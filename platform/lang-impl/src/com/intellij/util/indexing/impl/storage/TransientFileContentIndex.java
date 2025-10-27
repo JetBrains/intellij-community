@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -124,7 +125,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   @Override
   public void removeTransientDataForFile(int inputId) {
     if (IndexDebugProperties.DEBUG) {
-      LOG.assertTrue(ProgressManager.getInstance().isInNonCancelableSection());
+      LOG.assertTrue(ProgressManager.getInstance().isInNonCancelableSection(), "Must be called in a nonCancellableSection");
     }
     //TODO RC: do we need a lock around here?
     if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
@@ -138,8 +139,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
       InputDataDiffBuilder<Key, Value> builder = getKeysDiffBuilder(inputId);
       removeTransientDataForKeys(inputId, builder);
     }
-    catch (IOException throwable) {
-      throw new RuntimeException(throwable);
+    catch (IOException ex) {
+      throw new UncheckedIOException(ex);
     }
   }
 

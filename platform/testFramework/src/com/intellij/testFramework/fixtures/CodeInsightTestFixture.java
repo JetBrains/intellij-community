@@ -69,11 +69,12 @@ import java.util.function.Predicate;
  * intentions, code completion, highlighting, navigation, and refactorings in
  * a headless-like IDE instance.
  *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/glossary.html#code-insight">Code Insight (IntelliJ Platform Docs)</a>
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Overview</a>
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/tests-and-fixtures.html">Tests and Fixtures</a>
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-highlighting.html">Testing Highlighting</a>
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
- */
+ */ 
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   String CARET_MARKER = EditorTestUtil.CARET_TAG;
   String ERROR_MARKER = "error";

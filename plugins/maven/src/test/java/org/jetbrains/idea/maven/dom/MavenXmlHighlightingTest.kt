@@ -15,7 +15,7 @@ class MavenXmlHighlightingTest : DaemonAnalyzerTestCase() {
 
   @Throws(Exception::class)
   fun testMavenValidation() {
-    val file = File(MavenCustomRepositoryHelper.getOriginalTestDataPath()).resolve("MavenValidation.xml")
+    val file = File(MavenCustomRepositoryHelper.originalTestDataPath).resolve("MavenValidation.xml")
     doTest(LocalFileSystem.getInstance().findFileByIoFile(file)!!, false, false)
   }
 

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.searchEverywhereMl.ranking.vcs">
+<idea-plugin package="com.intellij.searchEverywhereMl.ranking.vcs" visibility="internal">
 
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>

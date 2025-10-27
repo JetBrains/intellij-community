@@ -21,7 +21,7 @@ public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCa
 
   @Override
   protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk11();
+    return IdeaTestUtil.getMockJdk21();
   }
 
   private void doTest() {
@@ -57,4 +57,10 @@ public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCa
 
   @TestFor(issues = {"IDEA-375458", "IDEA-377186"})
   public void testExplicitNullabilityAnnotation() { doTest(); }
+
+  @TestFor(issues = "IDEA-381105")
+  public void testRegression() { doTest(); }
+
+  @TestFor(issues = "IDEA-381105")
+  public void testRegressionSimple() { doTest(); }
 }

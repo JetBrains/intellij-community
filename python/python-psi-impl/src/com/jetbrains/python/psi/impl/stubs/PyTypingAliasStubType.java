@@ -184,6 +184,15 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       }
 
       @Override
+      public void visitPyListLiteralExpression(@NotNull PyListLiteralExpression node) {
+        if (node == expression) {
+          illegal[0] = true;
+          return;
+        }
+        super.visitElement(node);
+      }
+
+      @Override
       public void visitElement(@NotNull PsiElement element) {
         if (element instanceof ASTDelegatePsiElement) {
           if (!VALID_TYPE_ANNOTATION_ELEMENTS.contains(element.getNode().getElementType())) {

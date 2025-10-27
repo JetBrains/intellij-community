@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.platform.jewel.markdown.extensions.gfmTables.jar
   modules:
   - name: intellij.platform.jewel.markdown.extensions.gfmTables
     libraries:

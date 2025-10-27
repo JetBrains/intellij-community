@@ -16,6 +16,8 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.util.coroutines.attachAsChildTo
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.ThreeState
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.XSourcePosition
@@ -28,10 +30,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import com.intellij.xdebugger.impl.rpc.XDebugSessionDataId
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
@@ -169,13 +168,6 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  override suspend fun updateExecutionPosition(sessionId: XDebugSessionId) {
-    val session = sessionId.findValue() ?: return
-    withContext(Dispatchers.EDT) {
-      session.updateExecutionPosition()
-    }
-  }
-
   override suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean, changedByUser: Boolean) {
     val session = sessionId.findValue() ?: return
     val executionStackModel = executionStackId.findValue() ?: return
@@ -185,10 +177,20 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
+  @OptIn(AwaitCancellationAndInvoke::class)
   override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
-    val suspendContextModel = suspendContextId.findValue() ?: return emptyFlow()
     return channelFlow {
-      suspendContextModel.suspendContext.computeExecutionStacks(object : XSuspendContext.XExecutionStackContainer {
+      val suspendContextModel = suspendContextId.findValue() ?: return@channelFlow
+      attachAsChildTo(suspendContextModel.coroutineScope)
+
+      val container = object : XSuspendContext.XExecutionStackContainer {
+        @Volatile
+        var obsolete = false
+
+        override fun isObsolete(): Boolean {
+          return obsolete
+        }
+
         override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
           val session = suspendContextModel.session
           val stacks = executionStacks.map { stack ->
@@ -203,8 +205,11 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
         override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
           trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
         }
-      })
-      awaitClose()
+      }
+      suspendContextModel.suspendContext.computeExecutionStacks(container)
+      awaitClose {
+        container.obsolete = true
+      }
     }.buffer(Channel.UNLIMITED)
   }
 

@@ -40,6 +40,7 @@ import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XBreakpointTypeId
 import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.sourcePosition
 import fleet.rpc.core.toRpc
 import fleet.util.channels.use
 import kotlinx.coroutines.*
@@ -320,7 +321,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
 
   @RequiresReadLock
   private fun computeBreakpointsLineRawInfo(project: Project, position: XSourcePosition, editor: Editor): BreakpointsLineRawInfo {
-    val lineBreakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, editor)
+    val lineBreakpointTypes = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, true, editor)
     val variantsPromise = if (lineBreakpointTypes.isNotEmpty()) {
       XDebuggerUtilImpl.getLineBreakpointVariants(project, lineBreakpointTypes, position).asDeferred()
     }

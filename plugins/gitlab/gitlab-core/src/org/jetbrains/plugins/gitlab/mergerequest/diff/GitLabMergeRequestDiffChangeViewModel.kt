@@ -12,10 +12,12 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.createVcsChange
 import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.CoroutineScope
@@ -26,8 +28,16 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.stateIn
 
+/**
+ * A viewmodel for an individual file diff in a merge request
+ */
 interface GitLabMergeRequestDiffChangeViewModel : AsyncDiffViewModel {
   val change: RefComparisonChange
+  val diffData: GitTextFilePatchWithHistory?
+
+  companion object {
+    internal val EMPTY_PATCH_KEY: Key<Boolean> = Key.create("GitLab.MergeRequest.Diff.Empty.Patch")
+  }
 }
 
 internal class GitLabMergeRequestDiffChangeViewModelImpl(
@@ -39,15 +49,24 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
   private val cs = parentCs.childScope(javaClass.name)
   private val reloadRequests = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
 
+  override val diffData: GitTextFilePatchWithHistory? = allChanges.patchesByChange[change]
+
   override val request: StateFlow<ComputedResult<DiffRequest>?> = computationStateFlow(reloadRequests.consumeAsFlow().withInitial(Unit)) {
     val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project))
                              ?: error("Could not create diff producer from $change")
-    val request = coroutineToIndicator {
+    coroutineToIndicator {
       changeDiffProducer.process(UserDataHolderBase(), ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator())
-    }
-    request.apply {
+    }.apply {
       putUserData(RefComparisonChange.KEY, change)
-      putUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER, allChanges.patchesByChange[change]?.getDiffComputer())
+
+      if (diffData != null) {
+        if (diffData.patch.hunks.isNotEmpty()) {
+          putUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER, diffData.getDiffComputer())
+        }
+        else {
+          putUserData(GitLabMergeRequestDiffChangeViewModel.EMPTY_PATCH_KEY, true)
+        }
+      }
     }
   }.stateIn(cs, SharingStarted.Lazily, null)
 

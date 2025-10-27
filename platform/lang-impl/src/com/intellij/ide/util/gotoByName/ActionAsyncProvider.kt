@@ -36,7 +36,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ActionAsyncProvider>()
 
@@ -131,7 +130,9 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
       val wrapper = wrapAnAction(action, presentationProvider)
       val degree = matcher.matchingDegree(pattern)
       val matchedValue = abbreviationMatchedValue(wrapper, pattern, degree)
-      if (!consumer(matchedValue)) cancel()
+      if (!consumer(matchedValue)) {
+        cancel()
+      }
     }
   }
 
@@ -162,7 +163,9 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
         return@forEachConcurrentOrdered matchedValue
     }, { matchedValue ->
-      if (!consumer(matchedValue)) cancel()
+      if (!consumer(matchedValue)) {
+        cancel()
+      }
     })
   }
 
@@ -391,7 +394,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
       res
     }
 
-    var registrarDescriptionsPromise: Deferred<Collection<OptionDescription>?> = async {
+    val registrarDescriptionsPromise: Deferred<Collection<OptionDescription>?> = async {
       val registrar = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl
       val words = registrar.getProcessedWords(pattern)
       val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
@@ -451,7 +454,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   }
 
   private suspend fun loadAction(id: String): AnAction? {
-    return withContext(coroutineContext) {
+    return withContext(currentCoroutineContext()) {
       actionManager.getAction(id)
     }
   }

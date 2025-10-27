@@ -281,7 +281,13 @@ class RecordView(
             isEditable = isCellEditable(grid, rowIdx, columnInfo.idx)
 
             if (!isEditable) {
-              toolTipText = EditorBundle.message("editing.viewer.hint")
+              val reason = GridEditGuard.get(grid)?.getReasonText(grid)
+              if (reason != null && reason.isNotEmpty()) {
+                toolTipText = reason
+              }
+              else {
+                toolTipText = EditorBundle.message("editing.viewer.hint")
+              }
             }
           }
           val label = JLabel(columnInfo.name).apply {

@@ -31,7 +31,7 @@ internal class ModuleBasedPluginXmlPathResolver(
     val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleName }?.moduleDescriptor
     if (moduleDescriptor != null) {
       val input = moduleDescriptor.readFile(path) ?: error("Cannot resolve $path in $moduleDescriptor")
-      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, toXIncludeLoader(dataLoader))
+      val reader = PluginDescriptorFromXmlStreamConsumer(readContext, createXIncludeLoader(this@ModuleBasedPluginXmlPathResolver, dataLoader))
       reader.consume(input, path)
       return reader.getBuilder()
     }
@@ -45,11 +45,11 @@ internal class ModuleBasedPluginXmlPathResolver(
           val reasonsWhyNotLoaded = notLoadedModuleIds[moduleId] ?: emptyList()
           if (reasonsWhyNotLoaded.isNotEmpty()) {
             for (reason in reasonsWhyNotLoaded) {
-              addDependency(DependenciesElement.ModuleDependency(reason.stringId))
+              addDependency(DependenciesElement.ModuleDependency(reason.stringId, null))
             }
           }
           else {
-            addDependency(DependenciesElement.ModuleDependency("incompatible.with.product.mode.or.unresolved"))
+            addDependency(DependenciesElement.ModuleDependency("incompatible.with.product.mode.or.unresolved", null))
           }
         }
       }
@@ -58,14 +58,14 @@ internal class ModuleBasedPluginXmlPathResolver(
   }
 
   override fun resolveCustomModuleClassesRoots(moduleId: PluginModuleId): List<Path> {
-    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleId.id }?.moduleDescriptor
+    val moduleDescriptor = includedModules.find { it.moduleDescriptor.moduleId.stringId == moduleId.name }?.moduleDescriptor
     return moduleDescriptor?.resourceRootPaths ?: emptyList()
   }
 
   override fun loadXIncludeReference(
     dataLoader: DataLoader,
     path: String,
-  ): XIncludeLoader.LoadedXIncludeReference? {
+  ): LoadedXIncludeReference? {
     return fallbackResolver.loadXIncludeReference(
       dataLoader = dataLoader,
       path = path,

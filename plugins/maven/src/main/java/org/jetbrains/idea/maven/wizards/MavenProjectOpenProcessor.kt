@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectOpenProcessor
 import javax.swing.Icon
 
-internal class MavenProjectOpenProcessor : ProjectOpenProcessor() {
+class MavenProjectOpenProcessor : ProjectOpenProcessor() {
   private val importProvider = MavenOpenProjectProvider()
 
   override val name: String

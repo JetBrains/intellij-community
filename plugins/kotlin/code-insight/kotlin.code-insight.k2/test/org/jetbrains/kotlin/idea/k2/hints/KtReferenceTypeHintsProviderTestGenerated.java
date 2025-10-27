@@ -30,6 +30,16 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("AnonymousAnyCollectionElement.kt")
+    public void testAnonymousAnyCollectionElement() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/AnonymousAnyCollectionElement.kt");
+    }
+
+    @TestMetadata("AnonymousCollectionElement.kt")
+    public void testAnonymousCollectionElement() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/AnonymousCollectionElement.kt");
+    }
+
     @TestMetadata("AnonymousObject.kt")
     public void testAnonymousObject() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/AnonymousObject.kt");
@@ -153,6 +163,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
     @TestMetadata("JavaNonNullableArray.kt")
     public void testJavaNonNullableArray() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/JavaNonNullableArray.kt");
+    }
+
+    @TestMetadata("JavaTypeWithWarningLevelNullability.kt")
+    public void testJavaTypeWithWarningLevelNullability() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/JavaTypeWithWarningLevelNullability.kt");
     }
 
     @TestMetadata("LambdaReturnType.kt")

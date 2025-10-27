@@ -93,6 +93,9 @@ internal class CliBasedHatchService private constructor(
     return Result.success(available)
   }
 
+  override suspend fun findDefaultVirtualEnvironmentOrNull(): PyResult<HatchVirtualEnvironment?> =
+    findVirtualEnvironments().mapSuccess { envs -> envs.singleOrNull { it.hatchEnvironment == HatchEnvironment.DEFAULT } }
+
 
   override suspend fun createNewProject(projectName: String): PyResult<ProjectStructure> {
     val eelApi = workingDirectoryPath.getEelDescriptor().toEelApi()
@@ -138,6 +141,7 @@ private fun HatchEnvironments.getAvailableVirtualHatchEnvironments(): List<Hatch
         HatchEnvironment(
           name = envName,
           type = type,
+          features = features,
           dependencies = dependencies,
           environmentVariables = environmentVariables,
           scripts = scripts,

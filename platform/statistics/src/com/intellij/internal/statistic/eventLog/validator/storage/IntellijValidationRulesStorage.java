@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog.validator.storage;
 
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
+import com.intellij.internal.statistic.eventLog.validator.DictionaryStorage;
 import com.intellij.internal.statistic.eventLog.validator.GroupValidators;
 import com.intellij.internal.statistic.eventLog.validator.ValidationRuleStorage;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
@@ -20,8 +21,10 @@ public interface IntellijValidationRulesStorage extends ValidationRuleStorage<Ev
 
   /**
    * Loads and updates events scheme from the server if necessary
+   *
+   * @return true if events scheme was updated without errors, false otherwise
    */
-  void update();
+  boolean update();
 
   /**
    * Re-loads events scheme from local caches
@@ -46,4 +49,11 @@ public interface IntellijValidationRulesStorage extends ValidationRuleStorage<Ev
       descriptor -> EventGroupRules.create(descriptor, globalRulesHolder, validationSimpleRuleFactory, excludeFields, getDictionaryStorage())
     ));
   }
+
+  @Override
+  @Nullable
+  DictionaryStorage getDictionaryStorage();
+
+  @Override
+  boolean isUnreachable();
 }

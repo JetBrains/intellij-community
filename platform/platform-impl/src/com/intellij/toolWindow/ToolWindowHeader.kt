@@ -33,8 +33,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.beans.PropertyChangeEvent
-import java.beans.PropertyChangeListener
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.GroupLayout.DEFAULT_SIZE
@@ -46,8 +44,8 @@ import javax.swing.event.PopupMenuListener
 abstract class ToolWindowHeader internal constructor(
   private val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
-  private val gearProducer: Supplier<ActionGroup>
-) : BorderLayoutPanel(), PropertyChangeListener {
+  private val gearProducer: Supplier<ActionGroup>,
+) : BorderLayoutPanel() {
 
   @ApiStatus.Internal
   companion object {
@@ -231,7 +229,7 @@ abstract class ToolWindowHeader internal constructor(
     )
   }
 
-  private fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
+  internal fun manageWestPanelTabComponentAndToolbar(init: Boolean) {
     if (init) {
       westPanel.setComponents(contentUi.tabComponent, sideComponent)
       contentUi.connectTabToolbar()
@@ -242,18 +240,12 @@ abstract class ToolWindowHeader internal constructor(
     }
   }
 
-  override fun propertyChange(evt: PropertyChangeEvent?) {
-    manageWestPanelTabComponentAndToolbar(true)
-  }
-
   override fun addNotify() {
     super.addNotify()
-    toolWindow.component.addPropertyChangeListener(ToolWindowContentUi.ALLOW_TABS_REORDERING.toString(), this)
     manageWestPanelTabComponentAndToolbar(true)
   }
 
   override fun removeNotify() {
-    toolWindow.component.removePropertyChangeListener(ToolWindowContentUi.ALLOW_TABS_REORDERING.toString(), this)
     super.removeNotify()
     manageWestPanelTabComponentAndToolbar(false)
   }

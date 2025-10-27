@@ -14,6 +14,7 @@ import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.migrations.Localization242;
+import com.intellij.openapi.application.migrations.BigDataToolsMigration253;
 import com.intellij.openapi.application.migrations.NotebooksMigration242;
 import com.intellij.openapi.application.migrations.SpaceMigration252;
 import com.intellij.openapi.components.StoragePathMacros;
@@ -74,6 +75,8 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FILENAME;
 
 @ApiStatus.Internal
 public final class ConfigImportHelper {
@@ -211,12 +214,14 @@ public final class ConfigImportHelper {
         }
         else if (bestCandidate != null && !isConfigOld(bestCandidate.second)) {
           oldConfigDirAndOldIdePath = new Pair<>(bestCandidate.first, null);
-          log.info("auto-import (wizard disabled)");
+          log.info("auto-import");
         }
-        else if (!(veryFirstStartOnThisComputer || wizardEnabled || "never".equals(showImportDialog) || AppMode.isRemoteDevHost())) {
+        else {
           log.info("no suitable configs found");
-          oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(candidateDirectories.getPaths());
-          importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_NO_CONFIGS_FOUND;
+          if (!(veryFirstStartOnThisComputer || wizardEnabled || "never".equals(showImportDialog) || AppMode.isRemoteDevHost())) {
+            oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(candidateDirectories.getPaths());
+            importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.SHOW_DIALOG_NO_CONFIGS_FOUND;
+          }
         }
       }
 
@@ -231,7 +236,7 @@ public final class ConfigImportHelper {
 
         System.setProperty(CONFIG_IMPORTED_FROM_PATH, oldConfigDir.toString());
 
-        doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
+        doImport(oldConfigDir, newConfigDir, oldIdeHome, configImportOptions);
 
         System.setProperty(InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY, Boolean.TRUE.toString());
 
@@ -801,14 +806,9 @@ public final class ConfigImportHelper {
     return OSAgnosticPathUtil.expandUserHome(StringUtil.unquoteString(dir, '"'));
   }
 
-  @VisibleForTesting
-  public static void doImport(
-    @NotNull Path oldConfigDir,
-    @NotNull Path newConfigDir,
-    @Nullable Path oldIdeHome,
-    @NotNull Logger log,
-    @NotNull ConfigImportOptions importOptions
-  ) {
+  private static void doImport(Path oldConfigDir, Path newConfigDir, @Nullable Path oldIdeHome, ConfigImportOptions options) {
+    var log = options.log;
+
     if (oldConfigDir.equals(newConfigDir)) {
       log.info("New config directory is the same as the old one, no import needed.");
       return;
@@ -821,7 +821,7 @@ public final class ConfigImportHelper {
       log.info(String.format(
         "Importing configs: oldConfigDir=[%s], newConfigDir=[%s], oldIdeHome=[%s], oldPluginsDir=[%s], newPluginsDir=[%s]",
         oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir));
-      doImport(oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir, importOptions);
+      doImport(oldConfigDir, newConfigDir, oldIdeHome, oldPluginsDir, newPluginsDir, options);
     }
     catch (Exception e) {
       log.warn(e);
@@ -913,7 +913,7 @@ public final class ConfigImportHelper {
     // applying prepared updates to copied plugins
     StartupActionScriptManager.executeActionScriptCommands(actionCommands, oldPluginsDir, newPluginsDir);
 
-    updateVMOptions(newConfigDir, log);
+    updateVMOptions(newConfigDir, oldConfigDir, log);
   }
 
   public static void migrateLocalization(@NotNull Path oldConfigDir, @NotNull Path oldPluginsDir) {
@@ -962,13 +962,8 @@ public final class ConfigImportHelper {
 
     if (options.importSettings != null) {
       options.importSettings.processPluginsToMigrate(
-        newConfigDir,
-        oldConfigDir,
-        oldPluginsDir,
-        options,
-        brokenPluginVersions,
-        pluginsToMigrate,
-        pluginsToDownload);
+        newConfigDir, oldConfigDir, oldPluginsDir, options, brokenPluginVersions, pluginsToMigrate, pluginsToDownload
+      );
     }
 
     if (!PlatformUtils.isJetBrainsClient()) {
@@ -1071,6 +1066,7 @@ public final class ConfigImportHelper {
     // Note that migrations are not taken into account for IDE updates through Toolbox
     new NotebooksMigration242().migratePlugins(options);
     new SpaceMigration252().migratePlugins(options);
+    new BigDataToolsMigration253().migratePlugins(options);
   }
 
   private static void migrateGlobalPlugins(
@@ -1418,7 +1414,7 @@ public final class ConfigImportHelper {
       var currentLines = Files.readAllLines(currentFile, cs);
       currentLines.sort(String::compareTo);
       var result = mergeVmOptionsLines(importLines, currentLines);
-      updateVMOptionsLines(newConfigDir, result, log);
+      updateVMOptionsLines(newConfigDir, oldConfigDir, result, log);
       result.sort(String::compareTo);
       return !currentLines.equals(result);
     }
@@ -1428,7 +1424,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static ArrayList<String> mergeVmOptionsLines(List<String> importLines, List<String> currentLines) {
+  private static List<String> mergeVmOptionsLines(List<String> importLines, List<String> currentLines) {
     var result = new ArrayList<String>(importLines.size() + currentLines.size());
     var preferCurrentXmx = false;
 
@@ -1461,12 +1457,12 @@ public final class ConfigImportHelper {
   }
 
   /* Fix VM options in the custom *.vmoptions file that won't work with the current IDE version or duplicate/undercut platform ones. */
-  public static void updateVMOptions(Path newConfigDir, Logger log) {
+  public static void updateVMOptions(@NotNull Path newConfigDir, @NotNull Path oldConfigDir, @NotNull Logger log) {
     var vmOptionsFile = newConfigDir.resolve(VMOptions.getFileName());
     if (Files.exists(vmOptionsFile)) {
       try {
         var lines = Files.readAllLines(vmOptionsFile, VMOptions.getFileCharset());
-        var updated = updateVMOptionsLines(newConfigDir, lines, log);
+        var updated = updateVMOptionsLines(newConfigDir, oldConfigDir, lines, log);
         if (updated) {
           Files.write(vmOptionsFile, lines, VMOptions.getFileCharset());
         }
@@ -1477,9 +1473,12 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static boolean updateVMOptionsLines(Path newConfigDir, List<String> lines, Logger log) {
+  private static boolean updateVMOptionsLines(Path newConfigDir, Path oldConfigDir, List<String> lines, Logger log) {
     var platformVmOptionsFile = newConfigDir.getFileSystem().getPath(VMOptions.getPlatformOptionsFile().toString());
     var platformLines = new LinkedHashSet<>(readPlatformOptions(platformVmOptionsFile, log));
+    var oldConfigName = oldConfigDir.getFileName().toString();
+    @SuppressWarnings("SpellCheckingInspection")
+    var fromCE = oldConfigName.startsWith("IdeaIC") || oldConfigName.startsWith("PyCharmCE");
     var updated = false;
 
     for (var i = lines.listIterator(); i.hasNext(); ) {
@@ -1495,6 +1494,8 @@ public final class ConfigImportHelper {
         line.startsWith("-agentpath:") && line.contains("yjpagent") ||
         "-Dsun.io.useCanonPrefixCache=false".equals(line) ||
         "-Dfile.encoding=UTF-8".equals(line) && OS.CURRENT == OS.macOS ||
+        line.startsWith("-DJETBRAINS_LICENSE_SERVER") && fromCE ||
+        line.startsWith("-Dide.do.not.disable.paid.plugins.on.startup") ||
         isDuplicateOrLowerValue(line, platformLines)
       ) {
         i.remove(); updated = true;
@@ -1567,7 +1568,7 @@ public final class ConfigImportHelper {
   private static boolean shouldSkipFileDuringImport(Path path, @Nullable ConfigImportSettings settings) {
     var fileName = path.getFileName().toString();
     return SESSION_FILES.contains(fileName) ||
-           fileName.equals(BundledPluginsState.BUNDLED_PLUGINS_FILENAME) ||
+           fileName.equals(BUNDLED_PLUGINS_FILENAME) ||
            fileName.equals(StoragePathMacros.APP_INTERNAL_STATE_DB) ||
            fileName.equals(ExpiredPluginsState.EXPIRED_PLUGINS_FILENAME) ||
            fileName.startsWith(SpecialConfigFiles.CHROME_USER_DATA) ||

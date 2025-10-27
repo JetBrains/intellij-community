@@ -3,27 +3,32 @@ package com.intellij.xdebugger.impl.breakpoints.ui
 
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.rpc.topics.sendToClient
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC
 import com.intellij.xdebugger.impl.breakpoints.ShowBreakpointDialogRequest
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
 
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class BreakpointsDialogFactory(private val project: Project) {
+class BreakpointsDialogFactory(private val project: Project, private val scope: CoroutineScope) {
   private var balloonToHide: Balloon? = null
   private var breakpointFromBalloon: Any? = null
 
@@ -54,7 +59,7 @@ class BreakpointsDialogFactory(private val project: Project) {
   }
 
   fun showDialog(initialBreakpointId: XBreakpointId?) {
-    if (useFeProxy() && AppMode.isRemoteDevHost()) {
+    if (SplitDebuggerMode.isSplitDebugger() && AppMode.isRemoteDevHost()) {
       hideBalloon()
       SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC.sendToClient(project, ShowBreakpointDialogRequest(initialBreakpointId))
       return
@@ -64,6 +69,22 @@ class BreakpointsDialogFactory(private val project: Project) {
 
   @ApiStatus.Internal
   fun showDialogImpl(initialBreakpoint: XBreakpointId?) {
+    if (initialBreakpoint == null) {
+      showDialogImplImmediately(initialBreakpoint)
+      return
+    }
+
+    scope.launch {
+      XDebugManagerProxy.getInstance()
+        .getBreakpointManagerProxy(project)
+        .awaitBreakpointCreation(initialBreakpoint)
+      withContext(Dispatchers.EDT) {
+        showDialogImplImmediately(initialBreakpoint)
+      }
+    }
+  }
+
+  private fun showDialogImplImmediately(initialBreakpoint: XBreakpointId?) {
     if (selectInDialogShowing(initialBreakpoint)) return
 
     val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)

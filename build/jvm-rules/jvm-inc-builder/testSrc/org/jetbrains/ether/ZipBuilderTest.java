@@ -124,4 +124,90 @@ public class ZipBuilderTest extends TestCase {
 
     Files.deleteIfExists(zipFile);
   }
+
+  public void testZipCopy() throws IOException {
+    Path zipFile = myRootDir.resolve("test-archive-read.zip");
+    Path zipFileWrite = myRootDir.resolve("test-archive-write.zip");
+    TestCase.assertFalse(Files.exists(zipFileWrite));
+
+    List<String> allEntriesSorted = List.of(
+      "com/sys1/api/service1.class",
+      "com/sys1/api/service2.class",
+      "com/sys1/api/service3.class",
+      "com/sys1/impl/service1Impl.class",
+      "com/sys1/impl/service2Impl.class",
+      "com/sys1/impl/service3Impl.class",
+
+      "com/sys2/api/service1.class",
+      "com/sys2/api/service2.class",
+      "com/sys2/api/service3.class",
+      "com/sys2/impl/service1Impl.class",
+      "com/sys2/impl/service2Impl.class",
+      "com/sys2/impl/service3Impl.class"
+    );
+    byte[] emptyContent = new byte[0];
+
+    // creation
+    try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFile)) {
+      TestCase.assertTrue(isEmpty(builder.listEntries("")));
+      for (String entry : allEntriesSorted) {
+        builder.putEntry(entry, emptyContent);
+      }
+      builder.close(true);
+    }
+
+    // synchronize
+    try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFile, zipFileWrite)) {
+      builder.close(true);
+    }
+
+    TestCase.assertTrue(Files.exists(zipFile));
+    TestCase.assertTrue(Files.exists(zipFileWrite));
+    TestCase.assertTrue(Files.isSameFile(zipFile, zipFileWrite));
+
+    // reading
+    try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFileWrite)) {
+
+      TestCase.assertEquals(allEntriesSorted, collect(builder.getEntryNames(), new ArrayList<>()));
+
+      Set<String> entries_com = collect(builder.listEntries("com/"), new HashSet<>());
+      TestCase.assertEquals(Set.of("com/sys1/", "com/sys2/"), entries_com);
+
+      Set<String> entries_com_sys1 = collect(builder.listEntries("com/sys1/"), new HashSet<>());
+      TestCase.assertEquals(Set.of("com/sys1/api/", "com/sys1/impl/"), entries_com_sys1);
+
+      Set<String> entries_com_sys1_api = collect(builder.listEntries("com/sys1/api/"), new HashSet<>());
+      TestCase.assertEquals(Set.of("com/sys1/api/service1.class", "com/sys1/api/service2.class", "com/sys1/api/service3.class"), entries_com_sys1_api);
+    }
+
+    // modifying
+    try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFile, zipFileWrite)) {
+      builder.deleteEntry("com/sys2/");
+      builder.putEntry("com/sys3/api/service4.class", new byte[] {43});
+      builder.close(true);
+    }
+
+    TestCase.assertTrue(Files.exists(zipFile));
+    TestCase.assertTrue(Files.exists(zipFileWrite));
+    TestCase.assertFalse(Files.isSameFile(zipFile, zipFileWrite));
+    try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFile)) {
+      TestCase.assertEquals(allEntriesSorted, collect(builder.getEntryNames(), new ArrayList<>()));
+    }
+    try (ZipOutputBuilder builder = new ZipOutputBuilderImpl(zipFileWrite)) {
+      List<String> expectedEntries = List.of(
+        "com/sys1/api/service1.class",
+        "com/sys1/api/service2.class",
+        "com/sys1/api/service3.class",
+        "com/sys1/impl/service1Impl.class",
+        "com/sys1/impl/service2Impl.class",
+        "com/sys1/impl/service3Impl.class",
+
+        "com/sys3/api/service4.class"
+      );
+      TestCase.assertEquals(expectedEntries, collect(builder.getEntryNames(), new ArrayList<>()));
+    }
+
+    Files.deleteIfExists(zipFile);
+    Files.deleteIfExists(zipFileWrite);
+  }
 }

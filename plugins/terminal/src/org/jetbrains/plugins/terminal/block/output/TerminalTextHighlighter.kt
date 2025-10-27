@@ -43,7 +43,7 @@ object EmptyTextAttributesProvider : TextAttributesProvider {
 
 @ApiStatus.Internal
 class TextStyleAdapter(
-  private val style: TextStyle,
+  val style: TextStyle,
   private val colorPalette: TerminalColorPalette,
   private val ignoreContrastAdjustment: Boolean = true,
 ) : TextAttributesProvider {

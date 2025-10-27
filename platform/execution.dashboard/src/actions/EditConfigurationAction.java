@@ -1,19 +1,19 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.actions;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.RunManager;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.actions.RunDashboardActionUtils;
-import com.intellij.execution.impl.RunDialog;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardService;
 import org.jetbrains.annotations.NotNull;
 
-final class EditConfigurationAction extends DumbAwareAction {
+import static com.intellij.platform.execution.dashboard.actions.RunDashboardActionUtilsKt.getSelectedNode;
+import static com.intellij.platform.execution.dashboard.actions.RunDashboardActionUtilsKt.scheduleEditConfiguration;
+
+final class EditConfigurationAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -23,8 +23,8 @@ final class EditConfigurationAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
-    boolean enabled = node != null && RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
+    FrontendRunDashboardService node = project == null ? null : getSelectedNode(e);
+    boolean enabled = node != null;
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
     boolean popupPlace = e.isFromContextMenu();
@@ -37,10 +37,9 @@ final class EditConfigurationAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    RunDashboardRunConfigurationNode node = project == null ? null : RunDashboardActionUtils.getTarget(e);
+    FrontendRunDashboardService node = project == null ? null : getSelectedNode(e);
     if (node == null) return;
 
-    RunDialog.editConfiguration(project, node.getConfigurationSettings(),
-                                ExecutionBundle.message("run.dashboard.edit.configuration.dialog.title"));
+    scheduleEditConfiguration(project, node.getRunDashboardServiceDto().getUuid());
   }
 }

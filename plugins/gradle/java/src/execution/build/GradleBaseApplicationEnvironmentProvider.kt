@@ -31,6 +31,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.execution.target.GradleServerEnvironmentSetup
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
+import org.jetbrains.plugins.gradle.service.execution.loadApplicationInitScript
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getGradleIdentityPathOrNull
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
@@ -38,9 +39,25 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 @ApiStatus.Experimental
-abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfigurationBase> : GradleExecutionEnvironmentProvider {
-
-  abstract fun generateInitScript(params: GradleInitScriptParameters): String?
+abstract class GradleBaseApplicationEnvironmentProvider : GradleExecutionEnvironmentProvider {
+  protected open fun generateInitScript(params: GradleInitScriptParameters): String? {
+    val scriptText = loadApplicationInitScript(
+      gradlePath = params.gradleTaskPath,
+      runAppTaskName = params.runAppTaskName,
+      mainClassToRun = params.mainClass,
+      javaExePath = params.javaExePath,
+      sourceSetName = params.sourceSetName,
+      params = params.params,
+      definitions = params.definitions,
+      intelliJRtPath = null,
+      workingDirectory = params.workingDirectory,
+      useManifestJar = false,
+      useArgsFile = false,
+      useClasspathFile = false,
+      javaModuleName = params.javaModuleName
+    )
+    return scriptText
+  }
 
   protected open fun argsString(params: JavaParameters): String {
     return createEscapedParameters(params.programParametersList.parameters, "args") +

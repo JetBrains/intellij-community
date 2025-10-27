@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.vcs.git.actions.GitSingleRefActions
+import com.intellij.vcs.git.actions.branch.GitBranchActionToBeWrapped
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitTag
@@ -21,7 +22,10 @@ import java.util.function.Supplier
 import kotlin.reflect.KClass
 import kotlin.reflect.safeCast
 
-abstract class GitSingleRefAction<T : GitReference>(dynamicText: Supplier<@NlsActions.ActionText String>) : DumbAwareAction(dynamicText) {
+abstract class GitSingleRefAction<T : GitReference>(
+  dynamicText: Supplier<@NlsActions.ActionText String>
+) : GitBranchActionToBeWrapped, DumbAwareAction(dynamicText) {
+
   @Suppress("UNCHECKED_CAST")
   protected open val refClass: KClass<T> = GitReference::class as KClass<T>
 

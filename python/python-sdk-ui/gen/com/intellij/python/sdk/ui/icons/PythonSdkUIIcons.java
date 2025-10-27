@@ -20,9 +20,6 @@ public final class PythonSdkUIIcons {
 
   public static final class Tools {
     /** 16x16 */ public static final @NotNull Icon Anaconda = load("icons/com/intellij/python/sdk/ui/expui/tools/anaconda.svg", 1479605221, 2);
-    /** 16x16 */ public static final @NotNull Icon Hatch = load("icons/com/intellij/python/sdk/ui/expui/tools/hatch.svg", -958563001, 0);
     /** 16x16 */ public static final @NotNull Icon Pip = load("icons/com/intellij/python/sdk/ui/expui/tools/pip.svg", 123856126, 0);
-    /** 16x16 */ public static final @NotNull Icon Poetry = load("icons/com/intellij/python/sdk/ui/expui/tools/poetry.svg", -142471747, 0);
-    /** 16x16 */ public static final @NotNull Icon UV = load("icons/com/intellij/python/sdk/ui/expui/tools/uv.svg", -883297877, 0);
   }
 }

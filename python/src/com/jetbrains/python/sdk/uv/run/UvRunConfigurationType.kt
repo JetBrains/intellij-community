@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.uv.run
 
 import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.openapi.util.NotNullLazyValue
+import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
 
@@ -13,7 +14,7 @@ internal class UvRunConfigurationType :
     UV_CONFIGURATION_ID,
     PyBundle.message("uv.run.configuration.type.display.name"),
     PyBundle.message("uv.run.configuration.type.description"),
-    NotNullLazyValue.createValue { PythonIcons.UV },
+    NotNullLazyValue.createValue { PythonCommunityImplUVCommonIcons.UV },
   ) {
   init {
     addFactory(UvRunConfigurationFactory(this))

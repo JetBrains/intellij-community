@@ -863,14 +863,23 @@ public final class FileUtilRt {
     }
   }
 
-  private static void doDelete(Path path) throws IOException {
-    for (int attemptsLeft = MAX_FILE_IO_ATTEMPTS; attemptsLeft > 0; attemptsLeft--) {
+  private static void doDelete(@NotNull Path path) throws IOException {
+    //Issues with file removal usually happen on Windows, *nix-type OSes usually don't need >1 attempt:
+    int attemptsCount = SystemInfoRt.isWindows ? MAX_FILE_IO_ATTEMPTS : 1;
+    IOException previousException = null;
+    for (int attemptsLeft = attemptsCount - 1; attemptsLeft >= 0; attemptsLeft--) {
       try {
         Files.deleteIfExists(path);
         return;
       }
       catch (IOException e) {
-        if (!SystemInfoRt.isWindows || attemptsLeft == 1) {
+        if (previousException != null && !previousException.getClass().equals(e.getClass())) {
+          //throttle suppressed exceptions by .getClass(): exceptions of the same class usually carries no additional info
+          e.addSuppressed(previousException);
+        }
+        previousException = e;
+
+        if (attemptsLeft == 0) {// ==last attempt
           //noinspection InstanceofCatchParameter
           if (e instanceof DirectoryNotEmptyException) {
             //add the directory content to the exception:
@@ -881,24 +890,29 @@ public final class FileUtilRt {
           throw e;
         }
 
+        //OS is Windows below:
+
         //noinspection InstanceofCatchParameter
         if (e instanceof AccessDeniedException) {
           // a file could be read-only, then fallback to legacy java.io API helps
           try {
+            //noinspection IO_FILE_USAGE
             File file = path.toFile();
             if (file.delete() || !file.exists()) {
-              break;
+              return; // success!
             }
           }
-          catch (Throwable ignored) { }
+          catch (Throwable t) {
+            e.addSuppressed(t);
+          }
 
-          if (attemptsLeft == MAX_FILE_IO_ATTEMPTS / 2 && TRY_GC_IF_FILE_DELETE_FAILS) {
+          if (TRY_GC_IF_FILE_DELETE_FAILS && attemptsLeft == attemptsCount / 2) {
             //Non-closed stream/channel, or not-yet-unmapped memory-mapped buffer could be a reason for
             // AccessDeniedException on an attempt to delete file on Windows.
             // => kick in GC/finalizers to collect that is not yet collected.
             //
             // Those are quite heavy, system-wide operations, which is why we fall back to them only after
-            // several attempts to delete the file already failed. But we don't do it at the last attempt
+            // several attempts to delete the file already failed. But we don't do it at the _last_ attempt
             // either, because GC/finalizers tasks could run async/background and may need some time to
             // finish.
 
@@ -1044,7 +1058,7 @@ public final class FileUtilRt {
     try {
       long i = Integer.parseInt(getProperty(key, String.valueOf(defaultValue / KILOBYTE)));
       if (i < 0) return Integer.MAX_VALUE;
-      return (int) Math.min(i * KILOBYTE, Integer.MAX_VALUE);
+      return (int)Math.min(i * KILOBYTE, Integer.MAX_VALUE);
     }
     catch (NumberFormatException e) {
       return defaultValue;

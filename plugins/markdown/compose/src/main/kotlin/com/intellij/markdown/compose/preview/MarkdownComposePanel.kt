@@ -48,10 +48,14 @@ import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
 import org.jetbrains.jewel.intui.markdown.bridge.ProvideMarkdownStyling
+import org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.alerts.create
 import org.jetbrains.jewel.intui.markdown.bridge.styling.extensions.github.tables.create
 import org.jetbrains.jewel.markdown.Markdown
 import org.jetbrains.jewel.markdown.MarkdownMode
 import org.jetbrains.jewel.markdown.extensions.autolink.AutolinkProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.github.alerts.AlertStyling
+import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.github.alerts.GitHubAlertRendererExtension
 import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrikethroughRendererExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
@@ -98,19 +102,24 @@ internal class MarkdownComposePanel(
     val processor = remember(markdownMode) {
       MarkdownProcessor(
         listOf(
+          GitHubAlertProcessorExtension,
           GitHubTableProcessorExtension,
           GitHubStrikethroughProcessorExtension(),
           AutolinkProcessorExtension,
         ),
         markdownMode,
+        parseEmbeddedHtml = true,
       )
     }
     val tableRenderer = remember(markdownStyling) {
       GitHubTableRendererExtension(GfmTableStyling.create(), markdownStyling)
     }
+    val alertRenderer = remember(markdownStyling) {
+      GitHubAlertRendererExtension(AlertStyling.create(), markdownStyling)
+    }
     val coilContext = LocalPlatformContext.current
     val imageRendererExtension = remember(coilContext) { Coil3ImageRendererExtension.withDefaultLoader(coilContext) }
-    val allRenderingExtensions = listOf(tableRenderer, GitHubStrikethroughRendererExtension, imageRendererExtension)
+    val allRenderingExtensions = listOf(tableRenderer, alertRenderer, GitHubStrikethroughRendererExtension, imageRendererExtension)
     val blockRenderer = remember(markdownStyling) {
       ScrollSyncMarkdownBlockRenderer(
         markdownStyling,

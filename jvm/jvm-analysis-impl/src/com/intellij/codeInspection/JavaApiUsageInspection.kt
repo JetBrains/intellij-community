@@ -174,20 +174,21 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val sourcePsi = sourceNode.sourcePsi ?: return
       if (target !is PsiMember) return
       var languageLevel: LanguageLevel? = null
-      val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi)
+      val file = sourcePsi.containingFile
+      val module = ModuleUtilCore.findModuleForPsiElement(file)
       if (module != null) {
         languageLevel = getEffectiveLanguageLevel(module)
         if (languageLevel.isUnsupported) {
           languageLevel = languageLevel.getNonPreviewLevel()
         }
       }
-      else if (sourcePsi.containingFile.virtualFile is LightVirtualFile) {
+      else if (file.virtualFile is LightVirtualFile) {
         //it is necessary for generated files (for example, check completions)
-        languageLevel = sourcePsi.containingFile.getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY)
+        languageLevel = file.getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY)
       }
       if (languageLevel == null) return
-      var firstCompatibleLanguageLevel = JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(target, languageLevel)
-      if (firstCompatibleLanguageLevel != null) {
+      val info = JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevelInfo(target, languageLevel)
+      if (info != null) {
         val psiClass = if (qualifier != null) {
           PsiUtil.resolveClassInType(qualifier.getExpressionType())
         }
@@ -201,15 +202,26 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
           }
         }
 
+        var level = info.firstAppearLevel()
+        val outOfPreviewLevel = info.outOfPreviewLevel()
+        if (outOfPreviewLevel != null) {
+          val sdkLevel = JavaVersionService.getInstance().getJavaSdkVersion(file)?.maxLanguageLevel
+          if (sdkLevel != null && sdkLevel.isAtLeast(level) &&
+              (sdkLevel == languageLevel || languageLevel.isPreview)) {
+            // At current SDK level, the API is usable but in preview, so we should not report it
+            return
+          }
+          level = outOfPreviewLevel
+        }
         if (sourcePsi is PsiJavaCodeReferenceElement) {
           val previewFeatureUsage = JavaPreviewFeatureUtil.getPreviewFeatureUsage(sourcePsi, target)
-          val previewLevel = firstCompatibleLanguageLevel.getPreviewLevel()
+          val previewLevel = level.getPreviewLevel()
           if (previewFeatureUsage != null && previewLevel != null) {
-            firstCompatibleLanguageLevel = previewLevel
+            level = previewLevel
           }
         }
 
-        registerError(sourcePsi, firstCompatibleLanguageLevel, holder, isOnTheFly)
+        registerError(sourcePsi, level, holder, isOnTheFly)
       }
       else if (target is PsiClass && !languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
         for (generifiedClass in generifiedClasses) {

@@ -257,6 +257,13 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       if (declOwner != null && declOwner != owner) {
         readsFromInstruction.addAll(ScopeUtil.getElementsOfAccessType(name, declOwner, ReadWriteInstruction.ACCESS.WRITE));
       }
+      // Type params are not present in CFG
+      else if (owner instanceof PyTypeParameterListOwner typeParameterListOwner &&
+               typeParameterListOwner.getTypeParameterList() != null) {
+        StreamEx.of(typeParameterListOwner.getTypeParameterList().getTypeParameters())
+          .filter(typeParameter -> name.equals(typeParameter.getName()))
+          .forEach(readsFromInstruction::add);
+      }
     }
     ControlFlowUtil.iteratePrev(startInstruction, instructions, inst -> {
       final PsiElement instElement = inst.getElement();
@@ -355,7 +362,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         final PsiElement name = typeParameter.getNameIdentifier();
         registerWarning(name != null ? name : element,
                         PyPsiBundle.message("INSP.unused.locals.type.parameter.isnot.used", typeParameter.getName()),
-                        new PyRemoveStatementQuickFix());
+                        new PyRemoveTypeParameterQuickFix());
       }
       else {
         // Local variable or parameter

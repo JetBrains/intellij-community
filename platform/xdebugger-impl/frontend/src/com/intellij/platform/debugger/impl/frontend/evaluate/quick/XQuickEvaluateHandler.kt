@@ -28,7 +28,7 @@ private val LOG = Logger.getInstance(XQuickEvaluateHandler::class.java)
 
 internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
   override fun isEnabled(project: Project): Boolean {
-    val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession.value
+    val currentSession = FrontendXDebuggerManager.getInstance(project).currentSession
     return currentSession != null && currentSession.currentEvaluator != null
   }
 
@@ -70,7 +70,7 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
       }
       else {
         val currentSession = if (frontendType is FrontendType.Remote) {
-          FrontendXDebuggerManager.getInstance(project).currentSession.value
+          FrontendXDebuggerManager.getInstance(project).currentSession
         }
         else {
           // Monolith case, we do not want to break plugins e.g., IJPL-176963

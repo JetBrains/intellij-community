@@ -52,7 +52,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText, PathElementIdProvider {
+public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements NavigatableWithText, PathElementIdProvider, NodeWithMeasurableExpand {
   // the chain from a parent directory to this one usually contains only one virtual file
   private final Set<VirtualFile> chain = new SmartHashSet<>();
 

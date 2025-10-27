@@ -29,6 +29,7 @@ public class BuildContextImpl implements BuildContext {
   private final Appendable myMessageSink;
   private final @NotNull Path myOutJar;
   private final @Nullable Path myAbiJar;
+  private final @Nullable Path myKotlinCriStoragePath;
   private final Path myDataDir;
 
   private final @NotNull NodeSourceSnapshot mySources;
@@ -59,6 +60,8 @@ public class BuildContextImpl implements BuildContext {
 
     String abiPath = CLFlags.ABI_OUT.getOptionalScalarValue(flags);
     myAbiJar = abiPath != null? baseDir.resolve(abiPath).normalize() : null;
+
+    myKotlinCriStoragePath = myOutJar.resolveSibling(truncateExtension(myOutJar.getFileName().toString()) + DataPaths.KOTLIN_CRI_STORAGE_SUFFIX);
 
     myDataDir = myOutJar.resolveSibling(truncateExtension(myOutJar.getFileName().toString()) + DataPaths.DATA_DIR_NAME_SUFFIX);
     
@@ -318,6 +321,11 @@ public class BuildContextImpl implements BuildContext {
   @Override
   public @Nullable Path getAbiOutputZip() {
     return myAbiJar;
+  }
+
+  @Override
+  public @Nullable Path getKotlinCriStoragePath() {
+    return myKotlinCriStoragePath;
   }
 
   @Override

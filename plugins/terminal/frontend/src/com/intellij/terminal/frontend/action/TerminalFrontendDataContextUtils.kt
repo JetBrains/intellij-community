@@ -6,7 +6,7 @@ import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import com.intellij.terminal.frontend.view.impl.TerminalSearchController
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 
 @ApiStatus.Experimental
 object TerminalFrontendDataContextUtils {

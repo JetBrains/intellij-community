@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.automaton.jar
   modules:
   - name: intellij.libraries.automaton
   library: automaton

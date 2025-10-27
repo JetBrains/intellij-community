@@ -6,7 +6,7 @@ from networkx.utils.decorators import argmap
 __all__ = ["modularity", "partition_quality"]
 
 class NotAPartition(NetworkXError):
-    def __init__(self, G, collection) -> None: ...
+    def __init__(self, G: Graph[_Node], collection) -> None: ...
 
 require_partition: argmap
 

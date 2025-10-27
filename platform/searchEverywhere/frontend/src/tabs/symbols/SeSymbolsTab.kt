@@ -22,13 +22,13 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
+open class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
 
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
-    SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates())
+    SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates(), true)
   }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
@@ -65,6 +65,10 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.getPreviewInfo(itemData, false)
   }
 
+  override suspend fun isExtendedInfoEnabled(): Boolean {
+    return delegate.isExtendedInfoEnabled()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }
@@ -72,6 +76,7 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @ApiStatus.Internal
     const val ID: String = "SymbolSearchEverywhereContributor"
+
     @ApiStatus.Internal
     val NAME: String = IdeBundle.message("search.everywhere.group.name.symbols")
   }

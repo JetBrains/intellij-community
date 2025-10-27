@@ -14,6 +14,7 @@
 --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED
 --add-opens=java.base/jdk.internal.vm=ALL-UNNAMED
 --add-opens=java.base/sun.net.dns=ALL-UNNAMED
+--add-opens=java.base/sun.nio=ALL-UNNAMED
 --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
 --add-opens=java.base/sun.nio.fs=ALL-UNNAMED
 --add-opens=java.base/sun.security.ssl=ALL-UNNAMED

@@ -26,7 +26,16 @@ private class RunDashboardServiceSynchronizer : ProjectActivity {
       FrontendRunDashboardManager.getInstance(project).subscribeToBackendCustomizationsUpdates()
     }
     synchronizationScope.launch {
+      FrontendRunDashboardManager.getInstance(project).subscribeToBackendConfigurationTypesUpdates()
+    }
+    synchronizationScope.launch {
       FrontendRunDashboardLuxHolder.getInstance(project).subscribeToRunToolwindowUpdates()
+    }
+    synchronizationScope.launch {
+      FrontendRunDashboardManager.getInstance(project).subscribeToBackendAvailableConfigurationUpdates()
+    }
+    synchronizationScope.launch {
+      FrontendRunDashboardManager.getInstance(project).subscribeToBackendExcludedConfigurationUpdates()
     }
   }
 }

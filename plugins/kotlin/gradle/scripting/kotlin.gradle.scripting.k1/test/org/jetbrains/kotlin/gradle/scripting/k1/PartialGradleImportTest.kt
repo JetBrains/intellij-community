@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k1
 
+import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootsLocatorImpl
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
@@ -109,7 +110,7 @@ abstract class PartialGradleImportTest : MultiplePluginVersionGradleImportingTes
     }
 
     protected fun assertSingleGradleBuildRoot(): GradleBuildRoot {
-        val gradleBuildRoots = GradleBuildRootsLocator.getInstance(myProject).getAllRoots()
+        val gradleBuildRoots = (GradleBuildRootsLocator.getInstance(myProject) as? GradleBuildRootsLocatorImpl)?.getAllRoots() ?: emptyList()
         assertEquals("Expected exactly one GradleBuildRoot. Found $gradleBuildRoots",1, gradleBuildRoots.size)
         return gradleBuildRoots.single()
     }

@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.xerces.jar
   modules:
   - name: intellij.libraries.xerces
     libraries:

@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
-import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
@@ -15,9 +17,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.JdkApiCompatibilityService;
 import com.intellij.openapi.project.DumbService;
@@ -65,7 +65,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch;
-import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.psi.util.proximity.ReferenceListWeigher.ReferenceListApplicability.inapplicable;
 
 public final class JavaCompletionUtil {
@@ -466,14 +465,6 @@ public final class JavaCompletionUtil {
     return type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
   }
 
-  public static boolean insertSemicolonAfter(@NotNull PsiLambdaExpression lambdaExpression) {
-    return lambdaExpression.getBody() instanceof PsiCodeBlock || insertSemicolon(lambdaExpression.getParent());
-  }
-
-  static boolean insertSemicolon(PsiElement parent) {
-    return !(parent instanceof PsiExpressionList) && !(parent instanceof PsiExpression);
-  }
-
   static class JavaLookupElementHighlighter {
     private final @NotNull PsiElement myPlace;
     private final @Nullable VirtualFile myOriginalFile;
@@ -794,125 +785,7 @@ public final class JavaCompletionUtil {
                                        @NotNull LookupElement item,
                                        boolean overloadsMatter,
                                        boolean hasParams) {
-    insertParentheses(context, item, overloadsMatter, ThreeState.fromBoolean(hasParams), false);
-  }
-
-  static void insertParentheses(@NotNull InsertionContext context,
-                                @NotNull LookupElement item,
-                                boolean overloadsMatter,
-                                @NotNull ThreeState hasParams, // UNSURE if providing no arguments is a valid situation
-                                boolean forceClosingParenthesis) {
-    Editor editor = context.getEditor();
-    char completionChar = context.getCompletionChar();
-    PsiFile file = context.getFile();
-
-    TailType tailType = completionChar == '(' ? TailTypes.noneType() :
-                        completionChar == ':' ? TailTypes.conditionalExpressionColonType() :
-                        LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
-    boolean hasTail = tailType != TailTypes.noneType() && tailType != TailTypes.unknownType();
-    boolean smart = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
-
-    if (completionChar == '(' || completionChar == '.' || completionChar == ',' || completionChar == ';' || completionChar == ':' || completionChar == ' ') {
-      context.setAddCompletionChar(false);
-    }
-
-    if (hasTail) {
-      hasParams = ThreeState.NO;
-    }
-    boolean needRightParenth = forceClosingParenthesis ||
-                               !smart && (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET ||
-                                          hasParams == ThreeState.NO && completionChar != '(');
-
-    context.commitDocument();
-
-    CommonCodeStyleSettings styleSettings = CompletionStyleUtil.getCodeStyleSettings(context);
-    PsiElement elementAt = file.findElementAt(context.getStartOffset());
-    if (elementAt == null || !(elementAt.getParent() instanceof PsiMethodReferenceExpression)) {
-      ThreeState hasParameters = hasParams;
-      boolean spaceBetweenParentheses = hasParams == ThreeState.YES && styleSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES ||
-                                        hasParams == ThreeState.UNSURE && styleSettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES;
-      new ParenthesesInsertHandler<>(styleSettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES, spaceBetweenParentheses,
-                                     needRightParenth, styleSettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE) {
-        @Override
-        protected boolean placeCaretInsideParentheses(InsertionContext context1, LookupElement item1) {
-          return hasParameters != ThreeState.NO;
-        }
-
-        @Override
-        protected PsiElement findExistingLeftParenthesis(@NotNull InsertionContext context) {
-          PsiElement token = super.findExistingLeftParenthesis(context);
-          return isPartOfLambda(token) ? null : token;
-        }
-
-        private static boolean isPartOfLambda(PsiElement token) {
-          return token != null && token.getParent() instanceof PsiExpressionList &&
-                 PsiUtilCore.getElementType(PsiTreeUtil.nextVisibleLeaf(token.getParent())) == JavaTokenType.ARROW;
-        }
-      }.handleInsert(context, item);
-    }
-
-    if (hasParams != ThreeState.NO) {
-      // Invoke parameters popup
-      AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
-    }
-
-    if (smart || !needRightParenth || !EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically() ||
-        !insertTail(context, item, tailType, hasTail)) {
-      return;
-    }
-
-    if (completionChar == '.') {
-      AutoPopupController.getInstance(file.getProject()).scheduleAutoPopup(context.getEditor());
-    } else if (completionChar == ',') {
-      AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(context.getEditor(), null);
-    }
-  }
-
-  private static boolean insertTail(InsertionContext context, LookupElement item, TailType tailType, boolean hasTail) {
-    TailType toInsert = tailType;
-    LookupItem<?> lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
-    if (toInsert == EqTailType.INSTANCE) {
-      toInsert = TailTypes.unknownType();
-    }
-    if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType()) {
-      if (!hasTail && item.getObject() instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)item.getObject()).getReturnType())) {
-        PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
-        if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(context.getFile().findElementAt(context.getTailOffset() - 1))) {
-          return false;
-        }
-
-        boolean insertAdditionalSemicolon = true;
-        PsiElement leaf = context.getFile().findElementAt(context.getStartOffset());
-        PsiElement composite = leaf == null ? null : leaf.getParent();
-        if (composite instanceof PsiReferenceExpression) {
-          PsiElement parent = composite.getParent();
-          if (parent instanceof PsiMethodCallExpression) {
-            parent = parent.getParent();
-          }
-          if (parent instanceof PsiLambdaExpression lambda && !insertSemicolonAfter(lambda)) {
-            insertAdditionalSemicolon = false;
-          }
-          if (parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiForStatement forStatement &&
-              forStatement.getUpdate() == parent) {
-            insertAdditionalSemicolon = false;
-          }
-        }
-        if (insertAdditionalSemicolon) {
-          toInsert = TailTypes.semicolonType();
-        }
-
-      }
-    }
-    Editor editor = context.getEditor();
-    int tailOffset = context.getTailOffset();
-    int afterTailOffset = toInsert.processTail(editor, tailOffset);
-    int caretOffset = editor.getCaretModel().getOffset();
-    if (afterTailOffset > tailOffset &&
-        tailOffset > caretOffset &&
-        TabOutScopesTracker.getInstance().removeScopeEndingAt(editor, caretOffset) > 0) {
-      TabOutScopesTracker.getInstance().registerEmptyScope(editor, caretOffset, afterTailOffset);
-    }
-    return true;
+    JavaFrontendCompletionUtil.insertParentheses(context, item, overloadsMatter, ThreeState.fromBoolean(hasParams), false);
   }
 
   //need to shorten references in type argument list

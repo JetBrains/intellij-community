@@ -61,12 +61,12 @@ public class ApplicationInfoTest {
   }
 
   @Test
-  public void splashImage_freeModeLogoPreferredWhenMarkerPresent() {
+  public void splashImage_subscriptionModeLogoPreferredWhenMarkerPresent() {
     withTempConfigDirectory(configDir -> {
-      createFreeModeSplashMarkerFile(configDir);
-      ApplicationInfo info = createAppInfo(logo, logoFreeMode);
+      createSubscriptionModeSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(logo, logoSubscriptionMode);
       String url = info.getSplashImageUrl();
-      assertThat(url).isEqualTo(logoFreeModeUrl);
+      assertThat(url).isEqualTo(logoSubscriptionModeUrl);
     });
   }
 
@@ -81,10 +81,10 @@ public class ApplicationInfoTest {
   }
 
   @Test
-  public void splashImage_regularLogoWhenNoFreeModeMarker() {
+  public void splashImage_regularLogoWhenNoSubscriptionModeMarker() {
     withTempConfigDirectory(configDir -> {
-      deleteFreeModeSplashMarkerFile(configDir);
-      ApplicationInfo info = createAppInfo(logo, logoFreeMode);
+      deleteSubscriptionModeSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(logo, logoSubscriptionMode);
       String url = info.getSplashImageUrl();
       assertThat(url).isEqualTo(logoUrl);
     });
@@ -101,9 +101,9 @@ public class ApplicationInfoTest {
   }
 
   @Test
-  public void splashImage_regularLogoWhenMarkerPresentButNoFreeModeLogoProvided() {
+  public void splashImage_regularLogoWhenMarkerPresentButNoSubscriptionModeLogoProvided() {
     withTempConfigDirectory(configDir -> {
-      createFreeModeSplashMarkerFile(configDir);
+      createSubscriptionModeSplashMarkerFile(configDir);
       ApplicationInfo info = createAppInfo(logo);
       String url = info.getSplashImageUrl();
       assertThat(url).isEqualTo(logoUrl);
@@ -121,10 +121,10 @@ public class ApplicationInfoTest {
   }
 
   @Test
-  public void splashImage_eapLogoBeatsFreeModeInEapWhenBothAvailableAndMarkerPresent() {
+  public void splashImage_eapLogoBeatsSubscriptionModeInEapWhenBothAvailableAndMarkerPresent() {
     withTempConfigDirectory(configDir -> {
-      createFreeModeSplashMarkerFile(configDir);
-      ApplicationInfo info = createAppInfo(eap(true), logo, logoEap, logoFreeMode);
+      createSubscriptionModeSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(eap(true), logo, logoEap, logoSubscriptionMode);
       String url = info.getSplashImageUrl();
       assertThat(url).isEqualTo(logoEapUrl);
     });
@@ -141,12 +141,12 @@ public class ApplicationInfoTest {
   }
 
   @Test
-  public void splashImage_freeModeLogoWhenNotEapAndMarkerPresent() {
+  public void splashImage_subscriptionModeLogoWhenNotEapAndMarkerPresent() {
     withTempConfigDirectory(configDir -> {
-      createFreeModeSplashMarkerFile(configDir);
-      ApplicationInfo info = createAppInfo(eap(false), logo, logoEap, logoFreeMode);
+      createSubscriptionModeSplashMarkerFile(configDir);
+      ApplicationInfo info = createAppInfo(eap(false), logo, logoEap, logoSubscriptionMode);
       String url = info.getSplashImageUrl();
-      assertThat(url).isEqualTo(logoFreeModeUrl);
+      assertThat(url).isEqualTo(logoSubscriptionModeUrl);
     });
   }
 
@@ -163,22 +163,22 @@ public class ApplicationInfoTest {
   @Test
   public void splashImage_regularLogoWhenNotEapAndNoMarker() {
     withTempConfigDirectory(configDir -> {
-      deleteFreeModeSplashMarkerFile(configDir);
+      deleteSubscriptionModeSplashMarkerFile(configDir);
       deleteSimplifiedSplashMarkerFile(configDir);
-      ApplicationInfo info = createAppInfo(eap(false), logo, logoEap, logoFreeMode);
+      ApplicationInfo info = createAppInfo(eap(false), logo, logoEap, logoSubscriptionMode);
       String url = info.getSplashImageUrl();
       assertThat(url).isEqualTo(logoUrl);
     });
   }
 
   @Test
-  public void splashImage_freeModeLogoBeatsSimplifiedWhenBothAvailableAndMarkersPresent() {
+  public void splashImage_simplifiedLogoBeatsSubscriptionModeWhenBothAvailableAndMarkersPresent() {
     withTempConfigDirectory(configDir -> {
-      createFreeModeSplashMarkerFile(configDir);
+      createSubscriptionModeSplashMarkerFile(configDir);
       createSimplifiedSplashMarkerFile(configDir);
-      ApplicationInfo info = createAppInfo(eap(false), logo, logoFreeMode, logoSimplified);
+      ApplicationInfo info = createAppInfo(eap(false), logo, logoSubscriptionMode, logoSimplified);
       String url = info.getSplashImageUrl();
-      assertThat(url).isEqualTo(logoFreeModeUrl);
+      assertThat(url).isEqualTo(logoSimplifiedUrl);
     });
   }
 
@@ -201,16 +201,16 @@ public class ApplicationInfoTest {
     return new ApplicationInfoImpl(new XmlElement("state", Map.of(), children, null));
   }
 
-  private static void createFreeModeSplashMarkerFile(@NotNull Path configDir) throws IOException {
-    Files.writeString(configDir.resolve(ApplicationInfoImpl.FREE_MODE_SPLASH_MARKER_FILE_NAME), "");
+  private static void createSubscriptionModeSplashMarkerFile(@NotNull Path configDir) throws IOException {
+    Files.writeString(configDir.resolve(ApplicationInfoImpl.SUBSCRIPTION_MODE_SPLASH_MARKER_FILE_NAME), "");
   }
 
   private static void createSimplifiedSplashMarkerFile(@NotNull Path configDir) throws IOException {
     Files.writeString(configDir.resolve(ApplicationInfoImpl.SIMPLIFIED_SPLASH_MARKER_FILE_NAME), "");
   }
 
-  private static void deleteFreeModeSplashMarkerFile(@NotNull Path configDir) throws IOException {
-    Files.deleteIfExists(configDir.resolve(ApplicationInfoImpl.FREE_MODE_SPLASH_MARKER_FILE_NAME));
+  private static void deleteSubscriptionModeSplashMarkerFile(@NotNull Path configDir) throws IOException {
+    Files.deleteIfExists(configDir.resolve(ApplicationInfoImpl.SUBSCRIPTION_MODE_SPLASH_MARKER_FILE_NAME));
   }
 
   private static void deleteSimplifiedSplashMarkerFile(@NotNull Path configDir) throws IOException {
@@ -223,11 +223,11 @@ public class ApplicationInfoTest {
 
   private static final String logoUrl = "/logo.png";
   private static final String logoEapUrl = "/logo_eap.png";
-  private static final String logoFreeModeUrl = "/logo_free.png";
   private static final String logoSimplifiedUrl = "/logo_simplified.png";
+  private static final String logoSubscriptionModeUrl = "/logo_subscription.png";
 
   private final XmlElement logo = new XmlElement("logo", Map.of("url", logoUrl), List.of(), null);
   private final XmlElement logoEap = new XmlElement("logo-eap", Map.of("url", logoEapUrl), List.of(), null);
-  private final XmlElement logoFreeMode = new XmlElement("logo-free-mode", Map.of("url", logoFreeModeUrl), List.of(), null);
   private final XmlElement logoSimplified = new XmlElement("logo-simplified", Map.of("url", logoSimplifiedUrl), List.of(), null);
+  private final XmlElement logoSubscriptionMode = new XmlElement("logo-subscription-mode", Map.of("url", logoSubscriptionModeUrl), List.of(), null);
 }

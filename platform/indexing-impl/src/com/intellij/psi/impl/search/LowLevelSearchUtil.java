@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -13,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -224,8 +226,18 @@ public final class LowLevelSearchUtil {
     msg += "; file contents length: " + buffer.length();
     msg += "\n file provider: " + viewProvider;
     Document document = viewProvider.getDocument();
+    Project project = file.getProject();
     if (document != null) {
-      msg += "\n committed=" + PsiDocumentManager.getInstance(file.getProject()).isCommitted(document);
+      msg += "\n committed=" + PsiDocumentManager.getInstance(project).isCommitted(document);
+    }
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(project)) {
+      List<FileViewProvider> cachedViewProviders =
+        PsiManagerEx.getInstanceEx(project).getFileManagerEx().findCachedViewProviders(viewProvider.getVirtualFile());
+
+      msg += "\n sharedSourceSupport:true, cachedViewProviders:" + cachedViewProviders.size();
+    }
+    else {
+      msg += "\n sharedSourceSupport:false";
     }
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile root = viewProvider.getPsi(language);

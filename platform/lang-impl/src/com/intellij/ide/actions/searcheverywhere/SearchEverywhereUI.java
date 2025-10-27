@@ -434,12 +434,18 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     boolean isIncomplete = !myProject.getService(IncompleteDependenciesService.class).getState().isComplete();
     if (!isDumb && !isIncomplete) return null;
 
-    boolean containsPSIContributors = ContainerUtil.exists(contributors, c -> c instanceof AbstractGotoSEContributor ||
-                                                                              c instanceof PSIPresentationBgRendererWrapper);
-    if (!containsPSIContributors) return null;
+    boolean containsPSIOrActionContributors = ContainerUtil.exists(contributors, c -> c instanceof AbstractGotoSEContributor ||
+                                                                              c instanceof PSIPresentationBgRendererWrapper ||
+                                                                              c instanceof ActionSearchEverywhereContributor);
+
+    if (!containsPSIOrActionContributors) return null;
 
     return isDumb
-           ? new Pair<>(IdeBundle.message("dumb.mode.analyzing.project"), IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"))
+           ? ContainerUtil.all(contributors, c -> c instanceof ActionSearchEverywhereContributor)
+             ? new Pair<>(IdeBundle.message("dumb.mode.analyzing.project"),
+                          IdeBundle.message("dumb.mode.some.actions.might.be.unavailable.during.project.analysis"))
+             : new Pair<>(IdeBundle.message("dumb.mode.analyzing.project"),
+                          IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"))
            : new Pair<>(IdeBundle.message("incomplete.mode.results.might.be.incomplete"), null);
   }
 
@@ -729,7 +735,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
 
     OnePixelSplitter splitter = new OnePixelSplitter(true, .33f);
     splitter.setSplitterProportionKey(SPLITTER_SERVICE_KEY);
-    splitter.getDivider().setBackground(OnePixelDivider.BACKGROUND);
+    splitter.getDivider().setBackground(JBUI.CurrentTheme.Separator.color());
     splitter.setFirstComponent(resultScroll);
     splitter.setSecondComponent(myUsagePreviewPanel);
 
@@ -1068,7 +1074,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     }
   }
 
-  static boolean isExtendedInfoEnabled() {
+  @ApiStatus.Internal
+  public static boolean isExtendedInfoEnabled() {
     return Registry.is("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal();
   }
 
@@ -1076,7 +1083,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     return SearchEverywhereManager.getInstance(myProject).isPreviewEnabled();
   }
 
-  private static boolean isPreviewActive() {
+  @ApiStatus.Internal
+  public static boolean isPreviewActive() {
     return UISettings.getInstance().getShowPreviewInSearchEverywhere();
   }
 

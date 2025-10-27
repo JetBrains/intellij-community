@@ -195,6 +195,15 @@ object GHGQLRequests {
       }
   }
 
+  object Ref {
+    fun delete(server: GithubServerPath, refId: String): GQLQuery<Unit> =
+      GQLQuery.Parsed(
+        server.toGraphQLUrl(), GHGQLQueries.deleteRef,
+        mapOf("refId" to refId),
+        Unit::class.java
+      )
+  }
+
   object PullRequest {
     fun findOneId(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPRIdentifier?> =
       GQLQuery.OptionalTraversedParsed(

@@ -10,20 +10,20 @@ fragment pullRequestInfo on PullRequest {
 
   reviewDecision
 
-  baseRef {
-    refUpdateRule {
-      ...refUpdateRule
-    }
-  }
   baseRefName
   baseRefOid
   baseRepository {
     ...repository
   }
 
+  headRef {
+    id
+  }
   headRefName
   headRefOid
   headRepository {
     ...repository
   }
+
+  viewerCanDeleteHeadRef
 }

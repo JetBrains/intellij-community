@@ -72,7 +72,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
           return emptySet()
         }
 
-        //remote dev host is supposed to be the paid feature, so when running the IDE as a remove dev backend we automatically enable the ultimate plugin if it was disabled
+        //remote dev host is supposed to be the paid feature, so when running the IDE as a remove dev backend, we automatically enable the ultimate plugin if it was disabled
         val requiredForCurrentMode = if (AppMode.isRemoteDevHost()) PluginManagerCore.ULTIMATE_PLUGIN_ID else null
 
         // ApplicationInfoImpl maybe loaded in another thread - get it after readPluginIdsFromFile
@@ -172,7 +172,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     @TestOnly
     @Throws(IOException::class)
     fun saveDisabledPluginsAndInvalidate(configPath: Path, pluginIds: List<String> = emptyList()) {
-      PluginStringSetFile.write(configPath.resolve(DISABLED_PLUGINS_FILENAME), pluginIds.toSet())
+      writePluginStringSet(configPath.resolve(DISABLED_PLUGINS_FILENAME), pluginIds.toSet())
       invalidate()
     }
 

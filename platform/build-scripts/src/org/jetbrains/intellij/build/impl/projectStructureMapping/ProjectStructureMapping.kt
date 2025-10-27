@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.file.Path
 import java.util.TreeMap
+import java.util.TreeSet
 
 internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Sequence<String> {
   return entries.mapNotNull { (it as? ModuleOutputEntry)?.owner?.moduleName }.distinct()
@@ -27,9 +28,32 @@ internal fun getIncludedModules(entries: Sequence<DistributionFileEntry>): Seque
 internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: ZipFileWriter, buildPaths: BuildPaths, context: BuildContext) {
   val (fileToEntry, productModules) = groupPlatformEntries(contentReport = contentReport, buildPaths = buildPaths)
 
-  val moduleSets = productModules
-    .filter { it.first.moduleSet != null }
-    .groupByTo(TreeMap()) { it.first.moduleSet!! }
+  val allModuleSets = TreeMap<String, MutableList<Pair<ModuleItem, List<DistributionFileEntry>>>>()
+
+  // Group modules by their module sets using chain from ModuleItem.moduleSet
+  for ((moduleItem, distEntries) in productModules) {
+    val chain = moduleItem.moduleSet
+    if (chain == null) {
+      // Module not in any module set (e.g., additional product modules)
+      continue
+    }
+
+    // Module should be included in all sets in its chain
+    for (setName in chain) {
+      allModuleSets.computeIfAbsent(setName) { mutableListOf() }.add(moduleItem to distEntries)
+    }
+  }
+
+  // Determine root vs nested module sets by using chain from ModuleItem.moduleSet
+  // A set is nested if it appears after another set in any chain (e.g., [A, B] means B is nested)
+  // All sets after position 0 in any module's chain are considered nested
+  val nestedModuleSetNames = productModules
+    .mapNotNull { it.first.moduleSet }  // Get all chains
+    .flatMap { it.drop(1) }  // Take all sets except the first (root)
+    .toSet()
+
+  // Filter to only root module sets (not nested in other product module sets)
+  val rootModuleSets = allModuleSets.filterKeys { it !in nestedModuleSetNames }.toSortedMap()
 
   val platformData = buildPlatformContentReport(
     contentReport = contentReport,
@@ -37,13 +61,43 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
     distFiles = context.getDistFiles(os = null, arch = null, libcImpl = null),
     fileToEntry = fileToEntry,
     productModules = productModules,
-    moduleSets = moduleSets,
+    moduleSets = rootModuleSets,
   )
   zipFileWriter.uncompressedData("platform.yaml", platformData)
   zipFileWriter.uncompressedData("product-modules.yaml", buildProductModuleContentReport(productModules, buildPaths))
 
-  for ((moduleSetName, modules) in moduleSets) {
-    zipFileWriter.uncompressedData("moduleSets/$moduleSetName.yaml", modules.asSequence().map { it.first.moduleName }.sorted().joinToString("\n"))
+  // Write module set YAMLs with both direct modules and included module sets
+  for ((moduleSetName, modules) in allModuleSets) {
+    // Use Set to avoid duplicates (same module can appear in multiple JARs)
+    val entries = TreeSet<String>()
+
+    // Add direct module names only (modules where this set is the deepest/last in chain)
+    val directModules = modules.filter { it.first.moduleSet?.lastOrNull() == moduleSetName }
+    entries.addAll(directModules.map { it.first.moduleName })
+
+    // Extract immediate child sets (sets that directly follow this set in any chain)
+    // Example: if chain is [parent, current, child, grandchild], only add 'child'
+    val nestedSets = modules
+      .mapNotNull { it.first.moduleSet }
+      .mapNotNull { chain ->
+        val currentIndex = chain.indexOf(moduleSetName)
+        if (currentIndex != -1 && currentIndex < chain.size - 1) {
+          chain[currentIndex + 1]  // Return immediate child
+        } else {
+          null
+        }
+      }
+      .toSet()
+    entries.addAll(nestedSets)
+
+    val out = ByteArrayOutputStream()
+    createYamlGenerator(out).use { writer ->
+      writer.writeStartArray()
+      entries.sorted().forEach(writer::writeString)
+      writer.writeEndArray()
+    }
+
+    zipFileWriter.uncompressedData("moduleSets/$moduleSetName.yaml", out.toByteArray())
   }
 
   zipFileWriter.uncompressedData("bundled-plugins.yaml", buildPluginContentReport(contentReport.bundledPlugins, buildPaths))
@@ -140,7 +194,7 @@ private fun buildProductModuleContentReport(productModuleMap: List<Pair<ModuleIt
     for (entry in entries) {
       val file = entry.path
       // the issue is that some modules embedded into some products (Rider), so, name maybe product.jar...
-      val presentablePath = if ((entry as ModuleOwnedFileEntry).owner!!.moduleName == moduleItem.moduleName) {
+      val presentablePath = if (moduleItem.moduleName.contains(".rd.") && (entry as ModuleOwnedFileEntry).owner!!.moduleName == moduleItem.moduleName) {
         "<file>"
       }
       else {
@@ -287,8 +341,25 @@ private fun writeProductModules(
     }
   }
 
+  // Get all module names that are in module sets USED BY THIS PRODUCT
+  // Check if any root set name appears in the module's chain
+  val modulesInUsedSets = mutableSetOf<String>()
   for ((item) in productModules) {
-    if (item.moduleSet == null && item.reason == kind) {
+    val chainList = item.moduleSet
+    if (chainList != null) {
+      // Check if any root set is in the chain
+      for (moduleSetName in moduleSets.keys) {
+        if (moduleSetName in chainList) {
+          modulesInUsedSets.add(item.moduleName)
+          break
+        }
+      }
+    }
+  }
+
+  for ((item) in productModules) {
+    // Only write individual modules that aren't in any USED module set
+    if (item.reason == kind && item.moduleName !in modulesInUsedSets) {
       writer.writeString(item.moduleName)
     }
   }

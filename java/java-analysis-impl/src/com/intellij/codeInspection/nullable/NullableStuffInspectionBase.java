@@ -48,6 +48,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.AnnotationUtil.*;
+import static com.intellij.codeInspection.nullable.AnnotateAsNullMarkedFix.createAnnotateAsNullMarkedFix;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -442,12 +443,13 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   !(typeNullability == Nullability.UNKNOWN && type instanceof PsiWildcardType wildcardType && !wildcardType.isExtends())) {
                 String annotationToAdd = manager.getDefaultAnnotation(Nullability.NOT_NULL, reference);
                 PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationToAdd, element.getResolveScope());
-                AddTypeAnnotationFix fix = null;
+                List<LocalQuickFix> fixes = new ArrayList<>();
                 if (annotationClass != null &&
                     AnnotationTargetUtil.findAnnotationTarget(annotationClass, PsiAnnotation.TargetType.TYPE_USE) != null) {
-                  fix = new AddTypeAnnotationFix(typeArgument, annotationToAdd, manager.getNullables());
+                  fixes.add(LocalQuickFix.from(new AddTypeAnnotationFix(typeArgument, annotationToAdd, manager.getNullables())));
                 }
-                reportProblem(holder, typeArgument, fix, "non.null.type.argument.is.expected");
+                fixes.add(LocalQuickFix.from(createAnnotateAsNullMarkedFix(typeArgument, manager.getNullables()), false));
+                reportProblem(holder, typeArgument, fixes.toArray(LocalQuickFix.EMPTY_ARRAY), "non.null.type.argument.is.expected");
               }
             }
           }

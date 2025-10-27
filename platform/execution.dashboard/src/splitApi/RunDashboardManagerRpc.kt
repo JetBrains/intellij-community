@@ -3,11 +3,15 @@ package com.intellij.platform.execution.dashboard.splitApi
 
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.dashboard.RunDashboardServiceId
+import com.intellij.openapi.project.Project
+import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.projectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -31,4 +35,5 @@ interface RunDashboardManagerRpc : RemoteApi<Unit> {
                                            oldDescriptorId: RunContentDescriptorIdImpl?,
                                            newDescriptorId: RunContentDescriptorIdImpl)
   suspend fun detachRunContentDescriptorId(projectId: ProjectId, descriptorId: RunContentDescriptorIdImpl)
+  suspend fun setConfigurationTypes(projectId: ProjectId, configurationTypes: Set<String>)
 }

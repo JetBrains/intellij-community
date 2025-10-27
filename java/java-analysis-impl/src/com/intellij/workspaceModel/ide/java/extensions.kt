@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.java
 
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntityBuilder
 import com.intellij.pom.java.LanguageLevel
 
-public var JavaModuleSettingsEntity.Builder.languageLevel: LanguageLevel?
+public var JavaModuleSettingsEntityBuilder.languageLevel: LanguageLevel?
   get() = idToLanguageLevel(languageLevelId)
   set(value) {
     languageLevelId = value?.name

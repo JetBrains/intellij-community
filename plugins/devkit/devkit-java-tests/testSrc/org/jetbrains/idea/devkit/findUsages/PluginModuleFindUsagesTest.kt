@@ -13,8 +13,8 @@ class PluginModuleFindUsagesTest : JavaCodeInsightFixtureTestCase() {
 
   fun `test find modules`() {
     addModule("intellij.test.module1")
-    myFixture.addXmlFile("intellij.test.module1/intellij.test.module1.xml", """
-      <caret><idea-plugin>
+    val moduleFile = myFixture.addXmlFile("intellij.test.module1/intellij.test.module1.xml", """
+      <idea-plugin>
       </idea-plugin>
       """.trimIndent()
     )
@@ -37,7 +37,7 @@ class PluginModuleFindUsagesTest : JavaCodeInsightFixtureTestCase() {
       """.trimIndent()
     )
 
-    val usages = myFixture.testFindUsages("intellij.test.module1/intellij.test.module1.xml")
+    val usages = myFixture.findUsages(moduleFile)
     assertThat(usages)
       .hasSize(2)
   }

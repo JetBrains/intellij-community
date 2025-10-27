@@ -1,25 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities.impl
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
 import com.intellij.platform.workspace.jps.entities.LibraryTypeId
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -35,9 +25,6 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import java.io.Serializable
-import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -248,18 +235,18 @@ internal class LibraryEntityImpl(private val dataSource: LibraryEntityData) : Li
 
     // List of non-abstract referenced types
     var _excludedRoots: List<ExcludeUrlEntity>? = emptyList()
-    override var excludedRoots: List<ExcludeUrlEntity.Builder>
+    override var excludedRoots: List<ExcludeUrlEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
           ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(EXCLUDEDROOTS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ExcludeUrlEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity.Builder> ?: emptyList())
+                                                                                  this)!!.toList() as List<ExcludeUrlEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, EXCLUDEDROOTS_CONNECTION_ID)] as? List<ExcludeUrlEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -394,7 +381,7 @@ internal class LibraryEntityData : WorkspaceEntityData<LibraryEntity>(), SoftLin
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<LibraryEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<LibraryEntity> {
     val modifiable = LibraryEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -427,7 +414,7 @@ internal class LibraryEntityData : WorkspaceEntityData<LibraryEntity>(), SoftLin
     return LibraryEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return LibraryEntity(name, tableId, roots, entitySource) {
       this.typeId = this@LibraryEntityData.typeId
     }

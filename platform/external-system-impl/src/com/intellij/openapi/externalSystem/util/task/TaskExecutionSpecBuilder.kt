@@ -57,5 +57,11 @@ interface TaskExecutionSpecBuilder {
   @CheckReturnValue
   fun withActivateToolWindowOnFailure(activateToolWindowOnFailure: Boolean): TaskExecutionSpecBuilder
 
+  @CheckReturnValue
+  fun navigateToError(): TaskExecutionSpecBuilder
+
+  @CheckReturnValue
+  fun dontNavigateToError(): TaskExecutionSpecBuilder
+
   fun build(): TaskExecutionSpec
 }

@@ -79,7 +79,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
 
   private suspend fun doCacheSaving() {
     cacheFiles.entries.forEachConcurrent { (id, cacheFile) ->
-      val storage = GlobalWorkspaceModel.getInstanceByEnvironmentName(InternalEnvironmentNameImpl(id)).currentSnapshot
+      val storage = GlobalWorkspaceModel.getInstanceByEnvironmentName(InternalEnvironmentName.of(id)).currentSnapshot
       if (!storage.isConsistent) {
         invalidateCaches()
       }
@@ -109,7 +109,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   }
 
   override fun registerCachePartition(environmentName: InternalEnvironmentName) {
-    val cacheSuffix = if (environmentName.name == GlobalWorkspaceModelRegistry.GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID) {
+    val cacheSuffix = if (environmentName == InternalEnvironmentName.Local) {
       "$DATA_DIR_NAME/cache.data"
     }
     else {
@@ -120,7 +120,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   }
 
   companion object {
-    private val LOG = logger<GlobalWorkspaceModelCache>()
+    private val LOG = logger<GlobalWorkspaceModelCacheImpl>()
     internal const val DATA_DIR_NAME: String = "global-model-cache"
 
     private val cachesInvalidated = AtomicBoolean(false)

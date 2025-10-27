@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.quickfix
 
+import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -12,7 +13,8 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import org.jetbrains.annotations.Nls
 
-internal open class InstallPackageQuickFix(open val packageName: String) : LocalQuickFix {
+// this is HighPriorityAction because we always want our fix to appear above lsp tools because our fix is much better
+internal open class InstallPackageQuickFix(open val packageName: String) : LocalQuickFix, HighPriorityAction {
   override fun getFamilyName(): @Nls String = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName)
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

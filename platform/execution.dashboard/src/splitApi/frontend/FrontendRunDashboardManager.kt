@@ -13,6 +13,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper
 import com.intellij.platform.execution.dashboard.splitApi.*
@@ -21,6 +22,8 @@ import com.intellij.platform.project.projectId
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -31,7 +34,10 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   private val frontendDtos = MutableStateFlow<List<RunDashboardServiceDto>>(emptyList())
   private val frontendStatuses = MutableStateFlow(emptyMap<RunDashboardServiceId, ServiceStatusDto>())
   private val frontendCustomizations = MutableStateFlow(emptyMap<RunDashboardServiceId, ServiceCustomizationDto>())
-  private val statusFilter: RunDashboardStatusFilter = RunDashboardStatusFilter()
+  private val frontendAvailableConfigurations = MutableStateFlow(emptySet<RunDashboardConfigurationDto>())
+  private val frontendExcludedConfigurationTypeIds = MutableStateFlow(emptySet<String>())
+  private val statusFilter = RunDashboardStatusFilter()
+  private val configurationTypes = MutableStateFlow(emptySet<String>())
 
   internal suspend fun subscribeToBackendSettingsUpdates() {
     RunDashboardServiceRpc.getInstance().getSettings(project.projectId()).collect { updatesFromBackend ->
@@ -69,6 +75,32 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
       frontendCustomizations.value = updatedCustomizations
 
       updateDashboard(false)
+    }
+  }
+
+  internal suspend fun subscribeToBackendAvailableConfigurationUpdates() {
+    RunDashboardServiceRpc.getInstance().getAvailableConfigurations(project.projectId()).collect { updateFromBackend ->
+      frontendAvailableConfigurations.value = updateFromBackend
+    }
+  }
+
+  internal suspend fun subscribeToBackendExcludedConfigurationUpdates() {
+    RunDashboardServiceRpc.getInstance().getExcludedConfigurations(project.projectId()).collect { updateFromBackend ->
+      frontendExcludedConfigurationTypeIds.value = updateFromBackend
+    }
+  }
+
+  fun getAvailableConfigurations(): Set<RunDashboardConfigurationDto> {
+    return frontendAvailableConfigurations.value
+  }
+
+  fun getServices(): List<RunDashboardServiceDto> {
+    return frontendDtos.value
+  }
+
+  internal suspend fun subscribeToBackendConfigurationTypesUpdates() {
+    RunDashboardServiceRpc.getInstance().getConfigurationTypes(project.projectId()).collect { updateFromBackend ->
+      syncTypes(updateFromBackend)
     }
   }
 
@@ -116,12 +148,22 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   }
 
   override fun getTypes(): Set<String> {
-    LOG.debug("getTypes() invoked on frontend; returning empty set")
-    return emptySet()
+    return configurationTypes.value.toSet()
   }
 
-  override fun setTypes(types: MutableSet<String>) {
-    LOG.debug("setTypes(${types.size} types) invoked on frontend; ignored")
+  private fun syncTypes(types: Set<String>) {
+    configurationTypes.value = types
+
+    frontendDtos.update { currentDtos ->
+      currentDtos.filter { dto -> dto.typeId in types }
+    }
+  }
+
+  override fun setTypes(types: Set<String>) {
+    LOG.debug("setTypes(${types.size} types) invoked on frontend;")
+    syncTypes(types)
+    RunDashboardServiceViewContributorHelper.scheduleSetConfigurationTypes(project, types)
+    updateDashboard(true)
   }
 
   override fun getHiddenConfigurations(): Set<RunConfiguration?> {
@@ -138,12 +180,13 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   }
 
   override fun isNewExcluded(typeId: String): Boolean {
-    LOG.debug("isNewExcluded(typeId=$typeId) invoked on frontend; returning false")
-    return false
+    return frontendExcludedConfigurationTypeIds.value.contains(typeId)
   }
 
   override fun setNewExcluded(typeId: String, newExcluded: Boolean) {
-    LOG.debug("setNewExcluded(typeId=$typeId, newExcluded=$newExcluded) invoked on frontend; ignored")
+    RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+      RunDashboardServiceRpc.getInstance().setNewExcluded(project.projectId(), typeId, newExcluded)
+    }
   }
 
   override fun clearConfigurationStatus(configuration: RunConfiguration) {

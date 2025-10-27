@@ -18,8 +18,6 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "@lib//:opentelemetry-extension-kotlin",
-    "@lib//:ktor-client-okhttp",
-    "@lib//:okhttp",
     "//libraries/hash4j",
     "//libraries/ktor/client",
     "//libraries/ktor/io",

@@ -45,6 +45,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/external-process-auth-helper",
     "//platform/vcs-impl/shared",
+    "//platform/core-impl",
   ],
   runtime_deps = [
     "@lib//:jaxb-runtime",

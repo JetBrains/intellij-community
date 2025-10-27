@@ -39,16 +39,24 @@ final class ProcessPopup {
   private final JScrollPane myContentPanel;
   private JBPopup myPopup;
   private boolean myPopupVisible;
+  private final TasksFinishedDecorator myTasksFinishedDecorator;
+  private final AnalyzingBannerDecorator myAnalyzingBannerDecorator;
+  private final SeparatorDecorator mySeparatorDecorator;
 
   ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
 
-    myIndicatorPanel = new JBPanelWithEmptyText(new VerticalLayout(0)).withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
+    myIndicatorPanel =
+      new JBPanelWithEmptyText(new VerticalLayout(0)).withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
     myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
     myIndicatorPanel.setFocusable(true);
     if (ExperimentalUI.isNewUI()) {
       myIndicatorPanel.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
     }
+
+    myTasksFinishedDecorator = new TasksFinishedDecorator(myIndicatorPanel);
+    myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> revalidateAll());
+    mySeparatorDecorator = new SeparatorDecorator(myIndicatorPanel);
 
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     updateContentUI();
@@ -56,13 +64,13 @@ final class ProcessPopup {
 
   public void addIndicator(@NotNull ProgressComponent indicator) {
     JComponent component = indicator.getComponent();
-    if (myIndicatorPanel.getComponentCount() == 0) {
-      hideSeparator(component);
-    }
     if (ExperimentalUI.isNewUI()) {
       component.setOpaque(false);
     }
     myIndicatorPanel.add(component);
+    myTasksFinishedDecorator.indicatorAdded();
+    myAnalyzingBannerDecorator.indicatorAdded(indicator);
+    mySeparatorDecorator.indicatorAdded();
     revalidateAll();
   }
 
@@ -72,10 +80,11 @@ final class ProcessPopup {
     if (index == -1) {
       return;
     }
+
     myIndicatorPanel.remove(component);
-    if (index == 0 && myIndicatorPanel.getComponentCount() > 0) {
-      hideSeparator(myIndicatorPanel.getComponent(0));
-    }
+    myTasksFinishedDecorator.indicatorRemoved();
+    myAnalyzingBannerDecorator.indicatorRemoved(indicator, isShowing());
+    mySeparatorDecorator.indicatorRemoved();
     revalidateAll();
   }
 
@@ -140,6 +149,9 @@ final class ProcessPopup {
 
   public void hide() {
     if (myPopup != null) {
+      myAnalyzingBannerDecorator.handlePopupClose();
+      mySeparatorDecorator.handlePopupClose();
+
       myPopupVisible = false;
       myPopup.cancel();
       myPopup = null;
@@ -159,11 +171,22 @@ final class ProcessPopup {
     myContentPanel.setBorder(null);
   }
 
-  private static void hideSeparator(@NotNull Component component) {
+  public void setHideOnFocusLost(boolean value) {
+    if (myPopup instanceof AbstractPopup popup) {
+      popup.setCancelOnClickOutside(value);
+      popup.setCancelOnOtherWindowOpen(value);
+    }
+  }
+
+  static void hideSeparator(@NotNull Component component) {
     ProgressPanel panel = ClientProperty.get(component, KEY);
     if (panel != null) {
       panel.setSeparatorEnabled(false);
     }
+  }
+
+  static boolean isProgressIndicator(@NotNull Component component) {
+    return ClientProperty.get(component, KEY) != null;
   }
 
   private void createPopup(@NotNull JComponent content, @NotNull JComponent focus, boolean requestFocus) {

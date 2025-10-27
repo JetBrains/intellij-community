@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiPrecedenceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
@@ -94,6 +95,10 @@ public final class ConditionalExpressionGenerator {
     PsiExpression redundantComparisonReplacement = getRedundantComparisonReplacement(model);
     if (redundantComparisonReplacement != null) {
       return new ConditionalExpressionGenerator("", redundantComparisonReplacement);
+    }
+    ConditionalExpressionGenerator simplifiableBooleanTernaryGenerator = getSimplifiableBooleanTernaryGenerator(model);
+    if (simplifiableBooleanTernaryGenerator != null) {
+      return simplifiableBooleanTernaryGenerator;
     }
     return new ConditionalExpressionGenerator("?:", ct -> generateTernary(ct, condition, thenExpression, elseExpression, model.getType()));
   }
@@ -221,6 +226,58 @@ public final class ConditionalExpressionGenerator {
     return conditional.toString();
   }
 
+  private static @Nullable ConditionalExpressionGenerator getSimplifiableBooleanTernaryGenerator(@NotNull ConditionalModel model) {
+    PsiExpression condition = model.getCondition();
+    PsiExpression thenExpression = PsiUtil.deparenthesizeExpression(model.getThenExpression());
+    PsiExpression elseExpression = PsiUtil.deparenthesizeExpression(model.getElseExpression());
+    if (thenExpression == null || elseExpression == null) {
+      return null;
+    }
+    if (!(PsiTreeUtil.skipParentsOfType(thenExpression, PsiParenthesizedExpression.class) instanceof PsiConditionalExpression thenParent)) {
+      return null;
+    }
+    if (!(PsiTreeUtil.skipParentsOfType(elseExpression, PsiParenthesizedExpression.class) instanceof PsiConditionalExpression elseParent)) {
+      return null;
+    }
+
+    if (model.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING) && thenParent == elseParent) {
+      if (!(thenExpression instanceof PsiLiteral thenLiteral && thenLiteral.getValue() instanceof String thenStr)) {
+        return null;
+      }
+
+      if (!(elseExpression instanceof PsiLiteral elseLiteral && elseLiteral.getValue() instanceof String elseStr)) {
+        return null;
+      }
+
+      Boolean thenBool = getStringifiedBoolean(thenStr);
+      if (thenBool == null) {
+        return null;
+      }
+
+      Boolean elseBool = getStringifiedBoolean(elseStr);
+      if (elseBool == null) {
+        return null;
+      }
+
+      if (!thenBool.equals(elseBool)) {
+        boolean negate = !thenBool;
+        return new ConditionalExpressionGenerator("", ct -> {
+          String argText = negate ? BoolUtils.getNegatedExpressionText(condition, ct) : ct.text(condition);
+          PsiType condType = condition.getType();
+          if (condType != null && PsiTypes.booleanType().equals(condType)) {
+            return CommonClassNames.JAVA_LANG_BOOLEAN + ".toString(" + argText + ")";
+          }
+          // Boxed Boolean or unknown: prefer obj.toString() only when not negated; otherwise use Boolean.toString(!obj)
+          if (!negate) {
+            return ct.text(condition, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".toString()";
+          }
+          return CommonClassNames.JAVA_LANG_BOOLEAN + ".toString(" + argText + ")";
+        });
+      }
+    }
+    return null;
+  }
+
   private static @NotNull String joinConditions(PsiExpression left, PsiExpression right, boolean isAnd, CommentTracker ct) {
     int precedence;
     String token;
@@ -252,5 +309,13 @@ public final class ConditionalExpressionGenerator {
       return ct.text(leftPolyadic);
     }
     return ct.text(left, precedence) + token + ct.text(right, precedence);
+  }
+
+  private static @Nullable Boolean getStringifiedBoolean(@NotNull String b) {
+    return switch (b) {
+      case "true" -> Boolean.TRUE;
+      case "false" -> Boolean.FALSE;
+      default -> null;
+    };
   }
 }

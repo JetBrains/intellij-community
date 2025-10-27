@@ -54,8 +54,6 @@ interface XDebugSessionApi : RemoteApi<Unit> {
 
   suspend fun triggerUpdate(sessionId: XDebugSessionId)
 
-  suspend fun updateExecutionPosition(sessionId: XDebugSessionId)
-
   suspend fun setCurrentStackFrame(sessionId: XDebugSessionId, executionStackId: XExecutionStackId, frameId: XStackFrameId, isTopFrame: Boolean, changedByUser: Boolean = false)
 
   suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent>

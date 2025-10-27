@@ -10,6 +10,19 @@ import org.jetbrains.annotations.NonNls
  * hence we abstract `EelDescriptor` to a mere string [name].
  */
 @ApiStatus.Internal
-public interface InternalEnvironmentName {
+public sealed interface InternalEnvironmentName {
   public val name: @NonNls String
+
+  public data object Local : InternalEnvironmentName {
+    override val name: String = LOCAL_INTERNAL_ENVIRONMENT_NAME
+  }
+
+  public data class Custom(override val name: String) : InternalEnvironmentName
+
+  public companion object {
+    private const val LOCAL_INTERNAL_ENVIRONMENT_NAME = "Local"
+
+    @JvmStatic
+    public fun of(name: String): InternalEnvironmentName = if (name == LOCAL_INTERNAL_ENVIRONMENT_NAME) Local else Custom(name)
+  }
 }

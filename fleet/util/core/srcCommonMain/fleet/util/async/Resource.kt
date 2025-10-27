@@ -3,6 +3,7 @@
 
 package fleet.util.async
 
+import fleet.multiplatform.shims.SynchronizedObject
 import fleet.multiplatform.shims.synchronized
 import fleet.reporting.shared.tracing.spannedScope
 import fleet.tracing.SpanInfoBuilder
@@ -292,7 +293,7 @@ sealed class SharingMode(
  */
 fun <T> Resource<T>.shareIn(coroutineScope: CoroutineScope, sharing: SharingMode = SharingMode.Eager): Resource<T> =
   let { source ->
-    val lock = Any()
+    val lock = SynchronizedObject()
     var state: SharedResourceState<T> = when {
       sharing.runImmediately -> SharedResourceState.Running(1, runSharedResource(source, coroutineScope))
       else -> SharedResourceState.NotRunning()

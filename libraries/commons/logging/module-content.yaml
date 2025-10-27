@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.commons.logging.jar
   modules:
   - name: intellij.libraries.commons.logging
   library: commons-logging

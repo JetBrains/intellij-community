@@ -2,6 +2,8 @@
 package com.intellij.platform.searchEverywhere.frontend.tabs.files
 
 import com.intellij.ide.actions.SETextShortener
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.searchEverywhere.SeItemDataKeys
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListItemRow
 import com.intellij.platform.searchEverywhere.frontend.ui.SeResultListRow
@@ -24,6 +26,13 @@ class SeTargetItemPresentationRenderer(private val resultList: JList<SeResultLis
     val selected = selected
     selectionColor = UIUtil.getListBackground(selected, selected)
     presentation.backgroundColor?.let { background = it }
+
+    if (Registry.`is`("search.everywhere.ml.semantic.highlight.items", false)) {
+      val isSemantic = (value as SeResultListItemRow).item.additionalInfo[SeItemDataKeys.IS_SEMANTIC].toBoolean()
+      if (isSemantic) {
+        background = JBColor.GREEN.darker().darker()
+      }
+    }
 
     presentation.icon?.let { icon(it) }
 

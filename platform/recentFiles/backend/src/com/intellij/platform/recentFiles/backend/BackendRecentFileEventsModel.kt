@@ -16,6 +16,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -41,9 +42,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG by lazy { fileLogger() }
@@ -151,44 +150,28 @@ internal class BackendRecentFileEventsModel(private val project: Project, privat
 
   private suspend fun processOrderChangeEvents(): Nothing {
     orderChangeEvents.consumeEach { event ->
-      try {
+      LOG.runAndLogException {
         processOrderChangeEvent(event)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (t: Throwable) {
-        LOG.error(t)
       }
     }
     awaitCancellation() // unreachable
   }
 
   private suspend fun processFileUpdateEvents(): Nothing {
-    val pendingFiles = mutableSetOf<VirtualFile>()
-    val isProcessing = AtomicBoolean(false)
+    while (true) {
+      delay(updateDebounceMs.milliseconds)
 
-    fileChangeEvents.consumeEach { files ->
-      pendingFiles.addAll(files)
+      val pendingFiles = mutableSetOf<VirtualFile>()
+      pendingFiles += fileChangeEvents.receive()
 
-      if (pendingFiles.isNotEmpty() && isProcessing.compareAndSet(false, true)) {
-        val filesToUpdate = pendingFiles.toList()
-        pendingFiles.clear()
+      while (true) {
+        pendingFiles += fileChangeEvents.tryReceive().getOrNull() ?: break
+      }
 
-        coroutineScope.launch {
-          try {
-            processFileUpdateEvent(filesToUpdate, putOnTop = false)
-
-            delay(updateDebounceMs.milliseconds) // debounce update events
-          }
-          finally {
-            isProcessing.set(false)
-            fileChangeEvents.trySend(emptyList()) // schedule a new processing job for pending changes if needed
-          }
-        }
+      LOG.runAndLogException {
+        processFileUpdateEvent(pendingFiles.toList(), putOnTop = false)
       }
     }
-    awaitCancellation() // unreachable
   }
 
   private suspend fun processOrderChangeEvent(event: OrderChangeEvent) {

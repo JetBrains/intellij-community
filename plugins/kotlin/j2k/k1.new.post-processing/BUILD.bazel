@@ -35,6 +35,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
+    "//platform/core-impl",
     "//platform/refactoring",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",

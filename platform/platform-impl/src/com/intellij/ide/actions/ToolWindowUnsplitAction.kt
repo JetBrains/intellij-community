@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.content.Content
 
 internal class ToolWindowUnsplitAction : ToolWindowContextMenuActionBase(), ActionRemoteBehaviorSpecification.Frontend {
@@ -19,7 +18,6 @@ internal class ToolWindowUnsplitAction : ToolWindowContextMenuActionBase(), Acti
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
     val decorator = findNearestDecorator(e)
     e.presentation.isEnabled = decorator != null && decorator.canUnsplit()
-    e.presentation.isVisible = (e.presentation.isEnabled || !e.isFromContextMenu)
-                               && ToolWindowContentUi.isTabsReorderingAllowed(toolWindow)
+    e.presentation.isVisible = (e.presentation.isEnabled || !e.isFromContextMenu) && toolWindow.canSplitTabs()
   }
 }

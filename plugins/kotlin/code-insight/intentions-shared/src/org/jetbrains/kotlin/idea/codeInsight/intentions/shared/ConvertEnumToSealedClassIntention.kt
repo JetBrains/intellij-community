@@ -118,14 +118,16 @@ internal class ConvertEnumToSealedClassIntention : KotlinApplicableModCommandAct
             val initializers = member.initializerList?.initializers ?: emptyList()
             if (initializers.isNotEmpty()) {
                 for (initializer in initializers) {
-                    val superTypeListEntry = psiFactory.createSuperTypeCallEntry("${klass.name}${initializer.text}")
+                    val classNameText = klass.nameIdentifier?.text ?: return
+                    val superTypeListEntry = psiFactory.createSuperTypeCallEntry("$classNameText${initializer.text}")
                     obj.addSuperTypeListEntry(superTypeListEntry)
                 }
             } else {
+                val classNameText = klass.nameIdentifier?.text ?: enumClassName
                 val defaultEntry = if (isExpect) {
-                    psiFactory.createSuperTypeEntry(enumClassName)
+                    psiFactory.createSuperTypeEntry(classNameText)
                 } else {
-                    psiFactory.createSuperTypeCallEntry("$enumClassName()")
+                    psiFactory.createSuperTypeCallEntry("$classNameText()")
                 }
                 obj.addSuperTypeListEntry(defaultEntry)
             }
@@ -146,7 +148,7 @@ internal class ConvertEnumToSealedClassIntention : KotlinApplicableModCommandAct
 
         if (isJvmPlatform) {
             val enumEntryNames = objects.map { it.nameAsSafeName.asString() }
-            val targetClassName = klass.name
+            val targetClassName = klass.nameIdentifier?.text
             if (enumEntryNames.isNotEmpty() && targetClassName != null) {
                 val companionObject = klass.getOrCreateCompanionObject()
                 companionObject.addValuesFunction(targetClassName, enumEntryNames, psiFactory)

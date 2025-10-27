@@ -13,6 +13,9 @@ object CodeReviewColorUtil {
     object Chat {
       val hover: JBColor = jbColorFromHex("Review.ChatItem.Hover", "#DFE1E533", "#5A5D6333")
     }
+    object LineFrame {
+      val border: JBColor = JBColor.namedColor("Review.LineFrame.BorderColor", JBColor(0x3574F0, 0x548AF7))
+    }
   }
 
   object Branch {

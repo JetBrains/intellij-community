@@ -44,7 +44,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="22"/>
+                      stubVersion="23"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -550,6 +550,15 @@
                      implementationClass="org.jetbrains.idea.devkit.inspections.ContentModuleNamespaceInspection"
                      key="inspection.content.module.namespace.name"/>
 
+    <localInspection language="UAST"
+                     projectType="INTELLIJ_PLUGIN"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.eel.UseOptimizedEelFunctions"
+                     groupPathKey="inspections.group.path"
+                     groupKey="inspections.group.code"
+                     key="inspection.use.optimized.eel.functions.display.name"/>"
+
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
 
@@ -650,7 +659,13 @@
       implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor$ImplicitUsageProvider"/>
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
-    <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
+    <localInspection language="Properties"
+                     level="ERROR"
+                     enabledByDefault="true"
+                     key="inspections.plugin.keys.in.platform.registry"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     shortName="PluginKeysAreProhibitedInPlatformRegistry"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesInspection"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <backgroundPostStartupActivity
@@ -713,6 +728,8 @@
                  description="Enables commit messages validation for IntelliJ Monorepo"/>
     <registryKey key="aia.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for AI Assistant project"/>
+    <registryKey key="toolbox.commit.message.validation.enabled" defaultValue="true"
+                 description="Enables commit messages validation for Toolbox project"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.contentReport.ContentReportGeneratedSourcesFilter"/>
 

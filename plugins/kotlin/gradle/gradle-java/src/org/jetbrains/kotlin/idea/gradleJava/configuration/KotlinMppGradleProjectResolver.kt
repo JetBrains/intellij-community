@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
+import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.externalSystem.util.Order
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
@@ -76,7 +77,9 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
         val model = resolverCtx.getMppModel(gradleModule) ?: return moduleDataNode
         val context = KotlinMppGradleProjectResolver.Context(model, resolverCtx, gradleModule, projectDataNode, moduleDataNode)
         moduleDataNode.kotlinMppGradleProjectResolverContext = context
-        populateMppModuleDataNode(context)
+        ExternalSystemTelemetryUtil.runWithSpan(moduleDataNode.data.owner, "kotlin_import_mpp_createModule") {
+            populateMppModuleDataNode(context)
+        }
         return moduleDataNode
     }
 
@@ -84,14 +87,19 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
         val context = moduleDataNode.kotlinMppGradleProjectResolverContext
             ?: return super.populateModuleContentRoots(gradleModule, moduleDataNode)
 
-        reportMultiplatformNotifications(resolverCtx)
-        context.populateContentRoots()
-        populateExternalSystemRunTasks(gradleModule, moduleDataNode, resolverCtx)
+        ExternalSystemTelemetryUtil.runWithSpan(moduleDataNode.data.owner, "kotlin_import_mpp_populateModuleContentRoots") {
+            reportMultiplatformNotifications(resolverCtx)
+            context.populateContentRoots()
+            populateExternalSystemRunTasks(gradleModule, moduleDataNode, resolverCtx)
+        }
     }
 
     override fun populateModuleCompileOutputSettings(gradleModule: IdeaModule, moduleDataNode: DataNode<ModuleData>) {
-        moduleDataNode.kotlinMppGradleProjectResolverContext?.populateModuleCompileOutputSettings()
-            ?: return super.populateModuleCompileOutputSettings(gradleModule, moduleDataNode)
+        moduleDataNode.kotlinMppGradleProjectResolverContext?.let { mppContext ->
+            ExternalSystemTelemetryUtil.runWithSpan(moduleDataNode.data.owner, "kotlin_import_mpp_populateModuleCompileOutputSettings") {
+                mppContext.populateModuleCompileOutputSettings()
+            }
+        } ?: super.populateModuleCompileOutputSettings(gradleModule, moduleDataNode)
     }
 
     override fun populateModuleDependencies(
@@ -99,32 +107,38 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
         moduleDataNode: DataNode<ModuleData>,
         projectDataNode: DataNode<ProjectData>
     ) {
-        moduleDataNode.kotlinMppGradleProjectResolverContext?.populateModuleDependencies() ?:
-            super.populateModuleDependencies(gradleModule, moduleDataNode, projectDataNode)
-
+        moduleDataNode.kotlinMppGradleProjectResolverContext?.let { mppContext ->
+            ExternalSystemTelemetryUtil.runWithSpan(moduleDataNode.data.owner, "kotlin_import_mpp_populateModuleDependencies") {
+                mppContext.populateModuleDependencies()
+            }
+        } ?: super.populateModuleDependencies(gradleModule, moduleDataNode, projectDataNode)
     }
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
-        if (ExternalSystemApiUtil.find(ideModule, BuildScriptClasspathData.KEY) == null) {
-            val buildScriptClasspathData = buildClasspathData(gradleModule, resolverCtx)
-            ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData)
+        ExternalSystemTelemetryUtil.runWithSpan(ideModule.data.owner, "kotlin_import_mpp_populateModuleExtraModels") {
+            if (ExternalSystemApiUtil.find(ideModule, BuildScriptClasspathData.KEY) == null) {
+                val buildScriptClasspathData = buildClasspathData(gradleModule, resolverCtx)
+                ideModule.createChild(BuildScriptClasspathData.KEY, buildScriptClasspathData)
+            }
         }
         super.populateModuleExtraModels(gradleModule, ideModule)
     }
 
     override fun resolveFinished(projectDataNode: DataNode<ProjectData>) {
         super.resolveFinished(projectDataNode)
-        val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
-        val moduleDataNodes = mutableListOf<DataNode<ModuleData>>()
+        ExternalSystemTelemetryUtil.runWithSpan(projectDataNode.data.owner, "kotlin_import_mpp_resolveFinished") {
+            val extensionInstance = KotlinMppGradleProjectResolverExtension.buildInstance()
+            val moduleDataNodes = mutableListOf<DataNode<ModuleData>>()
 
-        /* Call the 'afterResolveFinished' extensions for all multiplatform nodes */
-        ExternalSystemApiUtil.findAll(projectDataNode, ProjectKeys.MODULE).forEach { moduleDataNode ->
-            extensionInstance.afterResolveFinished(moduleDataNode.kotlinMppGradleProjectResolverContext ?: return@forEach)
-            moduleDataNodes.add(moduleDataNode)
+            /* Call the 'afterResolveFinished' extensions for all multiplatform nodes */
+            ExternalSystemApiUtil.findAll(projectDataNode, ProjectKeys.MODULE).forEach { moduleDataNode ->
+                extensionInstance.afterResolveFinished(moduleDataNode.kotlinMppGradleProjectResolverContext ?: return@forEach)
+                moduleDataNodes.add(moduleDataNode)
+            }
+
+            /* Remove the context from all nodes since we're done working with it */
+            moduleDataNodes.forEach { moduleDataNode -> moduleDataNode.kotlinMppGradleProjectResolverContext = null }
         }
-
-        /* Remove the context from all nodes since we're done working with it */
-        moduleDataNodes.forEach { moduleDataNode -> moduleDataNode.kotlinMppGradleProjectResolverContext = null }
     }
 
     companion object {

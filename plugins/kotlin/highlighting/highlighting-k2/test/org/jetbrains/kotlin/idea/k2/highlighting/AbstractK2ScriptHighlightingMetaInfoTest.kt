@@ -8,11 +8,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.registerExtension
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationWithSdk
-import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.shared.SCRIPT_DEFINITIONS_SOURCES
+import org.jetbrains.kotlin.idea.core.script.shared.definition.defaultDefinition
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.psi.KtFile
@@ -20,6 +19,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.isScript
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 
@@ -81,7 +81,7 @@ abstract class AbstractK2ScriptHighlightingMetaInfoTest : AbstractK2Highlighting
     // kotlin scripts require adjusting a project model which is not possible for lightweight test fixture
     private class DefaultScriptConfigurationHandlerForTests(testProject: Project) :
         DefaultScriptConfigurationHandler(testProject, CoroutineScope(EmptyCoroutineContext)) {
-        override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptConfigurationWithSdk>) {}
+        override suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptCompilationConfigurationResult>) {}
 
         override fun isScriptExist(
             project: Project,

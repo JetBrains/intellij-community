@@ -122,7 +122,6 @@ public class PythonDebugConsoleCommunication<T extends XDebugProcess & PyDebugPr
       isExecuting = false;
       waitingForInput = false;
       notifyCommandExecuted(waitingForInput);
-
     }
     else {
 

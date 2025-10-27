@@ -14,7 +14,7 @@
           </stringArguments>
           <arrayArguments>
             <arrayArg name="pluginClasspaths">
-              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.20/kotlin-compose-compiler-plugin-2.2.20.jar</args>
+              <args>$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.21-RC2/kotlin-compose-compiler-plugin-2.2.21-RC2.jar</args>
             </arrayArg>
           </arrayArguments>
         </compilerArguments>
@@ -47,6 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
@@ -68,7 +69,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" />
     <orderEntry type="module" module-name="intellij.python.community.impl.venv" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
@@ -80,5 +81,9 @@
     <orderEntry type="module" module-name="intellij.python.common" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen.backend" />
     <orderEntry type="module" module-name="intellij.python.community.execService" />
+    <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" />
+    <orderEntry type="module" module-name="intellij.python.sdk.ui" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.uv.common" />
   </component>
 </module>

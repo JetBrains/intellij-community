@@ -810,7 +810,7 @@ def get_var_scope(attr_name, attr_value, evaluate_name, handle_return_values):
     elif attr_name == GENERATED_LEN_ATTR_NAME:
         return ""
 
-    if attr_name.startswith("__") and attr_name.endswith("__"):
+    if (attr_name.startswith("__") and attr_name.endswith("__")) or inspect.ismodule(attr_value):
         return DAPGrouper.SCOPE_SPECIAL_VARS
 
     if attr_name.startswith("_") or attr_name.endswith("__"):
@@ -818,10 +818,10 @@ def get_var_scope(attr_name, attr_value, evaluate_name, handle_return_values):
 
     try:
         if inspect.isroutine(attr_value) or isinstance(attr_value, MethodWrapperType):
-            return DAPGrouper.SCOPE_FUNCTION_VARS
+            return DAPGrouper.SCOPE_SPECIAL_VARS # note: we changed the scope here to correspond the scopes of pycharm's pydevd
 
         elif inspect.isclass(attr_value):
-            return DAPGrouper.SCOPE_CLASS_VARS
+            return DAPGrouper.SCOPE_SPECIAL_VARS # note: we changed the scope here to correspond the scopes of pycharm's pydevd
     except:
         # It's possible that isinstance throws an exception when dealing with user-code.
         if DebugInfoHolder.DEBUG_TRACE_LEVEL > 0:

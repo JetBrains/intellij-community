@@ -10,10 +10,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
-import com.intellij.util.text.SemVer
 import com.intellij.polySymbols.impl.StaticPolySymbolScope
 import com.intellij.polySymbols.webTypes.impl.WebTypesDefinitionsEP
 import com.intellij.polySymbols.webTypes.json.WebTypes
+import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
@@ -39,7 +39,6 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
 
   private val state = ClearableLazyValue.create { State(project) }.also {
     WebTypesDefinitionsEP.EP_NAME.addChangeListener(Runnable { it.drop() }, this)
-    WebTypesDefinitionsEP.EP_NAME_DEPRECATED.addChangeListener(Runnable { it.drop() }, this)
   }
 
   private val webTypesEnabledPackages: Set<String> get() = state.value.versionsRegistry.packages
@@ -60,7 +59,7 @@ class WebTypesEmbeddedDefinitionsLoader(private val project: Project) : Disposab
 
     init {
       val packagesEnabledByDefault = HashMap<String, SemVer>()
-      for (ep in WebTypesDefinitionsEP.EP_NAME.extensionList.plus(WebTypesDefinitionsEP.EP_NAME_DEPRECATED.extensionList)) {
+      for (ep in WebTypesDefinitionsEP.EP_NAME.extensionList) {
         try {
           val webTypes = ep.instance
           val semVer = SemVer.parseFromText(webTypes.version)!!

@@ -1,10 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2.hatch
 
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.hatch.HatchConfiguration
 import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.resolveHatchWorkingDirectory
@@ -24,53 +22,29 @@ import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal class HatchExistingEnvironmentSelector<P: PathHolder>(
   override val model: PythonMutableTargetAddInterpreterModel<P>,
 ) : PythonExistingEnvironmentConfigurator<P>(model) {
   val interpreterType: InterpreterType = InterpreterType.HATCH
-  val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(model.state.hatchExecutable.get())
 
   private lateinit var hatchFormFields: HatchFormFields<P>
-
-  init {
-    propertyGraph.dependsOn(executable, model.state.hatchExecutable, deleteWhenChildModified = false) {
-      model.state.hatchExecutable.get()
-    }
-  }
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     hatchFormFields = panel.buildHatchFormFields(
       model = model,
-      hatchEnvironmentProperty = state.selectedHatchEnv,
-      hatchExecutableProperty = executable,
       validationRequestor = validationRequestor,
       isGenerateNewMode = false,
     )
   }
 
   override fun onShown(scope: CoroutineScope) {
-    hatchFormFields.onShown(scope, model, state, isFilterOnlyExisting = true)
-    model.state.hatchExecutable.afterChange { commonExecutable ->
-      if (commonExecutable == null) {
-        model.hatchEnvironmentsResult.value = null
-        return@afterChange
-      }
-
-      val binaryToExec = commonExecutable.pathHolder?.let { model.fileSystem.getBinaryToExec(it) }
-                         ?: return@afterChange
-      scope.launch(Dispatchers.IO) {
-        model.detectHatchEnvironments(binaryToExec).also {
-          model.hatchEnvironmentsResult.value = it
-        }
-      }
-    }
+    hatchFormFields.onShown(scope, model, isFilterOnlyExisting = true)
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    val environment = state.selectedHatchEnv.get()
+    val environment = model.hatchViewModel.selectedEnvFromExisting.get()
     val existingHatchVenv = environment?.pythonVirtualEnvironment as? PythonVirtualEnvironment.Existing
                             ?: return Result.failure(HatchUIError.HatchEnvironmentIsNotSelected())
 
@@ -89,8 +63,8 @@ internal class HatchExistingEnvironmentSelector<P: PathHolder>(
         }
       }
     }.onSuccess {
-      when (val binaryToExec = executable.get()?.pathHolder) {
-        is BinOnEel -> HatchConfiguration.persistPathForTarget(hatchExecutablePath = binaryToExec.path)
+      when (val pathHolder = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {
+        is PathHolder.Eel -> HatchConfiguration.persistPathForTarget(hatchExecutablePath = pathHolder.path)
         else -> Unit
       }
     }

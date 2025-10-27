@@ -36,6 +36,9 @@ public interface BuildContext extends DiagnosticSink {
   @Nullable
   Path getAbiOutputZip();
 
+  @Nullable
+  Path getKotlinCriStoragePath();
+
   NodeSourceSnapshot getSources();
 
   NodeSourceSnapshot getBinaryDependencies();

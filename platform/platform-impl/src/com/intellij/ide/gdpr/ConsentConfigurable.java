@@ -2,9 +2,11 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.gdpr.localConsents.LocalConsentOptions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurableBase;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,6 +21,7 @@ public final class ConsentConfigurable extends ConfigurableBase<ConsentSettingsU
   public ConsentConfigurable() {
     super("consents", IdeBundle.message("consent.configurable"), "preferences.usage.statistics");
     myConsents = new ArrayList<>(AppUIUtil.loadConsentsForEditing());
+    myConsents.addAll(AppUIUtil.loadLocalConsentsAsConsentsForEditing());
     myConsents.sort(Comparator.comparing(ConsentBase::getId));
   }
 
@@ -33,7 +36,9 @@ public final class ConsentConfigurable extends ConfigurableBase<ConsentSettingsU
       @Override
       public void apply(@NotNull List<Consent> consents) {
         super.apply(consents);
-        AppUIUtil.saveConsents(consents);
+        List<String> localSettingIds = ContainerUtil.map(LocalConsentOptions.INSTANCE.getLocalConsents(), Consent::getId);
+        AppUIUtil.saveConsents(ContainerUtil.filter(consents, consent -> !localSettingIds.contains(consent.getId())));
+        AppUIUtil.saveConsentsAsLocalConsents(ContainerUtil.filter(consents, consent -> localSettingIds.contains(consent.getId())));
       }
     };
 

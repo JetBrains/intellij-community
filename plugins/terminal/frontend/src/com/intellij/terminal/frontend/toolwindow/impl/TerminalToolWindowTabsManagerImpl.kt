@@ -3,10 +3,8 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UI
-import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -27,9 +25,9 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.AwaitCancellationAndInvoke
-import com.intellij.util.EventDispatcher
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.initOnShow
 import com.jediterm.core.util.TermSize
 import fleet.rpc.client.durable
@@ -47,6 +45,7 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.util.fireListenersAndLogAllExceptions
 import kotlin.time.Duration.Companion.seconds
 
 internal class TerminalToolWindowTabsManagerImpl(
@@ -58,7 +57,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   override val tabs: List<TerminalToolWindowTab>
     get() = mutableTabs.toList()
 
-  private val eventDispatcher = EventDispatcher.create(TerminalTabsManagerListener::class.java)
+  private val listeners = DisposableWrapperList<TerminalTabsManagerListener>()
 
   private var tabsRestoredDeferred: Deferred<Unit> = CompletableDeferred(Unit)
 
@@ -100,7 +99,7 @@ internal class TerminalToolWindowTabsManagerImpl(
   }
 
   override fun addListener(parentDisposable: Disposable, listener: TerminalTabsManagerListener) {
-    eventDispatcher.addListener(listener, parentDisposable)
+    listeners.add(listener, parentDisposable)
   }
 
   private suspend fun createNewTabIfEmpty(toolWindow: ToolWindow) {
@@ -178,7 +177,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     manager.addContent(tab.content)
 
     val selectTab = {
-      manager.setSelectedContent(tab.content)
+      manager.setSelectedContent(tab.content, requestFocus)
     }
     if (requestFocus && !toolWindow.isActive) {
       toolWindow.activate(selectTab, false, false)
@@ -187,7 +186,9 @@ internal class TerminalToolWindowTabsManagerImpl(
       selectTab()
     }
 
-    eventDispatcher.multicaster.tabCreated(tab)
+    fireListenersAndLogAllExceptions(listeners, LOG, "Exception during handling tab created event: $tab") {
+      it.tabAdded(tab)
+    }
   }
 
   private fun addToTabsList(tab: TerminalToolWindowTab) {
@@ -220,7 +221,7 @@ internal class TerminalToolWindowTabsManagerImpl(
       TerminalTabsManagerApi.getInstance().createNewTerminalTab(project.projectId()).id
     }
 
-    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.IO) {
+    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
       // Backend terminal session tab lifecycle is not directly bound to the terminal frontend lifecycle.
       // We need to close the backend session when the terminal is closed explicitly.
       // And don't need it when a user is closing the project leaving the terminal tabs opened: to be able to reconnect back.
@@ -228,7 +229,12 @@ internal class TerminalToolWindowTabsManagerImpl(
       // It is not easy to determine whether it is explicit closing or not, so we use the heuristic.
       val isProjectClosing = getToolWindow().contentManager.isDisposed
       if (!isProjectClosing) {
-        TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
+        // Do not block frontend terminal scope cancellation by backend session termination request.
+        coroutineScope.launch(Dispatchers.IO) {
+          durable {
+            TerminalTabsManagerApi.getInstance().closeTerminalTab(project.projectId(), backendTabId)
+          }
+        }
       }
     }
 
@@ -337,7 +343,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
       val toolWindowActions = ActionManager.getInstance().getAction("Terminal.ToolWindowActions") as? ActionGroup
       toolWindow.setAdditionalGearActions(toolWindowActions)
-      ToolWindowContentUi.setAllowTabsReordering(toolWindow, true)
+      toolWindow.setTabsSplittingAllowed(true)
       ToolWindowContentUi.setToolWindowInEditorSupport(toolWindow, TerminalInEditorSupport())
 
       if (toolWindow is ToolWindowEx) {
@@ -481,5 +487,7 @@ internal class TerminalToolWindowTabsManagerImpl(
 
   companion object {
     val TAB_DETACHED_KEY = Key.create<Unit>("TerminalTabsManager.TabWasDetached")
+
+    private val LOG = logger<TerminalToolWindowTabsManagerImpl>()
   }
 }

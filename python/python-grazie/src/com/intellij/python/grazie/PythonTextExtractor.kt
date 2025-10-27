@@ -7,49 +7,75 @@ import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.Text
 import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import com.intellij.psi.util.PsiUtilCore
+import com.jetbrains.python.PyStringFormatParser
+import com.jetbrains.python.PyStringFormatParser.ConstantChunk
 import com.jetbrains.python.PyTokenTypes
-import com.jetbrains.python.PyTokenTypes.FSTRING_TEXT
 import com.jetbrains.python.documentation.docstrings.SphinxDocString
+import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyFormattedStringElement
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.impl.PyStringLiteralDecoder
 import java.util.regex.Pattern
+import java.util.regex.Pattern.quote
 
 private val KNOWN_DOCSTRING_TAGS_PATTERN = SphinxDocString.ALL_TAGS.joinToString("|", transform = Pattern::quote, prefix = "(", postfix = ")")
 private val DOCSTRING_DIRECTIVE_PATTERN = "^$KNOWN_DOCSTRING_TAGS_PATTERN[^\n:]*: *".toPattern(Pattern.MULTILINE)
 
 internal class PythonTextExtractor : TextExtractor() {
-  override fun buildTextContent(root: PsiElement, allowedDomains: MutableSet<TextDomain>): TextContent? {
-    val elementType = PsiUtilCore.getElementType(root)
-    if (elementType in PyTokenTypes.STRING_NODES) {
-      val domain = if (elementType == PyTokenTypes.DOCSTRING) TextDomain.DOCUMENTATION else TextDomain.LITERALS
-      if (domain !in allowedDomains) return null
-      val stringContent = TextContentBuilder.FromPsi.removingIndents(" \t")
-        .removingLineSuffixes(" \t")
-        .withUnknown(this::isUnknownFragment)
-        .build(root.parent, domain)
-      if (stringContent != null && domain == TextDomain.DOCUMENTATION && TextDomain.DOCUMENTATION in allowedDomains) {
-        return stringContent.excludeDocstringTags()
+  override fun buildTextContents(root: PsiElement, allowedDomains: Set<TextDomain>): List<TextContent> {
+    if (root is PyStringLiteralExpression) {
+      val texts = mutableListOf<TextContent>()
+      val parent = root.parent
+      if (parent is PyBinaryExpression && root === parent.leftExpression && parent.operator === PyTokenTypes.PERC) {
+        PyStringFormatParser.parsePercentFormat(root.stringValue).forEach { chunk ->
+          if (chunk is ConstantChunk) {
+            val startIndex = root.valueOffsetToTextOffset(chunk.startIndex)
+            val endIndex = root.valueOffsetToTextOffset(chunk.endIndex)
+            TextContentBuilder.FromPsi.build(root, TextDomain.LITERALS, TextRange(startIndex, endIndex))?.let { texts.add(it) }
+          }
+        }
+        return texts
       }
-      return stringContent
+
+      root.stringElements.forEach { element ->
+        val ranges = if (element.isFormatted) (element as PyFormattedStringElement).literalPartRanges else listOf(element.contentRange)
+        val decoder = PyStringLiteralDecoder(element)
+        val containsEscapes = element.textContains('\\')
+        ranges.forEach { range ->
+          val escapeAwareRanges = if (element.isRaw || !containsEscapes) listOf(range) else decoder.decodeRange(range).map { it.first }
+          escapeAwareRanges.forEach { escapeAwareRange ->
+            val domain = getDomain(element)
+            TextContentBuilder.FromPsi
+              .removingIndents(" \t")
+              .removingLineSuffixes(" \t")
+              .build(element, domain, escapeAwareRange)?.let { text ->
+                if (domain == TextDomain.DOCUMENTATION) text.excludeDocstringTags()?.let { texts.add(it) } else texts.add(text)
+              }
+          }
+        }
+      }
+      return texts
     }
 
     if (root is PsiCommentImpl && TextDomain.COMMENTS in allowedDomains) {
       val siblings = getNotSoDistantSimilarSiblings(root) { it is PsiCommentImpl }
-      return TextContent.joinWithWhitespace('\n', siblings.mapNotNull { TextContent.builder().build(it, TextDomain.COMMENTS) })
+      val text = TextContent.joinWithWhitespace(
+        '\n',
+        siblings.mapNotNull { TextContent.builder().build(it, TextDomain.COMMENTS) }
+      ) ?: return emptyList()
+      return listOf(text)
     }
 
-    return null
+    return emptyList()
   }
 
-  private fun isUnknownFragment(element: PsiElement): Boolean {
-    if (element.parent is PyFormattedStringElement) {
-      return element !is LeafPsiElement || element.elementType != FSTRING_TEXT
-    }
-
-    return false
+  private fun getDomain(element: PsiElement): TextDomain {
+    val elementType = PsiUtilCore.getElementType(element)
+    return if (elementType == PyTokenTypes.DOCSTRING) TextDomain.DOCUMENTATION else TextDomain.LITERALS
   }
 }
 

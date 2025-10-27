@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.dvcs.repo.Repository
@@ -8,6 +8,9 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.containers.stream
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.git.actions.branch.GitCheckoutWithUpdateAction
+import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys
+import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitLocalBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitTag
@@ -16,20 +19,20 @@ import git4idea.actions.ref.GitCheckoutAction
 import git4idea.actions.ref.GitDeleteRefAction
 import git4idea.actions.ref.GitMergeRefAction
 import git4idea.actions.ref.GitShowDiffWithRefAction
-import git4idea.actions.tag.GitPushTagsActionGroup
+import git4idea.actions.tag.GitPushTagActionWrapper
 import git4idea.branch.ActionState.Companion.isDisabledAndVisible
 import git4idea.branch.ActionState.Companion.isEnabledAndVisible
 import git4idea.branch.GitBranchesTreeTestContext.Companion.NOT_ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.ORIGIN
 import git4idea.branch.GitBranchesTreeTestContext.Companion.branchInfo
 import git4idea.branch.GitBranchesTreeTestContext.Companion.tagInfo
+import git4idea.repo.GitBranchTrackInfo
 import git4idea.repo.GitTagHolder
 import git4idea.test.MockGitRepository
-import git4idea.ui.branch.dashboard.BRANCHES_UI_CONTROLLER
-import git4idea.ui.branch.dashboard.BranchNodeDescriptor
-import git4idea.ui.branch.dashboard.BranchesDashboardActions
+import git4idea.test.MockGitRepositoryModel
+import git4idea.ui.branch.dashboard.*
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchActionsBuilder
-import git4idea.ui.branch.dashboard.BranchesDashboardTreeController
+import git4idea.ui.branch.dashboard.BranchesTreeSelection.Companion.getSelectedRepositories
 import org.mockito.Mockito
 import javax.swing.tree.TreePath
 import kotlin.reflect.KClass
@@ -54,11 +57,14 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
       isEnabledAndVisible<GitCheckoutAction>(),
       isEnabledAndVisible<GitCheckoutAsNewBranch>(),
       isEnabledAndVisible<GitCheckoutWithRebaseAction>(),
+      isEnabledAndVisible<GitCheckoutWithUpdateAction>(),
       isEnabledAndVisible<GitCompareWithBranchAction>(),
       isEnabledAndVisible<GitShowDiffWithRefAction>(),
       isEnabledAndVisible<GitRebaseBranchAction>(),
       isEnabledAndVisible<GitMergeRefAction>(),
+      isEnabledAndVisible<GitUpdateSelectedBranchAction>(),
       isEnabledAndVisible<GitPushBranchAction>(),
+      isEnabledAndVisible<GitTrackedBranchActionGroup>(),
       isEnabledAndVisible<GitRenameBranchAction>(),
       isEnabledAndVisible<GitDeleteRefAction>(),
     ))
@@ -71,7 +77,9 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     assertActions(expected = listOf(
       isEnabledAndVisible<GitCheckoutAsNewBranch>(),
       isEnabledAndVisible<GitShowDiffWithRefAction>(),
+      isEnabledAndVisible<GitUpdateSelectedBranchAction>(),
       isEnabledAndVisible<GitPushBranchAction>(),
+      isEnabledAndVisible<GitTrackedBranchActionGroup>(),
       isEnabledAndVisible<GitRenameBranchAction>(),
     ))
   }
@@ -102,7 +110,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
       isEnabledAndVisible<GitCheckoutAction>(),
       isEnabledAndVisible<GitShowDiffWithRefAction>(),
       isEnabledAndVisible<GitMergeRefAction>(),
-      isEnabledAndVisible<GitPushTagsActionGroup>(),
+      isEnabledAndVisible<GitPushTagActionWrapper>(),
+      isEnabledAndVisible<GitPushTagActionWrapper>(),
       isEnabledAndVisible<GitDeleteRefAction>(),
     ))
   }
@@ -119,7 +128,8 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
 
     assertActions(expected = listOf(
       isEnabledAndVisible<GitShowDiffWithRefAction>(),
-      isEnabledAndVisible<GitPushTagsActionGroup>(),
+      isEnabledAndVisible<GitPushTagActionWrapper>(),
+      isEnabledAndVisible<GitPushTagActionWrapper>(),
     ))
   }
 
@@ -203,13 +213,11 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
   }
 
   private fun GitBranchesTreeTestContext.assertActions(expected: List<ActionState>) {
-    val actions = BranchActionsBuilder.build(simpleEvent())?.getChildren(simpleEvent())?.mapNotNull {
-      if (it is Separator) return@mapNotNull null
-      val event = simpleEvent()
-      it.update(event)
-      if (!event.presentation.isVisible) return@mapNotNull null
-      ActionState(event.presentation.isEnabled, it::class)
-    }
+    val rootActions = BranchActionsBuilder.build(simpleEvent())?.getChildren(simpleEvent())
+
+    val actions = rootActions
+      ?.flatMap { expandAction(it) }
+      ?.mapNotNull { toActionState(it) }
 
     if (expected.isNotEmpty()) {
       assertNotNull(actions)
@@ -220,12 +228,42 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
     }
   }
 
+  private fun GitBranchesTreeTestContext.expandAction(action: AnAction): List<AnAction> {
+    return when (action) {
+      is GitTrackedBranchActionGroup -> listOf(action)
+      is Separator -> emptyList()
+      is ActionGroup -> action.getChildren(simpleEvent()).flatMap { expandAction(it) }
+      else -> listOf(action)
+    }
+  }
+
+  private fun GitBranchesTreeTestContext.toActionState(action: AnAction): ActionState? {
+    val event = simpleEvent()
+    action.update(event)
+    return if (event.presentation.isVisible) {
+      ActionState(event.presentation.isEnabled, action::class)
+    }
+    else {
+      null
+    }
+  }
 
   private fun GitBranchesTreeTestContext.simpleEvent(): AnActionEvent {
     return TestActionEvent.createTestEvent(CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
       sink[PlatformDataKeys.PROJECT] = project
       sink[BRANCHES_UI_CONTROLLER] = branchesUiController
+
       BranchesDashboardTreeController.snapshotSelectionActionsKeys(sink, tree.selectionPaths)
+
+      // Populate shared keys expected by some actions
+      val selection = BranchesTreeSelection(tree.selectionPaths)
+      val selectedNode = selection.selectedNodes.singleOrNull()
+      if (selectedNode != null) {
+        val selectedRepositories = getSelectedRepositories(selectedNode)
+        val models = selectedRepositories.map { MockGitRepositoryModel(it) }
+        sink[GitBranchesPopupKeys.AFFECTED_REPOSITORIES] = models
+        sink[GitBranchesPopupKeys.SELECTED_REPOSITORY] = models.singleOrNull()
+      }
     })
   }
 
@@ -240,15 +278,22 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
   }
 
   private fun GitBranchesTreeTestContext.singleRepoTreeState() {
+    val localMain = GitLocalBranch("main")
+    val localAnother = GitLocalBranch("another")
+    val remoteOriginMain = GitStandardRemoteBranch(ORIGIN, "main")
+    val remoteNotOriginMain = GitStandardRemoteBranch(NOT_ORIGIN, "main")
+    val remoteAnother = GitStandardRemoteBranch(ORIGIN, "another")
+
     setRawState(
       localBranches = listOf(
-        branchInfo(GitLocalBranch("main"), repositories = listOf(repo1), isCurrent = true),
-        branchInfo(GitLocalBranch("another"), repositories = listOf(repo1)),
+        branchInfo(localMain, repositories = listOf(repo1), isCurrent = true),
+        branchInfo(localAnother, repositories = listOf(repo1)),
         branchInfo(GitLocalBranch("prefix/another"), repositories = listOf(repo1))
       ),
       remoteBranches = listOf(
-        branchInfo(GitStandardRemoteBranch(ORIGIN, "main"), repositories = listOf(repo1)),
-        branchInfo(GitStandardRemoteBranch(NOT_ORIGIN, "main"), repositories = listOf(repo1)),
+        branchInfo(remoteOriginMain, repositories = listOf(repo1)),
+        branchInfo(remoteNotOriginMain, repositories = listOf(repo1)),
+        branchInfo(remoteAnother, repositories = listOf(repo1)),
       ),
       tags = listOf(
         tagInfo(GitTag("tag"), repositories = listOf(repo1)),
@@ -258,6 +303,14 @@ class GitBranchesTreeActionsForSelectionTest : GitBranchesTreeTest() {
 
     repo1.currentBranch = GitLocalBranch("main")
     repo1.remotes = listOf(ORIGIN, NOT_ORIGIN)
+    repo1.branchTrackInfos = listOf(GitBranchTrackInfo(localMain,
+                                                       remoteOriginMain,
+                                                       false),
+                                    GitBranchTrackInfo(localAnother,
+                                                       remoteAnother,
+                                                       false))
+
+    repo1.remoteBranchesWithHashes = listOf(remoteOriginMain, remoteNotOriginMain, remoteAnother).associateWith { HashImpl.build("0".repeat(40)) }
   }
 }
 

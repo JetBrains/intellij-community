@@ -22,6 +22,7 @@ import com.jetbrains.python.sdk.add.v2.conda.CondaExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.conda.CondaNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.hatch.HatchExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.hatch.HatchNewEnvironmentCreator
+import com.jetbrains.python.sdk.add.v2.pipenv.EnvironmentCreatorPip
 import com.jetbrains.python.sdk.add.v2.poetry.EnvironmentCreatorPoetry
 import com.jetbrains.python.sdk.add.v2.poetry.PoetryExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.uv.EnvironmentCreatorUv
@@ -31,13 +32,9 @@ import com.jetbrains.python.sdk.add.v2.venv.PythonExistingEnvironmentSelector
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
-class VenvAlreadyExistsError<P: PathHolder>(
-  val detectedSelectableInterpreter: DetectedSelectableInterpreter<P>,
-) : MessageError("Already contains python installation with version ${detectedSelectableInterpreter.languageLevel}")
-
 class ValidationInfoError(val validationInfo: ValidationInfo) : MessageError(validationInfo.message)
 
-class PythonAddCustomInterpreter<P : PathHolder>(
+internal class PythonAddCustomInterpreter<P : PathHolder>(
   val model: PythonMutableTargetAddInterpreterModel<P>,
   val module: Module?,
   private val errorSink: ErrorSink,
@@ -62,7 +59,7 @@ class PythonAddCustomInterpreter<P : PathHolder>(
   private val newInterpreterCreators = if (model.fileSystem.isReadOnly) emptyMap()
   else mapOf(
     VIRTUALENV to { EnvironmentCreatorVenv(model) },
-    CONDA to { CondaNewEnvironmentCreator(model, errorSink) },
+    CONDA to { CondaNewEnvironmentCreator(model) },
     PIPENV to { EnvironmentCreatorPip(model, errorSink) },
     POETRY to { EnvironmentCreatorPoetry(model, module, errorSink) },
     UV to { EnvironmentCreatorUv(model, module, errorSink) },
@@ -71,7 +68,7 @@ class PythonAddCustomInterpreter<P : PathHolder>(
 
   private val existingInterpreterSelectors = buildMap {
     put(PYTHON) { PythonExistingEnvironmentSelector(model, module) }
-    put(CONDA) { CondaExistingEnvironmentSelector(model, errorSink) }
+    put(CONDA) { CondaExistingEnvironmentSelector(model) }
     if (!limitExistingEnvironments) {
       put(POETRY) { PoetryExistingEnvironmentSelector(model, module) }
       put(UV) { UvExistingEnvironmentSelector(model, module) }

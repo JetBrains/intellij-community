@@ -780,6 +780,8 @@ public @interface NotNull {
 
     fun testRemoveParameterPreserveReceiver() = doTest { removeParameter(1) }
 
+    fun testRemoveParameterWithNextDefaults() = doTest { removeParameter(2) }
+
     fun testRemoveParameterInParentConflict() = doTestConflict {
         removeParameter(0)
     }

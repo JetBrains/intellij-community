@@ -23,6 +23,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
+    "//platform/core-impl",
     "@lib//:rd-core",
     "@lib//:rd-swing",
     "//platform/projectModel-api:projectModel",
@@ -66,6 +67,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",
+    "//platform/core-impl",
     "@lib//:rd-core",
     "@lib//:rd-swing",
     "//platform/projectModel-api:projectModel",
@@ -97,6 +99,7 @@ jvm_library(
     "//platform/platform-impl/ui",
     "//platform/platform-impl/initial-config-import",
     "//platform/plugins/parser/impl",
+    "//platform/plugins/parser/impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.ide.startup.importSettings` end

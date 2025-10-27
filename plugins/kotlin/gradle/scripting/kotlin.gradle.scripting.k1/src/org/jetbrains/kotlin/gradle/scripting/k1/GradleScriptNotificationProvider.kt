@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k1
 
-import KotlinGradleScriptingBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ImportModuleAction
 import com.intellij.ide.util.PropertiesComponent
@@ -16,6 +15,7 @@ import com.intellij.ui.EditorNotificationPanel.Status
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActionsManager
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.*

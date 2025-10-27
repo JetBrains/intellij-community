@@ -29,6 +29,7 @@ import com.intellij.util.applyIf
 import com.intellij.util.asSafely
 import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.util.text.NameUtilCore
+import com.intellij.xml.util.Html5TagAndAttributeNamesProvider
 import java.io.File
 import java.io.FileReader
 import java.lang.reflect.Type
@@ -126,19 +127,34 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   }
 
   fun testGenSvg() {
-    val attributes =
-      extractInformationSimple("svg.global_attributes", "svg/reference/attribute", listOf('_')) { dir, bcdPath, bcd ->
-        if (bcd == null && dir.name !in listOf("requiredfeatures", "systemlanguage"))
-          null
-        else
-          extractAttributeDocumentation(dir, bcdPath, bcd)
+    val attributes = extractInformationSimple("svg.global_attributes", "svg/reference/attribute", listOf('_')) { dir, bcdPath, bcd ->
+      extractAttributeDocumentation(dir, bcdPath, bcd)
+    }
+    val tags = extractInformationSimple("svg.elements", "svg/reference/element", listOf('_')) { dir, bcdPath, bcdInfo ->
+      this.extractElementDocumentation(dir, "svg/reference/attribute", null, bcdPath, bcdInfo, attributes)
+    }
+
+    val knownAttributes = mutableSetOf<String>()
+    val neededGlobalAttributes = mutableSetOf<String>("requiredfeatures")
+    val tag = tags["svg"]
+    for (attrName in Html5TagAndAttributeNamesProvider.getTagAttributes(Html5TagAndAttributeNamesProvider.Namespace.HTML, "svg", false)!!) {
+      knownAttributes.add(attrName.toString().lowercase())
+      if (tag?.attrs?.keys?.find { it.equals(attrName.toString(), true) } == null) {
+        neededGlobalAttributes.add(attrName.toString())
       }
+    }
+    for (tagName in Html5TagAndAttributeNamesProvider.getTags(Html5TagAndAttributeNamesProvider.Namespace.SVG, false)) {
+      val tag = tags[tagName.toString().lowercase()]
+      for (attrName in Html5TagAndAttributeNamesProvider.getTagAttributes(Html5TagAndAttributeNamesProvider.Namespace.SVG, tagName, false)!!) {
+        knownAttributes.add(attrName.toString().lowercase())
+        if (tag?.attrs?.keys?.find { it.equals(attrName.toString(), true) } == null) {
+          neededGlobalAttributes.add(attrName.toString())
+        }
+      }
+    }
+
     outputJson(MdnApiNamespace.Svg.name, MdnHtmlDocumentation(
-      LICENSE, AUTHOR, BUILT_LANG,
-      attributes,
-      extractInformationSimple("svg.elements", "svg/reference/element", listOf('_')) { dir, bcdPath, bcdInfo ->
-        this.extractElementDocumentation(dir, "svg/reference/attribute", null, bcdPath, bcdInfo, attributes)
-      }
+      LICENSE, AUTHOR, BUILT_LANG, attributes.filter { it.key in neededGlobalAttributes || it.key !in knownAttributes }, tags
     ))
   }
 
@@ -401,9 +417,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
     val elementDoc = contents.prose.first().getProseContent().appendOtherSections(contents.prose)
 
-    val attributesDoc = contents.prose.filterProseById("attributes", "attributes_for_form_submission", "deprecated_attributes",
-                                                       "obsolete_attributes",
-                                                       "non-standard_attributes")
+    val attributesDoc = contents.prose.filterProseById(
+      "attributes",
+      "individual_attributes",
+      "attributes_for_form_submission",
+      "deprecated_attributes",
+      "obsolete_attributes",
+      "non-standard_attributes",
+    )
       .joinToString("\n") { it.getProseContent().content }
       .let { RawProse(it) }
 

@@ -10,10 +10,14 @@ interface KotlinScriptHighlightingExtension {
 
     companion object {
         val EP_NAME: ProjectExtensionPointName<KotlinScriptHighlightingExtension> =
-            ProjectExtensionPointName<KotlinScriptHighlightingExtension>("org.jetbrains.kotlin.scriptHighlightingExtension")
+            ProjectExtensionPointName("org.jetbrains.kotlin.scriptHighlightingExtension")
 
+        /**
+         * Regular scripts (.kts) do not support external dependencies, so there is no need to postpone resolving.
+         * However, certain plugins (e.g., Gradle) may apply their own approach to scripting analysis, which occasionally doesn't imply lazy evaluation.
+         */
         fun shouldHighlightScript(project: Project, file: KtFile): Boolean {
-            return EP_NAME.getExtensions(project).any { it.shouldHighlightScript(file) }
+            return EP_NAME.getExtensions(project).all { it.shouldHighlightScript(file) }
         }
     }
 }

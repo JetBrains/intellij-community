@@ -51,6 +51,12 @@ public abstract class SearchScope {
     return null;
   }
 
+  @NotNull
+  @ApiStatus.Internal
+  public String toFullString() {
+    return toString();
+  }
+
   @Contract(pure = true)
   public abstract @NotNull SearchScope intersectWith(@NotNull SearchScope scope2);
 

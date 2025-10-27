@@ -1110,7 +1110,8 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
               while (addRunOnCommitEntered.get() == 0) {
                 Thread.onSpinWait();
               }
-              GCWatcher.tracking(Arrays.asList(ReadAction.compute(()->getPsiDocumentManager().getUncommittedDocuments()))).ensureCollected();
+              GCWatcher.tracking(Arrays.asList(ReadAction.compute(()->getPsiDocumentManager().getUncommittedDocuments())))
+                .ensureCollectedWithinTimeout(5_000); // wait for document commit queue
               assertEquals(0, committed.get());
             }
             finally {
@@ -1118,7 +1119,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
             }
           });
           while (!future.isDone()) {
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
           }
           future.get();
         }
@@ -1152,11 +1153,15 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
             modifyAndSaveDocument(virtualFile);
 
             // no dispatching here, to ensure the doc is not committed but stored in some queue in DCT
-            GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();
+            // TODO: ^^ DCT uses async WA now (document.async.commit.with.coroutines=true),
+            //  so it is probably already working on the document in the background.
+            GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile))
+              .ensureCollectedWithinTimeout(5_000); // wait for document commit queue
 
             while (!psiDocumentManager.isCommitted(FileDocumentManager.getInstance().getDocument(virtualFile))) {
-              UIUtil.dispatchAllInvocationEvents();
-              GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile)).ensureCollected();
+              PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+              GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile))
+                .ensureCollectedWithinTimeout(5_000); // wait for document commit queue
             }
           }
         }

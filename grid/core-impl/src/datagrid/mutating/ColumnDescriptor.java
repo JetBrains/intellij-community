@@ -24,7 +24,7 @@ public interface ColumnDescriptor {
     ZERO_PADDING,
     ROW_ID,
     HIDDEN,
-    HIGHLIGHTED,
+    INDEX,
     VIRTUAL
   }
 }

@@ -34,7 +34,6 @@ jvm_library(
     "//libraries/http-client",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//platform/testFramework/teamCity",
-    "@lib//:hamcrest",
     ":libraries_junit4_provided",
   ]
 )

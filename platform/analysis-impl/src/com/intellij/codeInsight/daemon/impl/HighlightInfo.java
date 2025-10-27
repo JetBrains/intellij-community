@@ -962,7 +962,7 @@ public class HighlightInfo implements Segment {
       return myCanCleanup;
     }
 
-    public @NotNull Iterable<? extends IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
+    public @NotNull Iterable<? extends @NotNull IntentionAction> getOptions(@NotNull PsiElement element, @Nullable Editor editor) {
       if (editor != null && Boolean.FALSE.equals(editor.getUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY))) {
         return Collections.emptyList();
       }

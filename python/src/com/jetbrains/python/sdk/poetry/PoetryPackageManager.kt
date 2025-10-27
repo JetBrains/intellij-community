@@ -25,6 +25,13 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
     return runPoetryWithSdk(sdk, "install").mapSuccess { }
   }
 
+  suspend fun updateProject(): PyResult<Unit> {
+    runPoetryWithSdk(sdk, "update").getOr {
+      return it
+    }
+    return reloadPackages().mapSuccess { }
+  }
+
   suspend fun lockProject(): PyResult<Unit> {
     runPoetryWithSdk(sdk, "lock").getOr {
       return it

@@ -38,5 +38,6 @@
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" name="rd-framework" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-scripting-common" level="project" />
   </component>
 </module>

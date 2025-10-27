@@ -61,7 +61,11 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     cs.cancel()
   }
 
-  fun actionPerformed(dataContext: DataContext, popupDependencies: Disposable? = null, documentationUiDependencies: Disposable? = null) {
+  fun actionPerformed(
+    dataContext: DataContext,
+    popupDependencies: Disposable? = null,
+    documentationUiDependencies: Disposable? = null,
+  ) {
     EDT.assertIsEdt()
 
     val editor = dataContext.getData(CommonDataKeys.EDITOR)
@@ -141,10 +145,12 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     documentationUiDependencies?.let { Disposer.register(documentationUI, it) }
   }
 
-  private fun showDocumentation(requests: List<DocumentationRequest>,
-                                popupContext: PopupContext,
-                                popupDependencies: Disposable? = null,
-                                documentationUiDependencies: Disposable? = null) {
+  private fun showDocumentation(
+    requests: List<DocumentationRequest>,
+    popupContext: PopupContext,
+    popupDependencies: Disposable? = null,
+    documentationUiDependencies: Disposable? = null,
+  ) {
     val toolWindowManager = DocumentationToolWindowManager.getInstance(project)
     val initial = requests.first()
     if (skipPopup) {
@@ -198,7 +204,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     lookup: LookupEx,
     lookupElement: LookupElement,
     delay: Long,
-    mapper: suspend (LookupElement) -> DocumentationRequest?
+    mapper: suspend (LookupElement) -> DocumentationRequest?,
   ) {
     if (getPopup() != null) {
       return // return here to avoid showing another popup if the current one gets cancelled during the delay
@@ -226,7 +232,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
 
   fun navigateInlineLink(
     url: String,
-    targetSupplier: () -> DocumentationTarget?
+    targetSupplier: () -> DocumentationTarget?,
   ) {
     EDT.assertIsEdt()
     cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
@@ -246,7 +252,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     url: String,
     targetSupplier: () -> DocumentationTarget?,
     editor: Editor,
-    popupPosition: Point
+    popupPosition: Point,
   ) {
     EDT.assertIsEdt()
     cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {

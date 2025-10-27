@@ -9,24 +9,19 @@ import com.intellij.credentialStore.keePass.getDefaultDbFile
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.Ephemeral
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.asPromise
 import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -35,7 +30,7 @@ private val LOG: Logger
   get() = logger<CredentialStore>()
 
 @Internal
-abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : PasswordSafe() {
+abstract class BasePasswordSafe : PasswordSafe() {
   protected abstract val settings: PasswordSafeSettings
 
   override var isRememberPasswordByDefault: Boolean
@@ -128,12 +123,8 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
     }
   }
 
-  // maybe in the future we will use native async; this method added here instead "if needed, just use runAsync in your code"
-  override fun getAsync(attributes: CredentialAttributes): Promise<Credentials?> {
-    return coroutineScope.async(Dispatchers.IO) {
-      get(attributes)
-    }.asCompletableFuture().asPromise()
-  }
+  override suspend fun getAsync(attributes: CredentialAttributes): Ephemeral<Credentials> =
+    currentProvider.getAsync(attributes)
 
   suspend fun save() {
     val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
@@ -155,13 +146,76 @@ abstract class BasePasswordSafe(private val coroutineScope: CoroutineScope) : Pa
       !it.password.isNullOrEmpty()
     } ?: false
   }
+
+  protected open fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
+    if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
+      return InMemoryCredentialStore()
+    }
+
+    fun showError(@NlsContexts.NotificationTitle title: String) {
+      @Suppress("HardCodedStringLiteral")
+      CredentialStoreUiService.getInstance().notify(
+        title = title,
+        content = CredentialStoreBundle.message("notification.content.in.memory.storage"),
+        project = null,
+        action = NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action"))
+        { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) }
+      )
+    }
+
+    if (CredentialStoreManager.getInstance().isSupported(settings.providerType)) {
+      if (settings.providerType == ProviderType.KEEPASS) {
+        try {
+          val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultDbFile()
+          return KeePassCredentialStore(dbFile, getDefaultMainPasswordFile())
+        }
+        catch (e: IncorrectMainPasswordException) {
+          LOG.warn(e)
+          showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
+                    else CredentialStoreBundle.message("notification.title.password.incorrect"))
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          showError(CredentialStoreBundle.message("notification.title.database.error"))
+        }
+      }
+      else {
+        try {
+          val store = createPersistentCredentialStore()
+          if (store == null) {
+            showError(CredentialStoreBundle.message("notification.title.keychain.not.available"))
+          }
+          else {
+            return store
+          }
+        }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          showError(CredentialStoreBundle.message("notification.title.cannot.use.keychain"))
+        }
+      }
+    }
+    else {
+      LOG.error("Provider ${settings.providerType} is not supported in this environment")
+      showError(CredentialStoreBundle.message("notification.title.cannot.use.provider", settings.providerType))
+    }
+
+    settings.providerType = ProviderType.MEMORY_ONLY
+    return InMemoryCredentialStore()
+  }
 }
 
 @TestOnly
 @Internal
 class TestPasswordSafeImpl @NonInjectable constructor(
   override val settings: PasswordSafeSettings
-) : BasePasswordSafe(coroutineScope = (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()) {
+) : BasePasswordSafe() {
   @TestOnly
   constructor() : this(service<PasswordSafeSettings>())
 
@@ -173,72 +227,9 @@ class TestPasswordSafeImpl @NonInjectable constructor(
 }
 
 @Internal
-class PasswordSafeImpl(coroutineScope: CoroutineScope) : BasePasswordSafe(coroutineScope), SettingsSavingComponent {
+class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
   override val settings: PasswordSafeSettings
     get() = service<PasswordSafeSettings>()
-}
-
-private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
-  if (settings.providerType == ProviderType.MEMORY_ONLY || (ApplicationManager.getApplication()?.isUnitTestMode == true)) {
-    return InMemoryCredentialStore()
-  }
-
-  fun showError(@NlsContexts.NotificationTitle title: String) {
-    @Suppress("HardCodedStringLiteral")
-    CredentialStoreUiService.getInstance().notify(
-      title = title,
-      content = CredentialStoreBundle.message("notification.content.in.memory.storage"),
-      project = null,
-      action = NotificationAction.createExpiring(CredentialStoreBundle.message("notification.content.password.settings.action"))
-      { e, _ -> CredentialStoreUiService.getInstance().openSettings(e.project) }
-    )
-  }
-
-  if (CredentialStoreManager.getInstance().isSupported(settings.providerType)) {
-    if (settings.providerType == ProviderType.KEEPASS) {
-      try {
-        val dbFile = settings.keepassDb?.let { Paths.get(it) } ?: getDefaultDbFile()
-        return KeePassCredentialStore(dbFile, getDefaultMainPasswordFile())
-      }
-      catch (e: IncorrectMainPasswordException) {
-        LOG.warn(e)
-        showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
-                  else CredentialStoreBundle.message("notification.title.password.incorrect"))
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        showError(CredentialStoreBundle.message("notification.title.database.error"))
-      }
-    }
-    else {
-      try {
-        val store = createPersistentCredentialStore()
-        if (store == null) {
-          showError(CredentialStoreBundle.message("notification.title.keychain.not.available"))
-        }
-        else {
-          return store
-        }
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        showError(CredentialStoreBundle.message("notification.title.cannot.use.keychain"))
-      }
-    }
-  }
-  else {
-    LOG.error("Provider ${settings.providerType} is not supported in this environment")
-    showError(CredentialStoreBundle.message("notification.title.cannot.use.provider", settings.providerType))
-  }
-
-  settings.providerType = ProviderType.MEMORY_ONLY
-  return InMemoryCredentialStore()
 }
 
 @Internal

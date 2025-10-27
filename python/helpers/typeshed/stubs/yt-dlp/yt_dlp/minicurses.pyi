@@ -1,8 +1,8 @@
 from collections.abc import Callable
-from typing import TextIO
+from typing import Final, TextIO
 from typing_extensions import Self
 
-CONTROL_SEQUENCES: dict[str, str] = ...
+CONTROL_SEQUENCES: Final[dict[str, str]]
 
 def format_text(text: str, f: str) -> str: ...
 

@@ -19,7 +19,6 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.execution.wsl.WslProxy;
 import com.intellij.ide.IdleTracker;
@@ -82,6 +81,7 @@ import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.eel.provider.utils.EelPathUtils;
+import com.intellij.platform.workspace.storage.InternalEnvironmentName;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -96,7 +96,6 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import com.intellij.workspaceModel.ide.impl.InternalEnvironmentNameImpl;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -152,7 +151,6 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -208,43 +206,28 @@ public final class BuildManager implements Disposable {
       return;
     }
 
-    Collection<File> systemDirs = Collections.singleton(LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory().toFile());
-    if (Boolean.parseBoolean(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
-      final List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
-      if (!distributions.isEmpty()) {
-        systemDirs = new ArrayList<>(systemDirs);
-        for (WSLDistribution distribution : distributions) {
-          final Path wslSystemDir = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(distribution);
-          if (wslSystemDir != null) {
-            systemDirs.add(wslSystemDir.toFile());
-          }
-        }
-      }
-    }
-
-    for (File buildSystemDir : systemDirs) {
-      File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
-      if (dirs != null) {
-        Instant now = Instant.now();
-        for (File buildDataProjectDir : dirs) {
-          File usageFile = getUsageFile(buildDataProjectDir);
-          if (usageFile.exists()) {
-            final Pair<Date, File> usageData = readUsageFile(usageFile);
-            if (usageData != null) {
-              final File projectFile = usageData.second;
-              if (projectFile != null && !projectFile.exists() ||
-                  Duration.between(usageData.first.toInstant(), now).toDays() > unusedThresholdDays) {
-                LOG.info("Clearing project build data because the project does not exist or was not opened for more than " +
-                         unusedThresholdDays +
-                         " days: " +
-                         buildDataProjectDir);
-                FileUtil.delete(buildDataProjectDir);
-              }
+    File buildSystemDir = LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory().toFile();
+    File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
+    if (dirs != null) {
+      Instant now = Instant.now();
+      for (File buildDataProjectDir : dirs) {
+        File usageFile = getUsageFile(buildDataProjectDir);
+        if (usageFile.exists()) {
+          final Pair<Date, File> usageData = readUsageFile(usageFile);
+          if (usageData != null) {
+            final File projectFile = usageData.second;
+            if (projectFile != null && !projectFile.exists() ||
+                Duration.between(usageData.first.toInstant(), now).toDays() > unusedThresholdDays) {
+              LOG.info("Clearing project build data because the project does not exist or was not opened for more than " +
+                       unusedThresholdDays +
+                       " days: " +
+                       buildDataProjectDir);
+              FileUtil.delete(buildDataProjectDir);
             }
           }
-          else {
-            updateUsageFile(null, buildDataProjectDir); // set usage stamp to start the countdown
-          }
+        }
+        else {
+          updateUsageFile(null, buildDataProjectDir); // set usage stamp to start the countdown
         }
       }
     }
@@ -532,12 +515,13 @@ public final class BuildManager implements Disposable {
             boolean changed = data.addDeleted(Iterators.filter(paths.deleted(), PATH_FILTER::test));
             changed |= data.addChanged(Iterators.filter(paths.changed(), PATH_FILTER::test));
             if (changed) {
-              RequestFuture<?> future = myBuildsInProgress.get(entry.getKey());
+              final String projectPath = entry.getKey();
+              RequestFuture<?> future = myBuildsInProgress.get(projectPath);
               if (future != null && !future.isCancelled() && !future.isDone()) {
                 final UUID sessionId = future.getRequestID();
                 final Channel channel = myMessageDispatcher.getConnectedChannel(sessionId);
                 if (channel != null) {
-                  CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent(wslPathMapper(entry.getKey()));
+                  CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent(getPathMapperForProject(projectPath));
                   final CmdlineRemoteProto.Message.ControllerMessage message =
                     CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
                       CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT
@@ -562,6 +546,25 @@ public final class BuildManager implements Disposable {
 
   private static @Nullable Project findProjectByProjectPath(@NotNull String projectPath) {
     return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), project -> projectPath.equals(getProjectPath(project)));
+  }
+
+  private static @NotNull Function<String, String> getPathMapperForProject(@NotNull Project project) {
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      return e -> asEelPath(Path.of(e)).toString();
+    }
+    // This handles paths for WSL projects even if "wsl.use.remote.agent.for.nio.filesystem" registry flag is disabled
+    // and `EelPathUtils.isPathLocal(path)` previously returned `true`
+    WSLDistribution distribution = findWSLDistribution(project);
+    return wslPathMapper(distribution);
+  }
+
+  private static @NotNull Function<String, String> getPathMapperForProject(@NotNull String projectPath) {
+    if (canUseEel() && !EelPathUtils.isPathLocal(Path.of(projectPath))) {
+      return e -> asEelPath(Path.of(e)).toString();
+    }
+    // This handles paths for WSL projects even if "wsl.use.remote.agent.for.nio.filesystem" registry flag is disabled
+    // and `EelPathUtils.isPathLocal(path)` previously returned `true`
+    return wslPathMapper(projectPath);
   }
 
   private static @NotNull Function<String, String> wslPathMapper(@Nullable WSLDistribution distribution) {
@@ -874,14 +877,8 @@ public final class BuildManager implements Disposable {
     }
 
     final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, pathMapperBack, isAutomake);
-    Function<String, String> pathMapper;
 
-    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-      pathMapper = e -> asEelPath(Path.of(e)).toString();
-    }
-    else {
-      pathMapper = wslDistribution != null ? wslDistribution::getWslPath : Function.identity();
-    }
+    Function<String, String> pathMapper = getPathMapperForProject(project);
 
     final DelegateFuture _future = new DelegateFuture();
     // by using the same queue that processes events,
@@ -915,8 +912,7 @@ public final class BuildManager implements Disposable {
         String optionsPath = PathManager.getOptionsPath();
 
         if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-          optionsPath = asEelPath(
-            transferLocalContentToRemote(Path.of(optionsPath), new EelPathUtils.TransferTarget.Temporary(eelDescriptor))).toString();
+          optionsPath = asEelPath(OptionsDirectoryProcessor.transferOptionsToRemote(PathManager.getOptionsDir(), eelDescriptor)).toString();
         }
         else {
           optionsPath = pathMapper.apply(optionsPath);
@@ -942,7 +938,7 @@ public final class BuildManager implements Disposable {
                      Iterators.collect(Iterators.map(data.myDeleted, InternedPath::getValue), new HashSet<>()));
           }
           needRescan = data.getAndResetRescanFlag();
-          currentFSChanges = needRescan ? null : data.createNextEvent(wslPathMapper(wslDistribution));
+          currentFSChanges = needRescan ? null : data.createNextEvent(pathMapper);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Sending to starting build, ordinal=" + (currentFSChanges == null ? null : currentFSChanges.getOrdinal()));
           }
@@ -1182,21 +1178,26 @@ public final class BuildManager implements Disposable {
 
     return getRuntimeSdk(project, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION, processed -> {
       // build's fallback SDK choosing policy: select among unprocessed SDKs in the SDK table the oldest possible one that can be used
-      // if project is located in a WSL VM, consider only SDKs, configured in the same WSL VM
-      Predicate<Sdk> wslSdkFilter = getWslSdkFilter(project);
+      // if the project is located within an Eel machine, consider only SDKs configured in the same Eel machine
+      Predicate<Sdk> sdkFilter = getSdkFilter(project);
 
       return StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
-        .filter(sdk -> !processed.contains(sdk) && wslSdkFilter.test(sdk))
+        .filter(sdk -> !processed.contains(sdk) && sdkFilter.test(sdk))
         .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
         .filterValues(version -> version != null && version.isAtLeast(MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION))
         .min(Map.Entry.comparingByValue())
         .map(p -> Pair.create(p.getKey(), JavaSdkVersion.fromJavaVersion(p.getValue())))
         .filter(p -> p.second != null)
-        .orElseGet(BuildManager::getIDERuntimeSdk);
+        .orElseGet(() -> {
+          if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+            throw new IllegalStateException(JavaCompilerBundle.message("build.manager.launch.build.process.failed.to.find.compatible.jdk"));
+          }
+          return getIDERuntimeSdk();
+        });
     });
   }
 
-  private static @NotNull Predicate<Sdk> getWslSdkFilter(@NotNull Project project) {
+  private static @NotNull Predicate<Sdk> getSdkFilter(@NotNull Project project) {
     // if WSL is configured, accepts only those SDKs that match project's WSL VM
     Supplier<WSLDistribution> projectWslDistribution = new Supplier<>() {
       private Ref<WSLDistribution> val;
@@ -1206,7 +1207,13 @@ public final class BuildManager implements Disposable {
         return val != null? val.get() : (val = Ref.create(findWSLDistribution(project))).get();
       }
     };
-    return sdk -> Objects.equals(projectWslDistribution.get(), findWSLDistribution(sdk));
+    if (canUseEel()) {
+      // an additional check for WSL distributions is required when "wsl.use.remote.agent.for.nio.filesystem" registry flag is set to false
+      return sdk -> JdkUtil.isCompatible(sdk, project) && Objects.equals(projectWslDistribution.get(), findWSLDistribution(sdk));
+    }
+    else {
+      return sdk -> Objects.equals(projectWslDistribution.get(), findWSLDistribution(sdk));
+    }
   }
 
   public static @NotNull Pair<@NotNull Sdk, @Nullable JavaSdkVersion> getJavacRuntimeSdk(@NotNull Project project) {
@@ -1268,7 +1275,7 @@ public final class BuildManager implements Disposable {
   private static @Nullable Pair<Sdk, JavaSdkVersion> getForkedJavacFallbackSdk(@NotNull Project project, int oldestPossibleVersion) {
     // select the oldest SDK version among SDKs that are present in the SDK Table, but not older than <oldestPossibleVersion>
     return StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
-      .filter(getWslSdkFilter(project))
+      .filter(getSdkFilter(project))
       .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
       .filterValues(version -> version != null && version.isAtLeast(oldestPossibleVersion))
       .min(Map.Entry.comparingByValue())
@@ -1494,7 +1501,7 @@ public final class BuildManager implements Disposable {
         //todo ensure that caches are up-to-date or use a different way to pass serialized workspace model to the build process
         cmdLine.addParameter("-Djps.workspace.storage.project.cache.path=" + cache.getCacheFile());
         cmdLine.addParameter(
-          "-Djps.workspace.storage.global.cache.path=" + globalCache.cacheFile(new InternalEnvironmentNameImpl(globalCacheId)));
+          "-Djps.workspace.storage.global.cache.path=" + globalCache.cacheFile(InternalEnvironmentName.of(globalCacheId)));
         cmdLine.addParameter(
           "-Djps.workspace.storage.relative.paths.in.cache=" + Registry.is("ide.workspace.model.store.relative.paths.in.cache", false));
       }
@@ -1933,6 +1940,9 @@ public final class BuildManager implements Disposable {
   }
 
   public @NotNull Path getBuildSystemDirectory(Project project) {
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      return EelPathUtils.getSystemFolder(project).resolve(SYSTEM_ROOT);
+    }
     final WslPath wslPath = WslPath.parseWindowsUncPath(getProjectPath(project));
     if (wslPath != null) {
       Path buildDir = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(wslPath.getDistribution());
@@ -1953,13 +1963,26 @@ public final class BuildManager implements Disposable {
 
   public @NotNull File getProjectSystemDirectory(@NotNull Project project) {
     String projectPath = getProjectPath(project);
-    WslPath wslPath = WslPath.parseWindowsUncPath(projectPath);
     Function<String, Integer> hashFunction;
-    if (wslPath == null) {
-      hashFunction = String::hashCode;
+    if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
+      final var descriptor = EelProviderUtil.getEelDescriptor(project);
+      hashFunction = s -> {
+        try {
+          return asEelPath(Path.of(s), descriptor).toString().hashCode();
+        }
+        catch (Throwable e) {
+          return s.hashCode();
+        }
+      };
     }
     else {
-      hashFunction = s -> Objects.requireNonNullElse(wslPath.getDistribution().getWslPath(s), s).hashCode();
+      WslPath wslPath = WslPath.parseWindowsUncPath(projectPath);
+      if (wslPath == null) {
+        hashFunction = String::hashCode;
+      }
+      else {
+        hashFunction = s -> Objects.requireNonNullElse(wslPath.getDistribution().getWslPath(s), s).hashCode();
+      }
     }
     return Utils.getDataStorageRoot(getBuildSystemDirectory(project).toFile(), projectPath, hashFunction);
   }

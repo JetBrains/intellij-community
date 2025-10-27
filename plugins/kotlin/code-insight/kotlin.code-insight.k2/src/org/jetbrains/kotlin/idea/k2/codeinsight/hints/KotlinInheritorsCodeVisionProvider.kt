@@ -33,7 +33,14 @@ class KotlinInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
 
     override fun acceptsFile(file: PsiFile): Boolean = Registry.`is`("enable.kotlin.code.vision.inlay") && file.language == KotlinLanguage.INSTANCE
 
-    override fun acceptsElement(element: PsiElement): Boolean = element is KtCallableDeclaration || element is KtClass
+    override fun acceptsElement(element: PsiElement): Boolean =
+        element is KtCallableDeclaration &&
+                element.parent !is PsiFile &&
+                element !is KtDestructuringDeclarationEntry &&
+                (element as? KtFunction)?.isLocal != true &&
+                ((element as? KtParameter)?.hasValOrVar() ?: true) &&
+                (element as? KtProperty)?.isLocal != true ||
+            element is KtClass
 
     override fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionInfo? {
         val count = if (element is KtCallableDeclaration) {

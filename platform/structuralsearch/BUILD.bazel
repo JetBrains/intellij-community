@@ -37,8 +37,8 @@ jvm_library(
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",
     "//libraries/fastutil",
-  ],
-  exports = ["//platform/duplicates-analysis"]
+    "//platform/core-impl",
+  ]
 )
 ### auto-generated section `build intellij.platform.structuralSearch` end
 

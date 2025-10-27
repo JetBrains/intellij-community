@@ -28,14 +28,14 @@ class ChunkHelper(
   fun <T> chunks(
     chunkSize: Int,
     entities: Sequence<T>,
-    evaluate: ChunkHelper.(Props<T>) -> Result,
+    evaluate: suspend ChunkHelper.(Props<T>) -> Result,
   ): Sequence<EvaluationChunk> {
     return entities.chunked(chunkSize).mapIndexed { index, values ->
       object : EvaluationChunk {
         override val datasetName: String = this@ChunkHelper.datasetName
         override val name: String = "${chunkNamePrefix}:${chunkSize * index}-${chunkSize * index + values.size - 1}"
 
-        override fun evaluate(
+        override suspend fun evaluate(
           handler: InterpretationHandler,
           filter: InterpretFilter,
           order: InterpretationOrder,
@@ -81,7 +81,7 @@ class ChunkHelper(
     layoutManager: LayoutManager,
     chunkSize: Int,
     entities: Sequence<T>,
-    evaluate: ChunkHelper.(Props<T>) -> PresentableResult,
+    evaluate: suspend ChunkHelper.(Props<T>) -> PresentableResult,
   ): Sequence<EvaluationChunk> {
     return chunks(chunkSize, entities) { props ->
       var call: CallFeature? = null
@@ -111,7 +111,7 @@ class ChunkHelper(
 
   fun presentableChunk(
     layoutManager: LayoutManager,
-    evaluate: ChunkHelper.(Props<Unit>) -> PresentableResult
+    evaluate: suspend ChunkHelper.(Props<Unit>) -> PresentableResult
   ): Sequence<EvaluationChunk> = presentableChunks(layoutManager, 1, sequenceOf(Unit)) { evaluate(it) }
 
   fun callFeature(target: String, offset: Int, features: Map<String, String>): CallFeature {

@@ -638,6 +638,8 @@ f:com.intellij.find.impl.FindInProjectUtil
 - getEmptyRangeAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - getExcludedAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - getSelectionAttributes():com.intellij.openapi.editor.markup.TextAttributes
+*:com.intellij.find.usages.api.DynamicUsage
+- isDynamic():Z
 *:com.intellij.find.usages.api.PsiUsage
 - com.intellij.find.usages.api.Usage
 - *sf:Companion:com.intellij.find.usages.api.PsiUsage$Companion

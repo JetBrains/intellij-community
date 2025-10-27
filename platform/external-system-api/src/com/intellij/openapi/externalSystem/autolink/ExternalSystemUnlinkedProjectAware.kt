@@ -29,6 +29,11 @@ interface ExternalSystemUnlinkedProjectAware {
     throw UnsupportedOperationException()
   }
 
+  @Internal
+  fun getLinkedProjectsPaths(project: Project): Set<String> {
+    throw UnsupportedOperationException()
+  }
+
   suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
     withContext(Dispatchers.EDT) {
       @Suppress("DEPRECATION_ERROR")

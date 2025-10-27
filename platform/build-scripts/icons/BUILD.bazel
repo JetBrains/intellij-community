@@ -58,7 +58,6 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
-    "//platform/util/xmlDom",
     "@lib//:okhttp",
     "//build/tasks",
     "//build/tasks:tasks_test_lib",
@@ -70,6 +69,7 @@ jvm_library(
     "@lib//:platform-images-build-pngencoder",
     "//libraries/hash4j",
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
+    ":platform_util_xmlDom_provided",
   ]
 )
 ### auto-generated section `build intellij.platform.images.build` end

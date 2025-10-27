@@ -21,6 +21,7 @@
   - name: intellij.performanceTesting
   contentModules:
   - name: intellij.performanceTesting.remoteDriver
+  - name: intellij.performanceTesting.remoteDriver.compose
   - name: intellij.performanceTesting.vcs
   - name: intellij.tools.ide.starter.bus
   - name: intellij.driver.model

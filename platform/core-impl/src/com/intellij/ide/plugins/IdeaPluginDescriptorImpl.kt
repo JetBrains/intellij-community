@@ -39,7 +39,8 @@ sealed class IdeaPluginDescriptorImpl(
   val incompatiblePlugins: List<PluginId> = raw.incompatibleWith.map(PluginId::getId)
   open val pluginAliases: List<PluginId> = raw.pluginAliases.map(PluginId::getId)
 
-  val moduleDependencies: ModuleDependencies = raw.dependencies.let(::convertDependencies)
+  abstract val moduleDependencies: ModuleDependencies
+
   val packagePrefix: String? = raw.`package`
 
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
@@ -167,16 +168,29 @@ sealed class IdeaPluginDescriptorImpl(
       }
     }
 
-    private fun convertDependencies(dependencies: List<DependenciesElement>): ModuleDependencies {
+    @JvmStatic
+    protected fun convertDependencies(dependencies: List<DependenciesElement>, parent: PluginMainDescriptor?): ModuleDependencies {
       if (dependencies.isEmpty()) {
         return ModuleDependencies.EMPTY
       }
       val moduleDeps = ArrayList<PluginModuleId>()
       val pluginDeps = ArrayList<PluginId>()
+      var cachedContentModuleNames: Set<String>? = null
       for (dep in dependencies) {
         when (dep) {
           is DependenciesElement.PluginDependency -> pluginDeps.add(PluginId.getId(dep.pluginId))
-          is DependenciesElement.ModuleDependency -> moduleDeps.add(PluginModuleId(dep.moduleName))
+          is DependenciesElement.ModuleDependency -> {
+            val namespace =
+              dep.namespace
+              ?: run {
+                if (cachedContentModuleNames == null) {
+                  cachedContentModuleNames = parent?.content?.modules?.mapTo(HashSet()) { it.moduleId.name } ?: emptySet()
+                }
+                if (dep.moduleName in cachedContentModuleNames) parent!!.namespace ?: parent.implicitNamespaceForPrivateModules else null
+              }
+              ?: PluginModuleId.JETBRAINS_NAMESPACE
+            moduleDeps.add(PluginModuleId(dep.moduleName, namespace))
+          }
           else -> LOG.error("Unknown dependency type: $dep")
         }
       }
@@ -201,7 +215,7 @@ sealed class IdeaPluginDescriptorImpl(
       LOG.warnInProduction(PluginException(buildString {
         append("Plugin descriptor for ")
         when (this@logUnexpectedElement) {
-          is ContentModuleDescriptor -> append("content module '${moduleId.id}' of plugin '${pluginId}'")
+          is ContentModuleDescriptor -> append("content module '${moduleId.name}' of plugin '${pluginId}'")
           is DependsSubDescriptor -> append("'depends' sub-descriptor '${descriptorPath}' of plugin '${pluginId}'")
           is PluginMainDescriptor -> append("plugin '${pluginId}'")
         }
@@ -303,20 +317,29 @@ class PluginMainDescriptor(
   override val pluginAliases: List<PluginId> = super.pluginAliases.let(::addCorePluginAliases)
 
   /**
+   * Explicitly set namespace for content modules of the plugin
+   */
+  val namespace: String? = raw.namespace
+
+  /**
+   * Implicit namespace used in [PluginModuleId] instances for dependencies between plugins modules if the explicit [namespace] is not set.
+   * Currently, it's not necessary to specify the namespace explicitly if all modules are private and don't depend on internal modules, but it's still convenient to have some
+   * namespace for debugging and logging.
+   */
+  internal val implicitNamespaceForPrivateModules by lazy { $$"$${id.idString}_$implicit" }
+
+  /**
    * this is an implementation detail required during descriptor loading, use [contentModules] instead
    */
   @VisibleForTesting
   val content: PluginContentDescriptor =
-    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it)) }
+    raw.contentModules.takeIf { it.isNotEmpty() }?.let { PluginContentDescriptor(convertContentModules(it, namespace ?: implicitNamespaceForPrivateModules)) }
     ?: PluginContentDescriptor.EMPTY
-
-  /**
-   * Specifies namespace for content modules of the plugin
-   */
-  val namespace: String? = raw.namespace
 
   val contentModules: List<ContentModuleDescriptor>
     get() = content.modules.map { it.descriptor }
+
+  override val moduleDependencies: ModuleDependencies = convertDependencies(raw.dependencies, this)
 
   init {
     reportMainDescriptorUnexpectedElements(raw) { logUnexpectedElement(it) }
@@ -410,7 +433,7 @@ class PluginMainDescriptor(
     }
     return pluginAliases +
            IdeaPluginOsRequirement.getHostOsModuleIds() +
-           IdeaPluginCpuArchRequirement.getHostCpuArchModuleIds() +
+           PluginCpuArchRequirement.getHostCpuArchModuleIds() +
            productModeAliasesForCorePlugin()
   }
 
@@ -422,7 +445,10 @@ class PluginMainDescriptor(
     parent = this,
     raw = subBuilder.build(),
     moduleId = module.moduleId,
-    moduleLoadingRule = module.loadingRule,
+    moduleLoadingRule = module.determineLoadingRule( // FIXME this call should happen in init phase, not while parsing
+      initContextForLoadingRuleDetermination,
+      id
+    ),
     descriptorPath = descriptorPath
   )
 
@@ -437,17 +463,19 @@ class PluginMainDescriptor(
 
   @ApiStatus.Internal
   companion object {
-    private fun convertContentModules(contentElements: List<ContentModuleElement>): List<PluginContentDescriptor.ModuleItem> {
+    private fun convertContentModules(contentElements: List<ContentModuleElement>, namespace: String): List<PluginContentDescriptor.ModuleItem> {
       return contentElements.map { elem ->
         val index = elem.name.lastIndexOf('/')
         val configFile: String? = if (index != -1) {
           "${elem.name.substring(0, index)}.${elem.name.substring(index + 1)}.xml"
         } else null
         PluginContentDescriptor.ModuleItem(
-          moduleId = PluginModuleId(elem.name),
+          moduleId = PluginModuleId(elem.name, namespace),
           configFile = configFile,
           descriptorContent = elem.embeddedDescriptorContent,
-          loadingRule = elem.loadingRule.convert())
+          loadingRule = elem.loadingRule.convert(),
+          requiredIfAvailable = elem.requiredIfAvailable?.let { PluginModuleId(it, PluginModuleId.JETBRAINS_NAMESPACE) },
+        )
       }
     }
     
@@ -486,6 +514,17 @@ class PluginMainDescriptor(
         reporter(PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR)
       }
     }
+
+    // FIXME this should not exist
+    @Volatile
+    private var initContextForLoadingRuleDetermination: PluginInitializationContext = ProductPluginInitContext()
+
+    // FIXME this should not exist
+    @ApiStatus.Internal
+    @TestOnly
+    fun setInitContextForLoadingRuleDetermination(initContext: PluginInitializationContext) {
+      initContextForLoadingRuleDetermination = initContext
+    }
   }
 }
 
@@ -503,6 +542,8 @@ class DependsSubDescriptor(
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
   override val isIndependentFromCoreClassLoader: Boolean = raw.isIndependentFromCoreClassLoader
+
+  override val moduleDependencies: ModuleDependencies = convertDependencies(raw.dependencies, null)
 
   private val rawResourceBundleBaseName: String? = raw.resourceBundleBaseName
 
@@ -571,6 +612,8 @@ class ContentModuleDescriptor(
   val moduleLoadingRule: ModuleLoadingRule = moduleLoadingRule
   val visibility: ModuleVisibility = raw.moduleVisibility.convert()
 
+  override val moduleDependencies: ModuleDependencies = convertDependencies(raw.dependencies, parent)
+
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
   override val useIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
@@ -579,17 +622,17 @@ class ContentModuleDescriptor(
   private val resourceBundleBaseName: String? = raw.resourceBundleBaseName
 
   /** java helper */
-  fun getModuleIdString(): String = moduleId.id
+  fun getModuleNameString(): String = moduleId.name
 
   override fun getDescriptorPath(): String = descriptorPath
 
   override fun getResourceBundleBaseName(): String? = resourceBundleBaseName
 
   override fun toString(): String =
-    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId.id}" +
+    "ContentModuleDescriptor(id=${this@ContentModuleDescriptor.moduleId.name}" +
     (if (moduleLoadingRule == ModuleLoadingRule.OPTIONAL) "" else ", loadingRule=$moduleLoadingRule") +
     (if (packagePrefix == null) "" else ", package=$packagePrefix") +
-    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId.id}.xml") "" else ", descriptorPath=$descriptorPath") +
+    (if (descriptorPath == "${this@ContentModuleDescriptor.moduleId.name}.xml") "" else ", descriptorPath=$descriptorPath") +
     ") <- $parent"
 
   init {

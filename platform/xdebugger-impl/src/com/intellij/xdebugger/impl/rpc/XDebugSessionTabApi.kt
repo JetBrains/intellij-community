@@ -80,6 +80,7 @@ data class XDebuggerSessionTabInfo(
   val additionalTabsComponentManagerId: XDebugSessionAdditionalTabComponentManagerId,
   @Serializable(with = SendChannelSerializer::class) val tabClosedCallback: SendChannel<Unit>,
   @Serializable(with = DeferredSerializer::class) val backendRunContendDescriptorId: Deferred<RunContentDescriptorIdImpl>,
+  @Serializable(with = DeferredSerializer::class) val showTab: Deferred<Unit>,
 ) : XDebuggerSessionTabAbstractInfo
 
 @ApiStatus.Internal

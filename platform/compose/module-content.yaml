@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.platform.compose.jar
   modules:
   - name: intellij.platform.compose
   library: jetbrains.compose.components.ui.tooling.preview.desktop

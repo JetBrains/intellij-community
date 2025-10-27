@@ -29,3 +29,11 @@ _msi
 msilib(.[a-z]+)?
 ossaudiodev
 spwd
+
+
+# ================
+# Unclear problems
+# ================
+
+# Added in 3.11.1, flagged by stubtest on Python < 3.14 for unknown reasons
+errno.ENOTCAPABLE

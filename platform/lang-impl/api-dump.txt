@@ -653,6 +653,8 @@ com.intellij.ide.projectView.impl.nodes.DropTargetNode
 - a:dropExternalFiles(com.intellij.psi.PsiFileSystemItem[],com.intellij.openapi.actionSystem.DataContext):V
 com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter
 - a:shouldShow(com.intellij.psi.PsiFileSystemItem):Z
+a:com.intellij.ide.scratch.LRUPopupBuilder
+- withPinnedId(java.lang.String):com.intellij.ide.scratch.LRUPopupBuilder
 com.intellij.ide.structureView.newStructureView.TreeActionsOwner
 - a:isActionActive(java.lang.String):Z
 - a:setActionActive(java.lang.String,Z):V

@@ -78,7 +78,12 @@ internal suspend fun patchPluginXml(
     embedContentModules(
       xml = element,
       file = findFileInModuleSources(module = pluginModule, relativePath = "META-INF/plugin.xml")!!,
-      xIncludePathResolver = createXIncludePathResolver(plugin.includedModules.map { it.moduleName } + platformLayout.includedModules.map { it.moduleName }, context),
+      xIncludePathResolver = createXIncludePathResolver(
+        includedPlatformModulesPartialList = (plugin.includedModules.asSequence().map { it.moduleName } + platformLayout.includedModules.asSequence().map { it.moduleName })
+          .distinct()
+          .toList(),
+        context = context,
+      ),
       layout = plugin,
       context = context,
     )
@@ -161,7 +166,7 @@ fun getOrCreateTopElement(rootElement: Element, tagName: String, anchors: List<S
   }
 
   val newElement = Element(tagName)
-  val anchor = anchors.asSequence().mapNotNull { rootElement.getChild(it) }.firstOrNull()
+  val anchor = anchors.firstNotNullOfOrNull { rootElement.getChild(it) }
   if (anchor == null) {
     rootElement.addContent(0, newElement)
   }

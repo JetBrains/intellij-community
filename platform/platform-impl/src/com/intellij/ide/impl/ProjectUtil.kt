@@ -39,7 +39,6 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
-import com.intellij.platform.PROJECT_OPENED_BY_PLATFORM_PROCESSOR
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.attachToProjectAsync
@@ -185,7 +184,7 @@ object ProjectUtil {
     if (isValidProjectPath(file)) {
       LOG.info("Opening existing project with .idea at $file")
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
-      return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options.copy(runConfigurators = true))
+      return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options.copy(runConfigurators = true, projectRootDir = file))
     }
 
     if (!options.preventIprLookup && Files.isDirectory(file)) {
@@ -226,18 +225,9 @@ object ProjectUtil {
 
     val project: Project?
     if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
-      project = (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(
-        projectIdentityFile = file,
-        options = options.copy(
-          isNewProject = true,
-          useDefaultProjectAsTemplate = true,
-          runConfigurators = true,
-          beforeOpen = {
-            it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
-            options.beforeOpen?.invoke(it) ?: true
-          },
-        )
-      )
+      // this customization is needed, because there is no way to pass original open options to the ProjectOpenProcessor
+      // isNewProject = true because for existing projects we should have exit earlier inside `if (isValidProjectPath(file))`
+      project = PlatformProjectOpenProcessor.openProjectAsync(file, options.copy(isNewProject = true, useDefaultProjectAsTemplate = true))
     }
     else {
       val virtualFile = nullableVirtualFileResult?.let {
@@ -251,16 +241,9 @@ object ProjectUtil {
   private fun computeProcessors(file: Path, lazyVirtualFile: () -> VirtualFile?): MutableList<ProjectOpenProcessor> {
     val processors = ArrayList<ProjectOpenProcessor>()
     ProjectOpenProcessor.EXTENSION_POINT_NAME.forEachExtensionSafe { processor ->
-      if (processor is PlatformProjectOpenProcessor) {
-        if (Files.isDirectory(file)) {
-          processors.add(processor)
-        }
-      }
-      else {
-        val virtualFile = lazyVirtualFile()
-        if (virtualFile != null && processor.canOpenProject(virtualFile)) {
-          processors.add(processor)
-        }
+      val virtualFile = lazyVirtualFile()
+      if (virtualFile != null && processor.canOpenProject(virtualFile)) {
+        processors.add(processor)
       }
     }
     return processors
@@ -653,32 +636,40 @@ object ProjectUtil {
       false
     }
 
-    var projectFile: Path? = null
-    if (created) {
-      val options = OpenProjectTask {
-        isNewProject = true
-        runConfigurators = true
-        projectName = name
-      }
-
-      val project = projectManager.newProjectAsync(file = file, options = options)
-      runInAutoSaveDisabledMode {
-        saveSettings(componentManager = project, forceSavingAllSettings = true)
-      }
-      edtWriteAction {
-        Disposer.dispose(project)
-      }
-      projectFile = file
-    }
-
-    if (projectFile == null) {
+    if (!created) {
       return null
     }
 
-    return projectManager.openProjectAsync(projectIdentityFile = projectFile, options = OpenProjectTask {
-      runConfigurators = true
+    val newProject = projectManager.newProjectAsync(file = file, options = OpenProjectTask {
+      isNewProject = true
       isProjectCreatedWithWizard = true
+      runConfigurators = false //not used inside
+      projectName = name
     })
+
+    try {
+      runInAutoSaveDisabledMode {
+        saveSettings(componentManager = newProject, forceSavingAllSettings = true)
+      }
+      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+        projectFile = file,
+        project = newProject,
+        newProject = true,
+        createModule = true,
+      )
+
+      return projectManager.openProjectAsync(projectIdentityFile = file, options = OpenProjectTask {
+        runConfigurators = false //not used when passing project
+        isProjectCreatedWithWizard = true
+        project = newProject
+      })
+    }
+    catch (th: Throwable) {
+      edtWriteAction {
+        Disposer.dispose(newProject)
+      }
+      throw th
+    }
   }
 
   @JvmStatic
@@ -705,8 +696,11 @@ object ProjectUtil {
   fun getOpenProjects(): Array<Project> = ProjectUtilCore.getOpenProjects()
 
   @Internal
+  enum class FolderOpeningMode { AS_PROJECT, AS_FOLDER }
+
+  @Internal
   @VisibleForTesting
-  suspend fun openExistingDir(file: Path, currentProject: Project?): Project? {
+  suspend fun openExistingDir(file: Path, mode: FolderOpeningMode, currentProject: Project?): Project? {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
     val preferAttach = currentProject != null &&
                        canAttach &&
@@ -715,18 +709,20 @@ object ProjectUtil {
       return null
     }
 
-    val project = if (canAttach) {
-      val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject).copy(
-        projectRootDir = file,
-      )
-      (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
+    val options = if (mode == FolderOpeningMode.AS_PROJECT) {
+      createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject)
     }
     else {
-      val options = OpenProjectTask(projectToClose = currentProject).copy(
+      OpenProjectTask(projectToClose = currentProject).copy(
         projectRootDir = file,
+        createModule = false,
+        useDefaultProjectAsTemplate = true,
+        runConfigurators = false,
       )
-      openOrImportAsync(file, options)
     }
+
+    val project = openOrImportAsync(file, options)
+
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       FileChooserUtil.setLastOpenedFile(project, file)
     }

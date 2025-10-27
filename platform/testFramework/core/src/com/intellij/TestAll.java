@@ -111,8 +111,8 @@ public class TestAll implements Test {
   public TestAll(String rootPackage, List<? extends Path> classesRoots) throws ClassNotFoundException {
     myTestCaseLoader = Builder.fromDefaults().build();
     if (shouldAddFirstAndLastTests()) {
-      myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest"));
-      myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest"));
+      myTestCaseLoader.addFirstTest(Class.forName("_FirstInSuiteTest", true, getClassLoader()));
+      myTestCaseLoader.addLastTest(Class.forName("_LastInSuiteTest", true, getClassLoader()));
     }
     myTestCaseLoader.fillTestCases(rootPackage, classesRoots);
 

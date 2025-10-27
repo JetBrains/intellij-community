@@ -41,7 +41,7 @@ import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.border.CompoundBorder
 
-class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaultPattern: InspectionPattern? = null) : DialogWrapper(project, true) {
+internal class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaultPattern: InspectionPattern? = null) : DialogWrapper(project, true) {
   private var searchContext: FindModel.SearchContext = FindModel.SearchContext.ANY
   private var flags: Int = RegExpFlag.UNICODE_CASE.id
   private var replace: Boolean = false

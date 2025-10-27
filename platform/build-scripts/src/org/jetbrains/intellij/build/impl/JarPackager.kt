@@ -312,19 +312,20 @@ class JarPackager private constructor(
 
     val packToDir = context.options.isUnpackedDist &&
                     !item.relativeOutputFile.contains('/') &&
+                    !item.isProductModule() &&
                     (patchedContent.isEmpty() || (patchedContent.size == 1 && patchedContent.containsKey("META-INF/plugin.xml"))) &&
                     extraExcludes.isEmpty() &&
-                    moduleOutputRoots.none { it.toString().endsWith(".jar") }  // TODO(k15tfu): consider running on output sources "as is", without packing
+                    moduleOutputRoots.isNotEmpty()
 
     val outFile = outDir.resolve(item.relativeOutputFile)
     val asset = if (packToDir) {
       assets.computeIfAbsent(moduleOutputRoots.single()) { file ->
-        AssetDescriptor(isDir = true, file, relativePath = "")
+        AssetDescriptor(isDir = !file.toString().endsWith(".jar"), file = file, relativePath = "")
       }
     }
     else {
       assets.computeIfAbsent(outFile) { file ->
-        createAssetDescriptor(relativeOutputFile = item.relativeOutputFile, targetFile = file)
+        AssetDescriptor(isDir = false, file = file, relativePath = item.relativeOutputFile, useCacheAsTargetFile = !item.isProductModule())
       }
     }
 
@@ -761,7 +762,7 @@ class JarPackager private constructor(
   }
 
   private fun getJarAsset(targetFile: Path, relativeOutputFile: String): AssetDescriptor = assets.computeIfAbsent(targetFile) {
-    createAssetDescriptor(targetFile = targetFile, relativeOutputFile = relativeOutputFile)
+    AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile)
   }
 }
 
@@ -922,6 +923,53 @@ private data class BuildAssetResult(
   @JvmField val sourceToMetadata: Map<Source, SizeAndHash>,
 )
 
+private fun buildDuplicateSourceErrorMessage(
+  file: Path,
+  asset: AssetDescriptor,
+  source: Source,
+  old: SizeAndHash,
+  size: Int,
+  hash: Long,
+  includedModules: Map<ModuleItem, MutableList<Source>>,
+): String = buildString {
+  appendLine("Source is duplicated:")
+  appendLine("  Target JAR: $file")
+  appendLine("  Relative path: ${asset.relativePath}")
+  appendLine("  Duplicate source: $source")
+  if (source is ZipSource) {
+    appendLine("  Source file: ${source.file}")
+  }
+  appendLine("  Already processed: size=${old.size}, hash=${old.hash}")
+  appendLine("  New occurrence:    size=$size, hash=$hash")
+  if (includedModules.isEmpty()) {
+    appendLine("  Sources being packed into this JAR (no modules, direct library merge):")
+    appendLine("    Total sources: ${asset.sources.size}")
+
+    // Count how many times the duplicate source appears
+    val duplicateCount = asset.sources.count { it == source }
+    if (duplicateCount > 1) {
+      appendLine("    Duplicate source appears $duplicateCount times in the list below:")
+    }
+
+    var duplicateIndex = 0
+    for (s in asset.sources) {
+      if (s == source) {
+        duplicateIndex++
+        appendLine("    >>> $s [DUPLICATE #$duplicateIndex]")
+      }
+      else {
+        appendLine("    - $s")
+      }
+    }
+  }
+  else {
+    appendLine("  Modules being packed into this JAR:")
+    for (module in includedModules.keys) {
+      appendLine("    - ${module.moduleName} (reason: ${module.reason}, output: ${module.relativeOutputFile})")
+    }
+  }
+}
+
 private suspend fun buildAsset(
   asset: AssetDescriptor,
   isCodesignEnabled: Boolean,
@@ -1012,7 +1060,15 @@ private suspend fun buildAsset(
           override fun consumeInfo(source: Source, size: Int, hash: Long) {
             val old = sourceToMetadata.putIfAbsent(source, SizeAndHash(size, hash))
             require(old == null) {
-              "Source is duplicated: new $source, old: $old"
+              buildDuplicateSourceErrorMessage(
+                file = file,
+                asset = asset,
+                source = source,
+                old = old!!,
+                size = size,
+                hash = hash,
+                includedModules = includedModules,
+              )
             }
           }
         },
@@ -1123,10 +1179,6 @@ private fun createModuleSource(module: JpsModule, outputDir: Path, excludes: Lis
     module.sourceRoots.any { !it.rootType.isForTests } -> error("Module ${module.name} output does not exist: $outputDir")
     else -> null
   }
-}
-
-private fun createAssetDescriptor(relativeOutputFile: String, targetFile: Path): AssetDescriptor {
-  return AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile)
 }
 
 private fun computeDistributionFileEntries(

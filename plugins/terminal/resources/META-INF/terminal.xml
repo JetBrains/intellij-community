@@ -65,9 +65,12 @@
                  description="Whether popup-based command completion feature is enabled in the Reworked Terminal"/>
     <registryKey key="terminal.type.ahead" defaultValue="true"
                  description="Whether terminal should predict how shell handles typing to minimize the typing latency. Monolith-only at the moment"/>
-    <registryKey key="terminal.generic.hyperlinks" defaultValue="false"
+    <registryKey key="terminal.generic.hyperlinks" defaultValue="true"
                  description="Show generic file hyperlinks in the reworked terminal. Such hyperlinks are highlighted on mouse hover.
                   Open a new terminal after enabling this option to take effect."/>
+    <registryKey key="terminal.ai.inline.completion.enabled" defaultValue="false"
+                 description="Whether Terminal AI Inline Completion is enabled and visible in the settings"/>
+    <consoleFilterProvider implementation="org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalGenericFileFilterProvider"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>

@@ -83,6 +83,10 @@ fun isJunit5Supported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.7")
 }
 
+fun isGroovy5Supported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "7.0")
+}
+
 fun isSpockSupported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.6")
 }

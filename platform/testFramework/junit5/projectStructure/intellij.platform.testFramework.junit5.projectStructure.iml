@@ -16,9 +16,11 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
   </component>
 </module>

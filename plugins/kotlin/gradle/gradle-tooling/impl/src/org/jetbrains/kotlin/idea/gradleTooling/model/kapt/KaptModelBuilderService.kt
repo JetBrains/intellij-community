@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling.model.kapt
 
+import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry
 import org.gradle.api.Named
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -63,11 +64,17 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
     override fun canBuild(modelName: String?): Boolean = modelName == KaptGradleModel::class.java.name
 
     override fun buildAll(modelName: String?, project: Project): KaptGradleModelImpl? {
-        return buildAll(project, builderContext = null, parameter = null)
+        return buildAllWithTelemetry(project, builderContext = null, parameter = null)
     }
 
     override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {
-        return buildAll(project, builderContext, parameter)
+        return buildAllWithTelemetry(project, builderContext, parameter)
+    }
+
+    private fun buildAllWithTelemetry(project: Project, builderContext: ModelBuilderContext?, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {
+        return GradleOpenTelemetry.callWithSpan("kotlin_import_daemon_kapt_buildAll") {
+            buildAll(project, builderContext, parameter)
+        }
     }
 
     private fun buildAll(project: Project, builderContext: ModelBuilderContext?, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {

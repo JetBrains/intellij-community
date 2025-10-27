@@ -11,6 +11,8 @@ import com.intellij.ui.GotItTooltip
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
+import java.awt.Point
+import javax.swing.SwingUtilities
 
 object PyCommunityToUnifiedTooltip {
 
@@ -33,8 +35,10 @@ object PyCommunityToUnifiedTooltip {
       if (settingsButton != null) {
         val tooltip = constructToolTip(project)
         PyCommunityUnifiedPromoFusCollector.TooltipShown.log()
-        // TODO won't show properly in the corner :(
-        tooltip.show(settingsButton, GotItTooltip.BOTTOM_LEFT)
+        tooltip.show(settingsButton.rootPane.layeredPane) { pane, _ ->
+          SwingUtilities.convertPoint(settingsButton,
+                                      Point(settingsButton.width / 2, settingsButton.height), pane)
+        }
       }
     }
   }

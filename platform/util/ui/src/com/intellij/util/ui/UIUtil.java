@@ -1750,6 +1750,22 @@ public final class UIUtil {
     return component;
   }
 
+  public static @Nullable JLayeredPane getWindowLayeredPaneFor(@NotNull Component component) {
+    Window window = SwingUtilities.windowForComponent(component);
+    if (window instanceof JFrame) {
+      return ((JFrame)window).getLayeredPane();
+    }
+    else if (window instanceof JDialog) {
+      return ((JDialog)window).getLayeredPane();
+    }
+    else if (window instanceof JWindow) {
+      return ((JWindow)window).getLayeredPane();
+    }
+    else {
+      return null;
+    }
+  }
+
   private static Component getDeepestComponentAtForComponent(@NotNull Component parent, int x, int y, @NotNull Component component) {
     Point point = SwingUtilities.convertPoint(parent, new Point(x, y), component);
     return SwingUtilities.getDeepestComponentAt(component, point.x, point.y);

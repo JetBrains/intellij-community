@@ -33,6 +33,12 @@ fun assumeThatJunit5IsSupported(gradleVersion: GradleVersion) {
   }
 }
 
+fun assumeThatGroovy5IsSupported(gradleVersion: GradleVersion) {
+  Assumptions.assumeTrue(isGroovy5Supported(gradleVersion)) {
+    "Gradle ${gradleVersion.version} doesn't support Groovy 5."
+  }
+}
+
 fun assumeThatKotlinIsSupported(gradleVersion: GradleVersion) {
   Assumptions.assumeTrue(isKotlinSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support Kotlin."

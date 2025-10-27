@@ -476,7 +476,7 @@ internal fun copyAndLoadGlobalEntities(originalFile: String? = null,
         application.invokeAndWait { saveDocumentsAndProjectsAndApp(true) }
         val globalEntitiesFolder = File(PathManagerEx.getCommunityHomePath(),
                                         "platform/workspace/jps/tests/testData/serialization/global/$expectedFile")
-        val entityStorage = GlobalWorkspaceModel.getInstance(LocalEelMachine).entityStorage.current
+        val entityStorage = GlobalWorkspaceModel.getInstance(LocalEelMachine).currentSnapshot
         if (entityStorage.entities(LibraryEntity::class.java).toList().isEmpty()) {
           optionsFolder.assertMatches(directoryContentOf(globalEntitiesFolder.toPath()),
                                       filePathFilter = { it.contains("jdk.table.xml") })

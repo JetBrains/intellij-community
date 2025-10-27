@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.platform.eel.fs.EelFiles;
 import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -71,6 +72,7 @@ public final class ClasspathBootstrap {
   };
 
   private static final String[] REFLECTION_OPEN_PACKAGES = {
+    "java.base/sun.nio=ALL-UNNAMED",
     "java.base/sun.nio.ch=ALL-UNNAMED",
     "java.base/jdk.internal.ref=ALL-UNNAMED",
 
@@ -195,6 +197,8 @@ public final class ClasspathBootstrap {
 
     addToClassPath(cp, ArtifactRepositoryManager.getClassesFromDependencies());
     addToClassPath(cp, Tracer.class); // tracing infrastructure
+
+    addToClassPath(cp, EelFiles.class);
 
     try {
       Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");

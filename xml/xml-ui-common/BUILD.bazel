@@ -29,6 +29,7 @@ jvm_library(
     "//xml/xml-psi-api:psi",
     "//platform/analysis-api:analysis",
     "//xml/xml-psi-impl:psi-impl",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.xml.ui.common` end

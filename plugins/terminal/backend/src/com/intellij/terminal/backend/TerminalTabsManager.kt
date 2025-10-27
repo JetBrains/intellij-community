@@ -17,8 +17,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
-import org.jetbrains.plugins.terminal.session.TerminalCloseEvent
-import org.jetbrains.plugins.terminal.session.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(AwaitCancellationAndInvoke::class)

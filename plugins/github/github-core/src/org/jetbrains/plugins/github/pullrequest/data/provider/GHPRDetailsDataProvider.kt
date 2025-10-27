@@ -42,6 +42,8 @@ interface GHPRDetailsDataProvider {
 
   suspend fun squashMerge(commitMessage: Pair<String, String>, currentHeadRef: String)
 
+  suspend fun deleteMergedBranch(refId: String)
+
   suspend fun signalDetailsNeedReload()
 
   suspend fun signalMergeabilityNeedsReload()

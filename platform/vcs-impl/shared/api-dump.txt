@@ -656,6 +656,24 @@ c:com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator
 - <init>():V
 - compare(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):I
 - s:getInstance():com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator
+e:com.intellij.openapi.vcs.ex.ExclusionState
+- java.lang.Enum
+- sf:ALL_EXCLUDED:com.intellij.openapi.vcs.ex.ExclusionState
+- sf:ALL_INCLUDED:com.intellij.openapi.vcs.ex.ExclusionState
+- sf:NO_CHANGES:com.intellij.openapi.vcs.ex.ExclusionState
+- sf:PARTIALLY:com.intellij.openapi.vcs.ex.ExclusionState
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.vcs.ex.ExclusionState
+- s:values():com.intellij.openapi.vcs.ex.ExclusionState[]
+f:com.intellij.openapi.vcs.ex.LocalRange
+- com.intellij.openapi.vcs.ex.Range
+- com.intellij.openapi.vcs.ex.LstLocalRange
+- sf:Companion:com.intellij.openapi.vcs.ex.LocalRange$Companion
+- f:getChangelistId():java.lang.String
+- getClientIds():java.util.List
+- f:getExclusionState():com.intellij.openapi.vcs.ex.RangeExclusionState
+f:com.intellij.openapi.vcs.ex.LocalRange$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 - a:clear():V
 - a:getComponent():javax.swing.JComponent

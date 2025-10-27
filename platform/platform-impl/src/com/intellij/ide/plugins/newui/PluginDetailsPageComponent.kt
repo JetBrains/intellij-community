@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
@@ -177,7 +178,13 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   init {
     nameAndButtons = BaselinePanel(12, false)
-    customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
+    customizer = try {
+      getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
+    }
+    catch (e: Exception) {
+      LOG.error("Error while getting plugin details customizer", e)
+      NoOpPluginsViewCustomizer.getPluginDetailsCustomizer(pluginModel.getModel())
+    }
     pluginManagerCustomizer = PluginManagerCustomizer.getInstance()
 
     createPluginPanel()
@@ -186,6 +193,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   companion object {
+    private val LOG = logger<PluginDetailsPageComponent>()
+
     @JvmStatic
     fun createDescriptionComponent(imageViewHandler: Consumer<in View>?): JEditorPane {
       val kit = HTMLEditorKitBuilder().withViewFactoryExtensions({ e, view ->
@@ -460,7 +469,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       component.background = PluginManagerConfigurable.MAIN_BG_COLOR
     }
 
-    customizer.processPluginNameAndButtonsComponent(nameAndButtons)
+    try {
+      customizer.processPluginNameAndButtonsComponent(nameAndButtons)
+    }
+    catch (e: Exception) {
+      LOG.error("Error during PluginDetailsPage customization", e)
+    }
   }
 
   fun setOnlyUpdateMode() {
@@ -521,14 +535,18 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     installOptionButton.setOptions(customizationModel.additionalActions)
     val mainAction = customizationModel.mainAction
     if (mainAction != null) {
-      setInstallAction(installOptionButton, mainAction)
-      installOptionButton.setEnabled(customizationModel.isVisible, customizationModel.text)
+      if(customizationModel.isVisible) {
+        setInstallAction(installOptionButton, mainAction)
+      }
+      installOptionButton.setEnabled(customizationModel.isVisible)
+      installOptionButton.setTextAndSize(customizationModel.text)
       installOptionButton.isVisible = customizationModel.isVisible
     }
     else {
       setDefaultInstallAction(installOptionButton)
       val text = if (customizationModel.isVisible) null else IdeBundle.message("plugins.configurable.installed")
-      installButton?.setEnabled(customizationModel.isVisible, text)
+      installButton?.setEnabled(customizationModel.isVisible, null)
+      installOptionButton.setTextAndSize(text)
       installButton?.setVisible(customizationModel.isVisible)
     }
 
@@ -547,7 +565,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     val customizationModel = pluginManagerCustomizer.getDisableButtonCustomizationModel(pluginModel, uiModel, installedDescriptorForMarketplace, modalityState)
                              ?: return
     enableDisableController?.setOptions(customizationModel.additionalActions)
-    val visible = customizationModel.isVisible && customizationModel.text == null
+    val visible = customizationModel.isVisible && customizationModel.text == null && restartButton?.isVisible != true
     component.isVisible = visible
     component.isEnabled = visible
     if (customizationModel.text != null && restartButton?.isVisible != true) {
@@ -872,7 +890,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   suspend fun showPluginImpl(pluginUiModel: PluginUiModel, updateDescriptor: PluginUiModel?) {
     plugin = pluginUiModel
     this.updateDescriptor = if (updateDescriptor != null && updateDescriptor.canBeEnabled) updateDescriptor else null
-    isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentOs
+    isPluginCompatible = !pluginUiModel.isIncompatibleWithCurrentPlatform
     isPluginAvailable = isPluginCompatible && updateDescriptor?.canBeEnabled ?: true
     if (isMarketplace) {
       withContext(Dispatchers.IO) {
@@ -893,7 +911,12 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     }
 
     if (plugin != null) {
-      customizer.processShowPlugin(plugin!!.getDescriptor())
+      try {
+        customizer.processShowPlugin(plugin!!.getDescriptor())
+      }
+      catch (e: Exception) {
+        LOG.error("Error during processShowPlugin() customization", e)
+      }
     }
 
     mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, plugin!!.pluginId)
@@ -1517,7 +1540,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun createInstallButton(): PluginInstallButton {
-    if (Registry.`is`("reworked.plugin.manager.enabled", false)) {
+    if (UiPluginManager.isCombinedPluginManagerEnabled()) {
       val button = InstallOptionButton()
       setDefaultInstallAction(button)
       return button

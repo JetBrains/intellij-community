@@ -5,6 +5,8 @@
   </dependencies>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.allowedActionsProvider"
+                    interface="com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.escapeHandler"
                     interface="com.intellij.terminal.frontend.action.TerminalEscapeHandler" dynamic="true"/>
   </extensionPoints>

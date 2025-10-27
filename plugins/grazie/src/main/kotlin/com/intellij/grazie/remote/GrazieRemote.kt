@@ -30,10 +30,18 @@ object GrazieRemote {
 
   fun allAvailableLocally(languages: Collection<Lang>): Boolean = languages.all { isAvailableLocally(it) }
 
-  /** Downloads [lang] to local storage */
-  @Deprecated("Use downloadAsync(Collection<Lang>, Project) instead", replaceWith = ReplaceWith("downloadAsync(listOf(lang), project)"))
-  @ApiStatus.ScheduledForRemoval
-  fun download(lang: Lang): Boolean = LanguageDownloader.download(lang)
+  /**
+   * Downloads language to local storage synchronously. Use with extra care as
+   * some languages are GPL-licensed and require explicit user agreement before downloading
+   * 
+   * Consider using [downloadAsync] instead as it:
+   * 1. Has built-in GPL license agreement check
+   * 2. Downloads language in the background without blocking
+   * 
+   * @param lang Language to download
+   * @return true if download was successful, false otherwise
+   */
+  fun downloadWithoutLicenseCheck(lang: Lang): Boolean = LanguageDownloader.download(lang)
 
   /** Downloads [languages] asynchronously to local storage */
   fun downloadAsync(languages: Collection<Lang>, project: Project): Unit = LanguageDownloader.downloadAsync(languages, project)
@@ -56,8 +64,8 @@ object GrazieRemote {
       project,
       msg("grazie.license.gpl.message", gplLanguages.joinToString { it.shortDisplayName }),
       msg("grazie.license.gpl.title"),
-      CommonBundle.getOkButtonText(),
-      if (languages.size == gplLanguages.size) CommonBundle.getCancelButtonText() else msg("grazie.license.gpl.cancel"),
+      CommonBundle.getYesButtonText(),
+      if (languages.size == gplLanguages.size) CommonBundle.getNoButtonText() else msg("grazie.license.gpl.cancel"),
       Messages.getQuestionIcon()
     ) == Messages.OK
     if (hasUserAgreement) return languages

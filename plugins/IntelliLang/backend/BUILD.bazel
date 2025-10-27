@@ -70,6 +70,8 @@ jvm_library(
   resources = [":backend_resources"],
   deps = [
     "@lib//:jetbrains-annotations-provided",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
     ":platform_backend_provided",
     ":platform_core_provided",
     ":platform_util_provided",

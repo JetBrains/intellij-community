@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.oro.matcher.jar
   modules:
   - name: intellij.libraries.oro.matcher
   library: OroMatcher

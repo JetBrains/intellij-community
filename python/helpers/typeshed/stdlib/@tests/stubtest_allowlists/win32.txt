@@ -2,10 +2,6 @@
 # TODO: Allowlist entries that should be fixed
 # ============================================
 
-# alias for a class defined elsewhere,
-# mypy infers the variable has type `(*args) -> DupHandle` but stubtest infers the runtime type as <class DupHandle>
-multiprocessing.reduction.AbstractReducer.DupHandle
-
 # Exists at runtime, but missing from stubs
 _winapi.CreateFileMapping
 _winapi.MapViewOfFile

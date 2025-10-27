@@ -2,7 +2,7 @@ import sys
 from _typeshed import Incomplete
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import AbstractContextManager
-from typing import Any, Literal, overload
+from typing import Any, Literal, Protocol, overload, type_check_only
 from typing_extensions import Self, TypeAlias, deprecated
 
 from psutil._common import (
@@ -234,11 +234,18 @@ class Popen(Process):
     def __getattribute__(self, name: str) -> Any: ...
     def __dir__(self) -> list[str]: ...
 
+@type_check_only
+class _ProcessIterCallable(Protocol):
+    def __call__(
+        self, attrs: list[str] | tuple[str, ...] | set[str] | frozenset[str] | None = None, ad_value=None
+    ) -> Iterator[Process]: ...
+    def cache_clear(self) -> None: ...
+
 def pids() -> list[int]: ...
 def pid_exists(pid: int) -> bool: ...
-def process_iter(
-    attrs: list[str] | tuple[str, ...] | set[str] | frozenset[str] | None = None, ad_value=None
-) -> Iterator[Process]: ...
+
+process_iter: _ProcessIterCallable
+
 def wait_procs(
     procs: Iterable[Process], timeout: float | None = None, callback: Callable[[Process], object] | None = None
 ) -> tuple[list[Process], list[Process]]: ...

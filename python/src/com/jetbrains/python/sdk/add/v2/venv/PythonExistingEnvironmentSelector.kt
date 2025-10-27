@@ -48,10 +48,11 @@ class PythonExistingEnvironmentSelector<P: PathHolder>(model: PythonAddInterpret
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     // todo error handling, nullability issues
     val sdk = model.state.selectedInterpreter.get()!!.setupSdk(
-      project = moduleOrProject.project,
+      moduleOrProject = moduleOrProject,
       allSdks = model.existingSdks,
       fileSystem = model.fileSystem,
-      targetPanelExtension = model.state.targetPanelExtension.get()
+      targetPanelExtension = model.state.targetPanelExtension.get(),
+      isAssociateWithModule = true,
     )
     return sdk
   }

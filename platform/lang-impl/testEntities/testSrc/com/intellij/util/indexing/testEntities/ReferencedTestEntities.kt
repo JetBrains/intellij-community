@@ -26,39 +26,7 @@ data class DependencyItem(val reference: ReferredTestEntityId)
 
 interface OneMoreWithReferenceTestEntity : WorkspaceEntity {
   val references: List<DependencyItem>
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<OneMoreWithReferenceTestEntity> {
-    override var entitySource: EntitySource
-    var references: MutableList<DependencyItem>
-  }
-
-  companion object : EntityType<OneMoreWithReferenceTestEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      references: List<DependencyItem>,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.references = references.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifyOneMoreWithReferenceTestEntity(
-  entity: OneMoreWithReferenceTestEntity,
-  modification: OneMoreWithReferenceTestEntity.Builder.() -> Unit,
-): OneMoreWithReferenceTestEntity = modifyEntity(OneMoreWithReferenceTestEntity.Builder::class.java, entity, modification)
-//endregion
 
 interface WithReferenceTestEntity : WorkspaceEntityWithSymbolicId {
   val name: @NlsSafe String
@@ -67,42 +35,7 @@ interface WithReferenceTestEntity : WorkspaceEntityWithSymbolicId {
     get() = WithReferenceTestEntityId(name)
 
   val references: List<DependencyItem>
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<WithReferenceTestEntity> {
-    override var entitySource: EntitySource
-    var name: String
-    var references: MutableList<DependencyItem>
-  }
-
-  companion object : EntityType<WithReferenceTestEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      name: String,
-      references: List<DependencyItem>,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.name = name
-      builder.references = references.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifyWithReferenceTestEntity(
-  entity: WithReferenceTestEntity,
-  modification: WithReferenceTestEntity.Builder.() -> Unit,
-): WithReferenceTestEntity = modifyEntity(WithReferenceTestEntity.Builder::class.java, entity, modification)
-//endregion
 
 
 interface ReferredTestEntity : WorkspaceEntityWithSymbolicId {
@@ -112,39 +45,4 @@ interface ReferredTestEntity : WorkspaceEntityWithSymbolicId {
   override val symbolicId: ReferredTestEntityId
     get() = ReferredTestEntityId(name)
 
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<ReferredTestEntity> {
-    override var entitySource: EntitySource
-    var name: String
-    var file: VirtualFileUrl
-  }
-
-  companion object : EntityType<ReferredTestEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      name: String,
-      file: VirtualFileUrl,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.name = name
-      builder.file = file
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
-
 }
-
-//region generated code
-fun MutableEntityStorage.modifyReferredTestEntity(
-  entity: ReferredTestEntity,
-  modification: ReferredTestEntity.Builder.() -> Unit,
-): ReferredTestEntity = modifyEntity(ReferredTestEntity.Builder::class.java, entity, modification)
-//endregion

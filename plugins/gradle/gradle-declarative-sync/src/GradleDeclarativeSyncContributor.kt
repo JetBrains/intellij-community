@@ -193,7 +193,7 @@ internal class GradleDeclarativeSyncContributor : GradleSyncContributor {
   private fun addSourceRoots(
     storage: MutableEntityStorage,
     entitySource: EntitySource,
-    contentRootEntity: ContentRootEntity.Builder,
+    contentRootEntity: ContentRootEntityBuilder,
     sourceRoots: List<Pair<String, String>>,
     basePath: VirtualFileUrl,
   ) {
@@ -256,7 +256,7 @@ internal class GradleDeclarativeSyncContributor : GradleSyncContributor {
     entitySource: EntitySource,
     moduleName: String,
     dependencies: List<ModuleDependencyItem>,
-  ): ModuleEntity.Builder {
+  ): ModuleEntityBuilder {
     val moduleName = moduleName
     val moduleEntity = ModuleEntity(
       name = moduleName,
@@ -272,9 +272,9 @@ internal class GradleDeclarativeSyncContributor : GradleSyncContributor {
   private fun addContentRootEntity(
     storage: MutableEntityStorage,
     entitySource: EntitySource,
-    moduleEntity: ModuleEntity.Builder,
+    moduleEntity: ModuleEntityBuilder,
     url: VirtualFileUrl,
-  ): ContentRootEntity.Builder {
+  ): ContentRootEntityBuilder {
     val contentRootEntity = ContentRootEntity(
       url = url,
       entitySource = entitySource,
@@ -291,7 +291,7 @@ internal class GradleDeclarativeSyncContributor : GradleSyncContributor {
     entitySource: EntitySource,
     type: String,
     url: VirtualFileUrl,
-    contentRootEntity: ContentRootEntity.Builder,
+    contentRootEntity: ContentRootEntityBuilder,
   ) {
     storage addEntity SourceRootEntity(
       url = url,

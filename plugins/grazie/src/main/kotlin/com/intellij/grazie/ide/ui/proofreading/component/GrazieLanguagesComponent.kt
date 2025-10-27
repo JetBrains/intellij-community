@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
-class GrazieLanguagesComponent(download: suspend (Collection<Lang>) -> Unit) : GrazieUIComponent {
+class GrazieLanguagesComponent(download: suspend (Collection<Lang>) -> Boolean) : GrazieUIComponent {
   private val languages = GrazieLanguagesList(download) {
     updateLinkToDownloadMissingLanguages()
   }

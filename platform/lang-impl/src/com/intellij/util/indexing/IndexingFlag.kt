@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.components.service
@@ -14,7 +14,6 @@ import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesServic
 import com.intellij.util.indexing.impl.perFileVersion.LongFileAttribute
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import kotlin.concurrent.Volatile
 
 /**
  * An object dedicated to manage persistent `isIndexed` file flag.
@@ -33,8 +32,7 @@ import kotlin.concurrent.Volatile
 object IndexingFlag {
   private val attribute = FileAttribute("indexing.flag", 1, true)
 
-  @Volatile
-  private var persistence = LongFileAttribute.overFastAttribute(attribute)
+  private val persistence = LongFileAttribute.overFastAttribute(attribute)
   private val hashes = StripedIndexingStampLock()
 
   @JvmStatic
@@ -139,7 +137,13 @@ object IndexingFlag {
   }
 
   fun reloadAttributes() {
-    persistence = LongFileAttribute.overFastAttribute(attribute)
+    persistence.close()//will be reopened on next access
+  }
+
+  @JvmStatic
+  fun close(){
+    unlockAllFiles()
+    persistence.close()
   }
 
   @JvmStatic

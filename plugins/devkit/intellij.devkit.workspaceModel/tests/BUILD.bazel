@@ -48,6 +48,7 @@ jvm_library(
     "@lib//:rd-core",
     "@lib//:rd-framework",
     "//platform/util/jdom",
+    "@lib//:kotlinc-kotlin-scripting-common",
   ],
   runtime_deps = ["//plugins/devkit"]
 )

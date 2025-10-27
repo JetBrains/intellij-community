@@ -1,14 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
-import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@Internal
 interface PathResolver {
   val isFlat: Boolean
     get() = false
@@ -32,10 +32,10 @@ interface PathResolver {
   }
 }
 
-@ApiStatus.Internal
-fun PathResolver.toXIncludeLoader(dataLoader: DataLoader): XIncludeLoader = object : XIncludeLoader {
+@Internal
+fun createXIncludeLoader(pathResolver: PathResolver, dataLoader: DataLoader): XIncludeLoader = object : XIncludeLoader {
   override fun loadXIncludeReference(path: String): LoadedXIncludeReference? {
-    return loadXIncludeReference(dataLoader, path)
+    return pathResolver.loadXIncludeReference(dataLoader, path)
   }
 
   override fun toString(): String = dataLoader.toString()

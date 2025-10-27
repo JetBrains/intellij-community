@@ -16,7 +16,9 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.UIBundle;
-import com.intellij.ui.content.*;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.UsageView;
@@ -114,12 +116,6 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
     toolWindow.setAdditionalGearActions(gearActions);
 
     myFindContentManager = toolWindow.getContentManager();
-    myFindContentManager.addContentManagerListener(new ContentManagerListener() {
-      @Override
-      public void contentRemoved(@NotNull ContentManagerEvent event) {
-        event.getContent().release();
-      }
-    });
   }
 
   private static @NotNull ToolWindow getOrRegisterFindToolWindow(@NotNull ToolWindowManager toolWindowManager) {

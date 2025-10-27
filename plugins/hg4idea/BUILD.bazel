@@ -39,6 +39,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
+    "//platform/core-impl",
   ]
 )
 
@@ -80,6 +81,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/dvcs-impl/shared",
     "//platform/vcs-impl/shared",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.vcs.hg` end

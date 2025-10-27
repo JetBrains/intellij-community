@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.project.impl
 
+import com.intellij.CommonBundle
 import com.intellij.configurationStore.ProjectStorePathManager
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.configurationStore.saveSettings
@@ -73,13 +74,12 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.platform.PROJECT_NEWLY_OPENED
-import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.attachToProjectAsync
+import com.intellij.platform.*
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
-import com.intellij.platform.isLoadedFromCacheButHasNoModules
+import com.intellij.platform.eel.provider.EelUnavailableException
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -87,6 +87,7 @@ import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.PlatformUtils.isDataSpell
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -554,7 +555,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   final override suspend fun openProjectAsync(projectIdentityFile: Path, options: OpenProjectTask): Project? {
     if (projectIdentityFile.fileSystem.javaClass.name == MultiRoutingFileSystem::javaClass.name) {
       span("EelInitialization.runEelInitialization") {
-        EelInitialization.runEelInitialization(projectIdentityFile.toString())
+        try {
+          EelInitialization.runEelInitialization(projectIdentityFile.toString())
+        } catch (e : EelUnavailableException) {
+          LOG.error(e)
+        }
       }
     }
 
@@ -621,7 +626,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     return span("ProjectManager.openAsync") {
-      doOpenAsync(options, projectIdentityFile)
+      FUSProjectHotStartUpMeasurer.withProjectContextElement(projectIdentityFile) {
+        doOpenAsync(options, projectIdentityFile)
+      }
     }
   }
 
@@ -657,7 +664,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                 projectName = options.projectName,
                 beforeInit = options.beforeInit,
                 useDefaultProjectAsTemplate = options.useDefaultProjectAsTemplate,
-                preloadServices = options.preloadServices
+                preloadServices = options.preloadServices,
+                markAsNewlyCreated = options.isProjectCreatedWithWizard,
               )
               else -> prepareProject(
                 projectIdentityFile = projectIdentityFile,
@@ -812,6 +820,24 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     catch (secondException: Throwable) {
       LOG.error(secondException)
     }
+
+    //show to the user at least some indication of the error happened:
+    if (exception != null) {
+      //TODO UX-3615: default error dialog is awful, make something better.
+      //      Also: use ApplicationNotificationsModel to check for Notifications that may be generated
+      //      during project opening -- they may contain some useful info about the error, and also
+      //      useful actions to 'fix' it -- better show those Notifications to user somehow, too.
+      val stackTraceText = ExceptionUtil.getThrowableText(exception)
+      val fullMessage = "${exception.localizedMessage}\n\nStack Trace:\n$stackTraceText"
+
+      withContext(Dispatchers.EDT) {
+        Messages.showErrorDialog(
+          IdeBundle.message("ide.opening.failed.message", fullMessage),
+          CommonBundle.getErrorTitle()
+        )
+      }
+    }
+
     if (options.showWelcomeScreen) {
       WelcomeFrame.showIfNoProjectOpened()
     }
@@ -838,6 +864,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       options.beforeInit,
       options.useDefaultProjectAsTemplate,
       options.preloadServices,
+      options.isProjectCreatedWithWizard,
       markAsNew = false
     ).also { project ->
       TrustedProjects.setProjectTrusted(project, true)
@@ -885,6 +912,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     beforeInit: ((Project) -> Unit)?,
     useDefaultProjectAsTemplate: Boolean,
     preloadServices: Boolean,
+    markAsNewlyCreated: Boolean,
     markAsNew: Boolean = true,
   ): Project {
     return coroutineScope {
@@ -915,6 +943,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
       val project = instantiateProject(identityFle = identityFle, projectName = projectName, beforeInit = beforeInit)
       project.putUserData(PROJECT_NEWLY_OPENED, markAsNew)
+      project.putUserData(PROJECT_NEWLY_CREATED, markAsNewlyCreated)
       val template = templateAsync?.await()
       initProject(file = identityFle, project = project, preloadServices = preloadServices, template = template)
       project
@@ -1128,7 +1157,7 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
     (project.serviceAsync<StartupManager>() as StartupManagerImpl).initProject()
   }
 
-  launch(CoroutineName("projectOpened event executing") + Dispatchers.UiWithModelAccess) {
+  launch(CoroutineName("projectOpened event executing") + Dispatchers.EDT) {
     @Suppress("DEPRECATION", "removal")
     ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
   }
@@ -1140,7 +1169,7 @@ fun CoroutineScope.runInitProjectActivities(project: Project) {
     return
   }
 
-  launch(CoroutineName("projectOpened component executing") + Dispatchers.UiWithModelAccess) {
+  launch(CoroutineName("projectOpened component executing") + Dispatchers.EDT) {
     for (component in projectComponents) {
       runCatching {
         val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER)

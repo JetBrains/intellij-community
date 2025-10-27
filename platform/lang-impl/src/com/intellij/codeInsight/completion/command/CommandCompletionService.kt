@@ -44,6 +44,13 @@ import kotlin.math.min
 private const val MAX_COUNT_TO_SHOW_HINT = 5
 
 /**
+ * Key representing whether this file is a copy for command completion analysis.
+ */
+@JvmField
+@ApiStatus.Internal
+val COMMAND_COMPLETION_COPY: Key<Boolean?> = Key.create<Boolean>("completion.command.copy.file")
+
+/**
  * Service class responsible for managing and providing functionality for command completion within a project.
  *
  * This class allows filtering and enhancing the behavior of code completion for commands, assisting in the

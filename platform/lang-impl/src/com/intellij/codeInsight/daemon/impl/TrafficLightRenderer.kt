@@ -10,7 +10,10 @@ import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile
-import com.intellij.codeInsight.multiverse.*
+import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.codeInsight.multiverse.EditorContextManager
+import com.intellij.codeInsight.multiverse.codeInsightContext
+import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.icons.AllIcons
@@ -49,10 +52,10 @@ import com.intellij.util.io.storage.HeavyProcessLatch
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.GridBag
 import it.unimi.dsi.fastutil.ints.IntArrayList
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Container
+import java.util.*
 import java.util.concurrent.CancellationException
 
 open class TrafficLightRenderer private constructor(
@@ -63,7 +66,10 @@ open class TrafficLightRenderer private constructor(
 ) : ErrorStripeRenderer, Disposable {
   private val daemonCodeAnalyzer: DaemonCodeAnalyzerImpl
   private val severityRegistrar: SeverityRegistrar
-  private val errorCount = Object2IntOpenHashMap<HighlightKey>() // guarded by errorCount
+  private val errorCount = ErrorCountStorage()
+  @Volatile
+  private var isDisposed: Boolean = false
+
   @JvmField
   @ApiStatus.Internal
   protected val uiController: UIController
@@ -100,22 +106,23 @@ open class TrafficLightRenderer private constructor(
 
   private fun init(project: Project, document: Document) {
     val model = DocumentMarkupModel.forDocument(document, project, true) as MarkupModelEx
-    model.addMarkupModelListener(this, object : MarkupModelListener {
-      override fun afterAdded(highlighter: RangeHighlighterEx) {
-        incErrorCount(highlighter, 1)
-      }
-
-      // assumption: range highlighters for errors/warnings don't transmute into each other, across different severity layers
-      // see com.intellij.codeInsight.daemon.impl.ManagedHighlighterRecycler.pickupHighlighterFromGarbageBin how range highlighter recycling work
-
-      override fun afterRemoved(highlighter: RangeHighlighterEx) {
-        incErrorCount(highlighter, -1)
-      }
-    })
     EdtInvocationManager.invokeLaterIfNeeded(Runnable {
+      if (isDisposed) return@Runnable
       for (rangeHighlighter in model.getAllHighlighters()) {
         incErrorCount(rangeHighlighter, 1)
       }
+      model.addMarkupModelListener(this, object : MarkupModelListener {
+        override fun afterAdded(highlighter: RangeHighlighterEx) {
+          incErrorCount(highlighter, 1)
+        }
+
+        // assumption: range highlighters for errors/warnings don't transmute into each other, across different severity layers
+        // see com.intellij.codeInsight.daemon.impl.ManagedHighlighterRecycler.pickupHighlighterFromGarbageBin how range highlighter recycling work
+
+        override fun afterRemoved(highlighter: RangeHighlighterEx) {
+          incErrorCount(highlighter, -1)
+        }
+      })
     })
   }
 
@@ -140,19 +147,6 @@ open class TrafficLightRenderer private constructor(
       defaultContext()
     }
   }
-  private fun getContext(highlighter: RangeHighlighter): CodeInsightContext {
-    val context: CodeInsightContext = if (isSharedSourceSupportEnabled(project)) {
-      highlighter.codeInsightContext ?: run {
-        // todo IJPL-339 please improve this code if context can indeed be null
-        // logger<TrafficLightRenderer>().error("highlightInfo's rangeHighlighter must have a context")
-        defaultContext()
-      }
-    }
-    else {
-      defaultContext()
-    }
-    return context
-  }
 
   open val errorCounts: IntArray
     /**
@@ -166,8 +160,7 @@ open class TrafficLightRenderer private constructor(
       val context = getContext()
       for (severity in severities) {
         val severityIndex = severityRegistrar.getSeverityIdx(severity)
-        val highlightKey = HighlightKey(severity, context)
-        cachedErrors[severityIndex] = synchronized(errorCount) { errorCount.getInt(highlightKey) }
+        cachedErrors[severityIndex] = errorCount.getErrorCount(severity, context)
       }
       return cachedErrors
     }
@@ -176,20 +169,16 @@ open class TrafficLightRenderer private constructor(
   }
 
   override fun dispose() {
-    synchronized(errorCount) {
-      errorCount.clear()
-    }
+    errorCount.clear()
+    isDisposed = true
   }
 
   private fun incErrorCount(highlighter: RangeHighlighter, delta: Int) {
     val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
     val infoSeverity = info.severity
     if (infoSeverity > HighlightSeverity.TEXT_ATTRIBUTES) {
-      val highlightKey = HighlightKey(infoSeverity, getContext(highlighter))
-      synchronized(errorCount) {
-        val oldVal = errorCount.getInt(highlightKey)
-        errorCount.put(highlightKey, Math.max(0, oldVal + delta))
-      }
+      val context = highlighter.codeInsightContext
+      errorCount.incErrorCount(infoSeverity, context, delta)
     }
   }
 
@@ -652,9 +641,12 @@ open class TrafficLightRenderer private constructor(
     ): TrafficLightRendererInfo {
       val viewProvider = psiFile.getViewProvider()
       val languages = viewProvider.getLanguages()
-      val settingMap = HashMap<Language, FileHighlightingSetting>(languages.size)
+      val settingMap = LinkedHashMap<Language, FileHighlightingSetting>(languages.size)
       val settings = HighlightingSettingsPerFile.getInstance(project)
-      for (psiRoot in viewProvider.getAllFiles()) {
+      val roots = viewProvider.getAllFiles().toMutableList()
+      // leave the first item (the base language) in place, show all others in a stable order
+      roots.subList(1, roots.size).sortBy { file ->  file.language.displayName }
+      for (psiRoot in roots) {
         val setting = settings.getHighlightingSettingForRoot(psiRoot)
         settingMap[psiRoot.getLanguage()] = setting
       }
@@ -662,7 +654,7 @@ open class TrafficLightRenderer private constructor(
       val virtualFile = psiFile.getVirtualFile()!!
       val inLib = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile)
       val shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(psiFile)
-      return TrafficLightRendererInfo(java.util.Map.copyOf(settingMap), inLib, shouldHighlight)
+      return TrafficLightRendererInfo(Collections.unmodifiableMap(settingMap), inLib, shouldHighlight)
     }
 
     private fun toPercent(progress: Double, finished: Boolean): Int {
@@ -671,8 +663,3 @@ open class TrafficLightRenderer private constructor(
     }
  }
 }
-
-private data class HighlightKey(
-  val severity: HighlightSeverity,
-  val context: CodeInsightContext,
-)

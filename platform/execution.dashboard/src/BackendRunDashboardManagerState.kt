@@ -11,6 +11,7 @@ import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.splitApi.*
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 
@@ -24,6 +25,16 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
   private val tagCallbacksByServiceId = HashMap<RunDashboardServiceId, List<CustomLinkDto>>()
 
   private val sharedStatuses = MutableSharedFlow<ServiceStatusDto>(1, 100, BufferOverflow.DROP_OLDEST)
+  private val sharedConfigurationTypes = MutableStateFlow<Set<String>>(emptySet())
+
+  private val sharedExcludedTypes = MutableStateFlow(emptySet<String>())
+
+  private val sharedStateUpdatesQueue = BackendRunDashboardUpdatesQueue(RunDashboardCoroutineScopeProvider.getInstance(project)
+                                                                          .cs.childScope("Backend run dashboard shared state updates"))
+
+  private fun scheduleSharedStateUpdate(update: SequentialComputationRequest) {
+    sharedStateUpdatesQueue.submit(update)
+  }
 
   fun getLinkByServiceId(link: String, serviceId: RunDashboardServiceId): Runnable? {
     return tagCallbacksByServiceId[serviceId]?.firstOrNull { linkDto -> linkDto.presentableText == link }?.callback
@@ -38,22 +49,41 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
   }
 
   fun setServices(value: List<List<RunDashboardService>>) {
-    val flattenServices = value.flatten()
-    sharedServicesState.value = flattenServices.map { backendServiceModel ->
-      createServiceDto(backendServiceModel)
-    }
+    scheduleSharedStateUpdate {
+      val flattenServices = value.flatten()
+      sharedServicesState.value = flattenServices.map { backendServiceModel ->
+        createServiceDto(backendServiceModel)
+      }
 
-    val effectiveServicesSet = flattenServices.asSequence().map { it.uuid }.toSet()
-    tagCallbacksByServiceId.keys.retainAll(effectiveServicesSet)
+      val effectiveServicesSet = flattenServices.asSequence().map { it.uuid }.toSet()
+      tagCallbacksByServiceId.keys.retainAll(effectiveServicesSet)
+    }
   }
 
   fun setSettings(openRunningConfigInTab: Boolean) {
-    sharedSettings.value = RunDashboardSettingsDto(openRunningConfigInTab)
+    scheduleSharedStateUpdate {
+      sharedSettings.value = RunDashboardSettingsDto(openRunningConfigInTab)
+    }
   }
 
-  fun fireStatusUpdated(backendService: RunDashboardService) {
-    sharedStatuses.tryEmit(ServiceStatusDto(backendService.uuid,
-                                            RunDashboardRunConfigurationStatus.getStatus(backendService.descriptor).id))
+  fun fireExcludedTypesUpdated(excludedTypes: Set<String>) {
+    scheduleSharedStateUpdate {
+      sharedExcludedTypes.value = excludedTypes
+    }
+  }
+
+  fun getExcludedTypes(): Flow<Set<String>> {
+    return sharedExcludedTypes.asStateFlow()
+  }
+
+  fun fireStatusUpdated(backendService: RunDashboardService, persistedStatus: RunDashboardRunConfigurationStatus?) {
+    scheduleSharedStateUpdate {
+      val effectiveStatus = when {
+        backendService.descriptor == null && persistedStatus != null -> persistedStatus
+        else -> RunDashboardRunConfigurationStatus.getStatus(backendService.descriptor)
+      }
+      sharedStatuses.tryEmit(ServiceStatusDto(backendService.uuid, effectiveStatus.id))
+    }
   }
 
   fun getStatuses(): Flow<ServiceStatusDto> {
@@ -61,9 +91,11 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
   }
 
   fun fireCustomizationUpdated(backendService: RunDashboardService, customizers: List<RunDashboardCustomizer>) {
-    val value = createCustomizationDto(backendService, customizers)
-    tagCallbacksByServiceId[backendService.uuid] = value.links
-    sharedServicesCustomizations.tryEmit(value)
+    scheduleSharedStateUpdate {
+      val value = createCustomizationDto(backendService, customizers)
+      tagCallbacksByServiceId[backendService.uuid] = value.links
+      sharedServicesCustomizations.tryEmit(value)
+    }
   }
 
   fun getCustomizations(): Flow<ServiceCustomizationDto> {
@@ -79,6 +111,16 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
     }
 
     return customizationBuilder.buildDto(backendService.uuid)
+  }
+
+  fun setConfigurationTypes(value: Set<String>) {
+    scheduleSharedStateUpdate {
+      sharedConfigurationTypes.value = value
+    }
+  }
+
+  fun getConfigurationTypes(): Flow<Set<String>> {
+    return sharedConfigurationTypes.asStateFlow()
   }
 
   companion object {

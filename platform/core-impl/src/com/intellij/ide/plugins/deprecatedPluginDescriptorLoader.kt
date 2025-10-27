@@ -6,7 +6,48 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
+
+@Internal
+@Deprecated("Used only by module-based loader")
+fun deprecatedLoadCorePluginForModuleBasedLoader(
+  platformPrefix: String,
+  isInDevServerMode: Boolean,
+  isUnitTestMode: Boolean,
+  isRunningFromSources: Boolean,
+  loadingContext: PluginDescriptorLoadingContext,
+  pathResolver: PathResolver,
+  useCoreClassLoader: Boolean,
+  classLoader: ClassLoader,
+  jarFileForModule: (moduleId: PluginModuleId, moduleDir: Path) -> Path?,
+): PluginMainDescriptor? {
+  if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
+    val reader = getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader)!!
+    return loadCoreProductPlugin(
+      loadingContext = loadingContext,
+      pathResolver = pathResolver,
+      useCoreClassLoader = useCoreClassLoader,
+      reader = reader,
+      jarFileForModule = jarFileForModule,
+      isRunningFromSourcesWithoutDevBuild = false,
+      isDeprecatedLoader = true
+    )
+  }
+  else {
+    val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
+    val reader = getResourceReader(path, classLoader) ?: return null
+    return loadCoreProductPlugin(
+      loadingContext = loadingContext,
+      pathResolver = pathResolver,
+      useCoreClassLoader = useCoreClassLoader,
+      reader = reader,
+      jarFileForModule = jarFileForModule,
+      isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
+      isDeprecatedLoader = true,
+    )
+  }
+}
 
 internal fun CoroutineScope.loadPluginDescriptorsInDeprecatedUnitTestMode(
   loadingContext: PluginDescriptorLoadingContext,
@@ -16,6 +57,7 @@ internal fun CoroutineScope.loadPluginDescriptorsInDeprecatedUnitTestMode(
   zipPool: ZipEntryResolverPool,
   customPluginDir: Path,
   bundledPluginDir: Path?,
+  jarFileForModule: (PluginModuleId, Path) -> Path?,
 ): Deferred<List<DiscoveredPluginsList>> {
   // Do not hardcode `isRunningFromSources = true`.
   // This falsely assumes that if `isUnitTestMode = true`, then tests are running inside the monorepo.
@@ -30,6 +72,7 @@ internal fun CoroutineScope.loadPluginDescriptorsInDeprecatedUnitTestMode(
     isRunningFromSources = isRunningFromSources, // do not hardcode to `true`
     classLoader = mainClassLoader,
     pool = zipPool,
+    jarFileForModule = jarFileForModule,
   )
   val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
   val bundled = if (bundledPluginDir == null) {
@@ -51,8 +94,9 @@ internal fun CoroutineScope.deprecatedLoadPluginDescriptorsWithoutDistIndex(
   mainClassLoader: ClassLoader,
   customPluginDir: Path,
   effectiveBundledPluginDir: Path,
+  jarFileForModule: (PluginModuleId, Path) -> Path?,
 ): Deferred<List<DiscoveredPluginsList>> {
-  PluginManagerCore.logger.warn("Dist index is missing or corrupted; an OLD, DEPRECATED, SOON-TO-BE-UNSUPPORTED implementation will be used")
+  PluginManagerCore.logger.warn("Dist index is missing or corrupted; an OLD, DEPRECATED, SOON-TO-BE-REMOVED implementation will be used")
 
   @Suppress("DEPRECATION")
   val core = deprecatedLoadCoreModules(
@@ -63,6 +107,7 @@ internal fun CoroutineScope.deprecatedLoadPluginDescriptorsWithoutDistIndex(
     isRunningFromSources = isRunningFromSources,
     pool = zipPool,
     classLoader = mainClassLoader,
+    jarFileForModule = jarFileForModule,
   )
   val custom = loadDescriptorsFromDir(dir = customPluginDir, loadingContext = loadingContext, isBundled = false, pool = zipPool)
   val bundled = loadDescriptorsFromDir(dir = effectiveBundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
@@ -71,7 +116,7 @@ internal fun CoroutineScope.deprecatedLoadPluginDescriptorsWithoutDistIndex(
   }
 }
 
-@Deprecated("Used only gateway and in deprecated unit test mode (not dev-mode)")
+@Deprecated("Used only by gateway and in deprecated unit test mode (not dev-mode)")
 private fun CoroutineScope.deprecatedLoadCoreModules(
   loadingContext: PluginDescriptorLoadingContext,
   platformPrefix: String,
@@ -80,8 +125,13 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
   isRunningFromSources: Boolean,
   pool: ZipEntryResolverPool,
   classLoader: ClassLoader,
+  jarFileForModule: (PluginModuleId, Path) -> Path?,
 ): Deferred<DiscoveredPluginsList> {
-  val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode)
+  val pathResolver = ClassPathXmlPathResolver(
+    classLoader = classLoader,
+    isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
+    isOptionalProductModule = { ProductLoadingStrategy.strategy.isOptionalProductModule(it) },
+  )
   val useCoreClassLoader = pathResolver.isRunningFromSourcesWithoutDevBuild || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
 
   if (isProductWithTheOnlyDescriptor(platformPrefix) && (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
@@ -92,7 +142,9 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
         pathResolver = pathResolver,
         useCoreClassLoader = useCoreClassLoader,
         reader = reader,
+        jarFileForModule = jarFileForModule,
         isRunningFromSourcesWithoutDevBuild = false,
+        isDeprecatedLoader = true,
       )
       DiscoveredPluginsList(Java11Shim.INSTANCE.listOf(corePlugin), PluginsSourceContext.Product)
     }
@@ -100,13 +152,15 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
 
   val corePluginDeferred = async(Dispatchers.IO) {
     val path = "${PluginManagerCore.META_INF}${platformPrefix}Plugin.xml"
-    val reader = getResourceReader(path, classLoader = classLoader) ?: return@async null
+    val reader = getResourceReader(path = path, classLoader = classLoader) ?: return@async null
     loadCoreProductPlugin(
       loadingContext = loadingContext,
       pathResolver = pathResolver,
       useCoreClassLoader = useCoreClassLoader,
       reader = reader,
+      jarFileForModule = jarFileForModule,
       isRunningFromSourcesWithoutDevBuild = isRunningFromSources && !isInDevServerMode,
+      isDeprecatedLoader = true,
     )
   }
 
@@ -118,7 +172,7 @@ private fun CoroutineScope.deprecatedLoadCoreModules(
     val libDir = if (useCoreClassLoader) null else PathManager.getLibDir()
     urlToFilename.mapTo(result) { (url, filename) ->
       async(Dispatchers.IO) {
-        loadDescriptorFromResource(
+        testOrDeprecatedLoadDescriptorFromResource(
           resource = url,
           filename = filename,
           loadingContext = loadingContext,

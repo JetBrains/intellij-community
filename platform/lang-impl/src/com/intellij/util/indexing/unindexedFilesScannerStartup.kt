@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -277,7 +278,9 @@ private suspend fun scheduleForIndexing(someProjectDirtyFilesFiles: List<Virtual
   readActionBlocking {
     for (file in someProjectDirtyFilesFiles.run { if (limit > 0) take(limit) else this }) {
       if (file is VirtualFileWithId) {
-        fileBasedIndex.scheduleFileForIncrementalIndexing(file.id, file, false, listOf(project))
+        Cancellation.executeInNonCancelableSection {
+          fileBasedIndex.scheduleFileForIncrementalIndexing(file.id, file, false, listOf(project))
+        }
       }
     }
   }

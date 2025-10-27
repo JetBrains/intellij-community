@@ -29,11 +29,9 @@ fun CoroutineScope.createSkippableJob(
   stepId: String,
   context: BuildContext,
   task: suspend () -> Unit,
-): Job {
-  return launch(CoroutineName("$stepId build step")) {
-    context.executeStep(spanBuilder, stepId) {
-      task()
-    }
+): Job = launch(CoroutineName("$stepId build step")) {
+  context.executeStep(spanBuilder, stepId) {
+    task()
   }
 }
 
@@ -70,6 +68,5 @@ internal fun getCommandLineArgumentsForOpenPackages(context: CompilationContext,
  * [GlobalScope] is required not to hang a caller, see [CoroutineStart.LAZY]
  */
 @OptIn(DelicateCoroutinesApi::class)
-internal fun <T> asyncLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): Deferred<T> {
-  return GlobalScope.async(Dispatchers.Unconfined + CoroutineName(coroutineName), CoroutineStart.LAZY, initializer)
-}
+internal fun <T> asyncLazy(coroutineName: String, initializer: suspend CoroutineScope.() -> T): Deferred<T> =
+  GlobalScope.async(Dispatchers.Unconfined + CoroutineName(coroutineName), CoroutineStart.LAZY, initializer)

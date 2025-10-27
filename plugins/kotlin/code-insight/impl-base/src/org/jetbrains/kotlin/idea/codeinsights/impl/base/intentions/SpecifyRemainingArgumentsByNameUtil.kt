@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidateInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -73,6 +74,7 @@ object SpecifyRemainingArgumentsByNameUtil {
      * Calculates the [RemainingArgumentsData] for the call.
      * See [RemainingArgumentsData] for details.
      */
+    @OptIn(KaExperimentalApi::class)
     private fun KaFunctionCall<*>.getRemainingArgumentsData(): RemainingArgumentsData? {
         if (!symbol.hasStableParameterNames) return null
 
@@ -85,7 +87,7 @@ object SpecifyRemainingArgumentsByNameUtil {
         }
         if (validArguments.isEmpty()) return null
 
-        val withoutDefault = validArguments.filter { !it.hasDefaultValue }.map { it.name }
+        val withoutDefault = validArguments.filter { !it.hasDeclaredDefaultValue }.map { it.name }
         return RemainingArgumentsData(withoutDefault, validArguments.map { it.name })
     }
 
@@ -93,6 +95,7 @@ object SpecifyRemainingArgumentsByNameUtil {
      * Given the list of [allCalls] that are possible, this function returns the minimum required arguments
      * required to complete any of the calls and the most number of arguments that can be passed to any of the calls.
      */
+    @OptIn(KaExperimentalApi::class)
     private fun KaSession.getRemainingArgumentsData(allCalls: List<KaCallCandidateInfo>): RemainingArgumentsData? {
         val allFunctionCalls = allCalls.map { info ->
             // If any of the calls cannot be resolved, we do not want to continue
@@ -102,7 +105,7 @@ object SpecifyRemainingArgumentsByNameUtil {
         if (validPossibleCalls.isEmpty()) return null
 
         val smallestData =
-            validPossibleCalls.minBy { it.symbol.valueParameters.count { !it.hasDefaultValue } }.getRemainingArgumentsData() ?: return null
+            validPossibleCalls.minBy { it.symbol.valueParameters.count { !it.hasDeclaredDefaultValue } }.getRemainingArgumentsData() ?: return null
         val largestData = validPossibleCalls.maxBy { it.symbol.valueParameters.size }.getRemainingArgumentsData() ?: return null
 
         return RemainingArgumentsData(smallestData.remainingRequiredArguments, largestData.allRemainingArguments)

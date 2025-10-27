@@ -15,6 +15,7 @@ import com.intellij.grazie.ide.ui.PaddedListCellRenderer;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextExtractor;
 import com.intellij.grazie.utils.HighlightingUtil;
+import com.intellij.grazie.utils.NaturalTextDetector;
 import com.intellij.grazie.utils.Text;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -62,8 +63,9 @@ public class RephraseAction extends IntentionAndQuickFixAction {
     }
 
     TextContent content = TextExtractor.findTextAt(psiFile, editor.getCaretModel().getOffset(), TextContent.TextDomain.ALL);
-    if (content == null) return false;
-    return content.fileRangeToText(HighlightingUtil.selectionRange(editor)) != null;
+    TextRange range = HighlightingUtil.selectionRange(editor);
+    if (content == null || (range.isEmpty() && !NaturalTextDetector.seemsNatural(content))) return false;
+    return content.fileRangeToText(range) != null;
   }
 
   public record SuggestionsWithLanguage(

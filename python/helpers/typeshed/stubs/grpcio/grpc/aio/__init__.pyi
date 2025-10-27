@@ -65,8 +65,8 @@ def secure_channel(
 
 def server(
     migration_thread_pool: futures.Executor | None = None,
-    handlers: Sequence[GenericRpcHandler[Any, Any]] | None = None,
-    interceptors: Sequence[ServerInterceptor[Any, Any]] | None = None,
+    handlers: Sequence[GenericRpcHandler] | None = None,
+    interceptors: Sequence[ServerInterceptor] | None = None,
     options: _Options | None = None,
     maximum_concurrent_rpcs: int | None = None,
     compression: Compression | None = None,
@@ -125,7 +125,7 @@ class Channel(abc.ABC):
 
 class Server(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def add_generic_rpc_handlers(self, generic_rpc_handlers: Iterable[GenericRpcHandler[Any, Any]]) -> None: ...
+    def add_generic_rpc_handlers(self, generic_rpc_handlers: Iterable[GenericRpcHandler]) -> None: ...
 
     # Returns an integer port on which server will accept RPC requests.
     @abc.abstractmethod
@@ -248,14 +248,14 @@ class ServicerContext(Generic[_TRequest, _TResponse], metaclass=abc.ABCMeta):
 # Client-Side Interceptor:
 
 class ClientCallDetails(abc.ABC):
-    def __init__(
-        self,
+    def __new__(
+        _cls,
         method: str,
         timeout: float | None,
         metadata: Metadata | None,
         credentials: CallCredentials | None,
         wait_for_ready: bool | None,
-    ) -> None: ...
+    ) -> Self: ...
 
     method: str
     timeout: float | None
@@ -355,7 +355,8 @@ class StreamStreamClientInterceptor(Generic[_TRequest, _TResponse], metaclass=ab
 
 # Server-Side Interceptor:
 
-class ServerInterceptor(Generic[_TRequest, _TResponse], metaclass=abc.ABCMeta):
+class ServerInterceptor(metaclass=abc.ABCMeta):
+    # This method (not the class) is generic over _TRequest and _TResponse.
     @abc.abstractmethod
     async def intercept_service(
         self,

@@ -68,6 +68,10 @@ class SeTextTab(private val delegate: SeTabDelegate, registerShortcut: (AnAction
     return delegate.getPreviewInfo(itemData, false)
   }
 
+  override suspend fun isExtendedInfoEnabled(): Boolean {
+    return delegate.isExtendedInfoEnabled()
+  }
+
   override fun dispose() {
     Disposer.dispose(filterEditorDisposable)
     Disposer.dispose(delegate)

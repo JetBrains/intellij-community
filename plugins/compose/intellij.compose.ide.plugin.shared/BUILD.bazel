@@ -47,6 +47,14 @@ jvm_library(
 ### auto-generated section `build intellij.compose.ide.plugin.shared` end
 
 ### auto-generated section `build intellij.compose.ide.plugin.shared.tests` start
+create_kotlinc_options(
+  name = "custom_ide-plugin-shared-tests",
+  opt_in = [
+    "com.intellij.openapi.util.IntellijInternalApi",
+    "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+  ]
+)
+
 jvm_library(
   name = "ide-plugin-shared-tests",
   visibility = ["//visibility:public"],
@@ -57,6 +65,7 @@ jvm_library(
   name = "ide-plugin-shared-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_ide-plugin-shared-tests",
   associates = ["//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared"],
   deps = [
     "//platform/analysis-api:analysis",

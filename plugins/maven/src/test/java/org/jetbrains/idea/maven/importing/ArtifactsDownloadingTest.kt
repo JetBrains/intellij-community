@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenId
@@ -70,24 +70,27 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
     val sources = repositoryPath.resolve("junit/junit/4.0/junit-4.0-sources.jar")
     val javadoc = repositoryPath.resolve("junit/junit/4.0/junit-4.0-javadoc.jar")
 
-    assertFalse(sources.exists())
-    assertFalse(javadoc.exists())
+    assertFalse("Sources folder should not exist at test start", sources.exists())
+    assertFalse("Javadoc folder should not exist at test start", javadoc.exists())
 
     mavenGeneralSettings.isWorkOffline = false
     downloadArtifacts()
 
-    assertTrue(sources.exists())
-    assertTrue(javadoc.exists())
+    assertTrue("Sources folder should exist after first download", sources.exists())
+    assertTrue("Javadoc folder should exist after first download", javadoc.exists())
 
-    FileUtil.delete(sources)
-    FileUtil.delete(javadoc)
+    FileUtilRt.deleteRecursively(sources)
+    FileUtilRt.deleteRecursively(javadoc)
+
+    assertFalse("Sources folder should not exist after deletion", sources.exists())
+    assertFalse("Javadoc folder should not exist after deletion", javadoc.exists())
 
     mavenGeneralSettings.isWorkOffline = true
 
     downloadArtifacts()
 
-    assertTrue(sources.exists())
-    assertTrue(javadoc.exists())
+    assertTrue("Sources folder should exist after second download",sources.exists())
+    assertTrue("Sources folder should exist after second download",javadoc.exists())
   }
 
   @Test
@@ -184,7 +187,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
   @Test
   @Throws(Exception::class)
   fun JavadocsAndSourcesForDepsWithClassifiersAndType() = runBlocking {
-    val remoteRepo = FileUtil.toSystemIndependentName(dir.resolve("repo").toString())
+    val remoteRepo = FileUtilRt.toSystemIndependentName(dir.resolve("repo").toString())
     updateSettingsXmlFully("""<settings>
 <mirrors>
   <mirror>

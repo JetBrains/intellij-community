@@ -285,6 +285,7 @@
     </extensionPoint>
 
     <extensionPoint name="runDashboardCustomizer" interface="com.intellij.execution.dashboard.RunDashboardCustomizer" dynamic="true"/>
+    <extensionPoint name="legacyRunDashboardServiceSubstitutor" interface="com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor" dynamic="true"/>
     <extensionPoint name="runDashboardDefaultTypesProvider" interface="com.intellij.execution.dashboard.RunDashboardDefaultTypesProvider" dynamic="true"/>
     <extensionPoint name="serviceViewContributor" interface="com.intellij.execution.services.ServiceViewContributor" dynamic="true"/>
     <extensionPoint name="hectorComponentProvider" interface="com.intellij.openapi.editor.HectorComponentPanelsProvider" area="IDEA_PROJECT" dynamic="true"/>
@@ -462,6 +463,8 @@
 
     <extensionPoint name="defaultLiveTemplatesProvider" interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>
     <extensionPoint name="defaultLiveTemplates" beanClass="com.intellij.codeInsight.template.impl.DefaultLiveTemplateEP" dynamic="true"/>
+    <extensionPoint name="templateFilter" interface="com.intellij.codeInsight.template.TemplateFilter" dynamic="true"/>
+    <extensionPoint name="templateGroupHintProvider" interface="com.intellij.codeInsight.template.TemplateGroupHintProvider" dynamic="true"/>
     <extensionPoint name="codeInsight.implementMethod" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
     </extensionPoint>
@@ -754,6 +757,9 @@
                     qualifiedName="com.intellij.microservices.featuresAvailabilityProvider" dynamic="true"/>
     <extensionPoint interface="com.intellij.microservices.oas.serialization.OasSerializationCompatibilityProvider"
                     qualifiedName="com.intellij.microservices.oasSerializationCompatibilityProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.highlightingProjectOrWorkspaceFileOverride"
+                    interface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingProjectOrWorkspaceFileOverride"
+                    dynamic="true"/>
 
     <extensionPoint name="saveAndSyncHandlerListener" interface="com.intellij.ide.SaveAndSyncHandlerListener" dynamic="true"/>
   </extensionPoints>

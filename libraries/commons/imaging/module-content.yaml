@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.commons.imaging.jar
   modules:
   - name: intellij.libraries.commons.imaging
   library: commons-imaging

@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gradle.service.sources.GradleLibrarySourcesDownloader
+import org.jetbrains.plugins.gradle.util.GradleDependencySourceDownloaderErrorHandler
 
 class GradleDownloadSourceEditorListener(private val cs: CoroutineScope) : FileEditorManagerListener {
 
@@ -18,7 +19,7 @@ class GradleDownloadSourceEditorListener(private val cs: CoroutineScope) : FileE
     cs.launch {
       val project = source.project
       if (GradleLibrarySourcesDownloader.canDownloadSources(project, file)) {
-        GradleLibrarySourcesDownloader.download(project, file)
+        GradleLibrarySourcesDownloader.download(project, file, GradleDependencySourceDownloaderErrorHandler.Noop)
       }
     }
   }

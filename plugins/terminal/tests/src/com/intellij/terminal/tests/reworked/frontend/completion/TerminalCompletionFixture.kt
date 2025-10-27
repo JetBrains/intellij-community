@@ -26,12 +26,14 @@ import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConflictStrategy
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
-import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.session.TerminalBlocksModelState
-import org.jetbrains.plugins.terminal.session.TerminalOutputBlock
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
+import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalShellIntegrationImpl
+import org.junit.Assert.assertEquals
 import org.junit.Assume
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_UNDEFINED
@@ -50,14 +52,20 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       terminalScope.cancel()
     }
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, terminalScope)
-    val terminalOutputBlock = TerminalOutputBlock(0, outputModel.startOffset, outputModel.startOffset, null, outputModel.startOffset, null)
-    val blocksModelState = TerminalBlocksModelState(listOf(terminalOutputBlock), 0)
-    view.blocksModel.restoreFromState(blocksModelState)
+    val shellIntegration = TerminalShellIntegrationImpl(outputModel, view.sessionModel, terminalScope.childScope("TerminalShellIntegration"))
+    view.shellIntegrationDeferred.complete(shellIntegration)
+
+    shellIntegration.onPromptFinished(TerminalOffset.ZERO)  // To make TerminalOutputStatus = TypingCommand
+    assertEquals(TerminalOutputStatus.TypingCommand, shellIntegration.outputStatus.value)
 
     Registry.get("terminal.type.ahead").setValue(true, testRootDisposable)
     TerminalCommandCompletion.enableForTests(testRootDisposable)
     // Terminal completion might still be disabled if not supported yet on some OS.
     Assume.assumeTrue(TerminalCommandCompletion.isEnabled())
+  }
+
+  suspend fun awaitShellIntegrationFeaturesInitialized() {
+    view.shellIntegrationFeaturesInitJob.join()
   }
 
   suspend fun type(text: String) {

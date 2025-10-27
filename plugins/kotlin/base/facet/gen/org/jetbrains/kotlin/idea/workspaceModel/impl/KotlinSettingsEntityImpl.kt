@@ -1,20 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel.impl
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -416,16 +406,16 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
         configFileItemsUpdater.invoke(value)
       }
 
-    override var module: ModuleEntity.Builder
+    override var module: ModuleEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder
         }
       }
       set(value) {
@@ -817,7 +807,7 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinSettingsEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinSettingsEntity> {
     val modifiable = KotlinSettingsEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -857,7 +847,7 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
     return KotlinSettingsEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return KotlinSettingsEntity(moduleId, name, sourceRoots, configFileItems, useProjectSettings, implementedModuleNames,
                                 dependsOnModuleNames, additionalVisibleModuleNames, sourceSetNames, isTestModule, externalProjectId,
                                 isHmppEnabled, pureKotlinSourceFolders, kind, externalSystemRunTasks, version, flushNeeded, entitySource) {
@@ -866,7 +856,7 @@ internal class KotlinSettingsEntityData : WorkspaceEntityData<KotlinSettingsEnti
       this.compilerArguments = this@KotlinSettingsEntityData.compilerArguments
       this.compilerSettings = this@KotlinSettingsEntityData.compilerSettings
       this.targetPlatform = this@KotlinSettingsEntityData.targetPlatform
-      parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModuleEntityBuilder>().singleOrNull()?.let { this.module = it }
     }
   }
 

@@ -86,7 +86,12 @@ internal fun appendIndexabilityInfo(node: ProjectViewNode<*>, appender: InplaceC
   if (WorkspaceFileIndex.getInstance(project).isIndexable(file)) {
     appender.append(" I", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
   }
-  else appender.append(" NI", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+  else if (WorkspaceFileIndex.getInstance(project).isInWorkspace(file)) {
+    appender.append(" NI", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+  }
+  else {
+    appender.append(" E", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+  }
 }
 
 internal class ProjectViewIndexableInfoListener : RegistryValueListener {

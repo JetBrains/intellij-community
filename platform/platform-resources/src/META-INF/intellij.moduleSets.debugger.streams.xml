@@ -1,8 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <content namespace="jetbrains">
-    <!-- Debugger Stream Tracing for Ultimate Editions -->
-    <module name="intellij.debugger.streams.core"/>
-    <module name="intellij.debugger.streams.shared"/>
-    <module name="intellij.debugger.streams.backend"/>
-  </content>
-</idea-plugin>

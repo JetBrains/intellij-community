@@ -4,16 +4,21 @@ package com.intellij.util
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 import javax.swing.JTabbedPane
 
 
 @Experimental
-fun JTabbedPane.bindSelectedTabIn(selectedTabState: MutableStateFlow<Int>, coroutineScope: CoroutineScope): Job {
+fun JTabbedPane.bindSelectedTabIn(selectedTabState: MutableStateFlow<Int>, coroutineScope: CoroutineScope) {
+  selectedIndex = selectedTabState.value
+
   val changeListener = javax.swing.event.ChangeListener {
     val selectedIndex = selectedIndex
     if (selectedTabState.value != selectedIndex) {
@@ -38,6 +43,4 @@ fun JTabbedPane.bindSelectedTabIn(selectedTabState: MutableStateFlow<Int>, corou
   job.invokeOnCompletion {
     removeChangeListener(changeListener)
   }
-
-  return job
 }

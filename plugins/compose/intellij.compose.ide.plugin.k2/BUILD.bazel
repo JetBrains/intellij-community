@@ -30,6 +30,7 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
     "//platform/util",
     "//platform/analysis-impl",
+    "//platform/core-impl",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
@@ -44,6 +45,12 @@ jvm_library(
 create_kotlinc_options(
   name = "custom_ide-plugin-k2-tests",
   x_context_parameters = True
+)
+
+jvm_library(
+  name = "ide-plugin-k2-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
 )
 
 jvm_library(

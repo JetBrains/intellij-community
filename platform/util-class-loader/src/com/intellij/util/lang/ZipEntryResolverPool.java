@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 
 /**
@@ -21,6 +20,6 @@ public interface ZipEntryResolverPool extends Closeable {
    * {@link #close()} is a hint that the instance is no longer in use
    */
   interface EntryResolver extends Closeable {
-    @Nullable InputStream loadZipEntry(@NotNull String path) throws IOException;
+    byte @Nullable [] loadZipEntry(@NotNull String path) throws IOException;
   }
 }

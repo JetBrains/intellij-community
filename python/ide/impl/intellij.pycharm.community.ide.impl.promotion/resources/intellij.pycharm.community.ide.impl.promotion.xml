@@ -101,6 +101,9 @@
     <registryKey key="py.promo.remind.later.interval.seconds"
                  defaultValue="259200"
                  description="PyCharm promo remind-later fallback delay in seconds"/>
+    <registryKey key="py.community.to.unified.test.ignore.release.channel"
+                 defaultValue="false"
+                 description="Ignores Release Channel requirement for promo mock update"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.promotion.PyCharmPromoCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.pycharm.community.ide.impl.promotion.communityToUnified.statistics.PyCommunityUnifiedPromoFusCollector"/>

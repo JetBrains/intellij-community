@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.LibraryLicense.Companion.PREDEFINED_LICENSE_URLS
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import kotlin.text.startsWith
 
 /**
  * Describes a library which is included in the distribution of an IntelliJ-based IDE.
@@ -170,6 +169,8 @@ data class LibraryLicense(
 
   fun newBsd(licenseUrl: String): LibraryLicense = license("BSD 3-Clause", licenseUrl, spdxIdentifier = "BSD-3-Clause")
 
+  fun zeroBsd(licenseUrl: String): LibraryLicense = license("BSD Zero Clause", licenseUrl, spdxIdentifier = "0BSD")
+
   fun mit(licenseUrl: String): LibraryLicense = license("MIT", licenseUrl, spdxIdentifier = "MIT")
 
   fun eplV1(licenseUrl: String): LibraryLicense = license("EPL 1.0", licenseUrl, spdxIdentifier = "EPL-1.0")
@@ -191,6 +192,8 @@ data class LibraryLicense(
   fun mpl2(licenseUrl: String): LibraryLicense = license("MPL 2.0", licenseUrl, spdxIdentifier = "MPL-2.0")
 
   fun upl(licenseUrl: String): LibraryLicense = license("UPL 1.0", licenseUrl, spdxIdentifier = "UPL-1.0")
+  
+  fun theUnlicense(licenseUrl: String): LibraryLicense = license("The Unlicense", licenseUrl, spdxIdentifier = "Unlicense")
 
   fun public(licenseUrl: String): LibraryLicense = license("Public Domain (CC0)", licenseUrl, spdxIdentifier = "CC0-1.0")
 

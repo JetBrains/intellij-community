@@ -13,7 +13,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.output.EmptyTextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
-import org.jetbrains.plugins.terminal.block.reworked.MutableTerminalOutputModelImpl
+import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -232,6 +232,17 @@ private fun testReplace(
     val model = TerminalTestUtil.createOutputModel()
     val textWithReplacement = parseTextWithReplacement(textWithReplacement)
     model.replace(0, 0, textWithReplacement.originalText.text, textWithReplacement.originalText.styles)
+    // We assert on both the initial content and changed content
+    // because there was a bug when the first access caused the value to be cached,
+    // and then the second call would return the (wrong) cached value.
+    // Without the first access, the test would pass even though there's a serious bug.
+    assertHighlightings(
+      model,
+      textWithReplacement.originalText.styles.map {
+        highlighting(it.startOffset.toInt(), it.endOffset.toInt(), it.style)
+      }
+    )
+    assertText(model, textWithReplacement.originalText.text)
     model.replace(
       textWithReplacement.removedIndex,
       textWithReplacement.removedLength,

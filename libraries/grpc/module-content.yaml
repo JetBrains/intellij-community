@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.grpc.jar
   projectLibraries:
   - name: grpc-core
     files:

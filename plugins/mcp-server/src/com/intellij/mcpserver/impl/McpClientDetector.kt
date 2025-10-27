@@ -1,6 +1,12 @@
 package com.intellij.mcpserver.impl
 
-import com.intellij.mcpserver.clientConfiguration.*
+import com.intellij.mcpserver.clients.McpClient
+import com.intellij.mcpserver.clients.McpClientInfo
+import com.intellij.mcpserver.clients.impl.ClaudeClient
+import com.intellij.mcpserver.clients.impl.ClaudeCodeClient
+import com.intellij.mcpserver.clients.impl.CursorClient
+import com.intellij.mcpserver.clients.impl.VSCodeClient
+import com.intellij.mcpserver.clients.impl.WindsurfClient
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
@@ -80,7 +86,7 @@ object McpClientDetector {
     if (configPath == null) return null
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
     if (path.exists() && path.isRegularFile()) {
-      return VSCodeClient(path)
+      return VSCodeClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
@@ -96,7 +102,7 @@ object McpClientDetector {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
 
     if (path.exists() && path.isRegularFile()) {
-      return ClaudeCodeMcpClient(path)
+      return ClaudeCodeClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
@@ -112,7 +118,7 @@ object McpClientDetector {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome(configPath))
 
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
-      return ClaudeMcpClient(path)
+      return ClaudeClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
@@ -120,7 +126,7 @@ object McpClientDetector {
   private fun detectCursorGlobal(): McpClient? {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome("~/.cursor/mcp.json"))
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
-      return CursorClient(path)
+      return CursorClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
@@ -128,29 +134,30 @@ object McpClientDetector {
   private fun detectWindsurf(): McpClient? {
     val path = Paths.get(OSAgnosticPathUtil.expandUserHome("~/.codeium/windsurf/mcp_config.json"))
     if (path.parent.exists() && path.parent.toFile().isDirectory()) {
-      return WindsurfClient(path)
-    }
-    return null
-  }
-
-  private fun detectProjectLevelClient(project: Project, configDirName: String, clientName: MCPClientNames): McpClient? {
-    val projectBasePath = project.basePath ?: return null
-    val configPath = Paths.get(projectBasePath, configDirName, "mcp.json")
-
-    if (looksLikeMcpJson(configPath)) {
-      return McpClient(clientName, configPath)
+      return WindsurfClient(McpClientInfo.Scope.GLOBAL, path)
     }
     return null
   }
 
   private fun detectVSCode(project: Project): McpClient? {
     val configDirName = ".vscode"
-    return detectProjectLevelClient(project, configDirName, MCPClientNames.VS_CODE_PROJECT)
+    val projectBasePath = project.basePath ?: return null
+    val configPath = Paths.get(projectBasePath, configDirName, "mcp.json")
+    if (looksLikeMcpJson(configPath)) {
+      return VSCodeClient(McpClientInfo.Scope.PROJECT, configPath)
+    }
+    return null
   }
 
   private fun detectCursorProject(project: Project): McpClient? {
     val configDirName = ".cursor"
-    return detectProjectLevelClient(project, configDirName, MCPClientNames.CURSOR_PROJECT)
+    val projectBasePath = project.basePath ?: return null
+    val configPath = Paths.get(projectBasePath, configDirName, "mcp.json")
+
+    if (looksLikeMcpJson(configPath)) {
+      return CursorClient(McpClientInfo.Scope.PROJECT, configPath)
+    }
+    return null
   }
 
   private fun detectClaudeCode(project: Project): McpClient? {
@@ -158,7 +165,7 @@ object McpClientDetector {
     val claudeCodeConfigPath = Paths.get(projectBasePath, ".mcp.json")
 
     if (looksLikeMcpJson(claudeCodeConfigPath)) {
-      return McpClient(MCPClientNames.CLAUDE_CODE_PROJECT, claudeCodeConfigPath)
+      return ClaudeCodeClient(McpClientInfo.Scope.PROJECT, claudeCodeConfigPath)
     }
     return null
   }

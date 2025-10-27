@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -25,12 +26,16 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
+import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
+import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingExtension
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUsingCreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.impl.PySdkBundle
@@ -41,10 +46,24 @@ import java.nio.file.Path
 
 
 class PythonSdkConfigurator : DirectoryProjectConfigurator {
+  init {
+    // new SDK configurator obsoletes this engine
+    if (enableSDKAutoConfigurator) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
     val sdk = project.pythonSdk
-    thisLogger().debug { "Input: $sdk, $isProjectCreatedWithWizard" }
-    if (sdk != null || isProjectCreatedWithWizard) {
+    thisLogger().debug { "Input: $sdk" }
+    /*
+     * DataSpell skips SDK setup on new project creation, so we need to use auto-detection there. At the same time, with PyCharm we
+     * first open a project and only then persist SDK from the dialog. So at this step we'll have null SDK for new projects.
+     *
+     * Please note, this is a dirty hack and shouldn't be used like this. We expect this whole configurator to be dropped soon, that's
+     * why we're not investing time in doing it properly using ide customizations.
+     */
+    if (sdk != null || (isProjectCreatedWithWizard && !PlatformUtils.isDataSpell())) {
       return
     }
     if (PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()?.isNotBlank() == true) {
@@ -56,22 +75,21 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
       PyPackageCoroutine.launch(project) {
         if (module.isDisposed) return@launch
-        val extension = findExtension(module)
-        val title = extension?.getIntention(module) ?: PySdkBundle.message("python.configuring.interpreter.progress")
-        withBackgroundProgress(project, title, true) {
-          val lifetime = extension?.let { suppressTipAndInspectionsFor(module, it) }
-          lifetime.use { configureSdk(project, module, extension) }
+        val sdkInfos = findSuitableCreateSdkInfos(module)
+        withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), true) {
+          val lifetime = suppressTipAndInspectionsFor(module, "all suitable extensions")
+          lifetime.use { configureSdk(project, module, sdkInfos) }
         }
       }
     }
   }
 
-  private suspend fun findExtension(module: Module): PyProjectSdkConfigurationExtension? = withContext(Dispatchers.Default) {
+  private suspend fun findSuitableCreateSdkInfos(module: Module): List<CreateSdkInfoWithTool> = withContext(Dispatchers.Default) {
     if (!TrustedProjects.isProjectTrusted(module.project) || ApplicationManager.getApplication().isUnitTestMode) {
-      null
+      emptyList()
     }
-    else PyProjectSdkConfigurationExtension.EP_NAME.extensionsIfPointIsRegistered.firstOrNull {
-      it.getIntention(module) != null && (!ApplicationManager.getApplication().isHeadlessEnvironment || it.supportsHeadlessModel())
+    else {
+      PyProjectSdkConfigurationExtension.findAllSortedForModule(module)
     }
   }
 
@@ -80,7 +98,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   suspend fun configureSdk(
     project: Project,
     module: Module,
-    extension: PyProjectSdkConfigurationExtension?,
+    createSdkInfos: List<CreateSdkInfoWithTool>,
   ): Unit = withContext(Dispatchers.Default) {
     val context = UserDataHolderBase()
 
@@ -98,13 +116,8 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (searchPreviousUsed(module, existingSdks, project))
       return@withContext
 
-    if (extension != null) {
-      val isExtensionSetup = setSdkUsingExtension(module, extension) {
-        withContext(Dispatchers.Default) {
-          extension.createAndAddSdkForConfigurator(module)
-        }
-      }
-      if (isExtensionSetup) return@withContext
+    for (createSdkInfo in createSdkInfos) {
+      if (setSdkUsingCreateSdkInfo(module, createSdkInfo, true)) return@withContext
     }
 
     if (setupSharedCondaEnv(module, existingSdks, project)) {
@@ -115,7 +128,9 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return@withContext
     }
 
-    if (findPreviousUsedSdk(existingSdks, project, module)) {
+    val systemPythons = findSortedSystemPythons(module)
+
+    if (findPreviousUsedSdk(module, existingSdks, systemPythons)) {
       return@withContext
     }
 
@@ -123,46 +138,58 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return@withContext
     }
 
-    findSystemWideSdk(module, existingSdks, project)
+    findSystemWideSdk(module, existingSdks, systemPythons)
   }
 
   private suspend fun findSystemWideSdk(
     module: Module,
     existingSdks: List<Sdk>,
-    project: Project,
+    systemPythons: List<SystemPython>,
   ): Unit = reportRawProgress { indicator ->
     indicator.text(PyBundle.message("looking.for.system.interpreter"))
     thisLogger().debug("Looking for a system-wide interpreter")
-    val eelDescriptor = module.project.getEelDescriptor()
     val homePaths = existingSdks
-      .mapNotNull { sdk -> sdk.homePath?.let { homePath -> Path.of(homePath) } }
-      .filter { it.getEelDescriptor() == eelDescriptor }
-    SystemPythonService().findSystemPythons(eelDescriptor.toEelApi())
-      .sortedWith(compareByDescending<SystemPython> { it.languageLevel }.thenBy { it.pythonBinary })
-      .sortedByDescending { it.pythonBinary }
-      .sortedByDescending { it.languageLevel }
-      .firstOrNull { it.pythonBinary !in homePaths }?.let {
-        thisLogger().debug { "Detected system-wide interpreter: $it" }
-        withContext(Dispatchers.EDT) {
-          SdkConfigurationUtil.createAndAddSDK(project, it.pythonBinary, PythonSdkType.getInstance())?.apply {
-            thisLogger().debug { "Created system-wide interpreter: $this" }
-            setReadyToUseSdk(project, module, this)
-          }
+      .mapNotNull { sdk -> sdk.takeIf { !it.isTargetBased() }?.homePath?.let { homePath -> Path.of(homePath) } }
+      .filter { it.getEelDescriptor() == module.project.getEelDescriptor() }
+    systemPythons.firstOrNull { it.pythonBinary !in homePaths }?.let {
+      thisLogger().debug { "Detected system-wide interpreter: $it" }
+      withContext(Dispatchers.EDT) {
+        SdkConfigurationUtil.createAndAddSDK(module.project, it.pythonBinary, PythonSdkType.getInstance())?.apply {
+          thisLogger().debug { "Created system-wide interpreter: $this" }
+          setReadyToUseSdk(module.project, module, this)
         }
       }
+    }
   }
 
   private suspend fun findPreviousUsedSdk(
-    existingSdks: List<Sdk>,
-    project: Project,
     module: Module,
+    existingSdks: List<Sdk>,
+    systemPythons: List<SystemPython>,
   ): Boolean = reportRawProgress { indicator ->
     indicator.text(PyBundle.message("looking.for.previous.system.interpreter"))
     thisLogger().debug("Looking for the previously used system-wide interpreter")
-    val sdk = mostPreferred(filterSystemWideSdks(existingSdks)) ?: return@reportRawProgress false
+    val sdk = systemPythons.firstNotNullOfOrNull { systemPython ->
+      existingSdks.firstOrNull { sdk ->
+        val sdkHomePath = sdk.takeIf { !it.isTargetBased() }
+          ?.homePath
+          ?.let { Path.of(it) }
+          ?.takeIf { it.getEelDescriptor() == module.project.getEelDescriptor() }
+        sdkHomePath == systemPython.pythonBinary
+      }
+    } ?: return@reportRawProgress false
     thisLogger().debug { "Previously used system-wide interpreter: $sdk" }
-    setReadyToUseSdk(project, module, sdk)
+    setReadyToUseSdk(module.project, module, sdk)
     return@reportRawProgress true
+  }
+
+  private suspend fun findSortedSystemPythons(module: Module) = reportRawProgress { indicator ->
+    indicator.text(PyBundle.message("looking.for.system.pythons"))
+    SystemPythonService().findSystemPythons(module.project.getEelDescriptor().toEelApi())
+      .sortedWith(
+        // Free-threaded Python is unstable, we don't want to have it selected by default if we have alternatives
+        compareBy<SystemPython> { it.pythonInfo.freeThreaded }.thenByDescending { it.pythonInfo.languageLevel }
+      )
   }
 
   private suspend fun findDefaultInterpreter(project: Project, module: Module): Boolean = reportRawProgress { indicator ->
@@ -196,8 +223,11 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (fallback == null) {
       return false
     }
-    fallback.createAndAddSdkForConfigurator(module)
-    return true
+    val sdkCreator = fallback.checkEnvironmentAndPrepareSdkCreator(module)?.sdkCreator
+    if (sdkCreator == null) {
+      return false
+    }
+    return sdkCreator(true).getOrLogException(thisLogger()) != null
   }
 
   private suspend fun searchPreviousUsed(

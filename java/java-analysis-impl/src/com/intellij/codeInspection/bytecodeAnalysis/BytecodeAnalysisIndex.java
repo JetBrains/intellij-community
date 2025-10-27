@@ -3,6 +3,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.SystemProperties;
@@ -192,6 +193,7 @@ public final class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     }
 
     private static Equations readEquations(@NotNull DataInput in) throws IOException {
+      ProgressManager.checkCanceled();
       boolean stable = in.readBoolean();
       int size = DataInputOutputUtil.readINT(in);
       ArrayList<DirectionResultPair> results = new ArrayList<>(size);

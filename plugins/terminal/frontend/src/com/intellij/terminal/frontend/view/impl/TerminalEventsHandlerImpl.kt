@@ -14,10 +14,17 @@ import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
+import kotlinx.coroutines.Deferred
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
-import org.jetbrains.plugins.terminal.session.TerminalState
+import org.jetbrains.plugins.terminal.session.impl.TerminalState
+import org.jetbrains.plugins.terminal.util.getNow
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -40,6 +47,7 @@ internal open class TerminalEventsHandlerImpl(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
+  private val shellIntegrationDeferred: Deferred<TerminalShellIntegration>?,
   private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
@@ -400,11 +408,11 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun scheduleCompletionPopupIfNeeded(charTyped: Char) {
     val project = editor.project ?: return
-    val blocksModel = editor.getUserData(TerminalBlocksModel.KEY) ?: return
+    val shellIntegration = shellIntegrationDeferred?.getNow() ?: return
     if (editor.isOutputModelEditor
         && TerminalCommandCompletion.isEnabled()
         && TerminalOptionsProvider.instance.showCompletionPopupAutomatically
-        && blocksModel.isCommandTypingMode()
+        && shellIntegration.outputStatus.value == TerminalOutputStatus.TypingCommand
         && canTriggerCompletion(charTyped)
         && LookupManager.getActiveLookup(editor) == null
         && outputModel.getTextAfterCursor().isBlank()
@@ -417,7 +425,7 @@ internal open class TerminalEventsHandlerImpl(
     return Character.isLetterOrDigit(char) || char == '-'
   }
 
-  private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe String = getText(cursorOffset, endOffset)
+  private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe CharSequence = getText(cursorOffset, endOffset)
 
   companion object {
     private val LOG = Logger.getInstance(TerminalEventsHandlerImpl::class.java)

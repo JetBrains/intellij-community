@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * actual for [com.intellij.util.currentJavaVersionPlatformSpecific]
  */
-@Actual("currentJavaVersionPlatformSpecific")
+@Actual
 @ApiStatus.Internal
 fun currentJavaVersionPlatformSpecificJs(): JavaVersion {
   return JavaVersion.compose(21, 0, 0, 0, false)

@@ -3,11 +3,11 @@ package fleet.util
 
 import fleet.util.multiplatform.Actual
 
-@Actual("getName")
+@Actual
 internal fun getNameJvm(): String = System.getProperty("os.name")
 
-@Actual("getVersion")
+@Actual
 internal fun getVersionJvm(): String = System.getProperty("os.version").lowercase()
 
-@Actual("getArch")
+@Actual
 internal fun getArchJvm(): String = System.getProperty("os.arch")

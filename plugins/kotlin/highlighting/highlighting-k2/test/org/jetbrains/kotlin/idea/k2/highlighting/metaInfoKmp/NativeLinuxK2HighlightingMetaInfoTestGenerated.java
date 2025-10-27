@@ -227,6 +227,11 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Redundant.kt");
         }
 
+        @TestMetadata("RedundantWithExpectedType.kt")
+        public void testRedundantWithExpectedType() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/RedundantWithExpectedType.kt");
+        }
+
         @TestMetadata("Unstable_explicitReceiver.kt")
         public void testUnstable_explicitReceiver() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Unstable_explicitReceiver.kt");
@@ -334,6 +339,11 @@ public abstract class NativeLinuxK2HighlightingMetaInfoTestGenerated extends Abs
         @TestMetadata("mismatchPackageDirectoryFileLevelProblem.kt")
         public void testMismatchPackageDirectoryFileLevelProblem() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblem.kt");
+        }
+
+        @TestMetadata("mismatchPackageDirectoryFileLevelProblemDeclarations.kt")
+        public void testMismatchPackageDirectoryFileLevelProblemDeclarations() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblemDeclarations.kt");
         }
 
         @TestMetadata("NamedArguments.kt")

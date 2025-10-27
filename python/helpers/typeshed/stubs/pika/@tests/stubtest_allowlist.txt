@@ -1,10 +1,3 @@
-# Stubtest doesn't understand that a property alias is also read-only.
-# https://github.com/python/mypy/issues/6700
-pika(\.adapters)?(\.blocking_connection)?\.BlockingConnection\.basic_nack
-pika(\.adapters)?(\.blocking_connection)?\.BlockingConnection\.consumer_cancel_notify
-pika(\.adapters)?(\.blocking_connection)?\.BlockingConnection\.exchange_exchange_bindings
-pika(\.adapters)?(\.blocking_connection)?\.BlockingConnection\.publisher_confirms
-
 # The implementation has defaults for the arguments that would make the
 # created instances unusable, so we require the arguments in the stub.
 pika.spec.Queue.DeclareOk.__init__

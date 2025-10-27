@@ -6,8 +6,16 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContentTest
 import com.intellij.grazie.text.TextExtractor
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
+import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 
-class KotlinGrazieSupportTest28 : GrazieTestBase() {
+class KotlinGrazieSupportTest28 : GrazieTestBase(), ExpectedPluginModeProvider {
+    override val pluginMode: KotlinPluginMode = KotlinPluginMode.K1
+    override fun setUp() {
+        setUpWithKotlinPlugin { super.setUp() }
+    }
+
     override val additionalEnabledRules: Set<String> = setOf("UPPERCASE_SENTENCE_START")
 
     override fun runHighlightTestForFile(file: String) {

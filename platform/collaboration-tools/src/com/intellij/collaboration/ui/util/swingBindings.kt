@@ -240,6 +240,12 @@ fun JEditorPane.bindTextHtmlIn(scope: CoroutineScope, textFlow: Flow<@Nls String
   }
 }
 
+fun JLabel.bindText(debugName: String, textFlow: Flow<@Nls String>) {
+  launchOnShow(debugName) {
+    bindTextIn(this, textFlow)
+  }
+}
+
 fun JLabel.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {

@@ -4305,6 +4305,94 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/arrayHashCode")
+    public static class ArrayHashCode extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("genericTypeArray.kt")
+        public void testGenericTypeArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/genericTypeArray.kt");
+        }
+
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/intArray.kt");
+        }
+
+        @TestMetadata("multidimensionalArrayContentDeepHashCode.kt")
+        public void testMultidimensionalArrayContentDeepHashCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/multidimensionalArrayContentDeepHashCode.kt");
+        }
+
+        @TestMetadata("multidimensionalArrayContentHashCode.kt")
+        public void testMultidimensionalArrayContentHashCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/multidimensionalArrayContentHashCode.kt");
+        }
+
+        @TestMetadata("noInspection.kt")
+        public void testNoInspection() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/noInspection.kt");
+        }
+
+        @TestMetadata("nullableArray.kt")
+        public void testNullableArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/nullableArray.kt");
+        }
+
+        @TestMetadata("simpleArray.kt")
+        public void testSimpleArray() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/arrayHashCode/simpleArray.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality")
+    public static class StringReferentialEquality extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("nonStringComparison.kt")
+        public void testNonStringComparison() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/nonStringComparison.kt");
+        }
+
+        @TestMetadata("nullComparison.kt")
+        public void testNullComparison() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/nullComparison.kt");
+        }
+
+        @TestMetadata("referentialEquals.kt")
+        public void testReferentialEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/referentialEquals.kt");
+        }
+
+        @TestMetadata("referentialEqualsNullable.kt")
+        public void testReferentialEqualsNullable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/referentialEqualsNullable.kt");
+        }
+
+        @TestMetadata("referentialNotEquals.kt")
+        public void testReferentialNotEquals() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/stringReferentialEquality/referentialNotEquals.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf")
     public static class SuspiciousCascadingIf extends AbstractK2LocalInspectionTest {
         @java.lang.Override
@@ -14922,6 +15010,60 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("isNotEmpty.kt")
             public void testIsNotEmpty() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/collection/isNotEmpty.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments")
+        public static class Comments extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("IfBlockInAssignmentWithComment.kt")
+            public void testIfBlockInAssignmentWithComment() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/IfBlockInAssignmentWithComment.kt");
+            }
+
+            @TestMetadata("IfBlockWithBlockComment1.kt")
+            public void testIfBlockWithBlockComment1() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/IfBlockWithBlockComment1.kt");
+            }
+
+            @TestMetadata("IfBlockWithBlockComment2.kt")
+            public void testIfBlockWithBlockComment2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/IfBlockWithBlockComment2.kt");
+            }
+
+            @TestMetadata("IfBlockWithBlockComment3.kt")
+            public void testIfBlockWithBlockComment3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/IfBlockWithBlockComment3.kt");
+            }
+
+            @TestMetadata("ifBlockWithComments.kt")
+            public void testIfBlockWithComments() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/ifBlockWithComments.kt");
+            }
+
+            @TestMetadata("ifBlockWithComments2.kt")
+            public void testIfBlockWithComments2() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/ifBlockWithComments2.kt");
+            }
+
+            @TestMetadata("ifBlockWithComments3.kt")
+            public void testIfBlockWithComments3() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/ifBlockWithComments3.kt");
+            }
+
+            @TestMetadata("ifBlockWithComments4.kt")
+            public void testIfBlockWithComments4() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/ifBlockWithComments4.kt");
             }
         }
 

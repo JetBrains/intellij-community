@@ -185,11 +185,8 @@ public final class JavaPreviewFeatureUtil {
 
     PsiReferenceExpression referenceExpression = tryCast(feature.getDetachedValue(), PsiReferenceExpression.class);
     if (referenceExpression == null) return null;
-
-    PsiEnumConstant enumConstant = tryCast(referenceExpression.resolve(), PsiEnumConstant.class);
-    if (enumConstant == null) return null;
-
-    return JavaFeature.convertFromPreviewFeatureName(enumConstant.getName());
+    var referenceName = referenceExpression.getReferenceName();
+    return referenceName == null ? null : JavaFeature.convertFromPreviewFeatureName(referenceName);
   }
 
   @Contract(value = "null -> null", pure = true)

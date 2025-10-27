@@ -38,6 +38,7 @@ jvm_library(
     "//libraries/hash4j",
     "//platform/workspace/storage",
     "//platform/backend/observation",
+    "//platform/projectModel-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.core.impl` end

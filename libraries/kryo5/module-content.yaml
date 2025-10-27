@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.kryo5.jar
   modules:
   - name: intellij.libraries.kryo5
   library: Kryo5

@@ -4,7 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.util.isNotNull
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
@@ -23,7 +23,7 @@ import java.util.*
 
 
 @Internal
-internal abstract class CustomExistingEnvironmentSelector<P: PathHolder>(
+internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
   private val name: String,
   model: PythonMutableTargetAddInterpreterModel<P>,
   private val module: Module?,
@@ -35,32 +35,24 @@ internal abstract class CustomExistingEnvironmentSelector<P: PathHolder>(
   private val existingEnvironments: MutableStateFlow<List<PythonSelectableInterpreter<P>>?> = MutableStateFlow(null)
   protected val selectedEnv: ObservableMutableProperty<PythonSelectableInterpreter<P>?> = propertyGraph.property(null)
 
-  open suspend fun onBinarySelection(pathOnFileSystem: P): ValidatedPath.Executable<P> {
-    val binaryToExec = model.fileSystem.getBinaryToExec(pathOnFileSystem)
-    return ValidatedPath.Executable(pathOnFileSystem, binaryToExec.getToolVersion(name))
-  }
-
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
-      executablePath = validatableExecutableField(
-        propertyGraph = propertyGraph,
+      executablePath = validatablePathField(
         fileSystem = model.fileSystem,
-        backProperty = executable,
+        pathValidator = toolState,
         validationRequestor = validationRequestor,
         labelText = message("sdk.create.custom.venv.executable.path", name),
         missingExecutableText = message("sdk.create.custom.venv.missing.text", name),
-        selectedPathValidator = ::onBinarySelection
       )
 
-      val nameTitle = name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
       comboBox = pythonInterpreterComboBox(
         model.fileSystem,
-        title = message("sdk.create.custom.existing.env.title", nameTitle),
+        title = message("sdk.create.custom.existing.env.title"),
         selectedSdkProperty = selectedEnv,
         validationRequestor = validationRequestor,
         onPathSelected = model::addManuallyAddedInterpreter,
       ) {
-        visibleIf(executable.isNotNull())
+        visibleIf(toolState.backProperty.transform { it?.validationResult?.successOrNull != null })
       }
     }
   }
@@ -104,7 +96,7 @@ internal abstract class CustomExistingEnvironmentSelector<P: PathHolder>(
   //  return interpreter
   //}
 
-  internal abstract val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?>
+  internal abstract val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>>
   internal abstract val interpreterType: InterpreterType
   internal abstract suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>>
 }

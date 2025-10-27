@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.shared
 
-import KotlinGradleScriptingBundle
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.workspace.storage.EntitySource
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
@@ -19,7 +17,7 @@ import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
-import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptCompilationConfigurationKeys
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.util.PropertiesCollection
@@ -55,7 +53,7 @@ fun loadGradleDefinitions(params: GradleDefinitionsParams): List<GradleScriptDef
         )
     }
 
-    val hostConfiguration = createHostConfiguration(params = params)
+    val hostConfiguration = params.toHostConfiguration()
     return loadDefinitionsFromTemplates(
         templateClassNames = templateClasses,
         templateClasspath = templateClasspath,
@@ -95,16 +93,16 @@ private fun findStdLibLanguageVersion(kotlinLibsClassPath: List<Path>): List<Str
         ?: emptyList()
 }
 
-private fun createHostConfiguration(params: GradleDefinitionsParams): ScriptingHostConfiguration =
+private fun GradleDefinitionsParams.toHostConfiguration(): ScriptingHostConfiguration =
     ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
         getEnvironment {
             mapOf(
-                "gradleHome" to params.gradleHome?.let(::File),
-                "gradleJavaHome" to params.javaHome,
-                "projectRoot" to params.workingDir.let(::File),
+                "gradleHome" to gradleHome.let(::File),
+                "gradleJavaHome" to javaHome,
+                "projectRoot" to workingDir.let(::File),
                 "gradleOptions" to emptyList<String>(), // There is no option in UI to set project wide gradleOptions
-                "gradleJvmOptions" to params.jvmArguments,
-                "gradleEnvironmentVariables" to params.environment
+                "gradleJvmOptions" to jvmArguments,
+                "gradleEnvironmentVariables" to environment
             )
         }
     }
@@ -157,15 +155,3 @@ val GradleScriptCompilationConfigurationKeys.externalProjectPath: PropertiesColl
 
 
 object KotlinGradleScriptEntitySource : EntitySource
-
-class GradleScriptModelData(
-    val models: Collection<GradleScriptModel>,
-    val javaHome: String? = null,
-)
-
-class GradleScriptModel(
-    val virtualFile: VirtualFile,
-    val classPath: List<String>,
-    val sourcePath: List<String>,
-    val imports: List<String>,
-)

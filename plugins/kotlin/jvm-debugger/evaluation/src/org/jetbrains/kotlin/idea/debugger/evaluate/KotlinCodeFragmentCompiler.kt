@@ -155,8 +155,8 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                 put(CommonConfigurationKeys.MODULE_NAME, module.name)
             }
             put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
-            put(KaCompilerFacility.CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
-            put(KaCompilerFacility.CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
+            put(CODE_FRAGMENT_CLASS_NAME, GENERATED_CLASS_NAME)
+            put(CODE_FRAGMENT_METHOD_NAME, GENERATED_FUNCTION_NAME)
         }
 
         return analyze(codeFragment) {

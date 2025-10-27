@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getSettings
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -16,7 +17,6 @@ import com.intellij.testFramework.enableInspectionTool
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
-import org.jetbrains.kotlin.gradle.scripting.shared.getGradleProjectSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceUntilWithRangeUntilInspection
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import java.io.File
 import java.nio.file.Files
@@ -156,7 +157,7 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
     }
 
     protected fun checkScriptConfigurationsIfAny() {
-        val settings = getGradleProjectSettings(project).firstOrNull() ?: error("Cannot find linked gradle project: ${project.basePath}")
+        val settings = (getSettings(project, SYSTEM_ID) as GradleSettings).linkedProjectsSettings.firstOrNull() ?: error("Cannot find linked gradle project: ${project.basePath}")
         val scripts = File(settings.externalProjectPath).walkTopDown().filter {
             it.name.endsWith("gradle.kts")
         }

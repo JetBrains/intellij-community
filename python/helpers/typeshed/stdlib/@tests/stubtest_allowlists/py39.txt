@@ -18,7 +18,7 @@ collections.AsyncGenerator.__anext__  # async at runtime, deliberately not in th
 collections.AsyncGenerator.aclose  # async at runtime, deliberately not in the stub, see #7491
 collections.AsyncGenerator.asend  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
 collections.AsyncIterator.__anext__  # async at runtime, deliberately not in the stub, see #7491
-collections.ByteString  # see comments in py3_common.txt
+collections.ByteString  # see comments in common.txt
 collections.Callable
 collections.Mapping.get  # Adding None to the Union messed up mypy
 collections.Sequence.index  # Supporting None in end is not mandatory
@@ -54,14 +54,11 @@ typing_extensions.Sentinel.__call__
 # <= 3.11
 # =======
 
-_?bz2.BZ2Decompressor.__init__  # function does not accept parameters but C signature is set
 enum.Enum._generate_next_value_
 importlib.abc.Finder.find_module
 urllib.request.HTTPPasswordMgrWithPriorAuth.__init__  # Args are passed as is to super, so super args are specified
 xml.etree.ElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
 xml.etree.cElementTree.Element.__bool__  # Doesn't really exist; see comments in stub
-
-platform.platform  # runtime default is 0, we pretend it's a bool
 
 
 # =======
@@ -107,18 +104,11 @@ tkinter.tix.TkVersion
 # <= 3.13
 # =======
 
-# Pretend typing.ByteString is a Union, to better match its documented semantics.
-# As a side effect, this changes the definition of collections.abc.ByteString, which is okay,
-# because it's not an ABC that makes any sense and was deprecated in 3.12
-_collections_abc.ByteString
-
 ast.Ellipsis.__new__  # Implementation has *args, but shouldn't allow any
 
 _?hashlib.scrypt  # Raises TypeError if salt, n, r or p are None
 
 importlib.abc.Traversable.open  # Problematic protocol signature at runtime, see source code comments.
-
-typing\.ByteString
 
 # Will always raise. Not included to avoid type checkers inferring that
 # TypeAliasType instances are callable.
@@ -203,6 +193,7 @@ lib2to3.tests  # Modules that exist at runtime, but shouldn't be added to typesh
 lib2to3\.tests\..+  # Modules that exist at runtime, but shouldn't be added to typeshed
 pkgutil.ImpImporter\..*  # Removed in 3.12
 pkgutil.ImpLoader\..*  # Removed in 3.12
+platform.platform  # runtime default is 0, we pretend it's a bool
 poplib.POP3_SSL.stls  # bad declaration of inherited function. See poplib.pyi
 tkinter.test  # Modules that exist at runtime, but shouldn't be added to typeshed
 tkinter\.test\..+  # Modules that exist at runtime, but shouldn't be added to typeshed

@@ -1,5 +1,6 @@
 import builtins
 from _typeshed import Incomplete
+from typing_extensions import disjoint_base
 
 import MySQLdb._exceptions
 
@@ -17,6 +18,7 @@ class OperationalError(MySQLdb._exceptions.DatabaseError): ...
 class ProgrammingError(MySQLdb._exceptions.DatabaseError): ...
 class Warning(builtins.Warning, MySQLdb._exceptions.MySQLError): ...
 
+@disjoint_base
 class connection:
     client_flag: Incomplete
     converter: Incomplete
@@ -67,6 +69,7 @@ class connection:
     def __delattr__(self, name: str, /) -> None: ...
     def __setattr__(self, name: str, value, /) -> None: ...
 
+@disjoint_base
 class result:
     converter: Incomplete
     has_next: Incomplete

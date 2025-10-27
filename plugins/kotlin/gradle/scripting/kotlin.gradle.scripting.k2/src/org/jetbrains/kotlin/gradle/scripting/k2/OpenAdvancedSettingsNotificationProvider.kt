@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2
 
-import KotlinGradleScriptingBundle
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -15,6 +14,7 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationPanel.Status
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptEntitySource
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import java.util.function.Function
 import javax.swing.JComponent

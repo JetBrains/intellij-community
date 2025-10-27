@@ -1092,6 +1092,7 @@ class DynamicPluginsTest {
     plugin("bar") {}.buildDir(barPluginPath)
     plugin("foo") {
       content {
+        namespace = "test_ns"
         module("foo.a") {
           dependencies {
             plugin("bar")
@@ -1112,7 +1113,7 @@ class DynamicPluginsTest {
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
-        assertThat(PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId("foo.b"))).isNull()
+        assertThat(PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId("foo.b", "test_ns"))).isNull()
         assertThat(ActionManager.getInstance().getAction("foo.b.action")).isNull()
       }
     }
@@ -1126,6 +1127,7 @@ class DynamicPluginsTest {
     plugin("bar") {}.buildDir(barPluginPath)
     plugin("foo") {
       implementationDetail = true
+      namespace = "foo"
       content {
         module("foo.a") {
           dependencies {
@@ -1138,7 +1140,7 @@ class DynamicPluginsTest {
     PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
     loadPluginInTest(fooPluginPath) {
       loadPluginInTest(barPluginPath) {
-        assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains(PluginModuleId("foo.a"))).isTrue
+        assertThat(PluginManagerCore.getPluginSet().buildContentModuleIdMap().contains(PluginModuleId("foo.a", "test_ns"))).isTrue
       }
     }
   }
@@ -1298,7 +1300,7 @@ private inline fun runAndCheckThatNoNewPlugins(block: () -> Unit) {
 
 private fun lexicographicallySortedPluginIds() = PluginManagerCore.loadedPlugins.toSortedSet(compareBy { it.pluginId })
 
-private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(id))
+private fun findEnabledModuleByName(id: String) = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(id, "test_ns"))
 
 private fun assertModuleIsNotLoaded(moduleName: String) {
   assertThat(findEnabledModuleByName(moduleName)).isNull()

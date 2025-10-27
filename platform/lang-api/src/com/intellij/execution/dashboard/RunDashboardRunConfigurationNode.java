@@ -30,5 +30,6 @@ public interface RunDashboardRunConfigurationNode {
 
   RunContentDescriptor getDescriptor();
 
+  @Deprecated(forRemoval = true)
   RunnerAndConfigurationSettings getConfigurationSettings();
 }

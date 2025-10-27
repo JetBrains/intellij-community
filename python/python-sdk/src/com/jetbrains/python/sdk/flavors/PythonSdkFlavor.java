@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -65,7 +66,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     .maximumSize(1000)
     .build();
 
-  private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
+  private static final Pattern VERSION_RE = Pattern.compile("((Python|GraalPy) (\\S+)).*", Pattern.DOTALL);
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
 
@@ -111,7 +112,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     return suggestLocalHomePathsImpl(module, context).stream().filter(path -> {
       var flavor = tryDetectFlavorByLocalPath(path.toString());
       boolean correctFlavor = flavor != null && flavor.getClass().equals(getClass());
-      // Some flavors might report foreign pythons: i.e Windows might find conda on PATH.
+      // Some flavors might report foreign pythons: e.g. Windows might find conda on PATH.
       if (!correctFlavor) {
         LOG.info(String.format("Path %s has a wrong flavor, not %s, skipping", path, this));
         return false;
@@ -436,8 +437,9 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @return level or null if no parsable output was found
    */
   public static @Nullable LanguageLevel getLanguageLevelFromVersionStringStaticSafe(@NotNull String versionString) {
-    if (versionString.startsWith(PYTHON_VERSION_STRING_PREFIX)) {
-      return LanguageLevel.fromPythonVersionSafe(versionString.substring(PYTHON_VERSION_STRING_PREFIX.length()));
+    final Matcher m = VERSION_RE.matcher(versionString);
+    if (m.matches()) {
+      return LanguageLevel.fromPythonVersionSafe(m.group(3));
     }
     return null;
   }
@@ -468,7 +470,8 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   @ApiStatus.Internal
   public void dropCaches() {
   }
-@ApiStatus.Internal
+
+  @ApiStatus.Internal
   public static final class UnknownFlavor extends PythonSdkFlavor<PyFlavorData.Empty> {
 
     public static final UnknownFlavor INSTANCE = new UnknownFlavor();

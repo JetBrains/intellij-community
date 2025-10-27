@@ -25,6 +25,7 @@ jvm_library(
     "//libraries/guava",
     "//libraries/stream",
     "//platform/analysis-api:analysis",
+    "//platform/core-impl",
     "//platform/analysis-impl",
     "//platform/core-api:core",
     "//jps/model-api:model",
@@ -47,6 +48,7 @@ jvm_library(
     "//platform/progress/shared:ide-progress",
     "//platform/eel-provider",
     "//python/impl.helperLocator:community-helpersLocator",
+    "//python/common",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -63,6 +65,7 @@ jvm_library(
     "//libraries/guava",
     "//libraries/stream",
     "//platform/analysis-api:analysis",
+    "//platform/core-impl",
     "//platform/analysis-impl",
     "//platform/core-api:core",
     "//jps/model-api:model",
@@ -88,6 +91,7 @@ jvm_library(
     "@lib//:junit5",
     "//platform/eel-provider",
     "//python/impl.helperLocator:community-helpersLocator",
+    "//python/common",
   ]
 )
 ### auto-generated section `build intellij.python.sdk` end

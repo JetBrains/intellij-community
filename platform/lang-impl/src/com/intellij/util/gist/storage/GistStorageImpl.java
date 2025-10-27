@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,8 +6,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
@@ -62,7 +62,7 @@ public final class GistStorageImpl extends GistStorage {
     Path gistsDir = FSRecords.getCacheDir().resolve(HUGE_GISTS_DIR_NAME + "/" + vfsStamp);
     try {
       if (Files.isRegularFile(gistsDir)) {
-        FileUtil.delete(gistsDir);
+        NioFiles.deleteRecursively(gistsDir);
       }
       Files.createDirectories(gistsDir);
       return gistsDir;
@@ -146,7 +146,7 @@ public final class GistStorageImpl extends GistStorage {
           })
           .forEach(outdatedHugeGistsDir -> {
             try {
-              FileUtilRt.deleteRecursively(outdatedHugeGistsDir);
+              NioFiles.deleteRecursively(outdatedHugeGistsDir);
             }
             catch (IOException e) {
               LOG.info("Can't delete old huge-gists dir [" + outdatedHugeGistsDir.toAbsolutePath() + "]", e);
@@ -158,8 +158,8 @@ public final class GistStorageImpl extends GistStorage {
         LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
       }
     }
-    catch (AlreadyDisposedException e) {
-      LOG.info("Can't cleanup old huge-gists: vfs is disposed -> try next time", e);
+    catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") AlreadyDisposedException e) {
+      LOG.info("Can't cleanup old huge-gists: vfs is disposed -> try next time");
     }
   }
 

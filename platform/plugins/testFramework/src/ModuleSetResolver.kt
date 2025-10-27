@@ -3,13 +3,36 @@ package com.intellij.platform.plugins.testFramework
 
 import com.intellij.openapi.util.JDOMUtil
 import java.nio.file.Path
+import kotlin.io.path.exists
+
+/**
+ * Checks if the path refers to a module set file.
+ * Handles both absolute (/META-INF/...) and relative (META-INF/...) formats.
+ */
+fun isModuleSetPath(path: String): Boolean = path.removePrefix("/").startsWith("META-INF/intellij.moduleSets.")
+
+/**
+ * Resolves the path to a module set XML file, checking community first, then licenseCommon.
+ * @param fileName the XML filename (e.g., "intellij.moduleSets.essential.xml")
+ * @param projectRoot the project root directory
+ * @return Path to the module set file
+ */
+fun resolveModuleSetPath(fileName: String, projectRoot: Path): Path {
+  val communityPath = projectRoot.resolve("community/platform/platform-resources/generated/META-INF/$fileName")
+  if (communityPath.exists()) {
+    return communityPath
+  }
+  else {
+    return projectRoot.resolve("licenseCommon/generated/META-INF/$fileName")
+  }
+}
 
 /**
  * Resolves a module set name into a list of actual module names, recursively following x-include references.
  *
  * If the moduleName starts with "intellij.moduleSets.", attempts to find and parse the corresponding XML file
- * in community/platform/platform-resources/src/META-INF/, then recursively resolves any nested module sets
- * referenced via x-include.
+ * in community/platform/platform-resources/generated/META-INF/ or ultimate/platform-ultimate/resources/META-INF/,
+ * then recursively resolves any nested module sets referenced via x-include.
  *
  * @param moduleSetName the name like "intellij.moduleSets.debugger.streams"
  * @param ultimateRoot the root directory of the ultimate repository
@@ -21,7 +44,7 @@ fun resolveModuleSet(moduleSetName: String, ultimateRoot: Path): List<String> {
   }
 
   val xmlFileName = "$moduleSetName.xml"
-  val xmlPath = ultimateRoot.resolve("community/platform/platform-resources/src/META-INF/$xmlFileName")
+  val xmlPath = resolveModuleSetPath(xmlFileName, ultimateRoot)
   return resolveModuleSetRecursive(xmlPath, ultimateRoot, HashSet())
 }
 
@@ -48,8 +71,8 @@ private fun resolveModuleSetRecursive(xmlPath: Path, ultimateRoot: Path, visited
     val href = includeElement.getAttribute("href")?.value
     if (href != null && href.startsWith("/META-INF/intellij.moduleSets.")) {
       // extract module set name from href like "/META-INF/intellij.moduleSets.essential.xml"
-      val includedModuleSetName = href.substringAfterLast('/').substringBeforeLast(".xml")
-      val includedXmlPath = ultimateRoot.resolve("community/platform/platform-resources/src/META-INF/$includedModuleSetName.xml")
+      val includedFileName = href.substringAfterLast('/')
+      val includedXmlPath = resolveModuleSetPath(includedFileName, ultimateRoot)
       result.addAll(resolveModuleSetRecursive(includedXmlPath, ultimateRoot, visited))
     }
   }

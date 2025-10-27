@@ -45,6 +45,13 @@ def pytest_addoption(parser):
     parser.addini("swapdiff", **kwargs)
 
 
+def get_rootdir(config):
+    if hasattr(config, 'rootpath'):  # pytest>=6
+        return str(config.rootpath)
+    else:
+        return str(config.rootdir)
+
+
 def pytest_configure(config):
     if config.option.no_teamcity >= 1:
         enabled = False
@@ -65,7 +72,8 @@ def pytest_configure(config):
             getattr(config.pluginmanager.getplugin('capturemanager'), 'global_and_fixture_disabled'),
             coverage_controller,
             skip_passed_output,
-            bool(config.getini('swapdiff') or config.option.swapdiff)
+            bool(config.getini('swapdiff') or config.option.swapdiff),
+            get_rootdir(config),
         )
         config.pluginmanager.register(config._teamcityReporting)
 
@@ -86,7 +94,7 @@ def _get_coverage_controller(config):
 
 
 class EchoTeamCityMessages(object):
-    def __init__(self, output_capture_enabled, context_manager, coverage_controller, skip_passed_output, swap_diff):
+    def __init__(self, output_capture_enabled, context_manager, coverage_controller, skip_passed_output, swap_diff, rootdir):
         self.coverage_controller = coverage_controller
         self.output_capture_enabled = output_capture_enabled
         self.skip_passed_output = skip_passed_output
@@ -94,7 +102,7 @@ class EchoTeamCityMessages(object):
         output_handler = TeamCityMessagesPrinter(context_manager=context_manager)
         self.teamcity = TeamcityServiceMessages(output_handler=output_handler)
         self.test_start_reported_mark = set()
-        self.rootdir = None
+        self.rootdir = rootdir
         self.current_test_item = None
 
         self.max_reported_output_size = 1 * 1024 * 1024
@@ -179,10 +187,6 @@ class EchoTeamCityMessages(object):
             self.report_test_finished(test_id)
 
     def pytest_collection_finish(self, session):
-        if hasattr(session.config, 'rootpath'):  # pytest>=6
-            self.rootdir = str(session.config.rootpath)
-        else:
-            self.rootdir = str(session.config.rootdir)
         self.teamcity.testCount(len(session.items))
 
     def pytest_runtest_logstart(self, nodeid, location):

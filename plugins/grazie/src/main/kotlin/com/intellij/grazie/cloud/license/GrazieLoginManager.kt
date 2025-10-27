@@ -150,14 +150,21 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
     }
 
     var accountToken = JbaToken.obtain()
-    if (accountToken == null && force) openLogInDialog()
-    accountToken = JbaToken.obtain()
+    if (accountToken == null && force) {
+      openLogInDialog()
+      accountToken = JbaToken.obtain()
+    }
     if (accountToken == null) {
       setState(GrazieLoginState.NoJba)
       return
     }
+    if (isLoggedOut && !force) {
+      logger.trace("User is logged out of cloud mode")
+      return
+    }
+    isLoggedOut = false
     if (!activationDialogWasShown) {
-      logger.warn("Need explicit activation dialog agreement, so skipping cloud login")
+      logger.debug("Need explicit activation dialog agreement, so skipping cloud login")
       setState(GrazieLoginState.Jba(token = accountToken, null))
       return
     }
@@ -172,8 +179,13 @@ class GrazieLoginManager(coroutineScope: CoroutineScope) {
       registerIfNeeded(accountToken)
       val license = obtainLicense(accountToken)
       logger.trace("Obtained license: $license")
-      if (license == null || skipCloudLogin) {
+      if (license == null) {
         setState(GrazieLoginState.Jba(token = accountToken, null))
+        return@catching
+      }
+      if (skipCloudLogin) {
+        setState(GrazieLoginState.Jba(token = accountToken, null))
+        isLoggedOut = true
         return@catching
       }
       setState(GrazieLoginState.WaitingForCloud)
@@ -301,7 +313,7 @@ private suspend fun obtainCloudToken(license: LicenseState.Valid, token: JbaToke
 }
 
 private suspend fun obtainLicense(token: JbaToken): LicenseState.Valid? {
-  val license = LicenseState.obtain()
+  var license = LicenseState.obtain()
   logger.trace("Obtained local license: $license")
   if (license is LicenseState.Valid) {
     return license
@@ -317,7 +329,13 @@ private suspend fun obtainLicense(token: JbaToken): LicenseState.Valid? {
   check(!external.suspended) { "Issued license is suspended" }
   check(!external.outdated) { "Issued license is outdated" }
 
-  // The user will be able to log in to the cloud via Grazie Icon on the status bar
+  // Try to get a license one more time after Grazie lite was granted.
+  license = LicenseState.obtain()
+  if (license is LicenseState.Valid) {
+    return license
+  }
+
+  // Well, we tried. The user will be able to log in to the cloud via Grazie Icon on the status bar
   return null
 }
 
@@ -345,9 +363,13 @@ internal fun ensureTermsOfServiceShown(): Boolean {
   return false
 }
 
-private const val ActivationDialogShownKey = "grazie.pro.activation.dialog.shown"
-
+private const val ActivationDialogShownKey = "grazie.cloud.activation.dialog.shown"
 private var activationDialogWasShown: Boolean
   get() = PropertiesComponent.getInstance().getBoolean(ActivationDialogShownKey, false)
   set(value) = PropertiesComponent.getInstance().setValue(ActivationDialogShownKey, value)
+
+private const val LoggedOutKey = "grazie.cloud.logged.out"
+private var isLoggedOut: Boolean
+  get() = PropertiesComponent.getInstance().getBoolean(LoggedOutKey, false)
+  set(value) = PropertiesComponent.getInstance().setValue(LoggedOutKey, value)
 

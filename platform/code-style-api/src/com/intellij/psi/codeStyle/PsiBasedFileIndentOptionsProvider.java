@@ -26,6 +26,7 @@ public abstract class PsiBasedFileIndentOptionsProvider extends FileIndentOption
   public final @Nullable CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull Project project,
                                                                                 @NotNull CodeStyleSettings settings,
                                                                                 @NotNull VirtualFile file) {
+    if (!file.isValid()) return null;
     //avoid calling getDocument, because it causes decompilation, which is unnecessary
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile != null) {

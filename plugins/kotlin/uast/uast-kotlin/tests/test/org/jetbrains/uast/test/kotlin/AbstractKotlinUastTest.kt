@@ -152,7 +152,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
         project.registerService(
             PsiNameHelper::class.java,
-            PsiNameHelperImpl(project),
+            PsiNameHelperImpl::class.java,
         )
         project.registerService(UastContext::class.java)
 

@@ -1,0 +1,11 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: CommunityModuleSets.main() -->
+<!-- Source: see moduleSet("libraries.temporaryBundled") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="intellij.libraries.jettison" loading="embedded"/>
+    <module name="intellij.libraries.xstream" loading="embedded"/>
+    <module name="intellij.libraries.commons.text"/>
+  </content>
+</idea-plugin>

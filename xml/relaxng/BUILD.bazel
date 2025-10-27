@@ -37,6 +37,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
+    "//platform/core-impl",
   ],
   runtime_deps = ["//platform/backend"]
 )
@@ -72,6 +73,7 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//xml/xml-psi-api:psi",
     "//platform/util/jdom",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.relaxng` end

@@ -113,6 +113,15 @@ internal class GHPRDetailsDataProviderImpl(parentCs: CoroutineScope,
       notifyNeedsReload()
     }
 
+  override suspend fun deleteMergedBranch(refId: String) {
+    try {
+      detailsService.deleteMergedBranch(pullRequestId, refId)
+    }
+    finally {
+      notifyNeedsReload()
+    }
+  }
+
   private suspend fun notifyNeedsReload(state: Boolean = true) {
     withContext(NonCancellable) {
       signalDetailsNeedReload()

@@ -1,14 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
-import com.intellij.execution.dashboard.RunDashboardManager;
-import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.RunDashboardService;
+import com.intellij.execution.dashboard.*;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.ide.productMode.IdeProductMode;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,20 @@ public final class RunDashboardActionUtils {
 
     RunDashboardService selectedService = null;
 
+    // todo introduce proper backend node ids, drop selected items usage completely
+    if (IdeProductMode.isMonolith()) {
+      var uiSelection = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
+      if (uiSelection != null) {
+        JBIterable<Object> roots = JBIterable.of(uiSelection);
+        if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
+
+        var substitutor = ContainerUtil.getFirstItem(LegacyRunDashboardServiceSubstitutor.EP_NAME.getExtensionList());
+        if (substitutor == null) return JBIterable.empty();
+
+        return JBIterable.from(ContainerUtil.map(result, it -> substitutor.substituteWithBackendService(it, project)));
+      }
+    }
+
     var currentContentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     var currentContentDescriptorId = currentContentDescriptor == null ? null : currentContentDescriptor.getId();
     if (currentContentDescriptorId != null) {
@@ -57,7 +72,7 @@ public final class RunDashboardActionUtils {
     JBIterable<Object> roots = JBIterable.of(selectedService);
     if (!getLeaves(project, e, roots.toList(), Collections.emptyList(), result)) return JBIterable.empty();
 
-    return JBIterable.from(result);
+    return JBIterable.from(result).filter(RunDashboardRunConfigurationNode.class);
   }
 
   private static boolean getLeaves(Project project, AnActionEvent e, List<Object> items, List<Object> valueSubPath,

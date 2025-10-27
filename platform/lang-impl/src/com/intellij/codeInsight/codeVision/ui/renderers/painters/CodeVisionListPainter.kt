@@ -86,7 +86,7 @@ open class CodeVisionListPainter(
       painter.paint(editor, textAttributes, g, it, Point(x, y), state, it == hoveredEntry, hoveredEntry)
       x += size.width
 
-      if (painter.shouldBeDelimited() && (index < value.visibleLens.size - 1 || hovered)) {
+      if (painter.shouldBeDelimited(it) && (index < value.visibleLens.size - 1 || hovered)) {
         delimiterPainter.paint(editor, textAttributes, g, Point(x, y), state, false)
         x += delimiterWidth
       }

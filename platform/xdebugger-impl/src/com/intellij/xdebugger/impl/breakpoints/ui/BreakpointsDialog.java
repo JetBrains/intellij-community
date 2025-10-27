@@ -102,6 +102,11 @@ public class BreakpointsDialog extends DialogWrapper {
 
     collectGroupingRules();
 
+    // First subscribe, then collect — we shouldn't skip any changes.
+    myBreakpointManager.subscribeOnBreakpointsChanges(myListenerDisposable, () -> {
+      myRebuildAlarm.cancelAndRequest();
+      return Unit.INSTANCE;
+    });
     collectItems();
 
     setTitle(XDebuggerBundle.message("xbreakpoints.dialog.title"));
@@ -354,11 +359,6 @@ public class BreakpointsDialog extends DialogWrapper {
     myTreeController.buildTree(myBreakpointItems);
 
     initSelection(myBreakpointItems);
-
-    myBreakpointManager.subscribeOnBreakpointsChanges(myListenerDisposable, () -> {
-      myRebuildAlarm.cancelAndRequest();
-      return Unit.INSTANCE;
-    });
 
     return decoratorPanel;
   }

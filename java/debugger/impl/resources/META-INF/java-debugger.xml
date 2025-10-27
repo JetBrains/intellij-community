@@ -108,6 +108,7 @@
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
     <xdebugger.settings implementation="com.intellij.debugger.settings.JavaDebuggerSettings"/>
+    <registryKey key="execution.java.always.debug" defaultValue="false" description="Always run java processes with the debug agent"/>
 
     <xdebugger.breakpointGroupingRule implementation="com.intellij.debugger.ui.XBreakpointGroupingByPackageRule"/>
     <xdebugger.breakpointGroupingRule implementation="com.intellij.debugger.ui.XBreakpointGroupingByClassRule"/>
@@ -117,6 +118,7 @@
 
     <xdebugger.attachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider"/>
     <xdebugger.attachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>
+    <xdebugger.dialog.item.presentation.provider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider$JavaAttachDialogItemPresentationProvider"/>
 
     <consoleFilterProvider implementation="com.intellij.execution.impl.JavaDebuggerConsoleFilterProvider"/>
     <jvm.exceptionFilter implementation="com.intellij.debugger.impl.attach.JavaDebuggerAddExceptionBreakpointFilter"/>
@@ -218,6 +220,8 @@
                  description="The timeout between the hit run-to-cursor breakpoint in another thread/coroutine and pause the debugger"/>
     <registryKey key="debugger.run.to.cursor.waited.threads.limit" defaultValue="1"
                  description="How many of threads allow to wait on the hit run-to-cursor breakpoint for the desired hit"/>"/>
+    <registryKey key="debugger.log.jdi.in.unit.tests" defaultValue="false"
+                 description="Enable full JDI logging under DebugProcessImpl.LOG.debug for unit tests"/>
   </extensions>
 
   <actions>

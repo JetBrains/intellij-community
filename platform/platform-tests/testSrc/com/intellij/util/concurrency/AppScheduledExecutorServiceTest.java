@@ -5,6 +5,7 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TimeoutUtil;
@@ -25,53 +26,28 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.util.concurrent.TimeUnit.*;
-
 public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsTestCase {
-  private static final class LogInfo {
-    private final int runnable;
-    private final Thread currentThread;
-
+  private record LogInfo(int runnable, @NotNull Thread currentThread) {
     private LogInfo(int runnable) {
-      this.runnable = runnable;
-      currentThread = Thread.currentThread();
-    }
-
-    @Override
-    public String toString() {
-      return "LogInfo{" +
-             "runnable=" + runnable +
-             ", currentThread=" + currentThread +
-             '}';
+      this(runnable, Thread.currentThread());
     }
   }
 
   private AppScheduledExecutorService service;
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    service = new AppScheduledExecutorService(getName(), 1, HOURS, /*initLowMemoryManager:*/ false);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    //noinspection SSBasedInspection
-    try {
-      service.shutdownAppScheduledExecutorService();
-      assertTrue(service.awaitTermination(10, SECONDS));
-    }
-    finally {
-      service = null;
-
-      super.tearDown();
-    }
+  public void runBare() throws Throwable {
+    AppScheduledExecutorService.withTemporaryAppScheduledServiceInTests(getName(), service -> {
+      this.service = service;
+      super.runBare();
+    });
+    this.service = null;
   }
 
   public void testDelayedWorks() throws Exception {
     assertFalse(service.isShutdown());
     assertFalse(service.isTerminated());
     // avoid conflicts when threads are timed out/restarted, since we are inclined to count them all in this test
-    ((AppScheduledExecutorService.BackendThreadPoolExecutor)service.backendExecutorService).superSetKeepAliveTime(1, TimeUnit.MINUTES);
+    service.setBackendThreadPoolExecutorKeepAliveTimeInTests(1, TimeUnit.MINUTES);
     int N = 3;
     CountDownLatch c = new CountDownLatch(1);
     // pre-start all threads
@@ -90,7 +66,7 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
     List<ScheduledFuture<?>> f = IntStream.range(1, N+1).mapToObj(i -> service.schedule(() -> {
       log.add(new LogInfo(i));
       TimeoutUtil.sleep(1000);
-    }, delay, MILLISECONDS)).collect(Collectors.toList());
+    }, delay, TimeUnit.MILLISECONDS)).collect(Collectors.toList());
 
     Future<?> f4 = service.submit((Runnable)() -> log.add(new LogInfo(0)));
 
@@ -135,10 +111,10 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
 
   public void testExceptionsFromScheduledTasksAreReported() {
     checkExceptionIsReported(
-      action -> service.scheduleWithFixedDelay(action, 1, 1, MILLISECONDS)
+      action -> service.scheduleWithFixedDelay(action, 1, 1, TimeUnit.MILLISECONDS)
     );
     checkExceptionIsReported(
-      action -> service.schedule(action, 1, MILLISECONDS)
+      action -> service.schedule(action, 1, TimeUnit.MILLISECONDS)
     );
   }
 
@@ -154,8 +130,7 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
   }
 
   public void testDelayedTasksReusePooledThreadIfExecuteAtDifferentTimes() {
-    service.setBackendPoolCorePoolSize(1);
-    ((ThreadPoolExecutor)service.backendExecutorService).prestartCoreThread();
+    service.setBackendThreadPoolCorePoolSizeAndPrestartCoreThreadInTests(1);
     assertEquals(1, service.getBackendPoolExecutorSize());
 
     service.setNewThreadListener((thread, runnable) -> {
@@ -184,7 +159,7 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
       public String toString() {
         return "f1";
       }
-    }, delay, MILLISECONDS);
+    }, delay, TimeUnit.MILLISECONDS);
     ScheduledFuture<?> f2 = service.schedule(new Runnable() {
       @Override
       public void run() {
@@ -197,7 +172,7 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
       public String toString() {
         return "f2";
       }
-    }, delay + delay, MILLISECONDS);
+    }, delay + delay, TimeUnit.MILLISECONDS);
     ScheduledFuture<?> f3 = service.schedule(new Runnable() {
       @Override
       public void run() {
@@ -211,7 +186,7 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
       public String toString() {
         return "f3";
       }
-    }, delay + delay + delay, MILLISECONDS);
+    }, delay + delay + delay, TimeUnit.MILLISECONDS);
 
     assertEquals(1, service.getBackendPoolExecutorSize());
     long now = System.currentTimeMillis();
@@ -256,12 +231,10 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
         log.add(new LogInfo(0));
         TimeoutUtil.sleep(10 * 1000);
       }
-        , delay, MILLISECONDS
+        , delay, TimeUnit.MILLISECONDS
       ));
 
-    for (Future<?> future : futures) {
-      future.get();
-    }
+    ConcurrencyUtil.getAll(futures);
 
     assertEquals(N, log.size());
     Set<Thread> usedThreads = ContainerUtil.map2Set(log, l -> l.currentThread);
@@ -269,36 +242,23 @@ public class AppScheduledExecutorServiceTest extends CatchLogErrorsInAllThreadsT
     assertEquals(N, usedThreads.size());
   }
 
-  public void testAwaitTerminationMakesSureTasksTransferredToBackendExecutorAreFinished() throws InterruptedException {
-    final AppScheduledExecutorService service = new AppScheduledExecutorService(getName(), 1, HOURS, /*initTowMemoryManager:*/false);
-    final List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
-
+  public void testAwaitTerminationMakesSureTasksTransferredToBackendExecutorAreFinished() throws Throwable {
     int N = 20;
     int delay = 500;
-    List<? extends Future<?>> futures = ContainerUtil.map(
-      Collections.nCopies(N, ""),
-      s -> service.schedule(() -> {
-          TimeoutUtil.sleep(5000);
-          log.add(new LogInfo(0));
-        }, delay, MILLISECONDS
-      )
-    );
-    TimeoutUtil.sleep(delay);
-    long start = System.currentTimeMillis();
-    AppDelayQueue delayQueue = service.getDelayQueue();
-    while (!delayQueue.isEmpty()) {
-      // wait till all tasks transferred from delayQueue to backend executor:
-      if (System.currentTimeMillis() > start + 20000) {
-        List<SchedulingWrapper.MyScheduledFutureTask<?>> unprocessedTasks = new ArrayList<>(delayQueue);
-        if (!unprocessedTasks.isEmpty()) {
-          fail("Not transferred after 20 seconds: " + ContainerUtil.map(unprocessedTasks, BoundedTaskExecutor::info) + ";\n" + unprocessedTasks);
-        }
-      }
-    }
-
-    service.shutdownAppScheduledExecutorService();
-    assertTrue(service.awaitTermination(20, SECONDS));
-
+    List<Future<?>> futures = new ArrayList<>(N);
+    List<LogInfo> log = Collections.synchronizedList(new ArrayList<>());
+    AppScheduledExecutorService.withTemporaryAppScheduledServiceInTests(getName()+"2", service -> {
+      futures.addAll(ContainerUtil.map(
+        Collections.nCopies(N, ""),
+        s -> service.schedule(() -> {
+            TimeoutUtil.sleep(5000);
+            log.add(new LogInfo(0));
+          }, delay, TimeUnit.MILLISECONDS
+        )
+      ));
+      TimeoutUtil.sleep(delay);
+      service.waitUntilAllTasksAreTransferredInTests(20, TimeUnit.SECONDS);
+    });
     for (Future<?> future : futures) {
       assertTrue(future.isDone());
     }

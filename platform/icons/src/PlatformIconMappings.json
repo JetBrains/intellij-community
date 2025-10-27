@@ -541,6 +541,7 @@
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
       "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg",
+      "gift.svg": "ide/gift.svg",
       "localScope.svg": [
         "ide/localScope.svg",
         "ide/localScopeAction.svg"

@@ -33,7 +33,6 @@ import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
 import com.intellij.testFramework.junit5.http.url
 import com.intellij.testFramework.replaceService
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.createDirectories
 import com.intellij.util.queryParameters
 import com.intellij.util.system.OS
 import com.sun.net.httpserver.HttpServer
@@ -46,7 +45,6 @@ import org.junit.Test
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicInteger
@@ -56,6 +54,7 @@ import kotlin.io.path.*
 
 private val LOG = logger<ConfigImportHelperTest>()
 
+@OptIn(ExperimentalPathApi::class)
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   val options = ConfigImportOptions(LOG).apply { headless = true }
 
@@ -166,12 +165,12 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldConfigDir = createConfigDir("2021.2")
     val newConfigDir = createConfigDir("2021.3")
 
-    val jdkFile = Files.writeString(oldConfigDir.resolve("${ApplicationNamesInfo.getInstance().scriptName}.jdk"), "...")
-    val migrationOptionFile = Files.writeString(CustomConfigMigrationOption.getCustomConfigMarkerFilePath(oldConfigDir), "")
-    val lockFile = Files.writeString(oldConfigDir.resolve(SpecialConfigFiles.LOCK_FILE), "...")
-    val otherFile = Files.writeString(oldConfigDir.resolve("other.xml"), "...")
+    val jdkFile = oldConfigDir.resolve("${ApplicationNamesInfo.getInstance().scriptName}.jdk").apply { writeText("...") }
+    val migrationOptionFile = CustomConfigMigrationOption.getCustomConfigMarkerFilePath(oldConfigDir).createFile()
+    val lockFile = oldConfigDir.resolve(SpecialConfigFiles.LOCK_FILE).apply { writeText("...") }
+    val otherFile =oldConfigDir.resolve("other.xml").apply { writeText("...") }
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    doImport(oldConfigDir, newConfigDir, options)
 
     assertThat(newConfigDir.resolve(jdkFile.fileName)).doesNotExist()
     assertThat(newConfigDir.resolve(migrationOptionFile.fileName)).doesNotExist()
@@ -183,16 +182,16 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldConfigDir = createConfigDir("2022.3")
     val newConfigDir = createConfigDir("2023.1")
 
-    val subdir = oldConfigDir.resolve("subdir").let(Files::createDirectories)
+    val subdir = oldConfigDir.resolve("subdir").createDirectories()
     listOf(
       subdir.resolve("file1.txt"),
       subdir.resolve("file2.txt")
-    ).forEach { Files.write(it, listOf("...")) }
+    ).forEach { it.writeLines(listOf("...")) }
 
     options.importSettings = object : ConfigImportSettings {
       override fun shouldSkipPath(path: Path) = path.endsWith("file1.txt")
     }
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    doImport(oldConfigDir, newConfigDir, options)
 
     assertThat(newConfigDir.resolve("subdir")).isDirectory()
     assertThat(newConfigDir.resolve("subdir/file1.txt")).doesNotExist()
@@ -201,18 +200,18 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `migrate plugins to empty directory`() {
     val oldConfigDir = newTempDir("oldConfig")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
     plugin("my-plugin") { dependsIntellijModulesLang() }.buildMainJar(oldPluginsDir.resolve("my-plugin.jar"))
 
     val newConfigDir = newTempDir("newConfig")
     val newPluginsDir = newConfigDir.resolve("plugins")
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newPluginsDir).isDirectoryContaining { it.name == "my-plugin.jar" }
   }
 
   @Test fun `download incompatible plugin`() {
     val oldConfigDir = newTempDir("oldConfig")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
     plugin("my-plugin") {
       dependsIntellijModulesLang()
       untilBuild = "193.1"
@@ -230,13 +229,13 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       }
     }
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newPluginsDir).isDirectoryContaining { it.name == "my-plugin-new.jar" }
   }
 
   @Test fun `keep incompatible plugin if can't download compatible`() {
     val oldConfigDir = newTempDir("oldConfig")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
     plugin("my-plugin") {
       dependsIntellijModulesLang()
       untilBuild = "193.1"
@@ -249,13 +248,13 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     options.downloadService = object : MarketplacePluginDownloadService() {
       override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?) = throw IOException("404")
     }
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newPluginsDir).isDirectoryContaining { it.name == "my-plugin.jar" }
   }
 
   @Test fun `skip bundled plugins`() {
     val oldConfigDir = newTempDir("oldConfig")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
     val oldBundledPluginsDir = newTempDir("oldBundled")
     plugin("my-plugin") { dependsIntellijModulesLang(); version = "1.1" }.buildMainJar(oldBundledPluginsDir.resolve("my-plugin-bundled.jar"))
     plugin("my-plugin") { dependsIntellijModulesLang(); version = "1.0" }.buildMainJar(oldPluginsDir.resolve("my-plugin.jar"))
@@ -264,26 +263,26 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newPluginsDir = newConfigDir.resolve("plugins")
 
     options.bundledPluginPath = oldBundledPluginsDir
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newPluginsDir).doesNotExist()
   }
 
   @Test fun `skip broken plugins`() {
     val oldConfigDir = newTempDir("oldConfig")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
     plugin("my-plugin") { dependsIntellijModulesLang(); version = "1.0" }.buildMainJar(oldPluginsDir.resolve("my-plugin.jar"))
 
     val newConfigDir = newTempDir("newConfig")
     val newPluginsDir = newConfigDir.resolve("plugins")
 
     ConfigImportHelper.testBrokenPluginsFetcherStub = Function { mapOf(PluginId.getId("my-plugin") to setOf("1.0")) }
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newPluginsDir).doesNotExist()
   }
 
   @Test fun `skip pending upgrades`() {
     val oldConfigDir = newTempDir("old/config")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
     val oldPluginsTempDir = newTempDir("old/system/plugins")
 
     val tempPath = oldPluginsTempDir.resolve("my-plugin.jar")
@@ -297,7 +296,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = newTempDir("newConfig")
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.name == "my-plugin-1.1.jar" }
       .isDirectoryNotContaining { it.name == "my-plugin-1.0.jar" }
@@ -305,7 +304,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `do not download updates for plugins with pending updates`() {
     val oldConfigDir = newTempDir("old/config")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
     val oldPluginsTempDir = newTempDir("old/system/plugins")
 
     val tempPath = oldPluginsTempDir.resolve("my-plugin.jar")
@@ -325,11 +324,10 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
-
       override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator?) =
         throw AssertionError("No file download should be requested")
     }
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.name == "my-plugin-1.1.jar" }
       .isDirectoryNotContaining { it.name == "my-plugin-1.0.jar" }
@@ -337,7 +335,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `skip pending upgrades for plugin zips`() {
     val oldConfigDir = newTempDir("old/config")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
     val oldPluginsTempDir = newTempDir("old/system/plugins")
 
     val tempPath = oldPluginsTempDir.resolve("my-plugin.zip")
@@ -351,7 +349,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = newTempDir("newConfig")
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.name == "my-plugin" && it.isDirectory() }
       .isDirectoryNotContaining { it.name == "my-plugin-1.0.jar" }
@@ -359,14 +357,14 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `do not migrate plugins to existing directory`() {
     val oldConfigDir = newTempDir("oldConfig")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
-    val oldPluginZip = Files.createFile(oldPluginsDir.resolve("old-plugin.zip"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
+    val oldPluginZip = oldPluginsDir.resolve("old-plugin.zip").createFile()
 
     val newConfigDir = newTempDir("newConfig")
-    val newPluginsDir = Files.createDirectories(newConfigDir.resolve("plugins"))
-    val newPluginZip = Files.createFile(newPluginsDir.resolve("new-plugin.zip"))
+    val newPluginsDir = newConfigDir.resolve("plugins").createDirectories()
+    val newPluginZip = newPluginsDir.resolve("new-plugin.zip").createFile()
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
 
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.fileName == newPluginZip.fileName }
@@ -377,10 +375,10 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldConfigDir = newTempDir("oldConfig")
     @Suppress("SpellCheckingInspection") val outlaws = listOf(
       "-XX:MaxJavaStackTraceDepth=-1", "-Xverify:none", "-noverify", "-agentlib:yjpagent=opts", "-agentpath:/path/to/lib-yjpagent.so=opts")
-    Files.write(oldConfigDir.resolve(VMOptions.getFileName()), outlaws)
+    oldConfigDir.resolve(VMOptions.getFileName()).writeLines(outlaws)
     val newConfigDir = newTempDir("newConfig")
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    doImport(oldConfigDir, newConfigDir, options)
 
     assertThat(newConfigDir.resolve(VMOptions.getFileName())).hasContent("-XX:MaxJavaStackTraceDepth=10000")
   }
@@ -393,17 +391,38 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       "-ea", "-Dsun.io.useCanonCaches=false", "-Djdk.http.auth.tunneling.disabledSchemes=\"\"", "-Djdk.attach.allowAttachSelf=true",
       "-Djdk.module.illegalAccess.silent=true", "-Dkotlinx.coroutines.debug=off")
 
-    val platformFile = memoryFs.fs.getPath(VMOptions.getPlatformOptionsFile().toString())
-    Files.createDirectories(platformFile.parent)
-    Files.write(platformFile, platformOptions + commonOptions)
+    memoryFs.fs.getPath(VMOptions.getPlatformOptionsFile().toString())
+      .createParentDirectories()
+      .writeLines(platformOptions + commonOptions)
 
     val oldConfigDir = createConfigDir("2021.2")
-    Files.write(oldConfigDir.resolve(VMOptions.getFileName()), userOptions + commonOptions)
+    oldConfigDir.resolve(VMOptions.getFileName()).writeLines(userOptions + commonOptions)
     val newConfigDir = createConfigDir("2021.3")
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    doImport(oldConfigDir, newConfigDir, options)
 
     assertThat(newConfigDir.resolve(VMOptions.getFileName())).hasContent("-Xms512m\n-Xmx2g\n-XX:+UseZGC")
+  }
+
+  @Test fun `filtering FLS VM option when importing from CE`() {
+    val oldICConfigDir = createConfigDir(version = "2025.2", product = "IdeaIC")
+    val oldIUConfigDir = createConfigDir(version = "2025.2", product = "IntelliJIdea")
+    listOf(oldICConfigDir, oldIUConfigDir).forEach {
+      it.resolve(VMOptions.getFileName())
+        .createParentDirectories()
+        .writeLines(listOf("-Dsome.random.properrty=xyz", "-DJETBRAINS_LICENSE_SERVER=host.domain"))
+    }
+
+    val newConfigDir = createConfigDir(version = "2025.3")
+    val importedFile = newConfigDir.resolve(VMOptions.getFileName())
+
+    newConfigDir.apply { deleteRecursively() }.createDirectories()
+    doImport(oldICConfigDir, newConfigDir, options)
+    assertThat(importedFile).content().doesNotContain("JETBRAINS_LICENSE_SERVER")
+
+    newConfigDir.apply { deleteRecursively() }.createDirectories()
+    doImport(oldIUConfigDir, newConfigDir, options)
+    assertThat(importedFile).content().contains("JETBRAINS_LICENSE_SERVER")
   }
 
   @Test fun `finding related directories`() {
@@ -417,7 +436,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val cfg191 = createConfigDir("2019.1")
     populate(cfg191, null, null, null)
     if (OS.CURRENT != OS.macOS) {
-      Files.writeString(cfg191.parent.resolve("some_file.txt"), "...")
+      cfg191.resolveSibling("some_file.txt").writeText("...")
     }
 
     val cfg192 = createConfigDir("2019.2")
@@ -429,15 +448,15 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
     val cfg193 = createConfigDir("2019.3")
     val plugins193 = when (OS.CURRENT) {
-      OS.macOS -> cfg193.parent.parent.resolve("Application Support").resolve(cfg193.fileName)
+      OS.macOS -> cfg193.parent.resolveSibling("Application Support").resolve(cfg193.fileName)
       else -> cfg193.resolve("plugins")
     }
     val sys193 = when (OS.CURRENT) {
-      OS.macOS -> cfg193.parent.parent.resolve("Caches").resolve(cfg193.fileName)
-      else -> cfg193.parent.resolve("system")
+      OS.macOS -> cfg193.parent.resolveSibling("Caches").resolve(cfg193.fileName)
+      else -> cfg193.resolveSibling("system")
     }
     val logs193 = when (OS.CURRENT) {
-      OS.macOS -> cfg193.parent.parent.resolve("Logs").resolve(cfg193.fileName)
+      OS.macOS -> cfg193.parent.resolveSibling("Logs").resolve(cfg193.fileName)
       else -> sys193.resolve("logs")
     }
     populate(cfg193, plugins193, sys193, logs193)
@@ -487,7 +506,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `default project directory is excluded`() {
     val defaultProjectPath = "${SystemProperties.getUserHome()}/PhpstormProjects"
-    Files.createDirectories(memoryFs.fs.getPath(defaultProjectPath))
+    memoryFs.fs.getPath(defaultProjectPath).createDirectories()
     val current = createConfigDir("2021.2", product = "PhpStorm")
     assertThat(findConfigDirectories(current).paths).isEmpty()
   }
@@ -525,34 +544,32 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newVmOptionsFile = newConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx2048m", "-Dsome.prop=new.val"))
     options.mergeVmOptions = true
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx4g", "-Dsome.prop=new.val")
 
     oldVmOptionsFile.writeLines(listOf("-Xmx1g"))
     newVmOptionsFile.writeLines(listOf("-Xmx2048m", "-Dunique.prop=some.val"))
 
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    doImport(oldConfigDir, newConfigDir, options)
     assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx2048m", "-Dunique.prop=some.val")
   }
 
   @TestFor(issues = ["IDEA-341860"])
   @Test fun `don't ask for VM options restart, if they are actual`() {
     val oldConfigDir = newTempDir("oldConfig")
-    val newConfigDir = newTempDir("newConfig")
-
-    val otherXml = oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE)
-    Files.createDirectories(otherXml.parent)
-    otherXml.writeLines(listOf("aaaa"))
-    val newVmOptionsFile = newConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx3G", "-Dsome.prop=new.val"))
-
-    CustomConfigMigrationOption.MigrateFromCustomPlace(oldConfigDir).writeConfigMarkerFile(newConfigDir)
-
+    oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY + '/' + StoragePathMacros.NON_ROAMABLE_FILE)
+      .createParentDirectories()
+      .writeLines(listOf("aaaa"))
     oldConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx2048m", "-Dsome.prop=old.val"))
 
-    val platformVmOptionsFile = newConfigDir.fileSystem.getPath(VMOptions.getPlatformOptionsFile().toString())
-    Files.createDirectories(platformVmOptionsFile.parent)
-    Files.write(platformVmOptionsFile, listOf("-Xmx2048m", "-Dsome.another.prop=another.val"))
+    val newConfigDir = newTempDir("newConfig")
+    val newVmOptionsFile = newConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx3G", "-Dsome.prop=new.val"))
 
+    newConfigDir.fileSystem.getPath(VMOptions.getPlatformOptionsFile().toString())
+      .createParentDirectories()
+      .writeLines(listOf("-Xmx2048m", "-Dsome.another.prop=another.val"))
+
+    CustomConfigMigrationOption.MigrateFromCustomPlace(oldConfigDir).writeConfigMarkerFile(newConfigDir)
     ConfigImportHelper.importConfigsTo(false, newConfigDir, emptyList(), LOG)
     assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx3G", "-Dsome.prop=new.val")
   }
@@ -570,7 +587,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `automatic import`() {
     val oldConfigDir = createConfigDir("2025.2", storageTS = LocalDateTime.now())
-    val markerFile = Files.createTempFile(oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY), "test.", ".xml")
+    val markerFile = createTempFile(oldConfigDir.resolve(PathManager.OPTIONS_DIRECTORY), "test.", ".xml")
     val newConfigDir = createConfigDir(version = "2025.3")
 
     withSystemProperty<RuntimeException>("intellij.startup.wizard", "false") {
@@ -665,7 +682,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `uses broken plugins from marketplace by default`() {
     val oldConfigDir = newTempDir("oldConfig")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
     plugin("my-plugin") { dependsIntellijModulesLang(); version = "1.0" }.buildMainJar(oldPluginsDir.resolve("my-plugin.jar"))
     plugin("my-plugin-2") { dependsIntellijModulesLang(); version = "1.0" }.buildMainJar(oldPluginsDir.resolve("my-plugin-2.jar"))
 
@@ -696,7 +713,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       headless = true
       compatibleBuildNumber = BuildNumber.fromString("201.1")
     }
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
 
     assertThat(brokenPluginsDownloaded).hasValue(1)
     assertThat(newPluginsDir).exists()
@@ -713,7 +730,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     setSystemProperty("idea.config.import.update.incompatible.plugins.only", updateIncompatibleOnly.toString(), testRootDisposable)
 
     val oldConfigDir = newTempDir("oldConfig")
-    val oldPluginsDir = Files.createDirectories(oldConfigDir.resolve("plugins"))
+    val oldPluginsDir = oldConfigDir.resolve("plugins").createDirectories()
 
     fun spec(id: String, version: String) = plugin(id) { dependsIntellijModulesLang(); this@plugin.version = version }
     spec("broken", "1.0").buildMainJar(oldPluginsDir.resolve("broken.jar"))
@@ -779,7 +796,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
         }
       }
     }
-    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
+    doImport(oldConfigDir, newConfigDir, options)
 
     assertThat(newPluginsDir).exists()
     assertThat(newPluginsDir.listDirectoryEntries())

@@ -1,6 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package com.intellij.platform.ijent.community.buildConstants
 
 /**
@@ -10,9 +9,8 @@ package com.intellij.platform.ijent.community.buildConstants
  * Unless you're modifying DevKit, please don't touch it.
  */
 @Deprecated("Replace with isMultiRoutingFileSystemEnabledForProduct")
-fun isIjentWslFsEnabledByDefaultForProduct(platformPrefix: String?): Boolean {
-  return isMultiRoutingFileSystemEnabledForProduct(platformPrefix)
-}
+fun isIjentWslFsEnabledByDefaultForProduct(platformPrefix: String?): Boolean =
+  isMultiRoutingFileSystemEnabledForProduct(platformPrefix)
 
 /**
  * Decides if the multi-routing filesystem should be enabled by default in some IDE.
@@ -24,9 +22,8 @@ fun isIjentWslFsEnabledByDefaultForProduct(platformPrefix: String?): Boolean {
  * `component>names>script` in `ApplicationInfo.xml`,
  * `com.intellij.testFramework.common.PlatformPrefix.PREFIX_CANDIDATES`.
  */
-fun isMultiRoutingFileSystemEnabledForProduct(platformPrefix: String?): Boolean {
-  return platformPrefix == null || !MRFS_AND_IJENT_DISABLED_BY_DEFAULT_IN.contains(platformPrefix)
-}
+fun isMultiRoutingFileSystemEnabledForProduct(platformPrefix: String?): Boolean =
+  platformPrefix == null || !MRFS_AND_IJENT_DISABLED_BY_DEFAULT_IN.contains(platformPrefix)
 
 /**
  * In case of problems in a particular IDE and inability to fix them quickly, add the platform prefix here.

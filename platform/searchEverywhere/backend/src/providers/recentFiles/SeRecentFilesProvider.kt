@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.util.gotoByName.FileTypeRef
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.backend.providers.target.SeTargetsProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.SeAsyncContributorWrapper
@@ -13,7 +14,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 @Internal
-class SeRecentFilesProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(), SeItemsPreviewProvider {
+class SeRecentFilesProvider(private val contributorWrapper: SeAsyncContributorWrapper<Any>) : SeWrappedLegacyContributorItemsProvider(),
+                                                                                              SeItemsPreviewProvider,
+                                                                                              SeExtendedInfoProvider {
   override val id: String get() = SeProviderIdUtils.RECENT_FILES_ID
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName

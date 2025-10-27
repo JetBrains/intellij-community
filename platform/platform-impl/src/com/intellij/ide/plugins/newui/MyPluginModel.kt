@@ -413,8 +413,6 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       myTopController!!.showProgress(false)
     }
 
-    if (info == null) return
-
     val pluginId = descriptor.pluginId
     val marketplaceComponents = myMarketplacePluginComponentMap[pluginId]
     val errorList = errors[pluginId] ?: emptyList()
@@ -448,7 +446,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
 
     val installing = myInstalling
-    if (info.install) {
+    if (info?.install == true) {
       if (installing != null && installing.ui != null) {
         clearInstallingProgress(descriptor)
         if (installingPlugins.isEmpty()) {
@@ -482,7 +480,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       myPluginUpdatesService!!.finishUpdate()
     }
 
-    info.indicator.cancel()
+    info?.indicator?.cancel()
 
     if (AccessibleAnnouncerUtil.isAnnouncingAvailable()) {
       val frame = WindowManager.getInstance().findVisibleFrame()
@@ -672,9 +670,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   val installedDescriptors: MutableList<PluginUiModel>
     get() {
-      checkNotNull(myInstalledPanel)
-
-      return myInstalledPanel!!
+      val panel = myInstalledPanel ?: return mutableListOf()
+      return panel
         .groups
         .filterNot { it.excluded }
         .flatMap { it.plugins }
@@ -894,7 +891,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
   suspend fun closeDialogAndApplyIfNeeded(component: Component? = null) {
     if (component == null) return
-    val settings = DialogWrapper.findInstance(component) ?: return
+    val settings = DialogWrapper.findInstance(component)
     if (settings is SettingsDialog) {
       if (component is JComponent) {
         applyAsync(component)
@@ -1073,12 +1070,10 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
 
     @JvmStatic
     private fun finishInstall(descriptor: PluginUiModel): InstallPluginInfo? {
-      val info = myInstallingInfos.remove(descriptor.pluginId) ?: return null
-      info.close()
+      val info = myInstallingInfos.remove(descriptor.pluginId)
+      info?.close()
       myInstallingWithUpdatesPlugins.remove(descriptor.pluginId)
-      if (info.install) {
-        installingPlugins.remove(descriptor)
-      }
+      installingPlugins.remove(descriptor)
       return info
     }
 

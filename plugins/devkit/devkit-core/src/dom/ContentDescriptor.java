@@ -33,6 +33,10 @@ public interface ContentDescriptor extends DomElement {
     @NotNull
     @Stubbed
     GenericAttributeValue<ModuleLoadingRule> getLoading();
+
+    @NotNull
+    @Stubbed
+    GenericAttributeValue<String> getRequiredIfAvailable();
     
     enum ModuleLoadingRule implements NamedEnum {
       REQUIRED("required"), EMBEDDED("embedded"), OPTIONAL("optional"), ON_DEMAND("on-demand");

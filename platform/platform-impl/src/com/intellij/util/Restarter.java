@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.platform.ide.productInfo.IdeProductInfo;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
@@ -141,10 +143,11 @@ public final class Restarter {
   }
 
   @ApiStatus.Internal
-  public static void scheduleRestart(boolean elevate, String @NotNull ... beforeRestart) throws IOException {
+  public static void scheduleRestart(boolean elevate, @NotNull List<@NotNull String> @NotNull ... beforeRestart) throws IOException {
+    var beforeRestartCommands = Stream.of(beforeRestart).filter(cmd -> !cmd.isEmpty()).toList();
     var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
     if (exitCodeVariable != null) {
-      if (beforeRestart.length > 0) {
+      if (!beforeRestartCommands.isEmpty()) {
         throw new IOException("Cannot restart application: specific exit code restart mode does not support executing additional commands");
       }
       try {
@@ -155,13 +158,13 @@ public final class Restarter {
       }
     }
     else if (OS.CURRENT == OS.Windows) {
-      restartOnWindows(elevate, List.of(beforeRestart), mainAppArgs);
+      restartOnWindows(elevate, beforeRestartCommands, mainAppArgs);
     }
     else if (OS.CURRENT == OS.macOS) {
-      restartOnMac(List.of(beforeRestart), mainAppArgs);
+      restartOnMac(beforeRestartCommands, mainAppArgs);
     }
     else if (OS.CURRENT == OS.Linux) {
-      restartOnLinux(List.of(beforeRestart), mainAppArgs);
+      restartOnLinux(beforeRestartCommands, mainAppArgs);
     }
     else {
       throw new IOException("Cannot restart application: not supported.");
@@ -173,7 +176,7 @@ public final class Restarter {
     return ourLauncherWithoutRemoteDevOverride.getValue();
   }
 
-  private static void restartOnWindows(boolean elevate, List<String> beforeRestart, List<String> args) throws IOException {
+  private static void restartOnWindows(boolean elevate, List<List<String>> beforeRestart, List<String> args) throws IOException {
     var starter = ourLauncher.getValue();
     if (starter == null) throw new IOException("Starter executable not found in " + PathManager.getBinDir());
     var command = prepareCommand("restarter.exe", beforeRestart);
@@ -186,7 +189,7 @@ public final class Restarter {
     runRestarter(command);
   }
 
-  private static void restartOnMac(List<String> beforeRestart, List<String> args) throws IOException {
+  private static void restartOnMac(List<List<String>> beforeRestart, List<String> args) throws IOException {
     var starter = ourLauncher.getValue();
     if (starter == null) throw new IOException("Starter executable not found in: " + PathManager.getHomeDir());
     var command = prepareCommand("restarter", beforeRestart);
@@ -196,7 +199,7 @@ public final class Restarter {
     runRestarter(command);
   }
 
-  private static void restartOnLinux(List<String> beforeRestart, List<String> args) throws IOException {
+  private static void restartOnLinux(List<List<String>> beforeRestart, List<String> args) throws IOException {
     var starterScript = ourLauncher.getValue();
     if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinDir());
     var command = prepareCommand("restarter", beforeRestart);
@@ -221,20 +224,22 @@ public final class Restarter {
     restarterEnv = new HashMap<>(env);
   }
 
-  private static List<String> prepareCommand(String restarterName, List<String> beforeRestart) throws IOException {
+  private static List<String> prepareCommand(String restarterName, List<List<String>> beforeRestart) throws IOException {
     var restarter = PathManager.getBinDir().resolve(restarterName);
     var command = new ArrayList<String>();
     command.add(copyWhenNeeded(restarter, beforeRestart).toString());
     command.add(String.valueOf(ProcessHandle.current().pid()));
-    if (!beforeRestart.isEmpty()) {
-      command.add(String.valueOf(beforeRestart.size()));
-      command.addAll(beforeRestart);
+    for (var cmd : beforeRestart) {
+      if (!cmd.isEmpty()) {
+        command.add(String.valueOf(cmd.size()));
+        command.addAll(cmd);
+      }
     }
     return command;
   }
 
-  private static Path copyWhenNeeded(Path binFile, List<String> args) throws IOException {
-    if (copyRestarterFiles || args.contains(UpdateInstaller.UPDATER_MAIN_CLASS)) {
+  private static Path copyWhenNeeded(Path binFile, List<List<String>> commands) throws IOException {
+    if (copyRestarterFiles || ContainerUtil.exists(commands, cmd -> cmd.contains(UpdateInstaller.UPDATER_MAIN_CLASS))) {
       var tempDir = Files.createDirectories(PathManager.getSystemDir().resolve("restart"));
       return Files.copy(binFile, tempDir.resolve(binFile.getFileName()), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES);
     }

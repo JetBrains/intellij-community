@@ -3,13 +3,12 @@ package com.intellij.util.indexing.testEntities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -22,8 +21,11 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.indexing.testEntities.ChildTestEntity
+import com.intellij.util.indexing.testEntities.ChildTestEntityBuilder
 import com.intellij.util.indexing.testEntities.ParentTestEntity
+import com.intellij.util.indexing.testEntities.ParentTestEntityBuilder
 import com.intellij.util.indexing.testEntities.SiblingEntity
+import com.intellij.util.indexing.testEntities.SiblingEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -73,7 +75,7 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
 
 
   internal class Builder(result: ParentTestEntityData?) : ModifiableWorkspaceEntityBase<ParentTestEntity, ParentTestEntityData>(
-    result), ParentTestEntity.Builder {
+    result), ParentTestEntityBuilder {
     internal constructor() : this(ParentTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -136,16 +138,16 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
 
       }
 
-    override var child: ChildTestEntity.Builder?
+    override var child: ChildTestEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID, this) as? ChildTestEntity.Builder)
-          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILD_CONNECTION_ID, this) as? ChildTestEntityBuilder)
+          ?: (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildTestEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildTestEntity.Builder
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildTestEntityBuilder
         }
       }
       set(value) {
@@ -172,16 +174,16 @@ internal class ParentTestEntityImpl(private val dataSource: ParentTestEntityData
         changedProperty.add("child")
       }
 
-    override var secondChild: SiblingEntity.Builder?
+    override var secondChild: SiblingEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(SECONDCHILD_CONNECTION_ID, this) as? SiblingEntity.Builder)
-          ?: (this.entityLinks[EntityLink(true, SECONDCHILD_CONNECTION_ID)] as? SiblingEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(SECONDCHILD_CONNECTION_ID, this) as? SiblingEntityBuilder)
+          ?: (this.entityLinks[EntityLink(true, SECONDCHILD_CONNECTION_ID)] as? SiblingEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(true, SECONDCHILD_CONNECTION_ID)] as? SiblingEntity.Builder
+          this.entityLinks[EntityLink(true, SECONDCHILD_CONNECTION_ID)] as? SiblingEntityBuilder
         }
       }
       set(value) {
@@ -238,7 +240,7 @@ internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
   internal fun isCustomParentPropertyInitialized(): Boolean = ::customParentProperty.isInitialized
   internal fun isParentEntityRootInitialized(): Boolean = ::parentEntityRoot.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentTestEntity> {
     val modifiable = ParentTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -264,7 +266,7 @@ internal class ParentTestEntityData : WorkspaceEntityData<ParentTestEntity>() {
     return ParentTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ParentTestEntity(customParentProperty, parentEntityRoot, entitySource) {
     }
   }

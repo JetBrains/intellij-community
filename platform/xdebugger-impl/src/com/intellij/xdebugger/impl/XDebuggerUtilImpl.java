@@ -58,6 +58,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
+import com.intellij.xdebugger.impl.util.XDebugMonolithUtils;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import kotlin.Unit;
@@ -308,8 +309,17 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     var future = toggleAndReturnLineBreakpointProxy(
       project, proxyTypes, position, selectVariantByPositionColumn,
       temporary, editor, canRemove, false, null);
-    return asPromise(future)
-      .then(b -> b instanceof XLineBreakpointProxy.Monolith monolith ? monolith.getBreakpoint() : null);
+    return asPromise(future).then(b -> {
+      if (b == null) return null;
+      if (b instanceof XLineBreakpointProxy.Monolith monolith) {
+        return monolith.getBreakpoint();
+      }
+      XBreakpointBase<?, ?, ?> monolithBreakpoint = XDebugMonolithUtils.findBreakpointById(b.getId());
+      if (monolithBreakpoint instanceof XLineBreakpoint<?> lineBreakpoint) {
+        return lineBreakpoint;
+      }
+      return null;
+    });
   }
 
   public static @NotNull CompletableFuture<@Nullable XLineBreakpointProxy> toggleAndReturnLineBreakpointProxy(

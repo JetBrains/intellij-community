@@ -42,14 +42,14 @@ jobs:
     strategy:
       matrix:
         platform: ["linux", "win32", "darwin"]
-        # TODO (2025-05-10) "3.13.2" should be "3.14-dev", see below.
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.13.2"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
       - uses: astral-sh/setup-uv@v6
         with:
           version-file: "requirements-tests.txt"
@@ -63,15 +63,9 @@ jobs:
           fi
       - name: Run mypy_test.py
         run: |
-          # TODO: (2025-05-10) This is a bad hack to work around mypy crashing
-          # when running on Python 3.14. See https://github.com/python/mypy/pull/19020.
-          if [[ "${{ matrix.python-version }}" == "3.13.2" ]]; then
-              MYPY_PY_VERSION="3.14"
-          else
-            # python-version can sometimes be pinned to a specific version or to "-dev", but
-            # mypy understands only X.Y version numbers.
-            MYPY_PY_VERSION=$(echo ${{ matrix.python-version }} | cut -d - -f 1 | cut -d . -f 1-2)
-          fi
+          # python-version can sometimes be pinned to a specific version or to "-dev", but
+          # mypy understands only X.Y version numbers.
+          MYPY_PY_VERSION=$(echo ${{ matrix.python-version }} | cut -d - -f 1 | cut -d . -f 1-2)
           python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${MYPY_PY_VERSION}
 
   regression-tests:

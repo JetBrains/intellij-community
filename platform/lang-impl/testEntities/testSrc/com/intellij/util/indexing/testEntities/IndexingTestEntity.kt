@@ -12,39 +12,4 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 interface IndexingTestEntity : WorkspaceEntity {
   val roots: List<VirtualFileUrl>
   val excludedRoots: List<VirtualFileUrl>
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<IndexingTestEntity> {
-    override var entitySource: EntitySource
-    var roots: MutableList<VirtualFileUrl>
-    var excludedRoots: MutableList<VirtualFileUrl>
-  }
-
-  companion object : EntityType<IndexingTestEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      roots: List<VirtualFileUrl>,
-      excludedRoots: List<VirtualFileUrl>,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.roots = roots.toMutableWorkspaceList()
-      builder.excludedRoots = excludedRoots.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifyIndexingTestEntity(
-  entity: IndexingTestEntity,
-  modification: IndexingTestEntity.Builder.() -> Unit,
-): IndexingTestEntity = modifyEntity(IndexingTestEntity.Builder::class.java, entity, modification)
-//endregion

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import org.junit.jupiter.api.Test;
@@ -91,5 +91,10 @@ class UtilsTest {
     var link = Files.createSymbolicLink(dir.resolve("link"), Path.of("dangling"));
     Utils.delete(link);
     assertThat(dir).isEmptyDirectory();
+  }
+
+  @Test void splitVersionString() {
+    assertThat(Utils.splitVersionString("IntellIJ IDEA (build 123.456.78)")).containsExactly("IntellIJ IDEA (build 123.456.78)");
+    assertThat(Utils.splitVersionString("IntellIJ IDEA 1234.56 #123.456.78")).containsExactly("IntellIJ IDEA 1234.56", "123.456.78");
   }
 }

@@ -7,11 +7,11 @@ import com.intellij.diagnostic.*
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager
 import com.intellij.ide.*
 import com.intellij.ide.bootstrap.InitAppContext
-import com.intellij.ide.plugins.BundledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
+import com.intellij.ide.plugins.saveBundledPluginsState
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.NotRoamableUiSettings
@@ -239,7 +239,7 @@ internal suspend fun loadApp(
         delay(1.minutes)
         if (!ApplicationManagerEx.getApplicationEx().isExitInProgress) {
           span("save bundled plugin state") {
-            BundledPluginsState.saveBundledPluginsState()
+            saveBundledPluginsState()
           }
         }
       }

@@ -20,7 +20,7 @@ import kotlin.io.path.createDirectories
 internal fun generatePluginRepositoryMetaFile(pluginSpecs: List<PluginRepositorySpec>, targetDir: Path, buildNumber: String): Path {
   val categories = TreeMap<String, MutableList<Plugin>>()
   for (spec in pluginSpecs) {
-    val p = readPlugin(spec.pluginZip, spec.pluginXml, buildNumber, targetDir)
+    val p = readPlugin(pluginZip = spec.pluginZip, pluginXml = spec.pluginXml, buildNumber = buildNumber, targetDirectory = targetDir)
     categories.computeIfAbsent(p.category) { mutableListOf() }.add(p)
   }
   Files.createDirectories(targetDir)

@@ -16,9 +16,7 @@ import org.jetbrains.kotlin.types.Variance
 
 class KotlinHighLevelExpressionTypeProvider : KotlinExpressionTypeProvider() {
     @OptIn(KaExperimentalApi::class)
-    private val renderer: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES.with {
-        typeApproximator = KaRendererTypeApproximator.NO_APPROXIMATION
-    }
+    private val renderer: KaTypeRenderer = KaTypeRendererForSource.WITH_SHORT_NAMES
 
     // this method gets called from the non-blocking read action
     @OptIn(KaExperimentalApi::class)

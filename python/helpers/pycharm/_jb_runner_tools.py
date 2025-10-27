@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-Tools to implement runners (https://confluence.jetbrains.com/display/~link/PyCharm+test+runners+protocol)
+Tools to implement runners (https://youtrack.jetbrains.com/articles/PY-A-83178089/PyCharm-test-runners-protocol)
 """
 import os
 import re

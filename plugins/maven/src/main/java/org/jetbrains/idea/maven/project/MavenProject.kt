@@ -548,15 +548,6 @@ class MavenProject(val file: VirtualFile) {
       return myState.dependencyTree
     }
 
-  @Suppress("SpellCheckingInspection")
-  val supportedPackagings: Set<String>
-    get() {
-      val result = mutableSetOf(MavenConstants.TYPE_POM, MavenConstants.TYPE_JAR, "ejb", "ejb-client", "war", "ear", "bundle", "maven-plugin")
-      for (each: MavenImporter in MavenImporter.getSuitableImporters(this)) {
-        each.getSupportedPackagings(result)
-      }
-      return result
-    }
 
   fun getDependencyTypesFromImporters(type: SupportedRequestType): Set<String> {
     val res: MutableSet<String> = HashSet()

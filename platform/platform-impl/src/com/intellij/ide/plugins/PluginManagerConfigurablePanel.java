@@ -47,6 +47,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.welcomeScreen.PluginsTabFactory;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenEventCollector;
 import com.intellij.ui.GotItTooltip;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBScrollPane;
@@ -900,22 +902,26 @@ public final class PluginManagerConfigurablePanel implements Disposable {
               Map<PluginUiModel, Double> pluginToScore = null;
 
               if (parser.internal) {
-                PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
-                  PluginsViewCustomizerKt.getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
-                if (groupDescriptor != null) {
-                  if (parser.searchQuery == null) {
-                    result.addDescriptors(groupDescriptor.getPlugins());
-                  }
-                  else {
-                    for (IdeaPluginDescriptor pluginDescriptor : groupDescriptor.getPlugins()) {
-                      if (StringUtil.containsIgnoreCase(pluginDescriptor.getName(), parser.searchQuery)) {
-                        result.addDescriptor(pluginDescriptor);
+                try {
+                  PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
+                    PluginsViewCustomizerKt.getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
+                  if (groupDescriptor != null) {
+                    if (parser.searchQuery == null) {
+                      result.addDescriptors(groupDescriptor.getPlugins());
+                    }
+                    else {
+                      for (IdeaPluginDescriptor pluginDescriptor : groupDescriptor.getPlugins()) {
+                        if (StringUtil.containsIgnoreCase(pluginDescriptor.getName(), parser.searchQuery)) {
+                          result.addDescriptor(pluginDescriptor);
+                        }
                       }
                     }
+                    result.removeDuplicates();
+                    result.sortByName();
+                    return;
                   }
-                  result.removeDuplicates();
-                  result.sortByName();
-                  return;
+                } catch (Exception e) {
+                  LOG.error("Error while loading internal plugins group", e);
                 }
               }
 
@@ -1409,6 +1415,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
               .loadErrors(myPluginModelFacade.getModel().mySessionId.toString(),
                           ContainerUtil.map(descriptors, PluginUiModel::getPluginId));
             result.getPreloadedModel().setErrors(MyPluginModel.getErrors(errors));
+            result.getPreloadedModel().setPluginInstallationStates(UiPluginManager.getInstance().getInstallationStatesSync());
             PluginManagerUsageCollector.performInstalledTabSearch(
               ProjectUtil.getActiveProject(), parser, result.getModels(), searchIndex, null);
 
@@ -1977,6 +1984,19 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       return true;
     }
     return myPluginModelFacade.getModel().isModified();
+  }
+
+  public void scheduleApply() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        apply();
+        WelcomeScreenEventCollector.logPluginsModified();
+        InstalledPluginsState.getInstance().runShutdownCallback();
+      }
+      catch (ConfigurationException exception) {
+        Logger.getInstance(PluginsTabFactory.class).error(exception);
+      }
+    }, ModalityState.nonModal());
   }
 
   public void apply() throws ConfigurationException {

@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
@@ -37,9 +38,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEd
 import org.jetbrains.plugins.github.pullrequest.ui.editor.ranges
 
 interface GHPRDiffReviewViewModel {
-  val commentableRanges: List<Range>
   val canComment: Boolean
+  val canNavigate: Boolean
+
+  val commentableRanges: List<Range>
   val changedRanges: List<Range>
+
   val threads: StateFlow<Collection<GHPRReviewThreadDiffViewModel>>
   val newComments: StateFlow<Collection<GHPRNewCommentDiffViewModel>>
   val aiComments: StateFlow<Collection<GHPRAICommentViewModel>>
@@ -59,7 +63,7 @@ interface GHPRDiffReviewViewModel {
 }
 
 internal class GHPRDiffReviewViewModelImpl(
-  project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
@@ -73,8 +77,10 @@ internal class GHPRDiffReviewViewModelImpl(
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
   private val path get() = relativePath(repository.root, change.filePath)
 
-  override val commentableRanges: List<Range> = diffData.patch.ranges
   override val canComment: Boolean = threadsVms.canComment
+  override val canNavigate: Boolean = diffData.isCumulative
+
+  override val commentableRanges: List<Range> = diffData.patch.ranges
   override val changedRanges: List<Range> = diffData.patch.hunks.flatMap { hunk -> PatchHunkUtil.getChangeOnlyRanges(hunk) }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -133,13 +139,16 @@ internal class GHPRDiffReviewViewModelImpl(
     threadsVms.cancelNewComment(change, side, lineIdx)
 
 
-  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) =
-    threadsVms.newComments.value.firstOrNull {
+  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
+    val newComment = threadsVms.newComments.value.firstOrNull {
       when (val loc = it.position.value.location) {
         is GHPRReviewCommentLocation.SingleLine -> loc.lineIdx == oldLineRange.end
         is GHPRReviewCommentLocation.MultiLine -> loc.startLineIdx == oldLineRange.start && loc.lineIdx == oldLineRange.end
       }
-    }?.updateLineRange(newLineRange) ?: Unit
+    } ?: return
+    newComment.updateLineRange(newLineRange)
+    GHPRStatisticsCollector.logResizedComments(project)
+  }
 
   override val isViewedState: StateFlow<ComputedResult<Boolean>> =
     dataProvider.viewedStateData.viewedStateComputationState

@@ -20,6 +20,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer"
+                    serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k2.roots.GradleBuildRootDataSerializer"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator"
                     serviceImplementation="org.jetbrains.kotlin.gradle.scripting.k2.roots.GradleBuildRootsLocatorImpl"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslSyncListener"/>
@@ -38,7 +41,12 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <kotlinScripDeferredResolutionPolicy implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScripDeferredResolvePolicy"/>
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptDefinitionsSource"/>
+    <scriptHighlightingExtension implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptHighlightingExtension"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsSource"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptService$GradleWorkspaceModelListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+  </projectListeners>
 </idea-plugin>

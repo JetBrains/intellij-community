@@ -34,6 +34,8 @@ private class DecompilerInEditorListener : EditorFactoryListener {
   }
 
   /**
+   * This is a hack. See IDEA-368466.
+   *
    * We want to add an icon to the small toolbar in the upper-right corner of the editor (aka "the inspection widget").
    *
    * Normal, well-behaved plugins (for example GitHub plugin, for code review), contribute their own actions to the
@@ -58,6 +60,9 @@ private class DecompilerInEditorListener : EditorFactoryListener {
 
     // We override this *only* to enforce the nice-looking minimum icon size.
     val statusToolbar = object : EditorInspectionsActionToolbar(defaultActionGroup, editor, editorButtonLook, null, null) {
+
+      override fun canReuseActionButton(oldActionButton: ActionButton, newPresentation: Presentation) = true
+
       override fun createIconButton(action: AnAction, place: String, presentation: Presentation, minimumSize: Supplier<out Dimension>): ActionButton {
         return object : ToolbarActionButton(action, presentation, place, minimumSize) {
           override fun getPreferredSize(): Dimension {

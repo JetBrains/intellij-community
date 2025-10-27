@@ -50,8 +50,6 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
   public static final DataKey<ReferenceCountProvider> REF_COUNT_PROVIDER_KEY =
     DataKey.create("ClassesTable.ReferenceCountProvider");
 
-  private static final JBColor CLICKABLE_COLOR = new JBColor(new Color(250, 251, 252), new Color(62, 66, 69));
-
   private static final SimpleTextAttributes LINK_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, SimpleTextAttributes.LINK_ATTRIBUTES.getFgColor());
   private static final SimpleTextAttributes UNDERLINE_LINK_ATTRIBUTES = SimpleTextAttributes.LINK_ATTRIBUTES;
@@ -234,7 +232,6 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
 
       @Override
       void updateTable(boolean mouseOnTable) {
-        setBackground(mouseOnTable ? CLICKABLE_COLOR : JBColor.background());
         SimpleTextAttributes linkAttributes = mouseOnTable ? UNDERLINE_LINK_ATTRIBUTES : LINK_ATTRIBUTES;
         getEmptyText().clear()
                       .appendText(XDebuggerBundle.message("memory.view.no.classes.loaded")).appendText(" ")
@@ -264,7 +261,6 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
       removeMouseListener(myMouseListener);
       myMouseListener = null;
       setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-      setBackground(JBColor.background());
     }
   }
 

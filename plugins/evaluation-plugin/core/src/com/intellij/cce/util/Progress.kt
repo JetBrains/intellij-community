@@ -7,9 +7,10 @@ interface Progress {
   fun finish() = Unit
   fun isCanceled(): Boolean
 
-  fun wrapWithProgress(block: (Progress) -> Unit) {
+  suspend fun <T> wrapWithProgress(block: suspend (Progress) -> T): T {
     start()
-    block(this)
+    val result = block(this)
     finish()
+    return result
   }
 }

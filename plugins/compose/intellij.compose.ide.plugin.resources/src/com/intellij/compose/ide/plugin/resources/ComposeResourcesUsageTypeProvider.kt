@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtProperty
 
 private val COMPOSE_RESOURCE_USAGE_TYPE = UsageType { ComposeIdeBundle.message("compose.resources.usage.type") }
 
-class ComposeResourcesUsageTypeProvider : UsageTypeProviderEx {
+private class ComposeResourcesUsageTypeProvider : UsageTypeProviderEx {
   override fun getUsageType(element: PsiElement, targets: Array<out UsageTarget>): UsageType? {
     val isComposeResourceProperty = (element.reference?.resolve() as? KtProperty)?.isComposeResourceProperty
     return if (isComposeResourceProperty == true) COMPOSE_RESOURCE_USAGE_TYPE else null

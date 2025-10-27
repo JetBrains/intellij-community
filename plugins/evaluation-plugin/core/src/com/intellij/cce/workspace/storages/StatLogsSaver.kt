@@ -15,7 +15,7 @@ class StatLogsSaver(private val logsTemporaryStoragePath: Path, private val fina
   private val formatter = SimpleDateFormat("dd_MM_yyyy")
   private val sessionIds = linkedSetOf<String>()
 
-  override fun <T> invokeRememberingLogs(action: () -> T): T = action()
+  override suspend fun <T> invokeRememberingLogs(action: suspend () -> T): T = action()
 
   override fun save(languageName: String?, trainingPercentage: Int) {
     val logsDir = logsTemporaryStoragePath.toFile()

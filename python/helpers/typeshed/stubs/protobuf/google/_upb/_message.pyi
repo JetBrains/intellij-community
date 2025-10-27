@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
 from typing import ClassVar, final
+from typing_extensions import Self
 
 default_pool: DescriptorPool
 
@@ -28,14 +29,14 @@ class Descriptor:
     nested_types_by_name: Incomplete
     oneofs: Incomplete
     oneofs_by_name: Incomplete
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def CopyToProto(self, object, /): ...
     def EnumValueName(self, *args, **kwargs): ...  # incomplete
     def GetOptions(self): ...
 
 @final
 class DescriptorPool:
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def Add(self, object, /): ...
     def AddSerializedFile(self, object, /): ...
     def FindAllExtensions(self, object, /): ...
@@ -62,7 +63,7 @@ class EnumDescriptor:
     values: Incomplete
     values_by_name: Incomplete
     values_by_number: Incomplete
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def CopyToProto(self, object, /): ...
     def GetOptions(self): ...
 
@@ -73,7 +74,7 @@ class EnumValueDescriptor:
     name: Incomplete
     number: Incomplete
     type: Incomplete
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def GetOptions(self): ...
 
 @final
@@ -151,7 +152,7 @@ class FieldDescriptor:
     name: Incomplete
     number: Incomplete
     type: Incomplete
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def GetOptions(self): ...
 
 @final
@@ -167,7 +168,7 @@ class FileDescriptor:
     public_dependencies: Incomplete
     serialized_pb: Incomplete
     services_by_name: Incomplete
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def CopyToProto(self, object, /): ...
     def GetOptions(self): ...
 
@@ -179,7 +180,7 @@ class MapIterator:
 @final
 class Message:
     Extensions: Incomplete
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete  # incomplete
+    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
     def ByteSize(self): ...
     def Clear(self): ...
     def ClearExtension(self, object, /): ...
@@ -225,7 +226,7 @@ class MethodDescriptor:
     name: Incomplete
     output_type: Incomplete
     server_streaming: Incomplete
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def CopyToProto(self, object, /): ...
     def GetOptions(self): ...
 
@@ -237,12 +238,12 @@ class OneofDescriptor:
     has_options: Incomplete
     index: Incomplete
     name: Incomplete
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def GetOptions(self): ...
 
 @final
 class RepeatedCompositeContainer:
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def MergeFrom(self, object, /): ...
     def add(self, *args, **kwargs): ...  # incomplete
     def append(self, object, /): ...
@@ -266,7 +267,7 @@ class RepeatedCompositeContainer:
 
 @final
 class RepeatedScalarContainer:
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def MergeFrom(self, object, /): ...
     def append(self, object, /): ...
     def extend(self, object, /): ...
@@ -296,14 +297,14 @@ class ServiceDescriptor:
     methods: Incomplete
     methods_by_name: Incomplete
     name: Incomplete
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def CopyToProto(self, object, /): ...
     def FindMethodByName(self, object, /): ...
     def GetOptions(self): ...
 
 @final
 class UnknownFieldSet:
-    def __init__(self, *args, **kwargs) -> None: ...  # incomplete
+    def __new__(cls, *args, **kwargs) -> Self: ...  # incomplete
     def __getitem__(self, index, /): ...
     def __len__(self) -> int: ...
 

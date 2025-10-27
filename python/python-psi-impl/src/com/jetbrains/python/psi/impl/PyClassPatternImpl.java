@@ -54,10 +54,11 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
     if (!(context.getType(refName) instanceof PyClassType classType)) return false;
 
     final List<PyPattern> arguments = getArgumentList().getPatterns();
-    if (SPECIAL_BUILTINS.contains(classType.getClassQName())) {
+    final @Nullable String classQName = classType.getClassQName();
+    if (classQName != null && SPECIAL_BUILTINS.contains(classQName)) {
       if (arguments.isEmpty()) return true;
       if (arguments.size() > 1) return false;
-      return arguments.get(0).canExcludePatternType(context);
+      return arguments.getFirst().canExcludePatternType(context);
     }
 
     List<String> matchArgs = getMatchArgs(classType, context);
@@ -104,7 +105,8 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
     // capture type can be a union like: list[int] | list[str]
     return PyTypeUtil.toStream(context.getType(this)).map(type -> {
       if (type instanceof PyClassType classType) {
-        if (SPECIAL_BUILTINS.contains(classType.getClassQName())) {
+        final @Nullable String classQName = classType.getClassQName();
+        if (classQName != null && SPECIAL_BUILTINS.contains(classQName)) {
           if (index == 0) {
             return classType;
           }
@@ -150,7 +152,8 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
   @Nullable
   static Ref<PyType> getMemberType(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-    final List<PyTypedResolveResult> results = type.getMemberTypes(name, null, AccessDirection.READ, resolveContext);
-    return ContainerUtil.isEmpty(results) ? null : Ref.create(getFirstItem(results).getType());
+    List<PyTypeMember> members = type.findMember(name, resolveContext);
+    if (members.isEmpty()) return null;
+    return Ref.create(PyUnionType.union(ContainerUtil.map(members, PyTypeMember::getType)));
   }
 }

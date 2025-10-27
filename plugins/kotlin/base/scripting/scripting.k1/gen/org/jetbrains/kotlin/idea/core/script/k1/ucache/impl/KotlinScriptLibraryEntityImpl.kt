@@ -14,10 +14,9 @@ import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableInde
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import java.io.Serializable
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptId
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntity
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryEntityBuilder
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryId
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryRoot
 
@@ -72,7 +71,7 @@ internal class KotlinScriptLibraryEntityImpl(private val dataSource: KotlinScrip
 
 
   internal class Builder(result: KotlinScriptLibraryEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityData>(
-    result), KotlinScriptLibraryEntity.Builder {
+    result), KotlinScriptLibraryEntityBuilder {
     internal constructor() : this(KotlinScriptLibraryEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -283,7 +282,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinScriptLibraryEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinScriptLibraryEntity> {
     val modifiable = KotlinScriptLibraryEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -318,7 +317,7 @@ internal class KotlinScriptLibraryEntityData : WorkspaceEntityData<KotlinScriptL
     return KotlinScriptLibraryEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return KotlinScriptLibraryEntity(name, roots, indexSourceRoots, usedInScripts, entitySource) {
     }
   }

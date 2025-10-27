@@ -323,6 +323,7 @@ public class JBColor extends Color implements PresentableColor, ComparableColor 
 
   @Override
   public boolean equals(Object obj) {
+    if (this == obj) return true;
     final Color c = getColor();
     return c == this ? super.equals(obj) : c.equals(obj);
   }

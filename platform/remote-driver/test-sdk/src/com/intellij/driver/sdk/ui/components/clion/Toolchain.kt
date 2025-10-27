@@ -80,28 +80,33 @@ enum class Debugger {
     override fun getDebuggerPath(): String = "Bundled GDB"
     override fun getDebuggerFieldName(): String = "Bundled GDB"
     override fun toString(): String = "GDB"
+    override fun type(): String = "GDB"
   },
 
   BUNDLED_LLDB {
     override fun getDebuggerPath(): String = "Bundled LLDB"
     override fun getDebuggerFieldName(): String = "Bundled LLDB"
     override fun toString(): String = "LLDB"
+    override fun type(): String = "LLDB"
   },
 
   CUSTOM_GDB {
     override fun getDebuggerPath(): String = "/usr/bin/gdb"
     override fun getDebuggerFieldName(): String = "Custom GDB executable"
     override fun toString(): String = "Custom GDB"
+    override fun type(): String = "GDB"
   },
 
   CUSTOM_LLDB {
     override fun getDebuggerPath(): String = "/usr/bin/lldb"
     override fun getDebuggerFieldName(): String = "Custom LLDB executable"
     override fun toString(): String = "Custom LLDB"
+    override fun type(): String = "LLDB"
   };
 
   abstract fun getDebuggerPath(): String
   abstract fun getDebuggerFieldName(): String
+  abstract fun type(): String
 }
 
 

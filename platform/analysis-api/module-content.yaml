@@ -1,0 +1,3 @@
+- name: dist.all/lib/intellij.platform.analysis.jar
+  modules:
+  - name: intellij.platform.analysis

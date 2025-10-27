@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.velocity.jar
   modules:
   - name: intellij.libraries.velocity
     libraries:

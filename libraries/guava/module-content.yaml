@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.guava.jar
   modules:
   - name: intellij.libraries.guava
   library: Guava

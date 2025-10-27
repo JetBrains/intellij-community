@@ -17,7 +17,9 @@ suspend fun checkPrivatePluginModulesAreNotPublic(
   softly: SoftAssertions,
 ) {
   val privateModules = getPrivateModules(context)
-  if (privateModules.isEmpty()) return
+  if (privateModules.isEmpty()) {
+    return
+  }
 
   val visited = mutableSetOf<JpsModule>()
   val bundledPrivateModules = context.productProperties.productLayout.bundledPluginModules.asSequence()
@@ -57,7 +59,7 @@ suspend fun checkPrivatePluginModulesAreNotPublic(
  */
 private fun getPrivateModules(context: BuildContext): Set<String> {
   val projectHome = context.paths.projectHome
-  val ultimateHome = BuildPaths.ULTIMATE_HOME
+  val ultimateHome = BuildPaths.MAYBE_ULTIMATE_HOME
 
   return when (projectHome) {
     ultimateHome -> readPrivateModulesFromFile(ultimateHome) // Ultimate project

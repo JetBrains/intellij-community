@@ -18,10 +18,11 @@ import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
 import com.intellij.xdebugger.impl.pinned.items.PinToTopMemberValue
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue
+import com.intellij.xdebugger.impl.rpc.sourcePosition
 import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeEx
-import com.intellij.xdebugger.impl.util.MonolithUtils
+import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -62,6 +63,10 @@ class FrontendXValue private constructor(
 
   @Volatile
   private var canNavigateToTypeSource = false
+
+  @Volatile
+  var canMarkValue: Boolean = false
+    private set
 
   private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue) {
     XValueApi.getInstance().computeChildren(xValueDto.id)
@@ -108,6 +113,10 @@ class FrontendXValue private constructor(
 
     cs.launch {
       canNavigateToTypeSource = xValueDto.canNavigateToTypeSource.await()
+    }
+
+    cs.launch {
+      canMarkValue = xValueDto.canMarkValue.await()
     }
   }
 
@@ -223,7 +232,7 @@ class FrontendXValue private constructor(
 
   override fun getReferrersProvider(): XReferrersProvider? {
     // TODO referrersProvider is only supported in monolith
-    return MonolithUtils.findXValueById(xValueDto.id)?.referrersProvider
+    return XDebugMonolithUtils.findXValueById(xValueDto.id)?.referrersProvider
   }
 
   override fun shouldShowTextValue(): Boolean = textProvider?.value?.shouldShowTextValue ?: false

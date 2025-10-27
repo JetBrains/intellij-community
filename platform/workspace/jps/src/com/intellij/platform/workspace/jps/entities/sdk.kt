@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
-import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.io.Serializable
 import org.jetbrains.annotations.NonNls
@@ -19,18 +21,10 @@ interface SdkEntity : WorkspaceEntityWithSymbolicId {
   val additionalData: String
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<SdkEntity> {
-    override var entitySource: EntitySource
-    var name: String
-    var type: String
-    var version: String?
-    var homePath: VirtualFileUrl?
-    var roots: MutableList<SdkRoot>
-    var additionalData: String
-  }
-
+  @Deprecated(message = "Use SdkEntityBuilder instead")
+  interface Builder : SdkEntityBuilder
   companion object : EntityType<SdkEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
@@ -41,25 +35,19 @@ interface SdkEntity : WorkspaceEntityWithSymbolicId {
       additionalData: String,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.name = name
-      builder.type = type
-      builder.roots = roots.toMutableWorkspaceList()
-      builder.additionalData = additionalData
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = SdkEntityType.compatibilityInvoke(name, type, roots, additionalData, entitySource, init)
   }
   //endregion
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifySdkEntity(
   entity: SdkEntity,
   modification: SdkEntity.Builder.() -> Unit,
-): SdkEntity = modifyEntity(SdkEntity.Builder::class.java, entity, modification)
+): SdkEntity {
+  return modifyEntity(SdkEntity.Builder::class.java, entity, modification)
+}
 //endregion
 
 

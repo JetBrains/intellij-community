@@ -95,7 +95,7 @@ internal abstract class SettingsHistoryCellRenderer : ColoredTableCellRenderer()
 
   private fun paintBackground(table: SettingsHistoryTable, row: SettingsHistoryTableRow, selected: Boolean, focused: Boolean) {
     if (row is SeparatorRow) {
-      background = JBUI.CurrentTheme.Table.BACKGROUND
+      background = null
       return
     }
 
@@ -113,7 +113,7 @@ internal abstract class SettingsHistoryCellRenderer : ColoredTableCellRenderer()
       background = JBUI.CurrentTheme.Table.Hover.background(focused)
     }
     else {
-      background = JBUI.CurrentTheme.Table.BACKGROUND
+      background = null
     }
   }
 

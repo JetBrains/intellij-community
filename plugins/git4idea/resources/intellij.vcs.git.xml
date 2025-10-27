@@ -214,10 +214,14 @@
       <action class="git4idea.actions.branch.GitCheckoutFromInputAction"/>
     </group>
 
-    <group id="Git.Branch">
+    <group id="Git.Branch.Backend.Checkout">
       <action class="git4idea.actions.ref.GitCheckoutAction"/>
       <action class="git4idea.actions.branch.GitCheckoutAsNewBranch"/>
       <action class="git4idea.actions.branch.GitCheckoutWithRebaseAction"/>
+      <add-to-group group-id="Git.Branch.Checkout" anchor="first"/>
+    </group>
+
+    <group id="Git.Branch.Backend">
       <separator/>
       <action id="Git.Ref.Compare.With"
               class="git4idea.actions.branch.GitCompareWithBranchAction"/>
@@ -237,6 +241,8 @@
       <separator/>
       <action class="git4idea.actions.branch.GitRenameBranchAction" id="Git.Rename.Local.Branch"/>
       <action class="git4idea.actions.ref.GitDeleteRefAction"/>
+
+      <add-to-group group-id="Git.Branch.Placeholder"/>
     </group>
 
     <action class="git4idea.actions.tag.GitPushTagAction" id="Git.Tag.Push"/>
@@ -788,7 +794,6 @@
     <changesViewContent id="git.stage" tabName="Staging Area" className="git4idea.index.GitStageContentProvider"
                         predicateClassName="git4idea.index.GitStageContentVisibilityPredicate"
                         preloaderClassName="git4idea.index.GitStageContentPreloader"
-                        displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"
                         isInCommitToolWindow="true"/>
     <vcs.changes.changesViewNodeAction implementation="git4idea.merge.GitChangesViewNodeAction"/>
 

@@ -2,33 +2,34 @@
 package com.jetbrains.python.sdk.add.v2.uv
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
-import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
-import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.isAssociatedWithModule
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.statistics.version
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.stream.Collectors
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
-internal class UvExistingEnvironmentSelector<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?)
+
+internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?)
   : CustomExistingEnvironmentSelector<P>("uv", model, module) {
-  override val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = model.state.uvExecutable
+  override val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>> = model.uvViewModel.toolValidator
   override val interpreterType: InterpreterType = InterpreterType.UV
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
@@ -62,14 +63,18 @@ internal class UvExistingEnvironmentSelector<P: PathHolder>(model: PythonMutable
   }
 
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>> {
-    val existingEnvs = PythonSdkUtil.getAllSdks().filter {
-      it.isUv && (it.associatedModulePath == modulePath.pathString || it.associatedModulePath == null)
-    }.mapNotNull { env ->
-      env.homePath?.let { path ->
-        model.fileSystem.parsePath(path).successOrNull?.let { homePath ->
-          DetectedSelectableInterpreter(homePath, env.version, false)
-        }
-      }
+    val rootFolders = Files.walk(modulePath, 1)
+      .filter(Files::isDirectory)
+      .collect(Collectors.toList())
+
+    val existingEnvs = rootFolders.mapNotNull { possibleVenvHome ->
+      val pythonBinaryPath = possibleVenvHome.resolvePythonBinary()?.takeIf { it.exists() }
+                             ?: return@mapNotNull null
+      val pythonInfo = pythonBinaryPath.validatePythonAndGetInfo().getOrNull()
+                       ?: return@mapNotNull null
+
+      val pathHolder = PathHolder.Eel(pythonBinaryPath) as P
+      DetectedSelectableInterpreter(pathHolder, pythonInfo, false)
     }
     return existingEnvs
   }

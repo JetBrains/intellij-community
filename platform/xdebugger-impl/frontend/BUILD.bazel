@@ -39,6 +39,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/core-impl",
   ]
 )
 
@@ -78,6 +79,7 @@ jvm_library(
     "//platform/xdebugger-impl/shared",
     "//platform/xdebugger-impl/rpc",
     "//platform/remote-topics/shared:rpc-topics",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.frontend` end

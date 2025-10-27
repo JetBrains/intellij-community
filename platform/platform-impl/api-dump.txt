@@ -309,6 +309,11 @@ bf:com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate$$serializer
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate):V
+com.intellij.ide.settings.fileBasedSync.FileBasedSettingsSyncListProvider
+- sf:Companion:com.intellij.ide.settings.fileBasedSync.FileBasedSettingsSyncListProvider$Companion
+- a:getSettingsFileList():java.util.List
+f:com.intellij.ide.settings.fileBasedSync.FileBasedSettingsSyncListProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.ide.startup.StartupActionScriptManager
 - s:addActionCommand(com.intellij.ide.startup.StartupActionScriptManager$ActionCommand):V
 - s:addActionCommands(java.util.List):V
@@ -498,6 +503,27 @@ com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard
 - getOrdinal():I
 - isEnabled(com.intellij.ide.util.projectWizard.WizardContext):Z
 com.intellij.notification.impl.NotificationFullContent
+a:com.intellij.openapi.actionSystem.ex.ActionButtonLook
+- sf:INPLACE_LOOK:com.intellij.openapi.actionSystem.ex.ActionButtonLook
+- sf:SYSTEM_LOOK:com.intellij.openapi.actionSystem.ex.ActionButtonLook
+- <init>():V
+- s:getButtonState(Z,Z,Z,Z,Z):I
+- getDisabledIcon(javax.swing.Icon):javax.swing.Icon
+- p:getIconPosition(com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon):java.awt.Point
+- p:getState(com.intellij.openapi.actionSystem.ActionButtonComponent):I
+- p:getStateBackground(javax.swing.JComponent,I):java.awt.Color
+- paintBackground(java.awt.Graphics,javax.swing.JComponent):V
+- paintBackground(java.awt.Graphics,javax.swing.JComponent,I):V
+- paintBackground(java.awt.Graphics,javax.swing.JComponent,java.awt.Color):V
+- paintBorder(java.awt.Graphics,javax.swing.JComponent):V
+- paintBorder(java.awt.Graphics,javax.swing.JComponent,I):V
+- paintBorder(java.awt.Graphics,javax.swing.JComponent,java.awt.Color):V
+- paintDownArrow(java.awt.Graphics,com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon,javax.swing.Icon):V
+- paintIcon(java.awt.Graphics,com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon):V
+- paintIcon(java.awt.Graphics,com.intellij.openapi.actionSystem.ActionButtonComponent,javax.swing.Icon,I,I):V
+- paintLookBackground(java.awt.Graphics,java.awt.Rectangle,java.awt.Color):V
+- paintLookBorder(java.awt.Graphics,java.awt.Rectangle,java.awt.Color):V
+- updateUI():V
 com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer
 - registerActions(com.intellij.openapi.actionSystem.ActionManager):V
 - a:unregisterActions(com.intellij.openapi.actionSystem.ActionManager):V
@@ -675,6 +701,9 @@ com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$Visib
 com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - com.intellij.openapi.editor.markup.LineMarkerRenderer
 - a:getPosition():com.intellij.openapi.editor.markup.LineMarkerRendererEx$Position
+f:com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar
+- com.intellij.openapi.Disposable
+- dispose():V
 com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - a:getAutoHideable():Z
 - a:getBackgroundAlpha():F
@@ -743,6 +772,8 @@ com.intellij.openapi.fileEditor.impl.EditorWindowHolder
 c:com.intellij.openapi.fileEditor.impl.EditorsSplitters
 - p:isPaintingOrigin():Z
 - p:paintChildren(java.awt.Graphics):V
+c:com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
+- s:updateModifiedProperty(com.intellij.openapi.vfs.VirtualFile):V
 f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 - sf:openEditor(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Request,com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileEditor.FileEditor
 f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$Companion
@@ -900,6 +931,9 @@ com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 - sf:Companion:com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createTabActions(com.intellij.ui.content.Content):java.util.List
+f:com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
+- f:updateWidget(com.intellij.openapi.wm.StatusBarWidgetFactory,kotlin.coroutines.CoroutineContext):V
+- bs:updateWidget$default(com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager,com.intellij.openapi.wm.StatusBarWidgetFactory,kotlin.coroutines.CoroutineContext,I,java.lang.Object):V
 f:com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 - f:runCloneTask(java.nio.file.Path,com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneTask):V
 f:com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService$CloneableProject

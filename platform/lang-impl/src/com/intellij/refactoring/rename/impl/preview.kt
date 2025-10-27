@@ -19,6 +19,7 @@ import com.intellij.refactoring.rename.api.RenameUsage
 import com.intellij.refactoring.rename.ui.progressTitle
 import com.intellij.refactoring.rename.ui.withBackgroundIndicator
 import com.intellij.usageView.UsageInfo
+import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewUtil
 import com.intellij.usages.Usage
 import com.intellij.usages.UsageView
@@ -28,7 +29,6 @@ import com.intellij.util.containers.toArray
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.ReceiveChannel
 import java.awt.event.ActionEvent
-import java.lang.Runnable
 import javax.swing.AbstractAction
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -128,6 +128,7 @@ private fun usageViewPresentation(): UsageViewPresentation {
   presentation.tabText = RefactoringBundle.message("rename.preview.tab.title")
   presentation.isShowReadOnlyStatusAsRed = true
   presentation.isShowCancelButton = true
+  presentation.setDynamicUsagesString(UsageViewBundle.message("node.potential.usages"))
   return presentation
 }
 

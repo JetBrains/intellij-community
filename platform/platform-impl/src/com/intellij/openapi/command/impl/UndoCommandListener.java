@@ -1,19 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.command.CommandEvent;
-import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-final class UndoCommandListener implements CommandListener {
+final class UndoCommandListener implements SeparatedCommandListener {
+
+  private static final Logger LOG = Logger.getInstance(UndoCommandListener.class);
+
   private final @Nullable Project project;
   private final @NotNull UndoManagerImpl undoManager;
-  private boolean isTransparentActionStarted;
 
   @SuppressWarnings("unused")
   UndoCommandListener(@NotNull Project project) {
@@ -31,40 +31,28 @@ final class UndoCommandListener implements CommandListener {
   }
 
   @Override
-  public void commandStarted(@NotNull CommandEvent event) {
-    if (!isTransparentActionStarted && !isProjectDisposed()) {
-      undoManager.onCommandStarted(
-        event.getProject(),
-        event.getUndoConfirmationPolicy(),
-        event.shouldRecordActionForOriginalDocument()
-      );
+  public void onCommandStarted(@NotNull CmdEvent cmdEvent) {
+    if (projectNotDisposed()) {
+      undoManager.onCommandStarted(eventWithProject(cmdEvent));
     }
   }
 
   @Override
-  public void commandFinished(@NotNull CommandEvent event) {
-    if (!isTransparentActionStarted && !isProjectDisposed()) {
-      undoManager.onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
+  public void onCommandFinished(@NotNull CmdEvent cmdEvent) {
+    if (projectNotDisposed()) {
+      undoManager.onCommandFinished(eventWithProject(cmdEvent));
     }
   }
 
-  @Override
-  public void undoTransparentActionStarted() {
-    if (!isProjectDisposed() && !undoManager.isInsideCommand()) {
-      isTransparentActionStarted = true;
-      undoManager.onCommandStarted(project, UndoConfirmationPolicy.DEFAULT, true);
-    }
+  private @NotNull CmdEvent eventWithProject(@NotNull CmdEvent cmdEvent) {
+    return cmdEvent.isTransparent() ? cmdEvent.withProject(project) : cmdEvent;
   }
 
-  @Override
-  public void undoTransparentActionFinished() {
-    if (isTransparentActionStarted && !isProjectDisposed()) {
-      isTransparentActionStarted = false;
-      undoManager.onCommandFinished(project, "", null);
+  private boolean projectNotDisposed() {
+    boolean isDisposed = project != null && project.isDisposed();
+    if (isDisposed) {
+      LOG.warn("Cannot perform a command, project is disposed " + project);
     }
-  }
-
-  private boolean isProjectDisposed() {
-    return project != null && project.isDisposed();
+    return !isDisposed;
   }
 }

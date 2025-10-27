@@ -976,6 +976,8 @@
       <synonym key="action.ResetIdeScaleAction.text"/>
     </action>
 
+    <action id="ShowSettingsChangesLogFile" class="com.intellij.ide.actions.ShowSettingsChangesLogFile" internal="true"/>
+
     <group id="MainToolbarPopupActions" searchable="false">
       <reference ref="ViewToolBar"/>
       <action id="CustomizeUI" class="com.intellij.ide.actions.CustomizeUIAction"/>
@@ -1453,6 +1455,9 @@
         </action>
         <action id="EnableMetalRendering" internal="true" class="com.intellij.ui.EnableMetalRenderingAction">
           <abbreviation value="metal"/>
+        </action>
+        <action id="EnableWayland" internal="true" class="com.intellij.ui.EnableWaylandAction">
+          <abbreviation value="wayland"/>
         </action>
         <action id="RulerGuide" internal="true" class="com.intellij.internal.rulerguide.RulerGuideAction"/>
         <action id="ShowHideDebugInfoInUi" internal="true" class="com.intellij.ide.actions.ShowHideDebugInfoInUiAction"/>

@@ -13,8 +13,8 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
-import com.intellij.openapi.application.impl.TopNavBarComponentFacade
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.openapi.wm.StatusBar
@@ -277,7 +277,7 @@ internal open class MyNavBarWrapperPanel(private val project: Project, useAsComp
 }
 
 internal class MyTopNavBarWrapperPanel(project: Project, useAsComponent: Boolean) :
-  MyNavBarWrapperPanel(project, useAsComponent), TopNavBarComponentFacade {
+  MyNavBarWrapperPanel(project, useAsComponent), BorderPainterHolder {
 
   override var borderPainter: BorderPainter = DefaultBorderPainter()
 
@@ -447,7 +447,7 @@ private object TopNavBarMode : NavBarMode {
     return withContext(Dispatchers.EDT) {
       setStatusBarCentralWidget(statusBar, null)
       val panel = MyTopNavBarWrapperPanel(project, useAsComponent = true)
-      InternalUICustomization.getInstance()?.configureTopNavBar(panel)
+      InternalUICustomization.getInstance()?.registerWindowBackgroundComponent(panel)
       panel
     }
   }

@@ -50,6 +50,7 @@ import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.asArchived
@@ -68,6 +69,7 @@ import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.jarCache.LocalDiskJarCacheManager
 import org.jetbrains.intellij.build.postData
+import org.jetbrains.intellij.build.productLayout.ProductConfiguration
 import org.jetbrains.intellij.build.readSearchableOptionIndex
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
@@ -117,17 +119,15 @@ data class BuildRequest(
 
   @JvmField val isBootClassPathCorrect: Boolean = false,
 ) {
-  override fun toString(): String {
-    return buildString {
-      append("BuildRequest(platformPrefix='$platformPrefix', ")
-      if (baseIdePlatformPrefixForFrontend != null) {
-        append("baseIdePlatformPrefixForFrontend='$baseIdePlatformPrefixForFrontend', ")
-      }
-      append("additionalModules=$additionalModules, ")
-      append("productionClassOutput=$productionClassOutput, ")
-      append("keepHttpClient=$keepHttpClient, ")
-      append("generateRuntimeModuleRepository=$generateRuntimeModuleRepository")
+  override fun toString(): String = buildString {
+    append("BuildRequest(platformPrefix='$platformPrefix', ")
+    if (baseIdePlatformPrefixForFrontend != null) {
+      append("baseIdePlatformPrefixForFrontend='$baseIdePlatformPrefixForFrontend', ")
     }
+    append("additionalModules=$additionalModules, ")
+    append("productionClassOutput=$productionClassOutput, ")
+    append("keepHttpClient=$keepHttpClient, ")
+    append("generateRuntimeModuleRepository=$generateRuntimeModuleRepository")
   }
 }
 
@@ -223,14 +223,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
       val platformLayoutAwaited = platformLayout.await()
       val (platformDistributionEntries, classPath) = spanBuilder("layout platform").use {
-        layoutPlatform(
-          runDir = runDir,
-          platformLayout = platformLayoutAwaited,
-          searchableOptionSet = searchableOptionSet,
-          context = context,
-          moduleOutputPatcher = moduleOutputPatcher,
-          request = request,
-        )
+        layoutPlatform(runDir, platformLayoutAwaited, searchableOptionSet, context, moduleOutputPatcher, request)
       }
 
       if (request.writeCoreClasspath) {
@@ -253,40 +246,14 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
-      buildPlugins(
-        request = request,
-        context = context,
-        runDir = runDir,
-        platformLayout = platformLayout,
-        artifactTask = artifactTask,
-        searchableOptionSet = searchableOptionSet,
-        buildPlatformJob = platformDistributionEntriesDeferred,
-        moduleOutputPatcher = moduleOutputPatcher,
-      )
-    }
-
-    launch {
-      val (pluginEntries, additionalEntries) = pluginDistributionEntriesDeferred.await()
-      spanBuilder("generate plugin classpath").use(Dispatchers.IO) {
-        val mainData = generatePluginClassPath(pluginEntries, moduleOutputPatcher)
-        val additionalData = additionalEntries?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
-
-        val byteOut = ByteArrayOutputStream()
-        val out = DataOutputStream(byteOut)
-        val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
-        platformDistributionEntriesDeferred.join()
-        writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount, moduleOutputPatcher = moduleOutputPatcher, context = context)
-        out.write(mainData)
-        additionalData?.let { out.write(it) }
-        out.close()
-        Files.write(runDir.resolve(PLUGIN_CLASSPATH), byteOut.toByteArray())
-      }
+      buildPlugins(request, context, runDir, platformLayout, artifactTask, searchableOptionSet, platformDistributionEntriesDeferred, moduleOutputPatcher)
     }
 
     if (context.generateRuntimeModuleRepository) {
       launch {
-        val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
-                                     pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
+        val allDistributionEntries =
+          platformDistributionEntriesDeferred.await().asSequence() +
+          pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
         spanBuilder("generate runtime repository").use(Dispatchers.IO) {
           generateRuntimeModuleRepositoryForDevBuild(allDistributionEntries, runDir, context)
         }
@@ -294,30 +261,41 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     launch {
-      computeIdeFingerprint(
-        platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
-        pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
-        runDir = runDir,
-        homePath = request.projectDir,
-      )
+      computeIdeFingerprint(platformDistributionEntriesDeferred, pluginDistributionEntriesDeferred, runDir, request.projectDir)
     }
 
-    launch(Dispatchers.IO) {
+    launch {
       // ensure platform dist files added to the list
-      platformDistributionEntriesDeferred.await()
+      val platformFileEntries = platformDistributionEntriesDeferred.await()
       // ensure plugin dist files added to the list
-      pluginDistributionEntriesDeferred.await()
+      val pluginDistributionEntries = pluginDistributionEntriesDeferred.await()
+      val platformLayout = platformLayout.await()
 
+      // must be before generatePluginClassPath, because we modify plugin descriptors (e.g., rename classes)
       spanBuilder("scramble platform").use {
-        request.scrambleTool?.scramble(platformLayout.await(), context)
+        request.scrambleTool?.scramble(platform = platformLayout, platformFileEntries = platformFileEntries, context = context)
       }
-      copyDistFiles(
-        context = context,
-        newDir = runDir,
-        os = request.os,
-        arch = JvmArchitecture.currentJvmArch,
-        libcImpl = LibcImpl.current(OsFamily.currentOs),
-      )
+
+      launch {
+        val (pluginEntries, additionalEntries) = pluginDistributionEntries
+        spanBuilder("generate plugin classpath").use(Dispatchers.IO) {
+          val mainData = generatePluginClassPath(pluginEntries, moduleOutputPatcher)
+          val additionalData = additionalEntries?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
+          val buffer = ByteArrayOutputStream()
+          DataOutputStream(buffer).use { out ->
+            val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
+            platformDistributionEntriesDeferred.join()
+            writePluginClassPathHeader(out, isJarOnly = !request.isUnpackedDist, pluginCount, platformLayout, context)
+            out.write(mainData)
+            additionalData?.let { out.write(it) }
+          }
+          Files.write(runDir.resolve(PLUGIN_CLASSPATH), buffer.toByteArray())
+        }
+      }
+
+      withContext(Dispatchers.IO) {
+        copyDistFiles(context, runDir, request.os, JvmArchitecture.currentJvmArch, LibcImpl.current(OsFamily.currentOs))
+      }
     }
   }.invokeOnCompletion {
     // close debug logging to prevent locking of the output directory on Windows
@@ -326,14 +304,12 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
   return runDir
 }
 
-private suspend fun getSearchableOptionSet(context: BuildContext): SearchableOptionSetDescriptor? {
-  return withContext(Dispatchers.IO) {
-    try {
-      readSearchableOptionIndex(context.paths.searchableOptionDir)
-    }
-    catch (_: NoSuchFileException) {
-      null
-    }
+private suspend fun getSearchableOptionSet(context: BuildContext): SearchableOptionSetDescriptor? = withContext(Dispatchers.IO) {
+  try {
+    readSearchableOptionIndex(context.paths.searchableOptionDir)
+  }
+  catch (_: NoSuchFileException) {
+    null
   }
 }
 
@@ -561,32 +537,26 @@ private suspend fun createBuildContext(
     }
 
     BuildContextImpl(
-      compilationContext = compilationContext,
-      productProperties = productProperties.await(),
-      windowsDistributionCustomizer = WindowsDistributionCustomizer(),
-      linuxDistributionCustomizer = LinuxDistributionCustomizer(),
-      macDistributionCustomizer = MacDistributionCustomizer(),
-      proprietaryBuildTools = if (request.scrambleTool == null) {
-        ProprietaryBuildTools.DUMMY
-      }
-      else {
-        ProprietaryBuildTools(
-          signTool = ProprietaryBuildTools.DUMMY_SIGN_TOOL,
-          scrambleTool = request.scrambleTool,
-          featureUsageStatisticsProperties = null,
-          artifactsServer = null,
-          licenseServerHost = null,
-        )
-      },
-      jarCacheManager = jarCacheManager,
+      compilationContext, productProperties.await(), WindowsDistributionCustomizer(), LinuxDistributionCustomizer(), MacDistributionCustomizer(),
+      proprietaryBuildTools =
+        if (request.scrambleTool == null) ProprietaryBuildTools.DUMMY
+        else ProprietaryBuildTools(
+          ProprietaryBuildTools.DUMMY_SIGN_TOOL, request.scrambleTool, featureUsageStatisticsProperties = null, artifactsServer = null, licenseServerHost = null
+        ),
+      jarCacheManager
     )
   }
 }
 
-internal suspend fun createProductProperties(productConfiguration: ProductConfiguration, compilationContext: CompilationContext, request: BuildRequest): ProductProperties {
+internal suspend fun createProductProperties(
+  productConfiguration: ProductConfiguration,
+  moduleOutputProvider: ModuleOutputProvider,
+  projectDir: Path,
+  platformPrefix: String?,
+): ProductProperties {
   val classPathFiles = buildList {
     for (moduleName in getBuildModules(productConfiguration)) {
-      addAll(compilationContext.getModuleOutputRoots(compilationContext.findRequiredModule(moduleName)))
+      addAll(moduleOutputProvider.getModuleOutputRoots(moduleOutputProvider.findRequiredModule(moduleName)))
     }
   }
 
@@ -608,7 +578,7 @@ internal suspend fun createProductProperties(productConfiguration: ProductConfig
       val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
         "$file (" + (if (Files.isDirectory(file)) "dir" else if (Files.exists(file)) "exists" else "doesn't exist") + ")"
       }
-      val projectPropertiesPath = getProductPropertiesPath(request.projectDir)
+      val projectPropertiesPath = getProductPropertiesPath(projectDir)
       throw RuntimeException("cannot create product properties, className=$className, projectPropertiesPath=$projectPropertiesPath, classPath=$classPathString, ", e)
     }
 
@@ -619,7 +589,7 @@ internal suspend fun createProductProperties(productConfiguration: ProductConfig
     catch (_: NoSuchMethodException) {
       lookup
         .findConstructor(productPropertiesClass, MethodType.methodType(Void.TYPE, Path::class.java))
-        .invoke(if (request.platformPrefix == "Idea") getCommunityHomePath(request.projectDir) else request.projectDir)
+        .invoke(if (platformPrefix == "Idea") getCommunityHomePath(projectDir) else projectDir)
     } as ProductProperties
   }
 }
@@ -657,18 +627,13 @@ private suspend fun layoutPlatform(
   }
 }
 
-private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
-  if (additionalModules.isEmpty()) {
-    return ""
-  }
+private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String =
+  if (additionalModules.isEmpty()) ""
   else {
     val hash = Hashing.xxh3_64().hashStream()
     hash.putUnorderedIterable(additionalModules, HashFunnel.forString(), Hashing.xxh3_64())
-    return "-" + additionalModules.joinToString(separator = "-") { it.removePrefix("intellij.").take(4) } + "-" +
-           java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
+    "-" + additionalModules.joinToString(separator = "-") { it.removePrefix(@Suppress("SpellCheckingInspection") "intellij.").take(4) } + "-" +
+    java.lang.Long.toUnsignedString(hash.asLong, Character.MAX_RADIX)
   }
-}
 
-private fun getCommunityHomePath(homePath: Path): Path {
-  return if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath
-}
+private fun getCommunityHomePath(homePath: Path): Path = if (Files.isDirectory(homePath.resolve("community"))) homePath.resolve("community") else homePath

@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.utils.vfs.CheckVFSHealthExtension;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeAll;
@@ -312,9 +313,7 @@ public class PersistentFS_FindFilesTest {
     try {
       List<? extends Future<?>> futures = ContainerUtil.map(tasks, task -> pool.submit(task));
 
-      for (Future<?> future : futures) {
-        future.get();
-      }
+      ConcurrencyUtil.getAll(futures);
     }
     finally {
       pool.shutdown();

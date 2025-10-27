@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration
 
-import com.intellij.codeInspection.util.IntentionName
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
@@ -10,23 +9,30 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.PipEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
+import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
-import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.configuration.*
+import com.jetbrains.python.sdk.findAmongRoots
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pipenv.*
 import com.jetbrains.python.sdk.pipenv.ui.PyAddNewPipEnvFromFilePanel
+import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -43,22 +49,48 @@ private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 @ApiStatus.Internal
 class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk?> = createAndAddSDk(module, Source.CONFIGURATOR)
+  override val toolId: ToolId = ToolId("pipenv")
 
-  override suspend fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PipEnvFileHelper.PIP_FILE)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
-
-  override suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk?> = createAndAddSDk(module, Source.INSPECTION)
-
-  private suspend fun createAndAddSDk(module: Module, source: Source): PyResult<Sdk?> {
-    val pipEnvExecutable = askForEnvData(module, source) ?: return PyResult.success(null)
-    PropertiesComponent.getInstance().pipEnvPath = pipEnvExecutable.pipEnvPath.pathString
-    return createPipEnv(module)
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
+    { checkManageableEnv(module, it) }
+  ) { envExists ->
+    { needsConfirmation -> createAndAddSdk(module, if (needsConfirmation) Source.CONFIGURATOR else Source.INSPECTION, envExists) }
   }
 
-  private suspend fun askForEnvData(module: Module, source: Source): PyAddNewPipEnvFromFilePanel.Data? {
+  override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension? = null
+
+  private suspend fun checkManageableEnv(
+    module: Module, checkExistence: CheckExistence,
+  ): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
+    val pipfile = findAmongRoots(module, PipEnvFileHelper.PIP_FILE)?.name ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
+    val pipEnvExecutable = getPipEnvExecutable().getOrLogException(LOGGER) ?: return@withBackgroundProgress EnvCheckerResult.CannotConfigure
+    val canManage = pipEnvExecutable.isExecutable()
+    val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", pipfile)
+    val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
+
+    when {
+      canManage && checkExistence -> {
+        PropertiesComponent.getInstance().pipenvPath = pipEnvExecutable.pathString
+        val envPath = runPipEnv(module.basePath?.toNioPathOrNull(), "--venv").mapSuccess { Path.of(it) }.successOrNull
+        val path = envPath?.resolvePythonBinary()
+        val envExists = path?.let { LocalFileSystem.getInstance().refreshAndFindFileByPath(it.pathString) != null } ?: false
+        if (envExists) EnvCheckerResult.EnvFound("", intentionName) else envNotFound
+      }
+      canManage -> envNotFound
+      else -> EnvCheckerResult.CannotConfigure
+    }
+  }
+
+  private suspend fun createAndAddSdk(module: Module, source: Source, envExists: Boolean): PyResult<Sdk?> {
+    val pipEnvExecutable = askForEnvData(module, source, envExists) ?: return PyResult.success(null)
+    PropertiesComponent.getInstance().pipenvPath = pipEnvExecutable.pipEnvPath.pathString
+    return createOrUsePipEnv(module)
+  }
+
+  private suspend fun askForEnvData(module: Module, source: Source, envExists: Boolean): PyAddNewPipEnvFromFilePanel.Data? {
     val pipEnvExecutable = getPipEnvExecutable().getOrLogException(LOGGER)
 
-    if (source == Source.INSPECTION && pipEnvExecutable?.isExecutable() == true) {
+    if ((envExists || source == Source.INSPECTION) && pipEnvExecutable?.isExecutable() == true) {
       return PyAddNewPipEnvFromFilePanel.Data(pipEnvExecutable)
     }
 
@@ -83,11 +115,11 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     return if (permitted) envData else null
   }
 
-  private suspend fun createPipEnv(module: Module): PyResult<Sdk> {
+  private suspend fun createOrUsePipEnv(module: Module): PyResult<Sdk> {
     LOGGER.debug("Creating pipenv environment")
-    return withBackgroundProgress(module.project, PyBundle.message("python.sdk.setting.up.pipenv.sentence")) {
+    return withBackgroundProgress(module.project, PyBundle.message("python.sdk.using.pipenv.sentence")) {
       val basePath = module.basePath
-                     ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid",module.basePath))
+                     ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", module.basePath))
       val pipEnv = setupPipEnv(Path.of(basePath), null, true).getOr {
         PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATION_FAILURE)
         return@withBackgroundProgress it
@@ -95,12 +127,12 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv)) }
       if (path == null) {
-        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", pipEnv))
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", pipEnv))
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString())
       if (file == null) {
-        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable","python", path))
+        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", path))
       }
 
       PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)

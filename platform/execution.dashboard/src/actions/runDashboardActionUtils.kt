@@ -12,12 +12,34 @@ import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.Frontend
 import com.intellij.platform.project.projectId
 import kotlinx.coroutines.launch
 
+internal fun getSelectedNode(e: AnActionEvent): FrontendRunDashboardService? {
+  return getSelectedNodes(e).singleOrNull()
+}
+
 internal fun getSelectedNodes(e: AnActionEvent): List<FrontendRunDashboardService> {
   return ServiceViewActionUtils.getTargets(e, FrontendRunConfigurationNode::class.java).mapNotNull { it.value }
 }
 
-internal fun scheduleUpdateRunConfigurationFolderNames(serviceIds: List<RunDashboardServiceId>, newGroupName: String?, project: Project) {
+internal fun scheduleEditConfiguration(project: Project, serviceId: RunDashboardServiceId) {
   RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
-    RunDashboardServiceRpc.getInstance().updateConfigurationFolderName(serviceIds, newGroupName, project.projectId())
+    RunDashboardServiceRpc.getInstance().editConfiguration(project.projectId(), serviceId)
+  }
+}
+
+internal fun scheduleCopyConfiguration(project: Project, serviceId: RunDashboardServiceId) {
+  RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+    RunDashboardServiceRpc.getInstance().copyConfiguration(project.projectId(), serviceId)
+  }
+}
+
+internal fun scheduleHideConfiguration(project: Project, serviceIds: List<RunDashboardServiceId>) {
+  RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+    RunDashboardServiceRpc.getInstance().hideConfiguration(project.projectId(), serviceIds)
+  }
+}
+
+internal fun scheduleUpdateRunConfigurationFolderNames(project: Project, serviceIds: List<RunDashboardServiceId>, newGroupName: String?) {
+  RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch {
+    RunDashboardServiceRpc.getInstance().updateConfigurationFolderName(project.projectId(), serviceIds, newGroupName)
   }
 }

@@ -14,6 +14,8 @@ import com.intellij.platform.eel.provider.utils.ProcessFunctions
 import com.intellij.platform.eel.provider.utils.bindProcessToScopeImpl
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.ExecuteGetProcessError
+import com.intellij.python.community.execService.spi.TargetEnvironmentRequestHandler
+import com.intellij.remoteServer.util.ServerRuntimeException
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -22,7 +24,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import com.intellij.remoteServer.util.ServerRuntimeException
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -44,11 +45,16 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
 
   // Broken Targets API can only upload the whole directory
   val dirsToMap = launchRequest.args.localFiles.map { it.parent }.toSet()
-  for (localDir in dirsToMap) {
-    request.uploadVolumes.add(TargetEnvironment.UploadRoot(localDir, TargetEnvironment.TargetPath.Temporary(), removeAtShutdown = true))
-  }
+  val handler = TargetEnvironmentRequestHandler.getHandler(request)
+  val uploadRoots = handler.mapUploadRoots(request, dirsToMap)
+  request.uploadVolumes.addAll(uploadRoots)
+
   val targetEnv = try {
     request.prepareEnvironment(TargetProgressIndicator.EMPTY)
+  }
+  catch (e: RuntimeException) { // some types like DockerRemoteRequest throw base RuntimeException instead of anything meaningful, need to change platform code first
+    fileLogger().warn("Failed to start $target", e) // TODO: i18n
+    return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError("Failed to start environment due to ${e.localizedMessage}")))
   }
   catch (e: ExecutionException) {
     fileLogger().warn("Failed to start $target", e) // TODO: i18n
@@ -81,11 +87,16 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
 }
 
 private class TargetProcessCommands(
-  private val scopeToBind: CoroutineScope,
+  override val scopeToBind: CoroutineScope,
   private val exePath: FullPathOnTarget,
   private val targetEnv: TargetEnvironment,
   private val cmdLine: TargetedCommandLine,
 ) : ProcessCommands {
+  override val env: Map<String, String>
+    get() = cmdLine.environmentVariables
+
+  override val cwd: String?
+    get() = cmdLine.workingDirectory
 
   private var process: Process? = null
 
@@ -95,7 +106,7 @@ private class TargetProcessCommands(
     }
     targetEnv.shutdown()
   }, killProcess = {
-    process?.destroyForcibly();
+    process?.destroyForcibly()
     targetEnv.shutdown()
   })
 

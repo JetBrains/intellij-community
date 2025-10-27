@@ -308,6 +308,9 @@ object CommunityLibraryLicenses {
       .lgpl2("https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
 
+    LibraryLicense("debugpy", version = LibraryLicense.CUSTOM_REVISION, attachedTo="intellij.python", url = "https://github.com/microsoft/debugpy")
+      .mit("https://github.com/microsoft/debugpy/blob/main/LICENSE"),
+
     LibraryLicense("Detekt", libraryName = "io.gitlab.arturbosch.detekt.api", url = "https://github.com/detekt/detekt")
       .apache("https://github.com/detekt/detekt/blob/master/LICENSE"),
 
@@ -1046,6 +1049,9 @@ object CommunityLibraryLicenses {
     LibraryLicense("OkHttp", libraryName = "okhttp", url = "https://square.github.io/okhttp/")
       .apache("https://square.github.io/okhttp/#license"),
 
+    LibraryLicense("opencsv", libraryName = "opencsv", url = "https://opencsv.sourceforge.net/")
+      .apache("https://sourceforge.net/p/opencsv/source/ci/master/tree/LICENSE"),
+
     LibraryLicense(libraryName = "opentelemetry", url = "https://opentelemetry.io/")
       .apache("https://github.com/open-telemetry/opentelemetry-java/blob/main/LICENSE")
       .suppliedByOrganizations("The OpenTelemetry Authors"),
@@ -1248,6 +1254,11 @@ object CommunityLibraryLicenses {
       .mit("https://github.com/testcontainers/testcontainers-java/blob/main/LICENSE")
       .suppliedByPersons("Richard North"),
 
+    LibraryLicense("Testcontainers JUnit5", libraryName = "testcontainers-junit-jupiter", url = "https://java.testcontainers.org")
+      .mit("https://github.com/testcontainers/testcontainers-java/blob/main/LICENSE")
+      .suppliedByPersons("Richard North"),
+
+
     LibraryLicense(libraryName = "TestNG", url = "https://testng.org/")
       .apache("https://github.com/cbeust/testng/blob/master/LICENSE.txt"),
 
@@ -1378,11 +1389,8 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("ai.grazie.spell.gec.engine.local"),
     jetbrainsLibrary("ai.grazie.spell.hunspell.en"),
     jetbrainsLibrary("cloud-config-client"),
-    jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation"),
-    jetbrainsLibrary("com.jetbrains.fus.reporting.configuration"),
-    jetbrainsLibrary("com.jetbrains.fus.reporting.connection.client"),
-    jetbrainsLibrary("com.jetbrains.fus.reporting.model"),
-    jetbrainsLibrary("com.jetbrains.fus.reporting.serialization.kotlin"),
+    jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation.all"),
+    jetbrainsLibrary("com.jetbrains.fus.reporting.api"),
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-performance-kotlin"),
     jetbrainsLibrary("completion-ranking-cpp-exp"),

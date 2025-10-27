@@ -1,0 +1,3 @@
+rootProject.name ="ide-starter"
+
+includeBuild "../intellij.tools.ide.starter"

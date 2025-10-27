@@ -7,7 +7,6 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.MigrateToJavaLangIoInspection;
 import com.intellij.java.JavaBundle;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +40,6 @@ public class MigrateToJavaLangIoInspectionTest extends LightJavaCodeInsightFixtu
   }
 
   private void doNotFind(String message) {
-    addIOClass(myFixture);
     MigrateToJavaLangIoInspection inspection = new MigrateToJavaLangIoInspection();
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, true, true, "before" + getTestName(false) + ".java");
@@ -50,21 +48,9 @@ public class MigrateToJavaLangIoInspectionTest extends LightJavaCodeInsightFixtu
   }
 
   private void doTest(String message) {
-    addIOClass(myFixture);
     myFixture.enableInspections(new MigrateToJavaLangIoInspection());
     myFixture.testHighlighting(true, true, true, "before" + getTestName(false) + ".java");
     myFixture.checkPreviewAndLaunchAction(myFixture.findSingleIntention(message));
     myFixture.checkResultByFile("after" + getTestName(false) + ".java");
-  }
-
-  public static void addIOClass(@NotNull JavaCodeInsightTestFixture fixture) {
-    fixture.addClass("""
-                         package java.lang;
-                         public final class IO {
-                           public static void println(Object obj) {}
-                           public static void println() {}
-                           public static void print(Object obj) {}
-                         }
-                         """);
   }
 }

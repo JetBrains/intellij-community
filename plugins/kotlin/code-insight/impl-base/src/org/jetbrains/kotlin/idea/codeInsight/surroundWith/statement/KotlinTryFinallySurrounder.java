@@ -11,14 +11,17 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.KtFinallySection;
 import org.jetbrains.kotlin.psi.KtTryExpression;
 
+import java.util.List;
+
 public class KotlinTryFinallySurrounder extends KotlinTrySurrounderBase<KtFinallySection> {
 
     @Override
-    protected String getCodeTemplate() {
+    protected String getCodeTemplate(List<ClassId> exceptionClasses) {
         return "try { \n} finally {\n\n}";
     }
 

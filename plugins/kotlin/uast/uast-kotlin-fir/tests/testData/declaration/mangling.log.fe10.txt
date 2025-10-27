@@ -40,6 +40,18 @@ UFile (package = )
                 UReturnExpression
                     UPolyadicExpression (operator = +)
                         ULiteralExpression (value = "str")
+        UMethod (name = baz$light_idea_test_case)
+            UAnnotation (fqName = kotlin.jvm.JvmOverloads)
+            UParameter (name = a)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                ULiteralExpression (value = 42)
+            UBlockExpression
+        UMethod (name = baz$light_idea_test_case)
+            UAnnotation (fqName = kotlin.jvm.JvmOverloads)
+            UBlockExpression
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                    UIdentifier (Identifier (`baz$light_idea_test_case`))
+                    ULiteralExpression (value = null)
         UMethod (name = Foo)
         UClass (name = Inner)
             UMethod (name = Inner)

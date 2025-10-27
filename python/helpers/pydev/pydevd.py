@@ -8,14 +8,13 @@ import sys
 from contextlib import contextmanager
 import weakref
 
-from _pydevd_bundle.pydevd_daemon_thread import run_as_pydevd_daemon_thread
-
 # allow the debugger to work in isolated mode Python
 here = os.path.dirname(os.path.abspath(__file__))
 if here not in sys.path:
     sys.path.insert(0, here)
 
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_return_info
+from _pydevd_bundle.pydevd_daemon_thread import run_as_pydevd_daemon_thread
 
 if sys.version_info[:2] < (2, 6):
     raise RuntimeError('The PyDev.Debugger requires Python 2.6 onwards to be run. If you need to use an older Python version, use an older version of the debugger.')

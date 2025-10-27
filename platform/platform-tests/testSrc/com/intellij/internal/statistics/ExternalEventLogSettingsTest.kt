@@ -5,17 +5,15 @@ import com.intellij.ide.Region
 import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
 import com.intellij.internal.statistic.eventLog.StatsAppConnectionSettings
 import com.intellij.internal.statistic.eventLog.connection.EventLogUploadSettingsClient
+import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.jetbrains.fus.reporting.FusHttpClient
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.configuration.RegionCode
-import com.jetbrains.fus.reporting.connection.JavaHttpClientBuilder
-import com.jetbrains.fus.reporting.connection.JavaHttpRequestBuilder
-import com.jetbrains.fus.reporting.connection.ProxyInfo
-import com.jetbrains.fus.reporting.model.http.HttpClientBuilder
-import com.jetbrains.fus.reporting.model.http.HttpRequestBuilder
-import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
+import com.jetbrains.fus.reporting.jvm.JvmHttpClient
+import com.jetbrains.fus.reporting.jvm.ProxyInfo
 import org.assertj.core.api.Assertions
 import java.time.Duration
 
@@ -35,8 +33,7 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
   }
 
   private val connectionSettings = StatsAppConnectionSettings()
-  private lateinit var httpClientBuilder: HttpClientBuilder
-  private lateinit var httpRequestBuilder: HttpRequestBuilder
+  private lateinit var httpClient: FusHttpClient
   override fun setUp() {
     super.setUp()
     installEp()
@@ -47,14 +44,15 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
   }
 
   fun setupHttpClientRequestBuilders() {
-    httpClientBuilder = JavaHttpClientBuilder()
-      .setProxyProvider { configurationUrl ->
+    httpClient = JvmHttpClient(
+      proxyProvider = { configurationUrl ->
         ProxyInfo(connectionSettings.provideProxy(configurationUrl).proxy)
-      }.setSSLContext(connectionSettings.provideSSLContext())
-    httpRequestBuilder = JavaHttpRequestBuilder()
-      .setExtraHeaders(connectionSettings.provideExtraHeaders())
-      .setUserAgent(connectionSettings.provideUserAgent())
-      .setTimeout(Duration.ofSeconds(1))
+      },
+      sslContextProvider = { connectionSettings.provideSSLContext() },
+      extraHeadersProvider = { connectionSettings.provideExtraHeaders() },
+      userAgent = connectionSettings.provideUserAgent(),
+      timeout = Duration.ofSeconds(1)
+    )
   }
 
   fun testSubstitution() {
@@ -64,11 +62,10 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
       productCode = PRODUCT_CODE,
       productVersion = PRODUCT_VERSION,
       isTestConfiguration = false,
-      httpClientBuilder = httpClientBuilder,
-      httpRequestBuilder = httpRequestBuilder,
+      httpClient = httpClient,
       regionCode = RegionCode.ALL,
       cacheTimeoutMs = 1,
-      serializer = FusKotlinSerializer()
+      serializer = FusComponentProvider.FusJacksonSerializer()
     )
     Assertions.assertThat(configurationClient.configurationUrl).isNotEqualTo(URL)
   }
@@ -83,11 +80,10 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
       productCode = PRODUCT_CODE,
       productVersion = PRODUCT_VERSION,
       isTestConfiguration = false,
-      httpClientBuilder = httpClientBuilder,
-      httpRequestBuilder = httpRequestBuilder,
+      httpClient = httpClient,
       regionCode = RegionCode.ALL,
       cacheTimeoutMs = 1,
-      serializer = FusKotlinSerializer()
+      serializer = FusComponentProvider.FusJacksonSerializer()
     )
     Assertions.assertThat(configurationClient.configurationUrl).isEqualTo(CONFIG_URL)
   }
@@ -102,11 +98,10 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
       productCode = PRODUCT_CODE,
       productVersion = PRODUCT_VERSION,
       isTestConfiguration = false,
-      httpClientBuilder = httpClientBuilder,
-      httpRequestBuilder = httpRequestBuilder,
+      httpClient = httpClient,
       regionCode = RegionCode.CN,
       cacheTimeoutMs = 1,
-      serializer = FusKotlinSerializer()
+      serializer = FusComponentProvider.FusJacksonSerializer()
     )
     Assertions.assertThat(configurationClient.configurationUrl).isEqualTo(CHINA_CONFIG_URL)
   }
@@ -121,11 +116,10 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
       productCode = PRODUCT_CODE,
       productVersion = PRODUCT_VERSION,
       isTestConfiguration = true,
-      httpClientBuilder = httpClientBuilder,
-      httpRequestBuilder = httpRequestBuilder,
+      httpClient = httpClient,
       regionCode = RegionCode.ALL,
       cacheTimeoutMs = 1,
-      serializer = FusKotlinSerializer()
+      serializer = FusComponentProvider.FusJacksonSerializer()
     )
     Assertions.assertThat(configurationClient.configurationUrl).isEqualTo(TEST_CONFIG_URL)
   }

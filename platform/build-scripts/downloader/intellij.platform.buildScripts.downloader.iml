@@ -33,8 +33,6 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
-    <orderEntry type="library" name="ktor-client-okhttp" level="project" />
-    <orderEntry type="library" name="okhttp" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.hash4j" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.io" />

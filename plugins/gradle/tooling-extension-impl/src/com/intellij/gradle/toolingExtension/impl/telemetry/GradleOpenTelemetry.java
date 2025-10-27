@@ -27,12 +27,13 @@ public final class GradleOpenTelemetry {
     myScope = extractScope(telemetry);
   }
 
-  public <T> T callWithSpan(@NotNull String spanName, @NotNull Function<Span, T> fn) {
-    return callWithSpan(spanName, (ignore) -> {
-    }, fn);
+  public static <T> T callWithSpan(@NotNull String spanName, @NotNull Function<Span, T> fn) {
+    return withOpenTelemetry(telemetry -> {
+      return telemetry.callWithSpan(spanName, (ignore) -> {}, fn);
+    });
   }
 
-  public void runWithSpan(@NotNull String spanName, @NotNull Consumer<Span> consumer) {
+  public static void runWithSpan(@NotNull String spanName, @NotNull Consumer<Span> consumer) {
     callWithSpan(spanName, span -> {
       consumer.accept(span);
       return null;
@@ -70,5 +71,18 @@ public final class GradleOpenTelemetry {
     return TelemetryContext.fromJvmProperties()
       .extract(propagator)
       .makeCurrent();
+  }
+
+  private static <T> T withOpenTelemetry(
+    @NotNull Function<GradleOpenTelemetry, T> action
+  ) {
+    GradleOpenTelemetry telemetry = new GradleOpenTelemetry();
+    try {
+      return action.apply(telemetry);
+    }
+    catch (Throwable exception) {
+      telemetry.shutdown();
+      throw exception;
+    }
   }
 }

@@ -20,6 +20,8 @@ jvm_library(
     "//platform/ide-core",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
+    "//platform/util-ex",
+    "//platform/core-impl",
     "//platform/indexing-api:indexing",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",

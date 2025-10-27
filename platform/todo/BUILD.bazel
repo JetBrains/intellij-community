@@ -32,6 +32,8 @@ jvm_library(
     "//platform/indexing-impl",
     "//platform/usageView-impl",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/projectModel-impl",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.todo` end

@@ -457,8 +457,8 @@
         "errorBorderColor": "Red4",
         "warningBackground": "Yellow1",
         "warningBorderColor": "Yellow2",
-        "informativeBackground": "Green1",
-        "informativeBorderColor": "Green3"
+        "informativeBackground": "Gray3",
+        "informativeBorderColor": "Gray4"
       },
       "WelcomeScreen.separatorColor": "#4E5157"
     },

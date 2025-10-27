@@ -110,14 +110,14 @@ public class HyperlinkAnnotator implements Annotator, DumbAware {
     boolean hasUnprocessedReferences = false;
     Set<TextRange> highlighted = new HashSet<>();
     for (PsiReference reference : references) {
-      if (reference instanceof WebReference) {
+      if (reference instanceof WebReference webReference) {
         String message = holder.getCurrentAnnotationSession().getUserData(messageKey);
         if (message == null) {
           message = getMessage();
           holder.getCurrentAnnotationSession().putUserData(messageKey, message);
         }
         TextRange range = reference.getRangeInElement().shiftRight(element.getTextRange().getStartOffset());
-        if (highlighted.add(range)) {
+        if (webReference.getHighlight() && highlighted.add(range)) {
           holder.newAnnotation(HighlightSeverity.INFORMATION, message)
             .range(range)
             .textAttributes(CodeInsightColors.INACTIVE_HYPERLINK_ATTRIBUTES)

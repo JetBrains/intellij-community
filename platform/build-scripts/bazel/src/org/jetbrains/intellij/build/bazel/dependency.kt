@@ -61,12 +61,12 @@ internal fun generateDeps(
   val runtimeDeps = mutableListOf<BazelLabel>()
   val provided = mutableListOf<BazelLabel>()
 
-  if (isTest && module.sources.isNotEmpty()) {
-    if (hasSources) {
+  if (isTest) {
+    if (hasSources && module.sources.isNotEmpty()) {
       // associates also is a dependency
       associates.add(BazelLabel(":${module.targetName}", module))
     }
-    else {
+    else if (module.sources.isNotEmpty() || module.resources.isNotEmpty()) {
       runtimeDeps.add(BazelLabel(":${module.targetName}", module))
     }
   }
@@ -419,25 +419,67 @@ private fun addDep(
   isExported: Boolean,
 ) {
   if (isTest) {
+    val hasProductionDependentModule = dependentModule.sources.isNotEmpty() || dependentModule.resources.isNotEmpty()
     when (scope) {
       JpsJavaDependencyScope.COMPILE -> {
-        deps.add(dependencyLabel)
+        if (hasSources) {
+          deps.add(dependencyLabel)
+        }
+        else if (!hasProductionDependentModule) {
+          runtimeDeps.add(dependencyLabel)
+        }
         if (isExported) {  // e.g. //debugger/intellij.java.debugger.rpc.tests:java-debugger-rpc-tests_test_lib
           exports.add(dependencyLabel)
         }
 
         if (dependencyModuleDescriptor != null && !dependencyModuleDescriptor.testSources.isEmpty()) {
           if (needsBackwardCompatibleTestDependency(dependencyModuleDescriptor.module.name, dependentModule)) {
-            deps.add(getLabelForTest(dependencyLabel))
+            if (hasSources) {
+              deps.add(getLabelForTest(dependencyLabel))
+            }
+            else {
+              runtimeDeps.add(getLabelForTest(dependencyLabel))
+            }
             if (isExported) {  // e.g. //CIDR-appcode/appcode-coverage:appcode-coverage_test_lib
               exports.add(getLabelForTest(dependencyLabel))
             }
           }
         }
       }
-      JpsJavaDependencyScope.TEST, JpsJavaDependencyScope.PROVIDED -> {
+      JpsJavaDependencyScope.PROVIDED -> {
+        // ignore deps if no sources, as `exports` in Bazel means "compile" scope
+        if (hasSources) {
+          if (dependencyModuleDescriptor == null) {
+            // lib supports `provided`
+            deps.add(dependencyLabel)
+            if (isExported) {
+              exports.add(dependencyLabel)
+            }
+          }
+          else {
+            if (dependencyModuleDescriptor.sources.isNotEmpty() || dependencyModuleDescriptor.resources.isNotEmpty()) {  // e.g. v2 module library
+              provided.add(dependencyLabel)
+              if (isExported) {
+                exports.add(dependencyLabel)
+              }
+            }
+            if (dependencyModuleDescriptor.testSources.isNotEmpty()) {
+              provided.add(getLabelForTest(dependencyLabel))
+              if (isExported) {
+                exports.add(getLabelForTest(dependencyLabel))
+              }
+            }
+          }
+        }
+      }
+      JpsJavaDependencyScope.TEST -> {
         if (dependencyModuleDescriptor == null) {
-          deps.add(dependencyLabel)
+          if (hasSources) {
+            deps.add(dependencyLabel)
+          }
+          else {
+            runtimeDeps.add(dependencyLabel)
+          }
           if (isExported) {  // e.g. //python/junit5Tests:junit5Tests_test_lib
             exports.add(dependencyLabel)
           }
@@ -452,19 +494,30 @@ private fun addDep(
           }
           else {
             val hasTestSource = !dependencyModuleDescriptor.testSources.isEmpty()
+            val hasTestResources = dependencyModuleDescriptor.testResources.isNotEmpty()
 
             if (isExported && hasTestSource) {
               println("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
             }
 
             if (!dependencyModuleDescriptor.sources.isEmpty() || !hasTestSource) {
-              deps.add(dependencyLabel)
+              if (hasSources) {
+                deps.add(dependencyLabel)
+              }
+              else {
+                runtimeDeps.add(dependencyLabel)
+              }
               if (isExported) {  // e.g. @community//python/python-venv:community-impl-venv_test_lib
                 exports.add(dependencyLabel)
               }
             }
-            if (hasTestSource) {
-              deps.add(getLabelForTest(dependencyLabel))
+            if (hasTestSource || hasTestResources) {
+              if (hasSources) {
+                deps.add(getLabelForTest(dependencyLabel))
+              }
+              else {
+                runtimeDeps.add(getLabelForTest(dependencyLabel))
+              }
               if (isExported) {  // e.g. //remote-dev/cwm-guest/plugins/java-frontend:java-frontend-split_test_lib
                 exports.add(getLabelForTest(dependencyLabel))
               }
@@ -473,7 +526,7 @@ private fun addDep(
         }
       }
       JpsJavaDependencyScope.RUNTIME -> {
-        if (dependentModule.sources.isEmpty()) {
+        if (!hasProductionDependentModule) {
           runtimeDeps.add(dependencyLabel)
         }
       }

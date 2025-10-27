@@ -17,6 +17,7 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
@@ -83,6 +84,7 @@ abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwa
       PythonPackageManagerUI.forPackageManager(manager).executeCommand(e.presentation.text) {
         execute(e, manager).mapSuccess {
           DaemonCodeAnalyzer.getInstance(psiFile.project).restart(psiFile, this)
+          manager.sdk.associatedModuleDir?.refresh(true, false)
         }
       }
     }

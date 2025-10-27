@@ -32,6 +32,8 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.thenIf
@@ -52,8 +54,24 @@ import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.dropdownStyle
 
+/**
+ * A composable that implements a combo box with a dropdown menu, allowing users to select an option from a (small,
+ * finite) list of actions or choices.
+ *
+ * Dropdown APIs are temporary and will be reimplemented in a future release to address usability and accessibility
+ * concerns (see JEWEL-1029).
+ *
+ * For a dropdown with a large list of items, consider using [ListComboBox] or [EditableListComboBox]. For an editable
+ * combobox, use [EditableComboBox] or [EditableListComboBox].
+ *
+ * @see ComboBox
+ * @see ListComboBox
+ * @see EditableComboBox
+ * @see EditableListComboBox
+ */
 @Suppress("ComposableParamOrder")
-@Deprecated(message = "Use ListComboBox instead. This component will be removed in a future release.")
+@ExperimentalJewelApi
+@ApiStatus.Experimental
 @Composable
 public fun Dropdown(
     modifier: Modifier = Modifier,
@@ -170,8 +188,14 @@ public fun Dropdown(
     }
 }
 
-@Suppress("DEPRECATION")
-@Deprecated(message = "Use ListComboBox instead. Dropdown will be removed in a future release.")
+/**
+ * Represents the state of a [Dropdown] component.
+ *
+ * Dropdown APIs are temporary and will be reimplemented in a future release to address usability and accessibility
+ * concerns (see JEWEL-1029).
+ */
+@ExperimentalJewelApi
+@ApiStatus.Experimental
 @Immutable
 @JvmInline
 public value class DropdownState(public val state: ULong) : FocusableComponentState {

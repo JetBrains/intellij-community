@@ -7,7 +7,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.contentModuleId
+import com.intellij.ide.plugins.contentModuleName
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.application.ApplicationManager
@@ -29,7 +29,6 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -113,7 +112,7 @@ class PluginAutoUpdateService(private val coroutineScope: CoroutineScope) {
   private suspend fun downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
     val downloadedList = mutableListOf<PluginDownloader>()
     val enabledPluginsAndModules: Set<String> = PluginManagerCore.getPluginSet().getEnabledModules().flatMap {
-      listOf(it.contentModuleId ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
+      listOf(it.contentModuleName ?: it.pluginId.idString) + it.pluginAliases.map { id -> id.idString }
     }.toSet()
     val downloaders = downloaders.filter { downloader ->
       val existingUpdateState = updatesState[downloader.id]

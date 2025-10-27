@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
@@ -67,7 +67,7 @@ public final class CompilerTask extends Task.Backgroundable {
     mySessionId = myContentId; // by default sessionID should be unique, just as content ID
 
     if (SystemProperties.getBooleanProperty("ide.jps.use.build.tool.window", true)) {
-      myBuildViewService = new BuildOutputService(project, contentName);
+      myBuildViewService = new BuildOutputService(project, contentName, myCompilationStartedAutomatically);
     } else {
       myBuildViewService = new CompilerMessagesService(project, myContentId, contentName, headlessMode);
     }

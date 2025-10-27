@@ -24,7 +24,7 @@ import kotlin.math.floor
 
 internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, var isEnabled: Boolean) : TabPainterAdapter {
   private val editorAdapter = if (isDefault) DefaultTabPainterAdapter(if (debugger) JBTabPainter.DEBUGGER else JBTabPainter.DEFAULT) else EditorTabPainterAdapter()
-  private val islandsAdapter = IslandsTabPainter(isDefault)
+  private val islandsAdapter = IslandsTabPainter(isDefault, debugger)
 
   override val tabPainter: JBTabPainter
     get() {
@@ -88,8 +88,17 @@ private class IslandsTabTheme : TabTheme {
     get() = JBColor.namedColor("EditorTabs.underlinedTabInactiveForeground", JBColor(0x000000, 0xFFFFFF))
 }
 
-internal open class IslandsTabPainter(isDefault: Boolean) : JBTabPainter {
-  private val myTheme = if (isDefault) DefaultTabTheme() else IslandsTabTheme()
+internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean) : JBTabPainter {
+  private val myTheme = when {
+    isToolWindow -> object : DefaultTabTheme() {
+      override val background: Color
+        get() = JBUI.CurrentTheme.ToolWindow.background()
+    }
+
+    isDefault -> DefaultTabTheme()
+
+    else -> IslandsTabTheme()
+  }
 
   override fun getTabTheme(): TabTheme = myTheme
 

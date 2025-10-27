@@ -15,10 +15,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryId
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
@@ -26,6 +23,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.findLibraryEntity
 import com.intellij.workspaceModel.ide.legacyBridge.findModule
 import org.jetbrains.annotations.ApiStatus
@@ -326,6 +324,11 @@ class ProjectStructureProviderIdeImpl(private val project: Project) : IDEProject
     override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule {
         val moduleInfo = SdkInfo(project, sdk)
         return getKtModuleByModuleInfo(moduleInfo) as KaLibraryModule
+    }
+
+    override fun getKaLibraryModule(sdkId: SdkId): KaLibraryModule {
+        val sdk = ModifiableRootModelBridge.findSdk(sdkId.name, sdkId.type)!!
+        return getKaLibraryModule(sdk)
     }
 
     override fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule> {

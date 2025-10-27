@@ -5,7 +5,6 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.CredentialStore
 import com.intellij.credentialStore.Credentials
 import com.intellij.openapi.application.ApplicationManager
-import org.jetbrains.concurrency.Promise
 
 /**
  * [See the documentation](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html).
@@ -26,8 +25,6 @@ abstract class PasswordSafe : CredentialStore, PasswordStorage {
   abstract val isMemoryOnly: Boolean
 
   abstract operator fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean)
-
-  abstract fun getAsync(attributes: CredentialAttributes): Promise<Credentials?>
 
   abstract fun isPasswordStoredOnlyInMemory(attributes: CredentialAttributes, credentials: Credentials): Boolean
 }

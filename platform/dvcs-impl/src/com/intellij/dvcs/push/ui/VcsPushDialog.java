@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
@@ -85,7 +86,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     myTopPanel = myController.createTopPanel();
 
     myPushActions = collectPushActions();
-    myMainAction = new ComplexPushAction(myPushActions.get(0), myPushActions.subList(1, myPushActions.size()));
+    myMainAction = new ComplexPushAction(myPushActions.subList(0, myPushActions.size()));
     myMainAction.putValue(DEFAULT_ACTION, Boolean.TRUE);
 
     myController.startLoadingCommits();
@@ -343,9 +344,14 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
   }
 
   public void updateOkActions() {
-    myMainAction.update();
     for (ActionWrapper wrapper : myPushActions) {
       wrapper.update();
+    }
+    myMainAction.update();
+    if (getButton(myMainAction) instanceof JBOptionButton o) {
+      if (!Arrays.equals(myMainAction.getOptions(), o.getOptions())) {
+        o.setOptions(myMainAction.getOptions());
+      }
     }
   }
 
@@ -357,6 +363,11 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
   public @Nullable VcsPushOptionValue getAdditionalOptionValue(@NotNull PushSupport support) {
     VcsPushOptionsPanel panel = myAdditionalPanels.get(support);
     return panel == null ? null : panel.getValue();
+  }
+
+  @ApiStatus.Experimental
+  public @Nullable VcsPushOptionsPanel getCustomPanel(@NotNull String id) {
+    return myCustomPanels.get(id);
   }
 
   @Override
@@ -375,13 +386,16 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
   }
 
   private static final class ComplexPushAction extends AbstractAction implements OptionAction {
-    private final ActionWrapper myDefaultAction;
-    private final List<? extends ActionWrapper> myOptions;
+    private final List<ActionWrapper> myActions;
 
-    private ComplexPushAction(@NotNull ActionWrapper defaultAction, @NotNull List<? extends ActionWrapper> additionalActions) {
-      super(defaultAction.getName());
-      myDefaultAction = defaultAction;
-      myOptions = additionalActions;
+    private ActionWrapper myDefaultAction;
+    private List<ActionWrapper> myOptions;
+
+    private ComplexPushAction(@NotNull List<ActionWrapper> actions) {
+      super(actions.getFirst().getName());
+      myActions = actions;
+      myDefaultAction = actions.getFirst();
+      myOptions = actions.subList(1, actions.size());
     }
 
     @Override
@@ -392,12 +406,19 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     @Override
     public void setEnabled(boolean isEnabled) {
       super.setEnabled(isEnabled);
-      for (Action optionAction : myOptions) {
+      for (Action optionAction : myActions) {
         optionAction.setEnabled(isEnabled);
       }
     }
 
     public void update() {
+      int firstEnabled = ContainerUtil.indexOf(myActions, it -> it.isEnabled());
+      if (firstEnabled >= 0) {
+        myDefaultAction = myActions.get(firstEnabled);
+        myOptions = new ArrayList<>();
+        myOptions.addAll(myActions.subList(0, firstEnabled));
+        myOptions.addAll(myActions.subList(firstEnabled + 1, myActions.size()));
+      }
       VcsPushUi dialog = myDefaultAction.myDialog;
       PushActionBase realAction = myDefaultAction.myRealAction;
 

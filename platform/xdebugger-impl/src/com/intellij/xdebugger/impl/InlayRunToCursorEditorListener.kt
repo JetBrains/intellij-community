@@ -49,8 +49,8 @@ import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus
@@ -225,7 +225,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
       }
 
       // TODO: RIDER-127831, Move RiderJumpToStatementAction to frontend, for fast update here
-      if (!XDebugSessionProxy.useFeProxy()) {
+      if (!SplitDebuggerMode.isSplitDebugger()) {
         val extraActions = Utils.expandActionGroupSuspend(
                                         actionManager.getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup,
                                         PresentationFactory(),

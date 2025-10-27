@@ -84,6 +84,9 @@ posixpath.join
 ntpath.join
 os.path.join
 
+# this is implemented with *args having a minimum size so arguments before it must be positional (but stubtest doesn't see that)
+tkinter.ttk.Style.element_create
+
 # typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
 # to mark these as positional-only for compatibility with existing sub-classes.
 typing(_extensions)?\.BinaryIO\.write

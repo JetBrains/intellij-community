@@ -12,8 +12,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
@@ -119,70 +117,62 @@ interface XDebugSessionProxy {
   companion object {
     @JvmField
     val DEBUG_SESSION_PROXY_KEY: DataKey<XDebugSessionProxy> = DataKey.create("XDebugSessionProxy")
-
-    @JvmStatic
-    fun useFeProxy(): Boolean {
-      return SplitDebuggerMode.useFeProxy()
-    }
-
-    @JvmStatic
-    fun useFeLineBreakpointProxy(): Boolean = useFeProxy()
-
-    @JvmStatic
-    fun showFeWarnings(): Boolean = Registry.`is`("xdebugger.toolwindow.split.warnings")
   }
 
-  // TODO WeakReference<XDebugSession>?
-  class Monolith(val session: XDebugSession) : XDebugSessionProxy {
+  class Monolith internal constructor(val session: XDebugSession) : XDebugSessionProxy {
+
+    val sessionImpl: XDebugSessionImpl get() = session as XDebugSessionImpl
+    private val sessionImplIfAvailable get() = session as? XDebugSessionImpl
+
     override val runContentDescriptorId: RunContentDescriptorIdImpl?
-      get() = (session as XDebugSessionImpl).getRunContentDescriptorIfInitialized()?.id as RunContentDescriptorIdImpl?
+      get() = sessionImplIfAvailable?.getMockRunContentDescriptorIfInitialized()?.id as RunContentDescriptorIdImpl?
 
     override val project: Project
       get() = session.project
     override val id: XDebugSessionId
-      get() = (session as XDebugSessionImpl).id
+      get() = sessionImpl.id
     override val sessionName: String
       get() = session.sessionName
     override val sessionData: XDebugSessionData
-      get() = (session as XDebugSessionImpl).sessionData
+      get() = sessionImpl.sessionData
     override val consoleView: ConsoleView?
       get() = session.consoleView
     override val restartActions: List<AnAction>
-      get() = (session as? XDebugSessionImpl)?.restartActions ?: emptyList()
+      get() = sessionImpl.restartActions
     override val extraActions: List<AnAction>
-      get() = (session as? XDebugSessionImpl)?.extraActions ?: emptyList()
+      get() = sessionImpl.extraActions
     override val extraStopActions: List<AnAction>
-      get() = (session as? XDebugSessionImpl)?.extraStopActions ?: emptyList()
+      get() = sessionImpl.extraStopActions
     override val consoleActions: List<AnAction>
       get() = consoleView?.createConsoleActions()?.toList() ?: emptyList()
     override val processHandler: ProcessHandler
       get() = session.debugProcess.processHandler
     override val coroutineScope: CoroutineScope
-      get() = (session as XDebugSessionImpl).coroutineScope
+      get() = sessionImpl.coroutineScope
     override val editorsProvider: XDebuggerEditorsProvider
       get() = session.debugProcess.editorsProvider
     override val valueMarkers: XValueMarkers<*, *>?
-      get() = (session as? XDebugSessionImpl)?.valueMarkers
+      get() = sessionImplIfAvailable?.valueMarkers
     override val sessionTab: XDebugSessionTab?
-      get() = (session as? XDebugSessionImpl)?.sessionTab
+      get() = sessionImplIfAvailable?.sessionTab
     override val sessionTabWhenInitialized: Deferred<XDebugSessionTab>
-      get() = (session as XDebugSessionImpl).sessionTabDeferred
+      get() = sessionImpl.sessionTabDeferred
     override val isPaused: Boolean
       get() = session.isPaused
     override val isStopped: Boolean
       get() = session.isStopped
     override val isReadOnly: Boolean
-      get() = (session as? XDebugSessionImpl)?.isReadOnly ?: false
+      get() = sessionImpl.isReadOnly
     override val isSuspended: Boolean
       get() = session.isSuspended
     override val isPauseActionSupported: Boolean
-      get() = (session as? XDebugSessionImpl)?.isPauseActionSupported() ?: false
+      get() = sessionImpl.isPauseActionSupported()
     override val isStepOverActionAllowed: Boolean
-      get() = (session as? XDebugSessionImpl)?.isStepOverActionAllowed ?: true
+      get() = sessionImpl.isStepOverActionAllowed
     override val isStepOutActionAllowed: Boolean
-      get() = (session as? XDebugSessionImpl)?.isStepOutActionAllowed ?: true
+      get() = sessionImpl.isStepOutActionAllowed
     override val isRunToCursorActionAllowed: Boolean
-      get() = (session as? XDebugSessionImpl)?.isRunToCursorActionAllowed ?: true
+      get() = sessionImpl.isRunToCursorActionAllowed
     override val isLibraryFrameFilterSupported: Boolean
       get() = session.debugProcess.isLibraryFrameFilterSupported
     override val isValuesCustomSorted: Boolean
@@ -205,9 +195,10 @@ interface XDebugSessionProxy {
     }
 
     override val currentSuspendContextCoroutineScope: CoroutineScope?
-      get() = (session as XDebugSessionImpl).currentSuspendCoroutineScope
+      get() = sessionImplIfAvailable?.currentSuspendCoroutineScope
 
-    override val activeNonLineBreakpointFlow: Flow<XBreakpointProxy?> get() = (session as XDebugSessionImpl)
+    override val activeNonLineBreakpointFlow: Flow<XBreakpointProxy?>
+      get() = sessionImpl
       .activeNonLineBreakpointFlow.map { (it as? XBreakpointBase<*, *, *>)?.asProxy() }
 
     override fun getCurrentPosition(): XSourcePosition? {
@@ -219,15 +210,15 @@ interface XDebugSessionProxy {
     }
 
     override fun getFrameSourcePosition(frame: XStackFrame): XSourcePosition? {
-      return (session as? XDebugSessionImpl)?.getFrameSourcePosition(frame)
+      return sessionImplIfAvailable?.getFrameSourcePosition(frame)
     }
 
     override fun getFrameSourcePosition(frame: XStackFrame, sourceKind: XSourceKind): XSourcePosition? {
-      return (session as? XDebugSessionImpl)?.getFrameSourcePosition(frame, sourceKind)
+      return sessionImplIfAvailable?.getFrameSourcePosition(frame, sourceKind)
     }
 
     override fun getCurrentExecutionStack(): XExecutionStack? {
-      return (session as? XDebugSessionImpl)?.currentExecutionStack
+      return sessionImplIfAvailable?.currentExecutionStack
     }
 
     override fun getCurrentStackFrame(): XStackFrame? {
@@ -235,11 +226,11 @@ interface XDebugSessionProxy {
     }
 
     override fun setCurrentStackFrame(executionStack: XExecutionStack, frame: XStackFrame, isTopFrame: Boolean) {
-      (session as? XDebugSessionImpl)?.setCurrentStackFrame(executionStack, frame, isTopFrame)
+      session.setCurrentStackFrame(executionStack, frame, isTopFrame)
     }
 
     override fun isTopFrameSelected(): Boolean {
-      return (session as? XDebugSessionImpl)?.isTopFrameSelected ?: false
+      return sessionImpl.isTopFrameSelected
     }
 
     override fun hasSuspendContext(): Boolean {
@@ -273,7 +264,7 @@ interface XDebugSessionProxy {
     }
 
     override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {
-      return XStackFramesListColorsCache.Monolith(session as XDebugSessionImpl, framesList)
+      return XStackFramesListColorsCache.Monolith(sessionImpl, framesList)
     }
 
     override fun areBreakpointsMuted(): Boolean {
@@ -288,7 +279,7 @@ interface XDebugSessionProxy {
       if (breakpoint !is XBreakpointProxy.Monolith) {
         return false
       }
-      return (session as XDebugSessionImpl).isInactiveSlaveBreakpoint(breakpoint.breakpoint)
+      return sessionImpl.isInactiveSlaveBreakpoint(breakpoint.breakpoint)
     }
 
     override fun getDropFrameHandler(): XDropFrameHandler? {
@@ -296,7 +287,7 @@ interface XDebugSessionProxy {
     }
 
     override fun getActiveNonLineBreakpoint(): XBreakpointProxy? {
-      val breakpoint = (session as XDebugSessionImpl).activeNonLineBreakpoint ?: return null
+      val breakpoint = sessionImplIfAvailable?.activeNonLineBreakpoint ?: return null
       if (breakpoint !is XBreakpointBase<*, *, *>) return null
       return breakpoint.asProxy()
     }

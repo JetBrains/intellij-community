@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.asm.tools.jar
   modules:
   - name: intellij.libraries.asm.tools
   library: asm-tools

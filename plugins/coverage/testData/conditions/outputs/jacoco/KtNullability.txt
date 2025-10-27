@@ -33,4 +33,4 @@ Hits: 1
 Covered 2/4 branches
 Line 17 coverage: PARTIAL
 Hits: 1
-Covered 2/4 branches
+Covered 3/4 branches

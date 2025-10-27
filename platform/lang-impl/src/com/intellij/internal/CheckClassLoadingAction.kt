@@ -6,7 +6,7 @@ import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginSetBuilder
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
-import com.intellij.ide.plugins.contentModuleId
+import com.intellij.ide.plugins.contentModuleName
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
@@ -20,7 +20,7 @@ import com.intellij.ui.table.JBTable
 import java.awt.Dimension
 import javax.swing.table.DefaultTableModel
 
-private class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"), ActionRemoteBehaviorSpecification.Duplicated {
+internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
   override fun actionPerformed(e: AnActionEvent) {
     val className = Messages.showInputDialog(e.project, "Enter class name:", "Check Class Loading", Messages.getQuestionIcon())
     if (className.isNullOrBlank()) return
@@ -89,7 +89,7 @@ private class CheckClassLoadingAction : DumbAwareAction("Check Class Loading"), 
 
   private val PluginModuleDescriptor.fullId: String get() = buildString {
     append(pluginId)
-    if (contentModuleId != null) append(":${contentModuleId}")
+    if (contentModuleName != null) append(":${contentModuleName}")
   }
 
   private val Any.addressTag: String get() = "@" + System.identityHashCode(this).toString(16)

@@ -1,8 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-/*
- * @author Eugene Zhuravlev
- */
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ModuleSourceSet;
@@ -16,10 +13,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ModuleCompileScope extends FileIndexCompileScope {
   private final Project myProject;
@@ -27,7 +24,6 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   private final Set<Module> myScopeModules;
   private final Module[] myModules;
   private final Collection<String> myIncludedUnloadedModules;
-  private final boolean myIncludeTests;
 
   public ModuleCompileScope(final Module module, boolean includeDependentModules) {
     this(module.getProject(), Collections.singleton(module), Collections.emptyList(), includeDependentModules, false);
@@ -48,7 +44,6 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   public ModuleCompileScope(Project project, final Collection<? extends Module> modules, Collection<String> includedUnloadedModules, boolean includeDependentModules, boolean includeRuntimeDeps, boolean includeTests) {
     myProject = project;
     myIncludedUnloadedModules = includedUnloadedModules;
-    myIncludeTests = includeTests;
     myTestSourcesModules = new HashSet<>();
     myScopeModules = new HashSet<>();
     for (Module module : modules) {
@@ -71,6 +66,12 @@ public class ModuleCompileScope extends FileIndexCompileScope {
           }
           return true;
         });
+        enumerator.forEach(orderEntry -> {
+          if (orderEntry instanceof ModuleOrderEntry moduleEntry && moduleEntry.isProductionOnTestDependency() && myScopeModules.contains(moduleEntry.getModule())) {
+            myTestSourcesModules.add(moduleEntry.getModule());
+          }
+          return true;
+        });
       }
       else {
         myScopeModules.add(module);
@@ -86,11 +87,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
 
   @Override
   public Collection<ModuleSourceSet> getAffectedSourceSets() {
-    Collection<ModuleSourceSet> result = super.getAffectedSourceSets();
-    if (myIncludeTests) {
-      return result.stream().filter(set -> !set.getType().isTest() || myTestSourcesModules.contains(set.getModule())).collect(Collectors.toList());
-    }
-    return result.stream().filter(set -> !set.getType().isTest()).collect(Collectors.toList());
+    return ContainerUtil.filter(super.getAffectedSourceSets(), set -> !set.getType().isTest() || myTestSourcesModules.contains(set.getModule()));
   }
 
   public static boolean shouldIncludeTestsFromDependentModulesToTestClasspath(@NotNull Module module) {

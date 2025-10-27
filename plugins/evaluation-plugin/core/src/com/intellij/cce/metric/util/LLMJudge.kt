@@ -6,5 +6,5 @@ data class LLMJudgeResult(
 )
 
 interface LLMJudge {
-  fun computeLLMJudgeScoreSync(question: String, aiaResponse: String, reference: String): LLMJudgeResult
+  suspend fun computeLLMJudgeScoreSync(question: String, aiaResponse: String, reference: String): LLMJudgeResult
 }

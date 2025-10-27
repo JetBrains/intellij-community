@@ -32,6 +32,7 @@ f:org.jetbrains.jewel.foundation.GlobalColors
 - f:getOutlines():org.jetbrains.jewel.foundation.OutlineColors
 - f:getPanelBackground-0d7_KjU():J
 - f:getText():org.jetbrains.jewel.foundation.TextColors
+- f:getToolwindowBackground-0d7_KjU():J
 - hashCode():I
 f:org.jetbrains.jewel.foundation.GlobalColors$Companion
 f:org.jetbrains.jewel.foundation.GlobalColorsKt
@@ -121,20 +122,6 @@ f:org.jetbrains.jewel.foundation.TextColors$Companion
 org.jetbrains.jewel.foundation.actionSystem.DataProviderContext
 - a:lazy(java.lang.String,kotlin.jvm.functions.Function0):V
 - a:set(java.lang.String,java.lang.Object):V
-f:org.jetbrains.jewel.foundation.actionSystem.DataProviderNode
-- androidx.compose.ui.Modifier$Node
-- androidx.compose.ui.focus.FocusEventModifierNode
-- androidx.compose.ui.node.TraversableNode
-- sf:$stable:I
-- sf:TraverseKey:org.jetbrains.jewel.foundation.actionSystem.DataProviderNode$TraverseKey
-- <init>(kotlin.jvm.functions.Function1):V
-- f:getDataProvider():kotlin.jvm.functions.Function1
-- f:getHasFocus():Z
-- getTraverseKey():org.jetbrains.jewel.foundation.actionSystem.DataProviderNode$TraverseKey
-- onFocusEvent(androidx.compose.ui.focus.FocusState):V
-- f:setDataProvider(kotlin.jvm.functions.Function1):V
-- f:setHasFocus(Z):V
-f:org.jetbrains.jewel.foundation.actionSystem.DataProviderNode$TraverseKey
 f:org.jetbrains.jewel.foundation.actionSystem.ProvideDataKt
 - sf:provideData(androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.foundation.code.MimeType
@@ -283,7 +270,7 @@ org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
 - onSelectPreviousItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
 f:org.jetbrains.jewel.foundation.lazy.SelectableLazyColumnKt
 - sf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
-- sf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
+- bsf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
 org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 - androidx.compose.foundation.lazy.LazyItemScope
 - a:isActive():Z
@@ -358,7 +345,7 @@ e:org.jetbrains.jewel.foundation.lazy.SelectionMode
 - s:values():org.jetbrains.jewel.foundation.lazy.SelectionMode[]
 f:org.jetbrains.jewel.foundation.lazy.tree.BasicLazyTreeKt
 - sf:BasicLazyTree-X48TzrA(org.jetbrains.jewel.foundation.lazy.tree.Tree,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.tree.TreeState,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V
-- sf:BasicLazyTree-orM9XXQ(org.jetbrains.jewel.foundation.lazy.tree.Tree,org.jetbrains.jewel.foundation.lazy.SelectionMode,kotlin.jvm.functions.Function1,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,org.jetbrains.jewel.foundation.lazy.tree.TreeState,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V
+- bsf:BasicLazyTree-orM9XXQ(org.jetbrains.jewel.foundation.lazy.tree.Tree,org.jetbrains.jewel.foundation.lazy.SelectionMode,kotlin.jvm.functions.Function1,J,J,J,F,androidx.compose.foundation.shape.CornerSize,androidx.compose.foundation.layout.PaddingValues,androidx.compose.foundation.layout.PaddingValues,F,F,org.jetbrains.jewel.foundation.lazy.tree.TreeState,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,J,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function4,androidx.compose.runtime.Composer,I,I,I,I):V
 f:org.jetbrains.jewel.foundation.lazy.tree.BuildTreeKt
 - sf:asTree(java.io.File,kotlin.jvm.functions.Function1):org.jetbrains.jewel.foundation.lazy.tree.Tree
 - sf:asTree(java.nio.file.Path,kotlin.jvm.functions.Function1):org.jetbrains.jewel.foundation.lazy.tree.Tree

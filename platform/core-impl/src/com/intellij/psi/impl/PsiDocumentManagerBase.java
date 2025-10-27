@@ -48,9 +48,9 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -62,6 +62,10 @@ import java.util.function.Consumer;
 public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
+
+  //todo to be removed after investigation
+  @ApiStatus.Internal
+  public static final Key<String> FORCE_LOG_STACK_TRACE = Key.create("FORCE_LOG_STACK_TRACE");
 
   private boolean isInsideCommitHandler; //accessed from EDT only
 
@@ -369,11 +373,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   /**
    * Adds {@code action} to the list of actions to be called when the document is committed.
-   * NB. Do not leak the document instance from the action code, to prevent memory excessive consumption when the Document is going to be garbage-collected.
+   * <br>NB. Do not leak the document instance from the {@code action} code,
+   * to prevent excessive memory consumption when the {@link Document} is going to be garbage-collected.
    * For example, this code is wrong:
    * {@code addRunOnCommit(document, d->document.getText())}
    * because the lambda {@code d->document.getText()} leaks the document instance.
-   * Use the document passed to the Consumer instead, e.g.:
+   * Use the document passed to the {@link Consumer} instead, e.g.:
    * {@code addRunOnCommit(document, d->d.getText())}
    */
   @ApiStatus.Internal
@@ -751,7 +756,6 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       });
       return;
     }
-
     runActions(document, getAndClearDocumentCommitActions(document));
 
     if (app.isDispatchThread()) {
@@ -762,6 +766,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
+  @RequiresEdt
   private void runActionsWhenAllCommitted() {
     ThreadingAssertions.assertEventDispatchThread();
     if (!mayRunActionsWhenAllCommitted()) return;
@@ -938,7 +943,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @Override
   public @NotNull Document @NotNull [] getUncommittedDocuments() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    ThreadingAssertions.assertReadAccess();
     if (myUncommittedDocuments.isEmpty()) {
       // myUncommittedDocuments is ConcurrentRefHashMap, so default toArray iterates it twice, even if collection is empty
       // (which is a common case during batch code analysis)
@@ -1074,7 +1079,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     if (commitNecessary) {
       assert !(document instanceof DocumentWindow);
       myUncommittedDocuments.add(document);
-      if (Registry.is("ide.activity.tracking.enable.debug")) {
+      if (Registry.is("ide.activity.tracking.enable.debug") || document.getUserData(FORCE_LOG_STACK_TRACE) != null) {
         myUncommittedDocumentTraces.put(document, new Throwable());
       }
       if (forceCommit) {

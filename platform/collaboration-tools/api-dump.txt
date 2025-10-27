@@ -447,6 +447,7 @@ f:com.intellij.collaboration.util.ComputedResult
 f:com.intellij.collaboration.util.ComputedResult$Companion
 - f:compute-Jugeb-E(kotlin.jvm.functions.Function0):com.intellij.collaboration.util.ComputedResult
 - f:failure-NCBHHgM(java.lang.Throwable):kotlin.Result
+- f:fromResult-vAKnILo(java.lang.Object):kotlin.Result
 - f:loading-uUe189E():kotlin.Result
 - f:success-NCBHHgM(java.lang.Object):kotlin.Result
 f:com.intellij.collaboration.util.ComputedResultKt

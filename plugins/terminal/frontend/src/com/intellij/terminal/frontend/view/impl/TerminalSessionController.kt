@@ -9,16 +9,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.frontend.view.hyperlinks.FrontendTerminalHyperlinkFacade
-import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
-import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
-import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
-import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.toState
-import org.jetbrains.plugins.terminal.session.dto.toTerminalState
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.toOptions
+import org.jetbrains.plugins.terminal.session.impl.dto.toState
+import org.jetbrains.plugins.terminal.session.impl.dto.toTerminalState
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -28,15 +26,12 @@ internal class TerminalSessionController(
   private val outputHyperlinkFacade: FrontendTerminalHyperlinkFacade?,
   private val alternateBufferModelController: TerminalOutputModelController,
   private val alternateBufferHyperlinkFacade: FrontendTerminalHyperlinkFacade?,
-  private val blocksModel: TerminalBlocksModel,
+  private val startupOptionsDeferred: CompletableDeferred<TerminalStartupOptions>,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
-  private val terminalAliasesStorage: TerminalAliasesStorage,
 ) {
-
+  private val eventHandlers: DisposableWrapperList<TerminalOutputEventsHandler> = DisposableWrapperList()
   private val terminationListeners: DisposableWrapperList<Runnable> = DisposableWrapperList()
-  private val shellIntegrationEventDispatcher: EventDispatcher<TerminalShellIntegrationEventsListener> =
-    EventDispatcher.create(TerminalShellIntegrationEventsListener::class.java)
 
   private val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
 
@@ -64,16 +59,24 @@ internal class TerminalSessionController(
   }
 
   private suspend fun handleEvent(event: TerminalOutputEvent) {
+    invokeBaseHandler(event)
+
+    for (handler in eventHandlers) {
+      handler.handleEvent(event)
+    }
+  }
+
+  private suspend fun invokeBaseHandler(event: TerminalOutputEvent) {
     when (event) {
       is TerminalInitialStateEvent -> {
         sessionModel.updateTerminalState(event.sessionState.toTerminalState())
+        startupOptionsDeferred.complete(event.startupOptions.toOptions())
         withContext(edtContext) {
           outputModelController.applyPendingUpdates()
           alternateBufferModelController.applyPendingUpdates()
 
           outputModelController.model.restoreFromState(event.outputModelState.toState())
           alternateBufferModelController.model.restoreFromState(event.alternateBufferState.toState())
-          blocksModel.restoreFromState(event.blocksModelState.toState())
           outputHyperlinkFacade?.restoreFromState(event.outputHyperlinksState)
           alternateBufferHyperlinkFacade?.restoreFromState(event.alternateBufferHyperlinksState)
         }
@@ -100,37 +103,6 @@ internal class TerminalSessionController(
       TerminalSessionTerminatedEvent -> {
         fireSessionTerminated()
       }
-      TerminalPromptStartedEvent -> {
-        withContext(edtContext) {
-          outputModelController.applyPendingUpdates()
-          blocksModel.promptStarted(outputModelController.model.cursorOffset)
-        }
-        shellIntegrationEventDispatcher.multicaster.promptStarted()
-      }
-      TerminalPromptFinishedEvent -> {
-        withContext(edtContext) {
-          outputModelController.applyPendingUpdates()
-          blocksModel.promptFinished(outputModelController.model.cursorOffset)
-        }
-        shellIntegrationEventDispatcher.multicaster.promptFinished()
-      }
-      is TerminalCommandStartedEvent -> {
-        withContext(edtContext) {
-          outputModelController.applyPendingUpdates()
-          blocksModel.commandStarted(outputModelController.model.cursorOffset)
-        }
-        shellIntegrationEventDispatcher.multicaster.commandStarted(event.command)
-      }
-      is TerminalCommandFinishedEvent -> {
-        withContext(edtContext) {
-          outputModelController.applyPendingUpdates()
-          blocksModel.commandFinished(event.exitCode)
-        }
-        shellIntegrationEventDispatcher.multicaster.commandFinished(event.command, event.exitCode, event.currentDirectory)
-      }
-      is TerminalAliasesReceivedEvent -> {
-        terminalAliasesStorage.setAliasesInfo(event.aliases)
-      }
       is TerminalHyperlinksHeartbeatEvent -> {
         LOG.warn("TerminalHyperlinksHeartbeatEvent isn't supposed to reach the frontend")
       }
@@ -138,6 +110,9 @@ internal class TerminalSessionController(
         withContext(edtContext) {
           getCurrentHyperlinkFacade(event)?.updateHyperlinks(event)
         }
+      }
+      else -> {
+        // do nothing
       }
     }
   }
@@ -175,8 +150,11 @@ internal class TerminalSessionController(
     }
   }
 
-  fun addShellIntegrationListener(parentDisposable: Disposable, listener: TerminalShellIntegrationEventsListener) {
-    shellIntegrationEventDispatcher.addListener(listener, parentDisposable)
+  fun addEventsHandler(handler: TerminalOutputEventsHandler, parentDisposable: Disposable? = null) {
+    if (parentDisposable != null) {
+      eventHandlers.add(handler, parentDisposable)
+    }
+    else eventHandlers.add(handler)
   }
 }
 

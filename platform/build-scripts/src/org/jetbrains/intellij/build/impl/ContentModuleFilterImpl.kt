@@ -40,7 +40,7 @@ internal object IncludeAllContentModuleFilter : ContentModuleFilter {
 
 internal class SkipUnresolvedOptionalContentModuleFilter(private val context: BuildContext) : ContentModuleFilter {
   override fun isOptionalModuleIncluded(moduleName: String, pluginMainModuleName: String?): Boolean {
-    return context.findModule(moduleName) != null;
+    return context.findModule(moduleName) != null
   }
   
   override fun toString(): String = "SkipUnresolvedOptionalContentModuleFilter"

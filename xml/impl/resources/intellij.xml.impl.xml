@@ -371,7 +371,7 @@
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer$MyEditorFactoryListener"/>
 
-    <completion.contributor language="HtmlCompatible" implementationClass="com.intellij.polySymbols.html.HtmlSymbolsCompletionContributor"/>
+    <completion.contributor language="HtmlCompatible" implementationClass="com.intellij.polySymbols.html.HtmlSymbolsCompletionContributor" id="HtmlSymbolsCompletionContributor"/>
 
     <xml.autoPopupEnabler implementation="com.intellij.xml.microservices.UrlReferencesXmlAutoPopupEnabler"/>
 

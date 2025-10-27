@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.settingsSync.core.SettingsSyncBridge.PushRequestMode.*
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
+import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.settingsSync.core.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.*
@@ -360,21 +361,9 @@ class SettingsSyncBridge(
   }
 
   private fun deleteServerData(afterDeleting: (DeleteServerDataResult) -> Unit) {
-    val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
-                                            emptySet(), null, emptyMap(), emptySet())
-    val pushResult = pushToCloud(deletionSnapshot, force = true)
-    LOG.info("Deleting server data. Result: $pushResult")
-    when (pushResult) {
-      is SettingsSyncPushResult.Success -> {
-        afterDeleting(DeleteServerDataResult.Success)
-      }
-      is SettingsSyncPushResult.Error -> {
-        afterDeleting(DeleteServerDataResult.Error(pushResult.message))
-      }
-      SettingsSyncPushResult.Rejected -> {
-        afterDeleting(DeleteServerDataResult.Error("Deletion rejected by server"))
-      }
-    }
+    val userData = RemoteCommunicatorHolder.getCurrentUserData()
+                   ?: return afterDeleting(DeleteServerDataResult.Error("No user data"))
+    afterDeleting(removeRemoteData(userData))
   }
 
   private fun checkServer() {
@@ -607,5 +596,24 @@ class SettingsSyncBridge(
 
   companion object {
     private val LOG = logger<SettingsSyncBridge>()
+
+    fun removeRemoteData(userData: SettingsSyncUserData): DeleteServerDataResult {
+      if (RemoteCommunicatorHolder.getCurrentUserData() != userData) {
+        return DeleteServerDataResult.Error("User account has changed")
+      }
+      val remoteCommunicator = RemoteCommunicatorHolder.getRemoteCommunicator()
+                               ?: return DeleteServerDataResult.Error("No remote communicator available")
+      val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
+                                              emptySet(), null, emptyMap(), emptySet())
+
+      val versionId = SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId
+      val pushResult = remoteCommunicator.push(deletionSnapshot, force = true, versionId)
+
+      return when (pushResult) {
+        is SettingsSyncPushResult.Success -> DeleteServerDataResult.Success
+        is SettingsSyncPushResult.Error -> DeleteServerDataResult.Error(pushResult.message)
+        SettingsSyncPushResult.Rejected -> DeleteServerDataResult.Error("Deletion rejected by server")
+      }
+    }
   }
 }

@@ -10,7 +10,6 @@ import com.intellij.openapi.client.ClientKind;
 import com.intellij.openapi.client.ClientSession;
 import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -26,7 +25,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsActions.ActionDescription;
 import com.intellij.openapi.util.NlsActions.ActionText;
-import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -174,7 +172,7 @@ public class UndoManagerImpl extends UndoManager {
 
   public boolean isActive() {
     UndoClientState state = getClientState();
-    return state != null && state.isActive();
+    return state != null && state.isActiveForCurrentProject();
   }
 
   public void addDocumentAsAffected(@NotNull Document document) {
@@ -207,7 +205,8 @@ public class UndoManagerImpl extends UndoManager {
 
   public @NotNull CurrentEditorProvider getEditorProvider() {
     CurrentEditorProvider provider = myOverriddenEditorProvider;
-    return (provider != null) ? provider : CurrentEditorProvider.getInstance();
+    FileEditor fileEditor = ((provider != null) ? provider : CurrentEditorProvider.getInstance()).getCurrentEditor(myProject);
+    return new StableEditorProvider(fileEditor);
   }
 
   public @Nullable Project getProject() {
@@ -335,40 +334,42 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
+  protected boolean isGroupIdChangeSupported() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  protected boolean isEditorStateRestoreSupported() {
+    return true;
+  }
+
+  @ApiStatus.Internal
   protected final int getStackSize(@Nullable DocumentReference docRef, boolean isUndo) {
     UndoClientState state = Objects.requireNonNull(getClientState(), "undo/redo is not available");
     return state.getStackSize(docRef, isUndo);
   }
 
   @ApiStatus.Internal
-  protected void onCommandStarted(
-    @Nullable Project project,
-    @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
-    boolean recordOriginalReference
-  ) {
+  protected void onCommandStarted(@NotNull CmdEvent cmdEvent) {
     UndoClientState state = getClientState();
     if (state == null || !state.isInsideCommand()) {
       for (UndoProvider undoProvider : getUndoProviders()) {
-        undoProvider.commandStarted(project);
+        undoProvider.commandStarted(cmdEvent.project());
       }
     }
     if (state != null) {
-      state.commandStarted(project, getEditorProvider(), undoConfirmationPolicy, recordOriginalReference);
+      state.commandStarted(cmdEvent, getEditorProvider());
     }
   }
 
-  void onCommandFinished(
-    @Nullable Project project,
-    @Nullable @Command String commandName,
-    @Nullable Object commandGroupId
-  ) {
+  void onCommandFinished(@NotNull CmdEvent cmdEvent) {
     UndoClientState state = getClientState();
     if (state != null) {
-      state.commandFinished(getEditorProvider(), commandName, commandGroupId);
+      state.commandFinished(cmdEvent);
     }
     if (state == null || !state.isInsideCommand()) {
       for (UndoProvider undoProvider : getUndoProviders()) {
-        undoProvider.commandFinished(project);
+        undoProvider.commandFinished(cmdEvent.project());
       }
     }
   }
@@ -437,7 +438,7 @@ public class UndoManagerImpl extends UndoManager {
   public void flushCurrentCommandMerger() {
     UndoClientState state = getClientState();
     if (state != null) {
-      state.flushCurrentCommand(UndoCommandFlushReason.MANAGER_FORCE);
+      state.flushCommandMerger(UndoCommandFlushReason.MANAGER_FORCE);
     }
   }
 

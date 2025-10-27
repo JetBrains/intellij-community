@@ -10,6 +10,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <legacyRunDashboardServiceSubstitutor implementation="com.intellij.platform.execution.dashboard.splitApi.LegacyRunDashboardServiceSubstitutorImpl"/>
     <remote.customDataContextSerializer implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceDataContextSerializer"/>
 
     <runDashboardManagerProxy

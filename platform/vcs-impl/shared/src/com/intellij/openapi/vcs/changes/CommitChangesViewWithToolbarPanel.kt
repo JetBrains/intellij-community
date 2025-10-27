@@ -3,73 +3,74 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.ide.CommonActionsManager
 import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesViewModifier.ChangesViewModifierListener
-import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
+import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
 import com.intellij.platform.vcs.impl.shared.telemetry.ChangesView
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.util.application
+import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.EdtInvocationManager.invokeLaterIfNeeded
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.lang.Runnable
-import javax.swing.tree.DefaultTreeModel
 import kotlin.time.Duration.Companion.milliseconds
 
+private val REFRESH_DELAY = 100.milliseconds
+
 @ApiStatus.Internal
-class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisposable: Disposable) : ChangesViewPanel(changesView), Disposable {
+open class CommitChangesViewWithToolbarPanel(
+  changesView: ChangesListView,
+  protected val cs: CoroutineScope,
+) : ChangesViewPanel(changesView) {
   val project: Project get() = changesView.project
   private val settings get() = ChangesViewSettings.getInstance(project)
 
-  private val scope = project.service<ScopeProvider>().cs.childScope("CommitChangesListWithToolbarPanel")
-  private val refresher = SingleTaskRunner(scope, 100.milliseconds) {
+  private val refresher = SingleTaskRunner(cs) {
     refreshView()
   }
 
   private var modelProvider: ModelProvider? = null
 
-  private var disposed = false
-
   init {
     refresher.start()
-    Disposer.register(parentDisposable, this)
-  }
-
-  @CalledInAny
-  fun setBusy(busy: Boolean) {
-    invokeLaterIfNeeded { changesView.setPaintBusy(busy) }
+    cs.launch(Dispatchers.UI) {
+      refresher.getIdleFlow().collect { idle ->
+        changesView.setPaintBusy(!idle)
+      }
+    }
   }
 
   @RequiresEdt
   fun initPanel(modelProvider: ModelProvider) {
     this.modelProvider = modelProvider
 
-    scope.launch(Dispatchers.UI) {
+    cs.launch(Dispatchers.UI) {
       ChangeListsViewModel.getInstance(project).changeListManagerState.collectLatest {
+        changesView.repaint()
+      }
+    }
+
+    cs.launch(Dispatchers.UI) {
+      PartialChangesHolder.getInstance(project).updates.collectLatest {
         changesView.repaint()
       }
     }
@@ -85,16 +86,16 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
 
     toolbarActionGroup.addAll(createChangesToolbarActions(changesView))
 
-    Initializer.EP_NAME.forEachExtensionSafe { it.init(scope, this) }
+    Initializer.EP_NAME.forEachExtensionSafe { it.init(cs, this) }
 
-    ChangesViewModifier.KEY.addChangeListener(project, { resetViewImmediatelyAndRefreshLater() }, this)
-    project.messageBus.connect(scope).subscribe(ChangesViewModifier.TOPIC, ChangesViewModifierListener { scheduleRefresh() })
+    ChangesViewModifier.KEY.addChangeListener(project, { resetViewImmediatelyAndRefreshLater() }, cs.asDisposable())
+    project.messageBus.connect(cs).subscribe(ChangesViewModifier.TOPIC, ChangesViewModifierListener { scheduleRefresh() })
 
     scheduleRefresh()
   }
 
   @CalledInAny
-  fun scheduleRefresh() {
+  fun scheduleRefresh(){
     scheduleRefresh(withDelay = true)
   }
 
@@ -110,36 +111,44 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
   }
 
   @CalledInAny
-  private fun scheduleRefresh(withDelay: Boolean, @RequiresBackgroundThread callback: Runnable? = null) {
-    setBusy(true)
-    if (withDelay) {
+  protected fun scheduleRefresh(withDelay: Boolean, @RequiresBackgroundThread callback: Runnable? = null) {
+    if (!withDelay && callback == null) {
       refresher.request()
+      return
     }
-    else {
-      refresher.requestNow()
-    }
-    scope.launch {
+
+    cs.launch {
+      if (withDelay) delay(REFRESH_DELAY)
+      refresher.request()
       refresher.awaitNotBusy()
       callback?.run()
-      setBusy(false)
     }
   }
 
   @RequiresBackgroundThread
   private suspend fun refreshView() {
-    if (disposed || !project.isInitialized || application.isUnitTestMode) return
+    if (!cs.isActive || !project.isInitialized || application.isUnitTestMode) return
     val modelProvider = modelProvider ?: return
 
-    val model = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.name).use {
-      modelProvider.getModel(changesView.grouping)
+    val (modelData, model) = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.name).use {
+      val modelData = modelProvider.getModelData()
+
+      modelData to ChangesViewUtil.createTreeModel(
+        project,
+        changesView.grouping,
+        modelData.changeLists,
+        modelData.unversionedFiles,
+        modelData.ignoredFiles,
+        modelData.isAllowExcludeFromCommit,
+      )
     }
 
     checkCanceled()
     withContext(Dispatchers.EDT) {
       TRACER.spanBuilder(ChangesView.ChangesViewRefreshEdt.getName()).use {
-        changesView.updateTreeModel(model.treeModel, ChangesViewTreeStateStrategy())
+        changesView.updateTreeModel(model, ChangesViewTreeStateStrategy())
         checkCanceled()
-        modelProvider.synchronizeInclusion(model.changeLists, model.unversionedFiles)
+        modelProvider.synchronizeInclusion(modelData.changeLists, modelData.unversionedFiles)
       }
     }
   }
@@ -153,11 +162,6 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
     changesView.setModel(TreeModelBuilder.buildEmpty())
     changesView.setPaintBusy(true)
     scheduleRefreshNow()
-  }
-
-  override fun dispose() {
-    scope.cancel()
-    disposed = true
   }
 
   private companion object {
@@ -185,11 +189,14 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
   }
 
   interface ModelProvider {
-    fun getModel(grouping: ChangesGroupingPolicyFactory): ExtendedTreeModel
+    fun getModelData(): ModelData
 
     fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>)
 
-    class ExtendedTreeModel(val changeLists: List<LocalChangeList>, val unversionedFiles: List<FilePath>, val treeModel: DefaultTreeModel)
+    class ModelData(val changeLists: List<LocalChangeList>,
+                    val unversionedFiles: List<FilePath>,
+                    val ignoredFiles: List<FilePath>,
+                    val isAllowExcludeFromCommit: () -> Boolean)
   }
 
   interface Initializer {
@@ -199,7 +206,4 @@ class CommitChangesViewWithToolbarPanel(changesView: ChangesListView, parentDisp
       internal val EP_NAME = ExtensionPointName<Initializer>("com.intellij.vcs.commitChangesViewInitializer")
     }
   }
-
-  @Service(Service.Level.PROJECT)
-  internal class ScopeProvider(val cs: CoroutineScope)
 }

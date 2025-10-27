@@ -15,6 +15,8 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.elements.actionButton
+import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
 import org.intellij.lang.annotations.Language
@@ -63,6 +65,8 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     }
 
   fun getLineNumber(text: String): Int = document.getLineNumber(this.text.indexOf(text)) + 1
+
+  fun getLastLineNumber(text: String): Int = document.getLineNumber(this.text.lastIndexOf(text)) + 1
 
   fun expandAllFoldings() {
     driver.invokeAction("ExpandAllRegions", component = component)
@@ -131,7 +135,7 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getFontSize(): Int = editor.getColorsScheme().getEditorFontSize()
 
-  fun clickOn(text: String, button: RemoteMouseButton, times: Int = 1) {
+  fun clickOn(text: String, button: RemoteMouseButton = RemoteMouseButton.LEFT, times: Int = 1) {
     val offset = this.text.indexOf(text) + text.length / 2
     val point = interact {
       val p = offsetToVisualPosition(offset)
@@ -370,7 +374,7 @@ data class GutterState(
   val iconPath: String = "",
 )
 
-class InlayHint(val offset: Int, val text: String)
+data class InlayHint(val offset: Int, val text: String)
 
 fun List<InlayHint>.getHint(offset: Int): InlayHint {
   val foundHint = this.find { it.offset == offset }
@@ -378,6 +382,20 @@ fun List<InlayHint>.getHint(offset: Int): InlayHint {
     throw NoSuchElementException("cannot find hint with offset: $offset")
   }
   return foundHint
+}
+
+fun Finder.editorSearchReplace(@Language("xpath") xpath: String? = null, action: EditorSearchReplaceComponent.() -> Unit) {
+  x(xpath ?: "//div[@class='EditorCompositePanel']//div[@class='SearchReplaceComponent']",
+    EditorSearchReplaceComponent::class.java).action()
+}
+
+class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
+  val searchField = textField { and(byClass("JBTextArea"), byAccessibleName("Search")) }
+  val replaceField = textField { and(byClass("JBTextArea"), byAccessibleName("Replace")) }
+  val matchesLabel = x("//div[@class='ActionToolbarImpl']//div[@class='JLabel']")
+  val nextOccurrenceButton = actionButton { byAccessibleName("Next Occurrence") }
+  val previousOccurrenceButton = actionButton { byAccessibleName("Previous Occurrence") }
+  val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")

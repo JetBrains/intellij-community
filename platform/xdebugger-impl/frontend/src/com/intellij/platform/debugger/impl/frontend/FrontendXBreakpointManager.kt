@@ -15,10 +15,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineBreakpointProxy
 import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import fleet.rpc.client.RpcClientException
 import kotlinx.coroutines.*
@@ -45,7 +45,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   private var _breakpointsDialogSettings: XBreakpointsDialogState? = null
 
-  private val lineBreakpointManager = XLineBreakpointManager(project, cs, isEnabled = useFeLineBreakpointProxy())
+  private val lineBreakpointManager = XLineBreakpointManager(project, cs, isEnabled = SplitDebuggerMode.isSplitDebugger(), this)
 
   private val lightBreakpoints: ConcurrentMap<LightBreakpointPosition, FrontendXLightLineBreakpoint> = ConcurrentCollectionFactory.createConcurrentMap()
 
@@ -128,6 +128,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   /**
    * Waits for breakpoint creation from [XBreakpointEvent.BreakpointAdded] event from backend.
+   * Returns `null` in case of timeout.
    *
    * [addBreakpoint] is not called in parallel, to have only one source of truth and avoid races.
    */
@@ -158,12 +159,13 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       return null
     }
     val type = FrontendXBreakpointTypesManager.getInstance(project).getTypeById(breakpointDto.typeId) ?: return null
-    val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this, onBreakpointChange = {
+    val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this)
+    newBreakpoint.installListener {
       breakpointsChanged.tryEmit(Unit)
-      if (it is XLineBreakpointProxy) {
-        lineBreakpointManager.breakpointChanged(it)
+      if (newBreakpoint is XLineBreakpointProxy) {
+        lineBreakpointManager.breakpointChanged(newBreakpoint)
       }
-    })
+    }
     val previousBreakpoint = breakpoints.putIfAbsent(breakpointDto.id, newBreakpoint)
     if (previousBreakpoint != null) {
       newBreakpoint.dispose()
@@ -296,9 +298,11 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     val scope = cs.childScope("BreakpointsChangesListener")
     val childDisposable = Disposable { scope.cancel("disposed") }
     Disposer.register(disposable, childDisposable)
-    scope.launch(Dispatchers.EDT) {
+    scope.launch(start = CoroutineStart.UNDISPATCHED) {
       breakpointsChanged.collect {
-        listener()
+        withContext(Dispatchers.EDT) {
+          listener()
+        }
       }
     }
   }
@@ -383,9 +387,10 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 }
 
 /**
- * Searches element with [search] or suspends until the element appears.
+ * Searches an element with [search] or suspends until the element appears.
  * Uses [updateFlow] as a trigger for updates.
- * [updateFlow] must be a flow with replay
+ * [updateFlow] must be a flow with replay.
+ * Returns `null` in case of timeout.
  */
 internal suspend fun <T> findOrAwaitElement(
   updateFlow: Flow<*>,

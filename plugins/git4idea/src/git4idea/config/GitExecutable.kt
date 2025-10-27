@@ -7,9 +7,12 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelPlatform
@@ -186,7 +189,7 @@ sealed class GitExecutable {
     }
 
     override fun createBundledCommandLine(project: Project, vararg command: String): GeneralCommandLine {
-      return delegate.doCreateBundledCommandLine(project, eel.platform is EelPlatform.Windows, *command)
+      return delegate.doCreateBundledCommandLine(project, eel.platform is EelPlatform.Windows, *command).withWorkingDirectory(project.basePath?.let { Path(it) })
     }
 
     override fun getLocaleEnv(): Map<@NonNls String, @NonNls String> {

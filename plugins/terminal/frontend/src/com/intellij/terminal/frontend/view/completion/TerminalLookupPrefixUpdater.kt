@@ -15,10 +15,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.terminal.block.reworked.TerminalCursorOffsetChanged
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 
 @ApiStatus.Internal
 class TerminalLookupPrefixUpdater private constructor(
@@ -32,14 +32,14 @@ class TerminalLookupPrefixUpdater private constructor(
 
   init {
     model.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun cursorOffsetChanged(event: TerminalCursorOffsetChanged) {
+      override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
         pendingRequestsCount.update { it + 1 }
         prefixUpdateRequests.trySend(Unit)
       }
     })
 
     model.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         pendingRequestsCount.update { it + 1 }
         prefixUpdateRequests.trySend(Unit)
       }
@@ -96,7 +96,7 @@ class TerminalLookupPrefixUpdater private constructor(
     if (caretOffset < startOffset) {
       return null  // It looks like the lookup is not valid
     }
-    return model.getText(startOffset, caretOffset)
+    return model.getText(startOffset, caretOffset).toString()
   }
 
   private fun truncatePrefix(times: Int) {

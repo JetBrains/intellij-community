@@ -5,7 +5,7 @@ import fleet.util.multiplatform.Actual
 
 /** WasmJs implementation of [newConcurrentMap] */
 @Suppress("unused")
-@Actual(linkedTo = "newConcurrentMap")
+@Actual
 internal fun <K : Any, V : Any> newConcurrentMapWasmJs(): ConcurrentMap<K, V> =
   SyntaxConcurrentMapWasmJs(HashMap())
 

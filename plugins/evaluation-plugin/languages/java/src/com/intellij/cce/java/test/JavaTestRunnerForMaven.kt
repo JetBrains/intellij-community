@@ -1,19 +1,16 @@
 package com.intellij.cce.java.test
 
 
-import com.intellij.cce.test.TestNotFoundException
 import com.intellij.cce.test.TestRunResult
-import com.intellij.openapi.application.smartReadAction
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 
+/**
+ * Just a maven runner.
+ */
 internal object JavaTestRunnerForMaven {
 
   suspend fun run(project: Project, moduleTests: List<ModuleTests>): TestRunResult {
@@ -28,10 +25,8 @@ internal object JavaTestRunnerForMaven {
 
     params.cmdOptions = "-am"
 
-    val resolvedModuleTests = resolveMavenProjects(project, moduleTests)
-
     // in multi-module projects tests will be prefixed with module:test
-    resolvedModuleTests
+    moduleTests
       .mapNotNull { it.module }
       .also {
         if (it.isNotEmpty()) {
@@ -46,7 +41,7 @@ internal object JavaTestRunnerForMaven {
         "surefire.failIfNoSpecifiedTests" to "false",
         "failIfNoTests" to "false",
         "maven.gitcommitid.skip" to "true",
-        "test" to resolvedModuleTests.flatMap { it.tests }.joinToString(separator = ",")
+        "test" to moduleTests.flatMap { it.tests }.joinToString(separator = ",")
       )
     }
 
@@ -62,7 +57,7 @@ internal object JavaTestRunnerForMaven {
       results.exitCode,
       passed,
       failed,
-      resolvedModuleTests.flatMap { it.tests },
+      moduleTests.flatMap { it.tests },
       compilationSuccessful,
       projectIsResolvable,
       output
@@ -129,42 +124,4 @@ object MavenOutputParser {
     }
     return res
   }
-}
-
-private suspend fun resolveMavenProjects(project: Project, moduleTests: List<ModuleTests>): List<ModuleTests> {
-  val result = mutableMapOf<String?, MutableList<String>>()
-
-  smartReadAction(project) {
-    for ((priorProject, tests) in moduleTests) {
-      for (test in tests) {
-        val (guessedProject, test) = tryGuessProject(project, priorProject, test)
-        if (!result.containsKey(guessedProject)) {
-          result[guessedProject] = mutableListOf()
-        }
-        result[guessedProject]!!.add(test)
-      }
-    }
-  }
-
-  return result.map { ModuleTests(it.key, it.value.distinct()) }
-}
-
-private fun tryGuessProject(project: Project, priorProject: String?, test: String): Pair<String?, String> {
-  if (priorProject != null) {
-    return Pair(priorProject, test)
-  }
-
-  val facade = JavaPsiFacade.getInstance(project)
-  val scope = GlobalSearchScope.projectScope(project)
-  val psiClass = facade.findClass(test, scope) ?: facade.findClass(test.split('.').dropLast(1).joinToString("."), scope)
-
-  if (psiClass == null) {
-    throw TestNotFoundException("Not found class for test: $priorProject:$test")
-  }
-
-  val module = ModuleUtil.findModuleForFile(psiClass.containingFile)
-  val mavenProject = module?.let { MavenProjectsManager.getInstance(project).findProject(it) }
-
-  val guessedProject = if (mavenProject == null) null else ":${mavenProject.mavenId.artifactId}"
-  return Pair(guessedProject, psiClass.qualifiedName!!)
 }

@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.Consent
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.ConsentSettingsUi
+import com.intellij.ide.gdpr.localConsents.LocalConsentOptions
 import com.intellij.ide.gdpr.trace.TraceConsentManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.UISettings
@@ -42,6 +43,7 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.system.OS
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
+import org.jetbrains.annotations.ApiStatus
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -177,10 +179,10 @@ fun isWindowIconAlreadyExternallySet(): Boolean = when (OS.CURRENT) {
   else -> false
 }
 
-private fun removeTraceConsents(consents: MutableList<Consent>) {
-  consents.removeIf { consent ->
-    ConsentOptions.condTraceDataCollectionNonComConsent().test(consent) ||
-    ConsentOptions.condTraceDataCollectionComConsent().test(consent)
+private fun removeTraceLocalConsents(localConsents: MutableList<Consent>) {
+  localConsents.removeIf { localConsent ->
+    LocalConsentOptions.condTraceDataCollectionNonComLocalConsent().test(localConsent) ||
+    LocalConsentOptions.condTraceDataCollectionComLocalConsent().test(localConsent)
   }
 }
 
@@ -347,17 +349,24 @@ object AppUIUtil {
     }
     result.removeIf(ConsentOptions.condTraceDataCollectionConsent()) // IJPL-208500
     result.removeIf(ConsentOptions.condAiDataCollectionConsent()) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
+    return result
+  }
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun loadLocalConsentsAsConsentsForEditing(): List<Consent> {
+    val localConsents = LocalConsentOptions.getLocalConsents().toMutableList()
     if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
-      removeTraceConsents(result)
+      removeTraceLocalConsents(localConsents)
     } else {
       val licenseTypeFlag = LicensingFacade.getInstance()?.metadata?.getOrNull(10)
       when (licenseTypeFlag) {
-        'F' -> result.removeIf(ConsentOptions.condTraceDataCollectionComConsent())
-        null -> removeTraceConsents(result)
-        else -> result.removeIf(ConsentOptions.condTraceDataCollectionNonComConsent())
+        'F' -> localConsents.removeIf(LocalConsentOptions.condTraceDataCollectionComLocalConsent())
+        null -> removeTraceLocalConsents(localConsents)
+        else -> localConsents.removeIf(LocalConsentOptions.condTraceDataCollectionNonComLocalConsent())
       }
     }
-    return result
+    return localConsents
   }
 
   @JvmStatic
@@ -383,6 +392,12 @@ object AppUIUtil {
     else {
       options.setConsents(consents)
     }
+  }
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun saveConsentsAsLocalConsents(consents: List<Consent>) {
+    LocalConsentOptions.setLocalConsents(consents)
   }
 
   /**

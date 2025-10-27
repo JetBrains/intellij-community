@@ -12,15 +12,19 @@ fun ProjectStructureUI.projectSettings(action: ProjectSettingsSectionUI.() -> Un
 }
 
 fun ProjectStructureUI.moduleSettings(action: ModuleSettingsSectionUI.() -> Unit) {
-  x("//div[@name='centerSection']", ModuleSettingsSectionUI::class.java).action()
+  xx("//div[@name='centerSection']", ModuleSettingsSectionUI::class.java).list().firstOrNull()?.action()
+  ?: error("Module settings section was not found")
+
 }
 
 fun ProjectStructureUI.facetsSettings(action: FacetsSettingsSectionUI.() -> Unit) {
-  x("//div[@name='centerSection']", FacetsSettingsSectionUI::class.java).action()
+  xx("//div[@name='centerSection']", FacetsSettingsSectionUI::class.java).list().firstOrNull()?.action()
+  ?: error("Facets settings section was not found")
 }
 
 fun ProjectStructureUI.artifactsSettings(action: ArtifactsSettingsSectionUI.() -> Unit) {
-  x("//div[@name='centerSection']", ArtifactsSettingsSectionUI::class.java).action()
+  xx("//div[@name='centerSection']", ArtifactsSettingsSectionUI::class.java).list().firstOrNull()?.action()
+  ?: error("Artifacts settings section was not found")
 }
 
 class ProjectSettingsSectionUI(data: ComponentData) : UiComponent(data) {

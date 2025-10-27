@@ -3,10 +3,9 @@ package com.intellij.internal.inspector.components
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.DataManagerImpl
-import com.intellij.openapi.actionSystem.CustomizedDataContext
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.ide.impl.DataValidators
+import com.intellij.internal.inspector.UiInspectorUtil.getComponentName
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -34,8 +33,15 @@ import javax.swing.table.DefaultTableModel
 internal class DataContextDialog(
   project: Project?,
   @JvmField val componentList: List<Component>
-) : DialogWrapper(project) {
+) : DialogWrapper(project, false, IdeModalityType.MODELESS) {
+
+  private var showLazyValues: Boolean = false
+  private var showBGTData: Boolean = false
+  private var showFQNs: Boolean = false
+
   init {
+    val component = componentList.firstOrNull() ?: error("No component")
+    title = "${getComponentName(component)} DataContext"
     init()
   }
 
@@ -49,15 +55,22 @@ internal class DataContextDialog(
     val table = JBTable()
     table.setDefaultRenderer(Object::class.java, MyTableCellRenderer())
 
-    table.model = buildTreeModel(false)
+    rebuild(table)
     TableSpeedSearch.installOn(table)
 
     val panel = panel {
       row {
-        checkBox("Show BGT Data").actionListener { event, component ->
-          table.model = SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
-            buildTreeModel(component.isSelected)
-          }
+        checkBox("Show BGT Data").actionListener { _, component ->
+          showBGTData = component.isSelected
+          rebuild(table)
+        }
+        checkBox("Show lazy keys").actionListener { _, component ->
+          showLazyValues = component.isSelected
+          rebuild(table)
+        }
+        checkBox("Show raw FQNs").actionListener { _, component ->
+          showFQNs = component.isSelected
+          rebuild(table)
         }
       }
       row {
@@ -73,7 +86,11 @@ internal class DataContextDialog(
     return panel.withPreferredSize(width, height)
   }
 
-  private fun buildTreeModel(showDataRules: Boolean): DefaultTableModel {
+  private fun rebuild(table: JBTable) {
+    table.model = buildTreeModel()
+  }
+
+  private fun buildTreeModel(): DefaultTableModel {
     val model = object : DefaultTableModel()  {
       override fun isCellEditable(row: Int, column: Int): Boolean = false
     }
@@ -81,15 +98,19 @@ internal class DataContextDialog(
     model.addColumn("Value")
     model.addColumn("Value type")
 
+    var index = 0
     var prev: Component? = null
+    val childDataMap = mutableMapOf<String, Any>()
     for (c in componentList) {
       assert(prev?.parent == null || prev.parent === c)
-      val result = collectDataFrom(c, showDataRules)
+      val result = SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+        collectDataFrom(c, childDataMap)
+      }
       if (result.isNotEmpty()) {
         if (model.rowCount > 0) {
           model.appendEmptyRow()
         }
-        model.appendHeader(c)
+        model.appendHeader(c, ++index)
         for (data in result) {
           model.appendRow(data)
         }
@@ -99,8 +120,8 @@ internal class DataContextDialog(
     return model
   }
 
-  private fun DefaultTableModel.appendHeader(component: Component) {
-    addRow(arrayOf(Header("$component"), null, getClassName(component)))
+  private fun DefaultTableModel.appendHeader(component: Component, index: Int) {
+    addRow(arrayOf(Header("$index. ${getComponentName(component)}"), null, getClassPresentationOrFQN(component)))
   }
 
   private fun DefaultTableModel.appendRow(data: ContextData) {
@@ -111,13 +132,13 @@ internal class DataContextDialog(
     addRow(arrayOf("", "", ""))
   }
 
-  private fun collectDataFrom(component: Component, showDataRules: Boolean): List<ContextData> {
+  private fun collectDataFrom(component: Component, childDataMap: MutableMap<String, Any>): List<ContextData> {
     val dataManager = DataManager.getInstance()
     val context = dataManager.getDataContext(component).let {
-      if (showDataRules) it else Utils.getUiOnlyDataContext(it)
+      if (showBGTData) it else Utils.getUiOnlyDataContext(it)
     }
     val parentContext = dataManager.getDataContext(component.parent).let {
-      if (showDataRules) it else Utils.getUiOnlyDataContext(it)
+      if (showBGTData) it else Utils.getUiOnlyDataContext(it)
     }
     val result = mutableListOf<ContextData>()
     for (key in DataKey.allKeys()) {
@@ -126,14 +147,28 @@ internal class DataContextDialog(
       val data = context.getData(key)
       val parentData = if (specialKey) null else parentContext.getData(key)
       if (equalData(data, parentData, 0, null)) continue
+      val childData = childDataMap[key.name]
       result += ContextData(
         key.name,
         getValuePresentation(data ?: CustomizedDataContext.EXPLICIT_NULL),
-        getClassName(data ?: CustomizedDataContext.EXPLICIT_NULL),
-        parentData != null && key != PlatformCoreDataKeys.BGT_DATA_PROVIDER)
+        getClassPresentationOrFQN(data ?: CustomizedDataContext.EXPLICIT_NULL),
+        childData != null && !equalData(data, childData, 0, null))
+      if (showLazyValues && data is DataManagerImpl.KeyedDataProvider) {
+        result += data.map.map { (k, v) ->
+          ContextData("${key.name} - $k", getValuePresentation(v), getClassPresentationOrFQN(v), false)
+        }
+      }
+      if (data != null && key != PlatformCoreDataKeys.BGT_DATA_PROVIDER) {
+        childDataMap[key.name] = data
+      }
     }
     result.sortWith(Comparator.comparing { StringUtil.toUpperCase(it.key) })
     return result
+  }
+
+  private fun getClassPresentationOrFQN(value: Any): String {
+    return if (showFQNs) (value.javaClass.name ?: "null")
+    else getClassPresentation(value)
   }
 }
 
@@ -192,17 +227,30 @@ private fun getKeyPresentation(key: String, overridden: Boolean) = when {
 private fun getValuePresentation(value: Any) = when (value) {
   is Array<*> -> value.contentToString()
   is DataManagerImpl.KeyedDataProvider ->
-    "${value.map.size} lazy" +
-    "${value.generic?.let { " + generic" } ?: ""}: ${value.map.keys.joinToString(", ")}"
+    "${value.javaClass.simpleName}(${value.map.size} providers)" +
+    (value.generic?.let { " + generic" } ?: "")
+  is CompositeDataProvider -> {
+    "${value.javaClass.simpleName}(${value.dataProviders.size} providers)"
+  }
   else -> value.toString()
 }
 
-private fun getClassName(value: Any): String {
+private fun getClassPresentation(value: Any): String {
+  val source = (value as? DataValidators.SourceWrapper)?.unwrapSource()
+  if (source != null && source !== value) {
+    return getClassPresentation(source)
+  }
+  if (value is CompositeDataProvider) {
+    return value.dataProviders.joinToString { getClassPresentation(it) }
+  }
   val clazz: Class<*> = value.javaClass
-  return when {
-    clazz.isAnonymousClass -> "${clazz.superclass.simpleName}$..."
+  val str = when {
+    clazz.isAnonymousClass -> "${clazz.name.substringAfterLast(".")}: ${clazz.superclass.simpleName}"
+    clazz.isHidden -> clazz.simpleName.substringBefore("/").let { if (it.endsWith("Lambda")) it else "$it/-" }
     else -> clazz.simpleName
   }
+  return if (value is Array<*>) "${str.substringBeforeLast("[")}[${value.size}]"
+  else str
 }
 
 private class MyTableCellRenderer : ColoredTableCellRenderer() {

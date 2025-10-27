@@ -10,7 +10,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.util.io.delete
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.ApiStatus
 import org.languagetool.Language
@@ -26,7 +26,7 @@ object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
 
     for (file in getOldFiles()) {
-      file.delete(true)
+      NioFiles.deleteRecursively(file)
     }
 
     ApplicationManager.getApplication().messageBus.connect()

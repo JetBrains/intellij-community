@@ -15,10 +15,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
+import org.jetbrains.plugins.terminal.view.*
 import java.awt.event.KeyEvent
 
 /**
@@ -90,10 +87,10 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
         curLineInfo = null
       }
       lineInfo?.line != cursorLine -> {
-        curLineInfo = LineInfo(cursorLine, textBeforeCursor)
+        curLineInfo = LineInfo(cursorLine, textBeforeCursor.toString())
       }
       !textBeforeCursor.startsWith(lineInfo.promptText) -> {
-        curLineInfo = lineInfo.copy(promptText = textBeforeCursor)
+        curLineInfo = lineInfo.copy(promptText = textBeforeCursor.toString())
       }
     }
 
@@ -118,7 +115,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
     LOG.debug { "Command finish detected" }
   }
 
-  private fun getTextBeforeCursor(cursorOffset: TerminalOffset): String? {
+  private fun getTextBeforeCursor(cursorOffset: TerminalOffset): CharSequence? {
     val lineNumber = outputModel.getLineByOffset(cursorOffset)
     val lineStartOffset = outputModel.getStartOfLine(lineNumber)
 
@@ -133,7 +130,7 @@ internal class TerminalHeuristicsBasedCommandFinishTracker(
     val flow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         check(flow.tryEmit(Unit))
       }
     })

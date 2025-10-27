@@ -3,21 +3,10 @@ package com.intellij.python.community.services.shared
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.psi.LanguageLevel
 import java.util.*
 
 
 private val logger = fileLogger()
-
-object LanguageLevelComparator : Comparator<LanguageLevelHolder> {
-  override fun compare(o1: LanguageLevelHolder, o2: LanguageLevelHolder): Int {
-    // Backward: first python is the highest
-    if (logger.isDebugEnabled) {
-      logger.debug("langLevel ${o1.languageLevel} vs ${o2.languageLevel}")
-    }
-    return LanguageLevel.VERSION_COMPARATOR.compare(o1.languageLevel, o2.languageLevel) * -1
-  }
-}
 
 object UiComparator : Comparator<UiHolder> {
   override fun compare(o1: UiHolder, o2: UiHolder): Int {
@@ -28,13 +17,24 @@ object UiComparator : Comparator<UiHolder> {
   }
 }
 
-class LanguageLevelWithUiComparator<T> : Comparator<T> where T : LanguageLevelHolder, T : UiHolder {
+object PythonInfoComparator : Comparator<PythonInfoHolder> {
+  override fun compare(o1: PythonInfoHolder, o2: PythonInfoHolder): Int {
+    // Backward: first python is the highest
+    if (logger.isDebugEnabled) {
+      logger.debug("pythonInfo ${o1.pythonInfo} vs ${o2.pythonInfo}")
+    }
+    return o1.pythonInfo.compareTo(o2.pythonInfo)
+  }
+}
+
+class PythonInfoWithUiComparator<T> : Comparator<T> where T : PythonInfoHolder, T : UiHolder {
   override fun compare(o1: T, o2: T): Int {
     if (logger.isDebugEnabled) {
       logger.debug("full ${o1.string()} vs ${o2.string()}")
     }
-    return LanguageLevelComparator.compare(o1, o2) * 10 + UiComparator.compare(o1, o2)
+    return PythonInfoComparator.compare(o1, o2) * 10 + UiComparator.compare(o1, o2)
   }
 }
 
-private fun <T> T.string(): String where T : LanguageLevelHolder, T : UiHolder = "($languageLevel,${ui?.toolName})"
+private fun <T> T.string(): String where T : PythonInfoHolder, T : UiHolder =
+  "(${pythonInfo.languageLevel},${ui?.toolName},free-threaded:${pythonInfo.freeThreaded})"

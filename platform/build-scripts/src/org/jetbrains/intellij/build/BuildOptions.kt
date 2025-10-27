@@ -27,7 +27,7 @@ import kotlin.time.Duration.Companion.minutes
 
 data class BuildOptions(
   @ApiStatus.Internal @JvmField val jarCacheDir: Path? = null,
-  @ApiStatus.Internal @JvmField val compressZipFiles: Boolean = true,
+  @ApiStatus.Internal @JvmField var compressZipFiles: Boolean = true,
   /** See [GlobalOptions.BUILD_DATE_IN_SECONDS]. */
   @JvmField val buildDateInSeconds: Long = computeBuildDateInSeconds(),
   @ApiStatus.Internal @JvmField val printFreeSpace: Boolean = true,
@@ -128,7 +128,7 @@ data class BuildOptions(
 
     /**
      * If this value is set no distributions of the product will be produced,
-     * only [non-bundled plugins][ProductModulesLayout.pluginModulesToPublish] will be built.
+     * only [non-bundled plugins][org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] will be built.
      */
     const val OS_NONE: String = "none"
 
@@ -436,10 +436,10 @@ data class BuildOptions(
   val bundledPluginDirectoriesToSkip: Set<String> = getSetProperty("intellij.build.bundled.plugin.dirs.to.skip")
 
   /**
-   * Specifies a list of directory names for non-bundled plugins (determined by [ProductModulesLayout.pluginModulesToPublish] and
-   * [ProductModulesLayout.buildAllCompatiblePlugins]) which should be actually built. This option can be used to speed up updating
-   * the IDE from sources. By default, all plugins determined by [ProductModulesLayout.pluginModulesToPublish] and
-   * [ProductModulesLayout.buildAllCompatiblePlugins] are built.
+   * Specifies a list of directory names for non-bundled plugins (determined by [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] and
+   * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.buildAllCompatiblePlugins]) which should be actually built. This option can be used to speed up updating
+   * the IDE from sources. By default, all plugins determined by [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] and
+   * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.buildAllCompatiblePlugins] are built.
    * To skip building all non-bundled plugins, set the property to `none`.
    */
   val nonBundledPluginDirectoriesToInclude: Set<String> = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
@@ -491,7 +491,7 @@ data class BuildOptions(
   var storeGitRevision: Boolean = getBooleanProperty("intellij.build.store.git.revision", true)
 
   /**
-   * Specifies an additional list of compatible plugin names which should not be built, see [ProductModulesLayout.compatiblePluginsToIgnore]
+   * Specifies an additional list of compatible plugin names which should not be built, see [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.compatiblePluginsToIgnore]
    */
   var compatiblePluginsToIgnore: Set<String> = getSetProperty("intellij.build.compatible.plugins.to.ignore")
 

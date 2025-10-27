@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 fun acceptSuspend(fn: suspend () -> Unit) { print(fn) }
 fun acceptComposableSuspend(fn: <!HIGHLIGHTING("severity='ERROR'; descr='[AMBIGUOUS_FUNCTION_TYPE_KIND] Multiple function type conversions are prohibited for a single type. Detected type conversions: [suspend, @Composable]'")!>@Composable suspend () -> Unit<!>) { print(fn.hashCode()) }
 
-val foo: suspend () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'SuspendFunction0<Unit>', actual 'ComposableFunction0<Unit>'.'")!>@Composable {}<!>
+val foo: suspend () -> Unit <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'SuspendFunction0<Unit>', actual 'ComposableFunction0<Unit>'.'")!>=<!> @Composable {}
 val bar: suspend () -> Unit = {}
 fun Test() {
     val composableLambda = @Composable {}

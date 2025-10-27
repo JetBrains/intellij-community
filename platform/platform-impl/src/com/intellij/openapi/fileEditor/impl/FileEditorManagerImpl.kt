@@ -6,6 +6,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
@@ -488,22 +489,24 @@ open class FileEditorManagerImpl(
   private suspend fun rootsChanged(fileEditorProviderManager: FileEditorProviderManager) {
     val fileToProviders = IdentityHashMap<VirtualFile, List<FileEditorProvider>>()
     val providerChanges = openedComposites.toList().mapNotNull { composite ->
-      val file = composite.file
-      val providers = fileToProviders.getOrPut(file) { fileEditorProviderManager.getProvidersAsync(project, file) }
-      val editorTypeIds = providers.mapTo(LinkedHashSet()) { it.editorTypeId }
-      val oldEditorTypeIds = getEditorTypeIds(composite)
-      if (oldEditorTypeIds.isEmpty()) {
-        // not initialized or invalid
-        return@mapNotNull null
-      }
+      withContext(composite.clientId.asContextElement()) {
+        val file = composite.file
+        val providers = fileToProviders.getOrPut(file) { fileEditorProviderManager.getProvidersAsync(project, file) }
+        val editorTypeIds = providers.mapTo(LinkedHashSet()) { it.editorTypeId }
+        val oldEditorTypeIds = getEditorTypeIds(composite)
+        if (oldEditorTypeIds.isEmpty()) {
+          // not initialized or invalid
+          return@withContext null
+        }
 
-      val newProviders = providers.filter { !oldEditorTypeIds.contains(it.editorTypeId) }
-      val editorTypeIdsToRemove = oldEditorTypeIds.filter { !editorTypeIds.contains(it) }
-      if (newProviders.isEmpty() && editorTypeIdsToRemove.isEmpty()) {
-        null
-      }
-      else {
-        ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = editorTypeIdsToRemove)
+        val newProviders = providers.filter { !oldEditorTypeIds.contains(it.editorTypeId) }
+        val editorTypeIdsToRemove = oldEditorTypeIds.filter { !editorTypeIds.contains(it) }
+        if (newProviders.isEmpty() && editorTypeIdsToRemove.isEmpty()) {
+          null
+        }
+        else {
+          ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = editorTypeIdsToRemove)
+        }
       }
     }
     if (providerChanges.isEmpty()) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -23,8 +24,11 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.registerExtension
+import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -35,10 +39,6 @@ import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import com.intellij.platform.eel.EelApi
-import com.jetbrains.python.PyToolUIInfo
-import com.jetbrains.python.PythonBinary
-import com.jetbrains.python.errorProcessing.PyResult
 import java.nio.file.Path
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.pathString
@@ -55,11 +55,11 @@ class SystemPythonServiceShowCaseTest {
       val eelApi = systemPython.pythonBinary.getEelDescriptor().toEelApi()
       val process = eelApi.exec.spawnProcess(systemPython.pythonBinary.pathString, "--version").eelIt()
       val output = async {
-        (if (systemPython.languageLevel.isPy3K) process.stdout else process.stderr).readWholeText()
+        (if (systemPython.pythonInfo.languageLevel.isPy3K) process.stdout else process.stderr).readWholeText()
       }
       Assertions.assertTrue(process.exitCode.await() == 0)
       val versionString = PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(output.await())!!
-      Assertions.assertEquals(systemPython.languageLevel, versionString, "Wrong version")
+      Assertions.assertEquals(systemPython.pythonInfo.languageLevel, versionString, "Wrong version")
     }
   }
 

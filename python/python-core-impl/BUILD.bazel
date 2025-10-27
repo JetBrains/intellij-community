@@ -26,6 +26,8 @@ jvm_library(
     "//libraries/guava",
     "//python/python-psi-impl:psi-impl",
     "//python/python-sdk:sdk",
+    "@lib//:kotlin-stdlib",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.python.community.core.impl` end

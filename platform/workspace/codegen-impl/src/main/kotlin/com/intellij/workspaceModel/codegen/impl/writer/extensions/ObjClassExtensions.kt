@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.extensions
 
 import com.intellij.workspaceModel.codegen.deft.meta.*
@@ -6,14 +6,31 @@ import com.intellij.workspaceModel.codegen.impl.writer.*
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityWithSymbolicId
 
+private val compatibilityModules = setOf(
+  "com.intellij.platform.workspace.jps.entities",
+  "com.intellij.java.workspace.entities",
+  "com.intellij.openapi.externalSystem.settings.workspaceModel",
+  "com.goide.vgo.project.workspaceModel.entities",
+  "org.jetbrains.kotlin.idea.workspaceModel"
+)
+
+internal val ObjClass<*>.requiresCompatibility: Boolean
+  get() = module.name in compatibilityModules
+
 internal val ObjClass<*>.javaFullName: QualifiedName
   get() = fqn(module.name, name)
 
+internal val ObjClass<*>.compatibleJavaBuilderName: String
+  get() = if (requiresCompatibility) "$name.Builder" else defaultJavaBuilderName
+
+internal val ObjClass<*>.defaultJavaBuilderName: String
+  get() = "${name}Builder"
+
 internal val ObjClass<*>.javaBuilderName: String
-  get() = "$name.Builder"
+  get() = if (requiresCompatibility) compatibleJavaBuilderName else defaultJavaBuilderName
 
 internal val ObjClass<*>.javaBuilderFqnName: QualifiedName
-  get() = fqn(module.name, "$name.Builder")
+  get() = fqn(module.name, defaultJavaBuilderName)
 
 internal val ObjClass<*>.javaImplName: String
   get() = "${name.replace(".", "")}Impl"

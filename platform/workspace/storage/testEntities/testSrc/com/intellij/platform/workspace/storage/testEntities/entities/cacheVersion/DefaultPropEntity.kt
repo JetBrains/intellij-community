@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -15,42 +15,4 @@ interface DefaultPropEntity: WorkspaceEntity {
   val someList: List<Int>
   val constInt: Int
     @Default get() = 9
-
-  //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<DefaultPropEntity> {
-    override var entitySource: EntitySource
-    var someString: String
-    var someList: MutableList<Int>
-    var constInt: Int
-  }
-
-  companion object : EntityType<DefaultPropEntity, Builder>() {
-    @JvmOverloads
-    @JvmStatic
-    @JvmName("create")
-    operator fun invoke(
-      someString: String,
-      someList: List<Int>,
-      entitySource: EntitySource,
-      init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.someString = someString
-      builder.someList = someList.toMutableWorkspaceList()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
-  }
-  //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifyDefaultPropEntity(
-  entity: DefaultPropEntity,
-  modification: DefaultPropEntity.Builder.() -> Unit,
-): DefaultPropEntity {
-  return modifyEntity(DefaultPropEntity.Builder::class.java, entity, modification)
-}
-//endregion

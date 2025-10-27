@@ -13,7 +13,6 @@ import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonSdkPanelBuilderAndSdkCreator
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import javax.swing.JComponent
 
@@ -21,11 +20,9 @@ internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> 
   baseSettings: PyV3BaseProjectSettings,
   projectNameProvider: ProjectPathProvider,
   specificUiAndSettings: Pair<PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>, TYPE_SPECIFIC_SETTINGS>?,
-  allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
 ) {
 
   private val sdkPanelBuilderAndSdkCreator: PythonSdkPanelBuilderAndSdkCreator = PythonSdkPanelBuilderAndSdkCreator(
-    onlyAllowedInterpreterTypes = allowedInterpreterTypes,
     errorSink = ShowingMessageErrorSync,
     module = null,
   )

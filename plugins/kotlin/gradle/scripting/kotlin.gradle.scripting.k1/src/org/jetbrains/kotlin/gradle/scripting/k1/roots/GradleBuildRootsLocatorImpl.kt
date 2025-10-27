@@ -33,6 +33,8 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * [org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRoot] is a linked gradle build (don't confuse with gradle project and included build).
@@ -52,7 +54,47 @@ import java.nio.file.Path
  *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.New] - not yet imported
  *   - [org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported] - imported
  */
-class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project, coroutineScope) {
+class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project) {
+    private val modifiedFilesCheckScheduled = AtomicBoolean()
+    private val modifiedFiles = ConcurrentLinkedQueue<String>()
+
+    fun fileChanged(filePath: String, ts: Long = System.currentTimeMillis()) {
+        findAffectedFileRoot(filePath)?.fileChanged(filePath, ts)
+        scheduleModifiedFilesCheck(filePath)
+    }
+
+    fun getAllRoots(): Collection<GradleBuildRoot> = roots.list
+
+    private fun scheduleModifiedFilesCheck(filePath: String) {
+        modifiedFiles.add(filePath)
+        if (modifiedFilesCheckScheduled.compareAndSet(false, true)) {
+            coroutineScope.launch {
+                if (modifiedFilesCheckScheduled.compareAndSet(true, false)) {
+                    checkModifiedFiles()
+                }
+            }
+        }
+    }
+
+    private fun checkModifiedFiles() {
+        updateNotifications(restartAnalyzer = false) { true }
+
+        roots.list.forEach {
+            it.saveLastModifiedFiles()
+        }
+
+        // process modifiedFiles queue
+        while (true) {
+            val file = modifiedFiles.poll() ?: break
+
+            // detect gradle version change
+            val buildDir = findGradleWrapperPropertiesBuildDir(file)
+            if (buildDir != null) {
+                actualizeBuildRoot(buildDir, null)
+            }
+        }
+    }
+
     private val manager: ScriptConfigurationManager
         get() = ScriptConfigurationManager.getInstance(project)
 
@@ -64,7 +106,7 @@ class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineSco
             if (value != field) {
                 field = value
                 roots.list.toList().forEach {
-                    reloadBuildRoot(it.pathPrefix, null)
+                    reloadBuildRoot(it.externalProjectPath, null)
                 }
             }
         }
@@ -96,18 +138,18 @@ class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineSco
     override fun add(newRoot: GradleBuildRoot) {
         val old = roots.add(newRoot)
         if (old is Imported && newRoot !is Imported) {
-            removeData(old.pathPrefix)
+            removeData(old.externalProjectPath)
         }
         if (old !is Legacy || newRoot !is Legacy) {
             updater.invalidateAndCommit()
         }
 
-        updateNotifications { it.startsWith(newRoot.pathPrefix) }
+        updateNotifications { it.startsWith(newRoot.externalProjectPath) }
     }
 
     private fun tryLoadFromFsCache(settings: GradleProjectSettings, version: String): Imported? {
         return tryCreateImportedRoot(settings.externalProjectPath) {
-            GradleBuildRootDataSerializer.getInstance().read(it)?.let { data ->
+            AbstractGradleBuildRootDataSerializer.getInstance().read(it)?.let { data ->
                 val gradleHome = data.gradleHome
                 if (gradleHome.isNotBlank() && GradleInstallationManager.getGradleVersion(Path.of(gradleHome)) != version) return@let null
 
@@ -249,7 +291,7 @@ class GradleScriptingSupport(val project: Project) : ScriptingSupport {
         with(manager) {
             roots.list.forEach { root ->
                 if (root.importing.compareAndSet(GradleBuildRoot.ImportingStatus.updatingCaches, GradleBuildRoot.ImportingStatus.updated)) {
-                    updateNotifications { it.startsWith(root.pathPrefix) }
+                    updateNotifications { it.startsWith(root.externalProjectPath) }
                 }
             }
         }
@@ -258,7 +300,7 @@ class GradleScriptingSupport(val project: Project) : ScriptingSupport {
     fun Imported.collectConfigurations(builder: ScriptClassRootsBuilder) {
         javaHome?.let { builder.sdks.addSdk(it) }
 
-        val definitions = GradleScriptDefinitionsContributor.getDefinitions(builder.project, pathPrefix, data.gradleHome, data.javaHome)
+        val definitions = GradleScriptDefinitionsContributor.getDefinitions(builder.project, externalProjectPath, data.gradleHome, data.javaHome)
         if (definitions == null) {
             // needed to recreate classRoots if correct script definitions weren't loaded at this moment
             // in this case classRoots will be recreated after script definitions update

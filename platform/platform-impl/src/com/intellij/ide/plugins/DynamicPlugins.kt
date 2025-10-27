@@ -1257,7 +1257,7 @@ private fun processDependenciesOnPlugin(
   val wantedIds = HashSet<String>(1 + dependencyTarget.contentModules.size)
   wantedIds.add(dependencyTarget.pluginId.idString)
   for (module in dependencyTarget.contentModules) {
-    wantedIds.add(module.moduleId.id)
+    wantedIds.add(module.moduleId.name)
   }
   // FIXME plugin aliases probably missing?
 
@@ -1282,7 +1282,7 @@ private fun processDependenciesOnPlugin(
         }
       }
       for (item in module.moduleDependencies.modules) {
-        if (wantedIds.contains(item.id) && !processor(plugin, module)) {
+        if (wantedIds.contains(item.name) && !processor(plugin, module)) {
           return
         }
       }

@@ -37,7 +37,9 @@ import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verifyAll
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -244,7 +246,7 @@ abstract class ComposeModifierCompletionContributorTest : KotlinLightCodeInsight
     // Do
     // to check that we still suggest "Modifier.extensionFunction" when the prefix doesn't much with the function name and only with "Modifier".
     // See [ComposeModifierCompletionContributor.ModifierLookupElement.getAllLookupStrings]
-    myFixture.type("M")
+    typeAllowingAnalysisOnEDT("M")
     completeWith("extensionFunction")
 
     // Check
@@ -376,7 +378,7 @@ abstract class ComposeModifierCompletionContributorTest : KotlinLightCodeInsight
     lookupStrings shouldNotContain "Modifier.extensionFunctionReturnsNonModifier"
 
     // Do
-    myFixture.type("extensionFunction\t")
+    typeAllowingAnalysisOnEDT("extensionFunction\t")
 
     // Check
     myFixture.checkResult(
@@ -587,6 +589,15 @@ abstract class ComposeModifierCompletionContributorTest : KotlinLightCodeInsight
     }
     finally {
       super.tearDown()
+    }
+  }
+
+  @OptIn(KaAllowAnalysisOnEdt::class, KaAllowAnalysisFromWriteAction::class)
+  protected fun typeAllowingAnalysisOnEDT(s: String) {
+    allowAnalysisOnEdt {
+      allowAnalysisFromWriteAction {
+        myFixture.type(s)
+      }
     }
   }
 }

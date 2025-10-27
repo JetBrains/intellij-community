@@ -103,6 +103,31 @@ support a new edition.
 """
 global___Edition = Edition
 
+class _SymbolVisibility:
+    ValueType = typing.NewType("ValueType", builtins.int)
+    V: typing_extensions.TypeAlias = ValueType
+
+class _SymbolVisibilityEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_SymbolVisibility.ValueType], builtins.type
+):
+    DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+    VISIBILITY_UNSET: _SymbolVisibility.ValueType  # 0
+    VISIBILITY_LOCAL: _SymbolVisibility.ValueType  # 1
+    VISIBILITY_EXPORT: _SymbolVisibility.ValueType  # 2
+
+class SymbolVisibility(_SymbolVisibility, metaclass=_SymbolVisibilityEnumTypeWrapper):
+    """Describes the 'visibility' of a symbol with respect to the proto import
+    system. Symbols can only be imported when the visibility rules do not prevent
+    it (ex: local symbols cannot be imported).  Visibility modifiers can only set
+    on `message` and `enum` as they are the only types available to be referenced
+    from other files.
+    """
+
+VISIBILITY_UNSET: SymbolVisibility.ValueType  # 0
+VISIBILITY_LOCAL: SymbolVisibility.ValueType  # 1
+VISIBILITY_EXPORT: SymbolVisibility.ValueType  # 2
+global___SymbolVisibility = SymbolVisibility
+
 @typing.final
 class FileDescriptorSet(google.protobuf.message.Message):
     """The protocol compiler can output a FileDescriptorSet containing the .proto
@@ -130,6 +155,7 @@ class FileDescriptorProto(google.protobuf.message.Message):
     DEPENDENCY_FIELD_NUMBER: builtins.int
     PUBLIC_DEPENDENCY_FIELD_NUMBER: builtins.int
     WEAK_DEPENDENCY_FIELD_NUMBER: builtins.int
+    OPTION_DEPENDENCY_FIELD_NUMBER: builtins.int
     MESSAGE_TYPE_FIELD_NUMBER: builtins.int
     ENUM_TYPE_FIELD_NUMBER: builtins.int
     SERVICE_FIELD_NUMBER: builtins.int
@@ -172,6 +198,12 @@ class FileDescriptorProto(google.protobuf.message.Message):
         """
 
     @property
+    def option_dependency(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.str]:
+        """Names of files imported by this file purely for the purpose of providing
+        option extensions. These are excluded from the dependency list above.
+        """
+
+    @property
     def message_type(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___DescriptorProto]:
         """All top-level definitions in this file."""
 
@@ -199,6 +231,7 @@ class FileDescriptorProto(google.protobuf.message.Message):
         dependency: collections.abc.Iterable[builtins.str] | None = ...,
         public_dependency: collections.abc.Iterable[builtins.int] | None = ...,
         weak_dependency: collections.abc.Iterable[builtins.int] | None = ...,
+        option_dependency: collections.abc.Iterable[builtins.str] | None = ...,
         message_type: collections.abc.Iterable[global___DescriptorProto] | None = ...,
         enum_type: collections.abc.Iterable[global___EnumDescriptorProto] | None = ...,
         service: collections.abc.Iterable[global___ServiceDescriptorProto] | None = ...,
@@ -240,6 +273,8 @@ class FileDescriptorProto(google.protobuf.message.Message):
             b"message_type",
             "name",
             b"name",
+            "option_dependency",
+            b"option_dependency",
             "options",
             b"options",
             "package",
@@ -319,7 +354,10 @@ class DescriptorProto(google.protobuf.message.Message):
     OPTIONS_FIELD_NUMBER: builtins.int
     RESERVED_RANGE_FIELD_NUMBER: builtins.int
     RESERVED_NAME_FIELD_NUMBER: builtins.int
+    VISIBILITY_FIELD_NUMBER: builtins.int
     name: builtins.str
+    visibility: global___SymbolVisibility.ValueType
+    """Support for `export` and `local` keywords on enums."""
     @property
     def field(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___FieldDescriptorProto]: ...
     @property
@@ -361,8 +399,11 @@ class DescriptorProto(google.protobuf.message.Message):
         options: global___MessageOptions | None = ...,
         reserved_range: collections.abc.Iterable[global___DescriptorProto.ReservedRange] | None = ...,
         reserved_name: collections.abc.Iterable[builtins.str] | None = ...,
+        visibility: global___SymbolVisibility.ValueType | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["name", b"name", "options", b"options"]) -> builtins.bool: ...
+    def HasField(
+        self, field_name: typing.Literal["name", b"name", "options", b"options", "visibility", b"visibility"]
+    ) -> builtins.bool: ...
     def ClearField(
         self,
         field_name: typing.Literal[
@@ -386,6 +427,8 @@ class DescriptorProto(google.protobuf.message.Message):
             b"reserved_name",
             "reserved_range",
             b"reserved_range",
+            "visibility",
+            b"visibility",
         ],
     ) -> None: ...
 
@@ -829,7 +872,10 @@ class EnumDescriptorProto(google.protobuf.message.Message):
     OPTIONS_FIELD_NUMBER: builtins.int
     RESERVED_RANGE_FIELD_NUMBER: builtins.int
     RESERVED_NAME_FIELD_NUMBER: builtins.int
+    VISIBILITY_FIELD_NUMBER: builtins.int
     name: builtins.str
+    visibility: global___SymbolVisibility.ValueType
+    """Support for `export` and `local` keywords on enums."""
     @property
     def value(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___EnumValueDescriptorProto]: ...
     @property
@@ -857,8 +903,11 @@ class EnumDescriptorProto(google.protobuf.message.Message):
         options: global___EnumOptions | None = ...,
         reserved_range: collections.abc.Iterable[global___EnumDescriptorProto.EnumReservedRange] | None = ...,
         reserved_name: collections.abc.Iterable[builtins.str] | None = ...,
+        visibility: global___SymbolVisibility.ValueType | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["name", b"name", "options", b"options"]) -> builtins.bool: ...
+    def HasField(
+        self, field_name: typing.Literal["name", b"name", "options", b"options", "visibility", b"visibility"]
+    ) -> builtins.bool: ...
     def ClearField(
         self,
         field_name: typing.Literal[
@@ -872,6 +921,8 @@ class EnumDescriptorProto(google.protobuf.message.Message):
             b"reserved_range",
             "value",
             b"value",
+            "visibility",
+            b"visibility",
         ],
     ) -> None: ...
 
@@ -1732,7 +1783,9 @@ class FieldOptions(google.protobuf.message.Message):
     is a formalization for deprecating fields.
     """
     weak: builtins.bool
-    """For Google-internal migration only. Do not use."""
+    """DEPRECATED. DO NOT USE!
+    For Google-internal migration only. Do not use.
+    """
     debug_redact: builtins.bool
     """Indicate that the field value should not be printed out when using debug
     formats, e.g. when the field contains sensitive credentials.
@@ -2413,6 +2466,50 @@ class FeatureSet(google.protobuf.message.Message):
     STYLE2024: FeatureSet.EnforceNamingStyle.ValueType  # 1
     STYLE_LEGACY: FeatureSet.EnforceNamingStyle.ValueType  # 2
 
+    @typing.final
+    class VisibilityFeature(google.protobuf.message.Message):
+        DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+        class _DefaultSymbolVisibility:
+            ValueType = typing.NewType("ValueType", builtins.int)
+            V: typing_extensions.TypeAlias = ValueType
+
+        class _DefaultSymbolVisibilityEnumTypeWrapper(
+            google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[
+                FeatureSet.VisibilityFeature._DefaultSymbolVisibility.ValueType
+            ],
+            builtins.type,
+        ):
+            DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
+            DEFAULT_SYMBOL_VISIBILITY_UNKNOWN: FeatureSet.VisibilityFeature._DefaultSymbolVisibility.ValueType  # 0
+            EXPORT_ALL: FeatureSet.VisibilityFeature._DefaultSymbolVisibility.ValueType  # 1
+            """Default pre-EDITION_2024, all UNSET visibility are export."""
+            EXPORT_TOP_LEVEL: FeatureSet.VisibilityFeature._DefaultSymbolVisibility.ValueType  # 2
+            """All top-level symbols default to export, nested default to local."""
+            LOCAL_ALL: FeatureSet.VisibilityFeature._DefaultSymbolVisibility.ValueType  # 3
+            """All symbols default to local."""
+            STRICT: FeatureSet.VisibilityFeature._DefaultSymbolVisibility.ValueType  # 4
+            """All symbols local by default. Nested types cannot be exported.
+            With special case caveat for message { enum {} reserved 1 to max; }
+            This is the recommended setting for new protos.
+            """
+
+        class DefaultSymbolVisibility(_DefaultSymbolVisibility, metaclass=_DefaultSymbolVisibilityEnumTypeWrapper): ...
+        DEFAULT_SYMBOL_VISIBILITY_UNKNOWN: FeatureSet.VisibilityFeature.DefaultSymbolVisibility.ValueType  # 0
+        EXPORT_ALL: FeatureSet.VisibilityFeature.DefaultSymbolVisibility.ValueType  # 1
+        """Default pre-EDITION_2024, all UNSET visibility are export."""
+        EXPORT_TOP_LEVEL: FeatureSet.VisibilityFeature.DefaultSymbolVisibility.ValueType  # 2
+        """All top-level symbols default to export, nested default to local."""
+        LOCAL_ALL: FeatureSet.VisibilityFeature.DefaultSymbolVisibility.ValueType  # 3
+        """All symbols default to local."""
+        STRICT: FeatureSet.VisibilityFeature.DefaultSymbolVisibility.ValueType  # 4
+        """All symbols local by default. Nested types cannot be exported.
+        With special case caveat for message { enum {} reserved 1 to max; }
+        This is the recommended setting for new protos.
+        """
+
+        def __init__(self) -> None: ...
+
     FIELD_PRESENCE_FIELD_NUMBER: builtins.int
     ENUM_TYPE_FIELD_NUMBER: builtins.int
     REPEATED_FIELD_ENCODING_FIELD_NUMBER: builtins.int
@@ -2420,6 +2517,7 @@ class FeatureSet(google.protobuf.message.Message):
     MESSAGE_ENCODING_FIELD_NUMBER: builtins.int
     JSON_FORMAT_FIELD_NUMBER: builtins.int
     ENFORCE_NAMING_STYLE_FIELD_NUMBER: builtins.int
+    DEFAULT_SYMBOL_VISIBILITY_FIELD_NUMBER: builtins.int
     field_presence: global___FeatureSet.FieldPresence.ValueType
     enum_type: global___FeatureSet.EnumType.ValueType
     repeated_field_encoding: global___FeatureSet.RepeatedFieldEncoding.ValueType
@@ -2427,6 +2525,7 @@ class FeatureSet(google.protobuf.message.Message):
     message_encoding: global___FeatureSet.MessageEncoding.ValueType
     json_format: global___FeatureSet.JsonFormat.ValueType
     enforce_naming_style: global___FeatureSet.EnforceNamingStyle.ValueType
+    default_symbol_visibility: global___FeatureSet.VisibilityFeature.DefaultSymbolVisibility.ValueType
     def __init__(
         self,
         *,
@@ -2437,10 +2536,13 @@ class FeatureSet(google.protobuf.message.Message):
         message_encoding: global___FeatureSet.MessageEncoding.ValueType | None = ...,
         json_format: global___FeatureSet.JsonFormat.ValueType | None = ...,
         enforce_naming_style: global___FeatureSet.EnforceNamingStyle.ValueType | None = ...,
+        default_symbol_visibility: global___FeatureSet.VisibilityFeature.DefaultSymbolVisibility.ValueType | None = ...,
     ) -> None: ...
     def HasField(
         self,
         field_name: typing.Literal[
+            "default_symbol_visibility",
+            b"default_symbol_visibility",
             "enforce_naming_style",
             b"enforce_naming_style",
             "enum_type",
@@ -2460,6 +2562,8 @@ class FeatureSet(google.protobuf.message.Message):
     def ClearField(
         self,
         field_name: typing.Literal[
+            "default_symbol_visibility",
+            b"default_symbol_visibility",
             "enforce_naming_style",
             b"enforce_naming_style",
             "enum_type",

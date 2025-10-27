@@ -39,6 +39,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/util/coroutines",
     "//platform/util/multiplatform",
+    "//platform/eel",
     ":platform_util_troveCompileOnly_provided",
   ],
   exports = [

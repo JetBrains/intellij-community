@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage
 
 /**
@@ -6,9 +6,12 @@ package com.intellij.platform.workspace.storage
  * implementation only.
  */
 public abstract class EntityType<T : WorkspaceEntity, B : WorkspaceEntity.Builder<T>>(
-  private val base: EntityType<*, *>? = null, // TODO: Do we need base?
+  @Deprecated("Has no use, to be removed")
+  private val base: EntityType<*, *>? = null
 ) {
-    private val ival: Class<T> get() = javaClass.enclosingClass as Class<T>
+    protected open val entityClass: Class<T>? = null
+  
+    private val ival: Class<T> get() = entityClass ?: javaClass.enclosingClass as Class<T> // entityClass as Class<T>
 
     private val name: String by lazy {
         if (ival.enclosingClass == null) ival.simpleName else {

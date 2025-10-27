@@ -3,6 +3,7 @@ package com.intellij.platform.execution.dashboard;
 
 import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.dashboard.*;
 import com.intellij.execution.dashboard.actions.ExecutorAction;
 import com.intellij.execution.dashboard.actions.RunDashboardGroupNode;
@@ -19,6 +20,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.WeighedItem;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.platform.execution.dashboard.actions.RunDashboardDoubleClickRunAction;
@@ -103,7 +105,7 @@ public final class RunDashboardServiceViewContributor
     if (group instanceof FolderDashboardGroup) {
       return new RunDashboardFolderGroupViewDescriptor(node);
     }
-    if (group instanceof RunDashboardGroupImpl<?> dashboardGroup && dashboardGroup.getValue() instanceof ConfigurationType type) {
+    if (group instanceof RunDashboardGroupImpl<?> dashboardGroup && dashboardGroup.getValue() instanceof String type) {
       return new RunDashboardTypeGroupViewDescriptor(node, type);
     }
     return new RunDashboardGroupViewDescriptor(node);
@@ -435,7 +437,12 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public @Nullable Runnable getRemover() {
-      ConfigurationType type = ObjectUtils.tryCast(((RunDashboardGroupImpl<?>)myGroup).getValue(), ConfigurationType.class);
+      Object value = ((RunDashboardGroupImpl<?>)myGroup).getValue();
+      if (!(value instanceof String configurationTypeId)) {
+        Logger.getInstance(RunDashboardGroupViewDescriptor.class).debug("Unexpected group value class: " + value + " (" + value.getClass() + ")");
+        return null;
+      }
+      ConfigurationType type = ConfigurationTypeUtil.findConfigurationType(configurationTypeId);
       if (type != null) {
         return () -> {
           RunDashboardManager runDashboardManager = RunDashboardManagerProxy.getInstance(myNode.getProject());
@@ -506,9 +513,9 @@ public final class RunDashboardServiceViewContributor
   private static class RunDashboardTypeGroupViewDescriptor extends RunDashboardGroupViewDescriptor {
     private final ConfigurationType myType;
 
-    RunDashboardTypeGroupViewDescriptor(GroupingNode node, ConfigurationType type) {
+    RunDashboardTypeGroupViewDescriptor(GroupingNode node, String type) {
       super(node);
-      myType = type;
+      myType = ConfigurationTypeUtil.findConfigurationType(type);
     }
 
     @Override

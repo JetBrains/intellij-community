@@ -6,6 +6,7 @@ jvm_library(
   module_name = "intellij.platform.eel",
   visibility = ["//visibility:public"],
   srcs = glob(["gen-builders/**/*.kt", "gen-builders/**/*.java", "src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -15,6 +16,12 @@ jvm_library(
 ### auto-generated section `build intellij.platform.eel` end
 
 ### auto-generated section `build intellij.platform.eel.codegen` start
+jvm_library(
+  name = "eel-codegen",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
 jvm_library(
   name = "eel-codegen_test_lib",
   module_name = "intellij.platform.eel.codegen",

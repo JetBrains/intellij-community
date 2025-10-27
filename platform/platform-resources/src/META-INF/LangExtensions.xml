@@ -296,9 +296,11 @@
     <readerModeProvider implementation="com.intellij.codeInsight.actions.VisualFormattingLayerReaderModeProvider"/>
 
     <projectService serviceInterface="com.intellij.formatting.service.FormattingNotificationService"
-                    serviceImplementation="com.intellij.formatting.service.FormattingUiNotificationService"/>
+                    serviceImplementation="com.intellij.formatting.service.FormattingNotificationServiceImpl"/>
     <projectService serviceInterface="com.intellij.formatting.service.PostQuickFixTaskService"
                     serviceImplementation="com.intellij.formatting.service.PostQuickFixTaskServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.formatting.service.AsyncDocumentFormattingSupportFactory"
+                        serviceImplementation="com.intellij.formatting.service.AsyncDocumentFormattingSupportFactoryImpl"/>
 
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile"
@@ -444,6 +446,7 @@
     <codeInsight.codeVisionProviderFactory implementation="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProviderFactory"/>
     <codeInsight.inlayHintsSwitch implementation="com.intellij.codeInsight.hints.InlayHintsProviderSwitch"/>
     <codeInsight.inlayHintsSwitch implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionSwitch"/>
+    <codeInsight.highlightingProjectOrWorkspaceFileOverride implementation="com.intellij.codeInsight.daemon.impl.analysis.IgnoredFileHighlightingOverrider"/>
     <config.inlayGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.CodeVisionGlobalSettingsProvider"/>
     <config.codeVisionGroupSettingProvider
       implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionInheritorsSettingsProvider"/>
@@ -558,7 +561,6 @@
 
     <refactoring.elementListenerProvider implementation="com.intellij.packageDependencies.ui.RefactoringScopeElementListenerProvider"/>
 
-    <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.DefaultChangeLocalityDetector"/>
 
     <registryKey defaultValue="false" description="Enables navigation for TODO comments" key="todo.navigation"/>
@@ -793,6 +795,8 @@
                                implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.RichTextCodeVisionEntryPainter"/>
     <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry"
                                implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.ZombieCodeVisionEntryPainter"/>
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.ZeroWidthCodeVisionEntry"
+                               implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.ZeroWidthCodeVisionEntryPainter"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionListPainterFactory"
                         serviceImplementation="com.intellij.codeInsight.codeVision.ui.renderers.DefaultCodeVisionListPainterFactory"/>
@@ -1224,7 +1228,7 @@
     <customFoldingProvider implementation="com.intellij.lang.customFolding.VisualStudioCustomFoldingProvider"/>
 
     <completion.contributor language="TEXT" implementationClass="com.intellij.util.textCompletion.TextCompletionContributor"
-                            order="first, before commitCompletion"/>
+                            id="textCompletion" order="first, before commitCompletion"/>
     <lookup.charFilter implementation="com.intellij.util.textCompletion.TextCompletionCharFilter"/>
 
     <completion.contributor language="any" implementationClass="com.intellij.codeInsight.completion.CustomFileTypeCompletionContributor"/>

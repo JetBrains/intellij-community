@@ -53,6 +53,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.troveCompileOnly" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.multiplatform" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.eel" />
   </component>
   <component name="copyright">
     <Base>

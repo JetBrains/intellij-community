@@ -1110,6 +1110,14 @@ fun <T : CommandChain> T.waitForVcsLogUpdate(): T = apply {
 }
 
 /**
+ * Wait for background procedures on project opening
+ */
+fun <T : CommandChain> T.waitForProjectOpenProcedures(): T = apply {
+  waitForSmartMode()
+  waitForVcsLogUpdate()
+}
+
+/**
  * Will wait and throw exception if the condition wasn't satisfied
  */
 fun <T : CommandChain> T.waitVcsLogIndexing(timeout: Duration? = null): T = apply {

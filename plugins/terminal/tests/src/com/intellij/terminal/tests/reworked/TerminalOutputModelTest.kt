@@ -14,16 +14,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
 import org.jetbrains.plugins.terminal.block.output.TerminalOutputHighlightingsSnapshot
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
-import org.jetbrains.plugins.terminal.block.reworked.TerminalLineIndex
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
-import org.jetbrains.plugins.terminal.block.reworked.endOffset
-import org.jetbrains.plugins.terminal.block.reworked.lastLine
-import org.jetbrains.plugins.terminal.block.reworked.textLength
 import org.jetbrains.plugins.terminal.block.ui.BlockTerminalColorPalette
-import org.jetbrains.plugins.terminal.session.StyleRange
-import org.jetbrains.plugins.terminal.session.TerminalOutputModelState
+import org.jetbrains.plugins.terminal.session.impl.StyleRange
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputModelState
+import org.jetbrains.plugins.terminal.view.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -151,12 +145,20 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `update exceeds maxCapacity`() = runBlocking(Dispatchers.EDT) {
+  fun `update exceeds maxCapacity`(): Unit = runBlocking(Dispatchers.EDT) {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
-    val startOffsets = mutableListOf<TerminalOffset>()
+    var balance = 0
+    val events = mutableListOf<TerminalContentChangeEvent>()
     model.addListener(testRootDisposable, object: TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
-        startOffsets.add(startOffset)
+      override fun beforeContentChanged(model: TerminalOutputModel) {
+        ++balance
+        assertThat(balance).isOne()
+      }
+
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        --balance
+        assertThat(balance).isZero()
+        events.add(event)
       }
     })
 
@@ -181,7 +183,134 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
       rs
       tuvwxyz
     """.trimIndent(), model.document.text)
-    assertEquals(listOf(firstStartOffset, secondStartOffset), startOffsets)
+    assertThat(balance).isZero()
+    assertThat(firstStartOffset).isEqualTo(TerminalOffset.of(3)) // trimmed: abc
+    assertThat(secondStartOffset).isEqualTo(TerminalOffset.of(12)) // trimmed: abcdef + EOL + mnopq (replacing ghijkl)
+    assertThat(events).hasSize(4)
+    // first insert
+    assertThat(events[0].offset).isEqualTo(TerminalOffset.of(0))
+    assertThat(events[0].oldText.toString()).isEmpty()
+    assertThat(events[0].newText.toString()).isEqualTo("""
+      abcdef
+      ghijkl
+    """.trimIndent())
+    // first trimming
+    assertThat(events[1].offset).isEqualTo(TerminalOffset.of(0))
+    assertThat(events[1].oldText.toString()).isEqualTo("abc")
+    assertThat(events[1].newText.toString()).isEmpty()
+    // second insert
+    assertThat(events[2].offset).isEqualTo(TerminalOffset.of(7)) // trimmed abc + def + EOL
+    assertThat(events[2].oldText.toString()).isEqualTo("ghijkl")
+    assertThat(events[2].newText.toString()).isEqualTo("""
+      mnopqrs
+      tuvwxyz
+    """.trimIndent())
+    // second trimming
+    assertThat(events[3].offset).isEqualTo(TerminalOffset.of(3)) // only trimmed abc
+    assertThat(events[3].oldText.toString()).isEqualTo("""
+      def
+      mnopq
+    """.trimIndent())
+    assertThat(events[3].newText.toString()).isEmpty()
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - only line`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChangeEvent>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(0, "some even longer text")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(5))
+    assertThat(events.last().oldText.toString()).isEqualTo("long")
+    assertThat(events.last().newText.toString()).isEqualTo("even longer")
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - second line`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChangeEvent>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(1, "another line")
+    model.update(1, "another long line")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(24))
+    assertThat(events.last().oldText.toString()).isEqualTo("")
+    assertThat(events.last().newText.toString()).isEqualTo("ong l")
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - longer line, both sides match`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChangeEvent>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(1, "another line")
+    model.update(1, "another line, long line")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(27))
+    assertThat(events.last().oldText.toString()).isEqualTo("")
+    assertThat(events.last().newText.toString()).isEqualTo(", long line")
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - shorter line, both sides match`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChangeEvent>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(1, "another line, long line")
+    model.update(1, "another line")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(27))
+    assertThat(events.last().oldText.toString()).isEqualTo(", long line")
+    assertThat(events.last().newText.toString()).isEqualTo("")
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - no-op change`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel()
+    val events = mutableListOf<TerminalContentChangeEvent>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        events += event
+      }
+    })
+    model.update(0, "some long text")
+    model.update(0, "some long text")
+    // no assertion for the offset because it can technically be anywhere
+    assertThat(events.last().oldText).isEmpty()
+    assertThat(events.last().newText).isEmpty()
+  }
+
+  @Test
+  fun `update events ignore unchanged prefix and suffix - trimmed offsets`(): Unit = runBlocking(Dispatchers.EDT)  {
+    val model = TerminalTestUtil.createOutputModel(maxLength = 5)
+    val events = mutableListOf<TerminalContentChangeEvent>()
+    model.addListener(testRootDisposable, object : TerminalOutputModelListener {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
+        events += event
+      }
+    })
+    model.update(0, "012345")
+    model.update(0, "12x45")
+    assertThat(events.last().offset).isEqualTo(TerminalOffset.of(3))
+    assertThat(events.last().oldText.toString()).isEqualTo("3")
+    assertThat(events.last().newText.toString()).isEqualTo("x")
   }
 
   @Test
@@ -412,11 +541,11 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     assertThat(sut.startOffset).isEqualTo(TerminalOffset.ZERO)
     assertThat(sut.startOffset).isEqualTo(sut.endOffset)
     assertThat(sut.getText(sut.startOffset, sut.endOffset)).isEmpty()
-    assertThat(sut.firstLine).isEqualTo(TerminalLineIndex.ZERO)
-    assertThat(sut.firstLine).isEqualTo(sut.lastLine)
-    assertThat(sut.getStartOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
-    assertThat(sut.getEndOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
-    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLine)
+    assertThat(sut.firstLineIndex).isEqualTo(TerminalLineIndex.ZERO)
+    assertThat(sut.firstLineIndex).isEqualTo(sut.lastLineIndex)
+    assertThat(sut.getStartOfLine(sut.firstLineIndex)).isEqualTo(sut.startOffset)
+    assertThat(sut.getEndOfLine(sut.firstLineIndex)).isEqualTo(sut.startOffset)
+    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLineIndex)
   }
 
   @Test
@@ -427,15 +556,15 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     assertThat(sut.startOffset).isEqualTo(TerminalOffset.ZERO)
     assertThat(sut.startOffset).isEqualTo(sut.endOffset)
     assertThat(sut.getText(sut.startOffset, sut.endOffset)).isEmpty()
-    assertThat(sut.firstLine).isEqualTo(TerminalLineIndex.ZERO)
-    assertThat(sut.firstLine).isEqualTo(sut.lastLine)
-    assertThat(sut.getStartOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
-    assertThat(sut.getEndOfLine(sut.firstLine)).isEqualTo(sut.startOffset)
-    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLine)
+    assertThat(sut.firstLineIndex).isEqualTo(TerminalLineIndex.ZERO)
+    assertThat(sut.firstLineIndex).isEqualTo(sut.lastLineIndex)
+    assertThat(sut.getStartOfLine(sut.firstLineIndex)).isEqualTo(sut.startOffset)
+    assertThat(sut.getEndOfLine(sut.firstLineIndex)).isEqualTo(sut.startOffset)
+    assertThat(sut.getLineByOffset(sut.startOffset)).isEqualTo(sut.firstLineIndex)
   }
 }
 
-private fun styleRange(start: Long, end: Long, textStyle: TextStyle = TextStyle()): StyleRange {
+internal fun styleRange(start: Long, end: Long, textStyle: TextStyle = TextStyle()): StyleRange {
   return StyleRange(start, end, textStyle)
 }
 

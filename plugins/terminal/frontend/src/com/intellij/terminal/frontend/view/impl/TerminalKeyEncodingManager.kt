@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
-import org.jetbrains.plugins.terminal.session.TerminalState
+import org.jetbrains.plugins.terminal.session.impl.TerminalState
 
 /**
  * Actually a wrapper around [TerminalKeyEncoder].

@@ -7,20 +7,21 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
-import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetVersion
+import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
 import com.intellij.python.community.interpreters.Interpreter
 import com.intellij.python.community.interpreters.InterpreterService
 import com.intellij.python.community.interpreters.impl.PyInterpreterBundle.message
 import com.intellij.python.community.interpreters.spi.InterpreterProvider
 import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -88,11 +89,11 @@ private suspend fun <T : PyFlavorData> createInterpreter(provider: InterpreterPr
     }
     is Result.Success -> {
       val executablePython = r.result
-      val languageLevel = sdk.versionString?.let { LanguageLevel.fromPythonVersionSafe(it) }
-                          ?: ExecService().validatePythonAndGetVersion(executablePython).getOr {
-                            return InvalidInterpreterImpl(SdkMixin(sdk, additionalData), message("py.interpreter.no.version", it.error.message))
-                          }
-      return ValidInterpreterImpl(languageLevel, executablePython, SdkMixin(sdk, additionalData), provider.ui)
+      val pythonInfo = sdk.versionString?.let { LanguageLevel.fromPythonVersionSafe(it) }?.let { PythonInfo(it) }
+                       ?: ExecService().validatePythonAndGetInfo(executablePython).getOr {
+                         return InvalidInterpreterImpl(SdkMixin(sdk, additionalData), message("py.interpreter.no.version", it.error.message))
+                       }
+      return ValidInterpreterImpl(pythonInfo, executablePython, SdkMixin(sdk, additionalData), provider.ui)
     }
   }
 }

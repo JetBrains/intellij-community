@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/lang-core",
+    "//platform/core-impl",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/projectModel-api:projectModel",

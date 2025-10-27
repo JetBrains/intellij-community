@@ -44,6 +44,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
@@ -324,7 +325,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       session = createXDebugSession(environment, pyState, serverSocket, result);
     }
     initSession(session, state, environment.getExecutor());
-    return session.getRunContentDescriptor();
+    return ((XDebugSessionImpl)session).getMockRunContentDescriptor();
   }
 
   /**
@@ -354,7 +355,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           session.addSessionListener(sessionListener);
         }
         initSession(session, state, environment.getExecutor());
-        return session.getRunContentDescriptor();
+        return ((XDebugSessionImpl)session).getMockRunContentDescriptor();
       }));
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.util.io.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
@@ -55,7 +56,7 @@ sealed class DirectorySpecBase(override val originalFile: Path?) : DirectoryCont
   }
 
   override fun generateInTempDir(): Path {
-    val target = FileUtil.createTempDirectory("directory-by-spec", null, true).toPath()
+    val target = FileUtilRt.createTempDirectory("directory-by-spec", null, true).toPath()
     generate(target)
     return target
   }
@@ -224,7 +225,7 @@ private fun assertDirectoryContentMatches(file: Path,
       val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false).toPath()
       ZipUtil.extract(file, dirForExtracted, null)
       assertDirectoryMatches(dirForExtracted, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
-      FileUtil.delete(dirForExtracted)
+      FileUtilRt.deleteRecursively(dirForExtracted)
     }
     is FileSpec -> {
       errorReporter.assertTrue(relativePath, "$file is not a file", file.isRegularFile())
@@ -314,7 +315,7 @@ private fun createSpecByPath(path: Path, originalFile: Path?): DirectoryContentS
     ZipUtil.extract(path, dirForExtracted, null)
     val spec = if (path.extension == "jar") JarSpec() else ZipSpec()
     fillSpecFromDirectory(spec, dirForExtracted, null)
-    FileUtil.delete(dirForExtracted)
+    FileUtilRt.deleteRecursively(dirForExtracted)
     return spec
   }
   return FileSpec(Files.readAllBytes(path), originalFile)

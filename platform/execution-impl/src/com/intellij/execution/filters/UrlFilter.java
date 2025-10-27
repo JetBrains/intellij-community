@@ -28,6 +28,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class UrlFilter implements Filter, DumbAware {
+
+  private static final String FILE_MINIMAL_PROTOCOL_PREFIX = "file:/";
+
   private final Project myProject;
 
   public UrlFilter() {
@@ -55,7 +58,7 @@ public class UrlFilter implements Filter, DumbAware {
     int textStartOffset = entireLength - line.length();
     List<ResultItem> resultList = new ArrayList<>();
 
-    if (line.contains(LocalFileSystem.PROTOCOL_PREFIX)) {
+    if (line.contains(FILE_MINIMAL_PROTOCOL_PREFIX)) {
       resultList.addAll(findMatchingItems(line, URLUtil.FILE_URL_PATTERN_OPTIMIZED, textStartOffset));
     }
 
@@ -89,17 +92,21 @@ public class UrlFilter implements Filter, DumbAware {
   }
 
   private @Nullable HyperlinkInfo buildFileHyperlinkInfo(@NotNull String url) {
-    if (myProject != null && !url.endsWith(".html") && url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+    if (myProject != null && !url.endsWith(".html")) {
+      String prefix = findFileProtocolPrefix(url);
+      if (prefix == null) {
+        return null;
+      }
       int documentLine = -1, documentColumn = -1;
       int filePathEndIndex = url.length();
       final int lastColonInd = url.lastIndexOf(':');
-      if (lastColonInd > LocalFileSystem.PROTOCOL_PREFIX.length() && lastColonInd < url.length() - 1) {
+      if (lastColonInd > prefix.length() && lastColonInd < url.length() - 1) {
         int lastValue = StringUtil.parseInt(url.substring(lastColonInd + 1), Integer.MIN_VALUE);
         if (lastValue != Integer.MIN_VALUE) {
           documentLine = lastValue - 1;
           filePathEndIndex = lastColonInd;
           int preLastColonInd = url.lastIndexOf(':', lastColonInd - 1);
-          if (preLastColonInd > LocalFileSystem.PROTOCOL_PREFIX.length()) {
+          if (preLastColonInd > prefix.length()) {
             int preLastValue = StringUtil.parseInt(url.substring(preLastColonInd + 1, lastColonInd), Integer.MIN_VALUE);
             if (preLastValue != Integer.MIN_VALUE) {
               documentLine = preLastValue - 1;
@@ -109,8 +116,18 @@ public class UrlFilter implements Filter, DumbAware {
           }
         }
       }
-      String filePath = toWindowsPath(decode(url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex)));
+      String filePath = toWindowsPath(decode(url.substring(prefix.length(), filePathEndIndex)));
       return new FileUrlHyperlinkInfo(myProject, filePath, documentLine, documentColumn, url, true);
+    }
+    return null;
+  }
+
+  private static @Nullable String findFileProtocolPrefix(@NotNull String url) {
+    if (url.startsWith("file:///")) {
+      return LocalFileSystem.PROTOCOL_PREFIX;
+    }
+    if (url.startsWith(FILE_MINIMAL_PROTOCOL_PREFIX) && !url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+      return "file:";
     }
     return null;
   }

@@ -59,10 +59,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : InternalEnvironmentName {
-      override val name: String
-        get() = "test"
-    }
+    val environmentName = InternalEnvironmentName.of("test")
 
     val mutableStorage = MutableEntityStorage.create()
     val entityStorage = VersionedEntityStorageImpl(mutableStorage.toSnapshot())
@@ -140,10 +137,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : InternalEnvironmentName {
-      override val name: String
-        get() = "test"
-    }
+    val environmentName = InternalEnvironmentName.of("test")
 
     val mutableStorage = MutableEntityStorage.create()
     val entityStorage = VersionedEntityStorageImpl(mutableStorage.toSnapshot())
@@ -195,10 +189,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : InternalEnvironmentName {
-      override val name: String
-        get() = "test"
-    }
+    val environmentName = InternalEnvironmentName.of("test")
 
     val mutableStorage = MutableEntityStorage.create()
     val entityStorage = VersionedEntityStorageImpl(mutableStorage.toSnapshot())
@@ -233,10 +224,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : InternalEnvironmentName {
-      override val name: String
-        get() = "test"
-    }
+    val environmentName = InternalEnvironmentName.of("test")
 
     val mutableStorage = MutableEntityStorage.create()
     val entityStorage = VersionedEntityStorageImpl(mutableStorage.toSnapshot())
@@ -305,10 +293,7 @@ class JpsGlobalModelSynchronizerJobTest {
 
     synchronizer.setVirtualFileUrlManager(IdeVirtualFileUrlManagerImpl())
 
-    val environmentName = object : InternalEnvironmentName {
-      override val name: String
-        get() = "test"
-    }
+    val environmentName = InternalEnvironmentName.of("test")
 
     val mutableStorage = MutableEntityStorage.create()
     val entityStorage = VersionedEntityStorageImpl(mutableStorage.toSnapshot())

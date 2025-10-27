@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.gradle.model.projectModel.impl
 
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -17,6 +17,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntityBuilder
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId
 
 @GeneratedCodeApiVersion(3)
@@ -56,7 +57,7 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
 
 
   internal class Builder(result: GradleModuleEntityData?) : ModifiableWorkspaceEntityBase<GradleModuleEntity, GradleModuleEntityData>(
-    result), GradleModuleEntity.Builder {
+    result), GradleModuleEntityBuilder {
     internal constructor() : this(GradleModuleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -124,16 +125,16 @@ internal class GradleModuleEntityImpl(private val dataSource: GradleModuleEntity
 
       }
 
-    override var module: ModuleEntity.Builder
+    override var module: ModuleEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntity.Builder
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleEntityBuilder
         }
       }
       set(value) {
@@ -216,7 +217,7 @@ internal class GradleModuleEntityData : WorkspaceEntityData<GradleModuleEntity>(
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<GradleModuleEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleModuleEntity> {
     val modifiable = GradleModuleEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -242,9 +243,9 @@ internal class GradleModuleEntityData : WorkspaceEntityData<GradleModuleEntity>(
     return GradleModuleEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return GradleModuleEntity(gradleProjectId, entitySource) {
-      parents.filterIsInstance<ModuleEntity.Builder>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModuleEntityBuilder>().singleOrNull()?.let { this.module = it }
     }
   }
 

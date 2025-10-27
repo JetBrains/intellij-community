@@ -57,15 +57,19 @@ abstract class NonModalCommitPanel(
   private var commitInputBorder: CommitInputBorder? = null
 
   private val mainPanel: BorderLayoutPanel = object : BorderLayoutPanel(), UiDataProvider {
+    init {
+      isOpaque = false
+    }
+
     override fun uiDataSnapshot(sink: DataSink) {
       DataSink.uiDataSnapshot(sink, commitMessage)
       uiDataSnapshotFromProviders(sink)
     }
   }
 
-  protected val centerPanel: BorderLayoutPanel = JBUI.Panels.simplePanel()
+  protected val centerPanel: BorderLayoutPanel = JBUI.Panels.simplePanel().also { it.isOpaque = false }
 
-  private val bottomPanel: JBPanel<JBPanel<*>> = JBPanel<JBPanel<*>>(VerticalLayout(0))
+  private val bottomPanel: JBPanel<JBPanel<*>> = JBPanel<JBPanel<*>>(VerticalLayout(0)).also { it.isOpaque = false }
 
   private val actions = ActionManager.getInstance().getAction("ChangesView.CommitToolbar") as ActionGroup
   val toolbar: ActionToolbar = ActionManager.getInstance().createActionToolbar(COMMIT_TOOLBAR_PLACE, actions, true).apply {

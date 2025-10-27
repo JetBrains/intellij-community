@@ -2,6 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -14,6 +15,8 @@ interface XDebuggerValueMarkupApi : RemoteApi<Unit> {
   suspend fun markValue(xValueId: XValueId, markerDto: XValueMarkerDto)
 
   suspend fun unmarkValue(xValueId: XValueId)
+
+  suspend fun clear(xDebugSessionId: XDebugSessionId)
 
   companion object {
     @JvmStatic

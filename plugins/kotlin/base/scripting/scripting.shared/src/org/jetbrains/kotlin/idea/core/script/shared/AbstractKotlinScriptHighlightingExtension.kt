@@ -14,26 +14,26 @@ import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.api.ScriptDiagnostic
 
 interface AbstractKotlinScriptHighlightingExtension : KotlinScriptHighlightingExtension {
-    fun calculateShouldHighlightScript(file: KtFile): Boolean
+    fun shouldHighlight(file: KtFile): Boolean
 
     override fun shouldHighlightScript(file: KtFile): Boolean {
         val project = file.project
 
         return CachedValuesManager.getManager(file.project).getCachedValue(file) {
             create(
-                file.calculateShouldHighlightScript(file),
+                file.calculateShouldHighlightScript(),
                 ProjectRootModificationTracker.getInstance(project),
                 ScriptDependenciesModificationTracker.getInstance(project)
             )
         }
     }
 
-    private fun KtFile.calculateShouldHighlightScript(file: KtFile): Boolean {
+    private fun KtFile.calculateShouldHighlightScript(): Boolean {
         if (shouldDefinitelyHighlight()) return true
         if (KotlinPlatformUtils.isCidr) return false
-        if (getScriptReports(file).any { it.severity == ScriptDiagnostic.Severity.FATAL }) return false
+        if (getScriptReports(this).any { it.severity == ScriptDiagnostic.Severity.FATAL }) return false
 
         return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true)
-            .matches(this) && this@AbstractKotlinScriptHighlightingExtension.calculateShouldHighlightScript(this)
+            .matches(this) && shouldHighlight(this)
     }
 }

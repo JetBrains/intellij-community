@@ -134,7 +134,6 @@ class KotlinMppProjectIsolationTest : AbstractKotlinMppGradleImportingTest() {
         }
     }
 
-    @Ignore("Check and unmute when IDEA-368207 is fixed")
     @Test
     @PluginTargetVersions(pluginVersion = "2.2.0-dev-745+", gradleVersion = "8.10+")
     fun testKmpDependsOnAndroidKMPLibrary() {

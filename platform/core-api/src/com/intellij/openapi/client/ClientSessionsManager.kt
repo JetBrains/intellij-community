@@ -4,6 +4,7 @@ package com.intellij.openapi.client
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -98,7 +99,14 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
     @JvmStatic
     fun getProjectSessionOrThrow(project: Project, clientId: ClientId): ClientProjectSession {
       val session = project.service<ClientSessionsManager<ClientProjectSession>>().getSession(clientId)
-      return session ?: error("Project-level session is not set for $clientId")
+      if (session == null) {
+        val projectSessions = getProjectSessions(project, ClientKind.ALL).joinToString(", ", "existing project sessions: ", "\n")
+        val appSessions = getAppSessions(ClientKind.ALL).joinToString(", ", "existing app sessions: ", transform = {
+            (it as? ComponentManagerEx)?.debugString() ?: it.toString()
+          })
+        error("Project-level session is not set for $clientId\n $projectSessions $appSessions")
+      }
+      return session
     }
 
     /**

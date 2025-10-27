@@ -2,11 +2,10 @@
 
 package org.jetbrains.kotlin.gradle.scripting.k1.gradle
 
+import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootDataSerializer
 import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.readKotlinDslScriptModels
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.writeKotlinDslScriptModels
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -43,9 +42,9 @@ class GradleBuildRootDataSerializerTest {
         )
 
         val buffer = ByteArrayOutputStream()
-        writeKotlinDslScriptModels(DataOutputStream(buffer), data)
+        GradleBuildRootDataSerializer.writeKotlinDslScriptModels(DataOutputStream(buffer), data)
 
-        val restored = readKotlinDslScriptModels(DataInputStream(ByteArrayInputStream(buffer.toByteArray())), "a")
+        val restored = GradleBuildRootDataSerializer.readKotlinDslScriptModels(DataInputStream(ByteArrayInputStream(buffer.toByteArray())), "a")
 
         assertEquals(data.toString(), restored.toString())
     }
@@ -61,9 +60,9 @@ class GradleBuildRootDataSerializerTest {
         )
 
         val buffer = ByteArrayOutputStream()
-        writeKotlinDslScriptModels(DataOutputStream(buffer), data)
+        GradleBuildRootDataSerializer.writeKotlinDslScriptModels(DataOutputStream(buffer), data)
 
-        val restored = readKotlinDslScriptModels(DataInputStream(ByteArrayInputStream(buffer.toByteArray())), "a")
+        val restored = GradleBuildRootDataSerializer.readKotlinDslScriptModels(DataInputStream(ByteArrayInputStream(buffer.toByteArray())), "a")
 
         assertEquals(data.toString(), restored.toString())
     }

@@ -5,9 +5,9 @@ import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.ShellStartupOptions
-import org.jetbrains.plugins.terminal.session.dto.TerminalSizeDto
-import org.jetbrains.plugins.terminal.session.dto.toDto
-import org.jetbrains.plugins.terminal.session.dto.toTermSize
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalSizeDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toTermSize
 
 /**
  * DTO for [org.jetbrains.plugins.terminal.ShellStartupOptions].

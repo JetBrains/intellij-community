@@ -4147,6 +4147,14 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-85078
+  public void testComprehensionIfClauseNarrows() {
+    doTest("str", """
+      messages = ["a", None, "b"]
+      ((expr := msg) for msg in messages if msg)
+      """);
+  }
+
   @TestFor(issues="PY-81651")
   public void testEqWithAny() {
     // the actual result is `Any`, but we don't have the technology yet
@@ -4167,6 +4175,15 @@ public class Py3TypeTest extends PyTestCase {
       a = object()
       if callable(a):
           expr = a
+      """);
+  }
+
+  @TestFor(issues="PY-83339")
+  public void testAssertNarrowsOptionalAfterAssert() {
+    doTest("int", """
+      def foo(param: int | None):
+          assert param
+          expr = param
       """);
   }
 

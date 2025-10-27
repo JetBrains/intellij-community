@@ -25,7 +25,7 @@ class PluginSpec internal constructor(
   val description: String?,
 
   val pluginDependencies: List<DependsSpec>,
-  val moduleDependencies: List<String>,
+  val moduleDependencies: List<ModuleDependencySpec>,
   val pluginMainModuleDependencies: List<String>,
   val moduleVisibility: ModuleVisibility,
 
@@ -65,7 +65,7 @@ class PluginSpecBuilder(
   var description: String? = null,
 
   internal var pluginDependencies: List<DependsSpec> = emptyList(),
-  internal var moduleDependencies: List<String> = emptyList(),
+  internal var moduleDependencies: List<ModuleDependencySpec> = emptyList(),
   internal var pluginMainModuleDependencies: List<String> = emptyList(),
 
   var moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE,
@@ -99,17 +99,17 @@ class PluginSpecBuilder(
   )
 }
 
-/**
- * @param configFile null to embed into main plugin.xml
- */
 class ContentModuleSpec internal constructor(
   val moduleId: String,
   val loadingRule: ModuleLoadingRule,
+  val requiredIfAvailable: String?,
   val spec: PluginSpec,
 )
 
 class DependsSpec internal constructor(val pluginId: String, val optional: Boolean, val configFile: String?, val spec: PluginSpec?) {
   init { require((configFile != null) == (spec != null)) }
 }
+
+class ModuleDependencySpec internal constructor(val name: String, val namespace: String? = null)
 
 class ExtensionsSpec internal constructor(val ns: String, @Language("XML") val content: String)

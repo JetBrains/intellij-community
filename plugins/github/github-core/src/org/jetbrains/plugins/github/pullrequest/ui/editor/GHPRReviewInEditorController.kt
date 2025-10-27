@@ -66,8 +66,8 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
               launchNow {
                 ReviewInEditorUtil.showReviewToolbarWithActions(
                   reviewVm, editor,
-                  actionManager.getAction("GitHub.Diff.Review.PreviousComment"),
-                  actionManager.getAction("GitHub.Diff.Review.NextComment"),
+                  actionManager.getAction("CodeReview.PreviousComment"),
+                  actionManager.getAction("CodeReview.NextComment"),
                 )
               }
 
@@ -121,7 +121,7 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
     launchNow {
       val userIcon = fileVm.iconProvider.getIcon(fileVm.currentUser.url, 16)
       editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) {
-        GHPRInlayUtils.installInlaysDimming(this, model)
+        GHPRInlayUtils.installInlaysDimming(this, model, null)
         editor.project?.let { project ->
           GHPRInlayUtils.installInlaysFocusTracker(this, model, project)
         }

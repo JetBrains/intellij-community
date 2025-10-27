@@ -1,15 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework
 
-import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.plugins.ModuleLoadingRule
 import com.intellij.ide.plugins.PluginContentDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Files
@@ -29,8 +30,11 @@ private object PluginBuilderConsts {
 private val pluginIdCounter = AtomicInteger()
 
 /**
+ * for removal in 26.1
+ *
  * use [com.intellij.platform.testFramework.plugins.plugin] instead
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use PluginSpec instead")
 class PluginBuilder() {
   private data class ExtensionBlock(val ns: String, val text: String)
@@ -124,7 +128,7 @@ class PluginBuilder() {
     moduleFile: String = "$moduleId.xml",
   ): PluginBuilder {
     subDescriptors.add(SubDescriptor(moduleFile, moduleDescriptor))
-    content.add(PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId), configFile = null, descriptorContent = null, loadingRule = loadingRule))
+    content.add(PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId, PluginModuleId.JETBRAINS_NAMESPACE), configFile = null, descriptorContent = null, loadingRule = loadingRule, requiredIfAvailable = null))
     return this
   }
 
@@ -134,7 +138,7 @@ class PluginBuilder() {
   }
 
   fun dependency(moduleName: String): PluginBuilder {
-    dependencies.add(PluginModuleId(moduleName))
+    dependencies.add(PluginModuleId(moduleName, PluginModuleId.JETBRAINS_NAMESPACE))
     return this
   }
 
@@ -248,13 +252,13 @@ class PluginBuilder() {
       if (content.isNotEmpty()) {
         append("\n<content>\n  ")
         content.joinTo(this, separator = "\n  ") { moduleItem ->
-          val loadingAttribute = when (moduleItem.loadingRule) {
+          val loadingAttribute = when (moduleItem.defaultLoadingRule) {
             ModuleLoadingRule.OPTIONAL -> ""
             ModuleLoadingRule.REQUIRED -> "loading=\"required\" "
             ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
             ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
           }
-          """<module name="${moduleItem.moduleId.id}" $loadingAttribute/>"""
+          """<module name="${moduleItem.moduleId.name}" $loadingAttribute/>"""
         }
         append("\n</content>")
       }

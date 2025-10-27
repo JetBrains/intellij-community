@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.jediterm.core.jar
   modules:
   - name: intellij.libraries.jediterm.core
   library: jediterm-core

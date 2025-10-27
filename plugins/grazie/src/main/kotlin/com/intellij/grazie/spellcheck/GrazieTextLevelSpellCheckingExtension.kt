@@ -120,7 +120,14 @@ object GrazieTextLevelSpellCheckingExtension {
     return typos.mapNotNull { typo ->
       val range = text.textRangeToFile(mapRange(typo.range))
       if (!psiRange.contains(range)) return@mapNotNull null
-      createTypo(typo.word, range.shiftLeft(element.textRange.startOffset), element) {
+      val shiftedRange = range.shiftLeft(element.textRange.startOffset)
+
+      val hasUnknownFragmentsInside = text.unknownOffsets().any { offset ->
+        offset > typo.range.start && offset < typo.range.endExclusive
+      }
+      if (hasUnknownFragmentsInside) return@mapNotNull null
+      
+      createTypo(typo.word, shiftedRange, element) {
         if (typo is CloudTypo) typo.fixes else LinkedSet()
       }
     }
@@ -146,7 +153,7 @@ object GrazieTextLevelSpellCheckingExtension {
         || GrazieConfig.get().processing == Processing.Local
         || !GrazieCloudConnector.seemsCloudConnected()
         || GrazieCloudConnector.isAfterRecentGecError()
-        || !NaturalTextDetector.seemsNatural(text.toString())) {
+        || !NaturalTextDetector.seemsNatural(text)) {
       return localTypos
     }
 

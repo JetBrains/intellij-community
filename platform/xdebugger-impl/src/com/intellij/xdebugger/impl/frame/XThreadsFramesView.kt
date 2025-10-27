@@ -51,7 +51,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3, private val sessionPro
   private val myFramesList = XDebuggerFramesList(debugTab.project, sessionProxy)
 
   private val myDescriptionPanel = JPanel(BorderLayout()).apply {
-    border = JBEmptyBorder(0, 20, 0, 0)
+    border = JBEmptyBorder(0)
   }
 
   private val mySplitter: NonProportionalOnePixelSplitter
@@ -154,9 +154,13 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3, private val sessionPro
 
     val frameListWrapper = JPanel(BorderLayout(0, 0))
 
-    frameListWrapper.add(myDescriptionPanel, BorderLayout.NORTH)
-    addFramesNavigationAd(frameListWrapper)
-    frameListWrapper.add(myFramesList.withSpeedSearch().toScrollPane(), BorderLayout.CENTER)
+    val framesWrapper = JPanel(BorderLayout()).apply {
+      add(myFramesList.withSpeedSearch().toScrollPane(), BorderLayout.CENTER)
+      addFramesNavigationAd(this)
+    }
+    frameListWrapper.add(framesWrapper, BorderLayout.CENTER)
+
+    frameListWrapper.add(myDescriptionPanel, BorderLayout.SOUTH)
     frameListWrapper.minimumSize = minimumDimension
 
     splitter.secondComponent = frameListWrapper
@@ -170,7 +174,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3, private val sessionPro
           descriptionComponentProvider.currentDescriptionComponent.collect {
             myDescriptionPanel.removeAll()
             if (it != null) {
-              myDescriptionPanel.add(it)
+              myDescriptionPanel.add(it, BorderLayout.CENTER)
             }
             myDescriptionPanel.revalidate()
             myDescriptionPanel.repaint()

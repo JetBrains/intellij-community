@@ -10,13 +10,18 @@ import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+import org.jetbrains.intellij.build.productLayout.ModuleSetProvider
 import java.nio.file.Path
 
 internal suspend fun createCommunityBuildContext(
   options: BuildOptions,
   projectHome: Path = COMMUNITY_ROOT.communityRoot,
 ): BuildContext = BuildContextImpl.createContext(
-  projectHome, IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot), setupTracer = true, options = options
+  projectHome = projectHome,
+  productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+  setupTracer = true,
+  options = options,
 )
 
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {
@@ -35,6 +40,9 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       *JewelMavenArtifacts.STANDALONE.keys.toTypedArray(),
     )
   }
+
+  override val moduleSetsProviders: List<ModuleSetProvider>
+    get() = listOf(CommunityModuleSets)
 
   override val baseFileName: String
     get() = "idea"
@@ -64,7 +72,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     ))
 
     productLayout.addPlatformSpec { layout, _ ->
-      layout.withModule("intellij.platform.duplicates.analysis")
       layout.withModule("intellij.platform.structuralSearch")
     }
 

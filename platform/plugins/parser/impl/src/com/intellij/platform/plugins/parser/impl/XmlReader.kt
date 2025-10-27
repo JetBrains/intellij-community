@@ -1,5 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
+@file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.platform.plugins.parser.impl
 
@@ -412,13 +413,13 @@ private fun readExtensionPoints(
     if (elementName != PluginXmlConst.EXTENSION_POINT_ELEM) {
       if (elementName == PluginXmlConst.INCLUDE_ELEM && reader.namespaceURI == PluginXmlConst.XINCLUDE_NAMESPACE_URI) {
         val partial = PluginDescriptorFromXmlStreamConsumer.withIncludeBase(
-          consumer.readContext,
-          consumer.xIncludeLoader,
-          consumer.includeBase,
+          readContext = consumer.readContext,
+          xIncludeLoader = consumer.xIncludeLoader,
+          includeBase = consumer.includeBase,
         )
         readInclude(
-          partial,
-          reader,
+          consumer = partial,
+          reader = reader,
           allowedPointer = PluginXmlConst.EXTENSION_POINTS_XINCLUDE_VALUE
         )
         LOG.warn("`include` is supported only on a root level (${reader.location})")
@@ -676,6 +677,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
 
     var name: String? = null
     var loadingRule = LoadingRule.OPTIONAL
+    var requiredIfAvailable: String? = null
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         PluginXmlConst.CONTENT_MODULE_NAME_ATTR -> name = readContext.interner.name(reader.getAttributeValue(i))
@@ -689,6 +691,7 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
             else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
           }
         }
+        PluginXmlConst.CONTENT_MODULE_REQUIRED_IF_AVAILABLE_ATTR -> requiredIfAvailable = getNullifiedAttributeValue(reader, i)
       }
     }
 
@@ -698,14 +701,20 @@ private fun readContent(reader: XMLStreamReader2, builder: PluginDescriptorBuild
 
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
-      builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = null))
+      builder.addContentModule(
+        ContentModuleElement(name = name, loadingRule = loadingRule, requiredIfAvailable = requiredIfAvailable,
+                             embeddedDescriptorContent = null)
+      )
     }
     else {
       val fromIndex = reader.textStart
       val toIndex = fromIndex + reader.textLength
       val length = toIndex - fromIndex
       val descriptorContent = if (length == 0) null else reader.textCharacters.copyOfRange(fromIndex, toIndex)
-      builder.addContentModule(ContentModuleElement(name = name, loadingRule = loadingRule, embeddedDescriptorContent = descriptorContent))
+      builder.addContentModule(
+        ContentModuleElement(name = name, loadingRule = loadingRule, requiredIfAvailable = requiredIfAvailable,
+                             embeddedDescriptorContent = descriptorContent)
+      )
 
       var nesting = 1
       while (true) {
@@ -729,13 +738,14 @@ private fun readDependencies(reader: XMLStreamReader2, builder: PluginDescriptor
     when (elementName) {
       PluginXmlConst.DEPENDENCIES_MODULE_ELEM -> {
         var name: String? = null
+        var namespace: String? = null
         for (i in 0 until reader.attributeCount) {
-          if (reader.getAttributeLocalName(i) == PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR) {
-            name = interner.name(reader.getAttributeValue(i))
-            break
+          when (reader.getAttributeLocalName(i)) {
+            PluginXmlConst.DEPENDENCIES_MODULE_NAME_ATTR -> name = interner.name(reader.getAttributeValue(i))
+            PluginXmlConst.DEPENDENCIES_MODULE_NAMESPACE_ATTR -> namespace = interner.name(reader.getAttributeValue(i))
           }
         }
-        builder.addDependency(DependenciesElement.ModuleDependency(name!!))
+        builder.addDependency(DependenciesElement.ModuleDependency(name!!, namespace))
       }
       PluginXmlConst.DEPENDENCIES_PLUGIN_ELEM -> {
         var id: String? = null
@@ -802,19 +812,21 @@ private fun readInclude(
   }
 
   var readError: IOException? = null
+  val targetPath = LoadPathUtil.toLoadPath(relativePath = path, baseDir = consumer.includeBase)
   val loadedXInclude = try {
-    val targetPath = LoadPathUtil.toLoadPath(relativePath = path, baseDir = consumer.includeBase)
     xIncludeLoader.loadXIncludeReference(path = targetPath)
   }
   catch (e: IOException) {
     readError = e
     null
   }
+
   if (loadedXInclude != null) {
     consumer.pushIncludeBase(LoadPathUtil.getChildBaseDir(base = consumer.includeBase, relativePath = path))
     try {
       consumer.consume(loadedXInclude.inputStream, loadedXInclude.diagnosticReferenceLocation)
-    } finally {
+    }
+    finally {
       consumer.popIncludeBase()
     }
     return
@@ -829,7 +841,7 @@ private fun readInclude(
     return
   }
   else {
-    throw RuntimeException("Cannot resolve $path (loader=${consumer.xIncludeLoader})", readError)
+    throw RuntimeException("Cannot resolve $path (targetPath=$targetPath, loader=${consumer.xIncludeLoader})", readError)
   }
 }
 

@@ -4,7 +4,7 @@ package fleet.multiplatform.shims
 
 import fleet.util.multiplatform.Actual
 
-@Actual("ConcurrentHashMap")
+@Actual
 fun <K, V> ConcurrentHashMapWasmJs(): ConcurrentHashMap<K, V> = ConcurrentHashMapWasm(mutableMapOf())
 
 internal fun <K, V> ConcurrentHashMapWasm(base: MutableMap<K, V>): ConcurrentHashMap<K, V> = object : MutableMap<K, V> by base, ConcurrentHashMap<K, V> {

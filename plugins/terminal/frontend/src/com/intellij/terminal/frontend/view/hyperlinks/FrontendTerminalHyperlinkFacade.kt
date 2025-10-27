@@ -6,12 +6,12 @@ import com.intellij.terminal.frontend.view.impl.TerminalInput
 import com.intellij.terminal.frontend.view.impl.toRelative
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.hyperlinks.TerminalHyperlinksModel
-import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.TerminalHyperlinksModelStateDto
-import org.jetbrains.plugins.terminal.session.dto.toFilterResultInfo
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalHyperlinksModelStateDto
+import org.jetbrains.plugins.terminal.session.impl.dto.toFilterResultInfo
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 
 internal class FrontendTerminalHyperlinkFacade(
   private val isInAlternateBuffer: Boolean,

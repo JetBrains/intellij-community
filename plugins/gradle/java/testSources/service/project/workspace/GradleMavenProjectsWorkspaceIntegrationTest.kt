@@ -2,9 +2,8 @@
 package org.jetbrains.plugins.gradle.service.project.workspace
 
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.INHERITED_SDK
-import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.MODULE_SOURCE
-import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertDependencies
+import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertLibraryDependencies
+import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.assertModuleDependencies
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModuleEntity
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.useProjectAsync
@@ -42,8 +41,8 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
       assertModules(project, "workspace", "maven-app",
                     "gradle-lib", "gradle-lib.main", "gradle-lib.test")
       assertModuleEntity(project, "maven-app") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "gradle-lib.main")
+        assertModuleDependencies(module, "gradle-lib.main")
+        assertLibraryDependencies(module, emptyList())
       }
     }
   }
@@ -68,8 +67,8 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
       assertModules(project, "workspace", "maven-lib",
                     "gradle-app", "gradle-app.main", "gradle-app.test")
       assertModuleEntity(project, "gradle-app.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "maven-lib")
+        assertModuleDependencies(module, "maven-lib")
+        assertLibraryDependencies(module, emptyList())
       }
     }
   }
@@ -112,12 +111,12 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
                     "gradle-app", "gradle-app.main", "gradle-app.test",
                     "gradle-lib", "gradle-lib.main", "gradle-lib.test")
       assertModuleEntity(project, "maven-app") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "maven-lib", "gradle-lib.main")
+        assertModuleDependencies(module, "maven-lib", "gradle-lib.main")
+        assertLibraryDependencies(module, emptyList())
       }
       assertModuleEntity(project, "gradle-app.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "maven-lib", "gradle-lib.main")
+        assertModuleDependencies(module, "maven-lib", "gradle-lib.main")
+        assertLibraryDependencies(module, emptyList())
       }
     }
   }
@@ -148,8 +147,8 @@ class GradleMavenProjectsWorkspaceIntegrationTest : ExternalProjectsWorkspaceInt
         "gradle-app", "gradle-app.main", "gradle-app.test",
       )
       assertModuleEntity(project, "gradle-app.main") { module ->
-        assertDependencies(module, INHERITED_SDK, MODULE_SOURCE,
-                           "maven-lib.main")
+        assertModuleDependencies(module, "maven-lib.main")
+        assertLibraryDependencies(module, emptyList())
       }
     }
   }

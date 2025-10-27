@@ -38,7 +38,7 @@ abstract class AbstractGradleBuildRootsLocatorTest : TestCase() {
         )
     }
 
-    private inner class MyRootsLocator(project: Project, coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project, coroutineScope) {
+    private inner class MyRootsLocator(project: Project, coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project) {
         override fun getScriptFirstSeenTs(path: String): Long = scripts[path]?.introductionTs ?: 0
         override fun getScriptInfo(localPath: String): GradleScriptInfo? = scripts[localPath]?.info
 

@@ -4593,6 +4593,8 @@ com.intellij.util.ui.JBUI$CurrentTheme$SegmentedButton
 - sf:SELECTED_BUTTON_COLOR:java.awt.Color
 - sf:SELECTED_END_BORDER_COLOR:java.awt.Color
 - sf:SELECTED_START_BORDER_COLOR:java.awt.Color
+f:com.intellij.util.ui.JBUI$CurrentTheme$Separator
+- s:color():java.awt.Color
 f:com.intellij.util.ui.JBUI$CurrentTheme$Spinner
 - <init>():V
 - s:minimumSize():java.awt.Dimension
@@ -4604,6 +4606,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$StatusBar
 - s:font():java.awt.Font
 - s:fontSizeOffsetKey():java.lang.String
 - s:hoverBackground():java.awt.Color
+- s:hoverInsets():java.awt.Insets
 com.intellij.util.ui.JBUI$CurrentTheme$StatusBar$Breadcrumbs
 - sf:CHEVRON_INSET:com.intellij.util.ui.JBValue
 - sf:FLOATING_BACKGROUND:java.awt.Color
@@ -4707,9 +4710,6 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:defaultExperimentalToolbarButtonIconSize():I
 - s:defaultExperimentalToolbarButtonSize():com.intellij.util.ui.JBDimension
 - s:defaultExperimentalToolbarFont():com.intellij.util.ui.JBFont
-- s:defaultStripeToolbarButtonIconPadding():com.intellij.util.ui.JBInsets
-- s:defaultStripeToolbarButtonIconPaddingForCompactMode():com.intellij.util.ui.JBInsets
-- s:defaultStripeToolbarButtonIconPaddingForNames():com.intellij.util.ui.JBInsets
 - s:defaultStripeToolbarButtonIconSize():I
 - s:defaultStripeToolbarButtonSize():com.intellij.util.ui.JBDimension
 - s:experimentalToolbarButtonIconSize():I
@@ -4725,7 +4725,6 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:recentProjectAvatarIconSize():I
 - s:recentProjectAvatarIconSizeKey():java.lang.String
 - s:stripeToolbarButtonIconPadding(Z,Z):java.awt.Insets
-- s:stripeToolbarButtonIconPaddingKey():java.lang.String
 - s:stripeToolbarButtonIconSize():I
 - s:stripeToolbarButtonIconSizeKey():java.lang.String
 - s:stripeToolbarButtonSize():java.awt.Dimension
@@ -5401,6 +5400,7 @@ f:com.intellij.util.ui.UIUtil
 - s:getWarningIcon():javax.swing.Icon
 - s:getWindow(java.awt.Component):java.awt.Window
 - s:getWindowColor():java.awt.Color
+- s:getWindowLayeredPaneFor(java.awt.Component):javax.swing.JLayeredPane
 - s:hasComponentOfType(java.awt.Component,java.lang.Class[]):Z
 - s:hasScrollPane(java.awt.Component):Z
 - s:haveCommonOwner(java.awt.Component,java.awt.Component):Z

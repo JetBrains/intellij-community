@@ -26,6 +26,7 @@ final class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance(UndoableGroup.class);
   private static final int BULK_MODE_ACTION_THRESHOLD = 50;
 
+  private final @NotNull List<CommandId> commandIds;
   private final @Nullable @Command String commandName;
   private final @NotNull List<? extends UndoableAction> actions;
   private final @NotNull UndoConfirmationPolicy confirmationPolicy;
@@ -43,10 +44,10 @@ final class UndoableGroup implements Dumpable {
   private boolean isValid;
 
   UndoableGroup(
+    @NotNull List<CommandId> commandIds,
     @Nullable @Command String commandName,
     @NotNull List<? extends UndoableAction> actions,
     @NotNull UndoConfirmationPolicy confirmationPolicy,
-    @NotNull UndoRedoStacksHolder stacksHolder,
     @Nullable EditorAndState stateBefore,
     @Nullable EditorAndState stateAfter,
     @Nullable UndoCommandFlushReason flushReason,
@@ -56,6 +57,7 @@ final class UndoableGroup implements Dumpable {
     boolean isGlobal,
     boolean isValid
   ) {
+    this.commandIds = commandIds;
     this.commandName = commandName;
     this.actions = actions;
     this.confirmationPolicy = confirmationPolicy;
@@ -69,7 +71,6 @@ final class UndoableGroup implements Dumpable {
     this.isTemporary = isTransparent;
     this.isGlobal = isGlobal;
     this.isValid = isValid;
-    composeStartFinishGroup(stacksHolder);
     this.isUndoable = ContainerUtil.all(actions, action -> !(action instanceof NonUndoableAction));
   }
 
@@ -134,6 +135,10 @@ final class UndoableGroup implements Dumpable {
 
   @NotNull UndoConfirmationPolicy getConfirmationPolicy() {
     return confirmationPolicy;
+  }
+
+  @NotNull List<CommandId> getCommandIds() {
+    return commandIds;
   }
 
   @NotNull List<? extends UndoableAction> getActions() {
@@ -294,30 +299,6 @@ final class UndoableGroup implements Dumpable {
     }
   }
 
-  private void composeStartFinishGroup(@NotNull UndoRedoStacksHolder holder) {
-    FinishMarkAction finishMark = getFinishMark();
-    if (finishMark != null) {
-      boolean global = false;
-      String commandName = null;
-      UndoRedoList<UndoableGroup> stack = holder.getStack(finishMark.getAffectedDocument());
-      for (Iterator<UndoableGroup> iterator = stack.descendingIterator(); iterator.hasNext(); ) {
-        UndoableGroup group = iterator.next();
-        if (group.isGlobal()) {
-          global = true;
-          commandName = group.getCommandName();
-          break;
-        }
-        if (group.getStartMark() != null) {
-          break;
-        }
-      }
-      if (global) {
-        finishMark.setGlobal(true);
-        finishMark.setCommandName(commandName);
-      }
-    }
-  }
-
   private boolean shouldAskConfirmationForStartFinishGroup(boolean redo) {
     if (redo) {
       StartMarkAction mark = getStartMark();
@@ -334,7 +315,7 @@ final class UndoableGroup implements Dumpable {
     return false;
   }
 
-  private @Nullable StartMarkAction getStartMark() {
+  @Nullable StartMarkAction getStartMark() {
     for (UndoableAction action : actions) {
       if (action instanceof StartMarkAction startMark) {
         return startMark;
@@ -343,7 +324,7 @@ final class UndoableGroup implements Dumpable {
     return null;
   }
 
-  private @Nullable FinishMarkAction getFinishMark() {
+  @Nullable FinishMarkAction getFinishMark() {
     for (UndoableAction action : actions) {
       if (action instanceof FinishMarkAction finishMark) {
         return finishMark;

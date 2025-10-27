@@ -8,11 +8,8 @@ import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
-import fleet.rpc.core.DeferredSerializer
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,8 +17,6 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XDebuggerManagerApi : RemoteApi<Unit> {
   suspend fun initialize(projectId: ProjectId, capabilities: XFrontendDebuggerCapabilities)
-
-  suspend fun currentSession(projectId: ProjectId): Flow<XDebugSessionId?>
 
   suspend fun sessions(projectId: ProjectId): XDebugSessionsList
 
@@ -90,7 +85,7 @@ sealed interface XDebuggerSessionEvent {
   @Serializable
   class SessionPaused(
     override val state: XDebugSessionState,
-    @Serializable(with = DeferredSerializer::class) val suspendData: Deferred<SuspendData?>,
+    val suspendData: SuspendData?,
   ) : EventWithState
 
   @Serializable
@@ -106,8 +101,10 @@ sealed interface XDebuggerSessionEvent {
   @Serializable
   class StackFrameChanged(
     override val state: XDebugSessionState,
-    val sourcePosition: XSourcePositionDto?,
-    @Serializable(with = DeferredSerializer::class) val stackFrame: Deferred<XStackFrameDto>?,
+    val sourcePositionDto: XSourcePositionDto?,
+    val topSourcePositionDto: XSourcePositionDto?,
+    val isTopFrame: Boolean,
+    val stackFrame: XStackFrameDto?,
   ) : EventWithState
 
   @Serializable
@@ -128,8 +125,8 @@ data class SuspendData(
   val suspendContextDto: XSuspendContextDto,
   val executionStack: XExecutionStackDto?,
   val stackFrame: XStackFrameDto?,
-  val sourcePosition: XSourcePositionDto?,
-  val topSourcePosition: XSourcePositionDto?,
+  val sourcePositionDto: XSourcePositionDto?,
+  val topSourcePositionDto: XSourcePositionDto?,
 )
 
 @ApiStatus.Internal

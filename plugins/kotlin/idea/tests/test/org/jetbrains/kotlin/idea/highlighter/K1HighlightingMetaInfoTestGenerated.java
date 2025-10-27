@@ -516,6 +516,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/smartCasts/Redundant.kt");
         }
 
+        @TestMetadata("RedundantWithExpectedType.kt")
+        public void testRedundantWithExpectedType() throws Exception {
+            runTest("testData/highlighterMetaInfo/smartCasts/RedundantWithExpectedType.kt");
+        }
+
         @TestMetadata("Unstable_explicitReceiver.kt")
         public void testUnstable_explicitReceiver() throws Exception {
             runTest("testData/highlighterMetaInfo/smartCasts/Unstable_explicitReceiver.kt");
@@ -618,6 +623,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("mismatchPackageDirectoryFileLevelProblem.kt")
         public void testMismatchPackageDirectoryFileLevelProblem() throws Exception {
             runTest("testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblem.kt");
+        }
+
+        @TestMetadata("mismatchPackageDirectoryFileLevelProblemDeclarations.kt")
+        public void testMismatchPackageDirectoryFileLevelProblemDeclarations() throws Exception {
+            runTest("testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblemDeclarations.kt");
         }
 
         @TestMetadata("NamedArguments.kt")

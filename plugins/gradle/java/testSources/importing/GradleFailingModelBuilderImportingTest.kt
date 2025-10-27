@@ -18,8 +18,8 @@ class GradleFailingModelBuilderImportingTest : BuildViewMessagesImportingTestCas
     importProject("")
     assertSyncViewTree {
       assertNode("finished") {
-        assertNode("root project 'project': Test import errors")
         assertNodeWithDeprecatedGradleWarning()
+        assertNode("root project 'project': Test import errors")
       }
     }
     assertSyncViewNode("root project 'project': Test import errors") {

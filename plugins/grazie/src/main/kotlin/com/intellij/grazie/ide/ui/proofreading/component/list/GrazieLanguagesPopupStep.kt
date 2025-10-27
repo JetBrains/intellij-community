@@ -20,7 +20,7 @@ private val logger = logger<GrazieLanguagesPopupStep>()
 
 class GrazieLanguagesPopupStep(
   @NlsContexts.PopupTitle title: String, available: List<Lang>, toDownload: List<Lang>,
-  private val download: suspend (Collection<Lang>) -> Unit, private val onResult: (Lang) -> Unit,
+  private val download: suspend (Collection<Lang>) -> Boolean, private val onResult: (Lang) -> Unit,
 ) : BaseListPopupStep<Lang>(title, available + toDownload) {
   private val firstOther = toDownload.firstOrNull()
 
@@ -33,7 +33,7 @@ class GrazieLanguagesPopupStep(
     return doFinalStep {
       GrazieScope.coroutineScope().launch {
         try {
-          download(listOf(selectedValue))
+          if (!download(listOf(selectedValue))) return@launch
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             onResult(selectedValue)
           }

@@ -107,7 +107,7 @@ class ThreadContextPropagationTest {
     val service = EdtScheduledExecutorService.getInstance()
     doScheduledExecutorServiceTest(service)
     doPropagationTest {
-      service.schedule(it.runnable(), ModalityState.any(), 10, TimeUnit.MILLISECONDS)
+      service.schedule(it.runnable(), 10, TimeUnit.MILLISECONDS)
     }
   }
 

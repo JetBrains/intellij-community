@@ -386,6 +386,10 @@ private class ParallelCompletionRunner : K2CompletionRunner {
             resultSet.restartCompletionOnPrefixChange(element.prefixCondition)
         }
 
+        is AccumulatingSinkMessage.RestartCompletionOnAnyPrefixChange -> {
+            resultSet.restartCompletionOnAnyPrefixChange()
+        }
+
         is AccumulatingSinkMessage.SingleElement -> {
             resultSet.addElement(element.element)
         }

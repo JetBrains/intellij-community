@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="fleet:clikt-core" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.github.ajalt.clikt:clikt-core-jvm:5.0.3">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-core-jvm/5.0.3/clikt-core-jvm-5.0.3.jar">
+          <sha256sum>69cba94a2291f74b78c88239cd8b67eaf3f08e0dad297749abe6477b3e9b81b1</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-core-jvm/5.0.3/clikt-core-jvm-5.0.3.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-core-jvm/5.0.3/clikt-core-jvm-5.0.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

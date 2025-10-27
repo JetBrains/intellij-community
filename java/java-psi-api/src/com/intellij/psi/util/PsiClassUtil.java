@@ -40,12 +40,19 @@ public final class PsiClassUtil {
    * @return true if class is {@code java.lang.Throwable} or legally inherits from it.
    */
   public static boolean isThrowable(@NotNull PsiClass psiClass) {
-    if (psiClass.isInterface()) return false;
-    if (psiClass.getTypeParameters().length > 0) return false; // Valid throwables are never generic
-    if (CommonClassNames.JAVA_LANG_THROWABLE.equals(psiClass.getQualifiedName())) return true;
-    PsiClass throwableClass =
-      JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CommonClassNames.JAVA_LANG_THROWABLE, psiClass.getResolveScope());
-    if (throwableClass == null) return false;
-    return psiClass.isInheritor(throwableClass, true);
+    if (psiClass instanceof PsiAnonymousClass) {
+      psiClass = ((PsiAnonymousClass)psiClass).getBaseClassType().resolve();
+    }
+    while (true) {
+      if (psiClass == null) return false;
+      if (psiClass.isInterface()) return false;
+      if (psiClass.getTypeParameters().length > 0) return false; // Valid throwables are never generic
+      if (CommonClassNames.JAVA_LANG_THROWABLE.equals(psiClass.getQualifiedName())) return true;
+      PsiClassType[] types = psiClass.getExtendsListTypes();
+      if (types.length == 0) return false;
+      PsiClassType type = types[0];
+      if (type.getParameterCount() != 0) return false;
+      psiClass = type.resolve();
+    }
   }
 }

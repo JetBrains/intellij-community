@@ -3,15 +3,20 @@ package org.jetbrains.kotlin.base.fir.scripting.projectStructure
 
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules.KaScriptDependencyLibraryModuleImpl
 import org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules.KaScriptModuleImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.FirKaModuleFactory
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.serialization.deserialization.DOT_METADATA_FILE_EXTENSION
+import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 
 internal class FirKaScriptingModuleFactory : FirKaModuleFactory {
     override fun createScriptLibraryModule(
@@ -25,7 +30,12 @@ internal class FirKaScriptingModuleFactory : FirKaModuleFactory {
         val ktFile = file as? KtFile ?: return null
         if (file.virtualFile is VirtualFileWindow) return null
 
-        if (file.virtualFile.extension == KotlinFileType.EXTENSION) {
+        val nameSequence = file.virtualFile.nameSequence
+        if (
+            nameSequence.endsWith(KotlinFileType.DOT_DEFAULT_EXTENSION)
+            || nameSequence.endsWith(BuiltInSerializerProtocol.DOT_DEFAULT_EXTENSION)
+            || nameSequence.endsWith(DOT_METADATA_FILE_EXTENSION)
+        ) {
             /*
             We cannot be 100% sure that a file is a script solely based on its extension.
             Details explaining why are written in the comments of KTIJ-32922.
@@ -37,23 +47,29 @@ internal class FirKaScriptingModuleFactory : FirKaModuleFactory {
             return null
         }
 
-        return when {
-            !ktFile.isScript() -> {
-                null
-            }
-            ktFile.isCompiled -> {
-                /*
-                For compiled scripts we should not create any KaScriptModule
-                as we do not treat them as scripts, a proper module for them
-                should be KaScriptDependencyModule.
-                */
-                null
-            }
-            else -> {
-                val virtualFile = file.originalFile.virtualFile
+        if (ktFile.isCompiled) {
+            /*
+            For compiled scripts we should not create any KaScriptModule
+            as we do not treat them as scripts, a proper module for them
+            should be KaScriptDependencyModule.
+            */
+            return null
+        }
 
-                KaScriptModuleImpl(file.project, virtualFile)
+        val project = ktFile.project
+        val virtualFile = file.originalFile.virtualFile
+
+        if (!nameSequence.endsWith(KotlinFileType.DOT_SCRIPT_EXTENSION)) {
+            val workspaceModel = WorkspaceModel.getInstance(project)
+            val snapshot = workspaceModel.currentSnapshot
+
+            val url = virtualFile.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
+            val entitiesByUrl = snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(url)
+            if (entitiesByUrl.none() || entitiesByUrl.none { it is KotlinScriptEntity }) {
+                return null
             }
         }
+
+        return KaScriptModuleImpl(project, virtualFile)
     }
 }

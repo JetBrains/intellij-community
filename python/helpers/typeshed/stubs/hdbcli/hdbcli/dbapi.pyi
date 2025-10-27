@@ -4,7 +4,7 @@ from collections.abc import Callable, Sequence
 from datetime import date, datetime, time
 from types import TracebackType
 from typing import Any, Final, Literal, overload
-from typing_extensions import Self, TypeAlias
+from typing_extensions import Self, TypeAlias, disjoint_base
 
 from .resultrow import ResultRow
 
@@ -12,6 +12,7 @@ apilevel: Final[str]
 threadsafety: Final[int]
 paramstyle: Final[tuple[str, ...]]  # hdbcli defines it as a tuple which does not follow PEP 249
 
+@disjoint_base
 class Connection:
     def __init__(
         self,
@@ -42,6 +43,7 @@ class Connection:
 
 connect = Connection
 
+@disjoint_base
 class LOB:
     def __init__(self, *args: Any, **kwargs: Any) -> None: ...
     def close(self) -> bool: ...
@@ -52,6 +54,7 @@ class LOB:
 _Parameters: TypeAlias = Sequence[tuple[Any, ...]] | None
 _Holdability: TypeAlias = Literal[0, 1, 2, 3]
 
+@disjoint_base
 class Cursor:
     description: tuple[tuple[Any, ...], ...]
     rowcount: int

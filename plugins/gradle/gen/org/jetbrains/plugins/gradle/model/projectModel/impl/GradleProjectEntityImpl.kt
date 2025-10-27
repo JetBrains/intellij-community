@@ -11,9 +11,9 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityBuilder
 import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId
 
 @GeneratedCodeApiVersion(3)
@@ -80,7 +80,7 @@ internal class GradleProjectEntityImpl(private val dataSource: GradleProjectEnti
 
 
   internal class Builder(result: GradleProjectEntityData?) : ModifiableWorkspaceEntityBase<GradleProjectEntity, GradleProjectEntityData>(
-    result), GradleProjectEntity.Builder {
+    result), GradleProjectEntityBuilder {
     internal constructor() : this(GradleProjectEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -267,7 +267,7 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<GradleProjectEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<GradleProjectEntity> {
     val modifiable = GradleProjectEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -293,7 +293,7 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
     return GradleProjectEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return GradleProjectEntity(buildId, name, path, identityPath, url, linkedProjectId, entitySource) {
     }
   }

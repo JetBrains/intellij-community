@@ -21,5 +21,12 @@ fun interface JavaVersionRestriction {
     fun javaRestrictionOf(targetVersionNotation: String): JavaVersionRestriction {
       return JavaVersionRestriction { _, source -> !isVersionMatch(source, targetVersionNotation) }
     }
+
+    @JvmStatic
+    fun compositeOf(restrictions: List<JavaVersionRestriction>): JavaVersionRestriction {
+      return JavaVersionRestriction { gradleVersion, source ->
+        restrictions.any { it.isRestricted(gradleVersion, source) }
+      }
+    }
   }
 }

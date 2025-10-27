@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
@@ -370,7 +370,7 @@ internal class WorkspaceModuleImporter(
   }
 
   class ExternalSystemData(val moduleEntity: ModuleEntity, val mavenProjectFilePath: String, val mavenModuleType: StandardMavenModuleType) {
-    fun write(entity: ExternalSystemModuleOptionsEntity.Builder) {
+    fun write(entity: ExternalSystemModuleOptionsEntityBuilder) {
       entity.externalSystemModuleVersion = VERSION
       entity.externalSystem = EXTERNAL_SOURCE_ID
       // Can't use 'entity.linkedProjectPath' since it implies directory (and used to set working dir for Run Configurations).

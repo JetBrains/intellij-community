@@ -9,11 +9,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
-import com.intellij.terminal.frontend.view.impl.TerminalSessionController
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellCacheableDataGenerator
-import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandExecutionListener
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandStartedEvent
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalShellIntegration
 import java.time.Duration
 
 /**
@@ -24,7 +25,7 @@ import java.time.Duration
  * This way, we will avoid abandoning the result of heavy generators.
  */
 internal class ShellDataGeneratorsExecutorReworkedImpl(
-  sessionController: TerminalSessionController,
+  shellIntegration: TerminalShellIntegration,
   private val coroutineScope: CoroutineScope,
 ) : ShellDataGeneratorsExecutor {
   private val cache: Cache<String, Deferred<Any>> = Caffeine.newBuilder()
@@ -35,8 +36,8 @@ internal class ShellDataGeneratorsExecutorReworkedImpl(
 
   init {
     // Clear caches when the user executes the command
-    sessionController.addShellIntegrationListener(coroutineScope.asDisposable(), object : TerminalShellIntegrationEventsListener {
-      override fun commandStarted(command: String) {
+    shellIntegration.addCommandExecutionListener(coroutineScope.asDisposable(), object : TerminalCommandExecutionListener {
+      override fun commandStarted(event: TerminalCommandStartedEvent) {
         reset()
       }
     })

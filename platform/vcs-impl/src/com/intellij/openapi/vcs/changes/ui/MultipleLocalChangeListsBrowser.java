@@ -28,6 +28,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProdu
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
+import com.intellij.platform.vcs.impl.shared.commit.PartialCommitChangeNodeDecorator;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -37,7 +38,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
 import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
 import com.intellij.vcs.commit.PartialCommitInclusionModel;
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi;
 import org.jetbrains.annotations.Contract;

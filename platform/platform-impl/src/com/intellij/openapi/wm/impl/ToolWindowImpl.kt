@@ -12,6 +12,7 @@ import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.actions.speedSearch.SpeedSearchAction
 import com.intellij.ide.impl.ContentManagerWatcher
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -19,6 +20,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.debug
@@ -133,6 +135,8 @@ import kotlin.math.abs
 
   internal var icon: Icon? = null
 
+  private var tabsSplittingAllowed: Boolean = false
+
   private val contentManager = SynchronizedClearableLazy {
     val result = createContentManager()
     if (toolWindowManager.isNewUi) {
@@ -172,6 +176,20 @@ import kotlin.math.abs
   private class UpdateBackgroundContentManager : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
       InternalDecoratorImpl.setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
+    }
+
+    override fun selectionChanged(event: ContentManagerEvent) {
+      if (event.operation == ContentManagerEvent.ContentOperation.add && UISettings.getInstance().differentToolwindowBackground) {
+        ApplicationManager.getApplication().invokeLater { contentAdded(event) }
+      }
+    }
+  }
+
+  internal fun updateContentBackgroundColors() {
+    val color = JBUI.CurrentTheme.ToolWindow.background()
+
+    for (content in contentManager.value.contents) {
+      InternalDecoratorImpl.setBackgroundRecursively(content.component, color)
     }
   }
 
@@ -637,6 +655,19 @@ import kotlin.math.abs
 
   override fun updateContentUi() {
     contentUi?.update()
+  }
+
+  override fun canSplitTabs(): Boolean {
+    return tabsSplittingAllowed
+  }
+
+  override fun setTabsSplittingAllowed(allowed: Boolean) {
+    tabsSplittingAllowed = allowed
+
+    val header = decorator?.header ?: return
+    if (header.isShowing) {
+      header.manageWestPanelTabComponentAndToolbar(true)
+    }
   }
 
   fun fireActivated(source: ToolWindowEventSource) {

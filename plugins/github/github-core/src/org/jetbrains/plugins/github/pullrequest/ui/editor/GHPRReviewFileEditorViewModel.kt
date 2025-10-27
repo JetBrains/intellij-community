@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.util.*
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
@@ -24,12 +25,12 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 
@@ -80,7 +81,7 @@ interface GHPRReviewFileEditorViewModel {
 private val LOG = logger<GHPRReviewFileEditorViewModelImpl>()
 
 internal class GHPRReviewFileEditorViewModelImpl(
-  project: Project,
+  private val project: Project,
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
@@ -179,8 +180,8 @@ internal class GHPRReviewFileEditorViewModelImpl(
    * We don't really care about the left-sided line number. It needs to be at the beginning to make sure
    * the first comment on the line is picked though.
    */
-  private fun lineToUnified(line: Int): GHPRReviewUnifiedPosition =
-    GHPRReviewUnifiedPosition(change, leftLine = -1, rightLine = line)
+  private fun lineToUnified(line: Int): UnifiedCodeReviewItemPosition =
+    UnifiedCodeReviewItemPosition(change, leftLine = -1, rightLine = line)
 
   private fun threadIsVisible(threadId: String): Boolean =
     allMappedThreads.value[threadId]?.let { it.isVisible && it.line != null && it.change?.filePathAfter != null } ?: false
@@ -205,14 +206,16 @@ internal class GHPRReviewFileEditorViewModelImpl(
     }
   }
 
-  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) =
-    threadsVm.newComments.value.firstOrNull {
+  override fun updateCommentLines(oldLineRange: LineRange, newLineRange: LineRange) {
+    val newComment = threadsVm.newComments.value.firstOrNull {
       when (val loc = it.position.value.location) {
         is GHPRReviewCommentLocation.SingleLine -> loc.lineIdx == oldLineRange.end
         is GHPRReviewCommentLocation.MultiLine -> loc.startLineIdx == oldLineRange.start && loc.lineIdx == oldLineRange.end
       }
-    }?.updateLineRange(newLineRange) ?: Unit
-
+    } ?: return
+    newComment.updateLineRange(newLineRange)
+    GHPRStatisticsCollector.logResizedComments(project)
+  }
 
   override fun cancelNewComment(lineIdx: Int) =
     threadsVm.cancelNewComment(change, Side.RIGHT, lineIdx)

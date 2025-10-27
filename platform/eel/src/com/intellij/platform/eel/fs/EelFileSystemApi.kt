@@ -289,6 +289,7 @@ interface EelFileSystemApi {
      */
     val bytes: ByteBuffer
 
+
     /**
      * `true` if [bytes] contains the whole file, `false` only if the part of the file.
      */

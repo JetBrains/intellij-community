@@ -19,19 +19,5 @@
     "text": "To measure and improve integration with JetBrains AI, we can <a href=\"https://www.jetbrains.com/help/ai/data-collection-and-use-policy.html\">collect non-anonymous information</a> about its usage, which includes the full text of inputs sent by the IDE to the large language model and its responses, including source code snippets.",
     "printableName": "Allow detailed data collection by JetBrains AI",
     "accepted": "false"
-  },
-  {
-    "consentId": "ai.trace.data.collection.and.use.noncom.policy",
-    "version": "1.0",
-    "text": "This includes an expanded range of IDE data with associated code snippets, such as AI feature usage, run configurations, and terminal commands. This data will be used for product improvement and model training purposes. Find more details <a href=\"https://www.jetbrains.com/legal/docs/terms/product_data_collection/\">here</a>.",
-    "printableName": "Send detailed code-related data",
-    "accepted": "false"
-  },
-  {
-    "consentId": "ai.trace.data.collection.and.use.com.policy",
-    "version": "1.0",
-    "text": "This includes an expanded range of IDE data with associated code snippets, such as AI feature usage, run configurations, and terminal commands. This data will be used for product improvement and model training purposes. Find more details <a href=\"https://www.jetbrains.com/legal/docs/terms/product_data_collection/\">here</a>.",
-    "printableName": "Send detailed code-related data",
-    "accepted": "false"
   }
 ]

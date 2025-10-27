@@ -69,7 +69,7 @@ class GitUntrackedFilesHolder internal constructor(
     get() = untrackedFiles.initialized
 
   init {
-    updateRunner = SingleTaskRunner(cs, 500.milliseconds, ::update)
+    updateRunner = SingleTaskRunner.delayedTaskRunner(cs, 500.milliseconds, ::update)
     cs.launch(start = CoroutineStart.UNDISPATCHED) {
       try {
         project.serviceAsync<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()

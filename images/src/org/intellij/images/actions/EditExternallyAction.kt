@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -25,8 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.ui.UIBundle
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.io.delete
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.intellij.images.ImagesBundle
 import org.intellij.images.fileTypes.ImageFileTypeManager
 import org.intellij.images.options.impl.ImagesConfigurable
@@ -157,9 +159,9 @@ private fun VirtualFile.copyToBackingFile(disposable: Disposable): VirtualFile {
 
 private fun Path.safeDelete() {
   try {
-    delete()
+    NioFiles.deleteRecursively(this)
   }
-  catch (ignore: IOException) {
+  catch (_: IOException) {
   }
 }
 

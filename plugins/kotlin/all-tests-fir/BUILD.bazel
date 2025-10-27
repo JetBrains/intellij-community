@@ -65,6 +65,7 @@ jvm_library(
     "//plugins/kotlin/gradle/code-insight-groovy/tests.k2:kotlin-gradle-codeInsight-groovy-tests",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k2:kotlin-gradle-scripting",
     "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting",
+    "//plugins/kotlin/grazie/intellij.kotlin.grazie.tests:kotlin-grazie-tests",
   ]
 )
 ### auto-generated section `build kotlin.fir-all-tests` end

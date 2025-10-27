@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.kotlinx.datetime.jar
   modules:
   - name: intellij.libraries.kotlinx.datetime
   library: kotlinx-datetime-jvm

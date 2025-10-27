@@ -20,6 +20,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/tasks-platform-api:tasks",
     "//platform/core-api:core",
+    "//platform/projectModel-impl",
     "//platform/platform-api:ide",
     "//platform/vcs-api:vcs",
     "//libraries/gson",

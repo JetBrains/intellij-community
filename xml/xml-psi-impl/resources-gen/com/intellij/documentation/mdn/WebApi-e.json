@@ -1051,6 +1051,9 @@
         "Experimental"
       ],
       "compatibility": {},
+      "baseline": {
+        "level": "NONE"
+      },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>ariaNotify()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> interface specifies that a given string of text should be announced by a <a href=\"$MDN_URL$/Glossary/Screen_reader\">screen reader</a> if available and activated.",
       "parameters": {
         "announcement": "A string specifying the text to be announced.",
@@ -3379,7 +3382,7 @@
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>setHTML()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> interface provides an XSS-safe method to parse and sanitize a string of HTML into a <a href=\"$MDN_URL$/Web/API/DocumentFragment\"><code>DocumentFragment</code></a>, and then insert it into the DOM as a subtree of the element.",
       "parameters": {
         "input": "A string defining HTML to be sanitized and injected into the element.",
-        "options": "An options object with the following optional parameters:\n<dl>\n<dt id=\"sanitizer\"><a href=\"#sanitizer\"><code>sanitizer</code></a></dt>\n<dd>\n<p>A <a href=\"$MDN_URL$/Web/API/Sanitizer\"><code>Sanitizer</code></a> or <a href=\"$MDN_URL$/Web/API/SanitizerConfig\"><code>SanitizerConfig</code></a> object which defines what elements of the input will be allowed or removed, or the string <code>\"default\"</code> for the default configuration.\nNote that generally a <code>\"Sanitizer</code> is expected to be more efficient than a <code>SanitizerConfig</code> if the configuration is to reused.\nIf not specified, the default sanitizer configuration is used.\n</dd>\n</dl>"
+        "options": "An options object with the following optional parameters:\n<dl>\n<dt id=\"sanitizer\"><a href=\"#sanitizer\"><code>sanitizer</code></a></dt>\n<dd>\n<p>A <a href=\"$MDN_URL$/Web/API/Sanitizer\"><code>Sanitizer</code></a> or <a href=\"$MDN_URL$/Web/API/SanitizerConfig\"><code>SanitizerConfig</code></a> object which defines what elements of the input will be allowed or removed, or the string <code>\"default\"</code> for the default configuration.\nNote that generally a <code>Sanitizer</code> is expected to be more efficient than a <code>SanitizerConfig</code> if the configuration is to be reused.\nIf not specified, the default sanitizer configuration is used.\n</dd>\n</dl>"
       },
       "returns": "None (<code>undefined</code>).",
       "throws": {
@@ -6118,13 +6121,10 @@
         "Edge": "87",
         "Firefox": "140",
         "FirefoxAndroid": "140",
-        "Opera": "73",
-        "Safari": "18.4",
-        "SafariIOS": "18.4"
+        "Opera": "73"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2025-06-24"
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is only available in <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a>.</div>\n<p>The <strong><code>ExtendableCookieChangeEvent</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/Cookie_Store_API\">Cookie Store API</a> is the event type passed to <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/cookiechange_event\" ><code>cookiechange</code></a> event fired at the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> when any cookie changes occur which match the service worker's cookie change subscription list. A cookie change event consists of a cookie and a type (either \"changed\" or \"deleted\").\n<p>Cookie changes that cause the <code>ExtendableCookieChangeEvent</code> to be dispatched are:\n<ul>\n<li>A cookie is newly created and not immediately removed, or if a cookies is replaced.\nIn this case <code>type</code> is \"changed\".</li>\n<li>A cookie is newly created and immediately removed.\nIn this case <code>type</code> is \"deleted\"</li>\n<li>A cookie is removed. In this case <code>type</code> is \"deleted\".</li>\n</ul>"
     },
@@ -6139,13 +6139,10 @@
         "Edge": "87",
         "Firefox": "140",
         "FirefoxAndroid": "140",
-        "Opera": "73",
-        "Safari": "18.4",
-        "SafariIOS": "18.4"
+        "Opera": "73"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2025-06-24"
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is only available in <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a>.</div>\n<p>The <strong><code>changed</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ExtendableCookieChangeEvent\"><code>ExtendableCookieChangeEvent</code></a> interface returns any cookies that have been changed by the given <code>ExtendableCookieChangeEvent</code> instance."
     },
@@ -6160,13 +6157,10 @@
         "Edge": "87",
         "Firefox": "140",
         "FirefoxAndroid": "140",
-        "Opera": "73",
-        "Safari": "18.4",
-        "SafariIOS": "18.4"
+        "Opera": "73"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2025-06-24"
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is only available in <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a>.</div>\n<p>The <strong><code>deleted</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ExtendableCookieChangeEvent\"><code>ExtendableCookieChangeEvent</code></a> interface returns any cookies that have been deleted by the given <code>ExtendableCookieChangeEvent</code> instance."
     },
@@ -6181,13 +6175,10 @@
         "Edge": "87",
         "Firefox": "140",
         "FirefoxAndroid": "140",
-        "Opera": "73",
-        "Safari": "18.4",
-        "SafariIOS": "18.4"
+        "Opera": "73"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2025-06-24"
+        "level": "NONE"
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is only available in <a href=\"$MDN_URL$/Web/API/Service_Worker_API\">Service Workers</a>.</div>\n<p>The <strong><code>ExtendableCookieChangeEvent()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/ExtendableCookieChangeEvent\"><code>ExtendableCookieChangeEvent</code></a> object\nwhich is the event type passed to <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope/cookiechange_event\" ><code>cookiechange</code></a> event fired at the <a href=\"$MDN_URL$/Web/API/ServiceWorkerGlobalScope\"><code>ServiceWorkerGlobalScope</code></a> when any cookie changes occur which match the service worker's cookie change subscription list.\nThis constructor is called by the browser when a change event occurs.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis event constructor is generally not needed for production websites. It's primary use is for tests that require an instance of this event.\n</div>",
       "parameters": {
@@ -11538,10 +11529,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11556,10 +11544,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11575,10 +11560,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11597,10 +11579,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "115",
         "ChromeAndroid": "121",
-        "Edge": "115",
-        "Opera": "101",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11615,10 +11594,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11633,10 +11609,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11651,10 +11624,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "127",
         "ChromeAndroid": "127",
-        "Edge": "127",
-        "Opera": "113",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11673,7 +11643,7 @@
         "Safari": "26",
         "SafariIOS": "26"
       },
-      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>isFallbackAdapter</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/GPUAdapter\"><code>GPUAdapter</code></a> interface returns <code>true</code> if the adapter is a <a href=\"$MDN_URL$/Web/API/GPU/requestAdapter#fallback_adapters\">fallback adapter</a>, and <code>false</code> if not."
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is not standardized. We do not recommend using non-standard features in production, as they have limited browser support, and may change or be removed. However, they can be a suitable alternative in specific cases where no standard option exists.</div>\n<p>The <strong><code>isFallbackAdapter</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/GPUAdapter\"><code>GPUAdapter</code></a> interface returns <code>true</code> if the adapter is a <a href=\"$MDN_URL$/Web/API/GPU/requestAdapter#fallback_adapters\">fallback adapter</a>, and <code>false</code> if not.\n<p>This property has been removed from the web platform. Use <a href=\"$MDN_URL$/Web/API/GPUAdapterInfo/isFallbackAdapter\"><code>GPUAdapterInfo.isFallbackAdapter</code></a> instead."
     },
     "gpuadapter.limits": {
       "url": "$MDN_URL$/web/api/gpuadapter/limits",
@@ -11681,10 +11651,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11710,10 +11677,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11736,10 +11700,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11754,10 +11715,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11772,10 +11730,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11790,10 +11745,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11802,17 +11754,27 @@
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>device</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/GPUAdapterInfo\"><code>GPUAdapterInfo</code></a> interface returns a vendor-specific identifier for the adapter, or an empty string if it is not available."
     },
+    "gpuadapterinfo.isfallbackadapter": {
+      "url": "$MDN_URL$/web/api/gpuadapterinfo/isfallbackadapter",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "136",
+        "ChromeAndroid": "136",
+        "Edge": "136",
+        "Opera": "121",
+        "Safari": "26",
+        "SafariIOS": "26"
+      },
+      "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>isFallbackAdapter</code></strong> read-only property of the\n<a href=\"$MDN_URL$/Web/API/GPUAdapterInfo\"><code>GPUAdapterInfo</code></a> interface returns <code>true</code> if the adapter is a <a href=\"$MDN_URL$/Web/API/GPU/requestAdapter#fallback_adapters\">fallback adapter</a>, and <code>false</code> if not."
+    },
     "gpuadapterinfo.subgroupmaxsize": {
       "url": "$MDN_URL$/web/api/gpuadapterinfo/subgroupmaxsize",
       "status": [
         "StandardTrack"
       ],
-      "compatibility": {
-        "Chrome": "134",
-        "ChromeAndroid": "134",
-        "Edge": "134",
-        "Opera": "119"
-      },
+      "compatibility": {},
       "baseline": {
         "level": "NONE"
       },
@@ -11823,12 +11785,7 @@
       "status": [
         "StandardTrack"
       ],
-      "compatibility": {
-        "Chrome": "134",
-        "ChromeAndroid": "134",
-        "Edge": "134",
-        "Opera": "119"
-      },
+      "compatibility": {},
       "baseline": {
         "level": "NONE"
       },
@@ -11840,10 +11797,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11858,10 +11812,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11876,10 +11827,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11894,10 +11842,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11912,10 +11857,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11930,10 +11872,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11948,10 +11887,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11967,10 +11903,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -11990,10 +11923,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12008,10 +11938,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12032,10 +11959,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12050,10 +11974,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12068,10 +11989,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12087,10 +12005,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12105,10 +12020,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12123,10 +12035,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12141,10 +12050,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12163,10 +12069,6 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "131",
-        "ChromeAndroid": "131",
-        "Edge": "131",
-        "Opera": "116",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12182,10 +12084,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12204,10 +12103,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12223,10 +12119,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12241,10 +12134,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12259,10 +12149,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12277,10 +12164,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12299,10 +12183,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12321,10 +12202,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12345,10 +12223,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12371,10 +12246,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12395,10 +12267,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12419,10 +12288,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12443,10 +12309,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12465,10 +12328,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12487,10 +12347,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12505,10 +12362,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12524,10 +12378,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12546,10 +12397,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12585,10 +12433,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12603,10 +12448,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12621,10 +12463,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12639,10 +12478,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12657,10 +12493,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12675,10 +12508,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12693,10 +12523,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12711,10 +12538,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12729,10 +12553,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12747,10 +12568,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12765,10 +12583,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12789,10 +12604,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12812,10 +12624,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12831,10 +12640,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12853,10 +12659,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12871,10 +12674,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12890,10 +12690,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12912,10 +12709,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12938,10 +12732,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12960,10 +12751,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -12978,10 +12766,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13000,10 +12785,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13018,10 +12800,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13035,12 +12814,7 @@
       "status": [
         "StandardTrack"
       ],
-      "compatibility": {
-        "Chrome": "132",
-        "ChromeAndroid": "132",
-        "Edge": "132",
-        "Opera": "117"
-      },
+      "compatibility": {},
       "baseline": {
         "level": "NONE"
       },
@@ -13052,10 +12826,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13064,7 +12835,7 @@
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>createBindGroup()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/GPUDevice\"><code>GPUDevice</code></a> interface creates a <a href=\"$MDN_URL$/Web/API/GPUBindGroup\"><code>GPUBindGroup</code></a> based on a <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a> that defines a set of resources to be bound together in a group and how those resources are used in shader stages.",
       "parameters": {
-        "descriptor": "An object containing the following properties:\n<dl>\n<dt id=\"entries\"><a href=\"#entries\"><code>entries</code></a></dt>\n<dd>\n<p>An array of entry objects describing the resources to expose to the shader. There will be one for each corresponding entry described by the <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a> referenced in <code>layout</code>. Each entry object has the following properties:\n<dl>\n<dt id=\"binding\"><a href=\"#binding\"><code>binding</code></a></dt>\n<dd>\n<p>A number representing a unique identifier for this resource binding, which matches the <code>binding</code> value of a corresponding <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a> entry. In addition, it matches the <code>n</code> index value of the corresponding <a href=\"https://gpuweb.github.io/gpuweb/wgsl/#attribute-binding\" class=\"external\" target=\"_blank\"><code>@binding(n)</code></a> attribute in the shader (<a href=\"$MDN_URL$/Web/API/GPUShaderModule\"><code>GPUShaderModule</code></a>) used in the related pipeline.\n</dd>\n<dt id=\"resource\"><a href=\"#resource\"><code>resource</code></a></dt>\n<dd>\n<p>The resource to bind. This can be one of the following:\n<ul>\n<li><code>GPUBufferBinding</code> (which wraps a <a href=\"$MDN_URL$/Web/API/GPUBuffer\"><code>GPUBuffer</code></a>; see <a href=\"#gpubufferbinding_objects\">GPUBufferBinding objects</a> for a definition)</li>\n<li><a href=\"$MDN_URL$/Web/API/GPUExternalTexture\"><code>GPUExternalTexture</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/GPUSampler\"><code>GPUSampler</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/GPUTextureView\"><code>GPUTextureView</code></a>; can be used in place of a <code>GPUExternalTexture</code> provided it is compatible (a 2D format with a single subresource, that is, <a href=\"$MDN_URL$/Web/API/GPUTexture/createView#dimension\"><code>dimension: \"2d\"</code></a>).</li>\n</ul>\n</dd>\n</dl>\n</dd>\n<dt id=\"label\"><a href=\"#label\"><code>label</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string providing a label that can be used to identify the object, for example in <a href=\"$MDN_URL$/Web/API/GPUError\"><code>GPUError</code></a> messages or console warnings.\n</dd>\n<dt id=\"layout\"><a href=\"#layout\"><code>layout</code></a></dt>\n<dd>\n<p>The <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a> that the <code>entries</code> of this bind group will conform to.\n</dd>\n</dl>"
+        "descriptor": "An object containing the following properties:\n<dl>\n<dt id=\"entries\"><a href=\"#entries\"><code>entries</code></a></dt>\n<dd>\n<p>An array of entry objects describing the resources to expose to the shader. There will be one for each corresponding entry described by the <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a> referenced in <code>layout</code>. Each entry object has the following properties:\n<dl>\n<dt id=\"binding\"><a href=\"#binding\"><code>binding</code></a></dt>\n<dd>\n<p>A number representing a unique identifier for this resource binding, which matches the <code>binding</code> value of a corresponding <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a> entry. In addition, it matches the <code>n</code> index value of the corresponding <a href=\"https://gpuweb.github.io/gpuweb/wgsl/#attribute-binding\" class=\"external\" target=\"_blank\"><code>@binding(n)</code></a> attribute in the shader (<a href=\"$MDN_URL$/Web/API/GPUShaderModule\"><code>GPUShaderModule</code></a>) used in the related pipeline.\n</dd>\n<dt id=\"resource\"><a href=\"#resource\"><code>resource</code></a></dt>\n<dd>\n<p>The resource to bind. This can be one of the following:\n<ul>\n<li><code>GPUBufferBinding</code>: Wraps a <a href=\"$MDN_URL$/Web/API/GPUBuffer\"><code>GPUBuffer</code></a>; see <a href=\"#gpubufferbinding_objects\">GPUBufferBinding objects</a> for a definition.</li>\n<li><a href=\"$MDN_URL$/Web/API/GPUBuffer\"><code>GPUBuffer</code></a>: Can be used directly rather than being wrapped in a <code>GPUBufferBinding</code>, provided the default <a href=\"#offset\"><code>offset</code></a> and <a href=\"#size\"><code>size</code></a> values are being used.</li>\n<li><a href=\"$MDN_URL$/Web/API/GPUExternalTexture\"><code>GPUExternalTexture</code></a></li>\n<li><a href=\"$MDN_URL$/Web/API/GPUTextureView\"><code>GPUTextureView</code></a>: Can be used in place of a <code>GPUExternalTexture</code> provided it is compatible (a 2D format with a single subresource, that is, <a href=\"$MDN_URL$/Web/API/GPUTexture/createView#dimension\"><code>dimension: \"2d\"</code></a>).</li>\n<li><a href=\"$MDN_URL$/Web/API/GPUTexture\"><code>GPUTexture</code></a>: Can be used in place of a <code>GPUTextureView</code>, provided a default view is desired. When used in this context, <code>GPUTexture</code> is equivalent to a <code>GPUTextureView</code> object created using a <a href=\"$MDN_URL$/Web/API/GPUTexture/createView\"><code>GPUTexture.createView()</code></a> call with no argument specified.</li>\n<li><a href=\"$MDN_URL$/Web/API/GPUSampler\"><code>GPUSampler</code></a></li>\n</ul>\n</dd>\n</dl>\n</dd>\n<dt id=\"label\"><a href=\"#label\"><code>label</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string providing a label that can be used to identify the object, for example in <a href=\"$MDN_URL$/Web/API/GPUError\"><code>GPUError</code></a> messages or console warnings.\n</dd>\n<dt id=\"layout\"><a href=\"#layout\"><code>layout</code></a></dt>\n<dd>\n<p>The <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a> that the <code>entries</code> of this bind group will conform to.\n</dd>\n</dl>"
       },
       "returns": "A <a href=\"$MDN_URL$/Web/API/GPUBindGroup\"><code>GPUBindGroup</code></a> object instance."
     },
@@ -13074,10 +12845,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13096,10 +12864,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13108,9 +12873,12 @@
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>createBuffer()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/GPUDevice\"><code>GPUDevice</code></a> interface creates a <a href=\"$MDN_URL$/Web/API/GPUBuffer\"><code>GPUBuffer</code></a> in which to store raw data to use in GPU operations.",
       "parameters": {
-        "descriptor": "An object containing the following properties:\n<dl>\n<dt id=\"label\"><a href=\"#label\"><code>label</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string providing a label that can be used to identify the object, for example in <a href=\"$MDN_URL$/Web/API/GPUError\"><code>GPUError</code></a> messages or console warnings.\n</dd>\n<dt id=\"mappedatcreation\"><a href=\"#mappedatcreation\"><code>mappedAtCreation</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A boolean. If set to <code>true</code>, the buffer will be mapped upon creation, meaning that you can set the values inside the buffer immediately by calling <a href=\"$MDN_URL$/Web/API/GPUBuffer/getMappedRange\"><code>GPUBuffer.getMappedRange()</code></a>. The default value is <code>false</code>.\n<p>Note that it is valid to set <code>mappedAtCreation: true</code> so you can set the buffer's initial data, even if the <code>GPUBufferUsage.MAP_READ</code> or <code>GPUBufferUsage.MAP_WRITE</code> usage flags are not set.\n</dd>\n<dt id=\"size\"><a href=\"#size\"><code>size</code></a></dt>\n<dd>\n<p>A number representing the size of the buffer, in bytes.\n</dd>\n<dt id=\"usage\"><a href=\"#usage\"><code>usage</code></a></dt>\n<dd>\n<p>The <a href=\"$MDN_URL$/Glossary/Bitwise_flags\">bitwise flags</a> representing the allowed usages for the <code>GPUBuffer</code>. The possible values are in the <a href=\"$MDN_URL$/Web/API/GPUBuffer/usage#value\"><code>GPUBuffer.usage</code> value table</a>.\n<p>Note that multiple possible usages can be specified by separating values with <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/Bitwise_OR\">bitwise OR</a>, for example: <code>GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE</code>.\n</dd>\n</dl>"
+        "descriptor": "An object containing the following properties:\n<dl>\n<dt id=\"label\"><a href=\"#label\"><code>label</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string providing a label that can be used to identify the object, for example in <a href=\"$MDN_URL$/Web/API/GPUError\"><code>GPUError</code></a> messages or console warnings.\n</dd>\n<dt id=\"mappedatcreation\"><a href=\"#mappedatcreation\"><code>mappedAtCreation</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A boolean. If set to <code>true</code>, the buffer will be mapped upon creation, meaning that you can set the values inside the buffer immediately by calling <a href=\"$MDN_URL$/Web/API/GPUBuffer/getMappedRange\"><code>GPUBuffer.getMappedRange()</code></a>. The default value is <code>false</code>.\n<p>Note that it is valid to set <code>mappedAtCreation: true</code> so you can set the buffer's initial data, even if the <code>GPUBufferUsage.MAP_READ</code> or <code>GPUBufferUsage.MAP_WRITE</code> usage flags are not set.\n</dd>\n<dt id=\"size\"><a href=\"#size\"><code>size</code></a></dt>\n<dd>\n<p>A number representing the size of the buffer, in bytes. If <code>mappedAtCreation</code> is set to <code>true</code>, this must be a multiple of <code>4</code>.\n</dd>\n<dt id=\"usage\"><a href=\"#usage\"><code>usage</code></a></dt>\n<dd>\n<p>The <a href=\"$MDN_URL$/Glossary/Bitwise_flags\">bitwise flags</a> representing the allowed usages for the <code>GPUBuffer</code>. The possible values are in the <a href=\"$MDN_URL$/Web/API/GPUBuffer/usage#value\"><code>GPUBuffer.usage</code> value table</a>.\n<p>Note that multiple possible usages can be specified by separating values with <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/Bitwise_OR\">bitwise OR</a>, for example: <code>GPUBufferUsage.COPY_SRC | GPUBufferUsage.MAP_WRITE</code>.\n</dd>\n</dl>"
       },
-      "returns": "A <a href=\"$MDN_URL$/Web/API/GPUBuffer\"><code>GPUBuffer</code></a> object instance."
+      "returns": "A <a href=\"$MDN_URL$/Web/API/GPUBuffer\"><code>GPUBuffer</code></a> object instance.",
+      "throws": {
+        "RangeError DOMException": "Thrown if <code>mappedAtCreation</code> is set to <code>true</code>, and the specified <code>size</code> is not a multiple of <code>4</code>."
+      }
     },
     "gpudevice.createcommandencoder": {
       "url": "$MDN_URL$/web/api/gpudevice/createcommandencoder",
@@ -13118,10 +12886,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13140,10 +12905,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13162,10 +12924,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13184,10 +12943,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13196,7 +12952,7 @@
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>createPipelineLayout()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/GPUDevice\"><code>GPUDevice</code></a> interface creates a <a href=\"$MDN_URL$/Web/API/GPUPipelineLayout\"><code>GPUPipelineLayout</code></a> that defines the <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a>s used by a pipeline. <a href=\"$MDN_URL$/Web/API/GPUBindGroup\"><code>GPUBindGroup</code></a>s used with the pipeline during command encoding must have compatible <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a>s.",
       "parameters": {
-        "descriptor": "An object containing the following properties:\n<dl>\n<dt id=\"bindgrouplayouts\"><a href=\"#bindgrouplayouts\"><code>bindGroupLayouts</code></a></dt>\n<dd>\n<p>An array of <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a> objects (which are in turn created via calls to <a href=\"$MDN_URL$/Web/API/GPUDevice/createBindGroupLayout\"><code>GPUDevice.createBindGroupLayout()</code></a>). Each one corresponds to a <a href=\"https://gpuweb.github.io/gpuweb/wgsl/#attribute-binding\" class=\"external\" target=\"_blank\"><code>@group</code></a> attribute in the shader code contained in the <a href=\"$MDN_URL$/Web/API/GPUShaderModule\"><code>GPUShaderModule</code></a> used in a related pipeline.\n</dd>\n<dt id=\"label\"><a href=\"#label\"><code>label</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string providing a label that can be used to identify the object, for example in <a href=\"$MDN_URL$/Web/API/GPUError\"><code>GPUError</code></a> messages or console warnings.\n</dd>\n</dl>"
+        "descriptor": "An object containing the following properties:\n<dl>\n<dt id=\"bindgrouplayouts\"><a href=\"#bindgrouplayouts\"><code>bindGroupLayouts</code></a></dt>\n<dd>\n<p>An array of values representing the bind group layouts for a pipeline. Each value can be:\n<ul>\n<li>A <a href=\"$MDN_URL$/Web/API/GPUBindGroupLayout\"><code>GPUBindGroupLayout</code></a> object, created via a call to <a href=\"$MDN_URL$/Web/API/GPUDevice/createBindGroupLayout\"><code>GPUDevice.createBindGroupLayout()</code></a>. Each object corresponds to a <a href=\"https://gpuweb.github.io/gpuweb/wgsl/#attribute-binding\" class=\"external\" target=\"_blank\"><code>@group</code></a> attribute in the shader code contained in the <a href=\"$MDN_URL$/Web/API/GPUShaderModule\"><code>GPUShaderModule</code></a> used in a related pipeline.</li>\n<li><code>null</code>, which represents an empty bind group layout. <code>null</code> values are ignored when creating a pipeline layout.</li>\n</ul>\n</dd>\n<dt id=\"label\"><a href=\"#label\"><code>label</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string providing a label that can be used to identify the object, for example in <a href=\"$MDN_URL$/Web/API/GPUError\"><code>GPUError</code></a> messages or console warnings.\n</dd>\n</dl>"
       },
       "returns": "A <a href=\"$MDN_URL$/Web/API/GPUPipelineLayout\"><code>GPUPipelineLayout</code></a> object instance."
     },
@@ -13206,10 +12962,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13228,10 +12981,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13250,10 +13000,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13272,10 +13019,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13294,10 +13038,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13316,10 +13057,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13338,10 +13076,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13350,7 +13085,7 @@
       },
       "doc": "<div class=\"notecard secure\"><p><strong>Secure context:</strong> This feature is available only in <a href=\"$MDN_URL$/Web/Security/Secure_Contexts\">secure contexts</a> (HTTPS), in some or all <a href=\"#browser_compatibility\">supporting browsers</a>.</div>\n<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>createTexture()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/GPUDevice\"><code>GPUDevice</code></a> interface creates a <a href=\"$MDN_URL$/Web/API/GPUTexture\"><code>GPUTexture</code></a> in which to store 1D, 2D, or 3D arrays of data, such as images, to use in GPU rendering operations.",
       "parameters": {
-        "descriptor": "An object containing the following properties:\n<dl>\n<dt id=\"dimension\"><a href=\"#dimension\"><code>dimension</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>An enumerated value indicating the dimension level of the texture. Possible values are:\n<ul>\n<li><code>\"1d\"</code>: The texture is one-dimensional.</li>\n<li><code>\"2d\"</code>: The texture is two-dimensional or an array of two-dimensional layers.</li>\n<li><code>\"3d\"</code>: The texture is three-dimensional.</li>\n</ul>\n<p><code>dimension</code> defaults to <code>\"2d\"</code> if the value is omitted.\n</dd>\n<dt id=\"format\"><a href=\"#format\"><code>format</code></a></dt>\n<dd>\n<p>An enumerated value specifying the format of the texture. See the <a href=\"https://gpuweb.github.io/gpuweb/#enumdef-gputextureformat\" class=\"external\" target=\"_blank\">Texture formats</a> section of the specification for all the possible values.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\n<ul>\n<li>The <code>depth32float-stencil8</code> <a href=\"$MDN_URL$/Web/API/GPUSupportedFeatures\">feature</a> needs to be enabled to create <code>depth32float-stencil8</code>-format <a href=\"$MDN_URL$/Web/API/GPUTexture\"><code>GPUTexture</code></a>s.</li>\n<li>The <code>texture-compression-bc</code> feature needs to be enabled to create two-dimensional BC compressed <code>GPUTexture</code>s: <code>bc1-rgba-unorm</code>, <code>bc1-rgba-unorm-srgb</code>, <code>bc2-rgba-unorm</code>, <code>bc2-rgba-unorm-srgb</code>, <code>bc3-rgba-unorm</code>, <code>bc3-rgba-unorm-srgb</code>, <code>bc4-r-unorm</code>, <code>bc4-r-snorm</code>, <code>bc5-rg-unorm</code>, <code>bc5-rg-snorm</code>, <code>bc6h-rgb-ufloat</code>, <code>bc6h-rgb-float</code>, <code>bc7-rgba-unorm</code>, and <code>bc7-rgba-unorm-srgb</code> formats.</li>\n<li>The <code>texture-compression-astc</code> feature needs to be enabled to create two-dimensional ASTC compressed <code>GPUTexture</code>s: <code>astc-4x4-unorm</code>, <code>astc-4x4-unorm-srgb</code>, <code>astc-5x4-unorm</code>, <code>astc-5x4-unorm-srgb</code>, <code>astc-5x5-unorm</code>, <code>astc-5x5-unorm-srgb</code>, <code>astc-6x5-unorm</code>, <code>astc-6x5-unorm-srgb</code>, <code>astc-6x6-unorm</code>, <code>astc-6x6-unorm-srgb</code>, <code>astc-8x5-unorm</code>, <code>astc-8x5-unorm-srgb</code>, <code>astc-8x6-unorm</code>, <code>astc-8x6-unorm-srgb</code>, <code>astc-8x8-unorm</code>, <code>astc-8x8-unorm-srgb</code>, <code>astc-10x5-unorm</code>, <code>astc-10x5-unorm-srgb</code>, <code>astc-10x6-unorm</code>, <code>astc-10x6-unorm-srgb</code>, <code>astc-10x8-unorm</code>, <code>astc-10x8-unorm-srgb</code>, <code>astc-10x10-unorm</code>, <code>astc-10x10-unorm-srgb</code>, <code>astc-12x10-unorm</code>, <code>astc-12x10-unorm-srgb</code>, and <code>astc-12x12-unorm``astc-12x12-unorm-srgb</code> formats.</li>\n<li>The <code>texture-compression-etc2</code> feature needs to be enabled to create two-dimensional ETC2 compressed <code>GPUTexture</code>s: <code>etc2-rgb8unorm</code>, <code>etc2-rgb8unorm-srgb</code>, <code>etc2-rgb8a1unorm</code>, <code>etc2-rgb8a1unorm-srgb</code>, <code>etc2-rgba8unorm</code>, <code>etc2-rgba8unorm-srgb</code>, <code>eac-r11unorm</code>, <code>eac-r11snorm</code>, <code>eac-rg11unorm</code>, and <code>eac-rg11snorm</code> formats.</li>\n</ul>\n</div>\n</dd>\n<dt id=\"label\"><a href=\"#label\"><code>label</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string providing a label that can be used to identify the object, for example in <a href=\"$MDN_URL$/Web/API/GPUError\"><code>GPUError</code></a> messages or console warnings.\n</dd>\n<dt id=\"miplevelcount\"><a href=\"#miplevelcount\"><code>mipLevelCount</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A number specifying the number of mip levels the texture will contain. If omitted, this defaults to 1.\n</dd>\n<dt id=\"samplecount\"><a href=\"#samplecount\"><code>sampleCount</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A number specifying the texture's sample count. To be valid, the value must be 1 or 4. If omitted, this defaults to 1. A value higher than 1 indicates a multi-sampled texture.\n</dd>\n<dt id=\"size\"><a href=\"#size\"><code>size</code></a></dt>\n<dd>\n<p>An object or array specifying the width, height, and depth/array layer count of the texture. The width value must always be specified, while the height and depth/array layer count values are optional and will default to 1 if omitted.\n<p>For example, you can pass an array like <code>[16, 16, 2]</code>, or its equivalent object <code>{ width: 16, height: 16, depthOrArrayLayers: 2 }</code>.\n</dd>\n<dt id=\"usage\"><a href=\"#usage\"><code>usage</code></a></dt>\n<dd>\n<p>The <a href=\"$MDN_URL$/Glossary/Bitwise_flags\">bitwise flags</a> representing the allowed usages for the <code>GPUTexture</code>. The possible values are in the <a href=\"$MDN_URL$/Web/API/GPUTexture/usage#value\"><code>GPUTexture.usage</code> value table</a>.\n<p>Note that multiple possible usages can be specified by separating values with <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/Bitwise_OR\">bitwise OR</a>, for example: <code>GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT</code>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\n<ul>\n<li>The <code>bgra8unorm-storage</code> <a href=\"$MDN_URL$/Web/API/GPUSupportedFeatures\">feature</a> needs to be enabled to specify <code>STORAGE_BINDING</code> usage for a <code>bgra8unorm</code>-<a href=\"#format\"><code>format</code></a> <a href=\"$MDN_URL$/Web/API/GPUTexture\"><code>GPUTexture</code></a>.</li>\n<li>The <code>rg11b10ufloat-renderable</code> <a href=\"$MDN_URL$/Web/API/GPUSupportedFeatures\">feature</a> needs to be enabled to specify <code>RENDER_ATTACHMENT</code> usage for a <code>rg11b10ufloat</code>-<a href=\"#format\"><code>format</code></a> <a href=\"$MDN_URL$/Web/API/GPUTexture\"><code>GPUTexture</code></a>, as well as its blending and multisampling.</li>\n</ul>\n</div>\n</dd>\n<dt id=\"viewformats\"><a href=\"#viewformats\"><code>viewFormats</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>An array of enumerated values specifying other <a href=\"https://gpuweb.github.io/gpuweb/#enumdef-gputextureformat\" class=\"external\" target=\"_blank\">texture formats</a> permitted when calling <a href=\"$MDN_URL$/Web/API/GPUTexture/createView\"><code>GPUTexture.createView()</code></a> on this texture, in addition to the texture format specified in its <code>format</code> value.\n</dd>\n</dl>"
+        "descriptor": "An object containing the following properties:\n<dl>\n<dt id=\"dimension\"><a href=\"#dimension\"><code>dimension</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>An enumerated value indicating the dimension level of the texture. Possible values are:\n<ul>\n<li><code>\"1d\"</code>: The texture is one-dimensional.</li>\n<li><code>\"2d\"</code>: The texture is two-dimensional or an array of two-dimensional layers.</li>\n<li><code>\"3d\"</code>: The texture is three-dimensional.</li>\n</ul>\n<p><code>dimension</code> defaults to <code>\"2d\"</code> if the value is omitted.\n</dd>\n<dt id=\"format\"><a href=\"#format\"><code>format</code></a></dt>\n<dd>\n<p>An enumerated value specifying the format of the texture. See the <a href=\"https://gpuweb.github.io/gpuweb/#enumdef-gputextureformat\" class=\"external\" target=\"_blank\">Texture formats</a> section of the specification for all the possible values.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\n<ul>\n<li>The <code>depth32float-stencil8</code> <a href=\"$MDN_URL$/Web/API/GPUSupportedFeatures\">feature</a> needs to be enabled to create <code>depth32float-stencil8</code>-format <a href=\"$MDN_URL$/Web/API/GPUTexture\"><code>GPUTexture</code></a>s.</li>\n<li>The <code>texture-compression-bc</code> feature needs to be enabled to create two-dimensional (<code>dimension: \"2d\"</code>) BC compressed <code>GPUTexture</code>s: <code>bc1-rgba-unorm</code>, <code>bc1-rgba-unorm-srgb</code>, <code>bc2-rgba-unorm</code>, <code>bc2-rgba-unorm-srgb</code>, <code>bc3-rgba-unorm</code>, <code>bc3-rgba-unorm-srgb</code>, <code>bc4-r-unorm</code>, <code>bc4-r-snorm</code>, <code>bc5-rg-unorm</code>, <code>bc5-rg-snorm</code>, <code>bc6h-rgb-ufloat</code>, <code>bc6h-rgb-float</code>, <code>bc7-rgba-unorm</code>, and <code>bc7-rgba-unorm-srgb</code> formats.</li>\n<li>The <code>texture-compression-bc</code> and <code>texture-compression-bc-sliced-3d</code> features need to be enabled to create three-dimensional BC compressed <code>GPUTexture</code>s (the same <code>format</code> values specified in the previous bullet, but with <code>dimension</code> set to <code>3d</code>).</li>\n<li>The <code>texture-compression-astc</code> feature needs to be enabled to create two-dimensional (<code>dimension: \"2d\"</code>) ASTC compressed <code>GPUTexture</code>s: <code>astc-4x4-unorm</code>, <code>astc-4x4-unorm-srgb</code>, <code>astc-5x4-unorm</code>, <code>astc-5x4-unorm-srgb</code>, <code>astc-5x5-unorm</code>, <code>astc-5x5-unorm-srgb</code>, <code>astc-6x5-unorm</code>, <code>astc-6x5-unorm-srgb</code>, <code>astc-6x6-unorm</code>, <code>astc-6x6-unorm-srgb</code>, <code>astc-8x5-unorm</code>, <code>astc-8x5-unorm-srgb</code>, <code>astc-8x6-unorm</code>, <code>astc-8x6-unorm-srgb</code>, <code>astc-8x8-unorm</code>, <code>astc-8x8-unorm-srgb</code>, <code>astc-10x5-unorm</code>, <code>astc-10x5-unorm-srgb</code>, <code>astc-10x6-unorm</code>, <code>astc-10x6-unorm-srgb</code>, <code>astc-10x8-unorm</code>, <code>astc-10x8-unorm-srgb</code>, <code>astc-10x10-unorm</code>, <code>astc-10x10-unorm-srgb</code>, <code>astc-12x10-unorm</code>, <code>astc-12x10-unorm-srgb</code>, <code>astc-12x12-unorm</code>, and <code>astc-12x12-unorm-srgb</code> formats.</li>\n<li>The <code>texture-compression-astc</code> and <code>texture-compression-astc-sliced-3d</code> features need to be enabled to create three-dimensional BC compressed <code>GPUTexture</code>s (the same <code>format</code> values specified in the previous bullet, but with <code>dimension</code> set to <code>3d</code>).</li>\n<li>The <code>texture-compression-etc2</code> feature needs to be enabled to create two-dimensional ETC2 compressed <code>GPUTexture</code>s: <code>etc2-rgb8unorm</code>, <code>etc2-rgb8unorm-srgb</code>, <code>etc2-rgb8a1unorm</code>, <code>etc2-rgb8a1unorm-srgb</code>, <code>etc2-rgba8unorm</code>, <code>etc2-rgba8unorm-srgb</code>, <code>eac-r11unorm</code>, <code>eac-r11snorm</code>, <code>eac-rg11unorm</code>, and <code>eac-rg11snorm</code> formats.</li>\n<li>See the <a href=\"#tier_1_and_tier_2_texture_formats\">Tier 1 and Tier 2 texture formats</a> section for more information about those texture format sets and the requirements to create them.</li>\n</ul>\n</div>\n</dd>\n<dt id=\"label\"><a href=\"#label\"><code>label</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A string providing a label that can be used to identify the object, for example in <a href=\"$MDN_URL$/Web/API/GPUError\"><code>GPUError</code></a> messages or console warnings.\n</dd>\n<dt id=\"miplevelcount\"><a href=\"#miplevelcount\"><code>mipLevelCount</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A number specifying the number of mip levels the texture will contain. If omitted, this defaults to 1.\n</dd>\n<dt id=\"samplecount\"><a href=\"#samplecount\"><code>sampleCount</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>A number specifying the texture's sample count. To be valid, the value must be 1 or 4. If omitted, this defaults to 1. A value higher than 1 indicates a multi-sampled texture.\n</dd>\n<dt id=\"size\"><a href=\"#size\"><code>size</code></a></dt>\n<dd>\n<p>An object or array specifying the width, height, and depth/array layer count of the texture. The width value must always be specified, while the height and depth/array layer count values are optional and will default to 1 if omitted.\n<p>For example, you can pass an array like <code>[16, 16, 2]</code>, or its equivalent object <code>{ width: 16, height: 16, depthOrArrayLayers: 2 }</code>.\n</dd>\n<dt id=\"usage\"><a href=\"#usage\"><code>usage</code></a></dt>\n<dd>\n<p>The <a href=\"$MDN_URL$/Glossary/Bitwise_flags\">bitwise flags</a> representing the allowed usages for the <code>GPUTexture</code>. The possible values are in the <a href=\"$MDN_URL$/Web/API/GPUTexture/usage#value\"><code>GPUTexture.usage</code> value table</a>.\n<p>Note that multiple possible usages can be specified by separating values with <a href=\"$MDN_URL$/Web/JavaScript/Reference/Operators/Bitwise_OR\">bitwise OR</a>, for example: <code>GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT</code>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\n<ul>\n<li>The <code>bgra8unorm-storage</code> <a href=\"$MDN_URL$/Web/API/GPUSupportedFeatures\">feature</a> needs to be enabled to specify <code>STORAGE_BINDING</code> usage for a <code>bgra8unorm</code>-<a href=\"#format\"><code>format</code></a> <a href=\"$MDN_URL$/Web/API/GPUTexture\"><code>GPUTexture</code></a>.</li>\n<li>The <code>rg11b10ufloat-renderable</code> <a href=\"$MDN_URL$/Web/API/GPUSupportedFeatures\">feature</a> needs to be enabled to specify <code>RENDER_ATTACHMENT</code> usage for a <code>rg11b10ufloat</code>-<a href=\"#format\"><code>format</code></a> <a href=\"$MDN_URL$/Web/API/GPUTexture\"><code>GPUTexture</code></a>, as well as its blending and multisampling.</li>\n</ul>\n</div>\n</dd>\n<dt id=\"viewformats\"><a href=\"#viewformats\"><code>viewFormats</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>An array of enumerated values specifying other <a href=\"https://gpuweb.github.io/gpuweb/#enumdef-gputextureformat\" class=\"external\" target=\"_blank\">texture formats</a> permitted when calling <a href=\"$MDN_URL$/Web/API/GPUTexture/createView\"><code>GPUTexture.createView()</code></a> on this texture, in addition to the texture format specified in its <code>format</code> value.\n</dd>\n</dl>"
       },
       "returns": "A <a href=\"$MDN_URL$/Web/API/GPUTexture\"><code>GPUTexture</code></a> object instance."
     },
@@ -13360,10 +13095,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13379,10 +13111,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13397,10 +13126,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13422,10 +13148,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13440,10 +13163,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13458,10 +13178,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13476,10 +13193,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13495,10 +13209,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13517,10 +13228,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13535,10 +13243,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13553,10 +13258,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13571,10 +13273,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13589,10 +13288,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
-        "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99"
+        "ChromeAndroid": "121"
       },
       "baseline": {
         "level": "NONE"
@@ -13605,10 +13301,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
-        "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99"
+        "ChromeAndroid": "121"
       },
       "baseline": {
         "level": "NONE"
@@ -13621,10 +13314,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13639,10 +13329,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13657,10 +13344,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13675,10 +13359,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13696,10 +13377,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13714,10 +13392,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13735,10 +13410,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13753,10 +13425,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13775,10 +13444,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13793,10 +13459,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13811,10 +13474,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13829,10 +13489,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13847,10 +13504,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13865,10 +13519,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13884,10 +13535,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13902,10 +13550,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13920,10 +13565,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13938,10 +13580,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13966,10 +13605,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -13984,10 +13620,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14003,10 +13636,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14025,10 +13655,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14054,10 +13681,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14079,10 +13703,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14097,10 +13718,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14115,10 +13733,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14133,10 +13748,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14158,10 +13770,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14184,10 +13793,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14207,10 +13813,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14230,10 +13833,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14252,10 +13852,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14274,10 +13871,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14292,10 +13886,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14311,10 +13902,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14333,10 +13921,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14359,10 +13944,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14384,10 +13966,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14406,10 +13985,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14431,10 +14007,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14449,10 +14022,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14471,10 +14041,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14496,10 +14063,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14522,10 +14086,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14545,10 +14106,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14568,10 +14126,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14587,10 +14142,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14606,10 +14158,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14628,10 +14177,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14650,10 +14196,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14668,10 +14211,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14687,10 +14227,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14709,10 +14246,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14735,10 +14269,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14757,10 +14288,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14782,10 +14310,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14804,10 +14329,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14829,10 +14351,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14851,10 +14370,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14876,10 +14392,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14903,10 +14416,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14921,10 +14431,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14943,10 +14450,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14961,10 +14465,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14979,10 +14480,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -14997,10 +14495,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15015,10 +14510,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15034,10 +14526,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15052,10 +14541,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15070,10 +14556,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15088,10 +14571,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15106,10 +14586,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15128,10 +14605,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15146,10 +14620,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15165,10 +14636,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15183,10 +14651,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15201,10 +14666,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15219,10 +14681,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15237,10 +14696,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15255,10 +14711,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15273,10 +14726,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15291,10 +14741,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15309,10 +14756,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15327,10 +14771,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15345,10 +14786,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15363,10 +14801,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15381,10 +14816,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15403,10 +14835,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -15421,10 +14850,7 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "113",
         "ChromeAndroid": "121",
-        "Edge": "113",
-        "Opera": "99",
         "Safari": "26",
         "SafariIOS": "26"
       },
@@ -19021,10 +18447,7 @@
           "SafariIOS": "8"
         },
         "webgpu_context": {
-          "Chrome": "113",
           "ChromeAndroid": "121",
-          "Edge": "113",
-          "Opera": "99",
           "Safari": "26",
           "SafariIOS": "26"
         }
@@ -20151,10 +19574,11 @@
         "SafariIOS": "15.5"
       },
       "baseline": {
-        "level": "LOW",
-        "lowDate": "2023-04-11"
+        "level": "HIGH",
+        "lowDate": "2023-04-11",
+        "highDate": "2025-10-11"
       },
-      "doc": "The <a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a> property <strong><code>inert</code></strong> reflects the value of the element's <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/inert\"><code>inert</code></a> attribute. It is a boolean value that, when present, makes the browser \"ignore\" user input events for the element, including focus events and events from assistive technologies. The browser may also ignore page search and text selection in the element. This can be useful when building UIs such as modals where you would want to \"trap\" the focus inside the modal when it's visible.\n<p>Note that if the <code>inert</code> attribute is unspecified, the element itself may still inherit inertness from its parent. However, that inherited inertness is not reflected by this property's value."
+      "doc": "The <a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a> property <strong><code>inert</code></strong> reflects the value of the element's <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/inert\"><code>inert</code></a> attribute. It is a boolean value that, when present, makes the browser \"ignore\" user input events for the element, including focus events and events from assistive technologies. The browser may also ignore page search and text selection in the element. This can be useful when building UIs such as modals where you would want to \"trap\" the focus inside the modal when it's visible.\n<p>Note that if the <code>inert</code> attribute is unspecified, the element itself may still inherit inertness from its parent. However, that inherited inertness is not reflected by this property's value. Explicitly setting the property to <code>false</code> cannot revert inertness inherited from the parent."
     },
     "htmlelement.innertext": {
       "url": "$MDN_URL$/web/api/htmlelement/innertext",
@@ -20489,7 +19913,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The read-only <strong><code>style</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a> returns the <em>inline</em> style of an element in the form of a live <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object that contains a list of all styles properties for that element with values assigned only for the attributes that are defined in the element's inline <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/style\"><code>style</code></a> attribute.\n<p>Shorthand properties are expanded. If you set <code>style=\"border-top: 1px solid black\"</code>, the longhand properties (<a href=\"$MDN_URL$/Web/CSS/border-top-color\"><code>border-top-color</code></a>, <a href=\"$MDN_URL$/Web/CSS/border-top-style\"><code>border-top-style</code></a>, and <a href=\"$MDN_URL$/Web/CSS/border-top-width\"><code>border-top-width</code></a>) are set instead.\n<p>This property is read-only, meaning it is not possible to assign a <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object to it. Nevertheless, it is possible to set an inline style by assigning a <em>string</em> directly to the <code>style</code> property. In this case the string is forwarded to <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration/cssText\"><code>CSSStyleDeclaration.cssText</code></a>. Using <code>style</code> in this manner will completely overwrite all inline styles on the element.\n<p>Therefore, to add specific styles to an element without altering other style values, it is generally preferable to set individual properties on the <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object. For example, you can write <code>element.style.backgroundColor = \"red\"</code>.\n<p>A style declaration is reset by setting it to <code>null</code> or an empty string, e.g., <code>elt.style.color = null</code>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nCSS property names are converted to JavaScript identifier with these rules:\n<ul>\n<li>If the property is made of one word, it remains as it is: <code>height</code> stays as is (in lowercase). As <code>float</code> is a reserved keyword in JavaScript, this property name was historically converted to <code>cssFloat</code>. All modern browsers now support the direct use of <code>float</code> in JavaScript to access the <code>float</code> CSS property, but <code>cssFloat</code> is used in older browsers and is still supported as an alias in modern browsers.</li>\n<li>If the property is made of several words, separated by dashes, the dashes are removed and it is converted to <a href=\"$MDN_URL$/Glossary/Camel_case\">camel case</a>: <code>background-attachment</code> becomes <code>backgroundAttachment</code>.</li>\n</ul>\n<p>The <code>style</code> property has the same priority in the CSS cascade as an inline style declaration set via the <code>style</code> attribute.\n</div>"
+      "doc": "The read-only <strong><code>style</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a> returns the <em>inline</em> <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/style\"><code>style</code></a> of an element in the form of a live <a href=\"$MDN_URL$/Web/API/CSSStyleProperties\"><code>CSSStyleProperties</code></a> object.\nThis object can be used to get and set the inline styles of an element."
     },
     "htmlelement.tabindex": {
       "url": "$MDN_URL$/web/api/htmlelement/tabindex",
@@ -22138,7 +21562,10 @@
         "lowDate": "2020-01-15",
         "highDate": "2022-07-15"
       },
-      "doc": "The <strong><code>srcdoc</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement\"><code>HTMLIFrameElement</code></a> specifies the content of the page."
+      "doc": "<div class=\"notecard warning\">\n<p><strong>Warning:</strong>\nThis property parses its input as HTML, writing the result into the frame's DOM.\nAPIs like this are known as <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#concepts_and_usage\">injection sinks</a>, and are potentially a vector for <a href=\"$MDN_URL$/Web/Security/Attacks/XSS\">cross-site-scripting (XSS)</a> attacks, if the input originally came from an attacker.\n<p>You can mitigate this risk by always assigning <code>TrustedHTML</code> objects instead of strings and <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#using_a_csp_to_enforce_trusted_types\">enforcing trusted types</a>.\nSee <a href=\"#security_considerations\">Security considerations</a> for more information.\n</div>\n<p>The <strong><code>srcdoc</code></strong> property of the <a href=\"$MDN_URL$/Web/API/HTMLIFrameElement\"><code>HTMLIFrameElement</code></a> interface gets or sets the inline HTML markup of the frame's document.\n<p>This reflects the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/iframe#srcdoc\"><code>srcdoc</code></a> attribute of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/iframe\"><code>&lt;iframe&gt;</code></a>.",
+      "throws": {
+        "TypeError": "Thrown if the property is set to a string when <a href=\"$MDN_URL$/Web/API/Trusted_Types_API\">Trusted Types</a> are <a href=\"$MDN_URL$/Web/API/Trusted_Types_API#using_a_csp_to_enforce_trusted_types\">enforced by a CSP</a> and no default policy is defined."
+      }
     },
     "htmliframeelement.width": {
       "url": "$MDN_URL$/web/api/htmliframeelement/width",
@@ -32371,13 +31798,15 @@
       },
       "doc": "The <strong><code>getAll()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a>\ninterface retrieves all objects that are inside the index.\n<p>There is a performance cost associated with looking at the <code>value</code> property\nof a cursor, because the object is created lazily. To use a feature\nlike <code>getAll()</code>, the browser has to create all the objects at once. If you\nare just interested in looking at each of the keys, for instance, it is more efficient\nto use a <a href=\"$MDN_URL$/Web/API/IDBCursor\">cursor</a>. If you are trying to get an\narray of all the objects in an object store, though, you should\nuse <code>getAll()</code>.",
       "parameters": {
-        "query": "A key or an <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a> identifying the records to retrieve. If this\nvalue is null or missing, the browser will use an unbound key range.",
-        "count": "The number of records to return. If this value exceeds the number of records in the\nquery, the browser will only retrieve the queried records. If it is lower than\n<code>0</code> or greater than <code>2^32 - 1</code> a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a>\nexception will be thrown."
+        "query": "A key or an <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a> identifying the records to retrieve. If this value is <code>null</code> or not specified, the browser will use an unbound key range.<p>See the earlier <a href=\"#query\"><code>query</code></a> definition.",
+        "count": "The number of records to return. If this value exceeds the number of records in the\nquery, the browser will only retrieve the queried records. If it is lower than\n<code>0</code> or greater than <code>2^32 - 1</code> a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a>\nexception will be thrown.<p>See the earlier <a href=\"#count\"><code>count</code></a> definition.",
+        "direction": "An enumerated value specifying the direction in which the objects are traversed. Possible values are:\n<dl>\n<dt id=\"next\"><a href=\"#next\"><code>next</code></a></dt>\n<dd>\n<p>The objects are traversed from the beginning, in increasing key order. This is the default value.\n</dd>\n<dt id=\"nextunique\"><a href=\"#nextunique\"><code>nextunique</code></a></dt>\n<dd>\n<p>The objects are traversed from the beginning, in increasing key order. For every key with duplicate objects, only the object closest to the start is yielded.\n</dd>\n<dt id=\"prev\"><a href=\"#prev\"><code>prev</code></a></dt>\n<dd>\n<p>The objects are traversed from the end, in decreasing key order.\n</dd>\n<dt id=\"prevunique\"><a href=\"#prevunique\"><code>prevunique</code></a></dt>\n<dd>\n<p>The objects are traversed from the end, in decreasing key order. For every key with duplicate objects, only the object closest to the start is yielded.\n</dd>\n</dl>"
       },
       "returns": "An <a href=\"$MDN_URL$/Web/API/IDBRequest\"><code>IDBRequest</code></a> object on which subsequent events related to this operation are fired.\n<p>If the operation is successful, the value of the request's <a href=\"$MDN_URL$/Web/API/IDBRequest/result\" title=\"result\"><code>result</code></a> property is an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> of the values of all records matching the given query, up to the value of <code>count</code>, if <code>count</code> was supplied.",
       "throws": {
         "TransactionInactiveError DOMException": "Thrown if this <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a>'s transaction is inactive.",
-        "InvalidStateError DOMException": "Thrown if the <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a> has been deleted or removed."
+        "InvalidStateError DOMException": "Thrown if the <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a> has been deleted or removed.",
+        "TypeError DOMException": "Thrown if the <a href=\"#count\"><code>count</code></a> parameter is not between <code>0</code> and <code>2^32 - 1</code>, inclusive."
       }
     },
     "idbindex.getallkeys": {
@@ -32402,13 +31831,42 @@
       },
       "doc": "The <strong><code>getAllKeys()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a>\ninterface asynchronously retrieves the primary keys of all objects inside the index,\nsetting them as the <code>result</code> of the request object.",
       "parameters": {
-        "query": "A key or an <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a> identifying the keys to retrieve. If this\nvalue is null or missing, the browser will use an unbound key range.",
-        "count": "The number records to return. If this value exceeds the number of records in the\nquery, the browser will only retrieve the first item. If it is lower than\n<code>0</code> or greater than <code>2^32 - 1</code> a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a>\nexception will be thrown."
+        "query": "A key or an <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a> identifying the keys to retrieve. If this value is <code>null</code> or not specified, the browser will use an unbound key range.<p>See the earlier <a href=\"#query\"><code>query</code></a> definition.",
+        "count": "The number records to return. If this value exceeds the number of records in the\nquery, the browser will only retrieve the first item. If it is lower than\n<code>0</code> or greater than <code>2^32 - 1</code> a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a>\nexception will be thrown.<p>See the earlier <a href=\"#count\"><code>count</code></a> definition.",
+        "direction": "An enumerated value specifying the direction in which the objects are traversed. Possible values are:\n<dl>\n<dt id=\"next\"><a href=\"#next\"><code>next</code></a></dt>\n<dd>\n<p>The objects are traversed from the beginning, in increasing key order. This is the default value.\n</dd>\n<dt id=\"nextunique\"><a href=\"#nextunique\"><code>nextunique</code></a></dt>\n<dd>\n<p>The objects are traversed from the beginning, in increasing key order. Keys duplicated across multiple objects are only yielded once.\n</dd>\n<dt id=\"prev\"><a href=\"#prev\"><code>prev</code></a></dt>\n<dd>\n<p>The objects are traversed from the end, in decreasing key order.\n</dd>\n<dt id=\"prevunique\"><a href=\"#prevunique\"><code>prevunique</code></a></dt>\n<dd>\n<p>The objects are traversed from the end, in decreasing key order. Keys duplicated across multiple objects are only yielded once.\n</dd>\n</dl>"
       },
       "returns": "An <a href=\"$MDN_URL$/Web/API/IDBRequest\"><code>IDBRequest</code></a> object on which subsequent events related to this operation are fired.\n<p>If the operation is successful, the value of the request's <a href=\"$MDN_URL$/Web/API/IDBRequest/result\" title=\"result\"><code>result</code></a> property is an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> of the keys for all records matching the given query, up to the value of <code>count</code>, if <code>count</code> was supplied.",
       "throws": {
         "TransactionInactiveError DOMException": "Thrown if this <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a>'s transaction is inactive.",
-        "InvalidStateError DOMException": "Thrown if the <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a> has been deleted or removed."
+        "InvalidStateError DOMException": "Thrown if the <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a> has been deleted or removed.",
+        "TypeError DOMException": "Thrown if the <a href=\"#count\"><code>count</code></a> parameter is not between <code>0</code> and <code>2^32 - 1</code>, inclusive."
+      }
+    },
+    "idbindex.getallrecords": {
+      "url": "$MDN_URL$/web/api/idbindex/getallrecords",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "141",
+        "ChromeAndroid": "141",
+        "Edge": "141"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>getAllRecords()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a>\ninterface retrieves all records (including index keys, primary keys, and values) from the index.\n<p><code>getAllRecords()</code> effectively combines the functionality of <a href=\"$MDN_URL$/Web/API/IDBIndex/getAllKeys\" ><code>getAllKeys()</code></a> and <a href=\"$MDN_URL$/Web/API/IDBIndex/getAll\" ><code>getAll()</code></a> by enumerating both primary keys and values at the same time. This combined operation enables certain data retrieval patterns to be significantly faster than alternatives such as iteration with cursors.",
+      "parameters": {
+        "query": "A key or an <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a> identifying the records to retrieve. If this value is <code>null</code> or not specified, the browser will use an unbound key range.",
+        "count": "The number of records to return. If this value exceeds the number of records in the query, the browser will retrieve only the queried records. If the value is less than <code>0</code> or greater than <code>2^32 - 1</code>, a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> exception will be thrown.",
+        "direction": "An enumerated value specifying the direction in which the records are traversed. Possible values are:\n<dl>\n<dt id=\"next\"><a href=\"#next\"><code>next</code></a></dt>\n<dd>\n<p>The records are traversed from the beginning, in increasing key order. This is the default value.\n</dd>\n<dt id=\"nextunique\"><a href=\"#nextunique\"><code>nextunique</code></a></dt>\n<dd>\n<p>The records are traversed from the beginning, in increasing key order. For every key with duplicate records, only the record closest to the start is yielded.\n</dd>\n<dt id=\"prev\"><a href=\"#prev\"><code>prev</code></a></dt>\n<dd>\n<p>The records are traversed from the end, in decreasing key order.\n</dd>\n<dt id=\"prevunique\"><a href=\"#prevunique\"><code>prevunique</code></a></dt>\n<dd>\n<p>The records are traversed from the end, in decreasing key order. For every key with duplicate records, only the record closest to the start is yielded.\n</dd>\n</dl>"
+      },
+      "returns": "An <a href=\"$MDN_URL$/Web/API/IDBRequest\"><code>IDBRequest</code></a> object on which subsequent events related to this operation are fired.\n<p>If the operation is successful, the value of the request's <a href=\"$MDN_URL$/Web/API/IDBRequest/result\" title=\"result\"><code>result</code></a> property is an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>array</code></a> of objects representing all the records that match the given query, up to the number specified by <code>count</code> (if provided).\n<p>Each object contains the following properties:\n<dl>\n<dt id=\"key\"><a href=\"#key\"><code>key</code></a></dt>\n<dd>\n<p>A value representing the record's key.\n</dd>\n<dt id=\"primarykey\"><a href=\"#primarykey\"><code>primaryKey</code></a></dt>\n<dd>\n<p>A value representing the key of the record in the index's associated <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a>.\n</dd>\n<dt id=\"value\"><a href=\"#value\"><code>value</code></a></dt>\n<dd>\n<p>A value representing the record's value.\n</dd>\n</dl>",
+      "throws": {
+        "InvalidStateError DOMException": "Thrown if the <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a> or its associated <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a> has been deleted or removed.",
+        "TransactionInactiveError DOMException": "Thrown if this <a href=\"$MDN_URL$/Web/API/IDBIndex\"><code>IDBIndex</code></a>'s transaction is inactive.",
+        "TypeError DOMException": "Thrown if the <a href=\"#count\"><code>count</code></a> parameter is not between <code>0</code> and <code>2^32 - 1</code>, inclusive."
       }
     },
     "idbindex.getkey": {
@@ -33188,15 +32646,16 @@
       },
       "doc": "The <strong><code>getAll()</code></strong> method of the\n<a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a> interface returns an <a href=\"$MDN_URL$/Web/API/IDBRequest\"><code>IDBRequest</code></a> object\ncontaining all objects in the object store matching the specified parameter or all\nobjects in the store if no parameters are given.\n<p>If a value is successfully found, then a structured clone of it is created and set as\nthe result of the request object.\n<p>This method produces the same result for:\n<ul>\n<li>a record that doesn't exist in the database</li>\n<li>a record that has an undefined value</li>\n</ul>\n<p>To tell these situations apart, you either call\n<ol>\n<li>the <a href=\"$MDN_URL$/Web/API/IDBObjectStore/openCursor\" ><code>openCursor()</code></a> method with the same\nkey. That method provides a cursor if the record exists, and no cursor if it does not.</li>\n<li>the <a href=\"$MDN_URL$/Web/API/IDBObjectStore/count\" ><code>count()</code></a> method with the same key, which\nwill return 1 if the row exists and 0 if it doesn't.</li>\n</ol>",
       "parameters": {
-        "query": "A key or <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a> to be queried. If nothing is passed, this will\ndefault to a key range that selects all the records in this object store.",
-        "count": "Specifies the number of values to return if more than one is found. If it is lower\nthan <code>0</code> or greater than <code>2^32 - 1</code> a\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> exception will be thrown."
+        "query": "A key or <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a> to be queried. If this value is not specified, this will\ndefault to a key range that selects all the records in this object store.<p>See the earlier <a href=\"#query\"><code>query</code></a> definition.",
+        "count": "Specifies the number of values to return if more than one is found. If it is lower\nthan <code>0</code> or greater than <code>2^32 - 1</code> a\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> exception will be thrown.<p>See the earlier <a href=\"#count\"><code>count</code></a> definition.",
+        "direction": "An enumerated value specifying the direction in which the objects are traversed. Possible values are:\n<dl>\n<dt id=\"next\"><a href=\"#next\"><code>next</code></a></dt>\n<dd>\n<p>The objects are traversed from the beginning, in increasing key order. This is the default value.\n</dd>\n<dt id=\"nextunique\"><a href=\"#nextunique\"><code>nextunique</code></a></dt>\n<dd>\n<p>The objects are traversed from the beginning, in increasing key order. This will yield the same objects as <code>next</code>, because duplicate keys are not allowed in <code>IDBObjectStore</code>s.\n</dd>\n<dt id=\"prev\"><a href=\"#prev\"><code>prev</code></a></dt>\n<dd>\n<p>The objects are traversed from the end, in decreasing key order.\n</dd>\n<dt id=\"prevunique\"><a href=\"#prevunique\"><code>prevunique</code></a></dt>\n<dd>\n<p>The objects are traversed from the end, in decreasing key order. This will yield the same objects as <code>prev</code>, because duplicate keys are not allowed in <code>IDBObjectStore</code>s.\n</dd>\n</dl>"
       },
       "returns": "An <a href=\"$MDN_URL$/Web/API/IDBRequest\"><code>IDBRequest</code></a> object on which subsequent events related to this operation are fired.\n<p>If the operation is successful, the value of the request's <a href=\"$MDN_URL$/Web/API/IDBRequest/result\" title=\"result\"><code>result</code></a> property is an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> of the values of all records matching the given query, up to the value of <code>count</code>, if <code>count</code> was supplied.",
       "throws": {
         "TransactionInactiveError DOMException": "Thrown if this <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a>'s transaction is inactive.",
         "DataError DOMException": "Thrown if key or key range provided contains an invalid key or is null.",
         "InvalidStateError DOMException": "Thrown if the <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a> has been deleted or removed.",
-        "TypeError": "Thrown if the <code>count</code> parameter is not between <code>0</code> and <code>2^32 - 1</code> included."
+        "TypeError DOMException": "Thrown if the <a href=\"#count\"><code>count</code></a> parameter is not between <code>0</code> and <code>2^32 - 1</code>, inclusive."
       }
     },
     "idbobjectstore.getallkeys": {
@@ -33221,14 +32680,43 @@
       },
       "doc": "The <code>getAllKeys()</code> method of the <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a>\ninterface returns an <a href=\"$MDN_URL$/Web/API/IDBRequest\"><code>IDBRequest</code></a> object retrieves record keys for all\nobjects in the object store matching the specified parameter or all objects in the\nstore if no parameters are given.\n<p>If a value is successfully found, then a structured clone of it is created and set as\nthe result of the request object.\n<p>This method produces the same result for:\n<ul>\n<li>a record that doesn't exist in the database</li>\n<li>a record that has an undefined value</li>\n</ul>\n<p>To tell these situations apart, you need to call the\n<a href=\"$MDN_URL$/Web/API/IDBObjectStore/openCursor\" ><code>openCursor()</code></a> method with the same key. That\nmethod provides a cursor if the record exists, and no cursor if it does not.",
       "parameters": {
-        "query": "A value that is or resolves to an <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a>.",
-        "count": "Specifies the number of values to return if more than one is found. If it is lower\nthan <code>0</code> or greater than <code>2^32 - 1</code> a\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> exception will be thrown."
+        "query": "A value that is or resolves to an <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a>. If this value is not specified, this will\ndefault to a key range that selects all the records in this object store.<p>See the earlier <a href=\"#query\"><code>query</code></a> definition.",
+        "count": "Specifies the number of values to return if more than one is found. If it is lower\nthan <code>0</code> or greater than <code>2^32 - 1</code> a\n<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> exception will be thrown.<p>See the earlier <a href=\"#count\"><code>count</code></a> definition.",
+        "direction": "An enumerated value specifying the direction in which the objects are traversed. Possible values are:\n<dl>\n<dt id=\"next\"><a href=\"#next\"><code>next</code></a></dt>\n<dd>\n<p>The objects are traversed from the beginning, in increasing key order. This is the default value.\n</dd>\n<dt id=\"nextunique\"><a href=\"#nextunique\"><code>nextunique</code></a></dt>\n<dd>\n<p>The objects are traversed from the beginning, in increasing key order. This will yield the same keys as <code>next</code>, because duplicate keys are not allowed in <code>IDBObjectStore</code>s.\n</dd>\n<dt id=\"prev\"><a href=\"#prev\"><code>prev</code></a></dt>\n<dd>\n<p>The objects are traversed from the end, in decreasing key order.\n</dd>\n<dt id=\"prevunique\"><a href=\"#prevunique\"><code>prevunique</code></a></dt>\n<dd>\n<p>The objects are traversed from the end, in decreasing key order. This will yield the same keys as <code>prev</code>, because duplicate keys are not allowed in <code>IDBObjectStore</code>s.\n</dd>\n</dl>"
       },
       "returns": "An <a href=\"$MDN_URL$/Web/API/IDBRequest\"><code>IDBRequest</code></a> object on which subsequent events related to this operation are fired.\n<p>If the operation is successful, the value of the request's <a href=\"$MDN_URL$/Web/API/IDBRequest/result\" title=\"result\"><code>result</code></a> property is an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>Array</code></a> of the keys for all records matching the given query, up to the value of <code>count</code>, if <code>count</code> was supplied.",
       "throws": {
         "TransactionInactiveError DOMException": "Thrown if this <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a>'s transaction is inactive.",
         "DataError DOMException": "Thrown if the key or key range provided contains an invalid key or is null.",
-        "InvalidStateError DOMException": "Thrown if the <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a> has been deleted or removed."
+        "InvalidStateError DOMException": "Thrown if the <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a> has been deleted or removed.",
+        "TypeError DOMException": "Thrown if the <a href=\"#count\"><code>count</code></a> parameter is not between <code>0</code> and <code>2^32 - 1</code>, inclusive."
+      }
+    },
+    "idbobjectstore.getallrecords": {
+      "url": "$MDN_URL$/web/api/idbobjectstore/getallrecords",
+      "status": [
+        "Experimental",
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "141",
+        "ChromeAndroid": "141",
+        "Edge": "141"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>getAllRecords()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a>\ninterface retrieves all records (including primary keys and values) from the object store.\n<p><code>getAllRecords()</code> effectively combines the functionality of <a href=\"$MDN_URL$/Web/API/IDBObjectStore/getAllKeys\" ><code>getAllKeys()</code></a> and <a href=\"$MDN_URL$/Web/API/IDBObjectStore/getAll\" ><code>getAll()</code></a> by enumerating both primary keys and values at the same time. This combined operation enables certain data retrieval patterns to be significantly faster than alternatives such as iteration with cursors.",
+      "parameters": {
+        "query": "A key or an <a href=\"$MDN_URL$/Web/API/IDBKeyRange\"><code>IDBKeyRange</code></a> identifying the records to retrieve. If this value is <code>null</code> or not specified, the browser will use an unbound key range.",
+        "count": "The number of records to return. If this value exceeds the number of records in the query, the browser will retrieve only the queried records. If the value is less than <code>0</code> or greater than <code>2^32 - 1</code>, a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypeError\"><code>TypeError</code></a> exception will be thrown.",
+        "direction": "An enumerated value specifying the direction in which the records are traversed, which in turn defines the order in which they are returned. Possible values are:\n<dl>\n<dt id=\"next\"><a href=\"#next\"><code>next</code></a></dt>\n<dd>\n<p>The records are traversed from the beginning, in increasing key order. This is the default value.\n</dd>\n<dt id=\"nextunique\"><a href=\"#nextunique\"><code>nextunique</code></a></dt>\n<dd>\n<p>The records are traversed from the beginning, in increasing key order. This will yield the same records as <code>next</code>, because duplicate keys are not allowed in <code>IDBObjectStore</code>s.\n</dd>\n<dt id=\"prev\"><a href=\"#prev\"><code>prev</code></a></dt>\n<dd>\n<p>The records are traversed from the end, in decreasing key order.\n</dd>\n<dt id=\"prevunique\"><a href=\"#prevunique\"><code>prevunique</code></a></dt>\n<dd>\n<p>The records are traversed from the end, in decreasing key order. This will yield the same records as <code>prev</code>, because duplicate keys are not allowed in <code>IDBObjectStore</code>s.\n</dd>\n</dl>"
+      },
+      "returns": "An <a href=\"$MDN_URL$/Web/API/IDBRequest\"><code>IDBRequest</code></a> object on which subsequent events related to this operation are fired.\n<p>If the operation is successful, the value of the request's <a href=\"$MDN_URL$/Web/API/IDBRequest/result\" title=\"result\"><code>result</code></a> property is an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Array\"><code>array</code></a> of objects representing all records that match the given query, up to the number specified by <code>count</code> (if provided).\n<p>Each object contains the following properties:\n<dl>\n<dt id=\"key\"><a href=\"#key\"><code>key</code></a></dt>\n<dd>\n<p>A value representing the record's key.\n</dd>\n<dt id=\"primarykey\"><a href=\"#primarykey\"><code>primaryKey</code></a></dt>\n<dd>\n<p>The record's key; identical to the <code>key</code> property.\n</dd>\n<dt id=\"value\"><a href=\"#value\"><code>value</code></a></dt>\n<dd>\n<p>A value representing the record's value.\n</dd>\n</dl>",
+      "throws": {
+        "InvalidStateError DOMException": "Thrown if the <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a> has been deleted or removed.",
+        "TransactionInactiveError DOMException": "Thrown if this <a href=\"$MDN_URL$/Web/API/IDBObjectStore\"><code>IDBObjectStore</code></a>'s transaction is inactive.",
+        "TypeError DOMException": "Thrown if the <a href=\"#count\"><code>count</code></a> parameter is not between <code>0</code> and <code>2^32 - 1</code>, inclusive."
       }
     },
     "idbobjectstore.getkey": {

@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.collaboration.util.getOrNull
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -17,6 +18,8 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.cancelOnDispose
@@ -54,8 +57,13 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
         }.collectLatest { reviewVm ->
           reviewVm?.getFileVm(file)?.collectScoped { fileVm ->
             if (fileVm != null) supervisorScope {
+              val actionManager = serviceAsync<ActionManager>()
               launchNow {
-                ReviewInEditorUtil.showReviewToolbar(reviewVm, editor)
+                ReviewInEditorUtil.showReviewToolbarWithActions(
+                  reviewVm, editor,
+                  actionManager.getAction("CodeReview.PreviousComment"),
+                  actionManager.getAction("CodeReview.NextComment"),
+                )
               }
 
               val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
@@ -69,12 +77,20 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     }.cancelOnDispose(editorDisposable)
   }
 
-  private suspend fun showReview(fileVm: GitLabMergeRequestEditorReviewFileViewModel, editor: EditorEx): Nothing {
+  private suspend fun showReview(
+    fileVm: GitLabMergeRequestEditorReviewFileViewModel,
+    editor: EditorEx,
+  ): Nothing {
     withContext(Dispatchers.Main) {
       val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()
       val reviewHeadContent = fileVm.headContent.mapNotNull { it?.result?.getOrThrow() }.first()
 
-      val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm)
+      val model = GitLabMergeRequestEditorReviewUIModel(this, preferences, fileVm) showEditor@{ changeToShow, lineIdx ->
+        val file = changeToShow.filePathAfter?.virtualFile ?: return@showEditor
+        val fileOpenDescriptor = OpenFileDescriptor(project, file, lineIdx, 0)
+        FileEditorManager.getInstance(project).openFileEditor(fileOpenDescriptor, true)
+      }
+
       launchNow {
         ReviewInEditorUtil.trackDocumentDiffSync(reviewHeadContent, editor.document, model::setPostReviewChanges)
       }
@@ -92,11 +108,13 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
       }
 
       editor.putUserData(CodeReviewCommentableEditorModel.KEY, model)
+      editor.putUserData(CodeReviewNavigableEditorViewModel.KEY, model)
       try {
         awaitCancellation()
       }
       finally {
         editor.putUserData(CodeReviewCommentableEditorModel.KEY, null)
+        editor.putUserData(CodeReviewNavigableEditorViewModel.KEY, null)
       }
     }
   }

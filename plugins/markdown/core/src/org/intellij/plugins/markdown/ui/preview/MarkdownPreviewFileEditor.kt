@@ -29,12 +29,15 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -77,7 +80,12 @@ class MarkdownPreviewFileEditor(
   init {
     document.addDocumentListener(ReparseContentDocumentListener(), this)
 
-    coroutineScope.launch(Dispatchers.EDT) { attachHtmlPanel() }
+    coroutineScope.launch {
+      mainEditor.filterNotNull().first()
+      coroutineScope.launch(Dispatchers.EDT) {
+        attachHtmlPanel()
+      }
+    }
 
     val messageBusConnection = project.messageBus.connect(this)
     val settingsChangedListener = UpdatePanelOnSettingsChangedListener()
@@ -135,6 +143,7 @@ class MarkdownPreviewFileEditor(
   fun setMainEditor(editor: Editor) {
     check(mainEditor.value == null)
     mainEditor.value = editor
+    logger.info("MarkdownPreviewFileEditor: the main editor has been set")
     if (Registry.`is`("markdown.experimental.boundary.precise.scroll.enable")) {
       coroutineScope.launch { setupScrollHelper() }
     }
@@ -194,17 +203,8 @@ class MarkdownPreviewFileEditor(
         logger.warn("Cannot find any available preview panel provider. Registered providers: ${registeredProviders.joinToString { it.providerInfo.name }}")
       }
       else {
+        logger.warn("Cannot use preview panel provider '${preferredProvider.providerInfo.name}'. Using the first one that is available: ${availableProvider.providerInfo.name}")
         settings.previewPanelProviderInfo = availableProvider.providerInfo
-        Notifications.Bus.notify(
-          Notification(
-            "Markdown",
-            MarkdownBundle.message("markdown.settings.notification.title"),
-            MarkdownBundle.message("markdown.settings.preview.provider.not.available", providerInfo.name, availableProvider.providerInfo.name),
-            NotificationType.WARNING
-          ),
-          project
-        )
-        logger.warn("Cannot use preview panel provider '${providerInfo.name}'. Using the first one that is available: ${preferredProvider.providerInfo.name}")
         preferredProvider = availableProvider
       }
     }
@@ -233,14 +233,22 @@ class MarkdownPreviewFileEditor(
     val settings = MarkdownSettings.getInstance(project)
     val textPreprocessor = retrievePanelProvider(settings).sourceTextPreprocessor
     lastRenderedHtml = readAction {
-      textPreprocessor.preprocessText(project, document, file)
+      val text = textPreprocessor.preprocessText(project, document, file)
+      logger.info("MarkdownPreviewFileEditor: readAction finished")
+      text
     }
 
-    val editor = mainEditor.firstOrNull() ?: return
+    val editor = mainEditor.firstOrNull() ?: run {
+      logger.warn("MarkdownPreviewFileEditor: editor is null, cannot update preview")
+      return
+    }
+
     writeIntentReadAction {
       val offset = editor.caretModel.offset
       val line = editor.document.getLineNumber(offset)
+      logger.info("MarkdownPreviewFileEditor: setHtml length: ${lastRenderedHtml.length}, offset: $offset, line: $line")
       panel.setHtml(lastRenderedHtml, offset, line, file)
+      logger.info("MarkdownPreviewFileEditor: setHtml finished")
     }
   }
 

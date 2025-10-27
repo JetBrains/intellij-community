@@ -10,6 +10,8 @@
     "BackgroundDark": "Gray12",
     "BackgroundDarkest": "Gray11",
 
+    "AltBackgroundDark": "#E8E8EB",
+
     "BorderDark": "Gray12",
     "BorderLight": "Gray12",
     "BorderTransparent": "#00000000",
@@ -34,8 +36,10 @@
     "Islands": 1,
     "Island": {
       "arc": 20,
-      "borderWidth": 4,
-      "borderWidth.compact": 3,
+      "arc.compact": 16,
+      "borderWidth": 5,
+      "borderWidth.compact": 4,
+      "borderColor": "BackgroundMid",
       "inactiveAlpha": 0.44,
       "inactiveAlphaInStatusBar": {
         "os.mac": 0.2,
@@ -52,7 +56,7 @@
       "selectedBackground": "BackgroundMid",
       "hoverBackground": "#0000000D",
       "separatorColor": "#00000012",
-      "foreground": "#818594"
+      "foreground": "#00000099"
     },
 
     "MainToolbar": {
@@ -84,6 +88,17 @@
       }
     },
 
+    "StripeToolbar.Button": {
+      "leftStripeIcon.padding": "5,7,5,3",
+      "rightStripeIcon.padding": "5,3,5,7",
+      "leftStripeIcon.padding.compact": "4,5,4,3",
+      "rightStripeIcon.padding.compact": "4,3,4,5",
+      "leftStripeIconWithName.padding": "4,6,4,2",
+      "rightStripeIconWithName.padding": "4,2,4,6",
+      "leftStripeIconWithName.padding.compact": "3,4,3,2",
+      "rightStripeIconWithName.padding.compact": "3,2,3,4"
+    },
+
     "EditorTabs": {
       "background": "BackgroundLight",
       "underTabsBorderColor": "BackgroundDark",
@@ -104,8 +119,7 @@
     },
 
     "Editor.ToolTip": {
-      "background": "TooltipBackground",
-      "border": "TooltipBackground"
+      "background": "TooltipBackground"
     },
 
     "Code.Block": {
@@ -136,6 +150,10 @@
     },
     "MenuItem.background": "PopupBackground",
     "PopupMenu.background": "PopupBackground",
+
+    "Toolbar.Floating.background": "#E4E6EB",
+
+    "Tree.border.compact": "2,8,2,8",
 
     "ToolTip": {
       "background": "TooltipBackground",
@@ -169,7 +187,7 @@
 
     "SearchEverywhere.Header.insets": "2,4,0,9",
 
-    "HelpBrowser.UserMessage.background": "#DFE1E5CC",
+    "HelpBrowser.UserMessage.background": "#EDEEF2",
 
     "RecentProject.Color1.MainToolbarGradientStart": "#f7d7cb",
     "RecentProject.Color2.MainToolbarGradientStart": "#f5e6b8",
@@ -215,6 +233,22 @@
     "ProgressBar": {
       "progressCounterBackground": "#5288f2",
       "progressCounterForeground": "#FFFFFF"
+    },
+
+    "alt": {
+      "MainWindow.background": "AltBackgroundDark",
+
+      "MainToolbar.background": "AltBackgroundDark",
+      "ToolWindow.Stripe.background": "AltBackgroundDark",
+      "StatusBar.background": "AltBackgroundDark",
+
+      "ToolWindow.Header.inactiveBackground": "#F7F6F8",
+      "ToolWindow.background": "#F7F6F8",
+
+      "Borders.color": "#E8E9ED",
+      "Borders.ContrastBorderColor": "#E8E9ED",
+      "ToolWindow.Header.borderColor": "#E8E9ED",
+      "Island.borderColor": "#F7F6F8"
     }
   }
 }

@@ -781,7 +781,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   public void testStressConcurrentAccess() throws Exception {
     VirtualFilePointer fileToCreatePointer = createPointerByFile(tempDir.getRoot(), null);
     VirtualFilePointerListener listener = new VirtualFilePointerListener() { };
-    TestTimeOut t = TestTimeOut.setTimeout(15, TimeUnit.SECONDS);
+    TestTimeOut t = TestTimeOut.setTimeout(30, TimeUnit.SECONDS);
     AtomicBoolean run = new AtomicBoolean(false);
     AtomicReference<Throwable> exception = new AtomicReference<>(null);
     int i;
@@ -789,41 +789,42 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     FilePartNodeRoot fakeRoot = FilePartNodeRoot.createFakeRoot(LocalFileSystem.getInstance());
     for (i = 0; !t.timedOut(i) && i<50_000; i++) {
       Disposable disposable = Disposer.newDisposable();
-      // supply listener to separate pointers under one root so that it will be removed on dispose
-      VirtualFilePointerImpl bb =
-        (VirtualFilePointerImpl)myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/bb", disposable, listener);
+      try {
+        // supply listener to separate pointers under one root so that it will be removed on dispose
+        VirtualFilePointerImpl bb = (VirtualFilePointerImpl)myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/bb", disposable, listener);
 
-      if (i % 1000 == 0) LOG.info("i = " + i);
-
-      CountDownLatch ready = new CountDownLatch(nThreads);
-      Runnable read = () -> {
-        try {
-          ready.countDown();
-          while (run.get()) {
-            bb.getNodeForTesting().update(((VirtualFilePointerImpl)fileToCreatePointer).getNodeForTesting(), fakeRoot, "test", null);
+        CountDownLatch ready = new CountDownLatch(nThreads);
+        Runnable read = () -> {
+          try {
+            ready.countDown();
+            while (run.get()) {
+              bb.getNodeForTesting().update(((VirtualFilePointerImpl)fileToCreatePointer).getNodeForTesting(), fakeRoot, "test", null);
+            }
           }
+          catch (Throwable e) {
+            exception.set(e);
+          }
+        };
+
+        run.set(true);
+        List<Job> jobs = new ArrayList<>(nThreads);
+        for (int it = 0; it < nThreads; it++) {
+          jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
         }
-        catch (Throwable e) {
-          exception.set(e);
+        boolean isReady = ready.await(10, TimeUnit.SECONDS);
+        assumeTrue("It took too long to start all jobs", isReady);
+
+        myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
+
+        run.set(false);
+        for (Job job : jobs) {
+          job.waitForCompletion(2_000);
         }
-      };
-
-      run.set(true);
-      List<Job> jobs = new ArrayList<>(nThreads);
-      for (int it = 0; it < nThreads; it++) {
-        jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
+        ExceptionUtil.rethrowAll(exception.get());
       }
-      boolean isReady = ready.await(10, TimeUnit.SECONDS);
-      assumeTrue("It took too long to start all jobs", isReady);
-
-      myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
-
-      run.set(false);
-      for (Job job : jobs) {
-        job.waitForCompletion(2_000);
+      finally {
+        Disposer.dispose(disposable);
       }
-      ExceptionUtil.rethrowAll(exception.get());
-      Disposer.dispose(disposable);
     }
     LOG.debug("i = " + i);
   }

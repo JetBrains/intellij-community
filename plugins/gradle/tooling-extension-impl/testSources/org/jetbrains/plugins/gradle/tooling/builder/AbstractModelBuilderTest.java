@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
+import com.google.common.collect.Multimap;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction;
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState;
@@ -18,7 +19,6 @@ import gnu.trove.TObjectHash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.apache.commons.lang3.StringUtils;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
-import com.google.common.collect.Multimap;
 import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
@@ -31,7 +31,6 @@ import org.jetbrains.plugins.gradle.service.execution.SystemPropertiesAdjuster;
 import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction;
 import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -49,8 +48,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast;
-
 /**
  * @author Vladislav.Soroka
  */
@@ -61,8 +58,7 @@ public abstract class AbstractModelBuilderTest {
 
   @Rule public TestName name = new TestName();
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
-  @Rule public TargetJavaVersionWatcher myTargetJavaVersionWatcher =
-    new TargetJavaVersionWatcher(new ModelBuilderTestJavaVersionRestriction());
+  @Rule public TargetJavaVersionWatcher myTargetJavaVersionWatcher = new TargetJavaVersionWatcher();
 
   @ClassRule public static final ApplicationRule ourApplicationRule = new ApplicationRule();
 
@@ -215,15 +211,5 @@ public abstract class AbstractModelBuilderTest {
       StringUtils.class, // apache-commons.jar
       TObjectHash.class //trove4j.jar
     );
-  }
-
-  private static final class ModelBuilderTestJavaVersionRestriction implements JavaVersionRestriction {
-    @Override
-    public boolean isRestricted(@NotNull GradleVersion gradleVersion, @NotNull JavaVersion source) {
-      if (isGradleAtLeast(gradleVersion, "8.10") && source.feature < 17) {
-        return true;
-      }
-      return false;
-    }
   }
 }

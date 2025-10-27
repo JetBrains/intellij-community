@@ -3,18 +3,18 @@ package com.intellij.java.refactoring.changeClassSignature;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.psi.*;
 import com.intellij.refactoring.changeClassSignature.ChangeClassSignatureProcessor;
 import com.intellij.refactoring.changeClassSignature.Existing;
 import com.intellij.refactoring.changeClassSignature.New;
 import com.intellij.refactoring.changeClassSignature.TypeParameterInfo;
+import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
 
-public class ChangeClassSignatureTest extends LightRefactoringTestCase {
+public class ChangeClassSignatureTest extends LightJavaCodeInsightTestCase {
   @NonNls private static final String DATA_PATH = "/refactoring/changeClassSignature/";
 
   @NotNull

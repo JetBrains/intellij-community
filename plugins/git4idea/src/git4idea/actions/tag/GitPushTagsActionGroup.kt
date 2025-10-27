@@ -8,6 +8,7 @@ import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import org.jetbrains.annotations.VisibleForTesting
 
 internal class GitPushTagsActionGroup : ActionGroup(GitBundle.messagePointer("action.Git.Push.Tag.text"), false) {
   override fun update(e: AnActionEvent) {
@@ -43,7 +44,8 @@ internal class GitPushTagsActionGroup : ActionGroup(GitBundle.messagePointer("ac
   }
 }
 
-private class GitPushTagActionWrapper(
+@VisibleForTesting
+class GitPushTagActionWrapper(
   action: AnAction,
   private val repository: GitRepository,
   private val remote: GitRemote,

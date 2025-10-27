@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.EelUnavailableException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
@@ -677,7 +678,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     LOG.trace { "openOneByOne: openPaths=$openPaths index=$index someProjectWasOpened=$someProjectWasOpened" }
 
     val (key, value) = openPaths.get(index)
-    EelInitialization.runEelInitialization(key)
+    try {
+      EelInitialization.runEelInitialization(key)
+    } catch (e : EelUnavailableException) {
+      LOG.error(e)
+    }
     val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
       forceOpenInNewFrame = true
       showWelcomeScreen = false

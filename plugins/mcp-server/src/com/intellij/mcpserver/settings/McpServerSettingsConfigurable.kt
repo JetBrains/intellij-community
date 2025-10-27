@@ -6,7 +6,7 @@ import com.intellij.ide.BrowserUtil.browse
 import com.intellij.ide.IdeBundle.messagePointer
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpserverIcons
-import com.intellij.mcpserver.clientConfiguration.McpClient
+import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.createSseServerJsonEntry
 import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.impl.McpClientDetector
@@ -112,7 +112,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
       row {
         comment(McpServerBundle.message("settings.explanation.when.server.disabled", getHelpLink("mcp-server.html#supported-tools"),
-                                        McpClientDetector.detectGlobalMcpClients().joinToString("<br/>") { " • " + it.name.displayName }))
+                                        McpClientDetector.detectGlobalMcpClients().joinToString("<br/>") { " • " + it.mcpClientInfo.displayName }))
       }.bottomGap(BottomGap.NONE).visibleIf(enabledCheckboxState!!.not())
 
       group(McpServerBundle.message("settings.client.group"), indent = false) {
@@ -124,7 +124,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
             val isConfigured = ValueComponentPredicate(mcpClient.isConfigured() ?: false)
             val isPortCorrect = ValueComponentPredicate(mcpClient.isPortCorrect())
             row {
-              text(mcpClient.name.displayName)
+              text(mcpClient.mcpClientInfo.displayName)
             }.topGap(TopGap.SMALL)
             val autoconfiguredPressed = ValueComponentPredicate(false)
             val errorDuringConfiguration = ValueComponentPredicate(false)
@@ -152,7 +152,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
               }, object : AbstractAction(McpServerBundle.message("copy.mcp.server.configuration")) {
                 override fun actionPerformed(e: ActionEvent?) {
                   CopyPasteManager.getInstance().setContents(TextTransferable(McpClient.json.encodeToString(buildJsonObject {
-                    put("jetbrains", McpClient.json.encodeToJsonElement(mcpClient.getConfig()))
+                    put(McpClient.productSpecificServerKey(), McpClient.json.encodeToJsonElement(mcpClient.getConfig()))
                   }) as CharSequence))
                   if (e != null) showCopiedBallon(e)
                 }

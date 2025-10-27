@@ -3,14 +3,16 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.async.mapStateInNow
 import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.ui.FocusableViewModel
+import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -21,8 +23,9 @@ import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import java.net.URL
 import java.util.*
 
-interface GitLabNoteViewModel {
+interface GitLabNoteViewModel : CodeReviewTrackableItemViewModel, FocusableViewModel {
   val id: GitLabId
+  override val trackingId: String get() = id.toString()
   val author: GitLabUserDTO
   val createdAt: Date?
   val isDraft: Boolean
@@ -45,10 +48,10 @@ class GitLabNoteViewModelImpl(
   isMainNote: Flow<Boolean>,
   currentUser: GitLabUserDTO
 ) : GitLabNoteViewModel {
-
   private val cs = parentCs.childScope(javaClass.name)
 
   override val id: GitLabId = note.id
+  override val trackingId: String = id.toString()
   override val author: GitLabUserDTO = note.author
   override val createdAt: Date? = note.createdAt
   override val isDraft: Boolean = note is GitLabMergeRequestDraftNote
@@ -66,7 +69,8 @@ class GitLabNoteViewModelImpl(
 
   override val discussionState: StateFlow<GitLabDiscussionStateContainer> = isMainNote.map {
     if (it) {
-      val outdated = note.asSafely<GitLabMergeRequestNote>()?.positionMapping?.map { mapping ->
+      val outdated = note.asSafely<GitLabMergeRequestNote>()?.positionMapping?.map { mappingResult ->
+        val mapping = mappingResult.getOrNull()
         mapping is GitLabMergeRequestNotePositionMapping.Outdated || mapping is GitLabMergeRequestNotePositionMapping.Obsolete
       } ?: flowOf(false)
       GitLabDiscussionStateContainer(note.resolved, outdated)
@@ -75,6 +79,13 @@ class GitLabNoteViewModelImpl(
       GitLabDiscussionStateContainer.DEFAULT
     }
   }.stateInNow(cs, GitLabDiscussionStateContainer.DEFAULT)
+
+  private val _focusRequestsChannel = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
+  override val focusRequests: Flow<Unit> get() = _focusRequestsChannel.receiveAsFlow()
+
+  override fun requestFocus() {
+    _focusRequestsChannel.trySend(Unit)
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

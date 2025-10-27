@@ -19,11 +19,10 @@ class PyPackagingJcefHtmlPanel(project: Project) : JCEFHtmlPanel(uniqueUrl) {
   private val cssStyleCodeToInject: String
     get() {
       val styleKey = when (val laf = LafManager.getInstance().getCurrentUIThemeLookAndFeel()) {
-        is UIThemeLookAndFeelInfo -> when (laf.id) {
-          "ExperimentalDark" -> "python_packaging_toolwindow_dark.css"
-          "ExperimentalLight" -> "python_packaging_toolwindow_light.css"
-          "JetBrainsHighContrastTheme" -> "python_packaging_toolwindow_high_contrast.css"
-          else -> "python_packaging_toolwindow_default.css"
+        is UIThemeLookAndFeelInfo -> when {
+          laf.id == "JetBrainsHighContrastTheme" -> "python_packaging_toolwindow_high_contrast.css"
+          laf.isDark -> "python_packaging_toolwindow_dark.css"
+          else -> "python_packaging_toolwindow_light.css"
         }
         else -> "python_packaging_toolwindow_default.css"
       }

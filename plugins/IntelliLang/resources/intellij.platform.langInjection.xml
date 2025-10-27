@@ -10,11 +10,11 @@
                     interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport" dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.intelliLang.injectionConfig"
                     beanClass="org.intellij.plugins.intelliLang.LanguageInjectionConfigBean" dynamic="true"/>
-    <extensionPoint qualifiedName="org.intellij.intelliLang.defaultInjectorSuppressor"
-                    beanClass="com.intellij.openapi.util.ClassExtensionPoint"
+    <extensionPoint qualifiedName="org.intellij.intelliLang.fallbackInjectorSuppressor"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass"
-            implements="org.intellij.plugins.intelliLang.inject.DefaultInjectorSuppressor"/>
+            implements="org.intellij.plugins.intelliLang.inject.FallbackInjectorSuppressor"/>
     </extensionPoint>
   </extensionPoints>
 

@@ -108,7 +108,8 @@ public final class IdeaTestUtil {
   }
 
   public static @NotNull Sdk getMockJdk(@NotNull JavaVersion version) {
-    int mockJdk = version.feature >= 21 ? 21 :
+    int mockJdk = version.feature >= 25 ? 25 :
+                  version.feature >= 21 ? 21 :
                   version.feature >= 11 ? 11 :
                   version.feature >= 9 ? 9 :
                   version.feature >= 7 ? version.feature :
@@ -128,7 +129,7 @@ public final class IdeaTestUtil {
 
   private static Sdk createMockJdkFromRepository(String name, int version) {
     List<RemoteRepositoryDescription> repos = MavenDependencyUtil.getRemoteRepositoryDescriptions();
-    String coordinates = "org.jetbrains.mockjdk:" + MOCK_JDK_GROUP_ID + ":" + version + ".0";
+    String coordinates = "org.jetbrains.mockjdk:" + MOCK_JDK_GROUP_ID + ":" + version + ".0.0";
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coordinates, false);
     Collection<OrderRoot> roots =
       JarRepositoryManager.loadDependenciesModal(ProjectManager.getInstance().getDefaultProject(), libraryProperties, false, false, null,

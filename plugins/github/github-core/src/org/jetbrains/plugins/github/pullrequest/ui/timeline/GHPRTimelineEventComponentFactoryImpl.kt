@@ -248,7 +248,7 @@ internal class GHPRTimelineEventComponentFactoryImpl(
   }
 
   companion object {
-    private fun branchHTML(name: @Nls String): HtmlChunk {
+    internal fun branchHTML(name: @Nls String): HtmlChunk {
       val foreground = CurrentBranchComponent.TEXT_COLOR
       val background = CurrentBranchComponent.getBranchPresentationBackground(UIUtil.getListBackground())
 

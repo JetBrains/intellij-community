@@ -6,10 +6,10 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.XDebugSessionListener
-import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 
-private class DisableCoroutineViewListener : FrontendXDebuggerManagerListener {
+private class DisableCoroutineViewListener : XDebuggerManagerProxyListener {
     override fun sessionStarted(session: XDebugSessionProxy) {
         session.addSessionListener(object : XDebugSessionListener {
             private var isFirstTimePaused = true

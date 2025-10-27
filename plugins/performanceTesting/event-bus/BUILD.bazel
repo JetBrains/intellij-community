@@ -20,6 +20,10 @@ jvm_library(
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/jackson/databind",
     "//libraries/kotlin/reflect",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:netty-codec-compression",
   ]
 )
 
@@ -36,6 +40,10 @@ jvm_library(
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//libraries/jackson/databind",
     "//libraries/kotlin/reflect",
+    "@lib//:netty-codec-http",
+    "@lib//:netty-buffer",
+    "//platform/platform-util-netty:ide-util-netty",
+    "@lib//:netty-codec-compression",
   ]
 )
 ### auto-generated section `build intellij.tools.ide.starter.bus` end

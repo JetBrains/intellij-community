@@ -37,11 +37,150 @@ public class PyProtocolInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-76822
+  public void testProtocolWithPropertyAndConcreteWithAttribute() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Template(Protocol):
+                       @property
+                       def val1(self) -> int:
+                           ...
+                   
+                   
+                   class Concrete(Template):
+                       val1: int = 0
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolWithPropertyAndConcreteWithProperty() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class Template(Protocol):
+                       @property
+                       def val1(self) -> int:
+                           ...
+                   
+                   
+                   class Concrete(Template):
+                       @property
+                       def val1(self) -> int:
+                           ...
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolWithMutablePropertyAndClassAttribute() {
+    doTestByText("""
+                   from typing import Protocol, Sequence
+                   
+                   class Template(Protocol):
+                       @property
+                       def val(self) -> Sequence[float]:
+                           ...
+                   
+                       @val.setter
+                       def val(self, val: Sequence[float]) -> None:
+                           ...
+                   
+                   
+                   class Concrete(Template):
+                       val: Sequence[float] = [0]
+                   """);
+  }
+
+  // PY-76822
+  public void testProtocolAndFrozenDataclass() {
+    doTestByText("""
+                   from typing import Protocol
+                   from dataclasses import dataclass
+                   
+                   class Template(Protocol):
+                       @property
+                       def val(self) -> int:
+                           ...
+                   
+                       @val.setter
+                       def val(self, val: int) -> None:
+                           ...
+                   
+                   
+                   @dataclass(frozen=True)
+                   class Concrete(Template):
+                       <warning descr="'val' is writable in protocol 'Template'">val</warning>: int = 0
+                   """);
+  }
+
   // PY-61857
   public void testClassWithTypeParameterListNotReported() {
     runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
       super.doTest();
     });
+  }
+
+  // PY-76903
+  public void testProtocolCannotBeInstantiated() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class P(Protocol):
+                           ...
+                   
+                   p = <warning descr="Cannot instantiate protocol class 'P'">P()</warning>
+                   """);
+  }
+
+  // PY-76903
+  public void testProtocolSubclassCanBeInstantiated() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class P(Protocol):
+                       ...
+                   
+                   
+                   class C(P):
+                       ...
+                   
+                   c = C()
+                   """);
+  }
+
+  // PY-76903
+  public void testProtocolFunctionCall() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class P(Protocol):
+                       def foo(self) -> None: ...
+                   
+                   
+                   def f(p: P):
+                       p.foo()
+                   """);
+  }
+
+  // PY-76903
+  public void testProtocolTypeButConcreteValue() {
+    doTestByText("""
+                   from typing import Protocol, reveal_type
+                   
+                   class P(Protocol):
+                       def foo(self) -> None: ...
+                   
+                   
+                   class I(P):
+                       def foo(self) -> None: ...
+                   
+                   
+                   def f() -> type[P]:
+                       return I
+                   
+                   t = f()
+                   t()
+                   """);
   }
 
   @Override

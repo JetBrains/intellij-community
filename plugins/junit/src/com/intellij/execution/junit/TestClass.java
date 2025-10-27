@@ -55,6 +55,14 @@ class TestClass extends TestObject {
 
   @Override
   public RefactoringElementListener getListener(final PsiElement element) {
+    String name = getConfiguration().getPersistentData().MAIN_CLASS_NAME;
+    if (element instanceof PsiNamedElement namedElement) {
+      // do not react on unrelated refactorings
+      String elementName = namedElement.getName();
+      if (elementName == null || name == null || !name.contains(elementName)) {
+        return null;
+      }
+    }
     return RefactoringListeners.getClassOrPackageListener(element, getConfiguration().myClass);
   }
 

@@ -203,8 +203,11 @@
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.openapi.command.impl.UndoCommandListener"
+    <listener class="com.intellij.openapi.command.impl.CommandSeparator"
               topic="com.intellij.openapi.command.CommandListener"/>
+
+    <listener class="com.intellij.openapi.command.impl.UndoCommandListener"
+              topic="com.intellij.openapi.command.impl.SeparatedCommandListener"/>
 
     <listener class="com.intellij.openapi.editor.impl.VisibleEditorsTracker$MyCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
@@ -283,7 +286,7 @@
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.command.impl.UndoCommandListener"
-              topic="com.intellij.openapi.command.CommandListener"/>
+              topic="com.intellij.openapi.command.impl.SeparatedCommandListener"/>
 
     <listener class="com.intellij.notification.impl.NotificationsModelConsumingListener"
               topic="com.intellij.notification.Notifications"/>

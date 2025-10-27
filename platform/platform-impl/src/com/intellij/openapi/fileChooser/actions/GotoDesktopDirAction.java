@@ -14,10 +14,12 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.system.OS;
-import com.sun.jna.platform.win32.*;
+import com.sun.jna.platform.win32.Shell32;
+import com.sun.jna.platform.win32.ShlObj;
+import com.sun.jna.platform.win32.WinDef;
+import com.sun.jna.platform.win32.WinError;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
@@ -28,24 +30,24 @@ import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 final class GotoDesktopDirAction extends FileChooserAction implements LightEditCompatible {
   private final NullableLazyValue<Path> myDesktopPath = lazyNullable(() -> {
-    Path path = getDesktopDirectory();
+    var path = getDesktopDirectory();
     return Files.isDirectory(path) ? path : null;
   });
 
   private final NullableLazyValue<VirtualFile> myDesktopDirectory = lazyNullable(() -> {
-    Path path = myDesktopPath.getValue();
+    var path = myDesktopPath.getValue();
     return path != null ? LocalFileSystem.getInstance().findFileByNioFile(path) : null;
   });
 
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    Path path = myDesktopPath.getValue();
+    var path = myDesktopPath.getValue();
     e.getPresentation().setEnabled(path != null);
   }
 
   @Override
   protected void actionPerformed(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
-    Path path = myDesktopPath.getValue();
+    var path = myDesktopPath.getValue();
     if (path != null) {
       panel.load(path);
     }
@@ -53,13 +55,13 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
 
   @Override
   protected void update(@NotNull FileSystemTree tree, @NotNull AnActionEvent e) {
-    VirtualFile dir = myDesktopDirectory.getValue();
+    var dir = myDesktopDirectory.getValue();
     e.getPresentation().setEnabled(dir != null && tree.isUnderRoots(dir));
   }
 
   @Override
   protected void actionPerformed(@NotNull FileSystemTree tree, @NotNull AnActionEvent e) {
-    VirtualFile dir = myDesktopDirectory.getValue();
+    var dir = myDesktopDirectory.getValue();
     if (dir != null) {
       tree.select(dir, () -> tree.expand(dir, null));
     }
@@ -67,24 +69,24 @@ final class GotoDesktopDirAction extends FileChooserAction implements LightEditC
 
   private static Path getDesktopDirectory() {
     if (OS.CURRENT == OS.Windows && JnaLoader.isLoaded()) {
-      char[] path = new char[WinDef.MAX_PATH];
-      WinNT.HRESULT res = Shell32.INSTANCE.SHGetFolderPath(null, ShlObj.CSIDL_DESKTOP, null, ShlObj.SHGFP_TYPE_CURRENT, path);
+      var path = new char[WinDef.MAX_PATH];
+      var res = Shell32.INSTANCE.SHGetFolderPath(null, ShlObj.CSIDL_DESKTOP, null, ShlObj.SHGFP_TYPE_CURRENT, path);
       if (WinError.S_OK.equals(res)) {
-        int len = 0;
+        var len = 0;
         while (len < path.length && path[len] != 0) len++;
         return Path.of(new String(path, 0, len));
       }
     }
     else if (OS.CURRENT == OS.macOS && JnaLoader.isLoaded()) {
-      ID manager = Foundation.invoke(Foundation.getObjcClass("NSFileManager"), "defaultManager");
-      ID url = Foundation.invoke(manager, "URLForDirectory:inDomain:appropriateForURL:create:error:",
-        12 /*NSDesktopDirectory*/, 1 /*NSUserDomainMask*/, null, false, null);
-      String path = Foundation.toStringViaUTF8(Foundation.invoke(url, "path"));
+      var manager = Foundation.invoke(Foundation.getObjcClass("NSFileManager"), "defaultManager");
+      var selector = "URLForDirectory:inDomain:appropriateForURL:create:error:";
+      var url = Foundation.invoke(manager, selector, 12 /*NSDesktopDirectory*/, 1 /*NSUserDomainMask*/, null, false, null);
+      var path = Foundation.toStringViaUTF8(Foundation.invoke(url, "path"));
       if (path != null) {
         return Path.of(path);
       }
     }
-    else if (PathEnvironmentVariableUtil.isOnPath("xdg-user-dir")) {
+    else if (OS.isGenericUnix() && PathEnvironmentVariableUtil.isOnPath("xdg-user-dir")) {
       var path = ExecUtil.execAndReadLine(new GeneralCommandLine("xdg-user-dir", "DESKTOP"));
       if (path != null && !path.isBlank()) {
         try {

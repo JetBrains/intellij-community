@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.compose.foundation.desktop.jar
   modules:
   - name: intellij.libraries.compose.foundation.desktop
     libraries:

@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.commons.text.jar
   modules:
   - name: intellij.libraries.commons.text
     libraries:

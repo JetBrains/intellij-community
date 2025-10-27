@@ -4,12 +4,15 @@
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.syntax"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.common"/>
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.interpreters"/>
-    <module name="intellij.python.community.impl.poetry"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.community.impl.uv.common"/>
+    <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.sdk.ui"/>
@@ -19,6 +22,8 @@
     <module name="intellij.python.community.impl.installer"/>
     <module name="intellij.python.community.impl.venv"/>
     <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.sdkConfigurator.common"/>
+    <module name="intellij.python.processOutput"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>
@@ -50,8 +55,10 @@
                                           language="Python"
                                           nameKey="INLAY.type.hints"
                                           providerId="python.type.inlays">
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type" optionId="python.type.inlays.reveal_type" />
-      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return" optionId="python.type.inlays.function.return" />
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.reveal.type" enabledByDefault="true" nameKey="INLAY.reveal.type"
+              optionId="python.type.inlays.reveal_type"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.function.return" enabledByDefault="false" nameKey="INLAY.function.return"
+              optionId="python.type.inlays.function.return"/>
     </codeInsight.declarativeInlayProvider>
 
 
@@ -77,20 +84,12 @@
     <postStartupActivity implementation="com.jetbrains.python.poetry.PoetryPyProjectTomlPostStartupActivity"/>
 
     <virtualFileCustomDataProvider implementation="com.jetbrains.python.psi.PyLangLevelVirtualFileCustomDataProvider"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.run.features.PyRunToolUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
-    <tool implementation="com.jetbrains.python.projectModel.poetry.PoetryTool"/>
-    <tool implementation="com.jetbrains.python.projectModel.uv.UvTool"/>
-  </extensions>
 
   <projectListeners>
-    <listener
-      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
-      topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
-    <listener
-      class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
-      topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
     <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
               topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
     <listener class="com.jetbrains.python.statistics.PyPackageDaemonListener"
@@ -142,9 +141,9 @@
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
 
-    <projectService serviceInterface="com.jetbrains.python.codeInsight.completion.RemoteFilePathRetrievalService"
-                    serviceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"
-                    testServiceImplementation="com.jetbrains.python.codeInsight.completion.DummyRemoteFilePathRetrievalService"/>
+    <projectService serviceInterface="com.jetbrains.python.codeInsight.completion.runtime.patProvider.RemoteFilePathRetrievalService"
+                    serviceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"
+                    testServiceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.packaging.pip.PypiPackageCache"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
@@ -195,6 +194,7 @@
                  overrides="true"/>
     <registryKey key="python.test.autodetect.new.run.config" defaultValue="true" description="Python test autodetect configuration new UI"/>
     <registryKey key="python.run.doctest.via.pytest.configuration" defaultValue="true" description="Run doctest via pytest configuration"/>
+    <registryKey key="run.with.py.tool" defaultValue="true" description="Run with Python tool"/>
     <registryKey key="debugger.valueTooltipAutoShow" defaultValue="false" description="Auto show tooltip on mouse over." overrides="true"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
@@ -278,6 +278,7 @@
                          implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
     <liveTemplateContext contextId="Python_Top_Level" baseContextId="Python"
                          implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$TopLevel"/>
+    <liveTemplatePreprocessor implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDecoratorTemplatePreprocessor"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>

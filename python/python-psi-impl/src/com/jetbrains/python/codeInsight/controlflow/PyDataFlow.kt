@@ -18,7 +18,11 @@ import java.util.*
 data class FlowContext(val typeEvalContext: TypeEvalContext, val checkNoReturnCalls: Boolean)
 
 @ApiStatus.Internal
-class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, context: FlowContext) : ControlFlow by controlFlow {
+class PyDataFlow(
+  scopeOwner: ScopeOwner,
+  private val controlFlow: PyControlFlow,
+  context: FlowContext,
+) : ControlFlow by controlFlow {
   private val reachability: BooleanArray = BooleanArray(instructions.size)
 
   init {
@@ -68,6 +72,10 @@ class PyDataFlow(scopeOwner: ScopeOwner, controlFlow: ControlFlow, context: Flow
   private fun Instruction.isReachableWithVersionChecks(languageVersion: Version): Boolean {
     return evaluateVersionsForElement(element ?: return true).contains(languageVersion)
   }
+
+  fun getInstruction(element: PsiElement): Int {
+    return controlFlow.getInstruction(element)
+  }
 }
 
 /**
@@ -104,7 +112,7 @@ private fun PsiElement.isUnreachableForInspectionNoCache(context: FlowContext): 
  * Determines if the element is unreachable by control flow analysis.
  * If the element does not have corresponding instruction in CFG, searches for the nearest parent that has.
  */
-fun PsiElement.isUnreachableByControlFlow(context: FlowContext): Boolean {
+private fun PsiElement.isUnreachableByControlFlow(context: FlowContext): Boolean {
   return PyUtil.getParameterizedCachedValue(this, context) { this.isUnreachableByControlFlowNoCache(it) }
 }
 
@@ -113,7 +121,7 @@ private fun PsiElement.isUnreachableByControlFlowNoCache(context: FlowContext): 
   if (scope != null) {
     val flow = ControlFlowCache.getDataFlow(scope, context)
     val instructions = flow.instructions
-    val idx = findInstructionNumber(instructions)
+    val idx = flow.getInstruction(this)
     if (idx < 0 || instructions[idx].isAuxiliary()) {
       val parent = this.parent
       return parent != null && parent.isUnreachableByControlFlow(context)
@@ -121,20 +129,6 @@ private fun PsiElement.isUnreachableByControlFlowNoCache(context: FlowContext): 
     return flow.isUnreachable(instructions[idx])
   }
   return false
-}
-
-/**
- * Like com.intellij.codeInsight.controlflow.ControlFlowUtil.findInstructionNumberByElement,
- * but does not check ProgressManager.checkCanceled().
- * It spends quite some time there.
- */
-fun PsiElement.findInstructionNumber(flow: Array<Instruction>): Int {
-  for (i in flow.indices) {
-    if (this === flow[i].getElement()) {
-      return i
-    }
-  }
-  return -1
 }
 
 private fun PyStatement.isIgnoredUnreachableStatement(context: FlowContext): Boolean {

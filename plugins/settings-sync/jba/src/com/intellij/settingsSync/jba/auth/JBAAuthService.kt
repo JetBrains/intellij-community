@@ -259,6 +259,19 @@ internal class JBAAuthService(private val cs: CoroutineScope) : SettingsSyncAuth
       }
     }
 
+  override val contactSupportFunction: (() -> Unit)?
+    get() {
+      val actionManager = ActionManager.getInstance()
+      val contactSupportAction = actionManager.getAction("TechnicalSupport") ?: return null
+
+      return {
+        ActionUtil.performAction(
+          contactSupportAction,
+          AnActionEvent.createEvent(contactSupportAction, DataContext.EMPTY_CONTEXT, null, "SettingsSyncRemoteDataRemovalNotification", ActionUiKind.NONE, null)
+        )
+      }
+    }
+
   private fun performLogout(component: Component) {
     if (RemoteCommunicatorHolder.getExternalProviders().isEmpty())
       return

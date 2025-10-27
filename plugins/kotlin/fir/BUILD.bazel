@@ -79,6 +79,8 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
+    "//platform/eel",
+    "//platform/eel-provider",
   ],
   exports = ["//plugins/kotlin/frontend-independent"],
   runtime_deps = [

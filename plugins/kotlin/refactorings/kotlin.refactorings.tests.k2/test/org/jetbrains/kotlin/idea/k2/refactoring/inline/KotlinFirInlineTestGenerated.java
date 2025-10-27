@@ -2770,6 +2770,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/varargrsWithSpread.kt");
             }
 
+            @TestMetadata("varargs.kt")
+            public void testVarargs() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/varargs.kt");
+            }
+
             @TestMetadata("withContextParameters.kt")
             public void testWithContextParameters() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/withContextParameters.kt");

@@ -124,7 +124,6 @@ private suspend fun <X> asyncTarget(
         }
       }
     }
-    else -> error("Unexpected result: $asyncLinkResolveResult")
   }
 }
 

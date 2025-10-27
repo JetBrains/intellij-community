@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -87,6 +88,11 @@ class EditorCellViewer(private val project: Project,
 
   init {
     editor.document.addDocumentListener(updateDocumentListener)
+
+    val reason = GridEditGuard.get(grid)?.getReasonText(grid)
+    if (reason != null && reason.isNotEmpty()) {
+      EditorModificationUtil.setReadOnlyHint(editor, reason)
+    }
 
     DataGridCellTypeListener.addDataGridListener(grid, { rows, columns ->
       if (rows.asIterable().any { it == valueParserCache.row } && columns.asIterable().any { it == valueParserCache.column }) {

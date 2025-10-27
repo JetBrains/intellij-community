@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.gradle.scripting.shared.importing
 
-import KotlinGradleScriptingBundle
 import com.intellij.build.FilePosition
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.MessageEvent
@@ -15,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import java.io.File
 
 @Nls

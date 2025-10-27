@@ -36,13 +36,17 @@ object RecentProjectPanelComponentFactory {
   private const val UPDATE_INTERVAL = 50L // 50ms -- 20 frames per second
 
   @JvmStatic
-  fun createComponent(parentDisposable: Disposable, collectors: List<() -> List<RecentProjectTreeItem>>,
-                      treeBackground: Color? = WelcomeScreenUIManager.getProjectsBackground()
+  fun createComponent(
+    parentDisposable: Disposable,
+    collectors: List<() -> List<RecentProjectTreeItem>>,
+    treeBackground: Color? = WelcomeScreenUIManager.getProjectsBackground(),
+    disableSearchFieldBorder: Boolean = true,
   ): RecentProjectFilteringTree {
     val tree = Tree().apply {
       background = treeBackground
     }
-    val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors).apply {
+    val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors,
+                                                   disableSearchFieldBorder = disableSearchFieldBorder).apply {
       installSearchField()
       expandGroups()
     }

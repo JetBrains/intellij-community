@@ -15,6 +15,8 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import kotlinx.coroutines.CoroutineScope
+import java.nio.file.Path
+import kotlin.io.path.pathString
 
 internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchRequest: LaunchRequest): ProcessLauncher {
   val exePath: EelPath = with(binOnEel) {
@@ -35,14 +37,17 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
 }
 
 private class EelProcessCommands(
-  private val scopeToBind: CoroutineScope,
+  override val scopeToBind: CoroutineScope,
   private val binOnEel: BinOnEel,
   private val path: EelPath,
   private val args: List<String>,
-  private val env: Map<String, String>,
+  override val env: Map<String, String>,
   private val tty: TtySize?,
 ) : ProcessCommands {
   private var eelProcess: EelProcess? = null
+
+  override val cwd: String?
+    get() = binOnEel.workDir?.toRealPath()?.pathString
 
   override val processFunctions: ProcessFunctions = ProcessFunctions(
     waitForExit = { eelProcess?.exitCode?.await() },

@@ -39,7 +39,7 @@ class SeActionItem(
 }
 
 @Internal
-class SeActionsAdaptedProvider(private val contributorWrapper: SeAsyncContributorWrapper<MatchedValue>) : SeWrappedLegacyContributorItemsProvider() {
+class SeActionsAdaptedProvider(private val contributorWrapper: SeAsyncContributorWrapper<MatchedValue>) : SeWrappedLegacyContributorItemsProvider(), SeExtendedInfoProvider {
   override val id: String get() = SeProviderIdUtils.ACTIONS_ID
   override val displayName: @Nls String
     get() = contributor.fullGroupName

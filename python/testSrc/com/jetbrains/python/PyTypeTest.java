@@ -2,6 +2,8 @@
 package com.jetbrains.python;
 
 import com.google.common.collect.ImmutableList;
+import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -783,6 +785,8 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testParameterFromUsages() {
+    RecursionManager.assertOnRecursionPrevention(myFixture.getTestRootDisposable());
+    Registry.get("python.use.better.control.flow.type.inference").setValue(true);
     final String text = """
       def foo(bar):
           expr = bar

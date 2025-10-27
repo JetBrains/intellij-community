@@ -17,6 +17,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/core",
     "//libraries/kotlinx/serialization/json",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/projectModel-impl",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
@@ -38,6 +39,7 @@ jvm_library(
     "//platform/object-serializer",
     "//platform/kernel/shared:kernel",
     "//platform/lang-core",
+    "//platform/execution",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.dashboard` end

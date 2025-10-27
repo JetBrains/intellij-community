@@ -118,6 +118,16 @@ class SeLocalItemDataProvider(
     return provider is SeItemsPreviewProvider
   }
 
+  fun isExtendedInfoEnabled(): Boolean {
+    if (provider is SeTopHitItemsProvider) {
+      return provider.isExtendedInfoProvider()
+    }
+    else if (provider is SeAdaptedItemsProvider) {
+      return provider.isExtendedInfoProvider()
+    }
+    return provider is SeExtendedInfoProvider
+  }
+
   override fun dispose() {
     SeLog.log(SeLog.LIFE_CYCLE, "$logLabel provider ${id.value} disposed")
     Disposer.dispose(provider)

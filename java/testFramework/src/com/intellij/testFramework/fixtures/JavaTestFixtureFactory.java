@@ -4,7 +4,9 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.testFramework.fixtures.impl.JavaTestFixtureFactoryImpl;
 import org.jetbrains.annotations.NotNull;
 
-
+/**
+ * @see IdeaTestFixtureFactory
+ */
 public abstract class JavaTestFixtureFactory {
   private static final JavaTestFixtureFactory ourInstance = new JavaTestFixtureFactoryImpl();
 
@@ -12,13 +14,14 @@ public abstract class JavaTestFixtureFactory {
     return ourInstance;
   }
 
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String name);
+  public abstract @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String name);
 
-  public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
+  public abstract @NotNull JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture);
 
-  public abstract JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture, TempDirTestFixture tempDirFixture);
+  public abstract @NotNull JavaCodeInsightTestFixture createCodeInsightFixture(IdeaProjectTestFixture projectFixture,
+                                                                               TempDirTestFixture tempDirFixture);
 
-  public static TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name) {
+  public static @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name) {
     return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name);
   }
 }

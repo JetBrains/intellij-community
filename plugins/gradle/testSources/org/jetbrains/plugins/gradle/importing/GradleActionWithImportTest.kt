@@ -72,8 +72,8 @@ class GradleActionWithImportTest : GradleActionWithImportTestCase() {
 
       assertSyncViewTree {
         assertNode("finished") {
-          assertNode(":importTestTask")
           assertNodeWithDeprecatedGradleWarning()
+          assertNode(":importTestTask")
         }
       }
     }

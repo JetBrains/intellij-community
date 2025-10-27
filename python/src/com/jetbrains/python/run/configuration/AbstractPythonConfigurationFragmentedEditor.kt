@@ -12,6 +12,7 @@ import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.PyCommonFragmentsBuilder
 import com.jetbrains.python.run.PythonRunConfigurationExtensionsManager
 import com.jetbrains.python.run.features.PyRunToolProvider
+import com.jetbrains.python.run.features.enableRunTool
 import com.jetbrains.python.run.features.useRunTool
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -31,9 +32,9 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     addInterpreterOptions(fragments)
     addContentSourceRoots(fragments)
 
-    runConfiguration.sdk?.let { sdk ->
-      createRunToolTag(sdk)?.let { fragments.add(it) }
-    }
+    runConfiguration.sdk?.takeIf { enableRunTool }
+      ?.let { createRunToolTag(it) }
+      ?.let { fragments.add(it) }
 
     customizeFragments(fragments)
     fragments.add(PyEditorExtensionFragment())

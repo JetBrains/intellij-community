@@ -15,7 +15,7 @@ import com.jetbrains.python.sdk.uv.isUv
 private class UvRunToolProvider : PyRunToolProvider {
 
   override val runToolData: PyRunToolData = PyRunToolData(
-    PyRunToolId("py.run.with.uv"),
+    PyRunToolId("uv.run"),
     PyBundle.message("uv.run.configuration.type.display.name"),
     PyBundle.message("python.run.configuration.fragments.python.group"),
   )

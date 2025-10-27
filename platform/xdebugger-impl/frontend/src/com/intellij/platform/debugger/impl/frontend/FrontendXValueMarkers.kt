@@ -1,32 +1,34 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend
 
+import com.intellij.ide.ui.colors.color
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
-import com.intellij.ui.JBColor
 import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.XValueMarkers
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 
 internal class FrontendXValueMarkers<V : XValue, M>(private val project: Project) : XValueMarkers<V, M>() {
   override fun getMarkup(value: XValue): ValueMarkup? {
     val markerDto = FrontendXValue.asFrontendXValueOrNull(value)?.markerDto ?: return null
-    // TODO[IJPL-160146]: Implement implement Color serialization
-    return ValueMarkup(markerDto.text, markerDto.color ?: JBColor.RED, markerDto.tooltipText)
+    return ValueMarkup(markerDto.text, markerDto.colorId?.color(), markerDto.tooltipText)
   }
 
   override fun canMarkValue(value: XValue): Boolean {
-    // TODO[IJPL-160146]: Implement canMarkValue
-    return true
+    return FrontendXValue.asFrontendXValueOrNull(value)?.canMarkValue ?: false
   }
 
   override fun markValue(value: XValue, markup: ValueMarkup): Promise<in Any> {
@@ -43,7 +45,8 @@ internal class FrontendXValueMarkers<V : XValue, M>(private val project: Project
   }
 
   override fun clear() {
-    // TODO[IJPL-160146]: Implement clear
+    val debugSessionProxy = XDebugManagerProxy.getInstance().getCurrentSessionProxy(project) ?: return
+    project.service<FrontendXValueMarkersService>().clear(debugSessionProxy)
   }
 }
 
@@ -51,7 +54,7 @@ internal class FrontendXValueMarkers<V : XValue, M>(private val project: Project
 private class FrontendXValueMarkersService(project: Project, private val cs: CoroutineScope) {
   fun markValue(value: XValue, markup: ValueMarkup): Promise<Any> {
     val valueMarked = cs.async {
-      val marker = XValueMarkerDto(markup.text, markup.color, markup.toolTipText)
+      val marker = XValueMarkerDto(markup.text, markup.color.rpcId(), markup.toolTipText)
       XDebuggerValueMarkupApi.getInstance().markValue(FrontendXValue.asFrontendXValue(value).xValueDto.id, marker)
       marker as Any
     }
@@ -64,5 +67,11 @@ private class FrontendXValueMarkersService(project: Project, private val cs: Cor
       Any()
     }
     return valueUnmarked.asCompletableFuture().asPromise()
+  }
+
+  fun clear(debugSessionProxy: XDebugSessionProxy) {
+    cs.launch {
+      XDebuggerValueMarkupApi.getInstance().clear(debugSessionProxy.id)
+    }
   }
 }

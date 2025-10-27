@@ -887,6 +887,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     }
   }
 
+  /** @throws IllegalArgumentException if fieldValue is not valid id (>NULL_ID) */
   private static void checkValidIdField(int recordId,
                                         int fieldValue,
                                         @NotNull String fieldName) {

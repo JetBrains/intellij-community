@@ -226,7 +226,9 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
             }
             return null
           } else {
-            uiQueue.pollFirst() // now we remove WriteActionFinished from the queue
+            synchronized(lockObject) {
+              uiQueue.pollFirst() // now we remove WriteActionFinished from the queue
+            }
             currentWriteIntentLockMode = WriteIntentLockMode.ALL
           }
         }
@@ -235,12 +237,16 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
             // Current modality is not acceptable; we must send such event to the Skipped Modality Queue
             skippedQueue.get().add(incomingInfo)
             incomingInfo.wasInSkippedItems = true
-            selectedQueue.pollFirst() // remove the skipped runnable
+            synchronized(lockObject) {
+              selectedQueue.pollFirst() // remove the skipped runnable
+            }
             continue
           }
           if (incomingInfo.isExpired.value(null)) {
             // this runnable is expired; let's continue searching for a suitable one
-            selectedQueue.pollFirst() // remove the skipped runnable
+            synchronized(lockObject) {
+              selectedQueue.pollFirst() // remove the skipped runnable
+            }
             continue
           }
           requestFlush() // in case someone wrote "invokeLater { UIUtil.dispatchAllInvocationEvents(); }"
@@ -318,7 +324,9 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
         }
         // let's try to execute the runnable
         val success = !(threadingSupport.isWriteActionPending() || threadingSupport.isWriteActionInProgress()) && threadingSupport.tryRunWriteIntentReadAction {
-          writeIntentQueue.pollFirst() // remove runnable from writeIntentQueue
+          synchronized(lockObject) {
+            writeIntentQueue.pollFirst() // remove runnable from writeIntentQueue
+          }
           resetThreadContext {
             val progressManager = ProgressManager.getInstanceOrNull()
             if (progressManager != null) {
@@ -342,7 +350,9 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
           }
         }
       } else {
-        uiQueue.pollFirst() // we are going to run this runnable; let's remove it from the queue
+        synchronized(lockObject) {
+          uiQueue.pollFirst() // we are going to run this runnable; let's remove it from the queue
+        }
         // no write-intent required; we can execute this directly
         resetThreadContext {
           nextRunnable.runnable.run()

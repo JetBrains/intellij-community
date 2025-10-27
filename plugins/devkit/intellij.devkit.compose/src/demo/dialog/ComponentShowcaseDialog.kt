@@ -70,8 +70,8 @@ internal class ComponentShowcaseDialog(project: Project) : DialogWrapper(project
               ),
             padding =
               Toolbar.stripeToolbarButtonIconPadding(
-                uiSettings.compactMode, // compactMode
-                ResizeStripeManager.isShowNames(), // showNames
+                /* left = */ true,
+                /* showNames = */ ResizeStripeManager.isShowNames(),
               )
                 .toPaddingValues(),
             borderWidth = 0.dp,

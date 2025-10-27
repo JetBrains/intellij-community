@@ -28,7 +28,7 @@ class SeFilesTab(private val delegate: SeTabDelegate) : SeTab {
   override val isIndexingDependent: Boolean get() = true
 
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
-    SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates())
+    SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates(), true)
   }
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
@@ -66,6 +66,10 @@ class SeFilesTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.getPreviewInfo(itemData, false)
   }
 
+  override suspend fun isExtendedInfoEnabled(): Boolean {
+    return delegate.isExtendedInfoEnabled()
+  }
+
   override fun dispose() {
     Disposer.dispose(delegate)
   }
@@ -73,6 +77,7 @@ class SeFilesTab(private val delegate: SeTabDelegate) : SeTab {
   companion object {
     @Internal
     const val ID: String = "FileSearchEverywhereContributor"
+
     @Internal
     val NAME: String = IdeBundle.message("search.everywhere.group.name.files")
   }

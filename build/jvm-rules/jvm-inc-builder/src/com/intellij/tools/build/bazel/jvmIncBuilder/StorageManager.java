@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.build.bazel.jvmIncBuilder;
 
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.CompositeZipOutputBuilder;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.Utils;
-import com.intellij.tools.build.bazel.jvmIncBuilder.impl.ZipOutputBuilderImpl;
+import com.intellij.tools.build.bazel.jvmIncBuilder.impl.*;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.forms.FormBinding;
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.graph.PersistentMVStoreMapletFactory;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
@@ -15,10 +13,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.dependency.GraphConfiguration;
 import org.jetbrains.jps.dependency.impl.DependencyGraphImpl;
-import org.jetbrains.jps.util.SystemInfo;
+import org.jetbrains.jps.dependency.kotlin.LookupsIndex;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.*;
@@ -36,6 +33,7 @@ public class StorageManager implements CloseableExt {
   private CompositeZipOutputBuilder myComposite;
   private InstrumentationClassFinder myInstrumentationClassFinder;
   private FormBinding myFormBinding;
+  private boolean isKotlinCriDataGenerationEnabled;
 
   private final MVStore myDataSwapStore;
 
@@ -47,6 +45,7 @@ public class StorageManager implements CloseableExt {
       .cacheSize(8)
       .open();
     myDataSwapStore.setVersionsToKeep(0);
+    isKotlinCriDataGenerationEnabled = myContext.getKotlinCriStoragePath() != null;
   }
 
   public void cleanBuildState() throws IOException {
@@ -108,14 +107,29 @@ public class StorageManager implements CloseableExt {
 
   @NotNull
   public GraphConfiguration getGraphConfiguration() throws IOException {
-    GraphConfiguration config = myGraphConfig;
-    if (config == null) {
-      DependencyGraphImpl graph = new DependencyGraphImpl(
-        new PersistentMVStoreMapletFactory(DataPaths.getDepGraphStoreFile(myContext).toString(), Math.min(8, Runtime.getRuntime().availableProcessors()))
-      );
-      myGraphConfig = config = GraphConfiguration.create(graph, myContext.getPathMapper());
+    if (myGraphConfig != null) {
+      return myGraphConfig;
     }
-    return config;
+
+    DependencyGraphImpl graph = createDependencyGraph();
+    myGraphConfig = GraphConfiguration.create(graph, myContext.getPathMapper());
+    return myGraphConfig;
+  }
+
+  @NotNull
+  private DependencyGraphImpl createDependencyGraph() throws IOException {
+    var filePath = DataPaths.getDepGraphStoreFile(myContext).toString();
+    int maxBuilderThreads = Math.min(8, Runtime.getRuntime().availableProcessors());
+    var containerFactory = new PersistentMVStoreMapletFactory(filePath, maxBuilderThreads);
+
+    if (isKotlinCriDataGenerationEnabled) {
+      return new DependencyGraphImpl(
+        containerFactory,
+        DependencyGraphImpl.IndexFactory.create(LookupsIndex::new)
+      );
+    } else {
+      return new DependencyGraphImpl(containerFactory);
+    }
   }
 
   @NotNull
@@ -171,7 +185,7 @@ public class StorageManager implements CloseableExt {
 
   @Override
   public final void close() {
-    close(!myContext.hasErrors());
+    close(true); // close saving all successfully compiled content
   }
 
   @Override
@@ -192,13 +206,8 @@ public class StorageManager implements CloseableExt {
     GraphConfiguration config = myGraphConfig;
     if (config != null) {
       myGraphConfig = null;
+      writeKotlinCriData(config.getGraph(), saveChanges);
       safeClose(config.getGraph(), saveChanges);
-    }
-
-    InstrumentationClassFinder finder = myInstrumentationClassFinder;
-    if (finder != null) {
-      myInstrumentationClassFinder = null;
-      finder.releaseResources();
     }
 
     myComposite = null;
@@ -208,6 +217,37 @@ public class StorageManager implements CloseableExt {
 
     safeClose(myAbiOutputBuilder, saveChanges);
     myAbiOutputBuilder = null;
+
+    InstrumentationClassFinder finder = myInstrumentationClassFinder;
+    if (finder != null) {
+      myInstrumentationClassFinder = null;
+      finder.releaseResources();
+    }
+  }
+
+  private void writeKotlinCriData(DependencyGraph graph, Boolean saveChanges) {
+    if (!saveChanges || !isKotlinCriDataGenerationEnabled) return;
+    Path kotlinCriPath = myContext.getKotlinCriStoragePath();
+    if (kotlinCriPath == null) return;
+    if (!Files.exists(kotlinCriPath)) {
+      try { Files.createDirectories(kotlinCriPath); }
+      catch (IOException e) { myContext.report(Message.create(null, e)); }
+    }
+
+    KotlinCriUtilKt.prepareSerializedData(graph)
+      .forEach(
+        (name, content) -> {
+          try {
+            Files.write(kotlinCriPath.resolve(name), content,
+                        StandardOpenOption.CREATE,
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.TRUNCATE_EXISTING);
+          }
+          catch (IOException e) {
+            myContext.report(Message.create(null, e));
+          }
+        }
+      );
   }
 
   private void safeClose(Closeable cl, boolean saveChanges) {
@@ -254,43 +294,6 @@ public class StorageManager implements CloseableExt {
     return null;
   }
 
-  private static final String WINDOWS_ERROR_TOO_MANY_LINKS;
-  static {
-    // sun.nio.fs.WindowsNativeDispatcher.FormatMessage(1142)
-    String errorMessage = "An attempt was made to create more links on a file than the file system supports"; // default
-    if (SystemInfo.isWindows) {
-      try {
-        // attempt to get the locate specific error message
-        Method requestMethod = Class.forName("sun.nio.fs.WindowsNativeDispatcher").getDeclaredMethod("FormatMessage", int.class);
-        requestMethod.setAccessible(true);
-        errorMessage = (String)requestMethod.invoke(null, 1142 /*the code for 'too many hardlinks' error*/);
-      }
-      catch (Throwable err) {
-        throw new RuntimeException(err);
-      }
-    }
-    WINDOWS_ERROR_TOO_MANY_LINKS = errorMessage;
-  }
-  
-  private static boolean tryCreateLink(Path link, Path existing) {
-    try {
-      Files.createLink(link, existing);
-      return true;
-    }
-    catch (FileSystemException e) {
-      String message = e.getMessage();
-      if (message != null && message.endsWith(WINDOWS_ERROR_TOO_MANY_LINKS)) {
-        return false;
-      }
-      else {
-        throw new UncheckedIOException(e);
-      }
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
   private static void createLinkAfterCopy(Path linkFile, Path originalFile, Path tempDir) throws IOException {
     int index = 1;
     Path copyFile;
@@ -320,7 +323,7 @@ public class StorageManager implements CloseableExt {
           }
         }
       }
-    } while (!tryCreateLink(linkFile, copyFile));
+    } while (!Utils.tryCreateLink(linkFile, copyFile));
   }
 
   public static void backupDependencies(BuildContext context, Iterable<Path> deletedPaths, Iterable<Path> presentPaths) throws IOException {
@@ -338,7 +341,7 @@ public class StorageManager implements CloseableExt {
 
     for (Path presentPath : presentPaths) {
       Path backup = DataPaths.getJarBackupStoreFile(context, presentPath);
-      if (!tryCreateLink(backup, presentPath)) {
+      if (!Utils.tryCreateLink(backup, presentPath)) {
         Path trash = DataPaths.getLibraryTrashDir(context, presentPath);
         Files.createDirectories(trash);
         createLinkAfterCopy(backup, presentPath, trash);

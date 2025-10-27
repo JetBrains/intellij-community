@@ -76,6 +76,9 @@ class UISettingsState : BaseState() {
   @get:OptionTag("SHOW_TOOL_WINDOW_NUMBERS")
   var showToolWindowsNumbers: Boolean by property(false)
 
+  @get:OptionTag("DIFFERENT_TOOLWINDOW_BACKGROUND")
+  var differentToolwindowBackground: Boolean by property(false)
+
   @get:OptionTag("SHOW_TOOL_WINDOW_NAMES")
   var showToolWindowsNames: Boolean by property(false)
   @get:OptionTag("TOOL_WINDOW_LEFT_SIDE_CUSTOM_WIDTH")

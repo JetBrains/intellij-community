@@ -58,8 +58,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.intellij.grazie.text.GrazieProblem.getQuickFixText;
 import static com.intellij.grazie.text.GrazieProblem.visualizeSpace;
@@ -407,6 +405,8 @@ public final class TreeRuleChecker {
       List<ParsedSentence> sentences = entry.getValue();
       if (sentences.isEmpty()) continue;
 
+      int offsetInContent = 0;
+
       List<MatchingResult> matches = doCheck(content, sentences);
       for (int i = 0; i < sentences.size(); i++) {
         ParsedSentence parsed = sentences.get(i);
@@ -425,8 +425,9 @@ public final class TreeRuleChecker {
           .withTree(parsed.tree.withStartOffset(offset))
           .withMetadata(matches.get(i).metadata);
         doc.add(new SentenceWithContent(ds, content, offset, offset + untrimmedRange.getStartOffset()));
+        offsetInContent += ds.text.length();
       }
-      offset += content.length();
+      offset += offsetInContent;
     }
     return doc;
   }
@@ -604,31 +605,6 @@ public final class TreeRuleChecker {
     @Override
     public boolean shouldSuppressInCodeLikeFragments() {
       return match.rule().shouldSuppressInCodeLikeFragments();
-    }
-  }
-
-  public static class DocProblemFilter extends ProblemFilter {
-    private static final Pattern PY_DOC_PARAM = Pattern.compile("[a-z0-9_]+\\s*:\\s+\\p{L}+( or \\p{L}+)*");
-
-    @Override
-    public boolean shouldIgnore(@NotNull TextProblem problem) {
-      TextContent text = problem.getText();
-      if (text.getDomain() == TextDomain.DOCUMENTATION) {
-        List<TextRange> ranges = problem.getHighlightRanges();
-        String psiClass = text.getCommonParent().getClass().getName();
-
-        //todo remove after https://youtrack.jetbrains.com/issue/PY-59061 is fixed
-        if (psiClass.equals("com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl")) {
-          Matcher matcher = PY_DOC_PARAM.matcher(text);
-          while (matcher.find()) {
-            if (ContainerUtil.exists(ranges, r -> r.intersects(matcher.start(), matcher.end()))) {
-              return true;
-            }
-          }
-        }
-      }
-
-      return false;
     }
   }
 }

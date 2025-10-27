@@ -9,7 +9,8 @@
     <module name="intellij.python.sdk"/>
     <module name="intellij.python.sdk.ui"/>
     <module name="intellij.python.pyproject"/>
-    <module name="intellij.python.community.impl.poetry"/>
+    <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.community.impl.pipenv"/>
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community"/>
@@ -24,6 +25,7 @@
     <module name="intellij.python.community.services.internal.impl"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.community.interpreters"/>
+    <module name="intellij.python.processOutput"/>
   </dependencies>
   <!-- Declare that we support core Python functionality -->
   <module value="com.intellij.modules.python"/>

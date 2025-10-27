@@ -823,7 +823,14 @@
     "StripeToolbar.Button": {
       "size.compact": "32,32",
       "iconSize.compact": 16,
-      "iconPadding.compact": "4,4,4,4"
+      "leftStripeIcon.padding": "5,5,5,5",
+      "rightStripeIcon.padding": "5,5,5,5",
+      "leftStripeIcon.padding.compact": "4,4,4,4",
+      "rightStripeIcon.padding.compact": "4,4,4,4",
+      "leftStripeIconWithName.padding": "4,4,4,4",
+      "rightStripeIconWithName.padding": "4,4,4,4",
+      "leftStripeIconWithName.padding.compact": "3,3,3,3",
+      "rightStripeIconWithName.padding.compact": "3,3,3,3"
     },
 
     "Tooltip": {
@@ -1064,7 +1071,11 @@
       "Projects.actions.background": "#3C5C86",
       "SidePanel.background": "#3C3F41"
     },
-
+    "WelcomeScreen.Frame.DisclosureButton": {
+      "defaultBackground": "Gray2",
+      "hoverOverlay": "#FFFFFF0D",
+      "pressedOverlay": "#FFFFFF1A"
+    },
     "RecentProject": {
       "Color1": {
         "MainToolbarGradientStart": "#654B40",

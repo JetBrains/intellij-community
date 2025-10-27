@@ -380,6 +380,22 @@
                      language="kotlin"
                      key="inspection.suspicious.call.on.collection.to.add.or.remove.path.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinArrayHashCodeInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.array.hash.code.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.StringReferentialEqualityInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.string.referential.equality.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions.WhenWithOnlyElseInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
@@ -488,11 +504,11 @@
                      suppressId="unused" alternativeId="UNUSED_PARAMETER" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.unused.symbol.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedFlowInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.coroutines.UnusedFlowInspection"
                      enabledByDefault="true"
                      groupPath="Kotlin"
                      level="WARNING"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.coroutine"
                      language="kotlin"
                      key="inspection.unused.flow.display.name" bundle="messages.KotlinBundle"/>
 

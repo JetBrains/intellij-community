@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.name.JvmStandardClassIds.JVM_STATIC_FQ_NAME
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.uast.*
@@ -122,7 +123,7 @@ open class KotlinUMethod(
                 if (!isConstructor && returnType != PsiTypes.voidType()) {
                     append("return ")
                 }
-                append(jvmOverload!!.name)
+                append(jvmOverload!!.name.quoteIfNeeded())
                 callArguments.joinTo(this, prefix = "(", postfix = ")", separator = ", ")
             }
         val trampoline = KtPsiFactory.contextual(sourcePsi ?: javaPsi).createExpression(trampolineText)

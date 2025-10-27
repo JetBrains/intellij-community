@@ -2,9 +2,10 @@
 package com.intellij.platform.plugins.parser.impl.elements
 
 abstract class DependenciesElement {
-  class ModuleDependency(@JvmField val moduleName: String): DependenciesElement() {
+  class ModuleDependency(@JvmField val moduleName: String, @JvmField val namespace: String?): DependenciesElement() {
     override fun toString(): String {
-      return "ModuleDependency(moduleName=$moduleName)"
+      val namespaceString = if (namespace != null) ", namespace=$namespace" else ""
+      return "ModuleDependency(moduleName=$moduleName$namespaceString)"
     }
   }
   class PluginDependency(@JvmField val pluginId: String): DependenciesElement() {

@@ -51,7 +51,7 @@ object K2CreateLocalVariableFromUsageBuilder {
 
     internal class CreateLocalFromUsageAction(
         refExpr: KtNameReferenceExpression,
-        private val propertyName: String = refExpr.getReferencedName()
+        private val propertyName: String = refExpr.text
     ) : IntentionAction {
         val pointer: SmartPsiElementPointer<KtNameReferenceExpression> = SmartPointerManager.createPointer(refExpr)
         override fun getText(): String = KotlinBundle.message("fix.create.from.usage.local.variable", propertyName)

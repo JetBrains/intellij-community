@@ -3,10 +3,8 @@ package com.intellij.platform.debugger.impl.frontend
 
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
-import com.intellij.platform.project.findProjectOrNull
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
-import com.intellij.platform.rpc.topics.RemoteTopic
 import com.intellij.xdebugger.impl.breakpoints.SHOW_BREAKPOINT_DIALOG_REMOTE_TOPIC
 import com.intellij.xdebugger.impl.breakpoints.ShowBreakpointDialogRequest
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory

@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultComboBoxModel
 
 // @formatter:off
@@ -49,7 +50,8 @@ private val myRenderedDocCheckBox                     get() = CheckboxDescriptor
 private val myUseEditorFontInInlays                   get() = CheckboxDescriptor(ApplicationBundle.message("use.editor.font.for.inlays"), model::isUseEditorFontInInlays, model::setUseEditorFontInInlays)
 // @formatter:on
 
-internal class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
+@ApiStatus.Internal
+class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("tab.editor.settings.appearance"),
   "reference.settingsdialog.IDE.editor.appearance",
   "editor.preferences.appearance"

@@ -41,6 +41,7 @@ jvm_library(
     "@lib//:platform-jewel-markdown-core-org-commonmark-commonmark",
     "//platform/jewel/foundation",
     "//libraries/compose-foundation-desktop",
+    "//libraries/jsoup",
   ],
   exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
   plugins = ["@lib//:compose-plugin"]
@@ -64,6 +65,7 @@ jvm_library(
     "//platform/jewel/foundation:foundation_test_lib",
     "//libraries/compose-foundation-desktop",
     "//libraries/compose-foundation-desktop-junit",
+    "//libraries/jsoup",
   ],
   exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
   plugins = ["@lib//:compose-plugin"]

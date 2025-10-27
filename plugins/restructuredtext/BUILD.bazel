@@ -54,6 +54,7 @@ jvm_library(
     "//platform/util/jdom",
     "//libraries/jcef",
     "//platform/indexing-api:indexing",
+    "//platform/core-impl",
     ":platform_lang-impl_provided",
     ":platform_execution-impl_provided",
     ":platform_core-ui_provided",
@@ -66,6 +67,11 @@ jvm_library(
   module_name = "intellij.restructuredtext",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
-  resources = [":restructuredtext_test_resources"]
+  resources = [":restructuredtext_test_resources"],
+  runtime_deps = [
+    ":restructuredtext",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
+  ]
 )
 ### auto-generated section `build intellij.restructuredtext` end

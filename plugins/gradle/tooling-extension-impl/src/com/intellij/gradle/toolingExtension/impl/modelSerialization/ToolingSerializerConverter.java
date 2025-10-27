@@ -15,12 +15,9 @@ import org.jetbrains.plugins.gradle.tooling.Exceptions;
 public class ToolingSerializerConverter {
 
   private final ToolingSerializer mySerializer;
-  private final GradleOpenTelemetry myTelemetry;
 
-  public ToolingSerializerConverter(@NotNull BuildController controller, @NotNull GradleOpenTelemetry telemetry) {
-    myTelemetry = telemetry;
-
-    DummyModel dummyModel = myTelemetry.callWithSpan("GetDummyModel", __ ->
+  public ToolingSerializerConverter(@NotNull BuildController controller) {
+    DummyModel dummyModel = GradleOpenTelemetry.callWithSpan("GetDummyModel", __ ->
       controller.getModel(DummyModel.class)
     );
     Object unpacked = new ProtocolToModelAdapter().unpack(dummyModel);
@@ -29,7 +26,7 @@ public class ToolingSerializerConverter {
   }
 
   public Object convert(Object object) {
-    return myTelemetry.callWithSpan("SerializeGradleModel", span -> {
+    return GradleOpenTelemetry.callWithSpan("SerializeGradleModel", span -> {
       span.setAttribute("model.class", object.getClass().getName());
       try {
         return mySerializer.write(object);

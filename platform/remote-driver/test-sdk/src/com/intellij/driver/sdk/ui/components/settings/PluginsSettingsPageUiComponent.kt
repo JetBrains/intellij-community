@@ -1,14 +1,17 @@
 package com.intellij.driver.sdk.ui.components.settings
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.PluginDescriptor
 import com.intellij.driver.sdk.PluginId
 import com.intellij.driver.sdk.getPlugin
+import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.accessibleName
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
+import com.intellij.driver.sdk.ui.components.common.tabbedPane
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
@@ -24,6 +27,10 @@ fun DialogUiComponent.pluginsSettingsPage(action: PluginsSettingsPageUiComponent
 
 fun WelcomeScreenUI.pluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
   onPluginsPage().apply(action)
+
+fun Driver.openPluginsSettings() {
+  invokeAction("WelcomeScreen.Plugins", now = false)
+}
 
 private fun Finder.onPluginsPage(action: PluginsSettingsPageUiComponent.() -> Unit = {}): PluginsSettingsPageUiComponent =
   x("${xQuery { byType("com.intellij.ide.plugins.newui.PluginSearchTextField") }}/ancestor::div[.//div[@accessiblename='Installed' and @javaclass='javax.swing.JLabel']][1]", PluginsSettingsPageUiComponent::class.java).apply(action)
@@ -78,7 +85,7 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   class PluginDetailsPage(data: ComponentData) : UiComponent(data) {
-    val optionButton = x { byType("com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction${"$"}OptionButton") }
+    val optionButton = x(OptionButtonUiComponent::class.java) { byType("com.intellij.ide.plugins.newui.buttons.OptionButton") }
     val installButton = x { and(byType(JButton::class.java), byAccessibleName("Install")) }
     val installOptionButton = x { byType("com.intellij.ide.plugins.newui.buttons.InstallOptionButton") }
     val uninstallButton = x { and(byType(JButton::class.java), byAccessibleName("Uninstall")) }
@@ -87,5 +94,16 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     val enableButton = x { and(byType(JButton::class.java), byAccessibleName("Enable")) }
     val arrowButton = x { byType($$"com.intellij.ui.components.BasicOptionButtonUI$ArrowButton")}
     val restartIdeButton = x { byAccessibleName("Restart IDE") }
+    val tabbedPane = tabbedPane()
+    val overviewTab = tabbedPane.tab("Overview")
+    val whatsNewTab = tabbedPane.tab("What's New")
+    val reviewsTab = tabbedPane.tab("Reviews")
+    val additionalInfoTab = tabbedPane.tab("Additional Info")
+    val versionPanel = x { byType("com.intellij.ide.plugins.newui.VersionPanel") }
+
+    class OptionButtonUiComponent(data: ComponentData) : UiComponent(data) {
+      val disableButton = x { and(byType(JButton::class.java), byAccessibleName("Disable")) }
+      val enableButton = x { and(byType(JButton::class.java), byAccessibleName("Enable")) }
+    }
   }
 }

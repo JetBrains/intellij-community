@@ -2,11 +2,11 @@
 package org.jetbrains.kotlin.idea.core.script.k2.modules
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationWithSdk
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 
 interface ScriptRefinedConfigurationResolver {
-    suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk?
-    fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk?
+    suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult?
+    fun get(virtualFile: VirtualFile): ScriptCompilationConfigurationResult?
     fun remove(virtualFile: VirtualFile): Unit = Unit
 }

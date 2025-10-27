@@ -2,11 +2,11 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.newui.TabbedPaneHeaderComponent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -54,6 +54,8 @@ public final class PluginManagerConfigurable
 
   public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
 
+  private static final Logger LOG = Logger.getInstance(PluginManagerConfigurable.class);
+
   private PluginManagerConfigurablePanel myPanel;
 
   /**
@@ -96,7 +98,12 @@ public final class PluginManagerConfigurable
   public @Nullable JComponent createComponent() {
     PluginManagerConfigurablePanel panel = createPanelIfNeeded();
 
-    getPluginsViewCustomizer().processConfigurable(this);
+    try {
+      getPluginsViewCustomizer().processConfigurable(this);
+    }
+    catch (Exception e) {
+      LOG.error("Error while processing configurable", e);
+    }
 
     return panel.getComponent();
   }
@@ -256,6 +263,12 @@ public final class PluginManagerConfigurable
   public void apply() throws ConfigurationException {
     if (myPanel != null) {
       myPanel.apply();
+    }
+  }
+
+  public void scheduleApply() {
+    if (myPanel != null) {
+      myPanel.scheduleApply();
     }
   }
 

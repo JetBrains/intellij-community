@@ -24,7 +24,7 @@ fun TextContent.replaceEscapedVerticalTab(): TextContent {
   return this.replaceBackslashEscapedWhitespace('v')
 }
 
-private fun TextContent.replaceBackslashEscapedWhitespace(separator: Char): TextContent {
+fun TextContent.replaceBackslashEscapedWhitespace(separator: Char): TextContent {
   val excluded = getBackslashExcludeRanges(this, separator)
   if (excluded.isEmpty()) return this
 
@@ -84,6 +84,9 @@ private fun mapSeparator(symbol: Char): Char {
   return when (symbol) {
     'n' -> '\n'
     't' -> '\t'
+    'b' -> ' '
+    'r' -> '\r'
+    'f' -> '\u000C'
     'v' -> Char(0x0b)
     else -> ' '
   }

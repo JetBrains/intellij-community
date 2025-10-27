@@ -12,8 +12,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.storage.*
+import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
@@ -28,13 +30,14 @@ private class GlobalSdkBridgeInitializer : BridgeInitializer {
     @Suppress("UNCHECKED_CAST")
     val sdkChanges = (changes[SdkEntity::class.java] as? List<EntityChange<SdkEntity>>) ?: emptyList()
     val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
+    val environmentName = project.getEelDescriptor().machine.getInternalEnvironmentName()
 
     for (addChange in addChanges) {
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
-        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
+        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", environmentName = environmentName)
         sdkEntityCopy.applyChangesFrom(addChange.newEntity)
-        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy))
+        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy, environmentName))
       }
     }
   }
@@ -43,25 +46,19 @@ private class GlobalSdkBridgeInitializer : BridgeInitializer {
 private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : GlobalSdkTableBridge {
   override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                              initialEntityStorage: VersionedEntityStorage): () -> Unit {
+    val environmentName = eelMachine.getInternalEnvironmentName()
     val sdks = mutableStorage
       .entities(SdkEntity::class.java)
       .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
       .map { sdkEntity ->
-        val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as SdkEntity.Builder
-        sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntityBuilder))
+        val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as SdkEntityBuilder
+        sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntityBuilder, environmentName))
       }
       .toList()
     thisLogger().debug("Initial load of SDKs")
 
     for ((entity, sdkBridge) in sdks) {
-      if (shouldSkipEntityProcessing(entity)) {
-        // The SDKs are populated from a single file for now. All loaded SDK entities go to the same entity storage
-        // We want to avoid having alien SDKs in storages, hence we filter them
-        mutableStorage.removeEntity(entity)
-      }
-      else {
-        mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
-      }
+      mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
     }
     return {}
   }
@@ -71,16 +68,14 @@ private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : Globa
     val sdkChanges = (changes[SdkEntity::class.java] as? List<EntityChange<SdkEntity>>) ?: emptyList()
     val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
 
-    for (addChange in addChanges) {
-      if (shouldSkipEntityProcessing(addChange.newEntity)) {
-        continue
-      }
+    val environmentName = eelMachine.getInternalEnvironmentName()
 
+    for (addChange in addChanges) {
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
-        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", "")
+        val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", environmentName = environmentName)
         sdkEntityCopy.applyChangesFrom(addChange.newEntity)
-        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy))
+        ProjectJdkImpl(SdkBridgeImpl(sdkEntityCopy, environmentName))
       }
     }
   }

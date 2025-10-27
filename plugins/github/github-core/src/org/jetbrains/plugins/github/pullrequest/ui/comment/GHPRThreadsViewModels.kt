@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.async.*
+import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.getOrNull
@@ -20,7 +21,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.mapToRightSideLine
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels.ThreadIdAndPosition
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModelImpl
 import java.time.Instant.EPOCH
@@ -34,19 +34,13 @@ internal interface GHPRThreadsViewModels {
 
   val threadMappingData: StateFlow<Map<String, ThreadMappingData>>
 
-  fun lookupNextComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String?
+  fun lookupNextComment(cursorLocation: UnifiedCodeReviewItemPosition, isVisible: (String) -> Boolean): String?
   fun lookupNextComment(currentThreadId: String, isVisible: (String) -> Boolean): String?
-  fun lookupPreviousComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String?
+  fun lookupPreviousComment(cursorLocation: UnifiedCodeReviewItemPosition, isVisible: (String) -> Boolean): String?
   fun lookupPreviousComment(currentThreadId: String, isVisible: (String) -> Boolean): String?
 
   fun requestNewComment(position: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel
   fun cancelNewComment(change: RefComparisonChange, side: Side, lineIdx: Int)
-
-  data class ThreadIdAndPosition(
-    val id: String?,
-    val createdAt: Date,
-    val positionInDiff: GHPRReviewUnifiedPosition,
-  )
 
   data class ThreadMappingData(
     val threadData: GHPullRequestReviewThread,
@@ -167,19 +161,19 @@ internal class GHPRThreadsViewModelsImpl(
       cancelNewComment(position.change, position.location.side, position.location.lineIdx)
     }
 
-  override fun lookupNextComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String? =
+  override fun lookupNextComment(cursorLocation: UnifiedCodeReviewItemPosition, isVisible: (String) -> Boolean): String? =
     lookupAdjacentComment(cursorLocation, isNext = true, isVisible)
 
   override fun lookupNextComment(currentThreadId: String, isVisible: (String) -> Boolean): String? =
     lookupAdjacentComment(currentThreadId, isNext = true, isVisible)
 
-  override fun lookupPreviousComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String? =
+  override fun lookupPreviousComment(cursorLocation: UnifiedCodeReviewItemPosition, isVisible: (String) -> Boolean): String? =
     lookupAdjacentComment(cursorLocation, isNext = false, isVisible)
 
   override fun lookupPreviousComment(currentThreadId: String, isVisible: (String) -> Boolean): String? =
     lookupAdjacentComment(currentThreadId, isNext = false, isVisible)
 
-  private fun lookupAdjacentComment(cursorLocation: GHPRReviewUnifiedPosition, isNext: Boolean, isVisible: (String) -> Boolean): String? {
+  private fun lookupAdjacentComment(cursorLocation: UnifiedCodeReviewItemPosition, isNext: Boolean, isVisible: (String) -> Boolean): String? {
     // Fetch stuff
     val threads = threadOrder.value?.getOrNull() ?: return null
     if (threads.isEmpty()) return null
@@ -225,8 +219,8 @@ internal class GHPRThreadsViewModelsImpl(
   }
 
   companion object {
-    private fun positionComparator(changeIndexLookup: (RefComparisonChange) -> Int?): Comparator<GHPRReviewUnifiedPosition> =
-      Comparator<GHPRReviewUnifiedPosition> { left, right ->
+    private fun positionComparator(changeIndexLookup: (RefComparisonChange) -> Int?): Comparator<UnifiedCodeReviewItemPosition> =
+      Comparator<UnifiedCodeReviewItemPosition> { left, right ->
         val leftChangeIdx = changeIndexLookup(left.change)
         val rightChangeIdx = changeIndexLookup(right.change)
 
@@ -254,7 +248,7 @@ internal class GHPRThreadsViewModelsImpl(
         ThreadIdAndPosition(
           threadData.id,
           threadData.createdAt,
-          GHPRReviewUnifiedPosition(
+          UnifiedCodeReviewItemPosition(
             change,
             threadData.mapToLeftSideLine(diffData) ?: -1,
             threadData.mapToRightSideLine(diffData) ?: -1
@@ -268,3 +262,9 @@ internal class GHPRThreadsViewModelsImpl(
     }
   }
 }
+
+private data class ThreadIdAndPosition(
+  val id: String?,
+  val createdAt: Date,
+  val positionInDiff: UnifiedCodeReviewItemPosition,
+)

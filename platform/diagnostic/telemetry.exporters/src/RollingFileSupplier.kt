@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.exporters
 
 import com.intellij.openapi.util.io.FileSetLimiter
@@ -62,7 +62,7 @@ class RollingFileSupplier(
    *
    * Generated file name is derived from metricsReportingBasePath, but with date/time/sequential-number additions,
    * i.e. '/var/logs/open-telemetry-metrics.csv' (base) -> '/var/logs/open-telemetry-metrics-2023-02-04-14-15-43.1.csv'
-   * (exact format is configurable).
+   * (the exact format is configurable).
    *
    * Method uses Date/time/seqNo additions to always create new file, not existent in the metricsReportingBasePath.parent
    * folder before the call.

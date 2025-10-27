@@ -1,14 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.vfs
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -97,20 +94,7 @@ class GitIndexVirtualFile(
     if (data == null) {
       GitIndexFileSystemRefresher.getInstance(project).initialRefresh(listOf(this))
     }
-
-    try {
-      if (ApplicationManager.getApplication().isDispatchThread) {
-        return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<ByteArray, IOException> {
-          GitIndexFileSystemRefresher.getInstance(project).readContentFromGit(root, filePath)
-        }, GitBundle.message("stage.vfs.read.process", name), false, project)
-      }
-      else {
-        return GitIndexFileSystemRefresher.getInstance(project).readContentFromGit(root, filePath)
-      }
-    }
-    catch (e: Exception) {
-      throw IOException(e)
-    }
+    return GitIndexFileSystemRefresher.getInstance(project).readContentFromGit(root, filePath)
   }
 
   override fun equals(other: Any?): Boolean {

@@ -2,6 +2,8 @@
 package com.intellij.xdebugger.impl.actions
 
 import com.intellij.execution.actions.ChooseDebugConfigurationPopupAction
+import com.intellij.frontend.FrontendApplicationInfo
+import com.intellij.frontend.FrontendType
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -21,26 +23,22 @@ open class ResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.F
     }
 
     val session = DebuggerUIUtil.getSessionProxy(e)
-    // Do nothing when there is no session, so that LUX-ed action on frontend will delegate to the backend action
-    if (session == null) {
-      // we may trigger the Choose Run Configuration dialog via the action shortcut, the action must be enabled,
-      // but in the Run / Debug toolbar it should be disabled when no session. There the action is attached to the concrete process.
-      e.presentation.isEnabled = isFromShortcutOrSearch(e)
-      return
-    }
-
-    if (!session.isStopped) {
+    if (session != null && !session.isStopped) {
       e.presentation.isEnabled = session.isPaused && !session.isReadOnly
     }
     else {
-      // disable visual representation but leave the shortcut action enabled
-      e.presentation.isEnabled = isFromShortcutOrSearch(e)
+      // ChooseDebugConfigurationPopupAction is not supported on fronted yet
+      val isActionSupported = FrontendApplicationInfo.getFrontendType() !is FrontendType.Remote
+      // we may trigger the Choose Run Configuration dialog via the action shortcut, the action must be enabled,
+      // but in the Run / Debug toolbar it should be disabled when no session. There the action is attached to the concrete process.
+      e.presentation.isEnabled = isActionSupported && isFromShortcutOrSearch(e)
     }
   }
 
   private fun isFromShortcutOrSearch(e: AnActionEvent): Boolean {
     return e.inputEvent is KeyEvent
            || e.place == ActionPlaces.ACTION_SEARCH
+           || e.place == ActionPlaces.KEYBOARD_SHORTCUT
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

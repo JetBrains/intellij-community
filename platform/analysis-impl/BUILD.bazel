@@ -46,10 +46,9 @@ jvm_library(
     "//libraries/jackson/jackson",
     "//libraries/jackson/module-kotlin:libraries-jackson-module-kotlin",
     "//platform/util-class-loader:util-classLoader",
+    "//libraries/kotlinx/serialization/core",
+    "//libraries/kotlinx/serialization/json",
   ],
-  exports = [
-    "//platform/core-impl",
-    "//platform/projectModel-impl",
-  ]
+  exports = ["//platform/projectModel-impl"]
 )
 ### auto-generated section `build intellij.platform.analysis.impl` end

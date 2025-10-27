@@ -85,6 +85,17 @@ fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> 
   assertTrue(actualChanges.isEmpty())
 }
 
+fun GitRepository.assertCurrentBranch(name: String) {
+  assertEquals("Current branch is incorrect in ${this}", name, this.currentBranchName)
+}
+
+fun GitRepository.assertCurrentRevision(reference: String) {
+  val expectedRef = git("rev-parse HEAD")
+  val currentRef = git("rev-parse $reference")
+
+  assertEquals("Current revision is incorrect in ${this}", expectedRef, currentRef)
+}
+
 fun GitPlatformTest.assertLastMessage(actual: String, failMessage: String = "Last commit is incorrect") {
   assertMessage(actual, lastMessage(), failMessage)
 }

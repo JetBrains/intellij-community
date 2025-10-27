@@ -80,7 +80,7 @@ internal object IndexableIteratorBuilders {
       }
     }
     if (buildersToProceed.isNotEmpty()) {
-      logger.error("Failed to find handlers for IndexableIteratorBuilders: ${buildersToProceed};\n" +
+      logger.info("Failed to find handlers for IndexableIteratorBuilders: ${buildersToProceed};\n" +
                    "available handlers: $handlers")
     }
     return result

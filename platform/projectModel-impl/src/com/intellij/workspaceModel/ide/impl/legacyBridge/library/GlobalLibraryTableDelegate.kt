@@ -174,8 +174,7 @@ internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable
   }
 
   internal fun getLibraries(): Array<Library> {
-    val entityStorage = GlobalWorkspaceModel.getInstance(eelMachine).entityStorage
-    val storage = entityStorage.current
+    val storage = GlobalWorkspaceModel.getInstance(eelMachine).currentSnapshot
     val libraryEntitySequence = storage.entities(LibraryEntity::class.java).filter { it.tableId == libraryTableId }.toList()
     val libs: Array<Library> = libraryEntitySequence.mapNotNull { storage.libraryMap.getDataByEntity(it) }
       .toList().toTypedArray()

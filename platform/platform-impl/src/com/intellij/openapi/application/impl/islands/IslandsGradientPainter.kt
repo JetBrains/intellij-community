@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.PaintUtil.alignIntToInt
 import com.intellij.ui.paint.PaintUtil.alignTxToInt
@@ -23,6 +24,24 @@ import java.awt.*
 import javax.swing.JComponent
 
 internal class IslandsGradientPainter(private val frame: IdeFrame, private val mainColor: Color, private val enabled: () -> Boolean) : AbstractPainter() {
+
+  /**
+   * The list of auto replaced colors. Should contain only very specific colors, don't add widely used like `Panel.background`
+   */
+  private val islandsGradientColors = setOf(
+    // Root components
+    "MainWindow.background",
+    "MainToolbar.background",
+    "MainToolbar.inactiveBackground",
+    "ToolWindow.Stripe.background",
+    "StatusBar.background",
+
+    // Nav bar
+    "StatusBar.Breadcrumbs.hoverBackground",
+    "StatusBar.Breadcrumbs.selectionBackground",
+    "StatusBar.Breadcrumbs.selectionInactiveBackground"
+    )
+
   private val projectWindowCustomizer = ProjectWindowCustomizerService.getInstance()
 
   private var doPaint = true
@@ -33,7 +52,11 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
     if (doPaint) {
       try {
         doPaint = false
-        islandsGradientPaint(frame, mainColor, projectWindowCustomizer, component, g)
+
+        val colorName = (g.paint as? JBColor)?.name
+        if (colorName in islandsGradientColors) {
+          islandsGradientPaint(frame, mainColor, projectWindowCustomizer, component, g)
+        }
       }
       finally {
         doPaint = true

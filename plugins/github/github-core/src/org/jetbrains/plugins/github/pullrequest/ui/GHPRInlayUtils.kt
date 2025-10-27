@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.collaboration.action.findFocusedThreadId
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.launchNow
@@ -19,6 +20,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
@@ -29,13 +31,13 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.github.pullrequest.comment.action.findFocusedThreadId
 import org.jetbrains.plugins.github.pullrequest.ui.comment.CommentedCodeFrameRenderer
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
 import java.awt.*
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JLayer
+import javax.swing.SwingUtilities
 import javax.swing.plaf.LayerUI
 import kotlin.math.abs
 
@@ -49,7 +51,9 @@ internal object GHPRInlayUtils {
   ) {
     val cs: CoroutineScope = parentCs.childScope("Comment inlay hover controller")
     var activeLineHighlighter: RangeHighlighter? = null
-    val frameResizer = if (vm is GHPREditorMappedComponentModel.NewComment<*>) {
+    val isUnifiedDiffViewer = side == null
+    val multilineCommentsDisabled = Registry.get("github.pr.new.multiline.comments.disabled").asBoolean()
+    val frameResizer = if (vm is GHPREditorMappedComponentModel.NewComment<*> && !(isUnifiedDiffViewer && multilineCommentsDisabled)) {
       val frameResizer = ResizingFrameListener(editor, vm)
       editor.addEditorMouseMotionListener(frameResizer)
       editor.addEditorMouseListener(frameResizer)
@@ -114,6 +118,18 @@ internal object GHPRInlayUtils {
     }
     catch (_: IllegalArgumentException) {
       Cursor.getDefaultCursor()
+    }
+
+    init {
+      SwingUtilities.invokeLater {
+        val point = editorEx.gutterComponentEx.mousePosition
+        if (point != null) {
+          val borders = getYAxisBorders()
+          if (borders != null && point.getEdge(borders) != null) {
+            editorEx.gutterComponentEx.cursor = resizeCursor
+          }
+        }
+      }
     }
 
     override fun mouseDragged(e: EditorMouseEvent) {
@@ -235,7 +251,7 @@ internal object GHPRInlayUtils {
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun installInlaysDimming(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>) {
+  fun installInlaysDimming(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>, locationToLine: ((DiffLineLocation) -> Int?)?) {
     cs.launchNow {
       model.inlays
         .map { it.filterIsInstance<GHPREditorMappedComponentModel>() }
@@ -248,13 +264,25 @@ internal object GHPRInlayUtils {
           val rangesToDim = inlayStates
             .filter { it.shouldShowOutline }
             .mapNotNull {
-              val (_, lines) = it.range ?: return@mapNotNull null
-              lines.first..<lines.last
+              val (side, lines) = it.range ?: return@mapNotNull null
+              if (locationToLine != null) {
+                val startLine = locationToLine(side to lines.first) ?: return@mapNotNull null
+                val endLine = locationToLine(side to lines.last) ?: return@mapNotNull null
+                startLine..<endLine
+              }
+              else {
+                lines.first..<lines.last
+              }
             }
 
           inlayStates.forEach { (vm, _, range) ->
-            val (_, lines) = range ?: return@forEach
-            val onLine = lines.last
+            val (side, lines) = range ?: return@forEach
+            val onLine = if (locationToLine != null) {
+              locationToLine(side to lines.last) ?: return@forEach
+            }
+            else {
+              lines.last
+            }
 
             vm.setDimmed(rangesToDim.any { dimRange -> dimRange.contains(onLine) })
           }

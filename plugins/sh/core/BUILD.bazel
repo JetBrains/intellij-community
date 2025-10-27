@@ -34,6 +34,7 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.sh.core` end
@@ -50,6 +51,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
     "//plugins/sh/core",
     "//plugins/sh/backend",
     "//plugins/sh/plugin:plugin-main",

@@ -17,6 +17,7 @@ import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
@@ -161,7 +162,7 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
     
     val reader = GlobalDirectJpsFileContentReader(macroExpander)
     val rootsTypes = JpsSdkLibraryBridge.serializers.map { it.typeId }
-    val serializers = JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, rootsTypes, optionsPath)
+    val serializers = JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, rootsTypes, optionsPath, InternalEnvironmentName.Local)
     for (serializer in serializers) {
       val loaded = serializer.loadEntities(reader, errorReporter, virtualFileUrlManager)
       serializer.checkAndAddToBuilder(globalStorage, globalStorage, loaded.data)

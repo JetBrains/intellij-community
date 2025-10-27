@@ -5,7 +5,7 @@ import fleet.util.multiplatform.Actual
 
 /** JS implementation of [newConcurrentMap] */
 @Suppress("unused")
-@Actual(linkedTo = "newConcurrentMap")
+@Actual
 internal fun <K : Any, V : Any> newConcurrentMapJs(): ConcurrentMap<K, V> =
   SyntaxConcurrentMapJs(HashMap())
 

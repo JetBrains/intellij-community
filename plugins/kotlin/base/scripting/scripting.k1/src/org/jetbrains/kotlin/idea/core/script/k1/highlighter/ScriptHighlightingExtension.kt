@@ -7,6 +7,6 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 
 class
 ScriptHighlightingExtension : AbstractKotlinScriptHighlightingExtension {
-    override fun calculateShouldHighlightScript(file: KtFile): Boolean =
+    override fun shouldHighlight(file: KtFile): Boolean =
         ScriptConfigurationsProvider.getInstance(file.project)?.getScriptConfigurationResult(file) != null
 }

@@ -86,9 +86,7 @@ assert_type((-95) ** 8.42, Any)
 # Fraction.__pow__/__rpow__ with modulo parameter
 # With the None parameter, we get the correct type, but with a non-None parameter, we receive TypeError
 if sys.version_info >= (3, 14):
-    # pyright infers Fraction | float | complex, while mypy infers Fraction.
-    # This is probably because of differences in @overload handling.
-    assert_type(pow(Fraction(3, 4), 2, None), Fraction)  # pyright: ignore[reportAssertTypeFailure]
+    assert_type(pow(Fraction(3, 4), 2, None), Fraction)
     # Non-none modulo should fail
     pow(Fraction(3, 4), 2, 1)  # type: ignore[misc]
 else:

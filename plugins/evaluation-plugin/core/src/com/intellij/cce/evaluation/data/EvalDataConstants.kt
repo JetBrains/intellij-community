@@ -169,6 +169,16 @@ object Execution {
     DataPlacement.AdditionalText(AIA_DESCRIPTION),
   )
 
+  val ACTUAL_SMART_CHAT_ENDPOINTS: TrivialEvalData<List<String>> = EvalDataDescription(
+    name = "Actual smart chat function calls",
+    description = "List of names of smart-chat endpoints, called in chat-session",
+    placement = DataPlacement.AdditionalConcatenatedLines(AIA_ACTUAL_SMART_CHAT_ENDPOINTS),
+    presentation = EvalDataPresentation(
+      PresentationCategory.EXECUTION,
+      renderer = DataRenderer.Lines,
+    ),
+  )
+
   val LLMC_LOG: TrivialEvalData<String> = EvalDataDescription(
     name = "LLMC log",
     description = "LLMC logs during evaluation case",
@@ -397,6 +407,7 @@ object Analysis {
     )
   )
 
+
   val ACTUAL_FUNCTION_CALLS: TrivialEvalData<List<String>> = EvalDataDescription(
     name = "Actual function calls",
     description = "Bind with the list of actual internal API calls",
@@ -511,6 +522,11 @@ object Metrics {
     threshold = 1.0,
     dependencies = MetricDependencies(Analysis.FAILED_RELATED_FILE_VALIDATIONS)
   ) { RelatedFileValidationSuccess() }
+
+  val WAS_ASK_AI_CALLED: EvalMetric = EvalMetric(
+    threshold = 1.0,
+    dependencies = MetricDependencies(Execution.ACTUAL_SMART_CHAT_ENDPOINTS)
+  ) { WasAskAICalledMetric() }
 
   val FUNCTION_CALLING: EvalMetric = EvalMetric(
     threshold = 1.0,

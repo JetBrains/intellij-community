@@ -140,7 +140,6 @@ class _Params(TypedDict, total=False):
     nopart: bool | None
     updatetime: bool | None
     writedescription: bool | None
-    writeannotations: bool | None
     writeinfojson: bool | None
     allow_playlist_files: bool | None
     clean_infojson: bool | None
@@ -187,13 +186,9 @@ class _Params(TypedDict, total=False):
     socket_timeout: int | None
     bidi_workaround: bool | None
     debug_printtraffic: bool | None
-    prefer_ffmpeg: bool | None
-    include_ads: bool | None
     default_search: str | None
     dynamic_mpd: bool | None
     extractor_args: Mapping[str, Mapping[str, Any]] | None
-    youtube_include_dash_manifest: bool | None
-    youtube_include_hls_manifest: bool | None
     encoding: str | None
     extract_flat: bool | Literal["in_playlist", "discard", "discard_in_playlist"] | None
     live_from_start: bool | None
@@ -205,7 +200,6 @@ class _Params(TypedDict, total=False):
     postprocessors: Collection[Mapping[str, Any]]
     fixup: Literal["never", "warn", "detect_or_warn"] | None
     source_address: str | None
-    call_home: bool | None
     sleep_interval_requests: int | None
     sleep_interval: int | None
     max_sleep_interval: int | None
@@ -215,7 +209,6 @@ class _Params(TypedDict, total=False):
     force_keyframes_at_cuts: bool | None
     list_thumbnails: str | None
     playlist_items: Collection[int] | None
-    xattr_set_filesize: bool | None
     match_filter: NotRequired[Callable[[Mapping[str, Any], bool], str | None] | Callable[[Mapping[str, Any]], str | None] | None]
     color: _Color | None
     ffmpeg_location: str | None
@@ -232,6 +225,7 @@ class _Params(TypedDict, total=False):
     geo_bypass: bool | None
     geo_bypass_country: str | None
     geo_bypass_ip_block: str | None
+    useid: bool | None
     compat_opts: dict[str, Any] | None
     logger: _LoggerProtocol
     # Undocumented fields below.
@@ -239,9 +233,7 @@ class _Params(TypedDict, total=False):
     _warnings: Collection[str] | None
     autonumber_size: int | None
     autonumber_start: int | None
-    cn_verification_proxy: str | None
     load_pages: bool | None
-    youtube_print_sig_code: bool | None
     progress_hooks: list[Callable[[Mapping[str, Any]], object]]
     impersonate: ImpersonateTarget
 

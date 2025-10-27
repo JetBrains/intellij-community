@@ -64,6 +64,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
@@ -167,7 +168,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.remote" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.poetry" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" />
     <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
@@ -180,13 +181,16 @@
     <orderEntry type="module" module-name="intellij.python.hatch" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.model" level="project" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
-    <orderEntry type="library" name="kaml" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" />
     <orderEntry type="module" module-name="intellij.python.community.interpreters" />
+    <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.uv.common" />
+    <orderEntry type="module" module-name="intellij.python.common" />
+    <orderEntry type="module" module-name="intellij.python.processOutput" />
   </component>
 </module>

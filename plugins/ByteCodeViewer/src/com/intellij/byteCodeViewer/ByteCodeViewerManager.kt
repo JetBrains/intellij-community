@@ -29,28 +29,32 @@ public object ByteCodeViewerManager {
       .first()
   }
 
-  public fun findClassFile(aClass: PsiClass): VirtualFile? {
-    val fileClass = aClass.containingClassFileClass()
+  public fun findClassFile(psiClass: PsiClass): VirtualFile? {
+    val fileClass = psiClass.containingClassFileClass()
     for (finder in CLASS_FINDER_EP.extensionList) {
-      val vFile = finder.findClass(aClass, fileClass)
+      val vFile = finder.findClass(psiClass, fileClass)
       if (vFile != null) {
         return vFile
       }
     }
     val file = fileClass.originalElement.containingFile.virtualFile ?: return null
-    val fileIndex = ProjectFileIndex.getInstance(aClass.project)
-    val jvmClassName = ClassUtil.getBinaryClassName(aClass) ?: return null
-    return if (FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) {
+    val jvmClassName = ClassUtil.getBinaryClassName(psiClass) ?: return null
+    if (FileTypeRegistry.getInstance().isFileOfType(file, JavaClassFileType.INSTANCE)) {
       // compiled class; looking for the right .class file (inner class 'A.B' is "contained" in 'A.class', but we need 'A$B.class')
-      file.parent.findChild(StringUtil.getShortName(jvmClassName) + ".class")
+      return file.parent.findChild(StringUtil.getShortName(jvmClassName) + ".class")
     }
     else {
       // source code; looking for a .class file in compiler output
-      val moduleExtension = CompilerModuleExtension.getInstance(fileIndex.getModuleForFile(file)) ?: return null
-      val classRoot = if (fileIndex.isInTestSourceContent(file)) moduleExtension.compilerOutputPathForTests
-      else moduleExtension.compilerOutputPath
+      val fileIndex = ProjectFileIndex.getInstance(psiClass.project)
+      val module = fileIndex.getModuleForFile(file) ?: return null
+      val compilerModuleExtension = CompilerModuleExtension.getInstance(module) ?: return null
+      val classRoot = when (fileIndex.isInTestSourceContent(file)) {
+        true -> compilerModuleExtension.compilerOutputPathForTests
+        false -> compilerModuleExtension.compilerOutputPath
+      }
       if (classRoot == null) return null
-      return classRoot.resolveFromRootOrRelative(jvmClassName.replace('.', '/') + ".class")
+      val relativeClassFilePath = jvmClassName.replace('.', '/') + ".class"
+      return classRoot.resolveFromRootOrRelative(relativeClassFilePath)
     }
   }
 
@@ -81,8 +85,8 @@ public object ByteCodeViewerManager {
     val queue: Queue<PsiClass> = ArrayDeque<PsiClass>(listOf<PsiClass?>(*containingFile.getClasses()))
     while (!queue.isEmpty()) {
       val c = queue.remove()
-      val navigationElement: PsiElement? = c.getNavigationElement()
-      val classRange = navigationElement?.getTextRange()
+      val navigationElement: PsiElement = c.getNavigationElement()
+      val classRange = navigationElement.getTextRange()
       if (classRange != null && classRange.contains(textRange)) {
         result = c
         queue.clear()

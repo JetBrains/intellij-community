@@ -67,6 +67,7 @@ class RecentProjectFilteringTree(
   treeComponent: Tree,
   parentDisposable: Disposable,
   collectors: List<() -> List<RecentProjectTreeItem>>,
+  val disableSearchFieldBorder: Boolean
 ) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(treeComponent, DefaultMutableTreeNode(RootItem(collectors))) {
   init {
     val projectActionButtonViewModel = ProjectActionButtonViewModel()
@@ -139,7 +140,9 @@ class RecentProjectFilteringTree(
 
       textEditor.apply {
         isOpaque = false
-        border = JBUI.Borders.empty()
+        if (disableSearchFieldBorder) {
+          border = JBUI.Borders.empty()
+        }
         emptyText.text = IdeBundle.message("welcome.screen.search.projects.empty.text")
         accessibleContext.accessibleName = IdeBundle.message("welcome.screen.search.projects.empty.text")
         TextComponentEmptyText.setupPlaceholderVisibility(this)

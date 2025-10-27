@@ -160,7 +160,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
     return myVirtualFile;
   }
 
-  private @Nullable Document getCachedDocument() {
+  @Nullable Document getCachedDocument() {
     Document document = com.intellij.reference.SoftReference.dereference(myDocument);
     if (document != null) return document;
     return FileDocumentManager.getInstance().getCachedDocument(getVirtualFile());

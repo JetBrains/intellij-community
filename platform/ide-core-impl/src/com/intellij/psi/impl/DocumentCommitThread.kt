@@ -39,15 +39,14 @@ import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = logger<DocumentCommitThread>()
 
 @ApiStatus.Internal
 class DocumentCommitThread : DocumentCommitProcessor, Disposable {
-  @Volatile
-  private var isDisposed = false
+  private val isDisposed
+    get() = myExecutor.isShutdown
   private val myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Document Commit Pool")
 
   private val commitInProgressCounter = AtomicInteger()
@@ -65,8 +64,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
   }
 
   override fun dispose() {
-    (myExecutor as BoundedTaskExecutor).clearAndCancelAll()
-    isDisposed = true
+    myExecutor.shutdownNow()
   }
 
   override fun commitAsynchronously(
@@ -242,12 +240,6 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
   }
 
   override fun toString(): String = "Document commit thread; application: ${ApplicationManager.getApplication()}; isDisposed: $isDisposed"
-
-
-  fun Pair<Job, AtomicBoolean>.isReadPartInProgress(): Boolean {
-    // the commit is in the read phase if its job is not canceled (by a similar task) or when it did not manage to set the boolean flag of read
-    return !first.isCancelled && second.get()
-  }
 
   // NB: failures applying EDT tasks are not handled - i.e., failed documents are added back to the queue and the method returns
   @TestOnly

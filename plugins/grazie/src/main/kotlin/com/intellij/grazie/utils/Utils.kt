@@ -2,6 +2,9 @@
 package com.intellij.grazie.utils
 
 import ai.grazie.gec.model.problem.ProblemFix
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -48,7 +51,7 @@ internal fun <T> runBlockingModalProcess(
   project: Project? = null,
   title: @NlsContexts.DialogTitle String,
   isCancellable: Boolean = true,
-  block: suspend CoroutineScope.() -> T
+  block: suspend CoroutineScope.() -> T,
 ): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(
     ThrowableComputable { runBlockingCancellable(block) },
@@ -57,3 +60,10 @@ internal fun <T> runBlockingModalProcess(
     project
   )
 }
+
+val isPromotionAllowed: Boolean
+  get() {
+    if (ApplicationInfoEx.getInstanceEx().isVendorJetBrains) return true
+    val pluginId = PluginId.getId("com.intellij.marketplace")
+    return PluginManagerCore.isLoaded(pluginId)
+  }

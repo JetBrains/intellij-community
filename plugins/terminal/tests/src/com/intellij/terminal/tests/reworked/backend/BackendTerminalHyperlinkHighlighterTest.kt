@@ -21,10 +21,10 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.CoroutineStart.UNDISPATCHED
 import kotlinx.coroutines.flow.*
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.updateContent
-import org.jetbrains.plugins.terminal.session.*
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.view.TerminalOffset
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.impl.updateContent
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -384,7 +384,7 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       updateModel(999L, generateLines(1002, 1005, links = (1002..1005).toList()))
       assertLinks(
         *(
-          (0 until 764).map { link(at(it, "link${it + 234}")) } +
+          (1 until 764).map { link(at(it, "link${it + 234}")) } +
           listOf(
             link(at(764, "link1000")),
             link(at(765, "link1002")),
@@ -485,21 +485,26 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
 
     suspend fun updateModel(fromLine: Long, newText: String) {
-      updateEvents.emit(listOf(TerminalContentUpdatedEvent(newText, emptyList(), fromLine)))
+      updateEvents.emit(listOf(TerminalContentUpdatedEvent(newText.ensureEOL(), emptyList(), fromLine)))
       pendingUpdateEventCount.update { it + 1 }
     }
 
     suspend fun assertText(expected: String) {
       awaitEventProcessing()
-      assertThat(document.text).isEqualTo(expected)
+      assertThat(document.text).isEqualTo(expected.ensureEOL())
     }
 
     suspend fun assertLinks(vararg expectedLinks: Link) {
       awaitEventProcessing()
-      val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>()
+      val actualLinks = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHyperlinkInfo>().map { link ->
+        ActualLinkWrapper(
+          outputModel.getText(TerminalOffset.of(link.absoluteStartOffset), TerminalOffset.of(link.absoluteEndOffset)).toString(),
+          link,
+        )
+      }
       assertThat(actualLinks).hasSameSizeAs(expectedLinks)
       for (i in actualLinks.indices) {
-        val actual = actualLinks[i]
+        val actual = actualLinks[i].link
         val expected = expectedLinks[i]
         val actualStartOffset = TerminalOffset.of(actual.absoluteStartOffset)
         val actualEndOffset = TerminalOffset.of(actual.absoluteEndOffset)
@@ -518,12 +523,22 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       }
     }
 
+    private data class ActualLinkWrapper(
+      val line: String,
+      val link: TerminalHyperlinkInfo,
+    )
+
     suspend fun assertHighlightings(vararg expectedHighlightings: Highlighting) {
       awaitEventProcessing()
-      val actualHighlightings = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHighlightingInfo>()
+      val actualHighlightings = backendFacade.dumpState().hyperlinks.filterIsInstance<TerminalHighlightingInfo>().map { highlighting ->
+        ActualHighlightingWrapper(
+          outputModel.getText(TerminalOffset.of(highlighting.absoluteStartOffset), TerminalOffset.of(highlighting.absoluteEndOffset)).toString(),
+          highlighting,
+        )
+      }
       assertThat(actualHighlightings).hasSameSizeAs(expectedHighlightings)
       for (i in actualHighlightings.indices) {
-        val actual = actualHighlightings[i]
+        val actual = actualHighlightings[i].highlighting
         val expected = expectedHighlightings[i]
         val expectedStartOffset = expected.locator.locateOffset(outputModel)
         val expectedEndOffset = expectedStartOffset + expected.locator.length.toLong()
@@ -538,6 +553,11 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
         assertThat(actual.layer).`as`(description).isEqualTo(expectedLayer)
       }
     }
+
+    private data class ActualHighlightingWrapper(
+      val line: String,
+      val highlighting: TerminalHighlightingInfo,
+    )
 
     suspend fun assertInlays(vararg expectedInlays: Inlay) {
       awaitEventProcessing()
@@ -609,10 +629,10 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
       val length: Int get() = substring.length
 
       fun locateOffset(model: TerminalOutputModel): TerminalOffset {
-        val line = model.firstLine + line.toLong()
+        val line = model.firstLineIndex + line.toLong()
         val lineStart = model.getStartOfLine(line)
         val lineEnd = model.getEndOfLine(line)
-        val lineText = model.getText(lineStart, lineEnd)
+        val lineText = model.getText(lineStart, lineEnd).toString()
         val column = lineText.indexOfSingle(substring)
         return lineStart + column.toLong()
       }
@@ -691,6 +711,8 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
     }
   }
 }
+
+private fun String.ensureEOL(): String = if (isEmpty() || endsWith('\n')) this else this + '\n'
 
 private class InlayResultItem(
   highlightStartOffset: Int,

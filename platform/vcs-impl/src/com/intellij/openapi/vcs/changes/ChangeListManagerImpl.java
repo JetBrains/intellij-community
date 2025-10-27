@@ -525,7 +525,6 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
           isInitialUpdate = myInitialUpdate;
           myInitialUpdate = false;
         }
-        changesView.setBusy(true);
         changesView.scheduleRefresh();
 
         SensitiveProgressWrapper vcsIndicator = new SensitiveProgressWrapper(ProgressManager.getInstance().getProgressIndicator());

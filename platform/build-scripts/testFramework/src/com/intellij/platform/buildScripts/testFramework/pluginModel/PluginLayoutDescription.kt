@@ -74,27 +74,19 @@ private class YamlFileBasedPluginLayoutProvider(
 
     // Collect productModules and productEmbeddedModules separately, expanding module sets
     val productModuleNames = ideContentData
+      .asSequence()
       .flatMap { it.productModules }
       .flatMap { moduleName -> resolveModuleSet(moduleName, ultimateHome) }
       .distinct()
 
     val productEmbeddedModuleNames = ideContentData
+      .asSequence()
       .flatMap { it.productEmbeddedModules }
       .flatMap { moduleName -> resolveModuleSet(moduleName, ultimateHome) }
       .distinct()
 
-    if (productModuleNames.isEmpty() && productEmbeddedModuleNames.isEmpty()) {
-      return baseEntries
-    }
-
-    // Process productModules with "dist.all/lib/modules/{moduleName}.jar" pattern
-    for (moduleName in productModuleNames) {
-      loadAndMergeModuleContent(moduleName, "dist.all/lib/modules/$moduleName.jar", baseEntries)
-    }
-
-    // Process productEmbeddedModules with "dist.all/lib/module-{moduleName}.jar" pattern
-    for (moduleName in (productEmbeddedModuleNames + productModuleNames)) {
-      loadAndMergeModuleContent(moduleName, "dist.all/lib/module-$moduleName.jar", baseEntries)
+    for (moduleName in (productModuleNames + productEmbeddedModuleNames)) {
+      loadAndMergeModuleContent(moduleName, "dist.all/lib/$moduleName.jar", baseEntries)
     }
 
     return baseEntries

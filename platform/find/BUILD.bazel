@@ -22,6 +22,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
     "//libraries/kotlinx/serialization/core",
+    "//platform/core-impl",
     "//platform/lang-impl",
     "//platform/usageView",
     "//platform/core-ui",

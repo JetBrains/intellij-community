@@ -61,7 +61,7 @@ class Mount(dict[str, Incomplete]):
     def __init__(
         self,
         target: str,
-        source: str,
+        source: str | None,
         type: Literal["bind", "volume", "tmpfs", "npipe"] = "volume",
         read_only: bool = False,
         consistency: Literal["default", "consistent", "cached", "delegated"] | None = None,

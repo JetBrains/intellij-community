@@ -38,6 +38,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/libraries/cglib",
+    "//platform/core-impl",
   ],
   exports = ["//xml/dom-openapi:dom"],
   runtime_deps = ["//platform/backend"]

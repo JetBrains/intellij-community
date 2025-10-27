@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.actions
 
 import com.intellij.codeInsight.lookup.LookupManager
@@ -80,9 +80,14 @@ private fun documentationTargetsInner(dataProvider: DataMap): List<Documentation
 }
 
 @ApiStatus.Internal
-fun targetsFromEditor(project: Project, editor: Editor, offset: Int): List<DocumentationTarget>? {
+fun targetsFromEditor(
+  project: Project,
+  editor: Editor,
+  offset: Int,
+): List<DocumentationTarget>? {
   val file = PsiUtilBase.getPsiFileInEditor(editor, project)
              ?: return null
+
   val ideTargetProvider = IdeDocumentationTargetProvider.getInstance(project)
   val lookup = LookupManager.getActiveLookup(editor)
   if (lookup != null) {

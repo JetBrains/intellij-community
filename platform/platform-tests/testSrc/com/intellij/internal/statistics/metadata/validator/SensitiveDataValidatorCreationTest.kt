@@ -111,7 +111,8 @@ class SensitiveDataValidatorCreationTest : BaseSensitiveDataValidatorTest() {
 }
     """.trimIndent()
 
-    doTest(content, "183.1234.31", "test.group.id")
+    // test group does not cover group version 3 – result should be empty
+    doTestNotContains(content, "183.1234.31", "test.group.id")
   }
 
   fun `test creating validator without build and version`() {

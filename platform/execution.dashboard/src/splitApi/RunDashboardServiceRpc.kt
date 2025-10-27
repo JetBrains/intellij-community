@@ -25,8 +25,18 @@ interface RunDashboardServiceRpc : RemoteApi<Unit> {
   suspend fun getServices(projectId: ProjectId): Flow<List<RunDashboardServiceDto>>
   suspend fun getStatuses(projectId: ProjectId): Flow<ServiceStatusDto>
   suspend fun getCustomizations(projectId: ProjectId): Flow<ServiceCustomizationDto>
-  suspend fun updateConfigurationFolderName(serviceIds: List<RunDashboardServiceId>, newGroupName: String?, projectId: ProjectId)
+  suspend fun getConfigurationTypes(projectId: ProjectId): Flow<Set<String>>
+  suspend fun updateConfigurationFolderName(projectId: ProjectId, serviceIds: List<RunDashboardServiceId>, newGroupName: String?)
   suspend fun getLuxedContentEvents(projectId: ProjectId): Flow<RunDashboardLuxedContentEvent>
   suspend fun startLuxingContentForService(projectId: ProjectId, id: RunDashboardServiceId): ComponentDirectTransferId?
   suspend fun pauseLuxingContentForService(projectId: ProjectId, id: RunDashboardServiceId)
+  suspend fun getAvailableConfigurations(projectId: ProjectId): Flow<Set<RunDashboardConfigurationDto>>
+  suspend fun getExcludedConfigurations(projectId: ProjectId): Flow<Set<String>>
+  suspend fun setNewExcluded(projectId: ProjectId, configurationTypeId: String, newExcluded: Boolean)
+  suspend fun restoreConfigurations(projectId: ProjectId, configurations: List<RunDashboardConfigurationId>)
+  suspend fun hideConfigurations(projectId: ProjectId, configurations: List<RunDashboardConfigurationId>)
+  suspend fun getRunManagerUpdates(projectId: ProjectId): Flow<Unit>
+  suspend fun editConfiguration(projectId: ProjectId, serviceId: RunDashboardServiceId)
+  suspend fun copyConfiguration(projectId: ProjectId, serviceId: RunDashboardServiceId)
+  suspend fun hideConfiguration(projectId: ProjectId, serviceIds: List<RunDashboardServiceId>)
 }

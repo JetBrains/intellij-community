@@ -16,6 +16,10 @@ import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+import org.jetbrains.intellij.build.productLayout.ModuleSetProvider
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
@@ -216,7 +220,7 @@ abstract class ProductProperties {
   var rootModuleForModularLoader: String? = null
 
   /**
-   * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by 
+   * Specifies the mode of this product which will be used to determine which plugin modules should be loaded at runtime by
    * [the modular loader][com.intellij.platform.bootstrap.ModuleBasedProductLoadingStrategy].
    * This property makes sense only if [rootModuleForModularLoader] is set to a non-null value.
    */
@@ -227,9 +231,8 @@ abstract class ProductProperties {
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
-  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
-    return getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
-  }
+  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
+    getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
 
   /**
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker], when .class file version verification is necessary.
@@ -265,13 +268,11 @@ abstract class ProductProperties {
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String
 
   /**
-   * `<productName>-<buildNumber>` for any (nightly, EAP, or release) build, e.g., 'ideaIC-232.9999'
+   * `<productName>-<buildNumber>` for any (nightly, EAP, or release) build, e.g., 'idea-232.9999'
    *
    * See [getBaseArtifactName].
    */
-  fun getBaseArtifactName(context: BuildContext): String {
-    return getBaseArtifactName(context.applicationInfo, context.buildNumber)
-  }
+  fun getBaseArtifactName(context: BuildContext): String = getBaseArtifactName(context.applicationInfo, context.buildNumber)
 
   /**
    * @return an instance of the class containing properties specific for Windows distribution,
@@ -338,16 +339,49 @@ abstract class ProductProperties {
    * Paths to externally built plugins to be included in the IDE.
    * They will be copied into the build, as well as included in the IDE classpath when launching it to build search index, .jar order, etc.
    */
-  open fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
+  open suspend fun getAdditionalPluginPaths(context: BuildContext): List<Path> = emptyList()
 
   /**
-   * Override this function to provide additional JVM command line arguments which will be added to launchers along with 
+   * Override this function to provide additional JVM command line arguments which will be added to launchers along with
    * [additionalIdeJvmArguments].
    */
   open fun getAdditionalContextDependentIdeJvmArguments(context: BuildContext): List<String> = emptyList()
 
   /**
-   * @return custom properties for [org.jetbrains.intellij.build.impl.productInfo.ProductInfoData].
+   * Override this method to programmatically specify content modules for the product plugin.xml.
+   *
+   * This provides a way to define content modules in Kotlin code instead of using XML xi:include directives.
+   * The modules specified here will be automatically injected into the product's plugin.xml during build
+   * via `layout.withPatch` mechanism in `processAndGetProductPluginContentModules`.
+   *
+   * You can:
+   * - Reference named module sets (e.g., "essential", "vcs", "xml") which are resolved from
+   *   [org.jetbrains.intellij.build.productLayout.CommunityModuleSets] and UltimateModuleSets registries
+   * - Add individual modules via `additionalModules`
+   * - Exclude specific modules via `excludedModules`
+   * - Override loading modes via `moduleLoadingOverrides`
+   *
+   * The programmatic modules are merged with XML-based xi:includes (both are supported during transition).
+   *
+   * Example:
+   * ```
+   * override fun getProductContentModules() = ProductModulesContentSpec().apply {
+   *   moduleSets = listOf(
+   *     ModuleSet("essential", CommunityModuleSets.essential()),
+   *     ModuleSet("vcs", CommunityModuleSets.vcs())
+   *   )
+   *   additionalModules = listOf(ContentModule("my.custom.module"))
+   *   excludedModules = setOf("intellij.unwanted.module")
+   * }
+   * ```
+   *
+   * @return specification of programmatic content modules, or null to use only XML-based includes
+   * @see org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+   */
+  open fun getProductContentDescriptor(): ProductModulesContentSpec? = null
+
+  /**
+   * @return custom properties for [com.intellij.platform.buildData.productInfo.ProductInfoData].
    */
   @Suppress("KDocUnresolvedReference")
   open fun generateCustomPropertiesForProductInfo(): List<CustomProperty> = emptyList()
@@ -356,9 +390,8 @@ abstract class ProductProperties {
    * If `true`, a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
   @ApiStatus.Internal
-  open suspend fun addRemoteDevelopmentLibraries(buildContext: BuildContext): Boolean {
-    return buildContext.getBundledPluginModules().contains("intellij.remoteDevServer")
-  }
+  open suspend fun addRemoteDevelopmentLibraries(context: BuildContext): Boolean =
+    context.getBundledPluginModules().contains("intellij.remoteDevServer")
 
   /**
    * Checks whether some necessary conditions specific for the product are met and report errors via [BuildContext.messages] if they aren't.
@@ -449,30 +482,35 @@ abstract class ProductProperties {
    * @param pluginId may be null if missing or a plugin descriptor is malformed
    * @return list of plugin validation errors.
    */
-  open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
-    return when (result) {
-      is PluginCreationSuccess -> buildList {
-        addAll(result.unacceptableWarnings)
-        if (result.plugin.pluginVersion == null) {
-          add(PropertyNotSpecified("version"))
-        }
-        val id = result.plugin.pluginId
-        if (id == null) {
-          add(PropertyNotSpecified("id"))
-        }
-        else if (!PLUGIN_ID_REGEX.matches(id)) {
-          add(InvalidPluginIDProblem(id))
-        }
+  open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> = when (result) {
+    is PluginCreationSuccess -> buildList {
+      addAll(result.unacceptableWarnings)
+      if (result.plugin.pluginVersion == null) {
+        add(PropertyNotSpecified("version"))
       }
-      is PluginCreationFail -> result.errorsAndWarnings
+      val id = result.plugin.pluginId
+      if (id == null) {
+        add(PropertyNotSpecified("id"))
+      }
+      else if (!PLUGIN_ID_REGEX.matches(id)) {
+        add(InvalidPluginIDProblem(id))
+      }
     }
+    is PluginCreationFail -> result.errorsAndWarnings
   }
 
-  private companion object {
-    /**
-     * From https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id:
-     * > Please use characters, numbers, and '.'/'-'/'_' symbols only and keep it reasonably short.
-     */
-    val PLUGIN_ID_REGEX: Regex = "^[\\w.-]+$".toRegex()
-  }
+  /**
+   * List of module sets providers used to discover and resolve module set relationships.
+   * Used only for packaging tests to group modules by their module sets.
+   *
+   * For community builds: [CommunityModuleSets]
+   * For ultimate builds: both UltimateModuleSets and [CommunityModuleSets]
+   */
+  abstract val moduleSetsProviders: List<ModuleSetProvider>
 }
+
+/**
+ * From https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html#idea-plugin__id:
+ * > Please use characters, numbers, and '.'/'-'/'_' symbols only and keep it reasonably short.
+ */
+private val PLUGIN_ID_REGEX: Regex = "^[\\w.-]+$".toRegex()

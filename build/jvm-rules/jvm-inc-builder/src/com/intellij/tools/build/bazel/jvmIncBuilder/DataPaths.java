@@ -13,6 +13,7 @@ public interface DataPaths {
   String OLD_DEPS_DIR_NAME = "past-deps";
   String ABI_JAR_SUFFIX = ".abi.jar";
   String DATA_DIR_NAME_SUFFIX = "-ic";
+  String KOTLIN_CRI_STORAGE_SUFFIX = "-kotlinCriStorage";
   String KOTLIN_MODULE_EXTENSION = ".kotlin_module";
 
 

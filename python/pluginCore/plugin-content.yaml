@@ -43,12 +43,6 @@
     files:
     - name: $MAVEN_REPOSITORY$/com/google/code/findbugs/jsr305/3/jsr305-3.jar
     reason: <- intellij.python.community.impl
-  - name: kaml
-    files:
-    - name: $MAVEN_REPOSITORY$/com/charleskorn/kaml/kaml-jvm/0/kaml-jvm-0.jar
-    - name: $MAVEN_REPOSITORY$/it/krzeminski/snakeyaml-engine-kmp-jvm/3/snakeyaml-engine-kmp-jvm-3.jar
-    - name: $MAVEN_REPOSITORY$/net/thauvin/erik/urlencoder/urlencoder-lib-jvm/1/urlencoder-lib-jvm-1.jar
-    reason: <- intellij.python.community.impl
   - name: libthrift
     files:
     - name: $MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0/libthrift-0.jar
@@ -60,9 +54,21 @@
       - name: $MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1/ml-completion-prev-exprs-models-1.jar
       completion-ranking-python-with-full-line:
       - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0/completion-ranking-python-with-full-line-0.jar
-- name: lib/modules/intellij.python.community.impl.poetry.jar
+- name: lib/modules/intellij.python.community.impl.pipenv.jar
   contentModules:
-  - name: intellij.python.community.impl.poetry
+  - name: intellij.python.community.impl.pipenv
+- name: lib/modules/intellij.python.community.impl.poetry.backend.jar
+  contentModules:
+  - name: intellij.python.community.impl.poetry.backend
+- name: lib/modules/intellij.python.community.impl.poetry.common.jar
+  contentModules:
+  - name: intellij.python.community.impl.poetry.common
+- name: lib/modules/intellij.python.community.impl.uv.backend.jar
+  contentModules:
+  - name: intellij.python.community.impl.uv.backend
+- name: lib/modules/intellij.python.community.impl.uv.common.jar
+  contentModules:
+  - name: intellij.python.community.impl.uv.common
 - name: lib/modules/intellij.python.community.impl.venv.jar
   contentModules:
   - name: intellij.python.community.impl.venv
@@ -129,6 +135,9 @@
 - name: lib/modules/intellij.python.parser.jar
   contentModules:
   - name: intellij.python.parser
+- name: lib/modules/intellij.python.processOutput.jar
+  contentModules:
+  - name: intellij.python.processOutput
 - name: lib/modules/intellij.python.psi.impl.jar
   contentModules:
   - name: intellij.python.psi.impl
@@ -178,4 +187,5 @@
   modules:
   - name: intellij.python.community.plugin
   contentModules:
+  - name: intellij.python.processOutput.impl
   - name: intellij.commandInterface

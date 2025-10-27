@@ -43,7 +43,6 @@ import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -247,6 +246,7 @@ class InfoAndProgressPanel internal constructor(
     synchronized(originals) {
       if (originals.isEmpty()) {
         mainPanel.updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.ALLOW_ONCE)
+        getPopup().setHideOnFocusLost(false)
       }
       originals.add(original)
       infos.add(info)
@@ -414,13 +414,23 @@ class InfoAndProgressPanel internal constructor(
   ): BalloonHandler {
     @Suppress("HardCodedStringLiteral")
     val htmlContent = htmlBody.replace("\n", "<br>")
+    val icon = icon ?: if (type == MessageType.INFO) {
+      null
+    }
+    else {
+      type.defaultIcon
+    }
     val balloon = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(htmlContent,
-                                    icon ?: type.defaultIcon,
+                                    icon,
                                     type.titleForeground,
                                     type.popupBackground,
                                     listener)
+      .setPointerSize(JBUI.size(16, 8))
+      .setPointerShiftedToStart(true)
+      .setBorderInsets(JBUI.insets(9, 7, 11, 7))
       .setBorderColor(type.borderColor)
+      .setCornerRadius(JBUI.scale(8))
       .createBalloon()
     SwingUtilities.invokeLater(Runnable {
       val oldBalloon = SoftReference.dereference(lastShownBalloon)
@@ -431,10 +441,14 @@ class InfoAndProgressPanel internal constructor(
       }
       lastShownBalloon = WeakReference(balloon)
       val comp: Component = mainPanel
+      val targetComponent = mainPanel.inlinePanel.indicator?.textPanel ?: comp
       if (comp.isShowing()) {
-        val offset = comp.height / 2
-        val point = Point(comp.width - offset, comp.height - offset)
-        balloon.show(RelativePoint(comp, point), Balloon.Position.above)
+        // in the middle of the text label, shifted slightly left
+        val x = targetComponent.width / 2 - 5
+        // above the label, 9 = pointer height + 1
+        val y = -9
+        val point = Point(x, y)
+        balloon.show(RelativePoint(targetComponent, point), Balloon.Position.above)
       }
       else {
         val rootPane = SwingUtilities.getRootPane(comp)
@@ -608,7 +622,7 @@ class InfoAndProgressPanel internal constructor(
         updateNavBarAutoscrollToSelectedLimit(AutoscrollLimit.UNLIMITED)
         inlinePanel.updateState(null)
         if (host.shouldClosePopupAndOnProcessFinish) {
-          host.hideProcessPopup()
+          host.popup?.setHideOnFocusLost(true)
         }
       }
       else if (inlinePanel.indicator != null && inlinePanel.indicator!!.info === progress.info) {
@@ -1230,8 +1244,8 @@ class InfoAndProgressPanel internal constructor(
   }
 }
 
-private class CounterLabel : JPanel() {
-  private val label: JBLabel
+private class CounterLabel : JPanel(), UISettingsListener {
+  private val textPanel: TextPanel
   private var numberOfProgresses: Int = 0
   private var isProgressVisible: Boolean = false
 
@@ -1241,17 +1255,17 @@ private class CounterLabel : JPanel() {
   private var minimumSize: Dimension? = null
 
   init {
-    label = createLabel()
+    textPanel = createTextPanel()
     layout = BorderLayout()
-    add(label, BorderLayout.CENTER)
-    setNumber(0, isProgressVisible =false, isPopupShowing = false)
+    add(textPanel, BorderLayout.CENTER)
+    isOpaque = false
+    setNumber(0, isProgressVisible = false, isPopupShowing = false)
   }
 
-  private fun createLabel(): JBLabel {
-    val label = JBLabel()
-    label.font = TextPanel.getFont()
-    label.foreground = JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND
-    return label
+  private fun createTextPanel(): TextPanel {
+    val panel = TextPanel()
+    panel.foreground = JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND
+    return panel
   }
 
 
@@ -1268,14 +1282,14 @@ private class CounterLabel : JPanel() {
 
     refreshTextForMinimumSizeIfNeeded(numberToShow)
 
-    val labelText = when {
+    val panelText = when {
       isPopupShowing -> ""
       numberToShow <= 0 -> ""
       !isProgressVisible && numberToShow == 1 -> ""
       isProgressVisible -> "+${numberToShow}"
       else -> "${numberToShow}"
     }
-    label.text = labelText
+    textPanel.text = panelText
   }
 
   private fun refreshTextForMinimumSizeIfNeeded(numberToShow: Int) {
@@ -1299,7 +1313,7 @@ private class CounterLabel : JPanel() {
     val texts = textsForMinimumSize
     if (texts == null || texts.isEmpty()) return super.getPreferredSize()
 
-    val probe = createLabel()
+    val probe = createTextPanel()
 
     var minSize = Dimension(0, 0)
     for (text in texts) {
@@ -1314,5 +1328,9 @@ private class CounterLabel : JPanel() {
 
   override fun getMinimumSize(): Dimension {
     return preferredSize
+  }
+
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    minimumSize = null
   }
 }

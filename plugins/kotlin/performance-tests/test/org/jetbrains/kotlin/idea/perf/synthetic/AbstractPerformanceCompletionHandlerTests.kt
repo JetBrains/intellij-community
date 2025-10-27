@@ -167,7 +167,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
         if (lookupString != null || itemText != null || tailText != null) {
             val item = getExistentLookupElement(project, lookupString, itemText, tailText, useExpensiveRenderer)
             if (item != null) {
-                selectItem(fixture, item, completionChars.last())
+                selectItem(item, completionChars.last())
             }
         }
     }

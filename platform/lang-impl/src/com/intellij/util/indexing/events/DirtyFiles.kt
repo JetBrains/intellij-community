@@ -10,6 +10,10 @@ import com.intellij.util.containers.ContainerUtil
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Conceptually, it is a [project -> List of dirty files for this project]
+ *  Additionally, it keeps a List of dirty files for an 'unknown' project
+ */
 @ApiStatus.Internal
 class DirtyFiles {
   private val myDirtyFiles = ContainerUtil.createLockFreeCopyOnWriteList<Pair<Project, ProjectDirtyFiles>>()
@@ -79,14 +83,20 @@ class DirtyFiles {
   }
 }
 
+/**
+ * Per-Project dirty files.
+ * TODO RC: actually, it is better named just DirtyFiles, since it doesn't contain a project ref,
+ *  and really even used for 'unknown project dirty files'. While current DirtyFiles better be
+ *  named PerProjectDirtyFiles
+ */
 @ApiStatus.Internal
 class ProjectDirtyFiles {
   private val filesSet: ConcurrentBitSet = ConcurrentBitSet.create()
 
-  fun addFile(fileId: Int) = filesSet.set(fileId)
-  fun containsFile(fileId: Int) = filesSet.get(fileId)
-  fun removeFile(fileId: Int) = filesSet.clear(fileId)
-  fun clear() = filesSet.clear()
+  fun addFile(fileId: Int): Boolean = filesSet.set(fileId)
+  fun containsFile(fileId: Int): Boolean = filesSet.get(fileId)
+  fun removeFile(fileId: Int): Boolean = filesSet.clear(fileId)
+  fun clear(): Unit = filesSet.clear()
 
   fun addFiles(fileIds: Collection<Int>) {
     for (fileId in fileIds) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.impl.writer.fields
 
 import com.intellij.workspaceModel.codegen.deft.meta.ExtProperty
@@ -13,12 +13,12 @@ val ExtProperty<*, *>.wsCode: String
     if (additionalAnnotations.isNotEmpty()) {
       line(additionalAnnotations)
     }
-    sectionNoBrackets("$parentAnnotation$generatedCodeVisibilityModifier var ${receiver.javaBuilderName}$generic.$name: ${valueType.javaBuilderTypeWithGeneric}") {
+    sectionNoBrackets("$parentAnnotation$generatedCodeVisibilityModifier var ${receiver.defaultJavaBuilderName}$generic.$name: ${valueType.javaBuilderTypeWithGeneric}") {
       line("by WorkspaceEntity.extensionBuilder(${valueType.entityType}::class.java)")
     }
   }
 
-private val ExtProperty<*, *>.additionalAnnotations: String
+val ExtProperty<*, *>.additionalAnnotations: String
   get() {
     val hasInternalAnnotation = annotations.any {
       it.fqName == Internal.decoded

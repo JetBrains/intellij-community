@@ -54,6 +54,8 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - *sf:combineState(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.StateFlow
 - *sf:combineState(kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.StateFlow
 - *sf:combineState(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.StateFlow
+- *sf:combineStates(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.StateFlow
+- *sf:combineStates(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.StateFlow
 - sf:computationStateFlow(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function2):kotlinx.coroutines.flow.Flow
 - sf:disposingMainScope(com.intellij.openapi.Disposable):kotlinx.coroutines.CoroutineScope
 - sf:disposingScope(com.intellij.openapi.Disposable,kotlin.coroutines.CoroutineContext):kotlinx.coroutines.CoroutineScope
@@ -938,11 +940,8 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sort(java.util.List):java.util.List
 f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - *sf:controlInlaysIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
-- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function6,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:showCodeReview$default(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- *bs:showCodeReview$default(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function6,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function6,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 - *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
 - a:canCreateComment(I):Z
@@ -1513,6 +1512,9 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 *f:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Review$Chat
 - sf:INSTANCE:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Review$Chat
 - f:getHover():com.intellij.ui.JBColor
+*f:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Review$LineFrame
+- sf:INSTANCE:com.intellij.collaboration.ui.util.CodeReviewColorUtil$Review$LineFrame
+- f:getBorder():com.intellij.ui.JBColor
 *:com.intellij.collaboration.ui.util.DimensionRestrictions
 - a:getHeight():java.lang.Integer
 - a:getWidth():java.lang.Integer
@@ -1567,6 +1569,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - sf:bindSelectedIn(javax.swing.JCheckBox,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.MutableStateFlow):V
 - sf:bindSelectedItemIn(com.intellij.ui.dsl.builder.Cell,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.MutableStateFlow):com.intellij.ui.dsl.builder.Cell
 - sf:bindSelectedItemIn(javax.swing.ComboBoxModel,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.MutableStateFlow):V
+- sf:bindText(javax.swing.JLabel,java.lang.String,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextHtmlIn(javax.swing.JEditorPane,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow):V
 - sf:bindTextIn(com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.MutableStateFlow):V
 - sf:bindTextIn(com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.StateFlow,kotlin.jvm.functions.Function1):V

@@ -4,6 +4,8 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -14,6 +16,7 @@ import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.community.impl.installer.CondaInstallManager
@@ -25,20 +28,19 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.util.preferredHeight
 import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_NEW
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
-import com.jetbrains.python.sdk.add.v2.conda.detectCondaExecutable
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
@@ -114,17 +116,50 @@ class PythonNewEnvironmentDialogNavigator {
   internal fun restoreLastState(allowedInterpreterTypes: Collection<PythonInterpreterSelectionMode>) {
     val properties = PropertiesComponent.getInstance()
 
-    val modeString = properties.getValue(FAV_MODE) ?: return
-    val mode = PythonInterpreterSelectionMode.valueOf(modeString)
-    if (mode !in allowedInterpreterTypes) return
+    val mode = loadSelectionMode(properties, allowedInterpreterTypes) ?: return
     selectionMode?.set(mode)
 
     if (mode == CUSTOM) {
-      val method = PythonInterpreterSelectionMethod.valueOf(properties.getValue(FAV_METHOD) ?: return)
-      selectionMethod.set(method)
+      restoreCustomModeState(properties)
+    }
+  }
 
-      val manager = PythonSupportedEnvironmentManagers.valueOf(properties.getValue(FAV_MANAGER) ?: return)
-      if (method == CREATE_NEW) newEnvManager.set(manager) else existingEnvManager.set(manager)
+  private fun loadSelectionMode(
+    properties: PropertiesComponent,
+    allowedInterpreterTypes: Collection<PythonInterpreterSelectionMode>
+  ): PythonInterpreterSelectionMode? {
+    val modeString = properties.getValue(FAV_MODE) ?: return null
+    val mode = modeString.toEnumOrNull<PythonInterpreterSelectionMode>() ?: return null
+    return mode.takeIf { it in allowedInterpreterTypes }
+  }
+
+  private fun restoreCustomModeState(properties: PropertiesComponent) {
+    val method = loadSelectionMethod(properties) ?: return
+    selectionMethod.set(method)
+
+    val manager = loadEnvironmentManager(properties) ?: return
+    when (method) {
+      CREATE_NEW -> newEnvManager.set(manager)
+      SELECT_EXISTING -> existingEnvManager.set(manager)
+    }
+  }
+
+  private fun loadSelectionMethod(properties: PropertiesComponent): PythonInterpreterSelectionMethod? {
+    val methodString = properties.getValue(FAV_METHOD) ?: return null
+    return methodString.toEnumOrNull<PythonInterpreterSelectionMethod>()
+  }
+
+  private fun loadEnvironmentManager(properties: PropertiesComponent): PythonSupportedEnvironmentManagers? {
+    val managerString = properties.getValue(FAV_MANAGER) ?: return null
+    return managerString.toEnumOrNull<PythonSupportedEnvironmentManagers>()
+  }
+
+  private inline fun <reified T : Enum<T>> String.toEnumOrNull(): T? {
+    return try {
+      enumValueOf<T>(this)
+    } catch (_: IllegalArgumentException) {
+      thisLogger().debug("Failed to convert '$this' to ${T::class.simpleName}")
+      null
     }
   }
 
@@ -136,14 +171,13 @@ class PythonNewEnvironmentDialogNavigator {
 }
 
 
-internal fun <P: PathHolder> SimpleColoredComponent.customizeForPythonInterpreter(isLoading: Boolean, interpreter: PythonSelectableInterpreter<P>?) {
+internal fun <P : PathHolder> SimpleColoredComponent.customizeForPythonInterpreter(isLoading: Boolean, interpreter: PythonSelectableInterpreter<P>?) {
   when {
     isLoading -> {
       append(message("sdk.create.custom.hatch.environment.loading"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
       return
     }
     interpreter == null -> {
-      icon = AllIcons.General.ShowWarning
       append(message("sdk.create.custom.existing.error.no.interpreters.to.select"), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES)
       return
     }
@@ -153,7 +187,7 @@ internal fun <P: PathHolder> SimpleColoredComponent.customizeForPythonInterprete
     is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> {
       icon = IconLoader.getTransparentIcon(interpreter.ui?.icon ?: PythonParserIcons.PythonFile)
       val title = interpreter.ui?.toolName ?: message("sdk.rendering.detected.grey.text")
-      append(String.format("Python %-4s", interpreter.languageLevel))
+      append(String.format("Python %-4s", interpreter.pythonInfo.languageLevel))
       append(" (" + replaceHomePathToTilde(interpreter.homePath.toString()) + ") $title", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
     is InstallableSelectableInterpreter -> {
@@ -200,7 +234,7 @@ fun replaceHomePathToTilde(sdkHomePath: @NonNls String): @NlsSafe String {
 }
 
 
-class PythonSdkComboBoxListCellRenderer<P: PathHolder>(val isLoading: () -> Boolean) : ColoredListCellRenderer<PythonSelectableInterpreter<P>?>() {
+class PythonSdkComboBoxListCellRenderer<P : PathHolder>(val isLoading: () -> Boolean) : ColoredListCellRenderer<PythonSelectableInterpreter<P>?>() {
 
   override fun getListCellRendererComponent(list: JList<out PythonSelectableInterpreter<P>?>?, value: PythonSelectableInterpreter<P>?, index: Int, selected: Boolean, hasFocus: Boolean): Component {
     return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
@@ -260,20 +294,18 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
           preferredSize = JBUI.size(preferredSize)
           isEditable = true
         }
-        .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(selectedSdkProperty))
+        .validationRequestor(
+          validationRequestor
+            and WHEN_PROPERTY_CHANGED(selectedSdkProperty)
+            and WHEN_PROPERTY_CHANGED(comboBox.isLoading)
+        )
         .validationInfo {
-          if (comboBox.isVisible && !comboBox.isBusy && selectedSdkProperty.get() == null) {
-            ValidationInfo(message("sdk.create.custom.existing.error.no.interpreters.to.select"))
+          when {
+            !it.isVisible -> null
+            it.isLoading.get() -> ValidationInfo(message("python.add.sdk.panel.wait"))
+            selectedSdkProperty.get() == null -> ValidationInfo("")
+            else -> null
           }
-          else null
-        }
-        .validationOnApply {
-          if (!comboBox.isVisible) return@validationOnApply null
-          // This component must set sdk: clients expect it not to be null (PY-77463)
-          if (comboBox.isBusy || selectedSdkProperty.get() == null) {
-            ValidationInfo(message("python.add.sdk.panel.wait"))
-          }
-          else null
         }
         .align(Align.FILL)
     }
@@ -287,9 +319,10 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
   val fileSystem: FileSystem<P>,
   private val errorSink: ErrorSink,
 ) : ComboBox<PythonSelectableInterpreter<P>?>() {
+  val isLoading: ObservableMutableProperty<Boolean> = AtomicBooleanProperty(true)
 
   init {
-    renderer = PythonSdkComboBoxListCellRenderer { isBusy }
+    renderer = PythonSdkComboBoxListCellRenderer { isLoading.get() }
     val newOnPathSelected: (String) -> Unit = { rawPath ->
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("python.sdk.validating.environment")) {
         val pathOnFileSystem = fileSystem.parsePath(rawPath).onFailure { error ->
@@ -324,6 +357,7 @@ internal class PythonInterpreterComboBox<P : PathHolder>(
       selectedItemReminder?.let { selectedItem = it }
 
       setBusy(false)
+      isLoading.set(false)
     }.launchIn(scope + Dispatchers.EDT)
   }
 
@@ -413,15 +447,14 @@ private fun ExtendableTextComponent.removeLoadingExtension() {
   removeExtension(loaderExtension)
 }
 
-internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterModel<P>, errorSink: ErrorSink): ActionLink {
+internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterModel<P>): ActionLink? {
+  if ((model.fileSystem as? FileSystem.Eel)?.eelApi != localEel) return null
+
   return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda", "")) {
     PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
-      model.condaEnvironmentsLoading.value = true
-      model.detectCondaExecutable()
-      model.detectCondaEnvironmentsOrError(errorSink)
-      model.condaEnvironmentsLoading.value = false
+      model.condaViewModel.toolValidator.autodetectExecutable()
     }
   }
 }

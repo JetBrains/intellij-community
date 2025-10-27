@@ -24,12 +24,19 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import kotlin.io.encoding.Base64
 import kotlin.math.max
 
 /**
@@ -309,7 +316,18 @@ class DocumentTracker(
   @Internal
   fun recreateBlocks(map: Map<Range, BlockData>) {
     LOCK.write {
-      tracker.setRanges(map.keys.toList().sortedWith(compareBy<Range> { it.start1 }.thenBy { it.end1 }.thenBy { it.start2 }.thenBy { it.end2 } ), false)
+      val content1 = getContent(Side.LEFT)
+      val content2 = getContent(Side.RIGHT)
+      val ranges = map.keys.toList().sortedWith(compareBy<Range> { it.start1 }.thenBy { it.end1 }.thenBy { it.start2 }.thenBy { it.end2 })
+      if (!isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, ranges)) {
+        logger<DocumentTracker>().error(
+          "ranges are invalid in recreateBlocks" +
+          "document1: $document1, document2: $document2, " +
+          "isFrozen1: ${freezeHelper.isFrozen(Side.LEFT)}, isFrozen2: ${freezeHelper.isFrozen(Side.RIGHT)}, " +
+          "isBulk1: ${document1.isInBulkUpdate}, isBulk2: ${document2.isInBulkUpdate}")
+        return
+      }
+      tracker.setRanges(ranges, false)
       for (block in tracker.blocks) {
         block.data = map[block.range]
       }
@@ -1232,6 +1250,7 @@ private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, other
   else -> Range(otherStart, otherEnd, start, end)
 }
 
+@Serializable
 sealed class RangeExclusionState {
   abstract val hasExcluded: Boolean
   abstract val hasIncluded: Boolean
@@ -1247,10 +1266,13 @@ sealed class RangeExclusionState {
   }
 
   @Experimental
+  @Serializable
   class Partial(
     val deletionsCount: Int,
     val additionsCount: Int,
+    @Serializable(with = JavaBitSetSerializer::class)
     private val includedDeletions: BitSet,
+    @Serializable(with = JavaBitSetSerializer::class)
     private val includedAdditions: BitSet
   ) : RangeExclusionState() {
     init {
@@ -1336,6 +1358,19 @@ sealed class RangeExclusionState {
         logger<DocumentTracker>().error(
           "Invalid exclusion state: [${this.deletionsCount} - ${this.deletionsCount}] [${deletionsCount} - ${additionsCount}]")
       }
+    }
+
+    private object JavaBitSetSerializer : KSerializer<BitSet> {
+      private val base64 = Base64.withPadding(Base64.PaddingOption.PRESENT_OPTIONAL)
+
+      override val descriptor: SerialDescriptor = String.serializer().descriptor
+
+      override fun serialize(encoder: Encoder, value: BitSet) {
+        base64.encode(value.toByteArray())
+      }
+
+      override fun deserialize(decoder: Decoder): BitSet =
+        BitSet.valueOf(base64.decode(decoder.decodeString()))
     }
   }
 }

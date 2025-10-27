@@ -577,10 +577,16 @@ public class ContainerUtilCollectionsTest extends Assert {
     map.put("a", ref1.get());
     map.put("b", ref2.get());
 
-    GCWatcher.fromClearedRef(ref2).ensureCollected();
+    GCWatcher gcwRef2 = GCWatcher.fromClearedRef(ref2);
+    gcwRef2.ensureCollected();
+
+    gcwRef2.waitForReferenceQueue(); // map.size() will only be updated after gc-ed objects are processed by the ReferenceQueue
     assertEquals(1, map.size());
 
-    GCWatcher.fromClearedRef(ref1).ensureCollected();
+    GCWatcher gcw1 = GCWatcher.fromClearedRef(ref1);
+    gcw1.ensureCollected();
+
+    gcw1.waitForReferenceQueue(); // map.size() will only be updated after gc-ed objects are processed by the ReferenceQueue
     assertTrue(map.toString(), map.isEmpty());
   }
 
@@ -750,12 +756,13 @@ public class ContainerUtilCollectionsTest extends Assert {
     Ref<Object> ref = Ref.create(new Object());
     set.add(ref.get());
 
-    GCWatcher.fromClearedRef(ref).ensureCollected();
+    GCWatcher watcher = GCWatcher.fromClearedRef(ref);
+    watcher.ensureCollected();
+    watcher.waitForReferenceQueue();
     assertFalse(set.remove(this)); // to run processQueue
     assertTrue(set.isEmpty());
 
     assertTrue(set.add(this));  // to run processQueues();
-    //noinspection ConstantValue -- set contract is tested, not implied here
     assertFalse(set.isEmpty());
     assertTrue(set.remove(this));
 

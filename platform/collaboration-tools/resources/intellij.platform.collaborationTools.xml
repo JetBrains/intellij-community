@@ -4,6 +4,7 @@
     <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
   </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
     <themeMetadataProvider path="/META-INF/CollaborationTools.themeMetadata.json"/>
     <statistics.notificationIdsHolder implementation="com.intellij.collaboration.ui.notification.CollaborationToolsNotificationIdsHolder"/>
@@ -22,11 +23,22 @@
                      bundle="messages.CollaborationToolsBundle"
                      groupKey="advanced.settings.collab.tools"/>
   </extensions>
+
   <applicationListeners>
     <listener class="com.intellij.collaboration.ui.codereview.CodeReviewCombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
+
   <actions>
+    <action id="CodeReview.PreviousComment"
+            class="com.intellij.collaboration.action.CodeReviewPreviousCommentAction"
+            icon="com.intellij.icons.AllIcons.Actions.PreviousOccurence"
+            use-shortcut-of="PreviousOccurence"/>
+    <action id="CodeReview.NextComment"
+            class="com.intellij.collaboration.action.CodeReviewNextCommentAction"
+            icon="com.intellij.icons.AllIcons.Actions.NextOccurence"
+            use-shortcut-of="NextOccurence"/>
+
     <action id="Code.Review.Editor.Show.Diff"
             class="com.intellij.collaboration.ui.codereview.editor.action.CodeReviewEditorShowFileDiffAction"
             icon="AllIcons.Actions.Diff">

@@ -14,7 +14,7 @@ open class CredentialStoreManagerImpl : CredentialStoreManager {
       provider in availableProviders()
     }
 
-  override fun availableProviders(): List<ProviderType> = ProviderType.entries
+  override fun availableProviders(): List<ProviderType> = listOf(ProviderType.MEMORY_ONLY, ProviderType.KEYCHAIN, ProviderType.KEEPASS)
 
   override fun defaultProvider(): ProviderType = if (SystemInfo.isWindows) ProviderType.KEEPASS else ProviderType.KEYCHAIN
 }

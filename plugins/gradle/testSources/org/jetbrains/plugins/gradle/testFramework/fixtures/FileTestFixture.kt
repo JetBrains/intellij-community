@@ -26,5 +26,7 @@ interface FileTestFixture : IdeaTestFixture {
   interface Builder : TestFilesConfiguration {
 
     fun excludeFiles(vararg relativePath: String)
+
+    fun excludeFilePatterns(vararg syntaxAndPatterns: String)
   }
 }

@@ -3,12 +3,14 @@ package com.jetbrains.python.sdk.readOnly
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor
 import com.jetbrains.python.sdk.sdkFlavor
 
 internal class PythonSystemSdkReadOnlyProvider : PythonSdkReadOnlyProvider {
-  override fun isSdkReadOnly(sdk: Sdk): Boolean {
-    return sdk.sdkFlavor is UnixPythonSdkFlavor
+  override fun isSdkReadOnly(sdk: Sdk) = when (sdk.sdkFlavor) {
+    is UnixPythonSdkFlavor, is MacPythonSdkFlavor -> true
+    else -> false
   }
 
   override fun getSdkReadOnlyMessage(sdk: Sdk): String {

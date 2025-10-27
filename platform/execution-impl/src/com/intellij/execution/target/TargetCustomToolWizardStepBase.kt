@@ -8,11 +8,11 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import javax.swing.JComponent
-import kotlin.jvm.Throws
 
-abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContexts.DialogTitle title: String,
-                                                                     protected val model: M)
-  : TargetEnvironmentWizardStepKt(title), TargetCustomToolWizardStep {
+abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(
+  @NlsContexts.DialogTitle title: String,
+  protected val model: M,
+) : TargetEnvironmentWizardStepKt(title), TargetCustomToolWizardStep {
   private lateinit var mainPanel: BorderLayoutPanel
 
   private var customToolPanel: TargetCustomToolPanel? = null
@@ -32,7 +32,9 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
 
   final override fun getNextStepId(): Any? = null
 
-  final override fun isComplete(): Boolean = true
+  final override fun isComplete(): Boolean {
+    return customToolPanel?.validateCustomTool()?.isEmpty() ?: true
+  }
 
   final override fun _init() {
     super._init()
@@ -45,8 +47,13 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
     model.applyChanges()
 
     // TODO [targets] get rid of `!!` in `model.languageConfigForIntrospection!!`
-    customToolPanel = TargetCustomToolPanel(model.project, model.subject.getTargetType(), ::editingTargetConfiguration,
-                                            model.languageConfigForIntrospection!!, createIntrospectable())
+    customToolPanel = TargetCustomToolPanel(
+      project = model.project,
+      targetEnvironmentType = model.subject.getTargetType(),
+      targetSupplier = ::editingTargetConfiguration,
+      language = model.languageConfigForIntrospection!!,
+      introspectable = createIntrospectable()
+    ) { fireStateChanged() }
       .also {
         mainPanel.addToCenter(it.component)
       }

@@ -12,7 +12,9 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.xml.XmlFile
@@ -20,6 +22,7 @@ import com.intellij.util.Processor
 import com.intellij.util.xml.ConvertContext
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.ElementPresentationManager
+import com.intellij.util.xml.GenericDomValue
 import com.intellij.util.xml.ResolvingConverter
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor
@@ -72,6 +75,14 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
       }
     }
     return findDescriptorInModuleLibraries(currentModule, descriptorFileName)
+  }
+
+  override fun getPsiElement(resolvedValue: IdeaPlugin?): PsiElement? {
+    return resolvedValue?.xmlElement?.containingFile
+  }
+
+  override fun handleElementRename(genericValue: GenericDomValue<IdeaPlugin?>?, context: ConvertContext?, newElementName: String) {
+    super.handleElementRename(genericValue, context, newElementName.removeSuffix(".xml"))
   }
 
   override fun toString(plugin: IdeaPlugin?, context: ConvertContext): String? {

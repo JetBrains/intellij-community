@@ -121,7 +121,7 @@ internal class ExternalProjectsBuildClasspathEntityData : WorkspaceEntityData<Ex
 
   internal fun isProjectsBuildClasspathInitialized(): Boolean = ::projectsBuildClasspath.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ExternalProjectsBuildClasspathEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ExternalProjectsBuildClasspathEntity> {
     val modifiable = ExternalProjectsBuildClasspathEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -148,7 +148,7 @@ internal class ExternalProjectsBuildClasspathEntityData : WorkspaceEntityData<Ex
     return ExternalProjectsBuildClasspathEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ExternalProjectsBuildClasspathEntity(projectsBuildClasspath, entitySource) {
     }
   }

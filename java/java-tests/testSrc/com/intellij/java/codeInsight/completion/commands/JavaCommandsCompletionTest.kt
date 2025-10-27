@@ -676,6 +676,22 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertFalse(elements.any { element -> element.lookupString.contains("Go to impl", ignoreCase = true) })
   }
 
+  fun testRenameFile() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        package com.example;
+        
+        public class CrudRepo.<caret> <T, ID> {
+        }""".trimIndent())
+    myFixture.doHighlighting()
+    val elements = myFixture.completeBasic()
+    val lookupElement = elements.firstOrNull { element -> element.lookupString.contains("Rename File", ignoreCase = true) }
+    assertNotNull(lookupElement)
+    val element = lookupElement?.`as`(CommandCompletionLookupElement::class.java)
+    assertNotNull(element)
+    assertNotNull(element?.preview)
+  }
+
   fun testRedCode() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     val psiFile = myFixture.configureByText(JavaFileType.INSTANCE, """

@@ -26,5 +26,5 @@ interface ICodeVisionEntryBasePainter<T> : ICodeVisionPainter {
   ): Dimension
 
   @ApiStatus.Internal
-  fun shouldBeDelimited(): Boolean = true
+  fun shouldBeDelimited(entry: T): Boolean = true
 }

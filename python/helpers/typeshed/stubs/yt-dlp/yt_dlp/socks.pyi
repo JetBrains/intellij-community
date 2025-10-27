@@ -1,14 +1,14 @@
 import socket
 from _socket import _Address
 from collections.abc import Mapping
-from typing import NamedTuple, SupportsIndex
+from typing import Final, NamedTuple, SupportsIndex
 
-SOCKS4_VERSION: int
-SOCKS4_REPLY_VERSION: int
-SOCKS4_DEFAULT_DSTIP: bytes
-SOCKS5_VERSION: int
-SOCKS5_USER_AUTH_VERSION: int
-SOCKS5_USER_AUTH_SUCCESS: int
+SOCKS4_VERSION: Final = 4
+SOCKS4_REPLY_VERSION: Final = 0x00
+SOCKS4_DEFAULT_DSTIP: Final[bytes]
+SOCKS5_VERSION: Final = 5
+SOCKS5_USER_AUTH_VERSION: Final = 0x01
+SOCKS5_USER_AUTH_SUCCESS: Final = 0x00
 
 class Socks4Command:
     CMD_CONNECT: int

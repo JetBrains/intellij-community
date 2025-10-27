@@ -9,7 +9,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.configurationStore.SchemeDataHolder;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -625,13 +624,13 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                       ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName())
                                       : extension::getDisplayName;
       if (toolWrapper instanceof LocalInspectionToolWrapper local) {
-        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID());
+        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID(), toolWrapper.getDescriptionContextClass());
       }
       else {
-        key = HighlightDisplayKey.register(shortName, computable, shortName);
+        key = HighlightDisplayKey.register(shortName, computable, shortName, null, toolWrapper.getDescriptionContextClass());
       }
       if (key == null) {
-        PluginException.logPluginError(LOG, "Couldn't register HighlightDisplayKey '"+shortName + "' ; number of initialized tools: " + myTools.size()+"; toolWrapper:"+toolWrapper+"; extension:"+extension, null, toolWrapper.getDescriptionContextClass());
+        // it's an error, but it was already logged in .register()
         return;
       }
     }

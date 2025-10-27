@@ -2,7 +2,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.java"/>
 
-  <depends optional="true">com.intellij.platform.images</depends>
   <depends optional="true" config-file="community-integration.xml">com.intellij.modules.idea.community</depends>
 
   <xi:include href="/idea/JavaActions.xml"/>
@@ -333,6 +332,7 @@
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider"/>
     <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.SetupJavaProjectFromSourcesActivity"/>
+    <postStartupActivity implementation="com.intellij.jarRepository.RepositoryLibraryExtendedPropertiesUpdateStartupActivity"/>
     <backgroundPostStartupActivity implementation="com.intellij.compiler.cache.CompilerCacheStartupActivity"/>
 
     <console.folding implementation="com.intellij.execution.filters.StackTraceFolding"/>
@@ -679,10 +679,6 @@
                          implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>
     <compiler.updateResourcesBuildContributor implementation="com.intellij.compiler.impl.JavaResourcesBuildContributor"/>
 
-    <!--<expectedTypesProvider implementation="com.intellij.codeInsight.JavaExpectedTypesProvider"/>-->
-
-
-
     <projectService serviceImplementation="com.intellij.execution.testDiscovery.JavaAutoRunManager"/>
     <registryKey defaultValue="true" description="Trigger autotest on delay instead of build events" key="trigger.autotest.on.delay"/>
 
@@ -811,6 +807,10 @@
                             order="first" id="VmOptionsCompletionContributor"/>
     <applicationService serviceInterface="com.intellij.execution.vmOptions.VMOptionsService"
                         serviceImplementation="com.intellij.execution.vmOptions.VMOptionsServiceImpl"/>
+
+    <registryKey key="ide.jvm.run.marker" defaultValue="false" description="Enable JVM-lang-based run line markers"/>
+    <registryKey key="ide.jvm.command.line.clear.all.environments" defaultValue="true"
+                 description="Clear all environments when running a JVM command line application"/>
 
     <runDashboardCustomizer implementation="com.intellij.execution.CommonJavaRunDashboardCustomizer" id="commonJavaCustomizer"/>
 
@@ -2038,7 +2038,7 @@
     <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="NotNullFieldNotInitialized"
                      bundle="messages.JavaBundle" key="inspection.notnull.field.not.initialized.display.name"
                      groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
-                     level="WARNING"
+                     level="WARNING" alternativeId="NullAway.Init"
                      implementationClass="com.intellij.codeInspection.nullable.NotNullFieldNotInitializedInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ParameterCanBeLocal" key="inspection.parameter.can.be.local.display.name"
                      groupKey="group.names.class.structure" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
@@ -2786,12 +2786,19 @@
     <registryKey key="java.completion.methods.use.tags"
                  defaultValue="true"
                  description="Use additional tags for methods for completion"/>
+    <registryKey key="ide.java.completion.suggest.static.after.instance"
+                 defaultValue="false"
+                 description="Suggest static methods/fields after instance qualifier in Java completion"/>
 
     <registryKey key="java.create.compact.source.file.separately"
                  defaultValue="true"
                  description="Show 'Create java compact file' separately from all other classes"/>
 
     <virtualFileCustomDataProvider implementation="com.intellij.ide.JavaCodeStyleSettingsCustomDataSynchronizer"/>
+
+    <registryKey key="compiler.external.javac.keep.alive.timeout" defaultValue="300000"
+                 description="If not used for the specified period of time or longer, the IDE will shut down the cached javac compilation process"/>
+    <registryKey key="compiler.build.can.use.eel" defaultValue="true" description="Allow using Eel API to run build processes"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -2871,8 +2878,6 @@
   </applicationListeners>
 
   <projectListeners>
-    <listener class="com.intellij.jarRepository.RepositoryLibraryChangeListener"
-              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileInlaySelectionListenerSettingsListener"
               topic="com.intellij.codeInsight.hints.InlayHintsSettings$SettingsListener"/>
     <listener class="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemFileRefactoringEventListener"

@@ -11,8 +11,8 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.block.ui.withLock
-import org.jetbrains.plugins.terminal.session.*
-import org.jetbrains.plugins.terminal.session.dto.toDto
+import org.jetbrains.plugins.terminal.session.impl.*
+import org.jetbrains.plugins.terminal.session.impl.dto.toDto
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun createTerminalOutputFlow(

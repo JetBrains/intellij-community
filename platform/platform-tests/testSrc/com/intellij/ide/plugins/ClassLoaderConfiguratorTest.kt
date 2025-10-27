@@ -33,20 +33,26 @@ internal class ClassLoaderConfiguratorTest {
     val kotlinGradleJava = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId("kotlin.gradle.gradle-java"),
-                                                  loadingRule = ModuleLoadingRule.OPTIONAL,
-                                                  configFile = null,
-                                                  descriptorContent = null))
+      module = PluginContentDescriptor.ModuleItem(
+        moduleId = PluginModuleId("kotlin.gradle.gradle-java", PluginModuleId.JETBRAINS_NAMESPACE),
+        loadingRule = ModuleLoadingRule.OPTIONAL,
+        configFile = null,
+        descriptorContent = null,
+        requiredIfAvailable = null,
+      ))
     val kotlinCompilerGradle = kotlin.createContentModuleInTest(
       subBuilder = emptyBuilder,
       descriptorPath = "",
-      module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId("kotlin.compiler-plugins.annotation-based-compiler-support.gradle"),
-                                                  loadingRule = ModuleLoadingRule.OPTIONAL,
-                                                  configFile = null,
-                                                  descriptorContent = null))
+      module = PluginContentDescriptor.ModuleItem(
+        moduleId = PluginModuleId("kotlin.compiler-plugins.annotation-based-compiler-support.gradle", PluginModuleId.JETBRAINS_NAMESPACE),
+        loadingRule = ModuleLoadingRule.OPTIONAL,
+        configFile = null,
+        descriptorContent = null,
+        requiredIfAvailable = null,
+      ))
     val plugins = arrayOf(kotlin, gradle, kotlinGradleJava, kotlinCompilerGradle)
     sortDependenciesInPlace(plugins)
-    assertThat(plugins.last().contentModuleId).isNull()
+    assertThat(plugins.last().contentModuleName).isNull()
   }
 
   @Test
@@ -62,7 +68,13 @@ internal class ClassLoaderConfiguratorTest {
       return plugin.createContentModuleInTest(
         subBuilder = PluginDescriptorBuilder.builder().apply { `package` = moduleId },
         descriptorPath = "",
-        module = PluginContentDescriptor.ModuleItem(moduleId = PluginModuleId(moduleId), configFile = null, descriptorContent = null, loadingRule = ModuleLoadingRule.OPTIONAL),
+        module = PluginContentDescriptor.ModuleItem(
+          moduleId = PluginModuleId(moduleId, PluginModuleId.JETBRAINS_NAMESPACE),
+          configFile = null,
+          descriptorContent = null,
+          loadingRule = ModuleLoadingRule.OPTIONAL,
+          requiredIfAvailable = null,
+        ),
       )
     }
     val modules = arrayOf(
@@ -70,7 +82,7 @@ internal class ClassLoaderConfiguratorTest {
       createModuleDescriptor("com.foo.bar"),
     )
     sortDependenciesInPlace(modules)
-    assertThat(modules.map { it.moduleId.id }).containsExactly("com.foo.bar", "com.foo")
+    assertThat(modules.map { it.moduleId.name }).containsExactly("com.foo.bar", "com.foo")
   }
 
   @Test

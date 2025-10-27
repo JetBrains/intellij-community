@@ -4,7 +4,6 @@ package com.jetbrains.performancePlugin.profilers
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.util.SystemProperties
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -36,9 +35,8 @@ interface Profiler {
     @JvmStatic
     fun formatSnapshotName(isMemorySnapshot: Boolean): String {
       val buildNumber = ApplicationInfo.getInstance().build.asString()
-      val userName = SystemProperties.getUserName()
       val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
-      return buildNumber + '_' + (if (isMemorySnapshot) "memory_" else "") + userName + '_' + snapshotDate
+      return buildNumber + '_' + (if (isMemorySnapshot) "memory_" else "") + snapshotDate
     }
   }
 

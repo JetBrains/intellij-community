@@ -39,12 +39,19 @@ public interface ModCommandService {
    */
   @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action);
 
+  @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action, boolean availableInBatchMode);
+
   /**
    * @param fix {@link LocalQuickFix}
    * @return a {@link ModCommandAction} which is wrapped inside the supplied quick-fix; null if the supplied quick-fix
    * does not wrap a {@code ModCommandAction}.
    */
   @Nullable ModCommandAction unwrap(@NotNull LocalQuickFix fix);
+
+  /**
+   * Implementation of ModCommand.insertText; should not be used directly. 
+   */
+  @NotNull ModCommand insertText(@NotNull ActionContext context, @NotNull String text, boolean moveAfter);
 
   /**
    * Implementation of ModCommand.psiUpdate; should not be used directly.

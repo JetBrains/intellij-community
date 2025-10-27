@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.vfs.readText
 import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.sdk.ui.evolution.sdk.EvoModuleSdk
 import com.intellij.python.sdk.ui.evolution.sdk.resolvePythonExecutable
 import com.intellij.python.sdk.ui.evolution.tool.pip.sdk.getPythonVersion
@@ -15,7 +16,6 @@ import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLazyNodeElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeLeafElement
 import com.intellij.python.sdk.ui.evolution.ui.components.EvoTreeSection
-import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHomePath
 import com.jetbrains.python.Result
@@ -33,7 +33,7 @@ import kotlin.io.path.name
 
 private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeElement = EvoTreeLazyNodeElement("Poetry", PythonIcons.Python.Origami) {
-    val poetryExecutable = getPoetryExecutable().getOr {
+    getPoetryExecutable().getOr {
       return@EvoTreeLazyNodeElement it
     }
 
@@ -65,7 +65,7 @@ private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
       EvoTreeSection(ListSeparator(label), leafs)
     }
 
-    val systemPythons = SystemPythonService().findSystemPythons().groupBy { it.languageLevel }.keys.sortedDescending()
+    val systemPythons = SystemPythonService().findSystemPythons().groupBy { it.pythonInfo.languageLevel }.keys.sortedDescending()
     val prefix = specials?.firstOrNull()?.name?.substringBeforeLast("-") ?: "$projectName-sha256"
     val specialSection = EvoTreeSection(
       label = ListSeparator("$poetryVirtualenvsPath/$prefix"),
@@ -84,20 +84,6 @@ private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
 
     Result.success(sections)
   }
-  //override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeElement {
-  //  val path = evoModuleSdk.module.which("poetry") ?: return null
-  //  return null
-  //  val header = object : AnAction("Base: $path", null, PythonIcons.Python.Origami) {
-    //  override fun actionPerformed(e: AnActionEvent) = Unit
-  //  //}
-  //  //
-  //  //val evoLazyActionGroup = EvoLazyActionGroup(
-  //  //  ExternalToolActionGroup("Poetry", "Poetry", EvolutionIcons.Tools.Poetry)
-  //  //) {
-  //  //  Result.success(listOf(header))
-  //  //}
-  //  //return evoLazyActionGroup
-  //}
 }
 
 private class SelectPoetryEnvAction(

@@ -18,6 +18,7 @@ import git4idea.repo.GitBranchTrackInfo
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
+import org.jetbrains.annotations.VisibleForTesting
 
 internal object GitRepositoryToDtoConverter {
   fun convertToDto(repository: GitRepository): GitRepositoryDto {
@@ -63,7 +64,8 @@ internal object GitRepositoryToDtoConverter {
     Repository.State.DETACHED -> GitOperationState.DETACHED_HEAD
   }
 
-  private fun convertTrackingInfo(trackingInfo: Map<String, GitBranchTrackInfo>): Map<String, GitStandardRemoteBranch> {
+  @VisibleForTesting
+  fun convertTrackingInfo(trackingInfo: Map<String, GitBranchTrackInfo>): Map<String, GitStandardRemoteBranch> {
     val result = HashMap<String, GitStandardRemoteBranch>(trackingInfo.size)
 
     trackingInfo.forEach { (branchName, trackInfo) ->

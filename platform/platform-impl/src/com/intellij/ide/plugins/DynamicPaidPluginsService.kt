@@ -3,7 +3,7 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID
-import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencies
+import com.intellij.ide.plugins.PluginManagerCore.processAllNonOptionalDependencyIds
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileVisitResult
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.measureTimedValue
@@ -76,20 +77,14 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
       return
     }
 
-    val disabledPlugins = DisabledPluginsState.getDisabledIds()
-    val pluginSet = PluginManagerCore.getPluginSet()
-    val pluginIdMap = PluginManagerCore.buildPluginIdMap()
-    val contentModuleIdMap = pluginSet.buildContentModuleIdMap()
-    val loadedPlugins = pluginSet.enabledPlugins.toSet()
-
-    val pluginsToEnable = pluginSet.allPlugins.filter {
-      !disabledPlugins.contains(it.pluginId) &&
-      !loadedPlugins.contains(it) &&
-      pluginRequiresUltimatePlugin(it.pluginId, pluginIdMap, contentModuleIdMap) &&
-      !pluginRequiresDisabledPlugin(it.pluginId, pluginIdMap, contentModuleIdMap, disabledPlugins) &&
-      PluginManagerCore.isCompatible(it)
+    val pluginSet = PluginManagerCore.getPluginSetOrNull()
+    if (pluginSet == null) {
+      logger.info("Plugin set is not initialized. Paid plugins will not be enabled.")
+      return
     }
 
+    val disabledPlugins = DisabledPluginsState.getDisabledIds()
+    val pluginsToEnable = getPluginsToEnable(pluginSet, disabledPlugins)
     if (pluginsToEnable.isEmpty()) {
       logger.debug("No plugins found to be enabled.")
       return
@@ -114,33 +109,39 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
     }
   }
 
+  @VisibleForTesting
+  @ApiStatus.Internal
+  fun getPluginsToEnable(pluginSet: PluginSet, disabledPlugins: Set<PluginId>): List<PluginMainDescriptor> {
+    val pluginIdMap = pluginSet.buildPluginIdMap()
+    val contentModuleIdMap = pluginSet.buildContentModuleIdMap()
+    val loadedPlugins = pluginSet.enabledPlugins.toSet()
+
+    return pluginSet.allPlugins.filter {
+      !disabledPlugins.contains(it.pluginId) &&
+      !loadedPlugins.contains(it) &&
+      pluginRequiresUltimatePlugin(it.pluginId, pluginIdMap, contentModuleIdMap) &&
+      !pluginRequiresDisabledOrNotInstalledPlugin(it.pluginId, pluginSet, pluginIdMap, contentModuleIdMap, disabledPlugins) &&
+      PluginManagerCore.isCompatible(it)
+    }
+  }
+
   private fun notifyNotLoadedWithoutRestart(pluginEnabler: PluginEnabler, plugins: List<IdeaPluginDescriptorImpl>) {
-    val (loadableAfterRestart, missingDependencies) = plugins.partition { plugin ->
-      plugin.dependencies.all { PluginManagerCore.isPluginInstalled(it.pluginId) || it.isOptional }
-    }
+    val notificationTitle: String = IdeBundle.message("notification.title.paid.plugins.not.loaded")
+    val pluginNames = plugins.map { it.name }.sorted()
 
-    if (missingDependencies.isNotEmpty()) {
-      logger.info("Plugins cannot be loaded even with restart because of missing dependencies: ${missingDependencies.map { it.pluginId }}")
-    }
+    @Suppress("HardCodedStringLiteral")
+    val notificationContent = IdeBundle.message("notification.content.paid.plugins.not.loaded") +
+                              pluginNames.joinToString(separator = "<br>")
 
-    if (loadableAfterRestart.isNotEmpty()) {
-      val notificationTitle: String = IdeBundle.message("notification.title.paid.plugins.not.loaded")
-      val pluginNames = loadableAfterRestart.map { it.name }.sorted()
-
-      @Suppress("HardCodedStringLiteral")
-      val notificationContent = IdeBundle.message("notification.content.paid.plugins.not.loaded") +
-                                pluginNames.joinToString(separator = "<br>")
-
-      NotificationGroupManager.getInstance()
-        .getNotificationGroup("Paid Plugins")
-        .createNotification(notificationTitle, notificationContent, NotificationType.INFORMATION)
-        .addAction(object : NotificationAction(IdeBundle.message("notification.action.load.paid.plugins.and.restart")) {
-          override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-            enablePlugins(pluginEnabler, loadableAfterRestart, restart = true)
-          }
-        })
-        .notify(null)
-    }
+    NotificationGroupManager.getInstance()
+      .getNotificationGroup("Paid Plugins")
+      .createNotification(notificationTitle, notificationContent, NotificationType.INFORMATION)
+      .addAction(object : NotificationAction(IdeBundle.message("notification.action.load.paid.plugins.and.restart")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          enablePlugins(pluginEnabler, plugins, restart = true)
+        }
+      })
+      .notify(null)
   }
 
   private fun enablePlugins(
@@ -191,7 +192,7 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
       return if (requireRestart.isEmpty()) {
         // loadablePlugins.all { allowLoadUnloadWithoutRestart(it, context = loadablePlugins) } == true at this point
         // we can load all of them safely
-        return loadablePlugins + loadable to requireRestartPlugins
+        loadablePlugins + loadable to requireRestartPlugins
       }
       else doSplit(pluginsToLoad = loadable, loadablePlugins = loadablePlugins, requireRestartPlugins = requireRestartPlugins + requireRestart)
     }
@@ -200,14 +201,15 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
   }
 }
 
-private fun pluginRequiresDisabledPlugin(
-  plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+private fun pluginRequiresDisabledOrNotInstalledPlugin(
+  plugin: PluginId, pluginSet: PluginSet, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
   contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>, disabledPluginIds: Set<PluginId>,
 ): Boolean {
-  if (disabledPluginIds.isEmpty()) return false
   val rootDescriptor = pluginMap[plugin] ?: return false
-  return !processAllNonOptionalDependencies(rootDescriptor, pluginMap, contentModuleIdMap) { descriptorImpl ->
-    if (disabledPluginIds.contains(descriptorImpl.pluginId)) FileVisitResult.TERMINATE
-    else FileVisitResult.CONTINUE
+  return !processAllNonOptionalDependencyIds(rootDescriptor, pluginMap, contentModuleIdMap) { dependency ->
+    if (disabledPluginIds.contains(dependency)) FileVisitResult.TERMINATE
+    else if (pluginSet.isPluginEnabled(dependency)) FileVisitResult.CONTINUE
+    else if (pluginSet.isPluginInstalled(dependency)) FileVisitResult.CONTINUE
+    else FileVisitResult.TERMINATE
   }
 }

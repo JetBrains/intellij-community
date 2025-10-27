@@ -15,16 +15,19 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
  *
- * By default, it includes all modules specified in [org.jetbrains.intellij.build.ProductModulesLayout],
+ * By default, it includes all modules specified in [org.jetbrains.intellij.build.productLayout.ProductModulesLayout],
  * all libraries these modules depend on with scope 'Compile' or 'Runtime', and all project libraries from dependencies (with scope 'Compile'
- * or 'Runtime') of plugin modules for plugins which are [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules] bundled
- * (or prepared to be [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] published) with the product (except
+ * or 'Runtime') of plugin modules for plugins which are [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules] bundled
+ * (or prepared to be [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] published) with the product (except
  * project libraries which are explicitly included in layouts of all plugins depending on them by [BaseLayoutSpec.withProjectLibrary]).
  */
 class PlatformLayout : BaseLayout() {
   internal var libAsProductModule: Set<String> = emptySet()
 
   private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
+
+  @JvmField
+  val cachedDescriptorContainer: CachedDescriptorContainer = CachedDescriptorContainer()
 
   @get:TestOnly
   val excludedProjectLibraries: Sequence<String>

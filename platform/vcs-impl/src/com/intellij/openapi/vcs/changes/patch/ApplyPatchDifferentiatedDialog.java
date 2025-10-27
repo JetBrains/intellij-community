@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffDialogHints;
@@ -81,6 +81,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static com.intellij.util.containers.ContainerUtil.concat;
 import static com.intellij.util.containers.ContainerUtil.map;
 
 public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
@@ -106,7 +107,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private final Runnable myReset;
   private final @Nullable ChangeListChooserPanel myChangeListChooser;
   private final ChangesLegendCalculator myInfoCalculator;
-  private final CommitLegendPanel myCommitLegendPanel;
+  private final @NotNull CommitLegendComponent myCommitLegendPanel;
   private final ApplyPatchExecutor myCallback;
   private final List<? extends ApplyPatchExecutor> myExecutors;
 
@@ -227,17 +228,24 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
 
     myInfoCalculator = new ChangesLegendCalculator();
-    myCommitLegendPanel = new CommitLegendPanel(myInfoCalculator) {
+
+    LegendChunk conflict = new LegendChunk() {
       @Override
-      public void update() {
-        super.update();
-        final int inapplicable = myInfoCalculator.getInapplicable();
-        if (inapplicable > 0) {
-          appendSpace();
-          append(inapplicable, FileStatus.MERGED_WITH_CONFLICTS, VcsBundle.message("patch.apply.missing.base.file.label"));
-        }
+      public @NotNull FileStatus getFileStatus() { return FileStatus.MERGED_WITH_CONFLICTS; }
+
+      @Override
+      public @NlsSafe @NotNull String getCompactLabel() { return getFullLabel(); }
+
+      @Override
+      public @Nls @NotNull String getFullLabel() { return VcsBundle.message("patch.apply.missing.base.file.label"); }
+
+      @Override
+      public @Nls @NotNull String formatNumbers() {
+        return LegendChunkFormatters.nonZeroOrEmpty(myInfoCalculator.getInapplicable());
       }
     };
+    List<LegendChunk> legendChunks = concat(CommitLegendComponent.defaultLegendChunks(myInfoCalculator), List.of(conflict));
+    myCommitLegendPanel = CommitLegendComponent.create(myInfoCalculator, legendChunks);
 
     init();
 

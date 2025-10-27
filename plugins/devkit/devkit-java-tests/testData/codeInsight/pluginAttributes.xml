@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij"
+<idea-plugin <error descr="Package attribute usage is discouraged and deprecated, content modules should be packaged into separate jars under `lib/modules/`. Refer to attribute documentation for details.">package="com.intellij"</error>
              <error descr="Implementation plugins are no longer supported: use either a regular plugin or implement a product module">implementation-detail="false"</error>
              allow-bundled-update="false"
              require-restart="false"

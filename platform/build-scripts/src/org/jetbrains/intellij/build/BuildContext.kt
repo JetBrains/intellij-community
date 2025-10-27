@@ -98,7 +98,7 @@ interface BuildContext : CompilationContext {
 
   /**
    * Returns main modules' names of plugins bundled with the product.
-   * In IDEs, which use path-based loader, this list is specified manually in [ProductModulesLayout.bundledPluginModules] property.
+   * In IDEs, which use path-based loader, this list is specified manually in [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules] property.
    */
   suspend fun getBundledPluginModules(): List<String>
 
@@ -117,7 +117,7 @@ interface BuildContext : CompilationContext {
   /**
    * [nonBundledPlugins]/auto-uploading/
    *
-   * See [ProductModulesLayout.buildAllCompatiblePlugins]
+   * See [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.buildAllCompatiblePlugins]
    */
   val nonBundledPluginsToBePublished: Path
 

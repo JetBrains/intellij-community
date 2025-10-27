@@ -59,6 +59,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
+import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
@@ -67,8 +68,10 @@ import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.packaging.PyExecutionException;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.run.features.PyRunToolIds;
 import com.jetbrains.python.run.features.PyRunToolParameters;
 import com.jetbrains.python.run.features.PyRunToolProvider;
+import com.jetbrains.python.run.features.PyRunToolUsageCollector;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.PythonCommandLineTargetEnvironmentProvider;
@@ -93,6 +96,7 @@ import java.util.function.Function;
 import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 import static com.jetbrains.python.run.features.PyRunToolExtKt.useRunTool;
+import static com.jetbrains.python.run.features.PyRunToolProviderKt.getEnableRunTool;
 
 /**
  * Since this state is async, any method could be called on any thread
@@ -172,7 +176,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   @Override
   public @NotNull ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner<?> runner) throws ExecutionException {
-    return execute(executor, new CommandLinePatcher[0]);
+    if (runner instanceof PyDebugRunner || runner instanceof PythonRunner) {
+      return execute(executor, new CommandLinePatcher[0]);
+    }
+    return executeWithoutStartProcess(executor);
   }
 
   /**
@@ -195,6 +202,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
     else {
       return Collections.emptyList();
     }
+  }
+
+  private @NotNull ExecutionResult executeWithoutStartProcess(@NotNull Executor executor) throws ExecutionException {
+    ProcessHandler processHandler = new SimpleProcessHandler();
+    ConsoleView console = createAndAttachConsoleInEDT(myConfig.getProject(), processHandler, executor);
+    return new DefaultExecutionResult(console, processHandler, createActions(console, processHandler));
   }
 
   /**
@@ -350,10 +363,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
         .toList();
 
     PyRunToolParameters runToolParameters = null;
-    if (sdk != null) {
+    if (sdk != null && getEnableRunTool()) {
       PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
       if (runToolProvider != null && useRunTool(myConfig, sdk)) {
         runToolParameters = runToolProvider.getRunToolParameters();
+        PyRunToolUsageCollector.logRun(myConfig.getProject(), PyRunToolIds.idOf(runToolProvider));
       }
     }
 

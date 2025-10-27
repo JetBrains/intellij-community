@@ -388,6 +388,11 @@ public final class PushController implements Disposable {
     return myPushLog;
   }
 
+  @ApiStatus.Experimental
+  public @NotNull VcsPushDialog getDialog() {
+    return myDialog;
+  }
+
   /**
    * An exception thrown if a {@link PrePushHandler} has failed to make the decision
    * by whatever reason: either it had been cancelled, or an execution exception had occurred.

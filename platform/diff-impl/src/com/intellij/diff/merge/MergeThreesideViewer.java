@@ -279,31 +279,35 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     return new AbstractAction(caption) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        var confirmationShown = false;
-        var discardChanges = false;
+        boolean confirmationShown = false;
+        boolean discardChanges = true;
 
-        if (result == MergeResult.LEFT || result == MergeResult.RIGHT) {
-          confirmationShown = myContentModified;
-          discardChanges = MergeUtil.showConfirmDiscardChangesDialog(myPanel.getRootPane(),
-                                                                result == MergeResult.LEFT
-                                                                ? DiffBundle.message("button.merge.resolve.accept.left")
-                                                                : DiffBundle.message("button.merge.resolve.accept.right"),
-                                                                myContentModified);
-        }
+        switch (result) {
+          case LEFT, RIGHT -> {
+            confirmationShown = myContentModified;
+            discardChanges = MergeUtil.showConfirmDiscardChangesDialog(myPanel.getRootPane(),
+                                                                         result == MergeResult.LEFT
+                                                                         ? DiffBundle.message("button.merge.resolve.accept.left")
+                                                                         : DiffBundle.message("button.merge.resolve.accept.right"),
+                                                                         myContentModified);
+          }
 
-        if (result == MergeResult.RESOLVED && (getChangesCount() > 0 || getConflictsCount() > 0)) {
-          confirmationShown = true;
+          case RESOLVED -> {
+            if (getChangesCount() > 0 || getConflictsCount() > 0) {
+              confirmationShown = true;
 
-          discardChanges = MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"), DiffBundle
-              .message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()))
-            .yesText(DiffBundle.message("apply.changes.and.mark.resolved"))
-            .noText(DiffBundle.message("continue.merge"))
-            .ask(myPanel.getRootPane());
+              discardChanges = MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"), DiffBundle
+                  .message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()))
+                .yesText(DiffBundle.message("apply.changes.and.mark.resolved"))
+                .noText(DiffBundle.message("continue.merge"))
+                .ask(myPanel.getRootPane());
+            }
+          }
 
-        }
-        if (result == MergeResult.CANCEL) {
-          confirmationShown = myContentModified;
-          discardChanges = MergeUtil.showExitWithoutApplyingChangesDialog(myTextMergeViewer, myMergeRequest, myMergeContext, myContentModified);
+          case CANCEL -> {
+            confirmationShown = myContentModified;
+            discardChanges = MergeUtil.showExitWithoutApplyingChangesDialog(myTextMergeViewer, myMergeRequest, myMergeContext, myContentModified);
+          }
         }
 
         logDialogButton(result, confirmationShown, discardChanges, false);

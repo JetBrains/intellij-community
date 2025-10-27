@@ -12,14 +12,11 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.LicensingFacade
 import com.intellij.util.PlatformUtils
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.text.DecimalFormat
 import java.util.*
-import kotlin.text.startsWith
 
 /**
  * A lightweight model for representing plugin information in the UI.
@@ -33,7 +30,7 @@ interface PluginUiModel {
   @get:NlsSafe
   val version: String?
   val isBundled: Boolean
-  val isIncompatibleWithCurrentOs: Boolean
+  val isIncompatibleWithCurrentPlatform: Boolean
 
   val isIncompatible: Boolean
   val canBeEnabled: Boolean

@@ -2,6 +2,7 @@
 package com.intellij.platform.vcs.impl.shared.rpc
 
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.platform.vcs.rd.ThinClientVcsContextFactory
@@ -24,5 +25,16 @@ data class FilePathDto(
       vcsContextFactory.createFilePathOn(path, isDirectory, virtualFileId)
     else
       vcsContextFactory.createFilePath(path, isDirectory)
+  }
+
+  override fun toString(): String = "$path (isDirectory=$isDirectory)"
+
+  companion object {
+    fun toDto(path: FilePath): FilePathDto = FilePathDto(
+      virtualFileId = path.virtualFile?.rpcId(),
+      path = path.path,
+      isDirectory = path.isDirectory,
+      localFilePath = path,
+    )
   }
 }

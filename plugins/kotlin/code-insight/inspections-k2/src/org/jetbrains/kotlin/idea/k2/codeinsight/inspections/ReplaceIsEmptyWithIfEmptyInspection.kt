@@ -25,6 +25,9 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.childrenOfType
 
 /**
  * This inspection detects `if` statements containing only a single call to
@@ -165,7 +168,7 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
             val condition = element.condition ?: return
             val thenExpression = element.then ?: return
             val elseExpression = element.`else` ?: return
-            val defaultValueExpression = (if (replacement.negativeCondition) elseExpression else thenExpression)
+            val defaultValueExpression = if (replacement.negativeCondition) elseExpression else thenExpression
 
             val psiFactory = KtPsiFactory(project)
             val receiverText = (condition as? KtDotQualifiedExpression)?.receiverExpression?.text?.let { "$it." } ?: ""
@@ -175,7 +178,23 @@ internal class ReplaceIsEmptyWithIfEmptyInspection : KotlinApplicableInspectionB
             } else {
                 psiFactory.createExpressionByPattern("${receiverText}$replacementFunctionName { $0 }", defaultValueExpression)
             }
+            element.collectOptionalCommentsAndAddBeforeElement(psiFactory, if (replacement.negativeCondition) thenExpression else elseExpression)
             element.replace(newExpression)
         }
+
+        private fun PsiElement.collectOptionalCommentsAndAddBeforeElement(
+            psiFactory: KtPsiFactory,
+            fallOutBranch: PsiElement
+        ) {
+            val commentsBetweenTheBlocks = childrenOfType<PsiComment>().toList()
+            //We preserve comments between the blocks and those from the branch that is falling out due to this inspection
+            val commentsBetween = commentsBetweenTheBlocks + fallOutBranch.collectDescendantsOfType<PsiComment>()
+
+            for (comment in commentsBetween) {
+                parent.addBefore(comment, this)
+                parent.addBefore(psiFactory.createNewLine(), this)
+            }
+        }
+
     }
 }

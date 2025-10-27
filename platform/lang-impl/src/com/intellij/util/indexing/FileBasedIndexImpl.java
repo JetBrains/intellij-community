@@ -710,7 +710,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         // TODO-ank: Should we catch and ignore CancellationException here to allow other lines to execute?
         IndexingStamp.close();
-        IndexingFlag.unlockAllFiles(); // TODO-ank: IndexingFlag should also be closed, because indexes might be cleared (IDEA-336540)
+        IndexingFlag.unlockAllFiles();
+        IndexingFlag.close();
         // TODO-ank: review all the remaining usages of fast file attributes (IDEA-336540)
 
         List<ThrowableRunnable<?>> indexDisposeTasks = new ArrayList<>();
@@ -806,7 +807,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final ThreadLocal<Boolean> myReentrancyGuard = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
   @Override
-  public <K> boolean ensureUpToDate(final @NotNull ID<K, ?> indexId,
+  public <K> boolean ensureUpToDate(@NotNull ID<K, ?> indexId,
                                     @Nullable Project project,
                                     @Nullable GlobalSearchScope filter,
                                     @Nullable VirtualFile restrictedFile) {
@@ -1384,7 +1385,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
 
       for (Pair<IndexableFileSet, Project> set : myIndexableSets) {
-        final Project proj = set.second;
+        Project proj = set.second;
         if (proj != null && !proj.equals(project)) {
           continue; // skip this set as associated with a different project
         }
@@ -1801,7 +1802,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final VirtualFileUpdateTask myForceUpdateTask = new VirtualFileUpdateTask();
 
-  private void forceUpdate(@Nullable Project project, ProjectFilesCondition filter, final @Nullable VirtualFile restrictedTo) {
+  private void forceUpdate(@Nullable Project project,
+                           @NotNull ProjectFilesCondition filter,
+                           @Nullable VirtualFile restrictedTo) {
     Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
 
     if (!allFilesToUpdate.isEmpty()) {
@@ -1830,6 +1833,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     return myRegisteredIndexes.isContentDependentIndex(indexId);
   }
 
+  /** @return set of (opened) projects the given file belongs to */
   public @Unmodifiable @NotNull Set<Project> getContainingProjects(@NotNull VirtualFile file) {
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null) {
@@ -1849,12 +1853,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
+  /** @return true if the file belongs to the specific project's indexable files set */
   public boolean belongsToProjectIndexableFiles(@NotNull VirtualFile file, @NotNull Project project) {
-    return ContainerUtil.find(myIndexableSets, pair -> pair.second.equals(project) && pair.first.isInSet(file)) != null;
+    return ContainerUtil.exists(myIndexableSets, pair -> pair.second.equals(project) && pair.first.isInSet(file));
   }
 
+  /** @return true if the file belongs to _any_ registered project's indexable files set */
   public boolean belongsToIndexableFiles(@NotNull VirtualFile file) {
-    return ContainerUtil.find(myIndexableSets, pair -> pair.first.isInSet(file)) != null;
+    return ContainerUtil.exists(myIndexableSets, pair -> pair.first.isInSet(file));
   }
 
   @Internal

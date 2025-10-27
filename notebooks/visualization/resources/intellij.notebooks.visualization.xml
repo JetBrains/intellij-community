@@ -92,6 +92,8 @@
                  key="jupyter.markdown.cells.floating.toolbar"
                  restartRequired="false"/>
 
+    <registryKey key="jupyter.diff.viewer.output" defaultValue="false" description="Show outputs in the Jupyter diff viewer"/>
+
     <textEditorCustomizer implementation="com.intellij.notebooks.visualization.ui.NotebookFloatingToolbarCustomizer"/>
   </extensions>
 

@@ -38,6 +38,8 @@ public class PyCustomMember extends UserDataHolderBase {
   private final PsiElement myTarget;
   private PyPsiPath myPsiPath;
 
+  private boolean myIsClassVar = false;
+
   boolean myFunction = false;
 
   /**
@@ -241,6 +243,16 @@ public class PyCustomMember extends UserDataHolderBase {
 
   public boolean isFunction() {
     return myFunction;
+  }
+
+
+  public PyCustomMember asClassVar() {
+    myIsClassVar = true;
+    return this;
+  }
+
+  public boolean isClassVar() {
+    return myIsClassVar;
   }
 
   /**

@@ -29,6 +29,8 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
+import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
@@ -46,8 +48,6 @@ import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
-import com.jetbrains.python.sdk.poetry.POETRY_ICON
-import com.jetbrains.python.sdk.uv.UV_ICON
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Companion.PYTHON_INSTALLATION_INTERRUPTED
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -58,7 +58,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
-abstract class PythonAddEnvironment<P: PathHolder>(open val model: PythonAddInterpreterModel<P>) {
+abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInterpreterModel<P>) {
 
   val state: AddInterpreterState<P>
     get() = model.state
@@ -79,7 +79,8 @@ abstract class PythonAddEnvironment<P: PathHolder>(open val model: PythonAddInte
   protected suspend fun setupSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
     val sdk = getOrCreateSdk(moduleOrProject).getOr { return it }
 
-    moduleOrProject.moduleIfExists?.excludeInnerVirtualEnv(sdk)
+    moduleOrProject.project.excludeInnerVirtualEnv(sdk)
+    moduleOrProject.moduleIfExists?.let { sdk.setAssociationToModule(it) }
 
     return Result.success(sdk)
   }
@@ -107,7 +108,7 @@ abstract class PythonAddEnvironment<P: PathHolder>(open val model: PythonAddInte
   abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
-abstract class PythonNewEnvironmentCreator<P: PathHolder>(override val model: PythonMutableTargetAddInterpreterModel<P>) : PythonAddEnvironment<P>(model) {
+abstract class PythonNewEnvironmentCreator<P : PathHolder>(override val model: PythonMutableTargetAddInterpreterModel<P>) : PythonAddEnvironment<P>(model) {
   internal val venvExistenceValidationState: AtomicProperty<VenvExistenceValidationState> =
     AtomicProperty(VenvExistenceValidationState.Invisible)
 
@@ -132,7 +133,7 @@ abstract class PythonNewEnvironmentCreator<P: PathHolder>(override val model: Py
   }
 }
 
-abstract class PythonExistingEnvironmentConfigurator<P: PathHolder>(model: PythonAddInterpreterModel<P>) : PythonAddEnvironment<P>(model)
+abstract class PythonExistingEnvironmentConfigurator<P : PathHolder>(model: PythonAddInterpreterModel<P>) : PythonAddEnvironment<P>(model)
 
 
 enum class PythonSupportedEnvironmentManagers(
@@ -142,15 +143,16 @@ enum class PythonSupportedEnvironmentManagers(
 ) {
   VIRTUALENV("sdk.create.custom.virtualenv", PythonIcons.Python.Virtualenv, { true }),
   CONDA("sdk.create.custom.conda", PythonIcons.Python.Anaconda, { true }),
-  POETRY("sdk.create.custom.poetry", POETRY_ICON),
+  POETRY("sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
   PIPENV("sdk.create.custom.pipenv", PIPENV_ICON),
-  UV("sdk.create.custom.uv", UV_ICON),
+  UV("sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV),
   HATCH("sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
   PYTHON("sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
 }
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {
   PROJECT_VENV("sdk.create.type.project.venv"),
+  PROJECT_UV("sdk.create.type.project.uv"),
   BASE_CONDA("sdk.create.type.base.conda"),
   CUSTOM("sdk.create.type.custom")
 }
@@ -195,7 +197,7 @@ internal fun installBaseSdk(sdk: Sdk, existingSdks: List<Sdk>): Sdk? {
 }
 
 
-suspend fun <P: PathHolder> setupSdk(
+internal suspend fun <P : PathHolder> setupSdk(
   project: Project?,
   allSdks: List<Sdk>,
   fileSystem: FileSystem<P>,
@@ -240,24 +242,44 @@ suspend fun <P: PathHolder> setupSdk(
   return PyResult.success(sdk)
 }
 
-internal suspend fun <P: PathHolder> PythonSelectableInterpreter<P>.setupSdk(
-  project: Project?,
+internal suspend fun <P : PathHolder> PythonSelectableInterpreter<P>.setupSdk(
+  moduleOrProject: ModuleOrProject,
   allSdks: List<Sdk>,
   fileSystem: FileSystem<P>,
   targetPanelExtension: TargetPanelExtension?,
+  isAssociateWithModule: Boolean,
 ): PyResult<Sdk> {
   if (this is ExistingSelectableInterpreter) {
     return PyResult.success(sdkWrapper.sdk)
   }
 
-  val newSdk = setupSdk(project, allSdks, fileSystem, homePath!!, languageLevel, targetPanelExtension).getOr { return it }
+  val newSdk = setupSdk(
+    project = moduleOrProject.project,
+    allSdks = allSdks,
+    fileSystem = fileSystem,
+    pythonBinaryPath = homePath!!,
+    languageLevel = pythonInfo.languageLevel,
+    targetPanelExtension = targetPanelExtension
+  ).getOr { return it }
+
+  val module = PyProjectCreateHelpers.getModule(moduleOrProject, newSdk.homeDirectory)
+  if (isAssociateWithModule && module != null) {
+    newSdk.setAssociationToModule(module)
+  }
   newSdk.persist()
+
+  moduleOrProject.project.excludeInnerVirtualEnv(newSdk)
+
   return PyResult.success(newSdk)
 }
 
 class VersionFormatException : Exception()
 
 data class Version(val value: String) {
+  override fun toString(): String {
+    return value
+  }
+
   companion object {
     fun parse(versionString: String): Version {
       return Version(versionString)

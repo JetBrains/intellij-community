@@ -65,6 +65,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private final IElementType[] myLexTypes;
   private final NavigableMap<Integer, IElementType> myTokenTypesToRestoreOnRollback = new TreeMap<>();
   private int myCurrentLexeme;
+  private int myCheckCanceledCounter = 0;
 
   private final ParserDefinition myParserDefinition;
   private final Lexer myLexer;
@@ -835,15 +836,22 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   @Override
   public void advanceLexer() {
-    if ((myCurrentLexeme & 0xff) == 0) {
-      ProgressIndicatorProvider.checkCanceled();
-    }
+    checkCanceled();
 
     if (eof()) return;
 
     myTokenTypeChecked = false;
     myCurrentLexeme++;
     clearCachedTokenType();
+  }
+
+  private void checkCanceled() {
+    myCheckCanceledCounter++;
+    if ((myCheckCanceledCounter & 0xff) != 0) {
+      // perform the actual check once in 256 times
+      return;
+    }
+    ProgressIndicatorProvider.checkCanceled();
   }
 
   private void skipWhitespace() {

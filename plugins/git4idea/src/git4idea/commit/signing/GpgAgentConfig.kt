@@ -25,7 +25,7 @@ internal data class GpgAgentConfig(val path: Path, val content: Map<String, Stri
 
   @Throws(IOException::class)
   fun writeToFile() {
-    LOG.info("Writing gpg agent config to ${path.toFile()}")
+    LOG.info("Writing gpg agent config to ${path}")
     path.writeLines(content.map { (key, value) -> "$key $value".trimEnd() })
   }
 

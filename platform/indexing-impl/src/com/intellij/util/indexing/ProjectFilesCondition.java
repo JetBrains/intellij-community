@@ -18,9 +18,9 @@ public final class ProjectFilesCondition {
   private final IdFilter myIndexableFilesFilter;
 
   public ProjectFilesCondition(IdFilter indexableFilesFilter,
-                        GlobalSearchScope filter,
-                        VirtualFile restrictedTo,
-                        boolean includeFilesFromOtherProjects) {
+                               GlobalSearchScope filter,
+                               VirtualFile restrictedTo,
+                               boolean includeFilesFromOtherProjects) {
     myRestrictedTo = restrictedTo;
     myFilter = filter;
     myIndexableFilesFilter = indexableFilesFilter;

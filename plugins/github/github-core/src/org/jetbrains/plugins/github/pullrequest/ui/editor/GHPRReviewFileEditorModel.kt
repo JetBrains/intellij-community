@@ -41,6 +41,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
 
   override var shouldHighlightDiffRanges: Boolean by settings::highlightDiffLinesInEditor
 
+  override val canNavigate: Boolean get() = true
+
   @OptIn(ExperimentalCoroutinesApi::class)
   private val linesWithNewCommentsFlow: StateFlow<Set<Int>> =
     fileVm.newComments.flatMapLatest { vms ->
@@ -212,23 +214,23 @@ internal class GHPRReviewFileEditorModel internal constructor(
 
   private inner class ShiftedNewComment(cs: CoroutineScope, vm: GHPRReviewFileEditorNewCommentViewModel)
     : GHPREditorMappedComponentModel.NewComment<GHPRReviewNewCommentEditorViewModel>(vm) {
-    private val originalLocation: GHPRReviewCommentLocation = vm.location.value
-    override val key: Any = "NEW_$originalLocation"
+    private val location: StateFlow<GHPRReviewCommentLocation> = vm.position.mapState { it.location }
+    override val key: Any = "NEW_${location.value}"
     override val isVisible: StateFlow<Boolean> = MutableStateFlow(true)
 
     private val cs = cs.childScope("${this::class.simpleName}")
     private val _range = MutableStateFlow(
-      when (originalLocation) {
+      when (val loc = location.value) {
         is GHPRReviewCommentLocation.SingleLine -> {
-          Side.RIGHT to originalLocation.lineIdx.shiftLineToAfter().let { it..it }
+          Side.RIGHT to loc.lineIdx.shiftLineToAfter().let { it..it }
         }
         is GHPRReviewCommentLocation.MultiLine -> {
-          Side.RIGHT to (originalLocation.startLineIdx.shiftLineToAfter()..originalLocation.lineIdx.shiftLineToAfter())
+          Side.RIGHT to (loc.startLineIdx.shiftLineToAfter()..loc.lineIdx.shiftLineToAfter())
         }
       }
     )
     override val range: StateFlow<Pair<Side, IntRange>?> = _range.asStateFlow()
-    override val line: StateFlow<Int?> = range.mapState { it?.second?.last }
+    override val line: StateFlow<Int?> = location.mapState { it.lineIdx.shiftLineToAfter() }
 
     private val manualRange = MutableStateFlow(range.value)
     private var isManualUpdate = false

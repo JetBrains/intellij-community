@@ -22,6 +22,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
@@ -43,6 +44,7 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source.KaSour
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.symbolicId
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
+import org.jetbrains.kotlin.idea.base.util.caching.findSdkBridge
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.library.KotlinLibrary
@@ -248,6 +250,10 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
         return cache.cachedKaSdkModule(sdk.symbolicId)
     }
 
+    override fun getKaLibraryModule(sdkId: SdkId): KaLibraryModule {
+        return cache.cachedKaSdkModule(sdkId)
+    }
+
     override fun getKaLibraryModuleSymbolicId(libraryModule: KaLibraryModule): LibraryId {
         require(libraryModule is KaLibraryEntityBasedLibraryModuleBase) {
             "Expected ${KaLibraryEntityBasedLibraryModuleBase::class}, but got ${libraryModule::class} instead"
@@ -256,11 +262,17 @@ class K2IDEProjectStructureProvider(private val project: Project) : IDEProjectSt
     }
 
     override fun getOpenapiLibrary(module: KaLibraryModule): Library? {
-        return (module as? KaLibraryEntityBasedLibraryModuleBase)?.library
+        return when (module)  {
+            is KaLibraryEntityBasedLibraryModuleBase -> module.entity.findLibraryBridge(project.workspaceModel.currentSnapshot)
+            else -> null
+        }
     }
 
     override fun getOpenapiSdk(module: KaLibraryModule): Sdk? {
-        return (module as? KaLibrarySdkModuleImpl)?.sdk
+        return when (module) {
+            is KaLibrarySdkModuleImpl -> module.entity.findSdkBridge(project.workspaceModel.currentSnapshot)
+            else -> null
+        }
     }
 
     override fun getAssociatedKaModules(virtualFile: VirtualFile): List<KaModule> {

@@ -31,6 +31,9 @@ jvm_library(
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//java/idea-ui:ui",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/workspace/storage",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.platforms` end

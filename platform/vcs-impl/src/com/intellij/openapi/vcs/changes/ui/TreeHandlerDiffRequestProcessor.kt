@@ -7,13 +7,23 @@ import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.combined.*
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
-import com.intellij.openapi.vcs.changes.ChangesTreeEditorDiffPreview
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreview
 import com.intellij.openapi.vcs.changes.actions.diff.WrapperCombinedBlockProducer
 import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromWrappers
+import com.intellij.ui.ExpandableItemsHandler
+import com.intellij.util.EditSourceOnDoubleClickHandler
+import com.intellij.util.Processor
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
@@ -24,6 +34,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JTree
@@ -191,11 +202,63 @@ open class TreeHandlerChangesTreeTracker(
 
 
 abstract class TreeHandlerEditorDiffPreview(
-  tree: ChangesTree,
+  protected val tree: ChangesTree,
   targetComponent: JComponent = tree,
   protected val handler: ChangesTreeDiffPreviewHandler
-) : ChangesTreeEditorDiffPreview(tree, targetComponent) {
+) : EditorTabDiffPreview(tree.project) {
   constructor(tree: ChangesTree, handler: ChangesTreeDiffPreviewHandler) : this(tree, tree, handler)
+
+  init {
+    tree.doubleClickHandler = Processor { e -> handleDoubleClick(e) }
+    tree.enterKeyHandler = Processor { _ -> handleEnterKey() }
+    tree.addSelectionListener { handleSingleClick() }
+    PreviewOnNextDiffAction().registerCustomShortcutSet(targetComponent, this)
+
+    UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
+  }
+
+  protected open fun isPreviewOnDoubleClick(): Boolean = true
+  open fun handleDoubleClick(e: MouseEvent): Boolean {
+    if (!isPreviewOnDoubleClick()) return false
+    if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return false
+    return performDiffAction()
+  }
+
+  protected open fun isPreviewOnEnter(): Boolean = true
+  open fun handleEnterKey(): Boolean {
+    if (!isPreviewOnEnter()) return false
+    return performDiffAction()
+  }
+
+  protected open fun isOpenPreviewWithSingleClickEnabled(): Boolean = false
+  protected open fun isOpenPreviewWithSingleClick(): Boolean {
+    if (!isOpenPreviewWithSingleClickEnabled()) return false
+    if (!VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) return false
+    return true
+  }
+
+  protected open fun handleSingleClick() {
+    if (!isOpenPreviewWithSingleClick()) return
+    val opened = openPreview(false)
+    if (!opened) {
+      closePreview() // auto-close editor tab if nothing to preview
+    }
+  }
+
+  protected open fun isOpenPreviewWithNextDiffShortcut(): Boolean = true
+  protected open fun handleNextDiffShortcut() {
+    if (!isOpenPreviewWithNextDiffShortcut()) return
+    openPreview(true)
+  }
+
+  override fun handleEscapeKey() {
+    closePreview()
+    getApplication().invokeLater {
+      returnFocusToTree()
+    }
+  }
+
+  protected open fun returnFocusToTree() = Unit
 
   final override fun hasContent(): Boolean {
     return handler.hasContent(tree)
@@ -222,6 +285,22 @@ abstract class TreeHandlerEditorDiffPreview(
 
   @CalledInAny
   abstract fun getEditorTabName(wrapper: Wrapper?): String?
+
+  private inner class PreviewOnNextDiffAction : DumbAwareAction() {
+    init {
+      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_DIFF))
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = isOpenPreviewWithNextDiffShortcut()
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      handleNextDiffShortcut()
+    }
+  }
 
   companion object {
     fun createDefaultViewer(changesTree: ChangesTree, previewHandler: ChangesTreeDiffPreviewHandler, place: String): DiffEditorViewer {

@@ -111,7 +111,6 @@ import java.util.stream.Stream
 import java.util.zip.CRC32
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
-import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
 object MavenUtil {
@@ -1985,12 +1984,14 @@ object MavenUtil {
   fun isMaven410(xmlns: String?, schemaLocation: String?): Boolean {
     if (xmlns == null || schemaLocation == null) return false
     val schemaLocations = schemaLocation.split(' ')
-    return (xmlns == MAVEN_4_XLMNS || xmlns == MAVEN_4_XLMNS_HTTPS)
+    return (xmlns == MAVEN_4_XMLNS || xmlns == MAVEN_4_XMLNS_HTTPS)
            && schemaLocations.all {
-      it == MAVEN_4_XLMNS ||
-      it == MAVEN_4_XLMNS_HTTPS ||
+      it == MAVEN_4_XMLNS ||
+      it == MAVEN_4_XMLNS_HTTPS ||
       it == MAVEN_4_XSD ||
-      it == MAVEN_4_XSD_HTTPS
+      it == MAVEN_4_XSD_HTTPS ||
+      it == MAVEN_4_XSD_UNDERSCORE ||
+      it == MAVEN_4_XSD_HTTPS_UNDERSCORE
     }
 
   }

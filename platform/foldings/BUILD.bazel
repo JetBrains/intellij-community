@@ -17,6 +17,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.foldings` end

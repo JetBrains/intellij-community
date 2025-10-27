@@ -1,4 +1,4 @@
-*:org.intellij.plugins.intelliLang.inject.DefaultInjectorSuppressor
+*:org.intellij.plugins.intelliLang.inject.FallbackInjectorSuppressor
 - a:isSuppressedFor(com.intellij.psi.PsiElement):Z
 f:org.intellij.plugins.intelliLang.references.LanguageInjectionUtil
 - *f:commentBody(com.intellij.psi.PsiComment):java.lang.String

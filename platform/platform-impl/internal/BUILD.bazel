@@ -19,6 +19,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//jps/model-serialization",
@@ -56,6 +57,7 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/platform-impl/update-checker",
     "//libraries/jbr",
+    "//platform/projectModel-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.internal` end

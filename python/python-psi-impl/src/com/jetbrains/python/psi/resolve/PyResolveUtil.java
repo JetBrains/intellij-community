@@ -528,9 +528,7 @@ public final class PyResolveUtil {
     if (call != null && element instanceof PyTypedElement) {
       final var type = PyUtil.as(context.getType((PyTypedElement)element), PyClassType.class);
 
-      if (type != null && type.isDefinition()) {
-        final var cls = type.getPyClass();
-
+      if (type != null && type.isDefinition() && type.getDeclarationElement() instanceof PyClass cls) {
         final var constructor = ContainerUtil.find(
           PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(type, call, resolveContext)),
           it -> it instanceof PyPossibleClassMember possibleClassMember && possibleClassMember.getContainingClass() == cls
@@ -545,15 +543,11 @@ public final class PyResolveUtil {
     if (reference instanceof PsiPolyVariantReference multiReference) {
       return PyUtil.multiResolveTopPriority(multiReference);
     }
-    final var result = reference.resolve();
-    if (result == null) return List.of();
-    return List.of(result);
+    return ContainerUtil.createMaybeSingletonList(reference.resolve());
   }
 
   public static @Nullable PsiElement resolveDeclaration(@NotNull PsiReference reference, @NotNull PyResolveContext resolveContext) {
-    final var result = multiResolveDeclaration(reference, resolveContext);
-    if (result.isEmpty()) return null;
-    return result.get(0);
+    return ContainerUtil.getFirstItem(multiResolveDeclaration(reference, resolveContext));
   }
 
   private static @NotNull List<RatedResolveResult> resolveTypeParameters(@NotNull PyTypeParameterListOwner typeParameterListOwner,

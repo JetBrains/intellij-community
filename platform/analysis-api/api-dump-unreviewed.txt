@@ -253,7 +253,6 @@ a:com.intellij.codeInsight.completion.CompletionResultSet
 - a:restartCompletionWhenNothingMatches():V
 - runRemainingContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer):V
 - runRemainingContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer,Z):V
-- runRemainingContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer,Z,com.intellij.codeInsight.completion.CompletionSorter):V
 - runRemainingContributors(com.intellij.codeInsight.completion.CompletionParameters,Z):java.util.LinkedHashSet
 - startBatch():V
 - stopHere():V
@@ -270,7 +269,6 @@ a:com.intellij.codeInsight.completion.CompletionService
 - s:getCompletionService():com.intellij.codeInsight.completion.CompletionService
 - a:getCurrentCompletion():com.intellij.codeInsight.completion.CompletionProcess
 - p:getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer):V
-- p:getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer,com.intellij.codeInsight.completion.CompletionSorter):V
 - getVariantsFromContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.CompletionContributor,com.intellij.util.Consumer):V
 - performCompletion(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.util.Consumer):V
 - pa:suggestPrefix(com.intellij.codeInsight.completion.CompletionParameters):java.lang.String
@@ -403,7 +401,6 @@ f:com.intellij.codeInsight.daemon.HighlightDisplayKey
 - getID():java.lang.String
 - getShortName():java.lang.String
 - s:register(java.lang.String,com.intellij.openapi.util.Computable,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
-- s:register(java.lang.String,com.intellij.openapi.util.Computable,java.lang.String,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
 - s:register(java.lang.String,java.lang.String,java.lang.String):com.intellij.codeInsight.daemon.HighlightDisplayKey
 - s:unregister(java.lang.String):V
 com.intellij.codeInsight.daemon.HighlightingPassesCache

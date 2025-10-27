@@ -12,7 +12,7 @@ suspend fun createDistributionBuilderState(pluginsToPublish: Set<PluginLayout>, 
 
 suspend fun createDistributionBuilderState(context: BuildContext): DistributionBuilderState {
   val platform = createPlatformLayout(context)
-  return DistributionBuilderState(platform, pluginsToPublish = emptySet(), context)
+  return DistributionBuilderState(platform = platform, pluginsToPublish = emptySet(), context = context)
 }
 
 class DistributionBuilderState internal constructor(

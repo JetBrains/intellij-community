@@ -38,9 +38,9 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//platform/util/multiplatform",
-    "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport",
     "@lib//:junit5",
     "@lib//:kotlin-test",
+    ":platform_syntax_multiplatformSupport_provided",
   ]
 )
 ### auto-generated section `build intellij.platform.syntax` end

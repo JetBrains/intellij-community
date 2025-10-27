@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.community.execService.BinaryToExec
 import com.jetbrains.python.errorProcessing.PyResult
@@ -72,9 +71,9 @@ sealed class NewCondaEnvRequest {
       }
     }
 
-    private fun readEnvName(): String = runReadAction {
-      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(environmentYaml) ?: return@runReadAction DEFAULT_ENV_NAME
-      CondaEnvironmentYmlParser.readNameFromFile(virtualFile) ?: DEFAULT_ENV_NAME
+    private fun readEnvName(): String {
+      val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(environmentYaml) ?: return DEFAULT_ENV_NAME
+      return CondaEnvironmentYmlParser.readNameFromFile(virtualFile) ?: DEFAULT_ENV_NAME
     }
   }
 

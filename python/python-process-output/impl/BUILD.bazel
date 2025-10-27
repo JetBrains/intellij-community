@@ -1,0 +1,105 @@
+### auto-generated section `build intellij.python.processOutput.impl` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+create_kotlinc_options(
+  name = "custom_impl",
+  opt_in = ["kotlin.time.ExperimentalTime"],
+  plugin_options = ["plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true"]
+)
+
+resourcegroup(
+  name = "impl_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "impl",
+  module_name = "intellij.python.processOutput.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":impl_resources"],
+  kotlinc_opts = ":custom_impl",
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
+    "//platform/core-api:core",
+    "//libraries/skiko",
+    "//libraries/compose-foundation-desktop",
+    "//platform/jewel/foundation",
+    "//platform/jewel/ui",
+    "//platform/jewel/ide-laf-bridge",
+    "//platform/core-ui",
+    "//python/python-exec-service:community-execService",
+    "//python/openapi:community",
+    "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution-impl",
+    "@lib//:jediterm-core",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-collections-immutable",
+    "//platform/statistics",
+    "//python/python-process-output:processOutput",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+
+jvm_library(
+  name = "impl_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  kotlinc_opts = ":custom_impl",
+  associates = [":impl"],
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//platform/platform-api:ide",
+    "//platform/core-api:core",
+    "//libraries/skiko",
+    "//libraries/compose-foundation-desktop",
+    "//platform/jewel/foundation",
+    "//platform/jewel/foundation:foundation_test_lib",
+    "//platform/jewel/ui",
+    "//platform/jewel/ui:ui_test_lib",
+    "//platform/jewel/ide-laf-bridge",
+    "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
+    "//platform/core-ui",
+    "//python/python-exec-service:community-execService",
+    "//python/python-exec-service:community-execService_test_lib",
+    "//python/openapi:community",
+    "//python/openapi:community_test_lib",
+    "//platform/util:util-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//libraries/compose-foundation-desktop-junit",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-assertions-core-jvm",
+    "@lib//:kotlin-test-junit",
+    "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
+    "//platform/projectModel-api:projectModel",
+    "//platform/execution-impl",
+    "@lib//:jediterm-core",
+    "@lib//:io-mockk",
+    "@lib//:io-mockk-jvm",
+    "@lib//:kotlin-reflect",
+    "@lib//:kotlinx-collections-immutable",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "@lib//:junit5",
+    "//platform/testFramework/common",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
+    "//python/python-process-output:processOutput",
+  ],
+  plugins = ["@lib//:compose-plugin"]
+)
+### auto-generated section `build intellij.python.processOutput.impl` end
+
+### auto-generated section `test intellij.python.processOutput.impl` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "impl_test",
+  runtime_deps = [":impl_test_lib"]
+)
+### auto-generated section `test intellij.python.processOutput.impl` end

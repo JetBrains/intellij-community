@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfiguration;
 import com.intellij.platform.jps.model.resolver.JpsDependencyResolverConfigurationService;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
@@ -226,7 +227,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       ExecutorService executorService = Executors.newFixedThreadPool(parallelism);
       try {
         List<Future<?>> futures = ContainerUtil.map(libs, lib -> executorService.submit(() -> resolveAction.accept(lib)));
-        for (Future<?> future : futures) future.get();
+        ConcurrencyUtil.getAll(futures);
       }
       finally {
         executorService.shutdown();

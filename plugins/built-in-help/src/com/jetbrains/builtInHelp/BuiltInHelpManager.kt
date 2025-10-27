@@ -4,6 +4,7 @@ package com.jetbrains.builtInHelp
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
@@ -17,7 +18,12 @@ import java.lang.String.valueOf
 import java.net.*
 import java.nio.charset.StandardCharsets
 
-private val LOG = Logger.getInstance(BuiltInHelpManager::class.java)
+val LOG: Logger = Logger.getInstance(BuiltInHelpManager::class.java)
+
+//Later we'll add more languages here, for now it's Chinese only
+val localesToUrls: Map<String, String> = mapOf(
+  "zh-cn" to "zh-cn",
+)
 
 class BuiltInHelpManager : HelpManager() {
 
@@ -64,9 +70,18 @@ class BuiltInHelpManager : HelpManager() {
       }
       else {
 
-        val activeKeymapParam = if (activeKeymap == null) "" else "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
+        val activeKeymapParam = if (activeKeymap == null) ""
+        else
+          "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
 
-        "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
+        //Determine if we need to try loading localized docs first
+        val selectedLocale = LocalizationStateService.getInstance()?.selectedLocale?.lowercase()
+        val langPart = if (localesToUrls.containsKey(selectedLocale)) {
+          "/" + localesToUrls[selectedLocale]
+        }
+        else ""
+
+        "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}${langPart}/help/?${
           helpIdToUse
         }$activeKeymapParam"
       }

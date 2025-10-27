@@ -1,0 +1,5 @@
+# Is not present in runtime. For more details, see the file itself.
+gunicorn._types
+
+# .pyi file doesn't exist
+gunicorn.__main__

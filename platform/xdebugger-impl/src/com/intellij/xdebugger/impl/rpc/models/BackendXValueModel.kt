@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc.models
 
+import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -15,6 +16,7 @@ import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.deleteValueById
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.ui.JBColor
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.frame.XFullValueEvaluator
@@ -107,7 +109,7 @@ class BackendXValueModel internal constructor(
       _marker.value = null
       return
     }
-    _marker.update { XValueMarkerDto(marker.text, marker.color, marker.toolTipText) }
+    _marker.update { XValueMarkerDto(marker.text, (marker.color ?: JBColor.RED).rpcId(), marker.toolTipText) }
   }
 
   @ApiStatus.Internal
@@ -132,6 +134,9 @@ suspend fun BackendXValueModel.toXValueDto(): XValueDto {
   val valueMarkupFlow: RpcFlow<XValueMarkerDto?> = xValueModel.marker.toRpc()
 
   val textProvider = getTextProviderFlow(xValue, xValueModel)
+  val canMarkValue = xValue.isReady.thenApply {
+    session.getValueMarkers()?.canMarkValue(xValue) ?: false
+  }
 
   return XValueDto(
     xValueModel.id,
@@ -139,6 +144,7 @@ suspend fun BackendXValueModel.toXValueDto(): XValueDto {
     canNavigateToSource = xValue.canNavigateToSource(),
     canNavigateToTypeSource = xValue.canNavigateToTypeSourceAsync().asDeferred(),
     canBeModified = xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred(),
+    canMarkValue = canMarkValue.asDeferred(),
     valueMarkupFlow,
     xValueModel.presentation.toRpc(),
     xValueModel.getEvaluatorDtoFlow().toRpc(),

@@ -120,8 +120,11 @@ class DarculaDisclosureButtonUI(val uiComponent: JComponent) : BasicButtonUI() {
         g as Graphics2D
 
         val arc = getAdditionalButtonArc()
-        g.color = JBUI.CurrentTheme.List.buttonHoverBackground()
-        g.fillRoundRect(actionBounds.x, actionBounds.y, actionBounds.width, actionBounds.height, arc, arc)
+        val color = c.pressedBackground
+        if (color != null) {
+          g.color = color
+          g.fillRoundRect(actionBounds.x, actionBounds.y, actionBounds.width, actionBounds.height, arc, arc)
+        }
       }
 
       val icon = additionalActionsIcon(isAdditionalActionsButtonHovered)

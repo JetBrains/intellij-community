@@ -102,7 +102,9 @@ common_attr = add_dicts(
             default = "//:default-javac-opts",
             providers = [JavacOptions],
         ),
-        "_jvm_builder": attr.label(
+        "jvm_builder": attr.label(
+            doc = """Worker code to use. Usually this is not needed, but can be used to override the default
+            worker to build compiler plugins used in default worker.""",
             default = "//:jvm-builder",
             allow_single_file = True,
             cfg = scrubbed_host_platform_transition,

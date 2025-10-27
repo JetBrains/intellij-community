@@ -241,7 +241,7 @@ public final class UIUtil {
     else {
       doc = EditorFactory.getInstance().createDocument("");
     }
-    return createEditor(doc, project, editable, getTemplateContextType(profile));
+    return createEditor(doc, project, editable, getTemplateContextType(profile, dialect));
   }
 
   private static PsiFile createFileFragment(@NotNull Project project, @NotNull LanguageFileType fileType, Language dialect, @NotNull String text) {
@@ -253,8 +253,8 @@ public final class UIUtil {
            : factory.createFileFromText(name, dialect, text, true, true);
   }
 
-  public static TemplateContextType getTemplateContextType(@NotNull StructuralSearchProfile profile) {
-    final Class<? extends TemplateContextType> clazz = profile.getTemplateContextTypeClass();
+  public static TemplateContextType getTemplateContextType(@NotNull StructuralSearchProfile profile, Language dialect) {
+    final Class<? extends TemplateContextType> clazz = profile.getTemplateContextTypeClass(dialect);
     return TemplateContextTypes.getByClass(clazz);
   }
 }

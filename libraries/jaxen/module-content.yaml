@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.jaxen.jar
   modules:
   - name: intellij.libraries.jaxen
   library: Jaxen

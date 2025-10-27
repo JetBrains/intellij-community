@@ -20,6 +20,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/indexing-api:indexing",
     "//platform/projectModel-api:projectModel",
+    "//platform/core-impl",
     "//platform/util",
     "//platform/platform-impl:ide-impl",
     "//platform/analysis-impl",

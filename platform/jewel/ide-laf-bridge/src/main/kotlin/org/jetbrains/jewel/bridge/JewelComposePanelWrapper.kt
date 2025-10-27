@@ -21,6 +21,7 @@ import org.jetbrains.jewel.bridge.actionSystem.ComponentDataProviderBridge
 import org.jetbrains.jewel.bridge.component.JBPopupRenderer
 import org.jetbrains.jewel.bridge.theme.SwingBridgeTheme
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.foundation.InternalJewelApi
 import org.jetbrains.jewel.foundation.LocalComponent as LocalComponentFoundation
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.component.LocalPopupRenderer
@@ -192,10 +193,9 @@ public fun JewelComposeNoThemePanel(
 public fun JewelComposeNoThemePanel(config: ComposePanel.() -> Unit = {}, content: @Composable () -> Unit): JComponent =
     JewelComposeNoThemePanel(focusOnClickInside = false, config, content)
 
-private fun createJewelComposePanel(
-    focusOnClickInside: Boolean,
-    config: ComposePanel.(JewelComposePanelWrapper) -> Unit,
-): JewelComposePanelWrapper {
+@ApiStatus.Internal
+@InternalJewelApi
+public fun setSkikoLibraryPath() {
     if (System.getProperty("skiko.library.path") == null) {
         val bundledSkikoFolder = File(PathManager.getLibPath(), "/skiko-awt-runtime-all")
         if (bundledSkikoFolder.isDirectory && bundledSkikoFolder.canRead()) {
@@ -204,13 +204,23 @@ private fun createJewelComposePanel(
             JewelLogger.getInstance("SkikoLoader").warn("Bundled Skiko not found/not readable, falling back to default")
         }
     }
+}
+
+private fun createJewelComposePanel(
+    focusOnClickInside: Boolean,
+    config: ComposePanel.(JewelComposePanelWrapper) -> Unit,
+): JewelComposePanelWrapper {
+    setSkikoLibraryPath()
+
     val jewelPanel = JewelComposePanelWrapper(focusOnClickInside)
     jewelPanel.composePanel.config(jewelPanel)
     ComposeUiInspector(jewelPanel)
     return jewelPanel
 }
 
-internal class JewelComposePanelWrapper(private val focusOnClickInside: Boolean) : BorderLayoutPanel(), UiDataProvider {
+@ApiStatus.Internal
+@InternalJewelApi
+public class JewelComposePanelWrapper(private val focusOnClickInside: Boolean) : BorderLayoutPanel(), UiDataProvider {
     internal var targetProvider: UiDataProvider? = null
     private val listener = AWTEventListener { event ->
         if (event !is MouseEvent || event.button == MouseEvent.NOBUTTON) return@AWTEventListener
@@ -219,7 +229,7 @@ internal class JewelComposePanelWrapper(private val focusOnClickInside: Boolean)
         }
     }
 
-    val composePanel: ComposePanel = ComposePanel()
+    public val composePanel: ComposePanel = ComposePanel()
 
     init {
         super.addToCenter(composePanel)

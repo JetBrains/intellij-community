@@ -39,6 +39,7 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//platform/util",
     "//platform/core-api:core",
+    "//platform/analysis-api:analysis",
   ]
 )
 
@@ -72,6 +73,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/analysis-api:analysis",
   ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k1` end

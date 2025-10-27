@@ -7,7 +7,6 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -18,11 +17,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getWorkspaceModelManager
-import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -42,7 +40,7 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
         val configurationsSupplier = definition.getConfigurationResolver(project)
         val projectModelUpdater = definition.getWorkspaceModelManager(project)
 
-        val configuration = configurationsSupplier.get(ktFile.alwaysVirtualFile)?.scriptConfiguration ?: return false
+        val configuration = configurationsSupplier.get(ktFile.alwaysVirtualFile) ?: return false
         if (configuration.isError()) {
             project.service<ScriptReportSink>().attachReports(ktFile.alwaysVirtualFile, configuration.reports)
             return true
@@ -52,11 +50,9 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
     }
 
     fun execute(vararg ktFiles: KtFile): Job {
-        val definitionByFile = ktFiles
-            .filterNot { KotlinScripDeferredResolutionPolicy.shouldDeferResolution(project, it.virtualFile) }
-            .associateWith {
-                findScriptDefinition(project, KtFileScriptSource(it))
-            }
+        val definitionByFile = ktFiles.associateWith {
+            findScriptDefinition(project, KtFileScriptSource(it))
+        }
 
         scriptingDebugLog {
             val baseDirPath = project.basePath?.toNioPathOrNull()
@@ -89,6 +85,10 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
 
         projectModelUpdater.updateWorkspaceModel(configurationPerVirtualFile)
 
+        restartHighlighting(definitionByFile.keys)
+    }
+
+    suspend fun restartHighlighting(scripts: Iterable<KtFile>) {
         edtWriteAction {
             project.publishGlobalModuleStateModificationEvent()
             project.publishGlobalScriptModuleStateModificationEvent()
@@ -102,7 +102,7 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
         }
 
         if (project.isOpen && !project.isDisposed) {
-            for (ktFile in definitionByFile.keys) {
+            for (ktFile in scripts) {
                 if (ktFile.alwaysVirtualFile !in filesInEditors) continue
                 if (project.isOpen && !project.isDisposed) {
                     readAction {
@@ -116,8 +116,5 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
     companion object {
         @JvmStatic
         fun getInstance(project: Project): DefaultScriptResolutionStrategy = project.service()
-
-        private val logger: Logger
-            get() = Logger.getInstance(DefaultScriptResolutionStrategy::class.java)
     }
 }

@@ -13,6 +13,12 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A {@link CodeInsightTestFixture} extended a bit for Java-dependent tests.
+ * <p>
+ * Can be created using {@link JavaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)}.
+ *
+ * @see LightJavaCodeInsightFixtureTestCase
+ * @see LightJavaCodeInsightFixtureTestCase4
+ * @see LightJavaCodeInsightFixtureTestCase5
  */
 public interface JavaCodeInsightTestFixture extends CodeInsightTestFixture {
   JavaPsiFacadeEx getJavaFacade();

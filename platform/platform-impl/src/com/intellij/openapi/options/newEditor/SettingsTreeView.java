@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
@@ -85,7 +85,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private final SettingsFilter myFilter;
   private final JScrollPane myScroller;
   private final Map<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<>();
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, false, this, this, this)
+  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, true, MergingUpdateQueue.ANY_COMPONENT, this)
     .setRestartTimerOnAdd(true);
 
   private final MyRoot myRoot;

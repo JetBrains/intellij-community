@@ -145,10 +145,8 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.projectStructure" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.updateChecker" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.model" level="project" />
-    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.serialization.kotlin" level="project" />
-    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.configuration" level="project" />
-    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.ap.validation" level="project" />
+    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.api" level="project" />
+    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.psi.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
@@ -156,6 +154,5 @@
     <orderEntry type="module" module-name="intellij.platform.locking.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.shared" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.connection.client" level="project" />
   </component>
 </module>

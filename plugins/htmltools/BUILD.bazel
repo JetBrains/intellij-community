@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//platform/refactoring",
@@ -66,6 +67,7 @@ jvm_library(
     "//platform/lang-impl",
     "//xml/xml-parser:parser",
     "//platform/refactoring",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.html.tools.tests` end

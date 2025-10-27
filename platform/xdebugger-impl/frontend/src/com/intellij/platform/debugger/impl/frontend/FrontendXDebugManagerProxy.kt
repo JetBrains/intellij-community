@@ -6,6 +6,7 @@ import com.intellij.frontend.FrontendType
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
+import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager
@@ -19,7 +20,7 @@ import kotlinx.coroutines.flow.Flow
 private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   override fun isEnabled(): Boolean {
     val frontendType = FrontendApplicationInfo.getFrontendType()
-    return XDebugSessionProxy.useFeProxy() ||
+    return SplitDebuggerMode.isSplitDebugger() ||
            (frontendType is FrontendType.Remote && frontendType.isGuest()) // CWM case
   }
 
@@ -37,11 +38,11 @@ private class FrontendXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override fun getCurrentSessionProxy(project: Project): XDebugSessionProxy? {
-    return FrontendXDebuggerManager.getInstance(project).currentSession.value
+    return FrontendXDebuggerManager.getInstance(project).currentSession
   }
 
   override fun getCurrentSessionFlow(project: Project): Flow<XDebugSessionProxy?> {
-    return FrontendXDebuggerManager.getInstance(project).currentSession
+    return FrontendXDebuggerManager.getInstance(project).currentSessionFlow
   }
 
   override fun getSessions(project: Project): List<XDebugSessionProxy> {

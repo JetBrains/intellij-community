@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.inlays.declarative
 
 import com.intellij.codeInsight.hints.InlayDumpUtil
@@ -6,10 +6,13 @@ import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
-import com.intellij.codeInsight.hints.declarative.impl.*
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeHintsPreviewProvider
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPass
+import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil
 import com.intellij.codeInsight.hints.declarative.impl.views.InlayPresentationList
 import com.intellij.codeInsight.hints.declarative.impl.views.TextInlayPresentationEntry
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -53,6 +56,7 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     val pass = ActionUtil.underModalProgress(project, "") {
       DeclarativeInlayHintsPass(file, editor, listOf(providerInfo), isPreview = false)
     }
+    pass.setContext(file.codeInsightContext)
 
     applyPassAndCheckResult(pass, expectedFile, sourceText, expectedText, testMode)
   }
@@ -72,6 +76,7 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     val pass = ActionUtil.underModalProgress(project, "") {
       DeclarativeInlayHintsPassFactory.createPassForPreview(myFixture.file, myFixture.editor, provider, providerId, emptyMap(), false)
     }
+    pass.setContext(myFixture.file.codeInsightContext)
     applyPassAndCheckResult(pass, null, previewText, expectedText, testMode)
   }
 

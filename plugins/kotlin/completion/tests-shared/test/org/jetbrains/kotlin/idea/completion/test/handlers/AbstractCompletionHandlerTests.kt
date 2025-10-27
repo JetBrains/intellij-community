@@ -29,6 +29,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
         const val USE_EXPENSIVE_RENDERER = "// USE_EXPENSIVE_RENDERER"
         const val COMPLETION_CHAR_PREFIX = "CHAR:"
         const val COMPLETION_CHARS_PREFIX = "CHARS:"
+        const val COMPLETION_TYPE_AFTER_COMPLETED_PREFIX = "TYPE_AFTER_COMPLETED:"
         const val CODE_STYLE_SETTING_PREFIX = "CODE_STYLE_SETTING:"
         const val RETAIN_OVERRIDE_ANNOTATION_DIRECTIVE = "RETAIN_OVERRIDE_ANNOTATIONS:"
     }
@@ -79,6 +80,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                     val tailText = InTextDirectivesUtils.findStringWithPrefixes(fileText, TAIL_TEXT_PREFIX)
                     val useExpensiveRenderer = InTextDirectivesUtils.isDirectiveDefined(fileText, USE_EXPENSIVE_RENDERER)
                     val completionChars = completionChars(fileText)
+                    val typeAfterCompletion = InTextDirectivesUtils.findStringWithPrefixes(fileText, COMPLETION_TYPE_AFTER_COMPLETED_PREFIX)
 
                     val completionType = ExpectedCompletionUtils.getCompletionType(fileText) ?: defaultCompletionType
 
@@ -104,7 +106,6 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
 
                     doTestWithTextLoaded(
                         fileText,
-                        myFixture,
                         completionType,
                         invocationCount,
                         lookupString,
@@ -112,6 +113,7 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
                         tailText,
                         completionChars,
                         testFile.name + ".after",
+                        typeAfterCompletion = typeAfterCompletion,
                         useExpensiveRenderer = useExpensiveRenderer
                     )
                 }

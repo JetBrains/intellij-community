@@ -1,0 +1,22 @@
+### auto-generated section `build intellij.libraries.junit5.vintage` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "junit5-vintage_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "junit5-vintage",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":junit5-vintage_resources"],
+  exports = ["@lib//:junit5Vintage"],
+  runtime_deps = [
+    "@lib//:junit5Vintage",
+    "//libraries/junit4",
+    "//libraries/junit5-launcher",
+  ]
+)
+### auto-generated section `build intellij.libraries.junit5.vintage` end

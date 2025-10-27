@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.ui
 
-import com.intellij.ide.actions.searcheverywhere.PreviewAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereTabsShortcutsUtils
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.Disposable
@@ -24,8 +23,11 @@ import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.bindSelectedTabIn
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
@@ -69,7 +71,7 @@ class SePopupHeaderPane(
           }
           .component
 
-        setFilterActions(emptyList(), null, false)
+        setFilterActions(emptyList(), null)
         cell(tabFilterContainer).align(AlignY.FILL + AlignX.RIGHT).resizableColumn()
       }
 
@@ -80,11 +82,15 @@ class SePopupHeaderPane(
     panel.border = JBUI.Borders.compound(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
                                          JBUI.CurrentTheme.BigPopup.headerBorder())
 
-    configuration.value.tabs.ifEmpty {
+    val initialConfiguration = configuration.value
+
+    initialConfiguration.tabs.ifEmpty {
       listOf(Tab(SeAllTab.NAME, SeAllTab.ID, SeAllTab.ID))
     }.forEach { tab ->
       tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
     }
+
+    setSelectedIndexSafe(initialConfiguration.selectedTab.value)
 
     add(panel)
 
@@ -98,20 +104,22 @@ class SePopupHeaderPane(
                                                              SearchEverywhereUsageTriggerCollector.IS_SPLIT.with(true))
     }
 
-    var selectedTabBindingJob: Job? = null
-
     coroutineScope.launch {
       configuration.collectLatest { configuration ->
         withContext(Dispatchers.EDT) {
+          val uiSelectedTabIndex = tabbedPane.selectedIndex
           tabbedPane.removeAll()
-          selectedTabBindingJob?.cancel()
 
           if (configuration.tabs.isNotEmpty()) {
             for (tab in configuration.tabs) {
               tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
             }
 
-            selectedTabBindingJob = tabbedPane.bindSelectedTabIn(configuration.selectedTab, coroutineScope)
+            if (uiSelectedTabIndex in configuration.tabs.indices) {
+              configuration.selectedTab.value = uiSelectedTabIndex
+            }
+
+            tabbedPane.bindSelectedTabIn(configuration.selectedTab, this)
           }
           else {
             tabbedPane.addTab(SeAllTab.NAME, null, JPanel(), null)
@@ -135,15 +143,20 @@ class SePopupHeaderPane(
     super.removeNotify()
   }
 
-  fun setFilterActions(actions: List<AnAction>, showInFindToolWindowAction: AnAction?, isPreviewEnabled: Boolean) {
+  private fun setSelectedIndexSafe(index: Int) {
+    index.takeIf {
+      it >= 0 && it < tabbedPane.tabCount
+    }?.let {
+      tabbedPane.selectedIndex = it
+    }
+  }
+
+  fun setFilterActions(actions: List<AnAction>, showInFindToolWindowAction: AnAction?) {
     toolbarListenerDisposable?.let { Disposer.dispose(it) }
     val toolbarListenerDisposable = Disposer.newDisposable()
     this.toolbarListenerDisposable = toolbarListenerDisposable
 
     val actionGroup = DefaultActionGroup(actions)
-    if (isPreviewEnabled) {
-      actionGroup.add(PreviewAction())
-    }
     showInFindToolWindowAction?.let { actionGroup.add(it) }
     toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true)
     toolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
@@ -191,11 +204,13 @@ class SePopupHeaderPane(
     val tabs: List<Tab>,
     val deferredTabs: Flow<Tab>,
     val selectedTab: MutableStateFlow<Int>,
-    val showInFindToolWindowAction: AnAction?
+    val showInFindToolWindowAction: AnAction?,
   ) {
     companion object {
-      fun createInitial(initialTabs: List<Tab>,
-                        selectedTabId: String): Configuration =
+      fun createInitial(
+        initialTabs: List<Tab>,
+        selectedTabId: String,
+      ): Configuration =
         Configuration(initialTabs, emptyFlow(), MutableStateFlow(initialTabs.indexOfFirst { it.id == selectedTabId }), null)
     }
   }

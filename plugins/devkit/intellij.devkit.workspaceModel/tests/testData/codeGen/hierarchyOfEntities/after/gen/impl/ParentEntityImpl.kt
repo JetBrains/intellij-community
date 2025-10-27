@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Open
@@ -16,6 +17,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.ParentEntity
+import com.intellij.workspaceModel.test.api.ParentEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -54,7 +56,7 @@ internal open class ParentEntityImpl(private val dataSource: ParentEntityData) :
 
 
   internal class Builder(result: ParentEntityData?) : ModifiableWorkspaceEntityBase<ParentEntity, ParentEntityData>(
-    result), ParentEntity.Builder {
+    result), ParentEntityBuilder {
     internal constructor() : this(ParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -144,7 +146,7 @@ internal class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
   internal fun isData1Initialized(): Boolean = ::data1.isInitialized
   internal fun isData2Initialized(): Boolean = ::data2.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentEntity> {
     val modifiable = ParentEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -170,7 +172,7 @@ internal class ParentEntityData : WorkspaceEntityData<ParentEntity>() {
     return ParentEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ParentEntity(data1, data2, entitySource) {
     }
   }

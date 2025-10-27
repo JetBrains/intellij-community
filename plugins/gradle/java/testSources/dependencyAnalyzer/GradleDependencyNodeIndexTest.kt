@@ -9,6 +9,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyNodeIndex
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
+import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatConfigurationCacheIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatIsolatedProjectsIsSupported
@@ -64,6 +65,7 @@ class GradleDependencyNodeIndexTest : GradleDependencyNodeIndexTestCase() {
 
         assertSyncViewTree {
           assertNode("successful") {
+            assertNodeWithDeprecatedGradleWarning(gradleVersion)
             assertNode(":ijCollectDependencies")
           }
         }

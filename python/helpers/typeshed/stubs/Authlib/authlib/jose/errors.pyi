@@ -22,6 +22,10 @@ class InvalidHeaderParameterNameError(JoseError):
     error: str
     def __init__(self, name) -> None: ...
 
+class InvalidCritHeaderParameterNameError(JoseError):
+    error: str
+    def __init__(self, name: str) -> None: ...
+
 class InvalidEncryptionAlgorithmForECDH1PUWithKeyWrappingError(JoseError):
     error: str
     def __init__(self) -> None: ...

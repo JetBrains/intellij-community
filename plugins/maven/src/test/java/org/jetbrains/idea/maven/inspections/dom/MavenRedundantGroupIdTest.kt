@@ -11,6 +11,14 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
     super.setUp()
 
     fixture.enableInspections(MavenRedundantGroupIdInspection::class.java)
+
+    runBlocking {
+      importProjectAsync("""
+                       <groupId>test</groupId>
+                       <artifactId>test</artifactId>
+                       <version>1.0</version>
+                       """.trimIndent())
+    }
   }
 
   @Test
@@ -31,11 +39,11 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
                        <artifactId>childA</artifactId>
                        <version>1.0</version>
                          
-                       <parent>
-                         <groupId>my.group</groupId>
-                         <artifactId>parent</artifactId>
-                         <version>1.0</version>
-                       </parent>
+                      <parent>
+                        <groupId><error descr="Project 'my.group:parent:1.0' not found">my.group</error></groupId>
+                        <artifactId><error descr="Project 'my.group:parent:1.0' not found">parent</error></artifactId>
+                        <version><error descr="Project 'my.group:parent:1.0' not found">1.0</error></version>
+                      </parent>
                        """.trimIndent())
 
     checkHighlighting()
@@ -49,10 +57,10 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
                        <version>1.0</version>
                          
                        <parent>
-                         <groupId>my.group</groupId>
-                         <artifactId>parent</artifactId>
-                         <version>1.0</version>
-                       </parent>
+                        <groupId><error descr="Project 'my.group:parent:1.0' not found">my.group</error></groupId>
+                        <artifactId><error descr="Project 'my.group:parent:1.0' not found">parent</error></artifactId>
+                        <version><error descr="Project 'my.group:parent:1.0' not found">1.0</error></version>
+                      </parent>
                        """.trimIndent())
 
     checkHighlighting()
@@ -75,12 +83,9 @@ class MavenRedundantGroupIdTest : MavenDomTestCase() {
     fixture.configureFromExistingVirtualFile(projectPom)
     fixture.doHighlighting()
 
-    for (intention in fixture.availableIntentions) {
-      if (intention.text.startsWith("Remove ") && intention.text.contains("<groupId>")) {
-        fixture.launchAction(intention)
-        break
-      }
-    }
+    val intention =  fixture.availableIntentions.singleOrNull{it.text.startsWith("Remove ") && it.text.contains("groupId")}
+    assertNotNull("Cannot find intention", intention)
+    fixture.launchAction(intention!!)
 
 
     //doPostponedFormatting(myProject)

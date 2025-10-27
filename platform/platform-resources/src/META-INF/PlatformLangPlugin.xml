@@ -9,7 +9,7 @@
   <module value="com.intellij.modules.externalSystem"/>
   <module value="com.intellij.platform.ide.impl.wsl"/>
 
-  <xi:include href="PlatformLangComponents.xml"/>
+  <xi:include href="/META-INF/PlatformLangComponents.xml"/>
   <xi:include href="/idea/PriorityEditorLangActions.xml"/>
   <xi:include href="/idea/PlatformActions.xml"/>
   <xi:include href="/META-INF/PlatformExecutionActions.xml"/>
@@ -162,10 +162,6 @@
   <xi:include href="/META-INF/smRunner.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/duplicates-analysis.xml">
-    <xi:fallback/>
-  </xi:include>
-
   <xi:include href="/META-INF/ExternalProcessAuthHelper.xml">
     <xi:fallback/>
   </xi:include>

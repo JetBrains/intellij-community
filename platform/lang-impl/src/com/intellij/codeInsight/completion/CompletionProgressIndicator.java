@@ -335,7 +335,8 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   public void dispose() {
   }
 
-  private static int findReplacementOffset(int selectionEndOffset, @NotNull PsiReference reference) {
+  @ApiStatus.Internal
+  public static int findReplacementOffset(int selectionEndOffset, @NotNull PsiReference reference) {
     final List<TextRange> ranges = ReferenceRange.getAbsoluteRanges(reference);
     for (TextRange range : ranges) {
       if (range.contains(selectionEndOffset)) {
@@ -963,7 +964,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
 
   public static boolean shouldPreselectFirstSuggestion(@NotNull CompletionParameters parameters) {
     if (Registry.is("ide.completion.lookup.element.preselect.depends.on.context")) {
-      for (CompletionPreselectionBehaviourProvider provider : CompletionPreselectionBehaviourProvider.EP_NAME.getExtensionList()) {
+      for (CompletionPreselectionBehaviourProvider provider : CompletionPreselectionBehaviourProvider.getExtensions()) {
         if (!provider.shouldPreselectFirstSuggestion(parameters)) {
           return false;
         }

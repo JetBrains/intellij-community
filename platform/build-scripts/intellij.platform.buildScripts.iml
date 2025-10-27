@@ -227,9 +227,8 @@
     <orderEntry type="library" name="netty-tcnative-boringssl" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.idea.community.build.zip" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.configuration" level="project" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.serialization.kotlin" level="project" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.model" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.api" level="project" />
+    <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation.all" level="project" />
     <orderEntry type="module-library">
       <library name="netty" type="repository">
         <properties maven-id="io.netty:netty-all:4.2.0.RC2">
@@ -420,5 +419,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
+    <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
   </component>
 </module>

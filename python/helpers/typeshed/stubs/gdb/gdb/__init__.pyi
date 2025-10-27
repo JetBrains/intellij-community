@@ -7,7 +7,7 @@ import threading
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractContextManager
 from typing import Any, Final, Generic, Literal, Protocol, TypedDict, TypeVar, final, overload, type_check_only
-from typing_extensions import TypeAlias, deprecated
+from typing_extensions import TypeAlias, deprecated, disjoint_base
 
 import gdb.FrameDecorator
 import gdb.types
@@ -74,6 +74,7 @@ class GdbError(Exception): ...
 _ValueOrNative: TypeAlias = bool | int | float | str | Value | LazyString
 _ValueOrInt: TypeAlias = Value | int
 
+@disjoint_base
 class Value:
     address: Value
     is_optimized_out: bool
@@ -406,6 +407,7 @@ class RecordFunctionSegment:
 
 # CLI Commands
 
+@disjoint_base
 class Command:
     def __init__(self, name: str, command_class: int, completer_class: int = ..., prefix: bool = ...) -> None: ...
     def dont_repeat(self) -> None: ...
@@ -437,6 +439,7 @@ COMPLETE_EXPRESSION: int
 
 # GDB/MI Commands
 
+@disjoint_base
 class MICommand:
     name: str
     installed: bool
@@ -446,6 +449,7 @@ class MICommand:
 
 # Parameters
 
+@disjoint_base
 class Parameter:
     set_doc: str
     show_doc: str
@@ -682,6 +686,7 @@ class LineTable:
 
 # Breakpoints
 
+@disjoint_base
 class Breakpoint:
     # The where="spec" form of __init__().  See py-breakpoints.c:bppy_init():keywords for the positional order.
     @overload
@@ -854,6 +859,7 @@ WP_ACCESS: int
 
 # Finish Breakpoints
 
+@disjoint_base
 class FinishBreakpoint(Breakpoint):
     return_value: Value | None
 
@@ -907,6 +913,7 @@ class RegisterGroupsIterator(Iterator[RegisterGroup]):
 
 # Connections
 
+@disjoint_base
 class TargetConnection:
     def is_valid(self) -> bool: ...
 
@@ -941,6 +948,7 @@ class _Window(Protocol):
     def click(self, x: int, y: int, button: int) -> None: ...
 
 # Events
+@disjoint_base
 class Event: ...
 
 class ThreadEvent(Event):
@@ -952,7 +960,7 @@ class ExitedEvent(Event):
     exit_code: int
     inferior: Inferior
 
-class ThreadExitedEvent(Event): ...
+class ThreadExitedEvent(ThreadEvent): ...
 
 class StopEvent(ThreadEvent):
     details: dict[str, object]

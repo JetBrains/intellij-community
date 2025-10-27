@@ -139,9 +139,17 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     myStopped = true;
   }
 
+  /**
+   * Runs all instances of {@link CompletionContributor} applicable to {@code parameters} starting from the current one (excluding it).
+   * These contributors won't be run again after this method returns.
+   *
+   * @param parameters the parameters for which the contributors are run.
+   * @param passResult whether the results should be passed to the current CompletionResultSet.
+   * @return the set of results from all run contributors.
+   */
   public @NotNull LinkedHashSet<CompletionResult> runRemainingContributors(@NotNull CompletionParameters parameters,
                                                                            boolean passResult) {
-    final LinkedHashSet<CompletionResult> elements = new LinkedHashSet<>();
+    LinkedHashSet<CompletionResult> elements = new LinkedHashSet<>();
     runRemainingContributors(parameters, result -> {
       if (passResult) {
         passResult(result);
@@ -151,20 +159,31 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     return elements;
   }
 
-  public void runRemainingContributors(@NotNull CompletionParameters parameters, @NotNull Consumer<? super CompletionResult> consumer) {
+  /**
+   * Runs all instances of {@link CompletionContributor} applicable to {@code parameters} starting from the current one (excluding it).
+   * These contributors won't be run again after this method returns.
+   *
+   * @param parameters the parameters for which the contributors are run.
+   * @param consumer   the consumer for the results.
+   */
+  public void runRemainingContributors(@NotNull CompletionParameters parameters,
+                                       @NotNull Consumer<? super CompletionResult> consumer) {
     runRemainingContributors(parameters, consumer, true);
   }
 
+  /**
+   * Runs all instances of {@link CompletionContributor} applicable to {@code parameters} starting from the current one (excluding it).
+   *
+   * @param parameters the parameters for which the contributors are run.
+   * @param consumer   the consumer for the results.
+   * @param stop       if {@code false} is passed, no contributors will be run after the current contributor finishes.
+   * @deprecated use {@link #runRemainingContributors(CompletionParameters, Consumer)} instead.
+   * It never should be allowed to pass {@code false} as stop parameter.
+   */
+  @Deprecated
   public void runRemainingContributors(@NotNull CompletionParameters parameters,
                                        @NotNull Consumer<? super CompletionResult> consumer,
                                        boolean stop) {
-    runRemainingContributors(parameters, consumer, stop, null);
-  }
-
-  public void runRemainingContributors(@NotNull CompletionParameters parameters,
-                                       @NotNull Consumer<? super CompletionResult> consumer,
-                                       boolean stop,
-                                       @Nullable CompletionSorter customSorter) {
     //grouped contributors are not allowed to be used in runRemainingContributors from other contributors
     if (GroupedCompletionContributor.isGroupEnabledInApp() &&
         contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
@@ -189,7 +208,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
       public void consume(CompletionResult result) {
         consumer.consume(result);
       }
-    }, customSorter);
+    });
   }
 
   /**

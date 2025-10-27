@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.providers.topHit
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -62,6 +63,10 @@ open class SeTopHitItemsProvider(
 
   fun isPreviewProvider(): Boolean {
     return contributorWrapper.contributor is SearchEverywherePreviewProvider
+  }
+
+  fun isExtendedInfoProvider(): Boolean {
+    return contributor is SearchEverywhereExtendedInfoProvider
   }
 
   override fun dispose() {

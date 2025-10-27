@@ -20,6 +20,7 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerDocumentOffsetEvaluat
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType
 import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import com.intellij.xdebugger.impl.rpc.models.*
+import com.intellij.xdebugger.impl.rpc.sourcePosition
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackWithOrigin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await

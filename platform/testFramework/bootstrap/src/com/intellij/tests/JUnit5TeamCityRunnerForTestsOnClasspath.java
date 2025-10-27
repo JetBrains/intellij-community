@@ -19,6 +19,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -113,10 +114,19 @@ public final class JUnit5TeamCityRunnerForTestsOnClasspath {
     if (paths == null) return null;
     // Skip unrelated jars and any other archives, otherwise we will end up with test classes from dependencies.
     String relevantJarsRoot = System.getProperty("intellij.test.jars.location");
+    if (relevantJarsRoot == null) {
+      String bazelOutPattern = Paths.get("bazel-out", "jvm-fastbuild").toString();
+      String jar = paths.stream().map(Path::toString).filter(s -> s.contains(bazelOutPattern)).findFirst().orElse(null);
+      int index = jar != null ? jar.indexOf(bazelOutPattern) : -1;
+      if (index != -1) {
+        relevantJarsRoot = jar.substring(0, index + bazelOutPattern.length());
+      }
+    }
+    String finalRelevantJarsRoot = relevantJarsRoot;
     return paths.stream()
       .filter(path ->
                 Files.isDirectory(path) ||
-                (relevantJarsRoot != null && path.getFileName().toString().endsWith(".jar") && path.startsWith(relevantJarsRoot)))
+                (finalRelevantJarsRoot != null && path.getFileName().toString().endsWith(".jar") && path.startsWith(finalRelevantJarsRoot)))
       .collect(Collectors.toSet());
   }
 

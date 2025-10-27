@@ -7,7 +7,7 @@ import java.nio.CharBuffer
 /**
  * [com.intellij.util.text.fromSequenceWithoutCopyingPlatformSpecific]
  */
-@Actual("fromSequenceWithoutCopyingPlatformSpecific")
+@Actual
 internal fun fromSequenceWithoutCopyingPlatformSpecificJvm(seq: CharSequence?): CharArray? {
   if (seq is CharBuffer) {
     val buffer = seq
@@ -21,7 +21,7 @@ internal fun fromSequenceWithoutCopyingPlatformSpecificJvm(seq: CharSequence?): 
 /**
  * [com.intellij.util.text.getCharsPlatformSpecific]
  */
-@Actual("getCharsPlatformSpecific")
+@Actual
 internal fun getCharsPlatformSpecificJvm(string: CharSequence, srcOffset: Int, dst: CharArray, dstOffset: Int, len: Int): Boolean {
   if (string is CharBuffer) {
     val buffer = string

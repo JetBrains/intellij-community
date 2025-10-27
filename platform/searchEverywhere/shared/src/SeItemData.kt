@@ -59,7 +59,10 @@ class SeItemData private constructor(
         }
 
         computeCatchingOrNull(true, { e-> "Couldn't add isSemantic info (${providerId.value}): $e" }) {
-          val isSemanticElement = (item.contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(item.rawObject) ?: false
+          val element = (item.rawObject as? PSIPresentationBgRendererWrapper.ItemWithPresentation<*>)?.item
+                        ?: item.rawObject
+          val contributor = (item.contributor as? PSIPresentationBgRendererWrapper)?.delegate ?: item.contributor
+          val isSemanticElement = (contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(element) ?: false
           additionalInfo[SeItemDataKeys.IS_SEMANTIC] = isSemanticElement.toString()
         }
       }

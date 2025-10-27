@@ -2110,6 +2110,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("notRedundantDoubleBackslash.kt")
+        public void testNotRedundantDoubleBackslash() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/notRedundantDoubleBackslash.kt");
+        }
+
         @TestMetadata("prefix1.kt")
         public void testPrefix1() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/redundantInterpolationPrefix/prefix1.kt");

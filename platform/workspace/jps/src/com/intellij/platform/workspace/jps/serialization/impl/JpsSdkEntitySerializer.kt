@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.diagnostic.logger
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -75,7 +76,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
     return LoadingResult(mapOf(SdkEntity::class.java to sdkEntities))
   }
 
-  fun loadSdkEntity(sdkElement: Element, virtualFileManager: VirtualFileUrlManager ): SdkEntity.Builder {
+  fun loadSdkEntity(sdkElement: Element, virtualFileManager: VirtualFileUrlManager ): SdkEntityBuilder {
     val sdkName = sdkElement.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE)
     val sdkType = sdkElement.getChild(ELEMENT_TYPE).getAttributeValue(ATTRIBUTE_VALUE)
 
@@ -151,7 +152,7 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource, privat
                   sdkEntity.additionalData)
   }
 
-  fun saveSdkEntity(sdkRootElement: Element, sdkEntity: SdkEntity.Builder) {
+  fun saveSdkEntity(sdkRootElement: Element, sdkEntity: SdkEntityBuilder) {
     saveSdkEntity(sdkRootElement,
                   sdkEntity.name,
                   sdkEntity.type,

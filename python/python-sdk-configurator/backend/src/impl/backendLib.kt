@@ -1,110 +1,44 @@
 package com.intellij.python.sdkConfigurator.backend.impl
 
-import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.module.Module
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.Level
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.python.pyproject.model.api.SuggestedSdk
-import com.intellij.python.pyproject.model.api.suggestSdk
-import com.intellij.python.sdkConfigurator.common.ModuleName
-import com.jetbrains.python.Result
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.getOrCreateAdditionalData
-import com.jetbrains.python.sdk.setAssociationToPath
+import com.intellij.platform.rpc.topics.sendToClient
+import com.intellij.python.sdkConfigurator.common.impl.SHOW_SDK_CONFIG_UI_TOPIC
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
+private val askUserMutex = Mutex()
+
 /**
- * Configures SDK for modules without SDK in automatic manner trying to fix as many modules as possible.
- * Errors are logged.
+ * Same as [configureSdkAskingUser] but in a separate coroutine
  */
-internal suspend fun configureSdkAutomatically(project: Project, modulesOnly: Set<ModuleName>? = null) {
+internal fun configureSdkAskingUserBg(project: Project) {
+  project.service<MyService>().scope.launch(Dispatchers.Default) {
+    configureSdkAskingUser(project)
+  }
+}
+
+/**
+ * Ask user for list of modules and configure them
+ */
+internal suspend fun configureSdkAskingUser(project: Project) {
   withContext(Dispatchers.Default) {
-    val modules = project.modules
-      .filter { ModuleRootManager.getInstance(it).sdk == null }
-      .filter { modulesOnly == null || it.name in modulesOnly }
-    if (modules.isEmpty()) {
-      // All modules have SDK
-      return@withContext
-    }
-    val configurators = PyProjectSdkConfigurationExtension.EP_NAME.extensionList
-    val configuratorsByTool = configurators
-      .mapNotNull { extension -> extension.toolId?.let { Pair(it, extension) } }
-      .toMap()
-
-    assert(configurators.isNotEmpty()) { "PyCharm can't work without any SDK configurator" }
-
-    val tomlBasedConfigurators = configurators.filter { it.toolId != null }
-    val legacyConfigurators = configurators.filter { it.toolId == null }
-    val allSortedConfigurators = tomlBasedConfigurators + legacyConfigurators
-
-    val modulesWithSameSdk = mutableMapOf<Module, Module>()
-    for (module in modules) {
-      // TODO: Run in parallel
-      withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.configuring.module", module.name)) {
-        when (val r = module.suggestSdk()) {
-          null -> {
-            // Not a pyproject.toml: try all configurators
-            configureSdkForModule(module, allSortedConfigurators, checkForIntention = true)
-          }
-          is SuggestedSdk.PyProjectIndependent -> {
-            val preferredConfigurators = r.preferTools.mapNotNull { configuratorsByTool[it] }
-            if (!configureSdkForModule(module, preferredConfigurators, checkForIntention = false)) {
-              // For pyproject.toml based -- use pyproject.toml only configs
-              configureSdkForModule(module, tomlBasedConfigurators - preferredConfigurators.toSet(), checkForIntention = true)
-            }
-          }
-          is SuggestedSdk.SameAs -> {
-            modulesWithSameSdk[module] = r.parentModule
-          }
-        }
-        // Link workspace members with their workspace
-        val reportedBrokenModules = mutableSetOf<Module>()
-        for ((module, parentModule) in modulesWithSameSdk) {
-          val parentSdk = ModuleRootManager.getInstance(parentModule).sdk
-          if (parentSdk != null) {
-            ModuleRootModificationUtil.setModuleSdk(module, parentSdk)
-            // This SDK is shared, no need to associate it
-            // TODO: Support association with multiple modules
-            if (parentSdk.getOrCreateAdditionalData().associatedModulePath != null) {
-              parentSdk.setAssociationToPath(null)
-            }
-          }
-          else {
-            if (parentModule != reportedBrokenModules) {
-              logger.warn("No sdk for workspace root ${parentModule}, all children will have no SDKs")
-            }
-            reportedBrokenModules.add(parentModule)
-          }
-        }
+    askUserMutex.withLock {
+      val moduleToSuggestedSdk = ModulesSdkConfigurator.create(project)
+      val modulesDTO = moduleToSuggestedSdk.modulesDTO
+      if (modulesDTO.modules.isNotEmpty()) {
+        // No need to send empty list
+        SHOW_SDK_CONFIG_UI_TOPIC.sendToClient(project, modulesDTO)
       }
     }
   }
 }
 
-private suspend fun configureSdkForModule(module: Module, configurators: List<PyProjectSdkConfigurationExtension>, checkForIntention: Boolean): Boolean {
-  for (extension in configurators) {
-    if (checkForIntention && extension.getIntention(module) == null) {
-      logger.info("${extension.javaClass} skipped for ${module.name}")
-      continue
-    }
-    val created = when (val r = extension.createAndAddSdkForInspection(module)) {
-      is Result.Failure -> {
-        logger.warn("can't create SDK for ${module.name}: ${r.error.message}")
-        false
-      }
-      is Result.Success -> r.result?.also { sdk ->
-        ModuleRootModificationUtil.setModuleSdk(module, sdk)
-      } != null
-    }
-    if (created) {
-      return true
-    }
-  }
-  return false
-}
-
-private val logger = fileLogger()
+@Service(Level.PROJECT)
+private class MyService(val scope: CoroutineScope)

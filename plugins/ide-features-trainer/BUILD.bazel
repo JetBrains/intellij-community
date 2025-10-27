@@ -7,6 +7,12 @@ resourcegroup(
   strip_prefix = "res"
 )
 
+resourcegroup(
+  name = "featuresTrainer_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "featuresTrainer",
   module_name = "intellij.featuresTrainer",
@@ -19,10 +25,13 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:assertj-swing",
     "//platform/analysis-api:analysis",
+    "//platform/util-ex",
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-impl",
@@ -57,6 +66,7 @@ jvm_library(
   name = "featuresTrainer_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":featuresTrainer_test_resources"],
   associates = [":featuresTrainer"],
   deps = [
     "@lib//:kotlin-stdlib",
@@ -65,11 +75,14 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:assertj-swing",
     "//platform/analysis-api:analysis",
+    "//platform/util-ex",
     "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/core-impl",
+    "//platform/projectModel-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/lang-impl",

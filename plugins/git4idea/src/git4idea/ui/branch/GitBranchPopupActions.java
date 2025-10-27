@@ -35,7 +35,6 @@ import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortHash;
 import static com.intellij.util.ObjectUtils.notNull;
-import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
 import static git4idea.GitUtil.HEAD;
 import static git4idea.branch.GitBranchType.LOCAL;
@@ -352,8 +351,6 @@ public final class GitBranchPopupActions {
                                                              @NotNull GitRepository selectedRepository,
                                                              @Nullable AnActionEvent e) {
     AnAction[] actions = GitSingleRefActions.getSingleRefActionGroup().getChildren(e);
-    return map2Array(actions,
-                     AnAction.class,
-                     action -> GitBranchActionWrapper.tryWrap(action, branch, selectedRepository, repositories));
+    return GitBranchActionWrapper.wrapActions(actions, e, branch,selectedRepository, repositories);
   }
 }

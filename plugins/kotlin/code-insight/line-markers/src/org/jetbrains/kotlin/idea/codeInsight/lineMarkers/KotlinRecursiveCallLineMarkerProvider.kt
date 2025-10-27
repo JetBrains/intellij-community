@@ -79,7 +79,7 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
     @OptIn(KaContextParameterApi::class)
     context(_: KaSession)
 private fun checkDispatchReceiver(target: CallTarget): Boolean {
-        var dispatchReceiver = target.partiallyAppliedSymbol.dispatchReceiver ?: return true
+        var dispatchReceiver = target.partiallyAppliedSymbol?.dispatchReceiver ?: return true
         while (dispatchReceiver is KaSmartCastedReceiverValue) {
             dispatchReceiver = dispatchReceiver.original
         }

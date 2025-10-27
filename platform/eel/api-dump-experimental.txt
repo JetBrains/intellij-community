@@ -435,6 +435,14 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - *a:isClosed():Z
 f:com.intellij.platform.eel.channels.EelSendChannelKt
 - *sf:sendWholeBuffer(com.intellij.platform.eel.channels.EelSendChannel,java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.fs.EelFileUtils
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelFileUtils
+- f:deleteRecursively(java.nio.file.Path):V
+*f:com.intellij.platform.eel.fs.EelFiles
+- sf:INSTANCE:com.intellij.platform.eel.fs.EelFiles
+- sf:readAllBytes(java.nio.file.Path):B[]
+- sf:readString(java.nio.file.Path):java.lang.String
+- sf:readString(java.nio.file.Path,java.nio.charset.Charset):java.lang.String
 *:com.intellij.platform.eel.path.EelPath
 - *sf:Companion:com.intellij.platform.eel.path.EelPath$Companion
 - a:endsWith(java.util.List):Z

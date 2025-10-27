@@ -21,9 +21,9 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.xdebugger.XDebugSession
-import com.intellij.xdebugger.impl.FrontendXDebuggerManagerListener
+import com.intellij.xdebugger.impl.XDebuggerManagerProxyListener
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
-import com.intellij.xdebugger.impl.util.MonolithUtils
+import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
@@ -38,7 +38,7 @@ class DebuggerConnection(
     // Used externally on the Android Studio side
     @Suppress("MemberVisibilityCanBePrivate")
     val alwaysShowPanel: Boolean = false
-) : FrontendXDebuggerManagerListener, Disposable {
+) : XDebuggerManagerProxyListener, Disposable {
     companion object {
         private val log by logger
     }
@@ -57,12 +57,12 @@ class DebuggerConnection(
         }
 
         connection = project.messageBus.connect()
-        connection?.subscribe(FrontendXDebuggerManagerListener.TOPIC, this)
+        connection?.subscribe(XDebuggerManagerProxyListener.TOPIC, this)
     }
 
     override fun sessionStarted(session: XDebugSessionProxy) {
         // Coroutines view is only supported in monolith
-        val monolithSession = MonolithUtils.findSessionById(session.id) ?: return
+        val monolithSession = XDebugMonolithUtils.findSessionById(session.id) ?: return
         session.coroutineScope.launch(Dispatchers.EDT) {
             session.sessionTabWhenInitialized.await()
             val debugProcess = monolithSession.debugProcess

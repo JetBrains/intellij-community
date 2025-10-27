@@ -29,7 +29,7 @@ jvm_library(
   name = "kotlin-gradle-scripting",
   module_name = "intellij.kotlin.gradle.scripting",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   resources = [
     ":kotlin-gradle-scripting_resources",
     ":kotlin-gradle-scripting_resources_1",
@@ -73,6 +73,8 @@ jvm_library(
     "//java/openapi:java",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/eel-provider",
   ]
 )
 
@@ -149,6 +151,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/gradle/gradle-tooling/impl",
     "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+    "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.kotlin.gradle.scripting` end

@@ -23,6 +23,7 @@ jvm_library(
     "//platform/external-system-api/dependency-updater",
     "//android/gradle-dsl",
     "//platform/core-ui",
+    "@lib//:kotlin-stdlib",
   ],
   runtime_deps = [
     "//android/gradle-dsl-kotlin",

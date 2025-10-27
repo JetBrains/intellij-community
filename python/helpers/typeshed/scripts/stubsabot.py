@@ -204,7 +204,7 @@ async def with_extracted_archive(
         with zipfile.ZipFile(body) as zf:
             return handler(zf)
     elif packagetype == "sdist":
-        # sdist defaults to `.tar.gz` on Lunix and to `.zip` on Windows:
+        # sdist defaults to `.tar.gz` on Linux and to `.zip` on Windows:
         # https://docs.python.org/3.11/distutils/sourcedist.html
         if release_to_download.filename.endswith(".tar.gz"):
             with tarfile.open(fileobj=body, mode="r:gz") as zf:

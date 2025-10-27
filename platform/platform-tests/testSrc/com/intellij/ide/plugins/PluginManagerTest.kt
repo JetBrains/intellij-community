@@ -7,11 +7,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.IoTestUtil
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.plugins.parser.impl.XIncludeLoader.LoadedXIncludeReference
-import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.*
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil
@@ -285,7 +281,7 @@ class PluginManagerTest {
       for (descriptor in loadPluginResult.pluginSet.getEnabledModules()) {
         text.append(if (descriptor.isEnabled()) "+ " else "  ").append(descriptor.getPluginId().idString)
         if (descriptor is ContentModuleDescriptor) {
-          text.append(" | ").append(descriptor.moduleId.id)
+          text.append(" | ").append(descriptor.moduleId.name)
         }
         text.append('\n')
       }
@@ -432,7 +428,7 @@ class PluginManagerTest {
             val url = child.getAttributeValue("descriptor-url")!!
             if (url.endsWith("/$relativePath")) {
               try {
-                val reader = PluginDescriptorFromXmlStreamConsumer(readContext, this.toXIncludeLoader(dataLoader))
+                val reader = PluginDescriptorFromXmlStreamConsumer(readContext, createXIncludeLoader(this, dataLoader))
                 reader.consume(elementAsBytes(child), null)
                 return reader.getBuilder()
               }
@@ -496,7 +492,7 @@ private fun readModuleDescriptorForTest(input: ByteArray): PluginDescriptorBuild
   return PluginDescriptorFromXmlStreamConsumer(readContext = object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
     override val isMissingIncludeIgnored = false
-  }, xIncludeLoader = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER.toXIncludeLoader(object : DataLoader {
+  }, xIncludeLoader = createXIncludeLoader(PluginXmlPathResolver.DEFAULT_PATH_RESOLVER, object : DataLoader {
     override fun load(path: String, pluginDescriptorSourceOnly: Boolean) = throw UnsupportedOperationException()
     override fun toString() = ""
   })).let {

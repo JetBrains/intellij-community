@@ -24,6 +24,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,17 +91,21 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
       final String name = PsiFormatUtil.formatSimple((PsiNamedElement)modifierListOwner);
       if (name != null) {
         JavaElementKind type = JavaElementKind.fromElement(modifierListOwner).lessDescriptive();
-        if (shortName == null) {
-          return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.element", type.object(), name);
-        }
-        return JavaAnalysisBundle
-          .message("inspection.i18n.quickfix.annotate.element.as", type.object(), name, shortName);
+        return calcText(shortName, type, name);
       }
     }
     if (shortName == null) {
       return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate");
     }
     return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.as", shortName);
+  }
+
+  public static @Nls @NotNull String calcText(@Nullable String shortName, @NotNull JavaElementKind type, @NotNull String name) {
+    if (shortName == null) {
+      return JavaAnalysisBundle.message("inspection.i18n.quickfix.annotate.element", type.object(), name);
+    }
+    return JavaAnalysisBundle
+      .message("inspection.i18n.quickfix.annotate.element.as", type.object(), name, shortName);
   }
 
   public static @Nullable PsiModifierListOwner getContainer(PsiFile file, int offset) {

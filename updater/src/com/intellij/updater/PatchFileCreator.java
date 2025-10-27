@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.File;
@@ -139,7 +139,9 @@ public final class PatchFileCreator {
     }
 
     LOG.info(patch.getOldBuild() + " -> " + patch.getNewBuild());
-    ui.setDescription(UpdaterUI.message("updating.x.to.y", patch.getOldBuild(), patch.getNewBuild()));
+    var oldVersion = Utils.splitVersionString(patch.getOldBuild())[0];
+    var newVersion = Utils.splitVersionString(patch.getNewBuild())[0];
+    ui.setDescription(UpdaterUI.message("updating.x.to.y", oldVersion, newVersion));
 
     List<ValidationResult> validationResults = patch.validate(toDir, ui);
     return new PreparationResult(patch, patchFile, toDir, validationResults);

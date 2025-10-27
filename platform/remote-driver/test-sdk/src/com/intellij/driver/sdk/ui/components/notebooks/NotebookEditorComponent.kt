@@ -13,6 +13,7 @@ import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.EditorComponentImpl
+import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.common.ideFrame
@@ -29,6 +30,7 @@ import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForCodeAnalysis
+import com.intellij.driver.sdk.waitForIndicators
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -170,7 +172,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     PY-84369
     PY-84374
    */
-  fun softRunCellAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing cell") {
+  fun softRunCellAndWaitExecuted(timeout: Duration = 2.minutes): Unit = step("Executing cell") {
     runCell()
     waitFor(timeout = timeout) {
       val last = notebookCellExecutionInfos.lastOrNull()
@@ -200,12 +202,22 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     }
   }
 
+  /**
+   * Combined action that runs all cells, wait for their execution, and waits for the indexes to update.
+   */
+  fun runAllCellsAndWaitIndexesUpdated(timeout: Duration = 1.minutes, indicatorsTimeout: Duration = timeout): Unit = step("Executing cells and wait for indexes") {
+    runAllCellsAndWaitExecuted(timeout)
+    step("Waiting for indicators after execution") {
+      driver.waitForIndicators(indicatorsTimeout)
+    }
+  }
+
   /*
     This functions should be removed when fixed:
     PY-84369
     PY-84374
    */
-  fun softRunAllCellsAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing all cells") {
+  fun softRunAllCellsAndWaitExecuted(timeout: Duration = 2.minutes): Unit = step("Executing all cells") {
     runAllCells()
     waitFor(timeout = timeout) {
       val infos = notebookCellExecutionInfos
@@ -216,7 +228,6 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       val timesAfter = infos.map { it.getExecutionTimeInMsSafe() }
 
       infos.isNotEmpty()
-      && infos.size == notebookCellEditors.size
       && timesAfter.all { it != null }
       && timesBefore == timesAfter
     }
@@ -341,13 +352,13 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
         waitFor("wait for project tree to load", 30.seconds) {
           getAllTexts().isNotEmpty()
         }
-        getAllTexts().first().moveMouse()
+        getAllTexts().first().strictClick()
       }
     }
 
     val newFileButton = x { byAccessibleName("New File or Directory…") }
 
-    waitFor {
+    waitFor(timeout = 30.seconds) {
       newFileButton.present()
     }
     newFileButton.strictClick()
@@ -364,8 +375,15 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
       }
     }
 
-    waitFor("the editor is present") {
+    waitFor("the editor is present", timeout = 1.minutes) {
       notebookEditor().present()
+    }
+    projectView {
+      projectViewTree.run {
+        waitOneText(message = "File name should present in project tree", timeout = 15.seconds) {
+          it.text == "$name.ipynb"
+        }
+      }
     }
   }
 }
@@ -380,3 +398,18 @@ fun Driver.closeRightToolWindow(stripeButtonName: String) {
     }
   }
 }
+
+/**
+ * Executes a test block within the context of the notebook editor UI component.
+ * Note: only the NotebookEditorUiComponent and its successors are directly available in the context of this block.
+ * If you need to access other UI components in testBody(), use the `driver.ideFrame {}`.
+ *
+ * @param testBody A lambda containing the test actions to be executed with the `NotebookEditorUiComponent`.
+ */
+fun Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> Unit): IdeaFrameUI = ideFrame {
+  notebookEditor {
+    testBody()
+  }
+}
+
+

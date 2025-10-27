@@ -5,6 +5,9 @@ inputs:
   extension:
     description: 'tar.gz, exe or sit'
     required: true
+  product:
+    description: 'a product, available options: intellij_idea, pycharm'
+    required: true
 runs:
   using: composite
   steps:
@@ -17,8 +20,8 @@ runs:
     - name: Build environment
       shell: bash
       # language=bash
-      run: docker build . --target intellij_idea --tag intellij_idea
+      run: docker build . --target ${{inputs.product}} --tag ${{inputs.product}}
     - name: Build .${{inputs.extension}}
       shell: bash
       # language=bash
-      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" intellij_idea -Dintellij.build.target.os=${{inputs.os}}
+      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" ${{inputs.product}} -Dintellij.build.target.os=${{inputs.os}}

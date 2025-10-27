@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.workspaceModel
 
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.jps.serialization.impl.CustomFacetRelatedEntitySerializer
@@ -29,9 +30,9 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
         get() = KotlinFacetType.INSTANCE.stringId
 
     override fun loadEntitiesFromFacetState(
-        moduleEntity: ModuleEntity.Builder,
-        facetState: FacetState,
-        evaluateEntitySource: (FacetState) -> EntitySource
+      moduleEntity: ModuleEntityBuilder,
+      facetState: FacetState,
+      evaluateEntitySource: (FacetState) -> EntitySource
     ) {
         val entitySource = evaluateEntitySource(facetState)
         val kotlinSettingsEntity = KotlinSettingsEntity(
@@ -139,7 +140,7 @@ class KotlinModuleSettingsSerializer : CustomFacetRelatedEntitySerializer<Kotlin
     }
 
     override fun serializeBuilder(entity: WorkspaceEntity.Builder<out KotlinSettingsEntity>, module: ModuleEntity, rootElement: Element): Element {
-        entity as KotlinSettingsEntity.Builder
+        entity as KotlinSettingsEntityBuilder
 
         KotlinFacetSettings().apply {
             version = entity.version

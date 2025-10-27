@@ -25,7 +25,7 @@ internal val PROJECT_AWARE_TOPIC: Topic<ExternalSystemProjectListener> = Topic(E
 internal val PROJECT_LINKER_AWARE_TOPIC: Topic<ExternalSystemProjectLinkListener> = Topic(ExternalSystemProjectLinkListener::class.java, Topic.BroadcastDirection.NONE)
 
 
-internal val SYSTEM_ID = ProjectSystemId("PyProjectToml")
+internal val SYSTEM_ID = ProjectSystemId("pyproject.toml", PyProjectTomlBundle.message("intellij.python.pyproject.system.name"))
 
 
 val projectModelEnabled: Boolean get() = Registry.`is`("intellij.python.pyproject.model")

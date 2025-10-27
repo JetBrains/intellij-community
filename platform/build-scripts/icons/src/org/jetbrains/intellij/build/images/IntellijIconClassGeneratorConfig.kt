@@ -100,7 +100,7 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.spring.mvc",
       )
 
-      "intellij.spring.boot" -> IntellijIconClassGeneratorModuleConfig(
+      "intellij.spring.boot.shared" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringBootApiIcons",
         packageName = "com.intellij.spring.boot",
       )
@@ -197,6 +197,11 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       "intellij.uiDesigner" -> IntellijIconClassGeneratorModuleConfig(
         className = "UiDesignerIcons",
         packageName = "com.intellij.designer",
+      )
+
+      "intellij.r.psi" -> IntellijIconClassGeneratorModuleConfig(
+        className = "RIcons",
+        packageName = "com.intellij.r.psi.icons",
       )
 
       else -> super.getConfigForModule(moduleName)

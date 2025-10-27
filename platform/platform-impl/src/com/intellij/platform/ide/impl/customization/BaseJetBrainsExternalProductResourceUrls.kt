@@ -71,7 +71,7 @@ abstract class BaseJetBrainsExternalProductResourceUrls : ExternalProductResourc
       )
 
       val currentRegion = RegionSettings.getRegion()
-      val selectedLocale = LocalizationStateService.getInstance()?.selectedLocale
+      val selectedLocale = LocalizationStateService.getInstance()?.selectedLocale?.lowercase()
 
       return Urls.newFromEncoded(
         buildString {

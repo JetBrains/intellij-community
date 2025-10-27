@@ -370,14 +370,14 @@ public final class PersistentFSLoader {
     boolean contentHashesStorageHasErrors = false;
     boolean attributesStorageHasErrors = false;
 
-    //Try to resolve few nameId/contentId/attributeRefId against apt enumerators/storages -- which is quite
+    //Try to resolve a few nameId / contentId / attributeRefId against apt enumerators/storages -- which is quite
     // likely fails if storages/enumerators' files are corrupted anyhow, hence serves as a self-check heuristic.
     //Check _every_ fileId is quite slow, but it is definitely worth checking _some_.
     // So a tradeoff:
-    // If there were _no_ signs of corruption -- check only fileId(=)2, 4, 8...) -> always < 32 checks, given fileId
-    // is int32.
-    // If _any_ signs of corruption arises during quick-scan (or even before it) -> fallback to full scan, check
-    // _every_ fileId.
+    // - If there were _no_ signs of corruption -- check only fileId(=2, 4, 8...) -> strictly < 32 checks, given
+    //   fileId is int32.
+    // - If _any_ signs of corruption arises during quick-scan (or even before it) -> fallback to full scan, check
+    //   _every_ fileId.
     if (problemsDuringLoad.isEmpty()) {
       for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId *= 2) {
         if (!nameStorageHasErrors) {

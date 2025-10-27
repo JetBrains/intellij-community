@@ -8,7 +8,7 @@ import com.intellij.cce.util.text
 import com.intellij.openapi.vfs.VirtualFile
 
 class CodeFragmentFromTextBuilder : CodeFragmentBuilder() {
-  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment {
+  override suspend fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment {
     val text = file.text()
     val codeFragment = CodeFragment(0, text.length)
     codeFragment.text = text

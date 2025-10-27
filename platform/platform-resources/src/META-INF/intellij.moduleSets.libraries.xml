@@ -1,6 +1,0 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/intellij.moduleSets.libraries.core.xml"/>
-  <xi:include href="/META-INF/intellij.moduleSets.libraries.ktor.xml"/>
-  <xi:include href="/META-INF/intellij.moduleSets.libraries.misc.xml"/>
-  <xi:include href="/META-INF/intellij.moduleSets.libraries.temporaryBundled.xml"/>
-</idea-plugin>

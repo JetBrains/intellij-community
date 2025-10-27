@@ -1721,12 +1721,6 @@ c:com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String,java.util.List):V
 - b:<init>(java.lang.String,java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getText():java.lang.String
-f:com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
-- com.intellij.codeInsight.codeVision.CodeVisionEntry
-- <init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.String,javax.swing.Icon,java.lang.Integer,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:getCount():java.lang.Integer
-- f:getText():java.lang.String
 f:com.intellij.codeInsight.codeVision.ui.model.richText.RichString
 - <init>(com.intellij.openapi.util.TextRange,com.intellij.ui.SimpleTextAttributes,com.intellij.codeInsight.codeVision.ui.model.richText.RichText):V
 - f:component1():com.intellij.openapi.util.TextRange
@@ -1869,7 +1863,6 @@ f:com.intellij.codeInsight.completion.CompletionPhase$Synchronous
 a:com.intellij.codeInsight.completion.CompletionPhase$ZombiePhase
 - com.intellij.codeInsight.completion.CompletionPhase
 a:com.intellij.codeInsight.completion.CompletionPreselectionBehaviourProvider
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - shouldPreselectFirstSuggestion(com.intellij.codeInsight.completion.CompletionParameters):Z
 c:com.intellij.codeInsight.completion.DefaultCompletionContributor
@@ -4436,8 +4429,8 @@ f:com.intellij.codeInsight.lookup.impl.LookupTypedHandler
 - execute(com.intellij.openapi.editor.Editor,C,com.intellij.openapi.actionSystem.DataContext):V
 - s:getLookupAction(C,com.intellij.codeInsight.lookup.impl.LookupImpl):com.intellij.codeInsight.lookup.CharFilter$Result
 a:com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
-- com.intellij.openapi.editor.actionSystem.EditorAction
 - com.intellij.codeInsight.hint.HintManagerImpl$ActionToIgnore
+- com.intellij.openapi.editor.actionSystem.EditorAction
 - com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction
 - <init>(com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction$Handler):V
 - s:hasTemplatePrefix(com.intellij.codeInsight.lookup.impl.LookupImpl,C):Z

@@ -60,6 +60,7 @@ internal object CompletionShortNamesRenderer {
         append(" }")
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun renderFunctionParameter(
         parameter: KaVariableSignature<KaValueParameterSymbol>,
@@ -74,7 +75,7 @@ internal object CompletionShortNamesRenderer {
             parameterType = parameter.returnType.takeUnless { it is KaErrorType } ?: symbol.returnType,
         )
 
-        if (symbol.hasDefaultValue) {
+        if (symbol.hasDeclaredDefaultValue) {
             append(" = ...")
         }
     }

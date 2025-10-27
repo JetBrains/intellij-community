@@ -8,6 +8,7 @@ import com.intellij.execution.target.TargetEnvironment.*
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.ide.IdeBundle
 
+@Deprecated("Use EelTargetEnvironmentRequest instead")
 class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest, VolumeCopyingRequest {
   override var shouldCopyVolumes: Boolean = false
   override val configuration: WslTargetEnvironmentConfiguration

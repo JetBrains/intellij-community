@@ -12,7 +12,10 @@ class EventBusLogger(val name: String) {
   }
 
   private fun print(level: String, message: String) {
-    println("${getTime()}: $level - $name - $message")
+    val out = if (level.lowercase() == "error") System.err
+    else System.out
+
+    out.println("${getTime()}: $level - $name - $message")
   }
 
   fun info(message: String) {
@@ -22,5 +25,9 @@ class EventBusLogger(val name: String) {
   fun debug(message: String) {
     if (System.getProperty("eventbus.debug", "false").toBoolean())
       print("DEBUG", message)
+  }
+
+  fun error(message: String) {
+    print("ERROR", message)
   }
 }

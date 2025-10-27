@@ -193,6 +193,9 @@ public sealed class TypeEvalContext {
 
   @ApiStatus.Internal
   public <R> @Nullable R assumeType(@NotNull PyTypedElement element, @Nullable PyType type, @NotNull Function<TypeEvalContext, R> func) {
+    if (!Registry.is("python.use.better.control.flow.type.inference")) {
+      return func.apply(this);
+    }
     if (getKnownType(element) != null) {
       // Temporary solution, as overwriting known type might introduce inconsistencies with its dependencies.
       return null;

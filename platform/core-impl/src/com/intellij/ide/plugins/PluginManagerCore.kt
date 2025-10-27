@@ -457,10 +457,10 @@ object PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  fun getUnfulfilledCpuArchRequirement(descriptor: IdeaPluginDescriptor): IdeaPluginCpuArchRequirement? {
+  fun getUnfulfilledCpuArchRequirement(descriptor: IdeaPluginDescriptor): PluginCpuArchRequirement? {
     return descriptor.getDependencies().asSequence()
-      .mapNotNull { dep -> IdeaPluginCpuArchRequirement.fromModuleId(dep.pluginId).takeIf { !dep.isOptional } }
-      .firstOrNull { osReq -> !osReq.isHostOs() }
+      .mapNotNull { dep -> PluginCpuArchRequirement.fromPluginId(dep.pluginId).takeIf { !dep.isOptional } }
+      .firstOrNull { osReq -> !osReq.isHostArch() }
   }
 
   @JvmStatic
@@ -574,7 +574,7 @@ object PluginManagerCore {
 
     val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(
       incompletePlugins = loadingResult.getIncompleteIdMap().values,
-      currentProductModeEvaluator = initContext::currentProductModeId, 
+      initContext = initContext,
       disabler = { descriptor, disabledModuleToProblematicPlugin ->
       val loadingError = pluginSetBuilder.initEnableState(
         descriptor = descriptor,
@@ -635,7 +635,7 @@ object PluginManagerCore {
     if (corePlugin != null) {
       val disabledModulesOfCorePlugin = corePlugin.contentModules.filter { it.moduleLoadingRule.required && !it.isMarkedForLoading }
       if (disabledModulesOfCorePlugin.isNotEmpty()) {
-        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId.id })
+        throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleId.name })
       }
     }
     var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null
@@ -776,17 +776,18 @@ object PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  fun processAllNonOptionalDependencyIds(rootDescriptor: IdeaPluginDescriptorImpl, pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-                                         contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
-                                         consumer: (PluginId) -> FileVisitResult) {
-    processAllNonOptionalDependencies(
-      rootDescriptor = rootDescriptor,
-      depProcessed = HashSet(),
-      pluginIdMap = pluginIdMap,
-      contentModuleIdMap = contentModuleIdMap,
-    ) { pluginId, _ ->
-      if (pluginId == null) FileVisitResult.CONTINUE else consumer(pluginId) 
-    }
+  fun processAllNonOptionalDependencyIds(
+    rootDescriptor: IdeaPluginDescriptorImpl,
+    pluginIdMap: Map<PluginId, IdeaPluginDescriptorImpl>,
+    contentModuleIdMap: Map<PluginModuleId, ContentModuleDescriptor>,
+    consumer: (PluginId) -> FileVisitResult,
+  ): Boolean = processAllNonOptionalDependencies(
+    rootDescriptor = rootDescriptor,
+    depProcessed = HashSet(),
+    pluginIdMap = pluginIdMap,
+    contentModuleIdMap = contentModuleIdMap,
+  ) { pluginId, _ ->
+    if (pluginId == null) FileVisitResult.CONTINUE else consumer(pluginId)
   }
 
   /**

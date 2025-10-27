@@ -5,11 +5,10 @@ import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo
 import com.intellij.internal.statistic.eventLog.connection.EventLogSettingsClient
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsBasicConnectionSettings
 import com.intellij.internal.statistic.eventLog.connection.metadata.StatsConnectionSettings
+import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
-import com.jetbrains.fus.reporting.connection.JavaHttpClientBuilder
-import com.jetbrains.fus.reporting.connection.JavaHttpRequestBuilder
-import com.jetbrains.fus.reporting.connection.ProxyInfo
-import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
+import com.jetbrains.fus.reporting.jvm.JvmHttpClient
+import com.jetbrains.fus.reporting.jvm.ProxyInfo
 import java.security.SecureRandom
 import java.time.Duration
 import javax.net.ssl.SSLContext
@@ -18,20 +17,20 @@ const val DEFAULT_RECORDER_ID = "FUS"
 
 internal class TestEventLogUploadSettingsClient(configurationUrl: String) : EventLogSettingsClient() {
   override val applicationInfo = TestEventLogApplicationInfo()
-  override val configurationClient = ConfigurationClientFactory.Companion.createTest(
+  override val configurationClient = ConfigurationClientFactory.createTest(
     applicationInfo.productCode,
     applicationInfo.productVersion,
-    httpClientBuilder = JavaHttpClientBuilder()
-      .setProxyProvider { configurationUrl ->
-        ProxyInfo(
-        applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
-      }.setSSLContext(applicationInfo.connectionSettings.provideSSLContext()),
-    httpRequestBuilder = JavaHttpRequestBuilder()
-      .setExtraHeaders(applicationInfo.connectionSettings.provideExtraHeaders())
-      .setUserAgent(applicationInfo.connectionSettings.provideUserAgent())
-      .setTimeout(Duration.ofSeconds(1)),
+    httpClient = JvmHttpClient(
+      proxyProvider = { configurationUrl ->
+        ProxyInfo(applicationInfo.connectionSettings.provideProxy(configurationUrl).proxy)
+      },
+      sslContextProvider = { applicationInfo.connectionSettings.provideSSLContext() },
+      extraHeadersProvider = { applicationInfo.connectionSettings.provideExtraHeaders() },
+      userAgent = applicationInfo.connectionSettings.provideUserAgent(),
+      timeout = Duration.ofSeconds(1)
+    ),
     configurationUrl = configurationUrl,
-    serializer = FusKotlinSerializer()
+    serializer = FusComponentProvider.FusJacksonSerializer()
   )
   override val recorderId: String = DEFAULT_RECORDER_ID
 }

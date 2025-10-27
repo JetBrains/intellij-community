@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalUtil
-import org.jetbrains.plugins.terminal.session.TerminalInputEvent
-import org.jetbrains.plugins.terminal.session.TerminalOutputEvent
-import org.jetbrains.plugins.terminal.session.TerminalSessionTerminatedEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalInputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalOutputEvent
+import org.jetbrains.plugins.terminal.session.impl.TerminalSessionTerminatedEvent
 
 internal class BackendTerminalSessionImpl(
   private val inputChannel: SendChannel<TerminalInputEvent>,

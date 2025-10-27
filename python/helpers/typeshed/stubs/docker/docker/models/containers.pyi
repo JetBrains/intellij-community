@@ -325,7 +325,7 @@ class ContainerCollection(Collection[Container]):
         cpu_shares: int | None = None,
         cpuset_cpus: str | None = None,
         cpuset_mems: str | None = None,
-        detach: Literal[True],
+        detach: bool = False,
         device_cgroup_rules: list[Incomplete] | None = None,
         device_read_bps: list[Mapping[str, str | int]] | None = None,
         device_read_iops: list[Mapping[str, str | int]] | None = None,

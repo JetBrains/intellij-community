@@ -377,7 +377,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
       }
     }
     val disposedStr = if (isDisposed) " (disposed)" else ""
-    val creationTrace = if (ApplicationManager.getApplication().isUnitTestMode) creationTrace?.let {"\n"+it} ?:"" else ""
+    val creationTrace = if (ApplicationManager.getApplication()?.isUnitTestMode != false) creationTrace?.let {"\n"+it} ?:"" else ""
     return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr$creationTrace"
   }
 

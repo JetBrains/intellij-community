@@ -26,8 +26,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProjectOrNull
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
@@ -50,15 +51,14 @@ internal class BackendPluginInstallerApi : PluginInstallerApi {
     return DefaultUiPluginManagerController.setEnableStateForDependencies(sessionId, descriptorIds, enable)
   }
 
-  override suspend fun installPluginFromDisk(projectId: ProjectId?): PluginInstalledFromDiskResult {
-    return withContext(Dispatchers.EDT) {
-      val project = projectId?.findProjectOrNull()
-      val deferred = CompletableDeferred<PluginInstalledFromDiskResult>()
-
-      InstallFromDiskAction.installPluginFromDisk(null, project, InstalledPluginsTableModel(project), PluginEnabler.HEADLESS, null) {
-        deferred.complete(PluginInstalledFromDiskResult(PluginDescriptorConverter.toPluginDto(it.pluginDescriptor), it.restartNeeded))
+  override suspend fun installPluginFromDisk(projectId: ProjectId?): Flow<PluginInstalledFromDiskResult> {
+    return channelFlow {
+      withContext(Dispatchers.EDT) {
+        val project = projectId?.findProjectOrNull()
+        InstallFromDiskAction.installPluginFromDisk(null, project, InstalledPluginsTableModel(project), PluginEnabler.HEADLESS, null) {
+          trySend(PluginInstalledFromDiskResult(PluginDescriptorConverter.toPluginDto(it.pluginDescriptor), it.restartNeeded))
+        }
       }
-      deferred.await()
     }
   }
 

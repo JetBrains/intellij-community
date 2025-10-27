@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -36,6 +37,11 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
   ): JComponent =
     GitLabDiscussionComponentFactory.create(project, cs, avatarIconsProvider, vm, place).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
+    }.apply {
+      isFocusable = true
+      launchOnShow("focusRequests") {
+        vm.focusRequests.collect { requestFocus(false) }
+      }
     }.let {
       return if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
         Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(it)).apply {
@@ -56,6 +62,11 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
   ): JComponent =
     GitLabNoteComponentFactory.create(CodeReviewChatItemUIUtil.ComponentType.COMPACT, project, cs, avatarIconsProvider, vm, place).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
+    }.apply {
+      isFocusable = true
+      launchOnShow("focusRequests") {
+        vm.focusRequests.collect { requestFocus(false) }
+      }
     }.let {
       return if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
         Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(it)).apply {

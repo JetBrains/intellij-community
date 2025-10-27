@@ -102,7 +102,7 @@ class BatchSpanProcessor(
       catch (e: CancellationException) {
         throw e
       }
-      catch (e: Exception) {
+      catch (e: Throwable) {
         logger<BatchSpanProcessor>().error("Failed to flush", e)
       }
     }
@@ -191,7 +191,7 @@ class BatchSpanProcessor(
       catch (e: CancellationException) {
         throw e
       }
-      catch (e: Exception) {
+      catch (e: Throwable) {
         logger<BatchSpanProcessor>().error("Failed to reset", e)
       }
     }

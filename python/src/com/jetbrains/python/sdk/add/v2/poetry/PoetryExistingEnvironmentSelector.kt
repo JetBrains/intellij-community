@@ -2,20 +2,17 @@
 package com.jetbrains.python.sdk.add.v2.poetry
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
-import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
-import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.PythonMutableTargetAddInterpreterModel
-import com.jetbrains.python.sdk.add.v2.ValidatedPath
+import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.moduleIfExists
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
 import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
 import com.jetbrains.python.sdk.poetry.isPoetry
@@ -24,8 +21,8 @@ import com.jetbrains.python.statistics.version
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
-internal class PoetryExistingEnvironmentSelector<P: PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?) : CustomExistingEnvironmentSelector<P>("poetry", model, module) {
-  override val executable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = model.state.poetryExecutable
+internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMutableTargetAddInterpreterModel<P>, module: Module?) : CustomExistingEnvironmentSelector<P>("poetry", model, module) {
+  override val toolState: PathValidator<Version, P, ValidatedPath.Executable<P>> = model.poetryViewModel.toolValidator
   override val interpreterType: InterpreterType = InterpreterType.POETRY
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
@@ -35,16 +32,11 @@ internal class PoetryExistingEnvironmentSelector<P: PathHolder>(model: PythonMut
 
     PythonSdkUtil.getAllSdks().find { sdk -> sdk.isPoetry && sdk.homePath == pythonBinaryPath.toString() }?.let { return Result.success(it) }
 
-    val module = when (moduleOrProject) {
-      is ModuleOrProject.ModuleAndProject -> {
-        moduleOrProject.module
-      }
-      else -> null
-    }
-    val moduleBasePath = module?.basePath?.let { Path.of(it) } ?: error("module base path is not valid: ${module?.basePath}")
+    val basePathString = moduleOrProject.moduleIfExists?.basePath ?: moduleOrProject.project.basePath
+    val basePath = basePathString?.let { Path.of(it) } ?: error("module base path is not valid: $basePathString")
 
     return createPoetrySdk(
-      moduleBasePath,
+      basePath,
       existingSdks = ProjectJdkTable.getInstance().allJdks.toList(),
       pythonBinaryPath = pythonBinaryPath
     )
@@ -54,7 +46,7 @@ internal class PoetryExistingEnvironmentSelector<P: PathHolder>(model: PythonMut
     val existingEnvs = detectPoetryEnvs(null, null, modulePath.pathString).mapNotNull { env ->
       env.homePath?.let { path ->
         model.fileSystem.parsePath(path).successOrNull?.let { fsPath ->
-          DetectedSelectableInterpreter<P>(fsPath, env.version, false)
+          DetectedSelectableInterpreter<P>(fsPath, PythonInfo(env.version), false)
         }
       }
     }

@@ -4,31 +4,14 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.util.ScriptFileUtil
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.plugins.gradle.service.execution.loadApplicationInitScript
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 
-class GroovyGradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider<GroovyScriptRunConfiguration>() {
-  override fun generateInitScript(params: GradleInitScriptParameters): String {
-    val scriptText = loadApplicationInitScript(
-      gradlePath = params.gradleTaskPath,
-      runAppTaskName = params.runAppTaskName,
-      mainClassToRun = params.mainClass,
-      javaExePath = params.javaExePath,
-      sourceSetName = params.sourceSetName,
-      params = params.params,
-      definitions = params.definitions,
-      intelliJRtPath = null,
-      workingDirectory = params.workingDirectory,
-      useManifestJar = params.useManifestJar ?: false,
-      useArgsFile = params.useArgsFile ?: false,
-      useClasspathFile = false,
-      javaModuleName = params.javaModuleName
-    )
-    return scriptText
-  }
-
+class GroovyGradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironmentProvider() {
   override fun getMainClass(profile: JavaRunConfigurationBase): String {
     return "org.codehaus.groovy.tools.GroovyStarter"
   }

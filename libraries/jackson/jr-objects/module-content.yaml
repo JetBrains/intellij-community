@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.jackson.jr.objects.jar
   modules:
   - name: intellij.libraries.jackson.jr.objects
     libraries:

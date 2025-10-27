@@ -13,9 +13,12 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import kotlinx.coroutines.cancel
-import org.jetbrains.plugins.terminal.block.reworked.*
+import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
+import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
+import org.jetbrains.plugins.terminal.view.TerminalOutputModel
+import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
 import kotlin.math.max
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -174,14 +177,14 @@ private class TerminalLookupOutputModelListener(
 ) : TerminalOutputModelListener {
   private val initialTextBelowCursor = model.getTextBelowCursorLine().trim()
 
-  override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
-    val textBelowCursor = model.getTextBelowCursorLine().trim()
+  override fun afterContentChanged(event: TerminalContentChangeEvent) {
+    val textBelowCursor = event.model.getTextBelowCursorLine().trim()
     if (textBelowCursor != initialTextBelowCursor) {
       lookup.hideLookup(true)
     }
   }
 
-  private fun TerminalOutputModel.getTextBelowCursorLine(): String {
+  private fun TerminalOutputModel.getTextBelowCursorLine(): CharSequence {
     val line = getLineByOffset(this.cursorOffset)
     val lineEndOffset = getEndOfLine(line)
     return getText(lineEndOffset, endOffset)

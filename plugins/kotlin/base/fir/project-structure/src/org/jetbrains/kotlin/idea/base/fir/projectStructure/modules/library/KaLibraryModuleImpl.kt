@@ -49,10 +49,10 @@ internal class KaLibraryModuleImpl @InternalKaModuleConstructor constructor(
             is JvmIdePlatformKind -> JvmPlatforms.defaultJvmPlatform
             is CommonIdePlatformKind -> CommonPlatforms.defaultCommonPlatform
             is JsIdePlatformKind -> JsPlatforms.defaultJsPlatform
-            is WasmIdePlatformKind -> when (library.kind) {
+            is WasmIdePlatformKind -> when (libraryKind) {
                 is KotlinWasmJsLibraryKind -> WasmPlatforms.wasmJs
                 is KotlinWasmWasiLibraryKind -> WasmPlatforms.wasmWasi
-                else -> error("Unexpected Wasm library kind `${library.kind}`")
+                else -> error("Unexpected Wasm library kind `${libraryKind}`")
             }
 
             is NativeIdePlatformKind -> {
@@ -67,8 +67,12 @@ internal class KaLibraryModuleImpl @InternalKaModuleConstructor constructor(
         }
     }
 
-    private val idePlatformKind: IdePlatformKind by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        detectLibraryKind(library, project).platform.idePlatformKind
+    private val idePlatformKind: IdePlatformKind
+        get() = libraryKind.platform.idePlatformKind
+
+
+    private val libraryKind by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        detectLibraryKind(entity, project)
     }
 
     val resolvedKotlinLibraries: List<KotlinLibrary> by lazy(LazyThreadSafetyMode.PUBLICATION) {

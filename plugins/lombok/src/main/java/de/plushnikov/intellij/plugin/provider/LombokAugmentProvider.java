@@ -127,7 +127,12 @@ public final class LombokAugmentProvider extends PsiAugmentProvider implements P
     //skip if dumb mode, allow only `getAugments`
     if (DumbService.isDumb(typeElement.getProject())) return null;
 
-    return hasLombokLibrary(typeElement.getProject()) ? ValProcessor.inferType(typeElement) : null;
+    // Do not check whether lombok library is available.
+    // While this check is cached, first time it could be quite heavy, so let's postpone it.
+    // It's actually cheaper to avoid it here, as most of the types aren't shaped as 'var' and 'val',
+    // so we easily exclude them.
+    // Without Lombok library, lombok.var/lombok.val will not be resolvable anyway.
+    return ValProcessor.inferType(typeElement);
   }
 
   @Override

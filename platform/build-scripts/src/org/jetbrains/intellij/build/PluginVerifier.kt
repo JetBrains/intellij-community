@@ -12,7 +12,7 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
 
-private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.381"
+private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.396"
 
 suspend fun createPluginVerifier(
   pluginVerifierVersion: String = DEFAULT_PLUGIN_VERIFIER_VERSION,
@@ -57,6 +57,7 @@ class PluginVerifier internal constructor(
     errFile: Path?,
     outFile: Path?,
     runtimeDir: Path? = null,
+    mute: List<String> = emptyList(),
   ): Boolean {
     val java = JdkDownloader.getJavaExecutable(JdkDownloader.getJdkHomeAndLog(COMMUNITY_ROOT))
 
@@ -72,7 +73,9 @@ class PluginVerifier internal constructor(
         ide.installationPath.pathString,
         "-verification-reports-dir",
         reportDir.pathString,
-        "-offline"
+        "-offline",
+        "-mute",
+        mute.joinToString(","),
       ).plus(
         if (runtimeDir != null) listOf("-runtime-dir", runtimeDir.pathString) else emptyList()
       ),

@@ -117,9 +117,9 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * placed under 'lib' directory in a directory with name [mainModuleName].
      * If you need to include additional resources or modules in the plugin layout, specify them in the [body] parameter.
      * If you don't need to change the default layout, there is no need to call this method at all;
-     * it's enough to specify the plugin module in [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
-     * [org.jetbrains.intellij.build.ProductModulesLayout.bundledPluginModules],
-     * [org.jetbrains.intellij.build.ProductModulesLayout.pluginModulesToPublish] list.
+     * it's enough to specify the plugin module in [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules],
+     * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules],
+     * [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] list.
      *
      * Note that project-level libraries on which the plugin modules depend are automatically put in the 'IDE_HOME/lib' directory
      * for all IDEs that are compatible with the plugin.

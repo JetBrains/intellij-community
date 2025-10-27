@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.completion.method.JavaMethodCallInsertHandlerHelper;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
@@ -333,7 +334,8 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
                                                     new BeforeInsertHandler(),
                                                     new AfterInsertHandler(),
                                                     myShouldImportOrQualify,
-                                                    false);
+                                                    false,
+                                                    this);
       handler.handleInsert(context, this);
     }
 
@@ -406,7 +408,7 @@ public final class JavaQualifierAsArgumentContributor extends CompletionContribu
     private class AfterInsertHandler implements InsertHandler<JavaMethodCallElement> {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull JavaMethodCallElement item) {
-        PsiCallExpression call = JavaMethodCallInsertHandler.findInsertedCall(item, context);
+        PsiCallExpression call = JavaMethodCallInsertHandlerHelper.findInsertedCall(item, context);
         context.commitDocument();
         PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
         if (call != null) {

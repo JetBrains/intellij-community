@@ -6,61 +6,79 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.pyproject.PyProjectToml
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.ToolId
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.poetry.findPoetryLock
 import com.jetbrains.python.poetry.getPyProjectTomlForPoetry
-import com.jetbrains.python.projectModel.poetry.POETRY_TOOL_ID
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
+import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
-import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
-import com.jetbrains.python.sdk.poetry.getPoetryExecutable
-import com.jetbrains.python.sdk.poetry.setupPoetry
-import com.jetbrains.python.sdk.poetry.suggestedSdkName
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.poetry.*
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.pathString
+
 @ApiStatus.Internal
-class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
-  override val toolId: ToolId = POETRY_TOOL_ID
+class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
 
   companion object {
     private val LOGGER = Logger.getInstance(PyPoetrySdkConfiguration::class.java)
   }
 
-  @NlsSafe
-  override suspend fun getIntention(module: Module): String? = reportRawProgress {
+  override val toolId: ToolId = POETRY_TOOL_ID
+
+  override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
+    { checkExistence -> checkManageableEnv(module, checkExistence, true) },
+  ) { { createPoetry(module) } }
+
+  override suspend fun createSdkWithoutPyProjectTomlChecks(module: Module): CreateSdkInfo? = prepareSdkCreator(
+    { checkExistence -> checkManageableEnv(module, checkExistence, false) },
+  ) { { createPoetry(module) } }
+
+  override fun asPyProjectTomlSdkConfigurationExtension(): PyProjectTomlConfigurationExtension = this
+
+  private suspend fun checkManageableEnv(
+    module: Module, checkExistence: CheckExistence, checkToml: CheckToml,
+  ): EnvCheckerResult = reportRawProgress {
     it.text(PyBundle.message("python.sdk.validating.environment"))
 
-    val isPoetryProject = withContext(Dispatchers.IO) {
-      PyProjectToml.findFile(module)?.let { toml -> getPyProjectTomlForPoetry(toml) } != null ||
-      findPoetryLock(module) != null
+    val isPoetryProject = if (checkToml) {
+      withContext(Dispatchers.IO) {
+        PyProjectToml.findFile(module)?.let { toml -> getPyProjectTomlForPoetry(toml) } != null || findPoetryLock(module) != null
+      }
     }
+    else true
 
-    val isReadyToSetup = isPoetryProject && getPoetryExecutable().successOrNull != null
+    val canManage = isPoetryProject && getPoetryExecutable().successOrNull != null
+    val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment")
+    val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
-    return if (isReadyToSetup) PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment") else null
+    when {
+      canManage && checkExistence -> {
+        val basePath = module.basePath?.toNioPathOrNull()
+        runPoetry(basePath, "check", "--lock").getOr { return@reportRawProgress envNotFound }
+        val envPath = runPoetry(basePath, "env", "info", "-p")
+          .mapSuccess { it.toNioPathOrNull() }
+          .getOr { return@reportRawProgress envNotFound }
+        envPath?.resolvePythonBinary()?.let { EnvCheckerResult.EnvFound("", intentionName) } ?: return@reportRawProgress envNotFound
+      }
+      canManage -> envNotFound
+      else -> EnvCheckerResult.CannotConfigure
+    }
   }
-
-
-  override suspend fun createAndAddSdkForConfigurator(module: Module): PyResult<Sdk> = createPoetry(module)
-
-  override suspend fun createAndAddSdkForInspection(module: Module): PyResult<Sdk> = createPoetry(module)
-
-  override fun supportsHeadlessModel(): Boolean = true
 
   private suspend fun createPoetry(module: Module): PyResult<Sdk> =
     withBackgroundProgress(module.project, PyCharmCommunityCustomizationBundle.message("sdk.progress.text.setting.up.poetry.environment")) {
@@ -76,9 +94,7 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
                  ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", poetry))
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.pathString)
-      if (file == null) {
-        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", path))
-      }
+                 ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", path))
 
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")
       val sdk = SdkConfigurationUtil.setupSdk(
@@ -90,7 +106,7 @@ class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
       )
 
       withContext(Dispatchers.EDT) {
-        LOGGER.debug("Adding associated poetry environment: ${path}, $basePath")
+        LOGGER.debug("Adding associated poetry environment: $path, $basePath")
         sdk.setAssociationToModule(module)
         SdkConfigurationUtil.addSdk(sdk)
       }

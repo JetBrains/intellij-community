@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.facet.FacetManager
@@ -101,7 +101,7 @@ class FacetModelBridgeTest {
 
     builder addEntity ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source) {
       this.facets = listOf(
-        FacetEntity.invoke(ModuleId("test"), "MyFacet", MOCK_FACET_TYPE_ID, source) {
+        FacetEntity(ModuleId("test"), "MyFacet", MOCK_FACET_TYPE_ID, source) {
           configurationXmlTag = """<configuration data="foo" />"""
         }
       )
@@ -133,7 +133,7 @@ class FacetModelBridgeTest {
 
     val moduleEntity = ModuleEntity(name = "test", dependencies = emptyList(), entitySource = source)
 
-    builder addEntity FacetEntity.invoke(ModuleId("test"), "AnotherMockFacet", FacetEntityTypeId("AnotherMockFacetId"), source) {
+    builder addEntity FacetEntity(ModuleId("test"), "AnotherMockFacet", FacetEntityTypeId("AnotherMockFacetId"), source) {
       configurationXmlTag = """
         <AnotherFacetConfigProperties>
           <firstElement>
@@ -202,9 +202,9 @@ class FacetModelBridgeTest {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel { builder ->
         val moduleEntity = builder.entities<ModuleEntity>().first()
         builder.modifyModuleEntity(moduleEntity) module@{
-          builder addEntity FacetEntity.invoke(moduleEntity.symbolicId, "myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
+          builder addEntity FacetEntity(moduleEntity.symbolicId, "myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
             this.module = this@module
-            underlyingFacet = FacetEntity.invoke(moduleEntity.symbolicId, "anotherName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
+            underlyingFacet = FacetEntity(moduleEntity.symbolicId, "anotherName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource) {
               this.module = this@module
             }
           }

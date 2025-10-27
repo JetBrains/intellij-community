@@ -20,6 +20,7 @@ jvm_library(
   resources = [":toml_resources"],
   deps = [
     "//platform/core-api:core",
+    "//platform/core-impl",
     "//plugins/IntelliLang:langInjection",
     "//platform/lang-impl",
     "//plugins/markdown/core:markdown",

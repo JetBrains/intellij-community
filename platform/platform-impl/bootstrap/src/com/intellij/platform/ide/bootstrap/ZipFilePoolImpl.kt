@@ -55,7 +55,11 @@ class ZipFilePoolImpl : ZipFilePool(), ZipEntryResolverPool {
 }
 
 private class MyEntryResolver(@JvmField val zipFile: ZipFile) : ZipFilePool.EntryResolver {
-  override fun loadZipEntry(path: String) = zipFile.getInputStream(path)
-  override fun close() {} // no-op since it's pooled
+  override fun loadZipEntry(path: String) = zipFile.getData(path)
+
+  override fun close() {
+    // no-op since it's pooled
+  }
+
   override fun toString() = zipFile.toString()
 }

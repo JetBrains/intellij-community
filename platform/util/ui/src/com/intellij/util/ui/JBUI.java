@@ -521,7 +521,7 @@ public final class JBUI {
 
     public static final class CustomFrameDecorations {
       public static @NotNull Color separatorForeground() {
-        return JBColor.namedColor("Separator.separatorColor", new JBColor(0xcdcdcd, 0x515151));
+        return Separator.color();
       }
 
       public static @NotNull Color titlePaneButtonHoverBackground() {
@@ -972,6 +972,10 @@ public final class JBUI {
         return Widget.HOVER_BACKGROUND;
       }
 
+      public static @NotNull Insets hoverInsets() {
+        return insets("StatusBar.Widget.hoverInsets", insets(3, 4, 1, 4));
+      }
+
       public static @NotNull Font font() {
         return getFontWithSizeOffset(fontSizeOffsetKey(), defaultFont());
       }
@@ -1321,28 +1325,16 @@ public final class JBUI {
         return 20;
       }
 
-      public static @NotNull Insets stripeToolbarButtonIconPadding(boolean compactMode, boolean showNames) {
-        return insets(stripeToolbarButtonIconPaddingKey(), showNames
-                                                           ? compactMode
-                                                             ? defaultStripeToolbarButtonIconPaddingForCompactMode()
-                                                             : defaultStripeToolbarButtonIconPaddingForNames()
-                                                           : defaultStripeToolbarButtonIconPadding());
+      public static @NotNull Insets stripeToolbarButtonIconPadding(boolean left, boolean showNames) {
+        return insets(stripeToolbarButtonIconPaddingKey(left, showNames), defaultStripeToolbarButtonIconPadding());
       }
 
-      public static @NotNull String stripeToolbarButtonIconPaddingKey() {
-        return "StripeToolbar.Button.iconPadding";
+      private static @NotNull String stripeToolbarButtonIconPaddingKey(boolean left, boolean showNames) {
+        return "StripeToolbar.Button." + (left ? "left" : "right") + "StripeIcon" + (showNames ? "WithName" : "") + ".padding";
       }
 
-      public static @NotNull JBInsets defaultStripeToolbarButtonIconPadding() {
+      private static @NotNull JBInsets defaultStripeToolbarButtonIconPadding() {
         return insets(5);
-      }
-
-      public static @NotNull JBInsets defaultStripeToolbarButtonIconPaddingForNames() {
-        return insets(4);
-      }
-
-      public static @NotNull JBInsets defaultStripeToolbarButtonIconPaddingForCompactMode() {
-        return insets(3);
       }
     }
 
@@ -1660,6 +1652,13 @@ public final class JBUI {
         }
 
         public static final JBValue ARC = new JBValue.UIInteger("PopupMenu.Selection.arc", 8);
+      }
+    }
+
+    public static final class Separator {
+      private Separator() { }
+      public static @NotNull Color color() {
+        return JBColor.namedColor("Separator.separatorColor", new JBColor(0xcdcdcd, 0x515151));
       }
     }
 

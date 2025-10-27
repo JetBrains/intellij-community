@@ -40,6 +40,8 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
 import com.intellij.util.io.computeDetached
 import com.intellij.util.io.write
+import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import com.intellij.util.ui.IoErrorText
 import com.intellij.util.withQuery
 import kotlinx.coroutines.CoroutineScope
@@ -154,7 +156,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       allIds: Set<PluginId>,
       buildNumber: BuildNumber? = null,
       throwExceptions: Boolean = false,
-      updateCheck: Boolean = false
+      updateCheck: Boolean = false,
     ): List<IdeCompatibleUpdate> {
       val chunks = mutableListOf<MutableList<PluginId>>()
       chunks.add(ArrayList(100))
@@ -217,7 +219,8 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
             .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, false) }
-        } else null
+        }
+        else null
 
         val query = buildString {
           append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
@@ -267,14 +270,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         if (ids.isEmpty()) return emptyList()
 
         val data = objectMapper.writeValueAsString(CompatibleUpdateRequest(ids, buildNumber))
-        val baseUrl = URI(MarketplaceUrls.getSearchNearestUpdate())
-        val query = buildString {
-          append("os=${buildEncodedOsParameter()}")
-          append("&arch=${buildEncodedArchParameter()}")
-        }
-        val url = baseUrl.withQuery(query).toString()
-
-        return HttpRequests.post(url, HttpRequests.JSON_CONTENT_TYPE).run {
+        return HttpRequests.post(MarketplaceUrls.getSearchNearestUpdate(), HttpRequests.JSON_CONTENT_TYPE).run {
           productNameAsUserAgent()
           throwStatusCodeException(throwExceptions)
           connect {
@@ -749,21 +745,23 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   fun getCompatibleUpdateByModule(module: String): PluginId? {
     try {
-      val data = objectMapper.writeValueAsString(CompatibleUpdateForModuleRequest(module))
+      val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
 
-      @Suppress("DEPRECATION")
-      val baseUrl = URI(MarketplaceUrls.getSearchCompatibleUpdatesUrl())
       val query = buildString {
-        append("os=${buildEncodedOsParameter()}")
+        append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(null)}")
+        append("&os=${buildEncodedOsParameter()}")
         append("&arch=${buildEncodedArchParameter()}")
+        append("&module=${URLEncoder.encode(module, StandardCharsets.UTF_8)}")
       }
-      val url = baseUrl.withQuery(query).toString()
 
-      return HttpRequests.post(url, HttpRequests.JSON_CONTENT_TYPE)
+      val urlString = url.withQuery(query).toString()
+
+      return HttpRequests.request(urlString)
+        .accept(HttpRequests.JSON_CONTENT_TYPE)
+        .setHeadersViaTuner()
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          it.write(data)
           objectMapper.readValue(it.inputStream, object : TypeReference<List<IdeCompatibleUpdate>>() {})
         }.firstOrNull()
         ?.pluginId
@@ -963,6 +961,8 @@ private fun isNotModified(urlConnection: URLConnection, file: Path?): Boolean {
 private data class CompatibleUpdateRequest(
   val build: String,
   val pluginXMLIds: List<String>,
+  val os: String = OS.CURRENT.name,
+  val arch: String = CpuArch.CURRENT.name,
 ) {
 
   @JvmOverloads
@@ -972,21 +972,6 @@ private data class CompatibleUpdateRequest(
   ) : this(
     ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
     pluginIds.map { it.idString },
-  )
-}
-
-private data class CompatibleUpdateForModuleRequest(
-  val module: String,
-  val build: String,
-) {
-
-  @JvmOverloads
-  constructor(
-    module: String,
-    buildNumber: BuildNumber? = null,
-  ) : this(
-    module,
-    ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
   )
 }
 

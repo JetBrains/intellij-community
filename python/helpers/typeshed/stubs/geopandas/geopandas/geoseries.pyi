@@ -43,8 +43,8 @@ class GeoSeries(GeoPandasBase, pd.Series[BaseGeometry]):  # type: ignore[type-va
         copy: bool | None = None,
         fastpath: bool = False,
     ) -> None: ...
-    @final
-    def copy(self, deep: bool = True) -> Self: ...  # to override pandas definition
+    @final  # type: ignore[misc]
+    def copy(self, deep: bool = True) -> Self: ...
     @property
     def values(self) -> GeometryArray: ...
     @property
@@ -156,7 +156,7 @@ class GeoSeries(GeoPandasBase, pd.Series[BaseGeometry]):  # type: ignore[type-va
     def notnull(self) -> pd.Series[bool]: ...
     # *** TODO: `fillna` annotation in pandas-stubs is NOT compatible; must `-> Self` ***
     # def fillna(self, value=None, method: FillnaOptions | None = None, inplace: bool = False, **kwargs): ...
-    def __contains__(self, other: object) -> bool: ...
+    def __contains__(self, other: object) -> bool: ...  # type: ignore[misc]
     @doc(plot_series)
     def plot(self, *args, **kwargs): ...  # type: ignore[override]  # signature of `plot_series` copied in `@doc`
     @doc(_explore_geoseries)  # pyright: ignore[reportUnknownArgumentType]

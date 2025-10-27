@@ -12,8 +12,8 @@ import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableInde
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntity
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptEntityBuilder
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptId
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.KotlinScriptLibraryId
 
@@ -57,7 +57,7 @@ internal class KotlinScriptEntityImpl(private val dataSource: KotlinScriptEntity
 
 
   internal class Builder(result: KotlinScriptEntityData?) : ModifiableWorkspaceEntityBase<KotlinScriptEntity, KotlinScriptEntityData>(
-    result), KotlinScriptEntity.Builder {
+    result), KotlinScriptEntityBuilder {
     internal constructor() : this(KotlinScriptEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -219,7 +219,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinScriptEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinScriptEntity> {
     val modifiable = KotlinScriptEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -252,7 +252,7 @@ internal class KotlinScriptEntityData : WorkspaceEntityData<KotlinScriptEntity>(
     return KotlinScriptEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return KotlinScriptEntity(path, dependencies, entitySource) {
     }
   }

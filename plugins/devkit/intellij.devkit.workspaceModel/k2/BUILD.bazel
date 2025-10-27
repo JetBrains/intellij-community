@@ -41,6 +41,7 @@ jvm_library(
     "//platform/core-impl",
     "//java/openapi:java",
     "//plugins/kotlin/base/psi",
+    "//platform/analysis-api:analysis",
   ]
 )
 
@@ -75,6 +76,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/analysis-api:analysis",
   ]
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k2` end

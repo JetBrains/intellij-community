@@ -9,7 +9,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
+
 public final class JavaSdkVersionUtil {
+
   public static boolean isAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion expected) {
     JavaSdkVersion version = getJavaSdkVersion(element);
     return version == null || version.isAtLeast(expected);
@@ -54,5 +57,16 @@ public final class JavaSdkVersionUtil {
       }
     }
     return candidate;
+  }
+
+  public static @NotNull Comparator<Sdk> naturalJavaSdkOrder(boolean nullsFirst) {
+    var javaSdkVersionComparator =
+      nullsFirst ? Comparator.nullsFirst(Comparator.<JavaSdkVersion>naturalOrder())
+                 : Comparator.nullsLast(Comparator.<JavaSdkVersion>naturalOrder());
+    return (sdk1, sdk2) -> {
+      var jdkVersion1 = getJavaSdkVersion(sdk1);
+      var jdkVersion2 = getJavaSdkVersion(sdk2);
+      return javaSdkVersionComparator.compare(jdkVersion1, jdkVersion2);
+    };
   }
 }

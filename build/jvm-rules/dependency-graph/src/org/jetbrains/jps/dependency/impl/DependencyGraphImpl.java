@@ -6,9 +6,7 @@ import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.diff.Difference;
 import org.jetbrains.jps.dependency.java.GeneralJvmDifferentiateStrategy;
-import org.jetbrains.jps.dependency.java.SubclassesIndex;
 import org.jetbrains.jps.dependency.kotlin.KotlinSourceOnlyDifferentiateStrategy;
-import org.jetbrains.jps.dependency.kotlin.TypealiasesIndex;
 
 import java.util.*;
 import java.util.function.Function;
@@ -19,31 +17,24 @@ import static org.jetbrains.jps.util.Iterators.*;
 public final class DependencyGraphImpl extends GraphImpl implements DependencyGraph {
 
   private static final List<DifferentiateStrategy> ourDifferentiateStrategies = List.of(new KotlinSourceOnlyDifferentiateStrategy(), new GeneralJvmDifferentiateStrategy());
-  private final Set<String> myRegisteredIndices;
 
   public DependencyGraphImpl(MapletFactory containerFactory) {
-    super(containerFactory);
-    try {
-      addIndex(new SubclassesIndex(containerFactory));
-      addIndex(new TypealiasesIndex(containerFactory)); // todo: make registration 'pluggable', e.g. via DifferentiateStrategy
-      myRegisteredIndices = Collections.unmodifiableSet(collect(map(getIndices(), index -> index.getName()), new HashSet<>()));
-    }
-    catch (RuntimeException e) {
-      closeIgnoreErrors();
-      throw e;
-    }
+    this(containerFactory, IndexFactory.mandatoryIndices());
+  }
+
+  /**
+   * Note that IndexFactory must register all mandatory indices that {@link IndexFactory#mandatoryIndices()} provides
+   */
+  public DependencyGraphImpl(MapletFactory containerFactory, IndexFactory idxFactory) {
+    super(containerFactory, idxFactory);
   }
 
   @Override
   public Delta createDelta(Iterable<NodeSource> compiledSources, Iterable<NodeSource> deletedSources, boolean isSourceOnly) {
-    Delta delta = isSourceOnly? new SourceOnlyDelta(myRegisteredIndices, compiledSources, deletedSources) : new DeltaImpl(compiledSources, deletedSources);
-
-    Set<String> deltaIndices = collect(map(delta.getIndices(), index -> index.getName()), new HashSet<>());
-    if (!myRegisteredIndices.equals(deltaIndices)) {
-      throw new RuntimeException("Graph delta should contain the same set of indices as the base graph\n\tCurrent graph indices: " + myRegisteredIndices + "\n\tCurrent Delta indices: " + deltaIndices);
+    if (isSourceOnly) {
+      return new SourceOnlyDelta(map(getIndices(), BackDependencyIndex::getName), compiledSources, deletedSources);
     }
-
-    return delta;
+    return new DeltaImpl(compiledSources, deletedSources, getIndexFactory());
   }
 
   @Override

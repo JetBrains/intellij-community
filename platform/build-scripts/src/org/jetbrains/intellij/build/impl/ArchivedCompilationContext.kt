@@ -23,7 +23,11 @@ import kotlin.io.path.writeLines
 @ApiStatus.Internal
 class ArchivedCompilationContext(
   private val delegate: CompilationContext,
-  private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(paths = delegate.paths, classesOutputDirectory = delegate.classesOutputDirectory, messages = delegate.messages).apply {
+  private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(
+    paths = delegate.paths,
+    classesOutputDirectory = delegate.classesOutputDirectory,
+    messages = delegate.messages
+  ).apply {
     delegate.options.pathToCompiledClassesArchivesMetadata?.let {
       this.loadMetadataFile(it)
     }

@@ -1228,7 +1228,7 @@
       "doc": "<div class=\"notecard note\"><p><strong>Note:</strong> This feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API\">Web Workers</a>.</div>\n<p>The <strong><code>ReadableStream()</code></strong> constructor creates and returns a readable stream object from the given handlers.\n<p>Note that while all parameters are technically optional, omitting the <code>underlyingSource</code> will result in a stream that has no source, and that can't be read from (readers return a promise that will never be resolved).",
       "parameters": {
         "underlyingSource": "An object containing methods and properties that define how the constructed stream instance will behave.\n<code>underlyingSource</code> can contain the following:\n<dl>\n<dt id=\"start\"><a href=\"#start\"><code>start</code> (controller) <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This is a method, called immediately when the object is constructed. The\ncontents of this method are defined by the developer, and should aim to get access\nto the stream source, and do anything else required to set up the stream\nfunctionality. If this process is to be done asynchronously, it can return a\npromise to signal success or failure. The <code>controller</code> parameter passed\nto this method is a <a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController\"><code>ReadableStreamDefaultController</code></a> or a\n<a href=\"$MDN_URL$/Web/API/ReadableByteStreamController\"><code>ReadableByteStreamController</code></a>, depending on the value of the\n<code>type</code> property. This can be used by the developer to control the\nstream during set up.\n</dd>\n<dt id=\"pull\"><a href=\"#pull\"><code>pull</code> (controller) <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This method, also defined by the developer, will be called repeatedly when the\nstream's internal queue of chunks is not full, up until it reaches its high water\nmark. If <code>pull()</code> returns a promise, then it won't be called again\nuntil that promise fulfills; if the promise rejects, the stream will become\nerrored. The <code>controller</code> parameter passed to this method is a\n<a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController\"><code>ReadableStreamDefaultController</code></a> or a\n<a href=\"$MDN_URL$/Web/API/ReadableByteStreamController\"><code>ReadableByteStreamController</code></a>, depending on the value of the\n<code>type</code> property. This can be used by the developer to control the\nstream as more chunks are fetched. This function will not be called until <code>start()</code>\nsuccessfully completes. Additionally, it will only be called repeatedly if it\nenqueues at least one chunk or fulfills a BYOB request; a no-op <code>pull()</code>\nimplementation will not be continually called.\n</dd>\n<dt id=\"cancel\"><a href=\"#cancel\"><code>cancel</code> (reason) <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This method, also defined by the developer, will be called if the app signals\nthat the stream is to be cancelled (e.g., if <a href=\"$MDN_URL$/Web/API/ReadableStream/cancel\"><code>ReadableStream.cancel()</code></a>\nis called). The contents should do whatever is necessary to release access to the\nstream source. If this process is asynchronous, it can return a promise to signal\nsuccess or failure. The <code>reason</code> parameter contains a\nstring describing why the stream was cancelled.\n</dd>\n<dt id=\"type\"><a href=\"#type\"><code>type</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>This property controls what type of readable stream is being dealt with. If it\nis included with a value set to <code>\"bytes\"</code>, the passed controller object\nwill be a <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController\"><code>ReadableByteStreamController</code></a> capable of handling a BYOB\n(bring your own buffer)/byte stream. If it is not included, the passed controller\nwill be a <a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultController\"><code>ReadableStreamDefaultController</code></a>.\n</dd>\n<dt id=\"autoallocatechunksize\"><a href=\"#autoallocatechunksize\"><code>autoAllocateChunkSize</code> <span class=\"badge inline optional\">Optional</span></a></dt>\n<dd>\n<p>For byte streams, the developer can set the <code>autoAllocateChunkSize</code> with a positive integer value to turn on the stream's auto-allocation feature.\nWith this is set, the stream implementation will automatically allocate a view buffer of the specified size in <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/byobRequest\"><code>ReadableByteStreamController.byobRequest</code></a> when required.\n<p>This must be set to enable zero-copy transfers to be used with a default <a href=\"$MDN_URL$/Web/API/ReadableStreamDefaultReader\"><code>ReadableStreamDefaultReader</code></a>.\nIf not set, a default reader will still stream data, but <a href=\"$MDN_URL$/Web/API/ReadableByteStreamController/byobRequest\"><code>ReadableByteStreamController.byobRequest</code></a> will always be <code>null</code> and transfers to the consumer must be via the stream's internal queues.\n</dd>\n</dl>",
-        "queuingStrategy": "An object that optionally defines a queuing strategy for the stream. This takes two\nparameters:\n<dl>\n<dt id=\"highwatermark\"><a href=\"#highwatermark\"><code>highWaterMark</code></a></dt>\n<dd>\n<p>A non-negative integer — this defines the total number of chunks that can be\ncontained in the internal queue before backpressure is applied.\n</dd>\n<dt id=\"sizechunk\"><a href=\"#sizechunk\"><code>size(chunk)</code></a></dt>\n<dd>\n<p>A method containing a parameter <code>chunk</code> — this indicates the size to\nuse for each chunk, in bytes.\n</dd>\n</dl>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nYou could define your own custom\n<code>queuingStrategy</code>, or use an instance of\n<a href=\"$MDN_URL$/Web/API/ByteLengthQueuingStrategy\"><code>ByteLengthQueuingStrategy</code></a> or <a href=\"$MDN_URL$/Web/API/CountQueuingStrategy\"><code>CountQueuingStrategy</code></a>\nfor this object value. If no <code>queuingStrategy</code> is supplied, the default\nused is the same as a <code>CountQueuingStrategy</code> with a high water mark of\n1.\n</div>"
+        "queuingStrategy": "An object that optionally defines a queuing strategy for the stream. This takes two\nparameters:\n<dl>\n<dt id=\"highwatermark\"><a href=\"#highwatermark\"><code>highWaterMark</code></a></dt>\n<dd>\n<p>A non-negative integer — this defines the total size of all chunks that can be\ncontained in the internal queue before backpressure is applied.\n</dd>\n<dt id=\"sizechunk\"><a href=\"#sizechunk\"><code>size(chunk)</code></a></dt>\n<dd>\n<p>A method containing a parameter <code>chunk</code> — this indicates the size to\nuse for each chunk, in bytes.\n</dd>\n</dl>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nYou could define your own custom\n<code>queuingStrategy</code>, or use an instance of\n<a href=\"$MDN_URL$/Web/API/ByteLengthQueuingStrategy\"><code>ByteLengthQueuingStrategy</code></a> or <a href=\"$MDN_URL$/Web/API/CountQueuingStrategy\"><code>CountQueuingStrategy</code></a>\nfor this object value. If no <code>queuingStrategy</code> is supplied, the default\nused is the same as a <code>CountQueuingStrategy</code> with a high water mark of\n1.\n</div>"
       },
       "returns": "An instance of the <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> object.",
       "throws": {
@@ -8118,7 +8118,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>transform</code></strong> property of the <a href=\"$MDN_URL$/Web/API/RTCRtpReceiver\"><code>RTCRtpReceiver</code></a> object is used to insert a transform stream (<a href=\"$MDN_URL$/Web/API/TransformStream\"><code>TransformStream</code></a>) running in a worker thread into the receiver pipeline.\nThis allows stream transforms to be applied to encoded video and audio frames as they arrive from the packetizer (before they are played/rendered).\n<p>The transform that is to be added is defined using an <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransform\"><code>RTCRtpScriptTransform</code></a> and its associated <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a>.\nIf the transform is set in the peer connection <a href=\"$MDN_URL$/Web/API/RTCPeerConnection/track_event\"><code>track</code> event</a> handler, the transform stream will receive the first full incoming frame for the track."
     },
@@ -8159,7 +8160,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>RTCRtpScriptTransform</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/WebRTC_API\">WebRTC API</a> is used to insert a <a href=\"$MDN_URL$/Web/API/WebRTC_API/Using_Encoded_Transforms\">WebRTC Encoded Transform</a> (a <a href=\"$MDN_URL$/Web/API/TransformStream\"><code>TransformStream</code></a> running in a worker thread) into the WebRTC sender and receiver pipelines."
     },
@@ -8178,7 +8180,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>RTCRtpScriptTransform()</code></strong> constructor creates a new <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransform\"><code>RTCRtpScriptTransform</code></a> object.\n<p>Constructing the <code>RTCRtpScriptTransform</code> creates a counterpart <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer\"><code>RTCRtpScriptTransformer</code></a> in the specified worker, along with passed options (if any). Objects in the third parameter to the constructor are transferred.\n<p>The <a href=\"$MDN_URL$/Web/API/DedicatedWorkerGlobalScope/rtctransform_event\" ><code>rtctransform</code></a> event is then fired at the worker global object.\nWorker code can use the <code>event.transformer</code> property to get the counterpart <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer\"><code>RTCRtpScriptTransformer</code></a>, and <code>event.transformer.options</code> is used to get the options.\n<p>Note that the options are primarily used to inform the worker whether the transformer is processing incoming or outgoing frames, so that it can apply an appropriate transform.",
       "parameters": {
@@ -8205,7 +8208,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>RTCRtpScriptTransformer</code></strong> interface of the <a href=\"$MDN_URL$/Web/API/WebRTC_API\">WebRTC API</a> provides a worker-side <a href=\"$MDN_URL$/Web/API/Streams_API\">Stream API</a> interface that a <a href=\"$MDN_URL$/Web/API/WebRTC_API/Using_Encoded_Transforms\">WebRTC Encoded Transform</a> can use to modify encoded media frames in the incoming and outgoing WebRTC pipelines.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis feature is available in <a href=\"$MDN_URL$/Web/API/Web_Workers_API#worker_types\"><em>Dedicated</em> Web Workers</a>.\n</div>"
     },
@@ -8249,7 +8253,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>options</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer\"><code>RTCRtpScriptTransformer</code></a> interface returns the object that was (optionally) passed as the second argument <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransform/RTCRtpScriptTransform\">during construction</a> of the corresponding <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransform\"><code>RTCRtpScriptTransform</code></a>."
     },
@@ -8268,7 +8273,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>readable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer\"><code>RTCRtpScriptTransformer</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/ReadableStream\"><code>ReadableStream</code></a> instance is a source for encoded media frames.\n<p>When the corresponding <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransform\"><code>RTCRtpScriptTransform</code></a> is inserted into the WebRTC sender and receiver pipelines, this stream may be enqueued with outgoing or incoming encoded media frames (<a href=\"$MDN_URL$/Web/API/RTCEncodedVideoFrame\"><code>RTCEncodedVideoFrame</code></a> or <a href=\"$MDN_URL$/Web/API/RTCEncodedAudioFrame\"><code>RTCEncodedAudioFrame</code></a>).\nA WebRTC encoded transform can read the frames, modify them as needed, and then send them back into the WebRTC pipeline by writing them to <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer/writable\"><code>RTCRtpScriptTransformer.writable</code></a>.\nA common way to perform this operation is to pipe the frames through a <a href=\"$MDN_URL$/Web/API/TransformStream\"><code>TransformStream</code></a>."
     },
@@ -8287,7 +8293,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>sendKeyFrameRequest()</code></strong> method of the <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer\"><code>RTCRtpScriptTransformer</code></a> interface may be called by a <a href=\"$MDN_URL$/Web/API/WebRTC_API/Using_Encoded_Transforms\">WebRTC Encoded Transform</a> that is processing incoming encoded video frames, in order to request a key frame from the sender.\n<p>The method may only be called when receiving <em>video</em> (not audio) frames and if, for whatever reason, a recipient will not be able to decode the video without a new key frame.\nNote that the user agent can decide that the request for a key frame is not necessary, in which case the returned promise will fulfill even though the request was not actually sent.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIt might be called, for example, if a new user joins a WebRTC conference, in order to reduce the time before they receive a key frame and can hence start displaying video.\nFor more information see <a href=\"$MDN_URL$/Web/API/WebRTC_API/Using_Encoded_Transforms#triggering_a_key_frame\">Triggering a key frame</a> in Using WebRTC Encoded Transforms.\n</div>",
       "returns": "A <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/Promise\"><code>Promise</code></a> that fulfills with <code>undefined</code> once the request is sent, or the user agent decides that it does not need to.",
@@ -8310,7 +8317,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>writable</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer\"><code>RTCRtpScriptTransformer</code></a> interface returns a <a href=\"$MDN_URL$/Web/API/WritableStream\"><code>WritableStream</code></a> instance that can be used as a sink for encoded media frames enqueued on the corresponding <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer/readable\"><code>RTCRtpScriptTransformer.readable</code></a>.\n<p>When the corresponding <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransform\"><code>RTCRtpScriptTransform</code></a> is inserted into the WebRTC sender and receiver pipelines, encoded media frames (<a href=\"$MDN_URL$/Web/API/RTCEncodedVideoFrame\"><code>RTCEncodedVideoFrame</code></a> or <a href=\"$MDN_URL$/Web/API/RTCEncodedAudioFrame\"><code>RTCEncodedAudioFrame</code></a>) may be enqueued on the <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer/readable\"><code>RTCRtpScriptTransformer.readable</code></a>.\nA WebRTC encoded transform can read the frames from <code>readable</code>, modify them as needed, and then send them back into the WebRTC pipeline by sending them to this <code>writable</code>.\nA common way to perform this operation is to pipe the frames through a <a href=\"$MDN_URL$/Web/API/TransformStream\"><code>TransformStream</code></a>."
     },
@@ -8557,7 +8565,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>transform</code></strong> property of the <a href=\"$MDN_URL$/Web/API/RTCRtpSender\"><code>RTCRtpSender</code></a> object is used to insert a transform stream (<a href=\"$MDN_URL$/Web/API/TransformStream\"><code>TransformStream</code></a>) running in a worker thread into the sender pipeline.\nThis allows stream transforms to be applied to encoded video and audio frames after they are output by a codec, and before they are sent.\n<p>The transform that is to be added is defined using an <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransform\"><code>RTCRtpScriptTransform</code></a> and its associated <a href=\"$MDN_URL$/Web/API/Worker\"><code>Worker</code></a>.\nIf the transform is set synchronously immediately after creating the <code>RTCRtpSender</code> it will receive the first full frame generated by the sender's encoder."
     },
@@ -9371,7 +9380,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The <strong><code>RTCTransformEvent</code></strong> of the <a href=\"$MDN_URL$/Web/API/WebRTC_API\">WebRTC API</a> represent an event that is fired in a dedicated worker when an encoded frame has been queued for processing by a <a href=\"$MDN_URL$/Web/API/WebRTC_API/Using_Encoded_Transforms\">WebRTC Encoded Transform</a>.\n<p>The interface has a <a href=\"$MDN_URL$/Web/API/RTCTransformEvent/transformer\" ><code>transformer</code></a> property that exposes a readable stream and a writable stream.\nA worker should read encoded frames from <code>transformer.readable</code>, modify them as needed, and write them to <code>transformer.writable</code> in the same order and without any duplication.\n<p>At time of writing there is just one event based on <code>RTCTransformEvent</code>: <a href=\"$MDN_URL$/Web/API/DedicatedWorkerGlobalScope/rtctransform_event\" ><code>rtctransform</code></a>."
     },
@@ -9390,7 +9400,8 @@
         "SafariIOS": "15.4"
       },
       "baseline": {
-        "level": "NONE"
+        "level": "LOW",
+        "lowDate": "2025-10-03"
       },
       "doc": "The read-only <strong><code>transformer</code></strong> property of the <a href=\"$MDN_URL$/Web/API/RTCTransformEvent\"><code>RTCTransformEvent</code></a> interface returns the <a href=\"$MDN_URL$/Web/API/RTCRtpScriptTransformer\"><code>RTCRtpScriptTransformer</code></a> associated with the event.\n<p>The property exposes the WebRTC sender or receiver pipeline as a readable and writable stream of encoded media frames, which a <a href=\"$MDN_URL$/Web/API/WebRTC_API/Using_Encoded_Transforms\">WebRTC Encoded Transform</a> can insert itself into in order to modify frames."
     },
@@ -13629,7 +13640,11 @@
       "parameters": {
         "source": "Either an <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/ArrayBuffer\"><code>ArrayBuffer</code></a>, a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/TypedArray\"><code>TypedArray</code></a> or a <a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/DataView\"><code>DataView</code></a> object\nthat contains the media segment data you want to add to the <code>SourceBuffer</code>."
       },
-      "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>)."
+      "returns": "None (<a href=\"$MDN_URL$/Web/JavaScript/Reference/Global_Objects/undefined\"><code>undefined</code></a>).",
+      "throws": {
+        "InvalidStateError DOMException": "Thrown in one of the following cases:\n<ul>\n<li>The <code>SourceBuffer</code> object's <code>updating</code> attribute is <code>true</code>. You must wait for any previous append, update, or remove operations to complete (indicated by the <code>updateend</code> event) before calling <code>appendBuffer()</code> again.</li>\n<li>The <code>SourceBuffer</code> has been removed from the <code>sourceBuffers</code> attribute of the parent media source.</li>\n<li>The <code>HTMLMediaElement</code>'s <code>error</code> attribute is not <code>null</code>.</li>\n</ul>",
+        "QuotaExceededError": "The buffer is full, and no more data can be appended. This might occur if the <code>SourceBuffer</code> has reached a browser-defined limit on the amount of buffered data."
+      }
     },
     "sourcebuffer.appendbufferasync": {
       "url": "$MDN_URL$/web/api/sourcebuffer/appendbufferasync",
@@ -14098,8 +14113,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "142",
-        "Edge": "142"
+        "Chrome": "139",
+        "Edge": "139",
+        "Opera": "123"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>available()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/Web_Speech_API\">Web Speech API</a> checks whether the specified languages are available for speech recognition.\n<p>To install a language pack for speech recognition locally, use the <a href=\"$MDN_URL$/Web/API/SpeechRecognition/install_static\" ><code>SpeechRecognition.install()</code></a> method.\n<p>Access to the <code>available()</code> method is controlled by the <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/on-device-speech-recognition\"><code>on-device-speech-recognition</code></a> <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy\"><code>Permissions-Policy</code></a>. Specifically, where a defined policy blocks usage, any attempts to call the method will fail.",
       "parameters": {
@@ -14148,8 +14164,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "142",
-        "Edge": "142"
+        "Chrome": "139",
+        "Edge": "139",
+        "Opera": "123"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>install()</code></strong> static method of the <a href=\"$MDN_URL$/Web/API/Web_Speech_API\">Web Speech API</a> installs the required language packs for <a href=\"$MDN_URL$/Web/API/Web_Speech_API/Using_the_Web_Speech_API#on-device_speech_recognition\">on-device speech recognition</a> in the specified languages.\n<p>To check if the language packs are already available, use the <a href=\"$MDN_URL$/Web/API/SpeechRecognition/available_static\" ><code>SpeechRecognition.available()</code></a> method.\n<p>Access to the <code>install()</code> method is controlled by the <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy/on-device-speech-recognition\"><code>on-device-speech-recognition</code></a> <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Permissions-Policy\"><code>Permissions-Policy</code></a> directive. Specifically, where a defined policy blocks usage, any attempts to call the method will fail.",
       "parameters": {
@@ -14234,8 +14251,9 @@
         "StandardTrack"
       ],
       "compatibility": {
-        "Chrome": "142",
-        "Edge": "142"
+        "Chrome": "139",
+        "Edge": "139",
+        "Opera": "123"
       },
       "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>processLocally</code></strong> property of the\n<a href=\"$MDN_URL$/Web/API/SpeechRecognition\"><code>SpeechRecognition</code></a> interface specifies whether speech recognition must be performed locally on the user's device.\n<p>See <a href=\"$MDN_URL$/Web/API/Web_Speech_API/Using_the_Web_Speech_API#on-device_speech_recognition\">On-device speech recognition</a> for more information."
     },
@@ -17988,6 +18006,35 @@
       },
       "doc": "The <strong><code>SVGAElement</code></strong> interface provides access to the properties of an <a href=\"$MDN_URL$/Web/SVG/Reference/Element/a\"><code>&lt;a&gt;</code></a> element, as well as methods to manipulate them."
     },
+    "svgaelement.download": {
+      "url": "$MDN_URL$/web/api/svgaelement/download",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "142",
+        "ChromeAndroid": "142",
+        "Edge": "142",
+        "Firefox": "20",
+        "FirefoxAndroid": "20"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>download</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string indicating that the browser should treat the linked URL as a download.\n<p>This property can be set, to change the URL's <code>download</code> value. It reflects the value of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a#download\"><code>download</code></a> attribute.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nThis value might not be used for download. This value cannot be used to determine whether the download will occur.\n</div>"
+    },
+    "svgaelement.hash": {
+      "url": "$MDN_URL$/web/api/svgaelement/hash",
+      "doc": "The <strong><code>hash</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string representing the fragment identifier, including the leading hash mark (<code>#</code>), if any, in the referenced URL.\n<p>This property can be set, to change the URL's fragment (ignores leading <code>#</code>)."
+    },
+    "svgaelement.host": {
+      "url": "$MDN_URL$/web/api/svgaelement/host",
+      "doc": "The <strong><code>host</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string representing the hostname and port (if it's not the default port) in the referenced URL.\n<p>This property can be set, to change the URL's host and port."
+    },
+    "svgaelement.hostname": {
+      "url": "$MDN_URL$/web/api/svgaelement/hostname",
+      "doc": "The <strong><code>hostname</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string representing the hostname in the referenced URL.\n<p>This property can be set, to change the URL's hostname."
+    },
     "svgaelement.href": {
       "url": "$MDN_URL$/web/api/svgaelement/href",
       "status": [
@@ -18009,6 +18056,62 @@
         "highDate": "2018-01-29"
       },
       "doc": "The <strong><code>href</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> returns an <a href=\"$MDN_URL$/Web/API/SVGAnimatedString\"><code>SVGAnimatedString</code></a> object reflecting the value of the href attribute, and, in certain cases, the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/xlink:href\"><code>xlink:href</code></a>  attribute. It specifies the target URI associated with the link.\n<p>This property enables access to the URI set for a link within an SVG document."
+    },
+    "svgaelement.hreflang": {
+      "url": "$MDN_URL$/web/api/svgaelement/hreflang",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Firefox": "61",
+        "FirefoxAndroid": "61"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>hreflang</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string indicating the language of the linked resource.\n<p>This property can be set, to change the URL's <code>hreflang</code> value. It reflects the value of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a#hreflang\"><code>hreflang</code></a> attribute."
+    },
+    "svgaelement.origin": {
+      "url": "$MDN_URL$/web/api/svgaelement/origin",
+      "doc": "The <strong><code>origin</code></strong> readonly property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string containing the origin of the URL — that is, its scheme, its domain and its port."
+    },
+    "svgaelement.password": {
+      "url": "$MDN_URL$/web/api/svgaelement/password",
+      "doc": "The <strong><code>password</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string containing the password specified before the domain name.\n<p>This property can be set, to change the URL's password."
+    },
+    "svgaelement.pathname": {
+      "url": "$MDN_URL$/web/api/svgaelement/pathname",
+      "doc": "The <strong><code>pathname</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string containing an initial <code>/</code> followed by the path of the URL, not including the query string or fragment.\n<p>This property can be set, to change the URL's pathname."
+    },
+    "svgaelement.ping": {
+      "url": "$MDN_URL$/web/api/svgaelement/ping",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {},
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>ping</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string that reflects the <code>ping</code> attribute, containing a space-separated list of URLs to which, when the hyperlink is followed, <a href=\"$MDN_URL$/Web/HTTP/Reference/Methods/POST\"><code>POST</code></a> requests with the body <code>PING</code> will be sent by the browser (in the background). Typically used for tracking.\n<p>This property can be set, to change the URL's <code>ping</code> value. It reflects the value of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a#ping\"><code>ping</code></a> attribute."
+    },
+    "svgaelement.port": {
+      "url": "$MDN_URL$/web/api/svgaelement/port",
+      "doc": "The <strong><code>port</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string representing the port component, if any, of the referenced URL.\n<p>This property can be set, to change the URL's port."
+    },
+    "svgaelement.protocol": {
+      "url": "$MDN_URL$/web/api/svgaelement/protocol",
+      "doc": "The <strong><code>protocol</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string representing the protocol component, including trailing colon (<code>:</code>), of the referenced URL.\n<p>This property can be set, to change the URL's protocol."
+    },
+    "svgaelement.referrerpolicy": {
+      "url": "$MDN_URL$/web/api/svgaelement/referrerPolicy",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Firefox": "61",
+        "FirefoxAndroid": "61"
+      },
+      "doc": "The <strong><code>referrerpolicy</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string specifying which <a href=\"$MDN_URL$/Web/HTTP/Reference/Headers/Referer\">referrer</a> to send when fetching the <a href=\"$MDN_URL$/Glossary/URL\">URL</a>..\n<p>This property can be set, to change the URL's <code>referrerpolicy</code> value. It reflects the value of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a#referrerpolicy\"><code>referrerpolicy</code></a> attribute."
     },
     "svgaelement.rel": {
       "url": "$MDN_URL$/web/api/svgaelement/rel",
@@ -18052,6 +18155,10 @@
       },
       "doc": "The <strong><code>relList</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> returns a live <a href=\"$MDN_URL$/Web/API/DOMTokenList\"><code>DOMTokenList</code></a> reflecting the space-separated string <a href=\"$MDN_URL$/Web/HTML/Reference/Attributes/rel\"><code>&lt;list-of-Link-Types&gt;</code></a> values of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a#rel\"><code>rel</code></a> attribute of the SVG <a href=\"$MDN_URL$/Web/SVG/Reference/Element/a\"><code>&lt;a&gt;</code></a> element.\n<p>The property itself is read-only, meaning you can't substitute the\n<a href=\"$MDN_URL$/Web/API/DOMTokenList\"><code>DOMTokenList</code></a> by another one, but the content of the returned list can be\nchanged."
     },
+    "svgaelement.search": {
+      "url": "$MDN_URL$/web/api/svgaelement/search",
+      "doc": "The <strong><code>search</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string representing the URL's query string, if any, including the leading question mark (<code>?</code>).\n<p>This property can be set, to change the URL's query component."
+    },
     "svgaelement.target": {
       "url": "$MDN_URL$/web/api/svgaelement/target",
       "status": [
@@ -18073,6 +18180,33 @@
         "highDate": "2018-01-29"
       },
       "doc": "The <strong><code>SVGAElement.target</code></strong> read-only property of <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> returns an <a href=\"$MDN_URL$/Web/API/SVGAnimatedString\"><code>SVGAnimatedString</code></a> object that specifies the portion of a target window, frame, pane into which a document is to be opened when a link is activated.\n<p>This property is used when there are multiple possible targets for the ending resource, like when the parent document is a multi-frame HTML or XHTML document."
+    },
+    "svgaelement.text": {
+      "url": "$MDN_URL$/web/api/svgaelement/text",
+      "status": [
+        "StandardTrack",
+        "Deprecated"
+      ],
+      "compatibility": {},
+      "doc": "The <strong><code>text</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string that is a synonym for the <a href=\"$MDN_URL$/Web/API/Node/textContent\"><code>Node.textContent</code></a> property."
+    },
+    "svgaelement.type": {
+      "url": "$MDN_URL$/web/api/svgaelement/type",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Firefox": "61",
+        "FirefoxAndroid": "61"
+      },
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>type</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string indicating the MIME type of the linked resource.\n<p>This property can be set, to change the URL's <code>type</code> value. It reflects the value of the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/a#type\"><code>type</code></a> attribute."
+    },
+    "svgaelement.username": {
+      "url": "$MDN_URL$/web/api/svgaelement/username",
+      "doc": "The <strong><code>username</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGAElement\"><code>SVGAElement</code></a> interface returns a string containing the username specified before the domain name.\n<p>This property can be set, to change the URL's username."
     },
     "svgangle": {
       "url": "$MDN_URL$/web/api/svgangle",
@@ -19325,7 +19459,7 @@
         "lowDate": "2020-01-15",
         "highDate": "2022-07-15"
       },
-      "doc": "The <strong><code>requiredExtensions</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGAnimationElement\"><code>SVGAnimationElement</code></a> interface reflects the <a class=\"page-not-created\" data-href=\"$MDN_URL$/Web/SVG/Reference/Attribute/requiredExtensions\" ><code>requiredExtensions</code></a> attribute of the given element."
+      "doc": "The <strong><code>requiredExtensions</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGAnimationElement\"><code>SVGAnimationElement</code></a> interface reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/requiredExtensions\"><code>requiredExtensions</code></a> attribute of the given element."
     },
     "svganimationelement.systemlanguage": {
       "url": "$MDN_URL$/web/api/svganimationelement/systemlanguage",
@@ -19951,7 +20085,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The read-only <strong><code>style</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGElement\"><code>SVGElement</code></a> returns the <em>inline</em> style of an element in the form of a live <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object that contains a list of all styles properties for that element with values assigned only for the attributes that are defined in the element's inline <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/style\"><code>style</code></a> attribute.\n<p>Shorthand properties are expanded. If you set <code>style=\"border-top: 1px solid black\"</code>, the longhand properties (<a href=\"$MDN_URL$/Web/CSS/border-top-color\"><code>border-top-color</code></a>, <a href=\"$MDN_URL$/Web/CSS/border-top-style\"><code>border-top-style</code></a>, and <a href=\"$MDN_URL$/Web/CSS/border-top-width\"><code>border-top-width</code></a>) are set instead.\n<p>This property is read-only, meaning it is not possible to assign a <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object to it. Nevertheless, it is possible to set an inline style by assigning a <em>string</em> directly to the <code>style</code> property. In this case the string is forwarded to <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration/cssText\"><code>CSSStyleDeclaration.cssText</code></a>. Using <code>style</code> in this manner will completely overwrite all inline styles on the element.\n<p>Therefore, to add specific styles to an element without altering other style values, it is generally preferable to set individual properties on the <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\"><code>CSSStyleDeclaration</code></a> object. For example, you can write <code>element.style.backgroundColor = \"red\"</code>.\n<p>A style declaration is reset by setting it to <code>null</code> or an empty string, e.g., <code>elt.style.color = null</code>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nCSS property names are converted to JavaScript identifier with these rules:\n<ul>\n<li>If the property is made of one word, it remains as it is: <code>height</code> stays as is (in lowercase).</li>\n<li>If the property is made of several words, separated by dashes, the dashes are removed and it is converted to <a href=\"$MDN_URL$/Glossary/Camel_case\">camel case</a>: <code>background-attachment</code> becomes <code>backgroundAttachment</code>.</li>\n<li>The property <code>float</code>, being a reserved JavaScript keyword, is converted to <code>cssFloat</code>.</li>\n</ul>\n<p>The <code>style</code> property has the same priority in the CSS cascade as an inline style declaration set via the <code>style</code> attribute.\n</div>"
+      "doc": "The read-only <strong><code>style</code></strong> property of the <a href=\"$MDN_URL$/Web/API/SVGElement\"><code>SVGElement</code></a> returns the <em>inline</em> <a href=\"$MDN_URL$/Web/HTML/Reference/Global_attributes/style\"><code>style</code></a> of an element in the form of a live <a href=\"$MDN_URL$/Web/API/CSSStyleProperties\"><code>CSSStyleProperties</code></a> object.\nThis object can be used to get and set the inline styles of an element."
     },
     "svgelement.tabindex": {
       "url": "$MDN_URL$/web/api/svgelement/tabindex",
@@ -23960,7 +24094,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>x</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFESpotLightElement\"><code>SVGFESpotLightElement</code></a> interface describes the horizontal coordinate of the position of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedNumber\"><code>SVGAnimatedNumber</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/x\"><code>x</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a> element., which can be used to define the light source in a spotlight effect. The attribute is a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#number\"><code>&lt;number&gt;</code></a>. The default value is <code>0</code>."
+      "doc": "The <strong><code>x</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFESpotLightElement\"><code>SVGFESpotLightElement</code></a> interface describes the horizontal coordinate of the position of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedNumber\"><code>SVGAnimatedNumber</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/x\"><code>x</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a> element, which can be used to define the light source in a spotlight effect. The attribute is a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#number\"><code>&lt;number&gt;</code></a>. The default value is <code>0</code>."
     },
     "svgfespotlightelement.y": {
       "url": "$MDN_URL$/web/api/svgfespotlightelement/y",
@@ -23982,7 +24116,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>y</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFESpotLightElement\"><code>SVGFESpotLightElement</code></a> interface describes the vertical coordinate of the position of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedNumber\"><code>SVGAnimatedNumber</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/y\"><code>y</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a> element., which can be used to define the light source in a spotlight effect. The attribute is a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#number\"><code>&lt;number&gt;</code></a>. The default value is <code>0</code>."
+      "doc": "The <strong><code>y</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGFESpotLightElement\"><code>SVGFESpotLightElement</code></a> interface describes the vertical coordinate of the position of an SVG filter primitive as a <a href=\"$MDN_URL$/Web/API/SVGAnimatedNumber\"><code>SVGAnimatedNumber</code></a>.\n<p>It reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/y\"><code>y</code></a> attribute of the <a href=\"$MDN_URL$/Web/SVG/Reference/Element/feSpotLight\"><code>&lt;feSpotLight&gt;</code></a> element, which can be used to define the light source in a spotlight effect. The attribute is a <a href=\"$MDN_URL$/Web/SVG/Guides/Content_type#number\"><code>&lt;number&gt;</code></a>. The default value is <code>0</code>."
     },
     "svgfespotlightelement.z": {
       "url": "$MDN_URL$/web/api/svgfespotlightelement/z",
@@ -25101,7 +25235,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>requiredExtensions</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGGraphicsElement\"><code>SVGGraphicsElement</code></a> interface reflects the <a class=\"page-not-created\" data-href=\"$MDN_URL$/Web/SVG/Reference/Attribute/requiredExtensions\" ><code>requiredExtensions</code></a> attribute of the given element."
+      "doc": "The <strong><code>requiredExtensions</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/SVGGraphicsElement\"><code>SVGGraphicsElement</code></a> interface reflects the <a href=\"$MDN_URL$/Web/SVG/Reference/Attribute/requiredExtensions\"><code>requiredExtensions</code></a> attribute of the given element."
     },
     "svggraphicselement.systemlanguage": {
       "url": "$MDN_URL$/web/api/svggraphicselement/systemlanguage",
@@ -32811,7 +32945,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>TextTrackList</code></strong> interface is used to represent a list of the text tracks defined for the associated video or audio element, with each track represented by a separate <a href=\"$MDN_URL$/Web/API/TextTrack\"><code>textTrack</code></a> object in the list.\n<p>Text tracks can be added to a media element declaratively using the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/track\"><code>&lt;track&gt;</code></a> element or programmatically using the <a href=\"$MDN_URL$/Web/API/HTMLMediaElement/addTextTrack\"><code>HTMLMediaElement.addTextTrack()</code></a> method.\n<p>An instance of this object can be retrieved using the <a href=\"$MDN_URL$/Web/API/HTMLMediaElement/textTracks\" ><code>textTracks</code></a> property of an <a href=\"$MDN_URL$/Web/API/HTMLMediaElement\"><code>HTMLMediaElement</code></a> object.\n<p>For a given <a href=\"$MDN_URL$/Web/API/HTMLMediaElement\"><code>HTMLMediaElement</code></a> object <em>media</em>, the individual tracks can be accessed using:\n<ul>\n<li><code>media.TextTracks[n]</code>, to get the n-th text track from the object's list of text tracks</li>\n<li>the <a href=\"$MDN_URL$/Web/API/TextTrackList/getTrackById\"><code>media.textTracks.getTrackById()</code></a> method</li>\n</ul>"
+      "doc": "The <strong><code>TextTrackList</code></strong> interface is used to represent a list of the text tracks defined for the associated video or audio element, with each track represented by a separate <a href=\"$MDN_URL$/Web/API/TextTrack\"><code>TextTrack</code></a> object in the list.\n<p>Text tracks can be added to a media element declaratively using the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/track\"><code>&lt;track&gt;</code></a> element or programmatically using the <a href=\"$MDN_URL$/Web/API/HTMLMediaElement/addTextTrack\"><code>HTMLMediaElement.addTextTrack()</code></a> method.\n<p>An instance of this object can be retrieved using the <a href=\"$MDN_URL$/Web/API/HTMLMediaElement/textTracks\" ><code>textTracks</code></a> property of an <a href=\"$MDN_URL$/Web/API/HTMLMediaElement\"><code>HTMLMediaElement</code></a> object.\n<p>For a given <a href=\"$MDN_URL$/Web/API/HTMLMediaElement\"><code>HTMLMediaElement</code></a> object <em>media</em>, the individual tracks can be accessed using:\n<ul>\n<li><code>media.TextTracks[n]</code>, to get the n-th text track from the object's list of text tracks</li>\n<li>the <a href=\"$MDN_URL$/Web/API/TextTrackList/getTrackById\"><code>media.textTracks.getTrackById()</code></a> method</li>\n</ul>"
     },
     "texttracklist.gettrackbyid": {
       "url": "$MDN_URL$/web/api/texttracklist/gettrackbyid",
@@ -33166,16 +33300,17 @@
     "toggleevent.source": {
       "url": "$MDN_URL$/web/api/toggleevent/source",
       "status": [
-        "Experimental",
         "StandardTrack"
       ],
       "compatibility": {
         "Chrome": "140",
         "ChromeAndroid": "140",
         "Edge": "140",
+        "Firefox": "145",
+        "FirefoxAndroid": "145",
         "Opera": "124"
       },
-      "doc": "<div class=\"notecard experimental\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>source</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ToggleEvent\"><code>ToggleEvent</code></a> interface is an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> object instance representing the HTML popover control element that initiated the toggle."
+      "doc": "The <strong><code>source</code></strong> read-only property of the <a href=\"$MDN_URL$/Web/API/ToggleEvent\"><code>ToggleEvent</code></a> interface is an <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> object instance representing the HTML popover control element that initiated the toggle."
     },
     "toggleevent.toggleevent": {
       "url": "$MDN_URL$/web/api/toggleevent/toggleevent",
@@ -34548,7 +34683,7 @@
         "lowDate": "2015-07-29",
         "highDate": "2018-01-29"
       },
-      "doc": "The <strong><code>TreeWalker.whatToShow</code></strong> read-only property returns a\nbitmask that indicates the types of\n<a href=\"$MDN_URL$/Web/API/Node\">nodes</a> to show. Non-matching nodes are skipped, but their\nchildren may be included, if relevant. The possible values are:\n<figure class=\"table-container\"><table class=\"no-markdown\">\n<thead>\n<tr>\n<th>Constant</th>\n<th>Numerical value</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>NodeFilter.SHOW_ALL</code></td>\n<td>\n<code>4294967295</code> (that is the max value of <code>unsigned long</code>)\n</td>\n<td>Shows all nodes.</td>\n</tr>\n<tr>\n<td>\n<code>NodeFilter.SHOW_ATTRIBUTE</code>\n</td>\n<td><code>2</code></td>\n<td>\nShows attribute <a href=\"$MDN_URL$/Web/API/Attr\"><code>Attr</code></a> nodes. This is meaningful\nonly when creating a <a href=\"$MDN_URL$/Web/API/TreeWalker\"><code>TreeWalker</code></a> with an\n<a href=\"$MDN_URL$/Web/API/Attr\"><code>Attr</code></a> node as its root; in this case, it means\nthat the attribute node will appear in the first position of the\niteration or traversal. Since attributes are never children of other\nnodes, they do not appear when traversing over the document tree.\n</td>\n</tr>\n<tr>\n<td>\n<code>NodeFilter.SHOW_CDATA_SECTION</code>\n</td>\n<td><code>8</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/CDATASection\"><code>CDATASection</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_COMMENT</code></td>\n<td><code>128</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Comment\"><code>Comment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT</code></td>\n<td><code>256</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Document\"><code>Document</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_FRAGMENT</code></td>\n<td><code>1024</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentFragment\"><code>DocumentFragment</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_DOCUMENT_TYPE</code></td>\n<td><code>512</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/DocumentType\"><code>DocumentType</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ELEMENT</code></td>\n<td><code>1</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Element\"><code>Element</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_ENTITY</code> </td>\n<td><code>32</code></td>\n<td>Legacy, no more used.</td>\n</tr>\n<tr>\n<td>\n<code>NodeFilter.SHOW_ENTITY_REFERENCE</code>\n</td>\n<td><code>16</code></td>\n<td>Legacy, no more used.</td>\n</tr>\n<tr>\n<td>\n<code>NodeFilter.SHOW_NOTATION</code>\n</td>\n<td><code>2048</code></td>\n<td>Legacy, no more used.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_PROCESSING_INSTRUCTION</code></td>\n<td><code>64</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/ProcessingInstruction\"><code>ProcessingInstruction</code></a> nodes.</td>\n</tr>\n<tr>\n<td><code>NodeFilter.SHOW_TEXT</code></td>\n<td><code>4</code></td>\n<td>Shows <a href=\"$MDN_URL$/Web/API/Text\"><code>Text</code></a> nodes.</td>\n</tr>\n</tbody>\n</table></figure>"
+      "doc": "The <strong><code>TreeWalker.whatToShow</code></strong> read-only property returns a\nbitmask that indicates the types of\n<a href=\"$MDN_URL$/Web/API/Node\">nodes</a> to show. Non-matching nodes are skipped, but their\nchildren may be included, if relevant."
     },
     "trustedhtml": {
       "url": "$MDN_URL$/web/api/trustedhtml",

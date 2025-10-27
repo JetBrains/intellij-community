@@ -1,7 +1,8 @@
+// WITH_STDLIB
 fun foo() {
     val a = try {
         "aaa"
     } catch (e: <selection><caret>Exception</selection>) {
-        TODO("Not yet implemented")
+        throw e
     }
 }

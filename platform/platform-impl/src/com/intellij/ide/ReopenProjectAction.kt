@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -18,10 +19,12 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem.Companion.openProjectAndLogRecent
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.EelUnavailableException
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
 import com.intellij.util.PathUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
 import java.nio.file.Files
@@ -79,27 +82,37 @@ open class ReopenProjectAction @JvmOverloads constructor(
       return s
     }
 
+  private fun showReopenDialog(@Nls message: String, project: Project?) {
+    val exitCode = Messages.showDialog(project, message,
+                                       IdeBundle.message("dialog.title.reopen.project"),
+                                       arrayOf(CommonBundle.getOkButtonText(), IdeBundle.message("button.remove.from.list")), 0,
+                                       Messages.getErrorIcon())
+
+
+    if (exitCode == 1) {
+      isRemoved = true
+      RecentProjectsManager.getInstance().removePath(projectPath)
+    }
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     // force move focus to IdeFrame
     IdeEventQueue.getInstance().popupManager.closeAllPopups()
 
     val project = e.project
 
-    runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.title.project.initialization")) {
-      EelInitialization.runEelInitialization(projectPath)
+    try {
+      runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.title.project.initialization")) {
+        EelInitialization.runEelInitialization(projectPath)
+      }
+    } catch (e : EelUnavailableException) {
+      showReopenDialog(e.message, project)
+      return
     }
 
     val file = Path.of(projectPath).normalize()
     if (Files.notExists(file)) {
-      if (Messages.showDialog(project, IdeBundle
-          .message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)),
-                              IdeBundle.message("dialog.title.reopen.project"),
-                              arrayOf(CommonBundle.getOkButtonText(), IdeBundle.message("button.remove.from.list")), 0,
-                              Messages.getErrorIcon()) == 1
-      ) {
-        isRemoved = true
-        RecentProjectsManager.getInstance().removePath(projectPath)
-      }
+      showReopenDialog(IdeBundle.message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(projectPath)), project)
       return
     }
 

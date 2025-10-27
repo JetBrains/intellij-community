@@ -39,6 +39,19 @@ elements:
         - attribute:
             name: package
             renderContexts: [doc_provider]
+            deprecatedSince: "2026.1"
+            deprecationNote: |
+              Package attribute usage is discouraged and deprecated, content modules should be packaged into separate jars under `lib/modules/`.
+              IntelliJ Monorepository build system does it automatically when the attribute is not specified.
+              IntelliJ Platform Gradle Plugin allows doing that with `pluginModule` declaration since version 2.7.0.
+              
+              Note that after this attribute is removed, the classloader configuration will change.
+              While the class files of the module were packed into the main plugin's jar,
+              other modules could've accidentally accessed them. After they are separated into a module jar,
+              such accesses will start to throw `NoClassDefFoundError`.
+              Double-check that compile-time dependencies between modules match the module dependencies in module XMLs.
+              
+              See [_Plugin Model_](https://youtrack.jetbrains.com/articles/IJPL-A-31){internal} for more details.
             requirement:
               required: no
             description: |
@@ -247,12 +260,12 @@ elements:
                     required: no
                   description: |
                     The highest version of the IDE the plugin is compatible with.
-                    It's highly recommended not to set this attribute, so the plugin will be compatible with all the IDEs since the version 
-                    specified by the [`since-build`](#attribute:idea-plugin__idea-version__since-build).
-                    If it becomes necessary to specify the highest compatible IDE version later, it'll be possible to do that via the 
-                    Marketplace.
-                    Only if the publishing process for the plugin is configured to upload a new version of a plugin for each major IDE 
-                    version, it makes sense to limit the highest compatible IDE version from the beginning. 
+                    It's highly recommended not to set this attribute, so the plugin will be compatible with all IDE versions since the 
+                    version specified by the [`since-build`](#attribute:idea-plugin__idea-version__since-build).<br/>
+                    If it becomes necessary to specify the highest compatible IDE version later, it'll be possible to do that via JetBrains
+                    Marketplace.<br/>
+                    Only if the publishing process for the plugin is configured to upload a new version for each major IDE version, it makes
+                    sense to limit the highest compatible IDE version from the beginning. 
                     In that case, use [`strict-until-build`](#attribute:idea-plugin__idea-version__strict-until-build) instead.
               - attribute:
                   name: strict-until-build
@@ -260,11 +273,12 @@ elements:
                     required: no
                   since: "2025.3"
                   description: |
-                    The highest version of the IDE the plugin is compatible with.
-                    Use this attribute only if the publishing process for the plugin is configured to upload a new version of a plugin for 
-                    each major IDE version.
-                    Otherwise, omit this attribute. If it becomes necessary to specify the highest compatible IDE version later, it'll be 
-                    possible to do that via the Marketplace.
+                    The highest version of the IDE the plugin is compatible with.<br/>
+                    Use this attribute only if the publishing process for the plugin is configured to upload a new version for each major
+                    IDE version.
+                    Otherwise, skip this attribute.<br/>
+                    If it becomes necessary to specify the highest compatible IDE version later, it'll be possible to do that via
+                    JetBrains Marketplace.
             examples:
               - | # code snippets must have 4 spaces indent here
                 Compatibility with a specific build number (2021.3.3) and higher versions:
@@ -624,18 +638,17 @@ elements:
                         defaultValue: |
                           `optional`
                     - attribute:
-                        name: os
+                        name: required-if-available
                         description: |
-                          Allows restricting the loading of a module to specific operating system.
-                          Supported values:
-                          - `freebsd`
-                          - `linux`
-                          - `mac`
-                          - `unix`
-                          - `windows`
+                          **Experimental attribute**
                           
-                          For example, `os="windows"` allows the module to load only on Windows.
-
+                          Specifies a condition when the loading rule should be restricted to 'required' instead of the rule given by the 'loading' attribute.
+                          The value of the attribute may reference one of the special content modules that reflect the configuration of the IDE:
+                          - `intellij.platform.frontend` 
+                          - `intellij.platform.backend` 
+                          - `intellij.platform.frontend.split`                          
+                          
+                          [Internal doc](https://youtrack.jetbrains.com/articles/IJPL-A-1503).
         - element:
             name: extensions
             references:

@@ -20,12 +20,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
-import org.jetbrains.plugins.terminal.block.reworked.TerminalCursorOffsetChanged
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOffset
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
-import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModelListener
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.ui.*
+import org.jetbrains.plugins.terminal.view.*
 import kotlin.math.max
 
 /**
@@ -50,7 +47,7 @@ class TerminalOutputScrollingModelImpl(
 
   init {
     outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: TerminalOffset, isTypeAhead: Boolean) {
+      override fun afterContentChanged(event: TerminalContentChangeEvent) {
         if (shouldScrollToCursor) {
           // We already called in an EDT, but let's update the scroll later to not block output model updates.
           coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
@@ -59,7 +56,7 @@ class TerminalOutputScrollingModelImpl(
         }
       }
 
-      override fun cursorOffsetChanged(event: TerminalCursorOffsetChanged) {
+      override fun cursorOffsetChanged(event: TerminalCursorOffsetChangeEvent) {
         if (shouldScrollToCursor) {
           updateScrollPosition(event.newOffset)
         }

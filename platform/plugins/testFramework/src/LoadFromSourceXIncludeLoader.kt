@@ -1,11 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.plugins.testFramework
 
+import com.intellij.platform.plugins.parser.impl.LoadedXIncludeReference
 import com.intellij.platform.plugins.parser.impl.XIncludeLoader
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
+import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 class LoadFromSourceXIncludeLoader(
   private val prefixesOfPathsIncludedFromLibrariesViaXiInclude: List<String>,
@@ -50,10 +55,10 @@ class LoadFromSourceXIncludeLoader(
     return shortNameToPaths
   }
 
-  override fun loadXIncludeReference(path: String): XIncludeLoader.LoadedXIncludeReference? {
+  override fun loadXIncludeReference(path: String): LoadedXIncludeReference? {
     if (prefixesOfPathsIncludedFromLibrariesViaXiInclude.any { path.startsWith(it) }) {
       //todo: support loading from libraries
-      return XIncludeLoader.LoadedXIncludeReference("<idea-plugin/>".byteInputStream(), "dummy tag for external $path")
+      return LoadedXIncludeReference("<idea-plugin/>".encodeToByteArray(), "dummy tag for external $path")
     }
     val directoryName = path.substringBeforeLast(delimiter = '/', missingDelimiterValue = "")
     val parentDirectoryName = directoryName.substringBeforeLast('/', missingDelimiterValue = "")
@@ -63,7 +68,7 @@ class LoadFromSourceXIncludeLoader(
     val files = shortXmlPathToFullPaths[path] ?: emptyList()
     val file = files.firstOrNull()
     if (file != null) {
-      return XIncludeLoader.LoadedXIncludeReference(file.inputStream(), file.pathString)
+      return LoadedXIncludeReference(Files.readAllBytes(file), file.pathString)
     }
     return null
   }

@@ -408,6 +408,8 @@
     <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
                     serviceImplementation="com.intellij.diff.editor.DiffEditorTabFilesManagerImpl"/>
 
+    <settingsController id="LoggingSettingsController" implementation="com.intellij.ide.actions.LoggingSettingsController"/>
+
     <fileEditorProvider implementation="com.intellij.diff.editor.DiffFileEditorProvider"/>
     <fileEditorProvider implementation="com.intellij.ide.browsers.actions.WebPreviewEditorProvider"/>
     <fileEditorProvider implementation="com.intellij.ide.plugins.UIComponentEditorProvider"/>
@@ -645,6 +647,9 @@
                         serviceImplementation="com.intellij.ide.PlatformIdeServiceImpl"/>
 
     <postStartupActivity implementation="com.intellij.ide.ProjectWindowCustomizerListener" order="last"/>
+    <backgroundPostStartupActivity implementation="com.intellij.util.singleProduct.MigrationStartupActivity"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.singleProduct.MigrateToSingleProductCollector"/>
+
 
     <applicationService
       serviceInterface="com.intellij.platform.ide.productInfo.IdeProductInfo"
@@ -664,7 +669,7 @@
                  description="Add icon 'open In right splitter' to recent files menu"/>
     <welcomeFrameProvider implementation="com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrameProvider"/>
     <welcomeTabFactory id="ProjectsWelcomeTab" implementation="com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory"/>
-    <registryKey defaultValue="4" description="Number of primary buttons on welcome screen (other go to 'more actions')" key="welcome.screen.primaryButtonsCount" restartRequired="true"/>
+    <registryKey defaultValue="3" description="Number of primary buttons on welcome screen (other go to 'more actions')" key="welcome.screen.primaryButtonsCount" restartRequired="true"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.openapi.wm.impl.welcomeScreen.survey.IdeSurveyCollector"/>
     <statistics.counterUsagesCollector
@@ -901,6 +906,12 @@
       id="EditorDeleteLine.checkHandler"
     />
 
+    <registryKey key="remdev.completion.on.frontend"
+                 defaultValue="false"
+                 description="Enables frontend completion support"
+                 restartRequired="true"
+    />
+
     <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypedHandlerDelegate"/>
 
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
@@ -1018,6 +1029,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.navigation.actions.GTDUCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.navigation.actions.GoToDeclarationCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.accessibility.AccessibilityUsageTrackerCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.accessibility.AccessibilityToolsStateCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector"/>
     <statistics.counterUsagesCollector
@@ -1795,6 +1807,7 @@
                              provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"
                              key="settings.name" bundle="messages.MinimapBundle"/>
     <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
+    <registryKey key="wayland.true.popups" defaultValue="false" description="Show popups in Wayland as true popups (allows remembering the location, but limits them to the IDE window)"/>
     <actionPromoter implementation="com.intellij.ide.actions.speedSearch.SpeedSearchActionPromoter"/>
 
     <fileEditorProvider id="learnIde" implementation="com.intellij.openapi.wm.impl.welcomeScreen.learnIde.editorTab.LearnIdeFileEditorProvider"/>
@@ -1818,7 +1831,7 @@
 
     <idePerformanceListener implementation="com.intellij.diagnostic.FusFreezeReporter"/>
 
-    <backgroundPostStartupActivity implementation="com.intellij.internal.DumpPluginDescriptorsOnProjectOpenTrigger"/>
+    <applicationActivity implementation="com.intellij.internal.DumpPluginDescriptorsOnAppStartTrigger"/>
 
     <registryKey key="search.everywhere.footer.extended.info"
                  defaultValue="true"
@@ -2101,7 +2114,7 @@
               topic="com.intellij.codeInsight.template.TemplateManagerListener"/>
     <listener class="com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener"
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
-    <listener class="com.intellij.codeInsight.multiverse.EditorFilterUpdater"
+    <listener class="com.intellij.codeInsight.multiverse.MultiverseEditorFilterUpdater"
               topic="com.intellij.codeInsight.multiverse.EditorContextManager$ChangeEventListener"/>
   </projectListeners>
 

@@ -3,11 +3,13 @@ package com.intellij.codeHighlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,14 +32,16 @@ import java.util.List;
 
 /**
  * The highlighting pass which is associated with {@link Document} and its markup model.
- * The instantiation of this class must happen in the background thread, under {@link com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator}
+ * The instantiation of this class must happen in the background thread, under {@link DaemonProgressIndicator}
  * which has corresponding {@link com.intellij.codeInsight.daemon.impl.HighlightingSession}.
- * It's discouraged to do all that manually, please register your {@link TextEditorHighlightingPassFactory} in plugin.xml instead, e.g. like this:
+ * It's discouraged to do all that manually, please register your {@link TextEditorHighlightingPassFactory} in plugin.xml instead, e.g., like this:
  * <pre>
  *   {@code <highlightingPassFactory implementation="com.a.b.MyPassFactory"/>}
  * </pre>
  */
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
+  private static final Logger LOG = Logger.getInstance(TextEditorHighlightingPass.class);
+
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
   protected final @NotNull Document myDocument;
   protected final @NotNull Project myProject;
@@ -59,6 +63,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myInitialPsiStamp = PsiModificationTracker.getInstance(project).getModificationCount();
     ThreadingAssertions.assertBackgroundThread();
   }
+
   protected TextEditorHighlightingPass(@NotNull Project project, @NotNull Document document) {
     this(project, document, true);
   }
@@ -126,11 +131,13 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public void markUpToDateIfStillValid(@NotNull DaemonProgressIndicator updateProgress) {
     ThreadingAssertions.assertEventDispatchThread();
     if (isValid()) {
-      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(getDocument(), getContext(), getId(), updateProgress);
+      FileStatusMap statusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
+      statusMap.markFileUpToDate(getDocument(), getContext(), getId(), updateProgress);
     }
   }
 
   public abstract void doCollectInformation(@NotNull ProgressIndicator progress);
+
   public abstract void doApplyInformationToEditor();
 
   public final int getId() {
@@ -159,16 +166,16 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   @ApiStatus.Internal
   public void setContext(@NotNull CodeInsightContext context) {
-    assert myContext == null : "context is already assigned";
+    LOG.assertTrue(myContext == null || myContext == CodeInsightContexts.anyContext(),
+                   "context is already assigned for highlighting pass " + this);
     myContext = context;
   }
 
   @ApiStatus.Experimental
   protected @NotNull CodeInsightContext getContext() {
     if (myContext == null) {
-      // todo IJPL-339 report an error here once all the highlighting passes are ready
-      //      LOG.error("context was not set");
-      return CodeInsightContexts.anyContext();
+      LOG.error("context was not set to highlighting pass " + this);
+      myContext = CodeInsightContexts.anyContext();
     }
     return myContext;
   }

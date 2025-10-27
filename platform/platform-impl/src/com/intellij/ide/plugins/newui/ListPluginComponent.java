@@ -11,6 +11,7 @@ import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -59,6 +60,7 @@ public final class ListPluginComponent extends JPanel {
   public static final Color GRAY_COLOR = JBColor.namedColor("Label.infoForeground", new JBColor(Gray._120, Gray._135));
   public static final Color SELECTION_COLOR = JBColor.namedColor("Plugins.lightSelectionBackground", new JBColor(0xEDF6FE, 0x464A4D));
   public static final Color HOVER_COLOR = JBColor.namedColor("Plugins.hoverBackground", new JBColor(0xEDF6FE, 0x464A4D));
+  private static final Logger LOG = Logger.getInstance(ListPluginComponent.class);
 
   private static final Ref<Boolean> HANDLE_FOCUS_ON_SELECTION = new Ref<>(Boolean.TRUE);
 
@@ -117,7 +119,7 @@ public final class ListPluginComponent extends JPanel {
     myCoroutineScope = coroutineScope;
     myInstalledDescriptorForMarketplace = listModel.getInstalledModels().get(pluginUiModel.getPluginId());
     PluginId pluginId = myPlugin.getPluginId();
-    boolean compatible = !myPlugin.isIncompatibleWithCurrentOs();
+    boolean compatible = !myPlugin.isIncompatibleWithCurrentPlatform();
     PluginInstallationState pluginInstallationState = listModel.getPluginInstallationStates().get(pluginId);
     myIsAvailable = (compatible || isInstalledAndEnabled(pluginInstallationState)) && pluginUiModel.getCanBeEnabled();
     UiPluginManager pluginManager = UiPluginManager.getInstance();
@@ -125,7 +127,7 @@ public final class ListPluginComponent extends JPanel {
       .isPluginRequiresUltimateButItIsDisabled(pluginModelFacade.getModel().getSessionId(), pluginUiModel.getPluginId());
     myIsDisableAllowed = pluginUiModel.isDisableAllowed() && !myIsNotFreeInFreeMode;
     pluginModelFacade.addComponent(this);
-    myCustomizer = Registry.is("reworked.plugin.manager.enabled", false) ? PluginManagerCustomizer.getInstance() : null;
+    myCustomizer = UiPluginManager.isCombinedPluginManagerEnabled() ? PluginManagerCustomizer.getInstance() : null;
     setOpaque(true);
     setBorder(JBUI.Borders.empty(10));
     setLayout(myLayout);
@@ -163,7 +165,12 @@ public final class ListPluginComponent extends JPanel {
 
     UiInspectorUtil.registerProvider(this, new PluginIdUiInspectorContextProvider());
 
-    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processListPluginComponent(this);
+    try {
+      PluginsViewCustomizerKt.getListPluginComponentCustomizer().processListPluginComponent(this);
+    }
+    catch (Exception e) {
+      LOG.error("Error while customizing list plugin component", e);
+    }
   }
 
   @NotNull PluginsGroup getGroup() { return myGroup; }
@@ -335,7 +342,12 @@ public final class ListPluginComponent extends JPanel {
       myAlignButton.setOpaque(false);
     }
 
-    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreateButtons(this);
+    try {
+      PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreateButtons(this);
+    }
+    catch (Exception e) {
+      LOG.error("Error while customizing create buttons", e);
+    }
   }
 
   private @NotNull InstallButton createInstallButton() {
@@ -546,7 +558,8 @@ public final class ListPluginComponent extends JPanel {
   }
 
   public void setUpdateDescriptor(@Nullable PluginUiModel descriptor) {
-    if (myMarketplace && myInstalledDescriptorForMarketplace == null) {
+    if (myMarketplace && myInstalledDescriptorForMarketplace == null ||
+        (descriptor != null && myModelFacade.isUninstalled(descriptor.getPluginId()))) {
       return;
     }
     if (myUpdateDescriptor == null && descriptor == null) {
@@ -855,7 +868,12 @@ public final class ListPluginComponent extends JPanel {
       myAlignButton.setVisible(true);
     }
 
-    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processRemoveButtons(this);
+    try {
+      PluginsViewCustomizerKt.getListPluginComponentCustomizer().processRemoveButtons(this);
+    }
+    catch (Exception e) {
+      LOG.error("Error while customizing remove buttons", e);
+    }
   }
 
   public void updateButtons(PluginUiModel installedPlugin, PluginInstallationState state) {
@@ -892,7 +910,12 @@ public final class ListPluginComponent extends JPanel {
     updateErrors();
     setSelection(mySelection, false);
 
-    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processUpdateEnabledState(this);
+    try {
+      PluginsViewCustomizerKt.getListPluginComponentCustomizer().processUpdateEnabledState(this);
+    }
+    catch (Exception e) {
+      LOG.error("Error while customizing enabled state", e);
+    }
   }
 
   private void updateEnabledStateUI() {
@@ -1556,7 +1579,7 @@ public final class ListPluginComponent extends JPanel {
     }
 
     public void setProgressComponent(@NotNull JComponent progressComponent) {
-      assert myProgressComponent == null;
+      if (myProgressComponent != null) return;
       myProgressComponent = progressComponent;
       add(progressComponent);
 

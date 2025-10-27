@@ -23,10 +23,10 @@ abstract class CodeFragmentBuilder {
     }
   }
 
-  protected fun findRoot(code: CodeFragment, rootProcessor: EvaluationRootProcessor): CodeFragment {
-    rootProcessor.process(code)
+  protected suspend fun findRoot(code: CodeFragment, rootProcessor: EvaluationRootProcessor): CodeFragment {
+    rootProcessor.processFragment(code)
     return rootProcessor.getRoot() ?: throw NullRootException(code.path)
   }
 
-  abstract fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment?
+  abstract suspend fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment?
 }

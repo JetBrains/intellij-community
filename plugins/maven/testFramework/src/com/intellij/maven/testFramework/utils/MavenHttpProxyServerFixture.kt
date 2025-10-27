@@ -16,7 +16,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.*
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
 import kotlin.jvm.optionals.getOrDefault
 
@@ -31,7 +31,7 @@ class MavenHttpProxyServerFixture(
 
   private var proxyUsername: String? = null
   private var proxyPassword: String? = null
-  val requestedFiles: MutableList<String> = CopyOnWriteArrayList()
+  val requestedFiles: Queue<String> = ConcurrentLinkedQueue()
   val port: Int
     get() = serverSocket.localPort
 
@@ -59,7 +59,7 @@ class MavenHttpProxyServerFixture(
       val socket = serverSocket.accept()
       executor.execute { process(socket) }
     }
-    catch (ignore: SocketException) {
+    catch (_: SocketException) {
     }
     catch (e: IOException) {
       MavenLog.LOG.warn(e)
@@ -79,7 +79,7 @@ class MavenHttpProxyServerFixture(
         }
         val index = requestString.indexOf(' ')
         if (index < 0) throw IllegalStateException("Bad Request: $requestString")
-        val type: String? = requestString.substring(0, index)
+        val type = requestString.take(index)
         if (type != "GET") {
           printMethodNotSupportedInfo(requestString, type, os)
           return

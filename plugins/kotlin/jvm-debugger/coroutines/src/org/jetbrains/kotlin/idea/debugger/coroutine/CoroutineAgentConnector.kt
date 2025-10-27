@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
+import com.intellij.execution.JavaTestConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
@@ -64,11 +65,12 @@ object CoroutineAgentConnector {
         // though when a Java run configuration is chosen, the coroutine agent should not be applied.
         // In case no run configuration is provided or if it's not module-based, search the whole project for the package.
         val psiFacade = JavaPsiFacade.getInstance(project)
+        val includeTests = configuration is JavaTestConfigurationBase
         return configuration.modules.flatMap { module ->
             val moduleScope = GlobalSearchScope.union(
                 listOf(
-                    GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module),
-                    module.getModuleRuntimeScope(true),
+                    GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests),
+                    module.getModuleRuntimeScope(includeTests),
                 )
             )
             psiFacade.findClasses(KOTLINX_COROUTINES_DEBUG_PROBES_IMPL_FQN, moduleScope).asList()

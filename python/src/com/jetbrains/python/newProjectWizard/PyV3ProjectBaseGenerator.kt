@@ -17,13 +17,13 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.newProjectWizard.collector.PyProjectTypeGenerator
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector.logPythonNewProjectGenerated
 import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
 import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode
 import com.jetbrains.python.sdk.refreshPaths
 import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.CoroutineScope
@@ -48,7 +48,6 @@ import kotlin.reflect.jvm.jvmName
 abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   private val typeSpecificSettings: TYPE_SPECIFIC_SETTINGS,
   private val typeSpecificUI: PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>?,
-  private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
   private val _newProjectName: @NlsSafe String? = null,
   private val supportsNotEmptyModuleStructure: Boolean = false,
 ) : DirectoryProjectGenerator<PyV3BaseProjectSettings>, PyProjectTypeGenerator {
@@ -73,7 +72,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
     coroutineScope.launch {
       val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir, supportsNotEmptyModuleStructure).getOr {
         withContext(Dispatchers.EDT) {
-          uiServices.errorSink.emit(it.error)
+          uiServices.errorSink.emit(it.error, project)
         }
         return@launch // Since we failed to generate a project, we do not need to go any further
       }
@@ -96,7 +95,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       uiServices.expandProjectTreeView(project)
       withBackgroundProgress(project, PyBundle.message("python.project.model.progress.title.generating"), cancellable = true) {
         typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
-          uiServices.errorSink.emit(it)
+          uiServices.errorSink.emit(it, project)
         }
         refreshPaths(project, sdk, "PyV3ProjectBaseGenerator.generateProject")
       }
@@ -106,7 +105,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
 
 
   override fun createPeer(): ProjectGeneratorPeer<PyV3BaseProjectSettings> =
-    PyV3GeneratorPeer(baseSettings, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, allowedInterpreterTypes, uiServices)
+    PyV3GeneratorPeer(baseSettings, typeSpecificUI?.let { Pair(it, typeSpecificSettings) }, uiServices)
 
   override fun validate(baseDirPath: String): ValidationResult =
     when (val pathOrError = validatePath(baseDirPath)) {

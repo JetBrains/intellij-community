@@ -1,15 +1,5 @@
 # TODO: check these entries
 authlib.jose.drafts._jwe_enc_cryptodome
-authlib.oauth2.OAuth2Client.client_auth_class
-authlib.oauth2.OAuth2Client.oauth_error_class
-authlib.oauth2.OAuth2Client.token_auth_class
-authlib.oauth2.client.OAuth2Client.client_auth_class
-authlib.oauth2.client.OAuth2Client.oauth_error_class
-authlib.oauth2.client.OAuth2Client.token_auth_class
-authlib.oauth2.rfc7521.AssertionClient.oauth_error_class
-authlib.oauth2.rfc7521.client.AssertionClient.oauth_error_class
-authlib.oauth2.rfc7523.JWTBearerTokenValidator.token_cls
-authlib.oauth2.rfc7523.validator.JWTBearerTokenValidator.token_cls
 
 # Are set to `None` by default, initialized later:
 authlib.jose.drafts._jwe_algorithms.ECDH1PUAlgorithm.description

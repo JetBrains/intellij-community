@@ -68,6 +68,7 @@ e:com.intellij.credentialStore.ProviderType
 - sf:KEEPASS:com.intellij.credentialStore.ProviderType
 - sf:KEYCHAIN:com.intellij.credentialStore.ProviderType
 - sf:MEMORY_ONLY:com.intellij.credentialStore.ProviderType
+- sf:REMOTE:com.intellij.credentialStore.ProviderType
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.credentialStore.ProviderType
 - s:values():com.intellij.credentialStore.ProviderType[]
@@ -76,7 +77,6 @@ a:com.intellij.ide.passwordSafe.PasswordSafe
 - com.intellij.ide.passwordSafe.PasswordStorage
 - sf:Companion:com.intellij.ide.passwordSafe.PasswordSafe$Companion
 - <init>():V
-- a:getAsync(com.intellij.credentialStore.CredentialAttributes):org.jetbrains.concurrency.Promise
 - sf:getInstance():com.intellij.ide.passwordSafe.PasswordSafe
 - a:isMemoryOnly():Z
 - a:isPasswordStoredOnlyInMemory(com.intellij.credentialStore.CredentialAttributes,com.intellij.credentialStore.Credentials):Z

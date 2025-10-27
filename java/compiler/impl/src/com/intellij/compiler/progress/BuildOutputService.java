@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.build.*;
@@ -52,11 +52,21 @@ public class BuildOutputService implements BuildViewService {
   private final @NotNull Project myProject;
   private final @NotNull BuildProgress<BuildProgressDescriptor> myBuildProgress;
   private final @NotNull @NlsContexts.TabTitle String myContentName;
+  private final boolean myCompilationStartedAutomatically;
   private final ConsolePrinter myConsolePrinter;
 
   public BuildOutputService(@NotNull Project project, @NotNull @NlsContexts.TabTitle String contentName) {
+    this(project, contentName, false);
+  }
+
+  public BuildOutputService(
+    @NotNull Project project,
+    @NotNull @NlsContexts.TabTitle String contentName,
+    boolean compilationStartedAutomatically
+  ) {
     myProject = project;
     myContentName = contentName;
+    myCompilationStartedAutomatically = compilationStartedAutomatically;
     myBuildProgress = BuildViewManager.createBuildProgress(project);
     myConsolePrinter = new ConsolePrinter(myBuildProgress);
   }
@@ -100,6 +110,11 @@ public class BuildOutputService implements BuildViewService {
           };
         })
         .withContextActions(contextActions.toArray(AnAction.EMPTY_ARRAY));
+
+    if (myCompilationStartedAutomatically) {
+      // When compilation is triggered automatically (e.g., by auto test run), avoid stealing focus
+      buildDescriptor.setActivateToolWindowWhenFailed(false);
+    }
 
     myBuildProgress.start(new BuildProgressDescriptor() {
       @Override

@@ -60,7 +60,28 @@ public abstract class CompletionService {
                                              @Nullable CompletionContributor from,
                                              @NotNull PrefixMatcher matcher,
                                              @NotNull Consumer<? super CompletionResult> consumer) {
-    getVariantsFromContributors(parameters, from, matcher, consumer, null);
+    List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
+    boolean groupEnabledInApp = GroupedCompletionContributor.isGroupEnabledInApp();
+
+    int startingIndex = from != null ? contributors.indexOf(from) + 1 : 0;
+    for (int i = startingIndex; i < contributors.size(); i++) {
+      ProgressManager.checkCanceled();
+      CompletionContributor contributor = contributors.get(i);
+      if (groupEnabledInApp &&
+          contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
+          groupedCompletionContributor.groupIsEnabled(parameters)) {
+        continue;
+      }
+      CompletionResultSet result = createResultSet(parameters, consumer, contributor, matcher);
+      try {
+        getVariantsFromContributor(parameters, contributor, result);
+      }
+      catch (IndexNotReadyException ignore) {
+      }
+      if (result.isStopped()) {
+        return;
+      }
+    }
   }
 
 
@@ -94,38 +115,6 @@ public abstract class CompletionService {
                                                      consumer.consume(r);
                                                    }, contributor,
                                                    matcher);
-      try {
-        getVariantsFromContributor(parameters, contributor, result);
-      }
-      catch (IndexNotReadyException ignore) {
-      }
-      if (result.isStopped()) {
-        return;
-      }
-    }
-  }
-
-  protected void getVariantsFromContributors(@NotNull CompletionParameters parameters,
-                                             @Nullable CompletionContributor from,
-                                             @NotNull PrefixMatcher matcher,
-                                             @NotNull Consumer<? super CompletionResult> consumer,
-                                             @Nullable CompletionSorter customSorter) {
-    List<CompletionContributor> contributors = CompletionContributor.forParameters(parameters);
-    boolean groupEnabledInApp = GroupedCompletionContributor.isGroupEnabledInApp();
-
-    int startingIndex = from != null ? contributors.indexOf(from) + 1 : 0;
-    for (int i = startingIndex; i < contributors.size(); i++) {
-      ProgressManager.checkCanceled();
-      CompletionContributor contributor = contributors.get(i);
-      if (groupEnabledInApp &&
-          contributor instanceof GroupedCompletionContributor groupedCompletionContributor &&
-          groupedCompletionContributor.groupIsEnabled(parameters)) {
-        continue;
-      }
-      CompletionResultSet result = createResultSet(parameters, consumer, contributor, matcher);
-      if (customSorter != null) {
-        result = result.withRelevanceSorter(customSorter);
-      }
       try {
         getVariantsFromContributor(parameters, contributor, result);
       }

@@ -29,7 +29,7 @@ import java.nio.file.Files
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isDirectory
 
-class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
+private class GradleBeforeRunTaskImporter: BeforeRunTaskImporter {
   override fun process(project: Project,
                        modelsProvider: IdeModifiableModelsProvider,
                        runConfiguration: RunConfiguration,
@@ -169,7 +169,7 @@ class IDEAProjectFilesPostProcessor: ConfigurationHandler {
   class ProjectLayout(val ideaDirPath: String, val modulesMap: Map<String, String>)
 }
 
-class GenerateImlFilesSettings: ConfigurationHandler {
+private class GenerateImlFilesSettings: ConfigurationHandler {
   override fun onSuccessImport(project: Project,
                                projectData: ProjectData?,
                                modelsProvider: IdeModelsProvider,

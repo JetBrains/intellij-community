@@ -11,32 +11,8 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import org.junit.Assume.assumeTrue
-import java.io.File
-import java.nio.file.Path
 
-class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
-  private lateinit var repository: GitRepository
-  private lateinit var community: GitRepository
-  private lateinit var bro: Path
-  private lateinit var bromunity: Path
-
-  override fun setUp() {
-    super.setUp()
-
-    val mainRepo = setupRepositories(projectPath, "parent", "bro")
-    repository = mainRepo.projectRepo
-    bro = mainRepo.bro
-
-    val communityDir = File(projectPath, "community")
-    assertTrue(communityDir.mkdir())
-    val enclosingRepo = setupRepositories(communityDir.path, "community_parent", "community_bro")
-    community = enclosingRepo.projectRepo
-    bromunity = enclosingRepo.bro
-
-    repository.update()
-    community.update()
-  }
-
+class GitMultiRepoUpdateTest : GitMultiRepoUpdateBaseTest() {
   fun `test update only roots with incoming changes`() {
     cd(bro)
     tacp("file")

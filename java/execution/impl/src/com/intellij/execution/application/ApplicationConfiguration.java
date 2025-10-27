@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.searches.ImplicitClassSearch;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -111,6 +112,14 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
+    if (element instanceof PsiNamedElement namedElement) {
+      // do not react on unrelated refactorings
+      String elementName = namedElement.getName();
+      String mainClassName = getMainClassName();
+      if (elementName == null || mainClassName == null || !mainClassName.contains(elementName)) {
+        return null;
+      }
+    }
     final RefactoringElementListener listener = RefactoringListeners.
       getClassOrPackageListener(element, new RefactoringListeners.SingleClassConfigurationAccessor(this));
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);

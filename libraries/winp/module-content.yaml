@@ -1,4 +1,4 @@
-- name: <file>
+- name: dist.all/lib/intellij.libraries.winp.jar
   modules:
   - name: intellij.libraries.winp
     libraries:

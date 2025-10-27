@@ -292,7 +292,10 @@ class LookupChoiceFilter(Filter):
     def filter(self, qs: QuerySet[Any], lookup: Lookup) -> QuerySet[Any]: ...
 
 class OrderingFilter(BaseCSVFilter, ChoiceFilter):
-    field_class: type[BaseCSVField]  # Inherits CSV field behavior for comma-separated ordering
+    # Inherits CSV field behavior for comma-separated ordering.
+    # BaseCSVFilter constructs a custom ConcreteCSVField class that derives
+    # from BaseCSVField.
+    field_class: type[BaseCSVField]
     descending_fmt: str
     param_map: dict[str, str] | None
     def __init__(

@@ -501,7 +501,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   private void processMethodsDuplicates() {
-    if (!myMethodToReplaceIn.isValid()) return;
+    if (!myMethodToReplaceIn.isValid() || !MethodDuplicatesHandler.isAvailableOn(myMethodToReplaceIn)) return;
     MethodDuplicatesHandler.invokeOnScope(myProject, Collections.singleton(myMethodToReplaceIn),
                                           new AnalysisScope(myMethodToReplaceIn.getContainingFile()), true);
   }

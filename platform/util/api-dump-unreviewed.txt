@@ -2274,9 +2274,7 @@ f:com.intellij.util.concurrency.AppExecutorUtil
 f:com.intellij.util.concurrency.BoundedTaskExecutor
 - java.util.concurrent.AbstractExecutorService
 - awaitTermination(J,java.util.concurrent.TimeUnit):Z
-- clearAndCancelAll():java.util.List
 - execute(java.lang.Runnable):V
-- isEmpty():Z
 - isShutdown():Z
 - isTerminated():Z
 - shutdown():V

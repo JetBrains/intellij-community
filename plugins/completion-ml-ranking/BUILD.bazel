@@ -39,6 +39,7 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/platform-impl/internal",
     "//platform/diagnostic/telemetry-impl",
+    "//platform/core-impl",
     "//platform/lang-api:lang",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl",

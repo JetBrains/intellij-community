@@ -11,11 +11,7 @@ import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntityId
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ScriptDependency
-import kotlin.script.experimental.api.dependencies
-import kotlin.script.experimental.api.dependenciesSources
-import kotlin.script.experimental.api.ide
+import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.util.PropertiesCollection
 

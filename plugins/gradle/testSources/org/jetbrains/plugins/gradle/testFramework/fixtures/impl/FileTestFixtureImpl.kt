@@ -29,7 +29,9 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfigurationImpl
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
+import java.nio.file.FileSystems
 import java.nio.file.Path
+import java.nio.file.PathMatcher
 import java.util.*
 
 internal class FileTestFixtureImpl(
@@ -41,6 +43,7 @@ internal class FileTestFixtureImpl(
   private lateinit var errors: MutableList<Throwable>
   private lateinit var snapshots: MutableMap<Path, Optional<String>>
   private lateinit var excludedFiles: Set<Path>
+  private lateinit var excludedFilePatterns: Set<PathMatcher>
 
   private lateinit var testRootDisposable: Disposable
   private lateinit var fixtureRoot: VirtualFile
@@ -63,6 +66,7 @@ internal class FileTestFixtureImpl(
     excludedFiles = configuration.excludedFiles
       .map { root.toNioPath().getResolvedPath(it) }
       .toSet()
+    excludedFilePatterns = configuration.excludedFilePatterns
 
     val oldState = readFixtureState()
     dumpFixtureState()
@@ -237,7 +241,8 @@ internal class FileTestFixtureImpl(
 
                  path !in snapshots &&
                  path !in excludedFiles &&
-                 excludedFiles.none(path::startsWith)
+                 excludedFiles.none(path::startsWith) &&
+                 excludedFilePatterns.none { it.matches(path) }
                }
       }
 
@@ -253,9 +258,19 @@ internal class FileTestFixtureImpl(
       FileTestFixture.Builder {
 
     val excludedFiles = HashSet<String>()
+    val excludedFilePatterns = HashSet<PathMatcher>()
 
     override fun excludeFiles(vararg relativePath: String) {
       excludedFiles.addAll(relativePath)
+    }
+
+    /**
+     * Excludes files matching the given glob or regexp [syntaxAndPatterns].
+     * @see java.nio.file.FileSystem.getPathMatcher
+     */
+    override fun excludeFilePatterns(vararg syntaxAndPatterns: String) {
+      val fileSystem = FileSystems.getDefault()
+      excludedFilePatterns.addAll(syntaxAndPatterns.map(fileSystem::getPathMatcher))
     }
   }
 

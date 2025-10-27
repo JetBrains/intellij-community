@@ -6,12 +6,14 @@ import com.intellij.model.psi.PsiExternalReferenceHost;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class WebReference extends PsiReferenceBase<PsiElement> {
   private final @Nullable String myUrl;
-  
+  private boolean myHighlight = true;
+
   public WebReference(@NotNull PsiElement element) {
     this(element, (String)null);
   }
@@ -28,6 +30,16 @@ public class WebReference extends PsiReferenceBase<PsiElement> {
   public WebReference(@NotNull PsiElement element, TextRange textRange, @Nullable String url) {
     super(element, textRange, true);
     myUrl = url;
+  }
+
+  @ApiStatus.Internal
+  public boolean getHighlight() {
+    return myHighlight;
+  }
+
+  @ApiStatus.Internal
+  public void setHighlight(boolean highlight) {
+    myHighlight = highlight;
   }
 
   public boolean isHttpRequestTarget() {

@@ -5,9 +5,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-internal class RunDashboardCoroutineScopeProvider(val cs: CoroutineScope) {
+class RunDashboardCoroutineScopeProvider(val cs: CoroutineScope) {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): RunDashboardCoroutineScopeProvider = project.service()

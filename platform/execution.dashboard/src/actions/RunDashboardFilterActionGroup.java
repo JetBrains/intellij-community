@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManager;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardStatusFilter;
+import com.intellij.platform.execution.serviceView.ServiceViewActionProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ import java.util.Set;
 
 import static com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus.*;
 
-final class RunDashboardFilterActionGroup extends DefaultActionGroup implements CheckedActionGroup, DumbAware {
+final class RunDashboardFilterActionGroup extends ServiceViewActionProvider.DefaultFrontendServiceViewActionGroup implements CheckedActionGroup, DumbAware {
 
   @SuppressWarnings("unused")
   RunDashboardFilterActionGroup() {

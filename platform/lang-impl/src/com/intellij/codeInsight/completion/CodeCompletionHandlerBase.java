@@ -70,6 +70,9 @@ public class CodeCompletionHandlerBase {
    */
   public static final Key<Boolean> DIRECT_INSERTION = Key.create("CodeCompletionHandlerBase.directInsertion");
 
+  @ApiStatus.Internal
+  public static final Key<FinishCompletionInfo> ITEM_PATTERN_AND_PREFIX_LENGTH = Key.create("CodeCompletionHandlerBase.prefix-length");
+
   final @NotNull CompletionType completionType;
   final boolean invokedExplicitly;
   final boolean synchronous;
@@ -260,7 +263,12 @@ public class CodeCompletionHandlerBase {
     }
 
     LookupImpl lookup = (LookupImpl)LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "",
-                                                                                    new LookupArranger.DefaultArranger());
+                                                                                    new LookupArranger.DefaultArranger() {
+                                                                                      @Override
+                                                                                      public boolean isCompletion() {
+                                                                                        return true;
+                                                                                      }
+                                                                                    });
     if (editor.isOneLineMode()) {
       lookup.setCancelOnClickOutside(true);
       lookup.setCancelOnOtherWindowOpen(true);

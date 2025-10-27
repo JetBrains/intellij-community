@@ -10,11 +10,14 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.externalSystem.issue.BuildIssueException
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.text.nullize
@@ -32,6 +35,7 @@ import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.tooling.proxy.TargetIntermediateResultHandler
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
+import org.jetbrains.plugins.gradle.util.resolveProjectJdk
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -286,11 +290,35 @@ internal class GradleServerEnvironmentSetupImpl(
     }
     else {
       if (environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) == null) {
-        val targetJavaHomePath = FileUtil.toCanonicalPath(consumerOperationParameters.javaHome.path)
-        val javaLanguageRuntimeConfiguration = JavaLanguageRuntimeConfiguration().apply { homePath = targetJavaHomePath }
+        var toolingProxyJdkCandidate = consumerOperationParameters.javaHome?.path
+        if (toolingProxyJdkCandidate == null) {
+          toolingProxyJdkCandidate = suggestJdkForToolingProxyExecution()
+          if (toolingProxyJdkCandidate == null) {
+            throw BuildIssueException(NoJdkForToolingProxyBuildIssue())
+          }
+        }
+        val javaLanguageRuntimeConfiguration = JavaLanguageRuntimeConfiguration()
+        javaLanguageRuntimeConfiguration.homePath = FileUtil.toCanonicalPath(toolingProxyJdkCandidate)
         environmentConfiguration.addLanguageRuntime(javaLanguageRuntimeConfiguration)
       }
     }
+  }
+
+  private fun suggestJdkForToolingProxyExecution(): String? {
+    val projectJdk = project.resolveProjectJdk()?.homePath
+    if (projectJdk != null) {
+      return projectJdk.asLocalPathString()
+    }
+    return ExternalSystemJdkUtil.suggestJdkHomePaths(project)
+      .sortedBy { ExternalSystemJdkUtil.getJavaVersion(it)?.feature }
+      .firstOrNull()
+      ?.asLocalPathString()
+  }
+
+  private fun String.asLocalPathString(): String {
+    return Path.of(this)
+      .asEelPath()
+      .toString()
   }
 
   private fun prepareTargetEnvironmentRequest(request: TargetEnvironmentRequest,
