@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
 import com.intellij.platform.util.coroutines.flow.debounceBatch
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -365,7 +366,14 @@ internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutabl
   }
 
   fun getCommandLine(): String {
-    val gitScriptGenerator = GitScriptGenerator(executable)
+    val gitScriptGenerator = when (executable) {
+      is GitExecutable.Eel -> {
+        GitScriptGenerator((executable.eel.descriptor as? WslEelDescriptor)?.distribution)
+      }
+      else -> {
+        GitScriptGenerator(executable)
+      }
+    }
     return gitScriptGenerator.addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)
   }
 

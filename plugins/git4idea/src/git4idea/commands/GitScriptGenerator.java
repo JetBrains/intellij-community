@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
+import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.externalProcessAuthHelper.ScriptGeneratorImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import externalApp.ExternalApp;
@@ -10,23 +11,34 @@ import git4idea.config.GitExecutable;
 import git4idea.editor.GitRebaseEditorAppHandler;
 import git4idea.http.GitAskPassAppHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 
 public class GitScriptGenerator extends ScriptGeneratorImpl {
-  private final GitExecutable myExecutable;
+  private final WSLDistribution myWSLDistribution;
+
 
   public GitScriptGenerator(@NotNull GitExecutable executable) {
-    myExecutable = executable;
+    if (executable instanceof GitExecutable.Wsl) {
+      myWSLDistribution = ((GitExecutable.Wsl)executable).getDistribution();
+    }
+    else {
+      myWSLDistribution = null;
+    }
+  }
+
+  public GitScriptGenerator(@Nullable WSLDistribution wslDistribution) {
+    myWSLDistribution = wslDistribution;
   }
 
   @Override
   protected @NotNull String getJavaExecutablePath() {
-    if (myExecutable instanceof GitExecutable.Wsl) {
+    if (myWSLDistribution != null) {
       Path javaExecutable = Path.of(String.format("%s\\bin\\java.exe", System.getProperty("java.home")));
-      return myExecutable.convertFilePath(javaExecutable);
+      String converted = myWSLDistribution.getWslPath(javaExecutable.toAbsolutePath());
+      return converted != null ? converted : javaExecutable.toAbsolutePath().toString();
     }
     return super.getJavaExecutablePath();
   }
@@ -35,7 +47,7 @@ public class GitScriptGenerator extends ScriptGeneratorImpl {
   public @NotNull String commandLine(@NotNull Class<? extends ExternalApp> mainClass, boolean useBatchFile) {
     String commandLine = super.commandLine(mainClass, useBatchFile);
 
-    if (myExecutable instanceof GitExecutable.Wsl) {
+    if (myWSLDistribution != null) {
       // pass ENV variables from git to java command
       StringBuilder sb = new StringBuilder();
       List<String> envs = List.of(
