@@ -226,6 +226,11 @@ public final class IdeBackgroundUtil {
     return Strings.isNotEmpty(getBackgroundSpec(project, EDITOR_PROP));
   }
 
+  @ApiStatus.Internal
+  public static boolean isFrameBackgroundImageSet(@Nullable Project project) {
+    return Strings.isNotEmpty(getBackgroundSpec(project, FRAME_PROP));
+  }
+
   public static void repaintAllWindows() {
     UISettings.getInstance().fireUISettingsChanged();
     for (Window window : Window.getWindows()) {
