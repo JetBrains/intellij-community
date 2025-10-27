@@ -250,7 +250,7 @@ class FrontendXDebuggerSession private constructor(
         val newFrame = stackFrame?.let {
           getCurrentSuspendContext()?.getOrCreateStackFrame(it)
         }
-        currentStackFrame.value = StackFrameUpdate.noNotify(newFrame)
+        currentStackFrame.value = StackFrameUpdate.notifyChanged(newFrame)
       }
       is XDebuggerSessionEvent.BreakpointsMuted -> {}
       XDebuggerSessionEvent.SettingsChanged -> {}
