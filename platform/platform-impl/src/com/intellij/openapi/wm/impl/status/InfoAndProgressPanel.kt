@@ -45,6 +45,7 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.util.width
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.JBIterable
@@ -765,7 +766,17 @@ class InfoAndProgressPanel internal constructor(
     }
 
     override fun wrapProgress(): JComponent {
-      val progressWrapper = NonOpaquePanel(BorderLayout())
+      val progressWrapper = if (isCompact) {
+        object : NonOpaquePanel(BorderLayout()) {
+          override fun getPreferredSize(): Dimension {
+            val insets = border.getBorderInsets(this)
+            return Dimension(JBUI.scale(72 + insets.width), -1)
+          }
+        }
+      }
+      else {
+        NonOpaquePanel(BorderLayout())
+      }
       progressWrapper.add(progress, BorderLayout.CENTER)
       return progressWrapper
     }
