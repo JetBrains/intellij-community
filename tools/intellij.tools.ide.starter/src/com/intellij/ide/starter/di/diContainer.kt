@@ -95,7 +95,7 @@ var di: DI = _di
       field = value
       logOutput(
         """Starter DI was updated by: 
-        |${Thread.currentThread().stackTrace.copyOfRange(2, 4).joinToString(separator = "\n") { "- $it" }}"""
+        |${Thread.currentThread().stackTrace.copyOfRange(2, 5).joinToString(separator = "\n") { "- $it" }}"""
           .trimMargin()
       )
     }

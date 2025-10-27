@@ -7,14 +7,22 @@ import org.junit.platform.launcher.TestExecutionListener
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
 
+private val lock = Any()
+
+fun initStarterDevBuildServerDI() {
+  synchronized(lock) {
+    di = DI {
+      extend(di)
+      bindSingleton<DevBuildServerRunner>(overrides = true) { DevBuildServerRunnerImpl }
+    }
+    DISnapshot.initSnapshot(di, overwrite = true)
+  }
+}
+
 class DevBuildServerListener : TestExecutionListener {
   companion object {
     init {
-      di = DI {
-        extend(di)
-        bindSingleton<DevBuildServerRunner>(overrides = true) { DevBuildServerRunnerImpl }
-      }
-      DISnapshot.initSnapshot(di, overwrite = true)
+      initStarterDevBuildServerDI()
     }
   }
 }
