@@ -13172,6 +13172,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("IfBlockInAssignmentWithComment.kt")
+            public void testIfBlockInAssignmentWithComment() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/IfBlockInAssignmentWithComment.kt");
+            }
+
+            @TestMetadata("IfBlockWithBlockComment1.kt")
+            public void testIfBlockWithBlockComment1() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/IfBlockWithBlockComment1.kt");
+            }
+
+            @TestMetadata("IfBlockWithBlockComment2.kt")
+            public void testIfBlockWithBlockComment2() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/IfBlockWithBlockComment2.kt");
+            }
+
+            @TestMetadata("IfBlockWithBlockComment3.kt")
+            public void testIfBlockWithBlockComment3() throws Exception {
+                runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/IfBlockWithBlockComment3.kt");
+            }
+
             @TestMetadata("ifBlockWithComments.kt")
             public void testIfBlockWithComments() throws Exception {
                 runTest("testData/inspectionsLocal/replaceIsEmptyWithIfEmpty/comments/ifBlockWithComments.kt");
