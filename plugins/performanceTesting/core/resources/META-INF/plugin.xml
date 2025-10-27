@@ -43,8 +43,8 @@
       <add-to-group group-id="HelpDiagnosticTools" anchor="last"/>
     </group>
 
-    <action id="SimulateFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateFreeze"
-            text="Simulate a Freeze"/>
+    <action id="SimulateFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateFreeze"/>
+    <action id="SimulateRWFreeze" internal="true" class="com.jetbrains.performancePlugin.actions.SimulateRWFreeze"/>
   </actions>
 
   <extensionPoints>
