@@ -205,8 +205,7 @@ public class UndoManagerImpl extends UndoManager {
 
   public @NotNull CurrentEditorProvider getEditorProvider() {
     CurrentEditorProvider provider = myOverriddenEditorProvider;
-    FileEditor fileEditor = ((provider != null) ? provider : CurrentEditorProvider.getInstance()).getCurrentEditor(myProject);
-    return new StableEditorProvider(fileEditor);
+    return new StableEditorProvider(provider != null ? provider : CurrentEditorProvider.getInstance());
   }
 
   public @Nullable Project getProject() {
