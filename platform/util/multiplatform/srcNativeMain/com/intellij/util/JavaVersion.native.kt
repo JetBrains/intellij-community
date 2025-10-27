@@ -10,4 +10,4 @@ import org.jetbrains.annotations.ApiStatus
  */
 @Actual
 @ApiStatus.Internal
-fun currentJavaVersionPlatformSpecificWasmJs() = DefaultJavaVersion
+fun currentJavaVersionPlatformSpecificNative(): JavaVersion = DefaultJavaVersion

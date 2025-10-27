@@ -10,11 +10,7 @@ import kotlin.jvm.JvmName
 
 @Contract(pure = true)
 fun CharSequence.containsLineBreak(): Boolean {
-  for (i in 0..<length) {
-    val c = this[i]
-    if (c.isLineBreak()) return true
-  }
-  return false
+  return any { it.isLineBreak() }
 }
 
 @Contract(pure = true)
