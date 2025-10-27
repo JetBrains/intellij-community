@@ -51,7 +51,7 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
 
   override fun isInitiallyVisible(): Boolean = isWelcomeScreenProject(project)
 
-  override fun isDefaultPane(project: Project): Boolean = false
+  override fun isDefaultPane(project: Project): Boolean = isWelcomeScreenProject(project)
 
   override fun getWeight(): Int = -10 // TODO: Increase weight?
 
