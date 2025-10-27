@@ -6,6 +6,7 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.NlsActions
@@ -48,7 +49,7 @@ internal fun updateWinControlsTheme(background: Color, customTitleBar: CustomTit
   customTitleBar.putProperty("controls.background.hovered", UIManager.getColor("TitlePane.Button.hoverBackground"))
 }
 
-internal sealed class CustomHeader(@JvmField internal val window: Window) : JPanel() {
+internal sealed class CustomHeader(@JvmField internal val window: Window) : JPanel(), BorderPainterHolder {
   companion object {
     val H: Int
       get() = 12
@@ -127,7 +128,7 @@ internal sealed class CustomHeader(@JvmField internal val window: Window) : JPan
     createProductIcon()
   }
 
-  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+  override var borderPainter: BorderPainter = DefaultBorderPainter()
 
   init {
     isOpaque = true

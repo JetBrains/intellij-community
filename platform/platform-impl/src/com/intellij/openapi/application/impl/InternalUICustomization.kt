@@ -95,7 +95,11 @@ open class InternalUICustomization {
 
   open fun configureMainToolbar(toolbar: MainToolbar) {}
 
-  open fun configureTopNavBar(navBar: TopNavBarComponentFacade) {}
+  /**
+   * For Islands theme: the components are painted with the IDE background or gradient if set.
+   * For other themes: has no effect
+   */
+  open fun registerWindowBackgroundComponent(component: JComponent) {}
 
   open fun getEditorToolbarButtonLook(): ActionButtonLook? = null
 
@@ -173,6 +177,6 @@ open class InternalUICustomization {
 }
 
 @ApiStatus.Internal
-interface TopNavBarComponentFacade {
+interface BorderPainterHolder {
   var borderPainter: BorderPainter
 }
