@@ -1021,7 +1021,7 @@ class InfoAndProgressPanel internal constructor(
           }
 
           if (showCounterInsteadOfMultiProcessLink) {
-            addVisibleToPreferred(counterComponent, withGap = true, enforceOnInvisible = true)
+            addVisibleToPreferred(counterComponent, withGap = false, enforceOnInvisible = true)
             addVisibleToPreferred(progressIcon, withGap = false)
           }
           addVisibleToPreferred(multiProcessLink, withGap = true)
@@ -1123,7 +1123,7 @@ class InfoAndProgressPanel internal constructor(
 
           when {
             showCounterInsteadOfMultiProcessLink && counterComponent.isVisible -> {
-              rightX = setBounds(counterComponent, rightX, centerY, null, true) - gap
+              rightX = setBounds(counterComponent, rightX, centerY, null, true)
             }
             multiProcessLink.isVisible /* && !showCounterInsteadOfMultiProcessLink */ -> {
               rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
@@ -1261,6 +1261,7 @@ private class CounterLabel : JPanel(), UISettingsListener {
   private fun createTextPanel(): TextPanel {
     val panel = TextPanel()
     panel.foreground = JBUI.CurrentTheme.StatusBar.Widget.FOREGROUND
+    panel.border = JBUI.Borders.emptyLeft(4)
     return panel
   }
 
