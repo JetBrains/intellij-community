@@ -58,7 +58,7 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
 
   override fun findJdk(name: String, type: String): Sdk? {
     // sometimes delegate.findJdk can do mutating operations, like in the case of ProjectJdkTableImpl
-    return allJdks.find { it.name == name && it.sdkType.name == type } ?: delegate.findJdk(name, type)
+    return delegate.allJdks.find { it.name == name && it.sdkType.name == type && validateDescriptor(it) } ?: delegate.findJdk(name, type)
   }
 
   override fun getAllJdks(): Array<out Sdk> {
