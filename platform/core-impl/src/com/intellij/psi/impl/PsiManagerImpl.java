@@ -464,7 +464,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @RequiresWriteLock
   @ApiStatus.Internal
-  static void runWriteActionOnEdtRegardlessOfCurrentThread(Runnable action) {
+  public static void runWriteActionOnEdtRegardlessOfCurrentThread(Runnable action) {
     if (EDT.isCurrentThreadEdt()) {
       action.run();
     }
