@@ -270,14 +270,16 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun testSameVersionVar(gradleVersion: GradleVersion) {
+    fun testStringInterpolation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
-                """
+                $$"""
                 dependencies {
-                    var versionRef = "2.2.0"
-                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = versionRef)
-                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = versionRef)
+                    val groupRef = "org.jetbrains.kotlin"
+                    val nameRef = "kotlin-stdlib"
+                    val versionRef = "2.2.0"
+                    <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                    <weak_warning>api("$groupRef:$nameRef:$versionRef")</weak_warning>
                 }
                 """.trimIndent()
             )
@@ -286,15 +288,52 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun testDifferentVersionVal(gradleVersion: GradleVersion) {
+    fun testNamedArgumentsVals(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
                 """
+                dependencies {
+                    val groupRef = "org.jetbrains.kotlin"
+                    val nameRef = "kotlin-stdlib"
+                    val versionRef = "2.2.0"
+                    <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                    <weak_warning>api(group = groupRef, name = nameRef, version = versionRef)</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testCoordinateVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    val coordRef = "org.jetbrains.kotlin:kotlin-stdlib:2.2.0"
+                    <weak_warning>api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")</weak_warning>
+                    <weak_warning>api(coordRef)</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentVersionSameNameVal(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                $$"""
+                dependencies {
+                    val versionRef = "2.1.0"
+                    api("org.jetbrains.kotlin:kotlin-stdlib:$versionRef")
+                }
                 dependencies {
                     val versionRef = "2.2.0"
-                    val versionRef2 = "2.2.0"
-                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = versionRef)
-                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = versionRef2)
+                    api("org.jetbrains.kotlin:kotlin-stdlib:$versionRef")
                 }
                 """.trimIndent()
             )
@@ -303,7 +342,7 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
 
     @ParameterizedTest
     @BaseGradleVersionSource
-    fun testDifferentVersionValWithSameName(gradleVersion: GradleVersion) {
+    fun testDifferentVersionSameNameValNamedArguments(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
                 """
@@ -364,6 +403,302 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
                     <weak_warning>customConf(libs.kotlin.std.lib.simple)</weak_warning>
                 }
                 """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testSameKotlinArg(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    <weak_warning>api(kotlin("stdlib"))</weak_warning>
+                    <weak_warning>api(kotlin("stdlib"))</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testDifferentKotlinArg(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    api(kotlin("stdlib-jdk8"))
+                    api(kotlin("stdlib"))
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testKotlinArgVar(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    var kotlinArg = "stdlib"
+                    api(kotlin(kotlinArg))
+                    api(kotlin(kotlinArg))
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testSameKotlinArgDifferentVals(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    val kotlinRef = "stdlib"
+                    val kotlinRef2 = "stdlib"
+                    <weak_warning>api(kotlin(kotlinRef))</weak_warning>
+                    <weak_warning>api(kotlin(kotlinRef))</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testIgnoreOtherDependencyBlocks(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                buildscript {
+                    dependencies {
+                        classpath("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    }
+                }
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRemoveSimple(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testIntention(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent(),
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRemoveSimpleMultiple(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testIntention(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent(),
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRemoveSimpleUnselected(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testIntention(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    implementation("org:another:1.0.0")
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
+                    implementation("org:yet-another:1.0.0")
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent(),
+                """
+                dependencies {
+                    implementation("org:another:1.0.0")
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    implementation("org:yet-another:1.0.0")
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRemoveNamedArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testIntention(
+                """
+                dependencies {
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")<caret>
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")
+                }
+                """.trimIndent(),
+                """
+                dependencies {
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testNoRemoveNamedArgumentsAndSimpleMix(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testNoIntentions(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+            testNoIntentions(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")<caret>
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testRemoveVals(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testIntention(
+                """
+                dependencies {
+                    val versionRef = "2.2.0"
+                    api("org.jetbrains.kotlin:kotlin-stdlib:versionRef")<caret>
+                    api("org.jetbrains.kotlin:kotlin-stdlib:versionRef")
+                    api("org.jetbrains.kotlin:kotlin-stdlib:versionRef")
+                }
+                """.trimIndent(),
+                """
+                dependencies {
+                    val versionRef = "2.2.0"
+                    api("org.jetbrains.kotlin:kotlin-stdlib:versionRef")
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testNoRemoveDifferentConfiguration(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testNoIntentions(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
+                    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+            testNoIntentions(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testNoRemoveWithConfigurationBlock(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testNoIntentions(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret>
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0") { exclude("something") }
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+            testNoIntentions(
+                """
+                dependencies {
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")
+                    api("org.jetbrains.kotlin:kotlin-stdlib:2.2.0")<caret> { exclude("something") }
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testNoRemoveDifferentExtraArguments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testNoIntentions(
+                """
+                dependencies {
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")<caret>
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0", ext = "something")
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
+            )
+            testNoIntentions(
+                """
+                dependencies {
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0")
+                    api(group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version = "2.2.0", ext = "something")<caret>
+                }
+                """.trimIndent(),
+                "Remove exact duplicates"
             )
         }
     }
