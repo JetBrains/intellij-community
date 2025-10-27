@@ -163,8 +163,6 @@ open class InternalUICustomization {
 
   open fun getProjectTabContentInsets(): Insets? = null
 
-  open fun paintProjectTabsContainer(component: JComponent, g: Graphics): Boolean = false
-
   open fun createProjectTab(frame: JFrame, tabsComponent: WindowTabsComponent) {}
 
   open fun paintProjectTab(frame: JFrame, label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean = false
