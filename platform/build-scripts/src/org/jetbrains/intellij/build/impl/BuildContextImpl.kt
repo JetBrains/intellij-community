@@ -70,10 +70,10 @@ class BuildContextImpl internal constructor(
   override val linuxDistributionCustomizer: LinuxDistributionCustomizer?,
   override val macDistributionCustomizer: MacDistributionCustomizer?,
   override val proprietaryBuildTools: ProprietaryBuildTools,
+  @JvmField internal val jarCacheManager: JarCacheManager,
   override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(
     compilationContext.project, productProperties, compilationContext.options
   ),
-  @JvmField internal val jarCacheManager: JarCacheManager,
 ) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
@@ -176,18 +176,9 @@ class BuildContextImpl internal constructor(
       proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
       options: BuildOptions = BuildOptions(),
     ): BuildContext {
-      val compilationContext = CompilationContextImpl.createCompilationContext(
-        projectHome = projectHome,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
-        options = options,
-        setupTracer = setupTracer
-      ).asBazelIfNeeded
-      return createContext(
-        compilationContext = compilationContext,
-        projectHome = projectHome,
-        productProperties = productProperties,
-        proprietaryBuildTools = proprietaryBuildTools,
-      )
+      val outputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options)
+      val compilationContext = CompilationContextImpl.createCompilationContext(projectHome, outputRootEvaluator, options, setupTracer).asBazelIfNeeded
+      return createContext(compilationContext, projectHome, productProperties, proprietaryBuildTools)
     }
 
     fun createContext(
@@ -200,23 +191,28 @@ class BuildContextImpl internal constructor(
       val jarCacheManager = compilationContext.options.jarCacheDir?.let {
         LocalDiskJarCacheManager(cacheDir = it, productionClassOutDir = compilationContext.classesOutputDirectory.resolve("production"))
       } ?: NonCachingJarCacheManager
+      val applicationInfo = ApplicationInfoPropertiesImpl(compilationContext.project, productProperties, compilationContext.options)
       return BuildContextImpl(
         compilationContext.asArchivedIfNeeded, productProperties,
         productProperties.createWindowsCustomizer(projectHomeAsString),
         productProperties.createLinuxCustomizer(projectHomeAsString),
         productProperties.createMacCustomizer(projectHomeAsString),
-        proprietaryBuildTools,
-        ApplicationInfoPropertiesImpl(compilationContext.project, productProperties, compilationContext.options),
-        jarCacheManager,
+        proprietaryBuildTools, jarCacheManager, applicationInfo
       )
     }
 
-    private val PLUGIN_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
+    private val PLUGIN_DATE_FORMAT = DateTimeFormatter.ofPattern(@Suppress("SpellCheckingInspection") "yyyyMMdd")
+
+    private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path = { project ->
+      val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
+      projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
+    }
   }
 
   override var builtinModule: BuiltinModulesFileData?
-    get() = if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) null
-            else builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
+    get() =
+      if (options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) null
+      else builtinModulesData ?: throw IllegalStateException("builtinModulesData is not set. Make sure `BuildTasksImpl.buildProvidedModuleList` was called before")
     set(value) {
       check(builtinModulesData == null) { "builtinModulesData was already set" }
       builtinModulesData = value
@@ -332,7 +328,7 @@ class BuildContextImpl internal constructor(
       productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString),
       productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
       productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
-      proprietaryBuildTools, newAppInfo, jarCacheManager
+      proprietaryBuildTools, jarCacheManager, newAppInfo
     )
     if (prepareForBuild) {
       copy.compilationContext.prepareForBuild()
@@ -440,13 +436,9 @@ class BuildContextImpl internal constructor(
     val productModulesFile = findProductModulesFile(context = this, clientMainModuleName = rootModuleName)
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
     val resolver = object : ResourceFileResolver {
-      override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
-        return findFileInModuleSources(findRequiredModule(moduleId.stringId), relativePath)?.inputStream()
-      }
-
-      override fun toString(): String {
-        return "source file based resolver for '${paths.projectHome}' project"
-      }
+      override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? =
+        findFileInModuleSources(findRequiredModule(moduleId.stringId), relativePath)?.inputStream()
+      override fun toString(): String = "source file based resolver for '${paths.projectHome}' project"
     }
     return ProductModulesSerialization.readProductModulesAndMergeIncluded(productModulesFile.inputStream(), productModulesFile.pathString, resolver)
   }
@@ -455,11 +447,9 @@ class BuildContextImpl internal constructor(
     createDevModeProductRunner(this@BuildContextImpl)
   }
 
-  override suspend fun createProductRunner(additionalPluginModules: List<String>): IntellijProductRunner {
-    return when {
-      additionalPluginModules.isEmpty() -> devModeProductRunner.await()
-      else -> createDevModeProductRunner(additionalPluginModules = additionalPluginModules, context = this)
-    }
+  override suspend fun createProductRunner(additionalPluginModules: List<String>): IntellijProductRunner = when {
+    additionalPluginModules.isEmpty() -> devModeProductRunner.await()
+    else -> createDevModeProductRunner(context = this, additionalPluginModules)
   }
 
   override suspend fun runProcess(
@@ -470,13 +460,8 @@ class BuildContextImpl internal constructor(
     attachStdOutToException: Boolean,
   ) {
     runProcess(
-      args = args,
-      workingDir = workingDir,
-      timeout = timeout,
-      additionalEnvVariables = additionalEnvVariables,
-      attachStdOutToException = attachStdOutToException,
-      stdOutConsumer = messages::info,
-      stdErrConsumer = messages::warning,
+      args, workingDir, timeout, additionalEnvVariables,
+      attachStdOutToException = attachStdOutToException, stdOutConsumer = messages::info, stdErrConsumer = messages::warning
     )
   }
 
@@ -488,20 +473,10 @@ class BuildContextImpl internal constructor(
     createDistributionState(this@BuildContextImpl)
   }
 
-  override suspend fun distributionState(): DistributionBuilderState {
-    return distributionState.await()
-  }
+  override suspend fun distributionState(): DistributionBuilderState = distributionState.await()
 }
 
-internal fun findProductModulesFile(context: CompilationContext, clientMainModuleName: String): Path? {
-  return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
-}
+internal fun findProductModulesFile(context: CompilationContext, clientMainModuleName: String): Path? =
+  findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
 
-private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path = { project ->
-  val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
-  projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
-}
-
-private fun isNightly(buildNumber: String): Boolean {
-  return buildNumber.count { it == '.' } <= 1
-}
+private fun isNightly(buildNumber: String): Boolean = buildNumber.count { it == '.' } <= 1

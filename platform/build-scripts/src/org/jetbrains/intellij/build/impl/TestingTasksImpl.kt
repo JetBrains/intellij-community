@@ -637,16 +637,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     jvmArgs.addAll(0, listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=${hprofSnapshotFilePath}"))
 
     val customMemoryOptions = options.jvmMemoryOptions?.trim()?.split(Regex("\\s+"))?.takeIf { it.isNotEmpty() }
-    jvmArgs.addAll(
-      index = 0,
-      elements = VmOptionsGenerator.generate(
-        isEAP = true,
-        bundledRuntime = context.bundledRuntime,
-        customVmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
-        additionalVmOptions = customMemoryOptions ?: emptyList(),
-        platformPrefix = options.platformPrefix,
-      ),
-    )
+    jvmArgs.addAll(0, VmOptionsGenerator.generate(
+      isEAP = true,
+      customVmMemoryOptions = if (customMemoryOptions == null) mapOf("-Xms" to "750m", "-Xmx" to "1024m") else emptyMap(),
+      additionalVmOptions = customMemoryOptions ?: emptyList(),
+      options.platformPrefix
+    ))
 
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
     val ideaSystemPath = Path.of("$tempDir/system")
@@ -665,7 +661,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         }
       }
     }
-    @Suppress("SpellCheckingInspection")
     for ((k, v) in sequenceOf(
       "idea.platform.prefix" to options.platformPrefix,
       "idea.home.path" to context.paths.projectHome.toString(),

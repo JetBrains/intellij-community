@@ -48,12 +48,9 @@ internal fun generateProductInfoJson(
   context: BuildContext,
 ): String {
   val appInfo = context.applicationInfo
-  val jbrFlavors = if (launch.any { it.javaExecutablePath != null } && context.bundledRuntime.build.startsWith("17.")) {
-    listOf(ProductFlavorData("jbr17"))
-  }
-  else {
-    emptyList()
-  }
+  val jbrFlavors =
+    if (launch.any { it.javaExecutablePath != null } && context.bundledRuntime.version == 17) listOf(ProductFlavorData("jbr17"))
+    else emptyList()
   val productProperties = context.productProperties
   val productFlavors = productProperties.getProductFlavors(context).map { ProductFlavorData(it) }
   val json = ProductInfoData.create(
@@ -66,7 +63,7 @@ internal fun generateProductInfoJson(
     dataDirectoryName = context.systemSelector,
     svgIconPath = if (appInfo.svgRelativePath == null) null else "${relativePathToBin}/${productProperties.baseFileName}.svg",
     productVendor = appInfo.shortCompanyName,
-    majorVersionReleaseDate = LocalDate.parse(appInfo.majorReleaseDate, DateTimeFormatter.ofPattern("yyyyMMdd")),
+    majorVersionReleaseDate = LocalDate.parse(appInfo.majorReleaseDate, DateTimeFormatter.ofPattern(@Suppress("SpellCheckingInspection") "yyyyMMdd")),
     launch = launch,
     customProperties = listOfNotNull(generateGitRevisionProperty(context)) + productProperties.generateCustomPropertiesForProductInfo(),
     bundledPlugins = builtinModules?.plugins ?: emptyList(),
@@ -139,6 +136,4 @@ internal suspend fun generateEmbeddedFrontendLaunchData(
  *
  * E.g., if [this] is `installer.tag.gz`, returned Path will be `installer.tag.gz.product-info.json`.
  */
-internal fun Path.resolveProductInfoJsonSibling(): Path {
-  return resolveSibling("${this.fileName}.$PRODUCT_INFO_FILE_NAME")
-}
+internal fun Path.resolveProductInfoJsonSibling(): Path = resolveSibling("${this.fileName}.$PRODUCT_INFO_FILE_NAME")
