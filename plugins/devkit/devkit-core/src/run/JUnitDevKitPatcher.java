@@ -148,6 +148,9 @@ public final class JUnitDevKitPatcher extends JUnitPatcher {
 
   public static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
     var sdkVersion = jdk.getSdkType() instanceof JavaSdk javaSdk ? javaSdk.getVersion(jdk) : null;
+    if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_25)) {
+      vm.add("--enable-native-access=ALL-UNNAMED");
+    }
     if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
       var scope = ProjectScope.getContentScope(project);
       var files = ReadAction.compute(() -> FilenameIndex.getVirtualFilesByName("OpenedPackages.txt", scope));
