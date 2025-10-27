@@ -19,6 +19,7 @@ fleetModule {
   module {
     name = "fleet.build.s3"
     importedFromJps {}
+    test {}
   }
 }
 
@@ -58,8 +59,23 @@ kotlin {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-common")
       exclude(group = "org.slf4j", module = "slf4j-api")
     }
+    implementation(jps.org.slf4j.slf4j.api2013636515.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      isTransitive = false
+      exclude(group = "org.slf4j", module = "slf4j-jdk14")
+    }
     implementation(project(":fleet.build.platform"))
     implementation(project(":fleet.build.fs"))
+  }
+  sourceSets.commonTest.dependencies {
+    implementation(jps.org.jetbrains.kotlin.kotlin.test542871666.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+    }
+    implementation(jps.org.jetbrains.intellij.deps.kotlinx.kotlinx.coroutines.test.jvm1610416103.get().let { "${it.group}:kotlinx-coroutines-test:${it.version}" }) {
+      isTransitive = false
+    }
+  }
+  sourceSets.jvmTest.dependencies {
+    implementation(project(":fleet.junit4"))
   }
   // KOTLIN__MARKER_END
 }
