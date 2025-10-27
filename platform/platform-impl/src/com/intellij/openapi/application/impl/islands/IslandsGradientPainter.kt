@@ -25,12 +25,22 @@ import javax.swing.JComponent
 
 internal class IslandsGradientPainter(private val frame: IdeFrame, private val mainColor: Color, private val enabled: () -> Boolean) : AbstractPainter() {
 
+  /**
+   * The list of auto replaced colors. Should contain only very specific colors, don't add widely used like `Panel.background`
+   */
   private val islandsGradientColors = setOf(
+    // Root components
     "MainWindow.background",
     "MainToolbar.background",
     "MainToolbar.inactiveBackground",
     "ToolWindow.Stripe.background",
-    "StatusBar.background")
+    "StatusBar.background",
+
+    // Nav bar
+    "StatusBar.Breadcrumbs.hoverBackground",
+    "StatusBar.Breadcrumbs.selectionBackground",
+    "StatusBar.Breadcrumbs.selectionInactiveBackground"
+    )
 
   private val projectWindowCustomizer = ProjectWindowCustomizerService.getInstance()
 

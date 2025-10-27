@@ -10,32 +10,28 @@ import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
-import com.intellij.openapi.application.impl.TopNavBarComponentFacade
 import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
-import com.intellij.openapi.ui.Divider
-import com.intellij.openapi.ui.OnePixelDivider
-import com.intellij.openapi.ui.Splittable
+import com.intellij.openapi.ui.*
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.content.ContentLayout
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.MacToolbarFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
-import com.intellij.toolWindow.ToolWindowToolbar
 import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLayeredPane
@@ -63,6 +59,10 @@ import javax.swing.JFrame
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 import javax.swing.border.Border
+
+private data class WindowBackgroundComponentData(val origOpaque: Boolean, val origBackground: Color?)
+
+private val WINDOW_BACKGROUND_COMPONENT_KEY: Key<WindowBackgroundComponentData> = Key.create("Islands.WINDOW_BACKGROUND_COMPONENT_KEY")
 
 internal class IslandsUICustomization : InternalUICustomization() {
   private val isIslandsAvailable = ExperimentalUI.isNewUI()
@@ -447,9 +447,11 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  override fun configureTopNavBar(navBar: TopNavBarComponentFacade) {
+  override fun registerWindowBackgroundComponent(component: JComponent) {
+    component.putUserData(WINDOW_BACKGROUND_COMPONENT_KEY, WindowBackgroundComponentData(component.isOpaque, component.background))
+
     if (isManyIslandEnabled) {
-      configureMainFrameChildren(navBar as Component, true)
+      configureMainFrameChildren(component, true)
     }
   }
 
@@ -464,29 +466,25 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   private fun configureMainFrameChildren(component: Component, install: Boolean) {
     when (component) {
-      is ToolWindowToolbar -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-      }
-      is CustomHeader -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-      }
-      is MacToolbarFrameHeader -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-      }
       is IdeStatusBarImpl -> {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
-      is MainToolbar -> {
+      is BorderPainterHolder -> {
         component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
       }
-      is ToolWindowPane -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-      }
-      is TopNavBarComponentFacade -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
-      }
-      is WindowTabsComponent -> {
-        component.borderPainter = if (install) inactivePainter else DefaultBorderPainter()
+    }
+
+    if (component is JComponent) {
+      val data = component.getUserData(WINDOW_BACKGROUND_COMPONENT_KEY)
+      if (data != null) {
+        if (install) {
+          component.isOpaque = true
+          component.background = getMainBackgroundColor()
+        }
+        else {
+          component.isOpaque = data.origOpaque
+          component.background = data.origBackground
+        }
       }
     }
   }

@@ -8,6 +8,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -65,7 +66,7 @@ class ToolWindowPane private constructor(
   frame: JFrame,
   val paneId: String,
   @field:JvmField internal val buttonManager: ToolWindowButtonManager,
-) : JLayeredPane(), UISettingsListener {
+) : JLayeredPane(), UISettingsListener, BorderPainterHolder {
   companion object {
     const val TEMPORARY_ADDED: String = "TEMPORARY_ADDED"
 
@@ -125,7 +126,8 @@ class ToolWindowPane private constructor(
 
   internal val frame: JFrame
 
-  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+  override var borderPainter: BorderPainter = DefaultBorderPainter()
+
   /**
    * This panel is the layered pane where all sliding tool windows are located. The DEFAULT
    * layer contains splitters. The PALETTE layer contains all sliding tool windows.

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
@@ -51,7 +52,7 @@ internal class MacToolbarFrameHeader(
   private val frame: JFrame,
   private val rootPane: JRootPane,
   private val isAlwaysCompact: Boolean = false,
-) : JPanel(), MainFrameCustomHeader, ToolbarHolder, UISettingsListener {
+) : JPanel(), MainFrameCustomHeader, ToolbarHolder, UISettingsListener, BorderPainterHolder {
   private var view: HeaderView
 
   private val updateRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -72,7 +73,7 @@ internal class MacToolbarFrameHeader(
 
   val customTitleBar: WindowDecorations.CustomTitleBar?
 
-  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+  override var borderPainter: BorderPainter = DefaultBorderPainter()
 
   init {
     // a colorful toolbar
