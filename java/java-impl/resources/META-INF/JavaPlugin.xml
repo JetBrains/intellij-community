@@ -2043,6 +2043,7 @@
                      implementationClass="com.intellij.codeInspection.wrongPackageStatement.WrongPackageStatementInspection"/>
     <localInspection groupPathKey="group.path.names.probable.bugs" language="JAVA" shortName="NullableProblems" bundle="messages.JavaBundle"
                      key="inspection.nullable.problems.display.name"
+                     hasStaticDescription="true"
                      groupKey="group.names.nullability.problems" groupBundle="messages.InspectionsBundle" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.nullable.NullableStuffInspection"/>

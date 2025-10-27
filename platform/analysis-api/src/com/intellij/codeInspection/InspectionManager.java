@@ -81,6 +81,14 @@ public abstract class InspectionManager {
                                                                      boolean onTheFly,
                                                                      @NotNull LocalQuickFix @Nullable ... fixes);
 
+  public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
+                                                                     @Nullable("null means the text range of the element") TextRange rangeInElement,
+                                                                     @NotNull @InspectionMessage String descriptionTemplate,
+                                                                     @NotNull ProblemHighlightType highlightType,
+                                                                     @NotNull String tooltipMessage,
+                                                                     boolean onTheFly,
+                                                                     @NotNull LocalQuickFix @Nullable ... fixes);
+
   @Contract(pure = true)
   public abstract @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                                      @NotNull @InspectionMessage String descriptionTemplate,

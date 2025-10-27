@@ -287,6 +287,8 @@ com.intellij.codeInspection.HintAction
 - com.intellij.codeInsight.intention.IntentionAction
 - fixSilently(com.intellij.openapi.editor.Editor):Z
 - a:showHint(com.intellij.openapi.editor.Editor):Z
+a:com.intellij.codeInspection.InspectionManager
+- a:createProblemDescriptor(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String,com.intellij.codeInspection.ProblemHighlightType,java.lang.String,Z,com.intellij.codeInspection.LocalQuickFix[]):com.intellij.codeInspection.ProblemDescriptor
 com.intellij.codeInspection.InspectionProfile
 - java.lang.Comparable
 - sf:DEFAULT_PROFILE_NAME:java.lang.String
@@ -347,6 +349,8 @@ com.intellij.codeInspection.ProblemDescriptor
 - a:setProblemGroup(com.intellij.lang.annotation.ProblemGroup):V
 - a:setTextAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - a:showTooltip():Z
+f:com.intellij.codeInspection.ProblemsHolder$ProblemBuilder
+- tooltip(java.lang.String):com.intellij.codeInspection.ProblemsHolder$ProblemBuilder
 com.intellij.codeInspection.QuickFix
 - com.intellij.openapi.application.WriteActionAware
 - sf:EMPTY_ARRAY:com.intellij.codeInspection.QuickFix[]

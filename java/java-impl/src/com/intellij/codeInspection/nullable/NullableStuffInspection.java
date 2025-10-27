@@ -11,6 +11,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -25,6 +26,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -52,6 +54,15 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
         "inspection.nullable.problems.redundant.nullability.inside.container")),
       JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.NULLABILITY_ANNOTATIONS)
     );
+  }
+
+  @Override
+  public @Nullable @Nls String getStaticDescription() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return "";
+    } else {
+      return null;
+    }
   }
 
   @Override

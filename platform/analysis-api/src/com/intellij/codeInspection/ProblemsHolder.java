@@ -244,10 +244,12 @@ public class ProblemsHolder {
     private @NotNull ProblemHighlightType myHighlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
     private @Nullable TextRange myRange;
     private final @NotNull List<LocalQuickFix> myFixes = new ArrayList<>();
+    private @NotNull String myTooltip;
 
     private ProblemBuilder(@NotNull PsiElement element, @InspectionMessage @NotNull String template) {
       myPsiElement = element;
       myDescriptionTemplate = template;
+      myTooltip = myDescriptionTemplate;
     }
 
     /**
@@ -314,8 +316,24 @@ public class ProblemsHolder {
       return this;
     }
 
+    /**
+     * @param tooltip a message that is visible in the editor. It might contain HTML markup.
+     * @return this builder
+     */
+    @Contract(value = "_ -> this", mutates = "this")
+    public ProblemBuilder tooltip(@NotNull String tooltip) {
+      myTooltip = tooltip;
+      return this;
+    }
+
     public void register() {
-      registerProblem(myPsiElement, myDescriptionTemplate, myHighlightType, myRange, myFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      ProblemDescriptor descriptor = getManager()
+        .createProblemDescriptor(myPsiElement,
+                                 myRange,
+                                 myDescriptionTemplate,
+                                 myHighlightType, myTooltip, myOnTheFly,
+                                 myFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+      registerProblem(descriptor);
     }
   }
 }
