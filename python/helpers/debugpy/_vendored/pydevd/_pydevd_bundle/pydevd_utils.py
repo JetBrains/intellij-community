@@ -330,10 +330,10 @@ class DAPGrouper(object):
     the xml protocol the type is just added to each variable and the UI can group/hide it as needed.
     """
 
-    SCOPE_SPECIAL_VARS = "special variables"
-    SCOPE_PROTECTED_VARS = "protected variables"
-    SCOPE_FUNCTION_VARS = "function variables"
-    SCOPE_CLASS_VARS = "class variables"
+    SCOPE_SPECIAL_VARS = "Special Variables"
+    SCOPE_PROTECTED_VARS = "Protected Attributes"
+    SCOPE_FUNCTION_VARS = "Function Variables"
+    SCOPE_CLASS_VARS = "Class Variables"
 
     SCOPES_SORTED = [
         SCOPE_SPECIAL_VARS,
