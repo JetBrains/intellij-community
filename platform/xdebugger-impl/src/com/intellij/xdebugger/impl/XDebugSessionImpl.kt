@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
+import com.intellij.diagnostic.logging.LogConsoleManager
+import com.intellij.diagnostic.logging.LogFilesManager
 import com.intellij.execution.Executor
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.configurations.RunConfiguration
@@ -46,6 +48,7 @@ import com.intellij.ui.AppUIUtil.invokeOnEdt
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.*
@@ -499,7 +502,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
           }
 
           val component get() = myUi.component
+
+          val consoleManger get() = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
+        addAdditionalConsolesToManager(runTab.consoleManger, localTabScope.asDisposable())
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
@@ -556,6 +562,17 @@ class XDebugSessionImpl @JvmOverloads constructor(
     val runConfiguration = executionEnvironment?.runProfile
     if (runConfiguration is RunConfigurationBase<*>) {
       runConfiguration.createAdditionalTabComponents(additionalTabComponentManager, debugProcess.processHandler)
+    }
+  }
+
+  private fun addAdditionalConsolesToManager(
+    consoleManager: LogConsoleManager,
+    disposable: Disposable,
+  ) {
+    val runConfiguration = executionEnvironment?.runProfile
+    if (runConfiguration is RunConfigurationBase<*>) {
+      val logFilesManager = LogFilesManager(project, consoleManager, disposable)
+      logFilesManager.addLogConsoles(runConfiguration, debugProcess.processHandler)
     }
   }
 

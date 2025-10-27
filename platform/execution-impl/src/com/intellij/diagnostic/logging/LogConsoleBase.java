@@ -350,17 +350,23 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   public abstract boolean isActive();
 
   public void activate() {
+    activate(false);
+  }
+
+  @ApiStatus.Internal
+  public void activate(boolean force) {
+    boolean isActive = force || isActive();
     final ReaderThread readerThread = myReaderThread;
     if (readerThread == null) {
       return;
     }
-    if (isActive() && !readerThread.myRunning) {
+    if (isActive && !readerThread.myRunning) {
       resetLogFilter();
       myFilter.setSelectedItem(myModel.getCustomFilter());
       readerThread.startRunning();
       ApplicationManager.getApplication().executeOnPooledThread(readerThread);
     }
-    else if (!isActive() && readerThread.myRunning) {
+    else if (!isActive && readerThread.myRunning) {
       readerThread.stopRunning();
     }
   }
@@ -372,7 +378,9 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   @Override
   public void dispose() {
-    myModel.removeFilterListener(this);
+    if (!myProject.isDisposed()) {
+      myModel.removeFilterListener(this);
+    }
     stopRunning(false);
     if (myDisposed) return;
     myDisposed = true;
