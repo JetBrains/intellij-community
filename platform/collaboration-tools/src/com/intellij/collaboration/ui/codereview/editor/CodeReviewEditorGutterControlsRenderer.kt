@@ -263,7 +263,9 @@ private constructor(
       repaintColumn(editor)
     }
   private val LogicalLineData.startNewCommentAction
-    get() = GutterAction(AllIcons.General.InlineAdd, GutterAction.ActionType.START_NEW_COMMENT, AllIcons.General.InlineAddHover) { requestNewComment(logicalLine) }
+    get() = GutterAction(AllIcons.General.InlineAdd, GutterAction.ActionType.START_NEW_COMMENT, AllIcons.General.InlineAddHover) {
+      requestNewComment(logicalLine)
+    }
 
   private fun requestNewComment(logicalLine: Int) {
     if (model is CodeReviewCommentableEditorModel.WithMultilineComments) {
