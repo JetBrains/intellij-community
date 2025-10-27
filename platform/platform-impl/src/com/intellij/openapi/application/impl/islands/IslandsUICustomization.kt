@@ -4,7 +4,9 @@ package com.intellij.openapi.application.impl.islands
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
+import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.idea.AppMode
@@ -14,11 +16,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
@@ -57,10 +62,7 @@ import java.awt.event.WindowEvent
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
 import java.util.function.Supplier
-import javax.swing.JComponent
-import javax.swing.JFrame
-import javax.swing.SwingConstants
-import javax.swing.SwingUtilities
+import javax.swing.*
 import javax.swing.border.Border
 
 private data class WindowBackgroundComponentData(val origOpaque: Boolean, val origBackground: Color?)
@@ -72,15 +74,32 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   private var isManyIslandEnabledCache: Boolean? = null
 
+  private var isManyIslandCustomTheme = false
+
   private val isManyIslandEnabled: Boolean
     get() {
       var value = isManyIslandEnabledCache
       if (value == null) {
-        value = isIslandsAvailable && JBUI.getInt("Islands", 0) == 1
+        if (isIslandsAvailable) {
+          val themeValue = JBUI.getInt("Islands", 0)
+          isManyIslandCustomTheme = themeValue == 0 && !isDefaultTheme() && AdvancedSettings.getBoolean("ide.ui.theme.custom.islands")
+          value = isManyIslandCustomTheme || themeValue == 1
+        }
+        else {
+          value = false
+          isManyIslandCustomTheme = false
+        }
         isManyIslandEnabledCache = value
       }
       return value
     }
+
+  private fun isDefaultTheme(): Boolean {
+    val id = LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false
+
+    return id == "ExperimentalDark" || id == "ExperimentalLight" || id == "ExperimentalLightWithLightHeader" ||
+           id == "JetBrainsHighContrastTheme" || id == "Darcula"
+  }
 
   private var isIslandsGradientEnabledCache: Boolean? = null
 
@@ -161,6 +180,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     if (isManyIslandEnabled) {
       isBrightCached = JBColor.isBright()
       Toolkit.getDefaultToolkit().addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
+      applyMissingKeys()
     }
 
     var oldManyIsland = isManyIslandEnabled
@@ -177,6 +197,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
       if (newManyIsland) {
         isBrightCached = JBColor.isBright()
         toolkit.addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
+        applyMissingKeys()
       }
 
       if (oldManyIsland == newManyIsland) {
@@ -191,6 +212,35 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       oldManyIsland = newManyIsland
     })
+
+    connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
+      override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+        if (id == "ide.ui.theme.custom.islands") {
+          RegistryBooleanOptionDescriptor.suggestRestart(null)
+        }
+      }
+    })
+  }
+
+  private fun applyMissingKeys() {
+    if (isManyIslandCustomTheme) {
+      val uiDefaults = UIManager.getLookAndFeelDefaults()
+
+      uiDefaults["MainToolbar.borderColor"] = Gray.TRANSPARENT
+      uiDefaults["ToolWindow.borderColor"] = Gray.TRANSPARENT
+      uiDefaults["ToolWindow.Stripe.borderColor"] = Gray.TRANSPARENT
+      uiDefaults["StatusBar.borderColor"] = Gray.TRANSPARENT
+
+      val background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+
+      uiDefaults["ToolWindow.background"] = background
+      uiDefaults["ToolWindow.Header.background"] = background
+      uiDefaults["ToolWindow.Header.inactiveBackground"] = background
+      uiDefaults["EditorTabs.background"] = background
+      uiDefaults["Island.borderColor"] = background
+
+      uiDefaults["Island.arc"] = 20
+    }
   }
 
   private fun enableManyIslands() {

@@ -1738,6 +1738,8 @@
 
     <defaultHighlightingSettingProvider id="SyntheticSourcesHighlightingSettingProvider"
                                         implementation="com.intellij.codeInsight.daemon.SyntheticPsiFileHighlightingSettingProvider"/>
+
+    <advancedSetting id="ide.ui.theme.custom.islands" groupKey="group.advanced.settings.appearance" default="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.platform.backend">
