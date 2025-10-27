@@ -23,7 +23,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"DOWN",                     "EditorDown", "Terminal.SelectBlockBelow", "Terminal.DownCommandCompletion", "JupyterSelectCellBelowCommandModeAction"},
       {"ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
                                    "EditorEnter", "NextTemplateVariable", "Git.Log.Branches.Change.Branch.Filter", "SplitChooser.Split",
-                                   "JupyterMarkdownDestroyControllerAction", "Console.TableResult.GotoReferencedResult", "Terminal.EnterCommandCompletion"},
+                                   "JupyterMarkdownDestroyControllerAction", "Console.TableResult.GotoReferencedResult"},
       {"ESCAPE",                   "CloseGotItTooltip", "EditorEscape", "FocusEditor", "Terminal.SwitchFocusToEditor", "CloseDiffEditor"},
       {"F1",                       "ContextHelp", "org.jetbrains.r.actions.REditorHelpAction"},
       {"F2",                       "GotoNextError", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "Console.TableResult.EditValue",

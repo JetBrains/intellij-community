@@ -92,8 +92,9 @@
             use-shortcut-of="CodeCompletion">
       <override-text place="GoToAction"/>
     </action>
-    <action id="Terminal.EnterCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionEnterAction">
-      <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
+    <action id="Terminal.CommandCompletion.InsertSuggestion" class="com.intellij.terminal.frontend.action.TerminalCompletionEnterAction"
+            use-shortcut-of="EditorChooseLookupItem">
+      <override-text place="GoToAction"/>
     </action>
     <action id="Terminal.UpCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionUpAction">
       <keyboard-shortcut first-keystroke="UP" keymap="$default"/>

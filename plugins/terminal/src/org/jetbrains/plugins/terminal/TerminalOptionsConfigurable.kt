@@ -181,7 +181,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
               shortcutCombobox(
                 labelText = message("terminal.command.completion.shortcut.insert"),
                 presets = listOf(ENTER_SHORTCUT_PRESET, TAB_SHORTCUT_PRESET),
-                actionId = "Terminal.EnterCommandCompletion"
+                actionId = "Terminal.CommandCompletion.InsertSuggestion"
               )
             }
           }.visible(TerminalCommandCompletion.isEnabled(project))
