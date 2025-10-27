@@ -38,6 +38,7 @@ import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -487,6 +488,28 @@ class PlatformUtilitiesTest {
   @Test
   fun `cancelOnDispose contains information about caller`() = timeoutRunBlocking {
    `interesting caller`()
+  }
+
+  @Test
+  fun `callbacks to futures obtained from coroutines do not throw`(): Unit = runBlocking {
+    @Suppress("OPT_IN_USAGE") val job = GlobalScope.async(Dispatchers.Default, start = CoroutineStart.LAZY) {
+    }
+    val future = job.asCompletableFuture()
+    val ref = AtomicReference<Throwable>()
+    val finalization = Job()
+    future.thenRun {
+      try {
+        Cancellation.checkCancelled()
+      } catch (e: Throwable) {
+        ref.set(e)
+        throw e
+      } finally {
+        finalization.complete()
+      }
+    }
+    job.start()
+    finalization.asCompletableFuture().join()
+    ref.get()?.let { throw it }
   }
 
 }
