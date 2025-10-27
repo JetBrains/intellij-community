@@ -807,16 +807,6 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return null
   }
 
-  override fun paintProjectTabsContainer(component: JComponent, g: Graphics): Boolean {
-    if (isManyIslandEnabled) {
-      val gg = IdeBackgroundUtil.withFrameBackground(g, component)
-      gg.color = getMainBackgroundColor()
-      gg.fillRect(0, 0, component.width, component.height)
-      return true
-    }
-    return false
-  }
-
   private val PROJECT_TAB_SELECTED_BACKGROUND = JBColor.namedColor("MainWindow.Tab.selectedBackground", JBUI.CurrentTheme.ToolWindow.background())
   private val PROJECT_TAB_HOVER_BACKGROUND = JBColor.namedColor("MainWindow.Tab.hoverBackground", JBColor.namedColor("MainToolbar.Dropdown.transparentHoverBackground"))
   private val PROJECT_TAB_SEPARATOR_COLOR = JBColor.namedColor("MainWindow.Tab.separatorColor", 0xD3D5DB, 0x43454A)
@@ -859,10 +849,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
     val isGradient = isIslandsGradientEnabled && !CustomWindowHeaderUtil.isCompactHeader() && isColorfulToolbar(frame)
     val rect = Rectangle(label.width, label.height)
 
-    if (!isGradient) {
-      g.color = getMainBackgroundColor()
-      g.fillRect(0, 0, rect.width, rect.height)
-    }
+    g.color = getMainBackgroundColor()
+    g.fillRect(0, 0, rect.width, rect.height)
 
     if (selected || hovered) {
       val gg = if (isGradient) IdeBackgroundUtil.getOriginalGraphics(g) else g
