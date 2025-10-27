@@ -422,7 +422,7 @@ internal open class TerminalEventsHandlerImpl(
   }
 
   private fun canTriggerCompletion(char: Char): Boolean {
-    return Character.isLetterOrDigit(char) || char == '-'
+    return Character.isLetterOrDigit(char)
   }
 
   private fun TerminalOutputModel.getTextAfterCursor(): @NlsSafe CharSequence = getText(cursorOffset, endOffset)

@@ -98,13 +98,13 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     val prefix = allTokens.last().substring(prefixReplacementIndex)
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
-    // A partial pop-up implementation is required, as users find automatic pop-ups intrusive.
-    // This approach makes the pop-up discoverable while being less disruptive.
-    // The pop-up is triggered only when entering a command's argument
-    // (e.g., file after `ls`, folder after `cd`, branch after `git checkout`).
+    // todo: need to find a better place for checking it
+    //  because determining the context and checking the prefix can be done before computing the completion suggestions.
     if (isAutoPopup && TerminalOptionsProvider.instance.commandCompletionShowingMode == TerminalCommandCompletionShowingMode.ONLY_PARAMETERS) {
-      val containsShellCommand = suggestions.any { it.type == ShellSuggestionType.COMMAND }
-      if (containsShellCommand) {
+      // If ONLY_PARAMETERS mode is specified, show the completion popup only in specific contexts:
+      // when completing command options and arguments (for example, files after `ls`, branches after `git checkout`).
+      // It will make the completion popup less intrusive.
+      if (!isSuggestingParameters(suggestions, prefix)) {
         return
       }
     }
@@ -115,6 +115,16 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     if (elements.isNotEmpty()) {
       resultSet.stopHere()
     }
+  }
+
+  private fun isSuggestingParameters(suggestions: List<ShellCompletionSuggestion>, prefix: String): Boolean {
+    // Do not show the completion popup for short options like `-a` or `-h`
+    // Most probably, it will cause only distraction.
+    if (prefix.startsWith("-") && prefix.length <= 2) {
+      return false
+    }
+    // Show the popup only if there are no suggestions for subcommands (only options and arguments).
+    return suggestions.none { it.type == ShellSuggestionType.COMMAND }
   }
 
   private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext, isAutoPopup: Boolean): List<ShellCompletionSuggestion> {
