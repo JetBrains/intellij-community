@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
-package org.jetbrains.intellij.build
+package org.jetbrains.intellij.build.classPath
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -9,6 +9,12 @@ import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import org.jdom.CDATA
 import org.jdom.Element
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
+import org.jetbrains.intellij.build.TEST_FRAMEWORK_MODULE_NAMES
+import org.jetbrains.intellij.build.UTIL_8_JAR
+import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.impl.CachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -31,6 +37,7 @@ import org.jetbrains.intellij.build.impl.resolveNonXIncludeElementFromCache
 import org.jetbrains.intellij.build.impl.toLoadPath
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.isWindows
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.file.Path

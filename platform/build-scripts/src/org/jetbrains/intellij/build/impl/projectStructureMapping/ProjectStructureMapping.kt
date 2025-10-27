@@ -10,7 +10,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.MAVEN_REPO
-import org.jetbrains.intellij.build.PluginBuildDescriptor
+import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
