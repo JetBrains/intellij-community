@@ -29,6 +29,7 @@ import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue
 import org.jetbrains.idea.maven.model.MavenProjectProblem
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
@@ -39,6 +40,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.text.MessageFormat
+import java.util.concurrent.CancellationException
 
 class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, MavenBuildIssueHandler {
   private val mySyncView: BuildProgressListener = myProject.getService(SyncViewManager::class.java)
@@ -205,8 +207,17 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
 
   @Synchronized
   fun notifyDownloadSourcesProblem(e: Exception) {
-    hasErrors = true
-    mySyncView.onEvent(mySyncId, createMessageEvent(myProject, mySyncId, e))
+    val messageEvent = when (e) {
+      is CancellationException -> {
+        val message = MavenProjectBundle.message("maven.downloading.sources.cancelled")
+        MessageEventImpl(mySyncId, MessageEvent.Kind.INFO, SyncBundle.message("build.event.title.error"), message, message)
+      }
+      else -> {
+        hasErrors = true
+        createMessageEvent(myProject, mySyncId, e)
+      }
+    }
+    mySyncView.onEvent(mySyncId, messageEvent)
   }
 
   @Synchronized

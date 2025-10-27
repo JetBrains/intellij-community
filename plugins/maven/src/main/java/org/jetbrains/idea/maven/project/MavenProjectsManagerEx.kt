@@ -52,10 +52,6 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
-import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
-import org.jetbrains.idea.maven.server.MavenWrapperDownloader
-import org.jetbrains.idea.maven.server.showUntrustedProjectNotification
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType.*
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -309,6 +305,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   private val importMutex = Mutex()
+  private val downloadArtifactMutex = Mutex()
 
   override fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec) {
     project.trackActivityBlocking(MavenActivityKey) {
@@ -520,11 +517,6 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
           }
         }
       }
-      val artifactDownloadJob = doScheduleDownloadArtifacts(this,
-                                                            projectsToImport,
-                                                            null,
-                                                            importingSettings.isDownloadSourcesAutomatically,
-                                                            importingSettings.isDownloadDocsAutomatically)
 
       importMavenProjects(projectsToImport, modelsProvider, syncActivity)
     }
@@ -690,13 +682,14 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   ): ArtifactDownloadResult {
     if (!sources && !docs) return ArtifactDownloadResult()
 
-    val result = withBackgroundProgressTraced(myProject, "downloadArtifacts", MavenProjectBundle.message("maven.downloading"), true) {
-      reportRawProgress { reporter ->
-        doDownloadArtifacts(projects, artifacts, sources, docs, reporter)
+    downloadArtifactMutex.withLock {
+      val result = withBackgroundProgressTraced(myProject, "downloadArtifacts", MavenProjectBundle.message("maven.downloading"), true) {
+        reportRawProgress { reporter ->
+          doDownloadArtifacts(projects, artifacts, sources, docs, reporter)
+        }
       }
+      return result
     }
-
-    return result
   }
 
   private suspend fun doDownloadArtifacts(
