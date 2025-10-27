@@ -1,18 +1,16 @@
 package com.intellij.terminal.frontend.view.completion
 
-import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
-import com.intellij.codeInsight.completion.CompletionInitializationContextImpl
-import com.intellij.codeInsight.completion.CompletionPhase
-import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionPhase.CommittingDocuments
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
+import com.intellij.codeInsight.lookup.LookupArranger.DefaultArranger
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupFocusDegree
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.DumbModeBlockedFunctionality
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalOutputModel
@@ -23,8 +21,8 @@ import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 internal class TerminalCommandCompletionHandler(
   private val completionType: CompletionType,
   private val invokedExplicitly: Boolean,
-  autopopup: Boolean,
-  synchronous: Boolean,
+  private val autopopup: Boolean,
+  private val synchronous: Boolean,
 ) : CodeCompletionHandlerBase(completionType, invokedExplicitly, autopopup, synchronous) {
   fun invokeCompletion(e: AnActionEvent, time: Int) {
     val outputModel = e.terminalOutputModel ?: error("Output model is null during completion")
@@ -43,7 +41,7 @@ internal class TerminalCommandCompletionHandler(
     editor: Editor,
     time: Int,
     hasModifiers: Boolean,
-    caret: Caret
+    caret: Caret,
   ) {
     var time = time
 
@@ -58,24 +56,64 @@ internal class TerminalCommandCompletionHandler(
     if (CompletionServiceImpl.isPhase(CompletionPhase.InsertedSingleItem::class.java)) {
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion)
     }
-    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.javaClass, CompletionPhase.CommittingDocuments::class.java)
+    CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.javaClass, CommittingDocuments::class.java)
 
     val startingTime = System.currentTimeMillis()
-    val initCmd = Runnable {
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)!!
-      val context = CompletionInitializationContextImpl(editor, editor.caretModel.currentCaret, file, completionType, invocationCount)
-      context.dummyIdentifier = ""
-      doComplete(context, hasModifiers, true, startingTime)
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)!!
+    val context = CompletionInitializationContextImpl(editor, editor.caretModel.currentCaret, file, completionType, invocationCount)
+    context.dummyIdentifier = ""
+    doComplete(context, hasModifiers, startingTime)
+  }
+
+  private fun doComplete(
+    initContext: CompletionInitializationContextImpl,
+    hasModifiers: Boolean,
+    startingTime: Long,
+  ) {
+    val editor = initContext.editor
+    val lookup = obtainLookup(editor, initContext.project)
+
+    val phase = CompletionServiceImpl.completionPhase
+    if (phase is CommittingDocuments) {
+      phase.indicator?.closeAndFinish(false)
+      phase.replaced = true
     }
-    try {
-      CommandProcessor.getInstance().executeCommand(project, initCmd, null, null, editor.getDocument())
+    else {
+      CompletionServiceImpl.assertPhase(CompletionPhase.NoCompletion.javaClass)
     }
-    catch (e: IndexNotReadyException) {
-      DumbService.getInstance(project).showDumbModeNotificationForFunctionality(
-        CodeInsightBundle.message("completion.not.available.during.indexing"),
-        DumbModeBlockedFunctionality.CodeCompletion)
-      throw e
+
+    val indicator = CompletionProgressIndicator(editor, initContext.caret,
+                                                initContext.invocationCount, this,
+                                                initContext.offsetMap,
+                                                initContext.hostOffsets,
+                                                hasModifiers, lookup)
+
+    if (synchronous) {
+      trySynchronousCompletion(initContext, hasModifiers, startingTime, indicator, initContext.hostOffsets)
     }
+    else {
+      scheduleContributorsAfterAsyncCommit(initContext, indicator, hasModifiers)
+    }
+  }
+
+  private fun obtainLookup(editor: Editor, project: Project): LookupImpl {
+    val existing = LookupManager.getActiveLookup(editor) as? LookupImpl
+    if (existing != null && existing.isCompletion) {
+      existing.markReused()
+      if (!autopopup) {
+        existing.setLookupFocusDegree(LookupFocusDegree.FOCUSED)
+      }
+      return existing
+    }
+
+    val arranger = object : DefaultArranger() {
+      override fun isCompletion(): Boolean {
+        return true
+      }
+    }
+    val lookup = LookupManager.getInstance(project).createLookup(editor, LookupElement.EMPTY_ARRAY, "", arranger) as LookupImpl
+    lookup.setLookupFocusDegree(if (autopopup) LookupFocusDegree.UNFOCUSED else LookupFocusDegree.FOCUSED)
+    return lookup
   }
 
   private fun prepareCaret(commonEditor: Editor, outputModel: TerminalOutputModel): Caret {

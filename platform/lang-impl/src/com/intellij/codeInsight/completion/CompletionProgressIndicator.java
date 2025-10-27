@@ -162,14 +162,14 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
    */
   private volatile int myUnfreezeAfterNItems = -1;
 
-  CompletionProgressIndicator(@NotNull Editor editor,
-                              @NotNull Caret caret,
-                              int invocationCount,
-                              @NotNull CodeCompletionHandlerBase handler,
-                              @NotNull OffsetMap offsetMap,
-                              @NotNull OffsetsInFile hostOffsets,
-                              boolean hasModifiers,
-                              @NotNull LookupImpl lookup) {
+  public CompletionProgressIndicator(@NotNull Editor editor,
+                                     @NotNull Caret caret,
+                                     int invocationCount,
+                                     @NotNull CodeCompletionHandlerBase handler,
+                                     @NotNull OffsetMap offsetMap,
+                                     @NotNull OffsetsInFile hostOffsets,
+                                     boolean hasModifiers,
+                                     @NotNull LookupImpl lookup) {
     myEditor = editor;
     myCaret = caret;
     this.handler = handler;
