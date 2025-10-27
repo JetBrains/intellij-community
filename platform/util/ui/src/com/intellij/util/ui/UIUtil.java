@@ -2165,6 +2165,33 @@ public final class UIUtil {
     return ComponentUtil.getParentOfType(type, component);
   }
 
+  /**
+   * Searches above in the component hierarchy starting from the specified component, taking foster parents into account.
+   * <p>
+   * Note that the initial component is also checked and is immediately returned if it has the correct type.
+   *</p>
+   * <p>
+   * <em>Please consider using the plain {@link #getParent(Component)} if you're dealing with pure UI without remote development hacks.</em>
+   *</p>
+   * @param type      expected class
+   * @param component initial component
+   * @return a component of the specified type, or {@code null} if the search is failed
+   * @see #getParent(Component)
+   * @see #getParentOfType(Class, Component)
+   */
+  @Contract(pure = true)
+  public static @Nullable <T> T getGeneralizedParentOfType(@NotNull Class<? extends T> type, @Nullable Component component) {
+    var result = component;
+    while (result != null) {
+      if (type.isInstance(component)) {
+        //noinspection unchecked
+        return (T)result;
+      }
+      result = getParent(result);
+    }
+    return null;
+  }
+
   public static @NotNull JBIterable<Component> uiParents(@Nullable Component c, boolean strict) {
     return strict ? JBIterable.generate(c, c1 -> c1.getParent()).skip(1) : JBIterable.generate(c, c1 -> c1.getParent());
   }
