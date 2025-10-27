@@ -407,8 +407,6 @@ jvm_library(
     "//jps/model-impl:model-tests_test_lib",
     "//platform/diff-impl/tests:tests_test_lib",
     "//platform/built-in-server:builtInServer-tests_test_lib",
-    "//updater",
-    "//updater:updater_test_lib",
     "//platform/script-debugger/debugger-ui:scriptDebugger-ui",
     "//plugins/terminal",
     "//plugins/terminal/frontend",
