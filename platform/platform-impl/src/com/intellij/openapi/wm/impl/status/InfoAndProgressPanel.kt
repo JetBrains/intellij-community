@@ -36,6 +36,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.reference.SoftReference
 import com.intellij.ui.*
@@ -81,8 +83,10 @@ class InfoAndProgressPanel internal constructor(
     @ApiStatus.Internal
     val FAKE_BALLOON: Any = Any()
 
+    private const val SHOW_COUNTER_REGISTRY_KEY: String = "progresses.show.counter.icon.instead.of.show.link"
+
     private val showCounterInsteadOfMultiProcessLink: Boolean
-      get() = Registry.`is`("progresses.show.counter.icon.instead.of.show.link", false)
+      get() = Registry.`is`(SHOW_COUNTER_REGISTRY_KEY, false)
 
     private val supportSecondaryProgresses: Boolean
       get() = showCounterInsteadOfMultiProcessLink && Registry.`is`("progresses.support.secondary.progresses", false)
@@ -992,7 +996,13 @@ class InfoAndProgressPanel internal constructor(
         }
       })
       progressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
-      progressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border())
+      updateProgressIconBorder()
+      val listener = object : RegistryValueListener {
+        override fun afterValueChanged(value: RegistryValue) {
+          updateProgressIconBorder()
+        }
+      }
+      Registry.get(SHOW_COUNTER_REGISTRY_KEY).addListener(listener, host.coroutineScope)
 
       counterComponent = CounterLabel()
       counterComponent.addMouseListener(object : MouseAdapter() {
@@ -1170,6 +1180,15 @@ class InfoAndProgressPanel internal constructor(
       multiProcessLink.isVisible = false
       add(counterComponent)
       counterComponent.isVisible = false
+    }
+
+    private fun updateProgressIconBorder() {
+      if (showCounterInsteadOfMultiProcessLink) {
+        progressIcon.setBorder(JBUI.Borders.empty())
+      }
+      else {
+        progressIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.border())
+      }
     }
 
     fun updateProgress(compact: MyProgressComponent?) {
