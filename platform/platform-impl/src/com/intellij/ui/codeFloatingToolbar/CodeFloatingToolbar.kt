@@ -177,7 +177,7 @@ class CodeFloatingToolbar(
     val contextAwareActionGroupId = getContextAwareGroupId(editor) ?: return null
     val mainActionGroup = CustomActionsSchema.getInstance().getCorrectedAction(contextAwareActionGroupId) ?: error("Can't find groupId action")
 
-    return buildList {
+    val actionList = buildList {
       if (!isIntentionsGroupHidden(mainActionGroup)) {
         val showIntentionAction = CustomActionsSchema.getInstance().getCorrectedAction("ShowIntentionActions")
                                   ?: error("Can't find ShowIntentionActions action")
@@ -189,7 +189,9 @@ class CodeFloatingToolbar(
       if (!isConfigurationsGroupHidden(mainActionGroup)) {
         add(createConfigureGroup(contextAwareActionGroupId))
       }
-    }.let { DefaultActionGroup(it) }
+    }
+
+    return DefaultActionGroup(actionList)
   }
 
   override suspend fun createHint(): LightweightHint {
