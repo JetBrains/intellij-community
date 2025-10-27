@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.completion.spec.ShellCommandSpec
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.frontend.view.completion.TerminalLookupPrefixUpdater
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
@@ -144,6 +145,7 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
       .add(CommonDataKeys.PROJECT, project)
       .add(CommonDataKeys.EDITOR, view.outputEditor)
       .add(TerminalOutputModel.DATA_KEY, outputModel)
+      .add(TerminalView.DATA_KEY, view)
       .build()
     val event = AnActionEvent.createEvent(action, context, null,
                                           "", ActionUiKind.NONE, null)

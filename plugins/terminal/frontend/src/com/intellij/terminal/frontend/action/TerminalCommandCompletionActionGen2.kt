@@ -9,12 +9,15 @@ import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.terminal.frontend.action.TerminalFrontendDataContextUtils.terminalView
 import com.intellij.terminal.frontend.view.completion.TerminalCommandCompletionHandler
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
+import org.jetbrains.plugins.terminal.util.getNow
+import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus.TypingCommand
 
 internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(), ActionPromoter {
   override fun actionPerformed(e: AnActionEvent) {
@@ -33,9 +36,10 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
   override fun update(e: AnActionEvent) {
     super.update(e)
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null
-                                         && e.terminalEditor?.isOutputModelEditor == true
-                                         && TerminalCommandCompletion.isEnabled(project)
+    val isCommandTypingMode = e.terminalView?.shellIntegrationDeferred?.getNow()?.outputStatus?.value == TypingCommand
+    e.presentation.isEnabledAndVisible = e.terminalEditor?.isOutputModelEditor == true
+                                         && project != null && TerminalCommandCompletion.isEnabled(project)
+                                         && isCommandTypingMode
   }
 
   override fun createHandler(
