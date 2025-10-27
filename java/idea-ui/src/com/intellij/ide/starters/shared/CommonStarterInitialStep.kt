@@ -138,11 +138,9 @@ abstract class CommonStarterInitialStep(
   protected fun Panel.addSdkUi() {
     row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
       projectWizardJdkComboBox(
-        this,
+        wizardContext,
         locationProperty.toEelDescriptorProperty(),
         jdkIntentProperty,
-        wizardContext.disposable,
-        wizardContext.projectJdk,
         { sdk -> moduleBuilder.isSuitableSdkType(sdk.sdkType) }
       )
 

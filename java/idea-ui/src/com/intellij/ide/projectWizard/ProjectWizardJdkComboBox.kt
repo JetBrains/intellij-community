@@ -6,6 +6,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
 import com.intellij.ide.projectWizard.ProjectWizardJdkPredicate.Companion.getError
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -85,37 +86,29 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  return projectWizardJdkComboBox(
-    row,
+  return row.projectWizardJdkComboBox(
+    context,
     requireNotNull(baseData) {
       "Expected ${NewProjectWizardBaseStep::class.java.simpleName} in the new project wizard step tree."
     }.pathProperty.toEelDescriptorProperty(),
     intentProperty,
-    context.disposable,
-    context.projectJdk,
     sdkFilter,
     jdkPredicate,
   )
-    .onApply {
-      context.projectJdk = intentProperty.get().prepareJdk()
-    }
 }
 
 /**
- * @param projectJdk Existing JDK in case we are creating a module ("Project JDK" will be selected by default)
  * @param sdkFilter Filter for registered SDKs
  * @param jdkPredicate Predicate to show an error based on the JDK intent version/name
  */
-fun projectWizardJdkComboBox(
-  row: Row,
+fun Row.projectWizardJdkComboBox(
+  context: WizardContext,
   eelDescriptorProperty: ObservableProperty<EelDescriptor>,
   intentProperty: ObservableMutableProperty<ProjectWizardJdkIntent>,
-  disposable: Disposable,
-  projectJdk: Sdk? = null,
   sdkFilter: (Sdk) -> Boolean = { true },
   jdkPredicate: ProjectWizardJdkPredicate? = ProjectWizardJdkPredicate.IsJdkSupported(),
 ): Cell<ProjectWizardJdkComboBox> {
-  val comboBox = ProjectWizardJdkComboBox(projectJdk, disposable, sdkFilter)
+  val comboBox = ProjectWizardJdkComboBox(context.projectJdk, context.disposable, sdkFilter)
 
   val intentValue = intentProperty.get()
   require(intentValue == NoJdk) {
@@ -127,7 +120,7 @@ fun projectWizardJdkComboBox(
   }
   intentProperty.set(comboBox.item)
 
-  return row.cell(comboBox)
+  return cell(comboBox)
     .columns(COLUMNS_LARGE)
     .apply {
       val commentCell = comment(component.comment, 50)
@@ -167,6 +160,9 @@ fun projectWizardJdkComboBox(
         else -> Unit
       }
       PropertiesComponent.getInstance().setValue(selectedJdkProperty, intent.name)
+    }
+    .onApply {
+      context.projectJdk = intentProperty.get().prepareJdk()
     }
 }
 
