@@ -5,10 +5,17 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.ModuleItem
+import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
+import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.findFileInModuleSources
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.module.*
+import org.jetbrains.jps.model.module.JpsDependencyElement
+import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.model.module.JpsModuleReference
 import java.io.StringReader
 import java.util.concurrent.ConcurrentHashMap
 
@@ -66,9 +73,9 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
 
   suspend fun getPluginXmlContent(pluginModule: JpsModule): String {
     val path = "META-INF/plugin.xml"
-    var pluginXmlContent = context.readFileContentFromModuleOutput(pluginModule, path, forTests = false)
+    var pluginXmlContent = context.readFileContentFromModuleOutput(module = pluginModule, relativePath = path, forTests = false)
     if (useTestSourceEnabled && pluginXmlContent == null) {
-      pluginXmlContent = context.readFileContentFromModuleOutput(pluginModule, path, forTests = true)
+      pluginXmlContent = context.readFileContentFromModuleOutput(module = pluginModule, relativePath = path, forTests = true)
     }
     return pluginXmlContent?.let { String(it, Charsets.UTF_8) }
            ?: throw IllegalStateException("$path not found in ${pluginModule.name} module output")
