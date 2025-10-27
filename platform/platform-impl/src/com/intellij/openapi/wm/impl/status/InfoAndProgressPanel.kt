@@ -731,7 +731,6 @@ class InfoAndProgressPanel internal constructor(
   internal open inner class MyProgressComponent(compact: Boolean, task: TaskInfo, progressModel: ProgressModel)
     : ProgressComponent(compact, task, progressModel), TitledIndicator {
     private var original: ProgressModel?
-    internal var addedProgressBarWidth: Int = 0
     internal val visibleInStatusBar: Boolean
       get() = indicatorModel.visibleInStatusBar
 
@@ -766,13 +765,7 @@ class InfoAndProgressPanel internal constructor(
     }
 
     override fun wrapProgress(): JComponent {
-      val progressWrapper = object : NonOpaquePanel(BorderLayout()) {
-        override fun getPreferredSize(): Dimension? {
-          val original = super.getPreferredSize()
-          original.width += addedProgressBarWidth
-          return original
-        }
-      }
+      val progressWrapper = NonOpaquePanel(BorderLayout())
       progressWrapper.add(progress, BorderLayout.CENTER)
       return progressWrapper
     }
@@ -1037,7 +1030,6 @@ class InfoAndProgressPanel internal constructor(
             counterComponent.isVisible = false
             return
           }
-          indicator?.addedProgressBarWidth = 0
           val insets = parent.insets
           val x = insets.left
           val centerY = (parent.height + insets.top - insets.bottom) / 2
@@ -1119,25 +1111,15 @@ class InfoAndProgressPanel internal constructor(
           var rightX = initialRightX
           var indicatorSize = initialIndicatorSize
           progressIcon.isVisible = false
-          var additionalWidth = 0
 
           when {
             showCounterInsteadOfMultiProcessLink && counterComponent.isVisible -> {
               rightX = setBounds(counterComponent, rightX, centerY, null, true) - gap
             }
-            showCounterInsteadOfMultiProcessLink /* && !counterLabel.isVisible */ -> {
-              additionalWidth = counterComponent.preferredSize.width + gap
-            }
             multiProcessLink.isVisible /* && !showCounterInsteadOfMultiProcessLink */ -> {
               rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
             }
             //for single progress with `showCounterInsteadOfMultiProcessLink == false` do nothing, see IJPL-192911
-          }
-
-          if (additionalWidth != 0) {
-            indicatorSize = initialIndicatorSize ?: indicatorComponent.getPreferredSize()
-            indicatorSize.width += additionalWidth
-            indicator?.addedProgressBarWidth = additionalWidth
           }
           setBounds(indicatorComponent, rightX, centerY, indicatorSize, true)
         }
