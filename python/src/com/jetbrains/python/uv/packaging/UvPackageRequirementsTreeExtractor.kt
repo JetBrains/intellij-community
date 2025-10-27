@@ -19,7 +19,10 @@ internal class UvPackageRequirementsTreeExtractor(private val uvWorkingDirectory
 
   override suspend fun extract(pkg: PythonPackage): PackageNode {
     val workingDir = uvWorkingDirectory ?: return createLeafPackageNode(pkg.name)
-    val uvInstance = createUvLowLevel(workingDir, createUvCli())
+    val uvInstance = createUvLowLevel(workingDir).getOr {
+      thisLogger().warn("cannot run uv: ${it.error}")
+      return createLeafPackageNode(pkg.name)
+    }
     val requirementsOutput = uvInstance.listPackageRequirementsTree(pkg).getOr {
       thisLogger().info("extracting requires for package $pkg.name: error. Output: \n${it.error}")
       return createLeafPackageNode(pkg.name)

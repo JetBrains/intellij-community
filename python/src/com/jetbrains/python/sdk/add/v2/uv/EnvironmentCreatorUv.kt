@@ -147,7 +147,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
               null
             }
 
-            val cli = createUvCli((executable.pathHolder as PathHolder.Eel).path)
+            val cli = createUvCli((executable.pathHolder as PathHolder.Eel).path).getOr { return@withContext emptyList() }
             val uvLowLevel = createUvLowLevel(Path.of(""), cli)
             uvLowLevel.listSupportedPythonVersions(versionRequest)
               .getOr { return@withContext emptyList() }

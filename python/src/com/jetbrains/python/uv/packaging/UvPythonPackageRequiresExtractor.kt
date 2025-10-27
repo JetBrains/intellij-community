@@ -17,7 +17,10 @@ import java.nio.file.Path
 internal class UvPackageRequirementExtractor(private val uvWorkingDirectory: Path?) : PythonPackageRequirementExtractor {
   override suspend fun extract(pkg: PythonPackage, module: Module): List<PyPackageName> {
     val uvWorkingDirectory = uvWorkingDirectory ?: Path.of(module.basePath!!)
-    val uv = createUvLowLevel(uvWorkingDirectory, createUvCli())
+    val uv = createUvLowLevel(uvWorkingDirectory).getOr {
+      thisLogger().info("cannot run uv: ${it.error}")
+      return emptyList()
+    }
     return uv.listPackageRequirements(pkg).getOr {
       thisLogger().info("extracting requires for package ${pkg.name}: error. Output: \n${it.error}")
       return emptyList()

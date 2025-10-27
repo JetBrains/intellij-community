@@ -314,9 +314,11 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
   }
 }
 
-fun createUvLowLevel(cwd: Path, uvCli: UvCli = createUvCli()): UvLowLevel {
+fun createUvLowLevel(cwd: Path, uvCli: UvCli): UvLowLevel {
   return UvLowLevelImpl(cwd, uvCli)
 }
+
+fun createUvLowLevel(cwd: Path): PyResult<UvLowLevel> = createUvCli().mapSuccess { createUvLowLevel(cwd, it) }
 
 private fun tryExtractStderr(err: PyError): String? =
   when (err) {

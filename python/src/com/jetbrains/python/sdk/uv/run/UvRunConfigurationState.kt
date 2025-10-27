@@ -69,9 +69,9 @@ fun canRun(
 
   if (workingDirectory != null && uvExecutable != null) {
     runWithModalProgressBlocking(project, PyBundle.message("uv.run.configuration.state.progress.name")) {
-      val uv = createUvLowLevel(workingDirectory, createUvCli(uvExecutable))
+      val uv = createUvCli(uvExecutable).mapSuccess { createUvLowLevel(workingDirectory, it) }.getOrNull()
 
-      when (requiresSync(uv, options, logger).getOrNull()) {
+      when (uv?.let { requiresSync(it, options, logger) }?.getOrNull()) {
         true -> isUnsynced = true
         false -> {}
         null -> isError = true

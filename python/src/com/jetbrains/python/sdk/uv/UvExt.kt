@@ -53,7 +53,7 @@ suspend fun setupNewUvSdkAndEnv(
   val toml = workingDir.resolve(PY_PROJECT_TOML)
   val init = !toml.exists()
 
-  val uv = createUvLowLevel(workingDir, createUvCli())
+  val uv = createUvLowLevel(workingDir, createUvCli().getOr { return it })
   val envExecutable = uv.initializeEnvironment(init, version)
     .getOr {
       return it
