@@ -3189,6 +3189,16 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-85120
+  public void testTargetExpressionWithAnnotationNotConsideredTypeAlias() {
+    doTestByText("""
+                   a: list[int] | None = None  # Not a type alias
+                   
+                   if a:
+                       _ = a[1]  # No error expected
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

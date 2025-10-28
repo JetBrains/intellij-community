@@ -80,7 +80,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       return null;
     }
 
-    if (isExplicitTypeAlias(target) || looksLikeTypeHint(value)) {
+    if (isExplicitTypeAlias(target) || (looksLikeTypeHint(value) && target.getAnnotation() == null)) {
       return value;
     }
     return null;

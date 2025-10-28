@@ -22,6 +22,9 @@ bin3_ok = Union[str, bool] | None
 bin4_notOk = str & int
 list_notOk = [int, str]
 
+bin5_notOk: int | str = "foo"
+list_none_notOk: list[int] | None = None
+
 callable_ok = Callable[[int, str], bool]
 
 explicit_alias1_ok: TypeAlias = 'Foo is bar.'
