@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server;
 
-import com.intellij.DynamicBundle;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -9,7 +8,6 @@ import com.intellij.compiler.YourKitProfilerService;
 import com.intellij.compiler.cache.CompilerCacheConfigurator;
 import com.intellij.compiler.cache.CompilerCacheStartupActivity;
 import com.intellij.compiler.impl.CompilerUtil;
-import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompilerConfiguration;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
@@ -32,24 +30,21 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.*;
@@ -62,6 +57,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryManagerKt;
@@ -75,7 +71,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
 import com.intellij.platform.backend.workspace.WorkspaceModelCache;
-import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.path.EelPath;
 import com.intellij.platform.eel.provider.EelNioBridgeServiceKt;
 import com.intellij.platform.eel.provider.EelProviderUtil;
@@ -93,24 +88,19 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
-import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import io.netty.bootstrap.ServerBootstrap;
+import com.intellij.util.system.OS;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import io.netty.util.internal.ThreadLocalRandom;
 import kotlin.Unit;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.ide.BuiltInServerManager;
 import org.jetbrains.ide.BuiltInServerManagerImpl;
 import org.jetbrains.io.ChannelRegistrar;
@@ -127,16 +117,17 @@ import org.jvnet.winp.WinProcess;
 
 import javax.tools.*;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.text.SimpleDateFormat;
+import java.nio.file.FileSystemException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
@@ -151,26 +142,27 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
+import static java.util.Objects.requireNonNull;
+import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
-  private static final Key<String> COMPILER_PROCESS_DEBUG_HOST_PORT = Key.create("_compiler_process_debug_host_port_");
-  private static final Key<CharSequence> STDERR_OUTPUT = Key.create("_process_launch_errors_");
-  private static final SimpleDateFormat USAGE_STAMP_DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
-
-  private static final Logger LOG = Logger.getInstance(BuildManager.class);
-  private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
+
+  private static final Logger LOG = Logger.getInstance(BuildManager.class);
+
+  private static final Key<String> COMPILER_PROCESS_DEBUG_HOST_PORT = Key.create("_compiler_process_debug_host_port_");
+  private static final Key<CharSequence> STDERR_OUTPUT = Key.create("_process_launch_errors_");
+  private static final DateTimeFormatter USAGE_STAMP_DATE_FORMAT = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+  private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   private static final String[] INHERITED_IDE_VM_OPTIONS = {
     "user.language", "user.country", "user.region", PathManager.PROPERTY_PATHS_SELECTOR, "idea.case.sensitive.fs",
     "java.net.preferIPv4Stack"
   };
-
   private static final String IWS_EXTENSION = ".iws";  // an instance field; in order not to access the application on loading the class
   private static final int MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION = 11;
-  private final boolean IS_UNIT_TEST_MODE;
   private static final String IPR_EXTENSION = ".ipr";
   private static final String IDEA_PROJECT_DIR_PATTERN = ".idea";
   private static final Predicate<InternedPath> PATH_FILTER =
@@ -184,6 +176,7 @@ public final class BuildManager implements Disposable {
 
   private static final String JPS_USE_EXPERIMENTAL_STORAGE = "jps.use.experimental.storage";
 
+  private final boolean IS_UNIT_TEST_MODE;
   private final Map<TaskFuture<?>, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds =
@@ -194,35 +187,39 @@ public final class BuildManager implements Disposable {
   private final CoroutineDispatcherBackedExecutor myAutomakeTrigger;
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
-
   private final BuildManagerPeriodicTask myAutoMakeTask;
-
   private final BuildManagerPeriodicTask myDocumentSaveTask;
 
+  @SuppressWarnings("UseOptimizedEelFunctions")
   private final Runnable myGCTask = () -> {
     // todo: make customizable in UI?
-    final int unusedThresholdDays = Registry.intValue("compiler.build.data.unused.threshold", -1);
+    var unusedThresholdDays = Registry.intValue("compiler.build.data.unused.threshold", -1);
     if (unusedThresholdDays <= 0) {
       return;
     }
 
-    File buildSystemDir = LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory().toFile();
-    File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
-    if (dirs != null) {
-      Instant now = Instant.now();
-      for (File buildDataProjectDir : dirs) {
-        File usageFile = getUsageFile(buildDataProjectDir);
-        if (usageFile.exists()) {
-          final Pair<Date, File> usageData = readUsageFile(usageFile);
+    var buildSystemDir = LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory();
+    var now = LocalDate.now();
+    for (var buildDataProjectDir : NioFiles.list(buildSystemDir)) {
+      if (!TEMP_DIR_NAME.equals(buildDataProjectDir.getFileName().toString()) && Files.isDirectory(buildDataProjectDir)) {
+        var usageFile = getUsageFile(buildDataProjectDir);
+        if (Files.exists(usageFile)) {
+          var usageData = readUsageFile(usageFile);
           if (usageData != null) {
-            final File projectFile = usageData.second;
-            if (projectFile != null && !projectFile.exists() ||
-                Duration.between(usageData.first.toInstant(), now).toDays() > unusedThresholdDays) {
-              LOG.info("Clearing project build data because the project does not exist or was not opened for more than " +
-                       unusedThresholdDays +
-                       " days: " +
-                       buildDataProjectDir);
-              FileUtil.delete(buildDataProjectDir);
+            var projectFile = usageData.second;
+            if (
+              projectFile != null && !Files.exists(projectFile) ||
+              Duration.between(usageData.first, now).toDays() > unusedThresholdDays
+            ) {
+              LOG.info(
+                "Clearing project build data because the project does not exist or was not opened for more than " +
+                unusedThresholdDays + " days: " + buildDataProjectDir);
+              try {
+                NioFiles.deleteRecursively(buildDataProjectDir);
+              }
+              catch (IOException e) {
+                LOG.error("Failed to delete the build directory " + buildDataProjectDir, e);
+              }
             }
           }
         }
@@ -274,9 +271,8 @@ public final class BuildManager implements Disposable {
         if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
           return true;
         }
-        final long threshold =
-          Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
-        final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
+        var threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
+        var idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
         return idleSinceLastActivity < threshold;
       }
     };
@@ -296,15 +292,15 @@ public final class BuildManager implements Disposable {
       }
 
       private static boolean shouldSaveDocuments() {
-        final Project contextProject = getCurrentContextProject();
+        var contextProject = getCurrentContextProject();
         return contextProject != null && canStartAutoMake(contextProject);
       }
     };
 
-    final Application application = ApplicationManager.getApplication();
+    var application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
 
-    SimpleMessageBusConnection connection = application.getMessageBus().connect(coroutineScope);
+    var connection = application.getMessageBus().connect(coroutineScope);
     connection.subscribe(ProjectCloseListener.TOPIC, new ProjectWatcher());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -319,7 +315,7 @@ public final class BuildManager implements Disposable {
                 if (application.isDisposed()) {
                   return;
                 }
-                final List<VFileEvent> snapshot;
+                List<VFileEvent> snapshot;
                 synchronized (myUnprocessedEvents) {
                   if (myUnprocessedEvents.isEmpty()) {
                     return;
@@ -349,8 +345,8 @@ public final class BuildManager implements Disposable {
         Project project = null;
         ProjectFileIndex fileIndex = null;
 
-        for (VFileEvent event : events) {
-          final VirtualFile eventFile = event.getFile();
+        for (var event : events) {
+          var eventFile = event.getFile();
           if (eventFile == null) {
             continue;
           }
@@ -406,21 +402,20 @@ public final class BuildManager implements Disposable {
     });
 
     if (!IS_UNIT_TEST_MODE) {
-      ScheduledFuture<?> future =
-        AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
+      var future = AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(() -> runCommand(myGCTask), 3, 180, TimeUnit.MINUTES);
       Disposer.register(this, () -> future.cancel(false));
     }
   }
 
   private void configureIdleAutomake(@NotNull RegistryManager registryManager) {
-    int idleTimeout = getAutomakeWhileIdleTimeout(registryManager);
-    int listenerTimeout = idleTimeout > 0 ? idleTimeout : 60000;
-    Ref<AccessToken> idleListenerHandle = new Ref<>();
+    var idleTimeout = getAutomakeWhileIdleTimeout(registryManager);
+    var listenerTimeout = idleTimeout > 0 ? idleTimeout : 60000;
+    var idleListenerHandle = new Ref<AccessToken>();
     idleListenerHandle.set(IdleTracker.getInstance().addIdleListener(listenerTimeout, () -> {
-      int currentTimeout = getAutomakeWhileIdleTimeout(registryManager);
+      var currentTimeout = getAutomakeWhileIdleTimeout(registryManager);
       if (idleTimeout != currentTimeout) {
         // re-schedule with a changed period
-        AccessToken removeListener = idleListenerHandle.get();
+        var removeListener = idleListenerHandle.get();
         if (removeListener != null) {
           removeListener.close();
         }
@@ -428,9 +423,9 @@ public final class BuildManager implements Disposable {
       }
 
       if (currentTimeout > 0 /*is enabled*/ && !myAutoMakeTask.myInProgress.get()) {
-        boolean hasChanges = false;
+        var hasChanges = false;
         synchronized (myProjectDataMap) {
-          for (ProjectData data : myProjectDataMap.values()) {
+          for (var data : myProjectDataMap.values()) {
             if (data.hasChanges()) {
               hasChanges = true;
               break;
@@ -462,12 +457,12 @@ public final class BuildManager implements Disposable {
   }
 
   private static @NotNull List<Project> getOpenProjects() {
-    final Project[] projects = ProjectManager.getInstance().getOpenProjects();
+    var projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0) {
-      return Collections.emptyList();
+      return List.of();
     }
-    final List<Project> projectList = new SmartList<>();
-    for (Project project : projects) {
+    List<Project> projectList = new SmartList<>();
+    for (var project : projects) {
       if (isValidProject(project)) {
         projectList.add(project);
       }
@@ -504,28 +499,28 @@ public final class BuildManager implements Disposable {
   public void notifyChanges(Supplier<? extends Changes> changeProvider) {
     // ensure events are processed in the order they arrived
     runCommand(() -> {
-      if (changeProvider.get() instanceof Changes.Paths paths) {
+      if (changeProvider.get() instanceof Changes.Paths(Iterable<InternedPath> _deleted, Iterable<InternedPath> _changed)) {
         synchronized (myProjectDataMap) {
-          for (Map.Entry<String, ProjectData> entry : myProjectDataMap.entrySet()) {
-            ProjectData data = entry.getValue();
+          for (var entry : myProjectDataMap.entrySet()) {
+            var data = entry.getValue();
             // If a file name differs ony in case, on case-insensitive file systems such name still denotes the same file.
             // In this situation filesDeleted and filesChanged sets will contain paths which are different only in case.
             // Thus, the order in which BuildManager processes the changes, is important:
             // first deleted paths must be processed and only then changed paths
-            boolean changed = data.addDeleted(Iterators.filter(paths.deleted(), PATH_FILTER::test));
-            changed |= data.addChanged(Iterators.filter(paths.changed(), PATH_FILTER::test));
+            var changed = data.addDeleted(Iterators.filter(_deleted, PATH_FILTER::test));
+            changed |= data.addChanged(Iterators.filter(_changed, PATH_FILTER::test));
             if (changed) {
-              final String projectPath = entry.getKey();
-              RequestFuture<?> future = myBuildsInProgress.get(projectPath);
+              var projectPath = entry.getKey();
+              var future = myBuildsInProgress.get(projectPath);
               if (future != null && !future.isCancelled() && !future.isDone()) {
-                final UUID sessionId = future.getRequestID();
-                final Channel channel = myMessageDispatcher.getConnectedChannel(sessionId);
+                var sessionId = future.getRequestID();
+                var channel = myMessageDispatcher.getConnectedChannel(sessionId);
                 if (channel != null) {
-                  CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent(getPathMapperForProject(projectPath));
-                  final CmdlineRemoteProto.Message.ControllerMessage message =
-                    CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
-                      CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT
-                    ).setFsEvent(event).build();
+                  var event = data.createNextEvent(getPathMapperForProject(projectPath));
+                  var message = CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
+                    .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT)
+                    .setFsEvent(event)
+                    .build();
                   if (LOG.isDebugEnabled()) {
                     LOG.debug("Sending to running build, ordinal=" + event.getOrdinal());
                   }
@@ -554,7 +549,7 @@ public final class BuildManager implements Disposable {
     }
     // This handles paths for WSL projects even if "wsl.use.remote.agent.for.nio.filesystem" registry flag is disabled
     // and `EelPathUtils.isPathLocal(path)` previously returned `true`
-    WSLDistribution distribution = findWSLDistribution(project);
+    var distribution = findWSLDistribution(project);
     return wslPathMapper(distribution);
   }
 
@@ -571,7 +566,7 @@ public final class BuildManager implements Disposable {
     return distribution == null ?
            Function.identity() :
            path -> {
-             WslPath wslPath = WslPath.parseWindowsUncPath(path);
+             var wslPath = WslPath.parseWindowsUncPath(path);
              return wslPath != null && wslPath.getDistribution().getId().equalsIgnoreCase(distribution.getId())
                     ? wslPath.getLinuxPath()
                     : path;
@@ -588,7 +583,7 @@ public final class BuildManager implements Disposable {
           return myImpl.apply(path);
         }
         if (WslPath.isWslUncPath(path)) {
-          Project project = findProjectByProjectPath(projectPath);
+          var project = findProjectByProjectPath(projectPath);
           myImpl = wslPathMapper(project != null ? findWSLDistribution(project) : null);
           return myImpl.apply(path);
         }
@@ -598,11 +593,11 @@ public final class BuildManager implements Disposable {
   }
 
   public void clearState(@NotNull Project project) {
-    String projectPath = getProjectPath(project);
+    var projectPath = getProjectPath(project);
     cancelPreloadedBuilds(projectPath);
 
     synchronized (myProjectDataMap) {
-      ProjectData data = myProjectDataMap.get(projectPath);
+      var data = myProjectDataMap.get(projectPath);
       if (data != null) {
         data.dropChanges();
       }
@@ -611,10 +606,10 @@ public final class BuildManager implements Disposable {
   }
 
   public void clearState() {
-    final boolean cleared;
+    boolean cleared;
     synchronized (myProjectDataMap) {
       cleared = !myProjectDataMap.isEmpty();
-      for (Map.Entry<String, ProjectData> entry : myProjectDataMap.entrySet()) {
+      for (var entry : myProjectDataMap.entrySet()) {
         cancelPreloadedBuilds(entry.getKey());
         entry.getValue().dropChanges();
       }
@@ -629,11 +624,11 @@ public final class BuildManager implements Disposable {
   }
 
   public @Nullable List<String> getFilesChangedSinceLastCompilation(@NotNull Project project) {
-    String projectPath = getProjectPath(project);
+    var projectPath = getProjectPath(project);
     synchronized (myProjectDataMap) {
-      ProjectData data = myProjectDataMap.get(projectPath);
+      var data = myProjectDataMap.get(projectPath);
       if (data != null && !data.myNeedRescan) {
-        Set<InternedPath> changed = data.myChanged;
+        var changed = data.myChanged;
         return Iterators.collect(Iterators.map(changed, InternedPath::getValue), new ArrayList<>(changed.size()));
       }
       return null;
@@ -642,7 +637,7 @@ public final class BuildManager implements Disposable {
 
   private static @NotNull String getProjectPath(@NotNull Project project) {
     assert !project.isDefault() : BuildManager.class.getName() + " methods should not be called for default project";
-    return VirtualFileManager.extractPath(Objects.requireNonNull(project.getPresentableUrl()));
+    return VirtualFileManager.extractPath(requireNonNull(project.getPresentableUrl()));
   }
 
   public void scheduleAutoMake() {
@@ -654,11 +649,11 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private static @NotNull String getThreadTrace(Thread thread, final int depth) { // debugging
-    final StringBuilder buf = new StringBuilder();
-    final StackTraceElement[] trace = thread.getStackTrace();
-    for (int i = 0; i < depth && i < trace.length; i++) {
-      final StackTraceElement element = trace[i];
+  private static @NotNull String getThreadTrace(Thread thread, int depth) { // debugging
+    var buf = new StringBuilder();
+    var trace = thread.getStackTrace();
+    for (var i = 0; i < depth && i < trace.length; i++) {
+      var element = trace[i];
       buf.append("\tat ").append(element).append("\n");
     }
     return buf.toString();
@@ -675,14 +670,14 @@ public final class BuildManager implements Disposable {
   }
 
   private void runAutoMake() {
-    Collection<Project> projects = Collections.emptyList();
-    final int appIdleTimeout = getAutomakeWhileIdleTimeout(RegistryManager.getInstance());
+    Collection<Project> projects = List.of();
+    var appIdleTimeout = getAutomakeWhileIdleTimeout(RegistryManager.getInstance());
     if (appIdleTimeout > 0 && ApplicationManager.getApplication().getIdleTime() > appIdleTimeout) {
       // been idle for quite a while, so try to process all open projects while idle
       projects = getOpenProjects();
     }
     else {
-      final Project project = getCurrentContextProject();
+      var project = getCurrentContextProject();
       if (project != null) {
         projects = Collections.singleton(project);
       }
@@ -691,23 +686,23 @@ public final class BuildManager implements Disposable {
       return;
     }
 
-    final List<Pair<TaskFuture<?>, AutoMakeMessageHandler>> futures = new SmartList<>();
-    for (Project project : projects) {
+    List<Pair<TaskFuture<?>, AutoMakeMessageHandler>> futures = new SmartList<>();
+    for (var project : projects) {
       if (!canStartAutoMake(project)) {
         continue;
       }
 
-      final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
-      final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
-      final TaskFuture<?> future = scheduleBuild(
-        project, false, true, false, scopes, Collections.emptyList(), Collections.singletonMap(BuildParametersKeys.IS_AUTOMAKE, "true"),
+      var scopes = CmdlineProtoUtil.createAllModulesScopes(false);
+      var handler = new AutoMakeMessageHandler(project);
+      var future = scheduleBuild(
+        project, false, true, false, scopes, List.of(), Collections.singletonMap(BuildParametersKeys.IS_AUTOMAKE, "true"),
         handler
       );
       myAutomakeFutures.put(future, project);
       futures.add(new Pair<>(future, handler));
     }
-    boolean needAdditionalBuild = false;
-    for (Pair<TaskFuture<?>, AutoMakeMessageHandler> pair : futures) {
+    var needAdditionalBuild = false;
+    for (var pair : futures) {
       try {
         pair.first.waitFor();
       }
@@ -733,7 +728,7 @@ public final class BuildManager implements Disposable {
     if (project.isDisposed()) {
       return false;
     }
-    final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
+    var config = CompilerWorkspaceConfiguration.getInstance(project);
     if (!config.MAKE_PROJECT_ON_SAVE || !TrustedProjects.isProjectTrusted(project)) {
       return false;
     }
@@ -741,17 +736,17 @@ public final class BuildManager implements Disposable {
   }
 
   private static @Nullable Project getCurrentContextProject() {
-    final List<Project> openProjects = getOpenProjects();
+    var openProjects = getOpenProjects();
     if (openProjects.isEmpty()) {
       return null;
     }
     if (openProjects.size() == 1) {
-      return openProjects.get(0);
+      return openProjects.getFirst();
     }
 
     Project project = null;
     if (!GraphicsEnvironment.isHeadless()) {
-      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      var window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
       if (window == null) {
         window = ComponentUtil.getActiveWindow();
       }
@@ -762,7 +757,7 @@ public final class BuildManager implements Disposable {
   }
 
   private static boolean hasRunningProcess(@NotNull Project project) {
-    for (ProcessHandler handler : ExecutionManager.getInstance(project).getRunningProcesses()) {
+    for (var handler : ExecutionManager.getInstance(project).getRunningProcesses()) {
       if (!handler.isProcessTerminated() && !ALLOW_AUTOMAKE.get(handler, Boolean.FALSE)) { // active process
         return true;
       }
@@ -771,11 +766,11 @@ public final class BuildManager implements Disposable {
   }
 
   public @NotNull Collection<TaskFuture<?>> cancelAutoMakeTasks(@NotNull Project project) {
-    final Collection<TaskFuture<?>> futures = new SmartList<>();
+    Collection<TaskFuture<?>> futures = new SmartList<>();
     synchronized (myAutomakeFutures) {
-      for (Map.Entry<TaskFuture<?>, Project> entry : myAutomakeFutures.entrySet()) {
+      for (var entry : myAutomakeFutures.entrySet()) {
         if (entry.getValue().equals(project)) {
-          TaskFuture<?> future = entry.getKey();
+          var future = entry.getKey();
           future.cancel(false);
           futures.add(future);
         }
@@ -788,8 +783,8 @@ public final class BuildManager implements Disposable {
   }
 
   private void cancelAllPreloadedBuilds() {
-    String[] paths = ArrayUtil.toStringArray(myPreloadedBuilds.keySet());
-    for (String path : paths) {
+    var paths = ArrayUtil.toStringArray(myPreloadedBuilds.keySet());
+    for (var path : paths) {
       cancelPreloadedBuilds(path);
     }
   }
@@ -802,9 +797,9 @@ public final class BuildManager implements Disposable {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Cancel preloaded build for " + projectPath + "\n" + getThreadTrace(Thread.currentThread(), 50));
     }
-    CompletableFuture<Boolean> future = new CompletableFuture<>();
+    var future = new CompletableFuture<Boolean>();
     runCommand(() -> {
-      Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = takePreloadedProcess(projectPath);
+      var pair = takePreloadedProcess(projectPath);
       if (pair != null) {
         stopProcess(projectPath, pair.first.getRequestID(), pair.second, future);
       }
@@ -815,10 +810,7 @@ public final class BuildManager implements Disposable {
     return new TaskFutureAdapter<>(future);
   }
 
-  private void stopProcess(@NotNull String projectPath,
-                           @NotNull UUID sessionId,
-                           @NotNull OSProcessHandler processHandler,
-                           @Nullable CompletableFuture<Boolean> future) {
+  private void stopProcess(String projectPath, UUID sessionId, OSProcessHandler processHandler, @Nullable CompletableFuture<Boolean> future) {
     myMessageDispatcher.cancelSession(sessionId);
     // waiting for the process from project's task queue guarantees no build is started for this project
     // until this one gracefully exits and closes all its storages
@@ -826,7 +818,7 @@ public final class BuildManager implements Disposable {
       Throwable error = null;
       try {
         while (!processHandler.waitFor()) {
-          LOG.info("processHandler.waitFor() returned false for session " + sessionId + ", continue waiting");
+          LOG.info("[stop] processHandler.waitFor() returned false for session " + sessionId + ", continue waiting");
         }
       }
       catch (Throwable e) {
@@ -843,8 +835,7 @@ public final class BuildManager implements Disposable {
 
   private @Nullable Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> takePreloadedProcess(String projectPath) {
     Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> result;
-    final Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> preloadProgress =
-      myPreloadedBuilds.remove(projectPath);
+    var preloadProgress = myPreloadedBuilds.remove(projectPath);
     try {
       result = preloadProgress != null ? preloadProgress.get() : null;
     }
@@ -856,16 +847,16 @@ public final class BuildManager implements Disposable {
   }
 
   public @NotNull TaskFuture<?> scheduleBuild(
-    final Project project, final boolean isRebuild, final boolean isMake,
-    final boolean onlyCheckUpToDate, final List<TargetTypeBuildScope> scopes,
-    final Collection<String> paths,
-    final Map<String, String> userData, final DefaultMessageHandler messageHandler
+    Project project, boolean isRebuild, boolean isMake,
+    boolean onlyCheckUpToDate, List<TargetTypeBuildScope> scopes,
+    Collection<String> paths,
+    Map<String, String> userData, DefaultMessageHandler messageHandler
   ) {
 
-    final String projectPath = getProjectPath(project);
-    final boolean isAutomake = messageHandler instanceof AutoMakeMessageHandler;
-    final EelDescriptor eelDescriptor = EelProviderUtil.getEelDescriptor(project);
-    final WSLDistribution wslDistribution = findWSLDistribution(project);
+    var projectPath = getProjectPath(project);
+    var isAutomake = messageHandler instanceof AutoMakeMessageHandler;
+    var eelDescriptor = EelProviderUtil.getEelDescriptor(project);
+    var wslDistribution = findWSLDistribution(project);
 
     Function<String, String> pathMapperBack;
 
@@ -876,19 +867,19 @@ public final class BuildManager implements Disposable {
       pathMapperBack = wslDistribution != null ? wslDistribution::getWindowsPath : null;
     }
 
-    final BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, pathMapperBack, isAutomake);
+    BuilderMessageHandler handler = new NotifyingMessageHandler(project, messageHandler, pathMapperBack, isAutomake);
 
-    Function<String, String> pathMapper = getPathMapperForProject(project);
+    var pathMapper = getPathMapperForProject(project);
 
-    final DelegateFuture _future = new DelegateFuture();
+    var _future = new DelegateFuture();
     // by using the same queue that processes events,
     // we ensure that the build will be aware of all events that have happened before this request
     runCommand(() -> {
-      final Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> preloaded = takePreloadedProcess(projectPath);
-      final RequestFuture<PreloadedProcessMessageHandler> preloadedFuture = Pair.getFirst(preloaded);
-      final boolean usingPreloadedProcess = preloadedFuture != null;
+      var preloaded = takePreloadedProcess(projectPath);
+      var preloadedFuture = Pair.getFirst(preloaded);
+      var usingPreloadedProcess = preloadedFuture != null;
 
-      final UUID sessionId;
+      UUID sessionId;
       if (usingPreloadedProcess) {
         LOG.info("Using preloaded build process to compile " + projectPath);
         sessionId = preloadedFuture.getRequestID();
@@ -898,8 +889,7 @@ public final class BuildManager implements Disposable {
         sessionId = UUID.randomUUID();
       }
 
-      final RequestFuture<? extends BuilderMessageHandler> future =
-        usingPreloadedProcess ? preloadedFuture : new RequestFuture<>(handler, sessionId, new CancelBuildSessionAction<>());
+      var future = usingPreloadedProcess ? preloadedFuture : new RequestFuture<>(handler, sessionId, new CancelBuildSessionAction<>());
       // futures we need to wait for: either just "future" or both "future" and "buildFuture" below
       List<TaskFuture<?>> delegatesToWait = Collections.singletonList(future);
 
@@ -909,8 +899,7 @@ public final class BuildManager implements Disposable {
         future.setDone();
       }
       else {
-        String optionsPath = PathManager.getOptionsPath();
-
+        var optionsPath = PathManager.getOptionsDir().toString();
         if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
           optionsPath = asEelPath(OptionsDirectoryProcessor.transferOptionsToRemote(PathManager.getOptionsDir(), eelDescriptor)).toString();
         }
@@ -918,24 +907,21 @@ public final class BuildManager implements Disposable {
           optionsPath = pathMapper.apply(optionsPath);
         }
 
-        final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals =
-          CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder().setGlobalOptionsPath(optionsPath)
-            .build();
+        var globals = CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder().setGlobalOptionsPath(optionsPath).build();
         CmdlineRemoteProto.Message.ControllerMessage.FSEvent currentFSChanges;
-        final ExecutorService projectTaskQueue;
-        final boolean needRescan;
+        ExecutorService projectTaskQueue;
+        boolean needRescan;
         synchronized (myProjectDataMap) {
-          ProjectData data = getProjectData(projectPath);
+          var data = getProjectData(projectPath);
           if (isRebuild) {
             data.dropChanges();
           }
           if (IS_UNIT_TEST_MODE) {
-            LOG.info("Scheduling build for " +
-                     projectPath +
-                     "; CHANGED: " +
-                     Iterators.collect(Iterators.map(data.myChanged, InternedPath::getValue), new HashSet<>()) +
-                     "; DELETED: " +
-                     Iterators.collect(Iterators.map(data.myDeleted, InternedPath::getValue), new HashSet<>()));
+            LOG.info(
+              "Scheduling build for " + projectPath +
+              "; CHANGED: " + Iterators.collect(Iterators.map(data.myChanged, InternedPath::getValue), new HashSet<>()) +
+              "; DELETED: " + Iterators.collect(Iterators.map(data.myDeleted, InternedPath::getValue), new HashSet<>())
+            );
           }
           needRescan = data.getAndResetRescanFlag();
           currentFSChanges = needRescan ? null : data.createNextEvent(pathMapper);
@@ -945,19 +931,19 @@ public final class BuildManager implements Disposable {
           projectTaskQueue = data.taskQueue;
         }
 
-        String mappedProjectPath = pathMapper.apply(projectPath);
-        List<String> mappedPaths = ContainerUtil.map(paths, pathMapper::apply);
-        final CmdlineRemoteProto.Message.ControllerMessage params;
+        var mappedProjectPath = pathMapper.apply(projectPath);
+        var mappedPaths = ContainerUtil.map(paths, pathMapper::apply);
+        CmdlineRemoteProto.Message.ControllerMessage params;
         if (isRebuild) {
-          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, Collections.emptyList(), userData, globals, null, null);
+          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, List.of(), userData, globals, null, null);
         }
         else if (onlyCheckUpToDate) {
           params = CmdlineProtoUtil.createUpToDateCheckRequest(mappedProjectPath, scopes, mappedPaths, userData, globals, currentFSChanges);
         }
         else {
-          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, isMake ? Collections.emptyList() : mappedPaths, userData,
-                                                       globals, currentFSChanges,
-                                                       isMake ? CompilerCacheConfigurator.getCacheDownloadSettings(project) : null);
+          var pathsToMake = isMake ? List.<String>of() : mappedPaths;
+          var cacheSettings = isMake ? CompilerCacheConfigurator.getCacheDownloadSettings(project) : null;
+          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, pathsToMake, userData, globals, currentFSChanges, cacheSettings);
         }
         if (!usingPreloadedProcess) {
           myMessageDispatcher.registerBuildMessageHandler(future, params);
@@ -976,10 +962,10 @@ public final class BuildManager implements Disposable {
                 }
               }
               myBuildsInProgress.put(projectPath, future);
-              final OSProcessHandler processHandler;
+              OSProcessHandler processHandler;
               CharSequence errorsOnLaunch;
               if (usingPreloadedProcess) {
-                final boolean paramsSent = myMessageDispatcher.sendBuildParameters(future.getRequestID(), params);
+                var paramsSent = myMessageDispatcher.sendBuildParameters(future.getRequestID(), params);
                 if (!paramsSent) {
                   myMessageDispatcher.cancelSession(future.getRequestID());
                 }
@@ -1005,32 +991,29 @@ public final class BuildManager implements Disposable {
                 processHandler.startNotify();
               }
 
-              @NlsSafe String debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_HOST_PORT);
+              @NlsSafe var debugPort = processHandler.getUserData(COMPILER_PROCESS_DEBUG_HOST_PORT);
               if (debugPort != null) {
-                messageHandler.handleCompileMessage(
-                  sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse(
-                    "Build: waiting for debugger connection on port " + debugPort //NON-NLS
-                  ).getCompileMessage());
+                @NonNls var text = "Build: waiting for debugger connection on port " + debugPort;
+                messageHandler.handleCompileMessage(sessionId, CmdlineProtoUtil.createCompileProgressMessageResponse(text).getCompileMessage());
                 // additional support for debugger auto-attach feature
                 //noinspection UseOfSystemOutOrSystemErr
-                System.out.println("Build: Listening for transport dt_socket at address: " + debugPort); //NON-NLS
+                System.out.println("Build: Listening for transport dt_socket at address: " + debugPort);
               }
 
               while (!processHandler.waitFor()) {
                 LOG.info("processHandler.waitFor() returned false for session " + sessionId + ", continue waiting");
               }
 
-              final int exitValue = processHandler.getProcess().exitValue();
+              var exitValue = processHandler.getProcess().exitValue();
               if (exitValue != 0) {
-                final @Nls StringBuilder msg = new StringBuilder();
+                @Nls var msg = new StringBuilder();
                 msg.append(JavaCompilerBundle.message("abnormal.build.process.termination")).append(": ");
                 if (errorsOnLaunch != null && !errorsOnLaunch.isEmpty()) {
                   msg.append("\n").append(errorsOnLaunch);
                   if (StringUtil.contains(errorsOnLaunch, "java.lang.NoSuchMethodError")) {
-                    msg.append(
-                        "\nThe error may be caused by JARs in Java Extensions directory which conflicts with libraries used by the external build process.")
-                      .append(
-                        "\nTry adding -Djava.ext.dirs=\"\" argument to 'Build process VM options' in File | Settings | Build, Execution, Deployment | Compiler to fix the problem.");
+                    msg
+                      .append("\nThe error may be caused by JARs in Java Extensions directory which conflicts with libraries used by the external build process.")
+                      .append("\nTry adding -Djava.ext.dirs=\"\" argument to 'Build process VM options' in File | Settings | Build, Execution, Deployment | Compiler to fix the problem.");
                   }
                   else if (StringUtil.contains(errorsOnLaunch, "io.netty.channel.ConnectTimeoutException") && wslDistribution != null) {
                     msg.append(JavaCompilerBundle.message("wsl.network.connection.failure"));
@@ -1069,7 +1052,7 @@ public final class BuildManager implements Disposable {
           handleProcessExecutionFailure(sessionId, e);
         }
       }
-      boolean set = _future.setDelegates(delegatesToWait);
+      var set = _future.setDelegates(delegatesToWait);
       assert set;
     });
 
@@ -1086,7 +1069,7 @@ public final class BuildManager implements Disposable {
       return false;
     }
     if (canUseEel()) {
-      Path projectFilePath = Path.of(getProjectPath(project));
+      var projectFilePath = Path.of(getProjectPath(project));
       if (!EelProviderUtil.getEelDescriptor(projectFilePath).equals(LocalEelDescriptor.INSTANCE)) {
         // non-local projects do not work correctly with preloaded processes
         return false;
@@ -1096,7 +1079,7 @@ public final class BuildManager implements Disposable {
       return true;
     }
 
-    for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
+    for (var provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
       if (!provider.isProcessPreloadingEnabled()) {
         return false;
       }
@@ -1109,7 +1092,7 @@ public final class BuildManager implements Disposable {
       // Either the connection has never been established (a process not started or execution failed),
       // or no messages were sent from the launched process.
       // In this case, the session cannot be unregistered by the message dispatcher
-      final BuilderMessageHandler unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+      var unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
       if (unregistered != null) {
         if (execFailure != null) {
           unregistered.handleFailure(sessionId, CmdlineProtoUtil.createFailure(execFailure.getMessage(), execFailure));
@@ -1120,7 +1103,7 @@ public final class BuildManager implements Disposable {
   }
 
   private void handleProcessExecutionFailure(@NotNull UUID sessionId, Throwable e) {
-    final BuilderMessageHandler unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
+    var unregistered = myMessageDispatcher.unregisterBuildMessageHandler(sessionId);
     if (unregistered != null) {
       unregistered.handleFailure(sessionId, CmdlineProtoUtil.createFailure(e.getMessage(), e));
       unregistered.sessionTerminated(sessionId);
@@ -1136,7 +1119,7 @@ public final class BuildManager implements Disposable {
   }
 
   private synchronized int ensureListening(InetAddress inetAddress) {
-    for (ListeningConnection connection : myListeningConnections) {
+    for (var connection : myListeningConnections) {
       if (connection.myAddress.equals(inetAddress)) {
         return connection.myListenPort;
       }
@@ -1151,15 +1134,15 @@ public final class BuildManager implements Disposable {
   }
 
   private synchronized void cleanWslProxies(WSLDistribution dist) {
-    String idPrefix = dist.getId() + ":";
+    var idPrefix = dist.getId() + ":";
     List<String> keys = new SmartList<>();
-    for (String key : myWslProxyCache.keySet()) {
+    for (var key : myWslProxyCache.keySet()) {
       if (key.startsWith(idPrefix)) {
         keys.add(key);
       }
     }
-    for (String key : keys) {
-      WslProxy proxy = myWslProxyCache.remove(key);
+    for (var key : keys) {
+      var proxy = myWslProxyCache.remove(key);
       if (proxy != null) {
         Disposer.dispose(proxy);
       }
@@ -1175,18 +1158,16 @@ public final class BuildManager implements Disposable {
   }
 
   public static @NotNull Pair<@NotNull Sdk, @Nullable JavaSdkVersion> getBuildProcessRuntimeSdk(@NotNull Project project) {
-
     return getRuntimeSdk(project, MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION, processed -> {
       // build's fallback SDK choosing policy: select among unprocessed SDKs in the SDK table the oldest possible one that can be used
       // if the project is located within an Eel machine, consider only SDKs configured in the same Eel machine
-      Predicate<Sdk> sdkFilter = getSdkFilter(project);
-
+      var sdkFilter = getSdkFilter(project);
       return StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
         .filter(sdk -> !processed.contains(sdk) && sdkFilter.test(sdk))
         .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
         .filterValues(version -> version != null && version.isAtLeast(MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION))
         .min(Map.Entry.comparingByValue())
-        .map(p -> Pair.create(p.getKey(), JavaSdkVersion.fromJavaVersion(p.getValue())))
+        .map(p -> new Pair<>(p.getKey(), JavaSdkVersion.fromJavaVersion(requireNonNull(p.getValue()))))
         .filter(p -> p.second != null)
         .orElseGet(() -> {
           if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
@@ -1223,10 +1204,10 @@ public final class BuildManager implements Disposable {
   private static @NotNull Pair<Sdk, JavaSdkVersion> getRuntimeSdk(@NotNull Project project,
                                                                   int oldestPossibleVersion,
                                                                   Function<Set<? extends Sdk>, Pair<Sdk, JavaSdkVersion>> fallbackSdkProvider) {
-    final Map<Sdk, Integer> candidates = new HashMap<>();
+    Map<Sdk, Integer> candidates = new HashMap<>();
     Consumer<Sdk> addSdk = sdk -> {
       if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-        final Integer count = candidates.putIfAbsent(sdk, 1);
+        var count = candidates.putIfAbsent(sdk, 1);
         if (count != null) {
           candidates.put(sdk, count + 1);
         }
@@ -1234,31 +1215,31 @@ public final class BuildManager implements Disposable {
     };
 
     addSdk.accept(ProjectRootManager.getInstance(project).getProjectSdk());
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
+    for (var module : ModuleManager.getInstance(project).getModules()) {
       addSdk.accept(ModuleRootManager.getInstance(module).getSdk());
     }
 
-    final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+    var configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
     if (configuration.getJavacCompiler().equals(configuration.getDefaultCompiler()) &&
         JavacConfiguration.getOptions(project, JavacConfiguration.class).PREFER_TARGET_JDK_COMPILER) {
       // for javac, if compiler from associated SDK instead of cross-compilation is preferred, use a different policy:
       // select the most frequently used jdk from the sdks that are associated with the project, but not older than <oldestPossibleVersion>
       // this policy attempts to compile as many modules as possible without spawning a separate javac process
 
-      final List<Pair<Sdk, JavaSdkVersion>> sortedSdks = EntryStream.of(candidates)
+      var sortedSdks = EntryStream.of(candidates)
         .reverseSorted(Map.Entry.comparingByValue())
         .keys()
         .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
         .filterValues(version -> version != null && version.isAtLeast(oldestPossibleVersion))
-        .mapValues(JavaSdkVersion::fromJavaVersion)
+        .mapValues(version -> JavaSdkVersion.fromJavaVersion(requireNonNull(version)))
         .nonNullValues()
         .mapKeyValue(Pair::create)
         .toList();
 
       if (!sortedSdks.isEmpty()) {
         // first, try to find the most used JDK of version 9+ => JRT FS support will be needed
-        final Pair<Sdk, JavaSdkVersion> sdk9_plus = ContainerUtil.find(sortedSdks, p -> p.second.isAtLeast(JavaSdkVersion.JDK_1_9));
-        return sdk9_plus != null ? sdk9_plus : sortedSdks.iterator().next(); // get the most used
+        var sdk9_plus = ContainerUtil.find(sortedSdks, p -> p.second != null && p.second.isAtLeast(JavaSdkVersion.JDK_1_9));
+        return sdk9_plus != null ? sdk9_plus : sortedSdks.getFirst(); // get the most used
       }
     }
 
@@ -1267,49 +1248,47 @@ public final class BuildManager implements Disposable {
       .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
       .filterValues(version -> version != null && version.isAtLeast(oldestPossibleVersion))
       .max(Map.Entry.comparingByValue())
-      .map(p -> Pair.create(p.getKey(), JavaSdkVersion.fromJavaVersion(p.getValue())))
+      .map(p -> new Pair<>(p.getKey(), JavaSdkVersion.fromJavaVersion(requireNonNull(p.getValue()))))
       .filter(p -> p.second != null)
       .orElseGet(() -> fallbackSdkProvider.apply(candidates.keySet()));
   }
 
-  private static @Nullable Pair<Sdk, JavaSdkVersion> getForkedJavacFallbackSdk(@NotNull Project project, int oldestPossibleVersion) {
+  private static @Nullable Pair<Sdk, JavaSdkVersion> getForkedJavacFallbackSdk(Project project) {
     // select the oldest SDK version among SDKs that are present in the SDK Table, but not older than <oldestPossibleVersion>
     return StreamEx.of(ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance()))
       .filter(getSdkFilter(project))
       .mapToEntry(sdk -> JavaVersion.tryParse(sdk.getVersionString()))
-      .filterValues(version -> version != null && version.isAtLeast(oldestPossibleVersion))
+      .filterValues(version -> version != null && version.isAtLeast(ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION))
       .min(Map.Entry.comparingByValue())
-      .map(p -> Pair.create(p.getKey(), JavaSdkVersion.fromJavaVersion(p.getValue())))
+      .map(p -> new Pair<>(p.getKey(), JavaSdkVersion.fromJavaVersion(requireNonNull(p.getValue()))))
       .filter(p -> p.second != null)
       .orElse(null);
   }
 
   private static @NotNull Pair<Sdk, JavaSdkVersion> getIDERuntimeSdk() {
     @SuppressWarnings("removal")
-    Sdk sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-    return Pair.create(sdk, JavaSdk.getInstance().getVersion(sdk));
+    var sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    return new Pair<>(sdk, JavaSdk.getInstance().getVersion(sdk));
   }
 
-  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project,
-                                                                                                                    ExecutorService projectTaskQueue,
-                                                                                                                    @Nullable WSLDistribution projectWslDistribution) {
-
+  private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(
+    Project project,
+    ExecutorService projectTaskQueue,
+    @Nullable WSLDistribution projectWslDistribution
+  ) {
     // launching the build process from projectTaskQueue ensures that no other build process for this project is currently running
     return BackgroundTaskUtil.submitTask(projectTaskQueue, ProjectDisposableService.getInstance(project), () -> {
       if (project.isDisposed()) {
         return null;
       }
-      final RequestFuture<PreloadedProcessMessageHandler> future =
-        new RequestFuture<>(new PreloadedProcessMessageHandler(), UUID.randomUUID(),
-                            new CancelBuildSessionAction<>());
+      var future = new RequestFuture<>(new PreloadedProcessMessageHandler(), UUID.randomUUID(), new CancelBuildSessionAction<>());
       try {
         myMessageDispatcher.registerBuildMessageHandler(future, null);
-        ProgressIndicator indicator = Objects.requireNonNull(ProgressManager.getGlobalProgressIndicator());
-        final OSProcessHandler processHandler = launchBuildProcess(project, future.getRequestID(), true, projectWslDistribution, indicator);
-        final StringBuffer errors = new StringBuffer();
+        var indicator = requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
+        var processHandler = launchBuildProcess(project, future.getRequestID(), true, projectWslDistribution, indicator);
+        var errors = new StringBuffer();
         processHandler.addProcessListener(new StdOutputCollector(errors));
         STDERR_OUTPUT.set(processHandler, errors);
-
         processHandler.startNotify();
         return new Pair<>(future, processHandler);
       }
@@ -1327,7 +1306,7 @@ public final class BuildManager implements Disposable {
 
   private static @Nullable WSLDistribution findWSLDistribution(@Nullable Sdk sdk) {
     if (sdk != null && sdk.getSdkType() instanceof JavaSdkType projectJdkType) {
-      String windowsUncPath = projectJdkType.getVMExecutablePath(sdk);
+      var windowsUncPath = projectJdkType.getVMExecutablePath(sdk);
       if (windowsUncPath != null) {
         return WslPath.getDistributionByWindowsUncPath(windowsUncPath);
       }
@@ -1341,27 +1320,27 @@ public final class BuildManager implements Disposable {
                                               @Nullable WSLDistribution projectWslDistribution,
                                               @Nullable ProgressIndicator progressIndicator) throws ExecutionException, IOException {
     String compilerPath = null;
-    final String vmExecutablePath;
+    String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
 
-    final String forcedCompiledJdkHome = Registry.stringValue(COMPILER_PROCESS_JDK_PROPERTY);
+    var forcedCompiledJdkHome = Registry.stringValue(COMPILER_PROCESS_JDK_PROPERTY);
     String sdkName;
     if (Strings.isEmptyOrSpaces(forcedCompiledJdkHome)) {
       // choosing sdk with which the build process should be run
-      final Pair<Sdk, JavaSdkVersion> pair = getBuildProcessRuntimeSdk(project);
-      final Sdk projectJdk = pair.first;
+      var pair = getBuildProcessRuntimeSdk(project);
+      var projectJdk = pair.first;
       sdkName = projectJdk.getName();
       sdkVersion = pair.second;
 
-      final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
+      var projectJdkType = (JavaSdkType)projectJdk.getSdkType();
 
       // validate tools.jar presence for jdk8 and older
       if (!JavaSdkUtil.isJdkAtLeast(projectJdk, JavaSdkVersion.JDK_1_9)) {
-        @SuppressWarnings("removal") final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+        @SuppressWarnings("removal") var internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
         if (FileUtil.pathsEqual(projectJdk.getHomePath(), internalJdk.getHomePath())) {
           // important: because internal JDK can be either JDK or JRE,
           // this is the most universal way to obtain tools.jar path in this particular case
-          final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
+          var systemCompiler = ToolProvider.getSystemJavaCompiler();
           if (systemCompiler == null) {
             //temporary workaround for IDEA-169747
             try {
@@ -1393,44 +1372,43 @@ public final class BuildManager implements Disposable {
     }
     else {
       sdkName = forcedCompiledJdkHome;
-      compilerPath = new File(forcedCompiledJdkHome, "lib/tools.jar").getAbsolutePath();
-      vmExecutablePath = new File(forcedCompiledJdkHome, "bin/java").getAbsolutePath();
+      compilerPath = Path.of(forcedCompiledJdkHome, "lib/tools.jar").toAbsolutePath().toString();
+      vmExecutablePath = Path.of(forcedCompiledJdkHome, "bin/java").toAbsolutePath().toString();
       project.getService(BuildManagerVersionChecker.class).checkArch(forcedCompiledJdkHome);
     }
 
-    final CompilerConfiguration projectConfig = CompilerConfiguration.getInstance(project);
-    final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
+    var projectConfig = CompilerConfiguration.getInstance(project);
+    var config = CompilerWorkspaceConfiguration.getInstance(project);
 
-    InetAddress listenAddress = InetAddress.getLoopbackAddress();
-    InetSocketAddress listenSocketAddress = new InetSocketAddress(listenAddress, ensureListening(listenAddress));
-    String buildProcessConnectHost = listenAddress.getHostAddress();
-    int buildProcessConnectPort = listenSocketAddress.getPort();
+    var listenAddress = InetAddress.getLoopbackAddress();
+    var listenSocketAddress = new InetSocketAddress(listenAddress, ensureListening(listenAddress));
+    var buildProcessConnectHost = listenAddress.getHostAddress();
+    var buildProcessConnectPort = listenSocketAddress.getPort();
 
     BuildCommandLineBuilder cmdLine;
     WslPath wslPath;
-    boolean localProject = EelPathUtils.isProjectLocal(project);
+    var localProject = EelPathUtils.isProjectLocal(project);
     if (canUseEel() && !localProject) {
       wslPath = null;
-      EelBuildCommandLineBuilder eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
+      var eelBuilder = new EelBuildCommandLineBuilder(project, Path.of(vmExecutablePath));
       cmdLine = eelBuilder;
       cmdLine.addParameter("-Dide.jps.remote.path.prefixes=" + eelBuilder.pathPrefixes().stream()
         .map(e -> e.replace('\\', '/')).collect(Collectors.joining(";")));
       buildProcessConnectHost = "127.0.0.1";
-      int listenPort = listenSocketAddress.getPort();
-      buildProcessConnectPort =
-        eelBuilder.maybeRunReverseTunnel(listenPort, project); // TODO maybeRunReverseTunnel must return InetSocketAddress
+      var listenPort = listenSocketAddress.getPort();
+      buildProcessConnectPort = eelBuilder.maybeRunReverseTunnel(listenPort, project); // TODO maybeRunReverseTunnel must return InetSocketAddress
     }
     else {
       wslPath = WslPath.parseWindowsUncPath(vmExecutablePath);
       if (wslPath != null) {
-        WSLDistribution sdkDistribution = wslPath.getDistribution();
+        var sdkDistribution = wslPath.getDistribution();
         if (!sdkDistribution.equals(projectWslDistribution)) {
           throw new ExecutionException(JavaCompilerBundle.message("build.process.wsl.distribution.dont.match",
                                                                   sdkName + " (WSL " + sdkDistribution.getPresentableName() + ")",
                                                                   MINIMUM_REQUIRED_JPS_BUILD_JAVA_VERSION));
         }
         cmdLine = new WslBuildCommandLineBuilder(project, sdkDistribution, wslPath.getLinuxPath(), progressIndicator);
-        buildProcessConnectHost = "127.0.0.1"; // WslProxy listen address on linux side
+        buildProcessConnectHost = "127.0.0.1"; // WslProxy listen address on the Linux side
         buildProcessConnectPort = getWslPort(sdkDistribution, listenSocketAddress);
       }
       else {
@@ -1442,24 +1420,23 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    boolean profileWithYourKit = false;
-    boolean isAgentpathSet = false;
+    var profileWithYourKit = false;
+    var isAgentpathSet = false;
     String userDefinedHeapSize = null;
-    final List<String> userAdditionalOptionsList = new SmartList<>();
-    final String userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
-    final boolean userLocalOptionsActive = !StringUtil.isEmptyOrSpaces(userAdditionalVMOptions);
-    final String additionalOptions = userLocalOptionsActive ? userAdditionalVMOptions : projectConfig.getBuildProcessVMOptions();
+    List<String> userAdditionalOptionsList = new SmartList<>();
+    var userAdditionalVMOptions = config.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
+    var userLocalOptionsActive = !StringUtil.isEmptyOrSpaces(userAdditionalVMOptions);
+    var additionalOptions = userLocalOptionsActive ? userAdditionalVMOptions : projectConfig.getBuildProcessVMOptions();
     if (!StringUtil.isEmptyOrSpaces(additionalOptions)) {
-      final StringTokenizer tokenizer = new StringTokenizer(additionalOptions, " ", false);
+      var tokenizer = new StringTokenizer(additionalOptions, " ", false);
       while (tokenizer.hasMoreTokens()) {
-        final String option = tokenizer.nextToken();
+        var option = tokenizer.nextToken();
         if (StringUtil.startsWithIgnoreCase(option, "-Xmx")) {
           if (userLocalOptionsActive) {
             userDefinedHeapSize = option;
           }
         }
         else {
-          //noinspection SpellCheckingInspection
           if (option.startsWith("-Dprofiling.mode=") && !option.equals("-Dprofiling.mode=false")) {
             profileWithYourKit = true;
           }
@@ -1471,7 +1448,7 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    final int localHeapSize = config.COMPILER_PROCESS_HEAP_SIZE;
+    var localHeapSize = config.COMPILER_PROCESS_HEAP_SIZE;
     if (localHeapSize > 0) {
       cmdLine.addParameter("-Xmx" + localHeapSize + "m");
     }
@@ -1479,8 +1456,7 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter(userDefinedHeapSize);
     }
     else {
-      final int heapSize =
-        projectConfig.getBuildProcessHeapSize(JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
+      var heapSize = projectConfig.getBuildProcessHeapSize(JavacConfiguration.getOptions(project, JavacConfiguration.class).MAXIMUM_HEAP_SIZE);
       cmdLine.addParameter("-Xmx" + heapSize + "m");
     }
 
@@ -1492,11 +1468,11 @@ public final class BuildManager implements Disposable {
     attachJnaBootLibraryIfNeeded(project, cmdLine, wslPath);
     if (Registry.is("jps.build.use.workspace.model")) {
       // todo: upload workspace model to remote side because it runs with eel
-      String globalCacheId = "Local";
+      var globalCacheId = "Local";
 
       cmdLine.addParameter("-Dintellij.jps.use.workspace.model=true");
-      WorkspaceModelCache cache = WorkspaceModelCache.getInstance(project);
-      GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.Companion.getInstance();
+      var cache = WorkspaceModelCache.getInstance(project);
+      var globalCache = GlobalWorkspaceModelCache.Companion.getInstance();
       if (cache != null && globalCache != null) {
         //todo ensure that caches are up-to-date or use a different way to pass serialized workspace model to the build process
         cmdLine.addParameter("-Djps.workspace.storage.project.cache.path=" + cache.getCacheFile());
@@ -1515,7 +1491,7 @@ public final class BuildManager implements Disposable {
     if (sdkVersion != null) {
       if (sdkVersion.compareTo(JavaSdkVersion.JDK_1_9) < 0) {
         //-Djava.endorsed.dirs is not supported in JDK 9+, may result in abnormal process termination
-        cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all jre customizations for predictable behaviour
+        cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all JRE customizations for more predictable behavior
       }
       if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11)) {
         // enable javac-related reflection tricks in JPS
@@ -1523,19 +1499,16 @@ public final class BuildManager implements Disposable {
       }
     }
     if (IS_UNIT_TEST_MODE) {
-      //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Dtest.mode=true");
     }
 
     if (requestProjectPreload) {
-      //noinspection SpellCheckingInspection
       cmdLine.addPathParameter("-Dpreload.project.path=", FileUtil.toCanonicalPath(getProjectPath(project)));
-      //noinspection SpellCheckingInspection
       cmdLine.addPathParameter("-Dpreload.config.path=", FileUtil.toCanonicalPath(PathManager.getOptionsPath()));
     }
 
     if (ProjectUtilCore.isExternalStorageEnabled(project)) {
-      Path externalProjectConfig = ProjectUtil.getExternalConfigurationDir(project);
+      var externalProjectConfig = ProjectUtil.getExternalConfigurationDir(project);
       if (canUseEel() && !localProject) {
         try {
           cmdLine.addPathParameter(
@@ -1552,7 +1525,7 @@ public final class BuildManager implements Disposable {
         }
       }
       else {
-        String pathToExternalStorage = externalProjectConfig.toString();
+        var pathToExternalStorage = externalProjectConfig.toString();
         cmdLine.addPathParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=', pathToExternalStorage);
       }
     }
@@ -1570,25 +1543,20 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-D" + GlobalOptions.REPORT_BUILD_STATISTICS + "=true");
     }
     if (Registry.is("compiler.natural.int.multimap.impl")) {  // todo: temporary flag to evaluate experimental multi-map implementation
-      //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djps.mappings.natural.int.multimap.impl=true");
     }
 
     // third-party library tweaks
-    //noinspection SpellCheckingInspection
     cmdLine.addParameter("-Djdt.compiler.useSingleThread=true"); // always run Eclipse compiler in single-threaded mode
-    //noinspection SpellCheckingInspection
     cmdLine.addParameter("-Daether.connector.resumeDownloads=false"); // always re-download maven libraries if partially downloaded
-    cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" +
-                         ThreadLocalRandom.getInitialSeedUniquifier()); // this will make netty initialization faster on some systems
 
-    for (String option : userAdditionalOptionsList) {
+    for (var option : userAdditionalOptionsList) {
       cmdLine.addParameter(option);
     }
 
     cmdLine.setupAdditionalVMOptions();
 
-    Path hostWorkingDirectory = cmdLine.getHostWorkingDirectory();
+    var hostWorkingDirectory = cmdLine.getHostWorkingDirectory();
     try {
       Files.createDirectories(hostWorkingDirectory);
     }
@@ -1597,7 +1565,7 @@ public final class BuildManager implements Disposable {
     }
 
     if (profileWithYourKit) {
-      YourKitProfilerService service = ApplicationManager.getApplication().getService(YourKitProfilerService.class);
+      var service = ApplicationManager.getApplication().getService(YourKitProfilerService.class);
       if (service != null) {
         try {
           service.copyYKLibraries(hostWorkingDirectory);
@@ -1605,10 +1573,9 @@ public final class BuildManager implements Disposable {
         catch (IOException e) {
           LOG.warn("Failed to copy YK libraries", e);
         }
-        @SuppressWarnings("SpellCheckingInspection") final StringBuilder parameters =
-          new StringBuilder().append("-agentpath:").append(cmdLine.getYjpAgentPath(service))
-            .append("=disablealloc,delay=10000,sessionname=ExternalBuild");
-        final String buildSnapshotPath = System.getProperty("build.snapshots.path");
+        var parameters = new StringBuilder()
+          .append("-agentpath:").append(cmdLine.getYjpAgentPath(service)).append("=disablealloc,delay=10000,sessionname=ExternalBuild");
+        var buildSnapshotPath = System.getProperty("build.snapshots.path");
         if (buildSnapshotPath != null) {
           parameters.append(",dir=").append(buildSnapshotPath);
         }
@@ -1660,23 +1627,23 @@ public final class BuildManager implements Disposable {
     // Java compiler's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     cmdLine.setCharset(mySystemCharset);
     cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + '=' + mySystemCharset.name());
-    for (String name : INHERITED_IDE_VM_OPTIONS) {
-      final String value = System.getProperty(name);
+    for (var name : INHERITED_IDE_VM_OPTIONS) {
+      var value = System.getProperty(name);
       if (value != null) {
         cmdLine.addParameter("-D" + name + '=' + value);
       }
     }
-    for (String name : Set.of("intellij.test.jars.location", "intellij.test.jars.mapping.file")) {
-      final String value = System.getProperty(name);
+    for (var name : Set.of("intellij.test.jars.location", "intellij.test.jars.mapping.file")) {
+      var value = System.getProperty(name);
       if (value != null) {
         cmdLine.addPathParameter("-D" + name + "=", value);
       }
     }
-    final DynamicBundle.LanguageBundleEP languageBundle = LocalizationUtil.INSTANCE.findLanguageBundle();
+    var languageBundle = LocalizationUtil.INSTANCE.findLanguageBundle();
     if (languageBundle != null) {
-      final PluginDescriptor pluginDescriptor = languageBundle.pluginDescriptor;
-      final ClassLoader loader = pluginDescriptor == null ? null : pluginDescriptor.getClassLoader();
-      final String bundlePath = loader == null ? null : PathManager.getResourceRoot(loader, "META-INF/plugin.xml");
+      var pluginDescriptor = languageBundle.pluginDescriptor;
+      var loader = pluginDescriptor == null ? null : pluginDescriptor.getClassLoader();
+      var bundlePath = loader == null ? null : PathManager.getResourceRoot(loader, "META-INF/plugin.xml");
       if (bundlePath != null) {
         cmdLine.addParameter("-D" + GlobalOptions.LANGUAGE_BUNDLE + '=' + FileUtil.toSystemIndependentName(bundlePath));
       }
@@ -1690,9 +1657,7 @@ public final class BuildManager implements Disposable {
     }
 
     // TODO: Copy logs back as soon as eel provides API for that
-    Path logPath = localProject
-                   ? Path.of(FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()))
-                   : EelPathUtils.getSystemFolder(project).resolve("logs");
+    var logPath = localProject ? getBuildLogDirectory().toAbsolutePath() : EelPathUtils.getSystemFolder(project).resolve("logs");
 
     cmdLine.addPathParameter("-D" + GlobalOptions.LOG_DIR_OPTION + '=', logPath);
     if (AdvancedSettings.getBoolean(IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME)) {
@@ -1703,11 +1668,11 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-Djps.report.registered.unexistent.output=true");
     }
 
-    String fallbackSdkHome = localProject? System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null) : null;
-    String fallbackSdkVersion = localProject? System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null) : null;
+    var fallbackSdkHome = localProject ? System.getProperty(GlobalOptions.FALLBACK_JDK_HOME, null) : null;
+    var fallbackSdkVersion = localProject ? System.getProperty(GlobalOptions.FALLBACK_JDK_VERSION, null) : null;
     if (fallbackSdkHome == null || fallbackSdkVersion == null) {
-      Pair<Sdk, JavaSdkVersion> fallback = getForkedJavacFallbackSdk(project, ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION);
-      Sdk sdk = fallback != null? fallback.first : null;
+      var fallback = getForkedJavacFallbackSdk(project);
+      var sdk = fallback != null ? fallback.first : null;
       if (sdk != null && sdk.getSdkType() instanceof JavaSdkType javaSdk && !FileUtil.pathsEqual(vmExecutablePath, javaSdk.getVMExecutablePath(sdk))) {
         fallbackSdkHome = sdk.getHomePath();
         fallbackSdkVersion = fallback.second.getMaxLanguageLevel().getShortText();
@@ -1720,17 +1685,17 @@ public final class BuildManager implements Disposable {
     cmdLine.addParameter("-Dio.netty.noUnsafe=true");
 
 
-    final var projectSystemRoot = EelPathUtils.getSystemFolder(project);
+    var projectSystemRoot = EelPathUtils.getSystemFolder(project);
     var projectTempDir = projectSystemRoot.resolve(TEMP_DIR_NAME);
     Files.createDirectories(projectTempDir);
     cmdLine.addPathParameter("-Djava.io.tmpdir=", projectSystemRoot);
 
-    for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
-      for (String arg : provider.getVMArguments()) {
+    for (var provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
+      for (var arg : provider.getVMArguments()) {
         cmdLine.addParameter(arg);
       }
 
-      for (Pair<String, Path> parameter : provider.getPathParameters()) {
+      for (var parameter : provider.getPathParameters()) {
         try {
           cmdLine.addPathParameter(parameter.getFirst(), cmdLine.copyProjectSpecificPathToTargetIfRequired(project, parameter.getSecond()));
         }
@@ -1741,54 +1706,51 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    //noinspection SpellCheckingInspection
     cmdLine.addParameter("-Dide.propagate.context=false");
     cmdLine.addParameter("-Dintellij.platform.log.sync=true");
 
-    @SuppressWarnings("UnnecessaryFullyQualifiedName") final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
+    @SuppressWarnings("UnnecessaryFullyQualifiedName") var launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
 
-    final List<String> launcherCp = new ArrayList<>();
+    var launcherCp = new ArrayList<String>();
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
     launcherCp.addAll(BuildProcessClasspathManager.getLauncherClasspath(project));
     if (compilerPath != null) {   // can be null (in the case of JDK 9+)
       launcherCp.add(compilerPath);
     }
 
-    boolean includeBundledEcj = shouldIncludeEclipseCompiler(projectConfig);
-    File customEcjPath = null;
+    var includeBundledEcj = shouldIncludeEclipseCompiler(projectConfig);
+    var customEcjPath = (Path)null;
     if (includeBundledEcj) {
-      final String path = EclipseCompilerConfiguration.getOptions(project, EclipseCompilerConfiguration.class).ECJ_TOOL_PATH;
-      if (!StringUtil.isEmptyOrSpaces(path)) {
-        customEcjPath = new File(path);
-        if (customEcjPath.exists()) {
+      var path = EclipseCompilerConfiguration.getOptions(project, EclipseCompilerConfiguration.class).ECJ_TOOL_PATH;
+      if (path != null && !path.isBlank()) {
+        customEcjPath = Path.of(path);
+        if (Files.exists(customEcjPath)) {
           includeBundledEcj = false;
         }
         else {
-          throw new ExecutionException(
-            JavaCompilerBundle.message("build.process.ecj.path.does.not.exist", customEcjPath.getAbsolutePath()));
-          //customEcjPath = null;
+          throw new ExecutionException(JavaCompilerBundle.message("build.process.ecj.path.does.not.exist", customEcjPath.toAbsolutePath()));
         }
       }
     }
 
     ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp, includeBundledEcj);
     if (customEcjPath != null) {
-      launcherCp.add(customEcjPath.getAbsolutePath());
+      launcherCp.add(customEcjPath.toAbsolutePath().toString());
     }
 
     cmdLine.addParameter("-classpath");
-    cmdLine.addClasspathParameter(launcherCp, Collections.emptyList());
+    cmdLine.addClasspathParameter(launcherCp, List.of());
 
     cmdLine.addParameter(launcherClass.getName());
 
-    final List<String> cp = myClasspathManager.getBuildProcessClasspath(project);
+    var cp = myClasspathManager.getBuildProcessClasspath(project);
     if (profileWithYourKit) {
-      String yjpControllerFileName = "yjp-controller-api-redist.jar";
-      Path yjpControllerPath = Path.of(cmdLine.getWorkingDirectory(), yjpControllerFileName);
+      var yjpControllerFileName = "yjp-controller-api-redist.jar";
+      var yjpControllerPath = Path.of(cmdLine.getWorkingDirectory(), yjpControllerFileName);
       if (LOG.isDebugEnabled()) {
-        LOG.debug("JPS process profiling with YourKit is enabled, " +
-                  "adding '" + yjpControllerFileName + "' to classpath, " +
-                  "full path '" + yjpControllerPath + "'");
+        LOG.debug(
+          "JPS process profiling with YourKit is enabled, adding '" + yjpControllerFileName + "' to classpath, " +
+          "full path '" + yjpControllerPath + "'");
       }
       if (!Files.exists(yjpControllerPath)) {
         LOG.warn("JPS process profiling is enabled, but '" + yjpControllerPath + "' is missing");
@@ -1797,17 +1759,16 @@ public final class BuildManager implements Disposable {
       cmdLine.addClasspathParameter(cp, Collections.singletonList(yjpControllerFileName));
     }
     else {
-      cmdLine.addClasspathParameter(cp, Collections.emptyList());
+      cmdLine.addClasspathParameter(cp, List.of());
     }
 
-    for (BuildProcessParametersProvider buildProcessParametersProvider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
-      for (String path : buildProcessParametersProvider.getAdditionalPluginPaths()) {
+    for (var buildProcessParametersProvider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
+      for (var path : buildProcessParametersProvider.getAdditionalPluginPaths()) {
         try {
-          cmdLine.copyProjectSpecificPathToTargetIfRequired(project, Paths.get(path));
+          cmdLine.copyProjectSpecificPathToTargetIfRequired(project, Path.of(path));
         }
         catch (FileSystemException err) {
-          throw new ExecutionException(JavaCompilerBundle.message("build.manager.launch.build.process.failed.to.copy.additional.plugin"),
-                                       err);
+          throw new ExecutionException(JavaCompilerBundle.message("build.manager.launch.build.process.failed.to.copy.additional.plugin"), err);
         }
       }
     }
@@ -1819,11 +1780,11 @@ public final class BuildManager implements Disposable {
 
     cmdLine.addParameter(cmdLine.getWorkingDirectory());
 
-    boolean lowPriority = AdvancedSettings.getBoolean("compiler.lower.process.priority");
-    if (localProject && SystemInfo.isUnix && lowPriority) {
+    var lowPriority = AdvancedSettings.getBoolean("compiler.lower.process.priority");
+    if (localProject && OS.CURRENT != OS.Windows && lowPriority) {
       cmdLine.setUnixProcessPriority(10);
     }
-    if (localProject && SystemInfo.isLinux && Registry.is("compiler.process.new.session", true)) {
+    if (localProject && OS.CURRENT == OS.Linux && Registry.is("compiler.process.new.session", true)) {
       cmdLine.setStartNewSession();
     }
 
@@ -1835,7 +1796,7 @@ public final class BuildManager implements Disposable {
       LOG.error(e);
     }
 
-    final OSProcessHandler processHandler = new OSProcessHandler(cmdLine.buildCommandLine()) {
+    var processHandler = new OSProcessHandler(cmdLine.buildCommandLine()) {
       @Override
       protected boolean shouldDestroyProcessRecursively() {
         return true;
@@ -1850,7 +1811,7 @@ public final class BuildManager implements Disposable {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         // re-translate builder's output to idea.log
-        final String text = event.getText();
+        var text = event.getText();
         if (!StringUtil.isEmptyOrSpaces(text)) {
           if (ProcessOutputTypes.SYSTEM.equals(outputType)) {
             if (LOG.isDebugEnabled()) {
@@ -1869,7 +1830,7 @@ public final class BuildManager implements Disposable {
 
     if (localProject && SystemInfo.isWindows && lowPriority) {
       try {
-        WinProcess winProcess = new WinProcess((int)processHandler.getProcess().pid());
+        var winProcess = new WinProcess((int)processHandler.getProcess().pid());
         winProcess.setPriority(Priority.IDLE);
       }
       catch (UnsupportedOperationException ignored) {
@@ -1896,32 +1857,29 @@ public final class BuildManager implements Disposable {
     if (!(EelProviderUtil.getEelDescriptor(project) instanceof LocalEelDescriptor)) {
       return;
     }
-    String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
+    var jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
     if (jnaBootLibraryPath != null) {
-      //noinspection SpellCheckingInspection
       cmdLine.addPathParameter("-Djna.boot.library.path=", jnaBootLibraryPath);
-      //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.nosys=true");
-      //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.noclasspath=true");
     }
   }
 
   private static void showSnapshotNotificationAfterFinish(@NotNull Project project) {
-    MessageBusConnection busConnection = project.getMessageBus().connect();
+    var busConnection = project.getMessageBus().connect();
     busConnection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
       @Override
       public void buildFinished(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {
         busConnection.disconnect();
-        final Notification notification = new Notification(
+        var notification = new Notification(
           "Build Profiler",
           JavaCompilerBundle.message("notification.title.cpu.snapshot.build.has.been.captured"),
-          "", NotificationType.INFORMATION
+          NotificationType.INFORMATION
         );
         notification.addAction(new DumbAwareAction(JavaCompilerBundle.message("action.show.snapshot.location.text")) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            RevealFileAction.openDirectory(new File(SystemProperties.getUserHome(), "Snapshots"));
+            RevealFileAction.openDirectory(Path.of(SystemProperties.getUserHome(), "Snapshots"));
             notification.expire();
           }
         });
@@ -1932,8 +1890,8 @@ public final class BuildManager implements Disposable {
 
   private static boolean shouldIncludeEclipseCompiler(CompilerConfiguration config) {
     if (config instanceof CompilerConfigurationImpl) {
-      final BackendCompiler javaCompiler = ((CompilerConfigurationImpl)config).getDefaultCompiler();
-      final String compilerId = javaCompiler != null ? javaCompiler.getId() : null;
+      var javaCompiler = ((CompilerConfigurationImpl)config).getDefaultCompiler();
+      var compilerId = javaCompiler != null ? javaCompiler.getId() : null;
       return JavaCompilers.ECLIPSE_ID.equals(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equals(compilerId);
     }
     return true;
@@ -1943,9 +1901,9 @@ public final class BuildManager implements Disposable {
     if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
       return EelPathUtils.getSystemFolder(project).resolve(SYSTEM_ROOT);
     }
-    final WslPath wslPath = WslPath.parseWindowsUncPath(getProjectPath(project));
+    var wslPath = WslPath.parseWindowsUncPath(getProjectPath(project));
     if (wslPath != null) {
-      Path buildDir = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(wslPath.getDistribution());
+      var buildDir = WslBuildCommandLineBuilder.getWslBuildSystemDirectory(wslPath.getDistribution());
       if (buildDir != null) {
         return buildDir;
       }
@@ -1953,19 +1911,22 @@ public final class BuildManager implements Disposable {
     return LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory();
   }
 
-  public static @NotNull File getBuildLogDirectory() {
-    return new File(PathManager.getLogPath(), "build-log");
+  public static @NotNull Path getBuildLogDirectory() {
+    return PathManager.getLogDir().resolve("build-log");
   }
 
   public @NotNull Path getProjectSystemDir(@NotNull Project project) {
     return getProjectSystemDirectory(project).toPath();
   }
 
-  public @NotNull File getProjectSystemDirectory(@NotNull Project project) {
-    String projectPath = getProjectPath(project);
+  /** use {@link #getProjectSystemDir(Project)} instead */
+  @ApiStatus.Obsolete
+  @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
+  public @NotNull java.io.File getProjectSystemDirectory(@NotNull Project project) {
+    var projectPath = getProjectPath(project);
     Function<String, Integer> hashFunction;
     if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-      final var descriptor = EelProviderUtil.getEelDescriptor(project);
+      var descriptor = EelProviderUtil.getEelDescriptor(project);
       hashFunction = s -> {
         try {
           return asEelPath(Path.of(s), descriptor).toString().hashCode();
@@ -1976,53 +1937,54 @@ public final class BuildManager implements Disposable {
       };
     }
     else {
-      WslPath wslPath = WslPath.parseWindowsUncPath(projectPath);
+      var wslPath = WslPath.parseWindowsUncPath(projectPath);
       if (wslPath == null) {
         hashFunction = String::hashCode;
       }
       else {
-        hashFunction = s -> Objects.requireNonNullElse(wslPath.getDistribution().getWslPath(s), s).hashCode();
+        hashFunction = s -> requireNonNullElse(wslPath.getDistribution().getWslPath(Path.of(s)), s).hashCode();
       }
     }
     return Utils.getDataStorageRoot(getBuildSystemDirectory(project).toFile(), projectPath, hashFunction);
   }
 
-  private static File getUsageFile(@NotNull File projectSystemDir) {
-    //noinspection SpellCheckingInspection
-    return new File(projectSystemDir, "ustamp");
+  @SuppressWarnings("SpellCheckingInspection")
+  private static Path getUsageFile(Path projectSystemDir) {
+    return projectSystemDir.resolve("ustamp");
   }
 
-  private static void updateUsageFile(@Nullable Project project, @NotNull File projectSystemDir) {
-    File usageFile = getUsageFile(projectSystemDir);
-    StringBuilder content = new StringBuilder();
+  private static void updateUsageFile(@Nullable Project project, Path projectSystemDir) {
+    var usageFile = getUsageFile(projectSystemDir);
+    var content = new StringBuilder();
     try {
       synchronized (USAGE_STAMP_DATE_FORMAT) {
-        content.append(USAGE_STAMP_DATE_FORMAT.format(System.currentTimeMillis()));
+        content.append(USAGE_STAMP_DATE_FORMAT.format(LocalDate.now()));
       }
       if (project != null && !project.isDisposed()) {
-        final String projectFilePath = project.getProjectFilePath();
-        if (!StringUtil.isEmptyOrSpaces(projectFilePath)) {
+        var projectFilePath = project.getProjectFilePath();
+        if (projectFilePath != null && !projectFilePath.isBlank()) {
           content.append("\n").append(FileUtil.toCanonicalPath(projectFilePath));
         }
       }
-      FileUtil.writeToFile(usageFile, content.toString());
+      NioFiles.createParentDirectories(usageFile);
+      Files.writeString(usageFile, content.toString());
     }
     catch (Throwable e) {
       LOG.info(e);
     }
   }
 
-  private static @Nullable Pair<Date, File> readUsageFile(File usageFile) {
+  private static @Nullable Pair<LocalDate, Path> readUsageFile(Path usageFile) {
     try {
-      List<String> lines = FileUtil.loadLines(usageFile, StandardCharsets.UTF_8.name());
+      var lines = Files.readAllLines(usageFile);
       if (!lines.isEmpty()) {
-        final String dateString = lines.get(0);
-        final Date date;
+        var dateString = lines.getFirst();
+        LocalDate date;
         synchronized (USAGE_STAMP_DATE_FORMAT) {
-          date = USAGE_STAMP_DATE_FORMAT.parse(dateString);
+          date = LocalDate.from(USAGE_STAMP_DATE_FORMAT.parse(dateString));
         }
-        final File projectFile = lines.size() > 1 ? new File(lines.get(1)) : null;
-        return Pair.create(date, projectFile);
+        var projectFile = lines.size() > 1 ? Path.of(lines.get(1)) : null;
+        return new Pair<>(date, projectFile);
       }
     }
     catch (Throwable e) {
@@ -2032,42 +1994,42 @@ public final class BuildManager implements Disposable {
   }
 
   private synchronized void stopListening() {
-    for (ListeningConnection connection : myListeningConnections) {
+    for (var connection : myListeningConnections) {
       connection.myChannelRegistrar.close();
     }
     myListeningConnections.clear();
   }
 
   private synchronized void clearWslProxyCache() {
-    for (WslProxy proxy : myWslProxyCache.values()) {
+    for (var proxy : myWslProxyCache.values()) {
       try {
         Disposer.dispose(proxy);
       }
-      catch (Throwable ignored) {
-      }
+      catch (Throwable ignored) { }
     }
     myWslProxyCache.clear();
   }
 
   private int startListening(InetAddress address) {
-    ListeningConnection listeningConnection = new ListeningConnection(address);
-    BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
+    var listeningConnection = new ListeningConnection(address);
+    var builtInServerManager = BuiltInServerManager.getInstance();
     builtInServerManager.waitForStart();
-    ServerBootstrap bootstrap = ((BuiltInServerManagerImpl)builtInServerManager).createServerBootstrap();
+    var bootstrap = ((BuiltInServerManagerImpl)builtInServerManager).createServerBootstrap();
     bootstrap.childHandler(new ChannelInitializer<>() {
       @Override
       protected void initChannel(@NotNull Channel channel) {
-        channel.pipeline().addLast(listeningConnection.myChannelRegistrar,
-                                   new ProtobufVarint32FrameDecoder(),
-                                   new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
-                                   new ProtobufVarint32LengthFieldPrepender(),
-                                   new ProtobufEncoder(),
-                                   myMessageDispatcher);
+        channel.pipeline().addLast(
+          listeningConnection.myChannelRegistrar,
+          new ProtobufVarint32FrameDecoder(),
+          new ProtobufDecoder(CmdlineRemoteProto.Message.getDefaultInstance()),
+          new ProtobufVarint32LengthFieldPrepender(),
+          new ProtobufEncoder(),
+          myMessageDispatcher);
       }
     });
-    Channel serverChannel = bootstrap.bind(address, 0).syncUninterruptibly().channel();
+    var serverChannel = bootstrap.bind(address, 0).syncUninterruptibly().channel();
     listeningConnection.myChannelRegistrar.setServerChannel(serverChannel, false);
-    int port = ((InetSocketAddress)serverChannel.localAddress()).getPort();
+    var port = ((InetSocketAddress)serverChannel.localAddress()).getPort();
     listeningConnection.myListenPort = port;
     myListeningConnections.add(listeningConnection);
     return port;
@@ -2085,9 +2047,9 @@ public final class BuildManager implements Disposable {
   }
 
   private abstract class BuildManagerPeriodicTask implements Runnable {
-    private final Alarm alarm;
+    private final Alarm myAlarm;
     private final AtomicBoolean myInProgress = new AtomicBoolean(false);
-    private final Runnable taskRunnable = () -> {
+    private final Runnable myTaskRunnable = () -> {
       try {
         runTask();
       }
@@ -2095,12 +2057,11 @@ public final class BuildManager implements Disposable {
         myInProgress.set(false);
       }
     };
-
-    private final @NotNull CoroutineScope coroutineScope;
+    private final CoroutineScope myCoroutineScope;
 
     BuildManagerPeriodicTask(@NotNull CoroutineScope coroutineScope) {
-      this.coroutineScope = coroutineScope;
-      alarm = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
+      myCoroutineScope = coroutineScope;
+      myAlarm = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
     }
 
     final void schedule() {
@@ -2109,11 +2070,11 @@ public final class BuildManager implements Disposable {
 
     private void schedule(boolean increasedDelay) {
       cancelPendingExecution();
-      alarm.addRequest(this, Math.max(100, increasedDelay ? 10 * getDelay() : getDelay()));
+      myAlarm.addRequest(this, Math.max(100, increasedDelay ? 10 * getDelay() : getDelay()));
     }
 
     void cancelPendingExecution() {
-      alarm.cancelAllRequests();
+      myAlarm.cancelAllRequests();
     }
 
     protected boolean shouldPostpone() {
@@ -2126,10 +2087,10 @@ public final class BuildManager implements Disposable {
 
     @Override
     public final void run() {
-      final boolean shouldPostponeAllTasks = HeavyProcessLatch.INSTANCE.isRunning() || mySuspendBackgroundTasksCounter.get() > 0;
+      var shouldPostponeAllTasks = HeavyProcessLatch.INSTANCE.isRunning() || mySuspendBackgroundTasksCounter.get() > 0;
       if (!shouldPostponeAllTasks && !shouldPostpone() && !myInProgress.getAndSet(true)) {
         try {
-          AppJavaExecutorUtil.executeOnPooledIoThread(coroutineScope, taskRunnable);
+          AppJavaExecutorUtil.executeOnPooledIoThread(myCoroutineScope, myTaskRunnable);
         }
         catch (CancellationException ignored) {
           // we were shut down
@@ -2155,7 +2116,7 @@ public final class BuildManager implements Disposable {
     NotifyingMessageHandler(@NotNull Project project,
                             @NotNull BuilderMessageHandler delegateHandler,
                             @Nullable Function<String, String> pathMapper,
-                            final boolean isAutomake) {
+                            boolean isAutomake) {
       myProject = project;
       myDelegateHandler = delegateHandler;
       myPathMapper = pathMapper;
@@ -2171,8 +2132,8 @@ public final class BuildManager implements Disposable {
     public void buildStarted(@NotNull UUID sessionId) {
       super.buildStarted(sessionId);
       try {
-        ApplicationManager
-          .getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC).buildStarted(myProject, sessionId, myIsAutomake);
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC)
+          .buildStarted(myProject, sessionId, myIsAutomake);
       }
       catch (Throwable e) {
         LOG.error(e);
@@ -2189,8 +2150,7 @@ public final class BuildManager implements Disposable {
           ApplicationManager.getApplication().getMessageBus().syncPublisher(BuildManagerListener.TOPIC)
             .buildFinished(myProject, sessionId, myIsAutomake);
         }
-        catch (ProcessCanceledException ignored) {
-        }
+        catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignored) { }
         catch (Throwable e) {
           LOG.error(e);
         }
@@ -2199,25 +2159,23 @@ public final class BuildManager implements Disposable {
 
     @Override
     public void handleBuildMessage(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage msg) {
-      CmdlineRemoteProto.Message.BuilderMessage _message = msg;
+      var _message = msg;
       if (myPathMapper != null) {
         if (_message.hasCompileMessage()) {
-          final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage compileMessage = _message.getCompileMessage();
+          var compileMessage = _message.getCompileMessage();
           if (compileMessage.hasSourceFilePath()) {
-            final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Builder builder =
-              CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.newBuilder(compileMessage);
+            var builder = CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.newBuilder(compileMessage);
             builder.setSourceFilePath(myPathMapper.apply(compileMessage.getSourceFilePath()));
             _message = CmdlineRemoteProto.Message.BuilderMessage.newBuilder(_message).setCompileMessage(builder).build();
           }
         }
         if (_message.hasBuildEvent()) {
-          final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent buildEvent = _message.getBuildEvent();
-          final int filesCount = buildEvent.getGeneratedFilesCount();
+          var buildEvent = _message.getBuildEvent();
+          var filesCount = buildEvent.getGeneratedFilesCount();
           if (filesCount > 0) {
-            final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Builder builder =
-              CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.newBuilder(buildEvent);
-            for (int idx = 0; idx < filesCount; idx++) {
-              final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile file = buildEvent.getGeneratedFiles(idx);
+            var builder = CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.newBuilder(buildEvent);
+            for (var idx = 0; idx < filesCount; idx++) {
+              var file = buildEvent.getGeneratedFiles(idx);
               builder.setGeneratedFiles(idx, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile.newBuilder(file)
                 .setOutputRoot(myPathMapper.apply(file.getOutputRoot())));
             }
@@ -2229,7 +2187,7 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private static final class StdOutputCollector extends ProcessAdapter {
+  private static final class StdOutputCollector implements ProcessListener {
     private final Appendable myOutput;
     private int myStoredLength;
 
@@ -2255,8 +2213,7 @@ public final class BuildManager implements Disposable {
       try {
         myOutput.append(text);
       }
-      catch (IOException ignored) {
-      }
+      catch (IOException ignored) { }
     }
   }
 
@@ -2281,7 +2238,7 @@ public final class BuildManager implements Disposable {
 
     @Override
     public void runActivity(@NotNull Project project) {
-      MessageBusConnection connection = project.getMessageBus().connect();
+      var connection = project.getMessageBus().connect();
       connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
         @Override
         public void processStarting(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
@@ -2327,7 +2284,7 @@ public final class BuildManager implements Disposable {
           if (project.isDisposed()) {
             return;
           }
-          final Set<String> candidates = CollectionFactory.createFilePathSet();
+          var candidates = CollectionFactory.createFilePathSet();
           synchronized (myRootsToRefresh) {
             candidates.addAll(myRootsToRefresh);
             myRootsToRefresh.clear();
@@ -2344,9 +2301,9 @@ public final class BuildManager implements Disposable {
 
             if (compileContext.isAnnotationProcessorsEnabled()) {
               // annotation processors may have re-generated code
-              final CompilerConfiguration config = CompilerConfiguration.getInstance(project);
+              var config = CompilerConfiguration.getInstance(project);
               try {
-                for (Module module : ReadAction.nonBlocking(() -> compileContext.getCompileScope().getAffectedModules())
+                for (var module : ReadAction.nonBlocking(() -> compileContext.getCompileScope().getAffectedModules())
                   .executeSynchronously()) {
                   if (project.isDisposed()) {
                     return;
@@ -2355,19 +2312,18 @@ public final class BuildManager implements Disposable {
                     continue;
                   }
                   if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
-                    final String productionPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, false);
+                    var productionPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, false);
                     if (productionPath != null) {
                       candidates.add(productionPath);
                     }
-                    final String testsPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, true);
+                    var testsPath = CompilerPaths.getAnnotationProcessorsGenerationPath(module, true);
                     if (testsPath != null) {
                       candidates.add(testsPath);
                     }
                   }
                 }
               }
-              catch (ProcessCanceledException ignored) {
-              }
+              catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignored) { }
               catch (Throwable e) {
                 LOG.info(e);
               }
@@ -2379,13 +2335,13 @@ public final class BuildManager implements Disposable {
 
             CompilerUtil.refreshOutputRoots(candidates);
 
-            LocalFileSystem lfs = LocalFileSystem.getInstance();
+            var lfs = LocalFileSystem.getInstance();
             try {
               Collection<VirtualFile> toRefresh = ReadAction.nonBlocking(() -> {
                 if (project.isDisposed()) {
                   return Collections.<VirtualFile>emptySet();
                 }
-                ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+                var fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
                 return candidates.stream().map(lfs::findFileByPath).filter(root -> root != null && fileIndex.isInSourceContent(root))
                   .collect(Collectors.toSet());
               }).executeSynchronously();
@@ -2394,8 +2350,7 @@ public final class BuildManager implements Disposable {
                 lfs.refreshFiles(toRefresh, true, true, null);
               }
             }
-            catch (ProcessCanceledException ignored) {
-            }
+            catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException ignored) { }
             catch (Throwable e) {
               LOG.info(e);
             }
@@ -2410,9 +2365,9 @@ public final class BuildManager implements Disposable {
         }
       });
 
-      String projectPath = getProjectPath(project);
+      var projectPath = getProjectPath(project);
       Disposer.register(ProjectDisposableService.getInstance(project), () -> {
-        BuildManager buildManager = getInstance();
+        var buildManager = getInstance();
         buildManager.cancelPreloadedBuilds(projectPath);
         buildManager.myProjectDataMap.remove(projectPath);
       });
@@ -2421,11 +2376,10 @@ public final class BuildManager implements Disposable {
 
       getInstance().runCommand(() -> {
         try {
-          BackgroundTaskUtil
-            .submitTask(ProjectDisposableService.getInstance(project), () -> {
-              updateUsageFile(project, getInstance().getProjectSystemDirectory(project));
-            })
-            .awaitCompletion();
+          BackgroundTaskUtil.submitTask(
+            ProjectDisposableService.getInstance(project),
+            () -> updateUsageFile(project, getInstance().getProjectSystemDir(project))
+          ).awaitCompletion();
         }
         catch (java.util.concurrent.ExecutionException e) {
           ExceptionUtil.rethrowAllAsUnchecked(e.getCause());
@@ -2445,18 +2399,18 @@ public final class BuildManager implements Disposable {
 
     @Override
     public void projectClosing(@NotNull Project project) {
-      final String projectPath = getProjectPath(project);
+      var projectPath = getProjectPath(project);
       ProgressManager.getInstance()
         .run(new Task.Modal(project, JavaCompilerBundle.message("progress.title.cancelling.running.builds"), false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            final TaskFuture<?> currentBuild = myBuildsInProgress.get(projectPath);
+            TaskFuture<?> currentBuild = myBuildsInProgress.get(projectPath);
             if (currentBuild != null) {
               currentBuild.cancel(false);
             }
             myAutoMakeTask.cancelPendingExecution();
             cancelPreloadedBuilds(projectPath);
-            for (TaskFuture<?> future : cancelAutoMakeTasks(project)) {
+            for (var future : cancelAutoMakeTasks(project)) {
               future.waitFor(500, TimeUnit.MILLISECONDS);
             }
             if (currentBuild != null) {
@@ -2464,9 +2418,9 @@ public final class BuildManager implements Disposable {
             }
           }
         });
-      WSLDistribution wslDistr = findWSLDistribution(project);
-      if (wslDistr != null) {
-        cleanWslProxies(wslDistr);
+      var wslDistro = findWSLDistribution(project);
+      if (wslDistro != null) {
+        cleanWslProxies(wslDistro);
       }
     }
 
@@ -2496,9 +2450,9 @@ public final class BuildManager implements Disposable {
     }
 
     boolean addChanged(Iterable<InternedPath> paths) {
-      boolean changes = false;
+      var changes = false;
       if (!myNeedRescan) {
-        for (InternedPath path : paths) {
+        for (var path : paths) {
           changes |= myDeleted.remove(path);
           changes |= myChanged.add(path);
         }
@@ -2507,9 +2461,9 @@ public final class BuildManager implements Disposable {
     }
 
     boolean addDeleted(Iterable<InternedPath> paths) {
-      boolean changes = false;
+      var changes = false;
       if (!myNeedRescan) {
-        for (InternedPath path : paths) {
+        for (var path : paths) {
           changes |= myChanged.remove(path);
           changes |= myDeleted.add(path);
         }
@@ -2518,16 +2472,15 @@ public final class BuildManager implements Disposable {
     }
 
     CmdlineRemoteProto.Message.ControllerMessage.FSEvent createNextEvent(Function<String, String> pathMapper) {
-      final CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder builder =
-        CmdlineRemoteProto.Message.ControllerMessage.FSEvent.newBuilder();
+      var builder = CmdlineRemoteProto.Message.ControllerMessage.FSEvent.newBuilder();
       builder.setOrdinal(++myNextEventOrdinal);
 
-      for (InternedPath path : myChanged) {
+      for (var path : myChanged) {
         builder.addChangedPaths(pathMapper.apply(path.getValue()));
       }
       myChanged.clear();
 
-      for (InternedPath path : myDeleted) {
+      for (var path : myDeleted) {
         builder.addDeletedPaths(pathMapper.apply(path.getValue()));
       }
       myDeleted.clear();
@@ -2536,7 +2489,7 @@ public final class BuildManager implements Disposable {
     }
 
     boolean getAndResetRescanFlag() {
-      final boolean rescan = myNeedRescan;
+      var rescan = myNeedRescan;
       myNeedRescan = false;
       return rescan;
     }
@@ -2557,7 +2510,7 @@ public final class BuildManager implements Disposable {
     private Boolean myRequestedCancelState;
 
     private synchronized @NotNull List<TaskFuture<?>> getDelegates() {
-      List<TaskFuture<?>> delegates = myDelegates;
+      var delegates = myDelegates;
       while (delegates == null) {
         try {
           wait();
@@ -2574,7 +2527,7 @@ public final class BuildManager implements Disposable {
         try {
           myDelegates = delegates;
           if (myRequestedCancelState != null) {
-            for (TaskFuture<?> delegate : delegates) {
+            for (var delegate : delegates) {
               delegate.cancel(myRequestedCancelState);
             }
           }
@@ -2589,13 +2542,13 @@ public final class BuildManager implements Disposable {
 
     @Override
     public synchronized boolean cancel(boolean mayInterruptIfRunning) {
-      List<TaskFuture<?>> delegates = myDelegates;
+      var delegates = myDelegates;
       if (delegates == null) {
         myRequestedCancelState = mayInterruptIfRunning;
         return true;
       }
-      boolean cancelled = false;
-      for (TaskFuture<?> delegate : delegates) {
+      var cancelled = false;
+      for (var delegate : delegates) {
         cancelled |= delegate.cancel(mayInterruptIfRunning);
       }
       return cancelled;
@@ -2603,14 +2556,14 @@ public final class BuildManager implements Disposable {
 
     @Override
     public void waitFor() {
-      for (TaskFuture<?> delegate : getDelegates()) {
+      for (var delegate : getDelegates()) {
         delegate.waitFor();
       }
     }
 
     @Override
     public boolean waitFor(long timeout, TimeUnit unit) {
-      for (TaskFuture<?> delegate : getDelegates()) {
+      for (var delegate : getDelegates()) {
         delegate.waitFor(timeout, unit);
       }
       return isDone();
@@ -2625,7 +2578,7 @@ public final class BuildManager implements Disposable {
           return myRequestedCancelState != null;
         }
       }
-      for (TaskFuture<?> delegate : delegates) {
+      for (var delegate : delegates) {
         if (delegate.isCancelled()) {
           return true;
         }
@@ -2642,7 +2595,7 @@ public final class BuildManager implements Disposable {
           return false;
         }
       }
-      for (TaskFuture<?> delegate : delegates) {
+      for (var delegate : delegates) {
         if (!delegate.isDone()) {
           return false;
         }
@@ -2681,12 +2634,12 @@ public final class BuildManager implements Disposable {
         return;
       }
 
-      Document document = e.getDocument();
+      var document = e.getDocument();
       if (!FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
         return;
       }
 
-      VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+      var file = FileDocumentManager.getInstance().getFile(document);
       if (file != null && file.isInLocalFileSystem()) {
         getInstance().scheduleProjectSave();
       }

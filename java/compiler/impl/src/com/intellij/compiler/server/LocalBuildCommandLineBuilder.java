@@ -4,8 +4,8 @@ package com.intellij.compiler.server;
 import com.intellij.compiler.YourKitProfilerService;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.system.OS;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -32,14 +32,14 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
   @Override
   @SuppressWarnings({"IO_FILE_USAGE", "UnnecessaryFullyQualifiedName"})
   public void addClasspathParameter(List<String> classpathInHost, List<String> classpathInTarget) {
-    StringBuilder builder = new StringBuilder();
-    for (String file : classpathInHost) {
+    var builder = new StringBuilder();
+    for (var file : classpathInHost) {
       if (!builder.isEmpty()) {
         builder.append(java.io.File.pathSeparator);
       }
       builder.append(FileUtil.toCanonicalPath(file));
     }
-    for (String s : classpathInTarget) {
+    for (var s : classpathInTarget) {
       if (!builder.isEmpty()) {
         builder.append(java.io.File.pathSeparator);
       }
@@ -77,7 +77,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public void setUnixProcessPriority(int priority) {
-    if (!SystemInfo.isUnix) {
+    if (OS.CURRENT == OS.Windows) {
       throw new IllegalArgumentException("'setUnixProcessPriority' must be used only on Unix operating systems");
     }
 
@@ -86,7 +86,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
 
   @Override
   public void setStartNewSession() {
-    if (!SystemInfo.isLinux) {
+    if (OS.CURRENT != OS.Linux) {
       throw new IllegalArgumentException("'setNewProcessGroup' must be used only on Linux");
     }
 

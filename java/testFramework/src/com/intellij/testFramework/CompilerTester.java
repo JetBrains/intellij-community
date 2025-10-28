@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
@@ -42,7 +42,6 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.LogSetup;
@@ -59,6 +58,7 @@ import static com.intellij.configurationStore.StoreUtilKt.getPersistentStateComp
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("UseOptimizedEelFunctions")
 public final class CompilerTester {
   private static final Logger LOG = Logger.getInstance(CompilerTester.class);
 
@@ -269,12 +269,12 @@ public final class CompilerTester {
   }
 
   public static void printBuildLog() {
-    File logDirectory = BuildManager.getBuildLogDirectory();
-    TestLoggerFactory.publishArtifactIfTestFails(logDirectory.toPath(), "build-log");
+    var logDirectory = BuildManager.getBuildLogDirectory();
+    TestLoggerFactory.publishArtifactIfTestFails(logDirectory, "build-log");
   }
 
   public static void enableDebugLogging()  {
-    Path logDirectory = BuildManager.getBuildLogDirectory().toPath();
+    var logDirectory = BuildManager.getBuildLogDirectory();
     try {
       NioFiles.deleteRecursively(logDirectory);
       Files.createDirectories(logDirectory);
