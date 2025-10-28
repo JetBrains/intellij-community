@@ -53,6 +53,7 @@ public final class ActionsTreeUtil {
   private static final Logger LOG = Logger.getInstance(ActionsTreeUtil.class);
 
   private static final @NonNls String EDITOR_PREFIX = "Editor";
+  private static final String GROUP_INTENTIONS = "Intentions";
 
   private static final Set<String> ourBrokenActions = new HashSet<>();
 
@@ -480,7 +481,7 @@ public final class ActionsTreeUtil {
   private static Group createIntentionsGroup(Condition<? super AnAction> filtered) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     List<String> ids = actionManager.getActionIdList(WRAPPER_PREFIX);
-    Group group = new Group(KeyMapBundle.message("intentions.group.title"), IdeActions.GROUP_INTENTIONS, (Supplier<? extends Icon>)null);
+    Group group = new Group(KeyMapBundle.message("intentions.group.title"), GROUP_INTENTIONS, (Supplier<? extends Icon>)null);
     for (String id : ContainerUtil.sorted(ids)) {
       if (actionMatchesFilter(filtered, actionManager, id)) {
         group.addActionId(id);

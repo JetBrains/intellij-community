@@ -2,7 +2,8 @@
 package com.intellij.openapi.actionSystem;
 
 /**
- * Identifiers for standard actions and action groups.
+ * Identifiers for absolutely basic and standard actions and action groups.
+ * Do not add any product- or plugin-specific, temporary, or experimental constants.
  */
 public interface IdeActions {
   String ACTION_EDITOR_CUT = "EditorCut";
@@ -130,18 +131,6 @@ public interface IdeActions {
   String GROUP_CUT_COPY_PASTE = "CutCopyPasteGroup";
   String GROUP_EDITOR_TAB_POPUP = "EditorTabPopupMenu";
   String GROUP_HELP_MENU = "HelpMenu";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String GROUP_INTENTIONS = "Intentions"; // todo IJPL-174981
-
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_ADD = "Cvs.Add";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_COMMIT = "Cvs.Commit";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_EDITORS = "Cvs.Editors";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_LOG = "Cvs.Log";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_UPDATE = "Cvs.Update";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_STATUS = "Cvs.Status";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_DIFF = "Cvs.Diff";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_EDIT = "Cvs.Edit";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_UNEDIT = "Cvs.Unedit";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_CVS_CHECKOUT = "Cvs.Checkout";
 
   String ACTION_CLOSE_ACTIVE_TAB = "CloseActiveTab";
   String ACTION_PIN_ACTIVE_TAB = "PinActiveTab";
@@ -210,11 +199,8 @@ public interface IdeActions {
   String ACTION_EXPAND_ALL_TO_LEVEL_1 = "ExpandAllToLevel1";
   String ACTION_EXPAND_COLLAPSE_TOGGLE_REGION = "ExpandCollapseToggleAction";
 
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_NEW_HORIZONTAL_TAB_GROUP = "NewHorizontalTabGroup"; // todo IJPL-174981
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_NEW_VERTICAL_TAB_GROUP = "NewVerticalTabGroup"; // todo IJPL-174981
   String ACTION_MOVE_EDITOR_TO_OPPOSITE_TAB_GROUP = "MoveEditorToOppositeTabGroup";
   String ACTION_CHANGE_SPLIT_ORIENTATION = "ChangeSplitOrientation";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String ACTION_PIN_ACTIVE_EDITOR = "PinActiveEditor"; // todo IJPL-174981
 
   String GROUP_VERSION_CONTROLS = "VersionControlsGroup";
 
@@ -223,7 +209,6 @@ public interface IdeActions {
   String GROUP_NAVBAR_TOOLBAR = "NavBarToolBar";
   String GROUP_COMMANDER_POPUP = "CommanderPopupMenu";
   String GROUP_TESTTREE_POPUP = "TestTreePopupMenu";
-  @SuppressWarnings("UnresolvedPluginConfigReference") String GROUP_TESTSTATISTICS_POPUP = "TestStatisticsTablePopupMenu"; // todo IJPL-174981
 
   String GROUP_SCOPE_VIEW_POPUP = "ScopeViewPopupMenu";
 
