@@ -624,10 +624,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
                                       ? new Computable.PredefinedValueComputable<>(toolWrapper.getDisplayName())
                                       : extension::getDisplayName;
       if (toolWrapper instanceof LocalInspectionToolWrapper local) {
-        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID(), toolWrapper.getDescriptionContextClass());
+        key = HighlightDisplayKey.register(shortName, computable, toolWrapper.getID(), local.getAlternativeID(), toolWrapper);
       }
       else {
-        key = HighlightDisplayKey.register(shortName, computable, shortName, null, toolWrapper.getDescriptionContextClass());
+        key = HighlightDisplayKey.register(shortName, computable, shortName, null, toolWrapper);
       }
       if (key == null) {
         // it's an error, but it was already logged in .register()

@@ -194,10 +194,10 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       final String suppressId = configuration.getSuppressId();
       final String name = configuration.getName();
       if (suppressId == null) {
-        HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME, null, configuration.getClass());
+        HighlightDisplayKey.register(shortName, () -> name, SHORT_NAME, null, configuration);
       }
       else {
-        HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME, configuration.getClass());
+        HighlightDisplayKey.register(shortName, () -> name, suppressId, SHORT_NAME, configuration);
       }
     }, ModalityState.nonModal());
   }
