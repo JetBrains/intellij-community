@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
@@ -71,7 +72,7 @@ class GroovyMacroRegistryServiceImpl(val project: Project, val cs: CoroutineScop
           }
           macroRegistry.addAll(macroMethods)
         }
-        CachedValueProvider.Result(macroRegistry.mapTo(HashSet()) { SmartPointerManager.createPointer(it) }, *extensionFiles.toTypedArray(), *extensionClassFiles.toTypedArray())
+        CachedValueProvider.Result(macroRegistry.mapTo(HashSet()) { SmartPointerManager.createPointer(it) }, ProjectRootModificationTracker.getInstance(module.project))
       }
       moduleRegistry
     }.value
