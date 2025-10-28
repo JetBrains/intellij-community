@@ -1095,7 +1095,6 @@ class InfoAndProgressPanel internal constructor(
 
           if (showCounterInsteadOfMultiProcessLink && counterComponent.isVisible) {
             counterComponent.enforceCounterVisibilityForASingleProgress()
-            progressIcon.isVisible = false
             rightX = setBounds(counterComponent, rightX, centerY, null, true)
 
             progressIcon.isVisible = true
@@ -1128,7 +1127,6 @@ class InfoAndProgressPanel internal constructor(
             }
             setBounds(progressIcon, rightX, centerY, iconSize, miniWidth)
           }
-          progressIcon.isVisible = true
         }
 
         private fun layoutWithFittingIndicator(indicatorComponent: JPanel, initialIndicatorSize: Dimension?, initialRightX: Int, centerY: Int) {
