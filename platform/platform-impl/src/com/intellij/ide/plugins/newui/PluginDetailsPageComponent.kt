@@ -900,7 +900,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       nameAndButtons!!.setProgressDisabledButton((if (this.updateDescriptor == null) installButton?.getComponent() else updateButton)!!)
     }
     if (plugin == null) return
-    showPlugin(pluginUiModel)
+
+    withContext(Dispatchers.EDT + ModalityState.stateForComponent(this).asContextElement()) {
+      showPlugin(pluginUiModel)
+    }
 
     select(0, true)
 
