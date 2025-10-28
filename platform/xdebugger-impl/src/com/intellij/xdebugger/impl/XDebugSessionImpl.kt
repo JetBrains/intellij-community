@@ -503,7 +503,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
           val component get() = myUi.component
 
-          val consoleManger get() = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
+          val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
         addAdditionalConsolesToManager(runTab.consoleManger, localTabScope.asDisposable())
         // This is a mock descriptor used in backend only

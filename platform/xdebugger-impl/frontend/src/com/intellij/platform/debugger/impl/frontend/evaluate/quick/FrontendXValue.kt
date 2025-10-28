@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.asCompletableFuture
 import org.jetbrains.concurrency.asPromise
 import java.util.concurrent.CompletableFuture
 
@@ -130,10 +129,6 @@ class FrontendXValue private constructor(
 
   override fun canNavigateToTypeSource(): Boolean {
     return canNavigateToTypeSource
-  }
-
-  override fun canNavigateToTypeSourceAsync(): Promise<Boolean?>? {
-    return canNavigateToTypeSourceAsync()?.asCompletableFuture()?.asPromise()
   }
 
   override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState {
@@ -311,14 +306,8 @@ class FrontendXValue private constructor(
     }
 
     @JvmStatic
-    fun create(project: Project, evaluatorCoroutineScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): XValue {
-      // TODO[IJPL-160146]: Is it ok to dispose only when evaluator is changed?
-      //   So, XValues will live more than popups where they appeared
-      //   But it is needed for Mark object functionality at least.
-      //   Since we cannot dispose XValue when evaluation popup is closed
-      //   because it getting closed when Mark Object dialog is shown,
-      //   so we cannot refer to the backend's xValue
-      val cs = evaluatorCoroutineScope.childScope("FrontendXValue")
+    fun create(project: Project, containerScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): XValue {
+      val cs = containerScope.childScope("FrontendXValue")
       val presentation = xValueDto.presentation.toFlow()
       val frontendXValue = FrontendXValue(project, cs, xValueDto, hasParentValue, presentation)
       val name = xValueDto.name

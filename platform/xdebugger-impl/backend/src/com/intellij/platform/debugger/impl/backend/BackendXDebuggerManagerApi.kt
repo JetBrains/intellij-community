@@ -234,7 +234,6 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = show
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   override suspend fun getBreakpoints(projectId: ProjectId): XBreakpointsSetDto {
     val project = projectId.findProject()
     val breakpointManager = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).breakpointManager
@@ -261,18 +260,18 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         }
       })
 
-      val currentBreakpoints = breakpointManager.allBreakpoints.filterIsInstance<XBreakpointBase<*, *, *>>()
+      val currentBreakpoints = breakpointManager.allBreakpoints
       val currentBreakpointIds = currentBreakpoints.map { it.breakpointId }.toSet()
 
-      // some breakpoints were added during subscription
-      for (breakpoint in currentBreakpoints.filter { it.breakpointId !in initialBreakpointIds }) {
+      val createdDuringSubscription = currentBreakpoints.filter { it.breakpointId !in initialBreakpointIds }
+      for (breakpoint in createdDuringSubscription) {
         events.trySend {
           XBreakpointEvent.BreakpointAdded(breakpoint.toRpc())
         }
       }
 
-      // some breakpoints were removed during subscription
-      for (breakpointIdToRemove in initialBreakpointIds - currentBreakpointIds) {
+      val removedDuringSubscription = initialBreakpointIds - currentBreakpointIds
+      for (breakpointIdToRemove in removedDuringSubscription) {
         events.trySend {
           XBreakpointEvent.BreakpointRemoved(breakpointIdToRemove)
         }
