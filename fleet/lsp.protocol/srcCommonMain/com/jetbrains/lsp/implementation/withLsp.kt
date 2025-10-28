@@ -211,7 +211,7 @@ suspend fun withLsp(
                                                             result
                                                         )
                                                     }.onFailure { error ->
-                                                        if (error is CancellationException) throw error
+                                                        currentCoroutineContext().job.ensureActive()
                                                         LOG.error(error)
                                                     }.getOrNull()
                                                 }
@@ -231,7 +231,7 @@ suspend fun withLsp(
                                                                     data
                                                                 )
                                                             }.onFailure { decodingError ->
-                                                                if (decodingError is CancellationException) throw decodingError
+                                                                currentCoroutineContext().job.ensureActive()
                                                                 LOG.error(decodingError)
                                                             }.getOrNull()
                                                         }
@@ -268,7 +268,7 @@ suspend fun withLsp(
                                             }
                                         }
                                     }.onFailure { error ->
-                                        if (error is CancellationException) throw error
+                                        currentCoroutineContext().job.ensureActive()
                                         LOG.error(error)
                                     }
                             }
