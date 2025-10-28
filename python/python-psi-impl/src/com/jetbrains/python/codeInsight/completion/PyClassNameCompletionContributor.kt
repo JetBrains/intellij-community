@@ -30,12 +30,14 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder.QualifiedNameBasedScope
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.search.PySearchUtilBase
 import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex
+import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFileType
 import java.util.function.LongConsumer
@@ -114,6 +116,29 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     TimeoutUtil.run<RuntimeException>(ThrowableRunnable {
       val scope = createScope(originalFile)
       val alreadySuggested: MutableSet<QualifiedName> = HashSet()
+      
+      // Suggest importable modules and packages
+      val moduleKeys = PyModuleNameIndex.getAllKeys(originalFile.project)
+      val modulesFromIndex = moduleKeys.asSequence()
+        .filter { result.prefixMatcher.isStartMatch(it) }
+        // TODO Is there lazier API here?
+        .flatMap { PyModuleNameIndex.findByShortName(it, originalFile.project, scope) }
+        .toList()
+
+      val resolveContext = fromFoothold(originalFile)
+      modulesFromIndex.asSequence()
+        // TODO Do we need this resolve here?
+        .flatMap { resolve(it, resolveContext) }
+        .filter { PyUtil.isImportable(originalFile, it) }
+        .mapNotNull { createLookupElementBuilder(originalFile, it) }
+        .map { it.withInsertHandler(when {
+          insideStringLiteralInExtendedCompletion -> InsertHandlers.stringLiteralInsertHandler
+          else -> InsertHandlers.importingInsertHandler
+        }) }
+        .map { PrioritizedLookupElement.withPriority(it, PythonCompletionWeigher.NOT_IMPORTED_MODULE_WEIGHT.toDouble()) }
+        .forEach { result.addElement(it) }
+
+      // Suggest top-level importable names
       forEachPublicNameFromIndex(scope) { elementName: String ->
         ProgressManager.checkCanceled()
         counters.scannedNames++
@@ -162,6 +187,12 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
         println("\u0001Hi($duration)")
       }
     })
+  }
+
+  private fun resolve(module: PsiFile, resolveContext: PyQualifiedNameResolveContext): Sequence<PsiFileSystemItem> {
+    val qualifiedName = QualifiedNameFinder.findCanonicalImportPath(module, null) ?: return emptySequence()
+    return resolveQualifiedName(qualifiedName, resolveContext).asSequence()
+      .filterIsInstance<PsiFileSystemItem>()
   }
 
   private fun getInsertHandler(
