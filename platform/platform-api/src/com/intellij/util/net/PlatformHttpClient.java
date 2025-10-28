@@ -356,7 +356,7 @@ public final class PlatformHttpClient {
         var result = new CompletableFuture<HttpResponse<T>>();
         delegate.executor().orElseGet(() -> ExecutorsKt.asExecutor(Dispatchers.getIO())).execute(() -> {
           try {
-            var data = Files.readAllBytes(Path.of(request.uri()));
+            @SuppressWarnings("UseOptimizedEelFunctions") var data = Files.readAllBytes(Path.of(request.uri()));
             completeResult(responseHandler, fhr, data, result);
           }
           catch (NoSuchFileException e) {

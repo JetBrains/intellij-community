@@ -117,14 +117,14 @@ public final class CreateDesktopEntryAction extends DumbAwareAction implements A
   }
 
   private static Path prepare() throws IOException {
-    var binPath = PathManager.getBinPath();
-    assert Files.isDirectory(Path.of(binPath)) : "Invalid bin path: '" + binPath + "'";
+    var binDir = PathManager.getBinDir();
+    assert Files.isDirectory(binDir) : "Invalid bin directory: '" + binDir + "'";
 
     var iconPath = AppUIUtilKt.findAppIcon();
-    if (iconPath == null) throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
+    if (iconPath == null) throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binDir));
 
     var starter = Restarter.getIdeStarter();
-    if (starter == null) throw new RuntimeException(ApplicationBundle.message("desktop.entry.script.missing", binPath));
+    if (starter == null) throw new RuntimeException(ApplicationBundle.message("desktop.entry.script.missing", binDir));
 
     var names = ApplicationNamesInfo.getInstance();
     var name = names.getFullProductNameWithEdition();
@@ -134,7 +134,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction implements A
       "$ICON$", iconPath,
       "$COMMENT$", StringUtil.notNullize(names.getMotto(), name),
       "$WM_CLASS$", AppUIUtil.INSTANCE.getFrameClass()));
-    var entryFile = Path.of(PathManager.getTempPath(), getDesktopEntryName());
+    var entryFile = PathManager.getTempDir().resolve(getDesktopEntryName());
     Files.writeString(entryFile, content);
     return entryFile;
   }
@@ -159,7 +159,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction implements A
   }
 
   private static void exec(GeneralCommandLine command, @Nls @Nullable String prompt) throws IOException, ExecutionException {
-    command.setRedirectErrorStream(true);
+    command.withRedirectErrorStream(true);
     var result = new CapturingProcessHandler(prompt != null ? ExecUtil.sudoCommand(command, prompt) : command).runProcess();
     var exitCode = result.getExitCode();
     if (exitCode != 0) {
