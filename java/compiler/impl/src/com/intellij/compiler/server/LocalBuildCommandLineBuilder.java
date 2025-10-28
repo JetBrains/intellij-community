@@ -90,7 +90,7 @@ final class LocalBuildCommandLineBuilder implements BuildCommandLineBuilder {
       throw new IllegalArgumentException("'setNewProcessGroup' must be used only on Linux");
     }
 
-    myCommandLine.withWrappingCommand("setsid", "-w");
+    myCommandLine.withWrappingCommand("setsid");
   }
 
   static @NotNull Path getLocalBuildSystemDirectory() {
