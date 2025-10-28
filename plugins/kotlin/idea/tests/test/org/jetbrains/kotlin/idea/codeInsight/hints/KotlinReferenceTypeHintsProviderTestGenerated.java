@@ -250,6 +250,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/SuspendFunctionalType.kt");
     }
 
+    @TestMetadata("TruncatedTypes.kt")
+    public void testTruncatedTypes() throws Exception {
+        runTest("testData/codeInsight/hints/types/TruncatedTypes.kt");
+    }
+
     @TestMetadata("TypeInCompanion.kt")
     public void testTypeInCompanion() throws Exception {
         runTest("testData/codeInsight/hints/types/TypeInCompanion.kt");

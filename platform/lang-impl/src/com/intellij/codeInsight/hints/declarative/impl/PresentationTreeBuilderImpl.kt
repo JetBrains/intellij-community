@@ -95,8 +95,8 @@ class PresentationTreeBuilderImpl private constructor(
 
   override fun text(text: String, actionData: InlayActionData?) {
     require(text.isNotEmpty()) { "Text entry may not be empty. Please, fix the provider implementation." }
-    val segmentText = if (context.isTruncateTextNodes() && MAX_SEGMENT_TEXT_LENGTH < text.length) {
-      text.substring(0, MAX_SEGMENT_TEXT_LENGTH) + "…"
+    val segmentText = if (context.isTruncateTextNodes() && MAX_SEGMENT_TEXT_LENGTH + 1 < text.length) {
+      text.substring(0, MAX_SEGMENT_TEXT_LENGTH) + Typography.ellipsis
     } else {
       text
     }
