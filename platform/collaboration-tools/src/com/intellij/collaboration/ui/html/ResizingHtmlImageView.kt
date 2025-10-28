@@ -53,6 +53,9 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
   private var cachedContainer: Container? = null
   private var lastPaintedRectangle: Rectangle? = null
 
+  override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? =
+    element.attributes.getAttribute(HTML.Attribute.ALT) as? String
+
   override fun getPreferredSpan(axis: Int): Float =
     when (val state = loader.state) {
       ImageLoader.State.NotLoaded -> notLoadedIcon.getSpan(axis)
@@ -170,7 +173,7 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
       this@ResizingHtmlImageView.getAlignment(axis)
 
     override fun getToolTipText(x: Float, y: Float, allocation: Shape?): String? =
-      this@ResizingHtmlImageView.getToolTipText(x, y, allocation)
+      element.attributes.getAttribute(HTML.Attribute.ALT) as? String
 
     override fun modelToView(pos: Int, a: Shape, b: Position.Bias?): Shape =
       this@ResizingHtmlImageView.modelToView(pos, a, b)
