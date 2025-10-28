@@ -1,9 +1,12 @@
+import inspect
 from array import array
 from collections import deque
 
 from _pydevd_bundle.custom.pydevd_asyncio_provider import \
     get_eval_async_expression_in_context
-from _pydevd_bundle.custom.pydevd_constants import dict_iter_items
+from _pydevd_bundle.custom.pydevd_constants import dict_iter_items, ValuesPolicy, \
+    LOAD_VALUES_POLICY
+
 try:
     from collections import OrderedDict
 except:
@@ -45,3 +48,11 @@ def take_first_n_coll_elements(coll, n):
         return ret
     else:
         raise TypeError("Unsupported collection type: '%s'" % str(coll.__class__))
+
+def should_evaluate_shape():
+    return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
+
+def has_attribute_safe(obj, attr_name):
+    """Evaluates the existence of attribute without accessing it."""
+    attr = inspect.getattr_static(obj, attr_name, None)
+    return attr is not None

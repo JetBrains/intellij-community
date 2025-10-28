@@ -1,3 +1,4 @@
+import os
 import sys
 
 try:
@@ -110,3 +111,17 @@ else:
 
     def dict_items(d):
         return d.items()
+
+
+class ValuesPolicy:
+    SYNC = 0
+    ASYNC = 1
+    ON_DEMAND = 2
+
+
+LOAD_VALUES_POLICY = ValuesPolicy.SYNC
+if os.getenv('PYDEVD_LOAD_VALUES_ASYNC', 'False') == 'True':
+    LOAD_VALUES_POLICY = ValuesPolicy.ASYNC
+if os.getenv('PYDEVD_LOAD_VALUES_ON_DEMAND', 'False') == 'True':
+    LOAD_VALUES_POLICY = ValuesPolicy.ON_DEMAND
+DEFAULT_VALUES_DICT = {ValuesPolicy.ASYNC: "__pydevd_value_async", ValuesPolicy.ON_DEMAND: "__pydevd_value_on_demand"}
