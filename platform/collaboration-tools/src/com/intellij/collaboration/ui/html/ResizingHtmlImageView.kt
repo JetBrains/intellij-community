@@ -104,6 +104,8 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
   }
 
   override fun changedUpdate(e: DocumentEvent?, a: Shape?, f: ViewFactory?) {
+    // ignore if it does not have relevant changes
+    if (e?.getChange(element) == null) return
     super.changedUpdate(e, a, f)
     _loader = null
     preferenceChanged(null, true, true)
