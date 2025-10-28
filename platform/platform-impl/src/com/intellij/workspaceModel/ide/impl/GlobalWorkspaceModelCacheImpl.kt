@@ -79,7 +79,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
 
   private suspend fun doCacheSaving() {
     cacheFiles.entries.forEachConcurrent { (id, cacheFile) ->
-      val storage = GlobalWorkspaceModel.getInstanceByEnvironmentName(InternalEnvironmentName.of(id)).currentSnapshot
+      val storage = GlobalWorkspaceModel.getInstanceByEnvironmentNameAsync(InternalEnvironmentName.of(id)).currentSnapshot
       if (!storage.isConsistent) {
         invalidateCaches()
       }

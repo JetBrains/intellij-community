@@ -221,7 +221,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
 
   @VisibleForTesting
   protected open suspend fun delayLoadGlobalWorkspaceModel(environmentName: InternalEnvironmentName) {
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentName(environmentName)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentNameAsync(environmentName)
     if (loadedFromDisk[environmentName] == true || !globalWorkspaceModel.loadedFromCache) {
       return
     }
