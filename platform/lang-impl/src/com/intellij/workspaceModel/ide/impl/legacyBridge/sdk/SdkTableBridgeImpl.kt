@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifySdkEntity
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
@@ -46,6 +47,14 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
       return currentSnapshot.sdkMap.getDataByEntity(sdkEntity)
     }
     return null
+  }
+
+  override fun findSdkByName(name: String, environmentName: InternalEnvironmentName): Sdk? {
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentName(environmentName)
+    val currentSnapshot = globalWorkspaceModel.currentSnapshot
+    val sdkEntity = currentSnapshot.entities(SdkEntity::class.java)
+                      .firstOrNull { Comparing.strEqual(name, it.name) } ?: return null
+    return currentSnapshot.sdkMap.getDataByEntity(sdkEntity)
   }
 
   override fun getAllSdks(): List<Sdk> {

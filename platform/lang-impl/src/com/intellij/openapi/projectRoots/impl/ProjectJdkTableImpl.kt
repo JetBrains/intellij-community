@@ -16,17 +16,21 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 
 // This annotation is needed only for support of the "export settings" action
 @State(name = "ProjectJdkTable", storages = [Storage(value = JpsGlobalEntitiesSerializers.SDK_FILE_NAME + DEFAULT_EXT)], presentableName = ProjectJdkTableImpl.PresentableNameGetter::class)
-open class ProjectJdkTableImpl: ProjectJdkTable() {
+open class ProjectJdkTableImpl: ProjectJdkTable(), EnvironmentScopedProjectJdkLookup {
 
   private val delegate: SdkTableImplementationDelegate
 
@@ -52,24 +56,44 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
   override fun findJdk(name: String): Sdk? = delegate.findSdkByName(name)
 
   override fun findJdk(name: String, type: String): Sdk? {
-    var sdk = findJdk(name)
+    val sdk = findJdk(name)
     if (sdk != null) return sdk
+    return getCachedJdkOrTryCreateJdkUsingSystemProperty(name, type, InternalEnvironmentName.Local)
+  }
 
+  @ApiStatus.Internal
+  override fun findJdk(name: String, eelDescriptor: EelDescriptor): Sdk? {
+    return delegate.findSdkByName(name, environmentName = eelDescriptor.machine.getInternalEnvironmentName())
+  }
+
+  @ApiStatus.Internal
+  override fun findJdk(name: String, type: String, eelDescriptor: EelDescriptor): Sdk? {
+    val environmentName = eelDescriptor.machine.getInternalEnvironmentName()
+    val sdk = delegate.findSdkByName(name, environmentName)
+    if (sdk != null) return sdk
+    return getCachedJdkOrTryCreateJdkUsingSystemProperty(name, type, environmentName)
+  }
+
+  private fun getCachedJdkOrTryCreateJdkUsingSystemProperty(name: String, type: String, environmentName: InternalEnvironmentName): Sdk? {
     val uniqueName = "$type.$name"
-    sdk = cachedProjectJdks[uniqueName]
+    val sdk = cachedProjectJdks[uniqueName]
     if (sdk != null) return sdk
+    return when (environmentName) {
+      InternalEnvironmentName.Local -> {
+        val sdkPath = System.getProperty("jdk.$name")
+        if (sdkPath == null) return null
 
-    val sdkPath = System.getProperty("jdk.$name")
-    if (sdkPath == null) return null
-
-    val sdkType = SdkType.findByName(type)
-    if (sdkType != null && sdkType.isValidSdkHome(sdkPath)) {
-      val createdSdk = delegate.createSdk(name, sdkType, sdkPath)
-      sdkType.setupSdkPaths(createdSdk)
-      cachedProjectJdks[uniqueName] = createdSdk
-      return createdSdk
+        val sdkType = SdkType.findByName(type)
+        if (sdkType != null && sdkType.isValidSdkHome(sdkPath)) {
+          val createdSdk = delegate.createSdk(name, sdkType, sdkPath)
+          sdkType.setupSdkPaths(createdSdk)
+          cachedProjectJdks[uniqueName] = createdSdk
+          return createdSdk
+        }
+        return null
+      }
+      is InternalEnvironmentName.Custom -> null
     }
-    return null
   }
 
   override fun getAllJdks(): Array<Sdk> = delegate.getAllSdks().toTypedArray()

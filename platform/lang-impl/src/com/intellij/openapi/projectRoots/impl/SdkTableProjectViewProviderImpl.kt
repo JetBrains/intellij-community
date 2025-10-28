@@ -51,12 +51,18 @@ private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjec
 
 private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val delegate: ProjectJdkTable) : ProjectJdkTable() {
   override fun findJdk(name: String): Sdk? {
+    if (delegate is EnvironmentScopedProjectJdkLookup) {
+      return delegate.findJdk(name, descriptor)
+    }
     return delegate.allJdks.find {
       it.name == name && validateDescriptor(it)
     }
   }
 
   override fun findJdk(name: String, type: String): Sdk? {
+    if (delegate is EnvironmentScopedProjectJdkLookup) {
+      return delegate.findJdk(name, type, descriptor)
+    }
     // sometimes delegate.findJdk can do mutating operations, like in the case of ProjectJdkTableImpl
     return delegate.allJdks.find { it.name == name && it.sdkType.name == type && validateDescriptor(it) } ?: delegate.findJdk(name, type)
   }

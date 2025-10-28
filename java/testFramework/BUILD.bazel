@@ -58,6 +58,7 @@ jvm_library(
     "//platform/xdebugger-testFramework:debugger-testFramework",
     "//xml/xml-psi-api:psi",
     "//java/java-syntax:syntax",
+    "//platform/eel",
   ],
   exports = [
     "//java/testFramework/shared",

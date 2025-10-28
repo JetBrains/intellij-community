@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -19,6 +20,7 @@ interface SdkTableImplementationDelegate {
   fun getAllSdks(): List<Sdk>
 
   fun findSdkByName(name: String): Sdk?
+  fun findSdkByName(name: String, environmentName: InternalEnvironmentName): Sdk?
 
   @TestOnly
   fun saveOnDisk()
