@@ -41,7 +41,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptHighlightingExtension implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleScriptHighlightingExtension"/>
+    <kotlinScriptFilter implementation="org.jetbrains.kotlin.gradle.scripting.k2.GradleKotlinScriptProcessingFilter"/>
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsSource"/>
   </extensions>
 

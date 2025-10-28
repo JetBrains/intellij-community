@@ -9,7 +9,6 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptDiagnostic.Severity
@@ -17,14 +16,6 @@ import kotlin.script.experimental.api.SourceCode
 
 interface ScriptWorkspaceModelManager {
     suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptCompilationConfigurationResult>)
-
-    fun isScriptExist(
-        project: Project, scriptFile: VirtualFile, definition: ScriptDefinition
-    ): Boolean {
-        val fileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-        val index = project.workspaceModel.currentSnapshot.getVirtualFileUrlIndex()
-        return index.findEntitiesByUrl(scriptFile.toVirtualFileUrl(fileUrlManager)).any()
-    }
 }
 
 @Service(Service.Level.PROJECT)

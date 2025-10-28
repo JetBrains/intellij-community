@@ -31,7 +31,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationService.Companion.TOPIC
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
+import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptModuleManager.Companion.removeScriptModules
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDiagnostics
@@ -115,7 +115,7 @@ class ReloadScriptConfigurationService(private val project: Project, private val
             definition.getConfigurationResolver(project).remove(virtualFile)
             project.removeScriptModules(listOf(virtualFile))
             ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
-            DefaultScriptResolutionStrategy.getInstance(project).execute(ktFile).join()
+            KotlinScriptResolutionService.getInstance(project).process(ktFile)
 
             ktFile.putUserData(SHOW_NOTIFICATION, false)
             ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).onNotificationChanged(virtualFile)

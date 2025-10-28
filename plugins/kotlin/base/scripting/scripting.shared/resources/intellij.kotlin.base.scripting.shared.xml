@@ -7,6 +7,12 @@
             dynamic="true"/>
 
     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinScriptFilter"
+            interface="org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter"
+            area="IDEA_PROJECT"
+            dynamic="true"/>
+
+    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.scriptAfterRunCallbackProvider"
             interface="org.jetbrains.kotlin.idea.core.script.shared.ScriptAfterRunCallbackProvider"
             area="IDEA_PROJECT"

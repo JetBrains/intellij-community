@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootM
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -28,14 +27,10 @@ fun KtFile.shouldHighlightErrors(): Boolean {
         return false
     }
 
-    if (this is KtCodeFragment && context != null) {
-        return true
-    }
+    if (this is KtCodeFragment && context != null) return true
 
     val indexingInProgress = isIndexingInProgress(project)
-    if (!indexingInProgress && isScript()) { /* isScript() is based on stub index */
-        return calculateShouldHighlightScript()
-    }
+    if (!indexingInProgress && isScript()) return true
 
     return RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = indexingInProgress).matches(this)
 }
@@ -47,12 +42,10 @@ fun KtFile.shouldHighlightFile(): Boolean {
         return RootKindFilter.everything.copy(includeScriptsOutsideSourceRoots = true).matches(this)
     }
 
-    return if (isScript()) { /* isScript() is based on stub index */
-        KotlinScriptHighlightingExtension.shouldHighlightScript(project, this)
-    } else {
-        CachedValuesManager.getManager(this.project).getCachedValue(this) {
-            Result.create(calculateShouldHighlightFile(), ProjectRootModificationTracker.getInstance(project))
-        }
+    if (isScript()) return true
+
+    return CachedValuesManager.getManager(this.project).getCachedValue(this) {
+        Result.create(calculateShouldHighlightFile(), ProjectRootModificationTracker.getInstance(project))
     }
 }
 
@@ -69,11 +62,3 @@ private fun KtFile.calculateShouldHighlightFile(): Boolean =
         project,
         useSiteModule = null
     ) !is KaNotUnderContentRootModule
-
-private fun KtFile.calculateShouldHighlightScript(): Boolean {
-    if (shouldDefinitelyHighlight()) return true
-    if (KotlinPlatformUtils.isCidr) return false // There is no Java support in CIDR. So do not highlight errors in KTS if running in CIDR.
-
-    val isReadyToHighlight = KotlinScriptHighlightingExtension.shouldHighlightScript(project, this)
-    return isReadyToHighlight && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(this)
-}

@@ -20,6 +20,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.core.script.k1.highlighter.ScriptProblemHighlightFilter"/>
     <psi.clsCustomNavigationPolicy
             implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptDependencySourceNavigationPolicyForJavaClasses"/>
 
@@ -72,7 +73,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptHighlightingExtension implementation="org.jetbrains.kotlin.idea.core.script.k1.highlighter.ScriptHighlightingExtension"/>/>
     <scriptDefinitionsSource
             id="StandardScriptDefinitionContributor"
             order="last"

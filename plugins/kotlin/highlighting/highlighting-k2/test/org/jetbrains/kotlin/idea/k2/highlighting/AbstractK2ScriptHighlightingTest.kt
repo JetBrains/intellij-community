@@ -15,25 +15,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
+import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.psi.KtFile
 
-abstract class AbstractK2ScriptHighlightingTest() : AbstractHighlightingMetaInfoTest() {
+abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTest() {
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         runBlocking {
-            DefaultScriptResolutionStrategy.getInstance(project).execute(*(files.mapNotNull { it as? KtFile }.toTypedArray())).join()
+            KotlinScriptResolutionService.getInstance(project).process(files.filterIsInstance<KtFile>())
         }
 
         super.doMultiFileTest(files, globalDirectives)
     }
 
     override fun runInDispatchThread(): Boolean = false
-
-
 
     override fun setUp() {
         setUpWithKotlinPlugin {

@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
+import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptModuleManager.Companion.removeScriptModules
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
@@ -25,7 +25,7 @@ class K2KotlinScratchFile(project: Project, virtualFile: VirtualFile, val corout
         coroutineScope.launch {
             psiFile.findScriptDefinition()?.getConfigurationResolver(project)?.remove(virtualFile)
             project.removeScriptModules(listOf(virtualFile))
-            DefaultScriptResolutionStrategy.getInstance(project).execute(psiFile).join()
+            KotlinScriptResolutionService.getInstance(project).process(psiFile)
         }
     }
 }

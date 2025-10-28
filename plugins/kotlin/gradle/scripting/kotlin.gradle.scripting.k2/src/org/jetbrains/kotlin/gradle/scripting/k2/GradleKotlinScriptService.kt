@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
@@ -19,7 +18,6 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.psi.PsiManager
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.gradle.scripting.k2.definition.withIdeKeys
 import org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleScriptData
@@ -33,12 +31,11 @@ import org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.sdkId
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
+import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.modules.*
 import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.*
@@ -342,18 +339,8 @@ class GradleKotlinScriptService(val project: Project) : ScriptRefinedConfigurati
             }
 
             if (updatedData.any()) {
-                val ktFiles = buildSet {
-                    for (url in updatedData.keys) {
-                        val virtualFile = url.virtualFile ?: continue
-                        val ktFile = readAction { PsiManager.getInstance(project).findFile(virtualFile) } as? KtFile
-                        addIfNotNull(ktFile)
-                    }
-                }
-
                 getInstance(project).data.clear()
-                if (ktFiles.any()) {
-                    DefaultScriptResolutionStrategy.getInstance(project).restartHighlighting(ktFiles)
-                }
+                KotlinScriptResolutionService.dropKotlinScriptCaches(project)
             }
         }
     }
