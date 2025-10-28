@@ -18,6 +18,7 @@ import java.nio.file.attribute.UserPrincipalLookupService
 class IjentNioFileSystem internal constructor(
   private val fsProvider: IjentNioFileSystemProvider,
   internal val uri: URI,
+  internal val blockingOperationListener: (IjentNioPath) -> Unit,
 ) : FileSystem() {
   override fun close() {
     fsProvider.close(uri)

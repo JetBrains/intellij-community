@@ -2,19 +2,17 @@
 package com.intellij.platform.eel.impl.fs
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 
-@Service
 @ApiStatus.Internal
-class EelEarlyAccessChecker {
+class EelEarlyAccessChecker<T> {
   private val poorMansBloomFilter = Array(1 shl 16) { true }
   private val varHandle = MethodHandles.arrayElementVarHandle(poorMansBloomFilter::class.java)
 
-  fun check(path: String) {
+  fun check(path: T) {
     if (!EDT.isCurrentThreadEdt()) {
       return
     }
@@ -53,10 +51,10 @@ class EelEarlyAccessChecker {
     // Q: Isn't accessing the file system in EDT a bad practice in general?
     // A: In general, yes. However, there's too much code that does it anyway.
     //    This error highlights at least the most problematic code.
-    LOG.error("Remote file system accessed before Eel initialization. The description is in the source code.")
+    LOG.error("Remote file system accessed in EDT before Eel initialization. The description is in the source code.")
   }
 
   companion object {
-    private val LOG = logger<EelEarlyAccessChecker>()
+    private val LOG = logger<EelEarlyAccessChecker<*>>()
   }
 }
