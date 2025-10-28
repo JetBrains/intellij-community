@@ -50,6 +50,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//libraries/kotlinx/serialization/json",
     "//platform/platform-impl/initial-config-import",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.platform.configurationStore.impl` end
