@@ -6,13 +6,8 @@ import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
+import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
-import com.intellij.platform.debugger.impl.rpc.XValueDto
-import com.intellij.platform.debugger.impl.rpc.XValueId
-import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
-import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
-import com.intellij.platform.debugger.impl.rpc.XValueTextProviderDto
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.deleteValueById
 import com.intellij.platform.kernel.ids.findValueById
@@ -124,6 +119,16 @@ class BackendXValueModel internal constructor(
 
     private object BackendXValueIdType : BackendValueIdType<XValueId, BackendXValueModel>(::XValueId)
   }
+}
+
+@ApiStatus.Internal
+suspend fun BackendXValueModel.toXValueDtoWithPresentation(): XValueDtoWithPresentation {
+  val value = toXValueDto()
+  return XValueDtoWithPresentation(
+    value,
+    presentation.toRpc(),
+    getEvaluatorDtoFlow().toRpc(),
+  )
 }
 
 @ApiStatus.Internal

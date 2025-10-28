@@ -38,6 +38,7 @@ class FrontendXValue private constructor(
   val xValueDto: XValueDto,
   hasParentValue: Boolean,
   presentation: Flow<XValueSerializedPresentation>,
+  fullValueEvaluatorFlow: Flow<XFullValueEvaluatorDto?>,
 ) : XValue(), XValueTextProvider, PinToTopParentValue, PinToTopMemberValue {
   
   private val statePresentation = cs.async { presentation.stateIn(cs) }
@@ -71,7 +72,7 @@ class FrontendXValue private constructor(
     XValueApi.getInstance().computeChildren(xValueDto.id)
   }
 
-  private val fullValueEvaluator = xValueDto.fullValueEvaluator.toFlow().map { evaluatorDto ->
+  private val fullValueEvaluator = fullValueEvaluatorFlow.map { evaluatorDto ->
     if (evaluatorDto == null) {
       return@map null
     }
@@ -306,10 +307,28 @@ class FrontendXValue private constructor(
     }
 
     @JvmStatic
-    fun create(project: Project, containerScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): XValue {
-      val cs = containerScope.childScope("FrontendXValue")
+    fun create(project: Project, containerScope: CoroutineScope, dto: XValueDtoWithPresentation, hasParentValue: Boolean): XValue {
+      val presentation = dto.presentation.toFlow()
+      val fullValueEvaluatorFlow = dto.fullValueEvaluator.toFlow()
+      return create(project, containerScope, dto.value, presentation, fullValueEvaluatorFlow, hasParentValue)
+    }
+
+    internal fun create(project: Project, containerScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): XValue {
       val presentation = xValueDto.presentation.toFlow()
-      val frontendXValue = FrontendXValue(project, cs, xValueDto, hasParentValue, presentation)
+      val fullValueEvaluatorFlow = xValueDto.fullValueEvaluator.toFlow()
+      return create(project, containerScope, xValueDto, presentation, fullValueEvaluatorFlow, hasParentValue)
+    }
+
+    internal fun create(
+      project: Project,
+      containerScope: CoroutineScope,
+      xValueDto: XValueDto,
+      presentation: Flow<XValueSerializedPresentation>,
+      fullValueEvaluatorFlow: Flow<XFullValueEvaluatorDto?>,
+      hasParentValue: Boolean,
+    ): XValue {
+      val cs = containerScope.childScope("FrontendXValue")
+      val frontendXValue = FrontendXValue(project, cs, xValueDto, hasParentValue, presentation, fullValueEvaluatorFlow)
       val name = xValueDto.name
       return if (name != null) FrontendXNamedValue(frontendXValue, name) else frontendXValue
     }

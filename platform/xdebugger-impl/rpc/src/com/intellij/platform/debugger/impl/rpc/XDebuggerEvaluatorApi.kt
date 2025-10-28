@@ -86,7 +86,7 @@ sealed interface XValueComputeChildrenEvent {
 @Serializable
 sealed interface XEvaluationResult {
   @Serializable
-  data class Evaluated(val valueId: XValueDto) : XEvaluationResult
+  data class Evaluated(val xValue: XValueDtoWithPresentation) : XEvaluationResult
 
   @Serializable
   data class EvaluationError(val errorMessage: @NlsContexts.DialogMessage String) : XEvaluationResult
@@ -110,6 +110,14 @@ data class XValueDto(
   val name: String?,
   val textProvider: RpcFlow<XValueTextProviderDto>?,
   @Serializable(with = DeferredSerializer::class) val pinToTopData: Deferred<XPinToTopData>?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XValueDtoWithPresentation(
+  val value: XValueDto,
+  val presentation: RpcFlow<XValueSerializedPresentation>,
+  val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
 )
 
 @ApiStatus.Internal

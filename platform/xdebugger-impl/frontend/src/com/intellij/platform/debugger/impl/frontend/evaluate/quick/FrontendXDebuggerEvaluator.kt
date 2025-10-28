@@ -64,7 +64,7 @@ internal open class FrontendXDebuggerEvaluator(
     evaluatorScope.launch(Dispatchers.EDT) {
       try {
         when (val evaluation = evaluate().await()) {
-          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue.create(project, evaluatorScope, evaluation.valueId, false))
+          is XEvaluationResult.Evaluated -> callback.evaluated(FrontendXValue.create(project, evaluatorScope, evaluation.xValue, false))
           is XEvaluationResult.EvaluationError -> callback.errorOccurred(evaluation.errorMessage)
           is XEvaluationResult.InvalidExpression -> callback.invalidExpression(evaluation.error)
         }

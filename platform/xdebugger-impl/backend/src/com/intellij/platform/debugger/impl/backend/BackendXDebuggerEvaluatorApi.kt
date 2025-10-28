@@ -79,7 +79,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       override fun evaluated(result: XValue) {
         evaluationCoroutineScope.launch {
           val xValueModel = newXValueModel(stackFrameModel, result, session)
-          val xValueDto = xValueModel.toXValueDto()
+          val xValueDto = xValueModel.toXValueDtoWithPresentation()
           evaluationResult.complete(XEvaluationResult.Evaluated(xValueDto))
         }
       }
