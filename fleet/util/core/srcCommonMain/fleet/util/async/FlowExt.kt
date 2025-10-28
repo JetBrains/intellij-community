@@ -99,12 +99,16 @@ private fun <T> Flow<ChunkedEvent<T>>.chunkWithTimerTickOrDone(): Flow<List<T>> 
     collect { event ->
       when (event) {
         is ChunkedEvent.Done -> {
-          emit(buffered)
-          buffered = mutableListOf()
+          if (buffered.isNotEmpty()) {
+            emit(buffered)
+            buffered = mutableListOf()
+          }
         }
         is ChunkedEvent.Tick -> {
-          emit(buffered)
-          buffered = mutableListOf()
+          if (buffered.isNotEmpty()) {
+            emit(buffered)
+            buffered = mutableListOf()
+          }
         }
         is ChunkedEvent.Payload -> buffered.add(event.payload)
       }

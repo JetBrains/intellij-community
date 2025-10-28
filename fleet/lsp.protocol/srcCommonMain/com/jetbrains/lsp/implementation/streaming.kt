@@ -44,15 +44,15 @@ suspend fun <R> Flow<R>.streamResults(
     partialResultToken: ProgressToken,
     resultSerializer: KSerializer<R>,
 ) {
+    val ser = ListSerializer(resultSerializer)
     // `chunkedByTimeout` to ensure that we do not spam the client with too many progress notifications.
     chunkedByTimeout(BUFFERING_TIME_BETWEEN_SENDING_BATCH_RESULTS_MS)
         .collect { partialResult ->
-            if (partialResult.isEmpty()) return@collect
             lspClient.notify(
                 ProgressNotificationType,
                 ProgressParams(
                     partialResultToken,
-                    LSP.json.encodeToJsonElement(ListSerializer(resultSerializer), partialResult),
+                    LSP.json.encodeToJsonElement(ser, partialResult),
                 )
             )
         }

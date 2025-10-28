@@ -62,13 +62,13 @@ suspend fun withLsp(
                 return try {
                     deferred.await() as Result
                 } catch (c: CancellationException) {
-                    notify(LSP.CancelNotificationType, CancelParams(id))
+                    notifyAsync(LSP.CancelNotificationType, CancelParams(id))
                     outgoingRequests.remove(id)
                     throw c
                 }
             }
 
-            override fun <Params> notify(
+            override fun <Params> notifyAsync(
                 notificationType: NotificationType<Params>,
                 params: Params,
             ) {
@@ -84,6 +84,20 @@ suspend fun withLsp(
                     )
                 ).getOrThrow()
             }
+
+          override suspend fun <Params> notify(notificationType: NotificationType<Params>, params: Params) {
+            val notification = NotificationMessage(
+              jsonrpc = "2.0",
+              method = notificationType.method,
+              params = LSP.json.encodeToJsonElement(notificationType.paramsSerializer, params)
+            )
+            outgoing.send(
+              LSP.json.encodeToJsonElement(
+                NotificationMessage.serializer(),
+                notification
+              )
+            )
+          }
         }
 
         val lspHandlerContext = LspHandlerContext(lspClient)

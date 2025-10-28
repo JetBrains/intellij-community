@@ -5,6 +5,7 @@ import andel.intervals.Interval
 import andel.operation.*
 import andel.text.Text
 import andel.text.TextRange
+import andel.text.insertOperation
 import andel.text.replaceOperation
 
 fun MutableDocument.replaceRange(range: TextRange, replacement: String) {
