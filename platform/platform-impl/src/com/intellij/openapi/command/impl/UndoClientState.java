@@ -161,18 +161,11 @@ final class UndoClientState implements Disposable {
   }
 
   void commandStarted(@NotNull CmdEvent cmdEvent, @NotNull CurrentEditorProvider editorProvider) {
-    if (isInsideCommand()) {
-      throw new UndoIllegalStateException("Nested command detected, please report the stacktrace");
-    }
     commandBuilder.commandStarted(cmdEvent, editorProvider);
     undoSpy.commandStarted(cmdEvent);
   }
 
   void commandFinished(@NotNull CmdEvent cmdEvent) {
-    if (!isInsideCommand()) {
-      // possible if command listener was added within command
-      return;
-    }
     PerformedCommand performedCommand = commandBuilder.commandFinished(cmdEvent);
     commitCommand(performedCommand);
     notifyUndoSpy(cmdEvent, performedCommand);
@@ -209,17 +202,14 @@ final class UndoClientState implements Disposable {
   }
 
   void markCurrentCommandAsGlobal() {
-    assertInsideCommand();
     commandBuilder.markAsGlobal();
   }
 
   void addAffectedDocuments(Document @NotNull ... docs) {
-    assertInsideCommand();
     commandBuilder.addAffectedDocuments(docs);
   }
 
   void addAffectedFiles(VirtualFile @NotNull ... files) {
-    assertInsideCommand();
     commandBuilder.addAffectedFiles(files);
   }
 
@@ -254,7 +244,6 @@ final class UndoClientState implements Disposable {
   }
 
   void addDocumentAsAffected(@NotNull DocumentReference docRef) {
-    assertInsideCommand();
     commandBuilder.addDocumentAsAffected(docRef);
   }
 
@@ -276,7 +265,7 @@ final class UndoClientState implements Disposable {
   }
 
   void clearUndoRedoQueue(@NotNull DocumentReference docRef) {
-    assertOutsideCommand();
+    commandBuilder.assertOutsideCommand();
     flushCommandMerger(UndoCommandFlushReason.CLEAR_QUEUE);
     undoStacksHolder.clearStacks(Collections.singleton(docRef), false);
     redoStacksHolder.clearStacks(Collections.singleton(docRef), false);
@@ -373,7 +362,7 @@ final class UndoClientState implements Disposable {
 
   @TestOnly
   void dropHistoryInTests() {
-    assertOutsideCommand();
+    commandBuilder.assertOutsideCommand();
     undoStacksHolder.clearAllStacksInTests();
     redoStacksHolder.clearAllStacksInTests();
   }
@@ -512,18 +501,6 @@ final class UndoClientState implements Disposable {
 
   private boolean isUndoOrRedoInProgress() {
     return undoRedoInProgress != UndoRedoInProgress.NONE;
-  }
-
-  private void assertInsideCommand() {
-    if (!isInsideCommand()) {
-      throw new UndoIllegalStateException("Must be called inside a command");
-    }
-  }
-
-  private void assertOutsideCommand() {
-    if (isInsideCommand()) {
-      throw new UndoIllegalStateException("Must be called outside a command");
-    }
   }
 
   private int nextCommandTimestamp() {

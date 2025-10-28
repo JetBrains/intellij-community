@@ -7,6 +7,10 @@ import org.jetbrains.annotations.NotNull;
 final class UndoIllegalStateException extends RuntimeException {
 
   UndoIllegalStateException(@NotNull String message) {
-    super(message);
+    this(message, null);
+  }
+
+  UndoIllegalStateException(String message, Throwable cause) {
+    super(message, cause);
   }
 }
