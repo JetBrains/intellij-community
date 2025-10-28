@@ -181,6 +181,21 @@ private fun ListComboBoxes() {
                 },
             )
         }
+
+        Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Empty Combo-box")
+            var selectedIndex by remember { mutableIntStateOf(2) }
+            val selectedItemText = if (selectedIndex >= 0) stringItems[selectedIndex] else "[none]"
+            InfoText(text = "Selected item: $selectedItemText")
+
+            ListComboBox(
+                items = emptyList(),
+                selectedIndex = -1,
+                onSelectedItemChange = { index -> selectedIndex = index },
+                modifier = Modifier.widthIn(max = 200.dp),
+                itemKeys = { _, item -> item },
+            )
+        }
     }
 }
 
