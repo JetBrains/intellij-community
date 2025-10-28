@@ -96,7 +96,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   @ApiStatus.Internal
   @Override
   public @NotNull PsiReferenceRegistrarImpl getRegistrar(@NotNull Language language) {
-    return myRegistrars.computeIfAbsent(language, ReferenceProvidersRegistryImpl::createRegistrar);
+    return myRegistrars.computeIfAbsent(language, l -> createRegistrar(l));
   }
 
   @Override
