@@ -171,17 +171,17 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
   ): InsertHandler<LookupElement> {
     if (position.getParent() is PyStringLiteralExpression) {
       if (isInsideAllInInitPy(position)) {
-        return importingInsertHandler
+        return InsertHandlers.importingInsertHandler
       }
-      return stringLiteralInsertHandler
+      return InsertHandlers.stringLiteralInsertHandler
     }
     else if (PyParameterizedTypeInsertHandler.isCompletingParameterizedType(exported, position, typeEvalContext)) {
-      return genericTypeInsertHandler
+      return InsertHandlers.genericTypeInsertHandler
     }
     else if (exported is PyFunction && position.getParent().getParent() !is PyDecorator) {
-      return functionInsertHandler
+      return InsertHandlers.functionInsertHandler
     }
-    return importingInsertHandler
+    return InsertHandlers.importingInsertHandler
   }
 
   private fun containsOnlyElementUnderTheCaret(
@@ -331,48 +331,6 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     var totalVariants: Int = 0,
   )
 
-  private val importingInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
-    addImportForLookupElement(context, item, context.tailOffset - 1)
-  }
-
-  private val functionInsertHandler: InsertHandler<LookupElement> = object : PyFunctionInsertHandler() {
-    override fun handleInsert(context: InsertionContext, item: LookupElement) {
-      val tailOffset = context.tailOffset - 1
-      super.handleInsert(context, item)  // adds parentheses, modifies tail offset
-      context.commitDocument()
-      addImportForLookupElement(context, item, tailOffset)
-    }
-  }
-
-  private val genericTypeInsertHandler: InsertHandler<LookupElement> = InsertHandler<LookupElement> { context, item ->
-    val tailOffset = context.tailOffset - 1
-    PyParameterizedTypeInsertHandler.INSTANCE.handleInsert(context, item)
-    context.commitDocument()
-    addImportForLookupElement(context, item, tailOffset)
-  }
-
-  private val stringLiteralInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
-    val element = item.psiElement
-    if (element == null) return@InsertHandler
-    if (element is PyQualifiedNameOwner) {
-      insertStringLiteralPrefix(element.qualifiedName, element.name, context)
-    }
-    else {
-      val importPath = QualifiedNameFinder.findCanonicalImportPath(element, null)
-      if (importPath != null) {
-        insertStringLiteralPrefix(importPath.toString(), importPath.lastComponent.toString(), context)
-      }
-    }
-  }
-
-  private fun insertStringLiteralPrefix(qualifiedName: String?, name: String?, context: InsertionContext) {
-    if (qualifiedName != null && name != null) {
-      val qualifiedNamePrefix = qualifiedName.dropLast(name.length)
-      context.document.insertString(context.startOffset, qualifiedNamePrefix)
-    }
-  }
-
-
   companion object {
     // See https://plugins.jetbrains.com/plugin/18465-sputnik
     private const val TRACING_WITH_SPUTNIK_ENABLED = false
@@ -380,7 +338,50 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
 
     // See PY-73964, IJPL-265
     private const val RECURSIVE_INDEX_ACCESS_ALLOWED = false
+  }
+  
+  object InsertHandlers {
+    internal val importingInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
+      addImportForLookupElement(context, item, context.tailOffset - 1)
+    }
 
+    internal val functionInsertHandler: InsertHandler<LookupElement> = object : PyFunctionInsertHandler() {
+      override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        val tailOffset = context.tailOffset - 1
+        super.handleInsert(context, item)  // adds parentheses, modifies tail offset
+        context.commitDocument()
+        addImportForLookupElement(context, item, tailOffset)
+      }
+    }
+
+    internal val genericTypeInsertHandler: InsertHandler<LookupElement> = InsertHandler<LookupElement> { context, item ->
+      val tailOffset = context.tailOffset - 1
+      PyParameterizedTypeInsertHandler.INSTANCE.handleInsert(context, item)
+      context.commitDocument()
+      addImportForLookupElement(context, item, tailOffset)
+    }
+
+    internal val stringLiteralInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
+      val element = item.psiElement
+      if (element == null) return@InsertHandler
+      if (element is PyQualifiedNameOwner) {
+        insertStringLiteralPrefix(element.qualifiedName, element.name, context)
+      }
+      else {
+        val importPath = QualifiedNameFinder.findCanonicalImportPath(element, null)
+        if (importPath != null) {
+          insertStringLiteralPrefix(importPath.toString(), importPath.lastComponent.toString(), context)
+        }
+      }
+    }
+
+    private fun insertStringLiteralPrefix(qualifiedName: String?, name: String?, context: InsertionContext) {
+      if (qualifiedName != null && name != null) {
+        val qualifiedNamePrefix = qualifiedName.dropLast(name.length)
+        context.document.insertString(context.startOffset, qualifiedNamePrefix)
+      }
+    }
+    
     fun addImportForLookupElement(context: InsertionContext, item: LookupElement, tailOffset: Int) {
       val manager = PsiDocumentManager.getInstance(context.project)
       val document = manager.getDocument(context.file)
