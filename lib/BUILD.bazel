@@ -8,7 +8,7 @@ kt_compiler_plugin(
   name = "kotlin-serialization-plugin",
   id = "org.jetbrains.kotlin.kotlin-serialization-compiler-plugin",
   visibility = ["//visibility:public"],
-  deps = ["@rules_jvm//:kotlin-serialization-compiler-plugin"],
+  deps = ["@rules_jvm//:kotlin-serialization-compiler-plugin_import"],
 )
 
 kt_compiler_plugin(
@@ -43,7 +43,7 @@ kt_compiler_plugin(
   name = "compose-plugin",
   id = "org.jetbrains.kotlin.kotlin-compose-compiler-plugin",
   visibility = ["//visibility:public"],
-  deps = ["@rules_jvm//:kotlin-compose-compiler-plugin"],
+  deps = ["@rules_jvm//:kotlin-compose-compiler-plugin_import"],
 )
 
 java_binary(

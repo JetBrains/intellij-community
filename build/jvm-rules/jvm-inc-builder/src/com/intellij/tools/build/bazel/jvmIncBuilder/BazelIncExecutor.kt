@@ -4,12 +4,13 @@ package com.intellij.tools.build.bazel.jvmIncBuilder
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.BuildContextImpl
 import com.intellij.tools.build.bazel.jvmIncBuilder.impl.instrumentation.*
+import com.intellij.tools.build.bazel.jvmIncBuilder.util.ArgMap
+import com.intellij.tools.build.bazel.jvmIncBuilder.util.createArgMap
 import io.opentelemetry.api.trace.Tracer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.bazel.jvm.*
-import org.jetbrains.bazel.jvm.util.*
 import org.jetbrains.jps.javac.ExternalRefCollectorCompilerToolExtension
 import java.io.InputStream
 import java.io.Writer

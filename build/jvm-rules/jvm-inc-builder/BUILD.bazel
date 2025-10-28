@@ -1,52 +1,109 @@
 load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_binary")
-load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:src/jvm-args.bzl", "get_jvm_flags")
-
-kt_jvm_library(
-  name = "jvm-inc-builder-lib",
-  srcs = glob(
-      [
-          "src/**/*.kt",
-          "src/**/*.java",
-      ],
-      allow_empty = True,
-  ),
-  kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
-  #module_name = "intellij.tools.build.bazel.jvmIncBuilder",
-  visibility = ["//visibility:public"],
-  # buildifier: leave-alone
-  deps = [
-    "//:annotations",
-    "//dependency-graph",
-    "//jps-builders-6:build-javac-rt",
-    "//:jps-javac-extension",
-    "//:opentelemetry-api",
-    "//:h2-mvstore",
-    "//:hash4j",
-    "//:asm-all",
-    "//:kotlin-metadata",
-    "//:caffeine",
-    "//:intellij-deps-fastutil-for-patched-kotlin",
-    "//:qdox",
-    "//src/worker-framework",
-    "//src/worker-util",
-    "//zip",
-    "patched-kotlin-compiler-for-bazel",
-    "//:kotlin-compose-compiler-plugin",
-    "//:kotlin-serialization-compiler-plugin",
-    ":forms-1_1-preview_http_import",   # forms compilation support
-    ":jaxen-1_2_0_http_import",         # forms compilation support
-  ]
-)
 
 java_binary(
     name = "jvm-inc-builder",
-#     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use :jvm-inc-builder-jvm_flags
+    #     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use :jvm-inc-builder-jvm_flags
     main_class = "com.intellij.tools.build.bazel.jvmIncBuilder.BazelIncExecutor",
     visibility = ["//visibility:public"],
     runtime_deps = [":jvm-inc-builder-lib"],
+)
+
+java_library(
+    name = "patched-kotlin-compiler-for-bazel",
+    visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
+    exports = [
+        ":jvm-abi-gen_import",
+        ":kotlin-compiler_import",
+        ":kotlin-reflect_import",
+        ":kotlin-script-runtime_import",
+        ":kotlin-stdlib-jdk7_import",
+        ":kotlin-stdlib-jdk8_import",
+        ":kotlin-stdlib_import",
+    ],
+)
+
+jvm_import(
+    name = "forms_import",
+    jar = "@forms_http//file",
+)
+
+jvm_import(
+    name = "jaxen_import",
+    jar = "@jaxen_http//file",
+)
+
+jvm_import(
+    name = "jvm-abi-gen_import",
+    jar = "@jvm-abi-gen_http//file",
+)
+
+jvm_import(
+    name = "kotlin-compiler_import",
+    jar = "@kotlin-compiler_http//file",
+)
+
+jvm_import(
+    name = "kotlin-reflect_import",
+    jar = "@kotlin-reflect_http//file",
+)
+
+jvm_import(
+    name = "kotlin-script-runtime_import",
+    jar = "@kotlin-script-runtime_http//file",
+)
+
+jvm_import(
+    name = "kotlin-stdlib_import",
+    jar = "@kotlin-stdlib_http//file",
+)
+
+jvm_import(
+    name = "kotlin-stdlib-jdk7_import",
+    jar = "@kotlin-stdlib-jdk7_http//file",
+)
+
+jvm_import(
+    name = "kotlin-stdlib-jdk8_import",
+    jar = "@kotlin-stdlib-jdk8_http//file",
+)
+
+kt_jvm_library(
+    name = "jvm-inc-builder-lib",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    deps = [
+        #this two dependencies should be on the top because some parts of that in the Kotlin compiler
+        "//:opentelemetry-api_import",
+        "//:asm-all_import",
+        "//:annotations_import",
+        "//:caffeine_import",
+        "//:h2-mvstore_import",
+        "//:hash4j_import",
+        "//:intellij-deps-fastutil_import",
+        "//:jps-javac-extension_import",
+        "//:kotlin-compose-compiler-plugin_import",
+        "//:kotlin-metadata-jvm_import",
+        "//:kotlin-serialization-compiler-plugin_import",
+        "//:qdox_import",
+        "//dependency-graph",
+        "//jps-builders-6:build-javac-rt",
+        "//src/worker-framework",
+        "//zip",
+        ":forms_import",  # forms compilation support
+        ":jaxen_import",  # forms compilation support
+        "patched-kotlin-compiler-for-bazel",
+    ],
 )
 
 string_list_flag(
@@ -57,110 +114,5 @@ string_list_flag(
     ]),
     visibility = ["//visibility:public"],
 )
-
-
-# todo: temporarily commented
-#jvm_library(
-#  name = "jvm-inc-builder_test_lib",
-#  visibility = ["//visibility:public"],
-#  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
-#  associates = [":jvm-inc-builder"],
-#  deps = [
-#"//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
-#"//jps/jps-builders-6:build-javac-rt",
-#"@rules_jvm//dependency-graph",
-#"//platform/util-rt",
-#"//platform/util-rt:util-rt_test_lib",
-#"@lib//:jps-javac-extension",
-#"@lib//:jetbrains-annotations",
-#"@lib//:mvstore",
-#"@lib//:hash4j",
-#"@lib//:asm",
-#"@lib//:kotlin-metadata",
-#"@lib//:caffeine",
-#"@lib//:fastutil-min",
-#"@lib//:platform-jps-build-jvm_inc_builder-qdox-java-parser",
-#"@lib//:junit3",
-#"@lib//:kotlinc-kotlin-compiler-common-provided",
-#"@lib//:kotlinc-kotlin-compiler-cli-provided",
-#  ]
-#)
-
-#jvm_test(
-#  name = "jvm-inc-builder_test",
-#  runtime_deps = [":jvm-inc-builder_test_lib"]
-#)
-
-java_library(
-  name = "patched-kotlin-compiler-for-bazel",
-  visibility = ["//visibility:public"],  # used by @community//:monorepo-jvm-builder (@community//fleet/compiler-plugins/expects:expects-compiler-plugin, etc.)
-  exports = [
-    ":jvm-abi-gen-2_2_21-RC2-467_import",
-    ":kotlin-compiler-2_2_21-RC2-467_import",
-    ":kotlin-stdlib-jdk8-2_2_21-RC2-467_import",
-    ":kotlin-stdlib-2_2_21-RC2-467_import",
-    ":kotlin-stdlib-jdk7-2_2_21-RC2-467_import",
-    ":kotlin-script-runtime-2_2_21-RC2-467_import",
-    ":kotlin-reflect-2_2_21-RC2-467_import",
-    #":kotlinx-coroutines-core-jvm-1_8_0_http_import",
-    #":annotations-23_0_0_http_import",
-  ],
-)
-
-jvm_import(
-  name = "jvm-abi-gen-2_2_21-RC2-467_import",
-  jar = "@jvm-abi-gen-2_2_21-RC2-467_http//file",
-)
-
-jvm_import(
-    name = "kotlin-compiler-2_2_21-RC2-467_import",
-    jar = "@kotlin-compiler-2_2_21-RC2-467_http//file",
-)
-
-jvm_import(
-    name = "kotlin-stdlib-jdk8-2_2_21-RC2-467_import",
-    jar = "@kotlin-stdlib-jdk8-2_2_21-RC2-467_http//file",
-)
-
-jvm_import(
-    name = "kotlin-stdlib-2_2_21-RC2-467_import",
-    jar = "@kotlin-stdlib-2_2_21-RC2-467_http//file",
-)
-
-jvm_import(
-    name = "kotlin-stdlib-jdk7-2_2_21-RC2-467_import",
-    jar = "@kotlin-stdlib-jdk7-2_2_21-RC2-467_http//file",
-)
-
-jvm_import(
-    name = "kotlin-script-runtime-2_2_21-RC2-467_import",
-    jar = "@kotlin-script-runtime-2_2_21-RC2-467_http//file",
-)
-
-jvm_import(
-    name = "kotlin-reflect-2_2_21-RC2-467_import",
-    jar = "@kotlin-reflect-2_2_21-RC2-467_http//file",
-)
-
-#jvm_import(
-#  name = "kotlinx-coroutines-core-jvm-1_8_0_http_import",
-#  jar = "@kotlinx-coroutines-core-jvm-1_8_0_http//file"
-#)
-
-#jvm_import(
-#  name = "annotations-23_0_0_http_import",
-#  jar = "@annotations-23_0_0_http//file"
-#)
-
-jvm_import(
-    name = "forms-1_1-preview_http_import",
-    jar = "@forms-1_1-preview_http//file",
-)
-
-jvm_import(
-    name = "jaxen-1_2_0_http_import",
-    jar = "@jaxen-1_2_0_http//file",
-)
-
 
 ### skip generation section `build intellij.tools.build.bazel.jvmIncBuilder`

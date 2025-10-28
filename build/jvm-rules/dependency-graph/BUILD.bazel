@@ -2,55 +2,53 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:jvm.bzl", "jvm_resources", "resourcegroup")
 
 filegroup(
-  name = "dependency-graph_resources_sources",
-  srcs = glob(["resources/**/*"]),
-)
-
-resourcegroup(
-  name = "dependency-graph_resources",
-  srcs = [":dependency-graph_resources_sources"],
-  strip_prefix = "resources",
-  visibility = ["//visibility:public"],  # used by @community//build:dependency-graph
-)
-
-jvm_resources(
-  name = "dependency-graph_resources_rules_jvm_bootstrap",
-  files = [":dependency-graph_resources_sources"],
-  strip_prefix = "resources",
+    name = "dependency-graph_resources_sources",
+    srcs = glob(["resources/**/*"]),
 )
 
 filegroup(
-  name = "dependency-graph_sources",
-  srcs = glob(
-      [
-          "src/**/*.kt",
-          "src/**/*.java",
-      ],
-      allow_empty = True,
-  ),
-  visibility = ["//visibility:public"],  # used by @community//build:dependency-graph
+    name = "dependency-graph_sources",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],  # used by @community//build:dependency-graph
+)
+
+jvm_resources(
+    name = "dependency-graph_resources_rules_jvm_bootstrap",
+    files = [":dependency-graph_resources_sources"],
+    strip_prefix = "resources",
 )
 
 kt_jvm_library(
-  name = "dependency-graph",
-  srcs = [":dependency-graph_sources"],
-  kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
-  #module_name = "intellij.platform.jps.build.dependencyGraph",
-  visibility = [
-    "//jvm-inc-builder:__pkg__",
-  ],
-  runtime_deps = [":dependency-graph_resources_rules_jvm_bootstrap"],
-  # buildifier: leave-alone
-  deps = [
-    "//:annotations",
-    "//:hash4j",
-    "//:asm-all",
-    "//:kotlin-metadata",
-    "//:kotlin-stdlib",
-    "//:caffeine",
-    "//:intellij-deps-fastutil-for-patched-kotlin",
-    "//jps-builders-6:build-javac-rt",  # for Iterator utils and utility data structures
-  ],
+    name = "dependency-graph",
+    srcs = [":dependency-graph_sources"],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = [
+        "//jvm-inc-builder:__pkg__",
+    ],
+    runtime_deps = [":dependency-graph_resources_rules_jvm_bootstrap"],
+    deps = [
+        "//:annotations_import",
+        "//:asm-all_import",
+        "//:caffeine_import",
+        "//:hash4j_import",
+        "//:intellij-deps-fastutil_import",
+        "//:kotlin-metadata-jvm_import",
+        "//:kotlin-stdlib_import",
+        "//jps-builders-6:build-javac-rt",  # for Iterator utils and utility data structures
+    ],
+)
+
+resourcegroup(
+    name = "dependency-graph_resources",
+    srcs = [":dependency-graph_resources_sources"],
+    strip_prefix = "resources",
+    visibility = ["//visibility:public"],  # used by @community//build:dependency-graph
 )
 
 ### skip generation section `build intellij.platform.jps.build.dependencyGraph`
