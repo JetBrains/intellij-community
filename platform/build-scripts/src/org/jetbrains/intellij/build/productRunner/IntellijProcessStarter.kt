@@ -48,7 +48,8 @@ suspend fun runApplicationStarter(
   val jvmArgs = getCommandLineArgumentsForOpenPackages(context).toMutableList()
 
   val systemDir = tempDir.resolve("system")
-  jvmArgs += vmProperties.mutate {
+
+  jvmArgs.addAll(vmProperties.mutate {
     put(PathManager.PROPERTY_HOME_PATH, homePath.toString())
 
     put("idea.system.path", systemDir.toString())
@@ -62,21 +63,21 @@ suspend fun runApplicationStarter(
 
     put("ij.dir.lock.debug", "true")
     put("intellij.log.to.json.stdout", "true")
-  }.toJvmArgs()
-  jvmArgs += vmOptions.takeIf { it.isNotEmpty() } ?: listOf("-Xmx2g")
+  }.toJvmArgs())
+  jvmArgs.addAll(vmOptions.takeIf { it.isNotEmpty() } ?: listOf("-Xmx2g"))
   val debugProperty = "intellij.build.$appStarterId.debug.port"
   val debugPropertyValue = System.getProperty(debugProperty)
   debugPropertyValue?.let {
-    jvmArgs += "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it"
+    jvmArgs.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:$it")
   }
-
   val actualTimeout = if (debugPropertyValue == null) timeout else 20.minutes
-  val effectiveIdeClasspath = if (isFinalClassPath) classpath else prepareFlatClasspath(classpath, tempDir, context)
+
+  val effectiveIdeClasspath = if (isFinalClassPath) classpath else prepareFlatClasspath(classpath = classpath, tempDir = tempDir, context = context)
   try {
     // a second attempt is performed as a hacky workaround for various sporadic exceptions from the IDE side like:
     // com.intellij.util.IncorrectOperationException: Sorry but parent has already been disposed so the child will never be disposed
     retryWithExponentialBackOff(attempts = 2) {
-      runJava(context.ideMainClassName, args, jvmArgs, effectiveIdeClasspath, context.stableJavaExecutable, actualTimeout, onError = {
+      runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = actualTimeout, onError = {
         val logFile = findLogFile(systemDir)
         if (logFile != null) {
           val logDir = context.paths.logDir
@@ -128,7 +129,7 @@ private fun findLogFile(systemDir: Path): Path? {
     return defaultLog
   }
   //variants of IDEs which use 'PerProcessPathCustomizer' store idea.log in a subdirectory of logDir 
-  return logDir.walk().firstOrNull { it.name == "idea.log" }
+  return logDir.walk().filter { it.name == "idea.log" }.firstOrNull()
 }
 
 private fun readPluginId(pluginJar: Path): String? {
@@ -178,6 +179,14 @@ suspend fun runJavaForIntellijModule(
   workingDir: Path? = null,
   onError: (() -> Unit)? = null,
 ) {
-  val jvmArgs = getCommandLineArgumentsForOpenPackages(context) + jvmArgs + listOf("-Dij.dir.lock.debug=true", "-Dintellij.log.to.json.stdout=true")
-  runJava(mainClass, args, jvmArgs, classPath, context.stableJavaExecutable, timeout, workingDir, onError = onError)
+  runJava(
+    mainClass = mainClass,
+    args = args,
+    jvmArgs = getCommandLineArgumentsForOpenPackages(context) + jvmArgs + listOf("-Dij.dir.lock.debug=true", "-Dintellij.log.to.json.stdout=true"),
+    classPath = classPath,
+    javaExe = context.stableJavaExecutable,
+    timeout = timeout,
+    workingDir = workingDir,
+    onError = onError
+  )
 }

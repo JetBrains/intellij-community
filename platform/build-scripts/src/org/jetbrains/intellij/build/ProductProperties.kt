@@ -138,8 +138,9 @@ abstract class ProductProperties {
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with an added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1).
    */
-  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${appInfo.fullProductName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+  open fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "${appInfo.fullProductName}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+  }
 
   /**
    * If `true`, Alt+Button1 shortcut will be removed from 'Quick Evaluate Expression' action and assigned to 'Add/Remove Caret' action
@@ -231,8 +232,9 @@ abstract class ProductProperties {
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
-  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
-    getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  }
 
   /**
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker], when .class file version verification is necessary.
@@ -268,11 +270,13 @@ abstract class ProductProperties {
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String
 
   /**
-   * `<productName>-<buildNumber>` for any (nightly, EAP, or release) build, e.g., 'idea-232.9999'
+   * `<productName>-<buildNumber>` for any (nightly, EAP, or release) build, e.g., 'ideaIC-232.9999'
    *
    * See [getBaseArtifactName].
    */
-  fun getBaseArtifactName(context: BuildContext): String = getBaseArtifactName(context.applicationInfo, context.buildNumber)
+  fun getBaseArtifactName(context: BuildContext): String {
+    return getBaseArtifactName(context.applicationInfo, context.buildNumber)
+  }
 
   /**
    * @return an instance of the class containing properties specific for Windows distribution,
@@ -390,8 +394,9 @@ abstract class ProductProperties {
    * If `true`, a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
   @ApiStatus.Internal
-  open suspend fun addRemoteDevelopmentLibraries(context: BuildContext): Boolean =
-    context.getBundledPluginModules().contains("intellij.remoteDevServer")
+  open suspend fun addRemoteDevelopmentLibraries(context: BuildContext): Boolean {
+    return context.getBundledPluginModules().contains("intellij.remoteDevServer")
+  }
 
   /**
    * Checks whether some necessary conditions specific for the product are met and report errors via [BuildContext.messages] if they aren't.
@@ -482,21 +487,23 @@ abstract class ProductProperties {
    * @param pluginId may be null if missing or a plugin descriptor is malformed
    * @return list of plugin validation errors.
    */
-  open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> = when (result) {
-    is PluginCreationSuccess -> buildList {
-      addAll(result.unacceptableWarnings)
-      if (result.plugin.pluginVersion == null) {
-        add(PropertyNotSpecified("version"))
+  open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+    return when (result) {
+      is PluginCreationSuccess -> buildList {
+        addAll(result.unacceptableWarnings)
+        if (result.plugin.pluginVersion == null) {
+          add(PropertyNotSpecified("version"))
+        }
+        val id = result.plugin.pluginId
+        if (id == null) {
+          add(PropertyNotSpecified("id"))
+        }
+        else if (!PLUGIN_ID_REGEX.matches(id)) {
+          add(InvalidPluginIDProblem(id))
+        }
       }
-      val id = result.plugin.pluginId
-      if (id == null) {
-        add(PropertyNotSpecified("id"))
-      }
-      else if (!PLUGIN_ID_REGEX.matches(id)) {
-        add(InvalidPluginIDProblem(id))
-      }
+      is PluginCreationFail -> result.errorsAndWarnings
     }
-    is PluginCreationFail -> result.errorsAndWarnings
   }
 
   /**

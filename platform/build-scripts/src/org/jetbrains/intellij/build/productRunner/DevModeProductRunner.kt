@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.productRunner
 
 import org.jetbrains.intellij.build.BuildContext
@@ -40,7 +42,7 @@ internal suspend fun createDevModeProductRunner(context: BuildContext, additiona
       ),
       createProductProperties = { context.productProperties },
     )
-    DevModeProductRunner(context, runDir, classPath = newClassPath!!.map { it.toString() })
+    DevModeProductRunner(context = context, homePath = runDir, classPath = newClassPath!!.map { it.toString() })
   }
 }
 
@@ -51,6 +53,15 @@ private class DevModeProductRunner(
 ) : IntellijProductRunner {
   override suspend fun runProduct(args: List<String>, additionalVmProperties: VmProperties, timeout: Duration) {
     val vmOptionsFromBuild = readVmOptions(homePath)
-    runApplicationStarter(context, classPath, args, additionalVmProperties, vmOptionsFromBuild, homePath, timeout, isFinalClassPath = true)
+    runApplicationStarter(
+      context = context,
+      classpath = classPath,
+      args = args,
+      timeout = timeout,
+      homePath = homePath,
+      vmProperties = additionalVmProperties,
+      isFinalClassPath = true,
+      vmOptions = vmOptionsFromBuild,
+    )
   }
 }

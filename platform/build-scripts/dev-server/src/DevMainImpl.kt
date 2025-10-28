@@ -1,5 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("DevMainImpl")
+@file:Suppress("IO_FILE_USAGE", "ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
@@ -26,6 +28,7 @@ data class BuildDevInfo(
 fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collection<Path>> {
   val info = buildDevImpl()
 
+  @Suppress("SpellCheckingInspection")
   val exceptions = hashSetOf("jna.boot.library.path", "pty4j.preferred.native.folder", "jna.nosys", "jna.noclasspath", "jb.vmOptionsFile")
   val systemProperties = System.getProperties()
   for ((name, value) in info.systemProperties) {
@@ -37,11 +40,11 @@ fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collectio
 
   // DevKitApplicationPatcher sets custom values for idea.config.path and idea.system.path only,
   // so we need to explicitly set idea.plugins.path and idea.log.path here to avoid a warning at runtime
-  val configPath = systemProperties[PathManager.PROPERTY_CONFIG_PATH]
+  val configPath = systemProperties.get(PathManager.PROPERTY_CONFIG_PATH)
   if (configPath != null && !systemProperties.containsKey(PathManager.PROPERTY_PLUGINS_PATH)) {
     systemProperties.setProperty(PathManager.PROPERTY_PLUGINS_PATH, "$configPath${File.separator}plugins")
   }
-  val systemPath = systemProperties[PathManager.PROPERTY_SYSTEM_PATH]
+  val systemPath = systemProperties.get(PathManager.PROPERTY_SYSTEM_PATH)
   if (systemPath != null && !systemProperties.containsKey(PathManager.PROPERTY_LOG_PATH)) {
     systemProperties.setProperty(PathManager.PROPERTY_LOG_PATH, "$systemPath${File.separator}log")
   }
@@ -49,14 +52,15 @@ fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collectio
   return java.util.AbstractMap.SimpleImmutableEntry(info.mainClassName, info.classPath)
 }
 
+@Suppress("IO_FILE_USAGE")
 fun buildDevImpl(): BuildDevInfo {
   //TracerProviderManager.setOutput(Path.of(System.getProperty("user.home"), "trace.json"))
   @Suppress("TestOnlyProblems")
-  val ideaProjectRoot = PathManager.getHomeDirFor(PathManager::class.java)!!
+  val ideaProjectRoot = Path.of(PathManager.getHomePathFor(PathManager::class.java)!!)
   System.setProperty("idea.dev.project.root", ideaProjectRoot.toString().replace(File.separator, "/"))
   val additionalClassPaths = System.getProperty("idea.dev.additional.classpath")?.splitToSequence(',')?.map { Path.of(it) }?.toList() ?: emptyList()
 
-  var homePath: Path? = null
+  var homePath: String? = null
   var newClassPath: Collection<Path>? = null
   var mainClassName: String? = null
   val environment = mutableMapOf<String, String>()
@@ -69,16 +73,22 @@ fun buildDevImpl(): BuildDevInfo {
       //todo make it error
       println("Warning: property '$baseIdeForFrontendPropertyName' must be specified in VM Options of the run configuration to select which variant of JetBrains Client should be started")
     }
-    homePath = buildProductInProcess(
+
+    buildProductInProcess(
       BuildRequest(
-        platformPrefix, getAdditionalPluginMainModules(), ideaProjectRoot, baseIdePlatformPrefixForFrontend, keepHttpClient = false,
+        platformPrefix = platformPrefix,
+        baseIdePlatformPrefixForFrontend = baseIdePlatformPrefixForFrontend,
+        additionalModules = getAdditionalPluginMainModules(),
+        projectDir = ideaProjectRoot,
+        keepHttpClient = false,
         platformClassPathConsumer = { actualMainClassName, classPath, runDir ->
           mainClassName = actualMainClassName
           newClassPath = LinkedHashSet<Path>(classPath.size + additionalClassPaths.size).also {
             it.addAll(classPath)
             it.addAll(additionalClassPaths)
           }
-          environment += getIdeSystemProperties(runDir).map
+          homePath = runDir.invariantSeparatorsPathString
+          environment.putAll(getIdeSystemProperties(runDir).map)
         },
         // we should use a binary launcher for dev-mode
         isBootClassPathCorrect = System.getProperty("idea.dev.mode.in.process.build.boot.classpath.correct", "false").toBoolean(),
@@ -88,11 +98,15 @@ fun buildDevImpl(): BuildDevInfo {
     )
   }
   homePath?.let {
-    environment += PathManager.PROPERTY_HOME_PATH to it.invariantSeparatorsPathString
+    environment.put(PathManager.PROPERTY_HOME_PATH, it)
   }
-
-  return BuildDevInfo(mainClassName!!, newClassPath!!, environment)
+  return BuildDevInfo(
+    mainClassName = mainClassName!!,
+    classPath = newClassPath!!,
+    systemProperties = environment,
+  )
 }
 
-private fun getAdditionalPluginMainModules(): List<String> =
-  System.getProperty("additional.modules")?.splitToSequence(',')?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList() ?: emptyList()
+private fun getAdditionalPluginMainModules(): List<String> {
+  return System.getProperty("additional.modules")?.splitToSequence(',')?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList() ?: emptyList()
+}

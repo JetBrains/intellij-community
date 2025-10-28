@@ -123,6 +123,7 @@ class MacDistributionBuilder(
   }
 
   private suspend fun doCopyExtraFiles(macDistDir: Path, arch: JvmArchitecture, copyDistFiles: Boolean) {
+    @Suppress("SpellCheckingInspection")
     val platformProperties = mutableListOf(
       "\n#---------------------------------------------------------------------",
       "# macOS-specific system properties",
@@ -184,18 +185,36 @@ class MacDistributionBuilder(
       val builder = this@MacDistributionBuilder
 
       val productJson = generateProductJson(context, arch, withRuntime = true)
-      val productJsonWithoutRuntime = generateProductJson(context, arch, withRuntime = false)
+      val productJsonWithoutRuntime = generateProductJson(context = context, arch = arch, withRuntime = false)
       withContext(Dispatchers.IO) {
         macZipProductInfoJson.writeText(productJson)
         macZipWithoutRuntimeProductInfoJson.writeText(productJsonWithoutRuntime)
       }
 
-      buildMacZip(builder, macZip, zipRoot, arch, productJson, directories, extraFiles, includeRuntime = true, compressionLevel)
+      buildMacZip(
+        macDistributionBuilder = builder,
+        targetFile = macZip,
+        zipRoot = zipRoot,
+        arch = arch,
+        productJson = productJson,
+        directories = directories,
+        extraFiles = extraFiles,
+        includeRuntime = true,
+        compressionLevel = compressionLevel,
+      )
 
       if (customizer.buildArtifactWithoutRuntime) {
         val directoriesSansRuntime = directories.filterNot { it == runtimeDir }
         buildMacZip(
-          builder, macZipWithoutRuntime, zipRoot, arch, productJsonWithoutRuntime, directoriesSansRuntime, extraFiles, includeRuntime = false, compressionLevel
+          macDistributionBuilder = builder,
+          targetFile = macZipWithoutRuntime,
+          zipRoot = zipRoot,
+          arch = arch,
+          productJson = productJsonWithoutRuntime,
+          directories = directoriesSansRuntime,
+          extraFiles = extraFiles,
+          includeRuntime = false,
+          compressionLevel = compressionLevel,
         )
       }
 
@@ -209,7 +228,13 @@ class MacDistributionBuilder(
         }
       }
       else {
-        buildForArch(arch, macZip, macZipProductInfoJson, macZipWithoutRuntime, macZipWithoutRuntimeProductInfoJson)
+        buildForArch(
+          arch = arch,
+          macZip = macZip,
+          macZipProductInfoJson = macZipProductInfoJson,
+          macZipWithoutRuntime = macZipWithoutRuntime,
+          macZipWithoutRuntimeProductInfoJson = macZipWithoutRuntimeProductInfoJson,
+        )
       }
     }
   }
@@ -228,13 +253,14 @@ class MacDistributionBuilder(
       signMacBinaries(binariesToSign, context)
       for (dir in listOf(osAndArchSpecificDistPath, runtimeDist)) {
         launch(CoroutineName("recursively signing macOS binaries in $dir")) {
-          recursivelySignMacBinaries(coroutineScope = this, dir, context, matchers)
+          recursivelySignMacBinaries(coroutineScope = this, root = dir, context = context, executableFileMatchers = matchers)
         }
       }
     }
   }
 
-  override fun writeVmOptions(distBinDir: Path): Path = writeMacOsVmOptions(distBinDir, context)
+  override fun writeVmOptions(distBinDir: Path): Path =
+    writeMacOsVmOptions(distBinDir, context)
 
   private suspend fun layoutMacApp(
     ideaPropertyContent: CharSequence,
@@ -278,7 +304,7 @@ class MacDistributionBuilder(
       (ideaPropertyContent.lineSequence() + platformProperties).joinToString(separator = "\n")
     )
 
-    writeMacOsVmOptions(macBinDir, context)
+    writeVmOptions(macBinDir)
     createFrontendContextForLaunchers(context)?.let { clientContext ->
       writeMacOsVmOptions(macBinDir, clientContext)
     }
@@ -496,7 +522,7 @@ class MacDistributionBuilder(
     val executable = context.productProperties.baseFileName
     val fileVmOptions = VmOptionsGenerator.generate(context).asSequence() + sequenceOf("-Dapple.awt.application.appearance=system")
     val vmOptionsPath = distBinDir.resolve("${executable}.vmoptions")
-    VmOptionsGenerator.writeVmOptions(vmOptionsPath, fileVmOptions, separator = "\n")
+    writeVmOptions(file = vmOptionsPath, vmOptions = fileVmOptions, separator = "\n")
     return vmOptionsPath
   }
 
@@ -589,7 +615,7 @@ class MacDistributionBuilder(
       notarize(sitFile, context)
     }
 
-    buildDmg(sitFile, productInfoJson, "${baseName}.dmg", notarize)
+    buildDmg(sitFile = sitFile, productInfoJson = productInfoJson, dmgName = "${baseName}.dmg", staple = notarize)
 
     if (publishSitArchive) {
       context.notifyArtifactBuilt(sitFile)
@@ -597,7 +623,7 @@ class MacDistributionBuilder(
     }
 
     val zipRoot = getMacZipRoot(customizer, context)
-    checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled, arch, targetLibcImpl)
+    checkExecutablePermissions(distribution = sitFile, root = zipRoot, includeRuntime = isRuntimeBundled, arch = arch, libc = targetLibcImpl)
 
     if (isRuntimeBundled) {
       generateIntegrityManifest(sitFile, zipRoot, arch, context)
@@ -611,7 +637,7 @@ class MacDistributionBuilder(
         NioFiles.deleteRecursively(tempDir)
         NioFiles.createDirectories(tempDir)
         NioFiles.createDirectories(context.paths.artifactDir)
-        val entrypoint = prepareDmgBuildScripts(tempDir, staple, customizer, context)
+        val entrypoint = prepareDmgBuildScripts(tempDir = tempDir, staple = staple, customizer = customizer, context = context)
         if (!SystemInfoRt.isMac) {
           it.addEvent(".dmg can be built only on macOS")
           if (publishSitArchive) {
@@ -635,76 +661,76 @@ class MacDistributionBuilder(
       NioFiles.deleteRecursively(tempDir)
     }
   }
+}
 
-  private fun prepareDmgBuildScripts(tempDir: Path, staple: Boolean, customizer: MacDistributionCustomizer, context: BuildContext): Path {
-    NioFiles.deleteRecursively(tempDir)
-    Files.createDirectories(tempDir)
-    val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
-    Files.copy(Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath), dmgImageCopy)
-    val scriptsDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
-    Files.copy(scriptsDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-    NioFiles.setExecutable(tempDir.resolve("makedmg.sh"))
-    Files.copy(scriptsDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-    Files.copy(scriptsDir.resolve("staple.sh"), tempDir.resolve("staple.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-    val entrypoint = tempDir.resolve("build.sh")
-    Files.writeString(
-      entrypoint,
-      Files.readString(scriptsDir.resolve("build-template.sh"))
-        .resolveTemplateVar("staple", "$staple")
-        .resolveTemplateVar("appName", context.fullBuildNumber)
-        .resolveTemplateVar("contentSigned", "${context.isMacCodeSignEnabled}")
-        .resolveTemplateVar("buildDateInSeconds", "${context.options.buildDateInSeconds}")
-    )
-    NioFiles.setExecutable(entrypoint)
-    return entrypoint
-  }
+private fun prepareDmgBuildScripts(tempDir: Path, staple: Boolean, customizer: MacDistributionCustomizer, context: BuildContext): Path {
+  NioFiles.deleteRecursively(tempDir)
+  Files.createDirectories(tempDir)
+  val dmgImageCopy = tempDir.resolve("${context.fullBuildNumber}.png")
+  Files.copy(Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath), dmgImageCopy)
+  val scriptsDir = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
+  Files.copy(scriptsDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+  NioFiles.setExecutable(tempDir.resolve("makedmg.sh"))
+  Files.copy(scriptsDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+  Files.copy(scriptsDir.resolve("staple.sh"), tempDir.resolve("staple.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+  val entrypoint = tempDir.resolve("build.sh")
+  Files.writeString(
+    entrypoint,
+    Files.readString(scriptsDir.resolve("build-template.sh"))
+      .resolveTemplateVar("staple", "$staple")
+      .resolveTemplateVar("appName", context.fullBuildNumber)
+      .resolveTemplateVar("contentSigned", "${context.isMacCodeSignEnabled}")
+      .resolveTemplateVar("buildDateInSeconds", "${context.options.buildDateInSeconds}")
+  )
+  NioFiles.setExecutable(entrypoint)
+  return entrypoint
+}
 
 
-  private fun String.resolveTemplateVar(variable: String, value: String): String {
-    val reference = "%$variable%"
-    check(contains(reference)) { "No $reference is found in:\n'$this'" }
-    return replace(reference, value)
-  }
+private fun String.resolveTemplateVar(variable: String, value: String): String {
+  val reference = "%$variable%"
+  check(contains(reference)) { "No $reference is found in:\n'$this'" }
+  return replace(reference, value)
+}
 
-  private fun publishDmgBuildScripts(entrypoint: Path, tempDir: Path, context: BuildContext) {
-    val artifactDir = context.paths.artifactDir.resolve("macos-dmg-build")
-    artifactDir.createDirectories()
-    synchronized("$artifactDir".intern()) {
-      tempDir.listDirectoryEntries().forEach {
-        Files.copy(it, artifactDir.resolve(it.name), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-      }
-      val message = """
+private fun publishDmgBuildScripts(entrypoint: Path, tempDir: Path, context: BuildContext) {
+  val artifactDir = context.paths.artifactDir.resolve("macos-dmg-build")
+  artifactDir.createDirectories()
+  synchronized("$artifactDir".intern()) {
+    tempDir.listDirectoryEntries().forEach {
+      Files.copy(it, artifactDir.resolve(it.name), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+    }
+    val message = """
         To build .dmg(s):
         1. transfer .sit(s) to macOS host;
         2. transfer ${artifactDir.name}/ content to the same folder;
         3. execute ${entrypoint.name} from Terminal. 
         .dmg(s) will be built in the same folder.
       """.trimIndent()
-      artifactDir.resolve("README.txt").writeText(message)
-      context.messages.info(message)
-      context.notifyArtifactBuilt(artifactDir)
-    }
+    artifactDir.resolve("README.txt").writeText(message)
+    context.messages.info(message)
+    context.notifyArtifactBuilt(artifactDir)
+  }
+}
+
+private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, arch: JvmArchitecture, context: BuildContext) {
+  if (context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+    return
   }
 
-  private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, arch: JvmArchitecture, context: BuildContext) {
-    if (context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-      return
+  val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
+  try {
+    spanBuilder("extracting ${sitFile.name}").use(Dispatchers.IO) {
+      Decompressor.Zip(sitFile)
+        .withZipExtensions()
+        .extract(tempSit)
     }
-
-    val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
-    try {
-      spanBuilder("extracting ${sitFile.name}").use(Dispatchers.IO) {
-        Decompressor.Zip(sitFile)
-          .withZipExtensions()
-          .extract(tempSit)
-      }
-      RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), OsFamily.MACOS, arch)
-    }
-    finally {
-      withContext(Dispatchers.IO + NonCancellable) {
-        @OptIn(ExperimentalPathApi::class)
-        tempSit.deleteRecursively()
-      }
+    RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), OsFamily.MACOS, arch)
+  }
+  finally {
+    withContext(Dispatchers.IO + NonCancellable) {
+      @OptIn(ExperimentalPathApi::class)
+      tempSit.deleteRecursively()
     }
   }
 }

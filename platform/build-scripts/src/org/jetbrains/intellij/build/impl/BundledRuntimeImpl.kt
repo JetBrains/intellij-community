@@ -134,7 +134,6 @@ class BundledRuntimeImpl(
     return "${prefix}${version}-${os.jbrArchiveSuffix}${muslSuffix}-${archSuffix}-${runtimeBuildPrefix()}${buildNumber}.tar.gz"
   }
 
-  @Suppress("SpellCheckingInspection")
   private fun runtimeBuildPrefix(): String {
     if (!options.runtimeDebug) {
       return ""
@@ -151,6 +150,7 @@ class BundledRuntimeImpl(
    */
   override fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): Sequence<String> {
     val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home" else "jbr"
+    @Suppress("SpellCheckingInspection")
     return sequence {
       yield("$pathPrefix/bin/*")
       if (os == OsFamily.LINUX) {
@@ -163,7 +163,6 @@ class BundledRuntimeImpl(
       }
     }
   }
-
   private fun getArchSuffix(arch: JvmArchitecture): String = when (arch) {
     JvmArchitecture.x64 -> "x64"
     JvmArchitecture.aarch64 -> "aarch64"

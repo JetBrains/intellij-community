@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.dev
 
 import com.intellij.openapi.util.io.NioFiles
@@ -43,7 +45,7 @@ fun getIdeSystemProperties(runDir: Path): VmProperties {
   //we need this only because PathManager take idea.properties to the sources if 'idea.use.dev.build.server' is set to 'true'
   properties.load(Files.newInputStream(runDir.resolve("bin/idea.properties")))
   for (property in properties) {
-    result[property.key.toString()] = property.value.toString()
+    result.put(property.key.toString(), property.value.toString())
   }
 
   val vmOptions = readVmOptions(runDir)
@@ -62,8 +64,8 @@ fun readVmOptions(runDir: Path): List<String> {
   require(vmOptionsFile != null) {
     "No single *.vmoptions file in ${runDir} (${NioFiles.list(runDir).map(Path::getFileName).joinToString()})}"
   }
-  result += vmOptionsFile.readLines()
-  result += "-Djb.vmOptionsFile=${vmOptionsFile}"
+  result.addAll(vmOptionsFile.readLines())
+  result.add("-Djb.vmOptionsFile=${vmOptionsFile}")
 
   val productInfoFile = runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME)
   if (productInfoFile.exists()) {
@@ -73,7 +75,7 @@ fun readVmOptions(runDir: Path): List<String> {
       OsFamily.MACOS -> $$"$APP_PACKAGE/Contents"
       OsFamily.LINUX -> $$"$IDE_HOME"
     }
-    result += productJson.launch[0].additionalJvmArguments.map { it.replace(macroName, runDir.toString()) }
+    result.addAll(productJson.launch[0].additionalJvmArguments.map { it.replace(macroName, runDir.toString()) })
   }
 
   return result
@@ -86,11 +88,19 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
   }
   return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).use {
     try {
-      buildProduct(request) { compilationContext ->
-        val configuration = createConfiguration(request.productionClassOutput, request.projectDir)
-        val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
-        createProductProperties(productConfiguration, compilationContext, request.projectDir, request.platformPrefix)
-      }
+      buildProduct(
+        request = request,
+        createProductProperties = { compilationContext ->
+          val configuration = createConfiguration(homePath = request.projectDir, productionClassOutput = request.productionClassOutput)
+          val productConfiguration = getProductConfiguration(configuration, request.platformPrefix, request.baseIdePlatformPrefixForFrontend)
+          createProductProperties(
+            productConfiguration = productConfiguration,
+            moduleOutputProvider = compilationContext,
+            projectDir = request.projectDir,
+            platformPrefix = request.platformPrefix,
+          )
+        },
+      )
     }
     finally {
       // otherwise, a thread leak in tests
@@ -113,9 +123,11 @@ private fun createConfiguration(productionClassOutput: Path, homePath: Path): Pr
   return Json.decodeFromString(ProductConfigurationRegistry.serializer(), Files.readString(projectPropertiesPath))
 }
 
-internal fun getProductPropertiesPath(homePath: Path): Path =
+internal fun getProductPropertiesPath(homePath: Path): Path {
   // handle a custom product properties path
-  System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }?.takeIf { Files.exists(it) } ?: homePath.resolve(PRODUCT_REGISTRY_PATH)
+  return System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }?.takeIf { Files.exists(it) }
+         ?: homePath.resolve(PRODUCT_REGISTRY_PATH)
+}
 
 private fun getProductConfiguration(configuration: ProductConfigurationRegistry, platformPrefix: String, baseIdePlatformPrefixForFrontend: String?): ProductConfiguration {
   val key = if (baseIdePlatformPrefixForFrontend != null) "$baseIdePlatformPrefixForFrontend$platformPrefix" else platformPrefix
