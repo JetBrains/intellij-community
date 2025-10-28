@@ -95,20 +95,20 @@ class LocalIDEProcess : IDEProcess {
               span.addEvent("process created")
               EventsBus.subscribeOnce(process) { _: IdeExceptionEvent ->
                 if (process.isAlive) {
-                  captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir)
+                  captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir, runContext)
                 }
               }
               runInterruptible {
                 EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext = this, ideProcess = IDEProcessHandle(process.toHandle())))
               }
-              ideProcessId = getIdeProcessIdWithRetry(process.toProcessInfo())
+              ideProcessId = getIdeProcessIdWithRetry(process.toProcessInfo(), runContext)
               startCollectThreadDumpsLoop(logsDir, IDEProcessHandle(process.toHandle()), jdkHome, startConfig.workDir, ideProcessId, "ide")
             },
             onBeforeKilled = { process, pid ->
               span.end()
               computeWithSpan("runIde post-processing before killed") {
                 logOutput("BeforeKilled: $processPresentableName")
-                captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir)
+                captureDiagnosticOnKill(logsDir, jdkHome, startConfig, process, snapshotsDir, runContext = this)
                 EventsBus.postAndWaitProcessing(IdeBeforeKillEvent(this, process, pid))
                 if (testContext.profilerType != ProfilerType.NONE) {
                   EventsBus.postAndWaitProcessing(StopProfilerEvent(listOf()))

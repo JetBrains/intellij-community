@@ -7,6 +7,7 @@ import com.intellij.ide.starter.process.ProcessInfo.Companion.toProcessInfo
 import com.intellij.ide.starter.process.ProcessKiller.killProcesses
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
+import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.tools.ide.util.common.NoRetryException
 import com.intellij.tools.ide.util.common.PrintFailuresMode
 import com.intellij.tools.ide.util.common.logOutput
@@ -18,6 +19,7 @@ import oshi.software.os.OSProcess
 import oshi.software.os.OperatingSystem
 import java.nio.file.Path
 import java.util.function.Predicate
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.isRegularFile
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -89,14 +91,14 @@ private val devBuildArgumentsSet = setOf(
   "com.intellij.platform.runtime.loader.IntellijLoader" // thin client
 )
 
-private fun ProcessInfo.isIde(): Boolean =
+private fun ProcessInfo.isIde(runContext: IDERunContext): Boolean =
   /** for installer runs
    * Example:
    *  Name: idea
    *  Arguments: [/mnt/agent/temp/buildTmp/testb0bv1hja1z5rg/ide-tests/cache/builds/IU-installer-from-file/idea-IU-261.1243/bin/idea, serverMode,
    *    /mnt/agent/temp/buildTmp/testb0bv1hja1z5rg/ide-tests/cache/projects/unpacked/TestScopesProj]
    **/
-  (name != LinuxIdeDistribution.XVFB_TOOL_NAME && arguments.firstOrNull()?.contains(IDE_TESTS_SUBSTRING) == true) ||
+  (name != LinuxIdeDistribution.XVFB_TOOL_NAME && arguments.firstOrNull()?.startsWith(runContext.testContext.ide.installationPath.absolutePathString()) == true) ||
   /**  for dev build runs
    * Example:
    *  Name: java
@@ -106,16 +108,16 @@ private fun ProcessInfo.isIde(): Boolean =
   (name == "java" && arguments.any { it in devBuildArgumentsSet })
 
 
-suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo): Long {
+suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long {
   if (OS.CURRENT != OS.Linux) {
     return parentProcessInfo.pid
   }
 
   logOutput("Guessing IDE process ID on Linux: \n${parentProcessInfo.description}")
-  val attemptsResult = withRetry(retries = 100, delay = 3.seconds, messageOnFailure = "Couldn't find appropriate java process id for pid ${parentProcessInfo.pid}", printFailuresMode = PrintFailuresMode.ALL_FAILURES) {
-    getIdeProcessId(parentProcessInfo)
+  val attemptsResult = withRetry(retries = 100, delay = 3.seconds, messageOnFailure = "Couldn't find appropriate IDE process id for pid ${parentProcessInfo.pid}", printFailuresMode = PrintFailuresMode.ALL_FAILURES) {
+    getIdeProcessId(parentProcessInfo, runContext)
   }
-  return requireNotNull(attemptsResult) { "Java process id must not be null" }
+  return requireNotNull(attemptsResult) { "IDE process id must not be null" }
 }
 
 
@@ -124,7 +126,7 @@ suspend fun getIdeProcessIdWithRetry(parentProcessInfo: ProcessInfo): Long {
  * Thus, we must guess the IDE process ID for capturing the thread dumps.
  * In case of Dev Server, under xvfb-run the whole build process is happening so the waiting time can be long.
  */
-private fun getIdeProcessId(parentProcessInfo: ProcessInfo): Long {
+private fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: IDERunContext): Long {
   if (OS.CURRENT != OS.Linux) {
     return parentProcessInfo.pid
   }
@@ -134,14 +136,14 @@ private fun getIdeProcessId(parentProcessInfo: ProcessInfo): Long {
   }
   logOutput("Guessing IDE process ID on Linux (pid of the IDE process wrapper ${parentProcessInfo.pid})")
 
-  if (parentProcessInfo.isIde()) {
+  if (parentProcessInfo.isIde(runContext)) {
     logOutput("Parent process is an IDE process itself (was launched without wrapper)")
     return parentProcessInfo.pid
   }
 
   val suitableChildren = SystemInfo().operatingSystem.getChildProcesses(
     parentProcessInfo.pid.toInt(),
-    { ProcessInfo.create(it.processID.toLong()).isIde() },
+    { ProcessInfo.create(it.processID.toLong()).isIde(runContext) },
     OperatingSystem.ProcessSorting.UPTIME_DESC,
     0
   ).map { it.toProcessInfo() }
