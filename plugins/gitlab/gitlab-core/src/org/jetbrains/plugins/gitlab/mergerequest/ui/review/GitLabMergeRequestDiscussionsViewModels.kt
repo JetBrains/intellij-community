@@ -88,7 +88,8 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     .map { ComputedResult.fromResult(it) }
     .transformConsecutiveSuccesses {
       mapFiltered { it.discussionId == null }
-        .mapStatefulToStateful { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest) }
+        .mapStatefulToStateful { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest,
+                                                                                    projectData.contextDataLoader) }
     }
     .stateInNow(cs, ComputedResult.loading())
 

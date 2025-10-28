@@ -1,4 +1,5 @@
 fragment project on Project {
+  id
   name
   nameWithNamespace
   path

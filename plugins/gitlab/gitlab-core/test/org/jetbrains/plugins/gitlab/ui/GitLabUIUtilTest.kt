@@ -17,6 +17,8 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
   private lateinit var gitRepository: GitRepository
   private lateinit var gitRootVf: VirtualFile
 
+  private val baseUrl = "http://base/url/uploads/"
+
   override fun setUp() {
     super.setUp()
 
@@ -36,7 +38,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
       GitLabUIUtil.convertToHtml(
         project, gitRepository, GitLabProjectPath("test-account", "mr-test"), """
         [link](/some/invalid/file/path?query=123)
-      """.trimIndent())
+      """.trimIndent(), baseUrl)
     }
   }
 
@@ -70,6 +72,14 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
       """.trimIndent())
 
     assertThat(parsed.substituteSeparators()).contains("${GitLabUIUtil.OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
+  }
+
+  fun `test uploads files link rendering`() {
+    val parsed = convertToHtml("""
+        [link](/uploads/a/b/c.jpg) some text
+      """.trimIndent())
+
+    assertThat(parsed).isEqualTo("""<body><p><a href="${baseUrl}a/b/c.jpg">link</a> some text</p></body>""")
   }
 
   fun `test simple MR link gets MR link prefix`() {
@@ -240,7 +250,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
 
   private fun convertToHtml(markdownSource: String): @NlsSafe String {
     val parsed = GitLabUIUtil.convertToHtml(
-      project, gitRepository, GitLabProjectPath("test-account", "mr-test"), markdownSource)
+      project, gitRepository, GitLabProjectPath("test-account", "mr-test"), markdownSource, baseUrl)
     return parsed
   }
 }

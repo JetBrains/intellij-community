@@ -47,6 +47,8 @@ import java.net.URI
 
 private val MARKDOWN_IMAGE_SETTINGS: IElementType = MarkdownElementType("MARKDOWN_IMAGE_SETTINGS")
 
+private const val UPLOADS_PATH = "/uploads/"
+
 object GitLabUIUtil {
   const val OPEN_FILE_LINK_PREFIX = "glfilelink:"
   const val OPEN_MR_LINK_PREFIX = "glmergerequest:"
@@ -64,12 +66,14 @@ object GitLabUIUtil {
     project: Project,
     gitRepository: GitRepository,
     projectPath: GitLabProjectPath,
-    markdownSource: @NonNls String
+    markdownSource: @NonNls String,
+    uploadFileUrlBase: String
   ): @NlsSafe String {
     if (markdownSource.isBlank()) return markdownSource
     // TODO: fix bug with CRLF line endings from markdown library
     val text = preprocessMergeRequestIds(processIssueIdsMarkdown(project, markdownSource)).replace("\r", "")
-    val flavourDescriptor = GitLabFlavourDescriptor(gitRepository, projectPath, CodeBlockHtmlSyntaxHighlighter(project))
+    val flavourDescriptor = GitLabFlavourDescriptor(gitRepository, projectPath, CodeBlockHtmlSyntaxHighlighter(project),
+                                                    uploadFileUrlBase)
 
     return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
   }
@@ -80,7 +84,8 @@ object GitLabUIUtil {
   private class GitLabFlavourDescriptor(
     private val gitRepository: GitRepository,
     private val projectPath: GitLabProjectPath,
-    private val htmlSyntaxHighlighter: HtmlSyntaxHighlighter
+    private val htmlSyntaxHighlighter: HtmlSyntaxHighlighter,
+    private val uploadFileUrlBase: String,
   ) : GFMFlavourDescriptor() {
 
     /**
@@ -104,7 +109,7 @@ object GitLabUIUtil {
         MarkdownElementTypes.IMAGE to GitLabImageWithSettingsGeneratingProvider(linkMap, baseURI).makeXssSafe(useSafeLinks),
         GFMElementTypes.STRIKETHROUGH to SimpleInlineTagProvider("strike", 2, -2),
         MarkdownElementTypes.CODE_FENCE to CodeFenceSyntaxHighlighterGeneratingProvider(htmlSyntaxHighlighter),
-        MarkdownElementTypes.INLINE_LINK to GitLabLinkGeneratingProvider(gitRepository, projectPath, map[MarkdownElementTypes.INLINE_LINK]),
+        MarkdownElementTypes.INLINE_LINK to GitLabLinkGeneratingProvider(gitRepository, projectPath, uploadFileUrlBase, map[MarkdownElementTypes.INLINE_LINK]),
       )
     }
   }
@@ -198,6 +203,7 @@ object GitLabUIUtil {
   private class GitLabLinkGeneratingProvider(
     private val gitRepository: GitRepository,
     private val projectPath: GitLabProjectPath,
+    private val uploadFileUrlBase: String,
     private val fallback: GeneratingProvider?
   ) : GeneratingProvider {
     override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
@@ -228,6 +234,13 @@ object GitLabUIUtil {
       if (linkDestination.startsWith("http:") || linkDestination.startsWith("https:") ||
           linkDestination.trimStart('/').startsWith(fullProjectPath)) {
         visitor.consumeHtml(createLink(linkDestination, linkText).toString())
+        return
+      }
+
+      // "uploads" files links should be updated to absolute URLs of the uploads
+      if (linkDestination.startsWith(UPLOADS_PATH)) {
+        visitor.consumeHtml(createLink(
+          uploadFileUrlBase + linkDestination.substring(UPLOADS_PATH.length), linkText).toString())
         return
       }
 

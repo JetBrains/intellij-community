@@ -20,8 +20,10 @@ import org.jetbrains.plugins.gitlab.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestSetReviewers
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabRegistry
+
 
 private val LOG = logger<GitLabProject>()
 
@@ -38,6 +40,7 @@ interface GitLabProject {
   fun getMembersBatches(): Flow<List<GitLabUserDTO>>
 
   val defaultBranch: String?
+  val gitLabProjectId: GitLabId
   suspend fun isMultipleReviewersAllowed(): Boolean
 
   /**
@@ -50,6 +53,8 @@ interface GitLabProject {
   suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO
 
   fun reloadData()
+
+  val contextDataLoader: GitLabContextDataLoader
 }
 
 @CodeReviewDomainEntity
@@ -77,6 +82,11 @@ class GitLabLazyProject(
   private val multipleReviewersAllowedRequest = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
     loadMultipleReviewersAllowed(initialData)
   }
+  override val gitLabProjectId: GitLabId = initialData.id
+
+  val uploadFileUrlBase: String = projectMapping.repository.serverPath.toString() + "/-/project/" + gitLabProjectId.guessRestId() + "/uploads/"
+
+  override val contextDataLoader: GitLabContextDataLoader = GitLabContextDataLoader(uploadFileUrlBase)
 
   override val mergeRequests by lazy {
     CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, currentUser, tokenRefreshFlow)

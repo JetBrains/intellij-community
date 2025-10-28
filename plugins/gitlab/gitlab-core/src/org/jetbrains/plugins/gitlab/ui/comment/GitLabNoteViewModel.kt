@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
@@ -64,7 +65,8 @@ class GitLabNoteViewModelImpl(
 
   override val body: StateFlow<String> = note.body
   override val bodyHtml: StateFlow<String> = body.mapStateInNow(cs) {
-    GitLabUIUtil.convertToHtml(project, projectData.projectMapping.gitRepository, projectData.projectMapping.repository.projectPath,it)
+    GitLabUIUtil.convertToHtml(project, projectData.projectMapping.gitRepository, projectData.projectMapping.repository.projectPath, it,
+                               projectData.contextDataLoader.uploadFileUrlBase)
   }
 
   override val discussionState: StateFlow<GitLabDiscussionStateContainer> = isMainNote.map {

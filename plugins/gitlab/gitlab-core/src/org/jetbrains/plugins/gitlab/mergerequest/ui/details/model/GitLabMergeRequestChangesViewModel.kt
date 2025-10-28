@@ -18,6 +18,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 
 @ApiStatus.Internal
 interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitViewModel> {
@@ -34,7 +35,8 @@ private val LOG = logger<GitLabMergeRequestChangesViewModel>()
 internal class GitLabMergeRequestChangesViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
-  mergeRequest: GitLabMergeRequest
+  mergeRequest: GitLabMergeRequest,
+  private val contextDataLoader: GitLabContextDataLoader,
 ) : GitLabMergeRequestChangesViewModel,
     CodeReviewChangesViewModel<GitLabCommitViewModel> {
   private val cs = parentCs.childScope(javaClass.name)
@@ -54,7 +56,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
 
   override val reviewCommits: SharedFlow<List<GitLabCommitViewModel>> =
     mergeRequest.changes
-      .map { it.getCommits().map { commit -> GitLabCommitViewModel(project, mergeRequest, commit) } }
+      .map { it.getCommits().map { commit -> GitLabCommitViewModel(project, mergeRequest, commit, contextDataLoader) } }
       .modelFlow(cs, LOG)
 
   override val selectedCommitIndex: SharedFlow<Int> = reviewCommits.combine(delegate.selectedCommit) { commits, sha ->

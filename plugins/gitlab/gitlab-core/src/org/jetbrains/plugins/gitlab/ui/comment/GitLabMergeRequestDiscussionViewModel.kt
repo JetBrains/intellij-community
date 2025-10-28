@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
@@ -116,6 +117,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
   parentCs: CoroutineScope,
   note: GitLabMergeRequestDraftNote,
   mr: GitLabMergeRequest,
+  contextDataLoader: GitLabContextDataLoader,
 ) : GitLabNoteViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -132,7 +134,7 @@ class GitLabMergeRequestStandaloneDraftNoteViewModelBase internal constructor(
 
   override val body: StateFlow<String> = note.body
   override val bodyHtml: StateFlow<String> = body.mapStateInNow(cs) {
-    GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it)
+    GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it, contextDataLoader.uploadFileUrlBase)
   }
 
   override val discussionState: StateFlow<GitLabDiscussionStateContainer> =
