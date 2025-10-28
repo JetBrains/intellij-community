@@ -11,6 +11,11 @@ import com.intellij.ui.ColorHexUtil
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -26,6 +31,7 @@ open class RegistryValue @Internal constructor(
   private val keyDescriptor: RegistryKeyDescriptor?
 ) {
   private val listeners: MutableList<RegistryValueListener> = ContainerUtil.createLockFreeCopyOnWriteList()
+  private val flow = MutableSharedFlow<String>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   var isChangedSinceAppStart: Boolean = false
     private set
@@ -255,6 +261,8 @@ open class RegistryValue @Internal constructor(
       listener.afterValueChanged(this)
     }
 
+    flow.tryEmit(value)
+
     if (!isRestartRequired() && resolveNotRequiredValue(key) == registry.getBundleValueOrNull(key)) {
       registry.getStoredProperties().remove(key)
     }
@@ -302,6 +310,30 @@ open class RegistryValue @Internal constructor(
       listeners.remove(listener)
     }
   }
+
+  /** Returns a flow that emits when the raw string value changes. */
+  fun asStringFlow(): Flow<String> = flow.distinctUntilChanged()
+
+  /**
+   * Returns a flow that emits when the raw string value changes, converting the values to a boolean.
+   * Note that this will throw if the raw string value cannot be parsed as a boolean.
+   * @see asBoolean
+   */
+  fun asBooleanFlow(): Flow<Boolean> = flow.map { it.toBoolean() }.distinctUntilChanged()
+
+  /**
+   * Returns a flow that emits when the raw string value changes, converting the values to an integer.
+   * Note that this will throw if the raw string value cannot be parsed as an integer.
+   * @see asInteger
+   */
+  fun asIntegerFlow(): Flow<Int> = flow.map { it.toInt() }.distinctUntilChanged()
+
+  /**
+   * Returns a flow that emits when the raw string value changes, converting the values to a double.
+   * Note that this will throw if the raw string value cannot be parsed as a double.
+   * @see asDouble
+   */
+  fun asDoubleFlow(): Flow<Double> = flow.map { it.toDouble() }.distinctUntilChanged()
 
   internal fun resetCache() {
     stringCachedValue = null
