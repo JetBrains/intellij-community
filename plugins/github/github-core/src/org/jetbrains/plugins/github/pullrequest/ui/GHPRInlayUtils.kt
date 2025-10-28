@@ -45,15 +45,14 @@ internal object GHPRInlayUtils {
   internal fun installInlayHoverOutline(
     parentCs: CoroutineScope,
     editor: Editor,
-    side: Side?,
+    isUnifiedDiff: Boolean,
     locationToLine: ((DiffLineLocation) -> Int?)?,
     vm: GHPREditorMappedComponentModel,
   ) {
     val cs: CoroutineScope = parentCs.childScope("Comment inlay hover controller")
     var activeLineHighlighter: RangeHighlighter? = null
-    val isUnifiedDiffViewer = side == null
     val multilineCommentsDisabled = Registry.get("github.pr.new.multiline.comments.disabled").asBoolean()
-    val frameResizer = if (vm is GHPREditorMappedComponentModel.NewComment<*> && !(isUnifiedDiffViewer && multilineCommentsDisabled)) {
+    val frameResizer = if (vm is GHPREditorMappedComponentModel.NewComment<*> && !(isUnifiedDiff && multilineCommentsDisabled)) {
       val frameResizer = ResizingFrameListener(editor, vm)
       editor.addEditorMouseMotionListener(frameResizer)
       editor.addEditorMouseListener(frameResizer)
@@ -80,7 +79,8 @@ internal object GHPRInlayUtils {
         }
         val startOffset = editor.document.getLineStartOffset(commentRange.first)
         val endOffset = editor.document.getLineEndOffset(commentRange.last)
-        val renderer = CommentedCodeFrameRenderer(commentRange.first, commentRange.last, side)
+        val editorSide = if ((editor as? EditorEx)?.verticalScrollbarOrientation == EditorEx.VERTICAL_SCROLLBAR_LEFT) Side.LEFT else Side.RIGHT
+        val renderer = CommentedCodeFrameRenderer(commentRange.first, commentRange.last, editorSide)
         activeLineHighlighter = editor.markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST, null, HighlighterTargetArea.LINES_IN_RANGE).also { highlighter ->
           highlighter.customRenderer = renderer
           highlighter.lineMarkerRenderer = renderer
