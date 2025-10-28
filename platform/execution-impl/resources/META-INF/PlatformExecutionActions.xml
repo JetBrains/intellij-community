@@ -112,6 +112,10 @@
     <extensionPoint qualifiedName="com.intellij.execution.impl.runSessionService"
                     interface="com.intellij.execution.RunSessionService"
                     dynamic="true" />
+
+    <extensionPoint qualifiedName="com.intellij.execution.processHandlerPidProvider"
+                    interface="com.intellij.execution.impl.ProcessHandlerPidProvider"
+                    dynamic="true"/>
   </extensionPoints>
   <projectListeners>
     <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"
