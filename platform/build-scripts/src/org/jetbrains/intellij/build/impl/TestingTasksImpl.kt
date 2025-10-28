@@ -5,6 +5,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
@@ -1103,7 +1104,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         for (attempt in 1..options.attemptCount) {
           if (!runJUnit5 && !runJUnit34) break
           val spanNameSuffix = if (options.attemptCount > 1) " (attempt $attempt)" else ""
-          val additionalProperties: Map<String, String> = if (attempt > 1) mapOf("intellij.build.test.ignoreFirstAndLastTests" to "true") else emptyMap()
+          val systemPath = systemProperties[PathManager.PROPERTY_SYSTEM_PATH]
+
+          val additionalProperties = mutableMapOf(PathManager.PROPERTY_LOG_PATH to "$systemPath${File.separator}log${File.separator}junit5")
+          if (attempt > 1) {
+            additionalProperties["intellij.build.test.ignoreFirstAndLastTests"] = "true"
+          }
 
           val exitCode5: Int = if (runJUnit5) {
             block("run junit 5 tests${spanNameSuffix}") {
@@ -1125,6 +1131,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
             0
           }
 
+          additionalProperties[PathManager.PROPERTY_LOG_PATH] = "$systemPath${File.separator}log${File.separator}junit3and4"
           val exitCode34: Int = if (runJUnit34) {
             block("run junit 3+4 tests${spanNameSuffix}") {
               runJUnit5Engine(
