@@ -15,6 +15,7 @@ import kotlin.io.path.createFile
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.createTempFile
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 class UploadToS3UtilsTest {
@@ -64,6 +65,7 @@ class UploadToS3UtilsTest {
       temporaryDir = tempDir,
       dryRun = false,
       logger = NOPLogger.NOP_LOGGER,
+      uploadSha = false,
     )
 
     // Then
@@ -78,6 +80,57 @@ class UploadToS3UtilsTest {
     assertEquals(bucket, call.bucket)
     assertEquals(meta.s3Location, call.key)
     assertEquals(file, call.file)
+  }
+
+  @Test
+  fun put_with_sha_when_uploadSha(): Unit = runTest {
+    // Given
+    val bucket = "test-bucket"
+    val s3location = "path/in/s3/file.bin"
+    val s3Sha256location = "path/in/s3/file.bin.sha256"
+    val file = tempFile("hello")
+    val sha256File = tempDir.resolve("file.bin.sha256")
+    val meta = S3UploadMetadata(
+      filepath = file,
+      s3Location = s3location,
+      shouldBeArchivedToTarZst = false,
+      failUploadIfAlreadyExistingInS3 = true,
+    )
+
+    val client = FakeFleetS3Client(storageDir = storageDir)
+
+    // When
+    uploadToS3(
+      filesToUpload = listOf(meta),
+      client = client,
+      bucketName = bucket,
+      temporaryDir = tempDir,
+      dryRun = false,
+      logger = NOPLogger.NOP_LOGGER,
+      uploadSha = true,
+    )
+
+    // Then
+    assertEquals(
+      expected = listOf(
+        Call.Exists(bucket, s3location),
+        Call.Put(bucket, s3location, file),
+        Call.Put(bucket, s3Sha256location, sha256File),
+      ),
+      actual = client.calls,
+    )
+    val putFileCall = client.calls.filterIsInstance<Call.Put>()[0]
+    val putShaCall = client.calls.filterIsInstance<Call.Put>()[1]
+    assertEquals(bucket, putFileCall.bucket)
+    assertEquals(meta.s3Location, putFileCall.key)
+    assertEquals(file, putFileCall.file)
+
+    assertEquals(bucket, putShaCall.bucket)
+    assertEquals(s3Sha256location, putShaCall.key)
+    assertEquals(sha256File, putShaCall.file)
+
+    val storedSha256 = storageDir.resolve(bucket).resolve(s3Sha256location)
+    assertEquals("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824 *file.bin", storedSha256.readText())
   }
 
   @Test
@@ -108,6 +161,7 @@ class UploadToS3UtilsTest {
       temporaryDir = tempDir,
       dryRun = false,
       logger = NOPLogger.NOP_LOGGER,
+      uploadSha = false,
     )
 
     // It should not try to re-upload
@@ -143,6 +197,7 @@ class UploadToS3UtilsTest {
       temporaryDir = tempDir,
       dryRun = false,
       logger = NOPLogger.NOP_LOGGER,
+      uploadSha = false,
     )
 
     uploadToS3(
@@ -152,6 +207,7 @@ class UploadToS3UtilsTest {
       temporaryDir = tempDir,
       dryRun = false,
       logger = NOPLogger.NOP_LOGGER,
+      uploadSha = false,
     )
 
     // It should not try to re-upload
@@ -193,6 +249,7 @@ class UploadToS3UtilsTest {
         temporaryDir = tempDir,
         dryRun = false,
         logger = NOPLogger.NOP_LOGGER,
+        uploadSha = false,
       )
     }
     assertTrue(ex.message?.contains("checksum does not match")!!)
@@ -226,6 +283,7 @@ class UploadToS3UtilsTest {
       temporaryDir = tempDir,
       dryRun = true,
       logger = logger,
+      uploadSha = false,
     )
 
     assertEquals(emptyList(), client.calls)
@@ -250,6 +308,7 @@ class UploadToS3UtilsTest {
       temporaryDir = tempDir,
       dryRun = false,
       logger = NOPLogger.NOP_LOGGER,
+      uploadSha = false,
     )
 
     // Only put should be recorded; no existence/checksum calls
@@ -285,6 +344,7 @@ class UploadToS3UtilsTest {
       bucketName = bucket,
       temporaryDir = tempDir,
       dryRun = false,
+      uploadSha = false,
       logger = NOPLogger.NOP_LOGGER,
     )
 

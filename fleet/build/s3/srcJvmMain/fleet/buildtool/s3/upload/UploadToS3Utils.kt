@@ -5,8 +5,12 @@ import fleet.buildtool.fs.sha256
 import fleet.buildtool.fs.tarZst
 import org.slf4j.Logger
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.readBytes
+import kotlin.io.path.writeText
 
 /**
  * Upload local files to S3 bucket.
@@ -21,12 +25,14 @@ import kotlin.io.path.exists
  * @param filesToUpload list of files to upload.
  * @param bucketName name of the S3 bucket to upload to.
  * @param dryRun if true, no actual upload will be performed, only the message will be logged.
+ * @param uploadSha if true, SHA256 checksum of each [filesToUpload] will be uploaded to S3 for future validation.
  */
 suspend fun uploadToS3(
   filesToUpload: List<S3UploadMetadata>,
   client: FleetS3Client,
   bucketName: String,
   temporaryDir: Path,
+  uploadSha: Boolean,
   dryRun: Boolean,
   logger: Logger,
 ) {
@@ -63,7 +69,7 @@ suspend fun uploadToS3(
 
       validateAlreadyExisting(filesToUpload = alreadyExisting, client = client, bucketName = bucketName, logger = logger, temporaryDir = temporaryDir)
       // NOTE: There is still a potential TOCTOU race here if another process uploads between existence check and put.
-      uploadWithoutValidation(filesToUpload = notExisting, client = client, bucketName = bucketName, logger = logger)
+      uploadWithoutValidation(filesToUpload = notExisting, client = client, bucketName = bucketName, logger = logger, temporaryDir = temporaryDir, uploadSha = uploadSha)
     }
     else -> metadataToActualFileToUpload.forEach { (uploadMetadata, fileToUpload) ->
       logger.warn("DRY RUN: (would have) Uploaded '$fileToUpload' to '${uploadMetadata.s3Location}' (bucket=$bucketName)")
@@ -99,9 +105,38 @@ private suspend fun validateAlreadyExisting(
   }
 }
 
-private suspend fun uploadWithoutValidation(filesToUpload: Map<S3UploadMetadata, Path>, client: FleetS3Client, bucketName: String, logger: Logger) {
+private suspend fun uploadWithoutValidation(
+  filesToUpload: Map<S3UploadMetadata, Path>,
+  client: FleetS3Client,
+  bucketName: String,
+  logger: Logger,
+  temporaryDir: Path,
+  uploadSha: Boolean,
+) {
   filesToUpload.forEach { (uploadMetadata, fileToUpload) ->
     client.putObject(bucketName, uploadMetadata.s3Location, fileToUpload)
     logger.info("Uploaded '$fileToUpload' to '${uploadMetadata.s3Location}' (bucket=$bucketName)")
+    when {
+      uploadSha -> uploadSha256(uploadMetadata, fileToUpload, client, bucketName, logger, temporaryDir)
+      else -> {}
+    }
   }
+}
+
+private suspend fun uploadSha256(
+  uploadMetadata: S3UploadMetadata,
+  fileToUpload: Path,
+  client: FleetS3Client,
+  bucketName: String,
+  logger: Logger,
+  temporaryDir: Path,
+) {
+  val s3LocationPath = Path(uploadMetadata.s3Location)
+  val s3Sha256Location = "${s3LocationPath.invariantSeparatorsPathString}.sha256"
+  val sha256 = sha256(fileToUpload.readBytes())
+  val sha256File = temporaryDir.resolve("${s3LocationPath.fileName}.sha256")
+  sha256File.writeText("$sha256 *${s3LocationPath.fileName}")
+  client.putObject(bucketName, s3Sha256Location, sha256File)
+  logger.info("Uploaded '$sha256File' to '${s3Sha256Location}' (bucket=$bucketName)")
+  sha256File.deleteExisting()
 }
