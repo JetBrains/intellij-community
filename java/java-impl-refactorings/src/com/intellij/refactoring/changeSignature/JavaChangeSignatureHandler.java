@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.JavaTargetElementEvaluator;
@@ -12,9 +12,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -44,15 +46,21 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
   }
 
   private static void invokeOnElement(Project project, @Nullable Editor editor, PsiElement element) {
-    if (element instanceof PsiMethod && ((PsiMethod)element).getNameIdentifier() != null) {
-      invoke((PsiMethod) element, project, editor);
+    if (element instanceof PsiMethod m && m.getNameIdentifier() != null) {
+      if (element instanceof SyntheticElement && !(element instanceof LightRecordCanonicalConstructor)) {
+        String message = JavaRefactoringBundle.message("error.cannot.change.signature.implicitly.declared.method", m.getName());
+        CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.CHANGE_SIGNATURE);
+        return;
+      }
+      invoke(m, project, editor);
     }
-    else if (element instanceof PsiClass) {
-      invoke((PsiClass) element, editor);
+    else if (element instanceof PsiClass c) {
+      invoke(c, editor);
     }
     else {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), HelpID.CHANGE_SIGNATURE);
+      String message = 
+        RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("error.wrong.caret.position.method.or.class.name"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.CHANGE_SIGNATURE);
     }
   }
 
@@ -61,6 +69,10 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     if (elements.length != 1) return;
     Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     invokeOnElement(project, editor, elements[0]);
+  }
+
+  private static @NlsContexts.DialogTitle @NotNull String getRefactoringName() {
+    return RefactoringBundle.message("changeSignature.refactoring.name");
   }
 
   @Override
@@ -95,7 +107,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     LOG.assertTrue(nameIdentifier != null);
     if (isInplace) {
       CommandProcessor.getInstance().executeCommand(project, () -> new InplaceChangeSignature(project, editor, nameIdentifier),
-                                                    RefactoringBundle.message("changeSignature.refactoring.name"), null);
+                                                    getRefactoringName(), null);
     }
     else {
       JavaMethodDescriptor methodDescriptor = new JavaMethodDescriptor(method);
@@ -141,8 +153,9 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
     Project project = aClass.getProject();
     if (typeParameterList == null) {
-      final String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("changeClassSignature.no.type.parameters"));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, RefactoringBundle.message("changeSignature.refactoring.name"), HelpID.CHANGE_CLASS_SIGNATURE);
+      final String message = 
+        RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("changeClassSignature.no.type.parameters"));
+      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.CHANGE_CLASS_SIGNATURE);
       return;
     }
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
