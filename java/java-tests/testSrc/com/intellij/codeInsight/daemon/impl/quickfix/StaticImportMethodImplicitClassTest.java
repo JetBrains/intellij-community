@@ -9,15 +9,16 @@ import java.util.List;
 
 public class StaticImportMethodImplicitClassTest extends LightJavaCodeInsightFixtureTestCase {
   public void testStaticImportMethodImplicitClass() {
-    myFixture.addClass("""
-                         void main() {
-                             methodFromImplicitClass();
-                         }
-                         
-                         public static double methodFromImplicitClass() {
-                             return 1;
-                         }
-                         """);
+    myFixture.addClass(
+      """
+        void main() {
+            methodFromImplicitClass();
+        }
+        
+        public static double methodFromImplicitClass() {
+            return 1;
+        }
+        """);
 
     myFixture.configureByText("SomeClass.java", """
       public class SomeClass {
@@ -27,8 +28,7 @@ public class StaticImportMethodImplicitClassTest extends LightJavaCodeInsightFix
       }
       """);
     myFixture.doHighlighting();
-    List<IntentionAction> actions =
-      myFixture.filterAvailableIntentions(JavaBundle.message("qualify.static.call.fix.text") + " 'a.methodFromImplicitClass()'");
+    List<IntentionAction> actions = myFixture.filterAvailableIntentions(JavaBundle.message("qualify.static.call.fix.text"));
     assertEmpty(actions);
   }
 
@@ -49,7 +49,7 @@ public class StaticImportMethodImplicitClassTest extends LightJavaCodeInsightFix
         }
       }""");
     myFixture.doHighlighting();
-    myFixture.launchAction(JavaBundle.message("qualify.static.call.fix.text") + " 'A.methodFromImplicitClass()'");
+    myFixture.launchAction(JavaBundle.message("qualify.static.call.fix.text"));
     myFixture.checkResult(
       """
         void main() {

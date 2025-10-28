@@ -66,8 +66,6 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     if (PsiUtil.isMemberAccessibleAt(candidate, psiFile)) return true;
     PsiImplicitClass possibleImplicitClass = PsiTreeUtil.getParentOfType(candidate, PsiImplicitClass.class);
     if (possibleImplicitClass != null) {
-      boolean fileWithImplicitClass = JavaImplicitClassUtil.isFileWithImplicitClass(psiFile);
-      if (!fileWithImplicitClass) return false;
       if (!psiFile.equals(candidate.getContainingFile())) return false;
     }
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(candidate);
