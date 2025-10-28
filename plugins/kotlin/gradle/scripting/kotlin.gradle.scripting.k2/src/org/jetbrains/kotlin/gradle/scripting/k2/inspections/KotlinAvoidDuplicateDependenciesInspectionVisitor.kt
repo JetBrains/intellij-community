@@ -42,8 +42,11 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
             }
         // group duplicate dependencies
         val duplicateGroups = dependencies.groupBy { (dependency, type) ->
-            if (isOnTheFly) extractDependencyKey(dependency, type) to null
-            else extractDependencyKey(dependency, type) to dependency.text // in batch mode additionally restrict groups to exact duplicates
+            extractDependencyKey(dependency, type) to
+                    // additionally separate annotationProcessor dependencies
+                    if (isOnTheFly) (dependency.calleeExpression?.text == "annotationProcessor")
+                    // in batch mode additionally restrict groups to exact duplicates
+                    else dependency.text
         }.filter { it.key.first != null && it.value.size > 1 }
             .map { mapEntry -> mapEntry.key.first!! to mapEntry.value.map { it.first } }
 

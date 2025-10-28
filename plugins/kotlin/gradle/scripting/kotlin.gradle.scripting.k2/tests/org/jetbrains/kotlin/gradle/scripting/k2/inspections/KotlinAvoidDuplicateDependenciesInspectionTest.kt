@@ -703,6 +703,37 @@ class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCa
         }
     }
 
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testAnnotationProcessorSeparation(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    implementation("org.projectlombok:lombok:1.18.20")
+                    annotationProcessor("org.projectlombok:lombok:1.18.20")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    fun testAnnotationProcessorGrouping(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                dependencies {
+                    implementation("org.projectlombok:lombok:1.18.20")
+                    <weak_warning>annotationProcessor("org.projectlombok:lombok:1.18.20")</weak_warning>
+                    <weak_warning>annotationProcessor("org.projectlombok:lombok:1.18.20")</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
     companion object {
         private val PROJECT_FIXTURE = GradleTestFixtureBuilder.create("my_project_fixture") { gradleVersion ->
             withFile(
