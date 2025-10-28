@@ -437,7 +437,7 @@ f:com.intellij.platform.eel.channels.EelSendChannelKt
 - *sf:sendWholeBuffer(com.intellij.platform.eel.channels.EelSendChannel,java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.fs.EelFileUtils
 - sf:INSTANCE:com.intellij.platform.eel.fs.EelFileUtils
-- f:deleteRecursively(java.nio.file.Path):V
+- sf:deleteRecursively(java.nio.file.Path):V
 *f:com.intellij.platform.eel.fs.EelFiles
 - sf:INSTANCE:com.intellij.platform.eel.fs.EelFiles
 - sf:readAllBytes(java.nio.file.Path):B[]

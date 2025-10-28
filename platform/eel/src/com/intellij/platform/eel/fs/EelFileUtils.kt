@@ -14,6 +14,7 @@ import java.nio.file.Path
 @ApiStatus.Experimental
 object EelFileUtils {
   @Throws(IOException::class)
+  @JvmStatic
   fun deleteRecursively(fileOrDirectory: Path) {
     EelSharedSecrets.platformUtilImpl.deleteRecursively(fileOrDirectory)
   }
