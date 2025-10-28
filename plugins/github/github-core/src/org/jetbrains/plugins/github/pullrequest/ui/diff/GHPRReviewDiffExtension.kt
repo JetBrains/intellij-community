@@ -100,7 +100,7 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
           cs.launchNow {
             inlays
               .mapStatefulToStateful { inlayModel ->
-                GHPRInlayUtils.installInlayHoverOutline(this, editor, side, locationToLine, inlayModel)
+                GHPRInlayUtils.installInlayHoverOutline(this, editor, side == null, locationToLine, inlayModel)
               }
               .collect()
           }

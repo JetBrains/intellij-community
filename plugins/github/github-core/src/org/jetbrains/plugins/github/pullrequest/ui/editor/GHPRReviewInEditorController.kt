@@ -9,7 +9,6 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.collaboration.util.getOrNull
-import com.intellij.diff.util.Side
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -127,7 +126,7 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
         }
         launchNow {
           model.inlays
-            .mapStatefulToStateful { inlayModel -> GHPRInlayUtils.installInlayHoverOutline(this, editor, Side.RIGHT, null, inlayModel) }
+            .mapStatefulToStateful { inlayModel -> GHPRInlayUtils.installInlayHoverOutline(this, editor, false, null, inlayModel) }
             .collect()
         }
         createRenderer(it, userIcon)
