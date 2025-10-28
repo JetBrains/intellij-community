@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +36,10 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
     super.setUp();
     myManager = (UndoManagerImpl)UndoManager.getInstance(myProject);
 
+    var productionLikeEditorProvider = new FocusBasedCurrentEditorProvider.TestProvider(() -> getEditor());
+    myManager.setOverriddenEditorProvider(productionLikeEditorProvider);
+    getGlobalUndoManager().setOverriddenEditorProvider(productionLikeEditorProvider);
+
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         setUpInWriteAction();
@@ -48,6 +53,7 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      getGlobalUndoManager().setOverriddenEditorProvider(null);
       myManager.setOverriddenEditorProvider(null);
       myManager = null;
     }
@@ -234,5 +240,9 @@ public abstract class UndoTestCase extends JavaCodeInsightTestCase {
   @FunctionalInterface
   protected interface Command {
     void run() throws Exception;
+  }
+
+  private static UndoManagerImpl getGlobalUndoManager() {
+    return (UndoManagerImpl) UndoManager.getGlobalInstance();
   }
 }

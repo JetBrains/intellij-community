@@ -13,6 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.function.Supplier;
+
+
 public final class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
   @Override
   public FileEditor getCurrentEditor(@Nullable Project project) {
@@ -36,15 +39,20 @@ public final class FocusBasedCurrentEditorProvider implements CurrentEditorProvi
   @ApiStatus.Internal
   @TestOnly
   public static final class TestProvider implements CurrentEditorProvider {
-    private final @NotNull Editor editor;
+    private final @NotNull Supplier<? extends @Nullable Editor> focusedEditor;
 
-    public TestProvider(@NotNull Editor editor) {
-      this.editor = editor;
+    public TestProvider(@NotNull Supplier<? extends @Nullable Editor> focusedEditor) {
+      this.focusedEditor = focusedEditor;
     }
 
     @Override
-    public FileEditor getCurrentEditor(@Nullable Project project) {
-      return getFocusedEditor(Utils.createAsyncDataContext(editor.getContentComponent()));
+    public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+      Editor editor = focusedEditor.get();
+      if (editor != null) {
+        DataContext dataContext = Utils.createAsyncDataContext(editor.getContentComponent());
+        return getFocusedEditor(dataContext);
+      }
+      return null;
     }
   }
 }

@@ -3,7 +3,6 @@ package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,25 +119,18 @@ public class ComplexUndoTest extends EditorUndoTestCase {
 
   // IJPL-215217 Undo is broken after Introduce variable action
   public void testUndoAfterBulkUpdate() {
-    Editor editor = getFirstEditor();
-    myManager.setOverriddenEditorProvider(new FocusBasedCurrentEditorProvider.TestProvider(editor));
-    try {
-      WriteCommandAction.runWriteCommandAction(
-        myProject,
-        () -> {
-          DocumentUtil.executeInBulk(
-            editor.getDocument(),
-            true,
-            () -> editor.getDocument().insertString(0, " ")
-          );
-        }
-      );
-      undoFirstEditor();
-      checkEditorText("");
-    }
-    finally {
-      myManager.setOverriddenEditorProvider(null);
-    }
+    WriteCommandAction.runWriteCommandAction(
+      myProject,
+      () -> {
+        DocumentUtil.executeInBulk(
+          getFirstEditor().getDocument(),
+          true,
+          () -> getFirstEditor().getDocument().insertString(0, " ")
+        );
+      }
+    );
+    undoFirstEditor();
+    checkEditorText("");
   }
 
   private void checkEditorsText(String text) {
