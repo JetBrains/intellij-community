@@ -59,7 +59,7 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
     }
   }
 
-  override suspend fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent> {
+  override fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent> {
     val stackFrameModel = xStackFrameId.findValue() ?: return emptyFlow()
     return computeContainerChildren(stackFrameModel.coroutineScope, stackFrameModel.stackFrame, stackFrameModel.session)
   }

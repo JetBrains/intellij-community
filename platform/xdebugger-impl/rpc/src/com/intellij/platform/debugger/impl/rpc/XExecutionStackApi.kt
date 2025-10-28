@@ -17,7 +17,7 @@ interface XExecutionStackApi : RemoteApi<Unit> {
 
   suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent>
 
-  suspend fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent>
+  fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent>
 
   suspend fun canDrop(sessionId: XDebugSessionId, stackFrameId: XStackFrameId): Boolean
   suspend fun dropFrame(sessionId: XDebugSessionId, stackFrameId: XStackFrameId)

@@ -150,8 +150,6 @@ suspend fun BackendXValueModel.toXValueDto(): XValueDto {
     canBeModified = xValue.modifierAsync.thenApply { modifier -> modifier != null }.asDeferred(),
     canMarkValue = canMarkValue.asDeferred(),
     valueMarkupFlow,
-    xValueModel.presentation.toRpc(),
-    xValueModel.getEvaluatorDtoFlow().toRpc(),
     (xValue as? XNamedValue)?.name,
     textProvider?.toRpc(),
     (xValue as? PinToTopValue)?.pinToTopDataFuture?.asDeferred(),
@@ -159,20 +157,18 @@ suspend fun BackendXValueModel.toXValueDto(): XValueDto {
 }
 
 private fun BackendXValueModel.getEvaluatorDtoFlow(): Flow<XFullValueEvaluatorDto?> {
-  return fullValueEvaluator.map {
-    if (it == null) {
-      return@map null
-    }
-    XFullValueEvaluatorDto(
-      it.linkText,
-      it.isEnabled,
-      it.isShowValuePopup,
-      it.linkAttributes?.let { attributes ->
-        FullValueEvaluatorLinkAttributes(attributes.linkIcon?.rpcId(), attributes.linkTooltipText, attributes.shortcutSupplier?.get())
-      }
-    )
-  }
+  return fullValueEvaluator.map { it?.toRpc() }
 }
+
+@ApiStatus.Internal
+fun XFullValueEvaluator.toRpc(): XFullValueEvaluatorDto = XFullValueEvaluatorDto(
+  linkText,
+  isEnabled,
+  isShowValuePopup,
+  linkAttributes?.let { attributes ->
+    FullValueEvaluatorLinkAttributes(attributes.linkIcon?.rpcId(), attributes.linkTooltipText, attributes.shortcutSupplier?.get())
+  }
+)
 
 private fun getTextProviderFlow(
   xValue: XValue,

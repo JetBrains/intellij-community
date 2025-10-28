@@ -58,6 +58,19 @@ sealed interface XValueComputeChildrenEvent {
     val topValues: List<XValueDto>,
   ) : XValueComputeChildrenEvent
 
+  /**
+   * This event is introduced as an optimization for fast node expand on frontend.
+   * Having [XValueSerializedPresentation] passed as [XValueComputeChildrenEvent] helps to avoid an additional round-trip.
+   */
+  @Serializable
+  data class XValuePresentationEvent(val xValueId: XValueId, val presentation: XValueSerializedPresentation) : XValueComputeChildrenEvent
+
+  /**
+   * @see XValuePresentationEvent
+   */
+  @Serializable
+  data class XValueFullValueEvaluatorEvent(val xValueId: XValueId, val fullValueEvaluator: XFullValueEvaluatorDto?) : XValueComputeChildrenEvent
+
   @Serializable
   data class SetAlreadySorted(val value: Boolean) : XValueComputeChildrenEvent
 
@@ -105,8 +118,6 @@ data class XValueDto(
   @Serializable(with = DeferredSerializer::class) val canBeModified: Deferred<Boolean>,
   @Serializable(with = DeferredSerializer::class) val canMarkValue: Deferred<Boolean>,
   val valueMark: RpcFlow<XValueMarkerDto?>,
-  val presentation: RpcFlow<XValueSerializedPresentation>,
-  val fullValueEvaluator: RpcFlow<XFullValueEvaluatorDto?>,
   val name: String?,
   val textProvider: RpcFlow<XValueTextProviderDto>?,
   @Serializable(with = DeferredSerializer::class) val pinToTopData: Deferred<XPinToTopData>?,

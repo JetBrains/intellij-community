@@ -313,12 +313,6 @@ class FrontendXValue private constructor(
       return create(project, containerScope, dto.value, presentation, fullValueEvaluatorFlow, hasParentValue)
     }
 
-    internal fun create(project: Project, containerScope: CoroutineScope, xValueDto: XValueDto, hasParentValue: Boolean): XValue {
-      val presentation = xValueDto.presentation.toFlow()
-      val fullValueEvaluatorFlow = xValueDto.fullValueEvaluator.toFlow()
-      return create(project, containerScope, xValueDto, presentation, fullValueEvaluatorFlow, hasParentValue)
-    }
-
     internal fun create(
       project: Project,
       containerScope: CoroutineScope,

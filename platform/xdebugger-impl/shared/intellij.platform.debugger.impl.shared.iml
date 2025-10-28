@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
   </component>
 </module>

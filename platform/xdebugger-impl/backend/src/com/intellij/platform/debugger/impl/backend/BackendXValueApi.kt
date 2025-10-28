@@ -13,10 +13,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.XFullValueEvaluator.XFullValueEvaluationCallback
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
-import com.intellij.xdebugger.impl.rpc.models.findValue
-import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
-import com.intellij.xdebugger.impl.rpc.models.toXValueDto
+import com.intellij.xdebugger.impl.rpc.models.*
 import com.intellij.xdebugger.impl.rpc.toRpc
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
@@ -33,12 +30,12 @@ internal class BackendXValueApi : XValueApi {
     return xValueModel.computeTooltipPresentation()
   }
 
-  override suspend fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent> {
+  override fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent> {
     val xValueModel = BackendXValueModel.findById(xValueId) ?: return emptyFlow()
     return computeContainerChildren(xValueModel.cs, xValueModel.xValue, xValueModel.session)
   }
 
-  override suspend fun computeXValueGroupChildren(xValueGroupId: XValueGroupId): Flow<XValueComputeChildrenEvent> {
+  override fun computeXValueGroupChildren(xValueGroupId: XValueGroupId): Flow<XValueComputeChildrenEvent> {
     val xValueModel = xValueGroupId.findValue() ?: return emptyFlow()
     return computeContainerChildren(xValueModel.cs, xValueModel.xValueGroup, xValueModel.session)
   }
@@ -194,7 +191,7 @@ internal fun computeContainerChildren(
       }
 
       override fun addChildren(children: XValueChildrenList, last: Boolean) {
-        rawEvents.trySend(RawComputeChildrenEvent.AddChildren(children, last))
+        rawEvents.trySend(RawComputeChildrenEvent.AddChildren(children, last, session))
       }
 
       override fun tooManyChildren(remaining: Int) {
@@ -225,7 +222,7 @@ internal fun computeContainerChildren(
     try {
       xValueContainer.computeChildren(xCompositeBridgeNode)
       for (event in rawEvents) {
-        send(event.convertToRpcEvent(parentCs, session))
+        event.sendAsRpcEvents(parentCs, this@channelFlow)
       }
     }
     finally {
@@ -235,10 +232,15 @@ internal fun computeContainerChildren(
 }
 
 private sealed interface RawComputeChildrenEvent {
-  suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent
+  suspend fun sendAsRpcEvents(parentCoroutineScope: CoroutineScope, channel: SendChannel<XValueComputeChildrenEvent>) {
+    channel.send(convertToRpcEvent(parentCoroutineScope))
+  }
 
-  data class AddChildren(val children: XValueChildrenList, val last: Boolean) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
+  suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope): XValueComputeChildrenEvent = error("Should not be called")
+
+
+  data class AddChildren(val children: XValueChildrenList, val last: Boolean, val session: XDebugSessionImpl) : RawComputeChildrenEvent {
+    override suspend fun sendAsRpcEvents(parentCoroutineScope: CoroutineScope, channel: SendChannel<XValueComputeChildrenEvent>) {
       val names = (0 until children.size()).map { children.getName(it) }
       val childrenXValues = (0 until children.size()).map { children.getValue(it) }
       val childrenXValueEntities = childrenXValues.map { childXValue ->
@@ -259,29 +261,51 @@ private sealed interface RawComputeChildrenEvent {
       val topGroups = children.topGroups.toDto()
       val bottomGroups = children.bottomGroups.toDto()
 
-      val topValues: List<XValueDto> = children.topValues.map {
-        newChildXValueModel(it, parentCoroutineScope, session).toXValueDto()
+      val topValuesEntities = children.topValues.map {
+        newChildXValueModel(it, parentCoroutineScope, session)
+      }
+      val topValues = topValuesEntities.map { it.toXValueDto() }
+
+      channel.send(XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last, topGroups, bottomGroups, topValues))
+
+      fun subscribeToPresentationsFlow(model: BackendXValueModel) {
+        parentCoroutineScope.launch {
+          model.presentation.collectLatest {
+            channel.send(XValueComputeChildrenEvent.XValuePresentationEvent(model.id, it))
+          }
+        }
       }
 
-      return XValueComputeChildrenEvent.AddChildren(names, childrenXValueDtos, last, topGroups, bottomGroups, topValues)
+      fun subscribeToFullValueFlow(model: BackendXValueModel) {
+        parentCoroutineScope.launch {
+          model.fullValueEvaluator.collectLatest {
+            channel.send(XValueComputeChildrenEvent.XValueFullValueEvaluatorEvent(model.id, it?.toRpc()))
+          }
+        }
+      }
+
+      childrenXValueEntities.forEach(::subscribeToPresentationsFlow)
+      childrenXValueEntities.forEach(::subscribeToFullValueFlow)
+      topValuesEntities.forEach(::subscribeToPresentationsFlow)
+      topValuesEntities.forEach(::subscribeToFullValueFlow)
     }
   }
 
   data class SetAlreadySorted(val value: Boolean) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
+    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope): XValueComputeChildrenEvent {
       return XValueComputeChildrenEvent.SetAlreadySorted(value)
     }
   }
 
   data class SetErrorMessage(val message: String, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
+    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope): XValueComputeChildrenEvent {
       // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
       return XValueComputeChildrenEvent.SetErrorMessage(message, link)
     }
   }
 
   data class SetMessage(val message: String, val icon: Icon?, val attributes: SimpleTextAttributes?, val link: XDebuggerTreeNodeHyperlink?) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
+    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope): XValueComputeChildrenEvent {
       // TODO[IJPL-160146]: support SimpleTextAttributes serialization
       // TODO[IJPL-160146]: support XDebuggerTreeNodeHyperlink serialization
       return XValueComputeChildrenEvent.SetMessage(message, icon?.rpcId(), attributes, link)
@@ -289,7 +313,7 @@ private sealed interface RawComputeChildrenEvent {
   }
 
   data class TooManyChildren(val remaining: Int, val addNextChildren: Runnable?, val addNextChildrenCallbackHandler: AddNextChildrenCallbackHandler) : RawComputeChildrenEvent {
-    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope, session: XDebugSessionImpl): XValueComputeChildrenEvent {
+    override suspend fun convertToRpcEvent(parentCoroutineScope: CoroutineScope): XValueComputeChildrenEvent {
       return XValueComputeChildrenEvent.TooManyChildren(remaining, addNextChildrenCallbackHandler.setAddNextChildrenCallback(addNextChildren))
     }
   }
