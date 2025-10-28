@@ -168,6 +168,8 @@ f:com.intellij.psi.ExternalChangeActionUtil
 com.intellij.psi.impl.AnyPsiChangeListener
 - afterPsiChanged(Z):V
 - beforePsiChanged(Z):V
+f:com.intellij.psi.impl.DebugUtil
+- s:lightTreeAsElementTypeToString(com.intellij.util.diff.FlyweightCapableTreeStructure,Z):java.lang.String
 com.intellij.psi.impl.PsiDocumentTransactionListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - transactionCompleted(com.intellij.openapi.editor.Document,com.intellij.psi.PsiFile):V
