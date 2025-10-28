@@ -2,58 +2,56 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:jvm.bzl", "jvm_resources", "resourcegroup")
 
 filegroup(
-  name = "build-javac-rt_resources_sources",
-  srcs = glob(["resources/**/*"]),
-)
-
-resourcegroup(
-  name = "build-javac-rt_resources",
-  srcs = [":build-javac-rt_resources_sources"],
-  strip_prefix = "resources",
-  visibility = ["//visibility:public"],  # used by @community//build:build-javac-rt
-)
-
-jvm_resources(
-  name = "build-javac-rt_resources_rules_jvm_bootstrap",
-  files = [":build-javac-rt_resources_sources"],
-  strip_prefix = "resources",
+    name = "build-javac-rt_resources_sources",
+    srcs = glob(["resources/**/*"]),
 )
 
 filegroup(
-  name = "build-javac-rt_sources",
-  srcs = glob(
-      [
-          "gen/**/*.kt",
-          "gen/**/*.java",
-          "src/**/*.kt",
-          "src/**/*.java",
-      ],
-      allow_empty = True,
-  ),
-  visibility = ["//visibility:public"],  # used by @community//build:build-javac-rt
+    name = "build-javac-rt_sources",
+    srcs = glob(
+        [
+            "gen/**/*.kt",
+            "gen/**/*.java",
+            "src/**/*.kt",
+            "src/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],  # used by @community//build:build-javac-rt
+)
+
+jvm_resources(
+    name = "build-javac-rt_resources_rules_jvm_bootstrap",
+    files = [":build-javac-rt_resources_sources"],
+    strip_prefix = "resources",
 )
 
 kt_jvm_library(
-  name = "build-javac-rt",
-  srcs = [":build-javac-rt_sources"],
-  kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
-  #module_name = "intellij.platform.jps.build.javac.rt",
-  visibility = [
-    "//dependency-graph:__pkg__",
-    "//jvm-inc-builder:__pkg__",
-  ],
-  runtime_deps = [":build-javac-rt_resources_rules_jvm_bootstrap"],
-  # buildifier: leave-alone
-  deps = [
-    "//:annotations",
-    "//:javax-annotation-api",
-    "//:jps-javac-extension",
-    "//:netty-common",
-    "//:netty-buffer",
-    "//:protobuf-java",
-    "//:netty-transport-jps",
-    "//:netty-codec-jps",
-  ],
+    name = "build-javac-rt",
+    srcs = [":build-javac-rt_sources"],
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = [
+        "//dependency-graph:__pkg__",
+        "//jvm-inc-builder:__pkg__",
+    ],
+    runtime_deps = [":build-javac-rt_resources_rules_jvm_bootstrap"],
+    deps = [
+        "//:annotations_import",
+        "//:javax-annotation-api_import",
+        "//:jps-javac-extension_import",
+        "//:netty-buffer_import",
+        "//:netty-codec-jps",
+        "//:netty-common_import",
+        "//:netty-transport-jps_import",
+        "//:protobuf-java_import",
+    ],
+)
+
+resourcegroup(
+    name = "build-javac-rt_resources",
+    srcs = [":build-javac-rt_resources_sources"],
+    strip_prefix = "resources",
+    visibility = ["//visibility:public"],  # used by @community//build:build-javac-rt
 )
 
 ### skip generation section `build intellij.platform.jps.build.javac.rt`
