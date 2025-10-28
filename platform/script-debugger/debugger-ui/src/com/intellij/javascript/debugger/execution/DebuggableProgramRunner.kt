@@ -17,6 +17,7 @@ import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.impl.XDebugSessionImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -54,7 +55,8 @@ private fun doExecuteDebuggableProgram(environment: ExecutionEnvironment, state:
   return configuration.computeDebugAddressAsync(state).thenAsync{ socketAddress ->
     val starter = { executionResult: ExecutionResult? ->
       LOG.info("Debug session started address=$socketAddress, configuration=$configuration")
-      startSession(environment) { configuration.createDebugProcess(socketAddress, it, executionResult, environment) }.runContentDescriptor
+      val session = startSession(environment) { configuration.createDebugProcess(socketAddress, it, executionResult, environment) }
+      (session as XDebugSessionImpl).getMockRunContentDescriptor()
     }
     if (state is DebuggableRunProfileState) {
       state.execute(socketAddress.port).then(starter)
