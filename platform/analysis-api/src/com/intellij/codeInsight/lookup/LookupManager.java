@@ -30,7 +30,7 @@ public abstract class LookupManager {
     final Project project = editor.getProject();
     if (project == null || project.isDisposed()) return null;
 
-    try (AccessToken ignored = ClientId.withExplicitClientId(ClientEditorManager.getClientId(editor))) {
+    try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
       final LookupEx lookup = getInstance(project).getActiveLookup();
       if (lookup == null) return null;
 
