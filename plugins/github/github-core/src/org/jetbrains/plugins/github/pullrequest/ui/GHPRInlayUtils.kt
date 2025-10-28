@@ -106,7 +106,8 @@ internal object GHPRInlayUtils {
       }
     }
   }
-
+  private const val OUTLINE_OUTSIDE_DETECTION_MARGIN = 3
+  private const val OUTLINE_DETECTION_LINE_FRACTION = 0.3f
   private class ResizingFrameListener(val editor: Editor, val vm: GHPREditorMappedComponentModel.NewComment<*>) : EditorMouseListener, EditorMouseMotionListener {
     private val editorEx = editor as EditorEx
     private val model = editorEx.getUserData(CodeReviewCommentableEditorModel.KEY) as? CodeReviewEditorGutterControlsModel.WithMultilineComments
@@ -255,8 +256,8 @@ internal object GHPRInlayUtils {
       val topY = frameCoords.first
       val botY = frameCoords.second
       if (this.x.toFloat() !in 0f..editor.contentComponent.width.toFloat()) return null
-      if (this.y.toFloat() in (topY - 3).coerceAtLeast(0f)..topY + editor.lineHeight / 2) return Edge.TOP
-      if (this.y.toFloat() in botY - editor.lineHeight / 2..botY + 3) return Edge.BOTTOM
+      if (this.y.toFloat() in (topY - OUTLINE_OUTSIDE_DETECTION_MARGIN).coerceAtLeast(0f)..topY + editor.lineHeight * OUTLINE_DETECTION_LINE_FRACTION) return Edge.TOP
+      if (this.y.toFloat() in botY - editor.lineHeight * OUTLINE_DETECTION_LINE_FRACTION..botY + OUTLINE_OUTSIDE_DETECTION_MARGIN) return Edge.BOTTOM
       return null
     }
 
