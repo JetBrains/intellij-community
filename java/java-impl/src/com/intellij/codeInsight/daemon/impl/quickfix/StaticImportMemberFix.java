@@ -19,10 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -64,9 +61,15 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
   }
 
-  private static boolean isValidCandidate(PsiFile psiFile, PsiMember candidate){
+  private static boolean isValidCandidate(@NotNull PsiFile psiFile, @NotNull PsiMember candidate){
     if (!candidate.isValid()) return false;
     if (PsiUtil.isMemberAccessibleAt(candidate, psiFile)) return true;
+    PsiImplicitClass possibleImplicitClass = PsiTreeUtil.getParentOfType(candidate, PsiImplicitClass.class);
+    if (possibleImplicitClass != null) {
+      boolean fileWithImplicitClass = JavaImplicitClassUtil.isFileWithImplicitClass(psiFile);
+      if (!fileWithImplicitClass) return false;
+      if (!psiFile.equals(candidate.getContainingFile())) return false;
+    }
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(candidate);
     if (virtualFile == null) return false;
     return ProjectFileIndex.getInstance(psiFile.getProject()).isInContent(virtualFile);
