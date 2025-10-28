@@ -59,6 +59,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.SwingUtilities
@@ -294,9 +295,18 @@ val Sdk.associatedModulePath: String?
 
 @get:Internal
 val Sdk.associatedModuleNioPath: Path?
-  get() = runCatching {
-    associatedModulePath?.let { Path(it) }
-  }.getOrNull()
+  get() =
+    try {
+      associatedModulePath?.let { Path(it) }
+    }catch (e: InvalidPathException) {
+      if (getUserData(SDK_ERROR_REPORTED) != true) {
+        LOGGER.warn("Can't convert ${associatedModulePath} to path", e)
+        putUserData(SDK_ERROR_REPORTED, true)
+      }
+      null
+    }
+
+private val SDK_ERROR_REPORTED = Key.create<Boolean>("pySdkErrorReported")
 
 internal val Sdk.associatedModuleDir: VirtualFile?
   get() {

@@ -14,6 +14,7 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.parser.RequirementsParserHelper
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
+import kotlinx.io.IOException
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -31,13 +32,17 @@ object CondaEnvironmentYmlParser {
   }
 
   fun fromFile(file: VirtualFile): List<PyRequirement>? {
-    val pyRequirements = runCatching { readDeps(file) }.onFailure {
-      thisLogger().info("Cannot parse deps from ${file.readText()}", it)
+    val pyRequirements = try {
+      readDeps(file)
+    }
+    catch (e: IOException) {
+      thisLogger().info("Cannot parse deps from ${file.readText()}", e)
       return null
-    }.getOrNull() ?: return null
+    }
     return pyRequirements.filter { it.name != "python" }.distinct()
   }
 
+  @Throws(IOException::class)
   private fun readDeps(file: VirtualFile): List<PyRequirement> {
     val text = FileDocumentManager.getInstance().getDocument(file)?.text ?: return emptyList()
     val mapper = ObjectMapper(YAMLFactory())

@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.uv.impl
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.RuntimeJsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jetbrains.python.PyBundle
@@ -143,8 +144,8 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
 
       return PyExecResult.success(packages)
     }
-    catch (e: Exception) {
-      return PyResult.localizedError(e.message ?: "")
+    catch (e: RuntimeJsonMappingException) {
+      return PyResult.localizedError(e.message ?: e.localizedMessage ?: e.toString())
     }
   }
 
