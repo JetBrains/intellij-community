@@ -2,6 +2,8 @@ package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
@@ -1023,8 +1025,38 @@ class ListComboBoxUiTest {
         comboBox.assertIsDisplayed().performClick()
         popupMenu.assertIsDisplayed()
 
-        // The popup should have the combobox width (200dp) as minimum, not the smaller popupModifier width (100dp)
+        // The popup should be equal to the 'maxPopupHeight' size
         popupMenu.assertHeightIsEqualTo(500.dp)
+    }
+
+    @Test
+    fun `popup height must be at least as big as the combo box height`() {
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = emptyList(),
+                    selectedIndex = -1,
+                    onSelectedItemChange = {},
+                    modifier = Modifier.testTag("ComboBox").heightIn(48.dp),
+                    style =
+                        ComboBoxStyle(
+                            colors = JewelTheme.comboBoxStyle.colors,
+                            metrics =
+                                ComboBoxMetrics.default(
+                                    popupContentPadding = PaddingValues(vertical = 8.dp)
+                                ), // Small size on theme
+                            icons = JewelTheme.comboBoxStyle.icons,
+                        ),
+                    itemKeys = { index: Int, _: String -> index },
+                )
+            }
+        }
+
+        comboBox.assertIsDisplayed().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // 64 = 48 (Base from the combo box) + 16 from vertical padding from style
+        popupMenu.assertHeightIsEqualTo(64.dp)
     }
 
     @Test
