@@ -5,9 +5,14 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 create_kotlinc_options(
   name = "custom_core",
   opt_in = [
+    "androidx.compose.ui.ExperimentalComposeUiApi",
+    "androidx.compose.foundation.ExperimentalFoundationApi",
+    "org.jetbrains.jewel.foundation.ExperimentalJewelApi",
+    "org.jetbrains.jewel.foundation.InternalJewelApi",
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
-  ]
+  ],
+  x_context_receivers = True
 )
 
 resourcegroup(
@@ -96,6 +101,12 @@ jvm_library(
     "//platform/eel-provider",
     "//libraries/xerces",
     "//platform/usageView-impl",
-  ]
+    "//platform/jewel/foundation",
+    "@lib//:studio-platform",
+    "//platform/jewel/ide-laf-bridge",
+    "//platform/jewel/ui",
+    "//platform/compose",
+  ],
+  plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.devkit.core` end
