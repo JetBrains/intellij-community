@@ -96,13 +96,11 @@ com.intellij.codeHighlighting.HighlightDisplayLevelColoredIcon
 - a:getColor():java.awt.Color
 - a:getIcon():javax.swing.Icon
 c:com.intellij.codeInsight.CharTailType
-- com.intellij.codeInsight.TailType
 - <init>(C):V
 - <init>(C,Z):V
 - equals(java.lang.Object):Z
 - hashCode():I
 - isApplicable(com.intellij.codeInsight.completion.InsertionContext):Z
-- processTail(com.intellij.openapi.editor.Editor,I):I
 a:com.intellij.codeInsight.TailType
 - sf:CASE_COLON:com.intellij.codeInsight.TailType
 - sf:DOT:com.intellij.codeInsight.TailType

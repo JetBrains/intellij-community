@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.CutProvider;
 import com.intellij.ide.DeleteProvider;
@@ -373,5 +374,35 @@ public interface EditorEx extends Editor {
   @ApiStatus.Experimental
   default int getStickyLinesPanelHeight() {
     return 0;
+  }
+
+  @Override
+  default @NotNull ModNavigator asPsiNavigator() {
+    return new ModNavigator() {
+      @Override
+      public @NotNull Document getDocument() {
+        return EditorEx.this.getDocument();
+      }
+
+      @Override
+      public void select(@NotNull TextRange range) {
+        getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+      }
+
+      @Override
+      public void moveCaretTo(int offset) {
+        getCaretModel().moveToOffset(offset);
+      }
+
+      @Override
+      public int getCaretOffset() {
+        return getCaretModel().getOffset();
+      }
+
+      @Override
+      public void registerTabOut(@NotNull TextRange range, int tabOutOffset) {
+        TabOutScopesTracker.getInstance().registerScopeRange(EditorEx.this, range.getStartOffset(), range.getEndOffset(), tabOutOffset);
+      }
+    };
   }
 }

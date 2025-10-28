@@ -249,6 +249,7 @@ f:com.intellij.openapi.components.ServicesKt
 - a:getCaretOffset():I
 - a:getDocument():com.intellij.openapi.editor.Document
 - a:moveCaretTo(I):V
+- registerTabOut(com.intellij.openapi.util.TextRange,I):V
 - a:select(com.intellij.openapi.util.TextRange):V
 f:com.intellij.openapi.editor.markup.AttributesFlyweight
 - *s:create(java.awt.Color,java.awt.Color,I,java.awt.Color,com.intellij.openapi.editor.markup.EffectType,java.util.Map,java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight

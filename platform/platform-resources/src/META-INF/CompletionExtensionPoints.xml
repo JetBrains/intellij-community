@@ -59,6 +59,10 @@
     <extensionPoint qualifiedName="com.intellij.mlCompletionFeaturesCollector" dynamic="true" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.inline.completion.features.InlineCompletionFeaturesCollector"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.modcompletion.completionItemProvider" 
+                    beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.modcompletion.CompletionItemProvider"/>
+    </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.codeInsight.completion.command.factory"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -79,4 +83,8 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.command.commands.IntentionCommandOffsetProvider"/>
     </extensionPoint>
   </extensionPoints>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="false" description="ModCompletion contributors (see com.intellij.modcompletion.CompletionItemProvider)"
+                 key="ide.completion.modcommand"/>
+  </extensions>
 </idea-plugin>

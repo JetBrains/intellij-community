@@ -556,6 +556,7 @@ com.intellij.openapi.editor.ex.EditorEx
 - a:addFocusListener(com.intellij.openapi.editor.ex.FocusChangeListener,com.intellij.openapi.Disposable):V
 - a:addPropertyChangeListener(java.beans.PropertyChangeListener):V
 - a:addPropertyChangeListener(java.beans.PropertyChangeListener,com.intellij.openapi.Disposable):V
+- asPsiNavigator():com.intellij.openapi.editor.ModNavigator
 - a:createBoundColorSchemeDelegate(com.intellij.openapi.editor.colors.EditorColorsScheme):com.intellij.openapi.editor.colors.EditorColorsScheme
 - a:getBackgroundColor():java.awt.Color
 - a:getContentSize():java.awt.Dimension

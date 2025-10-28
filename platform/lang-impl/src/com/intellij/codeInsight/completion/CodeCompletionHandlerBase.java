@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.completion;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionAssertions.WatchingInsertionContext;
@@ -14,6 +15,9 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcompletion.CompletionItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
@@ -714,6 +718,11 @@ public class CodeCompletionHandlerBase {
 
     WatchingInsertionContext context =
       CompletionUtil.createInsertionContext(lookupItems, item, completionChar, editor, psiFile, caretOffset, idEndOffset, offsetMap);
+    if (item instanceof CompletionItemLookupElement wrapper) {
+      insertItem(completionChar, editor, psiFile, wrapper);
+      return context;
+    }
+
     int initialStartOffset = Math.max(0, caretOffset - item.getLookupString().length());
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
@@ -744,6 +753,21 @@ public class CodeCompletionHandlerBase {
     });
 
     return context;
+  }
+
+  private static void insertItem(char completionChar,
+                                @NotNull Editor editor,
+                                @NotNull PsiFile psiFile,
+                                CompletionItemLookupElement wrapper) {
+    CompletionItem.InsertionContext insertionContext = new CompletionItem.InsertionContext(
+      completionChar == Lookup.REPLACE_SELECT_CHAR ?
+      CompletionItem.InsertionMode.OVERWRITE : CompletionItem.InsertionMode.INSERT,
+      completionChar);
+    ActionContext actionContext = ActionContext.from(editor, psiFile);
+    ModCommandExecutor.executeInteractively(
+      actionContext,
+      AnalysisBundle.message("complete"), editor,
+      () -> wrapper.item().perform(actionContext, insertionContext));
   }
 
   private static @NotNull WatchingInsertionContext callHandleInsert(@NotNull CompletionProcessEx indicator,

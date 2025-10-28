@@ -35,4 +35,17 @@ public interface ModNavigator {
    * @return the document being edited 
    */
   @NotNull Document getDocument();
+
+  /**
+   * Registers a tab out scope, so pressing tab inside the scope moves the caret to the specified offset
+   * instead of adding a tab character.
+   * 
+   * May do nothing if tab out is not supported by the implementation.
+   * 
+   * @param range scope range 
+   * @param tabOutOffset target offset for tab-out
+   */
+  default void registerTabOut(@NotNull TextRange range, int tabOutOffset) {
+    
+  }
 }

@@ -1249,6 +1249,8 @@
 
     <extendWordSelectionHandler implementation="com.intellij.codeInsight.editorActions.wordSelection.VarargsSelectioner"/>
 
+    <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.codeInsight.completion.modcompletion.KeywordCompletionItemProvider"/>
+    
     <completion.skip implementation="com.intellij.codeInsight.completion.AbstractExpectedTypeSkipper" id="skipAbstract"/>
     <completion.skip implementation="com.intellij.codeInsight.completion.DeprecatedSkipper" id="skipDeprecated"/>
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.JavaCompletionStatistician"/>

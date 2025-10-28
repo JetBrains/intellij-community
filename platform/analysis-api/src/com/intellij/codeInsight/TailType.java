@@ -2,9 +2,9 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -39,7 +39,15 @@ public abstract class TailType {
     return insertChar(editor, tailOffset, c, true);
   }
 
+  public static int insertChar(@NotNull ModNavigator editor, int tailOffset, char c) {
+    return insertChar(editor, tailOffset, c, true);
+  }
+
   public static int insertChar(@NotNull Editor editor, int tailOffset, char c, boolean overwrite) {
+    return insertChar(editor.asPsiNavigator(), tailOffset, c, overwrite);
+  }
+
+  public static int insertChar(@NotNull ModNavigator editor, int tailOffset, char c, boolean overwrite) {
     Document document = editor.getDocument();
     int textLength = document.getTextLength();
     CharSequence chars = document.getCharsSequence();
@@ -54,9 +62,12 @@ public abstract class TailType {
   }
 
   protected static int moveCaret(@NotNull Editor editor, int tailOffset, int delta) {
-    CaretModel model = editor.getCaretModel();
-    if (model.getOffset() == tailOffset) {
-      model.moveToOffset(tailOffset + delta);
+    return moveCaret(editor.asPsiNavigator(), tailOffset, delta);
+  }
+
+  protected static int moveCaret(@NotNull ModNavigator editor, int tailOffset, int delta) {
+    if (editor.getCaretOffset() == tailOffset) {
+      editor.moveCaretTo(tailOffset + delta);
     }
     return tailOffset + delta;
   }

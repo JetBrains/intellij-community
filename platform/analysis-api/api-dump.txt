@@ -1,3 +1,15 @@
+c:com.intellij.codeInsight.CharTailType
+- com.intellij.codeInsight.ModNavigatorTailType
+- processTail(com.intellij.openapi.project.Project,com.intellij.openapi.editor.ModNavigator,I):I
+a:com.intellij.codeInsight.ModNavigatorTailType
+- com.intellij.codeInsight.TailType
+- <init>():V
+- processTail(com.intellij.openapi.editor.Editor,I):I
+- a:processTail(com.intellij.openapi.project.Project,com.intellij.openapi.editor.ModNavigator,I):I
+a:com.intellij.codeInsight.TailType
+- s:insertChar(com.intellij.openapi.editor.ModNavigator,I,C):I
+- s:insertChar(com.intellij.openapi.editor.ModNavigator,I,C,Z):I
+- ps:moveCaret(com.intellij.openapi.editor.ModNavigator,I,I):I
 com.intellij.codeInsight.completion.BatchConsumer
 - com.intellij.util.Consumer
 - endBatch():V
