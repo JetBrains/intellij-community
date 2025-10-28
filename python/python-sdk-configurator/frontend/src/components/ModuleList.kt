@@ -41,7 +41,7 @@ internal fun ModuleList(
   val longestItemChars = remember { (listOf(projectStructureLabel) + moduleItems.keys).maxBy { it.length } }
   val leftColumnMinSize = measureText(longestItemChars, ts)
   val spaceBetweenCols = 16.dp
-  Column(Modifier.padding(padding), verticalArrangement = Arrangement.spacedBy(padding)) {
+  Column(Modifier.width(800.dp).padding(padding), verticalArrangement = Arrangement.spacedBy(padding)) {
     Text(topLabel, Modifier.padding(bottom = 10.dp))
     Row(Modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
       Text(projectStructureLabel, Modifier.width(leftColumnMinSize + spaceBetweenCols + padding + 26.dp)) //~ checkbox size
