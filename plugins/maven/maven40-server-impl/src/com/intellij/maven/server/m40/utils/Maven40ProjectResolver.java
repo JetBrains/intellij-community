@@ -18,11 +18,8 @@ import org.apache.maven.resolver.MavenChainedWorkspaceReader;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
-import org.eclipse.aether.graph.DependencyVisitor;
-import org.eclipse.aether.repository.LocalRepositoryManager;
 import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
-import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
@@ -240,10 +237,10 @@ public class Maven40ProjectResolver {
                                                                     List<Exception> exceptions,
                                                                     String dependencyHash) {
     try {
-      DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-      Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult);
-      project.setArtifacts(artifacts);
 
+      DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
+      Set<Artifact> artifacts = resolveArtifacts(project, dependencyResolutionResult);
+      project.setArtifacts(artifacts);
       return createExecutionResult(exceptions, modelProblems, project, dependencyResolutionResult, dependencyHash);
     }
     catch (Exception e) {
@@ -266,32 +263,6 @@ public class Maven40ProjectResolver {
       MavenServerGlobals.getLogger().warn(e);
       resolutionResult = e.getResult();
     }
-
-    Set<Artifact> artifacts = new LinkedHashSet<>();
-    if (resolutionResult.getDependencyGraph() != null) {
-      try {
-        RepositoryUtils.toArtifacts(
-          artifacts,
-          resolutionResult.getDependencyGraph().getChildren(),
-          null == project.getArtifact() ? Collections.emptyList() : Collections.singletonList(project.getArtifact().getId()),
-          null);
-      }
-      catch (Exception e) {
-
-      }
-
-
-      // Maven 2.x quirk: an artifact always points at the local repo, regardless whether resolved or not
-      LocalRepositoryManager lrm = session.getLocalRepositoryManager();
-      for (Artifact artifact : artifacts) {
-        if (!artifact.isResolved()) {
-          String path = lrm.getPathForLocalArtifact(RepositoryUtils.toArtifact(artifact));
-          artifact.setFile(new File(lrm.getRepository().getBasedir(), path));
-        }
-      }
-    }
-    project.setResolvedArtifacts(artifacts);
-    project.setArtifacts(artifacts);
 
     return resolutionResult;
   }
@@ -408,42 +379,35 @@ public class Maven40ProjectResolver {
     }
   }
 
-  private @NotNull Set<Artifact> resolveArtifacts(DependencyResolutionResult dependencyResolutionResult) {
-    Map<Dependency, Artifact> winnerDependencyMap = new IdentityHashMap<>();
-    Set<Artifact> artifacts = new LinkedHashSet<>();
-    Set<Dependency> addedDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
-    resolveConflicts(dependencyResolutionResult, winnerDependencyMap);
+  private @NotNull Set<Artifact> resolveArtifacts(MavenProject project, DependencyResolutionResult dependencyResolutionResult) {
+    var artifacts = new LinkedHashSet<Artifact>();
+    var graph = dependencyResolutionResult.getDependencyGraph();
+    if (graph == null || graph.getChildren() == null || graph.getChildren().isEmpty()) return artifacts;
+    List<String> projectTrail =
+      null == project.getArtifact() ? Collections.emptyList() : Collections.singletonList(project.getArtifact().getId());
+    addArtifacts(artifacts, graph.getChildren(), projectTrail);
+    return artifacts;
+  }
 
-    for (Dependency dependency : dependencyResolutionResult.getDependencies()) {
-      Artifact artifact = dependency == null ? null : winnerDependencyMap.get(dependency);
-      if (artifact != null) {
-        addedDependencies.add(dependency);
-        artifacts.add(artifact);
-        resolveAsModule(artifact);
-      }
-    }
-
-    //if any syntax error presents in pom.xml we may not get dependencies via getDependencies, but they are in dependencyGraph.
-    // we need to BFS this graph and add dependencies
-    Queue<DependencyNode> queue =
-      new ArrayDeque<>(dependencyResolutionResult.getDependencyGraph().getChildren());
-    while (!queue.isEmpty()) {
-      DependencyNode node = queue.poll();
-      queue.addAll(node.getChildren());
-      Dependency dependency = node.getDependency();
-      if (dependency == null || !addedDependencies.add(dependency)) {
+  private static void addArtifacts(LinkedHashSet<Artifact> artifacts, List<DependencyNode> nodes, List<String> parentTrail) {
+    for (DependencyNode node : nodes) {
+      if (node.getData().get(ConflictResolver.NODE_DATA_WINNER) != null) {
         continue;
       }
-      Artifact artifact = winnerDependencyMap.get(dependency);
-      if (artifact != null) {
-        addedDependencies.add(dependency);
-        //todo: properly resolve order
-        artifacts.add(artifact);
-        resolveAsModule(artifact);
+      Artifact artifact = RepositoryUtils.toArtifact(node.getDependency());
+      if (artifact == null) {
+        continue;
       }
-    }
+      List<String> nodeTrail = new ArrayList<>(parentTrail.size() + 1);
+      nodeTrail.addAll(parentTrail);
+      nodeTrail.add(artifact.getId());
+      artifact.setDependencyTrail(nodeTrail);
 
-    return artifacts;
+      if (!artifacts.add(artifact)) {
+        MavenServerGlobals.getLogger().warn("Cannot add artifact " + artifact + ": Already present");
+      }
+      addArtifacts(artifacts, node.getChildren(), parentTrail);
+    }
   }
 
   private static void fillSessionCache(MavenSession mavenSession,
@@ -515,26 +479,11 @@ public class Maven40ProjectResolver {
 
   private static void resolveConflicts(DependencyResolutionResult dependencyResolutionResult,
                                        Map<Dependency, Artifact> winnerDependencyMap) {
-    dependencyResolutionResult.getDependencyGraph().accept(new TreeDependencyVisitor(new DependencyVisitor() {
-      @Override
-      public boolean visitEnter(DependencyNode node) {
-        Object winner = node.getData().get(ConflictResolver.NODE_DATA_WINNER);
-        Dependency dependency = node.getDependency();
-        if (dependency != null && winner == null) {
-          Artifact winnerArtifact = Maven40AetherModelConverter.toArtifact(dependency);
-          winnerDependencyMap.put(dependency, winnerArtifact);
-        }
-        return true;
-      }
 
-      @Override
-      public boolean visitLeave(DependencyNode node) {
-        return true;
-      }
-    }));
   }
 
-  private @NotNull List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request, @NotNull Collection<File> files,
+  private @NotNull List<ProjectBuildingResult> getProjectBuildingResults(@NotNull MavenExecutionRequest request,
+                                                                         @NotNull Collection<File> files,
                                                                          MavenSession session) {
     ProjectBuilder builder = myEmbedder.getComponent(ProjectBuilder.class);
 
