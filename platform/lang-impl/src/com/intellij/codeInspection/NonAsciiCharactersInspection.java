@@ -56,9 +56,11 @@ public final class NonAsciiCharactersInspection extends LocalInspectionTool {
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    PsiFile file = session.getFile();
-    if (!isFileWorthIt(file)) return PsiElementVisitor.EMPTY_VISITOR;
-    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.getFileType(), file.getProject(), file.getVirtualFile());
+    PsiFile psiFile = session.getFile();
+    if (!isFileWorthIt(psiFile)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+    SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(psiFile.getFileType(), psiFile.getProject(), psiFile.getVirtualFile());
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {

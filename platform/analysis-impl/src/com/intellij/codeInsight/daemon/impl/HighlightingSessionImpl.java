@@ -174,7 +174,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                   @NotNull ProperTextRange visibleRange,
                                                   boolean canChangeFileSilently,
                                                   @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     DaemonProgressIndicator indicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     CanISilentlyChange.Result result = canChangeFileSilently ? CanISilentlyChange.Result.UH_HUH : CanISilentlyChange.Result.UH_UH;
     HighlightingSessionImpl session = createHighlightingSession(psiFile, codeInsightContext, indicator, editorColorsScheme, visibleRange,
@@ -196,7 +196,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
                                                 @NotNull ProperTextRange visibleRange,
                                                 boolean canChangeFileSilently,
                                                 @NotNull Consumer<? super @NotNull HighlightingSession> runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!(ProgressIndicatorProvider.getGlobalProgressIndicator() instanceof DaemonProgressIndicator)) {
       ProgressManager.getInstance().executeProcessUnderProgress(()->runInsideHighlightingSessionInEDT(psiFile, codeInsightContext, editorColorsScheme, visibleRange, canChangeFileSilently, runnable), new DaemonProgressIndicator());
       return;
