@@ -78,7 +78,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
     PsiElement copy = PsiTreeUtil.findSameElementInCopy(getElement(), psiFile);
     if (copy == null) return IntentionPreviewInfo.EMPTY;
     if (candidates.isEmpty()) return IntentionPreviewInfo.EMPTY;
-    T element = candidates.get(0);
+    T element = candidates.getFirst();
     PsiClass containingClass = element.getContainingClass();
     if (containingClass == null) return IntentionPreviewInfo.EMPTY;
     consumer.accept(copy, element);
@@ -93,7 +93,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
 
   @Override
   public @NotNull String getText() {
-    return getBaseText() + (candidates == null || candidates.size() != 1 ? "..." : " '" + getMemberPresentableText(candidates.get(0)) + "'");
+    return getBaseText() + (candidates == null || candidates.size() != 1 ? "..." : " '" + getMemberPresentableText(candidates.getFirst()) + "'");
   }
 
   @Override
@@ -157,7 +157,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
       return false;
     }
 
-    T firstCandidate = candidates.get(0);
+    T firstCandidate = candidates.getFirst();
     PsiFile containingFile = callExpression.getContainingFile();
     if (containingFile == null || isPsiModificationStampChanged(containingFile.getProject())) {
       return false;
