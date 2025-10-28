@@ -255,6 +255,7 @@ public abstract class PsiClassType extends PsiType implements JvmReferenceType {
 
   /**
    * If class-type is created from the explicit reference in the code returns that reference.
+   * If type is created from `var` keyword, return this keyword
    * @return reference which the type is created from. Returns null if not applicable.
    */
   @ApiStatus.Experimental

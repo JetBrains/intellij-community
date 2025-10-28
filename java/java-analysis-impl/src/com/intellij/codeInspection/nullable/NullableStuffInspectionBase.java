@@ -266,7 +266,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         }
         else if (type != null) {
           PsiElement context = type instanceof PsiClassType classType ? classType.getPsiContext() : annotation;
-          if (context != null) {
+          if (context != null && !(PsiUtil.isJavaToken(context, JavaTokenType.VAR_KEYWORD))) {
             checkRedundantInContainerScope(annotation, manager.findDefaultTypeUseNullability(context), nullability);
           }
         }

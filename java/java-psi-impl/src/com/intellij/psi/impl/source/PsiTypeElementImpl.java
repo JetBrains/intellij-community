@@ -89,6 +89,15 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       else if (PsiUtil.isJavaToken(child, JavaTokenType.VAR_KEYWORD)) {
         assert type == null : this;
         type = inferVarType(parent);
+        if (type instanceof PsiClassType) {
+          PsiClassType psiClassType = (PsiClassType)type;
+          PsiClassType.ClassResolveResult result = psiClassType.resolveGenerics();
+          PsiClass element = result.getElement();
+          if (element != null) {
+            type = new PsiImmediateClassType(element, result.getSubstitutor(), psiClassType.getLanguageLevel(),
+                                             psiClassType.getAnnotationProvider(), child);
+          }
+        }
       }
       else if (child instanceof PsiJavaCodeReferenceElement) {
         assert type == null : this;
