@@ -37,6 +37,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +82,7 @@ public final class MainPassesRunner {
             runMainPasses(filesToCheck, result, (ProgressIndicatorEx)progress, minimumSeverity);
           }
           catch (ProcessCanceledException e) {
-            LOG.info("Code analysis canceled", e);
+            LOG.info("Code analysis canceled with PCE", e.getCause());
             exception.set(e);
           }
           catch (Exception e) {
@@ -104,11 +105,12 @@ public final class MainPassesRunner {
     return result;
   }
 
+  @RequiresBackgroundThread
   private void runMainPasses(@NotNull List<? extends VirtualFile> files,
                              @NotNull Map<? super Document, ? super List<HighlightInfo>> result,
                              @NotNull ProgressIndicatorEx progress,
                              @Nullable HighlightSeverity minimumSeverity) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ThreadingAssertions.assertBackgroundThread();
     ThreadingAssertions.assertNoOwnReadAccess();
     progress.setIndeterminate(false);
     List<Pair<VirtualFile, DaemonProgressIndicator>> daemonIndicators = Collections.synchronizedList(new ArrayList<>(files.size()));
@@ -170,8 +172,8 @@ public final class MainPassesRunner {
                              @Nullable HighlightSeverity minimumSeverity) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     daemonIndicator.checkCanceled();
-    PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
-    Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
+    PsiFile psiFile = ReadAction.compute(() -> file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null);
+    Document document = ReadAction.compute(() -> file.isValid() ? FileDocumentManager.getInstance().getDocument(file) : null);
     if (psiFile == null || document == null || !ReadAction.compute(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {
       return;
     }
