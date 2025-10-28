@@ -17,6 +17,7 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 import static com.intellij.updater.Runner.LOG;
+import static java.util.Objects.requireNonNullElse;
 
 final class PostUpdateTasks {
   static void refreshAppBundleIcon(Path targetDir) {
@@ -71,7 +72,6 @@ final class PostUpdateTasks {
         if (Files.isDirectory(folder)) {
           Files.walkFileTree(folder, Set.of(), 1, new SimpleFileVisitor<>() {
             @Override
-            @SuppressWarnings("NullableProblems")
             public FileVisitResult visitFile(Path shortcutFile, BasicFileAttributes attrs) {
               var shortcutName = shortcutFile.getFileName().toString();
               if (
@@ -131,5 +131,79 @@ final class PostUpdateTasks {
       LOG.log(Level.WARNING, "getLinkTarget(" + shortcutFile + ')', e);
     }
     return null;
+  }
+
+  static void updateDesktopEntries(Path targetDir) {
+    try {
+      LOG.info("updateDesktopEntries for: " + targetDir);
+      var userHome = System.getProperty("user.home");
+      var dataDirectories =
+        requireNonNullElse(System.getenv("XDG_DATA_HOME"), userHome + "/.local/share") + ':' +
+        requireNonNullElse(System.getenv("XDG_DATA_DIRS"), "/usr/local/share:/usr/share");
+      var targetPrefix = "Exec=\"" + targetDir + "/bin/";
+      outer:
+      for (var path : dataDirectories.split(":")) {
+        try {
+          var dir = Path.of(path, "applications");
+          try (var stream = Files.newDirectoryStream(dir, "*.desktop")) {
+            LOG.info("visiting " + dir);
+            for (var entry : stream) {
+              var content = Files.readAllLines(entry);
+              if (content.stream().anyMatch(line -> line.startsWith(targetPrefix))) {
+                var updated = updateEntry(content);
+                if (updated) {
+                  LOG.info("entry: " + entry);
+                  Files.write(entry, content);
+                  refreshMenu(path.startsWith(userHome + '/'));
+                  break outer;
+                }
+              }
+            }
+          }
+        }
+        catch (InvalidPathException | NotDirectoryException ignored) { }
+      }
+    }
+    catch (Throwable t) {
+      LOG.log(Level.WARNING, "updateDesktopEntries failed", t);
+    }
+  }
+
+  private static boolean updateEntry(List<String> content) {
+    var updated = false;
+    for (int i = 0; i < content.size(); i++) {
+      var line = content.get(i);
+      if (line.startsWith("Name=")) {
+        var newLine = line.replace(" CE", "").replace(" Community Edition", "");
+        if (!newLine.equals(line)) {
+          content.set(i, newLine);
+          updated = true;
+        }
+        break;
+      }
+    }
+    if (updated) {
+      for (int i = 0; i < content.size(); i++) {
+        var line = content.get(i);
+        if (line.startsWith("StartupWMClass=")) {
+          content.set(i, line.replace("-ce", ""));
+          break;
+        }
+      }
+    }
+    return updated;
+  }
+
+  private static void refreshMenu(boolean userMode) {
+    try {
+      var ec = new ProcessBuilder("xdg-desktop-menu", "forceupdate", "--mode", userMode ? "user" : "system")
+        .inheritIO()
+        .start()
+        .waitFor();
+      LOG.info("refreshMenu: ec=" + ec);
+    }
+    catch (Exception e) {
+      LOG.log(Level.WARNING, "refreshMenu failed", e);
+    }
   }
 }
