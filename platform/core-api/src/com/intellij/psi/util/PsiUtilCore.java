@@ -342,9 +342,6 @@ public class PsiUtilCore {
     if (element instanceof PsiFileSystemItem) {
       return element.isValid() ? ((PsiFileSystemItem)element).getVirtualFile() : null;
     }
-    if (element instanceof PsiElementWithVirtualFile) {
-      return ((PsiElementWithVirtualFile)element).getVirtualFile();
-    }
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null || !containingFile.isValid()) {
       return null;
