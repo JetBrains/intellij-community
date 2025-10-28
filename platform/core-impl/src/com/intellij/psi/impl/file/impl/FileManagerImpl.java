@@ -670,15 +670,16 @@ public final class FileManagerImpl implements FileManagerEx {
     }
     for (Iterator<Entry> iterator = fileToPsiFileMap.iterator(); iterator.hasNext();) {
       Entry entry = iterator.next();
+
       VirtualFile vFile = entry.getFile();
       CodeInsightContext context = entry.getContext();
+      FileViewProvider viewProvider = entry.getProvider();
 
       if (!vFile.isValid()) {
         iterator.remove();
         continue;
       }
 
-      FileViewProvider viewProvider = entry.getProvider();
       if (useFind) {
         PsiFile psiFile1 = findFile(vFile, context);
         if (psiFile1 == null) {
@@ -688,10 +689,10 @@ public final class FileManagerImpl implements FileManagerEx {
 
         if (!areViewProvidersEquivalent(viewProvider, psiFile1.getViewProvider())) {
           iterator.remove();
+          continue;
         }
-        else {
-          clearPsiCaches(viewProvider);
-        }
+
+        clearPsiCaches(viewProvider);
       }
       else if (!evaluateValidity((AbstractFileViewProvider)viewProvider)) {
         iterator.remove();
