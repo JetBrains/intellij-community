@@ -14,15 +14,16 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import java.util.concurrent.ConcurrentMap
 
 /**
  * Ad-hoc cache to avoid multiple repeated calls to [KtSymbolFromIndexProvider.getKotlinSubclassObjectsByNameFilter] during
  * unresolved references analysis in the auto-import.
- * 
- * This cache relies on the following conditions: 
- * - [KaSession.analysisScope] is stable during [KaSession]'s lifetime, 
+ *
+ * This cache relies on the following conditions:
+ * - [KaSession.analysisScope] is stable during [KaSession]'s lifetime,
  * so the results of [KtSymbolFromIndexProvider.getKotlinSubclassObjectsByNameFilter] should also be stable.
  * - It's safe to store references to [KaClassSymbol] in a cache as long as they are re-used in the same exact [KaSession].
  * This is achieved by using weak identity keys to store [KaSession].
@@ -45,7 +46,7 @@ private fun KtSymbolFromIndexProvider.getKotlinSubclassObjectsSymbolsCached(): L
 }
 
 /**
- * Retrieves all non-local callable symbols (functions, properties, fields) with the given [name] 
+ * Retrieves all non-local callable symbols (functions, properties, fields) with the given [name]
  * that can be potentially inherited by subclasses.
  *
  * This includes:
@@ -53,16 +54,22 @@ private fun KtSymbolFromIndexProvider.getKotlinSubclassObjectsSymbolsCached(): L
  * - Non-static, non-top-level Java methods and fields
  *
  * Callables declared in `final` classes are excluded, as they cannot be inherited.
- * 
+ *
+ * Returns only Kotlin extension callables if [onlyExtensions] is `true`; returns all possible callables otherwise.
+ *
  * N.B. No synthetic Java properties are included here.
  */
 context(_: KaSession)
-private fun KtSymbolFromIndexProvider.getNonLocalInheritableCallablesByName(name: Name): Sequence<KaCallableSymbol> =
+private fun KtSymbolFromIndexProvider.getNonLocalInheritableCallablesByName(name: Name, onlyExtensions: Boolean): Sequence<KaCallableSymbol> =
     sequence {
-        yieldAll(getKotlinCallableSymbolsByName(name) { !it.isTopLevelKtOrJavaMember() })
+        if (onlyExtensions) {
+            yieldAll(getKotlinCallableSymbolsByName(name) { !it.isTopLevelKtOrJavaMember() && it.isExtensionDeclaration() })
+        } else {
+            yieldAll(getKotlinCallableSymbolsByName(name) { !it.isTopLevelKtOrJavaMember() })
 
-        yieldAll(getJavaMethodsByName(name) { !it.isTopLevelKtOrJavaMember() && !it.hasModifierProperty(PsiModifier.STATIC) })
-        yieldAll(getJavaFieldsByName(name) { !it.isTopLevelKtOrJavaMember() && !it.hasModifierProperty(PsiModifier.STATIC) })
+            yieldAll(getJavaMethodsByName(name) { !it.isTopLevelKtOrJavaMember() && !it.hasModifierProperty(PsiModifier.STATIC) })
+            yieldAll(getJavaFieldsByName(name) { !it.isTopLevelKtOrJavaMember() && !it.hasModifierProperty(PsiModifier.STATIC) })
+        }
     }.filter { callableSymbol ->
         val container = callableSymbol.containingDeclaration
 
@@ -75,47 +82,50 @@ private fun KtSymbolFromIndexProvider.getNonLocalInheritableCallablesByName(name
  * Consider moving this to [KtSymbolFromIndexProvider] when there is a good API to represent inherited callables.
  */
 context(_: KaSession)
-internal fun KtSymbolFromIndexProvider.getCallableSymbolsFromSubclassObjects(name: Name): Sequence<Pair<KaClassSymbol, KaCallableSymbol>> {
+internal fun KtSymbolFromIndexProvider.getCallableSymbolsFromSubclassObjects(
+    name: Name,
+    receiverTypes: List<KaType>? = null
+): Sequence<Pair<KaClassSymbol, KaCallableSymbol>> {
+    val extensionsFilter: (KaCallableSymbol) -> Boolean =
+        if (receiverTypes != null) {
+            createExtensionsByReceiverTypesFilter(receiverTypes)
+        } else {
+            { _ -> true }
+        }
+
     // If there are no callables by this name which can be inherited,
     // there's no point to traverse all objects.
     // This check is supposed to be quick enough compared to computing `memberScope`s.
-    // See KTIJ-35825 for details. 
-    if (getNonLocalInheritableCallablesByName(name).none()) {
+    // See KTIJ-35825 for details.
+    val inheritableCallables =
+        getNonLocalInheritableCallablesByName(name, onlyExtensions = receiverTypes != null).filter(extensionsFilter)
+
+    if (inheritableCallables.none()) {
         return emptySequence()
     }
-    
+
     val allObjects = getKotlinSubclassObjectsSymbolsCached()
 
-    return allObjects.asSequence().flatMap { objectSymbol ->
-        val memberScope = objectSymbol.memberScope
-        val callablesByName = memberScope.callables(name)
-        callablesByName.map {
-            ProgressManager.checkCanceled()
-            objectSymbol to it
+    return allObjects.asSequence()
+        .flatMap { objectSymbol ->
+            val memberScope = objectSymbol.memberScope
+            val callablesByName = memberScope.callables(name)
+            callablesByName.map {
+                ProgressManager.checkCanceled()
+                objectSymbol to it
+            }
         }
-    }
+        .filter { (_, symbol) -> extensionsFilter(symbol) }
 }
-
-/**
- * Consider moving this to [KtSymbolFromIndexProvider] when there is a good API to represent inherited callables.
- */
-context(_: KaSession)
-internal fun KtSymbolFromIndexProvider.getExtensionCallableSymbolsFromSubclassObjects(
-    name: Name,
-    receiverTypes: List<KaType>,
-): Sequence<Pair<KaClassSymbol, KaCallableSymbol>> =
-    getCallableSymbolsFromSubclassObjects(name).filterExtensionsByReceiverTypes(receiverTypes)
 
 /**
  * Mostly a copy of [KtSymbolFromIndexProvider.filterExtensionsByReceiverTypes]; should be unified in the future.
  */
 context(_: KaSession)
-private fun Sequence<Pair<KaClassSymbol, KaCallableSymbol>>.filterExtensionsByReceiverTypes(
-    receiverTypes: List<KaType>
-): Sequence<Pair<KaClassSymbol, KaCallableSymbol>> {
+private fun createExtensionsByReceiverTypesFilter(receiverTypes: List<KaType>): (KaCallableSymbol) -> Boolean {
     val nonNullableReceiverTypes = receiverTypes.map { it.withNullability(false) }
 
-    return filter { (_, symbol) ->
+    return filter@{ symbol ->
         if (!symbol.isExtension) return@filter false
         val symbolReceiverType = symbol.receiverType ?: return@filter false
 
