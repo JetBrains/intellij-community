@@ -165,7 +165,7 @@ internal fun convertRelativePathToUrl(path: String,
                                       contentRootEntity: ContentRootEntityBuilder,
                                       pathResolver: ModuleRelativePathResolver,
                                       virtualUrlManager: VirtualFileUrlManager): VirtualFileUrl {
-  if (!File(path).exists()) {
+  if (path.isEmpty() || !File(path).exists()) {
     if (path.startsWith("/")) {
       //relative to other project
       val moduleName = EPathCommonUtil.getRelativeModuleName(path)
