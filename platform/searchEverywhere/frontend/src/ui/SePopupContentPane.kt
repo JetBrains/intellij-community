@@ -46,6 +46,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.popup.list.GroupedItemsListRenderer
+import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.impl.UsagePreviewPanel
@@ -118,6 +119,7 @@ class SePopupContentPane(
   init {
     layout = GridLayout()
 
+    resultList.putClientProperty(RenderingUtil.FOCUSABLE_SIBLING, textField)
     val actionListCellRenderer = SeActionItemPresentationRenderer(resultList).get { textField.text ?: "" }
     val targetListCellRenderer = SeTargetItemPresentationRenderer(resultList).get()
     val textSearchItemListCellRenderer = SeTextSearchItemPresentationRenderer().get()
