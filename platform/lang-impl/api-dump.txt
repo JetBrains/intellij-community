@@ -157,7 +157,7 @@ com.intellij.codeInsight.editorActions.CopyPastePreProcessor
 - a:preprocessOnPaste(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,java.lang.String,com.intellij.openapi.editor.RawText):java.lang.String
 - requiresAllDocumentsToBeCommitted(com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project):Z
 f:com.intellij.codeInsight.editorActions.FixDocCommentAction
-- s:generateComment(com.intellij.psi.PsiElement,com.intellij.openapi.project.Project,com.intellij.openapi.editor.ModPsiNavigator):V
+- s:generateComment(com.intellij.psi.PsiElement,com.intellij.openapi.project.Project,com.intellij.openapi.editor.ModNavigator):V
 com.intellij.codeInsight.editorActions.JavaLikeQuoteHandler
 - com.intellij.codeInsight.editorActions.QuoteHandler
 - canBeConcatenated(com.intellij.psi.PsiElement):Z

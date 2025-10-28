@@ -245,7 +245,7 @@ f:com.intellij.openapi.command.CoroutinesKt
 - *sf:writeCommandAction(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.components.ServicesKt
 - *sf:serviceAsync(com.intellij.openapi.components.ComponentManager,java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object
-*:com.intellij.openapi.editor.ModPsiNavigator
+*:com.intellij.openapi.editor.ModNavigator
 - a:getCaretOffset():I
 - a:getDocument():com.intellij.openapi.editor.Document
 - a:moveCaretTo(I):V

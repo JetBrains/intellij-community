@@ -10,7 +10,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ModPsiNavigator;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -130,7 +130,7 @@ public final class AssignFieldFromParameterAction extends PsiUpdateModCommandAct
   public static @Nullable PsiStatement addFieldAssignmentStatement(@NotNull Project project,
                                                                    @NotNull PsiField field,
                                                                    @NotNull PsiParameter parameter,
-                                                                   @Nullable ModPsiNavigator updater) {
+                                                                   @Nullable ModNavigator updater) {
     PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
     PsiCodeBlock methodBody = method.getBody();
     if (methodBody == null) return null;

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ModPsiNavigator;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -31,7 +31,7 @@ public class KotlinTryFinallySurrounder extends KotlinTrySurrounderBase<KtFinall
         moveCaretToBlockCenter(context, navigator, element.getFinalExpression());
     }
 
-    public static void moveCaretToBlockCenter(@NotNull ActionContext context, @NotNull ModPsiNavigator navigator, KtElement expression) {
+    public static void moveCaretToBlockCenter(@NotNull ActionContext context, @NotNull ModNavigator navigator, KtElement expression) {
         Project project = context.project();
         Document document = expression.getContainingFile().getFileDocument();
         PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);

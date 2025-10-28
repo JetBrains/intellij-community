@@ -452,15 +452,15 @@ public interface Editor extends UserDataHolder {
   }
 
   /**
-   * Adapts editor to a {@link ModPsiNavigator} interface, so
+   * Adapts editor to a {@link ModNavigator} interface, so
    * the code that wants to update editor position can work uniformly
    * both within {@link com.intellij.modcommand.ModCommand#psiUpdate(PsiElement, Consumer)}
    * and with a physical editor instance.
    *
    * @return new {@code ModPsiNavigator} adapter.
    */
-  default @NotNull ModPsiNavigator asPsiNavigator() {
-    return new ModPsiNavigator() {
+  default @NotNull ModNavigator asPsiNavigator() {
+    return new ModNavigator() {
       @Override
       public @NotNull Document getDocument() {
         return Editor.this.getDocument();

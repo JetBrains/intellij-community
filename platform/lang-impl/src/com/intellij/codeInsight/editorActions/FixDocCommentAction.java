@@ -16,7 +16,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ModPsiNavigator;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
@@ -80,7 +80,7 @@ public final class FixDocCommentAction extends EditorAction {
    * @param project     current project
    * @param navigator   navigator to use to set caret position
    */
-  public static void generateComment(final @NotNull PsiElement element, final @NotNull Project project, final @NotNull ModPsiNavigator navigator) {
+  public static void generateComment(final @NotNull PsiElement element, final @NotNull Project project, final @NotNull ModNavigator navigator) {
     Language language = element.getLanguage();
     final CodeDocumentationProvider docProvider = getDocumentationProvider(language);
     if (docProvider == null) {
@@ -170,7 +170,7 @@ public final class FixDocCommentAction extends EditorAction {
    * @param project     current project
    */
   private static void generateComment(@NotNull PsiElement anchor,
-                                      @NotNull ModPsiNavigator navigator,
+                                      @NotNull ModNavigator navigator,
                                       @NotNull CodeDocumentationProvider documentationProvider,
                                       @NotNull CodeDocumentationAwareCommenter commenter,
                                       @NotNull Project project) {

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * or can be remembered and executed later.
  */
 @ApiStatus.Experimental
-public interface ModPsiNavigator {
+public interface ModNavigator {
   /**
    * Selects given range
    *

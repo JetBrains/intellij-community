@@ -644,7 +644,7 @@ com.intellij.modcommand.ModCommandService
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction):com.intellij.codeInspection.LocalQuickFix
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction,Z):com.intellij.codeInspection.LocalQuickFix
 com.intellij.modcommand.ModPsiUpdater
-- com.intellij.openapi.editor.ModPsiNavigator
+- com.intellij.openapi.editor.ModNavigator
 - a:cancel(java.lang.String):V
 - a:getCaretOffset():I
 - a:getDocument():com.intellij.openapi.editor.Document

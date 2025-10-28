@@ -179,7 +179,7 @@ public final class GenerateMembersUtil {
     editor.getSelectionModel().removeSelection();
   }
 
-  public static void positionCaret(@NotNull ModPsiNavigator updater, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
+  public static void positionCaret(@NotNull ModNavigator updater, @NotNull PsiElement firstMember, boolean toEditMethodBody) {
     LOG.assertTrue(firstMember.isValid());
     Project project = firstMember.getProject();
 

@@ -211,14 +211,8 @@ com.intellij.modcommand.ModCommand
 - f:applyFix(com.intellij.openapi.project.Project,com.intellij.codeInspection.CommonProblemDescriptor[],java.util.List,java.lang.Runnable):V
 - perform(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.modcommand.ModCommand
 - a:perform(com.intellij.openapi.project.Project,java.util.List):com.intellij.modcommand.ModCommand
-*:com.intellij.modcommand.ModPsiNavigator
-- a:getCaretOffset():I
-- a:moveCaretTo(I):V
-- a:moveCaretTo(com.intellij.psi.PsiElement):V
-- a:select(com.intellij.openapi.util.TextRange):V
-- a:select(com.intellij.psi.PsiElement):V
 com.intellij.modcommand.ModPsiUpdater
-- com.intellij.modcommand.ModPsiNavigator
+- com.intellij.openapi.editor.ModNavigator
 - *a:trackDeclaration(com.intellij.psi.PsiElement):V
 *f:com.intellij.modcommand.ModUpdateReferences
 - java.lang.Record

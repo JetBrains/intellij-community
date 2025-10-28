@@ -2,14 +2,14 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 
 import com.intellij.modcommand.ActionContext
-import com.intellij.openapi.editor.ModPsiNavigator
+import com.intellij.openapi.editor.ModNavigator
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.convertToRawStringLiteral
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 fun convertToRawStringLiteralAndRestoreCaretPosition(
-    element: KtStringTemplateExpression, context: ActionContext, updater: ModPsiNavigator
+    element: KtStringTemplateExpression, context: ActionContext, updater: ModNavigator
 ) {
     // Note that we must get the offset before replace element to a string literal
     // because after the conversion, element will be a dangling KtExpression.
