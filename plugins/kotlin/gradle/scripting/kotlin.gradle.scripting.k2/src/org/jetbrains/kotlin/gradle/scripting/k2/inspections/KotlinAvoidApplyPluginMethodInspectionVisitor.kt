@@ -30,12 +30,13 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
             if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return
         }
 
-        val pluginFixInfo = canBeFixed(expression)
+        val pluginFixInfo = getPluginFixInfo(expression)
         val potentialFix = if (pluginFixInfo != null) GradleMoveApplyPluginToPluginsBlockFix(pluginFixInfo) else null
 
-        holder.problem(expression, GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.method.descriptor"))
-            .maybeFix(potentialFix)
-            .register()
+        holder.problem(
+            expression,
+            GradleInspectionBundle.message("inspection.message.avoid.apply.plugin.method.descriptor")
+        ).maybeFix(potentialFix).register()
     }
 
     /**
@@ -43,63 +44,91 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
      * PluginInfo with only name if it's a core plugin or
      * null if it's not possible to fix the issue.
      */
-    private fun canBeFixed(expression: KtCallExpression): PluginFixInfo? {
-        val pluginArgument = expression.valueArguments.singleOrNull()
-
-        // check that only the plugin id is passed as an argument
-        if (pluginArgument?.getArgumentName()?.asName?.identifier != "plugin") return null
-
-        val pluginNameExpr = pluginArgument.getArgumentExpression() ?: return null
-        val pluginName = pluginNameExpr.evaluateString() ?: return null
+    private fun getPluginFixInfo(expression: KtCallExpression): PluginFixInfo? {
+        val pluginName = extractPluginName(expression) ?: return null
 
         // no version required if it's a core plugin
-        if (GRADLE_CORE_PLUGIN_SHORT_NAMES.contains(pluginName)) return PluginFixInfo(pluginName, null, null)
+        if (GRADLE_CORE_PLUGIN_SHORT_NAMES.contains(pluginName)) {
+            return PluginFixInfo(pluginName, null, null)
+        }
 
-        val buildScriptBlock = holder.file.asSafely<KtFile>()?.findScriptInitializer("buildscript")?.getBlock() ?: return null
+        return findExternalPluginInfo(pluginName)
+    }
 
-        // check that only the gradlePluginPortal() repository is used
-        val repositoriesBlock = buildScriptBlock.findBlock("repositories") ?: return null
-        if (repositoriesBlock.children.singleOrNull()?.text != "gradlePluginPortal()") return null
+    private fun extractPluginName(expression: KtCallExpression): String? {
+        val pluginArgument = expression.valueArguments.singleOrNull()
+        // check that only the plugin id is passed as an argument
+        if (pluginArgument?.getArgumentName()?.asName?.identifier != "plugin") return null
+        val pluginNameExpr = pluginArgument.getArgumentExpression() ?: return null
+        return pluginNameExpr.evaluateString()
+    }
 
-        // find the plugin's corresponding dependency
+    private fun findExternalPluginInfo(pluginName: String): PluginFixInfo? {
+        val buildScriptBlock = getBuildScriptBlock() ?: return null
+
+        if (!isValidRepositorySetup(buildScriptBlock)) return null
+
         val pluginDependenciesBlock = buildScriptBlock.findBlock("dependencies") ?: return null
         val (psiElement, version) = findPluginClasspathDependency(pluginDependenciesBlock, pluginName) ?: return null
 
         return PluginFixInfo(pluginName, version, psiElement)
     }
 
+    private fun getBuildScriptBlock(): KtBlockExpression? {
+        return holder.file.asSafely<KtFile>()?.findScriptInitializer("buildscript")?.getBlock()
+    }
+
+    private fun isValidRepositorySetup(buildScriptBlock: KtBlockExpression): Boolean {
+        // check that only the gradlePluginPortal() repository is used
+        val repositoriesBlock = buildScriptBlock.findBlock("repositories") ?: return false
+        return repositoriesBlock.children.singleOrNull()?.text == "gradlePluginPortal()"
+    }
+
     private fun findPluginClasspathDependency(
         pluginDependenciesBlock: KtBlockExpression, pluginName: String
-    ): Pair<SmartPsiElementPointer<KtCallExpression>, String>? =
-        pluginDependenciesBlock.descendantsOfType<KtCallExpression>().firstNotNullOfOrNull { callExpression ->
-            if (callExpression.calleeExpression?.text != "classpath") return@firstNotNullOfOrNull null
-            val depType = findDependencyType(callExpression) ?: return@firstNotNullOfOrNull null
-            val argList = callExpression.valueArgumentList ?: return@firstNotNullOfOrNull null
-            val args = argList.arguments
-
-            val version = when (depType) {
-                DependencyType.SINGLE_ARGUMENT -> {
-                    val arg = args.firstOrNull()?.getArgumentExpression() ?: return@firstNotNullOfOrNull null
-                    val classpath = arg.evaluateString() ?: return@firstNotNullOfOrNull null
-                    val split = classpath.split(":")
-                    if (split.size == 3 && split.first() == pluginName) split.last()
-                    else return@firstNotNullOfOrNull null
-                }
-
-                DependencyType.NAMED_ARGUMENTS -> {
-                    val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString()
-                        ?: return@firstNotNullOfOrNull null
-                    if (group != pluginName) return@firstNotNullOfOrNull null
-                    findNamedOrPositionalArgument(argList, "version", 2)?.evaluateString()
-                        ?: return@firstNotNullOfOrNull null
-                }
-
-                DependencyType.OTHER -> return@firstNotNullOfOrNull null
-            }
-
-            callExpression.createSmartPointer() to version
+    ): Pair<SmartPsiElementPointer<KtCallExpression>, String>? {
+        return pluginDependenciesBlock.descendantsOfType<KtCallExpression>().firstNotNullOfOrNull { callExpression ->
+            extractPluginDependencyInfo(callExpression, pluginName)
         }
+    }
 
+    private fun extractPluginDependencyInfo(
+        callExpression: KtCallExpression,
+        pluginName: String
+    ): Pair<SmartPsiElementPointer<KtCallExpression>, String>? {
+        if (callExpression.calleeExpression?.text != "classpath") return null
+
+        val depType = findDependencyType(callExpression) ?: return null
+        val argList = callExpression.valueArgumentList ?: return null
+        val args = argList.arguments
+
+        val version = when (depType) {
+            DependencyType.SINGLE_ARGUMENT -> extractVersionFromSingleArgument(args, pluginName)
+            DependencyType.NAMED_ARGUMENTS -> extractVersionFromNamedArguments(argList, pluginName)
+            DependencyType.OTHER -> return null
+        } ?: return null
+
+        return callExpression.createSmartPointer() to version
+    }
+
+    private fun extractVersionFromSingleArgument(
+        args: List<KtValueArgument>,
+        pluginName: String
+    ): String? {
+        val arg = args.firstOrNull()?.getArgumentExpression() ?: return null
+        val classpath = arg.evaluateString() ?: return null
+        val split = classpath.split(":")
+        return if (split.size == 3 && split.first() == pluginName) split.last() else null
+    }
+
+    private fun extractVersionFromNamedArguments(
+        argList: KtValueArgumentList,
+        pluginName: String
+    ): String? {
+        val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString() ?: return null
+        if (group != pluginName) return null
+        return findNamedOrPositionalArgument(argList, "version", 2)?.evaluateString()
+    }
 }
 
 private class GradleMoveApplyPluginToPluginsBlockFix(
