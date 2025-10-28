@@ -13,9 +13,11 @@ import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.PathUtilRt
+import com.intellij.util.io.createDirectories
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.OptionTag
 import kotlinx.coroutines.*
@@ -33,13 +35,15 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
+import java.io.IOException
 import java.net.URI
 import java.net.URISyntaxException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.absolutePathString
-import kotlin.io.path.isDirectory
+import kotlin.io.path.exists
 import kotlin.io.path.name
 
 
@@ -174,7 +178,7 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
     return MavenServerManager.getInstance().createIndexer()
   }
 
-  private fun getDirForMavenIndex(repo: MavenRepositoryInfo): Path {
+  private suspend fun getDirForMavenIndex(repo: MavenRepositoryInfo): Path {
     val url = getCanonicalUrl(repo)
     val key = PathUtilRt.suggestFileName(PathUtilRt.getFileName(url), false, false)
 
@@ -183,18 +187,37 @@ class MavenSystemIndicesManager(val cs: CoroutineScope) : PersistentStateCompone
   }
 
 
-  private fun getCanonicalUrl(repo: MavenRepositoryInfo): String {
-    if (Path.of(repo.url).isDirectory()) return Path.of(repo.url).toCanonicalPath()
+  private suspend fun getCanonicalUrl(repo: MavenRepositoryInfo): String = withContext(Dispatchers.IO) {
+    val path =
+      try {
+        Path.of(repo.url).also {
+          if (!it.exists()) {
+            // Directory might not exist on fresh installations
+            it.createDirectories()
+          }
+        }.toCanonicalPath()
+      }
+      catch (_: IOException) {
+        null
+      }
+      catch (_: InvalidPathException) {
+        null
+      }
+
+    if (path != null) {
+      return@withContext path
+    }
+
     try {
       val uri = URI(repo.url)
       if (uri.scheme == null || uri.scheme.lowercase() == "file") {
         val path = uri.path
-        if (path != null) return path
+        if (path != null) return@withContext path
       }
-      return uri.toString()
+      return@withContext uri.toString()
     }
     catch (e: URISyntaxException) {
-      return repo.url
+      return@withContext repo.url
     }
 
   }
