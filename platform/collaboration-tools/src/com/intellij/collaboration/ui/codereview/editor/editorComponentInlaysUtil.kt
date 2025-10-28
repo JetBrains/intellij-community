@@ -138,6 +138,8 @@ private suspend fun <VM : EditorMapped> controlInlay(vm: VM, editor: EditorEx, r
             val currentInlay = inlay
             if (line != null && isVisible) {
               runCatching {
+                if (editor.document.lineCount <= line) return@runCatching
+
                 val offset = editor.document.getLineEndOffset(line)
                 if (currentInlay == null || !currentInlay.isValid || currentInlay.offset != offset) {
                   currentInlay?.let(Disposer::dispose)
