@@ -22,6 +22,7 @@ import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.psi.PsiManager
 import com.intellij.usageView.UsageInfo
@@ -61,8 +62,8 @@ class SePopupVm(
   private val canBeShownInFindResultsFlow = MutableStateFlow(false)
   val canBeShownInFindResults: Boolean get() = canBeShownInFindResultsFlow.value
 
-  private val _searchFieldWarning = MutableStateFlow("")
-  val searchFieldWarning: StateFlow<String> = _searchFieldWarning
+  private val _searchFieldWarning = MutableStateFlow<Pair<String, String?>?>(null)
+  val searchFieldWarning: StateFlow<Pair<String, String?>?> = _searchFieldWarning
 
   private var historyIterator: HistoryIterator = historyList.getIterator(currentTab.tabId)
     get() {
@@ -134,12 +135,19 @@ class SePopupVm(
       }.map { (currentTab, isDumb, isIncomplete) ->
         // IJPL-193615: In RemDev, IncompleteDependenciesService state is not synchronized between frontend and backend,
         // so isIncomplete always remains false on frontend, making dependency loading messages unavailable in RemDev.
-        if (!currentTab.isIndexingDependent) ""
-        else if (isDumb || isIncomplete) {
-          if (isDumb) IdeBundle.message("dumb.mode.analyzing.project")
-          else IdeBundle.message("incomplete.mode.results.might.be.incomplete")
+        if (!currentTab.isIndexingDependent || (!isDumb && !isIncomplete)) return@map null
+
+        if (isDumb) {
+          if (currentTab.tabId == SeActionsTab.ID) {
+            Pair(IdeBundle.message("dumb.mode.analyzing.project"), IdeBundle.message("dumb.mode.some.actions.might.be.unavailable.during.project.analysis"))
+          }
+          else {
+            Pair(IdeBundle.message("dumb.mode.analyzing.project"), IdeBundle.message("dumb.mode.results.might.be.incomplete.during.project.analysis"))
+          }
         }
-        else ""
+        else {
+          Pair(IdeBundle.message("incomplete.mode.results.might.be.incomplete"), null)
+        }
       }.distinctUntilChanged().collect {
         _searchFieldWarning.value = it
       }
@@ -287,5 +295,7 @@ private fun <T> Flow<T>.withPrevious(): Flow<Pair<T?, T>> = flow {
 }
 
 @ApiStatus.Internal
-class SePreviewConfiguration(val project: Project,
-                             val fetchPreview: (suspend (SeItemData) -> (List<UsageInfo>?))?)
+class SePreviewConfiguration(
+  val project: Project,
+  val fetchPreview: (suspend (SeItemData) -> (List<UsageInfo>?))?,
+)

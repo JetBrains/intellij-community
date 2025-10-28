@@ -343,7 +343,9 @@ class SePopupContentPane(
     launch {
       vm.searchFieldWarning.collect { warning ->
         withContext(Dispatchers.EDT) {
-          hintHelper.setLoadingText(warning)
+          warning?.let { (text, tooltip) ->
+            hintHelper.setLoadingText(text, tooltip)
+          } ?: hintHelper.setHint(null)
         }
       }
     }

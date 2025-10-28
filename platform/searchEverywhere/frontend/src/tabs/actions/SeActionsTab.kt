@@ -26,6 +26,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
   override val name: String get() = NAME
   override val id: String get() = ID
+  override val isIndexingDependent: Boolean get() = true
   private val filterEditor: SeFilterEditor = SeActionsFilterEditor()
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
