@@ -60,8 +60,13 @@ interface CaretModel {
   fun moveToLogicalPosition(position: LogicalPosition)
   fun moveToVisualPosition(pos: VisualPosition)
   fun getLogicalPosition(): LogicalPosition
+  fun getAllCarets(): List<Caret>
   fun moveToOffset(offset: Int)
   fun getOffset(): Int
+}
+@Remote("com.intellij.openapi.editor.Caret")
+interface Caret {
+  fun getLogicalPosition(): LogicalPosition
 }
 
 @Remote("com.intellij.openapi.editor.InlayModel")
@@ -152,7 +157,7 @@ interface EditorColorsScheme {
 @Remote("com.intellij.openapi.editor.SelectionModel")
 interface SelectionModel {
   fun setSelection(startOffset: Int, endOffset: Int)
-  fun getSelectedText(): String?
+  fun getSelectedText(allCaret: Boolean = false): String?
   fun removeSelection()
 }
 
