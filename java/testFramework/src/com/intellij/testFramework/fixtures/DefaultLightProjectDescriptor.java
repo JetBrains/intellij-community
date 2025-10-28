@@ -91,11 +91,11 @@ public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
     MavenDependencyUtil.addFromMaven(model, JETBRAINS_ANNOTATIONS_COORDINATES);
   }
 
-  private static class RequiredLibrary {
+  public static class RequiredLibrary {
     public final String mavenCoordinates;
     public final boolean includeTransitive;
 
-    private RequiredLibrary(String coordinates, boolean transitive) {
+    public RequiredLibrary(String coordinates, boolean transitive) {
       mavenCoordinates = coordinates;
       includeTransitive = transitive;
     }
