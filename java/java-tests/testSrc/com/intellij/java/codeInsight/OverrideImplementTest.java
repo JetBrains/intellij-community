@@ -702,6 +702,10 @@ public class OverrideImplementTest extends LightJavaCodeInsightFixtureTestCase {
     doTest(true);
   }
 
+  public void testMarkdownComment() {
+    doTest(true);
+  }
+
   private void doTest(boolean toImplement) {
     final String name = getTestName(false);
     myFixture.configureByFile("before" + name + ".java");
