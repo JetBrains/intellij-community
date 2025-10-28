@@ -106,18 +106,6 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     if (refExpr != null && (isDirectlyInsideClassBody(refExpr) || isInsideErrorElement(refExpr))) {
       return
     }
-    // TODO Use another method to collect already visible names
-    // Candidates: PyExtractMethodValidator, IntroduceValidator.isDefinedInScope
-    val refUnderCaret = refExpr?.reference ?: targetExpr?.reference
-    val namesInScope = if (refUnderCaret == null) {
-      mutableSetOf<String?>()
-    }
-    else {
-      refUnderCaret.variants
-        .filterIsInstance<LookupElement>()
-        .map { it.getLookupString() }
-        .toSet()
-    }
     val project = originalFile.getProject()
     val typeEvalContext = TypeEvalContext.codeCompletion(project, originalFile)
     val maxVariants = intValue("ide.completion.variant.limit")
@@ -134,7 +122,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
                                   PyElement::class.java) { exported ->
           ProgressManager.checkCanceled()
           val name = exported.getName()
-          if (name == null || namesInScope.contains(name)) return@processElements true
+          if (name == null) return@processElements true
           val fqn: QualifiedName = getFullyQualifiedName(exported)
           if (!isApplicableInInsertionContext(exported, fqn, position, typeEvalContext)) {
             counters.notApplicableInContextNames++
