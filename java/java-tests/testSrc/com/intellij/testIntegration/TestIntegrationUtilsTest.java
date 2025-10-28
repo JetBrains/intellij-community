@@ -19,10 +19,11 @@ public class TestIntegrationUtilsTest extends LightPlatformTestCase {
   public void testExtractClassMethods() {
     doTest("class Foo {void bar() {} private void baz() {}}", false, "bar(): void");
     doTest("class Foo extends Super {void bar() {}} class Super {void qux() {}}", false, "bar(): void");
-    doTest("class Foo extends Super {void bar() {}} class Super {void qux() {}}", true, "qux(): void", "bar(): void");
-    doTest("class Foo implements I {void bar() {}} interface I {void qux();}", true, "bar(): void");
-    doTest("class Foo implements I {void bar() {}} interface I {default void qux() {}}", true, "qux(): void", "bar(): void");
-    doTest("interface Foo extends I {void bar();} interface I {void qux();}", true, "bar(): void");
+    doTest("class Foo extends Super {void bar() {}} class Super {void qux() {}}", true, "bar(): void", "qux(): void");
+    doTest("class Foo implements I {void bar() {}} interface I {void qux();}", true, "bar(): void", "qux(): void");
+    doTest("class Foo implements I {void bar() {}} interface I {default void qux() {}}", true, "bar(): void", "qux(): void");
+    doTest("interface Foo extends I {void bar();} interface I {void qux();}", true, "bar(): void", "qux(): void");
+    doTest("class Foo extends I {@Override void bar();} interface I {void bar();default void foo(){}}", true, "bar(): void", "foo(): void");
   }
 
   private void doTest(@Language("JAVA") String text, boolean inherited, String... expected) {

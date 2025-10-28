@@ -122,28 +122,34 @@ public final class TestIntegrationUtils {
   }
 
   public static List<MemberInfo> extractClassMethods(PsiClass clazz, boolean includeInherited) {
-    List<MemberInfo> result = new ArrayList<>();
-    Set<PsiClass> classes;
+    List<PsiClass> classes = new ArrayList<>();
+    classes.add(clazz);
     if (includeInherited) {
-      classes = InheritanceUtil.getSuperClasses(clazz);
-      classes.add(clazz);
+      classes.addAll(InheritanceUtil.getSuperClasses(clazz).reversed());
     }
-    else {
-      classes = Collections.singleton(clazz);
-    }
+
+    List<MemberInfo> temp = new ArrayList<>();
     for (PsiClass aClass : classes) {
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) continue;
-      MemberInfo.extractClassMembers(aClass, result, new MemberInfo.Filter<>() {
+      MemberInfo.extractClassMembers(aClass, temp, new MemberInfo.Filter<>() {
         @Override
         public boolean includeMember(PsiMember member) {
           if (!(member instanceof PsiMethod)) return false;
-          if (member.hasModifierProperty(PsiModifier.PRIVATE) ||
-              (member.hasModifierProperty(PsiModifier.ABSTRACT) && member.getContainingClass() != clazz)) {
+          if (member.hasModifierProperty(PsiModifier.PRIVATE)) {
             return false;
           }
           return true;
         }
       }, false);
+    }
+
+    // to avoid duplicates due to abstract default methods
+    Set<String> uniqueDisplayNames = new HashSet<>();
+    List<MemberInfo> result = new ArrayList<>();
+    for (MemberInfo info : temp) {
+      if (uniqueDisplayNames.add(info.getDisplayName())) {
+        result.add(info);
+      }
     }
 
     return result;
