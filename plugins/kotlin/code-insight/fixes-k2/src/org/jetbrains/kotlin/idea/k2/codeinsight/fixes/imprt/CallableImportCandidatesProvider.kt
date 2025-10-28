@@ -109,7 +109,7 @@ internal class CallableImportCandidatesProvider(
                     )
 
                     yieldAll(
-                        indexProvider.getExtensionCallableSymbolsFromSubclassObjects(name, receiverTypes)
+                        indexProvider.getCallableSymbolsFromSubclassObjects(name, receiverTypes)
                             .map { (dispatcherObject, callableSymbol) -> CallableImportCandidate.create(callableSymbol, dispatcherObject) }
                     )
                 }
