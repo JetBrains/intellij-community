@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.IconLoader.setUseDarkIcons
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.AppIcon.MacAppIcon
 import com.intellij.ui.Color16.Companion.toColor16
@@ -348,7 +349,9 @@ object AppUIUtil {
       }
     }
     result.removeIf(ConsentOptions.condTraceDataCollectionConsent()) // IJPL-208500
-    result.removeIf(ConsentOptions.condAiDataCollectionConsent()) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
+    if (!options.isEAP || !Registry.`is`("llm.llmc.data.collection.enabled", true)) {
+      result.removeIf(ConsentOptions.condAiDataCollectionConsent()) // IJPL-195651 and IJPL-210395; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
+    }
     return result
   }
 
