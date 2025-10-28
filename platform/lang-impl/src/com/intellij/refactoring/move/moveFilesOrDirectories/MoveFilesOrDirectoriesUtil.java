@@ -203,7 +203,9 @@ public final class MoveFilesOrDirectoriesUtil {
         }
       }
       catch (IncorrectOperationException e) {
-        var message = IoErrorText.message(e.getCause());
+        var cause = e.getCause();
+        if (cause == null) throw e;
+        var message = IoErrorText.message(cause);
         CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, "refactoring.moveFile", project);
       }
     }, MoveHandler.getRefactoringName(), null);
