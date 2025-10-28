@@ -32,6 +32,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel.NoteItem
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
@@ -39,10 +40,12 @@ import javax.swing.Action
 import javax.swing.JComponent
 
 internal object GitLabDiscussionComponentFactory {
+
   fun create(
     project: Project,
     cs: CoroutineScope,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+    contextDataLoader: GitLabContextDataLoader,
     vm: GitLabMergeRequestDiscussionViewModel,
     place: GitLabStatistics.MergeRequestNoteActionPlace,
   ): JComponent {
@@ -57,7 +60,8 @@ internal object GitLabDiscussionComponentFactory {
                                       TimelineThreadCommentsPanel.UNFOLD_BUTTON_VERTICAL_GAP,
                                       0)
         }
-        is NoteItem.Note -> GitLabNoteComponentFactory.create(ComponentType.COMPACT, project, itemCs, avatarIconsProvider, item.vm, place)
+        is NoteItem.Note -> GitLabNoteComponentFactory.create(ComponentType.COMPACT, project, itemCs, avatarIconsProvider, contextDataLoader,
+                                                              item.vm, place)
       }
     }
 

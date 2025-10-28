@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsPickerComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
@@ -37,15 +38,17 @@ import java.net.URL
 import javax.swing.JComponent
 
 internal object GitLabNoteComponentFactory {
+
   fun create(
     componentType: ComponentType,
     project: Project,
     cs: CoroutineScope,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+    contextDataLoader: GitLabContextDataLoader,
     vm: GitLabNoteViewModel,
     place: GitLabStatistics.MergeRequestNoteActionPlace,
   ): JComponent {
-    val textPanel = createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl).let { panel ->
+    val textPanel = createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl, contextDataLoader).let { panel ->
       val actionsVm = vm.actionsVm ?: return@let panel
       EditableComponentFactory.wrapTextComponent(cs, panel, actionsVm.editVm) {
         GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE, place)
@@ -173,8 +176,11 @@ internal object GitLabNoteComponentFactory {
     return button
   }
 
-  fun createTextPanel(project: Project, cs: CoroutineScope, textFlow: Flow<@Nls String>, baseUrl: URL): JComponent =
-    SimpleHtmlPane(baseUrl = baseUrl, addBrowserListener = false).apply {
+  fun createTextPanel(
+    project: Project, cs: CoroutineScope, textFlow: Flow<@Nls String>, baseUrl: URL,
+    contextDataLoader: GitLabContextDataLoader
+  ): JComponent =
+    SimpleHtmlPane(baseUrl = baseUrl, addBrowserListener = false, customImageLoader = contextDataLoader.imageLoader).apply {
       bindTextIn(cs, textFlow)
       addGitLabHyperlinkListener(project)
     }

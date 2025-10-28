@@ -48,6 +48,7 @@ interface GitLabConnectedProjectViewModel {
   val accountVm: GitLabAccountViewModel
   val listVm: GitLabMergeRequestsListViewModel
   val currentMergeRequestReviewVm: Flow<GitLabMergeRequestEditorReviewViewModel?>
+  val contextDataLoader: GitLabContextDataLoader
   fun findMergeRequestDetails(mrIid: String): GitLabMergeRequestDetails?
   fun reloadMergeRequestDetails(mergeRequestId: String)
   fun getDiffViewModel(mrIid: String): Flow<Result<GitLabMergeRequestDiffViewModel>>
@@ -77,6 +78,8 @@ abstract class GitLabConnectedProjectViewModelBase(
 
   override val avatarIconProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(AsyncImageIconsProvider(cs, connection.imageLoader))
 
+  override val contextDataLoader: GitLabContextDataLoader = connection.projectData.contextDataLoader
+
   private val projectName: @Nls String = connection.repo.repository.projectPath.name
 
   override val listVm: GitLabMergeRequestsListViewModel = run {
@@ -103,7 +106,8 @@ abstract class GitLabConnectedProjectViewModelBase(
     connection.projectData.mergeRequests.getShared(iid)
       .transformConsecutiveSuccesses {
         mapScoped {
-          GitLabMergeRequestViewModels(project, this, connection.projectData, avatarIconProvider, it, connection.currentUser,
+          GitLabMergeRequestViewModels(project, this, connection.projectData, avatarIconProvider,
+                                       it, connection.currentUser,
                                        ::openMergeRequestDetails, ::openMergeRequestTimeline, ::openMergeRequestDiff)
         }
       }

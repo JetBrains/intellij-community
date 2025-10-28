@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabPersistentMergeRequestChangesViewedState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filterInFile
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
@@ -42,6 +43,7 @@ interface GitLabMergeRequestDiffReviewViewModel {
   val locationsWithNewDiscussions: StateFlow<Set<DiffLineLocation>>
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+  val contextDataLoader: GitLabContextDataLoader
 
   fun nextComment(focused: String, additionalIsVisible: (String) -> Boolean): String?
   fun nextComment(cursorLocation: UnifiedCodeReviewItemPosition, additionalIsVisible: (String) -> Boolean): String?
@@ -66,6 +68,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   private val discussionsContainer: GitLabMergeRequestDiscussionsViewModels,
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  override val contextDataLoader: GitLabContextDataLoader
 ) : GitLabMergeRequestDiffReviewViewModel {
   private val cs = parentCs.childScope(javaClass.name)
 

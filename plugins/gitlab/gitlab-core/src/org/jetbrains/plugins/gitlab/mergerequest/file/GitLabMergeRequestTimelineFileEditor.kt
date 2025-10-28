@@ -111,7 +111,9 @@ class GitLabMergeRequestTimelineEditorFactory(private val project: Project, pare
       withContext(Dispatchers.Main.immediate) {
         timelineVmResult.fold(
           onSuccess = {
-            val timeline = GitLabMergeRequestTimelineComponentFactory.create(project, this, it, projectVm.avatarIconProvider)
+            val timeline = GitLabMergeRequestTimelineComponentFactory.create(project, this, it,
+                                                                             projectVm.avatarIconProvider,
+                                                                             projectVm.contextDataLoader)
             wrapper.setContent(timeline)
             wrapper.repaint()
           },

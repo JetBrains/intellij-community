@@ -17,6 +17,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.GitLabWidgetDTO.WorkItemWidgetAssignees
 import org.jetbrains.plugins.gitlab.api.dto.GitLabWorkItemDTO.WorkItemType
 import org.jetbrains.plugins.gitlab.api.request.*
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestSetReviewers
@@ -67,6 +68,7 @@ class GitLabLazyProject(
   private val initialData: GitLabProjectDTO,
   private val currentUser: GitLabUserDTO,
   private val tokenRefreshFlow: Flow<Unit>,
+  imageLoader: GitLabImageLoader
 ) : GitLabProject {
 
   private val cs = parentCs.childScope(javaClass.name)
@@ -84,9 +86,9 @@ class GitLabLazyProject(
   }
   override val gitLabProjectId: GitLabId = initialData.id
 
-  val uploadFileUrlBase: String = projectMapping.repository.serverPath.toString() + "/-/project/" + gitLabProjectId.guessRestId() + "/uploads/"
+  private val uploadFileUrlBase: String = projectMapping.repository.serverPath.toString() + "/-/project/" + gitLabProjectId.guessRestId() + "/uploads/"
 
-  override val contextDataLoader: GitLabContextDataLoader = GitLabContextDataLoader(uploadFileUrlBase)
+  override val contextDataLoader: GitLabContextDataLoader = GitLabContextDataLoader(imageLoader, uploadFileUrlBase)
 
   override val mergeRequests by lazy {
     CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, currentUser, tokenRefreshFlow)

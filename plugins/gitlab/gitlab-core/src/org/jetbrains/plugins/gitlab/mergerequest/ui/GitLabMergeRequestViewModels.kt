@@ -66,7 +66,8 @@ internal class GitLabMergeRequestViewModels(
   }
 
   private val _diffVm by lazy {
-    GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, discussionsVms, avatarIconProvider).apply {
+    GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, discussionsVms,
+                                                 avatarIconProvider, projectData.contextDataLoader).apply {
       setup()
     }
   }
@@ -74,7 +75,8 @@ internal class GitLabMergeRequestViewModels(
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
     GitLabMergeRequestEditorReviewViewModel(cs, project, projectData.projectMapping, currentUser, mergeRequest,
-                                            discussionsVms, avatarIconProvider, openMergeRequestDetails, openMergeRequestDiff).apply {
+                                            discussionsVms, avatarIconProvider, projectData.contextDataLoader,
+                                            openMergeRequestDetails, openMergeRequestDiff).apply {
       setup()
     }
   }

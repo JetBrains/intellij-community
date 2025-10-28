@@ -9,6 +9,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.awt.Image
+import java.net.URI
 import java.net.http.HttpResponse
 
 @SinceGitLab("7.0", note = "No exact version")
@@ -30,6 +31,11 @@ suspend fun GitLabApi.GraphQL.getCurrentUser(): GitLabUserDTO {
 }
 
 suspend fun GitLabApi.loadImage(uri: String): Image {
+  val request = request(uri).GET().build()
+  return loadImage(request).body()
+}
+
+suspend fun GitLabApi.loadImage(uri: URI): Image {
   val request = request(uri).GET().build()
   return loadImage(request).body()
 }

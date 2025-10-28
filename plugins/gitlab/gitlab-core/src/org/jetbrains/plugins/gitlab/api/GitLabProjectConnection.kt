@@ -36,8 +36,9 @@ class GitLabProjectConnection(
 
   val tokenRefreshFlow: Flow<Unit> = tokenState.drop(1).map { }
 
-  val projectData: GitLabProject = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, glProject, currentUser, tokenRefreshFlow)
-  val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
+  val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient, repo.repository)
+
+  val projectData: GitLabProject = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, glProject, currentUser, tokenRefreshFlow, imageLoader)
 
   val serverVersion: GitLabVersion? = glMetadata?.version
 

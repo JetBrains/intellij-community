@@ -2,15 +2,20 @@
 package org.jetbrains.plugins.gitlab.data
 
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
+import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
 import icons.CollaborationToolsIcons
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.request.loadImage
+import org.jetbrains.plugins.gitlab.api.restApiUri
 import java.awt.Image
+import java.net.URI
+import java.net.URL
 import javax.swing.Icon
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -20,25 +25,34 @@ private const val LOADED_GRAVATAR_SIZE: Int = 80
 
 class GitLabImageLoader(
   private val apiClient: GitLabApi,
-  private val server: GitLabServerPath
-) : AsyncImageIconsProvider.AsyncImageLoader<GitLabUserDTO> {
+  private val gitLabProjectCoordinates: GitLabProjectCoordinates
+) : AsyncImageIconsProvider.AsyncImageLoader<GitLabUserDTO>, AsyncHtmlImageLoader {
   override suspend fun load(key: GitLabUserDTO): Image? {
     return key.avatarUrl?.let { avatarUrl ->
       val actualUri = when {
         avatarUrl.startsWith("http") -> avatarUrl
         avatarUrl.startsWith("/avatar") -> "https://secure.gravatar.com$avatarUrl?s=$LOADED_GRAVATAR_SIZE&d=identicon"
-        else -> server.uri + avatarUrl
+        else -> gitLabProjectCoordinates.serverPath.uri + avatarUrl
       }
-      try {
-        apiClient.loadImage(actualUri)
+      load(null, actualUri)
+    }
+  }
+
+  override suspend fun load(baseUrl: URL?, src: String): Image? {
+    try {
+      if (src.startsWith("/uploads/")) {
+        val uriString = gitLabProjectCoordinates.restApiUri.resolveRelative(src.trimStart('/')).toString()
+        return apiClient.loadImage(uriString)
       }
-      catch (ce: CancellationException) {
-        throw ce
-      }
-      catch (e: Exception) {
-        LOG.warn("Failed to load the avatar image from avatarUrl $avatarUrl with actual URI $actualUri", e)
-        throw e
-      }
+      val uri = URI.create(src)
+      return apiClient.loadImage(uri)
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to load the image from src $src", e)
+      throw e
     }
   }
 
