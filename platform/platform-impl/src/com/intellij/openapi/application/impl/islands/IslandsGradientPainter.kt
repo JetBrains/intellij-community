@@ -35,11 +35,6 @@ internal class IslandsGradientPainter(private val frame: IdeFrame, private val m
     "MainToolbar.inactiveBackground",
     "ToolWindow.Stripe.background",
     "StatusBar.background",
-
-    // Nav bar
-    "StatusBar.Breadcrumbs.hoverBackground",
-    "StatusBar.Breadcrumbs.selectionBackground",
-    "StatusBar.Breadcrumbs.selectionInactiveBackground"
     )
 
   private val projectWindowCustomizer = ProjectWindowCustomizerService.getInstance()

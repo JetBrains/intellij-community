@@ -69,6 +69,8 @@
       "background": "BackgroundDark",
       "borderColor": "BorderTransparent",
       "Breadcrumbs.hoverBackground": "#00000010",
+      "Breadcrumbs.selectionBackground": "#00000010",
+      "Breadcrumbs.selectionInactiveBackground": "#00000010",
       "Widget.hoverBackground": "#00000010"
     },
 

@@ -114,6 +114,8 @@
       "Breadcrumbs.foreground": "#9da0a8",
       "Widget.foreground": "#9da0a8",
       "Breadcrumbs.hoverBackground": "#FFFFFF18",
+      "Breadcrumbs.selectionBackground": "#FFFFFF18",
+      "Breadcrumbs.selectionInactiveBackground": "#FFFFFF18",
       "Widget.hoverBackground": "#FFFFFF18"
     },
 
