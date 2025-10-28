@@ -15,5 +15,5 @@ public final class PythonCommunityImplPoetryCommonIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonCommunityImplPoetryCommonIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Poetry = load("icons/intellij/python/community/impl/poetry/common/expui/poetry.svg", -142471747, 0);
+  /** 16x16 */ public static final @NotNull Icon Poetry = load("icons/intellij/python/community/impl/poetry/common/expui/poetry.svg", -286615611, 0);
 }
