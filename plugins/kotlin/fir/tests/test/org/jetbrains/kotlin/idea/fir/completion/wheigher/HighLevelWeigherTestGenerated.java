@@ -505,6 +505,16 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../../completion/testData/weighers/basic/DeprecatedSinceKotlinFun.kt");
         }
 
+        @TestMetadata("DoNotPreferNullForNonNullable.kt")
+        public void testDoNotPreferNullForNonNullable() throws Exception {
+            runTest("../../completion/testData/weighers/basic/DoNotPreferNullForNonNullable.kt");
+        }
+
+        @TestMetadata("DoNotPreferNullForNonNullable2.kt")
+        public void testDoNotPreferNullForNonNullable2() throws Exception {
+            runTest("../../completion/testData/weighers/basic/DoNotPreferNullForNonNullable2.kt");
+        }
+
         @TestMetadata("DslCallWithExpectedType.kt")
         public void testDslCallWithExpectedType() throws Exception {
             runTest("../../completion/testData/weighers/basic/DslCallWithExpectedType.kt");

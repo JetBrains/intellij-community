@@ -505,6 +505,16 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/DeprecatedSinceKotlinFun.kt");
         }
 
+        @TestMetadata("DoNotPreferNullForNonNullable.kt")
+        public void testDoNotPreferNullForNonNullable() throws Exception {
+            runTest("../testData/weighers/basic/DoNotPreferNullForNonNullable.kt");
+        }
+
+        @TestMetadata("DoNotPreferNullForNonNullable2.kt")
+        public void testDoNotPreferNullForNonNullable2() throws Exception {
+            runTest("../testData/weighers/basic/DoNotPreferNullForNonNullable2.kt");
+        }
+
         @TestMetadata("DslCallWithExpectedType.kt")
         public void testDslCallWithExpectedType() throws Exception {
             runTest("../testData/weighers/basic/DslCallWithExpectedType.kt");

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.isNothingType
+import org.jetbrains.kotlin.analysis.api.components.isNullable
 import org.jetbrains.kotlin.analysis.api.components.isSubClassOf
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.isUnitType
@@ -97,6 +98,8 @@ internal object ExpectedTypeWeigher {
                 // The only exception where we should prefer is for the `null` constant, which will be of type `Nothing?`
                 actualType.isNothingType && !actualType.isMarkedNullable -> NOT_MATCHES
                 actualType.isSubtypeOf(expectedType) -> MATCHES
+                // This matches for `null`, which should not ever be suggested for non-nullable expecte types
+                actualType.isNothingType && actualType.isMarkedNullable && !expectedType.isNullable -> NOT_MATCHES
                 actualType.withNullability(false).isSubtypeOf(expectedType) -> MATCHES_WITHOUT_NULLABILITY
                 else -> NOT_MATCHES
             }
