@@ -1266,6 +1266,7 @@ private class CounterLabel : JPanel(), UISettingsListener {
   private val textPanel: TextPanel
   private var numberOfProgresses: Int = 0
   private var isProgressVisible: Boolean = false
+  private var isPopupShowing: Boolean = false
 
   private var lastDigitNumber: Int = 0
   private var textsForMinimumSize: IntRange? = null
@@ -1291,28 +1292,35 @@ private class CounterLabel : JPanel(), UISettingsListener {
   fun setNumber(numberOfProgresses: Int, isProgressVisible: Boolean, isPopupShowing: Boolean) {
     this.numberOfProgresses = numberOfProgresses
     this.isProgressVisible = isProgressVisible
+    this.isPopupShowing = isPopupShowing
 
-    val numberToShow = if (isProgressVisible) {
+    refreshTextForMinimumSizeIfNeeded()
+    refreshPanelText()
+  }
+
+  private fun getNumberToShow(): Int {
+    return if (isProgressVisible) {
       numberOfProgresses - 1
     }
     else {
       numberOfProgresses
     }
+  }
 
-    refreshTextForMinimumSizeIfNeeded(numberToShow)
-
-    val panelText = when {
+  private fun refreshPanelText() {
+    val numberToShow = getNumberToShow()
+    val text = when {
       isPopupShowing -> ""
       numberToShow <= 0 -> ""
       !isProgressVisible && numberToShow == 1 -> ""
       isProgressVisible -> "+${numberToShow}"
       else -> "${numberToShow}"
     }
-    textPanel.text = panelText
+    textPanel.text = text
   }
 
-  private fun refreshTextForMinimumSizeIfNeeded(numberToShow: Int) {
-    val numberToShowString = numberToShow.toString()
+  private fun refreshTextForMinimumSizeIfNeeded() {
+    val numberToShowString = getNumberToShow().toString()
     if (numberToShowString.length != lastDigitNumber) {
       lastDigitNumber = numberToShowString.length
       textsForMinimumSize = when (lastDigitNumber) {
