@@ -93,23 +93,21 @@ abstract class PyImportableNameCompletionContributor : CompletionContributor(), 
     return PsiTreeUtil.getParentOfType(element, PyImportStatementBase::class.java) == null
   }
 
-  companion object {
-    fun addImportForLookupElement(context: InsertionContext, item: LookupElement, tailOffset: Int) {
-      val manager = PsiDocumentManager.getInstance(context.project)
-      val document = manager.getDocument(context.file)
-      if (document != null) {
-        manager.commitDocument(document)
-      }
-      val ref = context.file.findReferenceAt(tailOffset)
-      if (ref == null || ref.resolve() === item.psiElement) {
-        // no import statement needed
-        return
-      }
-      WriteCommandAction.writeCommandAction(context.project, context.file).run<RuntimeException> {
-        val psiElement = item.psiElement
-        if (psiElement is PsiNamedElement) {
-          AddImportHelper.addImport(psiElement, context.file, ref.element as PyElement)
-        }
+  fun addImportForLookupElement(context: InsertionContext, item: LookupElement, tailOffset: Int) {
+    val manager = PsiDocumentManager.getInstance(context.project)
+    val document = manager.getDocument(context.file)
+    if (document != null) {
+      manager.commitDocument(document)
+    }
+    val ref = context.file.findReferenceAt(tailOffset)
+    if (ref == null || ref.resolve() === item.psiElement) {
+      // no import statement needed
+      return
+    }
+    WriteCommandAction.writeCommandAction(context.project, context.file).run<RuntimeException> {
+      val psiElement = item.psiElement
+      if (psiElement is PsiNamedElement) {
+        AddImportHelper.addImport(psiElement, context.file, ref.element as PyElement)
       }
     }
   }

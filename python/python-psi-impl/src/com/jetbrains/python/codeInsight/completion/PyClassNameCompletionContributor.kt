@@ -6,14 +6,15 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.PsiFile
+import com.intellij.patterns.StandardPatterns
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.CachedValueProvider
@@ -26,6 +27,7 @@ import com.intellij.util.TimeoutUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
@@ -41,21 +43,43 @@ import java.util.function.LongConsumer
 /**
  * Adds completion variants for Python classes, functions and variables.
  */
-class PyClassNameCompletionContributor : PyImportableNameCompletionContributor() {
+class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
   init {
     if (TRACING_WITH_SPUTNIK_ENABLED) {
       println("\u0001hr('Importable names completion')")
     }
   }
 
-  override fun doFillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    if (!shouldDoCompletion(parameters, result)) return
+    
     result.restartCompletionWhenNothingMatches()
     val remainingResults = result.runRemainingContributors(parameters, true)
-
     if (parameters.isExtendedCompletion || remainingResults.isEmpty() || containsOnlyElementUnderTheCaret(remainingResults, parameters)) {
       fillCompletionVariantsImpl(parameters, result)
     }
   }
+
+  private fun shouldDoCompletion(parameters: CompletionParameters, result: CompletionResultSet): Boolean {
+    if (result.prefixMatcher.prefix.isEmpty()) {
+      result.restartCompletionOnPrefixChange(StandardPatterns.string().longerThan(0))
+      return false
+    }
+
+    val element = parameters.position
+    val parent = element.parent
+    if (parent is PyReferenceExpression && parent.isQualified) {
+      return false
+    }
+    if (parent is PyStringLiteralExpression) {
+      val prefix = parent.text.substring(0, parameters.offset - parent.textRange.startOffset)
+      if (prefix.contains(".")) {
+        return false
+      }
+    }
+    return element.findParentOfType<PyImportStatementBase>() == null
+  }
+
 
   private fun fillCompletionVariantsImpl(parameters: CompletionParameters, result: CompletionResultSet) {
     val isExtendedCompletion = parameters.isExtendedCompletion
@@ -319,6 +343,48 @@ class PyClassNameCompletionContributor : PyImportableNameCompletionContributor()
     var totalVariants: Int = 0,
   )
 
+  private val importingInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
+    addImportForLookupElement(context, item, context.tailOffset - 1)
+  }
+
+  private val functionInsertHandler: InsertHandler<LookupElement> = object : PyFunctionInsertHandler() {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+      val tailOffset = context.tailOffset - 1
+      super.handleInsert(context, item)  // adds parentheses, modifies tail offset
+      context.commitDocument()
+      addImportForLookupElement(context, item, tailOffset)
+    }
+  }
+
+  private val genericTypeInsertHandler: InsertHandler<LookupElement> = InsertHandler<LookupElement> { context, item ->
+    val tailOffset = context.tailOffset - 1
+    PyParameterizedTypeInsertHandler.INSTANCE.handleInsert(context, item)
+    context.commitDocument()
+    addImportForLookupElement(context, item, tailOffset)
+  }
+
+  private val stringLiteralInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
+    val element = item.psiElement
+    if (element == null) return@InsertHandler
+    if (element is PyQualifiedNameOwner) {
+      insertStringLiteralPrefix(element.qualifiedName, element.name, context)
+    }
+    else {
+      val importPath = QualifiedNameFinder.findCanonicalImportPath(element, null)
+      if (importPath != null) {
+        insertStringLiteralPrefix(importPath.toString(), importPath.lastComponent.toString(), context)
+      }
+    }
+  }
+
+  private fun insertStringLiteralPrefix(qualifiedName: String?, name: String?, context: InsertionContext) {
+    if (qualifiedName != null && name != null) {
+      val qualifiedNamePrefix = qualifiedName.dropLast(name.length)
+      context.document.insertString(context.startOffset, qualifiedNamePrefix)
+    }
+  }
+
+
   companion object {
     // See https://plugins.jetbrains.com/plugin/18465-sputnik
     private const val TRACING_WITH_SPUTNIK_ENABLED = false
@@ -326,5 +392,24 @@ class PyClassNameCompletionContributor : PyImportableNameCompletionContributor()
 
     // See PY-73964, IJPL-265
     private const val RECURSIVE_INDEX_ACCESS_ALLOWED = false
+
+    fun addImportForLookupElement(context: InsertionContext, item: LookupElement, tailOffset: Int) {
+      val manager = PsiDocumentManager.getInstance(context.project)
+      val document = manager.getDocument(context.file)
+      if (document != null) {
+        manager.commitDocument(document)
+      }
+      val ref = context.file.findReferenceAt(tailOffset)
+      if (ref == null || ref.resolve() === item.psiElement) {
+        // no import statement needed
+        return
+      }
+      WriteCommandAction.writeCommandAction(context.project, context.file).run<RuntimeException> {
+        val psiElement = item.psiElement
+        if (psiElement is PsiNamedElement) {
+          AddImportHelper.addImport(psiElement, context.file, ref.element as PyElement)
+        }
+      }
+    }
   }
 }
