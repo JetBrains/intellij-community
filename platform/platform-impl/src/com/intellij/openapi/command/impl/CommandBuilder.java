@@ -212,6 +212,8 @@ final class CommandBuilder {
   private static final class NoEvent implements CmdEvent {
     static final NoEvent INSTANCE = new NoEvent();
 
+    // region Unsupported
+
     @Override
     public @NotNull CommandId id() { throw new UnsupportedOperationException(); }
 
@@ -232,12 +234,18 @@ final class CommandBuilder {
 
     @Override
     public boolean isTransparent() { throw new UnsupportedOperationException(); }
+
+    // endregion
   }
 
   private static final class NoEditorProvider implements CurrentEditorProvider {
     static final CurrentEditorProvider INSTANCE = new NoEditorProvider();
 
+    // region Unsupported
+
     @Override
     public @Nullable FileEditor getCurrentEditor(@Nullable Project project) { throw new UnsupportedOperationException(); }
+
+    // endregion
   }
 }

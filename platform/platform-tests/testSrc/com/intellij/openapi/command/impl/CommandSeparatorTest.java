@@ -13,8 +13,8 @@ import java.util.List;
 
 public final class CommandSeparatorTest extends LightPlatformTestCase {
 
-  private List<State> separatorOutput;
   private CommandSeparator separator;
+  private List<State> separatorOutput;
 
   @Override
   public void setUp() throws Exception {
@@ -27,6 +27,7 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
     startCommand();
     finishCommand();
     assertResult(
+      "separator must forward start-finish pair as is",
       State.COMMAND_STARTED,
       State.COMMAND_FINISHED
     );
@@ -36,6 +37,7 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
     startTransparent();
     finishTransparent();
     assertResult(
+      "separator must forward transparent start-finish pair as is",
       State.TRANSPARENT_STARTED,
       State.TRANSPARENT_FINISHED
     );
@@ -47,6 +49,7 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
     finishTransparent();
     finishCommand();
     assertResult(
+      "separator must drop nested transparent start-finish pair",
       State.COMMAND_STARTED,
       State.COMMAND_FINISHED
     );
@@ -58,6 +61,7 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
     finishCommand();
     finishTransparent();
     assertResult(
+      "separator must drop nested start-finish pair",
       State.TRANSPARENT_STARTED,
       State.TRANSPARENT_FINISHED
     );
@@ -69,6 +73,7 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
     finishCommand();
     finishTransparent();
     assertResult(
+      "separator must linearize overlapping commands",
       State.COMMAND_STARTED,
       State.COMMAND_FINISHED,
       State.TRANSPARENT_STARTED,
@@ -82,6 +87,7 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
     finishTransparent();
     finishCommand();
     assertResult(
+      "separator must linearize overlapping commands",
       State.TRANSPARENT_STARTED,
       State.TRANSPARENT_FINISHED
     );
@@ -93,6 +99,7 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
     startCommand();
     finishCommand();
     assertResult(
+      "separator must forward start-finish pair as is",
       State.COMMAND_STARTED,
       State.COMMAND_FINISHED,
       State.COMMAND_STARTED,
@@ -106,6 +113,7 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
     startTransparent();
     finishTransparent();
     assertResult(
+      "separator must forward transparent start-finish pair as is",
       State.TRANSPARENT_STARTED,
       State.TRANSPARENT_FINISHED,
       State.TRANSPARENT_STARTED,
@@ -114,7 +122,7 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
   }
 
   public void testEmpty() {
-    assertResult();
+    assertResult("separator must be empty if no commands were added");
   }
 
   public void testNestedCommandFails() {
@@ -163,9 +171,16 @@ public final class CommandSeparatorTest extends LightPlatformTestCase {
     separator.undoTransparentActionFinished();
   }
 
-  private void assertResult(State... expected) {
-    assertEquals(List.of(expected), separatorOutput);
-    assertTrue(separator.isInitialState());
+  private void assertResult(String message, State... expected) {
+    assertEquals(
+      message,
+      List.of(expected),
+      separatorOutput
+    );
+    assertTrue(
+      "start-finish pair must leave the separator in the initial state but actual: " + separator.toString(),
+      separator.isInitialState()
+    );
   }
 
   private @NotNull CommandEvent createCommandEvent() {

@@ -96,32 +96,20 @@ public final class CommandSeparator implements CommandListener {
            !transparentInsideCommand;
   }
 
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   private void notifyCommandStarted(@NotNull CommandEvent event) {
-    notifyStarted(createCmdEvent(event));
+    publisher.onCommandStarted(createCmdEvent(event));
   }
 
   private void notifyCommandFinished(@NotNull CommandEvent event) {
-    notifyFinished(createCmdEvent(event));
+    publisher.onCommandFinished(createCmdEvent(event));
   }
 
   private void notifyTransparentStarted() {
-    notifyStarted(createTransparentCmdEvent());
+    publisher.onCommandStarted(createTransparentCmdEvent());
   }
 
   private void notifyTransparentFinished() {
-    notifyFinished(createTransparentCmdEvent());
-  }
-
-  private void notifyStarted(@NotNull CmdEvent cmdEvent) {
-    publisher.onCommandStarted(cmdEvent);
-  }
-
-  private void notifyFinished(@NotNull CmdEvent cmdEvent) {
-    publisher.onCommandFinished(cmdEvent);
+    publisher.onCommandFinished(createTransparentCmdEvent());
   }
 
   private void assertInsideCommand() {
