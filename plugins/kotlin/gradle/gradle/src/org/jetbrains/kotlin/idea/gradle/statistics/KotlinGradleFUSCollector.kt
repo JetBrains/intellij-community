@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
-private const val BASE_FUS_VERSION = 11
+private const val BASE_FUS_VERSION = 12
 
 object KotlinGradleFUSCollector : CounterUsagesCollector() {
 
@@ -108,7 +108,8 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             StringMetrics.KOTLIN_REFLECT_VERSION,
             StringMetrics.KOTLIN_COROUTINES_VERSION,
             StringMetrics.KOTLIN_SERIALIZATION_VERSION,
-            StringMetrics.ANDROID_GRADLE_PLUGIN_VERSION
+            StringMetrics.ANDROID_GRADLE_PLUGIN_VERSION,
+            StringMetrics.KOTLIN_GRADLE_PLUGIN_VERSION,
         ),
         KotlinGradleEvent(
             GROUP, GradleStatisticsEventGroups.KotlinFeatures,
@@ -120,7 +121,8 @@ object KotlinGradleFUSCollector : CounterUsagesCollector() {
             BooleanMetrics.GRADLE_WORKER_API_USED,
             BooleanMetrics.KOTLIN_OFFICIAL_CODESTYLE,
             BooleanMetrics.KOTLIN_PROGRESSIVE_MODE,
-            BooleanMetrics.KOTLIN_KTS_USED
+            BooleanMetrics.KOTLIN_KTS_USED,
+            BooleanMetrics.KOTLIN_BTA_USED,
         ),
         KotlinGradleEvent(
             GROUP, GradleStatisticsEventGroups.GradlePerformance,

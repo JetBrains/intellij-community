@@ -90,7 +90,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.KOTLIN_REFLECT_VERSION,
             KotlinBuildToolFusMetricName.KOTLIN_COROUTINES_VERSION,
             KotlinBuildToolFusMetricName.KOTLIN_SERIALIZATION_VERSION,
-            KotlinBuildToolFusMetricName.ANDROID_GRADLE_PLUGIN_VERSION
+            KotlinBuildToolFusMetricName.ANDROID_GRADLE_PLUGIN_VERSION,
+            KotlinBuildToolFusMetricName.KOTLIN_GRADLE_PLUGIN_VERSION
         ), addIDEPluginVersion = true
     ),
     FusFlowSendingStep(
@@ -103,7 +104,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.GRADLE_WORKER_API_USED,
             KotlinBuildToolFusMetricName.KOTLIN_OFFICIAL_CODESTYLE,
             KotlinBuildToolFusMetricName.KOTLIN_PROGRESSIVE_MODE,
-            KotlinBuildToolFusMetricName.KOTLIN_KTS_USED
+            KotlinBuildToolFusMetricName.KOTLIN_KTS_USED,
+            KotlinBuildToolFusMetricName.KOTLIN_BTA_USED
         )
     ),
     FusFlowSendingStep(
