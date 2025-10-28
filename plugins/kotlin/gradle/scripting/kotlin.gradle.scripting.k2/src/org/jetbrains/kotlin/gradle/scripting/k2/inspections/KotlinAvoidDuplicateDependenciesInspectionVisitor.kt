@@ -40,19 +40,30 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
                 if (dependencyType == DependencyType.SINGLE_ARGUMENT || dependencyType == DependencyType.NAMED_ARGUMENTS) it to dependencyType
                 else null
             }
+
         // group duplicate dependencies
-        val duplicateGroups = dependencies.groupBy { (dependency, type) ->
-            extractDependencyKey(dependency, type) to
-                    // additionally separate annotationProcessor dependencies
-                    if (isOnTheFly) (dependency.calleeExpression?.text == "annotationProcessor")
-                    // in batch mode additionally restrict groups to exact duplicates
-                    else dependency.text
-        }.filter { it.key.first != null && it.value.size > 1 }
-            .map { mapEntry -> mapEntry.key.first!! to mapEntry.value.map { it.first } }
+        val duplicateGroups = findDuplicateGroups(dependencies)
 
         duplicateGroups.forEach { (key, dependencies) ->
             if (isOnTheFly) reportProblemInOnTheFlyMode(key, dependencies)
             else reportProblemInBatchMode(key, dependencies)
+        }
+    }
+
+    private fun findDuplicateGroups(dependencies: Sequence<Pair<KtCallExpression, DependencyType>>): List<Pair<String, List<KtCallExpression>>> {
+        return dependencies.groupBy { (dependency, type) ->
+            extractDependencyKey(dependency, type) to createGroupingCriteria(dependency)
+        }.filter { it.key.first != null && it.value.size > 1 }
+            .map { mapEntry -> mapEntry.key.first!! to mapEntry.value.map { it.first } }
+    }
+
+    private fun createGroupingCriteria(dependency: KtCallExpression): Any {
+        return if (isOnTheFly) {
+            // additionally separate annotationProcessor dependencies
+            dependency.calleeExpression?.text == "annotationProcessor"
+        } else {
+            // in batch mode additionally restrict groups to exact duplicates
+            dependency.text
         }
     }
 
