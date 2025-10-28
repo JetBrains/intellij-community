@@ -75,7 +75,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
     myConnection = manager.getProject().getMessageBus().connect(manager);
 
-    LowMemoryWatcher.register(this::processQueue, manager);
+    LowMemoryWatcher.register(() -> processQueue(), manager);
 
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
@@ -138,7 +138,7 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   public static void clearPsiCaches(@NotNull FileViewProvider viewProvider) {
-    ((AbstractFileViewProvider)viewProvider).getCachedPsiFiles().forEach(PsiFile::clearCaches);
+    ((AbstractFileViewProvider)viewProvider).getCachedPsiFiles().forEach(file -> file.clearCaches());
   }
 
   @Override
@@ -201,7 +201,7 @@ public final class FileManagerImpl implements FileManagerEx {
   @Override
   @TestOnly
   public void cleanupForNextTest() {
-    ApplicationManager.getApplication().runWriteAction(this::clearViewProviders);
+    ApplicationManager.getApplication().runWriteAction(() -> clearViewProviders());
 
     myVFileToPsiDirMap.set(null);
     myManager.dropPsiCaches();
@@ -824,12 +824,12 @@ public final class FileManagerImpl implements FileManagerEx {
       FileViewProvider recreated = createFileViewProvider(file, true);
       myTempProviders.put(file, context, recreated);
       return areViewProvidersEquivalent(viewProvider, recreated) &&
-             ContainerUtil.all(((AbstractFileViewProvider)viewProvider).getCachedPsiFiles(), FileManagerImpl::isValidOriginal);
+             ContainerUtil.all(((AbstractFileViewProvider)viewProvider).getCachedPsiFiles(), psiFile1 -> isValidOriginal(psiFile1));
     }
     finally {
       FileViewProvider temp = myTempProviders.remove(file, context);
-      if (temp != null) {
-        DebugUtil.performPsiModification("invalidate temp view provider", ((AbstractFileViewProvider)temp)::markInvalidated);
+      if (temp instanceof AbstractFileViewProvider) {
+        DebugUtil.performPsiModification("invalidate temp view provider", () -> ((AbstractFileViewProvider)temp).markInvalidated());
       }
     }
   }

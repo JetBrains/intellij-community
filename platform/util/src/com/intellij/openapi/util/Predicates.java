@@ -23,6 +23,6 @@ public final class Predicates {
 
   @Contract(pure = true)
   public static <T> @NotNull Predicate<T> nonNull() {
-    return Objects::nonNull;
+    return obj -> Objects.nonNull(obj);
   }
 }

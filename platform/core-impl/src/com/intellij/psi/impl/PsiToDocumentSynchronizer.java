@@ -281,7 +281,7 @@ public class PsiToDocumentSynchronizer {
   }
 
   public static class DocumentChangeTransaction{
-    private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<>(Comparator.comparingInt(TextRange::getStartOffset));
+    private final TreeMap<TextRange, CharSequence> myAffectedFragments = new TreeMap<>(Comparator.comparingInt(range -> range.getStartOffset()));
     private final @NotNull PsiFile myChangeScope;
     private @NotNull ImmutableCharSequence myPsiText;
 

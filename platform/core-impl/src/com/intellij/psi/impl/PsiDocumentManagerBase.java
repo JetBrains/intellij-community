@@ -842,7 +842,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public boolean hasEventSystemEnabledUncommittedDocuments() {
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-319884, EA-831652, IDEA-301732, EA-659436, IDEA-307614, EA-773260")) {
-      return ContainerUtil.exists(myUncommittedDocuments, this::isEventSystemEnabled);
+      return ContainerUtil.exists(myUncommittedDocuments, document -> isEventSystemEnabled(document));
     }
   }
 

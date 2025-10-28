@@ -5,6 +5,7 @@ import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.event.PomModelEvent;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public final class ChangeUtil {
 
@@ -135,7 +135,7 @@ public final class ChangeUtil {
     }
     return TreeGenerator.EP_NAME.getExtensionList().stream()
       .map(generator -> generator.generateTreeFor(original, table, manager))
-      .filter(Objects::nonNull).findFirst().orElse(null);
+      .filter(Predicates.nonNull()).findFirst().orElse(null);
   }
 
   public static void prepareAndRunChangeAction(@NotNull ChangeAction action, @NotNull TreeElement changedElement){
