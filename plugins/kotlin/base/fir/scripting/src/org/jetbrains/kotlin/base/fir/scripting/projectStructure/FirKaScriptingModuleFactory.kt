@@ -65,7 +65,7 @@ internal class FirKaScriptingModuleFactory : FirKaModuleFactory {
 
             val url = virtualFile.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
             val entitiesByUrl = snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(url)
-            if (entitiesByUrl.none() || entitiesByUrl.none { it is KotlinScriptEntity }) {
+            if (entitiesByUrl.none { it is KotlinScriptEntity }) {
                 return null
             }
         }

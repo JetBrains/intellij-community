@@ -29,9 +29,10 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
             return
         }
 
+        val eventCode = event.code
         if (!PsiModificationTrackerImpl.canAffectPsi(event) ||
             event.isGenericChange ||
-            event.code == PsiEventType.BEFORE_CHILD_ADDITION
+            eventCode == PsiEventType.BEFORE_CHILD_ADDITION
         ) {
             return
         }
@@ -44,11 +45,12 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
 
         val rootElement = event.parent
 
-        if (rootElement != null) {
+        if (rootElement != null && eventCode != PsiEventType.BEFORE_CHILD_REPLACEMENT) {
+            // no reasons to invalidate injected documents before and actual replacement
             invalidateCachesInInjectedDocuments(rootElement)
         }
 
-        val child = when (event.code) {
+        val child = when (eventCode) {
             PsiEventType.CHILD_REMOVED -> rootElement
             PsiEventType.BEFORE_CHILD_REPLACEMENT -> event.oldChild
             else -> event.child
@@ -67,7 +69,7 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
             return
         }
 
-        val modificationType = when (event.code) {
+        val modificationType = when (eventCode) {
             PsiEventType.CHILD_ADDED -> KaElementModificationType.ElementAdded
             PsiEventType.CHILD_REMOVED -> {
                 val removedElement = event.child ?:
