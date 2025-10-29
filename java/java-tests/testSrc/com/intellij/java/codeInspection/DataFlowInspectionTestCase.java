@@ -48,7 +48,7 @@ public abstract class DataFlowInspectionTestCase extends LightJavaCodeInsightFix
                      "}");
   }
 
-  static void addJSpecifyNullMarked(JavaCodeInsightTestFixture fixture) {
+  protected static void addJSpecifyNullMarked(JavaCodeInsightTestFixture fixture) {
     @Language("JAVA") String nullMarked =
       """
         package org.jspecify.annotations;

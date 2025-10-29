@@ -78,10 +78,12 @@ public final class JavaTypeNullabilityUtil {
   
   private static boolean isLocal(PsiClassType classType) {
     PsiElement context = classType.getPsiContext();
-    //PsiKeyword is used for `var` case
-    return (context instanceof PsiJavaCodeReferenceElement || PsiUtil.isJavaToken(context, JavaTokenType.VAR_KEYWORD)) &&
-           context.getParent() instanceof PsiTypeElement &&
-           context.getParent().getParent() instanceof PsiLocalVariable;
+    return ((context instanceof PsiJavaCodeReferenceElement) &&
+            context.getParent() instanceof PsiTypeElement &&
+            context.getParent().getParent() instanceof PsiLocalVariable) ||
+           //inferred PsiTypeElements
+           (context instanceof PsiTypeElement && ((PsiTypeElement)context).isInferredType() &&
+            context.getParent() instanceof PsiLocalVariable);
   }
 
   /**

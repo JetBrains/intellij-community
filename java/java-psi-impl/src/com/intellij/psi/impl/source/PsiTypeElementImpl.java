@@ -89,15 +89,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       else if (PsiUtil.isJavaToken(child, JavaTokenType.VAR_KEYWORD)) {
         assert type == null : this;
         type = inferVarType(parent);
-        if (type instanceof PsiClassType) {
-          PsiClassType psiClassType = (PsiClassType)type;
-          PsiClassType.ClassResolveResult result = psiClassType.resolveGenerics();
-          PsiClass element = result.getElement();
-          if (element != null) {
-            type = new PsiImmediateClassType(element, result.getSubstitutor(), psiClassType.getLanguageLevel(),
-                                             psiClassType.getAnnotationProvider(), child);
-          }
-        }
+        type = tryToAddContext(type, this);
       }
       else if (child instanceof PsiJavaCodeReferenceElement) {
         assert type == null : this;
@@ -162,7 +154,28 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
     return type;
   }
-  
+
+  /**
+   * Attempts to add additional context to the specified PsiType based on the provided context element.
+   *
+   * @param type    the PsiType object to which context might be added; can be null
+   * @param context the PsiElement providing additional context; must not be null
+   * @return the modified PsiType with the context added, or the original type if context could not be added;
+   *         returns null if the input type is null
+   */
+  public static @Nullable PsiType tryToAddContext(@Nullable PsiType type, @NotNull PsiElement context) {
+    if (type instanceof PsiClassType) {
+      PsiClassType psiClassType = (PsiClassType)type;
+      PsiClassType.ClassResolveResult result = psiClassType.resolveGenerics();
+      PsiClass element = result.getElement();
+      if (element != null) {
+        type = new PsiImmediateClassType(element, result.getSubstitutor(), psiClassType.getLanguageLevel(),
+                                         psiClassType.getAnnotationProvider(), context);
+      }
+    }
+    return type;
+  }
+
   private static PsiType createArray(PsiType elementType, List<TypeAnnotationProvider> providers, boolean ellipsis) {
     PsiType result = elementType;
     for (int i = providers.size() - 1; i >= 0; i--) {
