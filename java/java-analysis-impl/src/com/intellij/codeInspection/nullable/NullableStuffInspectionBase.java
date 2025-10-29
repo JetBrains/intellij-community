@@ -38,6 +38,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaTypeNullabilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -205,7 +206,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
           checkAccessors(field, annotated, project, manager, anno, annoToRemove, holder);
 
-          checkConstructorParameters(field, annotated, manager, anno, annoToRemove, holder);
+          checkConstructorParameters(field, annotated, anno, annoToRemove, holder);
         }
       }
 
@@ -736,7 +737,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
   }
 
-  private static @NotNull ModCommandAction createAddAnnotationFix(String anno, List<String> annoToRemove, PsiParameter parameter) {
+  private static @NotNull ModCommandAction createAddAnnotationFix(@NotNull String anno, @NotNull List<String> annoToRemove, @NotNull PsiParameter parameter) {
     return new AddAnnotationModCommandAction(anno, parameter, ArrayUtilRt.toStringArray(annoToRemove));
   }
 
@@ -746,36 +747,31 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     LOG.assertTrue(parameter.isPhysical(), setter.getText());
   }
 
-  private void checkConstructorParameters(PsiField field,
-                                          Annotated annotated,
-                                          NullableNotNullManager manager,
+  private void checkConstructorParameters(PsiField field, Annotated annotated,
                                           String anno, List<String> annoToRemove, @NotNull ProblemsHolder holder) {
     List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
     if (initializers.isEmpty()) return;
 
+    if (REPORT_NOT_ANNOTATED_GETTER) {
+      reportConstructorParameterFromField(field, anno, annoToRemove, holder, initializers);
+    }
+
+    if (field.hasModifierProperty(PsiModifier.FINAL)) {
+      checkFinalFieldInitializedNotNull(field, annotated, holder, initializers);
+    }
+  }
+
+  private void checkFinalFieldInitializedNotNull(@NotNull PsiField field, @NotNull Annotated annotated,
+                                                 @NotNull ProblemsHolder holder, @NotNull List<PsiExpression> initializers) {
     List<PsiParameter> notNullParams = new ArrayList<>();
-
-    boolean isFinal = field.hasModifierProperty(PsiModifier.FINAL);
-
     for (PsiExpression rhs : initializers) {
-      if (rhs instanceof PsiReferenceExpression) {
-        PsiElement target = ((PsiReferenceExpression)rhs).resolve();
+      if (rhs instanceof PsiReferenceExpression ref) {
+        PsiElement target = ref.resolve();
         if (isConstructorParameter(target) && target.isPhysical()) {
           PsiParameter parameter = (PsiParameter)target;
-          if (REPORT_NOT_ANNOTATED_GETTER && !hasNullability(manager, parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
-            final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
-            if (nameIdentifier != null && nameIdentifier.isPhysical()) {
-              reportProblem(holder, nameIdentifier, createAddAnnotationFix(anno, annoToRemove, parameter),
-                            "inspection.nullable.problems.annotated.field.constructor.parameter.not.annotated",
-                            getPresentableAnnoName(field));
-              continue;
-            }
-          }
-
-          if (isFinal && annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false, false)) {
+          if (annotated.isDeclaredNullable && isNotNullNotInferred(parameter, false, false)) {
             notNullParams.add(parameter);
           }
-
         }
       }
     }
@@ -792,6 +788,40 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       reportProblem(holder, nameIdentifier, AddAnnotationModCommandAction.createAddNotNullFix(field),
                     "0.field.is.always.initialized.not.null", getPresentableAnnoName(field));
     }
+  }
+
+  private void reportConstructorParameterFromField(@NotNull PsiField field,
+                                                   @NotNull String anno,
+                                                   @NotNull List<String> annoToRemove,
+                                                   @NotNull ProblemsHolder holder,
+                                                   @NotNull List<PsiExpression> initializers) {
+    Map<PsiMethod, List<PsiExpression>> ctorToInitializers = StreamEx.of(initializers)
+      .mapToEntry(e -> PsiTreeUtil.getParentOfType(e, PsiMethod.class), e -> e)
+      .nonNullKeys()
+      .filterKeys(PsiMethod::isConstructor)
+      .grouping();
+
+    ctorToInitializers.forEach((ctor, exprs) -> {
+      List<PsiParameter> parameters = StreamEx.of(exprs)
+        .map(e -> PsiUtil.skipParenthesizedExprDown(e) instanceof PsiReferenceExpression ref
+                  ? tryCast(ref.resolve(), PsiParameter.class)
+                  : null)
+        .distinct()
+        .limit(2)
+        .toList();
+      if (parameters.size() != 1) return;
+      PsiParameter parameter = parameters.getFirst();
+      if (parameter != null && parameter.getDeclarationScope() == ctor
+          && !hasNullability(NullableNotNullManager.getInstance(field.getProject()), parameter)
+          && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
+        final PsiIdentifier nameIdentifier = parameter.getNameIdentifier();
+        if (nameIdentifier != null && nameIdentifier.isPhysical()) {
+          reportProblem(holder, nameIdentifier, createAddAnnotationFix(anno, annoToRemove, parameter),
+                        "inspection.nullable.problems.annotated.field.constructor.parameter.not.annotated",
+                        getPresentableAnnoName(field));
+        }
+      }
+    });
   }
 
   private static boolean isConstructorParameter(@Nullable PsiElement parameter) {
