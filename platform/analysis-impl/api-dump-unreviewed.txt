@@ -1220,6 +1220,7 @@ com.intellij.codeInsight.template.macro.TemplateCompletionProcessor
 - a:nextTabOnItemSelected(com.intellij.codeInsight.template.ExpressionContext,com.intellij.codeInsight.lookup.LookupElement):Z
 f:com.intellij.codeInsight.util.CodeCompletionKt
 - sf:CodeCompletion:com.intellij.platform.diagnostic.telemetry.Scope
+- sf:CodeCompletionContributors:com.intellij.platform.diagnostic.telemetry.Scope
 c:com.intellij.codeInspection.AddToInspectionOptionListFix
 - com.intellij.modcommand.ModCommandQuickFix
 - com.intellij.codeInsight.intention.LowPriorityAction
