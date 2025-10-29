@@ -686,10 +686,38 @@ http_file(
 )
 
 http_file(
+  name = "org_jspecify-jspecify-1_0_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar",
+  sha256 = "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab",
+  downloaded_file_path = "jspecify-1.0.0.jar"
+)
+
+http_file(
+  name = "com_google_errorprone-error_prone_annotations-2_40_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.40.0/error_prone_annotations-2.40.0.jar",
+  sha256 = "bfa77e49226e9bd2ac7ac1bc4a3c70430078f2e6cd30c8e0615d6c25d8ae818d",
+  downloaded_file_path = "error_prone_annotations-2.40.0.jar"
+)
+
+http_file(
   name = "com_github_ben-manes_caffeine-caffeine-3_2_2-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ben-manes/caffeine/caffeine/3.2.2/caffeine-3.2.2-sources.jar",
   sha256 = "2ec9bc766e34375395ca88522105efcc82247ade006848ebd8decf21bead1d7d",
   downloaded_file_path = "caffeine-3.2.2-sources.jar"
+)
+
+http_file(
+  name = "org_jspecify-jspecify-1_0_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar",
+  sha256 = "adf0898191d55937fb3192ba971826f4f294292c4a960740f3c27310e7b70296",
+  downloaded_file_path = "jspecify-1.0.0-sources.jar"
+)
+
+http_file(
+  name = "com_google_errorprone-error_prone_annotations-2_40_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.40.0/error_prone_annotations-2.40.0-sources.jar",
+  sha256 = "2cc5411999e3a3b8d6cacdfe138240ad5d79dfe0da5d26ae51b3b2bf9e65235e",
+  downloaded_file_path = "error_prone_annotations-2.40.0-sources.jar"
 )
 
 http_file(
@@ -6034,13 +6062,6 @@ http_file(
 )
 
 http_file(
-  name = "org_jspecify-jspecify-1_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar",
-  sha256 = "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab",
-  downloaded_file_path = "jspecify-1.0.0.jar"
-)
-
-http_file(
   name = "org_junit_jupiter-junit-jupiter-api-6_0_0-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/jupiter/junit-jupiter-api/6.0.0/junit-jupiter-api-6.0.0-sources.jar",
   sha256 = "52a9bb01e348a87c5743c6555274be8999d72ebdae0db3991b99f24bcd078e5e",
@@ -6052,13 +6073,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/junit/platform/junit-platform-commons/6.0.0/junit-platform-commons-6.0.0-sources.jar",
   sha256 = "eb76cc1b09296370774f1de11c2fa037464753d98f0d542312e270b647a4c106",
   downloaded_file_path = "junit-platform-commons-6.0.0-sources.jar"
-)
-
-http_file(
-  name = "org_jspecify-jspecify-1_0_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar",
-  sha256 = "adf0898191d55937fb3192ba971826f4f294292c4a960740f3c27310e7b70296",
-  downloaded_file_path = "jspecify-1.0.0-sources.jar"
 )
 
 http_file(

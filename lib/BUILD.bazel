@@ -817,11 +817,32 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
+java_library(
   name = "caffeine",
-  jar = "@com_github_ben-manes_caffeine-caffeine-3_2_2_http//file",
-  source_jar = "@com_github_ben-manes_caffeine-caffeine-3_2_2_http//file",
+  exports = [
+    ":com_github_ben-manes_caffeine-caffeine-3_2_2_http_import",
+    ":org_jspecify-jspecify-1_0_0_http_import",
+    ":com_google_errorprone-error_prone_annotations-2_40_0_http_import",
+  ],
   visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "com_github_ben-manes_caffeine-caffeine-3_2_2_http_import",
+  jar = "@com_github_ben-manes_caffeine-caffeine-3_2_2_http//file",
+  source_jar = "@com_github_ben-manes_caffeine-caffeine-3_2_2_http//file"
+)
+
+jvm_import(
+  name = "org_jspecify-jspecify-1_0_0_http_import",
+  jar = "@org_jspecify-jspecify-1_0_0_http//file",
+  source_jar = "@org_jspecify-jspecify-1_0_0_http//file"
+)
+
+jvm_import(
+  name = "com_google_errorprone-error_prone_annotations-2_40_0_http_import",
+  jar = "@com_google_errorprone-error_prone_annotations-2_40_0_http//file",
+  source_jar = "@com_google_errorprone-error_prone_annotations-2_40_0_http//file"
 )
 
 jvm_import(
@@ -4022,12 +4043,6 @@ jvm_import(
   name = "org_junit_platform-junit-platform-commons-6_0_0_http_import",
   jar = "@org_junit_platform-junit-platform-commons-6_0_0_http//file",
   source_jar = "@org_junit_platform-junit-platform-commons-6_0_0_http//file"
-)
-
-jvm_import(
-  name = "org_jspecify-jspecify-1_0_0_http_import",
-  jar = "@org_jspecify-jspecify-1_0_0_http//file",
-  source_jar = "@org_jspecify-jspecify-1_0_0_http//file"
 )
 
 java_library(

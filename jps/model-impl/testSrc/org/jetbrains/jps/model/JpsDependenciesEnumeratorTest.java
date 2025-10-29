@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -58,8 +58,8 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     return getJarUrlFromProjectLib("fastutil-min");
   }
 
-  private static String getCaffeineJar() {
-    return getJarUrlFromProjectLib("caffeine");
+  private static String getSampleLibJar() {
+    return getJarUrlFromProjectLib("byte-buddy");
   }
 
   private static String getJarUrlFromProjectLib(final String libraryName) {
@@ -85,9 +85,9 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
     return library;
   }
 
-  private JpsLibrary createCaffeineLibrary() {
-    JpsLibrary library = addLibrary("caffeine");
-    library.addRoot(getCaffeineJar(), JpsOrderRootType.COMPILED);
+  private JpsLibrary createSampleLibrary() {
+    var library = addLibrary("sample");
+    library.addRoot(getSampleLibJar(), JpsOrderRootType.COMPILED);
     return library;
   }
 
@@ -170,12 +170,12 @@ public class JpsDependenciesEnumeratorTest extends JpsJavaModelTestCase {
   public void testNotExportedLibrary() {
     final JpsModule dep = addModule("dep");
     JpsModuleRootModificationUtil.addDependency(dep, createJDomLibrary(), JpsJavaDependencyScope.COMPILE, false);
-    JpsModuleRootModificationUtil.addDependency(myModule, createCaffeineLibrary(), JpsJavaDependencyScope.COMPILE, false);
+    JpsModuleRootModificationUtil.addDependency(myModule, createSampleLibrary(), JpsJavaDependencyScope.COMPILE, false);
     JpsModuleRootModificationUtil.addDependency(myModule, dep, JpsJavaDependencyScope.COMPILE, false);
 
-    assertClassRoots(dependencies(myModule).withoutSdk(), getCaffeineJar());
-    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getCaffeineJar(), getFastUtilJar());
-    assertClassRoots(dependencies(myModule).withoutSdk().recursivelyExportedOnly(), getCaffeineJar());
+    assertClassRoots(dependencies(myModule).withoutSdk(), getSampleLibJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursively(), getSampleLibJar(), getFastUtilJar());
+    assertClassRoots(dependencies(myModule).withoutSdk().recursivelyExportedOnly(), getSampleLibJar());
     assertClassRoots(dependencies(myModule).withoutSdk().exportedOnly().recursively());
   }
 
