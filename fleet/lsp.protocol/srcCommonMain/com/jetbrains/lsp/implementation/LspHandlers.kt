@@ -1,22 +1,8 @@
 package com.jetbrains.lsp.implementation
 
-import com.jetbrains.lsp.protocol.LSP
-import com.jetbrains.lsp.protocol.LSP.ProgressNotificationType
-import com.jetbrains.lsp.protocol.RequestType
 import com.jetbrains.lsp.protocol.NotificationType
-import com.jetbrains.lsp.protocol.ProgressParams
-import com.jetbrains.lsp.protocol.WorkDoneProgress
-import com.jetbrains.lsp.protocol.WorkDoneProgressParams
-import fleet.util.async.throttleLatest
+import com.jetbrains.lsp.protocol.RequestType
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.time.delay
-import kotlin.time.Duration.Companion.milliseconds
 
 interface LspHandlers {
     fun requestHandler(
