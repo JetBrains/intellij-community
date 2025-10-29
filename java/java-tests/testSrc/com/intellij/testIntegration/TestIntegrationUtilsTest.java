@@ -23,6 +23,7 @@ public class TestIntegrationUtilsTest extends LightPlatformTestCase {
     doTest("class Foo implements I {void bar() {}} interface I {void qux();}", true, "bar(): void", "qux(): void");
     doTest("class Foo implements I {void bar() {}} interface I {default void qux() {}}", true, "bar(): void", "qux(): void");
     doTest("interface Foo extends I {void bar();} interface I {void qux();}", true, "bar(): void", "qux(): void");
+    doTest("interface Foo extends I {void bar();} interface I extends B {} interface B {void qux();}", true, "bar(): void", "qux(): void");
     doTest("class Foo extends I {@Override void bar();} interface I {void bar();default void foo(){}}", true, "bar(): void", "foo(): void");
   }
 

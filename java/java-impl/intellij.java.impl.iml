@@ -123,6 +123,7 @@
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.java.syntax" />
+    <orderEntry type="module" module-name="intellij.java.psi" />
   </component>
   <component name="copyright">
     <Base>

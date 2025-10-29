@@ -100,6 +100,7 @@ jvm_library(
     "//java/codeserver/core",
     "//xml/xml-psi-api:psi",
     "//java/java-syntax:syntax",
+    "//java/java-psi-api:psi",
   ],
   exports = [
     "//platform/lang-impl",
