@@ -550,6 +550,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/ExactMatchForKeyword.kt");
         }
 
+        @TestMetadata("ExpectedTypeDeprioritizeGenericReturn.kt")
+        public void testExpectedTypeDeprioritizeGenericReturn() throws Exception {
+            runTest("../testData/weighers/basic/ExpectedTypeDeprioritizeGenericReturn.kt");
+        }
+
         @TestMetadata("ExpectedTypeTypeParameters.kt")
         public void testExpectedTypeTypeParameters() throws Exception {
             runTest("../testData/weighers/basic/ExpectedTypeTypeParameters.kt");
@@ -743,6 +748,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
         @TestMetadata("PreferMatchingNamedArgumentName.kt")
         public void testPreferMatchingNamedArgumentName() throws Exception {
             runTest("../testData/weighers/basic/PreferMatchingNamedArgumentName.kt");
+        }
+
+        @TestMetadata("PreferNullForNullable.kt")
+        public void testPreferNullForNullable() throws Exception {
+            runTest("../testData/weighers/basic/PreferNullForNullable.kt");
         }
 
         @TestMetadata("PreferTypesMatchingConstructorParameterName.kt")

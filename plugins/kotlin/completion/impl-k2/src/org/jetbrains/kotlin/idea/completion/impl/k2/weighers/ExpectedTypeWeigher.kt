@@ -120,11 +120,16 @@ internal object ExpectedTypeWeigher {
                 // We exclude the Nothing type because it would match everything, but we should not give it priority.
                 // The only exception where we should prefer is for the `null` constant, which will be of type `Nothing?`
                 actualType.isNothingType && !actualType.isMarkedNullable -> NOT_MATCHES
+
                 actualType.isSubtypeOf(expectedType) -> MATCHES
+
                 // This matches for `null`, which should not ever be suggested for non-nullable expecte types
                 actualType.isNothingType && actualType.isMarkedNullable && !expectedType.isNullable -> NOT_MATCHES
+
                 actualType.withNullability(false).isSubtypeOf(expectedType) -> MATCHES_WITHOUT_NULLABILITY
+
                 isPossiblySubtype(actualType, expectedType) -> MATCHES_IGNORING_TYPE_ARGUMENTS
+
                 else -> NOT_MATCHES
             }
         }
