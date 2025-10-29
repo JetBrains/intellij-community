@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -10,30 +11,47 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.nextLeafs
 import com.intellij.psi.util.prevLeafs
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-internal class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspection<KtClassBody>(KtClassBody::class.java),
-                                                CleanupLocalInspectionTool {
-    override fun inspectionText(element: KtClassBody): String {
-        return KotlinBundle.message("redundant.empty.class.body")
+internal class RemoveEmptyClassBodyInspection :
+    KotlinApplicableInspectionBase.Simple<KtClassBody, Unit>(),
+    CleanupLocalInspectionTool {
+
+    override fun KaSession.prepareContext(element: KtClassBody): Unit = Unit
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): KtVisitor<*, *> = object : KtVisitorVoid() {
+        override fun visitClassBody(element: KtClassBody) {
+            super.visitClassBody(element)
+            visitTargetElement(element, holder, isOnTheFly)
+        }
     }
 
-    override val defaultFixText: String
-        get() = KotlinBundle.message("remove.redundant.empty.class.body")
+    override fun getProblemDescription(element: KtClassBody, context: Unit): String =
+        KotlinBundle.message("redundant.empty.class.body")
 
-    override fun applyTo(element: KtClassBody, project: Project, editor: Editor?) {
-        val parent = element.parent
-        element.delete()
-        addSemicolonIfNeeded(parent, editor)
-    }
+    override fun createQuickFix(element: KtClassBody, context: Unit): KotlinModCommandQuickFix<KtClassBody> =
+        object : KotlinModCommandQuickFix<KtClassBody>() {
+            override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.empty.class.body")
 
-    private fun addSemicolonIfNeeded(element: PsiElement, editor: Editor?) {
+            override fun applyFix(project: Project, element: KtClassBody, updater: ModPsiUpdater) {
+                val parent = element.parent
+                element.delete()
+                addSemicolonIfNeeded(parent, updater)
+            }
+        }
+
+    private fun addSemicolonIfNeeded(element: PsiElement, updater: ModPsiUpdater?) {
         val next = element.getNextSiblingIgnoringWhitespaceAndComments() ?: return
         if (next.node.elementType == KtTokens.SEMICOLON) return
         when (element) {
@@ -60,7 +78,7 @@ internal class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspec
         }
 
         val semicolon = element.addSemicolon()
-        editor?.caretModel?.moveToOffset(semicolon.endOffset)
+        updater?.moveCaretTo(semicolon.endOffset)
     }
 
     private fun PsiElement.addSemicolon(): PsiElement {
@@ -72,7 +90,7 @@ internal class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspec
         }
     }
 
-    override fun isApplicable(element: KtClassBody): Boolean {
+    override fun isApplicableByPsi(element: KtClassBody): Boolean {
         element.getStrictParentOfType<KtObjectDeclaration>()?.let {
             if (it.isObjectLiteral()) return false
         }
