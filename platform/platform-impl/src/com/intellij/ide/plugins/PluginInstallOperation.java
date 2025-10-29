@@ -233,7 +233,6 @@ public final class PluginInstallOperation {
   @RequiresBackgroundThread
   private boolean prepareToInstall(@NotNull PluginUiModel pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
-    if (!checkMissingDependencies(pluginNode.getDescriptor(), pluginIds)) return false;
     if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginNode.getDescriptor())) {
       LOG.warn("The plugin " + pluginNode.getPluginId() + " is not allowed to install for the organization");
       return false;
@@ -256,9 +255,7 @@ public final class PluginInstallOperation {
     if (prepared) {
       IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)downloader.getDescriptor();
 
-      if (pluginNode.getDependencies().isEmpty() && !descriptor.getDependencies().isEmpty()) {  // installing from custom plugins repo
-        if (!checkMissingDependencies(descriptor, pluginIds)) return false;
-      }
+      if (!checkMissingDependencies(descriptor, pluginIds)) return false;
 
       boolean allowNoRestart = myAllowInstallWithoutRestart &&
                                DynamicPlugins.allowLoadUnloadWithoutRestart(
