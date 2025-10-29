@@ -133,9 +133,9 @@ public final class JdkApiCompatibilityService {
   /**
    * @param signature     The signature, example: "java.util.Iterator#remove()" as specified by {@link #getSignature(PsiMember)}.
    * @param languageLevel to start the search.
-   * @return The newly introduced API if it appears after or including {@code languageLevel}, or null if it was introduced before
-   * {@code languageLevel}. If the API is in preview for languageLevel, null is returned. If the API was in preview and later standartized,
-   * but languageLevel is preview preview, then the first standard languageLevel is returned.
+   * @return The information about newly introduced API if it appears after or including {@code languageLevel}. 
+   * If the API was fully introduced before {@code languageLevel}, null is returned.
+   * If the API is in preview for {@code languageLevel}, but later standardized, the {@link LevelInfo#outOfPreviewLevel()} will be set.
    */
   @Contract("_, null -> null")
   private @Nullable LevelInfo getIntroducedApiLevel(@NotNull String signature, @Nullable LanguageLevel languageLevel) {
