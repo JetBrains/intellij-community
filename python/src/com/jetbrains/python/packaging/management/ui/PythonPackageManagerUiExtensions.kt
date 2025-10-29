@@ -53,12 +53,19 @@ fun PythonPackageManagerUI.launchInstallPackageWithBalloonBackground(packageName
                                                                     PythonPackageManagerUIHelpers.BalloonStyle.INFO)
 
       PyPackagesUsageCollector.installAllEvent.log(confirmed.size)
-      installPyRequirementsBackground(confirmed)
+      val isInstalled = installPyRequirementsBackground(confirmed) != null
 
       installingBalloon.hide()
 
-      PyPackagesUsageCollector.installPackageFromConsole.log(project)
-      PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), PythonPackageManagerUIHelpers.BalloonStyle.SUCCESS)
+      if (isInstalled) {
+        PyPackagesUsageCollector.installPackageFromConsole.log(project)
+        PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.packaging.notification.description.installed.packages", packageName), PythonPackageManagerUIHelpers.BalloonStyle.SUCCESS)
+      }
+      else {
+        PyPackagesUsageCollector.failInstallPackageFromConsole.log(project)
+        PythonPackageManagerUIHelpers.showBalloon(point, PyBundle.message("python.new.project.install.failed.title", packageName), PythonPackageManagerUIHelpers.BalloonStyle.ERROR)
+      }
+
     }
     catch (t: Throwable) {
       installingBalloon?.hide()
