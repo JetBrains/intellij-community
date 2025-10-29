@@ -25,6 +25,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
+import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
@@ -327,6 +328,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
   val allValidSdks = PythonSdkUtil
     .getAllSdks()
     .filter { sdk ->
+      if (sdk.isCondaVirtualEnv) return@filter false
       if (sdk.targetAdditionalData != null) return@filter false
 
       try {
