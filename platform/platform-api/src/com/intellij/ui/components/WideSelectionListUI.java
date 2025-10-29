@@ -13,6 +13,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicListUI;
 import java.awt.*;
@@ -25,7 +27,7 @@ import static com.intellij.ui.paint.RectanglePainter.DRAW;
 /**
  * @noinspection ALL
  */
-public final class WideSelectionListUI extends BasicListUI {
+public final class WideSelectionListUI extends BasicListUI implements BulkUpdateListUi {
   private static final Logger LOG = Logger.getInstance(WideSelectionListUI.class);
   private Rectangle myPaintBounds;
 
@@ -289,5 +291,53 @@ public final class WideSelectionListUI extends BasicListUI {
   /** @noinspection MethodOverridesStaticMethodOfSuperclass, unused */
   public static ComponentUI createUI(JComponent list) {
     return new WideSelectionListUI();
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void beforeBulkListUpdate() {
+    if (list == null) return;
+    list.clearSelection();
+    updateLayoutStateNeeded |= selectionModelChanged;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void afterBulkListUpdate() {
+    if (list == null) return;
+    list.clearSelection();
+    updateLayoutStateNeeded |= selectionModelChanged;
+    maybeUpdateLayoutState();
+    list.revalidate();
+    list.repaint();
+  }
+
+  @Override
+  protected ListSelectionListener createListSelectionListener() {
+    ListSelectionListener listener = super.createListSelectionListener();
+    return new BulkAwareListSelectionListener(listener, list);
+  }
+
+  private static class BulkAwareListSelectionListener implements ListSelectionListener {
+    private final @NotNull ListSelectionListener myDelegate;
+    private final @NotNull JList<?> myList;
+
+    private BulkAwareListSelectionListener(@NotNull ListSelectionListener delegate, @NotNull JList<?> list) {
+      myDelegate = delegate;
+      myList = list;
+    }
+
+    @Override
+    public void valueChanged(ListSelectionEvent e) {
+      ListSelectionModel model = myList.getSelectionModel();
+      if (model instanceof BulkUpdateListSelectionModel bulkModel) {
+        if (bulkModel.isBulkUpdateInProgress()) {
+          // suppress javax.swing.plaf.basic.BasicListUI.Handler.valueChanged
+          return;
+        }
+      }
+
+      myDelegate.valueChanged(e);
+    }
   }
 }

@@ -244,6 +244,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, myEmptyText.getWrappedFragmentsIterable());
     myExpandableItemsHandler = createExpandableItemsHandler();
     setCellRenderer(new DefaultListCellRenderer());
+
+    setSelectionModel(new BulkDefaultListSelectionModel(this));
   }
 
   private void installDefaultCopyAction() {

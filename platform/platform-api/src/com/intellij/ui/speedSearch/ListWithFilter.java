@@ -26,6 +26,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.InputMethodEvent;
 import java.awt.im.InputMethodRequests;
 
+import static com.intellij.ui.components.BulkListModelKt.refilterListModelInBulk;
+
 public final class ListWithFilter<T> extends JPanel implements UiCompatibleDataProvider {
   private final JList<T> myList;
   private final SearchTextField mySearchField = new SearchTextField(false);
@@ -245,7 +247,8 @@ public final class ListWithFilter<T> extends JPanel implements UiCompatibleDataP
 
   private void onSpeedSearchPatternChanged() {
     T prevSelection = myList.getSelectedValue(); // save to restore the selection on filter drop
-    myModel.refilter();
+    refilterListModelInBulk(myList);
+
     if (myModel.getSize() > 0) {
       int fullMatchIndex = mySpeedSearch.isHoldingFilter() ? myModel.getClosestMatchIndex() : myModel.getElementIndex(prevSelection);
       if (fullMatchIndex != -1) {

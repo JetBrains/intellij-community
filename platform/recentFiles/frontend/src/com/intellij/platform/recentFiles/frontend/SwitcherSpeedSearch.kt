@@ -2,10 +2,11 @@
 package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.ide.IdeBundle.message
-import com.intellij.platform.recentFiles.frontend.Switcher.SwitcherPanel
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.recentFiles.frontend.Switcher.SwitcherPanel
 import com.intellij.ui.SpeedSearchBase
 import com.intellij.ui.SpeedSearchComparator
+import com.intellij.ui.components.refilterListModelInBulk
 import com.intellij.ui.speedSearch.NameFilteringListModel
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.ListModel
@@ -99,8 +100,8 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
         val isPopupActive = isPopupActive
         val element = if (isPopupActive) null else getElementAt(selectedIndex)
 
-        (files.model as? NameFilteringListModel<*>)?.refilter()
-        (windows.model as? NameFilteringListModel<*>)?.refilter()
+        refilterListModelInBulk(files)
+        refilterListModelInBulk(windows)
 
         if (isPopupActive && files.isEmpty && windows.isEmpty) {
           files.setEmptyText(message("recent.files.speed.search.empty.text"))
@@ -110,6 +111,7 @@ class SwitcherSpeedSearch private constructor(switcher: SwitcherPanel) : SpeedSe
           files.setEmptyText(message("recent.files.file.list.empty.text"))
           windows.setEmptyText(message("recent.files.tool.window.list.empty.text"))
         }
+
         when {
           isPopupActive -> refreshSelection()
           else -> selectElement(element ?: getElementAt(0), "")
