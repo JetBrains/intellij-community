@@ -9,6 +9,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -39,6 +40,7 @@ import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -63,6 +65,17 @@ fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path
   val realTempDir = tempDir.toRealPath()
   initialized(realTempDir) {
     withContext(Dispatchers.IO) {
+      repeat(10) {
+        try {
+          // This method might throw DirectoryNotEmptyException due to races, hence retry
+          realTempDir.delete(recursively = true)
+          return@withContext
+        }
+        catch (e: IOException) {
+          fileLogger().warn("Can't delete $realTempDir", e)
+          Thread.sleep(100)
+        }
+      }
       realTempDir.delete(recursively = true)
     }
   }
