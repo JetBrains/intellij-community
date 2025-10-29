@@ -104,7 +104,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
   companion object {
     private val inspections: List<LocalInspectionTool> = listOf(Grammar(), Style())
 
-    private const val MAX_TEXT_LENGTH_IN_PSI_ELEMENT = 50_000
+    internal const val MAX_TEXT_LENGTH_IN_PSI_ELEMENT: Int = 50_000
     private const val MAX_TEXT_LENGTH_IN_FILE = 200_000
     const val GRAMMAR_INSPECTION: String = "GrazieInspection"
     const val STYLE_INSPECTION: String = "GrazieStyle"

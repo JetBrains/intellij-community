@@ -18,6 +18,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.cloud.GrazieCloudConnector
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.sortByPriority
 import com.intellij.grazie.mlec.LanguageHolder
 import com.intellij.grazie.rule.SentenceBatcher
@@ -53,6 +54,7 @@ object GrazieTextLevelSpellCheckingExtension {
 
   private val knownPhrases = ContainerUtil.createConcurrentSoftValueMap<Language, KnownPhrases>()
 
+
   /**
    * Performs spell-checking on the specified PSI element.
    *
@@ -73,6 +75,13 @@ object GrazieTextLevelSpellCheckingExtension {
     if (texts.isEmpty()) return SpellCheckingResult.Ignored
     val filteredTexts = texts.filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
     if (filteredTexts.isEmpty()) return SpellCheckingResult.Checked
+
+    //Bad optimization of internal code
+    //Rewrite it before remove this
+    //See https://youtrack.jetbrains.com/issue/PY-85199/PyCharm-freezes-on-opening-large-Jupyter-notebooks
+    if (GrazieInspection.skipCheckingTooLargeTexts(filteredTexts)) {
+      return SpellCheckingResult.Checked
+    }
 
     val textSpeller = getTextSpeller(element.project) ?: return SpellCheckingResult.Ignored
     filteredTexts.asSequence()
