@@ -355,7 +355,36 @@ f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
 - render(org.jetbrains.jewel.markdown.MarkdownBlock,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
 - renderThematicBreak(org.jetbrains.jewel.markdown.rendering.MarkdownStyling$ThematicBreak,Z,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
 *:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver
+- *sf:Companion:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$Companion
 - a:resolve(java.lang.String):java.lang.String
+*f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$Companion
+- f:create(java.nio.file.Path,Z):org.jetbrains.jewel.markdown.rendering.ImageSourceResolver
+- f:create(java.util.Set,Z):org.jetbrains.jewel.markdown.rendering.ImageSourceResolver
+- bs:create$default(org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$Companion,java.util.Set,Z,I,java.lang.Object):org.jetbrains.jewel.markdown.rendering.ImageSourceResolver
+*:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability
+- a:resolve(java.lang.String):java.lang.String
+*f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability$AbsolutePath
+- org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability$AbsolutePath
+- resolve(java.lang.String):java.lang.String
+*f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability$PlainUri
+- org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability$PlainUri
+- resolve(java.lang.String):java.lang.String
+*f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability$RelativePath
+- org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability
+- sf:$stable:I
+- <init>(java.nio.file.Path):V
+- resolve(java.lang.String):java.lang.String
+*f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability$RelativePathInResources
+- org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$ResolveCapability
+- sf:$stable:I
+- <init>():V
+- <init>(java.lang.Class):V
+- b:<init>(java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- resolve(java.lang.String):java.lang.String
 f:org.jetbrains.jewel.markdown.rendering.ImageSourceResolverKt
 - *sf:getLocalMarkdownImageSourceResolver():androidx.compose.runtime.ProvidableCompositionLocal
 *:org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer
