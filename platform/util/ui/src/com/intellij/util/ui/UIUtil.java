@@ -2167,7 +2167,7 @@ public final class UIUtil {
   public static @Nullable <T> T getGeneralizedParentOfType(@NotNull Class<? extends T> type, @Nullable Component component) {
     var result = component;
     while (result != null) {
-      if (type.isInstance(component)) {
+      if (type.isInstance(result)) {
         //noinspection unchecked
         return (T)result;
       }
