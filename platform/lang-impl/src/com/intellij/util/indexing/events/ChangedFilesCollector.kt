@@ -36,8 +36,10 @@ import kotlin.concurrent.withLock
 
 private val LOG = logger<ChangedFilesCollector>()
 
+private const val MIN_CHANGES_TO_PROCESS_ASYNC = 20
+
 /**
- * Collects file changes supplied from VFS via [AsyncFileListener].
+ * Collects file changes supplied from VFS via [AsyncFileListener] into [myEventMerger].
  * Collected changes could be accessed via [getEventMerger]
  */
 @ApiStatus.Internal
@@ -50,6 +52,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
     override fun onAdvance(phase: Int, registeredParties: Int): Boolean = false
   }
 
+  /** Used in [ensureUpToDateAsync] to process changes asynchronously */
   private val vfsEventsExecutor = createBoundedTaskExecutor("FileBasedIndex Vfs Event Processor", coroutineScope)
   private val scheduledVfsEventsWorkers = AtomicInteger()
   private val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
@@ -140,7 +143,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
   }
 
   fun ensureUpToDateAsync() {
-    if (eventMerger.approximateChangesCount < 20 || !scheduledVfsEventsWorkers.compareAndSet(0, 1)) {
+    if (eventMerger.approximateChangesCount < MIN_CHANGES_TO_PROCESS_ASYNC || !scheduledVfsEventsWorkers.compareAndSet(0, 1)) {
       return
     }
 
@@ -188,13 +191,13 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
             fileBasedIndex.doTransientStateChangeForFile(fileId, file, dirtyQueueProjects)
           }
           if (info.isContentChanged) {
-            fileBasedIndex.scheduleFileForIncrementalIndexing(fileId, file, true, dirtyQueueProjects)
+            fileBasedIndex.scheduleFileForIncrementalIndexing(fileId, file, /*onlyContentChanged: */true, dirtyQueueProjects)
           }
           if (info.isFileRemoved) {
-            fileBasedIndex.doInvalidateIndicesForFile(fileId, file, emptySet(), dirtyQueueProjects)
+            fileBasedIndex.doInvalidateIndicesForFile(fileId, file, /*containingProjects: */emptySet(), dirtyQueueProjects)
           }
           if (info.isFileAdded) {
-            fileBasedIndex.scheduleFileForIncrementalIndexing(fileId, file, false, dirtyQueueProjects)
+            fileBasedIndex.scheduleFileForIncrementalIndexing(fileId, file, /*onlyContentChanged: */false, dirtyQueueProjects)
           }
           if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
             StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
@@ -202,7 +205,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
           }
         }
         catch (t: Throwable) {
-          if (LOG.isDebugEnabled()) {
+          if (LOG.isDebugEnabled()) {//FIXME RC: what if it is PCE? -- must be re-thrown without logging
             LOG.debug("Exception while processing $info", t)
           }
           throw t

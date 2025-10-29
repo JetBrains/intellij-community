@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -133,6 +133,7 @@ public final class FileIndexingResult {
                                 @NotNull Supplier<String> debugString) {
     if (allModificationsSuccessful) {
       IndexingEventsLogger.tryLog("INDEX_UPDATED", file, debugString);
+      //remove indexed (=processed) files from the 'dirty files queue' (FilesToUpdateCollector)
       indexImpl.getFilesToUpdateCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
 
       if (shouldMarkFileAsIndexed) {

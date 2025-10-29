@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events
 
 import com.intellij.openapi.progress.util.PingProgress
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Conceptually, it is a [project -> List of dirty files for this project]
- *  Additionally, it keeps a List of dirty files for an 'unknown' project
+ * Additionally, it keeps a List of dirty files for an 'unknown' project
  */
 @ApiStatus.Internal
 class DirtyFiles {

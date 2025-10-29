@@ -129,7 +129,7 @@ public final class VfsEventsMerger {
           catch (AlreadyDisposedException e) {
             throw e;
           }
-          catch (ProcessCanceledException pce) {
+          catch (@SuppressWarnings("IncorrectCancellationExceptionHandling") ProcessCanceledException pce) {
             //IJPL-9805: it should be no PCE here -- eventProcessor.process()/.endBatch() should
             //           be 'atomic': a change is either processed, or not, so throw PCE from inside
             //           the processor is an error
@@ -179,19 +179,18 @@ public final class VfsEventsMerger {
   public static final class ChangeInfo {
     private final VirtualFile file;
 
-    @EventMask
-    private final short eventMask;
+    private final @EventMask short eventMask;
 
     ChangeInfo(@NotNull VirtualFile file, @EventMask short eventMask, @Nullable ChangeInfo previous) {
       this.file = file;
       this.eventMask = mergeEventMask(previous == null ? 0 : previous.eventMask, eventMask);
     }
 
-    @EventMask
-    private static short mergeEventMask(@EventMask short existingOperation, @EventMask short newOperation) {
+    private static @EventMask short mergeEventMask(@EventMask short existingOperation, @EventMask short newOperation) {
       if (newOperation == FILE_REMOVED) {
         return FILE_REMOVED;
       }
+      //noinspection MagicConstant
       return (short)(existingOperation | newOperation);
     }
 

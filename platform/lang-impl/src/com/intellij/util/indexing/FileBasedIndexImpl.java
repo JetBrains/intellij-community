@@ -1825,7 +1825,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @Internal
   public @NotNull Collection<FileIndexingRequest> getAllFilesToUpdate() {
+    //collected VFS events (for all projects) are processed, and changes delivered
+    // into filesToUpdateCollector during ensureUpToDate()
     getChangedFilesCollector().ensureUpToDate();
+    //collected files to index:
     return myFilesToUpdateCollector.getFilesToUpdate();
   }
 
@@ -1930,7 +1933,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
     }
     if (nontrivialFileIndexedStates.isEmpty() || (file.isValid() && file.isDirectory())) {
-      getFilesToUpdateCollector().removeScheduledFileFromUpdate(file); // no need to update it anymore
+      //nontrivialFileIndexedStates={} means the file was never indexed -- so, no need to remove it from indexes.
+      // but we still need to cancel any queued updates for it (apart from 'remove' updates):
+      getFilesToUpdateCollector().removeScheduledFileFromUpdate(file);
     }
     else {
       // its data should be (lazily) wiped for every index
