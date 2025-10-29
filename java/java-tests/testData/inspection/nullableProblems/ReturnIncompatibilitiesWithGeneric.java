@@ -84,4 +84,16 @@ class B<T> {
   List<List<@Nullable String>> nestedIntersection(Object arg) {
     return <warning descr="Returning a class with non-null type parameters when a class with nullable type parameters is expected">(List<List<@NotNull String>> & I) arg</warning>;
   }
+
+  static class NoStackOverflow {
+    public abstract static class Parent
+      <S extends Number, B extends Parent<S, B>>{}
+
+    public static class Child extends
+                              Parent<Number, Child> {}
+
+    public Parent rawType(Child p) {
+      return p;
+    }
+  }
 }
