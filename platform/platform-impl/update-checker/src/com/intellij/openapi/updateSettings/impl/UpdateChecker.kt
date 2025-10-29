@@ -491,7 +491,7 @@ object UpdateChecker {
     return it is SocketTimeoutException
            || it is UnknownHostException
            || it is HttpRequests.HttpStatusException && it.statusCode == HttpURLConnection.HTTP_NOT_FOUND
-           || it is JsonMappingException && it.cause?.message?.contains("Unexpected end-of-input") == true
+           || it is JsonMappingException && it.message?.contains("end-of-input") == true
   }
 
   @RequiresBackgroundThread

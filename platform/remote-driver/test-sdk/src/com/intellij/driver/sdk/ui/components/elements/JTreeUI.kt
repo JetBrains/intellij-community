@@ -206,6 +206,11 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     return findExpandedPath(*path, fullMatch = false) != null
   }
 
+  fun pathsCount(vararg path: String): Int {
+    expandPath(*path, fullMatch = false)
+    return findExpandedPaths(*path, fullMatch = false).size
+  }
+
   fun collectIconsAtRow(row: Int): List<Icon> = fixture.collectIconsAtRow(row)
 
   fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)

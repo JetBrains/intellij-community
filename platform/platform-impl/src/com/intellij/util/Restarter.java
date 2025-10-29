@@ -76,7 +76,7 @@ public final class Restarter {
           .normalize();
         if (Files.exists(hostLauncher)) return hostLauncher;
       }
-      Logger.getInstance(Restarter.class).error("Cannot find an actual launcher for the frontend");
+      Logger.getInstance(Restarter.class).warn("Cannot find an actual launcher for the frontend");
     }
 
     return null;
