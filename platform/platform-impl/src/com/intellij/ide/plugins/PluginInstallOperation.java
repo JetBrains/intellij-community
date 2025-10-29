@@ -478,9 +478,10 @@ public final class PluginInstallOperation {
    * Beware: Marketplace treats both plugin ids and content module ids as "modules"
    */
   private static @Nullable PluginId resolveModuleInMarketplaceWithCache(@NotNull String moduleId) {
-    Optional<PluginId> cachedModule = ourCache.getIfPresent(moduleId);
-    if (cachedModule != null && cachedModule.isPresent()) {
-      return cachedModule.get();
+    @Nullable Optional<PluginId> cachedModule = ourCache.getIfPresent(moduleId);
+    //noinspection OptionalAssignedToNull
+    if (cachedModule != null) {
+      return cachedModule.orElse(null);
     }
     PluginId result = MarketplaceRequests.getInstance().getCompatibleUpdateByModule(moduleId);
     ourCache.put(moduleId, Optional.ofNullable(result));
