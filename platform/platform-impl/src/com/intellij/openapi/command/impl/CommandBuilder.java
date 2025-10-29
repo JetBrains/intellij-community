@@ -158,7 +158,12 @@ final class CommandBuilder {
   }
 
   private @Nullable EditorAndState currentEditorState() {
-    return EditorAndState.getStateFor(undoProject, editorProvider);
+    try {
+      return EditorAndState.getStateFor(undoProject, editorProvider);
+    } catch (Throwable ex) {
+      LOG.error("Failed to retrieve editor state", ex);
+      return null;
+    }
   }
 
   private @Nullable DocumentReference originalDocument() {

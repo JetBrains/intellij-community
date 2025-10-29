@@ -350,12 +350,10 @@ public class UndoManagerImpl extends UndoManager {
 
   @ApiStatus.Internal
   protected void onCommandStarted(@NotNull CmdEvent cmdEvent) {
-    UndoClientState state = getClientState();
-    if (state == null || !state.isInsideCommand()) {
-      for (UndoProvider undoProvider : getUndoProviders()) {
-        undoProvider.commandStarted(cmdEvent.project());
-      }
+    for (UndoProvider undoProvider : getUndoProviders()) {
+      undoProvider.commandStarted(cmdEvent.project());
     }
+    UndoClientState state = getClientState();
     if (state != null) {
       state.commandStarted(cmdEvent, getEditorProvider());
     }
@@ -366,10 +364,8 @@ public class UndoManagerImpl extends UndoManager {
     if (state != null) {
       state.commandFinished(cmdEvent);
     }
-    if (state == null || !state.isInsideCommand()) {
-      for (UndoProvider undoProvider : getUndoProviders()) {
-        undoProvider.commandFinished(cmdEvent.project());
-      }
+    for (UndoProvider undoProvider : getUndoProviders()) {
+      undoProvider.commandFinished(cmdEvent.project());
     }
   }
 
@@ -490,6 +486,15 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private @Nullable UndoClientState getClientState() {
+    try {
+      return getClientStateUnsafe();
+    } catch (Throwable ex) {
+      LOG.error("Failed to get client state, the error may lead to undo inconsistency", ex);
+      return null;
+    }
+  }
+
+  private @Nullable UndoClientState getClientStateUnsafe() {
     ClientId clientId = ClientId.getCurrentOrNull();
     if (clientId != null) {
       ClientSession appSession = ClientSessionsManager.getAppSession(clientId);

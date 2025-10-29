@@ -51,7 +51,7 @@ final class UndoCommandListener implements SeparatedCommandListener {
   private boolean projectNotDisposed() {
     boolean isDisposed = project != null && project.isDisposed();
     if (isDisposed) {
-      LOG.warn("Cannot perform a command, project is disposed " + project);
+      LOG.error("Cannot perform a command, project is disposed " + project);
     }
     return !isDisposed;
   }

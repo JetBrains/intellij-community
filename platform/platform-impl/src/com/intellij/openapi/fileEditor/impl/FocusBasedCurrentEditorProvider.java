@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -17,16 +18,30 @@ import java.util.function.Supplier;
 
 
 public final class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
+
+  private static final Logger LOG = Logger.getInstance(FocusBasedCurrentEditorProvider.class);
+
   @Override
-  public FileEditor getCurrentEditor(@Nullable Project project) {
+  public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
     return getCurrentEditorEx();
   }
 
   @ApiStatus.Internal
-  public static FileEditor getCurrentEditorEx() {
+  public static @Nullable FileEditor getCurrentEditorEx() {
+    try {
+      return getCurrentEditorEx0();
+    } catch (Throwable ex) {
+      LOG.error("Failed to retrieve focused editor", ex);
+      return null;
+    }
+  }
+
+  private static @Nullable FileEditor getCurrentEditorEx0() {
     DataManager dataManager = DataManager.getInstanceIfCreated();
-    if (dataManager == null) return null;
-    return getFocusedEditor(dataManager.getDataContext());
+    if (dataManager != null) {
+      return getFocusedEditor(dataManager.getDataContext());
+    }
+    return null;
   }
 
   private static @Nullable FileEditor getFocusedEditor(@NotNull DataContext dataContext) {
