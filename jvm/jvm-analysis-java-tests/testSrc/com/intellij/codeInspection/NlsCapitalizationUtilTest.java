@@ -18,6 +18,7 @@ package com.intellij.codeInspection;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.Nls;
 
+import static com.intellij.codeInspection.NlsCapitalizationUtil.checkPunctuation;
 import static com.intellij.codeInspection.NlsCapitalizationUtil.isCapitalizationSatisfied;
 
 public class NlsCapitalizationUtilTest extends TestCase {
@@ -98,5 +99,77 @@ public class NlsCapitalizationUtilTest extends TestCase {
 
   private static void assertNotCapitalization(String value, Nls.Capitalization capitalization) {
     assertFalse("'" + value + "' should not satisfy " + capitalization, isCapitalizationSatisfied(value, capitalization));
+  }
+
+  public void testTitleCapitalizationArticles() {
+    assertTitle("Compare with the Latest Repository Version");
+    assertTitle("A Good Example");
+    assertTitle("An Important Message");
+  }
+
+  public void testTitleCapitalizationConjunctions() {
+    assertTitle("Search and Replace");
+    assertTitle("Save or Discard Changes");
+    assertTitle("This but Not That");
+  }
+
+  public void testTitleCapitalizationPrepositions() {
+    assertTitle("Compare with Latest Version");
+    assertTitle("Search in Files");
+    assertTitle("Go to Declaration");
+    assertTitle("Copy from Here");
+  }
+
+  public void testTitleCapitalizationFirstAndLastWords() {
+    assertTitle("Compare With");
+    assertTitle("The First Word");
+    assertTitle("Go to the End");
+  }
+
+  public void testTitleCapitalizationNotSatisfied() {
+    assertNotCapitalization("Compare With The Latest Repository Version", Nls.Capitalization.Title);
+    assertNotCapitalization("Search And Replace", Nls.Capitalization.Title);
+    assertNotCapitalization("compare with Latest Version", Nls.Capitalization.Title);
+    assertNotCapitalization("Compare with", Nls.Capitalization.Title);
+  }
+
+  public void testPunctuationSingleSentenceNoPeriod() {
+    assertTrue("Single sentence should not have period", checkPunctuation("This is a single sentence"));
+  }
+
+  public void testPunctuationSingleSentenceWithPeriod() {
+    assertFalse("Single sentence should not end with period", checkPunctuation("This is a single sentence."));
+  }
+
+  public void testPunctuationMultipleSentencesWithPeriods() {
+    assertTrue("Multiple sentences should end with periods", checkPunctuation("First sentence. Second sentence."));
+  }
+
+  public void testPunctuationMultipleSentencesWithoutFinalPeriod() {
+    assertFalse("Multiple sentences should end with periods", checkPunctuation("First sentence. Second sentence"));
+  }
+
+  public void testPunctuationNoDoubleQuotes() {
+    assertFalse("Should not use double quotes", checkPunctuation("This is \"quoted\" text"));
+  }
+
+  public void testPunctuationSingleQuotesAllowed() {
+    assertTrue("Single quotes are allowed", checkPunctuation("This is 'quoted' text"));
+  }
+
+  public void testPunctuationNoExclamation() {
+    assertFalse("Should not use exclamation points", checkPunctuation("This is important!"));
+  }
+
+  public void testPunctuationNoContractions() {
+    assertFalse("Should not use contractions", checkPunctuation("Path can't be found"));
+  }
+
+  public void testPunctuationDontAgainAllowed() {
+    assertTrue("'Don't [verb] again' is allowed", checkPunctuation("Don't ask again"));
+  }
+
+  public void testFixValueTitleWithArticles() {
+    assertEquals("Compare with the Latest Version", NlsCapitalizationUtil.fixValue("Compare With The Latest Version", Nls.Capitalization.Title));
   }
 }
