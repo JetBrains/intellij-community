@@ -31,6 +31,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscu
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filterInFile
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestDiscussionUtil
 import org.jetbrains.plugins.gitlab.mergerequest.util.toLines
 
@@ -110,9 +111,12 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
       .transformConsecutiveSuccesses { filterInFile(change) }
       .stateInNow(cs, ComputedResult.loading())
   override val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>> =
-    reviewVm.newDiscussions
-      .filterInFile(change)
-      .stateInNow(cs, emptyList())
+    discussionsContainer.newDiscussions.map {
+      it.mapNotNull { (position, vm) ->
+        val line = position.mapToLocation(diffData)?.takeIf { it.first == Side.RIGHT }?.second ?: return@mapNotNull null
+        GitLabMergeRequestEditorNewDiscussionViewModel(vm, line, discussionsViewOption)
+      }
+    }.stateInNow(cs, emptyList())
 
   override val linesWithDiscussions: StateFlow<Set<Int>> =
     GitLabMergeRequestDiscussionUtil
@@ -129,7 +133,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
     discussionsContainer.newDiscussions
       .map {
         it.keys.mapNotNullTo(mutableSetOf()) {
-          it.position.mapToLocation(diffData)?.takeIf { it.first == Side.RIGHT }?.second ?: return@mapNotNullTo null
+          it.mapToLocation(diffData)?.takeIf { it.first == Side.RIGHT }?.second ?: return@mapNotNullTo null
         }
       }
       .stateInNow(cs, emptySet())

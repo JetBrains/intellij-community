@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.FocusableViewModel
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 import com.intellij.diff.util.Side
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
@@ -60,21 +61,14 @@ class GitLabMergeRequestEditorDraftNoteViewModel internal constructor(
 }
 
 @ApiStatus.Internal
-class GitLabMergeRequestEditorNewDiscussionViewModel(
+class GitLabMergeRequestEditorNewDiscussionViewModel internal constructor(
   base: NewGitLabNoteViewModel,
-  originalPosition: GitLabNotePosition,
-  override val diffData: StateFlow<DiffDataMappedGitLabMergeRequestInlayModel.DiffData?>,
+  originalLine: Int,
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
-) : NewGitLabNoteViewModel by base, DiffDataMappedGitLabMergeRequestEditorViewModel {
-  override val key: Any = "NEW_${(originalPosition as? GitLabNotePosition.WithLine)?.lineIndexRight}"
-  override val line: StateFlow<Int?> = mapPositionToRightLine(originalPosition, diffData)
-
-  override val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState {
-    when (it) {
-      DiscussionsViewOption.DONT_SHOW -> false
-      else -> true
-    }
-  }
+) : NewGitLabNoteViewModel by base, CodeReviewInlayModel {
+  override val key: Any = "NEW_${originalLine}"
+  override val line: StateFlow<Int?> = MutableStateFlow(originalLine)
+  override val isVisible: StateFlow<Boolean> = discussionsViewOption.mapState { it != DiscussionsViewOption.DONT_SHOW }
 }
 
 private fun mapPositionToRightLine(

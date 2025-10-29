@@ -100,21 +100,13 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
         }
       }
     }.stateInNow(cs, ComputedResult.loading())
-  internal val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>> =
-    discussionsVms.newDiscussions.map { newDiscussions ->
-      newDiscussions.mapNotNull { (position, vm) ->
-        val position = position.position
-        val diffDataFlow = createDiffDataFlow(position, patchesByChangeFlow)
-        GitLabMergeRequestEditorNewDiscussionViewModel(vm, position, diffDataFlow, discussionsViewOption)
-      }
-    }.stateInNow(cs, emptyList())
 
   private val noteByTrackingId: StateFlow<Map<String, DiffDataMappedGitLabMergeRequestEditorViewModel>> =
-    combineStates(discussions, draftNotes, newDiscussions) { discussionsResult, draftNotesResult, newDiscussions ->
+    combineStates(discussions, draftNotes) { discussionsResult, draftNotesResult ->
       val discussions = discussionsResult.getOrNull() ?: emptyList()
       val draftNotes = draftNotesResult.getOrNull() ?: emptyList()
 
-      (discussions + draftNotes + newDiscussions).associateBy { note -> note.trackingId }
+      (discussions + draftNotes).associateBy { note -> note.trackingId }
     }
 
   @OptIn(ExperimentalCoroutinesApi::class)
