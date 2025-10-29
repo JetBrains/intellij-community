@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SSBasedInspection")
 
 package com.intellij.testFramework.junit5.impl
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
+import java.lang.AutoCloseable
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
@@ -37,7 +38,7 @@ fun ExtensionContext.testApplication(): Result<Unit> {
 }
 
 @TestOnly
-private class TestApplicationResource(val initializationResult: Result<Unit>) : ExtensionContext.Store.CloseableResource {
+private class TestApplicationResource(val initializationResult: Result<Unit>) : AutoCloseable {
   override fun close() {
     check(!EDT.isCurrentThreadEdt())
     if (!initializationResult.isSuccess) {
