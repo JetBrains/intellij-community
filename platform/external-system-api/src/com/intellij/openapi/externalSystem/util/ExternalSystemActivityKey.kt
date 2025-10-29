@@ -6,5 +6,5 @@ import org.jetbrains.annotations.Nls
 
 object ExternalSystemActivityKey : ActivityKey {
   override val presentableName: @Nls String
-    get() = "external-system"
+    get() = ExternalSystemBundle.message("external.system.activity.presentable.name")
 }
