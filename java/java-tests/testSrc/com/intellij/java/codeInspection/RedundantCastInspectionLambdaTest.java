@@ -59,8 +59,8 @@ public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCa
   public void testExplicitNullabilityAnnotation() { doTest(); }
 
   @TestFor(issues = "IDEA-381105")
-  public void testRegression() { doTest(); }
+  public void testLambdaParameterFieldAccess() { doTest(); }
 
   @TestFor(issues = "IDEA-381105")
-  public void testRegressionSimple() { doTest(); }
+  public void testLambdaParameterFieldAccessSimple() { doTest(); }
 }
