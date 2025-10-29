@@ -59,7 +59,7 @@ public final class PreviewFeatureInspection extends LocalInspectionTool {
               String name = owner instanceof PsiClass cls ?
                             cls.getQualifiedName() : 
                             Objects.requireNonNull(owner.getContainingClass()).getQualifiedName() + "#" + owner.getName();
-              holder.registerProblem(element, JavaBundle.message("preview.api.usage", name));
+              holder.registerProblem(element, JavaBundle.message("preview.api.usage.old.jdk", name, level.feature()));
             }
           }
         }
