@@ -365,10 +365,12 @@ public final class PluginInstallOperation {
                              "plugin.manager.dependencies.detected.message", false)) {
       return false;
     }
-
-    return !Registry.is("ide.plugins.suggest.install.optional.dependencies") ||
-           prepareDependencies(pluginNode, optionalDeps, "plugin.manager.optional.dependencies.detected.title",
-                               "plugin.manager.optional.dependencies.detected.message", true);
+    if (Registry.is("ide.plugins.suggest.install.optional.dependencies") &&
+        !prepareDependencies(pluginNode, optionalDeps, "plugin.manager.optional.dependencies.detected.title",
+                            "plugin.manager.optional.dependencies.detected.message", true)) {
+      return false;
+    }
+    return true;
   }
 
   private boolean prepareDependencies(@NotNull IdeaPluginDescriptor pluginNode,
