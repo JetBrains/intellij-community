@@ -773,7 +773,7 @@ class InfoAndProgressPanel internal constructor(
         object : NonOpaquePanel(BorderLayout()) {
           override fun getPreferredSize(): Dimension {
             val insets = border.getBorderInsets(this)
-            return Dimension(JBUI.scale(72 + insets.width), -1)
+            return Dimension(JBUI.scale(104 + insets.width), -1)
           }
         }
       }
