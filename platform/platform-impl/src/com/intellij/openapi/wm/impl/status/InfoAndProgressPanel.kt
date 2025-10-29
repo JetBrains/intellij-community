@@ -1056,7 +1056,6 @@ class InfoAndProgressPanel internal constructor(
           var rightX = parent.width - insets.right
           val gap = gap
           val indicatorComponent = indicator!!.component
-          counterComponent.resetCounterVisibilityForASingleProgress()
           if (indicatorComponent.isVisible) {
             var preferredWidth = preferredLayoutSize(parent).width - insets.left - insets.right
             var indicatorSize: Dimension? = null
@@ -1094,7 +1093,6 @@ class InfoAndProgressPanel internal constructor(
           indicatorComponent.setBounds(0, 0, 0, 0)
 
           if (showCounterInsteadOfMultiProcessLink && counterComponent.isVisible) {
-            counterComponent.enforceCounterVisibilityForASingleProgress()
             rightX = setBounds(counterComponent, rightX, centerY, null, true)
 
             progressIcon.isVisible = true
@@ -1234,7 +1232,6 @@ class InfoAndProgressPanel internal constructor(
       val isIndicatorVisible = !showPopup && (!supportSecondaryProgresses || currentIndicator.visibleInStatusBar)
       currentIndicator.component.isVisible = isIndicatorVisible
       if (showCounterInsteadOfMultiProcessLink) {
-        counterComponent.resetCounterVisibilityForASingleProgress()
         counterComponent.setNumber(size, isIndicatorVisible, showPopup)
         counterComponent.isVisible = true
         progressIcon.isVisible = !showPopup && !isIndicatorVisible
@@ -1268,8 +1265,6 @@ private class CounterLabel : JPanel(), UISettingsListener {
   private var numberOfProgresses: Int = 0
   private var isProgressVisible: Boolean = false
   private var isPopupShowing: Boolean = false
-  // needed when there is not enough space for a progress, and only process icon is shown, so a number should also be there
-  private var shouldShowNumberForASingleProcess: Boolean = false
 
   private var lastDigitNumber: Int = 0
   private var textsForMinimumSize: IntRange? = null
@@ -1315,7 +1310,6 @@ private class CounterLabel : JPanel(), UISettingsListener {
     val text = when {
       isPopupShowing -> ""
       numberToShow <= 0 -> ""
-      numberToShow == 1 && !shouldShowNumberForASingleProcess -> "${numberToShow}"
       !isProgressVisible && numberToShow == 1 -> ""
       isProgressVisible -> "+${numberToShow}"
       else -> "${numberToShow}"
@@ -1363,15 +1357,5 @@ private class CounterLabel : JPanel(), UISettingsListener {
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     minimumSize = null
-  }
-
-  fun enforceCounterVisibilityForASingleProgress() {
-    shouldShowNumberForASingleProcess = true
-    refreshPanelText()
-  }
-
-  fun resetCounterVisibilityForASingleProgress() {
-    shouldShowNumberForASingleProcess = false
-    refreshPanelText()
   }
 }
