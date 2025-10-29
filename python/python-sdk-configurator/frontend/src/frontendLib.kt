@@ -46,8 +46,9 @@ internal class ModulesViewModel(modulesDTO: ModulesDTO) {
     }
   }
 
-  fun clicked(what: ModuleName, checkBoxSet: Boolean) {
+  fun clicked(what: ModuleName) {
     val toChange = setOf(what) + children.getOrDefault(what, emptySet())
+    val checkBoxSet = what !in checked
     if (checkBoxSet) {
       checked.addAll(toChange)
     }
