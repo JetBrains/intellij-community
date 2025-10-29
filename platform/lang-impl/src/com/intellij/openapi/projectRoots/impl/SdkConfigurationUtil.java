@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
@@ -457,6 +458,14 @@ public final class SdkConfigurationUtil {
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
     FileChooser.chooseFiles(descriptor, null, component, suggestedSdkRoot, chosen -> {
       final String chosenPath = chosen.get(0).getPath();
+      if (!EelProviderUtil.getEelDescriptor(Path.of(chosenPath)).equals(EelProviderUtil.getEelDescriptor(path))) {
+        Messages.showErrorDialog(
+          component,
+          ProjectBundle.message("sdk.configure.sdk.not.accessible.from.current.environment.error", sdkType.getPresentableName()),
+          ProjectBundle.message("sdk.configure.jdk.environment.mismatch.title", sdkType.getPresentableName())
+        );
+        return;
+      }
       final String adjustedPath = sdkType.adjustSelectedSdkHome(chosenPath);
       AtomicBoolean isAdjustedPathValid = new AtomicBoolean(false);
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
