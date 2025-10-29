@@ -58,14 +58,14 @@ object CodeWriter {
     existingTargetFolder: () -> VirtualFile?,
   ) {
     val sourceFilePerObjModule = HashMap<String, VirtualFile>()
-    val ktClasses = HashMap<String, KtClass>()
+    val ktClasses = HashMap<String, KtClassOrObject>()
     readAction {
       VfsUtilCore.processFilesRecursively(sourceFolder) {
         if (it.extension == "kt") {
           val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile?
 
           ktFile?.declarations
-            ?.filterIsInstance<KtClass>()
+            ?.filterIsInstance<KtClassOrObject>()
             ?.filter { it.name != null }
             ?.forEach { ktClass ->
               val fqName = ktClass.fqName!!.asString()
@@ -126,13 +126,13 @@ object CodeWriter {
         }
 
         // compatibility invoke in FacetEntity and KotlinSettingsEntity
-        val savedCompatibilityInvokeCode = mutableMapOf<KtClass, PsiElement>()
+        val savedCompatibilityInvokeCode = mutableMapOf<KtClassOrObject, PsiElement>()
         saveCompatibilityCode(ktClasses, savedCompatibilityInvokeCode)
 
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
         removeGeneratedCode(ktClasses, genFolder)
 
-        val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
+        val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClassOrObject, List<KtDeclaration>>>()
         val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
         val generatedFiles = ArrayList<KtFile>()
 
@@ -291,7 +291,7 @@ object CodeWriter {
     return entitiesImplementations + metadataStorageImplementation
   }
 
-  private fun saveCompatibilityCode(ktClasses: Map<String, KtClass>, savedCompatibilityInvokeCode: MutableMap<KtClass, PsiElement>) {
+  private fun saveCompatibilityCode(ktClasses: Map<String, KtClassOrObject>, savedCompatibilityInvokeCode: MutableMap<KtClassOrObject, PsiElement>) {
     for (ktClass in ktClasses.values) {
       val companionDeclaration = ktClass.body?.declarations?.find { it is KtObjectDeclaration && it.isCompanion() } as? KtObjectDeclaration
                                  ?: continue
@@ -301,7 +301,7 @@ object CodeWriter {
     }
   }
 
-  private fun removeGeneratedCode(ktClasses: Map<String, KtClass>, genFolder: VirtualFile) {
+  private fun removeGeneratedCode(ktClasses: Map<String, KtClassOrObject>, genFolder: VirtualFile) {
     ktClasses.values.flatMapTo(HashSet()) { listOfNotNull(it.containingFile.node, it.body?.node) }.forEach {
       removeChildrenInGeneratedRegions(it)
     }
@@ -355,9 +355,9 @@ object CodeWriter {
   private fun addGeneratedObjClassFile(
     code: ObjClassGeneratedCode, generatedFiles: MutableList<KtFile>,
     project: Project, sourceFolder: VirtualFile, genFolder: VirtualFile,
-    ktClasses: Map<String, KtClass>, importsByFile: MutableMap<KtFile, Imports>,
-    topLevelDeclarations: MultiMap<KtFile, Pair<KtClass, List<KtDeclaration>>>, psiFactory: KtPsiFactory,
-    savedCompatibilityInvokeCode: MutableMap<KtClass, PsiElement>,
+    ktClasses: Map<String, KtClassOrObject>, importsByFile: MutableMap<KtFile, Imports>,
+    topLevelDeclarations: MultiMap<KtFile, Pair<KtClassOrObject, List<KtDeclaration>>>, psiFactory: KtPsiFactory,
+    savedCompatibilityInvokeCode: MutableMap<KtClassOrObject, PsiElement>,
   ) {
 
     if (code.target.name in SKIPPED_TYPES) return
@@ -469,7 +469,7 @@ object CodeWriter {
     }
   }
 
-  private fun addInnerDeclarations(ktClass: KtClass, code: ObjClassGeneratedCode, imports: Imports, savedCompatibilityInvokeCode: MutableMap<KtClass, PsiElement>) {
+  private fun addInnerDeclarations(ktClass: KtClassOrObject, code: ObjClassGeneratedCode, imports: Imports, savedCompatibilityInvokeCode: MutableMap<KtClassOrObject, PsiElement>) {
     if (code.builderInterface.isEmpty()) return
     val psiFactory = KtPsiFactory(ktClass.project)
     val builderInterface = ktClass.addDeclaration(psiFactory.createClass(imports.findAndRemoveFqns(code.builderInterface)))

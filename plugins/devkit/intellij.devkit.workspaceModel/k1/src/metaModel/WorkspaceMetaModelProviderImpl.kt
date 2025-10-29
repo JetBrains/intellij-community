@@ -4,12 +4,12 @@ package com.intellij.devkit.workspaceModel.k1.metaModel
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.openapi.module.Module
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
-import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
 
   override fun loadObjModules(
-    ktClasses: HashMap<String, KtClass>,
+    ktClasses: HashMap<String, KtClassOrObject>,
     module: Module,
     processAbstractTypes: Boolean,
     isTestSourceFolder: Boolean,

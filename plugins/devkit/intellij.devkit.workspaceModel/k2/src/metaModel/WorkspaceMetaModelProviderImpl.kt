@@ -10,13 +10,13 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
-import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
 
   @OptIn(KaAllowAnalysisFromWriteAction::class, KaAllowAnalysisOnEdt::class)
   override fun loadObjModules(
-    ktClasses: HashMap<String, KtClass>,
+    ktClasses: HashMap<String, KtClassOrObject>,
     module: Module,
     processAbstractTypes: Boolean,
     isTestSourceFolder: Boolean,
@@ -40,7 +40,7 @@ internal class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
       allowAnalysisFromWriteAction {
         packages
           .filter { it != "" }
-          .mapNotNull { packageName ->
+          .map { packageName ->
             metaModelProvider.getObjModule(packageName, kaModule)
           }
       }
