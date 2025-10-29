@@ -723,11 +723,25 @@ public final class FileManagerImpl implements FileManagerEx {
     if (!irrelevantViewProviders.isEmpty()) {
       CodeInsightContextManagerImpl codeInsightContextManager = CodeInsightContextManagerImpl.getInstanceImpl(myManager.getProject());
       irrelevantViewProviders.values().stream()
-        .filter(entry -> !filesHavingRelevantViewProviders.contains(entry.getFile()))
+        .filter(entry -> {
+          boolean contains = filesHavingRelevantViewProviders.contains(entry.getFile());
+          if (contains && LOG.isDebugEnabled()) {
+            FileViewProvider viewProvider = entry.getProvider();
+            CodeInsightContext context = codeInsightContextManager.getCodeInsightContextRaw(viewProvider);
+            LOG.debug("- View provider " + viewProvider + " with irrelevant context " + context + " has not survived moving");
+          }
+          return !contains;
+        })
         .map(entry -> {
           VirtualFile vFile = entry.getFile();
           FileViewProvider viewProvider = entry.getProvider();
           codeInsightContextManager.setCodeInsightContext(viewProvider, CodeInsightContexts.anyContext());
+
+          if (LOG.isDebugEnabled()) {
+            CodeInsightContext context = codeInsightContextManager.getCodeInsightContextRaw(viewProvider);
+            LOG.debug("+ View provider " + viewProvider + " with irrelevant context " + context + " has survived moving");
+          }
+
           return new Entry(vFile, CodeInsightContexts.anyContext(), viewProvider);
         })
         .collect(Collectors.toCollection(() -> fileToPsiFileMap));

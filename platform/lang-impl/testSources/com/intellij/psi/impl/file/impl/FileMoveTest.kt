@@ -4,18 +4,21 @@ package com.intellij.psi.impl.file.impl
 import com.intellij.codeInsight.multiverse.*
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multiverseProjectFixture
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import com.intellij.testFramework.junit5.fixture.moduleInProjectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 
 @TestApplication
 internal class FileMoveTest {
@@ -62,91 +65,81 @@ internal class FileMoveTest {
   private val src2 by projectFixture.fileOrDirInProjectFixture("module2/contentRoot2/src2")
   private val src4 by projectFixture.fileOrDirInProjectFixture("module4/contentRoot4/src4")
   private val src12 by projectFixture.fileOrDirInProjectFixture("module1/contentRoot1/src1-2")
+  private val src34 by projectFixture.fileOrDirInProjectFixture("module3/contentRoot3/src34-2")
 
   private val module3 by projectFixture.moduleInProjectFixture("module3")
   private val module4 by projectFixture.moduleInProjectFixture("module4")
 
   @Test
-  fun `file changes context after move`() = timeoutRunBlocking {
+  fun `file changes context after move`() = doTest {
     val psiFile = aJava.findPsiFile()
 
-    assertEquals("module1", psiFile.getModuleContextName())
+    assertModuleContext(psiFile, aJava, "module1")
 
-    writeAction {
-      aJava.move(this, src2)
-    }
+    moveFile(aJava, src2)
 
-    readAction {
-      assert(psiFile.isValid) { "file changed context after move => psiFile must not be invalidated" }
-    }
+    assertPsiFileIsValid(psiFile, aJava)
 
     val movedPsiFile = aJava.findPsiFile()
-    assertEquals("module2", movedPsiFile.getModuleContextName())
+    assertModuleContext(movedPsiFile, aJava, "module2")
   }
 
   @Test
-  fun `file changes context after move for any-context`() = timeoutRunBlocking {
+  fun `file changes context after move for any-context`() = doTest {
     val psiFile = aJava.findPsiFile()
 
     val rawContext = CodeInsightContextManagerImpl.getInstanceImpl(project).getCodeInsightContextRaw(psiFile.viewProvider)
-    assert(rawContext == anyContext())
+    assert(rawContext == anyContext()) { psiFile.presentableTextWithContext() + ", " + dumpPsiFiles(aJava)}
 
-    writeAction {
-      aJava.move(this, src2)
-    }
+    moveFile(aJava, src2)
 
-    readAction {
-      assert(psiFile.isValid) { "file changed context after move => psiFile must not be invalidated" }
-    }
+    assertPsiFileIsValid(psiFile, aJava)
 
     val movedPsiFile = aJava.findPsiFile()
-    assertEquals("module2", movedPsiFile.getModuleContextName())
+    assertEquals("module2", movedPsiFile.getModuleContextName()) { dumpPsiFiles(bJava) }
   }
 
-
   @Test
-  fun `shared file changes context after move`() = timeoutRunBlocking {
+  fun `shared file changes context after move`() = doTest {
     val psiFile3 = bJava.findPsiFile(module3.asContext())
     val psiFile4 = bJava.findPsiFile(module4.asContext())
 
     assertEquals("module3", psiFile3.getModuleContextName())
     assertEquals("module4", psiFile4.getModuleContextName())
 
-    writeAction {
-      bJava.move(this, src2)
-    }
+    moveFile(bJava, src2)
 
     readAction {
-      assert(psiFile3.isValid xor psiFile4.isValid) { "one of the files survives" }
+      assert(psiFile3.isValid xor psiFile4.isValid) {
+        val text3 = psiFile3.presentableTextWithContext() + "[" + if (psiFile3.isValid) "valid]" else "invalid]"
+        val text4 = psiFile3.presentableTextWithContext() + "[" + if (psiFile4.isValid) "valid]" else "invalid]"
+        text3 + " : " + text4 + ", " + dumpPsiFiles(bJava)
+      }
     }
 
     val movedPsiFile = bJava.findPsiFile()
-    assertEquals("module2", movedPsiFile.getModuleContextName())
+    assertModuleContext(movedPsiFile, bJava, "module2")
   }
 
   @Test
-  fun `shared file changes context after move when one context survives`() = timeoutRunBlocking {
+  fun `shared file changes context after move when one context survives`() = doTest { // this
     val psiFile3 = bJava.findPsiFile(module3.asContext())
     val psiFile4 = bJava.findPsiFile(module4.asContext())
 
     assertEquals("module3", psiFile3.getModuleContextName())
     assertEquals("module4", psiFile4.getModuleContextName())
 
-    writeAction {
-      bJava.move(this, src4)
-    }
+    moveFile(bJava, src4)
 
-    readAction {
-      assert(!psiFile3.isValid) { "module3 is not relevant anymore" }
-      assert(psiFile4.isValid) { "module4 is still relevant" }
-    }
+    assertPsiFileIsNotValid(psiFile3, bJava)
+    assertPsiFileIsValid(psiFile4, bJava)
 
     val movedPsiFile = bJava.findPsiFile()
-    assertEquals("module4", movedPsiFile.getModuleContextName())
+    assertModuleContext(movedPsiFile, bJava, "module4")
   }
 
   @Test
-  fun `shared file moves and all contexts survive`() = timeoutRunBlocking {
+  fun `shared file moves and all contexts survive`() = doTest {
     val module3 = ModuleManager.getInstance(project).findModuleByName("module3")!!
     val module4 = ModuleManager.getInstance(project).findModuleByName("module4")!!
     val module3Context = ProjectModelContextBridge.getInstance(project).getContext(module3)!!
@@ -155,38 +148,24 @@ internal class FileMoveTest {
     val psiFile3 = bJava.findPsiFile(module3Context)
     val psiFile4 = bJava.findPsiFile(module4Context)
 
-    assertEquals("module3", psiFile3.getModuleContextName())
-    assertEquals("module4", psiFile4.getModuleContextName())
+    assertModuleContext(psiFile3, bJava, "module3")
+    assertModuleContext(psiFile4, bJava, "module4")
 
-    writeAction {
-      bJava.move(this, src4)
-    }
+    moveFile(bJava, src34)
 
-    readAction {
-      assert(!psiFile3.isValid) { "module3 is not relevant anymore" }
-      assert(psiFile4.isValid) { "module4 is still relevant" }
-    }
-
-    val movedPsiFile = bJava.findPsiFile()
-    assertEquals("module4", movedPsiFile.getModuleContextName())
+    assertPsiFileIsValid(psiFile3, bJava)
+    assertPsiFileIsValid(psiFile4, bJava)
   }
 
-
   @Test
-  fun `file survives move`() = timeoutRunBlocking {
+  fun `file survives move`() = doTest {
     val psiFile = aJava.findPsiFile()
+    assertModuleContext(psiFile, aJava, "module1")
 
-    assertEquals("module1", psiFile.getModuleContextName())
+    moveFile(aJava, src12)
 
-    writeAction {
-      aJava.move(this, src12)
-    }
-
-    readAction {
-      assert(psiFile.isValid)
-    }
-
-    assertEquals("module1", psiFile.getModuleContextName())
+    assertPsiFileIsValid(psiFile, aJava)
+    assertModuleContext(psiFile, aJava, "module1")
   }
 
   private suspend fun VirtualFile.findPsiFile(): PsiFile {
@@ -208,4 +187,70 @@ internal class FileMoveTest {
   }
 
   private fun Module.asContext(): ModuleContext = ProjectModelContextBridge.getInstance(project).getContext(this)!!
+
+  private fun doTest(block: suspend () -> Unit) = timeoutRunBlocking {
+    thisLogger().debug("test started")
+    try {
+      block()
+    }
+    finally {
+      thisLogger().debug("test finished")
+    }
+  }
+
+  private suspend fun moveFile(file: VirtualFile, target: VirtualFile) {
+    writeAction {
+      val message = dumpPsiFiles(file)
+      thisLogger().debug("Existing PsiFiles of ${file.path}: " + message)
+
+      thisLogger().debug("moving ${file.path} to ${target.path}")
+      file.move(this, target)
+    }
+  }
+
+  private suspend fun assertPsiFileIsValid(psiFile: PsiFile, vFile: VirtualFile) {
+    readAction {
+      if (!psiFile.isValid) {
+        fail("File ${psiFile.presentableTextWithContext()} must be valid. See registered files:" + dumpPsiFiles(vFile))
+      }
+    }
+  }
+
+  private suspend fun assertPsiFileIsNotValid(psiFile: PsiFile, vFile: VirtualFile) {
+    readAction {
+      if (psiFile.isValid) {
+        fail("File ${psiFile.presentableTextWithContext()} must be invalid. See registered files:" + dumpPsiFiles(vFile))
+      }
+    }
+  }
+
+  private suspend fun assertModuleContext(psiFile: PsiFile, vFile: VirtualFile, expectedContext: String) {
+    assertEquals(expectedContext, psiFile.getModuleContextName()) { dumpPsiFiles(vFile) }
+  }
+
+  private fun dumpPsiFiles(file: VirtualFile): String {
+    val allCachedFiles = PsiManagerImpl.getInstanceEx(project).fileManagerEx.allCachedFiles
+    val myPsiFiles = allCachedFiles.filter { it.virtualFile == file }
+
+    return myPsiFiles.joinToString(separator = "\n  ", prefix = "[\n  ", postfix = "\n]") { file ->
+      file.presentableTextWithContext()
+    }
+  }
+
+  private fun PsiFile.presentableTextWithContext(): String {
+    val m = CodeInsightContextManagerImpl.getInstanceImpl(project)
+    val rawContext = m.getCodeInsightContextRaw(this.viewProvider)
+    return rawContext.presentableToString() + " : " + this.presentableText()
+  }
+
+  private fun CodeInsightContext.presentableToString(): String {
+    return when (this) {
+      is ModuleContext -> "ModuleContext(module=${getModule()!!.name})"
+      else -> this.toString()
+    }
+  }
+
+  private fun PsiFile.presentableText(): String {
+    return "File@" + System.identityHashCode(this)
+  }
 }
