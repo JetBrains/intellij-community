@@ -30,6 +30,11 @@ public class NavigateJavaSourceToLibraryTestGenerated extends AbstractNavigateJa
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("CapitalizedProperties.java")
+    public void testCapitalizedProperties() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/CapitalizedProperties.java");
+    }
+
     @TestMetadata("ClassAndConstuctors.java")
     public void testClassAndConstuctors() throws Exception {
         runTest("testData/decompiler/navigation/userJavaCode/ClassAndConstuctors.java");

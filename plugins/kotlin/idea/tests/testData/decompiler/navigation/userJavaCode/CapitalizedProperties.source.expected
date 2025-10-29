@@ -1,0 +1,5 @@
+CapitalizedPropertyContainerObject.class
+public object <2><4>CapitalizedPropertyContainerObject {
+    @kotlin.jvm.JvmStatic public final var <3><5>Default: kotlin.String /* compiled code */
+ String.class
+public final class <1>String implements Serializable, Comparable<String>, CharSequence {
