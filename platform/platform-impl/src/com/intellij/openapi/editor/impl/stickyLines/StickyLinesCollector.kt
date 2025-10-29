@@ -25,8 +25,8 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
- * Responsible for collecting sticky lines based on psi file structure. // todo rewrite
- * The implementation relies on PsiFileBreadcrumbsCollector to collect psi elements at specific document line.
+ * Responsible for collecting sticky lines based on the file structure.
+ * The implementation relies on FileBreadcrumbsCollector to collect ranges at specific document line.
  */
 @Internal
 class StickyLinesCollector(private val project: Project, private val document: Document) {
