@@ -741,6 +741,9 @@
     <extensionPoint interface="com.intellij.microservices.endpoints.EndpointsProjectModel"
                     qualifiedName="com.intellij.microservices.endpointsProjectModel" dynamic="true"/>
 
+    <extensionPoint interface="com.intellij.util.gotoByName.FindActionSearchableOptionsFilter"
+                    qualifiedName="com.intellij.findActionSearchableOptionsFilter" dynamic="true"/>"
+
     <extensionPoint interface="com.intellij.microservices.url.UrlResolverFactory"
                     qualifiedName="com.intellij.microservices.urlResolverFactory" dynamic="true"/>
     <extensionPoint interface="com.intellij.microservices.url.inlay.UrlPathInlayAction"
