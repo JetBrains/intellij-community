@@ -53,35 +53,16 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
   }
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    if (!shouldDoCompletion(parameters, result)) return
-    
+    if (result.prefixMatcher.prefix.isEmpty()) {
+      result.restartCompletionOnPrefixChange(StandardPatterns.string().longerThan(0))
+      return
+    }
     result.restartCompletionWhenNothingMatches()
     val remainingResults = result.runRemainingContributors(parameters, true)
     if (parameters.isExtendedCompletion || remainingResults.isEmpty() || containsOnlyElementUnderTheCaret(remainingResults, parameters)) {
       fillCompletionVariantsImpl(parameters, result)
     }
   }
-
-  private fun shouldDoCompletion(parameters: CompletionParameters, result: CompletionResultSet): Boolean {
-    if (result.prefixMatcher.prefix.isEmpty()) {
-      result.restartCompletionOnPrefixChange(StandardPatterns.string().longerThan(0))
-      return false
-    }
-
-    val element = parameters.position
-    val parent = element.parent
-    if (parent is PyReferenceExpression && parent.isQualified) {
-      return false
-    }
-    if (parent is PyStringLiteralExpression) {
-      val prefix = parent.text.substring(0, parameters.offset - parent.textRange.startOffset)
-      if (prefix.contains(".")) {
-        return false
-      }
-    }
-    return element.findParentOfType<PyImportStatementBase>() == null
-  }
-
 
   private fun fillCompletionVariantsImpl(parameters: CompletionParameters, result: CompletionResultSet) {
     val isExtendedCompletion = parameters.isExtendedCompletion
@@ -92,22 +73,32 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     val position = parameters.position
     val refExpr = position.parent as? PyReferenceExpression
     val targetExpr = position.parent as? PyTargetExpression
+    val stringElem = position as? PyStringElement
     val originalPosition = parameters.originalPosition
     // In cases like `fo<caret>o = 42` the target expression gets split by the trailing space at the end of DUMMY_IDENTIFIER as
     // `foIntellijIdeaRulezzz o = 42`, so in the copied file we're still completing inside a standalone reference expression.
     val originallyInsideTarget = originalPosition != null && originalPosition.parent is PyTargetExpression
     val insideUnqualifiedReference = refExpr != null && !refExpr.isQualified && !originallyInsideTarget
     val insidePattern = targetExpr != null && position.parent.parent is PyCapturePattern
-    val insideStringLiteralInExtendedCompletion = position is PyStringElement && isExtendedCompletion
+    val insideStringLiteralInExtendedCompletion = stringElem != null && isExtendedCompletion
     if (!(insideUnqualifiedReference || insidePattern || insideStringLiteralInExtendedCompletion)) {
       return
     }
 
     // Directly inside the class body scope, it's rarely needed to have expression statements
-    // TODO apply the same logic for completion of importable module and package names
-    if (refExpr != null && (isDirectlyInsideClassBody(refExpr) || isInsideErrorElement(refExpr))) {
+    if (refExpr != null && (isDirectlyInsideClassBody(refExpr) ||
+                            isInsideErrorElement(refExpr) ||
+                            isInsideImportElement(refExpr))) {
       return
     }
+
+    if (insideStringLiteralInExtendedCompletion) {
+      val prefix = stringElem.text.substring(stringElem.contentRange.startOffset, parameters.offset - stringElem.textRange.startOffset)
+      if (prefix.contains(".")) {
+        return
+      }
+    }
+    
     val project = originalFile.getProject()
     val typeEvalContext = TypeEvalContext.codeCompletion(project, originalFile)
     val maxVariants = intValue("ide.completion.variant.limit")
@@ -279,6 +270,10 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     return referenceExpression.findParentOfType<PsiErrorElement>() != null
   }
 
+  private fun isInsideImportElement(referenceExpression: PyReferenceExpression): Boolean {
+    return referenceExpression.findParentOfType<PyImportStatementBase>() != null
+  } 
+  
   private fun isDirectlyInsideClassBody(referenceExpression: PyReferenceExpression): Boolean {
     return referenceExpression.parent is PyExpressionStatement &&
            ScopeUtil.getScopeOwner(referenceExpression.parent) is PyClass
