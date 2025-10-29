@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -228,9 +228,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   private void appendAdditionalElement(Collection<? super Pair<PsiElement, TextRange>> stringUsages,
                                        PsiNamedElement variable,
                                        PsiElement element) {
-    if (element != variable && element instanceof PsiNameIdentifierOwner &&
-        !notSameFile(null, element.getContainingFile())) {
-      final PsiElement identifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
+    if (element != variable && element instanceof PsiNameIdentifierOwner owner && !notSameFile(null, element.getContainingFile())) {
+      final PsiElement identifier = owner.getNameIdentifier();
       if (identifier != null) {
         stringUsages.add(Pair.create(identifier, new TextRange(0, identifier.getTextLength())));
       }
@@ -242,7 +241,14 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     try {
       startDumbIfPossible();
       tryRollback();
-      final PsiNamedElement variable = getVariable();
+      PsiNamedElement variable = getVariable();
+      if (variable == null) {
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+        if (psiFile != null) {
+          variable = PsiTreeUtil.findElementOfClassAtRange(psiFile, mySubstitutedRange.getStartOffset(), mySubstitutedRange.getEndOffset(), 
+                                                           PsiNameIdentifierOwner.class);
+        }
+      }
       if (variable != null && !newName.equals(myOldName)) {
         if (isIdentifier(newName, variable.getLanguage())) {
           final PsiElement substituted = getSubstituted();
@@ -250,6 +256,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
             return;
           }
 
+          String type = UsageViewUtil.getType(variable);
+          String name = DescriptiveNameUtil.getDescriptiveName(variable);
           Runnable performRunnable = () -> {
             try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
               if (DumbService.isDumb(myProject)) {
@@ -259,9 +267,8 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
                 return;
               }
 
-              final String commandName = RefactoringBundle.message("renaming.0.1.to.2",
-                                                                   UsageViewUtil.getType(variable),
-                                                                   DescriptiveNameUtil.getDescriptiveName(variable), newName);
+             
+              final String commandName = RefactoringBundle.message("renaming.0.1.to.2", type, name, newName);
               CommandProcessor.getInstance().executeCommand(myProject, () -> {
                 performRenameInner(substituted, newName);
                 PsiDocumentManager.getInstance(myProject).commitAllDocuments();

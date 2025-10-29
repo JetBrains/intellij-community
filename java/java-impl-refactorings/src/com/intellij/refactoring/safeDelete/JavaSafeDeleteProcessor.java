@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.FindSuperElementsHelper;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -131,6 +132,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
                                                                         @Nullable Module module,
                                                                         @NotNull Collection<? extends PsiElement> allElementsToDelete) {
     Project project = element.getProject();
+    if (element instanceof SyntheticElement && !(element instanceof LightDefaultConstructor)) return null;
     if (element instanceof PsiPackage aPackage && module != null) {
       PsiDirectory[] directories = aPackage.getDirectories(module.getModuleScope());
       if (directories.length == 0) return null;
@@ -144,6 +146,9 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     if (element instanceof PsiMethod method) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         return Collections.singletonList(element);
+      }
+      if (method.isDefaultConstructor()) {
+        return Collections.singletonList(method.getContainingClass());
       }
       PsiMethod[] methods = SuperMethodWarningUtil.checkSuperMethods(method, allElementsToDelete);
       if (methods.length == 0) return null;

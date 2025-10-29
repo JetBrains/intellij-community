@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
@@ -40,6 +40,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
+import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -118,6 +119,20 @@ public class FindUsagesTest extends JavaPsiTestCase {
     PsiElement decompiled =
       ((PsiCompiledElement)myJavaFacade.findClass("javax.swing.JLabel", GlobalSearchScope.allScope(myProject))).getMirror();
     assertEquals(2, ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll().size());
+  }
+  
+  public void testDefaultConstructor() {
+    PsiClass aClass = myJavaFacade.findClass("Animal", GlobalSearchScope.allScope(myProject));
+    PsiMethod main = aClass.findMethodsByName("main", false)[0];
+    PsiLocalVariable variable = (PsiLocalVariable)main.getBody().getStatements()[0].getFirstChild();
+    PsiNewExpression newExpression = (PsiNewExpression)variable.getInitializer();
+    PsiMethod defaultConstructor = newExpression.resolveMethod();
+    Collection<PsiReference> references = ReferencesSearch.search(defaultConstructor, GlobalSearchScope.projectScope(myProject)).findAll();
+    List<@NotNull PsiElement> result = 
+      references.stream().map(r -> r.getElement()).sorted(PsiElementOrderComparator.getInstance()).toList();
+    assertEquals(2, references.size());
+    assertTrue(result.get(0).getParent() instanceof PsiNewExpression);
+    assertTrue(result.get(1) instanceof PsiMethod m && m.isConstructor() && "OneLeggedDog".equals(m.getName()));
   }
 
   public void testImplicitConstructorUsage() {

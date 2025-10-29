@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -227,18 +227,18 @@ public abstract class BaseRefactoringAction extends AnAction {
   @ApiStatus.Internal
   public static PsiElement findRefactoringTargetInEditor(@NotNull DataContext dataContext,
                                                          @NotNull Predicate<? super Language> elementLanguagePredicate) {
-    Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
-    PsiFile file = dataContext.getData(CommonDataKeys.PSI_FILE);
     PsiElement element = dataContext.getData(CommonDataKeys.PSI_ELEMENT);
-    Language[] languages = dataContext.getData(LangDataKeys.CONTEXT_LANGUAGES);
-    if (element == null || element instanceof SyntheticElement || !elementLanguagePredicate.test(element.getLanguage())) {
+    if (element == null || !elementLanguagePredicate.test(element.getLanguage())) {
+      Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
+      PsiFile file = dataContext.getData(CommonDataKeys.PSI_FILE);
       if (file == null || editor == null) {
         return null;
       }
       element = getElementAtCaret(editor, file);
     }
 
-    if (element == null || element instanceof SyntheticElement || languages == null) {
+    Language[] languages = dataContext.getData(LangDataKeys.CONTEXT_LANGUAGES);
+    if (element == null || languages == null) {
       return null;
     }
 
