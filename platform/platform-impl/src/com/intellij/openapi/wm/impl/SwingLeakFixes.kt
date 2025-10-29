@@ -7,12 +7,14 @@ import java.awt.Component
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
 import javax.swing.ToolTipManager
+import javax.swing.UIManager
 
 
 internal fun fixSwingLeaks() {
   fixDragRecognitionSupportLeak()
   fixSmoothAutoScrollerDragListenerLeak()
   fixTooltipManagerLeak()
+  fixTreeUiBaselineComponentLeak()
 }
 
 private fun fixDragRecognitionSupportLeak() {
@@ -34,6 +36,20 @@ private fun fixSmoothAutoScrollerDragListenerLeak() {
 private fun fixTooltipManagerLeak() {
   val fakeComponent = JPanel()
   ToolTipManager.sharedInstance().mousePressed(mouseEvent(fakeComponent, MouseEvent.MOUSE_PRESSED))
+}
+
+private fun fixTreeUiBaselineComponentLeak() {
+  val lafDefaults = UIManager.getLookAndFeelDefaults()
+  synchronized(lafDefaults) { // prevent CME if someone accesses it from outside the EDT
+    val iterator = lafDefaults.iterator()
+    while (iterator.hasNext()) {
+      val entry = iterator.next()
+      if (entry.key.toString() == "Tree.baselineComponent") {
+        iterator.remove()
+        break
+      }
+    }
+  }
 }
 
 private fun mouseEvent(source: Component, id: Int) = MouseEvent(
