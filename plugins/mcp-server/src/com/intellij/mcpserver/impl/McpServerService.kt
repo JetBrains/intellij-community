@@ -3,17 +3,12 @@ package com.intellij.mcpserver.impl
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.mcpserver.*
 import com.intellij.mcpserver.impl.util.network.*
-import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.util.findMostRelevantProject
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -48,6 +43,7 @@ import io.modelcontextprotocol.kotlin.sdk.*
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
+import io.modelcontextprotocol.kotlin.sdk.server.ServerSession
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -158,7 +154,8 @@ class McpServerService(val cs: CoroutineScope) {
   private fun isKnownToken(token: String): Boolean = activeAuthorizedSessions.containsKey(token)
 
   private fun getSessionOptions(token: String?): McpSessionOptions {
-    return token?.let { activeAuthorizedSessions[it] } ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
+    return token?.let { activeAuthorizedSessions[it] }
+           ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
   }
 
   val port: Int
@@ -237,7 +234,7 @@ class McpServerService(val cs: CoroutineScope) {
             finish()
           }
         }
-      }) { applicationCall ->
+      }) { applicationCall, transport ->
         // this is added because now a Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
         val projectPath = applicationCall.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
         val mcpServer = Server(
@@ -250,24 +247,30 @@ class McpServerService(val cs: CoroutineScope) {
               //prompts = ServerCapabilities.Prompts(listChanged = true),
               //resources = ServerCapabilities.Resources(subscribe = true, listChanged = true),
               tools = ServerCapabilities.Tools(listChanged = true),
+              logging = null,
+              experimental = null,
+              sampling = null,
+              prompts = null,
+              resources = null,
             )
           )
         )
-        mcpServer.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { _, _ ->
-          // Workaround inspector failure
-          return@setRequestHandler EmptyRequestResult()
-        }
+        val session = mcpServer.createSession(transport)
+        //session.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { _, _ ->
+        //  // Workaround inspector failure
+        //  return@setRequestHandler EmptyRequestResult()
+        //}
         launch {
           var previousTools: List<McpTool>? = null
           mcpTools.collectLatest { updatedTools ->
             previousTools?.forEach { previousTool ->
               mcpServer.removeTool(previousTool.descriptor.name)
             }
-            mcpServer.addTools(updatedTools.map { it.mcpToolToRegisteredTool(mcpServer, projectPath) })
+            mcpServer.addTools(updatedTools.map { it.mcpToolToRegisteredTool(mcpServer, session, projectPath) })
             previousTools = updatedTools
           }
         }
-        return@mcpPatched mcpServer
+        return@mcpPatched session
       }
     }.start(wait = false)
   }
@@ -282,7 +285,7 @@ class McpServerService(val cs: CoroutineScope) {
     }
   }
 
-  private fun McpTool.mcpToolToRegisteredTool(server: Server, projectPathFromInitialRequest: String?): RegisteredTool {
+  private fun McpTool.mcpToolToRegisteredTool(server: Server, session: ServerSession, projectPathFromInitialRequest: String?): RegisteredTool {
     val tool = toSdkTool()
     return RegisteredTool(tool) { request ->
       val httpRequest = currentCoroutineContext().httpRequestOrNull
@@ -318,7 +321,7 @@ class McpServerService(val cs: CoroutineScope) {
 
       val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
       val initialDocumentContents = ConcurrentHashMap<Document, String>()
-      val clientVersion = server.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
+      val clientVersion = session.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
 
       val additionalData = McpCallInfo(
         callId = callId.getAndAdd(1),
@@ -491,6 +494,7 @@ private fun McpTool.toSdkTool(): Tool {
   }
   else null
   val tool = Tool(name = descriptor.name,
+                  title = null,
                   description = descriptor.description,
                   inputSchema = Tool.Input(
                     properties = descriptor.inputSchema.propertiesSchema,
