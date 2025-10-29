@@ -182,16 +182,16 @@ public final class PluginInstallOperation {
   }
 
   private boolean prepareToInstall(@NotNull List<PluginUiModel> pluginsToInstall) {
-    List<PluginId> pluginIds = new SmartList<>();
+    List<PluginId> pluginIdsBeingInstalled = new SmartList<>();
     for (PluginUiModel pluginNode : pluginsToInstall) {
-      pluginIds.add(pluginNode.getPluginId());
+      pluginIdsBeingInstalled.add(pluginNode.getPluginId());
     }
 
     boolean result = false;
     for (PluginUiModel pluginNode : pluginsToInstall) {
       myIndicator.setText(pluginNode.getName());
       try {
-        result |= prepareToInstallWithCallback(pluginNode, pluginIds);
+        result |= prepareToInstallWithCallback(pluginNode, pluginIdsBeingInstalled);
       }
       catch (IOException e) {
         String title = IdeBundle.message("title.plugin.error");
@@ -206,20 +206,20 @@ public final class PluginInstallOperation {
   }
 
   private boolean prepareToInstallWithCallback(@NotNull PluginUiModel pluginNode,
-                                               @NotNull List<PluginId> pluginIds) throws IOException {
+                                               @NotNull List<PluginId> pluginIdsBeingInstalled) throws IOException {
     PluginId id = pluginNode.getPluginId();
     ActionCallback localCallback = myLocalInstallCallbacks.remove(id);
 
     if (localCallback == null) {
       ActionCallback callback = myLocalWaitInstallCallbacks.remove(id);
       if (callback == null) {
-        return prepareToInstall(pluginNode, pluginIds);
+        return prepareToInstall(pluginNode, pluginIdsBeingInstalled);
       }
       return callback.waitFor(-1) && callback.isDone();
     }
     else {
       try {
-        boolean result = prepareToInstall(pluginNode, pluginIds);
+        boolean result = prepareToInstall(pluginNode, pluginIdsBeingInstalled);
         removeInstallCallback(id, localCallback, result);
         return result;
       }
@@ -232,7 +232,7 @@ public final class PluginInstallOperation {
 
   @RequiresBackgroundThread
   private boolean prepareToInstall(@NotNull PluginUiModel pluginNode,
-                                   @NotNull List<PluginId> pluginIds) throws IOException {
+                                   @NotNull List<PluginId> pluginIdsBeingInstalled) throws IOException {
     if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginNode.getDescriptor())) {
       LOG.warn("The plugin " + pluginNode.getPluginId() + " is not allowed to install for the organization");
       return false;
@@ -255,7 +255,7 @@ public final class PluginInstallOperation {
     if (prepared) {
       IdeaPluginDescriptorImpl descriptor = (IdeaPluginDescriptorImpl)downloader.getDescriptor();
 
-      if (!checkMissingDependencies(descriptor, pluginIds)) return false;
+      if (!checkMissingDependencies(descriptor, pluginIdsBeingInstalled)) return false;
 
       boolean allowNoRestart = myAllowInstallWithoutRestart &&
                                DynamicPlugins.allowLoadUnloadWithoutRestart(
@@ -322,7 +322,7 @@ public final class PluginInstallOperation {
   }
 
   boolean checkMissingDependencies(@NotNull IdeaPluginDescriptor pluginNode,
-                                   @Nullable List<PluginId> pluginIds) {
+                                   @Nullable List<PluginId> pluginIdsBeingInstalled) {
     // check for dependent plugins at first.
     List<IdeaPluginDependency> dependencies = pluginNode.getDependencies();
     if (dependencies.isEmpty()) {
@@ -347,7 +347,7 @@ public final class PluginInstallOperation {
       if (PluginManagerCore.isPluginInstalled(depPluginId) ||
           InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
           InstalledPluginsState.getInstance().wasInstalledWithoutRestart(depPluginId) ||
-          pluginIds != null && pluginIds.contains(depPluginId)) {
+          pluginIdsBeingInstalled != null && pluginIdsBeingInstalled.contains(depPluginId)) {
         // ignore installed or installing plugins
         continue;
       }
