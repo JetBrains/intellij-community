@@ -10,6 +10,7 @@
 - a:getLanguages(com.intellij.platform.syntax.SyntaxElementType):kotlin.sequences.Sequence
 *f:com.intellij.platform.syntax.util.language.SyntaxElementLanguageProviderKt
 - *sf:getLanguage(com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider,com.intellij.platform.syntax.SyntaxElementType):com.intellij.platform.syntax.SyntaxLanguage
+- *sf:getSyntaxElementLanguageProviderEP():com.intellij.platform.syntax.extensions.ExtensionPointKey
 - *sf:syntaxElementLanguageProvider():com.intellij.platform.syntax.util.language.SyntaxElementLanguageProvider
 *c:com.intellij.platform.syntax.util.lexer.DelegateLexer
 - com.intellij.platform.syntax.util.lexer.LexerBase

@@ -78,4 +78,5 @@ class FiniteSyntaxElementLanguageProvider(
   }
 }
 
-private val syntaxElementLanguageProviderEP = ExtensionPointKey<SyntaxElementLanguageProvider>("com.intellij.syntax.syntaxElementLanguageProvider")
+@ApiStatus.Experimental
+val syntaxElementLanguageProviderEP: ExtensionPointKey<SyntaxElementLanguageProvider> = ExtensionPointKey<SyntaxElementLanguageProvider>("com.intellij.syntax.syntaxElementLanguageProvider")
