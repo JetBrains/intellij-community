@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.Classifier
 import com.intellij.codeInsight.lookup.ClassifierFactory
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.util.CodeCompletion
+import com.intellij.codeInsight.util.CodeCompletionContributors
 import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
 import com.intellij.ide.plugins.DynamicPluginListener
@@ -39,6 +40,7 @@ private val DEFAULT_PHASE_HOLDER = CompletionPhaseHolder(NoCompletion, null)
 
 open class CompletionServiceImpl : BaseCompletionService() {
   private val completionTracer = TelemetryManager.getInstance().getTracer(CodeCompletion)
+  private val contributorTracer = TelemetryManager.getInstance().getTracer(CodeCompletionContributors)
 
   companion object {
     @JvmStatic
@@ -205,7 +207,7 @@ open class CompletionServiceImpl : BaseCompletionService() {
   }
 
   override fun getVariantsFromContributor(params: CompletionParameters, contributor: CompletionContributor, result: CompletionResultSet) {
-    completionTracer.spanBuilder(contributor.javaClass.simpleName)
+    contributorTracer.spanBuilder(contributor.javaClass.simpleName)
       .setAttribute("avoid_null_value", true)
       .use {
         super.getVariantsFromContributor(params, contributor, result)
