@@ -156,8 +156,6 @@
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
     <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
 
-    <postStartupActivity implementation="com.intellij.openapi.application.impl.islands.IslandsFeedback"/>
-
     <applicationService
       serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl" />

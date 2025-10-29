@@ -13,8 +13,6 @@ private class ThemeListProviderImpl : ThemeListProvider {
 
     val newUiThemes = mutableListOf<UIThemeLookAndFeelInfo>()
     val classicUiThemes = mutableListOf<UIThemeLookAndFeelInfo>()
-    val nextUiThemes = mutableListOf<UIThemeLookAndFeelInfo>()
-    val islandUiThemes = mutableListOf<UIThemeLookAndFeelInfo>()
     val islandsUiThemes = mutableListOf<UIThemeLookAndFeelInfo>()
     val customThemes = mutableListOf<UIThemeLookAndFeelInfo>()
 
@@ -49,29 +47,33 @@ private class ThemeListProviderImpl : ThemeListProvider {
 
     newUiThemes.sortBy { it.name }
     classicUiThemes.sortBy { it.name }
-    nextUiThemes.sortBy { it.name }
-    islandUiThemes.sortBy { it.name }
     islandsUiThemes.sortBy { it.name }
     customThemes.sortBy { it.name }
 
     if (highContrastThemeToAdd != null) {
-      if (newUiThemes.isEmpty()) {
+      if (islandsUiThemes.isEmpty()) {
         val intellijLightIndex = classicUiThemes.indexOfFirst { it.id == intellijLightThemeId }
         if (intellijLightIndex >= 0) {
           classicUiThemes.add(intellijLightIndex, highContrastThemeToAdd)
         }
         else classicUiThemes.add(highContrastThemeToAdd)
       }
-      else newUiThemes.add(highContrastThemeToAdd)
+      else islandsUiThemes.add(highContrastThemeToAdd)
+    }
+
+    if (!islandsUiThemes.isEmpty()) {
+      val darcula = uiThemeProviderListManager.findThemeById("Darcula")
+      if (darcula != null) {
+        newUiThemes.add(darcula)
+        classicUiThemes.remove(darcula)
+      }
     }
 
     val groupInfos = mutableListOf<Groups.GroupInfo<UIThemeLookAndFeelInfo>>()
 
+    if (islandsUiThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(islandsUiThemes))
     if (newUiThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(newUiThemes))
     if (classicUiThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(classicUiThemes))
-    if (nextUiThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(nextUiThemes))
-    if (islandUiThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(islandUiThemes))
-    if (islandsUiThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(islandsUiThemes))
     if (customThemes.isNotEmpty()) groupInfos.add(Groups.GroupInfo(customThemes, IdeBundle.message("combobox.list.custom.section.title")))
 
     return Groups(groupInfos)

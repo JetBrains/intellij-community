@@ -510,8 +510,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> {
-    val themeManager = UiThemeProviderListManager.getInstance()
-    val islandThemes = themeManager.getBundledThemeListForTargetUI(TargetUIType.ISLANDS)
     val welcomeMode = WelcomeFrame.getInstance() != null
 
     return listCellRenderer {
@@ -534,9 +532,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
             else if (!welcomeMode && value.themeId != currentTheme?.id && currentTheme?.isRestartRequired() == true) {
               icon(getDisabledIcon(AllIcons.Actions.Restart, null))
               toolTipText = IdeBundle.message("ide.restart.required.comment")
-            }
-            else if (islandThemes.contains(theme)) {
-              icon(AllIcons.General.Beta)
             }
             break
           }
@@ -1494,7 +1489,7 @@ private sealed interface DefaultThemeStrategy {
 }
 
 private data object DefaultNewUiThemeStrategy : DefaultThemeStrategy {
-  override fun getPlatformDefaultId(isDark: Boolean) = if (isDark) "ExperimentalDark" else "ExperimentalLight"
+  override fun getPlatformDefaultId(isDark: Boolean) = if (isDark) "Islands Dark" else "Islands Light"
 
   override fun getProductDefaultId(isDark: Boolean, appInfo: ApplicationInfoEx): String? {
     return if (isDark) appInfo.defaultDarkLaf else appInfo.defaultLightLaf

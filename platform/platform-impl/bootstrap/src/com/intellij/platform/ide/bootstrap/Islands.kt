@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
   val app = ApplicationManager.getApplication()
-  if (!app.isEAP || app.isUnitTestMode || app.isHeadlessEnvironment || AppMode.isRemoteDevHost() || PlatformUtils.isDataSpell()) {
+  if (!app.isEAP || app.isUnitTestMode || app.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
     return
   }
 
@@ -42,20 +42,15 @@ suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
   }
 
   if (afterImportSettings) {
-    if (properties.getValue("ide.islands.show.feedback2") != "show.promo") {
+    if (properties.getValue("ide.islands.show.feedback3") != "done") {
       return
     }
   }
-  else if (properties.getBoolean("ide.islands.ab2", false)) {
+  else if (properties.getBoolean("ide.islands.ab3", false)) {
     return
   }
 
-  // ignore users who were enabled in 25.2
-  if (properties.getValue("ide.islands.show.feedback") != null) {
-    return
-  }
-
-  properties.setValue("ide.islands.ab2", true)
+  properties.setValue("ide.islands.ab3", true)
 
   withContext(Dispatchers.EDT) {
     enableTheme()
@@ -64,9 +59,6 @@ suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
 
 private suspend fun enableTheme() {
   val lafManager = serviceAsync<LafManager>()
-  if (lafManager.autodetect) {
-    return
-  }
 
   val currentTheme = lafManager.currentUIThemeLookAndFeel?.id ?: return
   if (currentTheme != "ExperimentalDark" && currentTheme != "ExperimentalLight" && currentTheme != "ExperimentalLightWithLightHeader") {
@@ -88,7 +80,7 @@ private suspend fun enableTheme() {
 
   val newTheme = UiThemeProviderListManager.getInstance().findThemeById(if (isLight) "Islands Light" else "Islands Dark") ?: return
 
-  PropertiesComponent.getInstance().setValue("ide.islands.show.feedback2", "show.promo")
+  PropertiesComponent.getInstance().setValue("ide.islands.show.feedback3", "done")
 
   lafManager.setCurrentLookAndFeel(newTheme, true)
 
