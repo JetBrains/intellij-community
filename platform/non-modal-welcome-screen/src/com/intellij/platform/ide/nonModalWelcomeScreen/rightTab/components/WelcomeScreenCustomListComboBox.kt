@@ -112,28 +112,22 @@ internal fun WelcomeScreenCustomListComboBox(
     maxPopupHeight = popupMaxHeight,
     minPopupWidth = minPopupWidth,
     onArrowDownPress = {
-      var currentSelectedIndex = listState.selectedItemIndex()
-
-      // When there is a preview-selected item, pressing down will actually change the
-      // selected value to the one underneath it (unless it's the last one)
-      if (previewSelectedIndex >= 0 && previewSelectedIndex < items.lastIndex) {
-        currentSelectedIndex = previewSelectedIndex
-        previewSelectedIndex = -1
+      // Move preview selection down without committing; commit happens on Enter.
+      val baseIndex = if (previewSelectedIndex >= 0) previewSelectedIndex else listState.selectedItemIndex().coerceAtLeast(0)
+      val nextIndex = (baseIndex + 1).coerceAtMost(items.lastIndex)
+      if (nextIndex != previewSelectedIndex) {
+        previewSelectedIndex = nextIndex
+        scope.launch { listState.lazyListState.scrollToIndex(nextIndex) }
       }
-
-      setSelectedItem((currentSelectedIndex + 1).coerceAtMost(items.lastIndex))
     },
     onArrowUpPress = {
-      var currentSelectedIndex = listState.selectedItemIndex()
-
-      // When there is a preview-selected item, pressing up will actually change the
-      // selected value to the one above it (unless it's the first one)
-      if (previewSelectedIndex > 0) {
-        currentSelectedIndex = previewSelectedIndex
-        previewSelectedIndex = -1
+      // Move preview selection up without committing; commit happens on Enter.
+      val baseIndex = if (previewSelectedIndex >= 0) previewSelectedIndex else listState.selectedItemIndex().coerceAtLeast(0)
+      val prevIndex = (baseIndex - 1).coerceAtLeast(0)
+      if (prevIndex != previewSelectedIndex) {
+        previewSelectedIndex = prevIndex
+        scope.launch { listState.lazyListState.scrollToIndex(prevIndex) }
       }
-
-      setSelectedItem((currentSelectedIndex - 1).coerceAtLeast(0))
     },
     style = style,
     textStyle = textStyle,
