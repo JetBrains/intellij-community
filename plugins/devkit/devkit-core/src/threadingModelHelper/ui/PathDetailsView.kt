@@ -100,9 +100,9 @@ internal fun PathDetailsView(
                 style = JewelTheme.defaultTextStyle,
                 color = JewelTheme.globalColors.text.disabled
               )
-              val cls = call.method.containingClass?.qualifiedName ?: "Unknown"
+              val cls = call.containingClassName ?: "Unknown"
               Text(
-                text = "$cls.${call.method.name}",
+                text = "$cls.${call.methodName}",
                 fontFamily = FontFamily.Monospace,
                 style = JewelTheme.defaultTextStyle
               )

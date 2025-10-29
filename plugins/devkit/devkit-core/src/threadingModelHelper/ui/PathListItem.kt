@@ -4,7 +4,7 @@ package org.jetbrains.idea.devkit.threadingModelHelper.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,10 +35,10 @@ internal fun PathListItem(
       .background(backgroundColor)
       .padding(horizontal = 16.dp, vertical = 10.dp)
   ) {
-    Row(
+    FlowRow(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.spacedBy(8.dp),
-      verticalAlignment = Alignment.CenterVertically
+      verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
       path.methodChain.forEachIndexed { index, call ->
         if (index > 0) {
@@ -50,8 +50,8 @@ internal fun PathListItem(
           )
         }
 
-        val cls = call.method.containingClass?.name ?: "Unknown"
-        val methodName = call.method.name
+        val cls = call.containingClassName ?: "Unknown"
+        val methodName = call.methodName
 
         Text(
           text = "$cls.$methodName",
