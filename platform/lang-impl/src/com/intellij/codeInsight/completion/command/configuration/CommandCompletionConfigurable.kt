@@ -39,7 +39,6 @@ class CommandCompletionConfigurableProvider : ConfigurableProvider() {
             .gap(RightGap.SMALL)
           contextHelp(CodeInsightBundle.message("options.command.completion.display.comment"))
             .gap(RightGap.SMALL)
-          icon(AllIcons.General.Beta)
         }
         if (GroupedCompletionContributor.isGroupEnabledInApp()) {
           indent {
