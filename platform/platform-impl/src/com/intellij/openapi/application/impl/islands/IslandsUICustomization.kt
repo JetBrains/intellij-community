@@ -9,7 +9,6 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
-import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ApplicationManager
@@ -35,7 +34,6 @@ import com.intellij.openapi.wm.impl.content.ContentLayout
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
-import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
@@ -43,7 +41,6 @@ import com.intellij.toolWindow.xNext.island.XNextIslandHolder
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D

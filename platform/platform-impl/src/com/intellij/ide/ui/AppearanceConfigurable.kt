@@ -206,8 +206,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           theme.component.renderer = lafManager.getLookAndFeelCellRenderer(theme.component)
           lafComboBoxModelWrapper.comboBoxComponent = theme.component
 
-          browserLink(message("ide.islands.read.more"), IslandsFeedback.getReadMoreUrl()).visibleIf(islandLafProperty)
-
           checkBox(message("preferred.theme.autodetect.selector"))
             .bindSelected(syncThemeProperty)
             .visible(lafManager.autodetectSupported)
