@@ -21,10 +21,11 @@ import static org.toml.lang.psi.TomlElementTypes.*;
 WHITE_SPACE=([\ \t\f]|("\r"|"\n"|"\r\n"))+
 COMMENT=#[^\n\r]*
 
-BOOLEAN=true|false
-
 BARE_KEY_OR_NUMBER=-?[0-9]+
 BARE_KEY_OR_DATE={DATE}[Zz]?
+BARE_KEY_OR_BOOLEAN={BOOLEAN}
+
+BOOLEAN=true|false
 
 ZERO_PREFIXABLE_DEC_INT=[0-9](_?[0-9])*
 
@@ -69,10 +70,11 @@ MULTILINE_LITERAL_STRING=(\'\'\')
   {WHITE_SPACE} { return com.intellij.psi.TokenType.WHITE_SPACE; }
   {COMMENT} { return COMMENT; }
 
-  {BOOLEAN} { return BOOLEAN; }
-
   {BARE_KEY_OR_NUMBER} { return BARE_KEY_OR_NUMBER; }
   {BARE_KEY_OR_DATE}   { return BARE_KEY_OR_DATE; }
+  {BARE_KEY_OR_BOOLEAN}   { return BARE_KEY_OR_BOOLEAN; }
+
+  {BOOLEAN} { return BOOLEAN; }
   {NUMBER}    { return NUMBER; }
   {BARE_KEY}  { return BARE_KEY; }
   {DATE_TIME} { return DATE_TIME; }
