@@ -1082,7 +1082,8 @@ internal fun focusEditorOnComposite(
     }
     else {
       if (toFront) {
-        IdeFocusManager.getGlobalInstance().requestFocusInProject(preferredFocusedComponent, composite.project)
+        IdeFocusManager.getGlobalInstance().toFront(preferredFocusedComponent)
+        preferredFocusedComponent.requestFocus()
       }
       else {
         preferredFocusedComponent.requestFocusInWindow()
