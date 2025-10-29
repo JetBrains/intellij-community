@@ -83,6 +83,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
    */
   @Deprecated @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
   public boolean REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = true;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER = true;
 
   private static final Logger LOG = Logger.getInstance(NullableStuffInspectionBase.class);
 
@@ -97,7 +98,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           "REQUIRE_NOTNULL_FIELDS_INITIALIZED".equals(name) && "true".equals(value) ||
           "REPORT_NULLABILITY_ANNOTATION_ON_LOCALS".equals(name) && "true".equals(value) ||
           "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value) ||
-          "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value)) {
+          "REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS".equals(name) && "false".equals(value) ||
+          "REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
     }
@@ -357,11 +359,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       private void checkRedundantInContainerScope(@NotNull PsiAnnotation annotation,
                                                   @Nullable NullabilityAnnotationInfo containerInfo,
                                                   @NotNull Nullability nullability) {
+        if (!REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER) return;
         if (containerInfo != null && !containerInfo.getAnnotation().equals(annotation) && containerInfo.getNullability() == nullability) {
           PsiJavaCodeReferenceElement containerName = containerInfo.getAnnotation().getNameReferenceElement();
           if (containerName != null) {
+            LocalQuickFix updateOptionFix = LocalQuickFix.from(
+              new UpdateInspectionOptionFix(NullableStuffInspectionBase.this,
+                                            "REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER",
+                                            JavaAnalysisBundle.message("inspection.nullable.problems.turn.off.redundant.annotation.under.container"),
+                                            false));
             reportProblem(holder, annotation,
-                          new RemoveAnnotationQuickFix(annotation, null),
+                          LocalQuickFix.notNullElements(new RemoveAnnotationQuickFix(annotation, null), updateOptionFix),
                           "inspection.nullable.problems.redundant.annotation.under.container", containerName.getReferenceName());
           }
         }

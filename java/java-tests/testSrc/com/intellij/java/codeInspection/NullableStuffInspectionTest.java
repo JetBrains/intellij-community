@@ -439,7 +439,18 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testRedundantNotNull() {
     doTest();
   }
-  
+
+  public void testRedundantNotNullDisabled() {
+    boolean previousValue = myInspection.REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER;
+    try {
+      myInspection.REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER = false;
+      doTest();
+    }
+    finally {
+      myInspection.REPORT_REDUNDANT_NULLABILITY_ANNOTATION_IN_THE_SCOPE_OF_ANNOTATED_CONTAINER = previousValue;
+    }
+  }
+
   public void testRedundantNotNull2() {
     doTest();
   }
