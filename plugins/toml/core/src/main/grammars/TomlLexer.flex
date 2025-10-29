@@ -45,7 +45,7 @@ NUMBER={FLOAT}|{INTEGER}
 DATE=[0-9]{4}-[0-9]{2}-[0-9]{2}
 TIME=[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?
 OFFSET=[Zz]|[+-][0-9]{2}:[0-9]{2}
-DATE_TIME= ({DATE} ([Tt]{TIME})? | {TIME}) {OFFSET}?
+DATE_TIME= ({DATE} ([Tt ]{TIME})? | {TIME}) {OFFSET}?
 
 BARE_KEY=[0-9_\-a-zA-Z]+
 

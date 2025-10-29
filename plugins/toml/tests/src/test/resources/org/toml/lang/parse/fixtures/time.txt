@@ -28,6 +28,16 @@ TOML File
     PsiWhiteSpace(' ')
     TomlLiteral
       PsiElement(DATE_TIME)('1979-05-27T00:32:00.999999-07:00')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      TomlKeySegment
+        PsiElement(BARE_KEY)('odt4')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(DATE_TIME)('1979-05-27 07:32:00Z')
   PsiWhiteSpace('\n\n')
   TomlKeyValue
     TomlKey
