@@ -6,8 +6,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorResult
 import com.intellij.platform.debugger.impl.rpc.XValueApi
+import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.xdebugger.frame.XFullValueEvaluator
-import com.intellij.xdebugger.impl.rpc.XValueId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

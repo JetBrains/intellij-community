@@ -2,9 +2,6 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor

@@ -2,13 +2,13 @@
 package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.ui.colors.color
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.debugger.impl.rpc.XDebuggerValueMarkupApi
+import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
 import com.intellij.ui.JBColor
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XValueMarkers
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.models.BackendXValueModelsManager
 import com.intellij.xdebugger.impl.rpc.models.findValue

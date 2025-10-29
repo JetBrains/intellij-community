@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto
 import com.intellij.platform.debugger.impl.rpc.XFullValueEvaluatorDto.FullValueEvaluatorLinkAttributes
 import com.intellij.platform.debugger.impl.rpc.XValueDto
+import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.rpc.XValueMarkerDto
 import com.intellij.platform.debugger.impl.rpc.XValueSerializedPresentation
 import com.intellij.platform.debugger.impl.rpc.XValueTextProviderDto
@@ -25,14 +26,12 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.pinned.items.PinToTopValue
-import com.intellij.xdebugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.ui.XValueTextProvider
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.toRpc
 import kotlinx.collections.immutable.toImmutableSet
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.asDeferred

@@ -8,7 +8,7 @@ import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerManagerApi
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionDto
 import com.intellij.java.debugger.impl.shared.rpc.JavaSessionState
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.flow.map

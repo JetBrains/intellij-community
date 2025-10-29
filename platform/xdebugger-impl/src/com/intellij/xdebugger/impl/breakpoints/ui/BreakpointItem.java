@@ -3,13 +3,13 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.platform.debugger.impl.rpc.XBreakpointId;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
-import com.intellij.xdebugger.impl.rpc.XBreakpointId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;

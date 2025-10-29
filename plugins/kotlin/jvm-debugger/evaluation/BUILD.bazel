@@ -35,7 +35,7 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/coroutines",
     "//platform/statistics",
     "//plugins/kotlin/base/facet",
-    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
     "//platform/editor-ui-api:editor-ui",
     "//plugins/kotlin/j2k/shared",
   ]

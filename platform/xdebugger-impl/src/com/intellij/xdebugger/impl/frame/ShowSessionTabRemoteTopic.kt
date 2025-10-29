@@ -4,9 +4,9 @@ package com.intellij.xdebugger.impl.frame
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.ShowFramesRequest
 import com.intellij.platform.debugger.impl.rpc.ShowSessionTabRequest
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.sendToClient
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

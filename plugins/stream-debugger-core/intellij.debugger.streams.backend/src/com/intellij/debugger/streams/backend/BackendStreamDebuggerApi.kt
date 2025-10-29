@@ -4,10 +4,10 @@ import com.intellij.debugger.streams.core.action.TraceStreamRunner
 import com.intellij.debugger.streams.shared.ChainStatus
 import com.intellij.debugger.streams.shared.StreamDebuggerApi
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
 import com.intellij.util.asDisposable
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel

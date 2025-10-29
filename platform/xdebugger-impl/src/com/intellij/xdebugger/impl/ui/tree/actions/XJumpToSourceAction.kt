@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi
-import com.intellij.xdebugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
 private class XJumpToSourceAction : XJumpToSourceActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {

@@ -19,7 +19,6 @@ import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.impl.XLineBreakpointInstallationInfo
 import com.intellij.xdebugger.impl.breakpoints.*
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
-import com.intellij.xdebugger.impl.rpc.XBreakpointId
 import fleet.rpc.client.RpcClientException
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow

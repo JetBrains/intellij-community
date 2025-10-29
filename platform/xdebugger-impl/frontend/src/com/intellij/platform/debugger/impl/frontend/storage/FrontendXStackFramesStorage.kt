@@ -4,7 +4,7 @@ package com.intellij.platform.debugger.impl.frontend.storage
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.rpc.XStackFrameDto
-import com.intellij.xdebugger.impl.rpc.XStackFrameId
+import com.intellij.platform.debugger.impl.rpc.XStackFrameId
 import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlin.coroutines.AbstractCoroutineContextElement

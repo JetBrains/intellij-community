@@ -6,10 +6,10 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.SerializableSimpleTextAttributes
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
+import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.rpc.RemoteApiProviderService
-import com.intellij.xdebugger.impl.rpc.XDebugSessionId
-import com.intellij.xdebugger.impl.rpc.XExecutionStackId
-import com.intellij.xdebugger.impl.rpc.XValueId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.ReceiveChannelSerializer

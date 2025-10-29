@@ -64,7 +64,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//java/java-impl:impl",
     "//java/debugger/shared",
-    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.coroutines` end

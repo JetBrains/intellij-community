@@ -48,7 +48,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "//plugins/kotlin/jvm-debugger/eval4j",
     "@lib//:kotlinc-scripting-compiler-plugin",
-    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
   ]
 )
 ### auto-generated section `build kotlin.jvm-debugger.evaluation.k1` end

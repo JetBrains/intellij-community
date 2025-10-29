@@ -15,7 +15,6 @@ import com.intellij.platform.rpc.UID
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XDescriptor
-import com.intellij.xdebugger.impl.rpc.*
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.DeferredSerializer
