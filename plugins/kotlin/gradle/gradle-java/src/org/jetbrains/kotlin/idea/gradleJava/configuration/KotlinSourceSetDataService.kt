@@ -143,21 +143,21 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
         ): Collection<SimplePlatform> {
             if (this is JvmIdePlatformKind) {
                 val jvmTarget = inferJvmTarget(mainModuleNode, sourceSetInfo)
-                return JvmPlatforms.jvmPlatformByTargetVersion(jvmTarget)
+                return JvmPlatforms.jvmPlatformByTargetVersion(jvmTarget).componentPlatforms
             }
 
             if (this is NativeIdePlatformKind) {
-                return NativePlatforms.nativePlatformByTargetNames(sourceSetModuleData.konanTargets)
+                return NativePlatforms.nativePlatformByTargetNames(sourceSetModuleData.konanTargets).componentPlatforms
             }
 
             if (this is WasmIdePlatformKind) {
-                return WasmPlatforms.wasmPlatformByTargetNames(sourceSetModuleData.wasmTargets)
+                return WasmPlatforms.wasmPlatformByTargetNames(sourceSetModuleData.wasmTargets).componentPlatforms
             }
 
             return if (isHmppModule) {
                 this.defaultPlatform.filter { it.isRelevantFor(projectPlatforms) }
             } else {
-                this.defaultPlatform
+                this.defaultPlatform.componentPlatforms
             }
         }
 

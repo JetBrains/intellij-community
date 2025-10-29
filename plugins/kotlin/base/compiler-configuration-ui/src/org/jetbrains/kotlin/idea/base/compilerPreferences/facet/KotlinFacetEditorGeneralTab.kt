@@ -258,7 +258,7 @@ class KotlinFacetEditorGeneralTab(
                     .mapNotNull { it.targetPlatform.componentPlatforms.singleOrNull() }
                     .filter { it.platformName == "JVM" && it.targetPlatformVersion.description == compilerConfigurable.selectedJvmVersion }
             } else {
-                configuration?.settings?.targetPlatform
+                configuration?.settings?.targetPlatform?.componentPlatforms
             }
 
             if (useProjectSettings || (!isInTargetPlatformChangeAction && !target.isNullOrEmpty())) {
