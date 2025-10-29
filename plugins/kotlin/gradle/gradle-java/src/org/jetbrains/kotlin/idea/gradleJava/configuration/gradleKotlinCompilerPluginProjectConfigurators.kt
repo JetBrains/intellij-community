@@ -6,10 +6,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.ChangedConfiguratorFiles
 import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfigurator
+import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion.Companion.defaultKotlinVersion
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getTopLevelBuildScriptPsiFile
@@ -22,16 +21,19 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator(private val
         val project = module.project
         val changedFiles = ChangedConfiguratorFiles()
         val file = project.getTopLevelBuildScriptPsiFile() ?: return null
+
         coroutineScope.launchTracked {
             edtWriteAction {
                 project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
                     val manipulator = GradleBuildScriptSupport.getManipulator(file)
+                    val version =
+                        manipulator.getKotlinVersionFromBuildScript() ?: defaultKotlinVersion
                     manipulator.configureBuildScripts(
                         kotlinPluginName,
                         getKotlinPluginExpression(file is KtFile),
                         PathUtil.KOTLIN_JAVA_STDLIB_NAME,
                         addVersion = true,
-                        version = manipulator.getKotlinVersionFromBuildScript() ?: IdeKotlinVersion.fromLanguageVersion(LanguageVersion.LATEST_STABLE),
+                        version = version,
                         jvmTarget = null,
                         changedFiles = changedFiles
                     )
