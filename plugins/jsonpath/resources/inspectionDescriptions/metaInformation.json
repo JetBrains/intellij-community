@@ -2,11 +2,11 @@
   "inspections": [
     {
       "id": "JsonPathUnknownFunction",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "JsonPathUnknownOperator",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "JsonPathEvaluateUnknownKey",

@@ -2,7 +2,7 @@
   "inspections": [
     {
       "id": "ShellCheck",
-      "codeQualityCategory": "Security"
+      "codeQualityCategory": "Unspecified"
     }
   ]
 }

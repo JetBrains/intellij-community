@@ -6,11 +6,11 @@
     },
     {
       "id": "JUnitMixedFramework",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "IgnoredJUnitTest",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "JUnit3StyleTestMethodInJUnit4Class",
@@ -46,7 +46,7 @@
     },
     {
       "id": "JUnit5Converter",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "MultipleExceptionsDeclaredOnTestMethod",
@@ -58,7 +58,7 @@
     },
     {
       "id": "Junit4Converter",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     }
   ]
 }

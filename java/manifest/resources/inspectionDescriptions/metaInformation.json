@@ -2,11 +2,11 @@
   "inspections": [
     {
       "id": "MissingFinalNewline",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "MisspelledHeader",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

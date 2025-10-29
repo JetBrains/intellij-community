@@ -6,7 +6,7 @@
     },
     {
       "id": "MissingMnemonic",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "FormSpellChecking",
@@ -14,11 +14,11 @@
     },
     {
       "id": "I18nForm",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "DuplicateMnemonic",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "NoScrollPane",

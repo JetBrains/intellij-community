@@ -2,7 +2,7 @@
   "inspections": [
     {
       "id": "SpringQualifierCopyableLombok",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "RedundantSlf4jDefinition",
@@ -14,7 +14,7 @@
     },
     {
       "id": "Lombok",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "LombokFlagUsage",
@@ -38,11 +38,11 @@
     },
     {
       "id": "StaticMethodImportLombok",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "DeprecatedLombok",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     }
   ]
 }

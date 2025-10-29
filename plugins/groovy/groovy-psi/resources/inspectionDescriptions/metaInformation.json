@@ -26,7 +26,7 @@
     },
     {
       "id": "GrFinalVariableAccess",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "ChangeToOperator",
@@ -42,7 +42,7 @@
     },
     {
       "id": "GroovyUnsynchronizedMethodOverridesSynchronizedMethod",
-      "codeQualityCategory": "Security"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "NewGroovyClassNamingConvention",
@@ -66,7 +66,7 @@
     },
     {
       "id": "GroovyEmptyStatementBody",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovyLabeledStatement",
@@ -74,7 +74,7 @@
     },
     {
       "id": "GroovyAssignmentToForLoopParameter",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovyImplicitNullArgumentCall",
@@ -82,7 +82,7 @@
     },
     {
       "id": "GroovyConditionalWithIdenticalBranches",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GrAnnotationReferencingUnknownIdentifiers",
@@ -94,7 +94,7 @@
     },
     {
       "id": "GrPOJO",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovyConditionalCanBeElvis",
@@ -106,11 +106,11 @@
     },
     {
       "id": "GrPackage",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "GroovySystemRunFinalizersOnExit",
-      "codeQualityCategory": "Security"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GrUnnecessaryPublicModifier",
@@ -118,7 +118,7 @@
     },
     {
       "id": "GroovyUnusedIncOrDec",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovyEmptyCatchBlock",
@@ -134,7 +134,7 @@
     },
     {
       "id": "GrNamedVariantLabels",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovyNegatedConditional",
@@ -142,7 +142,7 @@
     },
     {
       "id": "GroovySillyAssignment",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GrUnnecessarySealedModifier",
@@ -158,7 +158,7 @@
     },
     {
       "id": "GroovySynchronizationOnVariableInitializedWithLiteral",
-      "codeQualityCategory": "Security"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovyContinueOrBreakFromFinallyBlock",
@@ -166,7 +166,7 @@
     },
     {
       "id": "GroovyAssignmentToMethodParameter",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovyStaticMethodNamingConvention",
@@ -202,11 +202,11 @@
     },
     {
       "id": "GroovyUntypedAccess",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "GroovyResultOfObjectAllocationIgnored",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovySynchronizationOnThis",
@@ -214,7 +214,7 @@
     },
     {
       "id": "GroovyNestedSynchronizedStatement",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovyGStringKey",
@@ -306,7 +306,7 @@
     },
     {
       "id": "GroovyAccessibility",
-      "codeQualityCategory": "Security"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "GroovyFallthrough",
@@ -318,7 +318,7 @@
     },
     {
       "id": "DelegatesTo",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GroovyThrowFromFinallyBlock",
@@ -342,7 +342,7 @@
     },
     {
       "id": "NewInstanceOfSingleton",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GrReassignedInClosureLocalVar",
@@ -366,7 +366,7 @@
     },
     {
       "id": "GroovyOverlyComplexBooleanExpression",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "GroovyOverlyNestedMethod",
@@ -378,7 +378,7 @@
     },
     {
       "id": "GroovyNestedSwitch",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "GroovyRangeTypeCheck",
@@ -402,7 +402,7 @@
     },
     {
       "id": "GroovyPointlessArithmetic",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "GroovyDocCheck",
@@ -454,11 +454,11 @@
     },
     {
       "id": "GroovyOverlyComplexMethod",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "TypeCustomizer",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GrEqualsBetweenInconvertibleTypes",
@@ -470,7 +470,7 @@
     },
     {
       "id": "GroovyUnusedDeclaration",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "GroovyReturnFromClosureCanBeImplicit",
@@ -514,19 +514,19 @@
     },
     {
       "id": "GrDeprecatedAPIUsage",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "GroovyThreadStopSuspendResume",
-      "codeQualityCategory": "Security"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "GrMethodMayBeStatic",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "GroovyBreak",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "GroovyConstantConditional",

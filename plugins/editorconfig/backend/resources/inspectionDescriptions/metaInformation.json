@@ -10,7 +10,7 @@
     },
     {
       "id": "EditorConfigEncoding",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "EditorConfigEmptyHeader",
@@ -18,7 +18,7 @@
     },
     {
       "id": "EditorConfigSpaceInHeader",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "EditorConfigUnusedDeclaration",
@@ -26,19 +26,19 @@
     },
     {
       "id": "EditorConfigRootDeclarationUniqueness",
-      "codeQualityCategory": "Sanity"
-    },
-    {
-      "id": "EditorConfigShadowedOption",
-      "codeQualityCategory": "Sanity"
-    },
-    {
-      "id": "EditorConfigReferenceCorrectness",
       "codeQualityCategory": "Reliability"
     },
     {
-      "id": "EditorConfigPartialOverride",
+      "id": "EditorConfigShadowedOption",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigReferenceCorrectness",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigPartialOverride",
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "EditorConfigListAcceptability",
@@ -50,11 +50,11 @@
     },
     {
       "id": "EditorConfigNoMatchingFiles",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "EditorConfigHeaderUniqueness",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "EditorConfigValueCorrectness",
@@ -66,11 +66,11 @@
     },
     {
       "id": "EditorConfigPatternRedundancy",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "EditorConfigDeprecatedDescriptor",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "EditorConfigCharClassRedundancy",
@@ -94,15 +94,15 @@
     },
     {
       "id": "EditorConfigValueUniqueness",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "EditorConfigUnexpectedComma",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "EditorConfigShadowingOption",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "EditorConfigCharClassLetterRedundancy",
@@ -114,7 +114,7 @@
     },
     {
       "id": "EditorConfigPairAcceptability",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

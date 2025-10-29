@@ -22,7 +22,7 @@
     },
     {
       "id": "KotlinCovariantEquals",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ReplaceSizeZeroCheckWithIsEmpty",
@@ -46,7 +46,7 @@
     },
     {
       "id": "UnusedSymbol",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "ReplaceArrayEqualityOpWithArraysEquals",
@@ -54,7 +54,7 @@
     },
     {
       "id": "UnlabeledReturnInsideLambda",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "LateinitVarOverridesLateinitVar",
@@ -66,7 +66,7 @@
     },
     {
       "id": "DifferentKotlinGradleVersion",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "RedundantInnerClassModifier",
@@ -78,7 +78,7 @@
     },
     {
       "id": "GradleKotlinxCoroutinesDeprecation",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "WarningOnMainUnusedParameterMigration",
@@ -98,7 +98,7 @@
     },
     {
       "id": "DifferentStdlibGradleVersion",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "RedundantCompanionReference",
@@ -158,7 +158,7 @@
     },
     {
       "id": "SuspiciousEqualsCombination",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "RedundantElseInIf",
@@ -174,7 +174,7 @@
     },
     {
       "id": "UnusedEquals",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ConvertLambdaToReference",
@@ -214,7 +214,7 @@
     },
     {
       "id": "WrapUnaryOperator",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "RemoveExplicitSuperQualifier",
@@ -226,7 +226,7 @@
     },
     {
       "id": "SuspiciousVarProperty",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "MoveVariableDeclarationIntoWhen",
@@ -242,7 +242,7 @@
     },
     {
       "id": "UnusedUnaryOperator",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ClassName",
@@ -422,11 +422,11 @@
     },
     {
       "id": "MainFunctionReturnUnit",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "SuspiciousCallableReferenceInLambda",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ConvertSecondaryConstructorToPrimary",
@@ -486,7 +486,7 @@
     },
     {
       "id": "PackageDirectoryMismatch",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "RedundantEnumConstructorInvocation",
@@ -522,7 +522,7 @@
     },
     {
       "id": "NonVarPropertyInExternalInterface",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ReplaceSubstringWithSubstringBefore",
@@ -534,7 +534,7 @@
     },
     {
       "id": "DeprecatedGradleDependency",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "CastDueToProgressionResolutionChangeMigration",
@@ -558,7 +558,7 @@
     },
     {
       "id": "DataClassPrivateConstructor",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "JavaCollectionsStaticMethodOnImmutableList",
@@ -570,7 +570,7 @@
     },
     {
       "id": "DeprecatedMavenDependency",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "UnnecessaryVariable",
@@ -642,7 +642,7 @@
     },
     {
       "id": "SelfAssignment",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "RecursiveEqualsCall",
@@ -658,7 +658,7 @@
     },
     {
       "id": "FunctionWithLambdaExpressionBody",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ConvertTwoComparisonsToRangeCheck",
@@ -706,7 +706,7 @@
     },
     {
       "id": "SimplifiableCall",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "ObjectLiteralToLambda",
@@ -746,7 +746,7 @@
     },
     {
       "id": "RemoveRedundantSpreadOperator",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Performance"
     },
     {
       "id": "ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigration",
@@ -778,11 +778,11 @@
     },
     {
       "id": "ReplaceCallWithBinaryOperator",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "FloatingPointLiteralPrecision",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "KDocMissingDocumentation",
@@ -918,7 +918,7 @@
     },
     {
       "id": "NonExternalClassifierExtendingStateOrProps",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "IfThenToSafeAccess",
@@ -942,7 +942,7 @@
     },
     {
       "id": "UselessCallOnNotNull",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "AmbiguousExpressionInWhenBranchMigration",
@@ -970,7 +970,7 @@
     },
     {
       "id": "PublicApiImplicitType",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "NonNullableBooleanPropertyInExternalInterface",
@@ -1018,10 +1018,150 @@
     },
     {
       "id": "ConvertTryFinallyToUseCall",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "RedundantNullableReturnType",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RedundantUpperBound",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "TrailingComma",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavaCollectionWithNullableTypeArgument",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "KotlinBigDecimalEquals",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ReplaceMapGetOrDefault",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ContextParametersMigration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ReplaceContains",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ScriptShebangExecPermission",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantLabel",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ForEachJoinOnCollectionOfJob",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "VariableNeverRead",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "KotlinUnreachableCode",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnusedVariable",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "FilterIsInstanceResultIsAlwaysEmpty",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JavaDefaultMethodsNotOverriddenByDelegation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AddExplicitTargetToParameterAnnotation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SuspiciousCascadingIf",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "AssignedValueIsNeverRead",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnusedLambdaExpression",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SuspiciousCallOnCollectionToAddOrRemovePath",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "VariableInitializerIsRedundant",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CanConvertToMultiDollarString",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ObjectInheritsException",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MapAwaitOnCollectionOfDeferred",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UnusedExpression",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RedundantInterpolationPrefix",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PreferCurrentCoroutineContextToCoroutineContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ConvertFromMultiDollarToRegularString",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "SuspiciousImplicitCoroutineScopeReceiverAccess",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "RunBlockingInSuspendFunction",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "KotlinAmbiguousActuals",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UnusedFlow",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "KotlinNoActualForExpect",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CanUnescapeDollarLiteral",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "IllegalIdentifier",
       "codeQualityCategory": "Reliability"
     }
   ]

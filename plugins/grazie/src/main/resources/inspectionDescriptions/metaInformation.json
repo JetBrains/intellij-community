@@ -2,10 +2,14 @@
   "inspections": [
     {
       "id": "LanguageDetectionInspection",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Unspecified"
     },
     {
       "id": "GrazieInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GrazieStyle",
       "codeQualityCategory": "Code Style"
     }
   ]

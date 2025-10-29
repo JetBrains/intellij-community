@@ -18,7 +18,7 @@
     },
     {
       "id": "UnusedProperty",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "DuplicatePropertyInspection",

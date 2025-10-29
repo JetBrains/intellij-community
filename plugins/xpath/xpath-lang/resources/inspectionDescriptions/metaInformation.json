@@ -2,7 +2,7 @@
   "inspections": [
     {
       "id": "RedundantTypeConversion",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "CheckNodeTest",
@@ -26,15 +26,15 @@
     },
     {
       "id": "XsltVariableShadowing",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "XsltUnusedDeclaration",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "XsltDeclarations",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     }
   ]
 }

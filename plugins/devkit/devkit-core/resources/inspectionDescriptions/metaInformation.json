@@ -10,11 +10,11 @@
     },
     {
       "id": "PresentationAnnotation",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "IntentionDescriptionNotFoundInspection",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "MissingActionUpdateThread",
@@ -22,11 +22,11 @@
     },
     {
       "id": "ComponentNotRegistered",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "UseDPIAwareInsets",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ProductModulesXmlDom",
@@ -34,7 +34,7 @@
     },
     {
       "id": "PluginXmlPluginLogo",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "ActionIsNotPreviewFriendly",
@@ -42,7 +42,7 @@
     },
     {
       "id": "LightServiceMigrationCode",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "InspectionUsingGrayColors",
@@ -54,11 +54,11 @@
     },
     {
       "id": "UseJBColor",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "PotentialDeadlockInServiceInitialization",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ActionPresentationInstantiatedInCtor",
@@ -70,11 +70,11 @@
     },
     {
       "id": "UsePlatformProcessAwaitExit",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "PsiElementConcatenation",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "UnsafeReturnStatementVisitor",
@@ -82,11 +82,11 @@
     },
     {
       "id": "PluginXmlValidity",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "InspectionDescriptionNotFoundInspection",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Unspecified"
     },
     {
       "id": "LeakableMapKey",
@@ -98,7 +98,7 @@
     },
     {
       "id": "UseDPIAwareBorders",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ExtensionRegisteredAsServiceOrComponent",
@@ -110,19 +110,19 @@
     },
     {
       "id": "MismatchedLightServiceLevelAndCtor",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "MissingRecentApi",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "SimplifiableServiceRetrieving",
-      "codeQualityCategory": "Performance"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "PluginXmlExtensionRegistration",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "UsePrimitiveTypes",
@@ -134,7 +134,7 @@
     },
     {
       "id": "UnresolvedPluginConfigReference",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "CancellationCheckInLoops",
@@ -146,11 +146,11 @@
     },
     {
       "id": "PluginXmlDynamicPlugin",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ComponentRegistrationProblems",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "LightServiceMustBeFinal",
@@ -158,11 +158,11 @@
     },
     {
       "id": "LightServiceMigrationXML",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "MissingAccessibleContext",
-      "codeQualityCategory": "Security"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "UsePluginIdEquals",
@@ -178,7 +178,7 @@
     },
     {
       "id": "PostfixTemplateDescriptionNotFound",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "FileEqualsUsage",
@@ -198,7 +198,7 @@
     },
     {
       "id": "ExtensionClassShouldBeFinalAndNonPublic",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "JComponentDataProvider",
@@ -214,7 +214,7 @@
     },
     {
       "id": "UndesirableClassUsage",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "CallingMethodShouldBeRequiresBlockingContext",
@@ -226,7 +226,7 @@
     },
     {
       "id": "UnknownIdInMetaInformation",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "ThreadingConcurrency",
@@ -243,6 +243,26 @@
     {
       "id": "StatefulEp",
       "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PathAnnotationInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "KeymapXmlDom",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CanBeDumbAware",
+      "codeQualityCategory": "Unspecified"
+    },
+    {
+      "id": "checkedExceptions",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseIntelliJVirtualThreads",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

@@ -2,15 +2,15 @@
   "inspections": [
     {
       "id": "JsonSchemaCompliance",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Reliability"
     },
     {
       "id": "JsonSchemaDeprecation",
-      "codeQualityCategory": "Sanity"
+      "codeQualityCategory": "Code Style"
     },
     {
       "id": "JsonStandardCompliance",
-      "codeQualityCategory": "Code Style"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "JsonSchemaRefReference",
@@ -18,7 +18,7 @@
     },
     {
       "id": "Json5StandardCompliance",
-      "codeQualityCategory": "Reliability"
+      "codeQualityCategory": "Sanity"
     },
     {
       "id": "JsonDuplicatePropertyKeys",
