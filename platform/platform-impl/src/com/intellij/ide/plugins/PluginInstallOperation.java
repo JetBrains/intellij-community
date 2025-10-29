@@ -330,8 +330,8 @@ public final class PluginInstallOperation {
     }
 
     // prepare plugins list for install
-    final List<PluginUiModel> depends = new ArrayList<>();
-    final List<PluginUiModel> optionalDeps = new ArrayList<>();
+    final List<PluginUiModel> missingRequiredPlugins = new ArrayList<>();
+    final List<PluginUiModel> missingOptionalPlugins = new ArrayList<>();
     for (IdeaPluginDependency dependency : dependencies) {
       PluginId depPluginId = dependency.getPluginId();
 
@@ -354,16 +354,16 @@ public final class PluginInstallOperation {
 
       PluginUiModel depPluginDescriptor = findPluginInRepo(depPluginId);
       if (depPluginDescriptor != null) {
-        (dependency.isOptional() ? optionalDeps : depends).add(depPluginDescriptor);
+        (dependency.isOptional() ? missingOptionalPlugins : missingRequiredPlugins).add(depPluginDescriptor);
       }
     }
 
-    if (!prepareDependencies(pluginNode, depends, "plugin.manager.dependencies.detected.title",
+    if (!prepareDependencies(pluginNode, missingRequiredPlugins, "plugin.manager.dependencies.detected.title",
                              "plugin.manager.dependencies.detected.message", false)) {
       return false;
     }
     if (Registry.is("ide.plugins.suggest.install.optional.dependencies") &&
-        !prepareDependencies(pluginNode, optionalDeps, "plugin.manager.optional.dependencies.detected.title",
+        !prepareDependencies(pluginNode, missingOptionalPlugins, "plugin.manager.optional.dependencies.detected.title",
                             "plugin.manager.optional.dependencies.detected.message", true)) {
       return false;
     }
