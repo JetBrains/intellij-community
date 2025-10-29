@@ -2,7 +2,7 @@
 package com.intellij.tests;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.lang.Language;
+import com.intellij.lang.LanguageTestUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
@@ -21,9 +21,6 @@ import org.junit.platform.launcher.TestPlan;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This class is a replacement for {@linkplain _FirstInSuiteTest} and {@linkplain _LastInSuiteTest} for JUnit5 tests
@@ -33,8 +30,8 @@ import java.util.Map;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "JavadocReference"})
 public class JUnit5TestSessionListener implements LauncherSessionListener {
-  boolean includeFirstLast = !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests")) && 
-                             UsefulTestCase.IS_UNDER_TEAMCITY;
+  private final boolean includeFirstLast = !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests")) &&
+                                           UsefulTestCase.IS_UNDER_TEAMCITY;
   private long suiteStarted = 0;
 
   @ReviseWhenPortedToJDK("13")
@@ -90,19 +87,8 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
                                DynamicExtensionPointsTester.checkDynamicExtensionPoints(Functions.id());
                              }
                            },
-                           () -> {
-                             TestApplicationManager.testProjectLeak();
-                           },
-                           () -> {
-                             Collection<Language> languages = Language.getRegisteredLanguages();
-                             Map<String, Language> displayNames = new HashMap<>();
-                             for (Language language : languages) {
-                               Language prev = displayNames.put(language.getDisplayName(), language);
-                               if (prev != null) {
-                                 Assertions.fail(prev + " ("+prev.getClass()+") and " + language +" ("+language.getClass()+") both have identical display name: "+language.getDisplayName());
-                               }
-                             }
-                           });
+                           () -> TestApplicationManager.testProjectLeak(),
+                           () -> LanguageTestUtil.assertAllLanguagesHaveDifferentDisplayNames());
     }
     finally {
       if (suiteStarted != 0) {

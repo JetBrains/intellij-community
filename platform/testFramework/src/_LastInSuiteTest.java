@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-import com.intellij.lang.Language;
+import com.intellij.lang.LanguageTestUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.testFramework.GlobalState;
@@ -14,10 +14,6 @@ import org.junit.Assume;
 import org.junit.FixMethodOrder;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * This must be the last test.
@@ -58,15 +54,7 @@ public class _LastInSuiteTest extends TestCase {
 
   // should be run as late as possible to give the Languages the chance to instantiate as many of them as possible
   public void testLanguagesHaveDifferentDisplayNames() {
-    Collection<Language> languages = Language.getRegisteredLanguages();
-    Map<String, Language> displayNames = new HashMap<>();
-    for (Language language : languages) {
-      Language prev = displayNames.put(language.getDisplayName(), language);
-      if (prev != null) {
-        fail("The languages '%s' (%s) and '%s' (%s) have the same display name '%s'"
-               .formatted(prev, prev.getClass().getName(), language, language.getClass().getName(), language.getDisplayName()));
-      }
-    }
+    LanguageTestUtil.assertAllLanguagesHaveDifferentDisplayNames();
   }
 
   public void testStatistics() {
