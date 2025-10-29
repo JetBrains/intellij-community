@@ -11,6 +11,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.patterns.StandardPatterns
@@ -24,13 +26,13 @@ import com.intellij.psi.util.findParentOfType
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder.QualifiedNameBasedScope
 import com.jetbrains.python.psi.resolve.fromFoothold
@@ -104,42 +106,53 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     val maxVariants = intValue("ide.completion.variant.limit")
     val counters = Counters()
     val stubIndex = StubIndex.getInstance()
+    val fileBasedIndex = FileBasedIndex.getInstance()
     TimeoutUtil.run<RuntimeException>(ThrowableRunnable {
-      val scope = createScope(originalFile)
       val alreadySuggested: MutableSet<QualifiedName> = HashSet()
       
       // Suggest importable modules and packages
-      val moduleKeys = PyModuleNameIndex.getAllKeys(originalFile.project)
-      val modulesFromIndex = moduleKeys.asSequence()
-        .filter { result.prefixMatcher.isStartMatch(it) }
-        // TODO Is there lazier API here?
-        .flatMap { PyModuleNameIndex.findByShortName(it, originalFile.project, scope) }
-        .toList()
-
-      val resolveContext = fromFoothold(originalFile)
-      modulesFromIndex.asSequence()
-        // TODO Do we need this resolve here?
-        .flatMap { resolve(it, resolveContext) }
-        .filter { PyUtil.isImportable(originalFile, it) }
-        .mapNotNull { createLookupElementBuilder(originalFile, it) }
-        .map { it.withInsertHandler(when {
-          insideStringLiteralInExtendedCompletion -> InsertHandlers.stringLiteralInsertHandler
-          else -> InsertHandlers.importingInsertHandler
-        }) }
-        .map { PrioritizedLookupElement.withPriority(it, PythonCompletionWeigher.NOT_IMPORTED_MODULE_WEIGHT.toDouble()) }
-        .forEach { result.addElement(it) }
+      val modulePackageScope = createScope(originalFile, false)
+      forEachModulePackageNameFromIndex(modulePackageScope) { modulePackageName: String ->
+        ProgressManager.checkCanceled()
+        counters.scannedNames++
+        if (!result.prefixMatcher.isStartMatch(modulePackageName)) return@forEachModulePackageNameFromIndex true
+        for (vFile in fileBasedIndex.getContainingFilesIterator(PyModuleNameIndex.NAME, modulePackageName, modulePackageScope)) {
+          ProgressManager.checkCanceled()
+          val psiFile = originalFile.manager.findFile(vFile) as? PyFile
+          if (psiFile == null) {
+            return@forEachModulePackageNameFromIndex true
+          }
+          if (!PyUtil.isImportable(originalFile, psiFile)) {
+            return@forEachModulePackageNameFromIndex true
+          }
+          val fqn = getFullyQualifiedName(psiFile)
+          if (!isApplicableInInsertionContext(psiFile, fqn, position, typeEvalContext)) {
+            counters.notApplicableInContextNames++
+            return@forEachModulePackageNameFromIndex true
+          }
+          if (alreadySuggested.add(fqn)) {
+            result.addElement(createLookupElementForImportableName(modulePackageName, psiFile, originalFile, position, typeEvalContext))
+            counters.totalVariants++
+            if (counters.totalVariants >= maxVariants) {
+              return@forEachModulePackageNameFromIndex false
+            }
+          }
+        }
+        return@forEachModulePackageNameFromIndex true
+      }
 
       // Suggest top-level importable names
-      forEachPublicNameFromIndex(scope) { elementName: String ->
+      val topLevelNameScope = createScope(originalFile, true)
+      forEachPublicNameFromIndex(topLevelNameScope) { elementName: String ->
         ProgressManager.checkCanceled()
         counters.scannedNames++
         if (!result.prefixMatcher.isStartMatch(elementName)) return@forEachPublicNameFromIndex true
-        stubIndex.processElements(PyExportedModuleAttributeIndex.KEY, elementName, project, scope,
+        stubIndex.processElements(PyExportedModuleAttributeIndex.KEY, elementName, project, topLevelNameScope,
                                   PyElement::class.java) { exported ->
           ProgressManager.checkCanceled()
           val name = exported.getName()
           if (name == null) return@processElements true
-          val fqn: QualifiedName = getFullyQualifiedName(exported)
+          val fqn = getFullyQualifiedName(exported)
           if (!isApplicableInInsertionContext(exported, fqn, position, typeEvalContext)) {
             counters.notApplicableInContextNames++
             return@processElements true
@@ -149,26 +162,13 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
               counters.privateNames++
               return@processElements true
             }
-            val lookupElement = LookupElementBuilder
-              .createWithSmartPointer(name, exported)
-              .withIcon(exported.getIcon(0))
-              .withExpensiveRenderer(object : LookupElementRenderer<LookupElement>() {
-                override fun renderElement(element: LookupElement, presentation: LookupElementPresentation) {
-                  presentation.setItemText(element.getLookupString())
-                  presentation.setIcon(exported.getIcon(0))
-                  val importPath = QualifiedNameFinder.findCanonicalImportPath(exported, originalFile)
-                  if (importPath == null) return
-                  presentation.typeText = importPath.toString()
-                }
-              })
-              .withInsertHandler(getInsertHandler(exported, position, typeEvalContext))
-            result.addElement(PrioritizedLookupElement.withPriority(lookupElement, PythonCompletionWeigher.NOT_IMPORTED_MODULE_WEIGHT.toDouble()))
+            result.addElement(createLookupElementForImportableName(name, exported, originalFile, position, typeEvalContext))
             counters.totalVariants++
             if (counters.totalVariants >= maxVariants) {
               return@processElements false
             }
           }
-          true
+          return@processElements true
         }
       }
     }, LongConsumer { duration ->
@@ -180,11 +180,31 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     })
   }
 
-  private fun resolve(module: PsiFile, resolveContext: PyQualifiedNameResolveContext): Sequence<PsiFileSystemItem> {
-    val qualifiedName = QualifiedNameFinder.findCanonicalImportPath(module, null) ?: return emptySequence()
-    return resolveQualifiedName(qualifiedName, resolveContext).asSequence()
-      .filterIsInstance<PsiFileSystemItem>()
-  }
+  private fun createLookupElementForImportableName(
+    name: @NlsSafe String,
+    importable: PyElement,
+    originalFile: PsiFile,
+    position: PsiElement,
+    typeEvalContext: TypeEvalContext,
+  ): LookupElement = LookupElementBuilder
+    .createWithSmartPointer(name, importable)
+    .withIcon(importable.getIcon(0))
+    .withExpensiveRenderer(object : LookupElementRenderer<LookupElement>() {
+      override fun renderElement(element: LookupElement, presentation: LookupElementPresentation) {
+        presentation.setItemText(element.getLookupString())
+        presentation.setIcon(importable.getIcon(0))
+        val importPath = QualifiedNameFinder.findCanonicalImportPath(importable, originalFile)
+        if (importPath == null) return
+        if (importable is PsiFileSystemItem) {
+          presentation.typeText = importPath.removeLastComponent().toString()
+        }
+        else {
+          presentation.typeText = importPath.toString()
+        }
+      }
+    })
+    .withInsertHandler(getInsertHandler(importable, position, typeEvalContext))
+    .let { PrioritizedLookupElement.withPriority(it, PythonCompletionWeigher.NOT_IMPORTED_MODULE_WEIGHT.toDouble()) }
 
   private fun getInsertHandler(
     exported: PyElement,
@@ -231,8 +251,8 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
         CachedValueProvider.Result.create<Collection<String>>(keys, modificationTracker)
       })
 
-      for (allKey in cachedAllNames) {
-        if (!processor.invoke(allKey)) {
+      for (name in cachedAllNames) {
+        if (!processor.invoke(name)) {
           return
         }
       }
@@ -242,19 +262,29 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     }
   }
 
+  private fun forEachModulePackageNameFromIndex(scope: GlobalSearchScope, processor: (String) -> Boolean) {
+    for (name in PyModuleNameIndex.getAllKeys(scope.project!!)) {
+      if (!processor.invoke(name)) {
+        return
+      }
+    }
+  }
+
   private fun isApplicableInInsertionContext(
     definition: PyElement,
-    fqn: QualifiedName, position: PsiElement,
+    fqn: QualifiedName, 
+    position: PsiElement,
     context: TypeEvalContext
   ): Boolean {
     if (PyTypingTypeProvider.isInsideTypeHint(position, context)) {
       // Not all names from typing.py are defined as classes
       return (definition is PyClass ||
+              definition is PsiFileSystemItem ||
               isSuitableTypeAlias(definition, context) ||
               ArrayUtil.contains(fqn.getFirstComponent(), "typing", "typing_extensions"))
     }
     if (position.findParentOfType<PyPattern>() != null) {
-      return definition is PyClass
+      return definition is PyClass || definition is PsiFileSystemItem
     }
     return true
   }
@@ -280,6 +310,10 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
   }
 
   private fun getFullyQualifiedName(exported: PyElement): QualifiedName {
+    if (exported is PyFile) {
+      return QualifiedNameFinder.findShortestImportableQName(exported)
+             ?: QualifiedName.fromDottedString(FileUtilRt.getNameWithoutExtension(exported.name))
+    }
     val shortName = exported.getName() ?: ""
     val qualifiedName = if (exported is PyQualifiedNameOwner) exported.getQualifiedName() else null
     return QualifiedName.fromDottedString(qualifiedName ?: shortName)
@@ -297,7 +331,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     return fqn.components.any { it.startsWith("_") }
   }
 
-  private fun createScope(originalFile: PsiFile): GlobalSearchScope {
+  private fun createScope(originalFile: PsiFile, forTopLevelNames: Boolean): GlobalSearchScope {
     class HavingLegalImportPathScope(project: Project) : QualifiedNameBasedScope(project) {
       override fun containsQualifiedNameInRoot(root: VirtualFile, qName: QualifiedName): Boolean {
         return qName.components.all { PyNames.isIdentifier(it) } && qName != QualifiedName.fromComponents("__future__")
@@ -306,13 +340,17 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
 
     val project = originalFile.getProject()
     val pyiStubsScope = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.everythingScope(project), PyiFileType.INSTANCE)
-    return PySearchUtilBase.defaultSuggestionScope(originalFile)
+    val common = PySearchUtilBase.defaultSuggestionScope(originalFile)
       .intersectWith(GlobalSearchScope.notScope(pyiStubsScope))
-      .intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.fileScope(
-        originalFile))) // Some types in typing.py are defined as functions, causing inserting them with parentheses. It's better to rely on typing.pyi.
-      .intersectWith(GlobalSearchScope.notScope(fileScope("typing", originalFile, false)))
-      .uniteWith(fileScope("typing", originalFile, true))
+      .intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.fileScope(originalFile)))
       .intersectWith(HavingLegalImportPathScope(project))
+    if (forTopLevelNames) {
+      // Some types in typing.py are defined as functions, causing inserting them with parentheses. It's better to rely on typing.pyi.
+      return common
+        .intersectWith(GlobalSearchScope.notScope(fileScope("typing", originalFile, false)))
+        .uniteWith(fileScope("typing", originalFile, true))
+    }
+    return common
   }
 
   private fun fileScope(fqn: String, anchor: PsiFile, pyiStub: Boolean): GlobalSearchScope {
