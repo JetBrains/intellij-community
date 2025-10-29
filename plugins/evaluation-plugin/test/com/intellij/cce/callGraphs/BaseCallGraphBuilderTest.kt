@@ -6,14 +6,14 @@ import junit.framework.TestCase.*
 import java.io.File
 
 object CallGraphTestUtil {
-  private fun expectedCallGraph(testFixture: CodeInsightTestFixture, scenarioName: String): CallGraph {
-    val expectedJsonFile = File(testFixture.testDataPath + "/callGraphs/" + scenarioName + "/expected.json")
+  private fun expectedCallGraph(testFixture: CodeInsightTestFixture, testCaseDataDirectory: String): CallGraph {
+    val expectedJsonFile = File(testFixture.testDataPath, "$testCaseDataDirectory/expected.json")
     val text = expectedJsonFile.readText()
     return CallGraph.deserialise(text)
   }
 
-  private fun copyScenarioSources(testFixture: CodeInsightTestFixture, scenarioName: String) {
-    val srcDir = File("callGraphs/$scenarioName/src")
+  private fun copyScenarioSources(testFixture: CodeInsightTestFixture, testCaseDataDirectory: String) {
+    val srcDir = File("$testCaseDataDirectory/src")
     testFixture.copyDirectoryToProject(srcDir.path, "")
   }
 
@@ -82,11 +82,12 @@ object CallGraphTestUtil {
 
   fun doTestGeneratedGraphEqualsExpected(
     scenarioName: String,
+    testCaseDataDirectory: String,
     testFixture: CodeInsightTestFixture,
     callGraphBuilder: CallGraphBuilder,
   ) {
-    copyScenarioSources(testFixture, scenarioName)
-    val expected = expectedCallGraph(testFixture, scenarioName)
+    copyScenarioSources(testFixture, testCaseDataDirectory)
+    val expected = expectedCallGraph(testFixture, testCaseDataDirectory)
     val actual = buildActualGraph(callGraphBuilder, testFixture.project)
 
     val expectedToActualId = buildExpectedToActualIdMapByLocation(expected, actual, scenarioName)

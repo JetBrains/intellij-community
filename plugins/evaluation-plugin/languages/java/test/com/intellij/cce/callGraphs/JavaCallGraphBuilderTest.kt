@@ -32,6 +32,7 @@ class JavaCallGraphBuilderTest(private val scenario: String) : BasePlatformTestC
   fun testCallGraphAgainstExpected() {
     CallGraphTestUtil.doTestGeneratedGraphEqualsExpected(
       scenario,
+      "callGraphs/${scenario}",
       myFixture,
       JavaCallGraphBuilder(),
     )

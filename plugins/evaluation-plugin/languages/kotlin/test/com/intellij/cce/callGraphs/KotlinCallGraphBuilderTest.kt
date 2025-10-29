@@ -40,6 +40,7 @@ class KotlinCallGraphBuilderTest(private val scenario: String) : BasePlatformTes
   fun testCallGraphAgainstExpected() {
     CallGraphTestUtil.doTestGeneratedGraphEqualsExpected(
       scenario,
+      "callGraphs/${scenario}",
       myFixture,
       KotlinCallGraphBuilder()
     )
