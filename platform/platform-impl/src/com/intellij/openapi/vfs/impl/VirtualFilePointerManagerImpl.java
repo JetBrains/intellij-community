@@ -118,32 +118,27 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     assertAllPointersDisposed();
   }
 
-  private static final class EventDescriptor {
-    private final @NotNull VirtualFilePointerListener myListener;
-    private final VirtualFilePointer @NotNull [] myPointers;
+  private record EventDescriptor(@NotNull VirtualFilePointerListener myListener, VirtualFilePointer @NotNull [] myPointers) {
+      private EventDescriptor {
+        if (myPointers.length == 0) {
+          throw new IllegalArgumentException();
+        }
+      }
 
-    private EventDescriptor(@NotNull VirtualFilePointerListener listener, VirtualFilePointer @NotNull [] pointers) {
-      myListener = listener;
-      myPointers = pointers;
-      if (pointers.length == 0) {
-        throw new IllegalArgumentException();
+      private void fireBefore() {
+        myListener.beforeValidityChanged(myPointers);
+      }
+
+      private void fireAfter() {
+        myListener.validityChanged(myPointers);
+      }
+
+      @Override
+      @NotNull
+      public String toString() {
+        return myListener + " -> " + Arrays.toString(myPointers);
       }
     }
-
-    private void fireBefore() {
-      myListener.beforeValidityChanged(myPointers);
-    }
-
-
-    private void fireAfter() {
-      myListener.validityChanged(myPointers);
-    }
-
-    @Override
-    public String toString() {
-      return myListener + " -> " + Arrays.toString(myPointers);
-    }
-  }
 
   @TestOnly
   public synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent, @NotNull String childName) {
@@ -576,56 +571,63 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         ProgressManager.checkCanceled();
         VirtualFileSystem vfs = event.getFileSystem();
         if (!(vfs instanceof VirtualFilePointerCapableFileSystem) || !(vfs instanceof NewVirtualFileSystem fs)) continue;
-        if (event instanceof VFileDeleteEvent deleteEvent) {
-          VirtualFileSystemEntry file = (VirtualFileSystemEntry)deleteEvent.getFile();
-          VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(file, file.getFileSystem());
-          if (parent != null) {
-            addRelevantPointers(file, parent, FilePartNode.getNameId(file), toFirePointers, toUpdateNodes, true, fs, event);
-          }
-        }
-        else if (event instanceof VFileCreateEvent createEvent) {
-          boolean fireSubdirectoryPointers;
-          if (createEvent.isDirectory()) {
-            // when a new empty directory "/a/b" is created, there's no need to fire any deeper pointers like "/a/b/c/d.txt" - they're not created yet
-            // OTOH when refresh found a new directory "/a/b" which is non-empty, we must fire deeper pointers because they may exist already
-            fireSubdirectoryPointers = !createEvent.isEmptyDirectory();
-          }
-          else {
-            String createdFileName = createEvent.getChildName();
-            // if the .jar file created, there may be many files hiding inside
-            FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(createdFileName));
-            fireSubdirectoryPointers = fileType instanceof ArchiveFileType;
-          }
-          addRelevantPointers(null, (VirtualFileSystemEntry)createEvent.getParent(), createEvent.getChildNameId(), toFirePointers,
-                              toUpdateNodes, fireSubdirectoryPointers, fs, event);
-        }
-        else if (event instanceof VFileCopyEvent copyEvent) {
-          addRelevantPointers(null, (VirtualFileSystemEntry)copyEvent.getNewParent(), toNameId(copyEvent.getNewChildName()), toFirePointers,
-                              toUpdateNodes, true, fs, event);
-        }
-        else if (event instanceof VFileMoveEvent moveEvent) {
-          VirtualFileSystemEntry eventFile = (VirtualFileSystemEntry)moveEvent.getFile();
-          int newNameId = FilePartNode.getNameId(eventFile);
-          // files deleted from eventFile and created in moveEvent.getNewParent()
-          addRelevantPointers(null, (VirtualFileSystemEntry)moveEvent.getNewParent(), newNameId, toFirePointers, toUpdateNodes, true, fs, event);
-
-          VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
-          if (parent != null) {
-            addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
-          }
-        }
-        else if (event instanceof VFilePropertyChangeEvent change) {
-          if (VirtualFile.PROP_NAME.equals(change.getPropertyName()) && !Comparing.equal(change.getOldValue(), change.getNewValue())) {
-            VirtualFileSystemEntry eventFile = (VirtualFileSystemEntry)change.getFile();
-            VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
-            // e.g., for LightVirtualFiles
+        switch (event) {
+          case VFileDeleteEvent deleteEvent -> {
+            VirtualFileSystemEntry file = (VirtualFileSystemEntry)deleteEvent.getFile();
+            VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(file, file.getFileSystem());
             if (parent != null) {
-              int newNameId = toNameId(change.getNewValue().toString());
-              addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
-
-              // old pointers remain valid after rename, no need to fire
-              addRelevantPointers(parent, eventFile, FilePartNode.getNameId(eventFile), toFirePointers, toUpdateNodes, true, fs, false, event);
+              addRelevantPointers(file, parent, FilePartNode.getNameId(file), toFirePointers, toUpdateNodes, true, fs, event);
             }
+          }
+          case VFileCreateEvent createEvent -> {
+            boolean fireSubdirectoryPointers;
+            if (createEvent.isDirectory()) {
+              // when a new empty directory "/a/b" is created, there's no need to fire any deeper pointers like "/a/b/c/d.txt" - they're not created yet
+              // OTOH when refresh found a new directory "/a/b" which is non-empty, we must fire deeper pointers because they may exist already
+              fireSubdirectoryPointers = !createEvent.isEmptyDirectory();
+            }
+            else {
+              String createdFileName = createEvent.getChildName();
+              // if the .jar file created, there may be many files hiding inside
+              FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(createdFileName));
+              fireSubdirectoryPointers = fileType instanceof ArchiveFileType;
+            }
+            addRelevantPointers(null, (VirtualFileSystemEntry)createEvent.getParent(), createEvent.getChildNameId(), toFirePointers,
+                                toUpdateNodes, fireSubdirectoryPointers, fs, event);
+          }
+          case VFileCopyEvent copyEvent ->
+            addRelevantPointers(null, (VirtualFileSystemEntry)copyEvent.getNewParent(), toNameId(copyEvent.getNewChildName()),
+                                toFirePointers,
+                                toUpdateNodes, true, fs, event);
+          case VFileMoveEvent moveEvent -> {
+            VirtualFileSystemEntry eventFile = (VirtualFileSystemEntry)moveEvent.getFile();
+            int newNameId = FilePartNode.getNameId(eventFile);
+            // files deleted from eventFile and created in moveEvent.getNewParent()
+            addRelevantPointers(null, (VirtualFileSystemEntry)moveEvent.getNewParent(), newNameId, toFirePointers, toUpdateNodes, true, fs,
+                                event);
+
+            VirtualFileSystemEntry parent = (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
+            if (parent != null) {
+              addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
+            }
+          }
+          case VFilePropertyChangeEvent change -> {
+            if (VirtualFile.PROP_NAME.equals(change.getPropertyName()) && !Comparing.equal(change.getOldValue(), change.getNewValue())) {
+              VirtualFileSystemEntry eventFile = (VirtualFileSystemEntry)change.getFile();
+              VirtualFileSystemEntry parent =
+                (VirtualFileSystemEntry)FilePartNode.getParentThroughJar(eventFile, eventFile.getFileSystem());
+              // e.g., for LightVirtualFiles
+              if (parent != null) {
+                int newNameId = toNameId(change.getNewValue().toString());
+                addRelevantPointers(eventFile, parent, newNameId, toFirePointers, toUpdateNodes, true, fs, event);
+
+                // old pointers remain valid after rename, no need to fire
+                addRelevantPointers(parent, eventFile, FilePartNode.getNameId(eventFile), toFirePointers, toUpdateNodes, true, fs, false,
+                                    event);
+              }
+            }
+          }
+          default -> {
           }
         }
       }
@@ -647,7 +649,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return myLocalRoot.children.length != 0 || myTempRoot.children.length != 0;
   }
 
-  // converts multi-map with pointers-to-fire into convenient
+  // converts multimap with pointers-to-fire into convenient
   // - (listener->pointers created with this listener) map for firing individual listeners and
   // - allPointersToFire list to fire in bulk via VirtualFilePointerListener.TOPIC
   private static void groupPointersToFire(@NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> toFirePointers,
