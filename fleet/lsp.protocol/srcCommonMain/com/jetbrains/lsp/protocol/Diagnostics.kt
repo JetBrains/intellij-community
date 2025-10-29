@@ -254,8 +254,11 @@ data class DiagnosticOptions(
      * The server provides support for workspace diagnostics as well.
      */
     val workspaceDiagnostics: Boolean?,
-    override val workDoneProgress: Boolean?,
-) : WorkDoneProgressOptions
+
+    override val workDoneProgress: Boolean? = null,
+    override val id: String? = null,
+    override val documentSelector: DocumentSelector? = null,
+) : WorkDoneProgressOptions, StaticRegistrationOptions, TextDocumentRegistrationOptions
 
 /**
  * Parameters of the document diagnostic request.
