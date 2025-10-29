@@ -469,7 +469,7 @@ public class ProjectSdksModel implements SdkModel {
           else {
             Path pathToEnvironment = (project == null || project.getProjectFilePath() == null) ?
                                      Path.of(System.getProperty("user.home")) : Path.of(project.getProjectFilePath());
-            SdkConfigurationUtil.selectSdkHome(type, null, pathToEnvironment, home -> addSdk(type, home, sdk -> callback.accept(sdk)));
+            SdkConfigurationUtil.selectSdkHome(type, parent, pathToEnvironment, home -> addSdk(type, home, sdk -> callback.accept(sdk)));
           }
         }
       };
