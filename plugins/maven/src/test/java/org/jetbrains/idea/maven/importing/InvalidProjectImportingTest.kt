@@ -21,6 +21,7 @@ import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
@@ -551,6 +552,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDoNotFailIfDistributionRepositoryHasEmptyValues() = runBlocking {
+    assumeMaven3()
     importProjectAsync("""
                               <groupId>test</groupId>
                               <artifactId>project</artifactId>
@@ -816,6 +818,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testUnresolvedBuildExtensionsInModules() = runBlocking {
+    assumeMaven3()
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
