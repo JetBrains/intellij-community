@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.SearchTopHitProvider
@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
+import com.intellij.util.gotoByName.FindActionSearchableOptionsFilter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.asFlow
@@ -405,6 +406,9 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
           ?.filter {
             @Suppress("HardCodedStringLiteral")
             !(it.path == "ActionManager" || filterOutInspections && it.groupName == "Inspections")
+          }
+          ?.filter { description ->
+            FindActionSearchableOptionsFilter.EP_NAME.extensionList.all { findActionFilter -> findActionFilter.isAvailable(description) }
           }
           ?.toHashSet()
         if (descriptions.isNullOrEmpty()) {
