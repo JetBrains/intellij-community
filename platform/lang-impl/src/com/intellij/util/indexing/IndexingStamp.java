@@ -81,14 +81,14 @@ public final class IndexingStamp {
   //MAYBE RC: do we still need in-memory cache (fileId->Timestamps)? With new fast-attributes + fast enumerator
   //          access may be fast enough even without caching -- or, at least, it may be worth caching enumerator
   //          records (which are 100-1000 records at max) _only_
-  private static final ConcurrentIntObjectMap<Timestamps> ourTimestampsCache = createConcurrentIntObjectMap();
-  private static final BlockingQueue<Integer> ourFinishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
+  private static final ConcurrentIntObjectMap<Timestamps> timestampsCache = createConcurrentIntObjectMap();
+  private static final BlockingQueue<Integer> finishedFiles = new ArrayBlockingQueue<>(INDEXING_STAMP_CACHE_CAPACITY);
 
   /**
    * The lock protects reading/modifying the {@link Timestamps} state for fileId.
-   * It doesn't protect {@link #ourTimestampsCache} -- it is a concurrent map itself, doesn't need protection.
+   * It doesn't protect {@link #timestampsCache} -- it is a concurrent map itself, doesn't need protection.
    */
-  private static final StripedLock ourTimestampsPerFileLock = new StripedLock();
+  private static final StripedLock timestampsPerFileLock = new StripedLock();
 
   private static final AutoRefreshingOnVfsCloseRef<IndexingStampStorage> storage =
     new AutoRefreshingOnVfsCloseRef<>(IndexingStamp::createStorage);
@@ -109,11 +109,11 @@ public final class IndexingStamp {
   @TestOnly
   public static void dropTimestampMemoryCaches() {
     flushCaches();
-    ourTimestampsCache.clear();
+    timestampsCache.clear();
   }
 
   public static long getIndexStamp(int fileId, ID<?, ?> indexName) {
-    return ourTimestampsPerFileLock.withReadLock(fileId, () -> {
+    return timestampsPerFileLock.withReadLock(fileId, () -> {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       return stamp.get(indexName);
     });
@@ -121,7 +121,7 @@ public final class IndexingStamp {
 
   @TestOnly
   public static void dropIndexingTimeStamps(int fileId) throws IOException {
-    ourTimestampsCache.remove(fileId);
+    timestampsCache.remove(fileId);
     storage.invoke().writeTimestamps(fileId, TimestampsImmutable.EMPTY);
   }
 
@@ -132,7 +132,7 @@ public final class IndexingStamp {
   @Contract("_, true->!null")
   private static Timestamps getTimestamp(int id, boolean createIfNoneSaved) {
     assert id > 0;
-    Timestamps timestamps = ourTimestampsCache.get(id);
+    Timestamps timestamps = timestampsCache.get(id);
     if (timestamps == null) {
       TimestampsImmutable immutable = storage.invoke().readTimestamps(id);
       if (immutable == null) {
@@ -147,7 +147,7 @@ public final class IndexingStamp {
         timestamps = immutable.toMutableTimestamps();
       }
     }
-    ourTimestampsCache.cacheOrGet(id, timestamps);
+    timestampsCache.cacheOrGet(id, timestamps);
     return timestamps;
   }
 
@@ -159,7 +159,7 @@ public final class IndexingStamp {
 
   public static void update(int fileId, @NotNull ID<?, ?> indexName, final long indexCreationStamp) {
     assert fileId > 0;
-    ourTimestampsPerFileLock.withWriteLock(fileId, () -> {
+    timestampsPerFileLock.withWriteLock(fileId, () -> {
       Timestamps stamp = createOrGetTimeStamp(fileId);
       stamp.set(indexName, indexCreationStamp);
       return null;
@@ -172,7 +172,7 @@ public final class IndexingStamp {
    * "unindexed" is not included.
    */
   public static @NotNull List<ID<?, ?>> getNontrivialFileIndexedStates(int fileId) {
-    return ourTimestampsPerFileLock.withReadLock(fileId, () -> {
+    return timestampsPerFileLock.withReadLock(fileId, () -> {
       try {
         Timestamps stamp = createOrGetTimeStamp(fileId);
         if (stamp.hasIndexingTimeStamp()) {
@@ -191,27 +191,28 @@ public final class IndexingStamp {
     flushLock.writeLock().unlock();
   }
 
+  /** Persist cached data {@link Timestamps} for finishedFile */
   public static void flushCache(int finishedFile) {
-    boolean exit = ourTimestampsPerFileLock.withReadLock(finishedFile, () -> {
-      Timestamps timestamps = ourTimestampsCache.get(finishedFile);
+    boolean exit = timestampsPerFileLock.withReadLock(finishedFile, () -> {
+      Timestamps timestamps = timestampsCache.get(finishedFile);
       if (timestamps == null) return true;
       if (!timestamps.isDirty()) {
-        ourTimestampsCache.remove(finishedFile);
+        timestampsCache.remove(finishedFile);
         return true;
       }
       return false;
     });
     if (exit) return;
 
-    while (!ourFinishedFiles.offer(finishedFile)) {
+    while (!finishedFiles.offer(finishedFile)) {
       doFlush();
     }
   }
 
   @TestOnly
   public static int @NotNull [] dumpCachedUnfinishedFiles() {
-    return ourTimestampsPerFileLock.withAllLocksWriteLocked(() -> {
-      int[] cachedKeys = ourTimestampsCache
+    return timestampsPerFileLock.withAllLocksWriteLocked(() -> {
+      int[] cachedKeys = timestampsCache
         .entrySet()
         .stream()
         .filter(e -> e.getValue().isDirty())
@@ -223,7 +224,7 @@ public final class IndexingStamp {
       }
       else {
         IntSet cachedIds = new IntArraySet(cachedKeys);
-        Set<Integer> finishedIds = new HashSet<>(ourFinishedFiles);
+        Set<Integer> finishedIds = new HashSet<>(finishedFiles);
         cachedIds.removeAll(finishedIds);
         return cachedIds.toIntArray();
       }
@@ -233,14 +234,14 @@ public final class IndexingStamp {
   private static void doFlush() {
     flushLock.readLock().lock();
     try {
-      List<Integer> files = new ArrayList<>(ourFinishedFiles.size());
-      ourFinishedFiles.drainTo(files);
+      List<Integer> files = new ArrayList<>(finishedFiles.size());
+      finishedFiles.drainTo(files);
 
       if (!files.isEmpty()) {
         for (Integer fileId : files) {
-          IOException exception = ourTimestampsPerFileLock.withWriteLock(fileId, () -> {
+          IOException exception = timestampsPerFileLock.withWriteLock(fileId, () -> {
             try {
-              Timestamps timestamp = ourTimestampsCache.remove(fileId);
+              Timestamps timestamp = timestampsCache.remove(fileId);
               if (timestamp == null) return null;
 
               if (timestamp.isDirty() /*&& file.isValid()*/) {
@@ -267,7 +268,7 @@ public final class IndexingStamp {
   }
 
   static boolean isDirty() {
-    return !ourFinishedFiles.isEmpty();
+    return !finishedFiles.isEmpty();
   }
 
   static void close() {
