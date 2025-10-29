@@ -1,7 +1,8 @@
 <html>
 <body>
-Reports loops that can be replaced with a single <code>String.repeat()</code> method (available since Java 11).
-<p><b>Example:</b></p>
+Reports loops that can be replaced with a single <code>StringBuilder.repeat()</code> method (available since Java 21) or
+<code>String.repeat()</code> method (available since Java 11).
+<p><b>Example (Java 11):</b></p>
 <pre><code>
   void append(StringBuilder sb, int count, Object obj) {
     for (int i = 0; i &lt; count; i++) {

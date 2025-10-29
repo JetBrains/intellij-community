@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,12 +41,14 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.getLanguageLevel(holder.getFile()).isAtLeast(LanguageLevel.JDK_11)) return PsiElementVisitor.EMPTY_VISITOR;
+    var languageLevel = PsiUtil.getLanguageLevel(holder.getFile());
+    if (!languageLevel.isAtLeast(LanguageLevel.JDK_11)) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
       public void visitForStatement(@NotNull PsiForStatement statement) {
         PsiMethodCallExpression call = findAppendCall(statement);
         if (call == null) return;
+        if (ErrorUtil.containsDeepError(call)) return;
         PsiReferenceExpression qualifier = tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()),
                                                    PsiReferenceExpression.class);
         if (qualifier == null || !ExpressionUtil.isEffectivelyUnqualified(qualifier)) return;
@@ -55,9 +58,19 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
         if (var.getType().equals(PsiTypes.longType()) || VariableAccessUtils.variableIsUsed(var, call)) return;
         PsiExpression arg = call.getArgumentList().getExpressions()[0];
         if (SideEffectChecker.mayHaveSideEffects(arg)) return;
-        holder.registerProblem(statement.getFirstChild(), JavaBundle.message(
-          "inspection.message.can.be.replaced.with.string.repeat"),
-                               new StringRepeatCanBeUsedFix(ADD_MATH_MAX));
+        if (languageLevel.isAtLeast(LanguageLevel.JDK_21)) {
+          PsiType type = qualifier.getType();
+          if (type == null) return;
+          String builderClassName = type.getPresentableText();
+          holder.registerProblem(statement.getFirstChild(),
+                                 JavaBundle.message("inspection.message.can.be.replaced.with.builder.repeat",
+                                                    builderClassName + ".repeat()"),
+                                 new AbstractStringBuilderRepeatCanBeUsedFix(ADD_MATH_MAX, builderClassName));
+        }
+        else {
+          holder.registerProblem(statement.getFirstChild(), JavaBundle.message("inspection.message.can.be.replaced.with.string.repeat"),
+                                 new StringRepeatCanBeUsedFix(ADD_MATH_MAX));
+        }
       }
     };
   }
@@ -70,11 +83,40 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
     return call;
   }
 
-  private static final class StringRepeatCanBeUsedFix extends PsiUpdateModCommandQuickFix {
-    private final boolean myAddMathMax;
+  private static final class AbstractStringBuilderRepeatCanBeUsedFix extends RepeatCanBeUsedFix {
+    private final String builderClassShortName;
 
+    private AbstractStringBuilderRepeatCanBeUsedFix(boolean addMathMax, String builderClassShortName) {
+      super(addMathMax);
+      this.builderClassShortName = builderClassShortName;
+    }
+
+    @Override
+    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", builderClassShortName + ".repeat()");
+    }
+
+    @Override
+    protected void replaceWithRepeatCall(PsiExpression qualifierExpression,
+                                         String repeatedStringExpression,
+                                         String countText,
+                                         CommentTracker ct,
+                                         PsiExpression arg,
+                                         PsiForStatement forStatement,
+                                         PsiMethodCallExpression appendCall) {
+      String replacement = qualifierExpression.getText() + ".repeat(" + repeatedStringExpression + ", " + countText + ");";
+      PsiExpressionStatement result = (PsiExpressionStatement)ct.replaceAndRestoreComments(forStatement, replacement);
+      if (myAddMathMax) {
+        PsiMethodCallExpression repeatCall = (PsiMethodCallExpression)result.getExpression();
+        PsiMethodCallExpression maxCall = (PsiMethodCallExpression)repeatCall.getArgumentList().getExpressions()[1];
+        simplifyMaxCall(maxCall);
+      }
+    }
+  }
+
+  private static final class StringRepeatCanBeUsedFix extends RepeatCanBeUsedFix {
     private StringRepeatCanBeUsedFix(boolean addMathMax) {
-      myAddMathMax = addMathMax;
+      super(addMathMax);
     }
 
     @Override
@@ -83,16 +125,44 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
     }
 
     @Override
+    protected void replaceWithRepeatCall(PsiExpression qualifierExpression,
+                                         String repeatedStringExpression,
+                                         String countText,
+                                         CommentTracker ct,
+                                         PsiExpression arg,
+                                         PsiForStatement forStatement,
+                                         PsiMethodCallExpression call) {
+      String replacement = repeatedStringExpression + ".repeat(" + countText + ")";
+      ct.replace(arg, replacement);
+      PsiExpressionStatement result = (PsiExpressionStatement)ct.replaceAndRestoreComments(forStatement, call.getParent());
+      if (myAddMathMax) {
+        PsiMethodCallExpression appendCall = (PsiMethodCallExpression)result.getExpression();
+        PsiMethodCallExpression repeatCall = (PsiMethodCallExpression)appendCall.getArgumentList().getExpressions()[0];
+        PsiMethodCallExpression maxCall = (PsiMethodCallExpression)repeatCall.getArgumentList().getExpressions()[0];
+        simplifyMaxCall(maxCall);
+      }
+    }
+  }
+
+  private static abstract class RepeatCanBeUsedFix extends PsiUpdateModCommandQuickFix {
+    protected final boolean myAddMathMax;
+
+    private RepeatCanBeUsedFix(boolean addMathMax) {
+      myAddMathMax = addMathMax;
+    }
+
+    @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiForStatement statement = PsiTreeUtil.getParentOfType(element, PsiForStatement.class);
-      if (statement == null) return;
-      CountingLoop loop = CountingLoop.from(statement);
+      PsiForStatement forStatement = PsiTreeUtil.getParentOfType(element, PsiForStatement.class);
+      if (forStatement == null) return;
+      CountingLoop loop = CountingLoop.from(forStatement);
       if (loop == null) return;
-      PsiMethodCallExpression call = findAppendCall(statement);
-      if (call == null) return;
-      PsiExpression builder = call.getMethodExpression().getQualifierExpression();
-      if (builder == null) return;
-      PsiExpression arg = call.getArgumentList().getExpressions()[0];
+      PsiMethodCallExpression appendCall = findAppendCall(forStatement);
+      if (appendCall == null) return;
+      if (ErrorUtil.containsDeepError(appendCall)) return;
+      PsiExpression qualifierExpression = appendCall.getMethodExpression().getQualifierExpression();
+      if (qualifierExpression == null) return;
+      PsiExpression arg = appendCall.getArgumentList().getExpressions()[0];
       PsiExpression from, to;
       if (loop.isDescending()) {
         from = loop.getBound();
@@ -103,23 +173,28 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
         to = loop.getBound();
       }
       CommentTracker ct = new CommentTracker();
-      String repeatQualifier = getRepeatQualifier(arg, ct);
+      String repeatedStringExpression = getRepeatedStringExpression(arg, ct);
       String countText = getCountText(from, to, loop.isIncluding(), ct);
       if (myAddMathMax) {
         countText = CommonClassNames.JAVA_LANG_MATH + ".max(0," + countText + ")";
       }
-      String replacement = repeatQualifier + ".repeat(" + countText + ")";
-      ct.replace(arg, replacement);
-      PsiExpressionStatement result = (PsiExpressionStatement)ct.replaceAndRestoreComments(statement, call.getParent());
-      if (myAddMathMax) {
-        PsiMethodCallExpression appendCall = (PsiMethodCallExpression)result.getExpression();
-        PsiMethodCallExpression repeatCall = (PsiMethodCallExpression)appendCall.getArgumentList().getExpressions()[0];
-        PsiMethodCallExpression maxCall = (PsiMethodCallExpression)repeatCall.getArgumentList().getExpressions()[0];
-        PsiExpression count = maxCall.getArgumentList().getExpressions()[1];
-        LongRangeSet range = CommonDataflow.getExpressionRange(count);
-        if (range != null && !range.isEmpty() && range.min() >= 0) {
-          maxCall.replace(count);
-        }
+      replaceWithRepeatCall(qualifierExpression, repeatedStringExpression, countText, ct, arg, forStatement, appendCall);
+    }
+
+    protected abstract void replaceWithRepeatCall(
+      PsiExpression qualifierExpression,
+      String repeatedStringExpression,
+      String countText,
+      CommentTracker ct,
+      PsiExpression arg,
+      PsiForStatement forStatement,
+      PsiMethodCallExpression appendCall);
+
+    protected void simplifyMaxCall(PsiMethodCallExpression maxCall) {
+      PsiExpression count = maxCall.getArgumentList().getExpressions()[1];
+      LongRangeSet range = CommonDataflow.getExpressionRange(count);
+      if (range != null && !range.isEmpty() && range.min() >= 0) {
+        maxCall.replace(count);
       }
     }
 
@@ -146,15 +221,16 @@ public final class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocal
       return countText;
     }
 
-    private static @NotNull String getRepeatQualifier(PsiExpression arg, CommentTracker ct) {
-      if (arg instanceof PsiLiteralExpression literal && !TypeUtils.isJavaLangString(arg.getType())) {
+    private static @NotNull String getRepeatedStringExpression(PsiExpression arg, CommentTracker ct) {
+      boolean isStringType = TypeUtils.isJavaLangString(arg.getType());
+      if (arg instanceof PsiLiteralExpression literal && !isStringType) {
         Object value = literal.getValue();
         if (value instanceof Character) {
           return PsiLiteralUtil.stringForCharLiteral(literal.getText());
         }
         return StringUtil.wrapWithDoubleQuote(StringUtil.escapeStringCharacters(String.valueOf(value)));
       }
-      if (TypeUtils.isJavaLangString(arg.getType()) && NullabilityUtil.getExpressionNullability(arg, true) == Nullability.NOT_NULL) {
+      if (isStringType && NullabilityUtil.getExpressionNullability(arg, true) == Nullability.NOT_NULL) {
         return ct.text(arg, ParenthesesUtils.METHOD_CALL_PRECEDENCE);
       }
       return CommonClassNames.JAVA_LANG_STRING + ".valueOf(" + ct.text(arg) + ")";
