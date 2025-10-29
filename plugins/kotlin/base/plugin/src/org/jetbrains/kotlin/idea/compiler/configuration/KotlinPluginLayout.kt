@@ -109,7 +109,11 @@ object KotlinPluginLayout {
             KotlinPluginLayoutMode.SOURCES -> {
                 @Suppress("TestOnlyProblems")
                 if (PluginManagerCore.isUnitTestMode) {
-                    val provider = ServiceLoader.load(TestKotlinArtifactsProvider::class.java).singleOrNull()
+                    // When run on TC from the suite (junit 3+4), AppClassLoader contains only the bootstrap classpath.
+                    // To ensure that the service loader becomes full path, let's use current class loader instead
+                    val providerClass = TestKotlinArtifactsProvider::class.java
+                    val provider =
+                        ServiceLoader.load(providerClass, providerClass.classLoader).singleOrNull()
                         ?: error("TestKotlinArtifacts service provider is not found. Expected ...") // TODO
                     kotlincProvider = lazy {
                         // NOTE: FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider
