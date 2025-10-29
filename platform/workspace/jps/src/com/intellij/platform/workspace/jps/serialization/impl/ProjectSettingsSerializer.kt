@@ -121,6 +121,10 @@ class ProjectSettingsSerializer(
       componentTag.setAttribute(ATTR_PROJECT_JDK_NAME, projectSdk.name)
       componentTag.setAttribute(ATTR_PROJECT_JDK_TYPE, projectSdk.type)
     }
+    else {
+      componentTag.removeAttribute(ATTR_PROJECT_JDK_NAME)
+      componentTag.removeAttribute(ATTR_PROJECT_JDK_TYPE)
+    }
 
     javaProjectSettingsEntity?.compilerOutput?.also { compilerOutput ->
       val compilerOutputTag = Element(TAG_OUTPUT)
