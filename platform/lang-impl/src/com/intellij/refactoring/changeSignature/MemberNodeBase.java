@@ -14,6 +14,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.tree.TreeNode;
@@ -30,7 +31,7 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
 
   protected abstract @Unmodifiable List<M> computeCallers();
 
-  protected abstract void customizeRendererText(ColoredTreeCellRenderer renderer);
+  protected abstract void customizeRendererText(@NotNull ColoredTreeCellRenderer renderer);
 
   protected Condition<M> getFilter() {
     return Conditions.alwaysTrue();
@@ -98,11 +99,12 @@ public abstract class MemberNodeBase<M extends PsiElement> extends CheckedTreeNo
   }
 
   public void customizeRenderer(ColoredTreeCellRenderer renderer) {
-    if (getMember() == null) return;
-    final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
-    renderer.setIcon(ReadAction.compute(() -> getMember().getIcon(flags)));
-
-    customizeRendererText(renderer);
+    M member = getMember();
+    if (member != null) {
+      final int flags = Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS;
+      renderer.setIcon(ReadAction.compute(() -> member.getIcon(flags)));
+      customizeRendererText(renderer);
+    }
   }
 
   @Override

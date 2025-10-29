@@ -23,7 +23,7 @@ public abstract class JavaMemberNode<M extends PsiMember> extends MemberNodeBase
   }
 
   @Override
-  protected void customizeRendererText(ColoredTreeCellRenderer renderer) {
+  protected void customizeRendererText(@NotNull ColoredTreeCellRenderer renderer) {
     customizeRendererText(renderer, getMember(), isEnabled());
   }
 
