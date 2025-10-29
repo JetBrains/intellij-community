@@ -15,9 +15,7 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.requests.DiffRequest
-import com.intellij.diff.tools.util.DiffNotifications
 import com.intellij.diff.tools.util.base.DiffViewerBase
-import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -39,14 +37,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestDis
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestDraftNoteInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorMappedComponentModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestNewDiscussionInlayRenderer
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 class GitLabMergeRequestDiffExtension : DiffExtension() {
-  private val emptyDiffNotificationProvider by lazy {
-    DiffNotifications.createNotificationProvider(GitLabBundle.message("merge.request.diff.empty.patch.warning"))
-  }
-
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
     val project = context.project ?: return
 
@@ -54,10 +47,6 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
     val reviewVm = context.getUserData(GitLabMergeRequestDiffViewModel.KEY) ?: return
     val change = request.getUserData(RefComparisonChange.KEY) ?: return
-
-    if (request.getUserData(GitLabMergeRequestDiffChangeViewModel.EMPTY_PATCH_KEY) == true) {
-      DiffUtil.addNotificationIfAbsent(emptyDiffNotificationProvider, request)
-    }
 
     project.service<InlaysController>().installInlays(reviewVm, change, viewer)
   }
