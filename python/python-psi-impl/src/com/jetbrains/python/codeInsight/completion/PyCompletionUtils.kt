@@ -21,6 +21,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -166,7 +167,7 @@ fun computeCompletionWeight(element: PsiElement, elementName: String?, path: Qua
     }
   }
 
-  weight -= when(element) {
+  weight -= when(PyUtil.turnInitIntoDir(element)) {
     is PsiDirectory -> ELEMENT_TYPE * 2
     is PyFile -> ELEMENT_TYPE
     else -> 0
