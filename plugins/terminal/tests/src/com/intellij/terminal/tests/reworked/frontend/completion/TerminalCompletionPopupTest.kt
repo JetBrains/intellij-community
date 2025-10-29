@@ -177,6 +177,19 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `test completion popup closes on non-matching prefix`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd st")
+    fixture.callCompletionPopup()
+    assertSameElements(fixture.getLookupElements().map { it.lookupString },
+                       listOf("start", "status", "stop"))
+
+    fixture.type("x")
+    assertFalse(fixture.isLookupActive())
+  }
+
+  @Test
   fun `test completion popup closes when any text appears below the line with cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixture = createFixture()
 
