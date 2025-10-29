@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.idea.devkit.threadingModelHelper.LockRequirement
-import org.jetbrains.idea.devkit.threadingModelHelper.LockType
+import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.idea.devkit.threadingModelHelper.RequirementReason
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
@@ -30,25 +30,25 @@ internal fun LockRequirementChip(
     RequirementReason.ANNOTATION -> Triple(
       AllIconsKeys.Nodes.Annotationtype,
       JewelTheme.globalColors.text.info,
-      when (requirement.lockType) {
-        LockType.READ -> "@RequiresReadLock"
-        LockType.NO_READ -> "@RequiresNoReadAccess"
-        LockType.WRITE -> "@RequiresWriteLock"
-        LockType.WRITE_INTENT -> "@RequiresWriteIntentLock"
-        LockType.EDT -> "@RequiresEdt"
-        LockType.BGT -> "@RequiresBackgroundThread"
+      when (requirement.constraintType) {
+        ConstraintType.READ -> "@RequiresReadLock"
+        ConstraintType.NO_READ -> "@RequiresNoReadAccess"
+        ConstraintType.WRITE -> "@RequiresWriteLock"
+        ConstraintType.WRITE_INTENT -> "@RequiresWriteIntentLock"
+        ConstraintType.EDT -> "@RequiresEdt"
+        ConstraintType.BGT -> "@RequiresBackgroundThread"
       }
     )
     RequirementReason.ASSERTION -> Triple(
       AllIconsKeys.Debugger.ThreadAtBreakpoint,
       JewelTheme.globalColors.text.normal,
-      when (requirement.lockType) {
-        LockType.READ -> "assertReadAccess()"
-        LockType.NO_READ -> "assertNoReadAccess()"
-        LockType.WRITE -> "assertWriteAccess()"
-        LockType.WRITE_INTENT -> "assertWriteIntentAllowed()"
-        LockType.EDT -> "assertIsEdt()"
-        LockType.BGT -> "assertIsBackgroundThread()"
+      when (requirement.constraintType) {
+        ConstraintType.READ -> "assertReadAccess()"
+        ConstraintType.NO_READ -> "assertNoReadAccess()"
+        ConstraintType.WRITE -> "assertWriteAccess()"
+        ConstraintType.WRITE_INTENT -> "assertWriteIntentAllowed()"
+        ConstraintType.EDT -> "assertIsEdt()"
+        ConstraintType.BGT -> "assertIsBackgroundThread()"
       }
     )
     RequirementReason.SWING_COMPONENT -> Triple(
@@ -64,13 +64,13 @@ internal fun LockRequirementChip(
     RequirementReason.IMPLICIT -> Triple(
       AllIconsKeys.General.Information,
       JewelTheme.globalColors.text.disabled,
-      when (requirement.lockType) {
-        LockType.READ -> "Implicit read lock"
-        LockType.NO_READ -> "Implicit no-read"
-        LockType.WRITE -> "Implicit write lock"
-        LockType.WRITE_INTENT -> "Implicit write-intent"
-        LockType.EDT -> "Implicit EDT"
-        LockType.BGT -> "Implicit background"
+      when (requirement.constraintType) {
+        ConstraintType.READ -> "Implicit read lock"
+        ConstraintType.NO_READ -> "Implicit no-read"
+        ConstraintType.WRITE -> "Implicit write lock"
+        ConstraintType.WRITE_INTENT -> "Implicit write-intent"
+        ConstraintType.EDT -> "Implicit EDT"
+        ConstraintType.BGT -> "Implicit background"
       }
     )
   }

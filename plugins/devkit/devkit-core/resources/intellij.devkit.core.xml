@@ -784,12 +784,6 @@
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAddServiceAnnotationProvider"/>
 
-    <LockReqAnalyzer
-      language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.JavaLockReqAnalyzerBFS"/>
-    <LockReqDetector
-      language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.JavaLockReqDetector"/>
     <LockReqPsiOps
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.JavaLockReqPsiOps"/>
@@ -817,16 +811,6 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="DevKit.lang.LockReqAnalyzer"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzer"/>
-    </extensionPoint>
-    <extensionPoint qualifiedName="DevKit.lang.LockReqDetector"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqDetector"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.LockReqPsiOps"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">

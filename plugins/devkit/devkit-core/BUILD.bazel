@@ -12,7 +12,7 @@ create_kotlinc_options(
     "com.intellij.openapi.util.IntellijInternalApi",
     "org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction",
   ],
-  x_context_receivers = True
+  x_context_parameters = True
 )
 
 resourcegroup(
@@ -106,6 +106,7 @@ jvm_library(
     "//platform/jewel/ide-laf-bridge",
     "//platform/jewel/ui",
     "//platform/compose",
+    "//platform/util/concurrency",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

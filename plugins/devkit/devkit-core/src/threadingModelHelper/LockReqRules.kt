@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
+import java.util.EnumSet
+
 interface LockReqRules {
-  val assertionMethods: Map<String, Map<String, LockType>>
-  val lockAnnotations: Map<String, LockType>
+  val assertionMethods: Map<String, Map<String, ConstraintType>>
+  val lockAnnotations: Map<String, ConstraintType>
   val edtRequiredPackages: Set<String>
   val edtRequiredClasses: Set<String>
   val asyncClasses: Set<String>
@@ -16,45 +18,53 @@ interface LockReqRules {
   val disposerUtilityClassFqn: String
   val disposableInterfaceFqn: String
   val disposeMethodNames: Set<String>
-  val knownMethodIndifferentToLocks: Set<Pair<String, String>>
+
+  /**
+   * When analyzer configured to search for a subset of [ConstraintType] (via [AnalysisConfig.interestingConstraintTypes]),
+   * and it meets a signature from [indifferent] that is matched with a subset of [AnalysisConfig.interestingConstraintTypes], this signature is ignored.
+   * This is needed to save some performance on methods that guaranteedly won't have anything interesting inside them
+   */
+  val indifferent: Set<Pair<EnumSet<ConstraintType>, Signature>>
 }
+
+data class Signature(val classFqn: String, val methodName: String)
 
 class BaseLockReqRules : LockReqRules {
 
-  override val assertionMethods: Map<String, Map<String, LockType>> = mapOf(
+  override val assertionMethods: Map<String, Map<String, ConstraintType>> = mapOf(
     "com.intellij.util.concurrency.ThreadingAssertions" to mapOf(
-      "assertReadAccess" to LockType.READ,
-      "assertWriteAccess" to LockType.WRITE,
-      "assertWriteIntentReadAccess" to LockType.WRITE_INTENT,
-      "assertEventDispatchThread" to LockType.EDT,
-      "assertBackgroundThread" to LockType.BGT
+      "assertReadAccess" to ConstraintType.READ,
+      "assertWriteAccess" to ConstraintType.WRITE,
+      "assertWriteIntentReadAccess" to ConstraintType.WRITE_INTENT,
+      "assertEventDispatchThread" to ConstraintType.EDT,
+      "assertBackgroundThread" to ConstraintType.BGT
     ),
     "com.intellij.psi.SmartPsiElementPointer" to mapOf(
-      "getElement" to LockType.READ,
-      "getPsiRange" to LockType.READ,
-      "getRange" to LockType.READ,
+      "getElement" to ConstraintType.READ,
+      "getPsiRange" to ConstraintType.READ,
+      "getRange" to ConstraintType.READ,
     ),
     "com.intellij.psi.JavaPsiFacade" to mapOf(
-      "findClass" to LockType.READ
+      "findClass" to ConstraintType.READ
     ),
     "com.intellij.openapi.vfs.VirtualFileSystem" to mapOf(
-      "refreshAndFindFileByPath" to LockType.NO_READ
+      "refreshAndFindFileByPath" to ConstraintType.NO_READ
     ),
     "com.intellij.openapi.application.Application" to mapOf(
-      "assertReadAccessAllowed" to LockType.READ,
-      "assertWriteAccessAllowed" to LockType.WRITE,
-      "assertIsWriteThread" to LockType.WRITE,
-      "assertIsDispatchThread" to LockType.EDT,
-      "assertIsNonDispatchThread" to LockType.BGT
+      "assertReadAccessAllowed" to ConstraintType.READ,
+      "assertWriteAccessAllowed" to ConstraintType.WRITE,
+      "assertIsWriteThread" to ConstraintType.WRITE,
+      "assertIsDispatchThread" to ConstraintType.EDT,
+      "assertIsNonDispatchThread" to ConstraintType.BGT
     )
   )
 
-  override val lockAnnotations: Map<String, LockType> = mapOf(
-    "com.intellij.util.concurrency.annotations.RequiresReadLock" to LockType.READ,
-    "com.intellij.util.concurrency.annotations.RequiresWriteLock" to LockType.WRITE,
-    "com.intellij.util.concurrency.annotations.RequiresEdt" to LockType.EDT,
-    "com.intellij.util.concurrency.annotations.RequiresBackgroundThread" to LockType.BGT,
-    "com.intellij.util.concurrency.annotations.RequiresReadLockAbsence" to LockType.NO_READ,
+  override val lockAnnotations: Map<String, ConstraintType> = mapOf(
+    "com.intellij.util.concurrency.annotations.RequiresReadLock" to ConstraintType.READ,
+    "com.intellij.util.concurrency.annotations.RequiresWriteLock" to ConstraintType.WRITE,
+    "com.intellij.util.concurrency.annotations.RequiresEdt" to ConstraintType.EDT,
+    "com.intellij.util.concurrency.annotations.RequiresBackgroundThread" to ConstraintType.BGT,
+    "com.intellij.util.concurrency.annotations.RequiresReadLockAbsence" to ConstraintType.NO_READ,
   )
 
   override val edtRequiredPackages: Set<String> = setOf(
@@ -102,7 +112,9 @@ class BaseLockReqRules : LockReqRules {
   override val disposableInterfaceFqn: String = "com.intellij.openapi.Disposable"
   override val disposeMethodNames: Set<String> = setOf("dispose")
 
-  override val knownMethodIndifferentToLocks: Set<Pair<String, String>> = setOf(
-    "com.intellij.openapi.vfs.VirtualFileManager" to "findFileByUrl"
+  override val indifferent: Set<Pair<EnumSet<ConstraintType>, Signature>> = setOf(
+    LOCK_REQUIREMENTS to Signature("com.intellij.openapi.vfs.VirtualFileManager", "findFileByUrl"),
+    LOCK_REQUIREMENTS to Signature("com.intellij.openapi.vfs.impl.VirtualFileManagerImpl", "findFileByUrl")
+
   )
 }

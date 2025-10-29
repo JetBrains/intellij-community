@@ -4,12 +4,6 @@ package org.jetbrains.idea.devkit.threadingModelHelper
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 
-
-interface LockReqAnalyzerStreaming : LockReqAnalyzer {
-
-  suspend fun analyzeMethodStreaming(method: PsiMethod, consumer: LockReqConsumer): AnalysisResult
-}
-
 interface LockReqConsumer {
   fun onStart(method: PsiMethod) {}
 

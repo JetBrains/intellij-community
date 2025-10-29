@@ -50,7 +50,7 @@ internal fun PathListView(
         items = filteredPaths,
         key = { path ->
           val chain = path.methodChain.joinToString("->") { it.method.name }
-          "${chain}|${path.lockRequirement.lockType}|${path.lockRequirement.requirementReason}|${path.isSpeculative}"
+          "${chain}|${path.lockRequirement.constraintType}|${path.lockRequirement.requirementReason}|${path.isSpeculative}"
         }
       ) { path ->
         PathListItem(

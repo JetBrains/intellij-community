@@ -18,7 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqsService
-import org.jetbrains.idea.devkit.threadingModelHelper.LockType
+import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 
 @Composable
 internal fun LockReqsToolWindow(project: Project) {
@@ -29,7 +29,7 @@ internal fun LockReqsToolWindow(project: Project) {
   val paths = analysisResult?.paths?.toList() ?: emptyList()
   state = state.copy(allPaths = paths, selected = state.selected?.takeIf { it in paths })
 
-  val chips = LockType.entries.map { type -> LockTypeFilterChip(type, type in state.selectedTypes) }
+  val chips = ConstraintType.entries.map { type -> LockTypeFilterChip(type, type in state.selectedTypes) }
 
   Column(
     modifier = Modifier.fillMaxSize()
@@ -54,7 +54,7 @@ internal fun LockReqsToolWindow(project: Project) {
     }
 
     if (state.filteredPaths.isEmpty()) {
-      NoPathsFoundView(analysisResult.method)
+      NoPathsFoundView()
       return
     }
 

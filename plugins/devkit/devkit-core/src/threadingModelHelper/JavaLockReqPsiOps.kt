@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiClass
@@ -15,10 +16,16 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.Processor
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.measureTime
 
 
-class JavaLockReqPsiOps(private val rules: LockReqRules = BaseLockReqRules()) : LockReqPsiOps {
+/**
+ * Actual visitor of bodies for the searched methods
+ */
+class JavaLockReqPsiOps : LockReqPsiOps {
+
+  private val rules: LockReqRules = BaseLockReqRules()
 
   override fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
     val callees = mutableListOf<PsiMethod>()
@@ -75,33 +82,40 @@ class JavaLockReqPsiOps(private val rules: LockReqRules = BaseLockReqRules()) : 
     return emptyList()
   }
 
-  override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int): List<PsiMethod> {
+  override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiMethod) -> Unit){
     if (method.containingClass?.hasAnnotation("java.lang.FunctionalInterface") == true) {
-      return emptyList()
+      return
     }
-    val inheritors = mutableListOf<PsiMethod>()
     if (method.body != null) {
-      inheritors.add(method)
+      handler(method)
     }
-    measureTime {
-      val query = OverridingMethodsSearch.search(method, scope, true)
-      query.allowParallelProcessing().forEach(Processor { overridden ->
-        if (inheritors.size >= maxImpl) return@Processor false
-        inheritors.add(overridden)
+    val counter = AtomicInteger(1)
+    val query = OverridingMethodsSearch.search(method, scope, true)
+    blockingContextToIndicator {
+      query.forEach(Processor {
+        overridden ->
+        val value = counter.incrementAndGet()
+        if (value >= maxImpl) {
+          println("Too much inheritors for ${method.name}, stopping")
+          return@Processor false
+        }
+        handler(overridden)
+        true
       })
-    }.let { println("findInheritors: ${it}") }
-
-    return inheritors
+    }
   }
 
-  override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int): List<PsiClass> {
-    val implementations = mutableListOf<PsiClass>()
+  override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiClass) -> Unit) {
     val query = ClassInheritorsSearch.search(interfaceClass, scope, true)
-    query.allowParallelProcessing().forEach(Processor { implementor ->
-      if (implementations.size >= maxImpl) return@Processor false
-      implementations.add(implementor)
+    val counter = AtomicInteger(1)
+    query.forEach(Processor { implementor ->
+      if (counter.incrementAndGet() >= maxImpl) {
+        println("Too many implementations for ${interfaceClass.name}, stopping")
+        return@Processor false
+      }
+      handler(implementor)
+      true
     })
-    return implementations
   }
 
   override fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean {

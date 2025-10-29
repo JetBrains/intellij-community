@@ -6,12 +6,15 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
+import java.util.*
 
-enum class LockType { READ, WRITE, WRITE_INTENT, EDT, BGT, NO_READ }
+enum class ConstraintType { READ, WRITE, WRITE_INTENT, EDT, BGT, NO_READ }
+
+val LOCK_REQUIREMENTS: EnumSet<ConstraintType> = EnumSet.of(ConstraintType.READ, ConstraintType.WRITE, ConstraintType.WRITE_INTENT, ConstraintType.NO_READ)
 
 enum class RequirementReason { ANNOTATION, ASSERTION, SWING_COMPONENT, MESSAGE_BUS, IMPLICIT }
 
-data class LockRequirement(val source: PsiElement, val lockType: LockType, val requirementReason: RequirementReason)
+data class LockRequirement(val source: PsiElement, val constraintType: ConstraintType, val requirementReason: RequirementReason)
 
 data class MethodSignature(val qualifiedName: String, val parameterTypes: List<String>) {
   companion object {
@@ -28,9 +31,21 @@ data class ExecutionPath(val methodChain: List<MethodCall>, val lockRequirement:
 
 data class AnalysisResult(val method: PsiMethod, val paths: Set<ExecutionPath>, val messageBusTopics: Set<PsiClass>, val swingComponents: Set<MethodSignature>)
 
-data class AnalysisConfig(val scope: GlobalSearchScope, val maxDepth: Int = 7, val maxImplementations: Int = 30, val includePolymorphic: Boolean = true) {
+/**
+ * Input parameters for the search session
+ */
+data class AnalysisConfig(
+  val scope: GlobalSearchScope,
+  /**
+   * The set of constraints that will be searched for in the codebase
+   */
+  val interestingConstraintTypes: EnumSet<ConstraintType>,
+  val maxDepth: Int = 5,
+  val maxImplementations: Int = 5,
+  val includePolymorphic: Boolean = true,
+) {
   companion object {
-    fun forProject(project: Project): AnalysisConfig = AnalysisConfig(scope = GlobalSearchScope.projectScope(project))
+    fun forProject(project: Project, interestingConstraintTypes: EnumSet<ConstraintType>): AnalysisConfig = AnalysisConfig(scope = GlobalSearchScope.projectScope(project), interestingConstraintTypes = interestingConstraintTypes)
   }
 }
 

@@ -8,17 +8,19 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
+import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
+import org.jetbrains.idea.devkit.threadingModelHelper.LOCK_REQUIREMENTS
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
 
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
 class KtLockReqUnitTest : BasePlatformTestCase() {
 
-  private lateinit var analyzerBFS: KtLockReqAnalyzerBFS
+  private var analyzerBFS: LockReqAnalyzerParallelBFS = LockReqAnalyzerParallelBFS()
 
   override fun setUp() {
     super.setUp()
-    analyzerBFS = KtLockReqAnalyzerBFS()
     myFixture.addFileToProject("com/intellij/util/concurrency/annotations.java", """
         package com.intellij.util.concurrency.annotations;
         public @interface RequiresReadLock {}
@@ -50,7 +52,7 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
   private fun formatResult(result: AnalysisResult): List<String> {
     val actualPaths = result.paths.map { path ->
       val chain = path.methodChain.joinToString(" -> ") { "${it.method.containingClass?.name}.${it.method.name}" }
-      val requirement = "${path.lockRequirement.lockType.name}.${path.lockRequirement.requirementReason.name}"
+      val requirement = "${path.lockRequirement.constraintType.name}.${path.lockRequirement.requirementReason.name}"
       "$chain => $requirement"
     }
     return actualPaths
@@ -61,8 +63,9 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
     val className = relativeFileName.removeSuffix(".kt")
     val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.projectScope(project))
     val method: PsiMethod = psiClass?.methods?.firstOrNull { m -> m.name == TEST_METHOD_NAME }!!
+    val config = AnalysisConfig.forProject(project, LOCK_REQUIREMENTS)
     return runBlocking {
-      analyzerBFS.analyzeMethod(method)
+      analyzerBFS.analyzeMethod(method, config)
     }
   }
 

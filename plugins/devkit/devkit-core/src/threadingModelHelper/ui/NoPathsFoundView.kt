@@ -18,7 +18,7 @@ import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
-internal fun NoPathsFoundView(method: PsiMethod) {
+internal fun NoPathsFoundView() {
   Box(
     modifier = Modifier.fillMaxSize(),
     contentAlignment = Alignment.Center
@@ -41,7 +41,7 @@ internal fun NoPathsFoundView(method: PsiMethod) {
         )
       )
       Text(
-        text = "${method.containingClass?.name}.${method.name} and its callees",
+        text = "Method and its callees",
         color = JewelTheme.globalColors.text.info
       )
       Text(

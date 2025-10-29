@@ -11,38 +11,43 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.Processor
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
+import java.util.concurrent.atomic.AtomicInteger
 
-class KtLockReqPsiOps(private val resolver: KtCallResolver = KtFirUastCallResolver()) : LockReqPsiOps {
+class KtLockReqPsiOps() : LockReqPsiOps {
+
+  private val resolver: KtCallResolver = KtFirUastCallResolver()
 
   override fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
     return resolver.resolveCallees(method).distinct()
   }
 
-  override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int): List<PsiMethod> {
-    val inheritors = mutableListOf<PsiMethod>()
+  override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiMethod) -> Unit) {
     if (method.body != null) {
-      inheritors.add(method)
+      handler(method)
     }
+    val counter = AtomicInteger(1)
     OverridingMethodsSearch.search(method, scope, true)
-      .allowParallelProcessing()
       .forEach(Processor { overridden ->
-        if (inheritors.size >= maxImpl) return@Processor false
-        inheritors.add(overridden)
+        if (counter.incrementAndGet() >= maxImpl) {
+          println("Too many inheritors for ${method.name}, stopping")
+          return@Processor false
+        }
+        handler(overridden)
         true
       })
-    return inheritors
   }
 
-  override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int): List<PsiClass> {
-    val implementations = mutableListOf<PsiClass>()
+  override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiClass) -> Unit) {
+    val counter = AtomicInteger(1)
     ClassInheritorsSearch.search(interfaceClass, scope, true)
-      .allowParallelProcessing()
       .forEach(Processor { implementor ->
-        if (implementations.size >= maxImpl) return@Processor false
-        implementations.add(implementor)
+        if (counter.incrementAndGet() >= maxImpl) {
+          println("Too many implementations for ${interfaceClass.name}, stopping")
+          return@Processor false
+        }
+        handler(implementor)
         true
       })
-    return implementations
   }
 
   override fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean {

@@ -11,14 +11,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import org.jetbrains.idea.devkit.threadingModelHelper.LockType
+import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Text
 
-internal data class LockTypeFilterChip(val type: LockType, val selected: Boolean)
+internal data class LockTypeFilterChip(val type: ConstraintType, val selected: Boolean)
 
 @Composable
 internal fun FilterToggleChip(chip: LockTypeFilterChip, onToggle: () -> Unit) {

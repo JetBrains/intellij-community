@@ -3,13 +3,13 @@ package org.jetbrains.idea.devkit.threadingModelHelper.ui
 
 import androidx.compose.runtime.Immutable
 import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
-import org.jetbrains.idea.devkit.threadingModelHelper.LockType
+import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 
 @Immutable
 internal data class LockReqsViewState(
   val allPaths: List<ExecutionPath> = emptyList(),
   val query: String = "",
-  val selectedTypes: Set<LockType> = LockType.entries.toSet(),
+  val selectedTypes: Set<ConstraintType> = ConstraintType.entries.toSet(),
   val selected: ExecutionPath? = null,
 ) {
   val filteredPaths: List<ExecutionPath>
@@ -17,7 +17,7 @@ internal data class LockReqsViewState(
       if (allPaths.isEmpty()) return emptyList()
       val q = query.trim()
       return allPaths.asSequence()
-        .filter { it.lockRequirement.lockType in selectedTypes }
+        .filter { it.lockRequirement.constraintType in selectedTypes }
         .filter { path ->
           if (q.isEmpty()) return@filter true
           val chain = path.methodChain.joinToString(" -> ") { c ->

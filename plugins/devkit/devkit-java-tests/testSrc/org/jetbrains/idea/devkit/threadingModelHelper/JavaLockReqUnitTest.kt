@@ -4,20 +4,18 @@ package org.jetbrains.idea.devkit.threadingModelHelper
 import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
 class JavaLockReqUnitTest : BasePlatformTestCase() {
 
-  private lateinit var analyzerDFS: JavaLockReqAnalyzerDFS
-  private lateinit var analyzerBFS: JavaLockReqAnalyzerBFS
+  //private lateinit var analyzerDFS: JavaLockReqAnalyzerDFS
+  private val analyzerBFS = LockReqAnalyzerParallelBFS()
 
   override fun setUp() {
     super.setUp()
-    analyzerDFS = JavaLockReqAnalyzerDFS()
-    analyzerBFS = JavaLockReqAnalyzerBFS()
+    //analyzerDFS = JavaLockReqAnalyzerDFS()
     myFixture.addFileToProject("com/intellij/util/concurrency/annotations.java", """
         package com.intellij.util.concurrency.annotations;
         public @interface RequiresReadLock {}
@@ -141,13 +139,14 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     val psiJavaFile = myFixture.configureByFile(fileName) as PsiJavaFile
     val targetClass = psiJavaFile.classes.find { it.name == className } ?: error("Could not find class $className")
     val targetMethod = targetClass.methods.find { it.name == TEST_METHOD_NAME } ?: error("Could not find method $TEST_METHOD_NAME")
-    return Pair(runBlocking { analyzerDFS.analyzeMethod(targetMethod) }, runBlocking { analyzerBFS.analyzeMethod(targetMethod) })
+    TODO()
+    //return Pair(runBlocking { analyzerBFS.analyzeMethod(targetMethod, AnalysisConfig.forProject(psiJavaFile.project, null!!)) }, runBlocking { analyzerBFS.analyzeMethod(targetMethod) })
   }
 
   private fun formatResult(result: AnalysisResult): List<String> {
     val actualPaths = result.paths.map { path ->
       val chain = path.methodChain.joinToString(" -> ") { "${it.method.containingClass?.name}.${it.method.name}" }
-      val requirement = "${path.lockRequirement.lockType.name}.${path.lockRequirement.requirementReason.name}"
+      val requirement = "${path.lockRequirement.constraintType.name}.${path.lockRequirement.requirementReason.name}"
       "$chain => $requirement"
     }
     return actualPaths

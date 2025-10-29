@@ -26,7 +26,7 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
 import org.jetbrains.idea.devkit.threadingModelHelper.ExecutionPath
-import org.jetbrains.idea.devkit.threadingModelHelper.LockType
+import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.Orientation
@@ -116,11 +116,11 @@ internal fun PathDetailsView(
               key = AllIconsKeys.Debugger.Db_set_breakpoint,
               contentDescription = null,
               modifier = Modifier.size(16.dp),
-              tint = when (selectedPath.lockRequirement.lockType) {
-                LockType.READ -> JewelTheme.globalColors.text.info
-                LockType.NO_READ -> JewelTheme.globalColors.text.error
-                LockType.WRITE, LockType.WRITE_INTENT -> JewelTheme.globalColors.text.error
-                LockType.EDT, LockType.BGT -> JewelTheme.globalColors.text.normal
+              tint = when (selectedPath.lockRequirement.constraintType) {
+                ConstraintType.READ -> JewelTheme.globalColors.text.info
+                ConstraintType.NO_READ -> JewelTheme.globalColors.text.error
+                ConstraintType.WRITE, ConstraintType.WRITE_INTENT -> JewelTheme.globalColors.text.error
+                ConstraintType.EDT, ConstraintType.BGT -> JewelTheme.globalColors.text.normal
               }
             )
             Spacer(Modifier.width(8.dp))
@@ -160,13 +160,13 @@ internal fun PathDetailsView(
             val cls = call.method.containingClass?.qualifiedName ?: "Unknown"
             "$cls.${call.method.name}"
           }
-          val requirement = when (selectedPath.lockRequirement.lockType) {
-            LockType.READ -> "RequiresReadLock"
-            LockType.NO_READ -> "RequiresNoReadAccess"
-            LockType.WRITE -> "RequiresWriteLock"
-            LockType.WRITE_INTENT -> "RequiresWriteIntentLock"
-            LockType.EDT -> "RequiresEdt"
-            LockType.BGT -> "RequiresBackgroundThread"
+          val requirement = when (selectedPath.lockRequirement.constraintType) {
+            ConstraintType.READ -> "RequiresReadLock"
+            ConstraintType.NO_READ -> "RequiresNoReadAccess"
+            ConstraintType.WRITE -> "RequiresWriteLock"
+            ConstraintType.WRITE_INTENT -> "RequiresWriteIntentLock"
+            ConstraintType.EDT -> "RequiresEdt"
+            ConstraintType.BGT -> "RequiresBackgroundThread"
           }
           val text = "$chain -> $requirement"
           CopyPasteManager.getInstance().setContents(StringSelection(text))
@@ -186,13 +186,13 @@ internal fun PathDetailsView(
 
 private fun lockRequirementText(path: ExecutionPath): String {
   val reason = path.lockRequirement.requirementReason.name.lowercase().replaceFirstChar { it.titlecase() }
-  val type = when (path.lockRequirement.lockType) {
-    LockType.READ -> "Requires read lock"
-    LockType.NO_READ -> "Requires no-read access"
-    LockType.WRITE -> "Requires write lock"
-    LockType.WRITE_INTENT -> "Requires write-intent lock"
-    LockType.EDT -> "Requires EDT"
-    LockType.BGT -> "Requires background thread"
+  val type = when (path.lockRequirement.constraintType) {
+    ConstraintType.READ -> "Requires read lock"
+    ConstraintType.NO_READ -> "Requires no-read access"
+    ConstraintType.WRITE -> "Requires write lock"
+    ConstraintType.WRITE_INTENT -> "Requires write-intent lock"
+    ConstraintType.EDT -> "Requires EDT"
+    ConstraintType.BGT -> "Requires background thread"
   }
   val speculative = if (path.isSpeculative) " (speculative)" else ""
   return "$type ($reason)$speculative"
