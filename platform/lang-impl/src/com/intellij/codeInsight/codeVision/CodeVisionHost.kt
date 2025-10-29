@@ -31,10 +31,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.zombie.BLIGHT_MARK_KEY
-import com.intellij.openapi.editor.impl.zombie.BlightMark
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.BaseRemoteFileEditor
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -46,8 +43,6 @@ import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.openapi.util.getOrMaybeCreateUserData
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
@@ -461,11 +456,7 @@ open class CodeVisionHost(val project: Project) {
     }
 
     editorLifetime.onTermination {
-      val editorEx = editor as? EditorEx ?: run { context.clearLenses(); return@onTermination }
-      val editorExAsUserDataHolderEx = editorEx as? UserDataHolderEx ?: run { context.clearLenses(); return@onTermination }
-      val blightMark = editorExAsUserDataHolderEx.getOrMaybeCreateUserData(BLIGHT_MARK_KEY) { BlightMark(editorEx) } ?: run { context.clearLenses(); return@onTermination }
-
-      blightMark.onceBlightedOrNow { context.clearLenses() }
+      context.clearLenses()
     }
   }
 

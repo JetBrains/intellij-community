@@ -17,7 +17,7 @@ import java.nio.file.StandardOpenOption
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger = logger<NecropolisDestroyer>()
-private fun markerFile() = necropolisPath().resolve(".invalidated")
+private fun markerFile() = Necropolis.necropolisPath().resolve(".invalidated")
 
 @Service(Service.Level.APP)
 internal class NecropolisDestroyer {

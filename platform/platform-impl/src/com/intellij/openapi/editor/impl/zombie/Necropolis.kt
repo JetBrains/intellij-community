@@ -2,78 +2,34 @@
 package com.intellij.openapi.editor.impl.zombie
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.event.EditorFactoryEvent
-import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.rd.util.userData
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.openapi.util.getOrMaybeCreateUserData
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
-private val LOG: Logger = logger<Necropolis>()
-
-private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.intellij.textEditorNecromancerAwaker")
-
-internal fun necropolisPath(): Path {
-  return PathManager.getSystemDir().resolve("editor")
-}
-
-// https://liquipedia.net/warcraft/Blight
-class BlightMark(val blightHolder: EditorEx) {
-
-  private val blightLock = ReentrantLock()
-  private val blightAwaiters = mutableListOf<(EditorEx) -> Unit>()
-
-  private var isBlighted: Boolean = false
-
-  fun blight() {
-    blightLock.withLock {
-      if (!isBlighted) {
-        isBlighted = true
-        blightAwaiters.forEach { it(blightHolder) }
-        blightAwaiters.clear()
-      }
-    }
-  }
-
-  fun onceBlightedOrNow(action: (EditorEx) -> Unit) {
-    blightLock.withLock {
-      if (isBlighted) {
-        action(blightHolder)
-      }
-      else {
-        blightAwaiters.add(action)
-      }
-    }
-  }
-}
-
-val BLIGHT_MARK_KEY: Key<BlightMark?> = Key.create<BlightMark>("necropolis.blight.mark")
-var EditorEx.blightMark: BlightMark? by userData(BLIGHT_MARK_KEY)
 
 /**
  * Service managing all necromancers.
@@ -82,6 +38,37 @@ var EditorEx.blightMark: BlightMark? by userData(BLIGHT_MARK_KEY)
  */
 @Service(Service.Level.PROJECT)
 class Necropolis(private val project: Project, private val coroutineScope: CoroutineScope) : Disposable {
+
+  companion object {
+    private val LOG: Logger = logger<Necropolis>()
+    private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.intellij.textEditorNecromancerAwaker")
+
+    @JvmStatic
+    fun getInstance(project: Project, onlyIfCreated: Boolean = false): Necropolis? {
+      return if (isEnabled()) {
+        if (onlyIfCreated) {
+          project.serviceIfCreated<Necropolis>()
+        } else {
+          project.service<Necropolis>()
+        }
+      } else {
+        null
+      }
+    }
+
+    @JvmStatic
+    suspend fun getInstanceAsync(project: Project): Necropolis? {
+      return if (isEnabled()) project.serviceAsync<Necropolis>() else null
+    }
+
+    internal fun necropolisPath(): Path {
+      return PathManager.getSystemDir().resolve("editor")
+    }
+
+    private fun isEnabled(): Boolean {
+      return !AppModeAssertions.isBackend()
+    }
+  }
 
   private val necromancersDeferred: Deferred<List<Necromancer<Zombie>>>
   private val necromancersRef: AtomicReference<List<Necromancer<Zombie>>> = AtomicReference()
@@ -95,7 +82,6 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
         }
       }.awaitAll()
       necromancersRef.set(necromancers)
-      subscribeEditorClosed(necromancers)
       necromancers
     }
   }
@@ -138,37 +124,31 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     }
   }
 
-  private fun subscribeEditorClosed(necromancers: List<Necromancer<Zombie>>) {
-    val fileIdAdapter = FileIdAdapter.getInstance()
-    EditorFactory.getInstance().addEditorFactoryListener(
-      object : EditorFactoryListener {
-        override fun editorReleased(event: EditorFactoryEvent) {
-          val recipe = createTurningRecipe(event, fileIdAdapter)
-          if (recipe != null) {
-            //maybe readaction
-            WriteIntentReadAction.run {
-              turnIntoZombiesAndBury(necromancers, recipe)
-            }
-
-            val editorEx = event.editor as? EditorEx ?: return
-            val editorAsUserDataHolderEx = editorEx as? UserDataHolderEx ?: return
-            val blightMark = editorAsUserDataHolderEx.getOrMaybeCreateUserData(BLIGHT_MARK_KEY) { BlightMark(editorEx) } ?: return
-
-            blightMark.blight()
-          }
+  fun turnIntoZombiesAndBury(editor: Editor) {
+    ThreadingAssertions.assertEventDispatchThread()
+    require(editor.project == this.project)
+    val necromancers = necromancersRef.get()
+    if (necromancers != null) {
+      val recipe = createTurningRecipe(editor)
+      if (recipe != null) {
+        //maybe readaction
+        WriteIntentReadAction.run {
+          turnIntoZombiesAndBury(necromancers, recipe)
         }
-      },
-      this,
-    )
+      }
+    }
   }
 
-  private fun createTurningRecipe(event: EditorFactoryEvent, fileIdAdapter: FileIdAdapter): TurningRecipe? {
-    val editor = event.editor
-    if (editor.editorKind == EditorKind.MAIN_EDITOR && editor.project == project) {
+  private fun createTurningRecipe(editor: Editor): TurningRecipe? {
+    if (editor.editorKind == EditorKind.MAIN_EDITOR) {
       val document = editor.document
-      val file = FileDocumentManager.getInstance().getFile(document) ?: return null
-      val fileId = fileIdAdapter.getId(file) ?: return null
-      return TurningRecipe(project, fileId, file, document, document.modificationStamp, editor)
+      val file = FileDocumentManager.getInstance().getFile(document)
+      if (file != null) {
+        val fileId = FileIdAdapter.getInstance().getId(file)
+        if (fileId != null) {
+          return TurningRecipe(project, fileId, file, document, document.modificationStamp, editor)
+        }
+      }
     }
     return null
   }
@@ -260,7 +240,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
   }
 
   override fun toString(): String {
-    val necromancersStr = getNecromancers().joinToString(", ") { it.name() }
+    val necromancersStr = necromancersRef.get()?.joinToString(", ") { it.name() }
     return "Necropolis(project=${project.name}, necromancers=[$necromancersStr])"
   }
 }

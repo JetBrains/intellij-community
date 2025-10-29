@@ -7,7 +7,6 @@ import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.MarkupGr
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.logEditorMarkupGrave
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
@@ -367,8 +366,8 @@ open class HighlightingNecromancer(
     @JvmStatic
     @TestOnly
     fun clearSpawnedZombies(project: Project) {
-      val service = project.service<Necropolis>()
-      (service.necromancerByName(GRAVED_HIGHLIGHTING) as HighlightingNecromancer).clearSpawnedZombies()
+      val service = Necropolis.getInstance(project)
+      (service?.necromancerByName(GRAVED_HIGHLIGHTING) as HighlightingNecromancer?)?.clearSpawnedZombies()
     }
   }
 }

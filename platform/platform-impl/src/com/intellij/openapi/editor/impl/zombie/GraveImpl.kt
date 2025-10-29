@@ -40,7 +40,7 @@ class GraveImpl<Z : Zombie> (
     val cacheFactory = ManagedCacheFactory.getInstance()
     return cacheFactory.createCache(
       project,
-      necropolisPath(),
+      Necropolis.necropolisPath(),
       graveName,
       EnumeratorIntegerDescriptor.INSTANCE,
       FingerprintedExternalizer(necromancy),
