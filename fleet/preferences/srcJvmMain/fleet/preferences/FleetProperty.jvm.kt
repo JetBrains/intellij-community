@@ -3,7 +3,7 @@ package fleet.preferences
 
 import fleet.util.multiplatform.Actual
 
-@Actual("fleetProperty")
+@Actual
 internal fun fleetPropertyJvm(name: String, defaultValue: String?): String? {
   val formattedName = name.replace('.', '_').uppercase()
   return System.getProperty(name) ?: System.getenv(formattedName) ?: defaultValue
