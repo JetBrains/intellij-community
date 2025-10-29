@@ -144,6 +144,10 @@
 - name: lib/modules/intellij.python.psi.jar
   contentModules:
   - name: intellij.python.psi
+  library: jetbrains.kotlin.annotations.jvm
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-annotations-jvm/2/kotlin-annotations-jvm-2.jar
+  reason: <- intellij.python.psi
 - name: lib/modules/intellij.python.pydev.jar
   contentModules:
   - name: intellij.python.pydev

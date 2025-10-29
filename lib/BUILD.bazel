@@ -3491,6 +3491,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "jetbrains-kotlin-annotations-jvm",
+  jar = "@org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "jetbrains-kotlin-compose-compiler-plugin",
   jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_2_21-RC2_http//file",
   source_jar = "@org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_2_21-RC2_http//file",

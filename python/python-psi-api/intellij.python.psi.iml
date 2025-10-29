@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.python.syntax.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
+    <orderEntry type="library" name="jetbrains.kotlin.annotations.jvm" level="project" />
   </component>
 </module>

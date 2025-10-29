@@ -24,6 +24,7 @@ jvm_library(
     "//python/python-ast:ast",
     "//python/python-syntax-core:syntax-core",
     "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-kotlin-annotations-jvm",
   ],
   exports = [
     "//python/python-parser:parser",

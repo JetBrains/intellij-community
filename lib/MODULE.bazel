@@ -5243,6 +5243,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-annotations-jvm/2.2.21/kotlin-annotations-jvm-2.2.21.jar",
+  sha256 = "6054230599c840c69af3657c292b768f2b585c25fba91d26cd5ad8c992757b03",
+  downloaded_file_path = "kotlin-annotations-jvm-2.2.21.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-annotations-jvm-2_2_21-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-annotations-jvm/2.2.21/kotlin-annotations-jvm-2.2.21-sources.jar",
+  sha256 = "bf594d0e3a35c21b1f07097d9e10b6ab524ae5bb2ffdb92ea9b1f79f28e8ab09",
+  downloaded_file_path = "kotlin-annotations-jvm-2.2.21-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_kotlin-kotlin-compose-compiler-plugin-2_2_21-RC2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compose-compiler-plugin/2.2.21-RC2/kotlin-compose-compiler-plugin-2.2.21-RC2.jar",
   sha256 = "b966deee44a88b20f1567378c640e9c54496039a835675c339cf7e3b9e6c76f1",

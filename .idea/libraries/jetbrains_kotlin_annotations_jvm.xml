@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="jetbrains.kotlin.annotations.jvm" type="repository">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-annotations-jvm:2.2.21">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-annotations-jvm/2.2.21/kotlin-annotations-jvm-2.2.21.jar">
+          <sha256sum>6054230599c840c69af3657c292b768f2b585c25fba91d26cd5ad8c992757b03</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-annotations-jvm/2.2.21/kotlin-annotations-jvm-2.2.21.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-annotations-jvm/2.2.21/kotlin-annotations-jvm-2.2.21-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
