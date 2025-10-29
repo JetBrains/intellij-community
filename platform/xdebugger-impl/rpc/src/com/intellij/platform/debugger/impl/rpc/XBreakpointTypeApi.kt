@@ -56,6 +56,14 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
 
 @ApiStatus.Internal
 @Serializable
+data class XBreakpointTypeId(val id: String)
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointId(override val uid: UID) : Id
+
+@ApiStatus.Internal
+@Serializable
 data class XBreakpointsLineInfo(
   val availableTypes: List<XBreakpointTypeId>,
   val singleBreakpointVariant: Boolean,
@@ -80,6 +88,19 @@ data class XBreakpointTypeDto(
   val standardPanels: Set<XBreakpointTypeSerializableStandardPanels>,
   val isAddBreakpointButtonVisible: Boolean,
   val icons: XBreakpointTypeIcons,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointTypeIcons(
+  val enabledIcon: IconId,
+  val disabledIcon: IconId,
+  val suspendNoneIcon: IconId,
+  val mutedEnabledIcon: IconId,
+  val mutedDisabledIcon: IconId,
+  val pendingIcon: IconId?,
+  val inactiveDependentIcon: IconId,
+  val temporaryIcon: IconId?,
 )
 
 @ApiStatus.Internal

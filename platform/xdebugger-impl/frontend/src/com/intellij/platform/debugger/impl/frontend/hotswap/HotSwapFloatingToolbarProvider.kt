@@ -23,9 +23,9 @@ import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.hotswap.HotSwapUiExtension
-import com.intellij.xdebugger.impl.rpc.HotSwapSource
-import com.intellij.xdebugger.impl.rpc.HotSwapVisibleStatus
-import com.intellij.xdebugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
+import com.intellij.platform.debugger.impl.rpc.HotSwapSource
+import com.intellij.platform.debugger.impl.rpc.HotSwapVisibleStatus
+import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.collectLatest

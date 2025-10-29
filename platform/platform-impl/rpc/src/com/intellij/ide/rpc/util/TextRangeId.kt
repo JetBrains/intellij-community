@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-class TextRangeId(
+data class TextRangeId(
   val startOffset: Int,
   val endOffset: Int,
 )

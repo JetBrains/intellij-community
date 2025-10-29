@@ -4,15 +4,21 @@ package com.intellij.platform.debugger.impl.rpc
 import com.intellij.ide.rpc.DocumentPatchVersion
 import com.intellij.ide.rpc.DocumentPatchVersionAccessor
 import com.intellij.ide.rpc.FrontendDocumentId
+import com.intellij.ide.rpc.util.TextRangeId
+import com.intellij.ide.ui.icons.IconId
+import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import fleet.rpc.core.RpcFlow
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -67,6 +73,73 @@ interface XBreakpointApi : RemoteApi<Unit> {
     }
   }
 }
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointDto(
+  val id: XBreakpointId,
+  val initialState: XBreakpointDtoState,
+  val state: RpcFlow<XBreakpointDtoState>,
+  val editorsProviderDto: XDebuggerEditorsProviderDto?,
+  val typeId: XBreakpointTypeId,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointDtoState(
+  val displayText: String,
+  val sourcePosition: XSourcePositionDto?,
+  val isDefault: Boolean,
+  val logMessage: Boolean,
+  val logStack: Boolean,
+  val isLogExpressionEnabled: Boolean,
+  val logExpression: XExpressionDto?,
+  val isConditionEnabled: Boolean,
+  val conditionExpression: XExpressionDto?,
+  val enabled: Boolean,
+  val suspendPolicy: SuspendPolicy,
+  val userDescription: String?,
+  val group: String?,
+  val shortText: String,
+  val generalDescription: String,
+  val tooltipDescription: String,
+  val timestamp: Long,
+  val currentSessionCustomPresentation: XBreakpointCustomPresentationDto?,
+  val customPresentation: XBreakpointCustomPresentationDto?,
+  val lineBreakpointInfo: XLineBreakpointInfo?,
+  val requestId: Long,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XLineBreakpointInfo(
+  val isTemporary: Boolean,
+  val line: Int,
+  val fileUrl: String,
+  val highlightingRange: TextRangeId?,
+  val file: VirtualFileId?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XBreakpointCustomPresentationDto(
+  val icon: IconId?,
+  val errorMessage: @NlsSafe String?,
+  val timestamp: Long,
+)
+
+
+@ApiStatus.Internal
+@Serializable
+enum class XBreakpointTypeSerializableStandardPanels {
+  SUSPEND_POLICY, ACTIONS, DEPENDENCY
+}
+
+@ApiStatus.Internal
+@Serializable
+data class XLineBreakpointTypeInfo(
+  val priority: Int,
+)
 
 
 @ApiStatus.Internal

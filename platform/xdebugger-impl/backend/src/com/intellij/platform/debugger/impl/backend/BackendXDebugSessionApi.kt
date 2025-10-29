@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.backend
 
 import com.intellij.ide.rpc.FrontendDocumentId
 import com.intellij.ide.rpc.bindToFrontend
+import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.vfs.VirtualFileId
@@ -136,7 +137,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
       return computeVariants(handler, sourcePosition).map { variant ->
         val id = variant.storeGlobally(scope, session)
         readAction {
-          val textRange = variant.highlightRange?.let { it.startOffset to it.endOffset }
+          val textRange = variant.highlightRange?.toRpc()
           val forced = variant is ForceSmartStepIntoSource && variant.needForceSmartStepInto()
           XSmartStepIntoTargetDto(id, variant.icon?.rpcId(), variant.text, variant.description, textRange, forced)
         }

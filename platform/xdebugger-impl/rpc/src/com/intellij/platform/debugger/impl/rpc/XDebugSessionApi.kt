@@ -5,6 +5,7 @@ import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.execution.rpc.ProcessHandlerDto
 import com.intellij.ide.rpc.AnActionId
 import com.intellij.ide.rpc.FrontendDocumentId
+import com.intellij.ide.rpc.util.TextRangeId
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsContexts
@@ -115,12 +116,9 @@ data class XExecutionStackDto(
   @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XDescriptor>?
 )
 
-// TODO: should be moved to platform
 @ApiStatus.Internal
 @Serializable
-data class KillableProcessInfo(
-  val canKillProcess: Boolean = true,
-)
+data class XDebugSessionDataId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable
@@ -179,8 +177,7 @@ data class XSmartStepIntoTargetDto(
   val iconId: IconId?,
   val text: @NlsSafe String,
   val description: @Nls String?,
-  // TODO serialize TextRange directly
-  val textRange: Pair<Int, Int>?,
+  val textRange: TextRangeId?,
   val needsForcedSmartStepInto: Boolean,
 )
 

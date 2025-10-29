@@ -3,7 +3,6 @@ package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
-import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.rpc.AnActionId
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.project.ProjectId

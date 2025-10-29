@@ -11,10 +11,10 @@ import com.intellij.platform.project.findProject
 import com.intellij.xdebugger.impl.hotswap.HotSwapSessionImpl
 import com.intellij.xdebugger.impl.hotswap.HotSwapSessionManagerImpl
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics
-import com.intellij.xdebugger.impl.rpc.HotSwapSource
-import com.intellij.xdebugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
-import com.intellij.xdebugger.impl.rpc.XDebugHotSwapSessionId
-import com.intellij.xdebugger.impl.rpc.XDebuggerHotSwapApi
+import com.intellij.platform.debugger.impl.rpc.HotSwapSource
+import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapCurrentSessionStatus
+import com.intellij.platform.debugger.impl.rpc.XDebugHotSwapSessionId
+import com.intellij.platform.debugger.impl.rpc.XDebuggerHotSwapApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope

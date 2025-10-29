@@ -11,7 +11,7 @@ import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
-import com.intellij.xdebugger.impl.rpc.HotSwapSource;
+import com.intellij.platform.debugger.impl.rpc.HotSwapSource;
 import org.jetbrains.annotations.NotNull;
 
 public class ReloadFileAction extends CompileAction {

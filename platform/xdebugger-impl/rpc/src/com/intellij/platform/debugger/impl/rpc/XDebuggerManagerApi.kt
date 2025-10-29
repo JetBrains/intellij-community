@@ -3,7 +3,9 @@ package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.UID
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
@@ -41,6 +43,14 @@ interface XDebuggerManagerApi : RemoteApi<Unit> {
 data class XFrontendDebuggerCapabilities(
   val canShowImages: Boolean,
 )
+
+/**
+ * @see XDebugSessionId.findValue
+ * @see com.intellij.xdebugger.impl.XDebugSessionImpl.id
+ */
+@ApiStatus.Internal
+@Serializable
+data class XDebugSessionId(override val uid: UID) : Id
 
 @ApiStatus.Internal
 @Serializable

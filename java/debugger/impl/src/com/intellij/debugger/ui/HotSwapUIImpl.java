@@ -34,7 +34,7 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatusNotificationManager;
-import com.intellij.xdebugger.impl.rpc.HotSwapSource;
+import com.intellij.platform.debugger.impl.rpc.HotSwapSource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -42,7 +42,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class HotSwapUIImpl extends HotSwapUI {
   /**

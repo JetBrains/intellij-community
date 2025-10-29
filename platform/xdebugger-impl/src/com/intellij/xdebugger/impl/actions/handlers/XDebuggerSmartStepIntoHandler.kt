@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
 import com.intellij.execution.filters.HyperlinkInfo
 import com.intellij.execution.impl.EditorHyperlinkSupport
+import com.intellij.ide.rpc.util.textRange
 import com.intellij.ide.ui.icons.icon
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
@@ -84,10 +85,7 @@ private fun XSmartStepIntoTargetDto.target(): XSmartStepIntoTarget {
     override fun getText(): @NlsSafe String? = this@target.text
     override fun getDescription(): @Nls String? = this@target.description
     override fun getIcon(): Icon? = this@target.iconId?.icon()
-    override fun getHighlightRange(): TextRange? {
-      val (start, end) = this@target.textRange ?: return null
-      return TextRange(start, end)
-    }
+    override fun getHighlightRange(): TextRange? = this@target.textRange?.textRange()
   })
 }
 
