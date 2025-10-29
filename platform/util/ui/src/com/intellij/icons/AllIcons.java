@@ -1173,7 +1173,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ApacheIgnite = load("providers/apacheIgnite.svg", 550257054, 2);
     /** 16x16 */ public static final @NotNull Icon ApachePhoenix = load("providers/apachePhoenix.svg", 426659470, 0);
     /** 16x16 */ public static final @NotNull Icon Athena = load("providers/athena.svg", 1959048894, 0);
-    /** 16x16 */ public static final @NotNull Icon Azure = load("providers/azure.svg", 146675790, 0);
+    /** 16x16 */ public static final @NotNull Icon Azure = load("providers/azure.svg", 2141980648, 0);
     /** 16x16 */ public static final @NotNull Icon BigQuery = load("providers/bigQuery.svg", 1138709532, 0);
     /** 16x16 */ public static final @NotNull Icon Cassandra = load("providers/cassandra.svg", -819208447, 2);
     /** 16x16 */ public static final @NotNull Icon ClickHouse = load("providers/clickHouse.svg", -519696265, 0);
