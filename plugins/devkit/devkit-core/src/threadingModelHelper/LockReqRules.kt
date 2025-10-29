@@ -16,6 +16,7 @@ interface LockReqRules {
   val disposerUtilityClassFqn: String
   val disposableInterfaceFqn: String
   val disposeMethodNames: Set<String>
+  val knownMethodIndifferentToLocks: Set<Pair<String, String>>
 }
 
 class BaseLockReqRules : LockReqRules {
@@ -27,6 +28,17 @@ class BaseLockReqRules : LockReqRules {
       "assertWriteIntentReadAccess" to LockType.WRITE_INTENT,
       "assertEventDispatchThread" to LockType.EDT,
       "assertBackgroundThread" to LockType.BGT
+    ),
+    "com.intellij.psi.SmartPsiElementPointer" to mapOf(
+      "getElement" to LockType.READ,
+      "getPsiRange" to LockType.READ,
+      "getRange" to LockType.READ,
+    ),
+    "com.intellij.psi.JavaPsiFacade" to mapOf(
+      "findClass" to LockType.READ
+    ),
+    "com.intellij.openapi.vfs.VirtualFileSystem" to mapOf(
+      "refreshAndFindFileByPath" to LockType.NO_READ
     ),
     "com.intellij.openapi.application.Application" to mapOf(
       "assertReadAccessAllowed" to LockType.READ,
@@ -89,4 +101,8 @@ class BaseLockReqRules : LockReqRules {
   override val disposerUtilityClassFqn: String = "com.intellij.openapi.util.Disposer"
   override val disposableInterfaceFqn: String = "com.intellij.openapi.Disposable"
   override val disposeMethodNames: Set<String> = setOf("dispose")
+
+  override val knownMethodIndifferentToLocks: Set<Pair<String, String>> = setOf(
+    "com.intellij.openapi.vfs.VirtualFileManager" to "findFileByUrl"
+  )
 }

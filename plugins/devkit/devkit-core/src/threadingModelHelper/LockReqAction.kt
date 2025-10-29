@@ -23,11 +23,13 @@ class LockReqAction : AnAction() {
     currentThreadCoroutineScope().launch(Dispatchers.Default) {
       val project = e.project ?: return@launch
       val editor = e.getData(CommonDataKeys.EDITOR) ?: return@launch
-      val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return@launch
-
-      val smartPointerManager = SmartPointerManager.getInstance(project)
 
       val target = readAction {
+
+        val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return@readAction null
+
+        val smartPointerManager = SmartPointerManager.getInstance(project)
+
         val element = psiFile.findElementAt(editor.caretModel.offset) ?: return@readAction null
         val psiMethod = PsiTreeUtil.getParentOfType(element, PsiMethod::class.java)
         val psiClass = PsiTreeUtil.getParentOfType(element, PsiClass::class.java)

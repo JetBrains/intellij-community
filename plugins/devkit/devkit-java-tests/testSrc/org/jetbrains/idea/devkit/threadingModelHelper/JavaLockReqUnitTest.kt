@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.threadingModelHelper
 import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 
 
@@ -140,7 +141,7 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     val psiJavaFile = myFixture.configureByFile(fileName) as PsiJavaFile
     val targetClass = psiJavaFile.classes.find { it.name == className } ?: error("Could not find class $className")
     val targetMethod = targetClass.methods.find { it.name == TEST_METHOD_NAME } ?: error("Could not find method $TEST_METHOD_NAME")
-    return Pair(analyzerDFS.analyzeMethod(targetMethod), analyzerBFS.analyzeMethod(targetMethod))
+    return Pair(runBlocking { analyzerDFS.analyzeMethod(targetMethod) }, runBlocking { analyzerBFS.analyzeMethod(targetMethod) })
   }
 
   private fun formatResult(result: AnalysisResult): List<String> {

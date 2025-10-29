@@ -76,6 +76,9 @@ class JavaLockReqPsiOps(private val rules: LockReqRules = BaseLockReqRules()) : 
   }
 
   override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int): List<PsiMethod> {
+    if (method.containingClass?.hasAnnotation("java.lang.FunctionalInterface") == true) {
+      return emptyList()
+    }
     val inheritors = mutableListOf<PsiMethod>()
     if (method.body != null) {
       inheritors.add(method)

@@ -7,7 +7,7 @@ import com.intellij.psi.PsiMethod
 
 interface LockReqAnalyzerStreaming : LockReqAnalyzer {
 
-  fun analyzeMethodStreaming(method: PsiMethod, consumer: LockReqConsumer): AnalysisResult
+  suspend fun analyzeMethodStreaming(method: PsiMethod, consumer: LockReqConsumer): AnalysisResult
 }
 
 interface LockReqConsumer {

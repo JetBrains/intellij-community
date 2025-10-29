@@ -44,15 +44,12 @@ class LockReqsService(private val project: Project) {
             _currentResults = listOf(snapshot)
           }
         }
-        smartReadAction(project) {
-          streaming.analyzeMethodStreaming(method, consumer)
-        }
+        streaming.analyzeMethodStreaming(method, consumer)
       } else {
         // Fallback to blocking mode
-        val result = smartReadAction(project) {
-          val method = methodPtr.element ?: return@smartReadAction null
-          analyzer.analyzeMethod(method)
-        }
+        val method = methodPtr.element
+        if (method == null) return@withBackgroundProgress
+        val result = analyzer.analyzeMethod(method)
         withContext(Dispatchers.EDT) {
           _currentResults = listOf(result)
         }
@@ -62,30 +59,26 @@ class LockReqsService(private val project: Project) {
 
   suspend fun analyzeClass(psiPtr: SmartPsiElementPointer<PsiClass>) {
     withBackgroundProgress(project, "", true) {
-      val results = smartReadAction(project) {
-        val psiClass = psiPtr.element ?: return@smartReadAction emptyList()
-        psiClass.methods.map { method ->
-          ProgressManager.checkCanceled()
-          val analyzer = LockReqAnalyzerProvider.forLanguage(method.language)
-          analyzer.analyzeMethod(method)
-        }
-      }
+      val psiClass = psiPtr.element
+      val results = psiClass?.methods?.map { method ->
+        ProgressManager.checkCanceled()
+        val analyzer = LockReqAnalyzerProvider.forLanguage(method.language)
+        analyzer.analyzeMethod(method)
+      } ?: emptyList()
       _currentResults = results
     }
   }
 
   suspend fun analyzeFile(filePtr: SmartPsiElementPointer<PsiJavaFile>) {
     withBackgroundProgress(project, "", true) {
-      val results = smartReadAction(project) {
-        val psiFile = filePtr.element ?: return@smartReadAction emptyList()
-        psiFile.classes.flatMap { psiClass ->
-          psiClass.methods.map { method ->
-            ProgressManager.checkCanceled()
-            val analyzer = LockReqAnalyzerProvider.forLanguage(method.language)
-            analyzer.analyzeMethod(method)
-          }
+      val psiFile = filePtr.element
+      val results = psiFile?.classes?.flatMap { psiClass ->
+        psiClass.methods.map { method ->
+          ProgressManager.checkCanceled()
+          val analyzer = LockReqAnalyzerProvider.forLanguage(method.language)
+          analyzer.analyzeMethod(method)
         }
-      }
+      } ?: emptyList()
       _currentResults = results
     }
   }

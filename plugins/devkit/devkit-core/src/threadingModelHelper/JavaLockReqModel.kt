@@ -22,13 +22,13 @@ data class MethodSignature(val qualifiedName: String, val parameterTypes: List<S
   }
 }
 
-data class MethodCall(val method: PsiMethod, val isPolymorphic: Boolean = false, val isMessageBusCall: Boolean = false)
+data class MethodCall(val method: PsiMethod, val methodName: String = method.name, val containingClassName: String? = method.containingClass!!.name, val isPolymorphic: Boolean = false, val isMessageBusCall: Boolean = false)
 
 data class ExecutionPath(val methodChain: List<MethodCall>, val lockRequirement: LockRequirement, val isSpeculative: Boolean = false)
 
 data class AnalysisResult(val method: PsiMethod, val paths: Set<ExecutionPath>, val messageBusTopics: Set<PsiClass>, val swingComponents: Set<MethodSignature>)
 
-data class AnalysisConfig(val scope: GlobalSearchScope, val maxDepth: Int = 30, val maxImplementations: Int = 30, val includePolymorphic: Boolean = true) {
+data class AnalysisConfig(val scope: GlobalSearchScope, val maxDepth: Int = 7, val maxImplementations: Int = 30, val includePolymorphic: Boolean = true) {
   companion object {
     fun forProject(project: Project): AnalysisConfig = AnalysisConfig(scope = GlobalSearchScope.projectScope(project))
   }

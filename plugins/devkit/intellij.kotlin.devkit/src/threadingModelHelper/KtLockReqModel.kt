@@ -22,7 +22,7 @@ data class KtMethodSignature(val qualifiedName: String, val parameterTypes: List
 }
 
 data class KtMethodCall(val method: PsiMethod, val isPolymorphic: Boolean = false, val isMessageBusCall: Boolean = false) {
-  fun toCore(): MethodCall = MethodCall(method, isPolymorphic, isMessageBusCall)
+  fun toCore(): MethodCall = MethodCall(method, isPolymorphic = isPolymorphic, isMessageBusCall = isMessageBusCall)
 }
 
 data class KtExecutionPath(val methodChain: List<KtMethodCall>, val lockRequirement: LockRequirement, val isSpeculative: Boolean = false) {

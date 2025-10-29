@@ -5,5 +5,5 @@ import com.intellij.psi.PsiMethod
 
 interface LockReqAnalyzer {
 
-  fun analyzeMethod(method: PsiMethod): AnalysisResult
+  suspend fun analyzeMethod(method: PsiMethod): AnalysisResult
 }

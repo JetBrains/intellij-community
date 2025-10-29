@@ -26,7 +26,7 @@ class KtLockReqAnalyzerBFS : LockReqAnalyzer {
 
   private lateinit var context: TraversalContext
 
-  override fun analyzeMethod(method: PsiMethod): AnalysisResult {
+  override suspend fun analyzeMethod(method: PsiMethod): AnalysisResult {
     val config = KtAnalysisConfig.forProject(method.project)
     context = TraversalContext(config)
     traverseMethod(method)

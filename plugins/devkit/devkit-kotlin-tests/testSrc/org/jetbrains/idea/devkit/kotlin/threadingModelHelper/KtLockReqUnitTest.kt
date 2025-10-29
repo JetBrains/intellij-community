@@ -6,6 +6,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
 
@@ -60,7 +61,9 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
     val className = relativeFileName.removeSuffix(".kt")
     val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.projectScope(project))
     val method: PsiMethod = psiClass?.methods?.firstOrNull { m -> m.name == TEST_METHOD_NAME }!!
-    return analyzerBFS.analyzeMethod(method)
+    return runBlocking {
+      analyzerBFS.analyzeMethod(method)
+    }
   }
 
   fun testNoLockRequirementsKt() {

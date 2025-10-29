@@ -62,6 +62,18 @@ class JavaLockReqDetector(private val patterns: LockReqRules = BaseLockReqRules(
   }
 
   fun isCommonMethod(method: PsiMethod): Boolean {
-    return method.name in patterns.commonMethods
+    return (method.name == "compute" && method.containingClass?.qualifiedName == "com.intellij.openapi.util.ThrowableComputable") || method.name in patterns.commonMethods
   }
+
+  /**
+   * Whether this method guaranteedly does not contain interesting traces
+   */
+  fun shouldBeSkipped(method: PsiMethod): Boolean {
+    val name = method.name
+    return patterns.knownMethodIndifferentToLocks.any { (classFqn, methodName) -> methodName == name && method.containingClass?.qualifiedName == classFqn }
+           || method.containingClass?.qualifiedName?.startsWith("java") == true || method.containingClass?.qualifiedName?.startsWith("com.sun") == true
+
+  }
+
+
 }

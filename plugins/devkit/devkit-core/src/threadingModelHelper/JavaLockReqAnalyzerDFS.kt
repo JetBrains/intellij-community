@@ -18,7 +18,7 @@ class JavaLockReqAnalyzerDFS(private val detector: JavaLockReqDetector = JavaLoc
   private lateinit var context: TraversalContext
   private val psiOps = JavaLockReqPsiOps()
 
-  override fun analyzeMethod(method: PsiMethod): AnalysisResult {
+  override suspend fun analyzeMethod(method: PsiMethod): AnalysisResult {
     val config = AnalysisConfig.forProject(method.project)
     context = TraversalContext(config)
     traverseMethod(method)

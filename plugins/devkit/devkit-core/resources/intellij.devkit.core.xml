@@ -783,6 +783,16 @@
     <addServiceAnnotationProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAddServiceAnnotationProvider"/>
+
+    <LockReqAnalyzer
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.JavaLockReqAnalyzerBFS"/>
+    <LockReqDetector
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.JavaLockReqDetector"/>
+    <LockReqPsiOps
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.JavaLockReqPsiOps"/>
   </extensions>
   <applicationListeners>
     <listener class="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher$ComposeHotReloadRegistryListener"
