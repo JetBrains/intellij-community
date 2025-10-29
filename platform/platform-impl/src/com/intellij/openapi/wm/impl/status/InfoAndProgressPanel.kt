@@ -1018,8 +1018,8 @@ class InfoAndProgressPanel internal constructor(
       setLayout(object : AbstractLayoutManager() {
         override fun preferredLayoutSize(parent: Container): Dimension {
           val result = Dimension()
-          fun addVisibleToPreferred(component: JComponent, withGap: Boolean, enforceOnInvisible: Boolean = false) {
-            if (enforceOnInvisible || component.isVisible) {
+          fun addVisibleToPreferred(component: JComponent, withGap: Boolean) {
+            if (component.isVisible) {
               if (withGap && result.width > 0) {
                 result.width += gap
               }
@@ -1034,7 +1034,7 @@ class InfoAndProgressPanel internal constructor(
           }
 
           if (showCounterInsteadOfMultiProcessLink) {
-            addVisibleToPreferred(counterComponent, withGap = false, enforceOnInvisible = true)
+            addVisibleToPreferred(counterComponent, withGap = false)
             addVisibleToPreferred(progressIcon, withGap = false)
           }
           addVisibleToPreferred(multiProcessLink, withGap = true)
@@ -1102,7 +1102,7 @@ class InfoAndProgressPanel internal constructor(
             setBounds(progressIcon, rightX, centerY, null, true)
             return
           }
-          // With showCounterInsteadOfMultiProcessLink and !counterLabel.isVisible (single progress)
+          // With showCounterInsteadOfMultiProcessLink and !counterComponent.isVisible (single progress)
           // behavior is just the same as with !showCounterInsteadOfMultiProcessLink
 
           progressIcon.isVisible = true
