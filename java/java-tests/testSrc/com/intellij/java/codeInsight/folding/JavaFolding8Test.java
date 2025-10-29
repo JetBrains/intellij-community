@@ -10,6 +10,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
 
+import java.util.Collections;
 import java.util.List;
 
 public class JavaFolding8Test extends JavaFoldingTestCase {
@@ -106,7 +107,12 @@ public class JavaFolding8Test extends JavaFoldingTestCase {
                    .toList());
   }
 
-  public void test_parameter_annotations() {
+  public void testParameterAnnotations() {
+    myFixture.addClass("""
+                @interface Anno {
+                    String value();
+                }
+    """);
     configure("""
                 class Some {
                     void m(@Anno("hello " +
@@ -114,13 +120,90 @@ public class JavaFolding8Test extends JavaFoldingTestCase {
                            @Anno("goodbye " +
                                  "world") int b) {}
                 }
+                """);
+    assertEquals(List.of("FoldRegion -(29:66), placeholder='(...)'",
+                         "FoldRegion -(90:129), placeholder='(...)'"),
+                 ContainerUtil.map(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), FoldRegion::toString));
+  }
 
-                @interface Anno {\s
+  public void testSingleLineAnnotationIsNotCollapsed() {
+    myFixture.addClass("""
+                @interface Anno {
                     String value();
                 }
+    """);
+    configure("""
+                class Some {
+                    @Anno("hello world")
+                    void m() {}
+                }
                 """);
-    assertEquals(List.of("FoldRegion -(11:141), placeholder='{...}'", "FoldRegion -(24:66), placeholder='@{...}'",
-                         "FoldRegion -(85:129), placeholder='@{...}'", "FoldRegion -(159:183), placeholder='{...}'"),
+    assertEquals(Collections.emptyList(),
+                 ContainerUtil.map(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), FoldRegion::toString));
+
+  }
+
+  public void testAnnotationsFoldedIndependently() {
+    myFixture.addClass("""
+                @interface Anno {
+                    String value();
+                }
+    """);
+    myFixture.addClass("""
+                @interface Anno1 {
+                    String value();
+                }
+    """);
+    configure("""
+                class Some {
+                    @Anno(
+                    "hello world"
+                    )
+                    @Anno1(
+                    "Another hello world!"
+                    )
+                    void m() {}
+                }
+                """);
+    assertEquals(List.of("FoldRegion -(22:47), placeholder='(...)'", "FoldRegion -(58:92), placeholder='(...)'"),
+                 ContainerUtil.map(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), FoldRegion::toString));
+
+  }
+
+  public void testAnnotationsFoldingInDifferentPlaces(){
+    myFixture.addClass("""
+                @interface Anno {
+                    String value();
+                }
+    """);
+
+    myFixture.addClass("""
+                @interface Anno1 {
+                    String value();
+                }
+    """);
+    configure("""
+                public @Anno(
+                        "1"
+                )
+                class X {
+                    @Anno(
+                            "2"
+                    )
+                    private final @Anno1(
+                            "3"
+                    ) String x = "";
+                
+                    @Anno(
+                            "4"
+                    ) public @Anno1(
+                            "5"
+                    )
+                    String m() { return null; }
+                }
+                """);
+    assertEquals(List.of("FoldRegion -(12:27), placeholder='(...)'", "FoldRegion -(47:70), placeholder='(...)'", "FoldRegion -(95:118), placeholder='(...)'",
+                         "FoldRegion -(144:167), placeholder='(...)'", "FoldRegion -(181:204), placeholder='(...)'", "FoldRegion -(220:236), placeholder='{...}'"),
                  ContainerUtil.map(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), FoldRegion::toString));
   }
 
@@ -135,6 +218,35 @@ public class JavaFolding8Test extends JavaFoldingTestCase {
                 """);
     assertEquals(List.of("FoldRegion +(0:27), placeholder='/.../'",
                          "FoldRegion -(28:53), placeholder='/** A cool package */'"),
+                 ContainerUtil.map(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), FoldRegion::toString));
+  }
+
+  public void testNestedAnnotationWithMultiline() {
+    myFixture.addClass("""
+                @interface Anno {
+                    NestedAnno[] value();
+                }
+    """);
+    myFixture.addClass("""
+                @interface NestedAnno {
+                    String[] value();
+                }
+    """);
+    configure("""
+                class A {
+                  @Anno({
+                  @NestedAnno({"a",
+                               "b"}),
+                  @NestedAnno({"c",
+                               "d",
+                               "e"}),
+                  @NestedAnno({})
+                  })
+                  void f() {}
+                }
+                """);
+    assertEquals(List.of("FoldRegion -(17:146), placeholder='(...)'", "FoldRegion -(33:60), placeholder='(...)'",
+                         "FoldRegion -(75:122), placeholder='(...)'"),
                  ContainerUtil.map(myFixture.getEditor().getFoldingModel().getAllFoldRegions(), FoldRegion::toString));
   }
 }

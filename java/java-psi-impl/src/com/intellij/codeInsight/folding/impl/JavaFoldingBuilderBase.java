@@ -113,15 +113,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   }
 
   private static @NotNull TextRange annotationRange(@NotNull PsiAnnotation annotation) {
-    PsiElement element = annotation;
-    int startOffset = element.getTextRange().getStartOffset();
-    PsiElement last = element;
-    while (element instanceof PsiAnnotation) {
-      last = element;
-      element = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
-    }
-
-    return new TextRange(startOffset, last.getTextRange().getEndOffset());
+    TextRange parameterListRange = annotation.getParameterList().getTextRange();
+    int startOffset = parameterListRange.getStartOffset();
+    return new TextRange(startOffset, parameterListRange.getEndOffset());
   }
 
   public static boolean hasErrorElementsNearby(@NotNull PsiFile file, int startOffset, int endOffset) {
@@ -162,20 +156,19 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                                            @NotNull Document document) {
     if (modifierList == null) return;
     PsiElement[] children = modifierList.getChildren();
-    for (int i = 0; i < children.length; i++) {
+    for (int i = 0; i < children.length;) {
       PsiElement child = children[i];
       if (child instanceof PsiAnnotation) {
         PsiAnnotation annotation = (PsiAnnotation)child;
-        addToFold(list, annotation, document, false, "@{...}", annotationRange(annotation), JavaCodeFoldingSettings.getInstance().isCollapseAnnotations());
-        int j;
-        for (j = i + 1; j < children.length; j++) {
-          PsiElement nextChild = children[j];
-          if (nextChild instanceof PsiModifier) break;
-        }
-
-        //noinspection AssignmentToForLoopParameter
-        i = j;
+        addToFold(list, annotation, document, false, "(...)", annotationRange(annotation), JavaCodeFoldingSettings.getInstance().isCollapseAnnotations());
+        annotation.acceptChildren(new NestedAnnotationsVisitor(list, document));
       }
+      int j;
+      for (j = i + 1; j < children.length; j++) {
+        PsiElement nextChild = children[j];
+        if (nextChild instanceof PsiModifier || nextChild instanceof PsiAnnotation) break;
+      }
+      i = j;
     }
   }
 
@@ -755,5 +748,20 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return parent == null || parent.getElementType() != JavaElementType.CLASS;
     }
     return nodeType == JavaElementType.CODE_BLOCK;
+  }
+
+  private static class NestedAnnotationsVisitor extends JavaRecursiveElementWalkingVisitor {
+    @NotNull private final List<? super FoldingDescriptor> myList;
+    @NotNull private final Document myDocument;
+
+    private NestedAnnotationsVisitor(@NotNull List<? super FoldingDescriptor> list, @NotNull Document document) {
+      myList = list;
+      myDocument = document;
+    }
+
+    @Override
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
+      addToFold(myList, annotation, myDocument, false, "(...)", annotationRange(annotation), JavaCodeFoldingSettings.getInstance().isCollapseAnnotations());
+    }
   }
 }
