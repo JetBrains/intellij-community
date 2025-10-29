@@ -2,7 +2,6 @@ package com.intellij.lambda.testFramework.junit
 
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.openapi.diagnostic.currentClassLogger
-import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import org.junit.jupiter.api.extension.*
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
@@ -16,7 +15,7 @@ import java.util.stream.Stream
 class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvider {
   override fun supportsTestTemplate(context: ExtensionContext): Boolean = getModesToRun(context).isNotEmpty()
 
-  private fun getModesToRun(context: ExtensionContext): List<LambdaRdIdeType> {
+  private fun getModesToRun(context: ExtensionContext): List<IdeRunMode> {
     val methodAnnotation = AnnotationUtils.findAnnotation(context.testMethod, ExecuteInMonolithAndSplitMode::class.java)
     if (methodAnnotation.isPresent) {
       return methodAnnotation.get().mode.toList()
@@ -41,7 +40,7 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
       try {
         // PARAMETERIZED CASE: Generate tests for each argument in each LambdaRdIdeType
         provider.provideArguments(context).flatMap { args: Arguments ->
-          modesToRun.stream().map { mode -> createInvocationContext(mode, args.get()) }
+          modesToRun.stream().map { mode -> createInvocationContext(mode, args.get(), context) }
         }
       }
       catch (e: Exception) {
@@ -51,12 +50,14 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
     if (parametrizedRuns.isPresent) return parametrizedRuns.get()
 
     // SIMPLE CASE - test without parameters: Generate one test for each LambdaRdIdeType
-    return modesToRun.stream().map { mode -> createInvocationContext(mode, emptyArray()) }
+    return modesToRun.stream().map { mode -> createInvocationContext(mode, emptyArray(), context) }
   }
 
-  private fun createInvocationContext(mode: LambdaRdIdeType, args: Array<Any>): TestTemplateInvocationContext {
+  private fun createInvocationContext(mode: IdeRunMode, args: Array<Any>, context: ExtensionContext): TestTemplateInvocationContext {
     return object : TestTemplateInvocationContext {
       override fun getDisplayName(invocationIndex: Int): String {
+        MonolithAndSplitModeIdeInstanceInitializer.startIde(mode, context)
+
         val params = if (args.isNotEmpty()) " with params: " + listOf(*args) else ""
         return if (params.isNotEmpty()) "[$mode] $params" else "[$mode]"
       }
@@ -67,18 +68,17 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
             val type = paramCtx.parameter.type
             return type.isAssignableFrom(BackgroundRunWithLambda::class.java) ||
                    type.isAssignableFrom(mode::class.java) ||
-                       (paramCtx.index > 0 && paramCtx.index - 1 < args.size)
+                   (paramCtx.index > 0 && paramCtx.index - 1 < args.size)
           }
 
           override fun resolveParameter(paramCtx: ParameterContext, extCtx: ExtensionContext): Any {
             return when {
               paramCtx.parameter.type.isAssignableFrom(mode::class.java) -> mode
               paramCtx.parameter.type.isAssignableFrom(BackgroundRunWithLambda::class.java) -> {
-                // Assuming BackgroundRunWithLambda requires specific instantiation logic
-                MonolithAndSplitModeIdeInstanceInitializer.ideBackgroundRun
+                MonolithAndSplitModeIdeInstanceInitializer.startIde(mode, context)
               }
               else -> {
-                // The first parameter is the LambdaRdIdeType, so offset argument index by 1
+                // The first parameter is the IdeRunMode, so offset argument index by 1
                 args[paramCtx.index - 1]
               }
             }

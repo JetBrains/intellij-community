@@ -1,49 +1,57 @@
 package com.intellij.lambda.testFramework.junit
 
-import com.intellij.ide.starter.ide.IdeProductProvider
-import com.intellij.ide.starter.models.TestCase
-import com.intellij.ide.starter.project.LocalProjectInfo
-import com.intellij.ide.starter.project.TestCaseTemplate
+import com.intellij.ide.starter.config.ConfigurationStorage
+import com.intellij.ide.starter.config.splitMode
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.starter.newContextWithLambda
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
-import com.intellij.openapi.application.PathManager
 import org.junit.jupiter.api.extension.AfterAllCallback
-import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import java.nio.file.Paths
-import kotlin.io.path.createDirectories
 
-class MonolithAndSplitModeIdeInstanceInitializer : BeforeAllCallback, AfterAllCallback {
+class MonolithAndSplitModeIdeInstanceInitializer : AfterAllCallback {
   companion object {
     lateinit var ideBackgroundRun: BackgroundRunWithLambda
-  }
+      private set
+    lateinit var currentIdeMode: IdeRunMode
+      private set
 
-  override fun beforeAll(context: ExtensionContext) {
-    val testContext = Starter.newContextWithLambda(context.testClass.get().simpleName,
-                                                   UltimateTestCases.JpsEmptyProject,
-                                                   additionalPluginModule = IdeLambdaStarter.ADDITIONAL_LAMBDA_TEST_PLUGIN)
-    ideBackgroundRun = testContext.runIdeWithLambda()
+    fun startIde(runMode: IdeRunMode, context: ExtensionContext): BackgroundRunWithLambda {
+      synchronized(this) {
+        if (this::ideBackgroundRun.isInitialized && currentIdeMode == runMode) {
+          println("IDE is already running in mode: $runMode. Reusing the current instance of IDE.")
+          return ideBackgroundRun
+        }
+
+        stopIde()
+        currentIdeMode = runMode
+        ConfigurationStorage.splitMode(currentIdeMode == IdeRunMode.SPLIT)
+
+        println("Starting IDE in mode: $runMode")
+
+        val testContext = Starter.newContextWithLambda(context.testClass.get().simpleName,
+                                                       UltimateTestCases.JpsEmptyProject,
+                                                       additionalPluginModule = IdeLambdaStarter.ADDITIONAL_LAMBDA_TEST_PLUGIN)
+        ideBackgroundRun = testContext.runIdeWithLambda()
+
+        return ideBackgroundRun
+      }
+    }
+
+    private fun stopIde() {
+      synchronized(this) {
+        if (!this::ideBackgroundRun.isInitialized) return
+
+        println("Stopping IDE that is running in mode: $currentIdeMode")
+        catchAll { ideBackgroundRun.closeIdeAndWait() }
+      }
+    }
+
   }
 
   override fun afterAll(context: ExtensionContext) {
-    catchAll { ideBackgroundRun.closeIdeAndWait() }
+    stopIde()
   }
-}
-
-
-object UltimateTestCases : TestCaseTemplate(IdeProductProvider.IU) {
-  val JpsEmptyProject: TestCase<LocalProjectInfo> = withProject(
-    projectInfo = LocalProjectInfo(
-      projectDir = Paths.get(PathManager.getHomePath(), "out/ide-tests/cache/empty-project").createDirectories()
-    )
-  )
-  val JavaTestProject: TestCase<LocalProjectInfo> = withProject(
-    projectInfo = LocalProjectInfo(
-      projectDir = Paths.get(PathManager.getHomePath(), "out/ide-tests/cache/projects/unpacked/java-ui-automation-data").createDirectories()
-    )
-  )
 }
