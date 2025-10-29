@@ -9,6 +9,8 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTab
@@ -30,6 +32,7 @@ private class WelcomeScreenProjectActivity : ProjectActivity {
       dropModalWelcomeScreenOnClose(project)
       subscribeToWelcomeScreenTabClose(project)
       WelcomeScreenRightTab.show(project)
+      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
     }
   }
 

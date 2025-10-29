@@ -20,6 +20,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.awtTransferable
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import java.awt.datatransfer.DataFlavor
 import com.intellij.openapi.application.EDT
@@ -45,6 +48,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.createVerticalBrush
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
+import org.jetbrains.jewel.foundation.modifier.onActivated
+import org.jetbrains.jewel.foundation.modifier.trackComponentActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.component.styling.*
@@ -78,11 +83,19 @@ class WelcomeScreenRightTab(
         }
       }
     }
+    val focusRequester = remember { FocusRequester() }
 
     Box(
       modifier = Modifier
         .fillMaxSize()
         .background(color = panelBackgroundColor)
+        .focusRequester(focusRequester)
+        .trackComponentActivation(component)
+        .onActivated { activated ->
+          if (activated) {
+            focusRequester.requestFocus(FocusDirection.Enter)
+          }
+        }
         .dragAndDropTarget(
           shouldStartDragAndDrop = { event ->
             event.awtTransferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)

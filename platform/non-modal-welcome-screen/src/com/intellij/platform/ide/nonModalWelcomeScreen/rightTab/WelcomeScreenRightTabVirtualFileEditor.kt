@@ -25,7 +25,7 @@ internal class WelcomeScreenRightTabVirtualFileEditor(private val newProjectFile
 
   override fun getComponent(): JComponent = newProjectFile.window.component
 
-  override fun getPreferredFocusedComponent(): JComponent? = null
+  override fun getPreferredFocusedComponent(): JComponent = newProjectFile.window.component
 
   override fun getName(): @Nls(capitalization = Nls.Capitalization.Title) String =
     NonModalWelcomeScreenBundle.message("welcome.screen.editor.name")
