@@ -330,10 +330,11 @@ public final class PluginInstallOperation {
     }
 
     // prepare plugins list for install
-    final List<PluginUiModel> missingRequiredPlugins = new ArrayList<>();
-    final List<PluginUiModel> missingOptionalPlugins = new ArrayList<>();
+    final Map<PluginId, PluginUiModel> missingRequiredPlugins = new HashMap<>();
+    final Map<PluginId, PluginUiModel> missingOptionalPlugins = new HashMap<>();
     for (IdeaPluginDependency dependency : dependencies) {
       PluginId depPluginId = dependency.getPluginId();
+      var targetCollector = dependency.isOptional() ? missingOptionalPlugins : missingRequiredPlugins;
 
       if (PluginManagerCore.looksLikePlatformPluginAlias(depPluginId)) {
         IdeaPluginDescriptorImpl descriptorByAlias = PluginManagerCore.findPluginByPlatformAlias(depPluginId);
@@ -347,23 +348,26 @@ public final class PluginInstallOperation {
       if (PluginManagerCore.isPluginInstalled(depPluginId) ||
           InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
           InstalledPluginsState.getInstance().wasInstalledWithoutRestart(depPluginId) ||
-          pluginIdsBeingInstalled != null && pluginIdsBeingInstalled.contains(depPluginId)) {
+          pluginIdsBeingInstalled != null && pluginIdsBeingInstalled.contains(depPluginId) ||
+          targetCollector.containsKey(depPluginId)) {
         // ignore installed or installing plugins
         continue;
       }
 
       PluginUiModel depPluginDescriptor = findPluginInRepo(depPluginId);
       if (depPluginDescriptor != null) {
-        (dependency.isOptional() ? missingOptionalPlugins : missingRequiredPlugins).add(depPluginDescriptor);
+        targetCollector.putIfAbsent(depPluginId, depPluginDescriptor);
       }
     }
 
-    if (!prepareDependencies(pluginNode, missingRequiredPlugins, "plugin.manager.dependencies.detected.title",
+    missingOptionalPlugins.keySet().removeIf(pluginId -> missingRequiredPlugins.containsKey(pluginId));
+
+    if (!prepareDependencies(pluginNode, missingRequiredPlugins.values().stream().toList(), "plugin.manager.dependencies.detected.title",
                              "plugin.manager.dependencies.detected.message", false)) {
       return false;
     }
     if (Registry.is("ide.plugins.suggest.install.optional.dependencies") &&
-        !prepareDependencies(pluginNode, missingOptionalPlugins, "plugin.manager.optional.dependencies.detected.title",
+        !prepareDependencies(pluginNode, missingOptionalPlugins.values().stream().toList(), "plugin.manager.optional.dependencies.detected.title",
                             "plugin.manager.optional.dependencies.detected.message", true)) {
       return false;
     }
