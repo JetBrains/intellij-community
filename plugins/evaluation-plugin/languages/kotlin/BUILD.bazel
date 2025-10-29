@@ -54,6 +54,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
   ]
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin` end

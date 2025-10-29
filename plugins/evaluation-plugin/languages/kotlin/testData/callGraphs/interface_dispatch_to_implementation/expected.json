@@ -5,7 +5,7 @@
         "project_root_file_path": "Sample.kt",
         "text_range": [
           16,
-          23
+          31
         ]
       },
       "project_name": "kotlinGraph",
@@ -16,8 +16,8 @@
       "address": {
         "project_root_file_path": "Sample.kt",
         "text_range": [
-          43,
-          62
+          51,
+          81
         ]
       },
       "project_name": "kotlinGraph",
@@ -28,8 +28,8 @@
       "address": {
         "project_root_file_path": "Sample.kt",
         "text_range": [
-          66,
-          124
+          85,
+          143
         ]
       },
       "project_name": "kotlinGraph",
