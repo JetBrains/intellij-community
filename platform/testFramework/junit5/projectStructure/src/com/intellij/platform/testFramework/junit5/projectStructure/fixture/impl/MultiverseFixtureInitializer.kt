@@ -3,6 +3,7 @@ package com.intellij.platform.testFramework.junit5.projectStructure.fixture.impl
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -30,10 +31,14 @@ internal class MultiverseFixtureInitializer(
     openProjectTask: OpenProjectTask = OpenProjectTask.build(),
     openAfterCreation: Boolean
   ): Project {
+    thisLogger().info("Initializing project structure")
+
     projectFixture = projectFixture(openProjectTask = openProjectTask, openAfterCreation = openAfterCreation)
     val project = projectFixture.init()
 
     projectRootPath = project.basePath?.let { Path(it) } ?: error("Project base path is not available")
+
+    thisLogger().info("base project is created: $projectRootPath")
 
     val projectRootAsFixture = dirFixture(projectRootPath)
     projectRootAsFixture.init()
@@ -41,7 +46,11 @@ internal class MultiverseFixtureInitializer(
     val builder = DirectoryBuilderBase("", structure)
     builder.init()
 
+    thisLogger().info("Project structure has been read")
+
     initializeChildren(builder, projectRootAsFixture)
+
+    thisLogger().info("Project structure is initialized")
 
     return project
   }
@@ -81,6 +90,8 @@ internal class MultiverseFixtureInitializer(
     }
 
     initializeChildren(module, modulePathFixture)
+
+    thisLogger().info("Module '${module.moduleName}' is initialized")
   }
 
   private suspend fun TestFixtureInitializer.R<Project>.initializeSdk(
@@ -92,6 +103,7 @@ internal class MultiverseFixtureInitializer(
       initializeChildren(sdk, sdkPathFixture)
       val sdkFixture = projectFixture.sdkFixture(sdk.name, sdk.type, sdkPathFixture)
       sdkFixture.init()
+      thisLogger().info("SDK '${sdk.name}' is initialized")
       sdkFixture
     }
   }
@@ -109,6 +121,8 @@ internal class MultiverseFixtureInitializer(
     }
 
     initializeChildren(contentRoot, contentRootFixture)
+
+    thisLogger().info("Content root '${contentRoot.path}' is initialized")
   }
 
   private suspend fun TestFixtureInitializer.R<Project>.initializeSourceRoot(
@@ -123,6 +137,7 @@ internal class MultiverseFixtureInitializer(
     if (!sourceRoot.isExisting) {
       initializeChildren(sourceRoot, sourceRootFixture)
     }
+    thisLogger().info("Source root '${sourceRoot.path}' is initialized")
   }
 
   private suspend fun TestFixtureInitializer.R<Project>.initializeChildren(
@@ -138,12 +153,15 @@ internal class MultiverseFixtureInitializer(
         is FileBuilderImplWithByteArray -> containerFixture.fileFixture(file.name, file.content).init()
         is FileBuilderImplWithString -> containerFixture.fileFixture(file.name, file.content).init()
       }
+
+      thisLogger().info("File '${container.path}/${file.name}' is initialized")
     }
 
     container.directories.forEach { directory ->
       val directoryFixture = containerFixture.subDirFixture(directory.name)
       directoryFixture.init()
       initializeChildren(directory, directoryFixture)
+      thisLogger().info("Directory '${directory.path}' is initialized")
     }
 
     container.sdks.forEach { nestedSdk ->
