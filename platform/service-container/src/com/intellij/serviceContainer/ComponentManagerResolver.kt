@@ -24,7 +24,7 @@ internal class ComponentManagerResolver(
     return !constructor.isAnnotationPresent(NonInjectable::class.java) && !constructor.isAnnotationPresent(Deprecated::class.java)
   }
 
-  override fun isInjectable(parameterType: Class<*>): Boolean = !isNotApplicableClass(parameterType)
+  override fun isInjectable(parameterType: Class<*>): Boolean = isApplicableClass(parameterType)
 
   override fun resolveDependency(parameterType: Class<*>, instanceClass: Class<*>, round: Int): ArgumentSupplier? {
     if (ComponentManager::class.java === parameterType) {

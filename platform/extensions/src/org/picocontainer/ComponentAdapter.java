@@ -7,6 +7,8 @@
 */
 package org.picocontainer;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A component adapter is responsible for providing a specific component instance. An instance of an implementation of
  * this interface is used inside a {@link PicoContainer} for every registered component or instance.  Each
@@ -24,6 +26,7 @@ public interface ComponentAdapter {
    * @return the component's key. Should either be a class type (normally an interface) or an identifier that is
    * unique (within the scope of the current PicoContainer).
    */
+  @NotNull
   Object getComponentKey();
 
   /**
@@ -32,7 +35,9 @@ public interface ComponentAdapter {
    * @return the component's implementation class. Should normally be a concrete class (ie, a class that can be
    * instantiated).
    */
+  @NotNull
   Class<?> getComponentImplementation();
 
+  @NotNull
   Object getComponentInstance();
 }
