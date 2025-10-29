@@ -1214,7 +1214,7 @@ private fun fireProjectClosing(project: Project) {
 }
 
 private fun fireProjectClosed(project: Project) {
-  LOG.debug("projectClosed")
+  LOG.debug {"projectClosed $project" }
 
   LifecycleUsageTriggerCollector.onBeforeProjectClosed(project)
   closePublisher.projectClosed(project)
