@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -201,14 +201,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       pane.setViewportBorder(null);
     }
 
+    showPopup.accept(popup);
     if (gotoData.listUpdaterTask != null) {
-      Alarm alarm = new Alarm(popup);
-      alarm.addRequest(() -> showPopup.accept(popup), 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
-    }
-    else {
-      showPopup.accept(popup);
     }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       popup.closeOk(null);
