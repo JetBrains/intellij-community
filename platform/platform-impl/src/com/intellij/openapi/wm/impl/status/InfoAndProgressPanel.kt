@@ -553,7 +553,10 @@ class InfoAndProgressPanel internal constructor(
       setRefreshHidden()
       setLayout(InlineLayout())
       add(refreshAndInfoPanel)
-      add(inlinePanel)
+      val wrapper = NonOpaquePanel(BorderLayout())
+      wrapper.add(inlinePanel, BorderLayout.CENTER)
+      wrapper.border = JBUI.Borders.empty(0, 40, 0, 4)
+      add(wrapper)
       refreshAndInfoPanel.revalidate()
       refreshAndInfoPanel.repaint()
     }
@@ -1171,7 +1174,6 @@ class InfoAndProgressPanel internal constructor(
           }
         }
       })
-      setBorder(JBUI.Borders.empty(0, 40, 0, 4))
       add(progressIcon)
       progressIcon.isVisible = false
       add(multiProcessLink)
