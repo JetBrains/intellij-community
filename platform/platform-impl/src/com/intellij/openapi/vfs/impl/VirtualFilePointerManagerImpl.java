@@ -436,7 +436,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
   }
 
-  synchronized void resolveUrlBasedPointers() {
+  private synchronized void resolveUrlBasedPointers() {
     resolveUrlBasedPointers(myLocalRoot);
     resolveUrlBasedPointers(myTempRoot);
   }
@@ -462,7 +462,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     }
   }
 
-  synchronized void switchToUrlBasedPointers() {
+  private synchronized void switchToUrlBasedPointers() {
     myLocalRoot.replaceChildrenWithUPN();
     myTempRoot.replaceChildrenWithUPN();
   }
@@ -774,15 +774,13 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   private static final class DelegatingDisposable implements Disposable {
     private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ConcurrentCollectionFactory.createConcurrentIdentityMap();
-    private final Reference2IntOpenHashMap<VirtualFilePointerImpl> myCounts = new Reference2IntOpenHashMap<>(); // guarded by this
+    private final Reference2IntOpenHashMap<VirtualFilePointerImpl> myCounts = new Reference2IntOpenHashMap<>(); // guarded by VirtualFilePointerManager.getInstance()
     private final Disposable myParent;
 
+    // must be called under VirtualFilePointerManager lock
     private DelegatingDisposable(@NotNull Disposable parent, @NotNull VirtualFilePointerImpl firstPointer) {
       myParent = parent;
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
-        myCounts.put(firstPointer, 1);
-      }
+      myCounts.put(firstPointer, 1);
     }
 
     private static void registerDisposable(@NotNull Disposable parentDisposable, @NotNull VirtualFilePointerImpl pointer) {
@@ -798,15 +796,15 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       result.increment(pointer);
     }
 
-    synchronized void increment(@NotNull VirtualFilePointerImpl pointer) {
+    // must be called under VirtualFilePointerManager lock
+    void increment(@NotNull VirtualFilePointerImpl pointer) {
       myCounts.addTo(pointer, 1);
     }
 
     @Override
     public void dispose() {
       ourInstances.remove(myParent);
-      //noinspection SynchronizeOnThis
-      synchronized (this) {
+      synchronized (VirtualFilePointerManager.getInstance()) {
         for (Iterator<Reference2IntMap.Entry<VirtualFilePointerImpl>> iterator = myCounts.reference2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
           Reference2IntMap.Entry<VirtualFilePointerImpl> entry = iterator.next();
           VirtualFilePointerImpl pointer = entry.getKey();

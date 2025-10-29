@@ -60,6 +60,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.*;
@@ -1375,5 +1376,17 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals(expectedPointerFileName, pointer.getFileName());
     assertEquals(JarFileSystem.getInstance(), ((VirtualFilePointerImpl)pointer).getFileSystemForTesting());
     assertFalse(pointer.isValid());
+  }
+
+  @Test
+  public void testDeadlockDuringConcurrentCreateDispose() {
+    // also should not leak pointers, checked in tearDown()
+    IntStream.range(0, 100_000)
+      .parallel()
+      .forEach(__ -> {
+        Disposable disposable = Disposer.newDisposable();
+        myVirtualFilePointerManager.create(myDir().getUrl() + "/" + "file.txt", disposable, null);
+        Disposer.dispose(disposable);
+      });
   }
 }
