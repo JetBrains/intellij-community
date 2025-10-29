@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class PluginInstallOperation {
   private static final Logger LOG = Logger.getInstance(PluginInstallOperation.class);
 
-  private static final Cache<String, Optional<PluginId>> ourCache = Caffeine
+  private static final Cache<@NotNull String, Optional<PluginId>> ourModuleResolutionCache = Caffeine
     .newBuilder()
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build();
@@ -478,13 +478,13 @@ public final class PluginInstallOperation {
    * Beware: Marketplace treats both plugin ids and content module ids as "modules"
    */
   private static @Nullable PluginId resolveModuleInMarketplaceWithCache(@NotNull String moduleId) {
-    @Nullable Optional<PluginId> cachedModule = ourCache.getIfPresent(moduleId);
+    @Nullable Optional<PluginId> cachedResult = ourModuleResolutionCache.getIfPresent(moduleId);
     //noinspection OptionalAssignedToNull
-    if (cachedModule != null) {
-      return cachedModule.orElse(null);
+    if (cachedResult != null) {
+      return cachedResult.orElse(null);
     }
     PluginId result = MarketplaceRequests.getInstance().getCompatibleUpdateByModule(moduleId);
-    ourCache.put(moduleId, Optional.ofNullable(result));
+    ourModuleResolutionCache.put(moduleId, Optional.ofNullable(result));
     return result;
   }
 }
