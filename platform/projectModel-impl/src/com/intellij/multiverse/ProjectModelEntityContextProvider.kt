@@ -118,7 +118,7 @@ class ModuleContextImpl(
     return modulePointer.hashCode()
   }
 
-  override fun toString(): String = "ModuleContextImpl(modulePointer=$modulePointer, project=$project)"
+  override fun toString(): String = "ModuleContextImpl(modulePointer=$modulePointer, project=${project.name})"
 }
 
 @ApiStatus.Internal
@@ -141,7 +141,7 @@ class LibraryContextImpl(
     return libraryPointer.hashCode()
   }
 
-  override fun toString(): String = "LibraryContextImpl(libraryPointer=$libraryPointer, project=$project)"
+  override fun toString(): String = "LibraryContextImpl(libraryPointer=$libraryPointer, project=${project.name})"
 }
 
 @ApiStatus.Internal
@@ -164,5 +164,5 @@ class SdkContextImpl(
     return sdkPointer.hashCode()
   }
 
-  override fun toString(): String = "SdkContextImpl(sdkPointer=$sdkPointer, project=$project)"
+  override fun toString(): String = "SdkContextImpl(sdkPointer=$sdkPointer, project=${project.name})"
 }
