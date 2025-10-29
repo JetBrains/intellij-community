@@ -25,7 +25,7 @@ internal class FileMoveTest {
         sourceRoot("src1") {
           file("A.java", "public class A {}")
         }
-        sourceRoot("src1-2"){
+        sourceRoot("src1-2") {
         }
       }
     }
