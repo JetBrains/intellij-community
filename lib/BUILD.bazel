@@ -1411,336 +1411,336 @@ jvm_import(
 java_library(
   name = "grazie-core-ai-grazie-api-gateway-client-jvm",
   exports = [
-    ":ai_grazie_api-api-gateway-client-jvm-0_8_66_http_import",
-    ":ai_grazie_api-api-gateway-api-jvm-0_8_66_http_import",
-    ":ai_grazie_auth-gec-agg-model-public-jvm-0_8_66_http_import",
-    ":ai_grazie_llm-llm-agg-api-model-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-feedback-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-indexing-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-sum-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-llm-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-bdg-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-nlp-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-quota-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-license-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-tone-formality-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-gateway-jvm-0_8_66_http_import",
-    ":ai_grazie_auth-auth-model-jvm-0_8_66_http_import",
-    ":ai_grazie_auth_product-auth-product-model-jvm-0_8_66_http_import",
-    ":ai_grazie_user_cfg-user-cfg-model-jvm-0_8_66_http_import",
-    ":ai_grazie_utils-utils-jwt-jvm-0_8_66_http_import",
-    ":ai_grazie_user_strg-user-strg-model-jvm-0_8_66_http_import",
-    ":ai_grazie_indexing-indexing-server-api-jvm-0_8_66_http_import",
-    ":ai_grazie_model-swagger-annotations-jvm-0_8_66_http_import",
-    ":ai_grazie_client-client-common-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-common-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-auth-jvm-0_8_66_http_import",
-    ":ai_grazie_client-client-attribute-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-cloud-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-nmt-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-nlc-jvm-0_8_66_http_import",
-    ":ai_grazie_nlp-nlp-common-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-def-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-syn-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-qa-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-emb-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-task-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-jet-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-chat-jvm-0_8_66_http_import",
-    ":ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_66_http_import",
-    ":ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_66_http_import",
-    ":ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_66_http_import",
-    ":ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_66_http_import",
-    ":ai_grazie_utils-utils-common-jvm-0_8_66_http_import",
-    ":ai_grazie_utils-utils-multiplatform-jvm-0_8_66_http_import",
+    ":ai_grazie_api-api-gateway-client-jvm-0_8_74_http_import",
+    ":ai_grazie_api-api-gateway-api-jvm-0_8_74_http_import",
+    ":ai_grazie_auth-gec-agg-model-public-jvm-0_8_74_http_import",
+    ":ai_grazie_llm-llm-agg-api-model-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-feedback-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-indexing-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-sum-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-llm-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-bdg-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-nlp-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-quota-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-license-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-tone-formality-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-gateway-jvm-0_8_74_http_import",
+    ":ai_grazie_auth-auth-model-jvm-0_8_74_http_import",
+    ":ai_grazie_auth_product-auth-product-model-jvm-0_8_74_http_import",
+    ":ai_grazie_user_cfg-user-cfg-model-jvm-0_8_74_http_import",
+    ":ai_grazie_utils-utils-jwt-jvm-0_8_74_http_import",
+    ":ai_grazie_user_strg-user-strg-model-jvm-0_8_74_http_import",
+    ":ai_grazie_indexing-indexing-server-api-jvm-0_8_74_http_import",
+    ":ai_grazie_model-swagger-annotations-jvm-0_8_74_http_import",
+    ":ai_grazie_client-client-common-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-common-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-auth-jvm-0_8_74_http_import",
+    ":ai_grazie_client-client-attribute-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-cloud-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-nmt-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-nlc-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-common-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-def-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-syn-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-qa-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-emb-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-task-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-jet-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-chat-jvm-0_8_74_http_import",
+    ":ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_74_http_import",
+    ":ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_74_http_import",
+    ":ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_74_http_import",
+    ":ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_74_http_import",
+    ":ai_grazie_utils-utils-common-jvm-0_8_74_http_import",
+    ":ai_grazie_utils-utils-multiplatform-jvm-0_8_74_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ai_grazie_api-api-gateway-client-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_api-api-gateway-client-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_api-api-gateway-client-jvm-0_8_66_http//file"
+  name = "ai_grazie_api-api-gateway-client-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_api-api-gateway-client-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_api-api-gateway-client-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_api-api-gateway-api-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_api-api-gateway-api-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_api-api-gateway-api-jvm-0_8_66_http//file"
+  name = "ai_grazie_api-api-gateway-api-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_api-api-gateway-api-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_api-api-gateway-api-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_auth-gec-agg-model-public-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_auth-gec-agg-model-public-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_auth-gec-agg-model-public-jvm-0_8_66_http//file"
+  name = "ai_grazie_auth-gec-agg-model-public-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_auth-gec-agg-model-public-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_auth-gec-agg-model-public-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_llm-llm-agg-api-model-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_llm-llm-agg-api-model-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_llm-llm-agg-api-model-jvm-0_8_66_http//file"
+  name = "ai_grazie_llm-llm-agg-api-model-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_llm-llm-agg-api-model-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_llm-llm-agg-api-model-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-feedback-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-feedback-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-feedback-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-feedback-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-feedback-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-feedback-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-indexing-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-indexing-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-indexing-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-indexing-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-indexing-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-indexing-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-sum-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-sum-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-sum-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-sum-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-sum-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-sum-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-llm-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-llm-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-llm-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-llm-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-llm-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-llm-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-bdg-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-bdg-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-bdg-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-bdg-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-bdg-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-bdg-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-nlp-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-nlp-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-nlp-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-nlp-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-nlp-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-nlp-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-quota-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-quota-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-quota-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-quota-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-quota-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-quota-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-license-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-license-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-license-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-license-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-license-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-license-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-tone-formality-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-tone-formality-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-tone-formality-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-tone-formality-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-tone-formality-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-tone-formality-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-gateway-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-gateway-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-gateway-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-gateway-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-gateway-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-gateway-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_auth-auth-model-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_auth-auth-model-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_auth-auth-model-jvm-0_8_66_http//file"
+  name = "ai_grazie_auth-auth-model-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_auth-auth-model-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_auth-auth-model-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_auth_product-auth-product-model-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_auth_product-auth-product-model-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_auth_product-auth-product-model-jvm-0_8_66_http//file"
+  name = "ai_grazie_auth_product-auth-product-model-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_auth_product-auth-product-model-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_auth_product-auth-product-model-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_user_cfg-user-cfg-model-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_user_cfg-user-cfg-model-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_user_cfg-user-cfg-model-jvm-0_8_66_http//file"
+  name = "ai_grazie_user_cfg-user-cfg-model-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_user_cfg-user-cfg-model-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_user_cfg-user-cfg-model-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_utils-utils-jwt-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_utils-utils-jwt-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_utils-utils-jwt-jvm-0_8_66_http//file"
+  name = "ai_grazie_utils-utils-jwt-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_utils-utils-jwt-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_utils-utils-jwt-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_user_strg-user-strg-model-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_user_strg-user-strg-model-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_user_strg-user-strg-model-jvm-0_8_66_http//file"
+  name = "ai_grazie_user_strg-user-strg-model-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_user_strg-user-strg-model-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_user_strg-user-strg-model-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_indexing-indexing-server-api-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_indexing-indexing-server-api-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_indexing-indexing-server-api-jvm-0_8_66_http//file"
+  name = "ai_grazie_indexing-indexing-server-api-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_indexing-indexing-server-api-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_indexing-indexing-server-api-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-swagger-annotations-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-swagger-annotations-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_client-client-common-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_client-client-common-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_client-client-common-jvm-0_8_66_http//file"
+  name = "ai_grazie_client-client-common-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_client-client-common-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_client-client-common-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-common-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-common-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-common-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-common-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-common-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-common-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-auth-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-auth-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-auth-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-auth-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-auth-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-auth-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_client-client-attribute-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_client-client-attribute-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_client-client-attribute-jvm-0_8_66_http//file"
+  name = "ai_grazie_client-client-attribute-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_client-client-attribute-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_client-client-attribute-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-cloud-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-cloud-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-cloud-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-cloud-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-cloud-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-cloud-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-nmt-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-nmt-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-nmt-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-nmt-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-nmt-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-nmt-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-nlc-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-nlc-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-nlc-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-nlc-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-nlc-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-nlc-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_nlp-nlp-common-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_nlp-nlp-common-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_8_66_http//file"
+  name = "ai_grazie_nlp-nlp-common-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-common-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-common-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-def-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-def-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-def-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-def-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-def-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-def-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-syn-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-syn-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-syn-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-syn-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-syn-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-syn-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-qa-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-qa-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-qa-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-qa-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-qa-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-qa-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-emb-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-emb-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-emb-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-emb-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-emb-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-emb-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-task-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-task-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-task-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-task-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-task-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-task-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-jet-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-jet-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-jet-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-jet-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-jet-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-jet-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-chat-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-chat-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-chat-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-chat-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-chat-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-chat-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_66_http//file"
+  name = "ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_tasks_provider_model-tasks-provider-jet-completion-model-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_66_http_import",
-  jar = "@ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_66_http//file",
-  source_jar = "@ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_66_http//file"
+  name = "ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_74_http_import",
+  jar = "@ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_74_http//file",
+  source_jar = "@ai_grazie_tasks_provider-tasks-provider-task-schema-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_66_http//file"
+  name = "ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_tasks_provider_llm_completion-tasks-provider-llm-completion-model-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_66_http//file"
+  name = "ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_tasks_provider_model-tasks-provider-proxy-model-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_utils-utils-common-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_utils-utils-common-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_utils-utils-common-jvm-0_8_66_http//file"
+  name = "ai_grazie_utils-utils-common-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_utils-utils-common-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_utils-utils-common-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_utils-utils-multiplatform-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_utils-utils-multiplatform-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_utils-utils-multiplatform-jvm-0_8_66_http//file"
+  name = "ai_grazie_utils-utils-multiplatform-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_utils-utils-multiplatform-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_utils-utils-multiplatform-jvm-0_8_74_http//file"
 )
 
 java_library(
   name = "grazie-core-ai-grazie-client-ktor-jvm",
   exports = [
-    ":ai_grazie_client-client-ktor-jvm-0_8_66_http_import",
-    ":ai_grazie_utils-utils-ktor-jvm-0_8_66_http_import",
+    ":ai_grazie_client-client-ktor-jvm-0_8_74_http_import",
+    ":ai_grazie_utils-utils-ktor-jvm-0_8_74_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ai_grazie_client-client-ktor-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_client-client-ktor-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_client-client-ktor-jvm-0_8_66_http//file"
+  name = "ai_grazie_client-client-ktor-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_client-client-ktor-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_client-client-ktor-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_utils-utils-ktor-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_utils-utils-ktor-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_utils-utils-ktor-jvm-0_8_66_http//file"
+  name = "ai_grazie_utils-utils-ktor-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_utils-utils-ktor-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_utils-utils-ktor-jvm-0_8_74_http//file"
 )
 
 jvm_import(
   name = "grazie-core-ai-grazie-model-ner-jvm",
-  jar = "@ai_grazie_model-model-ner-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-ner-jvm-0_8_66_http//file",
+  jar = "@ai_grazie_model-model-ner-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-ner-jvm-0_8_74_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-core-ai-grazie-model-tree-jvm",
-  jar = "@ai_grazie_model-model-tree-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-tree-jvm-0_8_66_http//file",
+  jar = "@ai_grazie_model-model-tree-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-tree-jvm-0_8_74_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4414,83 +4414,83 @@ jvm_import(
 
 jvm_import(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-model-swagger-annotations-jvm",
-  jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_66_http//file",
+  jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_74_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-nlp-detect",
-  jar = "@ai_grazie_nlp-nlp-detect-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_8_66_http//file",
+  jar = "@ai_grazie_nlp-nlp-detect-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-detect-jvm-0_8_74_http//file",
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "libraries-ai-grazie-spell-gec-engine-local-ai-grazie-spell-gec-engine-local",
   exports = [
-    ":ai_grazie_spell-gec-spell-engine-local-0_8_66_http_import",
-    ":ai_grazie_utils-utils-common-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-gec-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-text-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-common-jvm-0_8_66_http_import",
-    ":ai_grazie_nlp-nlp-langs-jvm-0_8_66_http_import",
-    ":ai_grazie_nlp-nlp-common-jvm-0_8_66_http_import",
-    ":ai_grazie_nlp-nlp-patterns-jvm-0_8_66_http_import",
-    ":ai_grazie_nlp-nlp-similarity-jvm-0_8_66_http_import",
-    ":ai_grazie_nlp-nlp-phonetics-jvm-0_8_66_http_import",
-    ":ai_grazie_nlp-nlp-tokenizer-jvm-0_8_66_http_import",
-    ":ai_grazie_utils-utils-multiplatform-jvm-0_8_66_http_import",
+    ":ai_grazie_spell-gec-spell-engine-local-0_8_74_http_import",
+    ":ai_grazie_utils-utils-common-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-gec-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-text-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-common-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-langs-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-common-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http_import",
+    ":ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http_import",
+    ":ai_grazie_utils-utils-multiplatform-jvm-0_8_74_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "ai_grazie_spell-gec-spell-engine-local-0_8_66_http_import",
-  jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_66_http//file",
-  source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_66_http//file"
+  name = "ai_grazie_spell-gec-spell-engine-local-0_8_74_http_import",
+  jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_74_http//file",
+  source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-gec-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-gec-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-gec-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-gec-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-gec-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-gec-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_model-model-text-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_model-model-text-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-model-text-jvm-0_8_66_http//file"
+  name = "ai_grazie_model-model-text-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_model-model-text-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-model-text-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_nlp-nlp-langs-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_66_http//file"
+  name = "ai_grazie_nlp-nlp-langs-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-langs-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_nlp-nlp-patterns-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_8_66_http//file"
+  name = "ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-patterns-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_nlp-nlp-similarity-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_nlp-nlp-similarity-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-similarity-jvm-0_8_66_http//file"
+  name = "ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-similarity-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_nlp-nlp-phonetics-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_66_http//file"
+  name = "ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_74_http//file"
 )
 
 jvm_import(
-  name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_8_66_http_import",
-  jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_8_66_http//file"
+  name = "ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http_import",
+  jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_nlp-nlp-tokenizer-jvm-0_8_74_http//file"
 )
 
 jvm_import(
@@ -9130,19 +9130,19 @@ jvm_import(
 java_library(
   name = "search_everywhere_ml-ai-grazie-emb",
   exports = [
-    ":ai_grazie_model-model-emb-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-text-jvm-0_8_66_http_import",
-    ":ai_grazie_model-model-common-jvm-0_8_66_http_import",
-    ":ai_grazie_utils-utils-common-jvm-0_8_66_http_import",
-    ":ai_grazie_utils-utils-multiplatform-jvm-0_8_66_http_import",
+    ":ai_grazie_model-model-emb-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-text-jvm-0_8_74_http_import",
+    ":ai_grazie_model-model-common-jvm-0_8_74_http_import",
+    ":ai_grazie_utils-utils-common-jvm-0_8_74_http_import",
+    ":ai_grazie_utils-utils-multiplatform-jvm-0_8_74_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "search_everywhere_ml-ai-grazie-model-swagger-annotations-jvm",
-  jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_66_http//file",
-  source_jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_66_http//file",
+  jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_74_http//file",
+  source_jar = "@ai_grazie_model-swagger-annotations-jvm-0_8_74_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9204,8 +9204,8 @@ jvm_import(
 
 jvm_import(
   name = "search_everywhere_ml-typos-ai-grazie-spell-gec-engine-local-jvm",
-  jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_66_http//file",
-  source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_66_http//file",
+  jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_74_http//file",
+  source_jar = "@ai_grazie_spell-gec-spell-engine-local-0_8_74_http//file",
   visibility = ["//visibility:public"]
 )
 
