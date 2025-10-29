@@ -348,21 +348,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         List<HighlightInfo> fileLevelInfos = getOrCreateFileLevelHighlights(fileEditor);
         if (!ContainerUtil.exists(fileLevelInfos, existing -> existing.equalsByActualOffset(info))) {
           Document document = textEditor.getEditor().getDocument();
-          MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
+          MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
           // todo do we need to create a new highlighter if toReuse is not-null?
-          RangeHighlighterEx highlighter = HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(group,
-                                                                                                          info,
-                                                                                                          (RangeHighlighterEx)toReuse,
-                                                                                                          markupModel,
-                                                                                                          myProject,
-                                                                                                          context);
-          // for the condition `existing.equalsByActualOffset(info)` above work correctly,
-          // create a fake whole-file highlighter which will track the document size changes
-          // and which will make possible to calculate correct `info.getActualEndOffset()`
-          if (toReuse == null) {
-            // assign only newly created highlighter here; otherwise the reused highlighter was already set, no need (and can't) to overwrite
-            info.setHighlighter(highlighter);
-          }
+          HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(group, info, (RangeHighlighterEx)toReuse, markupModel, myProject, context);
           fileLevelInfos.add(info);
           addFileLevelInfoComponentToEditor(info, psiFile, textEditor);
           if (LOG.isDebugEnabled()) {
@@ -399,7 +387,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           return true;
         });
         Document document = textEditor.getEditor().getDocument();
-        MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
+        MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
         if (toReuse == null) {
           HighlightInfoUpdaterImpl.createOrReuseFakeFileLevelHighlighter(newInfo.getGroup(), newInfo, null, markupModel, myProject, context);
         }
@@ -640,9 +628,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           return progress.isRunning();
         });
         if (progress.isRunning() && !progress.isCanceled()) {
-          @SuppressWarnings("resource")
           ForkJoinPool pool = ForkJoinPool.commonPool();
-
           throw new RuntimeException("Highlighting still running after " +
              (System.currentTimeMillis() - start) / 1000 + " seconds. Still submitted passes: " +
                                      myPassExecutorService.getAllSubmittedPasses() +
@@ -1623,6 +1609,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
           myPassExecutorService.submitPasses(document, session.getCodeInsightContext(), virtualFile, psiFile, fileEditor, passes, progress);
         }
+//        clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(document, myProject);
         ProgressManager.checkCanceled();
       }), progress);
     }
@@ -1635,6 +1622,26 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       String reason = LOG.isDebugEnabled() ? ExceptionUtil.getThrowableText(e) : "PCE";
       stopAndRestartMyProcess(progress, e, reason);
       throw e;
+    }
+  }
+
+  @RequiresBackgroundThread
+  private static void clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(@NotNull Document document, @NotNull Project project) {
+    // this (rather expensive) processing can be done in BGT at leisure pace because RangeHighlighter has a fixed state transition: null HInfo -> valid HInfo -> invalid HInfo(?)
+    // after HighlightInfo.fromRangeHighlighter(h) returned invalid info (WTF though? it should not ever), it will stay the same forever because recyclers ignore these RangeHighlighters (see check in ManagedHighlighterRecycler.recycleHighlighter)
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
+    List<RangeHighlighter> invalid = ContainerUtil.filter(markupModel.getAllHighlighters(), h -> {
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(h);
+      if (info == null) {
+        return false;
+      }
+      RangeHighlighterEx fromInfo = info.getHighlighter();
+      // find strange highlighters that have attached HighlightInfo but it's the wrong one
+      return fromInfo != null && fromInfo != h;
+    });
+
+    for (RangeHighlighter highlighter : invalid) {
+      highlighter.dispose();
     }
   }
 

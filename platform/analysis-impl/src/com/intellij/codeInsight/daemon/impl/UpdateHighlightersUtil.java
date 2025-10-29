@@ -307,7 +307,7 @@ public final class UpdateHighlightersUtil {
       if (infoErrorStripeColor != null && !infoErrorStripeColor.equals(attributesErrorStripeColor)) {
         finalHighlighter.setErrorStripeMarkColor(infoErrorStripeColor);
       }
-      finalHighlighter.setErrorStripeTooltip(info);
+      BackgroundUpdateHighlightersUtil.associateInfoAndHighlighter(info, finalHighlighter);
       GutterMark renderer = info.getGutterIconRenderer();
       finalHighlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 
@@ -327,7 +327,6 @@ public final class UpdateHighlightersUtil {
     else {
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
-    info.setHighlighter(highlighter);
     range2markerCache.put(finalInfoRange, highlighter);
 
     if (infoAttributes != null) {

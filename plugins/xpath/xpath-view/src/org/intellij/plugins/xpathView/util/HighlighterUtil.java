@@ -148,7 +148,7 @@ public final class HighlighterUtil {
         return rangeHighlighter;
     }
 
-    private static Object formatTooltip(Editor e, PsiElement element) {
+    private static String formatTooltip(Editor e, PsiElement element) {
         if (!(element instanceof XmlTag)) {
           final String text = element.getText();
           if ((text == null || text.isEmpty()) && MyPsiUtil.isNameElement(element)) {

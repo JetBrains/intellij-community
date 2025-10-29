@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -126,6 +125,11 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
 
     @NotNull
     ToolLatencies latencies = new ToolLatencies(0,0,0);
+
+    @Override
+    public String toString() {
+      return "("+elementHighlights.size() +") "+super.toString();
+    }
   }
 
   @ApiStatus.Internal
@@ -1330,7 +1334,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       // create new
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, null, markup, session.getProject(), context);
-        newInfo.setHighlighter(highlighter);
         ((HighlightingSessionImpl)session).addFileLevelHighlight(newInfo, highlighter);
       }
       else {
@@ -1338,7 +1341,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, newLayer,
                                                       HighlighterTargetArea.EXACT_RANGE, false,
                                                       changeAttributes);
-        newInfo.setHighlighter(highlighter);
         newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
       }
     }
@@ -1348,7 +1350,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       HighlightSeverity oldSeverity = oldInfo.getSeverity();
       int oldLayer = isFileLevel ? FILE_LEVEL_FAKE_LAYER : UpdateHighlightersUtil.getLayer(oldInfo, severityRegistrar);
       highlighter = oldInfo.getHighlighter();
-      newInfo.setHighlighter(highlighter);
       if (isFileLevel) {
         highlighter = createOrReuseFakeFileLevelHighlighter(MANAGED_HIGHLIGHT_INFO_GROUP, newInfo, highlighter, markup, session.getProject(), context);
         ((HighlightingSessionImpl)session).replaceFileLevelHighlight(oldInfo, newInfo, highlighter);
@@ -1367,24 +1368,30 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   public static @NotNull RangeHighlighterEx createOrReuseFakeFileLevelHighlighter(int group,
                                                                                   @NotNull HighlightInfo info,
                                                                                   @Nullable RangeHighlighterEx toReuse,
-                                                                                  @NotNull MarkupModel markupModel,
+                                                                                  @NotNull MarkupModelEx markupModel,
                                                                                   @NotNull Project project,
                                                                                   @Nullable CodeInsightContext context) {
     Document document = markupModel.getDocument();
-    RangeHighlighterEx highlighter = toReuse != null && toReuse.isValid() ? toReuse
-             : (RangeHighlighterEx)markupModel.addRangeHighlighter(0, document.getTextLength(), FILE_LEVEL_FAKE_LAYER, null, HighlighterTargetArea.EXACT_RANGE);
+    RangeHighlighterEx highlighter;
+    if (toReuse != null && toReuse.isValid()) {
+      highlighter = toReuse;
+      BackgroundUpdateHighlightersUtil.associateInfoAndHighlighter(info, highlighter);
+    }
+    else {
+      highlighter = markupModel.addRangeHighlighterAndChangeAttributes(null, 0, document.getTextLength(), FILE_LEVEL_FAKE_LAYER,
+                                                                       HighlighterTargetArea.EXACT_RANGE, false, ex -> {
+          BackgroundUpdateHighlightersUtil.associateInfoAndHighlighter(info, ex);
+        });
+    }
     highlighter.setGreedyToLeft(true);
     highlighter.setGreedyToRight(true);
-    highlighter.setErrorStripeTooltip(info);
     // for the condition `existing.equalsByActualOffset(info)` above work correctly,
     // create a fake whole-file highlighter which will track the document size changes
     // and which will make possible to calculate correct `info.getActualEndOffset()`
-    //info.setHighlighter(highlighter);
     info.setGroup(group);
     if (context != null) {
       CodeInsightContextHighlightingUtil.installCodeInsightContext(highlighter, project, context);
     }
     return highlighter;
   }
-
 }

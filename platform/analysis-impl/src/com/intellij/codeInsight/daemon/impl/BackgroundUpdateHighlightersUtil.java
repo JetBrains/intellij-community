@@ -278,7 +278,7 @@ public final class BackgroundUpdateHighlightersUtil {
       highlighter = salvagedHighlighter;
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
-    info.setHighlighter(highlighter);
+
     range2markerCache.put(finalInfoRange, highlighter);
 
     if (LOG.isDebugEnabled()) {
@@ -301,6 +301,15 @@ public final class BackgroundUpdateHighlightersUtil {
                   " (set " + (infoAttributes.equals(afterSet) ? "successfully" : "not successfully") + ")");
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public static void associateInfoAndHighlighter(@NotNull HighlightInfo info, @NotNull RangeHighlighterEx highlighter) {
+    if (info.getHighlighter() == null) {
+      info.setHighlighter(highlighter);
+    }
+    assert info.getHighlighter() == highlighter;
+    highlighter.setErrorStripeTooltip(info);
   }
 
   static void changeAttributes(@NotNull RangeHighlighterEx highlighter,
@@ -327,7 +336,7 @@ public final class BackgroundUpdateHighlightersUtil {
       highlighter.setErrorStripeMarkColor(infoErrorStripeColor);
     }
 
-    highlighter.setErrorStripeTooltip(info);
+    associateInfoAndHighlighter(info, highlighter);
     GutterMark renderer = info.getGutterIconRenderer();
     highlighter.setGutterIconRenderer((GutterIconRenderer)renderer);
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -19,8 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class IterationStateTest extends AbstractEditorTest {
   private Color DEFAULT_BACKGROUND;
@@ -382,8 +385,7 @@ public class IterationStateTest extends AbstractEditorTest {
                                    new TextAttributes(new Color(random, random, random++), new Color(random, random, random++),
                                    null, null, Font.PLAIN), HighlighterTargetArea.EXACT_RANGE);
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).severity(severity).range(1, 3).createUnconditionally();
-    highlighter.setErrorStripeTooltip(info);
-    info.setHighlighter((RangeHighlighterEx)highlighter);
+    BackgroundUpdateHighlightersUtil.associateInfoAndHighlighter(info, (RangeHighlighterEx)highlighter);
     return highlighter;
   }
 
