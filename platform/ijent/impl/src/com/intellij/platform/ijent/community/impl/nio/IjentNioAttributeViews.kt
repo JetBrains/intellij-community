@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -8,12 +8,7 @@ import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import java.nio.file.Files
 import java.nio.file.attribute.*
 
-internal open class IjentNioBasicFileAttributeView(
-  val api: IjentFileSystemApi,
-  val path: EelPath,
-  val nioPath: IjentNioPath,
-  protected val blockingOperationListener: (IjentNioPath) -> Unit,
-) : BasicFileAttributeView {
+internal open class IjentNioBasicFileAttributeView(val api: IjentFileSystemApi, val path: EelPath, val nioPath: IjentNioPath) : BasicFileAttributeView {
   override fun name(): String? {
     return "basic"
   }
@@ -23,7 +18,6 @@ internal open class IjentNioBasicFileAttributeView(
   }
 
   override fun setTimes(lastModifiedTime: FileTime?, lastAccessTime: FileTime?, createTime: FileTime?) {
-    blockingOperationListener(nioPath)
     val builder = EelFileSystemApi.ChangeAttributesOptions.Builder()
     if (lastModifiedTime != null) {
       builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::modificationTime, lastModifiedTime)
@@ -37,18 +31,12 @@ internal open class IjentNioBasicFileAttributeView(
   }
 }
 
-internal class IjentNioPosixFileAttributeView(
-  api: IjentFileSystemApi,
-  path: EelPath,
-  nioPath: IjentNioPath,
-  blockingOperationListener: (IjentNioPath) -> Unit,
-) : IjentNioBasicFileAttributeView(api, path, nioPath, blockingOperationListener), PosixFileAttributeView {
+internal class IjentNioPosixFileAttributeView(api: IjentFileSystemApi, path: EelPath, nioPath: IjentNioPath) : IjentNioBasicFileAttributeView(api, path, nioPath), PosixFileAttributeView {
   override fun name(): String? {
     return "posix"
   }
 
   override fun readAttributes(): PosixFileAttributes {
-    blockingOperationListener(nioPath)
     return Files.readAttributes(nioPath, PosixFileAttributes::class.java)
   }
 
@@ -56,12 +44,10 @@ internal class IjentNioPosixFileAttributeView(
     if (perms == null) {
       return
     }
-    blockingOperationListener(nioPath)
     nioPath.nioFs.provider().setAttribute(nioPath, "posix:permissions", perms)
   }
 
   override fun setGroup(group: GroupPrincipal) {
-    blockingOperationListener(nioPath)
     if (group is EelPosixGroupPrincipal) {
       nioPath.nioFs.provider().setAttribute(nioPath, "posix:group", group)
     }
@@ -75,7 +61,6 @@ internal class IjentNioPosixFileAttributeView(
   }
 
   override fun setOwner(owner: UserPrincipal) {
-    blockingOperationListener(nioPath)
     if (owner is EelPosixUserPrincipal) {
       nioPath.nioFs.provider().setAttribute(nioPath, "posix:owner", owner)
     }

@@ -170,7 +170,6 @@ class AbsoluteIjentNioPath(val eelPath: EelPath, nioFs: IjentNioFileSystem, cach
   }
 
   override fun toRealPath(vararg options: LinkOption): IjentNioPath {
-    nioFs.blockingOperationListener(this)
     return eelPath.normalize()
       .let { normalizedPath ->
         if (LinkOption.NOFOLLOW_LINKS in options)

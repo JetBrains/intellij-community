@@ -50,16 +50,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         .single()
 
     @JvmStatic
-    fun newFileSystemMap(ijentFs: IjentFileSystemApi, blockingOperationListener: (IjentNioPath) -> Unit = ::nothing): MutableMap<String, *> =
-      mutableMapOf(KEY_IJENT_FS to ijentFs, BLOCKING_OPERATION_LISTENER to blockingOperationListener)
-
-    private fun nothing(ignored: IjentNioPath) {
-      // Nothing.
-    }
+    fun newFileSystemMap(ijentFs: IjentFileSystemApi): MutableMap<String, *> =
+      mutableMapOf(KEY_IJENT_FS to ijentFs)
 
     private const val SCHEME = "ijent"
     private const val KEY_IJENT_FS = "ijentFs"
-    private const val BLOCKING_OPERATION_LISTENER = "blockingOperationListener"
   }
 
   @JvmInline
@@ -71,7 +66,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   }
 
   private val criticalSection = CriticalSection(object {
-    val authorityRegistry: MutableMap<URI, Pair<IjentFileSystemApi, (IjentNioPath) -> Unit>> = hashMapOf()
+    val authorityRegistry: MutableMap<URI, IjentFileSystemApi> = hashMapOf()
   })
 
   override fun getScheme(): String = SCHEME
@@ -85,21 +80,18 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       throw UnsupportedOperationException(uri.toString() + " doesn't look like a proper URL for " + IjentNioFileSystemProvider::class.simpleName)
     }
 
-    val ijentFs: IjentFileSystemApi
-    val blockingOperationListener: (IjentNioPath) -> Unit
-    try {
-      ijentFs = env[KEY_IJENT_FS] as IjentFileSystemApi
-      @Suppress("UNCHECKED_CAST")
-      blockingOperationListener = env[BLOCKING_OPERATION_LISTENER] as (IjentNioPath) -> Unit
-    }
-    catch (err: Exception) {
-      throw when (err) {
-        is NullPointerException, is ClassCastException ->
-          IllegalArgumentException("Invalid map. `IjentNioFileSystemProvider.newFileSystemMap` should be used for map creation.")
-        else ->
-          err
+    val ijentFs =
+      try {
+        env[KEY_IJENT_FS] as IjentFileSystemApi
       }
-    }
+      catch (err: Exception) {
+        throw when (err) {
+          is NullPointerException, is ClassCastException ->
+            IllegalArgumentException("Invalid map. `IjentNioFileSystemProvider.newFileSystemMap` should be used for map creation.")
+          else ->
+            err
+        }
+      }
     val uriParts = getUriParts(uri)
     criticalSection {
       for (uriPart in uriParts) {
@@ -109,9 +101,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
           )
         }
       }
-      authorityRegistry[uri] = ijentFs to blockingOperationListener
+      authorityRegistry[uri] = ijentFs
     }
-    return IjentNioFileSystem(this, uri, blockingOperationListener)
+    return IjentNioFileSystem(this, uri)
   }
 
   private fun getUriParts(uri: URI): Collection<URI> = uri.path.asSequence()
@@ -126,13 +118,15 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun getFileSystem(uri: URI): IjentNioFileSystem {
     val uriParts = getUriParts(uri.normalize())
-    val (matchingUri, blockingOperationListener) = criticalSection {
-      uriParts.firstNotNullOfOrNull { uriPart ->
-        authorityRegistry[uriPart]?.let { (_, listener) -> uriPart to listener }
-      }
-      ?: throw FileSystemNotFoundException("`$uri` is not registered as IJent FS provider")
+    val matchingUri = criticalSection {
+      uriParts.firstOrNull { it in authorityRegistry }
     }
-    return IjentNioFileSystem(this, matchingUri, blockingOperationListener)
+    if (matchingUri != null) {
+      return IjentNioFileSystem(this, matchingUri)
+    }
+    else {
+      throw FileSystemNotFoundException("`$uri` is not registered as IJent FS provider")
+    }
   }
 
   override fun getPath(uri: URI): IjentNioPath {
@@ -256,7 +250,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       throw IOException(e)
     }
     val path = dir.eelPath
-    dir.nioFs.blockingOperationListener(dir)
     fsBlocking {
       when (val fsApi = dir.nioFs.ijentFs) {
         is IjentFileSystemPosixApi -> fsApi.createDirectory(path, emptyList()).getOrThrowFileSystemException()
@@ -281,7 +274,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val sourcePath = source.eelPath
     val targetPath = target.eelPath
 
-    source.nioFs.blockingOperationListener(source)
     val fs = source.nioFs.ijentFs
 
     val copyOptions = fs.copy(sourcePath, targetPath)
@@ -329,8 +321,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensureAbsoluteIjentNioPath(path)
     ensureAbsoluteIjentNioPath(path2)
     val nioFs = path.nioFs
-    nioFs.blockingOperationListener(path)
-    nioFs.blockingOperationListener(path2)
+
     return fsBlocking {
       nioFs.ijentFs.sameFile(path.eelPath, path2.eelPath)
     }
@@ -339,7 +330,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun isHidden(path: Path): Boolean {
     ensureAbsoluteIjentNioPath(path)
-    path.nioFs.blockingOperationListener(path)
     return when (path.nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> path.normalize().fileName.toString().startsWith(".")
       is IjentFileSystemWindowsApi -> TODO("Not implemented for Windows")
@@ -353,7 +343,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun checkAccess(path: Path, vararg modes: AccessMode) {
     val fs = ensureAbsoluteIjentNioPath(path).nioFs
-    fs.blockingOperationListener(path)
     fsBlocking {
       when (val ijentFs = fs.ijentFs) {
         is IjentFileSystemPosixApi -> {
@@ -375,16 +364,16 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>?, vararg options: LinkOption): V? {
     ensureAbsoluteIjentNioPath(path)
-    val nioFs = path.nioFs
     if (type == BasicFileAttributeView::class.java) {
       @Suppress("UNCHECKED_CAST")
-      return IjentNioBasicFileAttributeView(path.nioFs.ijentFs, path.eelPath, path, nioFs.blockingOperationListener) as V
+      return IjentNioBasicFileAttributeView(path.nioFs.ijentFs, path.eelPath, path) as V
     }
+    val nioFs = ensureIjentNioPath(path).nioFs
     when (nioFs.ijentFs) {
       is IjentFileSystemPosixApi -> {
         if (type == PosixFileAttributeView::class.java) {
           @Suppress("UNCHECKED_CAST")
-          return IjentNioPosixFileAttributeView(path.nioFs.ijentFs, path.eelPath, path, nioFs.blockingOperationListener) as V
+          return IjentNioPosixFileAttributeView(path.nioFs.ijentFs, path.eelPath, path) as V
         }
         else {
           return null
@@ -397,7 +386,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     val fs = ensureAbsoluteIjentNioPath(path).nioFs
-    fs.blockingOperationListener(path)
 
     val linkPolicy = if (LinkOption.NOFOLLOW_LINKS in options) {
       EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
@@ -584,7 +572,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   internal fun ijentFsApi(uri: URI): IjentFileSystemApi? =
     criticalSection {
-      authorityRegistry[uri]?.first
+      authorityRegistry[uri]
     }
 
   @OptIn(ExperimentalContracts::class)
