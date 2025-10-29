@@ -59,8 +59,8 @@ class KotlinAvoidDuplicateDependenciesInspectionVisitor(
 
     private fun createGroupingCriteria(dependency: KtCallExpression): Any {
         return if (isOnTheFly) {
-            // additionally separate annotationProcessor dependencies
-            dependency.calleeExpression?.text == "annotationProcessor"
+            // additionally try to separate annotationProcessor related dependencies
+            dependency.calleeExpression?.text?.contains("annotationProcessor", true) == true
         } else {
             // in batch mode additionally restrict groups to exact duplicates
             dependency.text
