@@ -46,6 +46,8 @@ interface WslIjentManager {
    */
   suspend fun getIjentApi(descriptor: EelDescriptor?, wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): IjentPosixApi
 
+  fun isIjentInitialized(descriptor: EelDescriptor): Boolean
+
   @Deprecated(
     "Use WslIjentAvailabilityService.runWslCommandsViaIjent",
     replaceWith = ReplaceWith(
