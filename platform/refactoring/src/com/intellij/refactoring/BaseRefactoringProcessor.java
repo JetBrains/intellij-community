@@ -96,7 +96,8 @@ import java.util.*;
  *     <ul>
  *       <li>Collects usages relevant to the refactoring by calling {@link #findUsages()}.</li>
  *       <li>Calls {@link #preprocessUsages} for any preliminary processing. If this method returns false, the refactoring is aborted.</li>
- *       <li>Decides whether to show a preview of the changes via {@link #previewRefactoring(UsageInfo[] usages)}, or to proceed directly to {@link #execute(UsageInfo[])}.</li>
+ *       <li>Decides (using {@link #isPreviewUsages(UsageInfo[] usages)}) whether to show a preview of the changes via {@link #previewRefactoring(UsageInfo[] usages)},
+ *       or to proceed to apply the changes via {@link #execute(UsageInfo[])}.</li>
  *     </ul>
  *   </li>
  *   <li>
