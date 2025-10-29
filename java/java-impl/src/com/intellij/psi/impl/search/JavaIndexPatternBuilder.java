@@ -36,13 +36,8 @@ public final class JavaIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   public int getCommentStartDelta(final IElementType tokenType) {
-    if (tokenType.equals(JavaTokenType.END_OF_LINE_COMMENT) || tokenType.equals(JavaTokenType.C_STYLE_COMMENT)) {
-      return 2;
-    }
-    else if (tokenType.equals(JavaDocElementType.DOC_COMMENT) || tokenType.equals(JavaDocElementType.DOC_MARKDOWN_COMMENT)) {
-      return 3;
-    }
-    return 0;
+    return tokenType == JavaTokenType.END_OF_LINE_COMMENT || tokenType == JavaTokenType.C_STYLE_COMMENT
+           ? 2 : JavaDocElementType.DOC_COMMENT_TOKENS.contains(tokenType) ? 3 : 0;
   }
 
   @Override
