@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -134,7 +135,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
   }
 
   private void customizeDialog(@NotNull PushDialogCustomizer customizer, @NotNull SimplePushAction simplePushAction) {
-    simplePushAction.getTemplatePresentation().setText(customizer.getNameForSimplePushAction(this));
+    simplePushAction.getTemplatePresentation().setTextWithMnemonic(() -> TextWithMnemonic.parse(customizer.getNameForSimplePushAction(this)));
     simplePushAction.setCondition(customizer.getCondition());
   }
 
@@ -372,7 +373,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(VcsPushUi.VCS_PUSH_DIALOG, this);
+    sink.set(VCS_PUSH_DIALOG, this);
   }
 
   @ApiStatus.Experimental
@@ -423,8 +424,13 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
       PushActionBase realAction = myDefaultAction.myRealAction;
 
       setEnabled(dialog.canPush());
-      putValue(Action.NAME, realAction.getText(dialog, enabled));
-      putValue(Action.SHORT_DESCRIPTION, realAction.getDescription(dialog, enabled));
+
+      var textWithMnemonic = realAction.getTemplatePresentation().getTextWithPossibleMnemonic().get();
+      putValue(NAME, textWithMnemonic.getText());
+      putValue(MNEMONIC_KEY, textWithMnemonic.getMnemonicCode());
+      putValue(DISPLAYED_MNEMONIC_INDEX_KEY, textWithMnemonic.getMnemonicIndex());
+
+      putValue(SHORT_DESCRIPTION, realAction.getDescription(dialog, enabled));
     }
 
     @Override
@@ -436,14 +442,14 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
   private static class ActionWrapper extends AbstractAction {
 
     private final @NotNull Project myProject;
-    private final @NotNull VcsPushUi myDialog;
+    private final @NotNull VcsPushDialog myDialog;
     private final @NotNull PushActionBase myRealAction;
 
-    ActionWrapper(@NotNull Project project, @NotNull VcsPushUi dialog, @NotNull PushActionBase realAction) {
+    ActionWrapper(@NotNull Project project, @NotNull VcsPushDialog dialog, @NotNull PushActionBase realAction) {
       myProject = project;
       myDialog = dialog;
       myRealAction = realAction;
-      putValue(Action.NAME, myRealAction.getText(myDialog, true));
+      putValue(NAME, myRealAction.getText(myDialog, true));
       putValue(OptionAction.AN_ACTION, realAction);
     }
 
@@ -455,8 +461,13 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     public void update() {
       boolean enabled = myRealAction.isEnabled(myDialog);
       setEnabled(enabled);
-      putValue(Action.NAME, myRealAction.getText(myDialog, enabled));
-      putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
+
+      var textWithMnemonic = myRealAction.getTemplatePresentation().getTextWithPossibleMnemonic().get();
+      putValue(NAME, textWithMnemonic.getText());
+      putValue(MNEMONIC_KEY, textWithMnemonic.getMnemonicCode());
+      putValue(DISPLAYED_MNEMONIC_INDEX_KEY, textWithMnemonic.getMnemonicIndex());
+
+      putValue(SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
 
     public @Nls @NotNull String getName() {
