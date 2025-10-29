@@ -156,6 +156,7 @@ object PluginManagerCore {
   fun getPluginSet(): PluginSet = nullablePluginSet!!
 
   @ApiStatus.Internal
+  @JvmStatic
   fun getPluginSetOrNull(): PluginSet? = nullablePluginSet
 
   /**
