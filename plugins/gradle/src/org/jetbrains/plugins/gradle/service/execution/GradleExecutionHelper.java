@@ -3,19 +3,13 @@ package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.BuildIssueEventImpl;
-import com.intellij.build.issue.BuildIssueQuickFix;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,18 +22,10 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -55,8 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService;
-import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue;
 import org.jetbrains.plugins.gradle.issue.DeprecatedGradleVersionIssue;
+import org.jetbrains.plugins.gradle.issue.OutdatedGradleVersionIssue;
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
@@ -65,7 +51,6 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask;
 
@@ -78,7 +63,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * This is the low-level Gradle execution API that connects and interacts with the Gradle daemon using the Gradle tooling API.
@@ -653,70 +637,13 @@ public final class GradleExecutionHelper {
     @NotNull GradleExecutionContext context,
     @NotNull BuildEnvironment buildEnvironment
   ) {
-    // check if the inspection is enabled
-    final HighlightDisplayKey key = HighlightDisplayKey.find("LatestMinorVersion");
-    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(context.getProject());
-    final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
-    if (key == null || !inspectionProfile.isToolEnabled(key)) return;
+    if (isLatestMinorVersionInspectionDisabled(context)) return;
 
-    // check if the used minor Gradle version is outdated
-    final GradleVersion currentVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
-    final GradleVersion latestVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(
-      GradleVersion.version(buildEnvironment.getGradle().getGradleVersion()).getMajorVersion()
-    );
-    if (currentVersion.compareTo(latestVersion) >= 0) return;
+    GradleVersion currentVersion = GradleVersion.version(buildEnvironment.getGradle().getGradleVersion());
+    if (isMinorGradleVersionOutdated(currentVersion)) return;
 
-    final var issue = new ConfigurableGradleBuildIssue() {
-      // try to navigate to the wrapper properties file and place the caret at the version
-      @Override
-      public @Nullable Navigatable getNavigatable(@NotNull Project project) {
-        if (project.getBasePath() == null) return null;
-        return ReadAction.compute(() -> {
-          final Path wrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(Path.of(project.getBasePath()));
-          if (wrapperPropertiesPath == null) return null;
-
-          final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByNioFile(wrapperPropertiesPath);
-          if (virtualFile == null) return null;
-
-          final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-          if (psiFile instanceof PropertiesFile propertiesFile) {
-            final IProperty distributionUrlProp = propertiesFile.findPropertyByKey("distributionUrl");
-            if (distributionUrlProp == null) return null;
-
-            final String versionText = currentVersion.getVersion();
-            final PsiElement psiElement = distributionUrlProp.getPsiElement();
-            final int indexInProperty = psiElement.getText().indexOf(versionText);
-            if (indexInProperty < 0) return null;
-
-            final int indexInFile = psiElement.getStartOffsetInParent() + indexInProperty + versionText.length();
-            return new OpenFileDescriptor(project, virtualFile, indexInFile);
-          }
-          return null;
-        });
-      }
-    };
-    issue.setTitle(GradleBundle.message("gradle.build.issue.gradle.outdated.minor.version.title"));
-    issue.addDescription(GradleBundle.message(
-      "gradle.build.issue.gradle.outdated.minor.version.description", currentVersion.getVersion()
-    ));
-    issue.addDescription(GradleBundle.message("gradle.build.issue.gradle.recommended.description", latestVersion.getVersion()));
-    issue.addGradleVersionQuickFix(context.getProjectPath(), latestVersion);
-
-    // find the responsible inspection and offer a link to its settings if available
-    final String hyperlinkReference = issue.addQuickFix(new BuildIssueQuickFix() {
-      @Override
-      public @NotNull String getId() {
-        return "navigate.to.latest.gradle.minor.version.inspection";
-      }
-
-      @Override
-      public @NotNull CompletableFuture<?> runQuickFix(@NotNull Project project, @NotNull DataContext dataContext) {
-        EditInspectionToolsSettingsAction.editToolSettings(context.getProject(), inspectionProfile, key.toString());
-        return CompletableFuture.completedFuture(null);
-      }
-    });
-
-    issue.addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.edit.inspection.settings", hyperlinkReference));
+    final var issue = new OutdatedGradleVersionIssue(context, currentVersion);
+    issue.addOpenInspectionSettingsQuickFix(context, "LatestMinorVersion");
 
     context.getListener().onStatusChange(
       new ExternalSystemBuildEvent(
@@ -724,6 +651,19 @@ public final class GradleExecutionHelper {
         new BuildIssueEventImpl(context.getTaskId(), issue, MessageEvent.Kind.INFO)
       )
     );
+  }
+
+  private static boolean isLatestMinorVersionInspectionDisabled(@NotNull GradleExecutionContext context) {
+    HighlightDisplayKey inspectionKey = HighlightDisplayKey.find("LatestMinorVersion");
+    if (inspectionKey == null) return true;
+    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(context.getProject());
+    InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
+    return !inspectionProfile.isToolEnabled(inspectionKey);
+  }
+
+  private static boolean isMinorGradleVersionOutdated(@NotNull GradleVersion currentVersion) {
+    GradleVersion latestVersion = GradleJvmSupportMatrix.getLatestMinorGradleVersion(currentVersion.getMajorVersion());
+    return currentVersion.compareTo(latestVersion) >= 0;
   }
 
   private static void checkThatGradleBuildEnvironmentIsDeprecatedByIdea(
