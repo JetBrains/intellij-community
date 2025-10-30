@@ -778,7 +778,7 @@ class PluginModelValidator(
 
   private fun findPluginAndModuleDescriptors(module: JpsModule): List<DescriptorFileInfo> {
     if (module.name !in validationOptions.modulesWithIncorrectlyPlacedModuleDescriptor) {
-      for (sourceRoot in module.productionSourceRoots) {
+      for (sourceRoot in module.sourceRoots) {
         val moduleXml = sourceRoot.findFile("META-INF/${module.name}.xml")
         if (moduleXml != null) {
           reportError(
@@ -796,13 +796,15 @@ class PluginModelValidator(
     val customRootPluginXmlFileName = validationOptions.corePluginDescriptions.find { it.mainModuleName == module.name }?.rootPluginXmlName
     val pluginFileName = customRootPluginXmlFileName ?: "plugin.xml"
 
-    val pluginDescriptors =
-      module.productionSourceRoots.mapNotNullTo(ArrayList()) { sourceRoot ->
-        val pluginDescriptorFile = sourceRoot.findFile("META-INF/$pluginFileName") ?: return@mapNotNullTo null 
-        loadRawPluginDescriptor(pluginDescriptorFile)?.let { PluginDescriptorFileInfo(module, pluginDescriptorFile, it) }
+    val (productionPluginDescriptors, testPluginDescriptors) =
+      module.sourceRoots.mapNotNull { sourceRoot ->
+        val pluginDescriptorFile = sourceRoot.findFile("META-INF/$pluginFileName") ?: return@mapNotNull null
+        val descriptor = loadRawPluginDescriptor(pluginDescriptorFile) ?: return@mapNotNull null
+        PluginDescriptorFileInfo(module, pluginDescriptorFile, descriptor, sourceRoot.rootType.isForTests)
       }
+      .partition { !it.inTests }
 
-    if (customRootPluginXmlFileName != null && pluginDescriptors.isEmpty()) {
+    if (customRootPluginXmlFileName != null && productionPluginDescriptors.isEmpty()) {
       reportError(
         message = "Cannot find $customRootPluginXmlFileName in ${module.name}",
         sourceModule = module,
@@ -823,19 +825,21 @@ class PluginModelValidator(
           }
       }
 
-    if (pluginDescriptors.size > 1) {
-      reportError(
-        "Duplicated plugin.xml",
-        module,
-        mapOf(
-          "module" to module.name,
-          "firstPluginDescriptor" to pluginDescriptors[0].descriptorFile,
-          "secondPluginDescriptor" to pluginDescriptors[1].descriptorFile,
-        ),
-      )
+    listOf(productionPluginDescriptors, testPluginDescriptors).forEach { pluginDescriptors ->
+      if (pluginDescriptors.size > 1) {
+        reportError(
+          "Duplicated plugin.xml",
+          module,
+          mapOf(
+            "module" to module.name,
+            "firstPluginDescriptor" to pluginDescriptors[0].descriptorFile,
+            "secondPluginDescriptor" to pluginDescriptors[1].descriptorFile,
+          ),
+        )
+      }
     }
 
-    return pluginDescriptors + moduleDescriptors
+    return productionPluginDescriptors + testPluginDescriptors + moduleDescriptors
   }
 
   private fun loadRawPluginDescriptor(file: Path): RawPluginDescriptor? {
@@ -907,6 +911,7 @@ private data class PluginDescriptorFileInfo(
   override val sourceModule: JpsModule,
   override val descriptorFile: Path,
   override val descriptor: RawPluginDescriptor,
+  val inTests: Boolean,
 ) : DescriptorFileInfo
 
 private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo, projectHomePath: Path) {
@@ -947,9 +952,6 @@ internal class PluginValidationError(message: String, val sourceModule: JpsModul
 internal fun hasContentOrDependenciesInV2Format(descriptor: RawPluginDescriptor): Boolean {
   return descriptor.contentModules.isNotEmpty() || descriptor.dependencies.isNotEmpty()
 }
-
-private val JpsModule.productionSourceRoots: Sequence<JpsModuleSourceRoot>
-  get() = sourceRoots.asSequence().filter { !it.rootType.isForTests }
 
 private fun JpsModuleSourceRoot.findFile(relativePath: String): Path? {
   return JpsJavaExtensionService.getInstance().findSourceFile(this, relativePath)
