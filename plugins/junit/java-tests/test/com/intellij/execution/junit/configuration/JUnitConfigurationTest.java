@@ -194,6 +194,25 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
                                lines);
   }
 
+  public void testPatternConfigurationWith() throws ExecutionException, IOException {
+
+    VirtualFile module1Content = findFile("moduleWithBothVersions");
+    createModule(module1Content, true, "JUnit5");
+
+    Module module = getModule(3);
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
+
+    JUnitConfiguration configuration = new JUnitConfiguration("", myProject);
+    configuration.getPersistentData().TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    configuration.getPersistentData().setPatterns(ContainerUtil.newLinkedHashSet("with4.TestCaseInheritor", "with4.TestCaseInheritorMultipleConstructor"));
+    configuration.setModule(module);
+
+    JavaParameters parameters = checkCanRun(configuration);
+    ParametersList parametersList = parameters.getProgramParametersList();
+    assertTrue("Expected to run as junit4 but program parameters are: " + parametersList.getParametersString(), parametersList.getList().contains("-junit4"));
+  }
+
   public void testRunningAllInPackage() throws IOException, ExecutionException {
     Module module1 = getModule1();
     GlobalSearchScope module1AndLibraries = GlobalSearchScope.moduleWithLibrariesScope(module1);

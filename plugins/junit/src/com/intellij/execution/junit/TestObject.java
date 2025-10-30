@@ -816,6 +816,19 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
     }
 
+    if (JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT)) {
+      if (ContainerUtil.and(data.getPatterns(), name -> {
+        PsiClass aClass = JavaExecutionUtil.findMainClass(project, name, globalSearchScope);
+        if (aClass == null) {
+          return false;
+        }
+        TestFramework framework = TestFrameworks.detectFramework(aClass);
+        return framework instanceof JUnit4Framework || framework instanceof JUnit3Framework;
+      })) {
+        return JUnitStarter.JUNIT4_PARAMETER;
+      }
+    }
+
     return getRunner(globalSearchScope, project);
   }
 
