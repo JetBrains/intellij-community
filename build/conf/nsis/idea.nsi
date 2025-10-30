@@ -1168,19 +1168,27 @@ Function un.DeleteShortcuts
 FunctionEnd
 
 Function un.UpdatePathEnvVar
-  ReadRegStr $0 HKCU "Environment" "${MUI_PRODUCT}"
-  ${If} $0 == "$INSTDIR\bin"
-    ReadRegStr $1 HKCU "Environment" "Path"
-    ${UnStrRep} $2 $1 ";%${MUI_PRODUCT}%" ""
-    ${If} $2 != $1
-    ${AndIf} $2 != ""
-      DetailPrint "Updating the 'Path' environment variable."
-      WriteRegExpandStr HKCU "Environment" "Path" "$2"
+  StrCpy $9 0
+  ${Do}
+    EnumRegValue $0 HKCU "Environment" $9
+    ${If} $0 == ""
+      ${Break}
     ${EndIf}
-    DetailPrint "Deleting the '${MUI_PRODUCT}' environment variable."
-    DeleteRegValue HKCU "Environment" "${MUI_PRODUCT}"
-    Call un.PostEnvChangeEvent
-  ${EndIf}
+    ReadRegStr $1 HKCU "Environment" $0
+    ${If} $1 == "$INSTDIR\bin"
+      ReadRegStr $1 HKCU "Environment" "Path"
+      ${UnStrRep} $2 $1 ";%$0%" ""
+      ${If} $2 != $1
+      ${AndIf} $2 != ""
+        DetailPrint "Updating the 'Path' environment variable."
+        WriteRegExpandStr HKCU "Environment" "Path" "$2"
+        DetailPrint "Deleting the '$0' environment variable."
+        DeleteRegValue HKCU "Environment" $0
+        Call un.PostEnvChangeEvent
+      ${EndIf}
+    ${EndIf}
+    IntOp $9 $9 + 1
+  ${Loop}
 FunctionEnd
 
 Function un.CachesAndSettings
