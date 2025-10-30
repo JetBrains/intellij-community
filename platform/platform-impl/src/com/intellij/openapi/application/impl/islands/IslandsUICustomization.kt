@@ -59,6 +59,7 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.awt.geom.Area
 import java.awt.geom.RoundRectangle2D
+import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.border.Border
@@ -157,14 +158,29 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  private fun configureBackgroundPainting(component: JComponent, recursive: Boolean) {
-    if (isManyIslandEnabled && isIslandsGradientEnabled) {
-      if (recursive) {
-        ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
+  private var forcedBackground = false
+
+  private val noBackground: Predicate<JComponent> = Predicate<JComponent> { component ->
+    if (forcedBackground) {
+      false
+    }
+    else {
+      val explicitlySetValue = component.getClientProperty(IdeBackgroundUtil.NO_BACKGROUND)
+      if (explicitlySetValue is Boolean) {
+        explicitlySetValue
       }
       else {
-        component.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, true)
+        isManyIslandEnabled && isIslandsGradientEnabled
       }
+    }
+  }
+
+  private fun configureBackgroundPainting(component: JComponent, recursive: Boolean) {
+    if (recursive) {
+      ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND_PREDICATE, noBackground)
+    }
+    else {
+      component.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND_PREDICATE, noBackground)
     }
   }
 
@@ -327,7 +343,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
         configureMainFrameChildren(it, false)
 
         if (it is JComponent) {
-          ClientProperty.removeRecursive(it, IdeBackgroundUtil.NO_BACKGROUND)
+          ClientProperty.removeRecursive(it, IdeBackgroundUtil.NO_BACKGROUND_PREDICATE)
         }
 
         when (it) {
@@ -388,8 +404,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
   private fun clearParentNoBackground(component: JComponent) {
     var nextComponent: JComponent? = component
 
-    while (nextComponent != null && ClientProperty.get(nextComponent, IdeBackgroundUtil.NO_BACKGROUND) != null) {
-      ClientProperty.removeRecursive(nextComponent, IdeBackgroundUtil.NO_BACKGROUND)
+    while (nextComponent != null && ClientProperty.get(nextComponent, IdeBackgroundUtil.NO_BACKGROUND_PREDICATE) != null) {
+      ClientProperty.removeRecursive(nextComponent, IdeBackgroundUtil.NO_BACKGROUND_PREDICATE)
       nextComponent = nextComponent.parent as JComponent?
     }
   }
@@ -720,7 +736,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     val gg: Graphics2D
 
     if (isGradient) {
-      component.putClientProperty(IdeBackgroundUtil.NO_BACKGROUND, null)
+      forcedBackground = true
       gg = if (editor) IdeBackgroundUtil.withEditorBackground(g, component) else IdeBackgroundUtil.withFrameBackground(g, component)
     }
     else {
@@ -751,7 +767,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
     finally {
       if (isGradient) {
-        configureBackgroundPainting(component, recursive = false)
+        forcedBackground = false
       }
     }
   }
