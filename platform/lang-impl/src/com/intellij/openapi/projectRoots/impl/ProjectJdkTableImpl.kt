@@ -30,7 +30,7 @@ import org.jetbrains.annotations.TestOnly
 
 // This annotation is needed only for support of the "export settings" action
 @State(name = "ProjectJdkTable", storages = [Storage(value = JpsGlobalEntitiesSerializers.SDK_FILE_NAME + DEFAULT_EXT)], presentableName = ProjectJdkTableImpl.PresentableNameGetter::class)
-open class ProjectJdkTableImpl: ProjectJdkTable(), EnvironmentScopedProjectJdkLookup {
+open class ProjectJdkTableImpl: ProjectJdkTable(), EnvironmentScopedSdkTableOps {
 
   private val delegate: SdkTableImplementationDelegate
 
@@ -94,6 +94,11 @@ open class ProjectJdkTableImpl: ProjectJdkTable(), EnvironmentScopedProjectJdkLo
       }
       is InternalEnvironmentName.Custom -> null
     }
+  }
+
+  @ApiStatus.Internal
+  override fun createSdk(name: String, sdkType: SdkTypeId, eelDescriptor: EelDescriptor): Sdk {
+    return delegate.createSdk(name, sdkType, eelDescriptor.machine.getInternalEnvironmentName())
   }
 
   override fun getAllJdks(): Array<Sdk> = delegate.getAllSdks().toTypedArray()

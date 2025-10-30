@@ -71,6 +71,10 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     return ProjectJdkImpl(name, type, homePath ?: "", null, environmentName)
   }
 
+  override fun createSdk(name: String, type: SdkTypeId, environmentName: InternalEnvironmentName): Sdk {
+    return ProjectJdkImpl(name, type, "", null, environmentName)
+  }
+
   override fun addNewSdk(sdk: Sdk) {
     val delegateSdk = (sdk as ProjectJdkImpl).delegate as SdkBridgeImpl
     val descriptor = delegateSdk.homeDirectory?.toNioPath()?.getEelDescriptor() ?: LocalEelDescriptor
