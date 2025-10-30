@@ -89,8 +89,8 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
 
     private fun extractVersionFromVersionCatalog(catalogExpression: KtDotQualifiedExpression): String? {
         val resolved = catalogExpression.selectorExpression?.mainReference?.resolve() as? PsiMethod ?: return null
-        val dependency = getResolvedDependency(resolved, catalogExpression) ?: return null
-        return parseKotlinStdLibVersionFromString(dependency)
+        val (group, name, version) = getResolvedDependency(resolved, catalogExpression) ?: return null
+        return if (isKotlinStdLib(group, name)) version else null
     }
 
     private fun parseKotlinStdLibVersionFromString(dependencyString: String): String? {
@@ -146,8 +146,7 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
     private fun extractVersionFromAliasPlugin(firstCall: ChainedMethodCallPart): String? {
         val arg = firstCall.arguments.firstOrNull() as? KtDotQualifiedExpression ?: return null
         val resolved = arg.selectorExpression?.mainReference?.resolve() as? PsiMethod ?: return null
-        val (name, version) = getResolvedPlugin(resolved, arg)
-            ?.split(":")?.takeIf { it.size == 2 } ?: return null
+        val (name, version) = getResolvedPlugin(resolved, arg) ?: return null
 
         return if (name == KOTLIN_JVM_PLUGIN) version else null
     }

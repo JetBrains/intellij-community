@@ -115,7 +115,8 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
 
   private fun getVersionIfKotlinStdLibSingleString(argument: GrExpression): String? {
     val stringValue = argument.toUElementOfType<UExpression>()?.evaluateString() ?: return null
-    val version = parseKotlinStdLibVersionFromString(stringValue) ?: return null
+    val (group, name, version) = stringValue.split(":").takeIf { it.size == 3 } ?: return null
+    if (!isKotlinStdLib(group, name)) return null
 
     LOG.debug {
       "Found a single string notation kotlin-stdlib dependency: $stringValue " +
@@ -129,21 +130,16 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
   private fun getVersionIfKotlinStdLibVersionCatalog(argument: GrExpression): String? {
     val catalogReference = argument as? GrReferenceElement<*> ?: return null
     val resolved = catalogReference.resolve() as? PsiMethod ?: return null
-    val stringValue = getResolvedDependency(resolved, argument) ?: return null
-    val version = parseKotlinStdLibVersionFromString(stringValue) ?: return null
+    val dependency = getResolvedDependency(resolved, argument) ?: return null
+    if (!isKotlinStdLib(dependency.group, dependency.name) || dependency.version == null) return null
 
     LOG.debug {
-      "Found a version catalog notation kotlin-stdlib dependency: $stringValue " +
+      "Found a version catalog notation kotlin-stdlib dependency: $dependency " +
       "at line ${holder.file.fileDocument.getLineNumber(argument.textRange.startOffset) + 1} " +
       "in file ${holder.file.virtualFile.path}"
     }
 
-    return version
-  }
-
-  private fun parseKotlinStdLibVersionFromString(dependencyString: String): String? {
-    val (group, name, version) = dependencyString.split(":").takeIf { it.size == 3 } ?: return null
-    return if (isKotlinStdLib(group, name)) version else null
+    return dependency.version
   }
 
   private fun isKotlinStdLib(group: String, name: String): Boolean {
@@ -189,8 +185,7 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
   private fun extractVersionFromAliasPlugin(firstCall: ChainedMethodCallPart): String? {
     val catalogReference = firstCall.arguments.firstOrNull() as? GrReferenceElement<*> ?: return null
     val resolved = catalogReference.resolve() as? PsiMethod ?: return null
-    val (name, version) = getResolvedPlugin(resolved, catalogReference)
-                            ?.split(":")?.takeIf { it.size == 2 } ?: return null
+    val (name, version) = getResolvedPlugin(resolved, catalogReference) ?: return null
 
     return if (name == KOTLIN_JVM_PLUGIN) version else null
   }

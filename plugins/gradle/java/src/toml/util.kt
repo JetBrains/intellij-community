@@ -179,33 +179,62 @@ private fun getVersionCatalogName(psiClass: PsiClass): String? {
     return name
 }
 
+data class DependencyCoordinates(val group: String, val name: String, val version: String?) {
+  override fun toString(): String {
+    return if (version != null) "$group:$name:$version" else "$group:$name"
+  }
+
+  companion object {
+    fun from(coordinates: String): DependencyCoordinates? {
+      val parts = coordinates.split(':')
+      if (parts.size < 2) return null
+      return DependencyCoordinates(parts[0], parts[1], parts.getOrNull(2))
+    }
+  }
+}
+
+data class PluginCoordinates(val id: String, val version: String?) {
+  override fun toString(): String {
+    return if (version != null) "$id:$version" else id
+  }
+
+  companion object {
+    fun from(coordinates: String): PluginCoordinates? {
+      val parts = coordinates.split(':')
+      if (parts.isEmpty()) return null
+      return PluginCoordinates(parts[0], parts.getOrNull(1))
+    }
+  }
+}
+
 /**
  * Tries to resolve a dependency from a synthetic accessor method.
- * @return a string in the format of `<group>:<name>:<version>`,
- * `<group>:<name>` if the version cannot be resolved or null if the dependency cannot be resolved
  */
-fun getResolvedDependency(method: PsiMethod, context: PsiElement): String? {
+fun getResolvedDependency(method: PsiMethod, context: PsiElement): DependencyCoordinates? {
   if (!isInVersionCatalogAccessor(method)) return null
   val origin = findOriginInTomlFile(method, context) as? TomlKeyValue ?: return null
   return when (val originValue = origin.value) {
-    is TomlLiteral -> originValue.text.cleanRawString()
+    is TomlLiteral -> DependencyCoordinates.from(originValue.text.cleanRawString())
+
     is TomlInlineTable -> {
       val module = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "module" }?.value
-      val moduleText = if (module != null) {
+
+      val (groupText, nameText) = if (module != null) {
         if (module !is TomlLiteral) return null
-        module.text.cleanRawString()
+        module.text.cleanRawString().split(':').takeIf { it.size == 2 } ?: return null
       }
       else {
         val group = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "group" }?.value
         val name = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "name" }?.value
         if (group == null || name == null) return null
         if (group !is TomlLiteral || name !is TomlLiteral) return null
-        "${group.text.cleanRawString()}:${name.text.cleanRawString()}"
+        listOf(group.text.cleanRawString(), name.text.cleanRawString())
       }
 
-      val versionEntry = originValue.entries.find { it.key.segments.firstOrNull()?.name == "version" } ?: return moduleText
-      val versionText = getResolvedVersion(versionEntry) ?: return moduleText
-      return "$moduleText:$versionText"
+      val versionEntry = originValue.entries.find { it.key.segments.firstOrNull()?.name == "version" }
+                         ?: return DependencyCoordinates(groupText, nameText, null)
+      val versionText = getResolvedVersion(versionEntry) ?: return DependencyCoordinates(groupText, nameText, null)
+      DependencyCoordinates(groupText, nameText, versionText)
     }
 
     else -> return null
@@ -214,24 +243,25 @@ fun getResolvedDependency(method: PsiMethod, context: PsiElement): String? {
 
 /**
  * Tries to resolve a plugin from a synthetic accessor method.
- * @return a string in the format of `<id>:<version>`,
- * `<id>` if the version cannot be resolved or null if the plugin cannot be resolved
  */
-fun getResolvedPlugin(method: PsiMethod, context: PsiElement): String? {
+fun getResolvedPlugin(method: PsiMethod, context: PsiElement): PluginCoordinates? {
   if (!isInVersionCatalogAccessor(method)) return null
   val origin = findOriginInTomlFile(method, context) as? TomlKeyValue ?: return null
   return when (val originValue = origin.value) {
-    is TomlLiteral -> originValue.text.cleanRawString()
+    is TomlLiteral -> PluginCoordinates.from(originValue.text.cleanRawString())
+
     is TomlInlineTable -> {
       val id = originValue.entries.find { it.key.segments.size == 1 && it.key.segments.firstOrNull()?.name == "id" }?.value
       if (id == null) return null
       if (id !is TomlLiteral) return null
       val idText = id.text.cleanRawString()
 
-      val versionEntry = originValue.entries.find { it.key.segments.firstOrNull()?.name == "version" } ?: return idText
-      val versionText = getResolvedVersion(versionEntry) ?: return idText
-      "$idText:$versionText"
+      val versionEntry = originValue.entries.find { it.key.segments.firstOrNull()?.name == "version" }
+                         ?: return PluginCoordinates(idText, null)
+      val versionText = getResolvedVersion(versionEntry) ?: return PluginCoordinates(idText, null)
+      PluginCoordinates(idText, versionText)
     }
+
     else -> null
   }
 }
@@ -257,7 +287,9 @@ private fun getResolvedVersion(entry: TomlKeyValue): String? {
   return finalVersionKeyValue?.value?.asSafely<TomlLiteral>()?.text?.cleanRawString()
 }
 
-// cleans single or multiline toml string literal
+/**
+ * Cleans a single or multiline TOML string literal
+ */
 private fun String.cleanRawString(): String =
   this.trim('"', '\'')
     .replace("\r", "")
