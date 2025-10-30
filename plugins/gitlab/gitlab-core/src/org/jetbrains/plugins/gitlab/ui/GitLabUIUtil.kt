@@ -8,7 +8,6 @@ import com.intellij.markdown.utils.lang.CodeBlockHtmlSyntaxHighlighter
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlChunk
 import git4idea.repo.GitRepository
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementType
@@ -24,9 +23,9 @@ import org.intellij.markdown.flavours.gfm.StrikeThroughDelimiterParser
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.ImageGeneratingProvider
+import org.intellij.markdown.html.LinkGeneratingProvider
 import org.intellij.markdown.html.SimpleInlineTagProvider
 import org.intellij.markdown.html.makeXssSafe
-import org.intellij.markdown.html.makeXssSafeDestination
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.sequentialparsers.EmphasisLikeParser
 import org.intellij.markdown.parser.sequentialparsers.LocalParsingResult
@@ -43,6 +42,8 @@ import org.intellij.markdown.parser.sequentialparsers.impl.ReferenceLinkParser
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
 
 
 private val MARKDOWN_IMAGE_SETTINGS: IElementType = MarkdownElementType("MARKDOWN_IMAGE_SETTINGS")
@@ -109,7 +110,7 @@ object GitLabUIUtil {
         MarkdownElementTypes.IMAGE to GitLabImageWithSettingsGeneratingProvider(linkMap, baseURI).makeXssSafe(useSafeLinks),
         GFMElementTypes.STRIKETHROUGH to SimpleInlineTagProvider("strike", 2, -2),
         MarkdownElementTypes.CODE_FENCE to CodeFenceSyntaxHighlighterGeneratingProvider(htmlSyntaxHighlighter),
-        MarkdownElementTypes.INLINE_LINK to GitLabLinkGeneratingProvider(gitRepository, projectPath, uploadFileUrlBase, map[MarkdownElementTypes.INLINE_LINK]),
+        MarkdownElementTypes.INLINE_LINK to GitLabLinkGeneratingProvider(gitRepository, projectPath, uploadFileUrlBase).makeXssSafe(useSafeLinks),
       )
     }
   }
@@ -203,61 +204,46 @@ object GitLabUIUtil {
   private class GitLabLinkGeneratingProvider(
     private val gitRepository: GitRepository,
     private val projectPath: GitLabProjectPath,
-    private val uploadFileUrlBase: String,
-    private val fallback: GeneratingProvider?
-  ) : GeneratingProvider {
-    override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
-      val linkText = node.findChildOfType(MarkdownElementTypes.LINK_TEXT)
-        ?.findChildOfType(MarkdownTokenTypes.TEXT)
-        ?.getTextInNode(text)
-      val linkDestination = node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text)
-
-      // For now, only format complete inline links
-      if (linkText == null || linkDestination == null) {
-        fallback?.processNode(visitor, text, node)
-        return
-      }
-
-      linkText as String
-      linkDestination as String
+    private val uploadFileUrlBase: String
+  ) : LinkGeneratingProvider(null, false) {
+    override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
+      val linkTextNode = node.findChildOfType(MarkdownElementTypes.LINK_TEXT) ?: return null
+      val linkText = linkTextNode.findChildOfType(MarkdownTokenTypes.TEXT)?.getTextInNode(text)?.let { LinkMap.normalizeTitle(it) }
+      val linkDestination = node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text)?.toString() ?: ""
 
       // If the destination starts with '!', it's a GitLab MR reference
       if (linkDestination.startsWith('!')) {
         val mrIid = linkDestination.substring(1)
         val mrUrl = "$OPEN_MR_LINK_PREFIX$mrIid"
-        visitor.consumeHtml(createLink(mrUrl, "!${mrIid}").toString())
-        return
+        return RenderInfo(linkTextNode, mrUrl, "!${mrIid}")
       }
 
-      // If the link looks an awful lot like a website link or project-relative link, leave it be
+      // If the link looks an awful lot like a website link
+      if (linkDestination.startsWith("http:") || linkDestination.startsWith("https:")) {
+        return RenderInfo(linkTextNode, LinkMap.normalizeDestination(linkDestination, true), linkText)
+      }
+
+      // project-relative link, leave it be as it, it will be handled by baseUrl in SimpleHtmlPane
       val fullProjectPath = projectPath.fullPath()
-      if (linkDestination.startsWith("http:") || linkDestination.startsWith("https:") ||
-          linkDestination.trimStart('/').startsWith(fullProjectPath)) {
-        visitor.consumeHtml(createLink(linkDestination, linkText).toString())
-        return
+      if (linkDestination.trimStart('/').startsWith(fullProjectPath)) {
+        return RenderInfo(linkTextNode, linkDestination, linkText)
       }
 
       // "uploads" files links should be updated to absolute URLs of the uploads
       if (linkDestination.startsWith(UPLOADS_PATH)) {
-        visitor.consumeHtml(createLink(
-          uploadFileUrlBase + linkDestination.substring(UPLOADS_PATH.length), linkText).toString())
-        return
+        return RenderInfo(linkTextNode, uploadFileUrlBase + linkDestination.substring(UPLOADS_PATH.length), linkText)
       }
 
       // Otherwise, the destination is a file in the current git repo, so we can make the link go to it directly
       try {
-        val fileDestination = gitRepository.root.toNioPath().resolve(linkDestination.replace('\\', '/')).toString()
+        val path = Path.of(linkDestination)
+        val fileDestination = gitRepository.root.toNioPath().resolve(path).toString()
         val fileDescription = "$OPEN_FILE_LINK_PREFIX${fileDestination}"
-        visitor.consumeHtml(createLink(fileDescription, linkText).toString())
+        return RenderInfo(linkTextNode, fileDescription, linkText)
       }
-      catch (e: Exception) {
-        // If some error occurred (because the file path is invalid because it's likely a link), just leave it as is
-        visitor.consumeHtml(createLink(linkDestination, linkText).toString())
+      catch (e: InvalidPathException) {
+        return RenderInfo(linkTextNode, LinkMap.normalizeDestination(linkDestination, true), linkText)
       }
-      return
     }
-
-    private fun createLink(linkDestination: String, @NlsSafe linkText: String): HtmlChunk.Element =
-      HtmlChunk.link(makeXssSafeDestination(linkDestination).toString(), linkText)
   }
 }

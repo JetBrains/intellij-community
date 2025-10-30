@@ -79,7 +79,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         [link](/uploads/a/b/c.jpg) some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><a href="${baseUrl}a/b/c.jpg">link</a> some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><a href="${baseUrl}a/b/c.jpg" title="link">link</a> some text</p></body>""")
   }
 
   fun `test simple MR link gets MR link prefix`() {
