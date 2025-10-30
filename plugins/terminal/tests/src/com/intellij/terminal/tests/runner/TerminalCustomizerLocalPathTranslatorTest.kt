@@ -288,6 +288,42 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
                  dir2.remoteSeparatorAndDir)
   }
 
+  @Test
+  fun `Go-related local dirs are translated to remote`(): Unit = timeoutRunBlocking(TIMEOUT) {
+    val dir = tempDir.asDirectory()
+
+    val gopath = "GOPATH"
+    val ijForceSetGopath = "_INTELLIJ_FORCE_SET_GOPATH"
+    val goroot = "GOROOT"
+    val ijForceSetGoroot = "_INTELLIJ_FORCE_SET_GOROOT"
+
+    val gopathDir = createTmpDir(gopath).asDirectory()
+    val binDir = createTmpDir("bin").asDirectory()
+    val gorootDir = createTmpDir("GOROOT").asDirectory()
+    register(deprecatedCustomizer {
+      gopathDir.appendHostTo(gopath, it)
+      binDir.appendHostTo(IJ_PREPEND_PATH, it)
+      gopathDir.appendHostTo(ijForceSetGopath, it)
+      it[goroot] = gorootDir.nioDir.toString()
+      it[ijForceSetGoroot] = gorootDir.nioDir.toString()
+    })
+    val result = configureStartupOptions(dir) {
+      it[gopath] = ""
+      it[IJ_PREPEND_PATH] = ""
+      it[ijForceSetGopath] = ""
+    }
+    Assertions.assertThat(result.getEnvVarValue(gopath))
+      .isEqualTo(gopathDir.remoteDir)
+    Assertions.assertThat(result.getEnvVarValue(IJ_PREPEND_PATH))
+      .isEqualTo(binDir.remoteDir)
+    Assertions.assertThat(result.getEnvVarValue(ijForceSetGopath))
+      .isEqualTo(gopathDir.remoteDir)
+    Assertions.assertThat(result.getEnvVarValue(goroot))
+      .isEqualTo(gorootDir.remoteDir)
+    Assertions.assertThat(result.getEnvVarValue(ijForceSetGoroot))
+      .isEqualTo(gorootDir.remoteDir)
+  }
+
   private fun customizer(handler: (envs: MutableMap<String, String>) -> Unit): LocalTerminalCustomizer {
     return object : LocalTerminalCustomizer() {
       override fun customizeCommandAndEnvironment(
