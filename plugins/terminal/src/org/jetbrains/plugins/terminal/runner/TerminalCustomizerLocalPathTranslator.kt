@@ -12,6 +12,7 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.pathSeparator
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
 import org.jetbrains.plugins.terminal.runner.TerminalCustomizerLocalPathTranslator.Companion.PATH_LIKE_ENV_NAMES
@@ -177,8 +178,9 @@ internal class TerminalCustomizerLocalPathTranslator(
     val path = WslPath.parseWindowsUncPath(pathString) ?: return null
     val eelRootPath = WslPath.parseWindowsUncPath(wslEelDescriptor.rootPath.toString()) ?: return null
     if (path.distributionId == eelRootPath.distributionId && path.wslRoot != eelRootPath.wslRoot) {
-      check(pathString.startsWith(path.wslRoot))
-      val newPathString = eelRootPath.wslRoot + pathString.substring(path.wslRoot.length)
+      val winPathString = PathUtil.toSystemDependentName(pathString)
+      check(winPathString.startsWith(path.wslRoot))
+      val newPathString = eelRootPath.wslRoot + winPathString.substring(path.wslRoot.length)
       try {
         val newPath = Path.of(newPathString)
         return newPath.asEelPath(descriptor).toString()

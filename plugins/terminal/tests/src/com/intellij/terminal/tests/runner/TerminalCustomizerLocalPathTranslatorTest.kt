@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.vfs.impl.wsl.WslConstants
 import com.intellij.platform.eel.EelApi
@@ -228,20 +229,31 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
   fun `translate Windows WSL UNC paths with different prefix`(): Unit = timeoutRunBlocking(TIMEOUT) {
     Assumptions.assumeTrue(eelHolder.type is Wsl)
 
-    fun buildWslUncPathWithOtherPrefix(windowsUncPath: String): String {
-      val wslPath = WslPath.parseWindowsUncPath(windowsUncPath)!!
-      val prefix = wslPath.wslRoot.removeSuffix(wslPath.distributionId)
-      val otherPrefix = (listOf(WslConstants.UNC_PREFIX, "\\\\wsl.localhost\\") - prefix).single()
-      check(windowsUncPath.startsWith(prefix))
-      return otherPrefix + windowsUncPath.removePrefix(prefix)
-    }
-
     val dir = tempDir.asDirectory()
     val dirWithOtherPrefix = Path.of(buildWslUncPathWithOtherPrefix(dir.nioDir.toString()))
     Assumptions.assumeTrue(Files.isDirectory(dirWithOtherPrefix))
 
     register(deprecatedCustomizer {
       prependToEnvVar(PATH, it, dirWithOtherPrefix.toString(), LocalEelDescriptor)
+    })
+
+    val result = configureStartupOptions(dir) {
+      it[PATH] = "/usr/bin"
+    }
+    Assertions.assertThat(result.getEnvVarValue(PATH))
+      .isEqualTo(dir.remoteDirAndSeparator + "/usr/bin")
+  }
+
+  @Test
+  fun `translate Windows WSL UNC paths with different prefix (Unix separators)`(): Unit = timeoutRunBlocking(TIMEOUT) {
+    Assumptions.assumeTrue(eelHolder.type is Wsl)
+
+    val dir = tempDir.asDirectory()
+    val dirWithOtherPrefix = Path.of(buildWslUncPathWithOtherPrefix(dir.nioDir.toString()))
+    Assumptions.assumeTrue(Files.isDirectory(dirWithOtherPrefix))
+
+    register(deprecatedCustomizer {
+      prependToEnvVar(PATH, it, FileUtilRt.toSystemIndependentName(dirWithOtherPrefix.toString()), LocalEelDescriptor)
     })
 
     val result = configureStartupOptions(dir) {
@@ -382,6 +394,15 @@ private fun joinPaths(path1: String, path2: String, descriptor: EelDescriptor): 
   else {
     path1 + path2
   }
+}
+
+private fun buildWslUncPathWithOtherPrefix(windowsUncPath: String): String {
+  val winSepUncPath = FileUtilRt.toSystemDependentName(windowsUncPath, '\\')
+  val wslPath = WslPath.parseWindowsUncPath(winSepUncPath)!!
+  val prefix = wslPath.wslRoot.removeSuffix(wslPath.distributionId)
+  val otherPrefix = (listOf(WslConstants.UNC_PREFIX, "\\\\wsl.localhost\\") - prefix).single()
+  check(winSepUncPath.startsWith(prefix))
+  return otherPrefix + winSepUncPath.removePrefix(prefix)
 }
 
 private const val PATH: String = "PATH"
