@@ -393,7 +393,7 @@ internal class ToolbarFrameHeader(
 
   override fun getComponentGraphics(graphics: Graphics?): Graphics? {
     val componentGraphics = super.getComponentGraphics(graphics)
-    return InternalUICustomization.getInstance()?.transformGraphics(this, componentGraphics) ?: componentGraphics
+    return InternalUICustomization.getInstance()?.backgroundImageGraphics(this, componentGraphics) ?: componentGraphics
   }
 
   override fun updateActive() {
