@@ -35,23 +35,19 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
     ) : Task.Modal(project, KotlinBundle.message("optimize.imports.collect.unused.imports"), true) {
 
         override fun run(indicator: ProgressIndicator) {
-            run {
-                indicator.isIndeterminate = false
+            indicator.isIndeterminate = false
 
-                val myTotalCount = operationData.size
-                for ((counter, file) in operationData.withIndex()) {
-                    ReadAction.nonBlocking<Unit> {
-                        val virtualFile = file.virtualFile ?: return@nonBlocking
+            val myTotalCount = operationData.size
+            for ((counter, file) in operationData.withIndex()) {
+                runReadAction {
+                    val virtualFile = file.virtualFile ?: return@runReadAction
 
-                        indicator.fraction = counter.toDouble() / myTotalCount
-                        indicator.text2 = virtualFile.presentableUrl
+                    indicator.fraction = counter.toDouble() / myTotalCount
+                    indicator.text2 = virtualFile.presentableUrl
 
-                        val importData = KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
-                        importData?.unusedImports?.mapTo(unusedImports) { it.createSmartPointer() }
-                    }
-                        .wrapProgress(indicator)
-                        .expireWhen { !file.isValid || project.isDisposed() }
-                        .executeSynchronously()
+                    if (!file.isValid) return@runReadAction
+                    val importData = KotlinOptimizeImportsFacility.getInstance().analyzeImports(file)
+                    importData?.unusedImports?.mapTo(unusedImports) { it.createSmartPointer() }
                 }
             }
         }
