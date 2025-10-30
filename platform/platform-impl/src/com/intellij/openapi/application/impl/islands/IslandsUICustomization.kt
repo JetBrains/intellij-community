@@ -760,7 +760,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       paintIslandBackground(gg, shape)
 
-      paintIslandBorderLine(gg, border)
+      if (isIslandBorderLineNeeded(component)) {
+        paintIslandBorderLine(gg, border)
+      }
     }
     finally {
       if (isGradient) {
@@ -772,6 +774,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
   private fun paintIslandBackground(gg: Graphics2D, shape: Area) {
     gg.color = getMainBackgroundColor()
     gg.fill(shape)
+  }
+
+  private fun isIslandBorderLineNeeded(component: JComponent): Boolean {
+    if (isIslandsGradientEnabled) return true
+    val project = ProjectUtil.getProjectForComponent(component)
+    return !IdeBackgroundUtil.isEditorBackgroundImageSet(project) // the border looks ugly with a background image
   }
 
   private fun paintIslandBorderLine(gg: Graphics2D, border: Area) {
