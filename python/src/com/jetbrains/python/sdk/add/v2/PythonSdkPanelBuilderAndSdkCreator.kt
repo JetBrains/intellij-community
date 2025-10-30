@@ -161,7 +161,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     }
   }
 
-  private fun initialize(scope: CoroutineScope) {
+  private suspend fun initialize(scope: CoroutineScope) {
     model.initialize(scope)
 
     pythonBaseVersionComboBox.initialize(scope, model.baseInterpreters)

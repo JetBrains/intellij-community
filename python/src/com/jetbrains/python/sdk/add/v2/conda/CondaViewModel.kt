@@ -8,8 +8,6 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.provider.localEel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.conda.loadLocalPythonCondaPath
@@ -52,7 +50,7 @@ class CondaViewModel<P : PathHolder>(
         }
       }
 
-      fileSystem.which(eelApi.getCondaCommand())?.let { return@ToolValidator it }
+      fileSystem.which("conda")?.let { return@ToolValidator it }
 
       // legacy slow fallback detection via the defined list of paths in case of there is no conda on the PATH (PY-85060),
       // not sure if it is worth it to keep it, because if there is no conda on the PATH the installation might be broken
@@ -114,12 +112,4 @@ class CondaViewModel<P : PathHolder>(
     }
     return@withContext PyResult.success(environments)
   }
-}
-
-/**
- * correctly detects the platform only for eelApi, for targets Windows is not supported
- */
-private fun EelApi?.getCondaCommand(): String = when {
-  this?.platform is EelPlatform.Windows -> "conda.bat"
-  else -> "conda"
 }

@@ -3,11 +3,9 @@ package com.intellij.python.hatch
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
-import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.where
-import com.intellij.python.hatch.runtime.getHatchCommand
 import com.jetbrains.python.Result
+import com.jetbrains.python.sdk.detectTool
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 
@@ -40,10 +38,6 @@ object HatchConfiguration {
     return result
   }
 
-  suspend fun detectHatchExecutable(eelApi: EelApi): Path? {
-    val hatchCommand = eelApi.getHatchCommand()
-    val hatchPath = eelApi.exec.where(hatchCommand)?.asNioPath()
-    return hatchPath
-  }
+  suspend fun detectHatchExecutable(eelApi: EelApi): Path? = detectTool("hatch", eelApi).successOrNull
 }
 

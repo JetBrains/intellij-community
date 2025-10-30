@@ -36,14 +36,14 @@ internal class UvInterpreterSection(
     }.visibleIf(_uv)
   }
 
-  fun onShown(scope: CoroutineScope) {
+  suspend fun onShown(scope: CoroutineScope) {
     selectUvIfExists()
     uvCreator.onShown(scope)
   }
 
   fun hintVisiblePredicate() = _uv and model.uvViewModel.uvExecutable.isNotNull()
 
-  private fun selectUvIfExists() {
+  private suspend fun selectUvIfExists() {
     if (PropertiesComponent.getInstance().getValue(FAV_MODE) != null) return
     if (hasUvExecutable() && selectedMode.get() != PythonInterpreterSelectionMode.PROJECT_UV) {
       selectedMode.set(PythonInterpreterSelectionMode.PROJECT_UV)
