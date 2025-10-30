@@ -2,7 +2,6 @@
 package com.intellij.java.ift.lesson.run
 
 import com.intellij.debugger.JavaDebuggerBundle
-import com.intellij.debugger.engine.JavaStackFrame
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.icons.AllIcons
 import com.intellij.java.ift.JavaLessonsBundle
@@ -14,12 +13,12 @@ import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.frame.XStackFrame
 import training.dsl.*
 import training.learn.CourseManager
 import training.learn.lesson.general.run.CommonDebugLesson
 import training.statistic.LessonStartingWay
 import training.ui.LearningUiManager
-import training.util.isToStringContains
 
 internal class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
   override val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
@@ -141,8 +140,14 @@ internal class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
     }
 
     task {
+      val lineNumber by lazy {
+        sample.text.split("\n")
+          .indexOfFirst { it.contains("return Integer.parseInt") }
+          .also { assert(it >= 0) { "No needed line found" } }
+      }
+
       triggerAndBorderHighlight { usePulsation = true }.listItem { item ->
-        (item as? JavaStackFrame)?.descriptor.isToStringContains("extractNumber")
+        (item as? XStackFrame)?.sourcePosition?.line == lineNumber
       }
     }
 
