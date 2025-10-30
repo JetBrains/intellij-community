@@ -80,6 +80,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(FinishInlineRename.PREFIX, FinishInlineRename::new),
       Map.entry(AssertOpenedFileInSpecificRoot.PREFIX, AssertOpenedFileInSpecificRoot::new),
       Map.entry(CloseAllTabsCommand.PREFIX, CloseAllTabsCommand::new),
+      Map.entry(HideAllToolWindowsCommand.PREFIX, HideAllToolWindowsCommand::new),
       Map.entry(CollectAllFilesCommand.PREFIX, CollectAllFilesCommand::new),
       Map.entry(ExecuteEditorActionCommand.PREFIX, ExecuteEditorActionCommand::new),
       Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new),
