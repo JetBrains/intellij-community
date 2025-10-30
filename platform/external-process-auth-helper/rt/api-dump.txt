@@ -4,6 +4,7 @@ externalApp.ExternalAppEntry
 - a:getArgs():java.lang.String[]
 - a:getEnvironment():java.util.Map
 - a:getStderr():java.io.PrintStream
+- a:getStdin():java.io.InputStream
 - a:getStdout():java.io.PrintStream
 - a:getWorkingDirectory():java.lang.String
 externalApp.ExternalAppHandler

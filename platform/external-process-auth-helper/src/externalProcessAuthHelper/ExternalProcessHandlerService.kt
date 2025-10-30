@@ -13,6 +13,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.asOutputStream
+import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.readUtf8
@@ -34,6 +35,7 @@ import org.jetbrains.ide.RestService
 import org.jetbrains.io.response
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.io.PrintStream
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -124,14 +126,17 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
   private class EelExternalAppEntry(val process: EelExecApi.ExternalCliProcess) : ExternalAppEntry, AutoCloseable {
     val myStderr: PrintStream = process.stderr.asOutputStream().let(::PrintStream)
     val myStdout: PrintStream = process.stdout.asOutputStream().let(::PrintStream)
+    val myStdin: InputStream = process.stdin.consumeAsInputStream()
     override fun getArgs(): Array<out String> = process.args.toTypedArray()
     override fun getEnvironment(): Map<String, String> = process.environment
     override fun getWorkingDirectory(): String = process.workingDir.asNioPath().pathString
     override fun getStderr(): PrintStream = myStderr
     override fun getStdout(): PrintStream = myStdout
+    override fun getStdin(): InputStream = myStdin
 
     override fun close() {
       stderr.close()
+      stdout.close()
     }
   }
 

@@ -1,12 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package externalApp;
 
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Map;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 class ExternalAppEntryImpl implements ExternalAppEntry {
-  public final String[] args;
+  private final String[] args;
 
   ExternalAppEntryImpl(String[] args) {
     this.args = args;
@@ -35,5 +36,10 @@ class ExternalAppEntryImpl implements ExternalAppEntry {
   @Override
   public PrintStream getStdout() {
     return System.out;
+  }
+
+  @Override
+  public InputStream getStdin() {
+    return System.in;
   }
 }
