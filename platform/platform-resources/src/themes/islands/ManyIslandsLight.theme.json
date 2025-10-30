@@ -93,8 +93,9 @@
     },
 
     "StripeToolbar.Button": {
-      "leftStripeIcon.padding": "5,7,5,3",
-      "rightStripeIcon.padding": "5,3,5,7",
+      "size": "37,40",
+      "leftStripeIcon.padding": "5,5,5,2",
+      "rightStripeIcon.padding": "5,2,5,5",
       "leftStripeIcon.padding.compact": "4,5,4,3",
       "rightStripeIcon.padding.compact": "4,3,4,5",
       "leftStripeIconWithName.padding": "4,6,4,2",
