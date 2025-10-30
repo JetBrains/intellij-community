@@ -454,17 +454,12 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() = mySessionTab
 
   override fun getUI(): RunnerLayoutUi? {
-    return if (SplitDebuggerMode.isSplitDebugger()) {
-      // See "TODO [Debugger.RunnerLayoutUi]" to see usages which are not yet properly migrated.
-      if (SplitDebuggerMode.showSplitWarnings()) {
-        LOG.error("RunnerLayoutUi should not be used in split mode from XDebugSession")
-      }
-      null
+    // See "TODO [Debugger.RunnerLayoutUi]" to see usages which are not yet properly migrated.
+    if (SplitDebuggerMode.showSplitWarnings()) {
+      LOG.error("RunnerLayoutUi should not be used in split mode from XDebugSession")
     }
-    else {
-      assertSessionTabInitialized()
-      sessionTab!!.ui
-    }
+    assertSessionTabInitialized()
+    return sessionTab!!.ui
   }
 
   override fun isMixedMode(): Boolean {
