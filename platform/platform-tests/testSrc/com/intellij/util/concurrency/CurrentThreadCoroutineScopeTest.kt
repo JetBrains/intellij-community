@@ -342,4 +342,30 @@ class CurrentThreadCoroutineScopeTest {
     job.join()
     assertTrue(flag.get())
   }
+
+  @OptIn(InternalCoroutinesApi::class)
+  @Test
+  fun `withCurrentThreadCoroutineScopeBlocking does not leak blockingContextScope to coroutines`(): Unit = timeoutRunBlocking {
+    val blockingContextScopeEnded = Semaphore(1)
+    val executeOnPooledThreadEnded = Semaphore(1)
+    val job = blockingContextScope {
+      withCurrentThreadCoroutineScopeBlocking {
+        currentThreadCoroutineScope().launch {
+          assertErrorLogged<IllegalStateException> {
+            currentThreadCoroutineScope()
+          }
+          application.executeOnPooledThread {
+            assertNull(Cancellation.currentJob())
+            blockingContextScopeEnded.timeoutWaitUp()
+            // happens strictly outside `blockingContextScope`
+            executeOnPooledThreadEnded.up()
+          }
+        }
+      }.second
+    }
+    // must manually propagate exceptions from the checkpoint's supervisor
+    job.getCancellationException().cause?.let { throw it }
+    blockingContextScopeEnded.up()
+    executeOnPooledThreadEnded.timeoutWaitUp()
+  }
 }

@@ -426,13 +426,9 @@ fun currentThreadCoroutineScope(): CoroutineScope {
       """There is no scoping element in this thread. Current context: ${threadContext}. 
         | Please use `blockingContextScope` or `withCurrentThreadCoroutineScope` to ensure that spawned coroutines are tracked""".trimMargin()))
   }
+  val context = (checkpoint?.context ?: threadContext).minusKey(BlockingJob).minusKey(ThreadScopeCheckpoint)
   @Suppress("RAW_SCOPE_CREATION")
-  return if (checkpoint == null) {
-    CoroutineScope(threadContext.minusKey(BlockingJob))
-  }
-  else {
-    CoroutineScope(checkpoint.context)
-  }
+  return CoroutineScope(context)
 }
 
 @Internal
