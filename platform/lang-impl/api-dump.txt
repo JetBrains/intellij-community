@@ -193,6 +193,12 @@ com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler
 com.intellij.codeInsight.generation.actions.PresentableLanguageCodeInsightActionHandler
 - com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler
 - com.intellij.lang.LanguageCodeInsightActionHandler
+c:com.intellij.codeInsight.highlighting.BraceHighlightingCustomizer
+- sf:Companion:com.intellij.codeInsight.highlighting.BraceHighlightingCustomizer$Companion
+- <init>():V
+- shouldShowScopeHint(com.intellij.openapi.editor.Editor):Z
+f:com.intellij.codeInsight.highlighting.BraceHighlightingCustomizer$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.highlighting.BraceHighlightingCustomizer
 com.intellij.codeInsight.highlighting.BraceMatcher
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getBraceTokenGroupId(com.intellij.psi.tree.IElementType):I

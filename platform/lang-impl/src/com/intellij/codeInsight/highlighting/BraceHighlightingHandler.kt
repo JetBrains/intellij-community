@@ -344,7 +344,7 @@ class BraceHighlightingHandler internal constructor(
         lineMarkFragment(editor, document, startLine, endLine, matched)
       }
 
-      if (!scopeHighlighting) {
+      if (!scopeHighlighting && BraceHighlightingCustomizer.getInstance(project).shouldShowScopeHint(editor)) {
         showScopeHint(lBrace.startOffset, lBrace.endOffset)
       }
     }
