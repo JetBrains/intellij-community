@@ -433,6 +433,7 @@ public final class PluginInstallOperation {
           }
           var resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyModuleId.getName());
           if (resolvedDependencyId == null) {
+            if (LOG.isDebugEnabled()) LOG.debug("Dependency is not resolved");
             continue;
           }
           if (LOG.isDebugEnabled()) LOG.debug("Dependency is resolved into " + resolvedDependencyId);
