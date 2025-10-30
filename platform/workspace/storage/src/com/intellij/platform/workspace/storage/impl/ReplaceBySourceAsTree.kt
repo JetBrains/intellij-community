@@ -21,6 +21,13 @@ private typealias WorkspaceEntityDataCustomCollection = MutableMap<WorkspaceEnti
   MutableList<WorkspaceEntityData<out WorkspaceEntity>>>
 
 /**
+ * Immutable version of WorkspaceEntityDataCustomCollection used for caching.
+ * Prevents accidental cache corruption through mutations.
+ */
+private typealias ImmutableWorkspaceEntityDataCollection = Map<WorkspaceEntityData<out WorkspaceEntity>,
+  List<WorkspaceEntityData<out WorkspaceEntity>>>
+
+/**
  * # Replace By Source ~~as tree~~
  *
  * Replace By Source, or RBS for short.
@@ -815,8 +822,8 @@ internal class ReplaceBySourceAsTree {
     return removeAt(index)
   }
 
-  private val targetChildrenEntityDataCache = HashMap<EntityId, Map<ConnectionId, WorkspaceEntityDataCustomCollection>>()
-  private val replaceWithChildrenEntityDataCache = HashMap<EntityId, Map<ConnectionId, WorkspaceEntityDataCustomCollection>>()
+  private val targetChildrenEntityDataCache = HashMap<EntityId, Map<ConnectionId, ImmutableWorkspaceEntityDataCollection>>()
+  private val replaceWithChildrenEntityDataCache = HashMap<EntityId, Map<ConnectionId, ImmutableWorkspaceEntityDataCollection>>()
 
   private fun childrenInReplaceWith(entityId: EntityId?, childClazz: Int): WorkspaceEntityDataCustomCollection {
     return childrenInStorage(entityId, childClazz, replaceWithStorage, replaceWithChildrenEntityDataCache)
@@ -861,7 +868,7 @@ internal class ReplaceBySourceAsTree {
     }
 
     private fun childrenInStorage(entityId: EntityId?, childrenClass: Int, storage: AbstractEntityStorage,
-                                  childrenCache: HashMap<EntityId, Map<ConnectionId, WorkspaceEntityDataCustomCollection>>): WorkspaceEntityDataCustomCollection {
+                                  childrenCache: HashMap<EntityId, Map<ConnectionId, ImmutableWorkspaceEntityDataCollection>>): WorkspaceEntityDataCustomCollection {
       if (entityId == null) return mutableMapOf()
 
       val targetChildren = childrenCache.getOrPut(entityId) {
@@ -882,7 +889,11 @@ internal class ReplaceBySourceAsTree {
       require(targetFoundChildren.size < 2) { "Got unexpected amount of children" }
 
       if (targetFoundChildren.isEmpty()) return mutableMapOf()
-      return targetFoundChildren.entries.single().value
+      // Return mutable working copy from immutable cached data
+      val immutableCollection = targetFoundChildren.entries.single().value
+      return immutableCollection.mapValuesTo(
+        CollectionFactory.createCustomHashingStrategyMap(hashingStrategy)
+      ) { (_, list) -> list.toMutableList() }
     }
 
     /**
