@@ -51,9 +51,10 @@ class CollectRootReasonsVisitor(private val threadsMap: Long2ObjectMap<ThreadInf
   }
 
   override fun visitRootJavaFrame(objectId: Long, threadSerialNumber: Long, frameNumber: Long) {
+    val threadInfo = threadsMap[threadSerialNumber]
     val rootReason =
-      if (frameNumber >= 0) {
-        RootReason.createJavaFrameReason(threadsMap[threadSerialNumber].frames[frameNumber.toInt()])
+      if (frameNumber >= 0 && threadInfo != null) {
+        RootReason.createJavaFrameReason(threadInfo.frames[frameNumber.toInt()])
       }
       else {
         RootReason.createJavaFrameReason("Unknown location")
