@@ -100,7 +100,11 @@
       "leftStripeIconWithName.padding": "4,6,4,2",
       "rightStripeIconWithName.padding": "4,2,4,6",
       "leftStripeIconWithName.padding.compact": "3,4,3,2",
-      "rightStripeIconWithName.padding.compact": "3,2,3,4"
+      "rightStripeIconWithName.padding.compact": "3,2,3,4",
+      "leftStripeTextOffset": 2,
+      "leftStripeTextOffset.compact": 0,
+      "rightStripeTextOffset": -2,
+      "rightStripeTextOffset.compact": 0
     },
 
     "EditorTabs": {
