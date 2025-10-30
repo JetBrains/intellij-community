@@ -115,7 +115,7 @@ internal class TerminalCustomizerLocalPathTranslator(
   }
 
   private fun translateHostPathToRemote(pathString: String): String {
-    if (pathString.isBlank() || pathString == ".") return pathString
+    if (pathString.isBlank()) return pathString
     val path: Path = try {
       Path.of(pathString)
     }
@@ -123,6 +123,7 @@ internal class TerminalCustomizerLocalPathTranslator(
       LOG.debug(e) { "Failed to create Path from $pathString, adding it as is (without translation)" }
       return pathString
     }
+    if (!path.isAbsolute) return pathString
     val eelPath: EelPath = try {
       path.asEelPath(descriptor)
     }
