@@ -879,7 +879,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             includeFilesFromOtherProjects);
 
           if (!ActionUtil.isDumbMode(project) || getCurrentDumbModeAccessType_NoDumbChecks() == null) {
-            forceUpdate(project, projectFilterCondition, restrictedFile);
+            forceUpdate(project, projectFilterCondition);
           }
           indexUnsavedDocuments(indexId, project, projectFilterCondition, restrictedFile);
         }
@@ -1806,8 +1806,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final VirtualFileUpdateTask myForceUpdateTask = new VirtualFileUpdateTask();
 
   private void forceUpdate(@Nullable Project project,
-                           @NotNull ProjectFilesCondition filter,
-                           @Nullable VirtualFile restrictedTo) {
+                           @NotNull ProjectFilesCondition filter) {
     Collection<FileIndexingRequest> allFilesToUpdate = getAllFilesToUpdate();
 
     if (!allFilesToUpdate.isEmpty()) {
