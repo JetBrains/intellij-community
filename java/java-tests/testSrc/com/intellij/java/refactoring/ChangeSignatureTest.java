@@ -2,10 +2,17 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.JavaPsiRecordUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
@@ -15,12 +22,41 @@ import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.ArrayUtil;
 import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
 public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   private CommonCodeStyleSettings getCommonSettings() {
     return getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE);
+  }
+
+  @Override
+  protected @Nullable PsiElement getTargetElement() {
+    PsiElement target = super.getTargetElement();
+    if (target instanceof PsiClass aClass) {
+      return JavaPsiRecordUtil.findCanonicalConstructor(aClass);
+    }
+    if (target instanceof PsiRecordComponent component) {
+      return JavaPsiRecordUtil.findCanonicalConstructor(component.getContainingClass());
+    }
+    if (getTestName(false).contains("Implicit")) {
+      return findCalledElement();
+    }
+    return target;
+  }
+  
+  private PsiElement findCalledElement() {
+    Editor editor = getEditor();
+    Document document = editor.getDocument();
+    Project project = getProject();
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document, context);
+    if (file == null) return null;
+    int offset = editor.getCaretModel().getOffset();
+    PsiElement element = file.findElementAt(offset);
+    PsiCall call = PsiTreeUtil.getParentOfType(element, PsiCall.class);
+    return call.resolveMethod();
   }
 
   public void testSimple() {
@@ -977,6 +1013,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, "Record component 'a' is used");
   }
 
+  public void testImplicitDefaultConstructor() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.createNew().withName("i").withType(PsiTypes.intType())
+      };
+    }, false);
+  }
+
   public void testWithoutConflictsForGet() {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     final PsiType pointType = facade.getElementFactory().createTypeFromText("String", null);
@@ -1000,74 +1044,61 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
   }
 
   public void testWithoutConflictsSwitchUsedDeconstruction() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(0).withName("a").withType(pointType)
+        ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())
       };
     }, false);
   }
 
   public void testConflictsSwitchNarrowedDeconstruction() {
     assertConflict(() -> {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
       doTest(null, null, null, method -> {
         return new ParameterInfoImpl[]{
-          ParameterInfoImpl.create(0).withName("a").withType(pointType)
+          ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())
         };
       }, false);
     }, "Record component 'b' is used");
   }
 
   public void testWithoutConflictsSwitchExtendedDeconstruction() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(0).withName("a").withType(pointType)
+        ParameterInfoImpl.create(0).withName("a").withType(PsiTypes.intType())
       };
     }, false);
   }
 
   public void testConflictsSwitchNestedDeconstruction() {
     assertConflict(() -> {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
       doTest(null, null, null, method -> {
         return new ParameterInfoImpl[]{
-          ParameterInfoImpl.create(0).withName("x").withType(pointType)
+          ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
         };
       }, false);
     }, "Record component 'y' is used");
   }
 
   public void testWithoutConflictsSwitchNestedDeconstruction() {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-    final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
-        ParameterInfoImpl.create(0).withName("x").withType(pointType)
+        ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
       };
     }, false);
   }
 
   public void testConflictsSwitchNestedDeconstructionDifTypes() {
     assertConflict(() -> {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-      final PsiType pointType = facade.getElementFactory().createTypeFromText("int", null);
       doTest(null, null, null, method -> {
         return new ParameterInfoImpl[]{
-          ParameterInfoImpl.create(0).withName("x").withType(pointType)
+          ParameterInfoImpl.create(0).withName("x").withType(PsiTypes.intType())
         };
       }, false);
     }, "Record component 'x' is used");
   }
 
   @SuppressWarnings("CatchMayIgnoreException")
-  private static void assertConflict(@NotNull Runnable runnable,
-                                     @NotNull String expectedMessage) {
+  private static void assertConflict(@NotNull Runnable runnable, @NotNull String expectedMessage) {
     try {
       runnable.run();
       fail("Conflict expected");

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -47,7 +48,8 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
 
   private static void invokeOnElement(Project project, @Nullable Editor editor, PsiElement element) {
     if (element instanceof PsiMethod m && m.getNameIdentifier() != null) {
-      if (element instanceof SyntheticElement && !(element instanceof LightRecordCanonicalConstructor)) {
+      if (element instanceof SyntheticElement && !(element instanceof LightRecordCanonicalConstructor)
+          && !(element instanceof LightDefaultConstructor)) {
         String message = JavaRefactoringBundle.message("error.cannot.change.signature.implicitly.declared.method", m.getName());
         CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.CHANGE_SIGNATURE);
         return;

@@ -5,7 +5,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -38,10 +37,7 @@ public abstract class ChangeSignatureBaseTest extends LightJavaCodeInsightTestCa
     super.tearDown();
   }
 
-  protected void doTest(@Nullable String returnType,
-                        final String @Nullable [] parameters,
-                        final String @Nullable [] exceptions,
-                        boolean delegate) {
+  protected void doTest(@Nullable String returnType, String @Nullable [] parameters, String @Nullable [] exceptions, boolean delegate) {
     GenParams genParams = parameters == null ? new SimpleParameterGen() : method -> {
       ParameterInfoImpl[] parameterInfos = new ParameterInfoImpl[parameters.length];
       for (int i = 0; i < parameters.length; i++) {
@@ -104,13 +100,7 @@ public abstract class ChangeSignatureBaseTest extends LightJavaCodeInsightTestCa
                         boolean skipConflict) {
     String basePath = getRelativePath() + getTestName(false);
     configureByFile(basePath + ".java");
-    PsiElement targetElement = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
-    if (targetElement instanceof PsiClass aClass) {
-      targetElement = JavaPsiRecordUtil.findCanonicalConstructor(aClass);
-    }
-    if (targetElement instanceof PsiRecordComponent component) {
-      targetElement = JavaPsiRecordUtil.findCanonicalConstructor(component.getContainingClass());
-    }
+    PsiElement targetElement = getTargetElement();
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;
     PsiType newType = newReturnType != null ? myFactory.createTypeFromText(newReturnType, method) : method.getReturnType();
@@ -131,6 +121,10 @@ public abstract class ChangeSignatureBaseTest extends LightJavaCodeInsightTestCa
       }
     }.run();
     checkResultByFile(basePath + "_after.java");
+  }
+
+  protected @Nullable PsiElement getTargetElement() {
+    return TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
   }
 
   protected String getRelativePath() {

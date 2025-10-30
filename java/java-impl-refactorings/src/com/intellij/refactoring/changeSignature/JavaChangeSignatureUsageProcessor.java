@@ -656,17 +656,32 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
   @Override
   public boolean processPrimaryMethod(ChangeInfo changeInfo) {
     if (!JavaLanguage.INSTANCE.equals(changeInfo.getLanguage()) || !(changeInfo instanceof JavaChangeInfo javaChangeInfo)) return false;
-    final PsiMethod element = javaChangeInfo.getMethod();
-    if (!JavaLanguage.INSTANCE.equals(element.getLanguage())) {
+    PsiMethod method = javaChangeInfo.getMethod();
+    if (!JavaLanguage.INSTANCE.equals(method.getLanguage())) {
       return false;
     }
-    if (!(element.isPhysical() || element instanceof LightRecordMethod || element instanceof LightRecordCanonicalConstructor)) {
-      return false;
+    if (!method.isDefaultConstructor()) {
+      if (!(method.isPhysical() || method instanceof LightRecordMethod || method instanceof LightRecordCanonicalConstructor)) {
+        return false;
+      }
+    }
+    else {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+      PsiClass aClass = method.getContainingClass();
+      if (method.isDefaultConstructor() && aClass != null) {
+        String className = aClass.getName();
+        if (className != null) {
+          PsiMethod constructor = factory.createConstructor(className, aClass);
+          PsiUtil.setModifierProperty(constructor, VisibilityUtil.getVisibilityModifier(aClass.getModifierList()), true);
+          method = (PsiMethod)aClass.add(constructor);
+          javaChangeInfo.updateMethod(method);
+        }
+      }
     }
     if (changeInfo.isGenerateDelegate()) {
       generateDelegate(javaChangeInfo);
     }
-    processPrimaryMethod(javaChangeInfo, element, null, true);
+    processPrimaryMethod(javaChangeInfo, method, null, true);
     return true;
   }
 
