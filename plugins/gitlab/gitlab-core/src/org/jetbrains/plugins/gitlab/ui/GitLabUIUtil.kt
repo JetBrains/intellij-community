@@ -24,7 +24,9 @@ import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.ImageGeneratingProvider
 import org.intellij.markdown.html.LinkGeneratingProvider
+import org.intellij.markdown.html.ReferenceLinksGeneratingProvider
 import org.intellij.markdown.html.SimpleInlineTagProvider
+import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.markdown.html.makeXssSafe
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.sequentialparsers.EmphasisLikeParser
@@ -106,11 +108,14 @@ object GitLabUIUtil {
 
     override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
       val map = super.createHtmlGeneratingProviders(linkMap, baseURI)
+      val referenceLinks = GitLabReferenceLinksGeneratingProvider(gitRepository, projectPath, uploadFileUrlBase, linkMap, baseURI, absolutizeAnchorLinks).makeXssSafe(useSafeLinks)
       return map + hashMapOf(
         MarkdownElementTypes.IMAGE to GitLabImageWithSettingsGeneratingProvider(linkMap, baseURI).makeXssSafe(useSafeLinks),
         GFMElementTypes.STRIKETHROUGH to SimpleInlineTagProvider("strike", 2, -2),
         MarkdownElementTypes.CODE_FENCE to CodeFenceSyntaxHighlighterGeneratingProvider(htmlSyntaxHighlighter),
         MarkdownElementTypes.INLINE_LINK to GitLabLinkGeneratingProvider(gitRepository, projectPath, uploadFileUrlBase).makeXssSafe(useSafeLinks),
+        MarkdownElementTypes.FULL_REFERENCE_LINK to referenceLinks,
+        MarkdownElementTypes.SHORT_REFERENCE_LINK to referenceLinks,
       )
     }
   }
@@ -201,49 +206,91 @@ object GitLabUIUtil {
     }
   }
 
+  private class GitLabReferenceLinksGeneratingProvider(
+    private val gitRepository: GitRepository,
+    private val projectPath: GitLabProjectPath,
+    private val uploadFileUrlBase: String,
+    private val linkMap: LinkMap,
+    baseURI: org.intellij.markdown.html.URI?,
+    resolveAnchors: Boolean = false,
+  ) : ReferenceLinksGeneratingProvider(linkMap, baseURI, resolveAnchors) {
+
+    override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
+      val label = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_LABEL } ?: return null
+      val linkInfo = linkMap.getLinkInfo(label.getTextInNode(text)) ?: return null
+      val linkTextNode = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT }
+
+      val destination = EntityConverter.replaceEntities(linkInfo.destination, processEntities = true, processEscapes = true)
+
+      val processedDestination = processDestination(gitRepository, projectPath, uploadFileUrlBase, destination)
+
+      return RenderInfo(
+        linkTextNode ?: label,
+        processedDestination,
+        linkInfo.title?.let { EntityConverter.replaceEntities(it, processEntities = true, processEscapes = true) }
+      )
+    }
+  }
+
   private class GitLabLinkGeneratingProvider(
     private val gitRepository: GitRepository,
     private val projectPath: GitLabProjectPath,
     private val uploadFileUrlBase: String
   ) : LinkGeneratingProvider(null, false) {
+
     override fun getRenderInfo(text: String, node: ASTNode): RenderInfo? {
       val linkTextNode = node.findChildOfType(MarkdownElementTypes.LINK_TEXT) ?: return null
       val linkText = linkTextNode.findChildOfType(MarkdownTokenTypes.TEXT)?.getTextInNode(text)?.let { LinkMap.normalizeTitle(it) }
       val linkDestination = node.findChildOfType(MarkdownElementTypes.LINK_DESTINATION)?.getTextInNode(text)?.toString() ?: ""
 
-      // If the destination starts with '!', it's a GitLab MR reference
+      val processedDestination = processDestination(gitRepository, projectPath, uploadFileUrlBase, linkDestination)
+
+      // If the destination starts with '!', we also show it as is
       if (linkDestination.startsWith('!')) {
-        val mrIid = linkDestination.substring(1)
-        val mrUrl = "$OPEN_MR_LINK_PREFIX$mrIid"
-        return RenderInfo(linkTextNode, mrUrl, "!${mrIid}")
+        return RenderInfo(linkTextNode, processedDestination, linkDestination)
       }
+      return RenderInfo(linkTextNode, processedDestination, linkText)
+    }
+  }
 
-      // If the link looks an awful lot like a website link
-      if (linkDestination.startsWith("http:") || linkDestination.startsWith("https:")) {
-        return RenderInfo(linkTextNode, LinkMap.normalizeDestination(linkDestination, true), linkText)
-      }
+  private fun processDestination(
+    gitRepository: GitRepository,
+    projectPath: GitLabProjectPath,
+    uploadFileUrlBase: String,
+    linkDestination: String,
+  ): CharSequence {
+    // If the destination starts with '!', it's a GitLab MR reference
+    if (linkDestination.startsWith('!')) {
+      val mrIid = linkDestination.substring(1)
+      val mrUrl = "$OPEN_MR_LINK_PREFIX$mrIid"
+      return mrUrl
+    }
 
-      // project-relative link, leave it be as it, it will be handled by baseUrl in SimpleHtmlPane
-      val fullProjectPath = projectPath.fullPath()
-      if (linkDestination.trimStart('/').startsWith(fullProjectPath)) {
-        return RenderInfo(linkTextNode, linkDestination, linkText)
-      }
+    // If the link looks an awful lot like a website link
+    if (linkDestination.startsWith("http:") || linkDestination.startsWith("https:")) {
+      return LinkMap.normalizeDestination(linkDestination, true)
+    }
 
-      // "uploads" files links should be updated to absolute URLs of the uploads
-      if (linkDestination.startsWith(UPLOADS_PATH)) {
-        return RenderInfo(linkTextNode, uploadFileUrlBase + linkDestination.substring(UPLOADS_PATH.length), linkText)
-      }
+    // project-relative link, leave it be as it, it will be handled by baseUrl in SimpleHtmlPane
+    val fullProjectPath = projectPath.fullPath()
+    if (linkDestination.trimStart('/').startsWith(fullProjectPath)) {
+      return linkDestination
+    }
 
-      // Otherwise, the destination is a file in the current git repo, so we can make the link go to it directly
-      try {
-        val path = Path.of(linkDestination)
-        val fileDestination = gitRepository.root.toNioPath().resolve(path).toString()
-        val fileDescription = "$OPEN_FILE_LINK_PREFIX${fileDestination}"
-        return RenderInfo(linkTextNode, fileDescription, linkText)
-      }
-      catch (e: InvalidPathException) {
-        return RenderInfo(linkTextNode, LinkMap.normalizeDestination(linkDestination, true), linkText)
-      }
+    // "uploads" files links should be updated to absolute URLs of the uploads
+    if (linkDestination.startsWith(UPLOADS_PATH)) {
+      return uploadFileUrlBase + linkDestination.substring(UPLOADS_PATH.length)
+    }
+
+    // Otherwise, the destination is a file in the current git repo, so we can make the link go to it directly
+    try {
+      val path = Path.of(linkDestination)
+      val fileDestination = gitRepository.root.toNioPath().resolve(path).toString()
+      val fileDescription = "$OPEN_FILE_LINK_PREFIX${fileDestination}"
+      return fileDescription
+    }
+    catch (_: InvalidPathException) {
+      return LinkMap.normalizeDestination(linkDestination, true)
     }
   }
 }

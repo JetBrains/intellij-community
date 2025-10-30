@@ -248,6 +248,61 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
     assertThat(parsed).isEqualTo("""<body><p>The picture <img src="http://url" alt="image" title="label" /> some text</p></body>""")
   }
 
+
+  fun `test full reference link with absolute web url`() {
+    val parsed = convertToHtml("""
+        [link]: http://url "label"
+        The link [link-description][link] and some text
+      """.trimIndent())
+
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="http://url" title="label">link-description</a> and some text</p></body>""")
+  }
+
+  fun `test full reference link for uploads file`() {
+    val parsed = convertToHtml("""
+        [link]: /uploads/some/path.pdf "label"
+        The link [link-description][link] and some text
+      """.trimIndent())
+
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="http://base/url/uploads/some/path.pdf" title="label">link-description</a> and some text</p></body>""")
+  }
+
+  fun `test full reference link for local file`() {
+    val parsed = convertToHtml("""
+        [link]: /local/file/some/path.pdf "label"
+        The link [link-description][link] and some text
+      """.trimIndent())
+
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="glfilelink:\local\file\some\path.pdf" title="label">link-description</a> and some text</p></body>""")
+  }
+
+  fun `test short reference link with absolute web url`() {
+    val parsed = convertToHtml("""
+        [link]: http://url "label"
+        The link [link] and some text
+      """.trimIndent())
+
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="http://url" title="label">link</a> and some text</p></body>""")
+  }
+
+  fun `test short reference link for uploads file`() {
+    val parsed = convertToHtml("""
+        [link]: /uploads/some/path.pdf "label"
+        The link [link] and some text
+      """.trimIndent())
+
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="http://base/url/uploads/some/path.pdf" title="label">link</a> and some text</p></body>""")
+  }
+
+  fun `test short reference link for local file`() {
+    val parsed = convertToHtml("""
+        [link]: /local/file/some/path.pdf "label"
+        The link [link] and some text
+      """.trimIndent())
+
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="glfilelink:\local\file\some\path.pdf" title="label">link</a> and some text</p></body>""")
+  }
+
   private fun convertToHtml(markdownSource: String): @NlsSafe String {
     val parsed = GitLabUIUtil.convertToHtml(
       project, gitRepository, GitLabProjectPath("test-account", "mr-test"), markdownSource, baseUrl)
