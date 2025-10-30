@@ -54,6 +54,11 @@ abstract class WelcomeScreenProjectProvider {
       return extension.doIsWelcomeScreenProject(project)
     }
 
+    fun isEditableWelcomeProject(project: Project): Boolean {
+      val extension = getWelcomeScreenProjectProvider() ?: return false
+      return extension.doIsWelcomeScreenProject(project) && extension.doIsEditableProject(project)
+    }
+
     fun isForceDisabledFileColors(): Boolean {
       val extension = getWelcomeScreenProjectProvider() ?: return false
       return extension.doIsForceDisabledFileColors()
@@ -97,6 +102,15 @@ abstract class WelcomeScreenProjectProvider {
   protected abstract fun getWelcomeScreenProjectName(): String
 
   protected abstract fun doIsWelcomeScreenProject(project: Project): Boolean
+
+  /**
+   * Return true if your project is not only a welcome screen, but also a real project where the user can create, store and edit files.
+   * Junie and other features might be disabled for non-editable welcome screen projects.
+   * See MTRH-1423
+   */
+  protected open fun doIsEditableProject(project: Project): Boolean {
+    return false
+  }
 
   protected abstract fun doIsForceDisabledFileColors(): Boolean
 
