@@ -263,6 +263,31 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
       .isEqualTo(dir.remoteDirAndSeparator + "/usr/bin")
   }
 
+  @Test
+  fun `ensure relative paths are not translated`(): Unit = timeoutRunBlocking(TIMEOUT) {
+    val dir1 = tempDir.asDirectory()
+    val dir2 = createTmpDir("dir2").asDirectory()
+    register(deprecatedCustomizer {
+      dir1.prependHostTo(PATH, it)
+      appendToEnvVar(PATH, it, ".", LocalEelDescriptor)
+    }, deprecatedCustomizer {
+      appendToEnvVar(PATH, it, "./foo", LocalEelDescriptor)
+      prependToEnvVar(PATH, it, "./bar", LocalEelDescriptor)
+      dir2.appendHostTo(PATH, it)
+    })
+    val result = configureStartupOptions(dir1) {
+      it[PATH] = "/path/to/baz"
+    }
+    val remoteSeparator = dir1.remoteSeparator
+    Assertions.assertThat(result.getEnvVarValue(PATH))
+      .isEqualTo("./bar" + remoteSeparator +
+                 dir1.remoteDirAndSeparator +
+                 "/path/to/baz" +
+                 remoteSeparator + "." +
+                 remoteSeparator + "./foo" +
+                 dir2.remoteSeparatorAndDir)
+  }
+
   private fun customizer(handler: (envs: MutableMap<String, String>) -> Unit): LocalTerminalCustomizer {
     return object : LocalTerminalCustomizer() {
       override fun customizeCommandAndEnvironment(
