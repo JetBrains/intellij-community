@@ -112,6 +112,10 @@ private fun PsiElement.isUnreachableForInspectionNoCache(context: FlowContext): 
  * Determines if the element is unreachable by control flow analysis.
  * If the element does not have corresponding instruction in CFG, searches for the nearest parent that has.
  */
+fun PsiElement.isUnreachableByControlFlow(context: TypeEvalContext): Boolean {
+  return isUnreachableByControlFlow(FlowContext(context, true))
+}
+
 private fun PsiElement.isUnreachableByControlFlow(context: FlowContext): Boolean {
   return PyUtil.getParameterizedCachedValue(this, context) { this.isUnreachableByControlFlowNoCache(it) }
 }

@@ -6,9 +6,7 @@ import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DfaMapInstance;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
-import com.jetbrains.python.codeInsight.controlflow.PyDataFlowKt;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
+import com.jetbrains.python.codeInsight.controlflow.*;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeVariable;
 import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeVariableImpl;
@@ -37,7 +35,9 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
     if (element == null || ((PyFile) element.getContainingFile()).getLanguageLevel().isPython2()){
       return processReducedMap(map, instruction, element);
     }
-    if (PyDataFlowKt.isUnreachableForInspection(element, myContext)) {
+    final FlowContext context = new FlowContext(myContext, true);
+    final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(element);
+    if (scopeOwner != null && ControlFlowCache.getDataFlow(scopeOwner, context).isUnreachable(instruction)) {
       return UNREACHABLE_MARKER;
     }
     if (instruction instanceof CallInstruction callInstruction) {
