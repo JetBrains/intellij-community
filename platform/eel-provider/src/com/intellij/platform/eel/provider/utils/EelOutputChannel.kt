@@ -56,7 +56,12 @@ interface EelOutputChannel {
   /**
    * Closes the channel similarly to sendEof, but if the channel is not already closed, can log an error or propagate it to the receiver.
    */
-  fun ensureClosed(error: Throwable? = null)
+  fun ensureClosed(error: () -> Throwable? = { null })
+}
+
+@ApiStatus.Internal
+fun EelOutputChannel.ensureClosed(error: Throwable?) {
+  ensureClosed { error }
 }
 
 @ApiStatus.Internal
@@ -134,13 +139,15 @@ class EelOutputChannelImpl : EelOutputChannel, EelReceiveChannel {
     state.update { it.copy(closed = true) }
   }
 
-  override fun ensureClosed(error: Throwable?) {
-    val wasClosed = state.getAndUpdate {
-      it.copy(closed = true)
+  override fun ensureClosed(error: () -> Throwable?) {
+    state.getAndUpdate {
+      if (!it.closed) {
+        it.copy(closed = true, closedWithError = error())
+      }
+      else {
+        it
+      }
     }.closed
-    if (!wasClosed && error != null) {
-      state.update { it.copy(closedWithError = error) }
-    }
   }
 
   override suspend fun closeForReceive() {

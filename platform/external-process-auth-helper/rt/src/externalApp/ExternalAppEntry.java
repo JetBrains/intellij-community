@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package externalApp;
 
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Map;
 
@@ -10,6 +11,7 @@ public interface ExternalAppEntry {
   String getWorkingDirectory();
   PrintStream getStderr();
   PrintStream getStdout();
+  InputStream getStdin();
 
   static ExternalAppEntry fromMain(String[] args) {
     return new ExternalAppEntryImpl(args);
