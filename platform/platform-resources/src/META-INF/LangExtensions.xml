@@ -334,6 +334,7 @@
                     serviceImplementation="com.intellij.usages.impl.UsageViewManagerImpl"/>
 
     <projectService serviceImplementation="com.intellij.find.actions.ShowUsagesManager" client="local"/>
+    <projectService serviceImplementation="com.intellij.codeInsight.highlighting.BraceHighlightingCustomizer" />
 
     <projectService serviceInterface="com.intellij.ide.util.gotoByName.ChooseByNameFactory"
                     serviceImplementation="com.intellij.ide.util.gotoByName.ChooseByNameFactoryImpl"/>
