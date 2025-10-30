@@ -15,7 +15,7 @@ import org.jetbrains.annotations.TestOnly
 @TestOnly
 class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()) : PythonPackageManagerService {
 
-  override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
+  override suspend fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
     installedPackages.ifEmpty {
       return TestPythonPackageManager(project, sdk).also { Disposer.register(project, it) }
     }

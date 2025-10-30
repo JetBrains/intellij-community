@@ -54,6 +54,7 @@ import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.remote.TargetAwarePathMappingProvider;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -366,7 +367,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (sdk != null && getEnableRunTool()) {
       PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
       if (runToolProvider != null && useRunTool(myConfig, sdk)) {
-        runToolParameters = runToolProvider.getRunToolParameters();
+        runToolParameters = PythonCommandLineStateExKt.getRunToolParametersForJvm(runToolProvider);
         PyRunToolUsageCollector.logRun(myConfig.getProject(), PyRunToolIds.idOf(runToolProvider));
       }
     }
@@ -626,6 +627,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * @param helpersAwareRequest the request
    * @return the representation of Python script or module execution
    */
+  @RequiresBackgroundThread
   protected @NotNull PythonExecution buildPythonExecution(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareRequest) {
     throw new UnsupportedOperationException("The implementation of Run Configuration based on Targets API is absent");
   }

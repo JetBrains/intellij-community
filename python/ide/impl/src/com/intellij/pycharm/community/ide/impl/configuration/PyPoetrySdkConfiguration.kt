@@ -24,6 +24,7 @@ import com.jetbrains.python.projectModel.poetry.POETRY_TOOL_ID
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.*
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.poetry.*
@@ -97,10 +98,10 @@ class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
       val tomlFile = PyProjectToml.findFile(module)
       val poetry = setupPoetry(basePath, null, true, tomlFile == null).getOr { return@withBackgroundProgress it }
       val path = poetry.resolvePythonBinary()
-                 ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", poetry))
+                 ?: return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", poetry))
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.pathString)
-                 ?: return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", path))
+                 ?: return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", path))
 
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")
       val sdk = SdkConfigurationUtil.setupSdk(

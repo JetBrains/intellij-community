@@ -70,9 +70,9 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
       return it
     }.map { it.name }
 
-    val categorizedPackages =  packages
+    val categorizedPackages = packages
       .map { PyPackageName.from(it) }
-      .partition { it.name !in dependencyNames || sdk.uvUsePackageManagement  }
+      .partition { it.name !in dependencyNames || sdk.uvUsePackageManagement }
 
     return PyResult.success(categorizedPackages)
   }
@@ -128,7 +128,7 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
 }
 
 class UvPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? {
+  override suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? {
     if (!sdk.isUv) {
       return null
     }

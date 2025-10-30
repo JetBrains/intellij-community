@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.intellij.execution.Platform
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
@@ -11,7 +10,6 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.systemOs
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
@@ -25,10 +23,7 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.sdk.PyDetectedSdk
-import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.runExecutableWithProgress
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.toVersion
@@ -61,24 +56,9 @@ suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String>
 /**
  * Detects the poetry executable in `$PATH`.
  */
-internal suspend fun detectPoetryExecutable(eel: EelApi = localEel): PyResult<Path> {
-  val windows = eel.systemOs().platform == Platform.WINDOWS
-  val poetryBinNames = if (windows) {
-    setOf("poetry.exe", "poetry.bat")
-  }
-  else {
-    setOf("poetry")
-  }
-
+internal suspend fun detectPoetryExecutable(eel: EelApi = localEel): PyResult<Path> =
   // TODO: Poetry from store isn't detected because local eel doesn't obey appx binaries. We need to fix it on eel side
-  val userHomePoetry = eel.userInfo.home.resolve(".poetry").resolve(".bin")
-  val executablePath = withContext(Dispatchers.IO) {
-    poetryBinNames.flatMap { eel.exec.findExeFilesInPath(it) }.firstOrNull()?.asNioPath()
-    ?: poetryBinNames.map { userHomePoetry.resolve(it).asNioPath() }.firstOrNull { it.exists() }
-  }
-
-  return executablePath?.let { PyResult.success(it) } ?: PyResult.localizedError(poetryNotFoundException)
-}
+  detectTool("poetry", eel, listOf(eel.userInfo.home.asNioPath().resolve(Path.of(".poetry", ".bin"))))
 
 /**
  * Returns the configured poetry executable or detects it automatically.

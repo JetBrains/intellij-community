@@ -5,8 +5,10 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
@@ -41,9 +43,15 @@ class UvRunConfigurationState(
     )
   }
 
-  override fun buildPythonExecution(helpersAwareRequest: HelpersAwareTargetEnvironmentRequest): PythonExecution {
-    return buildUvRunConfigurationCli(uvRunConfiguration.options, isDebug)
-  }
+  /**
+   * I'd prefer this whole function to be suspendable, but unfortunately it's an override from Java code, so we have to use
+   * [runBlockingMaybeCancellable] here :(
+   */
+  @RequiresBackgroundThread
+  override fun buildPythonExecution(helpersAwareRequest: HelpersAwareTargetEnvironmentRequest): PythonExecution =
+    runBlockingMaybeCancellable {
+      buildUvRunConfigurationCli(uvRunConfiguration.options, isDebug)
+    }
 }
 
 @ApiStatus.Internal
@@ -63,12 +71,12 @@ fun canRun(
   }
 
   val workingDirectory = options.workingDirectory
-  val uvExecutable = getUvExecutable()
   var isError = false
   var isUnsynced = false
+  runWithModalProgressBlocking(project, PyBundle.message("uv.run.configuration.state.progress.name")) {
+    val uvExecutable = getUvExecutable()
 
-  if (workingDirectory != null && uvExecutable != null) {
-    runWithModalProgressBlocking(project, PyBundle.message("uv.run.configuration.state.progress.name")) {
+    if (workingDirectory != null && uvExecutable != null) {
       val uv = createUvCli(uvExecutable).mapSuccess { createUvLowLevel(workingDirectory, it) }.getOrNull()
 
       when (uv?.let { requiresSync(it, options, logger) }?.getOrNull()) {
@@ -77,9 +85,9 @@ fun canRun(
         null -> isError = true
       }
     }
-  }
-  else {
-    isError = true
+    else {
+      isError = true
+    }
   }
 
   if (isError || isUnsynced) {

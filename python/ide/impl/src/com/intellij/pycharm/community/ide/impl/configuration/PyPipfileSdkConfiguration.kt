@@ -31,6 +31,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.findAmongRoots
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pipenv.*
@@ -139,12 +140,12 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv)) }
       if (path == null) {
-        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", pipEnv))
+        return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", pipEnv))
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString())
       if (file == null) {
-        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", path))
+        return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", path))
       }
 
       PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)
