@@ -25,6 +25,10 @@ private class PyCharmWelcomeScreenProjectProvider : WelcomeScreenProjectProvider
     return project.name == MISC_PROJECT_WITH_WELCOME_NAME || project.name == MISC_PROJECT_NAME
   }
 
+  override fun doIsEditableProject(project: Project): Boolean {
+    return true
+  }
+
   override fun doIsForceDisabledFileColors(): Boolean = true
 
   override fun doGetCreateNewFileProjectPrefix(): String = "awesomeProject"
