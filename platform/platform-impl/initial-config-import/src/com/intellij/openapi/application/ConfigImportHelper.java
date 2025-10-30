@@ -79,6 +79,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.plugins.BundledPluginsStateKt.BUNDLED_PLUGINS_FILENAME;
 
 @ApiStatus.Internal
+@SuppressWarnings("UseOptimizedEelFunctions")
 public final class ConfigImportHelper {
   public static final String IMPORT_FROM_ENV_VAR = "JB_IMPORT_SETTINGS_FROM";
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
