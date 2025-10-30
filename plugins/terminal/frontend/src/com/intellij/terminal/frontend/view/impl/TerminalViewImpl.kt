@@ -170,6 +170,7 @@ class TerminalViewImpl(
       scrollingModel = null,
       alternateBufferModel,
       shellIntegrationDeferred = null,
+      startupOptionsDeferred = null,
       typeAhead = null,
     )
     configureOutputEditor(
@@ -217,6 +218,7 @@ class TerminalViewImpl(
       scrollingModel,
       outputModel,
       shellIntegrationDeferred,
+      startupOptionsDeferred,
       typeAhead = outputModelController
     )
 

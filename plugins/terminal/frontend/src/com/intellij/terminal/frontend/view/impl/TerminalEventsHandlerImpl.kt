@@ -20,6 +20,8 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
+import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
+import org.jetbrains.plugins.terminal.session.guessShellName
 import org.jetbrains.plugins.terminal.session.impl.TerminalState
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -48,6 +50,7 @@ internal open class TerminalEventsHandlerImpl(
   private val scrollingModel: TerminalOutputScrollingModel?,
   private val outputModel: TerminalOutputModel,
   private val shellIntegrationDeferred: Deferred<TerminalShellIntegration>?,
+  private val startupOptionsDeferred: Deferred<TerminalStartupOptions>?,
   private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
@@ -408,9 +411,11 @@ internal open class TerminalEventsHandlerImpl(
 
   private fun scheduleCompletionPopupIfNeeded(charTyped: Char) {
     val project = editor.project ?: return
+    val shellName = startupOptionsDeferred?.getNow()?.guessShellName() ?: return
     val shellIntegration = shellIntegrationDeferred?.getNow() ?: return
     if (editor.isOutputModelEditor
         && TerminalCommandCompletion.isEnabled(project)
+        && TerminalCommandCompletion.isSupportedForShell(shellName)
         && TerminalOptionsProvider.instance.showCompletionPopupAutomatically
         && shellIntegration.outputStatus.value == TerminalOutputStatus.TypingCommand
         && canTriggerCompletion(charTyped)
