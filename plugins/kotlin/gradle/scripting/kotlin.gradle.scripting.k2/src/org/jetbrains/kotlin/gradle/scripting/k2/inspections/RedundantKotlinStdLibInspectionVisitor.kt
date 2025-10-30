@@ -20,9 +20,12 @@ import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.toUElementOfType
 
 class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
+
+    private val kotlinJvmPluginVersion = findKotlinJvmVersion(holder.file as KtFile)
+
     override fun visitCallExpression(expression: KtCallExpression) {
+        if (kotlinJvmPluginVersion == null) return
         val kotlinStdLibVersion = getKotlinStdLibVersion(expression) ?: return
-        val kotlinJvmPluginVersion = findKotlinJvmVersion(holder.file as KtFile) ?: return
         if (kotlinJvmPluginVersion != kotlinStdLibVersion) return
 
         holder.registerProblem(
@@ -36,7 +39,7 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
         val dependencyType = findDependencyType(dependencyExpression) ?: return null
         if (dependencyType == DependencyType.OTHER || !dependencyExpression.lambdaArguments.isEmpty()) return null
 
-        val argList = dependencyExpression.valueArgumentList?.takeIf { it.isPhysical } ?: return null
+        val argList = dependencyExpression.valueArgumentList ?: return null
 
         return when (dependencyType) {
             DependencyType.SINGLE_ARGUMENT -> extractVersionFromSingleArgument(argList)
