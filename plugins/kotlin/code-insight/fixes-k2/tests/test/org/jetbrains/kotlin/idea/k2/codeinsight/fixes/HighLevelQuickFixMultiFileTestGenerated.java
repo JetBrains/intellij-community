@@ -1519,6 +1519,16 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         public void testRootPackage() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/rootPackage.before.Main.kt");
         }
+
+        @TestMetadata("sameShortNameAnnotation.before.Main.kt")
+        public void testSameShortNameAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/sameShortNameAnnotation.before.Main.kt");
+        }
+
+        @TestMetadata("sameShortNameTypeAlias.before.Main.kt")
+        public void testSameShortNameTypeAlias() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/imports/sameShortNameTypeAlias.before.Main.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
