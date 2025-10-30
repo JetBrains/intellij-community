@@ -27,6 +27,7 @@ class MavenNoRootDefinedInspectionTest : MavenDomTestCase() {
 
   @Test
   fun testHighlightingWithoutMvn() = runBlocking {
+    assumeModel_4_1_0("applicable for model version 4.1.0")
     importProjectAsync("""
                        <groupId>my.group</groupId>
                        <artifactId>childA</artifactId>
@@ -34,14 +35,13 @@ class MavenNoRootDefinedInspectionTest : MavenDomTestCase() {
                        """.trimIndent())
 
     setRawPomFile("""<?xml version="1.0"?>
-      
-      <warning descr="Multi-module directory should be defined for all maven projects"><project xmlns="http://maven.apache.org/POM/$modelVersion"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
-  <modelVersion>$modelVersion</modelVersion>
-<groupId>my.group</groupId>
-<artifactId>childA</artifactId>
-<version>1.0</version></project></warning>
+       <warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model"><</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">project</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model"> </warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">xmlns="http://maven.apache.org/POM/4.1.0"</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">
+               </warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">
+               </warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd"</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">></warning>
+        <modelVersion>4.1.0</modelVersion>
+      <groupId>my.group</groupId>
+      <artifactId>childA</artifactId>
+      <version>1.0</version></project>
     """.trimIndent())
 
     checkHighlighting()
@@ -83,13 +83,13 @@ class MavenNoRootDefinedInspectionTest : MavenDomTestCase() {
     assertFalse("Directory should not exist!", mvnDir.isDirectory())
 
     setRawPomFile("""<?xml version="1.0"?>
-       <warning descr="Multi-module directory should be defined for all maven projects"><<caret>project xmlns="http://maven.apache.org/POM/$modelVersion"
-               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
-        <modelVersion>$modelVersion</modelVersion>
+       <warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model"><</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">project</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model"> </warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">xmlns="http://maven.apache.org/POM/4.1.0"</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">
+               </warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">
+               </warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model"><caret>xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd"</warning><warning descr="The root directory is not defined. Add the root=\"true\" attribute on the root project's model">></warning>
+        <modelVersion>4.1.0</modelVersion>
       <groupId>my.group</groupId>
       <artifactId>childA</artifactId>
-      <version>1.0</version></project></warning>
+      <version>1.0</version></project>
     """.trimIndent())
     checkHighlighting()
     val intention =  fixture.availableIntentions.singleOrNull{it.text.contains("Add root")}
@@ -106,33 +106,6 @@ class MavenNoRootDefinedInspectionTest : MavenDomTestCase() {
       <artifactId>childA</artifactId>
       <version>1.0</version></project>
     """.trimIndent())
-  }
-
-  @Test
-  fun testMvnDirectoryQuickFix() = runBlocking {
-
-    importProjectAsync("""
-                       <groupId>my.group</groupId>
-                       <artifactId>childA</artifactId>
-                       <version>1.0</version>
-                       """.trimIndent())
-    val mvnDir = projectRoot.toNioPath().resolve(".mvn")
-    assertFalse("Directory should not exist!", mvnDir.isDirectory())
-
-    setRawPomFile("""<?xml version="1.0"?>
-       <warning descr="Multi-module directory should be defined for all maven projects"><<caret>project xmlns="http://maven.apache.org/POM/$modelVersion"
-               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
-        <modelVersion>$modelVersion</modelVersion>
-      <groupId>my.group</groupId>
-      <artifactId>childA</artifactId>
-      <version>1.0</version></project></warning>
-    """.trimIndent())
-    checkHighlighting()
-    val intention =  fixture.availableIntentions.singleOrNull{it.text.contains("Create .mvn dir")}
-    assertNotNull("Cannot find intention", intention)
-    fixture.launchAction(intention!!)
-    assertTrue("Directory should be created", mvnDir.isDirectory())
   }
 
 
