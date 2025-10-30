@@ -23,7 +23,6 @@ internal object LibrariesRequiredForWorkspace {
   private val riderUnityPlugin = ModuleLibrary("intellij.rider.plugins.unity")
   private val riderModel = ModuleLibrary("intellij.rider.model.generated")
   private val riderRdClient = ModuleLibrary("intellij.rider.rdclient.dotnet")
-  private val bazelCommons = ModuleLibrary("intellij.bazel.commons")
   private val gradle = ModuleLibrary("intellij.gradle")
   private val gradleToolingExtension = ModuleLibrary("intellij.gradle.toolingExtension")
   private val gradleExternalSystemImpl = ModuleLibrary("intellij.platform.externalSystem.impl")
@@ -58,9 +57,6 @@ internal object LibrariesRequiredForWorkspace {
       }
       "intellij.kotlin.gradle.scripting" -> {
         listOf(kotlinBaseScripting)
-      }
-      "intellij.bazel.sdkcompat" -> {
-        listOf(bazelCommons)
       }
       "intellij.gradle" -> {
         listOf(gradleToolingExtension, gradleExternalSystemImpl)

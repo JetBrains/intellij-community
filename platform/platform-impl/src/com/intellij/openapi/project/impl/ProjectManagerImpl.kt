@@ -1443,7 +1443,7 @@ private suspend fun runApprovedExtensions(project: Project, epName: String, esse
     val assignableToClassName = adapter.assignableToClassName
     if (!isCorePlugin(pluginDescriptor)
         // todo develar
-        && !(pluginDescriptor.pluginId.idString == "org.jetbrains.bazel" && assignableToClassName == "org.jetbrains.bazel.sdkcompat.OpenBazelProjectAndSyncStartupActivity")) {
+        && !(pluginDescriptor.pluginId.idString == "org.jetbrains.bazel" && assignableToClassName == "org.jetbrains.bazel.flow.open.OpenBazelProjectAndSyncStartupActivity")) {
       LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
       continue
     }
