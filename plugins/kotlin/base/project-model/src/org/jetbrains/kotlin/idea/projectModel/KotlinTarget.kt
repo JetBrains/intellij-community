@@ -9,6 +9,7 @@ interface KotlinTarget : Serializable, HasMutableExtras {
     val presetName: String?
     val disambiguationClassifier: String?
     val platform: KotlinPlatform
+    val isManagedByComAndroidLibraryPlugin: Boolean
     val compilations: Collection<KotlinCompilation>
     val testRunTasks: Collection<KotlinTestRunTask>
     val nativeMainRunTasks: Collection<KotlinNativeMainRunTask>

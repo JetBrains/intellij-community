@@ -75,6 +75,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             associateCompilations.isNotEmpty()
         }
 
+        val isManagedByComAndroidLibraryPlugin = origin.target?.isKotlinAndroidTargetClass ?: false
+
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
             name = compilationName,
@@ -89,7 +91,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             associateCompilations = associateCompilations.toSet(),
             extras = IdeaKotlinExtras.from(serializedExtras),
             isTestComponent = isTestCompilation,
-            archiveFile = getArchiveFile(origin, importingContext)
+            archiveFile = getArchiveFile(origin, importingContext),
+            isManagedByComAndroidLibraryPlugin = isManagedByComAndroidLibraryPlugin,
         )
     }
 

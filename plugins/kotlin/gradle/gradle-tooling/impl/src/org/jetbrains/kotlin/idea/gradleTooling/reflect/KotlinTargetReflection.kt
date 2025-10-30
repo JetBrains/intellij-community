@@ -14,6 +14,7 @@ interface KotlinTargetReflection {
     val gradleTarget: Named
     val compilations: Collection<KotlinCompilationReflection>?
     val isMetadataTargetClass: Boolean
+    val isKotlinAndroidTargetClass: Boolean
 
     val nativeMainRunTasks: Collection<KotlinNativeMainRunTaskReflection>?
     val artifactsTaskName: String?
@@ -28,6 +29,12 @@ private class KotlinTargetReflectionImpl(private val instance: Any) : KotlinTarg
         val metadataTargetClass =
             instance.javaClass.classLoader.loadClassOrNull("org.jetbrains.kotlin.gradle.plugin.mpp.KotlinMetadataTarget")
         metadataTargetClass?.isInstance(instance) == true
+    }
+
+    override val isKotlinAndroidTargetClass: Boolean by lazy {
+        val kotlinAndroidTargetClass =
+            instance.javaClass.classLoader.loadClassOrNull("org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget")
+        kotlinAndroidTargetClass?.isInstance(instance) == true
     }
 
     override val targetName: String by lazy {

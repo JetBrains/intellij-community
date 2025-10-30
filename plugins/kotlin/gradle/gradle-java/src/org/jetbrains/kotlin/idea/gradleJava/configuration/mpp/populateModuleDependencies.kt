@@ -42,7 +42,7 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWi
          This is explicitly placed *after* calling into the extension points, so they can still handle the
          request with the EP instead.
          */
-        if (shouldDelegateToOtherPlugin(sourceSet)) return@forEach
+        if (sourceSet.isManagedByComAndroidLibraryPlugin) return@forEach
 
         /*
         Some dependencies are represented as IdeaKotlinProjectArtifactDependency.
