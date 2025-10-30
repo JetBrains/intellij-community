@@ -48,6 +48,9 @@ common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0
 common --local_resources=memory=HOST_RAM*.77 --local_resources=cpu=HOST_CPUS*2
 common --jobs=HOST_CPUS*2 --worker_max_multiplex_instances=JvmCompile=HOST_CPUS*2
 
+# Force all workers to quit after the build to prevent excessive memory usage when idle
+common --worker_quit_after_build
+
 # hide Java 8 deprecation warnings
 common --javacopt=-Xlint:-options
 
