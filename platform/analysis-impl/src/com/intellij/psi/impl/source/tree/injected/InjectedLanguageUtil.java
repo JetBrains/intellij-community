@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -36,10 +36,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/**
- * @deprecated Use {@link InjectedLanguageManager} instead
- */
-@Deprecated
 public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
   static final class ImplServiceImpl implements InjectedLanguageEditorUtil.ImplService {
     @Override
