@@ -73,6 +73,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   private final @NotNull Component myInitialComponent;
   private final @NotNull List<JComponent> myHighlightComponents = new ArrayList<>();
   private boolean myIsHighlighted = true;
+  private boolean myIsAccessibleEnabled = false;
   private final @NotNull HierarchyTree myHierarchyTree;
   private final @NotNull ComponentsNavBarPanel myNavBarPanel;
   private final @NotNull Wrapper myWrapperPanel;
@@ -313,10 +314,10 @@ public final class InspectorWindow extends JDialog implements Disposable {
     if (ignoreOrphanComponents && UIUtil.getRootPane(c) == null) return;
 
     Component selected = ContainerUtil.getFirstItem(myComponents);
-    myHierarchyTree.resetModel(c, false);
+    myHierarchyTree.resetModel(c, myIsAccessibleEnabled);
     TreeUtil.expandAll(myHierarchyTree);
     if (selected != null) {
-      myHierarchyTree.selectPath(selected, false);
+      myHierarchyTree.selectPath(selected, myIsAccessibleEnabled);
     }
   }
 
@@ -772,8 +773,6 @@ public final class InspectorWindow extends JDialog implements Disposable {
   }
 
   private final class ToggleAccessibleAction extends MyTextAction implements Toggleable {
-    private boolean isAccessibleEnable = false;
-
     private ToggleAccessibleAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.Accessible"));
     }
@@ -785,7 +784,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      Toggleable.setSelected(e.getPresentation(), isAccessibleEnable);
+      Toggleable.setSelected(e.getPresentation(), myIsAccessibleEnabled);
     }
 
     @Override
@@ -794,9 +793,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
     }
 
     private void switchHierarchy() {
+      myIsAccessibleEnabled = !myIsAccessibleEnabled;
+      myNavBarPanel.setAccessibleEnabled(myIsAccessibleEnabled);
       resetTree(false);
-      isAccessibleEnable = !isAccessibleEnable;
-      myNavBarPanel.setAccessibleEnabled(isAccessibleEnable);
       if (myShowAccessibilityIssuesAction.showAccessibilityIssues) {
         myShowAccessibilityIssuesAction.updateTreeWithAccessibilityAuditStatus();
       }
