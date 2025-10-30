@@ -313,7 +313,8 @@ public class ComponentValidator {
     return JBPopupFactory.getInstance().createComponentPopupBuilder(tipComponent, null).
       setBorderColor(isWarning ? warningBorderColor() : errorBorderColor()).
       setCancelOnClickOutside(false).
-      setShowShadow(true);
+      setShowShadow(true).
+      setFocusable(false);
   }
 
   /**
