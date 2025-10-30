@@ -3,6 +3,7 @@ package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.testFramework.junit5.fixture.EelForFixturesProvider.Companion.getEelForParametrizedTestProvider
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -67,6 +68,12 @@ internal class TestFixtureExtension : BeforeAllCallback,
 
   private fun before(context: ExtensionContext, static: Boolean, eelApi: EelApi? = null, instance: Any? = null) {
     val testClass: Class<*> = context.testClass.getOrNull() ?: return
+    if (static && !context.enclosingTestClasses.isEmpty()) {
+      // There can't be static fixtures in nested classes
+      return
+    }
+
+    TestLoggerFactory.onFixturesInitializationStarted(static)
 
     @OptIn(DelicateCoroutinesApi::class)
     val testScope = GlobalScope.childScope(context.displayName)
@@ -90,6 +97,7 @@ internal class TestFixtureExtension : BeforeAllCallback,
 
     awaitFixtureInitialization(testScope, pendingFixtures)
     context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
+    TestLoggerFactory.onFixturesInitializationFinished(static)
   }
 
   override fun afterEach(context: ExtensionContext) {
@@ -107,6 +115,13 @@ internal class TestFixtureExtension : BeforeAllCallback,
   }
 
   private fun after(context: ExtensionContext, static: Boolean) {
+    if (static && !context.enclosingTestClasses.isEmpty()) {
+      // There can't be static fixtures in nested classes
+      return
+    }
+
+    TestLoggerFactory.onFixturesDisposeStart(static)
+
     val testScope = context.getStore(ExtensionContext.Namespace.GLOBAL).get("TestFixtureExtension_$static") ?: return
     @Suppress("SSBasedInspection")
     runBlocking {
