@@ -93,8 +93,8 @@ public final class GCWatcher {
    * <p>Use methods with a fixed number of arguments instead.</p>
    */
   @Contract(pure = true)
-  public static @NotNull GCWatcher tracking(Object... objects) {
-    throw new UnsupportedOperationException("Use a method with fixed number of arguments instead");
+  public static @NotNull GCWatcher tracking(@SuppressWarnings("unused") Object... objects) {
+    throw new UnsupportedOperationException("Use .tracking() method with fixed number of arguments instead");
   }
 
   @Contract(pure = true)
@@ -116,7 +116,7 @@ public final class GCWatcher {
   }
 
   private boolean isEverythingCollected() {
-    return ContainerUtil.and(myReferences, e -> e.refersTo(null));
+    return ContainerUtil.all(myReferences, e -> e.refersTo(null));
   }
 
   private void removeQueuedObjects() {
