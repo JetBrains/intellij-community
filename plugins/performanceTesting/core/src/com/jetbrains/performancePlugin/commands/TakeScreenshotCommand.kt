@@ -116,7 +116,7 @@ internal fun takeFullScreenshot(childFolder: String? = null): String? {
   // On Wayland it triggers system dialog about granting permissions each time, and it can't be disabled.
   if (StartupUiUtil.isWayland) return null
 
-  var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
+  var screenshotPath = PathManager.getOriginalLogDir().resolve("screenshots").resolve(childFolder ?: "default").toFile()
   screenshotPath = getNextFolder(screenshotPath)
   val screenshotPathWithFile = screenshotPath.resolve("full_screen.png")
   takeScreenshotWithAwtRobot(screenshotPathWithFile.absolutePath, "png")
@@ -131,7 +131,7 @@ internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {
   if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
   val projects = ProjectManager.getInstance().openProjects
-  var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
+  var screenshotPath = PathManager.getOriginalLogDir().resolve("screenshots").resolve(childFolder ?: "default").toFile()
   screenshotPath = getNextFolder(screenshotPath)
 
   for (project in projects) {
