@@ -29,6 +29,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Semaphore
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -49,10 +50,21 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     get() = myExecutor.isShutdown
   private val myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Document Commit Pool")
 
-  private val commitInProgressCounter = AtomicInteger()
-
   // it does not make sense to commit several documents in parallel, as they end in write action, so they'll invalidate each other
   private val commitDispatcher = Dispatchers.Default.limitedParallelism(1, "Document commit dispatcher")
+
+  /**
+   * Asynchronous document commit is a sequence of read actions where each of them is followed by a write action.
+   *
+   * Assume that we just limit parallelism for such execution. Since write action will unconditionally switch to its own dispatcher,
+   * we basically allow concurrent execution of "read" parts of document commit.
+   * But these "read" parts will be inevitably invalidated when "write" part of some previous commit starts, hence we just wasted CPU on useless reads.
+   *
+   * With an additional semaphore, we do not allow other reads to start until the previous write action is finished.
+   * It has a side effect that at most one "read" part can run while the EDT holds a write-intent lock;
+   * but that is arguably the desirable behavior, as we know that a pending write action will invalidate all other possible "read" parts
+   */
+  private val commitDispatcherSuspender = Semaphore(1)
 
   companion object {
     @JvmStatic
@@ -111,7 +123,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
   private fun commitDocumentWithCoroutines(document: Document, task: CommitTask, documentManager: PsiDocumentManagerBase) {
     val service = task.myProject.service<PerProjectDocumentCommitRegistry>()
     val job = service.scope.launch(commitDispatcher, start = CoroutineStart.LAZY) {
-      commitInProgressCounter.incrementAndGet()
+      commitDispatcherSuspender.acquire()
       try {
         // one needs to treat modalities carefully with background write action
         // to be safer, we perform commit in background write action only if this is a non-modal commit
@@ -129,7 +141,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
         }
       }
       finally {
-        commitInProgressCounter.decrementAndGet()
+        commitDispatcherSuspender.release()
       }
     }
     job.invokeOnCompletion {
@@ -247,7 +259,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val boundedTaskExecutor = myExecutor as BoundedTaskExecutor
     if (!ApplicationManager.getApplication().isDispatchThread()) {
       boundedTaskExecutor.waitAllTasksExecuted(timeout, timeUnit)
-      while (commitInProgressCounter.get() > 0) {
+      while (commitDispatcherSuspender.availablePermits == 0) {
         Thread.sleep(10)
       }
       return
@@ -257,7 +269,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
     EDT.dispatchAllInvocationEvents()
     val deadLine = System.nanoTime() + timeUnit.toNanos(timeout)
-    while (!boundedTaskExecutor.isEmpty || commitInProgressCounter.get() > 0) {
+    while (!boundedTaskExecutor.isEmpty || commitDispatcherSuspender.availablePermits == 0) {
       try {
         boundedTaskExecutor.waitAllTasksExecuted(10, TimeUnit.MILLISECONDS)
       }
