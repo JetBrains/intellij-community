@@ -75,12 +75,20 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     else {
       tokens
     }
-    val aliasesStorage = parameters.editor.getUserData(TerminalAliasesStorage.KEY)
 
     if (allTokens.isEmpty()) {
       return
     }
+
+    val prefix = allTokens.last()
+    if (parameters.isAutoPopup && prefix.startsWith("-") && prefix.length <= 2) {
+      // Do not show the completion popup automatically for short options like `-a` or `-h`
+      // Most probably, it will cause only distraction.
+      return
+    }
+
     val suggestions = runBlockingCancellable {
+      val aliasesStorage = parameters.editor.getUserData(TerminalAliasesStorage.KEY)
       val expandedTokens = expandAliases(context, allTokens, aliasesStorage)
       computeSuggestions(expandedTokens, context, parameters.isAutoPopup)
     }
@@ -104,7 +112,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
       // If ONLY_PARAMETERS mode is specified, show the completion popup only in specific contexts:
       // when completing command options and arguments (for example, files after `ls`, branches after `git checkout`).
       // It will make the completion popup less intrusive.
-      if (!isSuggestingParameters(suggestions, prefix)) {
+      if (!isSuggestingParameters(suggestions)) {
         return
       }
     }
@@ -117,12 +125,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     }
   }
 
-  private fun isSuggestingParameters(suggestions: List<ShellCompletionSuggestion>, prefix: String): Boolean {
-    // Do not show the completion popup for short options like `-a` or `-h`
-    // Most probably, it will cause only distraction.
-    if (prefix.startsWith("-") && prefix.length <= 2) {
-      return false
-    }
+  private fun isSuggestingParameters(suggestions: List<ShellCompletionSuggestion>): Boolean {
     // Show the popup only if there are no suggestions for subcommands (only options and arguments).
     return suggestions.none { it.type == ShellSuggestionType.COMMAND }
   }
