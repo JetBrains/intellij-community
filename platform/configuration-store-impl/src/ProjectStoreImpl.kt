@@ -17,12 +17,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.provider.LocalEelMachine
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.settings.SettingsController
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.io.Ksuid
-import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentNameImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -173,21 +170,12 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       else {
         PathManager.getConfigDir()
       }
-      val productWorkspaceFile = basePath.resolve("workspace/${getMachineWorkspacePrefix()}${projectWorkspaceId}.xml")
+      val productWorkspaceFile = basePath.resolve("workspace/$projectWorkspaceId.xml")
       // storageManager.setMacros(macros) was called before, because we need to read a `ProjectIdManager` state to get projectWorkspaceId
       macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
     }
     isStoreInitialized = true
     LOG.info("Project store initialized with paths: $macros")
-  }
-
-  /**
-   * The same project can be mounted in a container. In this case its settings should not be shared with the local project, although it
-   * has the same project ID.
-   */
-  private fun getMachineWorkspacePrefix(): String {
-    val eelMachine = project.getEelDescriptor().machine
-    return if (eelMachine is LocalEelMachine) "" else "${eelMachine.getInternalEnvironmentNameImpl().name}~"
   }
 
   private fun loadProjectFromTemplate(defaultProject: Project, iprFile: Path?) {

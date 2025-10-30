@@ -44,6 +44,5 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.platform.ide.initialConfigImport" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
   </component>
 </module>

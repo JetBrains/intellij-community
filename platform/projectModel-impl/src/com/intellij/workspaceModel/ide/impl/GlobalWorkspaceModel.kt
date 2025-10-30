@@ -470,8 +470,7 @@ fun EelMachine.getInternalEnvironmentName(): InternalEnvironmentName {
   return protectedMachine.getInternalEnvironmentNameImpl()
 }
 
-@ApiStatus.Internal
-fun EelMachine.getInternalEnvironmentNameImpl(): InternalEnvironmentName =
+private fun EelMachine.getInternalEnvironmentNameImpl(): InternalEnvironmentName =
   if (this is LocalEelMachine) {
     InternalEnvironmentName.Local
   }
