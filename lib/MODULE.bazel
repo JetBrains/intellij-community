@@ -3493,31 +3493,31 @@ http_file(
 )
 
 http_file(
-  name = "ai_grazie_tasks-library-tasks-library-api-jvm-0_4_12_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.12/tasks-library-api-jvm-0.4.12.jar",
+  name = "ai_grazie_tasks-library-tasks-library-api-jvm-0_4_14_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.14/tasks-library-api-jvm-0.4.14.jar",
   sha256 = "70210d0eb24dd099e3e2923d55a8f4d5e5cef54f277f0bf1f17568633bec446e",
-  downloaded_file_path = "tasks-library-api-jvm-0.4.12.jar"
+  downloaded_file_path = "tasks-library-api-jvm-0.4.14.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks-library-tasks-library-api-jvm-0_4_12-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.12/tasks-library-api-jvm-0.4.12-sources.jar",
+  name = "ai_grazie_tasks-library-tasks-library-api-jvm-0_4_14-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.14/tasks-library-api-jvm-0.4.14-sources.jar",
   sha256 = "e254e20ee0b9a39af611c5ecfba96c69c131f90e480cb64a4c56012803bbf58e",
-  downloaded_file_path = "tasks-library-api-jvm-0.4.12-sources.jar"
+  downloaded_file_path = "tasks-library-api-jvm-0.4.14-sources.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks-library-tasks-library-model-jvm-0_4_12_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.12/tasks-library-model-jvm-0.4.12.jar",
+  name = "ai_grazie_tasks-library-tasks-library-model-jvm-0_4_14_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.14/tasks-library-model-jvm-0.4.14.jar",
   sha256 = "8722c78b12167e0c05e8797a66ede6984ff3d98882b9b729c008f6494702c706",
-  downloaded_file_path = "tasks-library-model-jvm-0.4.12.jar"
+  downloaded_file_path = "tasks-library-model-jvm-0.4.14.jar"
 )
 
 http_file(
-  name = "ai_grazie_tasks-library-tasks-library-model-jvm-0_4_12-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.12/tasks-library-model-jvm-0.4.12-sources.jar",
+  name = "ai_grazie_tasks-library-tasks-library-model-jvm-0_4_14-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.14/tasks-library-model-jvm-0.4.14-sources.jar",
   sha256 = "6380ad47f0aad6d4fe48c14f4b4ef3e37e94c7ca444c195846ed0786f0e58197",
-  downloaded_file_path = "tasks-library-model-jvm-0.4.12-sources.jar"
+  downloaded_file_path = "tasks-library-model-jvm-0.4.14-sources.jar"
 )
 
 http_file(
