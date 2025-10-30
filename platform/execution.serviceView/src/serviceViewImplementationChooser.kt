@@ -42,6 +42,7 @@ fun isNewFrontendServiceViewEnabled(): Boolean {
 @ApiStatus.Internal
 fun isOldMonolithServiceViewEnabled(): Boolean {
   if (isSplitDebuggerEnabledInTestsCopyPaste()) return false
+  if (!isCurrentProductSupportSplitServiceView()) return true
 
   return IdeProductMode.isMonolith || !isSplitServicesRegistryFlagOn()
 }
