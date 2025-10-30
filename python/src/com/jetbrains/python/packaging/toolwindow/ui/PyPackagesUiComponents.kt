@@ -24,10 +24,12 @@ import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import java.awt.BorderLayout
-import java.awt.Dimension
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 
 object PyPackagesUiComponents {
   val SELECTED_PACKAGE_DATA_CONTEXT: DataKey<DisplayablePackage> = DataKey.create<DisplayablePackage>("SELECTED_PACKAGE_DATA_CONTEXT")
@@ -55,29 +57,16 @@ object PyPackagesUiComponents {
     }, 8)
   }
 
-  fun boxPanel(init: JPanel.() -> Unit): JPanel = object : JPanel() {
+  fun borderPanel(init: JPanel.() -> Unit): JPanel = object : JPanel(BorderLayout()) {
     init {
-      layout = BoxLayout(this, BoxLayout.X_AXIS)
-      alignmentX = LEFT_ALIGNMENT
       init()
     }
   }
 
-  fun borderPanel(init: JPanel.() -> Unit): JPanel = object : JPanel() {
-    init {
-      layout = BorderLayout(0, 0)
-      init()
-    }
-  }
-
-  fun headerPanel(label: JLabel, component: JComponent?): JPanel = object : JPanel() {
+  fun headerPanel(label: JLabel, component: JComponent?): JPanel = object : JPanel(BorderLayout()) {
     init {
       background = UIUtil.getLabelBackground()
-      layout = BorderLayout()
       border = BorderFactory.createCompoundBorder(SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM), JBUI.Borders.empty(0, 5))
-      preferredSize = Dimension(preferredSize.width, 25)
-      minimumSize = Dimension(minimumSize.width, 25)
-      maximumSize = Dimension(maximumSize.width, 25)
 
       add(label, BorderLayout.WEST)
       if (component != null) {

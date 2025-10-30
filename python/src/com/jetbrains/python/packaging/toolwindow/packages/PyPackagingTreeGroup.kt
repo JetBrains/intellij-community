@@ -4,10 +4,7 @@ package com.jetbrains.python.packaging.toolwindow.packages
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBValue
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
@@ -15,10 +12,8 @@ import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeLis
 import com.jetbrains.python.packaging.toolwindow.packages.tree.PyPackagesTreeTable
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import org.jetbrains.annotations.Nls
-import java.awt.Component
 import java.awt.Dimension
 import javax.swing.JPanel
-import javax.swing.ScrollPaneConstants
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
@@ -38,12 +33,6 @@ internal class PyPackagingTreeGroup(
 
   private var itemsCount: Int? = null
 
-  val scrollPane = JBScrollPane(tree).apply {
-    border = JBEmptyBorder(JBUI.insetsLeft(gapValue.get()))
-    verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER
-    horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-  }
-
   private val headerProperties: HeaderProperties = createHeaderProperties()
 
   internal var items: List<DisplayablePackage>
@@ -58,11 +47,12 @@ internal class PyPackagingTreeGroup(
 
   private fun createHeaderProperties(): HeaderProperties {
     val label = JBLabel(repositoryName).apply {
+      border = JBUI.Borders.empty(5, 0)
       icon = AllIcons.General.ArrowDown
       horizontalAlignment = SwingConstants.LEFT
       verticalAlignment = SwingConstants.CENTER
     }
-    val panel = PyPackagesUiComponents.headerPanel(label, scrollPane)
+    val panel = PyPackagesUiComponents.headerPanel(label, tree)
     return HeaderProperties(label, panel)
   }
 
@@ -81,13 +71,13 @@ internal class PyPackagingTreeGroup(
     val totalHeight = tree.tree.rowCount * tree.tree.rowHeight
     val width = container.width
 
-    scrollPane.preferredSize = Dimension(width, totalHeight)
-    scrollPane.minimumSize = Dimension(width, totalHeight)
-    scrollPane.maximumSize = Dimension(width, totalHeight)
+    tree.preferredSize = Dimension(width, totalHeight)
+    tree.minimumSize = Dimension(width, totalHeight)
+    tree.maximumSize = Dimension(width, totalHeight)
   }
 
   fun collapse() {
-    scrollPane.isVisible = false
+    tree.isVisible = false
     updateExpandStateIcon()
     repaint()
   }
@@ -99,15 +89,14 @@ internal class PyPackagingTreeGroup(
     collapse()
   }
 
-
   fun expand() {
-    scrollPane.isVisible = true
+    tree.isVisible = true
     updateExpandStateIcon()
     repaint()
   }
 
   private fun updateExpandStateIcon() {
-    headerProperties.label.icon = if (scrollPane.isVisible)
+    headerProperties.label.icon = if (tree.isVisible)
       AllIcons.General.ArrowDown
     else
       AllIcons.General.ArrowRight
@@ -123,26 +112,21 @@ internal class PyPackagingTreeGroup(
 
   fun setSdkToHeader(@Nls sdkName: String?) {
     itemsCount = null
-    headerProperties.label.text =  PyBundle.message("python.toolwindow.packages.sdk.label.html", repositoryName, sdkName)
+    headerProperties.label.text = PyBundle.message("python.toolwindow.packages.sdk.label.html", repositoryName, sdkName)
   }
 
   fun addTo(panel: JPanel) {
-    scrollPane.alignmentX = Component.LEFT_ALIGNMENT
     panel.add(headerProperties.panel)
-    panel.add(scrollPane)
+    panel.add(tree)
   }
 
   fun removeFrom(panel: JPanel) {
     panel.remove(headerProperties.panel)
-    panel.remove(scrollPane)
+    panel.remove(tree)
   }
 
   fun repaint() {
     container.revalidate()
     container.repaint()
-  }
-
-  companion object {
-    private val gapValue = JBValue.UIInteger("TreeTable.gap", 16)
   }
 }
