@@ -1166,11 +1166,11 @@ fun <T : CommandChain> T.replaceText(
   if (endOffset != null) {
     options.append(" -endOffset ${endOffset}")
   }
-  if (newText != null) {
-    options.append(" -newText ${newText}")
-  }
   if (calculateAnalysisTime) {
     options.append(" -calculateAnalysisTime ${true}")
+  }
+  if (newText != null) {
+    options.append(" -newText ${newText}")
   }
   addCommand("${CMD_PREFIX}replaceText ${options}")
 }
