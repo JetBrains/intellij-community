@@ -38,49 +38,45 @@ import org.jetbrains.uast.toUElementOfType
 private val LOG = logger<GroovyRedundantKotlinStdLibInspectionVisitor>()
 
 class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder) : GroovyElementVisitor() {
+
+  private val kotlinJvmPluginVersion = findKotlinJvmVersion(holder.file as GroovyFile)
+
   override fun visitCallExpression(callExpression: GrCallExpression) {
+    if (kotlinJvmPluginVersion == null) return
     if (!apiDependencyPattern.accepts(callExpression)) return
     if (callExpression.hasClosureArguments()) return // dependency declaration with a closure probably has a custom configuration
 
-    // named arguments case
-    if (callExpression.namedArguments.size == 3) {
-      val kotlinStdLibVersion = getVersionIfKotlinStdLibNamedArguments(callExpression.namedArguments.asList()) ?: return
-      val kotlinJvmPluginVersion = findKotlinJvmVersion(holder.file as GroovyFile) ?: return
-      if (kotlinStdLibVersion == kotlinJvmPluginVersion) registerProblem(callExpression)
-      return
+    when {
+      callExpression.namedArguments.size == 3 -> processNamedArgumentsDependency(callExpression, callExpression.namedArguments.asList())
+      callExpression.expressionArguments.size == 1 -> processSingleArgumentDependency(callExpression, callExpression.expressionArguments.single())
+      else -> processListArgumentsDependencies(callExpression)
     }
+  }
 
-    // single argument case (string or version catalog)
-    val singleArgument = callExpression.expressionArguments.singleOrNull()
-    if (singleArgument != null) {
-      val kotlinStdLibVersion = getVersionIfKotlinStdLibSingleString(singleArgument)
-                                ?: getVersionIfKotlinStdLibVersionCatalog(singleArgument)
-                                ?: return
-      val kotlinJvmPluginVersion = findKotlinJvmVersion(holder.file as GroovyFile) ?: return
-      if (kotlinStdLibVersion == kotlinJvmPluginVersion) registerProblem(callExpression)
-      return
+  private fun processNamedArgumentsDependency(elementToRemove: GrExpression, namedArguments: List<GrNamedArgument>) {
+    val kotlinStdLibVersion = getVersionIfKotlinStdLibNamedArguments(namedArguments) ?: return
+    if (kotlinStdLibVersion == kotlinJvmPluginVersion) {
+      registerProblem(elementToRemove)
     }
+  }
 
-    // list of arguments case
-    // delay finding the kotlin jvm plugin version
-    var kotlinJvmPluginVersion: String? = null
+  private fun processSingleArgumentDependency(elementToRemove: GrExpression, singleArgument: GrExpression) {
+    val kotlinStdLibVersion = getVersionIfKotlinStdLibSingleString(singleArgument)
+                              ?: getVersionIfKotlinStdLibVersionCatalog(singleArgument)
+                              ?: return
+    if (kotlinStdLibVersion == kotlinJvmPluginVersion) {
+      registerProblem(elementToRemove)
+    }
+  }
 
+  private fun processListArgumentsDependencies(callExpression: GrCallExpression) {
     for (argument in callExpression.expressionArguments) {
       if (argument is GrListOrMap && argument.isMap) {
-        val kotlinStdLibVersion = getVersionIfKotlinStdLibNamedArguments(argument.namedArguments.asList())
-                                  ?: continue
-
-        if (kotlinJvmPluginVersion == null) kotlinJvmPluginVersion = findKotlinJvmVersion(holder.file as GroovyFile)
-        if (kotlinStdLibVersion == kotlinJvmPluginVersion) registerProblem(argument)
+        processNamedArgumentsDependency(argument, argument.namedArguments.asList())
       }
       else {
         val unwrappedArgument = if (argument is GrListOrMap) argument.initializers.singleOrNull() ?: continue else argument
-        val kotlinStdLibVersion = getVersionIfKotlinStdLibSingleString(unwrappedArgument)
-                                  ?: getVersionIfKotlinStdLibVersionCatalog(unwrappedArgument)
-                                  ?: continue
-
-        if (kotlinJvmPluginVersion == null) kotlinJvmPluginVersion = findKotlinJvmVersion(holder.file as GroovyFile)
-        if (kotlinStdLibVersion == kotlinJvmPluginVersion) registerProblem(argument)
+        processSingleArgumentDependency(argument, unwrappedArgument)
       }
     }
   }
@@ -104,11 +100,7 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
     val version = namedArguments.find { it.labelName == "version" }?.expression
                     .toUElementOfType<UExpression>()?.evaluateString() ?: return null
 
-    LOG.debug {
-      "Found a map notation kotlin-stdlib dependency: $group:$name:$version " +
-      "at line ${holder.file.fileDocument.getLineNumber(namedArguments[0].textRange.startOffset) + 1} " +
-      "in file ${holder.file.virtualFile.path}"
-    }
+    logFoundDependency(namedArguments.first(), "$group:$name:$version", "map notation")
 
     return if (isKotlinStdLib(group, name)) version else null
   }
@@ -118,11 +110,7 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
     val (group, name, version) = stringValue.split(":").takeIf { it.size == 3 } ?: return null
     if (!isKotlinStdLib(group, name)) return null
 
-    LOG.debug {
-      "Found a single string notation kotlin-stdlib dependency: $stringValue " +
-      "at line ${holder.file.fileDocument.getLineNumber(argument.textRange.startOffset) + 1} " +
-      "in file ${holder.file.virtualFile.path}"
-    }
+    logFoundDependency(argument, stringValue, "single string notation")
 
     return version
   }
@@ -133,17 +121,21 @@ class GroovyRedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsH
     val dependency = getResolvedDependency(resolved, argument) ?: return null
     if (!isKotlinStdLib(dependency.group, dependency.name) || dependency.version == null) return null
 
-    LOG.debug {
-      "Found a version catalog notation kotlin-stdlib dependency: $dependency " +
-      "at line ${holder.file.fileDocument.getLineNumber(argument.textRange.startOffset) + 1} " +
-      "in file ${holder.file.virtualFile.path}"
-    }
+    logFoundDependency(argument, dependency.toString(), "version catalog notation")
 
     return dependency.version
   }
 
   private fun isKotlinStdLib(group: String, name: String): Boolean {
     return group == KOTLIN_GROUP_ID && name == KOTLIN_JAVA_STDLIB_NAME
+  }
+
+  private fun logFoundDependency(element: PsiElement, dependency: String, notationType: String) {
+    LOG.debug {
+      "Found a $notationType kotlin-stdlib dependency: $dependency " +
+      "at line ${holder.file.fileDocument.getLineNumber(element.textRange.startOffset) + 1} " +
+      "in file ${holder.file.virtualFile.path}"
+    }
   }
 
   private fun findKotlinJvmVersion(file: GroovyFile): String? {
