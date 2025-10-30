@@ -235,7 +235,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
 
   public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language) {
     List<CompletionContributor> contributors = INSTANCE.forKey(language);
-    if (Registry.is("ide.completion.modcommand")) {
+    if (Registry.is("ide.completion.modcommand", false)) {
       contributors =
         ContainerUtil.concat(ContainerUtil.map(CompletionItemProvider.forLanguage(language), CompletionItemContributor::new), contributors);
     }
