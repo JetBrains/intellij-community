@@ -117,8 +117,8 @@ class HProfBuilder(dos: DataOutputStream, val classNameMapping: ((Class<*>) -> S
                              if (ste.isNativeMethod) -1 else ste.lineNumber)
     }
     val stackTraceSerialNumber = nextStackTraceSerialNumberID()
-    writer.writeStackTrace(stackTraceSerialNumber, thread.id, stackFrameIds)
-    return stackTraceSerialNumber
+    writer.writeStackTrace(stackTraceSerialNumber, thread.threadId(), stackFrameIds)
+    return thread.threadId().toInt()
   }
 
   fun addObject(o: Any?): Long {
