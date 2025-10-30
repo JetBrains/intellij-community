@@ -91,7 +91,7 @@ public class DumpDataForm {
                                                                                "JSON-Groovy.json.groovy");
   private final Project myProject;
   private final DumpSource<?> mySource;
-  private final Supplier<Window> myWindowSupplier;
+  private final @NotNull Supplier<? extends Window> myWindowSupplier;
   private final boolean mySupportsAddQuery;
   private final EditorEx myViewer;
   private final JBPanelWithEmptyText emptyTextPanel =
@@ -116,7 +116,7 @@ public class DumpDataForm {
 
   public DumpDataForm(@NotNull Project project,
                       @NotNull DumpSource<?> source,
-                      @NotNull Supplier<Window> windowSupplier,
+                      @NotNull Supplier<? extends Window> windowSupplier,
                       @Nullable CsvFormatsSettings csvFormatsSettings,
                       @NotNull Disposable disposable,
                       boolean supportsAddQuery) {
@@ -303,7 +303,7 @@ public class DumpDataForm {
   }
 
   protected boolean supportsTranspose(DataExtractorFactory factory) {
-    return !(factory instanceof Script && EXTRACTORS_NO_TRANSPOSE.contains(factory.getName()));
+    return !(factory instanceof PythonDataFrameExtractorFactory || (factory instanceof Script && EXTRACTORS_NO_TRANSPOSE.contains(factory.getName())));
   }
 
   protected boolean supportsAddTableDefinition(DataExtractorFactory factory) {
