@@ -2,8 +2,8 @@
 package org.jetbrains.kotlin.idea.run.gradle
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.testFramework.gradle.assumeThatKotlinDslScriptsModelImportIsSupported
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinDslScriptsModelImportIsSupported
 import org.junit.jupiter.params.ParameterizedTest
 
 /**

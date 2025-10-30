@@ -45,6 +45,12 @@ fun assumeThatKotlinIsSupported(gradleVersion: GradleVersion) {
   }
 }
 
+fun assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion: GradleVersion) {
+  Assumptions.assumeTrue(isKotlinDslScriptsModelImportSupported(gradleVersion)) {
+    "Gradle ${gradleVersion.version} doesn't support KotlinDslScriptsModel import."
+  }
+}
+
 fun assumeThatSpockIsSupported(gradleVersion: GradleVersion) {
   Assumptions.assumeTrue(isSpockSupported(gradleVersion)) {
     "Gradle ${gradleVersion.version} doesn't support Spock."

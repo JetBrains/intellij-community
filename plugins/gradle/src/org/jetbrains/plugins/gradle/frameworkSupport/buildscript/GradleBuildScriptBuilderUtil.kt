@@ -79,6 +79,10 @@ fun isKotlinSupported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "5.6.2")
 }
 
+fun isKotlinDslScriptsModelImportSupported(gradleVersion: GradleVersion): Boolean {
+  return GradleVersionUtil.isGradleAtLeast(gradleVersion, "6.0")
+}
+
 fun isJunit5Supported(gradleVersion: GradleVersion): Boolean {
   return GradleVersionUtil.isGradleAtLeast(gradleVersion, "4.7")
 }
