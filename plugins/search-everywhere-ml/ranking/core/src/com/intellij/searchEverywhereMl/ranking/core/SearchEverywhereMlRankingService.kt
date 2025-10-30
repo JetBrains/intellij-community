@@ -83,8 +83,17 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
                                       element: Any): Boolean {
     // If we're showing recently used actions (empty query) then we don't want to apply ML sorting either
     if (searchState.tab == SearchEverywhereTab.Actions && searchState.searchQuery.isEmpty()) return false
+
+    // The element may be an ItemWithPresentation pair - we will unwrap it
+    val actualElement = when (element) {
+      is PSIPresentationBgRendererWrapper.ItemWithPresentation<*> -> element.item
+      else -> element
+    }
+
     // Do not calculate machine learning weight for semantic items until the ranking models know how to treat them
-    if ((contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(element) == true) return false
+    if ((contributor as? SemanticSearchEverywhereContributor)?.isElementSemantic(actualElement) == true) {
+      return false
+    }
 
     return searchState.orderByMl
   }
