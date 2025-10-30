@@ -309,7 +309,9 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
       }
       else {
         String superName = superType.name();
-        return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) || CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName);
+        return CommonClassNames.JAVA_LANG_CLONEABLE.equals(superName) ||
+               CommonClassNames.JAVA_IO_SERIALIZABLE.equals(superName) ||
+               CommonClassNames.JAVA_LANG_OBJECT.equals(superName);
       }
     }
     if (superType instanceof ClassType) { // may check superclass only
