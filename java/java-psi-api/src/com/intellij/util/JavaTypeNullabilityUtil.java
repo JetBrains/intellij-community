@@ -55,7 +55,8 @@ public final class JavaTypeNullabilityUtil {
       }
     }
     PsiClass target = type.resolve();
-    if (target instanceof PsiTypeParameter) {
+    //inferred types don't have contexts
+    if (target instanceof PsiTypeParameter && context != null) {
       PsiTypeParameter typeParameter = (PsiTypeParameter)target;
       PsiReferenceList extendsList = typeParameter.getExtendsList();
       PsiClassType[] extendTypes = extendsList.getReferencedTypes();
@@ -78,12 +79,9 @@ public final class JavaTypeNullabilityUtil {
   
   private static boolean isLocal(PsiClassType classType) {
     PsiElement context = classType.getPsiContext();
-    return ((context instanceof PsiJavaCodeReferenceElement) &&
-            context.getParent() instanceof PsiTypeElement &&
-            context.getParent().getParent() instanceof PsiLocalVariable) ||
-           //inferred PsiTypeElements
-           (context instanceof PsiTypeElement && ((PsiTypeElement)context).isInferredType() &&
-            context.getParent() instanceof PsiLocalVariable);
+    return context instanceof PsiJavaCodeReferenceElement &&
+           context.getParent() instanceof PsiTypeElement &&
+           context.getParent().getParent() instanceof PsiLocalVariable;
   }
 
   /**

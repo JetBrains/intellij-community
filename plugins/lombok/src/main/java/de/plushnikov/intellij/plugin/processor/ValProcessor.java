@@ -7,7 +7,6 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.JavaVarTypeUtil;
-import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
@@ -184,7 +183,7 @@ public class ValProcessor extends AbstractProcessor {
     if (canInferType(typeElement)) {
       final PsiElement parent = typeElement.getParent();
       if (parent instanceof PsiLocalVariable parentAsLocalVariable) {
-        psiType = processLocalVariableInitializer(parentAsLocalVariable.getInitializer(), typeElement);
+        psiType = processLocalVariableInitializer(parentAsLocalVariable.getInitializer());
       } else {
         psiType = processParameterDeclaration(((PsiParameter) parent).getDeclarationScope());
       }
@@ -196,8 +195,7 @@ public class ValProcessor extends AbstractProcessor {
     return psiType;
   }
 
-  private static PsiType processLocalVariableInitializer(@Nullable final PsiExpression psiExpression,
-                                                         @NotNull PsiTypeElement typeElement) {
+  private static PsiType processLocalVariableInitializer(final PsiExpression psiExpression) {
     PsiType result = null;
     if (null != psiExpression && !(psiExpression instanceof PsiArrayInitializerExpression)) {
       result = RecursionManager.doPreventingRecursion(psiExpression, true, () -> {
@@ -212,8 +210,7 @@ public class ValProcessor extends AbstractProcessor {
         }
         if (type != null) {
           //Get upward projection, so you don't get types with missing diamonds.
-          PsiType projection = JavaVarTypeUtil.getUpwardProjection(type);
-          return PsiTypeElementImpl.tryToAddContext(projection, typeElement);
+          return JavaVarTypeUtil.getUpwardProjection(type);
         }
         return null;
       });
