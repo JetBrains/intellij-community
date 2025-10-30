@@ -173,7 +173,11 @@ class EchoTeamCityMessages(object):
 
     def format_location(self, location):
         if type(location) is tuple and len(location) == 3:
-            return "%s:%s (%s)" % (str(location[0]), str(location[1]), str(location[2]))
+            # Pytest internal location uses 0-based line numbers; display 1-based for humans
+            lineno = location[1]
+            if lineno is not None:
+                lineno = lineno + 1
+            return "%s:%s (%s)" % (str(location[0]), str(lineno), str(location[2]))
         return str(location)
 
     def pytest_sessionfinish(self, session, exitstatus):
