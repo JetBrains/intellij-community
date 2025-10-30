@@ -1223,9 +1223,28 @@ Function un.CachesAndSettings
 FunctionEnd
 
 Function un.UpdateContextMenu
-  DeleteRegKey SHCTX "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  DeleteRegKey SHCTX "Software\Classes\Directory\shell\${MUI_PRODUCT}"
-  DeleteRegKey SHCTX "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  StrCpy $R0 "*"
+  Call un.DoUpdateContextMenu
+  StrCpy $R0 "Directory"
+  Call un.DoUpdateContextMenu
+  StrCpy $R0 "Directory\Background"
+  Call un.DoUpdateContextMenu
+FunctionEnd
+
+; $R0 - a classes subkey
+Function un.DoUpdateContextMenu
+  StrCpy $9 0
+  ${Do}
+    EnumRegKey $0 SHCTX "Software\Classes\$R0\shell" $9
+    ${If} $0 == ""
+      ${Break}
+    ${EndIf}
+    ReadRegStr $1 SHCTX "Software\Classes\$R0\shell\$0" "Icon"
+    ${If} $1 == "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+      DeleteRegKey SHCTX "Software\Classes\$R0\shell\$0"
+    ${EndIf}
+    IntOp $9 $9 + 1
+  ${Loop}
 FunctionEnd
 
 Function un.ProductAssociation
