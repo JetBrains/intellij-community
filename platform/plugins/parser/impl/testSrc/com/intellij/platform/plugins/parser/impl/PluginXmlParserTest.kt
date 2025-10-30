@@ -10,6 +10,25 @@ import org.junit.jupiter.api.Test
 class PluginXmlParserTest {
 
   @Test
+  fun `plugin xml with BOM is parsed correctly`() {
+    val xml = """
+      <idea-plugin>
+        <id>test.plugin</id>
+        <name>Test Plugin</name>
+      </idea-plugin>
+    """.trimIndent()
+
+    // UTF-8 BOM: 0xEF 0xBB 0xBF
+    val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+    val xmlWithBom = bom + xml.toByteArray()
+
+    val descriptor = parseBytes(xmlWithBom)
+
+    assertThat(descriptor.id).isEqualTo("test.plugin")
+    assertThat(descriptor.name).isEqualTo("Test Plugin")
+  }
+
+  @Test
   fun `content module required-if-available attribute parsing`() {
     val xml = """
       <idea-plugin>
@@ -52,8 +71,12 @@ class PluginXmlParserTest {
   }
 
   private fun parse(xml: String): RawPluginDescriptor {
+    return parseBytes(xml.toByteArray())
+  }
+
+  private fun parseBytes(bytes: ByteArray): RawPluginDescriptor {
     val consumer = createTestConsumer()
-    consumer.consume(xml.toByteArray(), "test-plugin.xml")
+    consumer.consume(bytes, "test-plugin.xml")
     return consumer.build()
   }
 
