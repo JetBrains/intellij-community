@@ -14,11 +14,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
-import com.intellij.toolWindow.ResizeStripeManager
-import com.intellij.toolWindow.StripeButtonUi
-import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.toolWindow.ToolWindowLeftToolbar
-import com.intellij.toolWindow.ToolWindowToolbar
+import com.intellij.toolWindow.*
 import com.intellij.ui.*
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.icons.toStrokeIcon
@@ -135,10 +131,11 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
           val texts = getStripeSplitText()
           val button = this@SquareStripeButton
           val insets = button.insets
-          val textOffset = if (UISettings.Companion.getInstance().compactMode) 4 else 6
-          val x = insets.left + JBUI.scale(textOffset)
+          val textPadding = if (UISettings.getInstance().compactMode) 4 else 6
+          val textOffset = JBUI.CurrentTheme.Toolbar.stripeToolbarTextOffset(button.isOnTheLeftStripe())
+          val x = insets.left + JBUI.scale(textPadding + textOffset)
           var y = iconPosition.y + JBUI.scale(3)
-          val totalWidth = button.width - insets.left - insets.right - JBUI.scale(textOffset * 2)
+          val totalWidth = button.width - insets.left - insets.right - JBUI.scale(textPadding * 2)
           val textHeight = fm.height
           var firstX: Int? = null
 

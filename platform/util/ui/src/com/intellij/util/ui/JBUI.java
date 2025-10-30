@@ -1336,6 +1336,14 @@ public final class JBUI {
       private static @NotNull JBInsets defaultStripeToolbarButtonIconPadding() {
         return insets(5);
       }
+
+      public static int stripeToolbarTextOffset(boolean left) {
+        return getInt(stripeToolbarTextOffsetKey(left), 0);
+      }
+
+      private static @NotNull String stripeToolbarTextOffsetKey(boolean left) {
+        return "StripeToolbar.Button." + (left ? "left" : "right") + "StripeTextOffset";
+      }
     }
 
     public static final class FloatingToolbar {
