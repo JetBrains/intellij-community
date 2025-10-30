@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.InternalUICustomization;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -137,6 +138,10 @@ public final class IdeBackgroundUtil {
   }
 
   public static void resetBackgroundImagePainters() {
+    var uiCustomization = InternalUICustomization.getInstance();
+    if (uiCustomization != null) {
+      uiCustomization.updateBackgroundPainter();
+    }
     PainterHelper.resetWallpaperPainterCache();
     repaintAllWindows();
   }
