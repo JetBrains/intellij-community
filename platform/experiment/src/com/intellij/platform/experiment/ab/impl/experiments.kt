@@ -62,9 +62,9 @@ internal val experimentsPartition: List<ExperimentAssignment> = listOf(
   //),
   ExperimentAssignment(
     experiment = TYPESCRIPT_SERVICE_TYPES,
-    experimentBuckets = (0 until 512).toSet(),
-    controlBuckets = (512 until 1024).toSet(),
-    majorVersion = "2025.3 EAP",
+    experimentBuckets = (0 until 200).toSet(),
+    controlBuckets = (200 until 400).toSet(),
+    majorVersion = "2025.3",
     products = EnumSet.of(IntelliJPlatformProduct.WEBSTORM),
   ),
   // the rest belongs to the "unassigned" experiment
