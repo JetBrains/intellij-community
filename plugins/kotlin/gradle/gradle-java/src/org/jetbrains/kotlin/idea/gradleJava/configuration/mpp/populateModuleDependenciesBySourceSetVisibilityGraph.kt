@@ -13,7 +13,7 @@ internal fun KotlinMppGradleProjectResolver.Companion.populateModuleDependencies
     context: KotlinMppPopulateModuleDependenciesContext
 ): Unit = with(context) {
     for (sourceSet in mppModel.sourceSetsByName.values) {
-        if (shouldDelegateToOtherPlugin(sourceSet)) continue
+        if (sourceSet.isManagedByComAndroidLibraryPlugin) continue
 
         val dependsOnSourceSets = mppModel.resolveAllDependsOnSourceSets(sourceSet)
         val additionalVisibleSourceSets = sourceSet.additionalVisibleSourceSets.mapNotNull(mppModel.sourceSetsByName::get)

@@ -96,6 +96,7 @@ internal fun createKotlinCompilation(
         extras = IdeaKotlinExtras.wrap(extras),
         isTestComponent = associateCompilations.isNotEmpty(),
         archiveFile = null,
+        isManagedByComAndroidLibraryPlugin = false,
     )
 }
 
@@ -124,6 +125,7 @@ internal fun createKotlinTarget(
         presetName = null,
         disambiguationClassifier = null,
         platform = platform,
+        isManagedByComAndroidLibraryPlugin = false,
         compilations = compilations.toList(),
         testRunTasks = emptyList(),
         nativeMainRunTasks = emptyList(),

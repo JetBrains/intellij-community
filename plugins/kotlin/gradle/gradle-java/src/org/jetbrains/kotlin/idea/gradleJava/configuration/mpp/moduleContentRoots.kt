@@ -36,7 +36,7 @@ internal fun KotlinMppGradleProjectResolver.Context.populateContentRoots(
         .toMap()
     if (resolverCtx.getExtraProject(gradleModule, ExternalProject::class.java) == null) return
     processSourceSets(gradleModule, mppModel, moduleDataNode, resolverCtx) { dataNode, sourceSet ->
-        if (dataNode == null || shouldDelegateToOtherPlugin(sourceSet)) return@processSourceSets
+        if (dataNode == null || sourceSet.isManagedByComAndroidLibraryPlugin) return@processSourceSets
 
         /* Execute all registered extension points and skip population of content roots if instructed by extensions */
         if (extensionInstance.beforePopulateContentRoots(this, dataNode, sourceSet) == Skip) {
