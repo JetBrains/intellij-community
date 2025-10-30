@@ -144,7 +144,13 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
                                                                       @Nullable PsiElement element,
                                                                       DataContext dataContext) {
     if (element == null) return null;
-    List<HierarchyProvider> providers = extension.allForLanguage(element.getLanguage());
+    List<HierarchyProvider> providers;
+    if (element instanceof PsiFile) {
+      providers = extension.allForLanguageOrAny(element.getLanguage());
+    }
+    else {
+      providers = extension.allForLanguage(element.getLanguage());
+    }
     for (HierarchyProvider provider : providers) {
       PsiElement target = provider.getTarget(dataContext);
       if (target != null) {
