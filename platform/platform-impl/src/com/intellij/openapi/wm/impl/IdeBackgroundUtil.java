@@ -47,7 +47,29 @@ public final class IdeBackgroundUtil {
   public static final String EDITOR_PROP = "idea.background.editor";
   public static final String FRAME_PROP = "idea.background.frame";
 
+  /**
+   * The client property for disabling background image painting.
+   * <p>
+   *   It can be set by the user of a component to a non-null value to disable or force background painting.
+   * </p>
+   * <p>
+   *   If the {@link #NO_BACKGROUND_PREDICATE} property is set, then this property is ignored.
+   * </p>
+   */
   public static final Key<Boolean> NO_BACKGROUND = Key.create("SUPPRESS_BACKGROUND");
+
+  /**
+   * The client property for conditionally disabling background image painting.
+   * <p>
+   *   Prefer {@link #NO_BACKGROUND} for simple cases.
+   *   Be aware of references that the predicate may capture, to avoid memory leaks.
+   * </p>
+   * <p>
+   *   If this property is set, {@link #NO_BACKGROUND} is ignored.
+   *   If this behavior is undesired, consider explicitly checking for {@link #NO_BACKGROUND} in the predicate itself.
+   * </p>
+   */
+  public static final Key<Predicate<JComponent>> NO_BACKGROUND_PREDICATE = Key.create("SUPPRESS_BACKGROUND_PREDICATE");
 
   public enum Fill {
     PLAIN, SCALE, TILE
@@ -78,7 +100,7 @@ public final class IdeBackgroundUtil {
   private static @NotNull Graphics2D withNamedPainters(@NotNull Graphics g,
                                                        @NotNull String paintersName,
                                                        @NotNull JComponent component) {
-    Boolean noBackground = ClientProperty.get(component, NO_BACKGROUND);
+    Boolean noBackground = isBackgroundDisabled(component);
     if (Boolean.TRUE.equals(noBackground)) {
       return MyGraphics.unwrap(g);
     }
@@ -99,6 +121,16 @@ public final class IdeBackgroundUtil {
       return MyGraphics.unwrap(g);
     }
     return MyGraphics.wrap(g, helper, component);
+  }
+
+  private static @Nullable Boolean isBackgroundDisabled(@NotNull JComponent component) {
+    var predicate = ClientProperty.get(component, NO_BACKGROUND_PREDICATE);
+    if (predicate != null) {
+      return predicate.test(component);
+    }
+    else {
+      return ClientProperty.get(component, NO_BACKGROUND);
+    }
   }
 
   @ApiStatus.Experimental
@@ -209,7 +241,7 @@ public final class IdeBackgroundUtil {
         return g;
       }
 
-      Boolean noBackground = ClientProperty.get(c, NO_BACKGROUND);
+      Boolean noBackground = isBackgroundDisabled(c);
       if (Boolean.TRUE.equals(noBackground)) {
         return MyGraphics.unwrap(g);
       }

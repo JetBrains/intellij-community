@@ -9798,6 +9798,7 @@ f:com.intellij.openapi.wm.impl.IdeBackgroundUtil
 - sf:EDITOR_PROP:java.lang.String
 - sf:FRAME_PROP:java.lang.String
 - sf:NO_BACKGROUND:com.intellij.openapi.util.Key
+- sf:NO_BACKGROUND_PREDICATE:com.intellij.openapi.util.Key
 - <init>():V
 - s:createTemporaryBackgroundTransform(javax.swing.JComponent,java.awt.Image,com.intellij.openapi.wm.impl.IdeBackgroundUtil$Fill,com.intellij.openapi.wm.impl.IdeBackgroundUtil$Anchor,F,java.awt.Insets,com.intellij.openapi.Disposable):V
 - s:createTemporaryBackgroundTransform(javax.swing.JPanel,java.lang.String,com.intellij.openapi.Disposable):V
