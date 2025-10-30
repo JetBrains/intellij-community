@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.runner.RunWith
 import java.io.File
+import java.nio.file.Path
 
 @RunWith(JUnit3RunnerWithInners::class)
 open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
@@ -59,7 +60,7 @@ open class GradleScriptListenerTest : AbstractScriptConfigurationLoadingTest() {
         val build = (myFile as? KtFile) ?: error("")
 
         val newProjectSettings = GradleProjectSettings()
-        newProjectSettings.gradleHome = gradleCoreJar.parentFile.parent
+        newProjectSettings.gradleHomePath = Path.of(gradleCoreJar.parentFile.parent)
         newProjectSettings.distributionType = DistributionType.LOCAL
         newProjectSettings.externalProjectPath = settings.virtualFile.parent.path
         ExternalSystemApiUtil.getSettings(project, GradleConstants.SYSTEM_ID).linkProject(newProjectSettings)

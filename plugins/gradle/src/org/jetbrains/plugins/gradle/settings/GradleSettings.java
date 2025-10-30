@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.DelegatingGradleSettingsListenerAdapter;
 
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -147,8 +148,14 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
   @Override
   protected void checkSettings(@NotNull GradleProjectSettings old, @NotNull GradleProjectSettings current) {
-    if (!Objects.equals(old.getGradleHome(), current.getGradleHome())) {
-      getPublisher().onGradleHomeChange(old.getGradleHome(), current.getGradleHome(), current.getExternalProjectPath());
+    if (!Objects.equals(old.getGradleHomePath(), current.getGradleHomePath())) {
+      Path oldGradleHomePath = old.getGradleHomePath();
+      Path currentGradleHomePath = current.getGradleHomePath();
+      getPublisher().onGradleHomeChange(
+        oldGradleHomePath == null ? null : oldGradleHomePath.toString(),
+        currentGradleHomePath == null ? null : currentGradleHomePath.toString(),
+        current.getExternalProjectPath()
+      );
     }
     if (!Objects.equals(old.getGradleJvm(), current.getGradleJvm())) {
       getPublisher().onGradleJvmChange(old.getGradleJvm(), current.getGradleJvm(), current.getExternalProjectPath());

@@ -53,7 +53,7 @@ internal open class LocalBuildLayoutParameters(
     val gradleProjectSettings = getGradleProjectSettings() ?: return null
     return when (gradleProjectSettings.distributionType) {
       null -> GradleInstallationManager.getInstance().getAutodetectedGradleHome(project)
-      DistributionType.LOCAL -> gradleProjectSettings.gradleHome?.let { Path.of(it) }
+      DistributionType.LOCAL -> gradleProjectSettings.gradleHomePath
       DistributionType.WRAPPED -> {
         val projectNioPath = projectPath?.toCanonicalPath()
         val localSettings = GradleLocalSettings.getInstance(project)

@@ -14,6 +14,8 @@ import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
+import java.nio.file.Path;
+
 public class ImportFromGradleControl
   extends AbstractImportFromExternalSystemControl<GradleProjectSettings, GradleSettingsListener, GradleSettings>
 {
@@ -25,7 +27,7 @@ public class ImportFromGradleControl
     GradleProjectSettings result = new GradleProjectSettings();
     String gradleHome = GradleUtil.getLastUsedGradleHome();
     if (!StringUtil.isEmpty(gradleHome)) {
-      result.setGradleHome(gradleHome);
+      result.setGradleHomePath(Path.of(gradleHome));
     }
     return result;
   }

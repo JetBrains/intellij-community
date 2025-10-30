@@ -8,6 +8,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import org.jetbrains.plugins.gradle.util.GradleVersionXmlConverter
+import java.nio.file.Path
 
 class GradleDefaultProjectSettings internal constructor() : BaseState() {
 
@@ -65,12 +66,13 @@ class GradleDefaultProjectSettings internal constructor() : BaseState() {
     fun createProjectSettings(externalProjectPath: String): GradleProjectSettings {
       val headlessDistributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE?.toEnumOrNull<DistributionType>()
       val headlessGradleHome = GradleEnvironment.Headless.GRADLE_HOME
+      val effectiveGradleHome = headlessGradleHome ?: state.gradleHome
       return GradleProjectSettings(externalProjectPath).apply {
         gradleJvm = state.gradleJvm
         delegatedBuild = state.delegatedBuild
         testRunner = state.testRunner
         distributionType = headlessDistributionType ?: state.distributionType
-        gradleHome = headlessGradleHome ?: state.gradleHome
+        gradleHomePath = effectiveGradleHome?.let { Path.of(effectiveGradleHome) }
       }
     }
   }

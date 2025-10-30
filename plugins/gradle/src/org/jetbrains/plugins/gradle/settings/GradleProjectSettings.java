@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.*;
@@ -20,6 +21,7 @@ import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +38,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   private @Nullable String myGradleJvm;
   private @Nullable DistributionType myDistributionType;
-  private @Nullable String myGradleHome;
+  private @Nullable Path myGradleHome;
   private boolean disableWrapperSourceDistributionNotification;
   private boolean resolveModulePerSourceSet;
   private boolean resolveExternalAnnotations;
@@ -69,7 +71,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     }
     var gradleHome = GradleEnvironment.Headless.GRADLE_HOME;
     if (gradleHome != null) {
-      myGradleHome = gradleHome;
+      myGradleHome = Path.of(gradleHome);
     }
   }
 
@@ -81,11 +83,28 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     myGradleJvm = gradleJvm;
   }
 
+  /**
+   * @deprecated Use getGradleHomePath instead
+   */
+  @Deprecated
   public @Nullable @NlsSafe String getGradleHome() {
+    Path path = getGradleHomePath();
+    return path == null ? null : path.toString();
+  }
+
+  /**
+   * @deprecated Use setGradleHomePath instead
+   */
+  @Deprecated
+  public void setGradleHome(@Nullable String gradleHome) {
+    setGradleHomePath(StringUtil.isEmpty(gradleHome) ? null : Path.of(gradleHome));
+  }
+
+  public @Nullable Path getGradleHomePath() {
     return myGradleHome;
   }
 
-  public void setGradleHome(@Nullable String gradleHome) {
+  public void setGradleHomePath(@Nullable Path gradleHome) {
     myGradleHome = gradleHome;
   }
 

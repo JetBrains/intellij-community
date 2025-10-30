@@ -12,6 +12,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.io.File
 import java.net.URI
+import java.nio.file.Path
 import java.util.*
 
 abstract class GradleInstallationManagerTestCase : GradleImportingTestCase() {
@@ -23,7 +24,7 @@ abstract class GradleInstallationManagerTestCase : GradleImportingTestCase() {
       externalProjectPath = createUniqueTempDirectory()
       this.distributionType = distributionType
       if (wrapperVersionToGenerate != null) {
-        gradleHome = generateFakeGradleWrapper(externalProjectPath, wrapperVersionToGenerate)
+        gradleHomePath = generateFakeGradleWrapper(externalProjectPath, wrapperVersionToGenerate)
       }
     }
 
@@ -37,7 +38,7 @@ abstract class GradleInstallationManagerTestCase : GradleImportingTestCase() {
     return tempDirectory
   }
 
-  private fun generateFakeGradleWrapper(externalProjectPath: String, version: GradleVersion): String {
+  private fun generateFakeGradleWrapper(externalProjectPath: String, version: GradleVersion): Path {
     val wrapperConfiguration = WrapperConfiguration()
     wrapperConfiguration.distribution = URI("http://gradle-${version.version}.com")
 
@@ -56,7 +57,7 @@ abstract class GradleInstallationManagerTestCase : GradleImportingTestCase() {
 
     storeWrapperProperties(wrapperProperties, wrapperConfiguration)
 
-    return gradleHome
+    return Path.of(gradleHome)
   }
 
   private fun getLocalDistributionDir(gradleUserHome: File, projectPath: File, wrapperConfiguration: WrapperConfiguration): String {

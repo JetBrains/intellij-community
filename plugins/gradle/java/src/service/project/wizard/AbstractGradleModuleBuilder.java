@@ -244,7 +244,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     if (isCreatingNewLinkedProject()) {
       projectSettings.setExternalProjectPath(NioPathUtil.toCanonicalPath(rootProjectPath));
       projectSettings.setDistributionType(gradleDistributionType);
-      projectSettings.setGradleHome(gradleHome);
+      projectSettings.setGradleHomePath(gradleHome == null ? null : Path.of(gradleHome));
       GradleJvmResolutionUtil.setupGradleJvm(project, projectSettings, gradleVersion);
       GradleJvmValidationUtil.validateJavaHome(project, rootProjectPath, gradleVersion);
 

@@ -488,7 +488,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   public void apply(GradleProjectSettings settings) {
     settings.setCompositeBuild(myInitialSettings.getCompositeBuild());
     if (myGradleHomePathField != null) {
-      Path gradleHomePath = Path.of(FileUtil.toCanonicalPath(myGradleHomePathField.getText()));
+      Path gradleHomePath = Path.of(myGradleHomePathField.getText().trim());
       Path finalGradleHomePath;
       if (GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), gradleHomePath)) {
         finalGradleHomePath = gradleHomePath;
@@ -501,13 +501,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
           });
         }
       }
-      if (finalGradleHomePath == null) {
-        settings.setGradleHome(null);
-      }
-      else {
-        String finalGradleHome = finalGradleHomePath.toString();
-        settings.setGradleHome(finalGradleHome);
-        GradleUtil.storeLastUsedGradleHome(finalGradleHome);
+      settings.setGradleHomePath(finalGradleHomePath);
+      if (finalGradleHomePath != null) {
+        GradleUtil.storeLastUsedGradleHome(finalGradleHomePath.toString());
       }
     }
 
@@ -605,12 +601,12 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
 
     if (myGradleHomePathField == null) return false;
-    String gradleHome = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
+    String gradleHome = myGradleHomePathField.getText().trim();
     if (StringUtil.isEmpty(gradleHome)) {
-      return !StringUtil.isEmpty(myInitialSettings.getGradleHome());
+      return myInitialSettings.getGradleHomePath() != null;
     }
     else {
-      return !gradleHome.equals(myInitialSettings.getGradleHome());
+      return !Path.of(gradleHome).equals(myInitialSettings.getGradleHomePath());
     }
   }
 
@@ -626,11 +622,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
                     @Nullable WizardContext wizardContext) {
     updateProjectRef(project, wizardContext);
 
-    String gradleHome = settings.getGradleHome();
+    Path gradleHomePath = settings.getGradleHomePath();
     if (myGradleHomePathField != null) {
       GradleRuntimeTargetUI.installActionListener(myGradleHomePathField, myProjectRef.get(),
                                                   GradleBundle.message("gradle.settings.text.home.path"));
-      myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
+      myGradleHomePathField.setText(gradleHomePath == null ? "" : gradleHomePath.toString());
       myGradleHomePathField.getTextField().setForeground(GradleLocationSettingType.EXPLICIT_CORRECT.getColor());
     }
     resetImportControls(settings);
@@ -640,12 +636,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     resetWrapperControls(settings.getExternalProjectPath(), settings, isDefaultModuleCreation);
     resetGradleDelegationControls(wizardContext);
 
-    if (StringUtil.isEmpty(gradleHome)) {
+    if (gradleHomePath == null) {
       myGradleHomeSettingType = GradleLocationSettingType.UNKNOWN;
       deduceGradleHomeIfPossible();
     }
     else {
-      Path gradleHomePath = Path.of(gradleHome);
       if (GradleInstallationManager.getInstance().isGradleSdkHome(project, gradleHomePath)) {
         myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_CORRECT;
       }
