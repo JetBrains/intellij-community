@@ -23,6 +23,17 @@ internal class ShellNameTest {
       expectedName = ShellName.POWERSHELL,
       nameVariants = listOf("powershell", "PowerShell", "POWERSHELL")
     )
+    testShellNamesComparison(
+      expectedName = ShellName.PWSH,
+      nameVariants = listOf("pwsh", "Pwsh", "PWSH")
+    )
+  }
+
+  @Test
+  fun `check isPowerShell detects powershell correctly`() {
+    val shellNames = listOf("powershell", "PowerShell", "POWERSHELL", "pwsh", "Pwsh", "PWSH").map { ShellName.of(it) }
+    val allNames = shellNames + listOf(ShellName.POWERSHELL, ShellName.PWSH)
+    assertThat(allNames).allMatch { ShellName.isPowerShell(it) }
   }
 
   private fun testShellNamesComparison(expectedName: ShellName, nameVariants: List<String>) {
