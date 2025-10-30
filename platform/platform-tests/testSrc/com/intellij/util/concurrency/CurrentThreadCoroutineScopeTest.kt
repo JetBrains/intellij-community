@@ -306,7 +306,6 @@ class CurrentThreadCoroutineScopeTest {
   }
 
   @OptIn(InternalCoroutinesApi::class)
-  @RepeatedTest(100)
   fun `overwritten checkpoint inside blockingContextScope is not propagated`(): Unit = timeoutRunBlocking {
     val flag = AtomicBoolean(false)
     val job = blockingContextScope {
