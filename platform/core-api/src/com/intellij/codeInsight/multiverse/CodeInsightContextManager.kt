@@ -54,17 +54,6 @@ interface CodeInsightContextManager {
   fun getCodeInsightContextRaw(fileViewProvider: FileViewProvider): CodeInsightContext
 
   /**
-   * DANGEROUS API, AUTHORIZED PERSONNEL ONLY
-   *
-   * Tries to assign context of [fileViewProvider] to [context] if it's not yet assigned to something else.
-   *
-   * @return the context assigned to [fileViewProvider]
-   */
-  @Internal
-  @Deprecated("DANGEROUS API, AUTHORIZED PERSONNEL ONLY")
-  fun getOrSetContext(fileViewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext
-
-  /**
    * Subscribe to this flow to listen for context changes.
    * A new emission means all the contexts are invalidated and will be inferred from scratch.
    */

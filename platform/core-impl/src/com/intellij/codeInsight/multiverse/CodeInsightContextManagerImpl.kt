@@ -144,22 +144,6 @@ class CodeInsightContextManagerImpl(
     return context
   }
 
-  @Deprecated("DANGEROUS API, AUTHORIZED PERSONNEL ONLY")
-  override fun getOrSetContext(fileViewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext {
-    log.trace { "requested getOrSet context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
-
-    val rawContext = getCodeInsightContextRaw(fileViewProvider)
-    if (rawContext != anyContext()) {
-      return rawContext
-    }
-
-    if (context !in getContextSequence(fileViewProvider.virtualFile)) {
-      return inferContext(fileViewProvider)
-    }
-
-    return trySetContext(fileViewProvider, context)
-  }
-
   private fun findFirstContext(file: VirtualFile?): CodeInsightContext {
     if (file == null) return defaultContext()
 

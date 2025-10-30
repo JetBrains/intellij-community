@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
-import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
+import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.lang.LanguageMatcher;
 import com.intellij.notebook.editor.BackedVirtualFile;
@@ -47,7 +46,7 @@ public final class PsiSearchScopeUtil {
       FileViewProvider viewProvider = file.getOriginalFile().getViewProvider();
       VirtualFile backed = BackedVirtualFile.getOriginFileIfBacked(viewProvider.getVirtualFile());
       if (CodeInsightContexts.isSharedSourceSupportEnabled(element.getProject())) {
-        if (CodeInsightContextAwareSearchScopes.tryCheckingFileInScope(backed, viewProvider, globalScope, element.getProject())) {
+        if (CodeInsightContextAwareSearchScopes.contains(globalScope, backed, CodeInsightContextUtil.getCodeInsightContext(viewProvider))) {
           return true;
         }
       }
