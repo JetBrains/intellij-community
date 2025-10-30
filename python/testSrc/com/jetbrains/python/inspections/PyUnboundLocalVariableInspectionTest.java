@@ -474,6 +474,91 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
               print(f"{test}")""");
   }
 
+  // PY-82876
+  public void testExhaustivePatternAssertNever() {
+    doTestByText("""
+      from enum import Enum
+      from typing import assert_never
+
+      class Direction(Enum):
+          N = 0
+          S = 1
+
+      def foo(d: Direction):
+          match d:
+              case Direction.N:
+                  y = 1
+              case Direction.S:
+                  y = 3
+              case _:
+                  assert_never(d)
+          print(y)
+      """);
+  }
+
+  // PY-82876
+  public void testExhaustivePatternAssertNeverMissingAssignmentInBranchWarns() {
+    doTestByText("""
+      from enum import Enum
+      from typing import assert_never
+
+      class D(Enum):
+          A = 1
+          B = 2
+
+      def f(d: D):
+          match d:
+              case D.A:
+                  y = 1
+              case D.B:
+                  pass
+              case _:
+                  assert_never(d)
+          print(<warning descr="Local variable 'y' might be referenced before assignment">y</warning>)
+      """);
+  }
+
+  // PY-82876
+  public void testExhaustivePatternDefaultBranchNoAssertNeverNoWarning() {
+    doTestByText("""
+      from enum import Enum
+
+      class D(Enum):
+          A = 1
+          B = 2
+
+      def f(d: D):
+          match d:
+              case D.A:
+                  y = 1
+              case D.B:
+                  y = 2
+              case _:
+                  pass
+          print(y)
+      """);
+  }
+
+  // PY-82876
+  public void testExhaustivePatternAssertNeverUnionAlternativeNoWarning() {
+    doTestByText("""
+      from enum import Enum
+      from typing import assert_never
+
+      class D(Enum):
+          A = 1
+          B = 2
+
+      def f(d: D):
+          match d:
+              case D.A | D.B:
+                  y = 1
+              case _:
+                  assert_never(d)
+          print(y)
+      """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
