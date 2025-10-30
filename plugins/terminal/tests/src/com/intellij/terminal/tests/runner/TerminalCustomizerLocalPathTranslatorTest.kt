@@ -324,6 +324,28 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
       .isEqualTo(gorootDir.remoteDir)
   }
 
+  @Test
+  fun `Windows WSL UNC paths with Unix separators are translated`(): Unit = timeoutRunBlocking(TIMEOUT) {
+    Assumptions.assumeTrue(eelHolder.type is Wsl)
+
+    val dir1 = tempDir.asDirectory()
+    val dir2 = createTmpDir("dir2").asDirectory()
+
+    register(deprecatedCustomizer {
+      prependToEnvVar(PATH, it, FileUtilRt.toSystemIndependentName(dir1.nioDir.toString()), LocalEelDescriptor)
+      appendToEnvVar(PATH, it, "foo", LocalEelDescriptor)
+    }, deprecatedCustomizer {
+      appendToEnvVar(PATH, it, FileUtilRt.toSystemIndependentName(dir2.nioDir.toString()), LocalEelDescriptor)
+    })
+
+    val initialPath = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+    val result = configureStartupOptions(dir1) {
+      it[PATH] = initialPath
+    }
+    Assertions.assertThat(result.getEnvVarValue(PATH))
+      .isEqualTo(dir1.remoteDirAndSeparator + initialPath + dir1.remoteSeparator + "foo" + dir2.remoteSeparatorAndDir)
+  }
+
   private fun customizer(handler: (envs: MutableMap<String, String>) -> Unit): LocalTerminalCustomizer {
     return object : LocalTerminalCustomizer() {
       override fun customizeCommandAndEnvironment(
