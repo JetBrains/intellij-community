@@ -10,10 +10,12 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.BridgeInitializer
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 import com.intellij.platform.workspace.storage.*
 import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
@@ -21,7 +23,16 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Compa
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridgeRegistry
 import com.intellij.workspaceModel.ide.toPath
+import java.nio.file.InvalidPathException
 import java.util.concurrent.ConcurrentHashMap
+
+private fun SdkEntity.getAssociatedEelDescriptor(): EelDescriptor =
+  try {
+    homePath?.toPath()?.getEelDescriptor() ?: LocalEelDescriptor
+  }
+  catch (_: InvalidPathException) {
+    LocalEelDescriptor
+  }
 
 private class GlobalSdkBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
@@ -30,9 +41,11 @@ private class GlobalSdkBridgeInitializer : BridgeInitializer {
     @Suppress("UNCHECKED_CAST")
     val sdkChanges = (changes[SdkEntity::class.java] as? List<EntityChange<SdkEntity>>) ?: emptyList()
     val addChanges = sdkChanges.filterIsInstance<EntityChange.Added<SdkEntity>>()
-    val environmentName = project.getEelDescriptor().machine.getInternalEnvironmentName()
+    val projectEelDescriptor = project.getEelDescriptor()
+    val environmentName = projectEelDescriptor.machine.getInternalEnvironmentName()
 
     for (addChange in addChanges) {
+      if (addChange.newEntity.getAssociatedEelDescriptor() != projectEelDescriptor) continue
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
         val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", environmentName = environmentName)
@@ -50,6 +63,7 @@ private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : Globa
     val sdks = mutableStorage
       .entities(SdkEntity::class.java)
       .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
+      .filter { it.getAssociatedEelDescriptor().machine == eelMachine }
       .map { sdkEntity ->
         val sdkEntityBuilder = sdkEntity.createEntityTreeCopy(false) as SdkEntityBuilder
         sdkEntity to ProjectJdkImpl(SdkBridgeImpl(sdkEntityBuilder, environmentName))
@@ -71,6 +85,7 @@ private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : Globa
     val environmentName = eelMachine.getInternalEnvironmentName()
 
     for (addChange in addChanges) {
+      if (addChange.newEntity.getAssociatedEelDescriptor().machine != eelMachine) continue
       // Will initialize the bridge if missing
       builder.mutableSdkMap.getOrPutDataByEntity(addChange.newEntity) {
         val sdkEntityCopy = SdkBridgeImpl.createEmptySdkEntity("", "", environmentName = environmentName)
@@ -80,7 +95,7 @@ private class GlobalSdkBridgesLoader(private val eelMachine: EelMachine) : Globa
     }
   }
 
-  override fun handleBeforeChangeEvents(event: VersionedStorageChange) { }
+  override fun handleBeforeChangeEvents(event: VersionedStorageChange) {}
 
   override fun handleChangedEvents(event: VersionedStorageChange) {
     val changes = event.getChanges(SdkEntity::class.java)

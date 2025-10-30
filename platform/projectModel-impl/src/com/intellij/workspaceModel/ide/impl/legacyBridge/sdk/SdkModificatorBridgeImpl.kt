@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import org.jdom.Element
 import java.nio.file.InvalidPathException
@@ -59,12 +60,14 @@ internal class SdkModificatorBridgeImpl(
   override fun getHomePath(): String? = modifiedSdkEntity.homePath?.url
 
   override fun setHomePath(path: String?) {
-    modifiedSdkEntity.homePath = if (path != null) {
+    if (path != null) {
       val descriptor = getMachine(path)
       val globalInstance = GlobalWorkspaceModel.getInstance(descriptor).getVirtualFileUrlManager()
-      globalInstance.getOrCreateFromUrl(path)
-    } else {
-      null
+      modifiedSdkEntity.homePath = globalInstance.getOrCreateFromUrl(path)
+      modifiedSdkEntity.entitySource = SdkBridgeImpl.createEntitySourceForSdk(descriptor.getInternalEnvironmentName())
+    }
+    else {
+      modifiedSdkEntity.homePath = null
     }
   }
 

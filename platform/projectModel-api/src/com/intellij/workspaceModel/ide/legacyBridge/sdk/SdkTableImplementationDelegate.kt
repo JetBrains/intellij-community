@@ -16,6 +16,7 @@ interface SdkTableImplementationDelegate {
   fun updateSdk(originalSdk: Sdk, modifiedSdk: Sdk)
 
   fun createSdk(name: String, type: SdkTypeId, homePath: String?): Sdk
+  fun createSdk(name: String, type: SdkTypeId, environmentName: InternalEnvironmentName): Sdk
 
   fun getAllSdks(): List<Sdk>
 

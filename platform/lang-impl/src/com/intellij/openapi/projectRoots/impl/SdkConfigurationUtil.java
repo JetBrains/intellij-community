@@ -259,7 +259,7 @@ public final class SdkConfigurationUtil {
                            ? createUniqueSdkName(sdkType, homePath, allSdks)
                            : createUniqueSdkName(customSdkSuggestedName, allSdks);
 
-    Sdk sdk = projectJdkTableSupplier.get().createSdk(sdkName, sdkType);
+    Sdk sdk = SdkUtils.createSdkForEnvironment(projectJdkTableSupplier.get(), sdkName, sdkType, homePath);
     SdkModificator sdkModificator = sdk.getSdkModificator();
     if (additionalData != null) {
       // additional initialization.

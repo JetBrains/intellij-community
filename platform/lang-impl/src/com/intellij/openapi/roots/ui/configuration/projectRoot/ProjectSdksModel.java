@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.projectRoots.impl.SdkUtils;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
@@ -519,10 +520,19 @@ public class ProjectSdksModel implements SdkModel {
     return createSdkInternal(type, newSdkName, home);
   }
 
+  private static @NotNull EelDescriptor getEelDescriptorFromHomePath(@NotNull String homePath) {
+    try {
+      return getEelDescriptor(Path.of(homePath));
+    }
+    catch (InvalidPathException ignored) {
+      return LocalEelDescriptor.INSTANCE;
+    }
+  }
+
   private static @NotNull Sdk createSdkInternal(@NotNull SdkType type,
                                                 @NotNull String newSdkName,
                                                 @NotNull String home) {
-    final Sdk newJdk = ProjectJdkTable.getInstance().createSdk(newSdkName, type);
+    final Sdk newJdk = SdkUtils.createSdkForEnvironment(ProjectJdkTable.getInstance(), newSdkName, type, home);
     SdkModificator sdkModificator = newJdk.getSdkModificator();
     sdkModificator.setHomePath(home);
     sdkModificator.setVersionString(type.getVersionString(home));
