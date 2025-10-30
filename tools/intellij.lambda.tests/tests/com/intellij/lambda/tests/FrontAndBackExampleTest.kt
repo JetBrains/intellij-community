@@ -1,16 +1,20 @@
 package com.intellij.lambda.tests
 
 import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
+import com.intellij.lambda.testFramework.junit.GroupTestsByMode
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.tests.SampleTests.Companion.HelloBackendOnlyLambda
 import com.intellij.lambda.tests.SampleTests.Companion.HelloFrontendOnlyLambda
 import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.TestTemplate
 
 @ExecuteInMonolithAndSplitMode
+@GroupTestsByMode
 class FrontAndBackExampleTest {
 
+  @Disabled
   @TestTemplate
   fun testTemplateTest(ide: BackgroundRunWithLambda) = runBlocking {
     ide.runLambdaInBackend(HelloBackendOnlyLambda::class)
@@ -19,6 +23,11 @@ class FrontAndBackExampleTest {
 
   @TestTemplate
   fun simpleUnitTest() {
+    ApplicationManager.getApplication().invokeAndWait { println("Test template test : badums") }
+  }
+
+  @TestTemplate
+  fun anotherTest() {
     ApplicationManager.getApplication().invokeAndWait { println("Test template test : badums") }
   }
 }
