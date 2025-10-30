@@ -43,7 +43,8 @@ import kotlin.io.path.extension
 import kotlin.io.path.name
 import kotlin.system.exitProcess
 
-private const val MIGRATION_FILE_MARKER = ".ce_migration_attempted"
+@ApiStatus.Internal
+const val MIGRATION_FILE_MARKER: String = ".ce_migration_attempted"
 
 @ApiStatus.Internal
 fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
