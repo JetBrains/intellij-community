@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.awtTransferable
+import androidx.compose.ui.unit.Dp
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import java.awt.datatransfer.DataFlavor
 import com.intellij.openapi.application.EDT
@@ -165,6 +166,13 @@ class WelcomeScreenRightTab(
     }
   }
 
+  @Stable
+  private inline val WelcomeRightTabContentProvider.FeatureButtonSize.dp: Dp
+    get() = when (this) {
+      WelcomeRightTabContentProvider.FeatureButtonSize.COMMON -> 112
+      WelcomeRightTabContentProvider.FeatureButtonSize.LARGE -> 125
+    }.dp
+
   @Composable
   private fun FeatureButton(model: WelcomeRightTabContentProvider.FeatureButtonModel, scope: CoroutineScope) {
     WelcomeScreenCustomButton(
@@ -172,7 +180,7 @@ class WelcomeScreenRightTab(
         model.onClick(project, scope)
       },
       style = CustomButtonStyle(),
-      modifier = Modifier.size(112.dp, 87.dp),
+      modifier = Modifier.size(contentProvider.featureButtonSize.dp, 87.dp),
     ) {
       Column {
         Icon(key = model.icon, contentDescription = model.text, tint = model.tint,
