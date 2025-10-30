@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class PluginInstallOperation {
@@ -323,52 +324,153 @@ public final class PluginInstallOperation {
 
   boolean checkMissingDependencies(@NotNull IdeaPluginDescriptor pluginNode,
                                    @Nullable List<PluginId> pluginIdsBeingInstalled) {
-    // check for dependent plugins at first.
-    List<IdeaPluginDependency> dependencies = pluginNode.getDependencies();
-    if (dependencies.isEmpty()) {
-      return true;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Checking missing dependencies for " + pluginNode +
+                ". Plugins being installed: " + pluginIdsBeingInstalled);
+    }
+    var pluginSet = PluginManagerCore.getPluginSetOrNull(); // TODO assert that plugins are initialized at this point
+    final Set<PluginId> existingPluginIds = pluginSet != null ? pluginSet.buildPluginIdMap().keySet() : Collections.emptySet();
+    final Set<PluginModuleId> existingContentModuleIds = pluginSet != null ? pluginSet.buildContentModuleIdMap().keySet() : Collections.emptySet();
+    final Set<PluginId> addedPluginIdsAfterInstallation = new HashSet<>();
+    final Set<PluginModuleId> addedContentModuleIdsAfterInstallation = new HashSet<>();
+    addedPluginIdsAfterInstallation.add(pluginNode.getPluginId());
+    if (pluginIdsBeingInstalled != null) {
+      addedPluginIdsAfterInstallation.addAll(pluginIdsBeingInstalled);
+    }
+    if (pluginNode instanceof PluginMainDescriptor pluginDescriptor) {
+      addedPluginIdsAfterInstallation.addAll(pluginDescriptor.getPluginAliases());
+      for (var module : pluginDescriptor.getContentModules()) {
+        addedPluginIdsAfterInstallation.addAll(module.getPluginAliases());
+        addedContentModuleIdsAfterInstallation.add(module.getModuleId());
+      }
     }
 
-    // prepare plugins list for install
     final Map<PluginId, PluginUiModel> missingRequiredPlugins = new HashMap<>();
     final Map<PluginId, PluginUiModel> missingOptionalPlugins = new HashMap<>();
-    for (IdeaPluginDependency dependency : dependencies) {
-      PluginId depPluginId = dependency.getPluginId();
-      var targetCollector = dependency.isOptional() ? missingOptionalPlugins : missingRequiredPlugins;
 
-      if (PluginManagerCore.looksLikePlatformPluginAlias(depPluginId)) {
-        IdeaPluginDescriptorImpl descriptorByAlias = PluginManagerCore.findPluginByPlatformAlias(depPluginId);
-        PluginId pluginIdByModule = descriptorByAlias != null ?
-                                    descriptorByAlias.getPluginId() :
-                                    resolveModuleInMarketplaceWithCache(depPluginId.getIdString());
+    for (IdeaPluginDependency dependency : pluginNode.getDependencies()) {
+      if (LOG.isDebugEnabled()) LOG.debug("Processing depends dependency: " + dependency.getPluginId() + " optional=" + dependency.isOptional());
+      final PluginId dependencyId = dependency.getPluginId();
+      final var targetCollector = dependency.isOptional() ? missingOptionalPlugins : missingRequiredPlugins;
 
-        if (pluginIdByModule == null) continue;
-        depPluginId = pluginIdByModule;
-      }
-      if (PluginManagerCore.isPluginInstalled(depPluginId) ||
-          InstalledPluginsState.getInstance().wasInstalled(depPluginId) ||
-          InstalledPluginsState.getInstance().wasInstalledWithoutRestart(depPluginId) ||
-          pluginIdsBeingInstalled != null && pluginIdsBeingInstalled.contains(depPluginId) ||
-          targetCollector.containsKey(depPluginId)) {
-        // ignore installed or installing plugins
+      // pluginNode that comes from the Marketplace contains mixed dependencies on both plugins and modules
+      Function<PluginId, Boolean> shouldSkip = pluginId -> {
+        PluginModuleId pluginIdAsModuleId = PluginModuleId.getId(pluginId.getIdString(), PluginModuleId.JETBRAINS_NAMESPACE);
+        return existingPluginIds.contains(pluginId) ||
+               existingContentModuleIds.contains(pluginIdAsModuleId) ||
+               addedPluginIdsAfterInstallation.contains(pluginId) ||
+               addedContentModuleIdsAfterInstallation.contains(pluginIdAsModuleId) ||
+               InstalledPluginsState.getInstance().wasInstalled(pluginId) ||
+               InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId) ||
+               targetCollector.containsKey(pluginId);
+      };
+      if (shouldSkip.apply(dependencyId)) {
+        if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied");
         continue;
       }
-
-      PluginUiModel depPluginDescriptor = findPluginInRepo(depPluginId);
+      var resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyId.getIdString());
+      if (resolvedDependencyId == null) {
+        resolvedDependencyId = dependencyId;
+      }
+      if (LOG.isDebugEnabled() && !resolvedDependencyId.equals(dependencyId)) LOG.debug("Dependency is resolved into " + resolvedDependencyId);
+      if (shouldSkip.apply(resolvedDependencyId)) {
+        if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied");
+        continue;
+      }
+      PluginUiModel depPluginDescriptor = findPluginInRepo(resolvedDependencyId);
       if (depPluginDescriptor != null) {
-        targetCollector.putIfAbsent(depPluginId, depPluginDescriptor);
+        if (LOG.isDebugEnabled()) LOG.debug("Adding " + resolvedDependencyId + " to missing dependencies (optional=" + dependency.isOptional() + ")");
+        targetCollector.put(resolvedDependencyId, depPluginDescriptor);
+      } else {
+        if (LOG.isDebugEnabled()) LOG.debug("Plugin " + resolvedDependencyId + " is not found in the repository");
       }
     }
 
-    missingOptionalPlugins.keySet().removeIf(pluginId -> missingRequiredPlugins.containsKey(pluginId));
+    if (pluginNode instanceof PluginMainDescriptor pluginDescriptor) {
+      Function<PluginModuleDescriptor, Void> processRequiredModuleDependencies = module -> {
+        for (var dependencyPluginId : module.getModuleDependencies().getPlugins()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Processing v2 plugin dependency: " + dependencyPluginId.getIdString() + " in " +
+                      (module instanceof ContentModuleDescriptor contentModule ? "content module " + contentModule.getModuleNameString() : "main descriptor"));
+          }
+          Function<PluginId, Boolean> shouldSkip = pluginId -> {
+            return existingPluginIds.contains(pluginId) ||
+                   addedPluginIdsAfterInstallation.contains(pluginId) ||
+                   InstalledPluginsState.getInstance().wasInstalled(pluginId) ||
+                   InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId) ||
+                   missingRequiredPlugins.containsKey(pluginId);
+          };
+          if (shouldSkip.apply(dependencyPluginId)) {
+            if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied");
+            continue;
+          }
+          var resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyPluginId.getIdString());
+          if (resolvedDependencyId == null) {
+            resolvedDependencyId = dependencyPluginId;
+          }
+          if (LOG.isDebugEnabled() && !resolvedDependencyId.equals(dependencyPluginId)) LOG.debug("Dependency is resolved into " + resolvedDependencyId);
+          if (shouldSkip.apply(resolvedDependencyId)) {
+            if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied");
+            continue;
+          }
+          PluginUiModel depPluginDescriptor = findPluginInRepo(resolvedDependencyId);
+          if (depPluginDescriptor != null) {
+            if (LOG.isDebugEnabled()) LOG.debug("Adding " + resolvedDependencyId + " to missing dependencies");
+            missingRequiredPlugins.put(resolvedDependencyId, depPluginDescriptor);
+          } else {
+            if (LOG.isDebugEnabled()) LOG.debug("Plugin " + resolvedDependencyId + " is not found in the repository");
+          }
+        }
+        for (var dependencyModuleId : module.getModuleDependencies().getModules()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Processing v2 module dependency: " + dependencyModuleId.getName() + " in " +
+                      (module instanceof ContentModuleDescriptor contentModule ? "content module " + contentModule.getModuleNameString() : "main descriptor"));
+          }
+          if (existingContentModuleIds.contains(dependencyModuleId) ||
+              addedContentModuleIdsAfterInstallation.contains(dependencyModuleId)) {
+            if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied");
+            continue;
+          }
+          var resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyModuleId.getName());
+          if (resolvedDependencyId == null) {
+            continue;
+          }
+          if (LOG.isDebugEnabled()) LOG.debug("Dependency is resolved into " + resolvedDependencyId);
+          if (existingPluginIds.contains(resolvedDependencyId) ||
+              addedPluginIdsAfterInstallation.contains(resolvedDependencyId) ||
+              InstalledPluginsState.getInstance().wasInstalled(resolvedDependencyId) ||
+              InstalledPluginsState.getInstance().wasInstalledWithoutRestart(resolvedDependencyId) ||
+              missingRequiredPlugins.containsKey(resolvedDependencyId)) {
+            if (LOG.isDebugEnabled()) LOG.debug("Dependency is already satisfied");
+            continue;
+          }
+          PluginUiModel depPluginDescriptor = findPluginInRepo(resolvedDependencyId);
+          if (depPluginDescriptor != null) {
+            if (LOG.isDebugEnabled()) LOG.debug("Adding " + resolvedDependencyId + " to missing dependencies");
+            missingRequiredPlugins.put(resolvedDependencyId, depPluginDescriptor);
+          } else {
+            if (LOG.isDebugEnabled()) LOG.debug("Plugin " + resolvedDependencyId + " is not found in the repository");
+          }
+        }
+        return null;
+      };
+
+      processRequiredModuleDependencies.apply(pluginDescriptor);
+      for (var module : pluginDescriptor.getContentModules()) {
+        if (module.getModuleLoadingRule().getRequired()) {
+          processRequiredModuleDependencies.apply(module);
+        }
+      }
+      // optional modules are skipped because they form a majority of content modules and the result is not really used, see comment below
+    }
 
     if (!prepareDependencies(pluginNode, missingRequiredPlugins.values().stream().toList(), "plugin.manager.dependencies.detected.title",
                              "plugin.manager.dependencies.detected.message", false)) {
       return false;
     }
-    if (Registry.is("ide.plugins.suggest.install.optional.dependencies") &&
+    if (Registry.is("ide.plugins.suggest.install.optional.dependencies") && // TODO only 2 users use this, let's drop?
         !prepareDependencies(pluginNode, missingOptionalPlugins.values().stream().toList(), "plugin.manager.optional.dependencies.detected.title",
-                            "plugin.manager.optional.dependencies.detected.message", true)) {
+                             "plugin.manager.optional.dependencies.detected.message", true)) {
       return false;
     }
     return true;
@@ -484,8 +586,10 @@ public final class PluginInstallOperation {
     if (cachedResult != null) {
       return cachedResult.orElse(null);
     }
+    LOG.debug("Resolving module " + moduleId + " in Marketplace");
     PluginId result = MarketplaceRequests.getInstance().getCompatibleUpdateByModule(moduleId);
     ourModuleResolutionCache.put(moduleId, Optional.ofNullable(result));
+    LOG.debug("Resolved module " + moduleId + " in Marketplace: " + result);
     return result;
   }
 }
