@@ -879,6 +879,92 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     });
   }
 
+  // PY-84088
+  public void testAttributeOnUnknownQualifier() {
+    Map<String, PsiElement> marks = loadTest();
+    final PsiElement originalElement = marks.get("<the_ref>");
+    assertNotNull("<the_ref> marker is missing in test data", originalElement);
+    final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
+    final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
+                                                        originalElement.getTextOffset(),
+                                                        myFixture.getFile(),
+                                                        originalElement);
+    final String html = myProvider.generateDoc(target, originalElement);
+    if (html == null) return; // empty help is acceptable/preferred
+    assertFalse("Quick Doc must not include unrelated attribute docstring when qualifier type is unknown/Any",
+                html.contains("Identifier for the trigger associated with the response."));
+  }
+
+  // PY-84088
+  public void testModuleAttributeFunction() {
+    // Preload the module file into the temp project so that `import m` resolves
+    myFixture.copyFileToProject(getTestName(false) + "/m.py", "m.py");
+
+    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + "/use_module.py");
+    final PsiElement originalElement = marks.get("<the_ref>");
+    assertNotNull("<the_ref> marker is missing in test data", originalElement);
+    final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
+    final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
+                                                        originalElement.getTextOffset(),
+                                                        myFixture.getFile(),
+                                                        originalElement);
+    final String html = myProvider.generateDoc(target, originalElement);
+    assertNotNull("Quick Doc should be available for module attribute access", html);
+    assertTrue("Quick Doc should include module function docstring",
+               html.contains("Foo from module m."));
+  }
+
+  // Module attribute access — variable
+  public void testModuleAttributeVariable() {
+    // Preload the module file into the temp project so that `import m` resolves
+    myFixture.copyFileToProject(getTestName(false) + "/m.py", "m.py");
+
+    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + "/use_module.py");
+    final PsiElement originalElement = marks.get("<the_ref>");
+    assertNotNull("<the_ref> marker is missing in test data", originalElement);
+    final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
+    final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
+                                                        originalElement.getTextOffset(),
+                                                        myFixture.getFile(),
+                                                        originalElement);
+    final String html = myProvider.generateDoc(target, originalElement);
+    assertNotNull("Quick Doc should be available for module attribute access", html);
+    assertTrue("Quick Doc should include module variable doc/comment",
+               html.contains("BAR from module m."));
+  }
+
+  // PY-84088
+  public void testUnionCommonDefinitionAllowed() {
+    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + ".py");
+    final PsiElement originalElement = marks.get("<the_ref>");
+    assertNotNull("<the_ref> marker is missing in test data", originalElement);
+    final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
+    final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
+                                                        originalElement.getTextOffset(),
+                                                        myFixture.getFile(),
+                                                        originalElement);
+    final String html = myProvider.generateDoc(target, originalElement);
+    assertNotNull("Quick Doc should be available for Union[A, B].a where both resolve to Common.a", html);
+    assertTrue("Quick Doc should include Common.a docstring",
+               html.contains("Common.a doc."));
+  }
+
+  // PY-84088
+  public void testOptionalBoxPropertyAllowed() {
+    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + ".py");
+    final PsiElement originalElement = marks.get("<the_ref>");
+    assertNotNull("<the_ref> marker is missing in test data", originalElement);
+    final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
+    final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
+                                                        originalElement.getTextOffset(),
+                                                        myFixture.getFile(),
+                                                        originalElement);
+    final String html = myProvider.generateDoc(target, originalElement);
+    assertNotNull("Quick Doc should be available for Optional[Box].value", html);
+    assertTrue("Quick Doc should include Box.value docstring",
+               html.contains("Box.value doc."));
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/quickdoc/";
