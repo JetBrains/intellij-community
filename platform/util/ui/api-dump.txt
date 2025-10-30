@@ -4729,6 +4729,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:stripeToolbarButtonIconSizeKey():java.lang.String
 - s:stripeToolbarButtonSize():java.awt.Dimension
 - s:stripeToolbarButtonSizeKey():java.lang.String
+- s:stripeToolbarTextOffset(Z):I
 - s:toolbarButtonInsets():java.awt.Insets
 - s:toolbarButtonInsets(Z):java.awt.Insets
 - s:verticalInsetsKey():java.lang.String
