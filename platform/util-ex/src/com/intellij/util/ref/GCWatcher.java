@@ -213,7 +213,7 @@ public final class GCWatcher {
 
     while (!collected && System.currentTimeMillis() < timeoutDeadline) {
       runWhileWaiting.run();
-      TimeoutUtil.sleep(300); // let other threads to do some progress
+      TimeoutUtil.sleep(10); // let other threads to do some progress
       collected = tryCollect(log, timeoutDeadline, runWhileWaiting);
     }
 
