@@ -221,6 +221,8 @@ internal class TerminalCustomizerLocalPathTranslator(
     ).duplicateWithPrefixes("_INTELLIJ_FORCE_PREPEND_", "_INTELLIJ_FORCE_SET_")
 
     private val SINGLE_PATH_ENV_NAMES: List<String> = listOf(
+      "JEDITERM_SOURCE"
+    ) + listOf(
       "GOROOT",
       "GOBIN",
     ).duplicateWithPrefixes("_INTELLIJ_FORCE_SET_")
