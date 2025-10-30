@@ -3,7 +3,7 @@ package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class XMoveWatchUp extends XWatchesTreeActionBase implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public class XMoveWatchUp extends XWatchesTreeActionBase implements SplitDebuggerAction {
   public XMoveWatchUp() {
     getTemplatePresentation().setIcon(CommonActionsPanel.Buttons.UP.getIcon());
   }

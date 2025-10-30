@@ -6,14 +6,14 @@ import com.intellij.java.debugger.impl.shared.SharedJavaDebuggerSession
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.platform.project.projectId
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.launch
 
-private class CustomizeContextViewAction : XDebuggerTreeActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+private class CustomizeContextViewAction : XDebuggerTreeActionBase(), SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     perform(null, "", e)
   }

@@ -2,11 +2,11 @@
 package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerRunToCursorActionHandler
 
-open class RunToCursorAction : XDebuggerActionBase(true), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+open class RunToCursorAction : XDebuggerActionBase(true), SplitDebuggerAction {
   override fun getHandler(debuggerSupport: DebuggerSupport): DebuggerActionHandler {
     return ourHandler
   }

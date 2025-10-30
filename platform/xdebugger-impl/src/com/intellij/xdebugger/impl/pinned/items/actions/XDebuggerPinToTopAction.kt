@@ -4,8 +4,8 @@ package com.intellij.xdebugger.impl.pinned.items.actions
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.pinned.items.*
@@ -16,7 +16,7 @@ import icons.PlatformDebuggerImplIcons
 import java.awt.event.MouseEvent
 import java.util.*
 
-class XDebuggerPinToTopAction : XDebuggerTreeActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class XDebuggerPinToTopAction : XDebuggerTreeActionBase(), SplitDebuggerAction {
 
     companion object {
         fun pinToTopField(mouseEvent: MouseEvent?, node: XValueNodeImpl) {

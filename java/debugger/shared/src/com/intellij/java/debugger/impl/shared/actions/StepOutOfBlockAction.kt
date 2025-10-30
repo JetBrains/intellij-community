@@ -6,12 +6,12 @@ import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.launch
 
-private class StepOutOfBlockAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+private class StepOutOfBlockAction : AnAction(), DumbAware, SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     val sessionProxy = DebuggerUIUtil.getSessionProxy(e) ?: return
     sessionProxy.coroutineScope.launch {

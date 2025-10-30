@@ -2,17 +2,16 @@
 package com.intellij.xdebugger.impl.frame.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.frame.XWatchesView
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 
-private class XPauseWatchAction : XWatchesTreeActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+private class XPauseWatchAction : XWatchesTreeActionBase(), SplitDebuggerAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun isEnabled(e: AnActionEvent, tree: XDebuggerTree): Boolean {

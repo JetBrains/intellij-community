@@ -3,14 +3,14 @@ package com.intellij.debugger.streams.shared
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.launch
 
 /**
  * @author Vitaliy.Bibaev
  */
-open class TraceStreamAction : AnAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+open class TraceStreamAction : AnAction(), SplitDebuggerAction {
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
     val presentation = e.presentation

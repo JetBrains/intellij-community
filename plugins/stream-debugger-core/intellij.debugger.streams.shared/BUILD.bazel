@@ -25,6 +25,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl/rpc",
+    "//platform/xdebugger-impl/shared",
   ]
 )
 ### auto-generated section `build intellij.debugger.streams.shared` end

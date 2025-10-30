@@ -5,12 +5,12 @@ import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import kotlinx.coroutines.launch
 
-private class CreateRendererAction : AnAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+private class CreateRendererAction : AnAction(), SplitDebuggerAction {
   override fun update(e: AnActionEvent) {
     val values = getSelectedJavaValuesWithDescriptors(e)
     val value = values.singleOrNull()?.second

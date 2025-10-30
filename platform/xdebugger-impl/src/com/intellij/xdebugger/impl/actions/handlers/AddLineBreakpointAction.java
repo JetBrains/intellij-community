@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.actions.handlers;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
@@ -13,6 +12,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -33,7 +33,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
-public class AddLineBreakpointAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public class AddLineBreakpointAction extends DumbAwareAction implements SplitDebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
@@ -95,7 +95,7 @@ public class AddLineBreakpointAction extends DumbAwareAction implements ActionRe
     return false;
   }
 
-  public static class WithCondition extends AddLineBreakpointAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  public static class WithCondition extends AddLineBreakpointAction implements SplitDebuggerAction {
     @Override
     protected boolean editBreakpointSettings(XLineBreakpointProxy bp, @Nullable String editorSelection) {
       bp.setConditionEnabled(true);
@@ -104,7 +104,7 @@ public class AddLineBreakpointAction extends DumbAwareAction implements ActionRe
     }
   }
 
-  public static class WithLogging extends AddLineBreakpointAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  public static class WithLogging extends AddLineBreakpointAction implements SplitDebuggerAction {
     @Override
     protected boolean editBreakpointSettings(XLineBreakpointProxy bp, @Nullable String editorSelection) {
       bp.setSuspendPolicy(SuspendPolicy.NONE);

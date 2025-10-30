@@ -3,12 +3,12 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 
-open class PauseAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+open class PauseAction : DumbAwareAction(), SplitDebuggerAction {
   override fun update(e: AnActionEvent) {
     var supported = false
     val session = DebuggerUIUtil.getSessionProxy(e)

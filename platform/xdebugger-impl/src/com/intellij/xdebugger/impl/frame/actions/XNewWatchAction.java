@@ -3,8 +3,8 @@ package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XVariablesViewBase;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public class XNewWatchAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public class XNewWatchAction extends DumbAwareAction implements SplitDebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     XWatchesView view = DebuggerUIUtil.getWatchesView(e);

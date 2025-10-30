@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
@@ -36,13 +36,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XDropFrameHandler;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xml.util.XmlStringUtil;
-import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -519,7 +517,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     Color getBackgroundColor();
   }
 
-  public static class CopyStackAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  public static class CopyStackAction extends DumbAwareAction implements SplitDebuggerAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
@@ -762,7 +760,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements UiCompati
     return session.getDropFrameHandler();
   }
 
-  private static class ResetFrameAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  private static class ResetFrameAction extends DumbAwareAction implements SplitDebuggerAction {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       var inputEvent = e.getInputEvent();

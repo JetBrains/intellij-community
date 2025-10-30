@@ -7,11 +7,11 @@ import com.intellij.java.debugger.impl.shared.engine.NodeRendererDto
 import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerSessionApi
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XValueId
 import com.intellij.platform.debugger.impl.shared.FrontendDescriptorStateManager
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
@@ -21,12 +21,12 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.launch
 
-internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+internal class ViewAsGroup : ActionGroup(Presentation.NULL_STRING, true), DumbAware, SplitDebuggerAction {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
 
-  private class RendererAction(private val nodeRenderer: NodeRendererDto) : ToggleAction(nodeRenderer.name), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  private class RendererAction(private val nodeRenderer: NodeRendererDto) : ToggleAction(nodeRenderer.name) {
     init {
       getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested)
     }

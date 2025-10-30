@@ -2,17 +2,17 @@
 package com.intellij.xdebugger.impl.actions
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
-import org.jetbrains.annotations.ApiStatus
-import com.intellij.ide.ui.UISettings
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.util.application
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class OpenFilesInPreviewTabAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class OpenFilesInPreviewTabAction : ToggleAction(), DumbAware, SplitDebuggerAction {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
   }

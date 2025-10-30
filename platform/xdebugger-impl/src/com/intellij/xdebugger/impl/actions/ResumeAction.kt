@@ -7,14 +7,14 @@ import com.intellij.frontend.FrontendType
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.XDebuggerActionsCollector
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import java.awt.event.KeyEvent
 
-open class ResumeAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+open class ResumeAction : DumbAwareAction(), SplitDebuggerAction {
   override fun update(e: AnActionEvent) {
     val project = e.project
     if (project == null) {

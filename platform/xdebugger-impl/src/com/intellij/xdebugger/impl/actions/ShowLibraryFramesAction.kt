@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XDebuggerManagerApi
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-internal class ShowLibraryFramesAction : ToggleAction(), FrontendOtherwiseBackend {
+internal class ShowLibraryFramesAction : ToggleAction(), SplitDebuggerAction {
 
   init {
     templatePresentation.apply {

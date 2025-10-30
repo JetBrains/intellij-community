@@ -16,9 +16,9 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.frame.actions.XWatchesTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -49,6 +49,6 @@ public abstract class XCopyValueAction extends XFetchValueActionBase {
     return ActionUpdateThread.BGT;
   }
 
-  static class Simple extends XCopyValueAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+  static class Simple extends XCopyValueAction implements SplitDebuggerAction {
   }
 }

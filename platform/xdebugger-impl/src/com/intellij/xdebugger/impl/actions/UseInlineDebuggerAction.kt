@@ -19,19 +19,18 @@ import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.util.application
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 /**
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
-class UseInlineDebuggerAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class UseInlineDebuggerAction : ToggleAction(), DumbAware, SplitDebuggerAction {
   override fun isSelected(e: AnActionEvent): Boolean {
     return XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowValuesInline
   }

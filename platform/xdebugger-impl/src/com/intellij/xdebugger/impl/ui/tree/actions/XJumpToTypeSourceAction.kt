@@ -3,12 +3,12 @@ package com.intellij.xdebugger.impl.ui.tree.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.platform.debugger.impl.rpc.XDebuggerNavigationApi
 import com.intellij.platform.debugger.impl.rpc.XValueId
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 
-private class XJumpToTypeSourceAction : XJumpToSourceActionBase(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+private class XJumpToTypeSourceAction : XJumpToSourceActionBase(), SplitDebuggerAction {
   override suspend fun navigateToSource(xValueId: XValueId): Boolean =
     XDebuggerNavigationApi.getInstance().navigateToXValueType(xValueId).await()
 

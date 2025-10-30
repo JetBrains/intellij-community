@@ -2,14 +2,14 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerSmartStepIntoHandler;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public final class SmartStepIntoAction extends XDebuggerActionBase implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public final class SmartStepIntoAction extends XDebuggerActionBase implements SplitDebuggerAction {
   @ApiStatus.Internal
   public static final DebuggerActionHandler HANDLER = new XDebuggerSmartStepIntoHandler();
 

@@ -4,15 +4,15 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandler;
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerMuteBreakpointsHandler;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomMuteBreakpointHandlerKt.getAvailableCustomMuteBreakpointHandler;
 
-public class MuteBreakpointAction extends ToggleAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public class MuteBreakpointAction extends ToggleAction implements SplitDebuggerAction {
   private static final DebuggerToggleActionHandler ourHandler = new XDebuggerMuteBreakpointsHandler();
 
   @Override

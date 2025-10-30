@@ -3,8 +3,8 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XStackFrame
@@ -12,7 +12,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class ResetFrameAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+class ResetFrameAction : DumbAwareAction(), SplitDebuggerAction {
   override fun actionPerformed(e: AnActionEvent) {
     withHandler(e, true) { handler, stackFrame -> handler.drop(stackFrame) }
   }

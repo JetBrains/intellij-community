@@ -4,12 +4,12 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.util.Range;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 @ApiStatus.Internal
-public class ToggleBreakpointEnabledAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+public class ToggleBreakpointEnabledAction extends DumbAwareAction implements SplitDebuggerAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Collection<XBreakpointProxy> breakpoints = findLineBreakpoints(e);
