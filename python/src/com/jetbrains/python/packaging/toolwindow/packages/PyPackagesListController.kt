@@ -30,9 +30,13 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     background = UIUtil.getListBackground()
   }
 
+  private val packageListOuterPanel = JPanel(BorderLayout()).apply {
+    add(packageListPanel, BorderLayout.NORTH)
+  }
+
   private val tablesView = PyPackagingTreeView(project, packageListPanel, controller)
 
-  private val scrollingPackageListComponent: JScrollPane = ScrollPaneFactory.createScrollPane(packageListPanel, true).apply {
+  private val scrollingPackageListComponent: JScrollPane = ScrollPaneFactory.createScrollPane(packageListOuterPanel, true).apply {
     horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
   }
 
@@ -40,10 +44,7 @@ internal class PyPackagesListController(val project: Project, val controller: Py
     emptyText.appendLine(AnimatedIcon.Default.INSTANCE, message("python.toolwindow.packages.description.panel.loading"), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES, null)
   }
 
-
-  val component: JPanel = JPanel().apply {
-    layout = BorderLayout()
-  }
+  val component: JPanel = JPanel(BorderLayout())
 
   init {
     setLoadingState(false)
