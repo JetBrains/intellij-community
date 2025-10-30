@@ -30,7 +30,10 @@ public class ConfigurationState {
   private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.impl.ConfigurationState");
   // Update the version value whenever a serialization format changes.
   // This will help to avoid multiple "failed to load configuration" error messages
-  private static final int VERSION = 2;
+  // Also consider advancing the version when
+  //  - ABI generation logic changed (e.g. changes in ordering, filtering, etc)
+  //  - Any changes in builder's logic implemented, that might affect sources processing
+  private static final int VERSION = 3;
 
   private static final ConfigurationState EMPTY = new ConfigurationState(
     new PathSourceMapper(), NodeSourceSnapshot.EMPTY, List.of(), NodeSourceSnapshot.EMPTY, Map.of()
