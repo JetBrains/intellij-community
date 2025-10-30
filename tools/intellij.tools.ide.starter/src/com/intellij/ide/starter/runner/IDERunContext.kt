@@ -162,7 +162,9 @@ data class IDERunContext(
       setFatalErrorNotificationEnabled()
       setFlagIntegrationTests()
       setJcefJsQueryPoolSize(10_000)
-      takeScreenshotsPeriodically()
+      if (testContext !is IDERemDevTestContext) {
+        takeScreenshotsPeriodically()
+      }
       withJvmCrashLogDirectory(jvmCrashLogDirectory)
       withHeapDumpOnOutOfMemoryDirectory(heapDumpOnOomDirectory)
       withGCLogs(reportsDir.resolve("gcLog.log"))
