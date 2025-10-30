@@ -67,7 +67,8 @@ object AssetsJava {
   @ApiStatus.Internal
   fun prepareJavaSampleOnboardingTips(project: Project, fileName: String) {
     AssetsOnboardingTips.prepareOnboardingTips(project, fileName) { charSequence ->
-      charSequence.indexOf("System.out.println").takeIf { it >= 0 }
+      charSequence.indexOf("System.out.println").takeIf { it >= 0 } ?:
+      charSequence.indexOf("IO.println(\"i = \"").takeIf { it >= 0 }
     }
   }
 }
