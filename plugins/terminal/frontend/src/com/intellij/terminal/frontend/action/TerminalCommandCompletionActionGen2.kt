@@ -16,6 +16,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.terminalEditor
+import org.jetbrains.plugins.terminal.session.guessShellName
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus.TypingCommand
 
@@ -36,9 +37,12 @@ internal class TerminalCommandCompletionActionGen2 : BaseCodeCompletionAction(),
   override fun update(e: AnActionEvent) {
     super.update(e)
     val project = e.project
-    val isCommandTypingMode = e.terminalView?.shellIntegrationDeferred?.getNow()?.outputStatus?.value == TypingCommand
+    val terminalView = e.terminalView
+    val shellName = terminalView?.startupOptionsDeferred?.getNow()?.guessShellName()
+    val isCommandTypingMode = terminalView?.shellIntegrationDeferred?.getNow()?.outputStatus?.value == TypingCommand
     e.presentation.isEnabledAndVisible = e.terminalEditor?.isOutputModelEditor == true
                                          && project != null && TerminalCommandCompletion.isEnabled(project)
+                                         && shellName != null && TerminalCommandCompletion.isSupportedForShell(shellName)
                                          && isCommandTypingMode
   }
 

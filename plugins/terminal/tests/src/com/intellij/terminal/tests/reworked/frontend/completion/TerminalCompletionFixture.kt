@@ -28,6 +28,7 @@ import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecConf
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecInfo
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpecsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
+import org.jetbrains.plugins.terminal.session.impl.TerminalStartupOptionsImpl
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -55,6 +56,14 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     view = TerminalViewImpl(project, JBTerminalSystemSettingsProvider(), null, terminalScope)
     val shellIntegration = TerminalShellIntegrationImpl(outputModel, view.sessionModel, terminalScope.childScope("TerminalShellIntegration"))
     view.shellIntegrationDeferred.complete(shellIntegration)
+
+    // Need to specify some options to make `TerminalCommandCompletion.isSupportedForShell` pass.
+    val startupOptions = TerminalStartupOptionsImpl(
+      shellCommand = listOf("/bin/zsh", "--login", "-i"),
+      workingDirectory = project.basePath!!,
+      envVariables = emptyMap(),
+    )
+    view.startupOptionsDeferred.complete(startupOptions)
 
     shellIntegration.onPromptFinished(TerminalOffset.ZERO)  // To make TerminalOutputStatus = TypingCommand
     assertEquals(TerminalOutputStatus.TypingCommand, shellIntegration.outputStatus.value)
