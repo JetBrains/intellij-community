@@ -26,7 +26,6 @@ jvm_library(
     "//plugins/kotlin/base/code-insight",
     "//plugins/kotlin/core",
     "//plugins/kotlin/frontend-independent",
-    "//plugins/kotlin/idea",
     "//plugins/kotlin/jvm/shared",
     "//platform/core-ui",
     "//java/openapi:java",
