@@ -124,7 +124,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
       val mask = "${file.nameWithoutExtension}$"
       val files = listOf(file) + file.parent.children.filter { it.name.startsWith(mask) && it.fileType === JavaClassFileType.INSTANCE }
 
-      val options: MutableMap<String, Any> = IdeaDecompilerSettings.getInstance().state.preset.options().toMutableMap()
+      val options: MutableMap<String, Any> = IdeaDecompilerSettings.getInstance().state.preset.options.toMutableMap()
       if (Registry.`is`("decompiler.use.line.mapping")) {
         options[IFernflowerPreferences.BYTECODE_SOURCE_MAPPING] = "1"
       }

@@ -1,21 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
-import com.intellij.application.options.CodeStyle
-import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.psi.codeStyle.CodeStyleDefaults
 import org.jetbrains.annotations.Nls
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 
 /**
  * Exposing decompilation presets to the users was initially discussed in IDEA-343826.
  */
-internal enum class DecompilerPreset(@Nls val description: String, val options: () -> Map<String, String>) {
-  HIGH(IdeaDecompilerBundle.message("decompiler.preset.high.description"), {highPreset}),
-  MEDIUM(IdeaDecompilerBundle.message("decompiler.preset.medium.description"), {mediumPreset}),
-  LOW(IdeaDecompilerBundle.message("decompiler.preset.low.description"), {lowPreset});
+internal enum class DecompilerPreset(@Nls val description: String, val options: Map<String, String>) {
+  HIGH(IdeaDecompilerBundle.message("decompiler.preset.high.description"), highPreset),
+  MEDIUM(IdeaDecompilerBundle.message("decompiler.preset.medium.description"), mediumPreset),
+  LOW(IdeaDecompilerBundle.message("decompiler.preset.low.description"), lowPreset);
 
   fun toCommandLineInvocation(): String {
-    return options()
+    return options
       .filterNot { (key, _) -> key == "ban" || key == "ind" } // remove banner and indent flags as they breaks output
       .map { (key, value) -> "-$key=$value" }.joinToString(separator = " ")
   }
@@ -25,7 +24,7 @@ private val basePreset: Map<String, String> = mapOf(
   // Appearance-specific options
   IFernflowerPreferences.BANNER to IDEA_DECOMPILER_BANNER,
   IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
-  IFernflowerPreferences.INDENT_STRING to " ".repeat(CodeStyle.getDefaultSettings().getIndentOptions(JavaFileType.INSTANCE).INDENT_SIZE),
+  IFernflowerPreferences.INDENT_STRING to " ".repeat(CodeStyleDefaults.DEFAULT_INDENT_SIZE),
 
   IFernflowerPreferences.MAX_PROCESSING_METHOD to "60",
   IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
