@@ -57,9 +57,11 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
       if (now - lastUpdated < CACHE_TTL_MS) {
         return@compute oldValue
       }
-      val localContent = loadContentFromResources(coordinates.localPath)
-      if (localContent != null && ApplicationInfo.getInstance().build.isSnapshot) {
-        return@compute localContent to System.currentTimeMillis()
+      if (ApplicationInfo.getInstance().build.isSnapshot) {
+        val localContent = loadContentFromResources(coordinates.localPath)
+        if (localContent != null) {
+          return@compute localContent to System.currentTimeMillis()
+        }
       }
       val content = loadLocallyCachedContent(coordinates.localPath)
       downloadContentAsync(coordinates)
@@ -69,6 +71,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
       if (oldValue != null) {
         return@compute oldValue
       }
+      val localContent = loadContentFromResources(coordinates.localPath)
       if (localContent != null) {
         return@compute localContent to System.currentTimeMillis()
       }
