@@ -51,16 +51,19 @@ public final class BuildConsoleUtils {
     }
     if (text == null) return;
     Notification notification = failure == null ? null : failure.getNotification();
-    print(consoleView, notification, text, true);
+    print(consoleView, notification, text, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
   public static void print(@NotNull BuildTextConsoleView consoleView, @NotNull String group, @NotNull BuildIssue buildIssue) {
-    print(consoleView, group, buildIssue, true);
+    print(consoleView, group, buildIssue, ConsoleViewContentType.ERROR_OUTPUT);
   }
 
   @ApiStatus.Internal
   public static void print(
-    @NotNull BuildTextConsoleView consoleView, @NotNull String group, @NotNull BuildIssue buildIssue, boolean isErrorOutput
+    @NotNull BuildTextConsoleView consoleView,
+    @NotNull String group,
+    @NotNull BuildIssue buildIssue,
+    @NotNull ConsoleViewContentType outputType
   ) {
     Project project = consoleView.getProject();
     Map<String, NotificationListener> listenerMap = new LinkedHashMap<>();
@@ -86,14 +89,13 @@ public final class BuildConsoleUtils {
 
     Notification notification = new Notification(group, buildIssue.getTitle(), buildIssue.getDescription(), NotificationType.WARNING)
       .setListener(listener);
-    print(consoleView, notification, buildIssue.getDescription(), isErrorOutput);
+    print(consoleView, notification, buildIssue.getDescription(), outputType);
   }
 
   private static void print(
-    @NotNull ConsoleView consoleView, @Nullable Notification notification, @NotNull String text, boolean isErrorOutput
+    @NotNull ConsoleView consoleView, @Nullable Notification notification, @NotNull String text, @NotNull ConsoleViewContentType outputType
   ) {
     String content = StringUtil.convertLineSeparators(text);
-    final ConsoleViewContentType outputType = isErrorOutput ? ConsoleViewContentType.ERROR_OUTPUT : ConsoleViewContentType.NORMAL_OUTPUT;
     while (true) {
       Matcher tagMatcher = TAG_PATTERN.matcher(content);
       if (!tagMatcher.find()) {
