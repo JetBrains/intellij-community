@@ -760,18 +760,26 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       shape.subtract(border)
 
-      gg.color = getMainBackgroundColor()
-      gg.fill(shape)
+      paintIslandBackground(gg, shape)
 
-      gg.color = JBColor.namedColor("Island.borderColor", getMainBackgroundColor())
-      gg.stroke = BasicStroke(JBUIScale.scale(1f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
-      gg.draw(border)
+      paintIslandBorderLine(gg, border)
     }
     finally {
       if (isGradient) {
         forcedBackground = false
       }
     }
+  }
+
+  private fun paintIslandBackground(gg: Graphics2D, shape: Area) {
+    gg.color = getMainBackgroundColor()
+    gg.fill(shape)
+  }
+
+  private fun paintIslandBorderLine(gg: Graphics2D, border: Area) {
+    gg.color = JBColor.namedColor("Island.borderColor", getMainBackgroundColor())
+    gg.stroke = BasicStroke(JBUIScale.scale(1f), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
+    gg.draw(border)
   }
 
   override val editorTabPainterAdapter: IslandsTabPainterAdapter = IslandsTabPainterAdapter(false, false, isManyIslandEnabled)
