@@ -314,37 +314,37 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.tasks.library.api.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.tasks-library:tasks-library-api-jvm:0.4.12">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.tasks-library:tasks-library-api-jvm:0.4.14">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.12/tasks-library-api-jvm-0.4.12.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.14/tasks-library-api-jvm-0.4.14.jar">
               <sha256sum>70210d0eb24dd099e3e2923d55a8f4d5e5cef54f277f0bf1f17568633bec446e</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.12/tasks-library-api-jvm-0.4.12.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.14/tasks-library-api-jvm-0.4.14.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.12/tasks-library-api-jvm-0.4.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-api-jvm/0.4.14/tasks-library-api-jvm-0.4.14-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.tasks.library.model.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.tasks-library:tasks-library-model-jvm:0.4.12">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.tasks-library:tasks-library-model-jvm:0.4.14">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.12/tasks-library-model-jvm-0.4.12.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.14/tasks-library-model-jvm-0.4.14.jar">
               <sha256sum>8722c78b12167e0c05e8797a66ede6984ff3d98882b9b729c008f6494702c706</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.12/tasks-library-model-jvm-0.4.12.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.14/tasks-library-model-jvm-0.4.14.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.12/tasks-library-model-jvm-0.4.12-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/tasks-library/tasks-library-model-jvm/0.4.14/tasks-library-model-jvm-0.4.14-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
