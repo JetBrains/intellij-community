@@ -1746,15 +1746,15 @@ jvm_import(
 
 jvm_import(
   name = "grazie-core-ai-grazie-tasks-library-api-jvm",
-  jar = "@ai_grazie_tasks-library-tasks-library-api-jvm-0_4_12_http//file",
-  source_jar = "@ai_grazie_tasks-library-tasks-library-api-jvm-0_4_12_http//file",
+  jar = "@ai_grazie_tasks-library-tasks-library-api-jvm-0_4_14_http//file",
+  source_jar = "@ai_grazie_tasks-library-tasks-library-api-jvm-0_4_14_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "grazie-core-ai-grazie-tasks-library-model-jvm",
-  jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_4_12_http//file",
-  source_jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_4_12_http//file",
+  jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_4_14_http//file",
+  source_jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_4_14_http//file",
   visibility = ["//visibility:public"]
 )
 
