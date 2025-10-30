@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabSettings
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDiscussionViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDraftNoteViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffNewDiscussionViewModel
@@ -85,7 +85,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
                   UnifiedCodeReviewItemPosition(change, leftLine, rightLine)
                 }
               },
-              rendererFactory = { createRenderer(it, changeVm.avatarIconsProvider, changeVm.contextDataLoader) }
+              rendererFactory = { createRenderer(it, changeVm.avatarIconsProvider, changeVm.imageLoader) }
             )
           }
         }
@@ -95,14 +95,14 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
     private fun CoroutineScope.createRenderer(
       model: GitLabMergeRequestEditorMappedComponentModel,
       avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-      contextDataLoader: GitLabContextDataLoader,
+      imageLoader: GitLabImageLoader,
     ): CodeReviewComponentInlayRenderer =
       when (model) {
         is GitLabMergeRequestEditorMappedComponentModel.Discussion<*> ->
-          GitLabMergeRequestDiscussionInlayRenderer(this, project, model.vm, avatarIconsProvider, contextDataLoader,
+          GitLabMergeRequestDiscussionInlayRenderer(this, project, model.vm, avatarIconsProvider, imageLoader,
                                                     GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
         is GitLabMergeRequestEditorMappedComponentModel.DraftNote<*> ->
-          GitLabMergeRequestDraftNoteInlayRenderer(this, project, model.vm, avatarIconsProvider, contextDataLoader,
+          GitLabMergeRequestDraftNoteInlayRenderer(this, project, model.vm, avatarIconsProvider, imageLoader,
                                                    GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
         is GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<*> ->
           GitLabMergeRequestNewDiscussionInlayRenderer(this, project, model.vm, avatarIconsProvider,

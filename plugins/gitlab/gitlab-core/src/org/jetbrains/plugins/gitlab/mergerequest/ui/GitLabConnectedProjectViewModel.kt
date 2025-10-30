@@ -28,6 +28,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
@@ -48,7 +49,7 @@ interface GitLabConnectedProjectViewModel {
   val accountVm: GitLabAccountViewModel
   val listVm: GitLabMergeRequestsListViewModel
   val currentMergeRequestReviewVm: Flow<GitLabMergeRequestEditorReviewViewModel?>
-  val contextDataLoader: GitLabContextDataLoader
+  val imageLoader: GitLabImageLoader
   fun findMergeRequestDetails(mrIid: String): GitLabMergeRequestDetails?
   fun reloadMergeRequestDetails(mergeRequestId: String)
   fun getDiffViewModel(mrIid: String): Flow<Result<GitLabMergeRequestDiffViewModel>>
@@ -78,7 +79,7 @@ abstract class GitLabConnectedProjectViewModelBase(
 
   override val avatarIconProvider: IconsProvider<GitLabUserDTO> = CachingIconsProvider(AsyncImageIconsProvider(cs, connection.imageLoader))
 
-  override val contextDataLoader: GitLabContextDataLoader = connection.projectData.contextDataLoader
+  override val imageLoader: GitLabImageLoader = connection.imageLoader
 
   private val projectName: @Nls String = connection.repo.repository.projectPath.name
 
@@ -107,7 +108,7 @@ abstract class GitLabConnectedProjectViewModelBase(
       .transformConsecutiveSuccesses {
         mapScoped {
           GitLabMergeRequestViewModels(project, this, connection.projectData, avatarIconProvider,
-                                       it, connection.currentUser,
+                                       connection.imageLoader, it, connection.currentUser,
                                        ::openMergeRequestDetails, ::openMergeRequestTimeline, ::openMergeRequestDiff)
         }
       }

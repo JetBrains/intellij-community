@@ -10,6 +10,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.Compone
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTrackableItemViewModel
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindChildIn
 import com.intellij.collaboration.ui.util.bindDisabledIn
@@ -27,7 +28,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsPickerComponentFactory
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
@@ -44,11 +45,11 @@ internal object GitLabNoteComponentFactory {
     project: Project,
     cs: CoroutineScope,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-    contextDataLoader: GitLabContextDataLoader,
+    imageLoader: GitLabImageLoader,
     vm: GitLabNoteViewModel,
     place: GitLabStatistics.MergeRequestNoteActionPlace,
   ): JComponent {
-    val textPanel = createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl, contextDataLoader).let { panel ->
+    val textPanel = createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl, imageLoader).let { panel ->
       val actionsVm = vm.actionsVm ?: return@let panel
       EditableComponentFactory.wrapTextComponent(cs, panel, actionsVm.editVm) {
         GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE, place)
@@ -178,9 +179,9 @@ internal object GitLabNoteComponentFactory {
 
   fun createTextPanel(
     project: Project, cs: CoroutineScope, textFlow: Flow<@Nls String>, baseUrl: URL,
-    contextDataLoader: GitLabContextDataLoader
+    imageLoader: AsyncHtmlImageLoader
   ): JComponent =
-    SimpleHtmlPane(baseUrl = baseUrl, addBrowserListener = false, customImageLoader = contextDataLoader.imageLoader).apply {
+    SimpleHtmlPane(baseUrl = baseUrl, addBrowserListener = false, customImageLoader = imageLoader).apply {
       bindTextIn(cs, textFlow)
       addGitLabHyperlinkListener(project)
     }

@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffInlayComponentsFactory
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiscussionViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
@@ -15,15 +15,16 @@ import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @ApiStatus.Internal
-class GitLabMergeRequestDiscussionInlayRenderer internal constructor(cs: CoroutineScope,
-                                                                     project: Project,
-                                                                     vm: GitLabMergeRequestDiscussionViewModel,
-                                                                     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                                                     contextDataLoader: GitLabContextDataLoader,
-                                                                     place: GitLabStatistics.MergeRequestNoteActionPlace,
+class GitLabMergeRequestDiscussionInlayRenderer internal constructor(
+  cs: CoroutineScope,
+  project: Project,
+  vm: GitLabMergeRequestDiscussionViewModel,
+  avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  imageLoader: GitLabImageLoader,
+  place: GitLabStatistics.MergeRequestNoteActionPlace,
 )
   : CodeReviewComponentInlayRenderer(
-  GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(project, cs, avatarIconsProvider, contextDataLoader, vm, place)
+  GitLabMergeRequestDiffInlayComponentsFactory.createDiscussion(project, cs, avatarIconsProvider, imageLoader, vm, place)
 )
 
 @ApiStatus.Internal
@@ -31,11 +32,11 @@ class GitLabMergeRequestDraftNoteInlayRenderer internal constructor(cs: Coroutin
                                                                     project: Project,
                                                                     vm: GitLabNoteViewModel,
                                                                     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                                                    contextDataLoader: GitLabContextDataLoader,
+                                                                    imageLoader: GitLabImageLoader,
                                                                     place: GitLabStatistics.MergeRequestNoteActionPlace,
 )
   : CodeReviewComponentInlayRenderer(
-  GitLabMergeRequestDiffInlayComponentsFactory.createDraftNote(project, cs, avatarIconsProvider, contextDataLoader, vm, place)
+  GitLabMergeRequestDiffInlayComponentsFactory.createDraftNote(project, cs, avatarIconsProvider, imageLoader, vm, place)
 )
 
 @ApiStatus.Internal

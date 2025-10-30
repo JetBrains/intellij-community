@@ -113,7 +113,7 @@ class GitLabMergeRequestTimelineEditorFactory(private val project: Project, pare
           onSuccess = {
             val timeline = GitLabMergeRequestTimelineComponentFactory.create(project, this, it,
                                                                              projectVm.avatarIconProvider,
-                                                                             projectVm.contextDataLoader)
+                                                                             projectVm.imageLoader)
             wrapper.setContent(timeline)
             wrapper.repaint()
           },

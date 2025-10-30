@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffProcessorViewModelImpl
@@ -40,6 +41,7 @@ internal class GitLabMergeRequestViewModels(
   parentCs: CoroutineScope,
   projectData: GitLabProject,
   private val avatarIconProvider: IconsProvider<GitLabUserDTO>,
+  private val imageLoader: GitLabImageLoader,
   private val mergeRequest: GitLabMergeRequest,
   currentUser: GitLabUserDTO,
   private val openMergeRequestDetails: (String, GitLabStatistics.ToolWindowOpenTabActionPlace, Boolean) -> Unit,
@@ -67,7 +69,7 @@ internal class GitLabMergeRequestViewModels(
 
   private val _diffVm by lazy {
     GitLabMergeRequestDiffProcessorViewModelImpl(project, cs, currentUser, mergeRequest, discussionsVms,
-                                                 avatarIconProvider, projectData.contextDataLoader).apply {
+                                                 avatarIconProvider, imageLoader).apply {
       setup()
     }
   }
@@ -75,7 +77,7 @@ internal class GitLabMergeRequestViewModels(
 
   val editorReviewVm: GitLabMergeRequestEditorReviewViewModel by lazy {
     GitLabMergeRequestEditorReviewViewModel(cs, project, projectData.projectMapping, currentUser, mergeRequest,
-                                            discussionsVms, avatarIconProvider, projectData.contextDataLoader,
+                                            discussionsVms, avatarIconProvider, imageLoader,
                                             openMergeRequestDetails, openMergeRequestDiff).apply {
       setup()
     }

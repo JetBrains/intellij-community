@@ -31,9 +31,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.createDiffDataFlow
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
@@ -53,7 +53,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val mergeRequest: GitLabMergeRequest,
   private val discussionsVms: GitLabMergeRequestDiscussionsViewModels,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-  private val contextDataLoader: GitLabContextDataLoader,
+  private val imageLoader: GitLabImageLoader,
   private val openMergeRequestDetails: (String, GitLabStatistics.ToolWindowOpenTabActionPlace, Boolean) -> Unit,
   private val openMergeRequestDiff: (String, Boolean) -> Unit,
 ) : GitLabMergeRequestReviewViewModelBase(
@@ -254,7 +254,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
     GitLabMergeRequestEditorReviewFileViewModelImpl(
       this, project, mergeRequest, changes.selectedItem!!, diffData,
       discussionsVms, this@GitLabMergeRequestEditorReviewViewModel,
-      discussionsViewOption, avatarIconsProvider, contextDataLoader
+      discussionsViewOption, avatarIconsProvider, imageLoader
     ).also { vm ->
       launchNow {
         vm.showDiffRequests.collect { line ->

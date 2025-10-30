@@ -26,10 +26,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filterInFile
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.mapToLocation
@@ -55,7 +55,7 @@ interface GitLabMergeRequestEditorReviewFileViewModel {
   val newDiscussions: StateFlow<Collection<GitLabMergeRequestEditorNewDiscussionViewModel>>
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-  val contextDataLoader: GitLabContextDataLoader
+  val imageLoader: GitLabImageLoader
 
   fun lookupNextComment(line: Int, additionalIsVisible: (String) -> Boolean): String?
   fun lookupNextComment(noteTrackingId: String, additionalIsVisible: (String) -> Boolean): String?
@@ -81,7 +81,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   private val reviewVm: GitLabMergeRequestEditorReviewViewModel,
   discussionsViewOption: StateFlow<DiscussionsViewOption>,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-  override val contextDataLoader: GitLabContextDataLoader
+  override val imageLoader: GitLabImageLoader,
 ) : GitLabMergeRequestEditorReviewFileViewModel {
   private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 

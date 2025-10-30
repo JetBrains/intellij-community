@@ -13,6 +13,7 @@ import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.StatusMessageType
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
+import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.swingAction
@@ -40,6 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.*
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
@@ -54,7 +56,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
              cs: CoroutineScope,
              timelineVm: GitLabMergeRequestTimelineViewModel,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-             contextDataLoader: GitLabContextDataLoader
+             imageLoader: GitLabImageLoader,
   ): JComponent {
     val titleComponent = GitLabMergeRequestTimelineTitleComponent.create(project, cs, timelineVm).let {
       CollaborationToolsUIUtil.wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
@@ -62,10 +64,10 @@ internal object GitLabMergeRequestTimelineComponentFactory {
       border = Borders.empty(CodeReviewTimelineUIUtil.HEADER_VERT_PADDING, CodeReviewTimelineUIUtil.ITEM_HOR_PADDING)
     }
     val descriptionComponent = GitLabMergeRequestTimelineDescriptionComponent
-      .createComponent(project, cs, timelineVm, avatarIconsProvider, contextDataLoader)
+      .createComponent(project, cs, timelineVm, avatarIconsProvider, imageLoader)
 
     val timelinePanel = VerticalListPanel(0)
-    val errorOrTimelineComponent = createErrorOrTimelineComponent(cs, project, avatarIconsProvider, contextDataLoader, timelineVm, timelinePanel)
+    val errorOrTimelineComponent = createErrorOrTimelineComponent(cs, project, avatarIconsProvider, imageLoader, timelineVm, timelinePanel)
 
     val newNoteField = timelineVm.newNoteVm?.let {
       cs.createNewNoteField(project, avatarIconsProvider, it)
@@ -137,7 +139,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
   private fun createErrorOrTimelineComponent(cs: CoroutineScope,
                                              project: Project,
                                              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                             contextDataLoader: GitLabContextDataLoader,
+                                             imageLoader: GitLabImageLoader,
                                              timelineVm: GitLabMergeRequestTimelineViewModel,
                                              timelinePanel: JComponent): JComponent {
     val actionManager = ActionManager.getInstance()
@@ -148,7 +150,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
 
     val timelineItems = MutableStateFlow<List<GitLabMergeRequestTimelineItemViewModel>>(listOf())
     val timelineItemContent = ComponentListPanelFactory.createVertical(cs, timelineItems) { item ->
-      createItemComponent(project, avatarIconsProvider, contextDataLoader, item)
+      createItemComponent(project, avatarIconsProvider, imageLoader, item)
     }
     val timelineItemsAndLoadingLabel = VerticalListPanel(gap = 0).apply {
       val panel = this
@@ -196,7 +198,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
 
   private fun CoroutineScope.createItemComponent(project: Project,
                                                  avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                                 contextDataLoader: GitLabContextDataLoader,
+                                                 imageLoader: GitLabImageLoader,
                                                  item: GitLabMergeRequestTimelineItemViewModel): JComponent =
     when (item) {
       is GitLabMergeRequestTimelineItemViewModel.Immutable -> {
@@ -209,10 +211,10 @@ internal object GitLabMergeRequestTimelineComponentFactory {
         }
       }
       is GitLabMergeRequestTimelineItemViewModel.Discussion -> {
-        GitLabMergeRequestTimelineDiscussionComponentFactory.createIn(project, this, item, avatarIconsProvider, contextDataLoader)
+        GitLabMergeRequestTimelineDiscussionComponentFactory.createIn(project, this, item, avatarIconsProvider, imageLoader)
       }
       is GitLabMergeRequestTimelineItemViewModel.DraftNote -> {
-        GitLabMergeRequestTimelineDiscussionComponentFactory.createIn(project, this, item, avatarIconsProvider, contextDataLoader)
+        GitLabMergeRequestTimelineDiscussionComponentFactory.createIn(project, this, item, avatarIconsProvider, imageLoader)
       }
     }
 

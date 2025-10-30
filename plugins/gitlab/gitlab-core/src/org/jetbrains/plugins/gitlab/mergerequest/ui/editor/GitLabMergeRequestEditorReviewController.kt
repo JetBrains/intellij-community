@@ -26,8 +26,8 @@ import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabContextDataLoader
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel.FileReviewState
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -130,7 +130,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
       }
       launchNow {
         editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GitLabMergeRequestEditorMappedComponentModel::key)) {
-          createRenderer(it, fileVm.avatarIconsProvider, fileVm.contextDataLoader)
+          createRenderer(it, fileVm.avatarIconsProvider, fileVm.imageLoader)
         }
       }
 
@@ -149,16 +149,16 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
   private fun CoroutineScope.createRenderer(
     inlayModel: GitLabMergeRequestEditorMappedComponentModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-    contextDataLoader: GitLabContextDataLoader,
+    imageLoader: GitLabImageLoader,
   ) =
     when (inlayModel) {
       is GitLabMergeRequestEditorMappedComponentModel.Discussion<*> ->
         GitLabMergeRequestDiscussionInlayRenderer(this, project, inlayModel.vm, avatarIconsProvider,
-                                                  contextDataLoader,
+                                                  imageLoader,
                                                   GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
       is GitLabMergeRequestEditorMappedComponentModel.DraftNote<*> ->
         GitLabMergeRequestDraftNoteInlayRenderer(this, project, inlayModel.vm, avatarIconsProvider,
-                                                 contextDataLoader,
+                                                 imageLoader,
                                                  GitLabStatistics.MergeRequestNoteActionPlace.EDITOR)
       is GitLabMergeRequestEditorMappedComponentModel.NewDiscussion<*> ->
         GitLabMergeRequestNewDiscussionInlayRenderer(this, project, inlayModel.vm, avatarIconsProvider,
