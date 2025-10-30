@@ -108,7 +108,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
       Path logFile = logDir.resolve(LOG_FILE_NAME);
       JulLogger.clearHandlers();
-      JulLogger.configureLogFileAndConsole(logFile, false, true, false, null, null, null);
+      JulLogger.configureLogFileAndConsole(logFile, false, true, false, true, null, null, null);
 
       if (myEchoDebugToStdout) {
         addConsoleAppenderForDebugRecords();

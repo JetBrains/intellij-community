@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.DialogAppender;
@@ -35,8 +35,18 @@ public final class LoggerFactory implements Logger.Factory {
 
     var enableConsoleLogger = !logToJsonStdout && Boolean.parseBoolean(System.getProperty("idea.log.console", "true"));
     var append = Boolean.parseBoolean(System.getProperty("idea.log.append", "true"));
+    var persistAttachments = Boolean.parseBoolean(System.getProperty("idea.log.persist.attachments", "true"));
 
-    JulLogger.configureLogFileAndConsole(getLogFilePath(), append, enableConsoleLogger, true, () -> IdeaLogger.dropFrequentExceptionsCaches(), null, null);
+    JulLogger.configureLogFileAndConsole(
+      getLogFilePath(),
+      append,
+      enableConsoleLogger,
+      true,
+      persistAttachments,
+      () -> IdeaLogger.dropFrequentExceptionsCaches(),
+      null,
+      null
+    );
 
     var dialogAppender = new DialogAppender();
     dialogAppender.setLevel(Level.SEVERE);

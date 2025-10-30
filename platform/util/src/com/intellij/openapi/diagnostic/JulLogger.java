@@ -114,6 +114,7 @@ public class JulLogger extends Logger {
     boolean appendToFile,
     boolean enableConsoleLogger,
     boolean showDateInConsole,
+    boolean enablePersistingAttachments,
     @Nullable Runnable onRotate,
     @Nullable Filter filter,
     @Nullable Path inMemoryLogPath
@@ -123,6 +124,10 @@ public class JulLogger extends Logger {
 
     rootLogger.addHandler(configureFileHandler(logFilePath, appendToFile, onRotate, LOG_FILE_SIZE_LIMIT, LOG_FILE_COUNT, layout, filter));
 
+    if (enablePersistingAttachments) {
+      rootLogger.addHandler(configureAttachmentHandler(logFilePath, filter));
+    }
+
     if (enableConsoleLogger) {
       rootLogger.addHandler(configureConsoleHandler(showDateInConsole, layout, filter));
     }
@@ -130,6 +135,10 @@ public class JulLogger extends Logger {
     if (inMemoryLogPath != null) {
       rootLogger.addHandler(configureInMemoryHandler(inMemoryLogPath));
     }
+  }
+
+  private static @NotNull Handler configureAttachmentHandler(@NotNull Path path, @Nullable Filter filter) {
+    return new AttachmentHandler(path, filter);
   }
 
   private static Handler configureConsoleHandler(boolean showDateInConsole, IdeaLogRecordFormatter layout, @Nullable Filter filter) {
