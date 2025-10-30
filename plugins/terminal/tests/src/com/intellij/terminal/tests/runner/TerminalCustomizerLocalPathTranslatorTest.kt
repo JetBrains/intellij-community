@@ -346,6 +346,20 @@ class TerminalCustomizerLocalPathTranslatorTest(private val eelHolder: EelHolder
       .isEqualTo(dir1.remoteDirAndSeparator + initialPath + dir1.remoteSeparator + "foo" + dir2.remoteSeparatorAndDir)
   }
 
+  @Test
+  fun `translate JEDITERM_SOURCE to remote`(): Unit = timeoutRunBlocking(TIMEOUT) {
+    val dir = tempDir.asDirectory()
+    val fileToSource = dir.nioDir.resolve("test.sh")
+    register(deprecatedCustomizer {
+      it[JEDITERM_SOURCE] = fileToSource.toString()
+    })
+    val result = configureStartupOptions(dir) {
+      it.remove(JEDITERM_SOURCE)
+    }
+    Assertions.assertThat(result.getEnvVarValue(JEDITERM_SOURCE))
+      .isEqualTo(fileToSource.asEelPath(dir.descriptor).toString())
+  }
+
   private fun customizer(handler: (envs: MutableMap<String, String>) -> Unit): LocalTerminalCustomizer {
     return object : LocalTerminalCustomizer() {
       override fun customizeCommandAndEnvironment(
@@ -490,4 +504,5 @@ private fun buildWslUncPathWithOtherPrefix(windowsUncPath: String): String {
 
 private const val PATH: String = "PATH"
 private const val IJ_PREPEND_PATH: String = "_INTELLIJ_FORCE_PREPEND_PATH"
+private const val JEDITERM_SOURCE: String = "JEDITERM_SOURCE"
 private val TIMEOUT: Duration = 60.seconds
