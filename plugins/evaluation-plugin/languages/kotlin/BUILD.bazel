@@ -43,6 +43,7 @@ jvm_library(
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/evaluation-plugin/languages",
+    "//platform/core-impl",
     "//plugins/evaluation-plugin/core",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "//platform/analysis-api:analysis",
