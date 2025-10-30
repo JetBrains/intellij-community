@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -36,6 +37,7 @@ class JdkDownloadService(private val project: Project, private val coroutineScop
 
   fun scheduleDownloadSdk(sdk: Sdk): CompletableFuture<Boolean> {
     return coroutineScope.async {
+      if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) return@async false
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.downloading", sdk.name)) {
         JdkDownloadUtil.downloadSdk(sdk)
       }
