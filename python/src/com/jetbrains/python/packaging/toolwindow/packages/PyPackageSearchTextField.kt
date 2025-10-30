@@ -13,7 +13,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import java.awt.Dimension
 import javax.swing.event.DocumentEvent
 import kotlin.time.Duration.Companion.seconds
 
@@ -32,18 +31,13 @@ internal class PyPackageSearchTextField(private val project: Project) : SearchTe
     }.cancelOnDispose(this)
   }
 
-
   init {
     setHistoryPropertyName("PyPackageSearchTextField.history")
     setHistorySize(10)
 
-    preferredSize = Dimension(250, 30)
-    minimumSize = Dimension(250, 30)
-    maximumSize = Dimension(250, 30)
     textEditor.border = JBUI.Borders.emptyLeft(6)
     textEditor.isOpaque = true
     textEditor.emptyText.text = PyBundle.message("python.toolwindow.packages.search.text.placeholder")
-
 
     addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -51,7 +45,6 @@ internal class PyPackageSearchTextField(private val project: Project) : SearchTe
         service.handleSearch(text.trim())
       }
     })
-
   }
 
   override fun onFieldCleared() {

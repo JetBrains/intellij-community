@@ -62,7 +62,6 @@ class PyPackagesTreeTable(
       treeListener?.onTreeStructureChanged()
     }
 
-
   internal val isReadOnly
     get() = packagingService.currentSdk?.isReadOnly == true
 
@@ -77,6 +76,11 @@ class PyPackagesTreeTable(
     initializeCellRenderers()
     setupTreeInteractions()
     setupContextMenu()
+  }
+
+  // To properly update renderers font size and color after theme change.
+  override fun updateUI() {
+    initializeCellRenderers()
   }
 
   private fun initializeTreeTableProperties() {

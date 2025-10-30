@@ -35,13 +35,11 @@ class PyPackageInfoPanel(val project: Project) : Disposable {
 
   private var updateJob: Job? = null
 
-  val component = JPanel().apply {
-    layout = BorderLayout()
-  }
+  val component: JPanel = JPanel(BorderLayout())
 
   override fun dispose() {}
 
-  fun getPackage() = packageProperty.get()
+  fun getPackage(): DisplayablePackage? = packageProperty.get()
 
   fun setPackage(pyPackage: DisplayablePackage?) {
     val newPanel = if (pyPackage == null) noPackagePanel else loadingPanel

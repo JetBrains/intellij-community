@@ -21,11 +21,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.asDisposable
-import com.intellij.util.ui.NamedColorUtil
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.TraceContext
 import com.jetbrains.python.inspections.PyInterpreterInspection
@@ -46,7 +46,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
-import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
@@ -66,8 +65,8 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
   private val descriptionController = PyPackageInfoPanel(project)
   private val packagingScope = PyPackageCoroutine.getScope(project)
     .childScope("Packaging tool window", TraceContext(message("tracecontext.packaging.tool.window"), null)).also {
-    Disposer.register(this, it.asDisposable())
-  }
+      Disposer.register(this, it.asDisposable())
+    }
 
   private lateinit var contentPanel: JPanel
   private lateinit var contentSplitter: OnePixelSplitter
@@ -181,13 +180,10 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
       targetComponent = this@PyPackagingToolWindowPanel
     }
 
-    return PyPackagesUiComponents.boxPanel {
-      border = SideBorder(NamedColorUtil.getBoundsColor(), SideBorder.BOTTOM)
-      preferredSize = Dimension(preferredSize.width, 30)
-      minimumSize = Dimension(minimumSize.width, 30)
-      maximumSize = Dimension(maximumSize.width, 30)
-      add(packageSearchController)
-      add(actionToolbar.component)
+    return JPanel(BorderLayout()).apply {
+      border = IdeBorderFactory.createBorder(SideBorder.BOTTOM)
+      add(packageSearchController, BorderLayout.CENTER)
+      add(actionToolbar.component, BorderLayout.LINE_END)
     }
   }
 
