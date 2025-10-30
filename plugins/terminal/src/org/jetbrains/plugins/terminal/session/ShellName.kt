@@ -24,4 +24,4 @@ sealed interface ShellName {
   }
 }
 
-private class ShellNameImpl(override val value: String) : ShellName
+private data class ShellNameImpl(override val value: String) : ShellName
