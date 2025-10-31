@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.run
 
-import com.intellij.build.BuildDescriptor
-import com.intellij.build.BuildView
-import com.intellij.build.BuildViewManager
-import com.intellij.build.DefaultBuildDescriptor
+import com.intellij.build.*
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.impl.StartBuildEventImpl
 import com.intellij.debugger.impl.GenericDebuggerRunner
@@ -22,6 +19,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
@@ -215,10 +213,12 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     try {
       extractCharsetFromEnv(env["MAVEN_OPTS"])?.let {
         MavenLog.LOG.debug("extracted charset $it from MAVEN_OPTS")
-        return Charset.forName(it) }
+        return Charset.forName(it)
+      }
       extractCharsetFromEnv(env["JAVA_TOOL_OPTIONS"])?.let {
         MavenLog.LOG.debug("extracted charset $it from JAVA_TOOL_OPTIONS")
-        return Charset.forName(it) }
+        return Charset.forName(it)
+      }
       eelApi.exec.getCodepage()?.let {
         MavenLog.LOG.debug("extracted charset $it executing command")
         return Charset.forName(it)
@@ -226,7 +226,8 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     }
     catch (uce: UnsupportedCharsetException) {
       MavenLog.LOG.warn("Unsupported charset found, reverting to UTF-8", uce)
-    } catch (epe: ExecuteProcessException) {
+    }
+    catch (epe: ExecuteProcessException) {
       MavenLog.LOG.warn("Cannot determine process exception", epe)
     }
     return null
@@ -251,10 +252,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val processHandler = startProcess(debug)
 
       if (MavenRunConfigurationType.isDelegate(environment)) {
-        return doDelegateBuildExecute(executor, taskId, descriptor, processHandler)
+        return doDelegateBuildExecute(executor, taskId, descriptor, processHandler, runner)
       }
       else {
-        return doRunExecute(taskId, descriptor, processHandler)
+        return doRunExecute(taskId, descriptor, processHandler, runner)
       }
     }
     catch (e: Exception) {
@@ -268,6 +269,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     taskId: ExternalSystemTaskId,
     descriptor: DefaultBuildDescriptor,
     processHandler: ProcessHandler,
+    runner: ProgramRunner<*>,
   ): ExecutionResult {
     val buildView: BuildView? = createBuildView(descriptor)
 
@@ -280,7 +282,19 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     processHandler.addProcessListener(BuildToolConsoleProcessAdapter(eventProcessor))
     buildView.attachToProcess(MavenHandlerFilterSpyWrapper(processHandler, isWrapperedOutput(), isWindows()))
 
-    return DefaultExecutionResult(buildView, processHandler)
+    val actions = arrayOf<AnAction>(createFilteringActionsGroup(WeakFilterableSupplier(buildView)))
+
+    val res = DefaultExecutionResult(buildView, processHandler, *actions)
+    val restartActions = ArrayList<AnAction>()
+    restartActions.add(JvmToggleAutoTestAction())
+
+    if (MavenResumeAction.isApplicable(myConfiguration)) {
+      val resumeAction =
+        MavenResumeAction(res.getProcessHandler(), runner, environment, eventProcessor.parsingContext)
+      restartActions.add(resumeAction)
+    }
+    res.setRestartActions(*restartActions.toTypedArray())
+    return res
   }
 
   @Throws(ExecutionException::class)
@@ -310,6 +324,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     taskId: ExternalSystemTaskId,
     descriptor: DefaultBuildDescriptor,
     processHandler: ProcessHandler,
+    runner: ProgramRunner<*>,
   ): ExecutionResult {
     val consoleView = createConsole()
     val viewManager = environment.project.getService<BuildViewManager>(BuildViewManager::class.java)
