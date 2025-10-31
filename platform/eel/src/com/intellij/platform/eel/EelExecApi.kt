@@ -138,7 +138,7 @@ sealed interface EelExecApi {
    * See also [EelExecPosixApi.PosixEnvironmentVariablesOptions].
    */
   @ApiStatus.Experimental
-  fun environmentVariables(@GeneratedBuilder opts: EnvironmentVariablesOptions): Deferred<Map<String, String>>
+  fun environmentVariables(@GeneratedBuilder opts: EnvironmentVariablesOptions): EnvironmentVariablesDeferred
 
   /**
    * Indicates on the failure during fetching environment variables.
@@ -149,6 +149,19 @@ sealed interface EelExecApi {
   class EnvironmentVariablesException : EelError, IOException {
     constructor(message: String) : super(message)
     constructor(message: String, cause: Throwable) : super(message, cause)
+  }
+
+  /**
+   * This wrapper around [Deferred] exists only for pointing to the thrown error.
+   */
+  @ApiStatus.Experimental
+  class EnvironmentVariablesDeferred @ApiStatus.Internal constructor(
+    @ApiStatus.Experimental
+    val deferred: Deferred<Map<String, String>>
+  ) {
+    @ApiStatus.Experimental
+    @ThrowsChecked(EnvironmentVariablesException::class)
+    suspend fun await(): Map<String, String> = deferred.await()
   }
 
   interface EnvironmentVariablesOptions {
@@ -323,7 +336,7 @@ interface EelExecPosixApi : EelExecApi {
   @ApiStatus.Experimental
   override fun environmentVariables(
     @GeneratedBuilder(PosixEnvironmentVariablesOptions::class) opts: EelExecApi.EnvironmentVariablesOptions,
-  ): Deferred<Map<String, String>>
+  ): EelExecApi.EnvironmentVariablesDeferred
 
   interface PosixEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions {
     val mode: Mode get() = Mode.LOGIN_NON_INTERACTIVE
