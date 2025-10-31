@@ -17,7 +17,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
@@ -49,7 +48,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 import static com.intellij.util.containers.CollectionFactory.createFilePathSet;
 import static com.intellij.util.containers.FastUtilHashingStrategies.getCaseInsensitiveStringStrategy;
@@ -66,15 +64,6 @@ final class RefreshWorker {
   private static final Executor executor = ExecutorsKt.asExecutor(
     Dispatchers.getIO().limitedParallelism(PARALLELISM, "RefreshWorkerDispatcher")
   );
-
-  /**
-   * Use legacy {@link LocalFileSystemImpl#listWithCaching(VirtualFile, Set)} method instead of new, more generic
-   * {@link BatchingFileSystem#listWithAttributes(VirtualFile, Set)}
-   * Temporary flag, to investigate performance issues linked to the transition to {@link BatchingFileSystem},
-   * remove afterward.
-   */
-  private static final boolean USE_LEGACY_LOCAL_FS_METHOD = getBooleanProperty("vfs.RefreshWorker.USE_LEGACY_LOCAL_FS_METHOD", false);
-
 
   private static final Object REQUESTOR = VFileEvent.REFRESH_REQUESTOR;
 
@@ -229,9 +218,6 @@ final class RefreshWorker {
             events.subList(mark, events.size()).clear();
             continue nextDir;
           }
-          finally {
-            clearFsCache(fs);
-          }
         }
         queryItemsProcessed.incrementAndGet();
 
@@ -314,7 +300,6 @@ final class RefreshWorker {
       }
     }
 
-    clearFsCache(fs);
     checkCancelled(dir);
     if (isDirectoryChanged(dir, vfsChildren, vfsNames)) {
       return false;
@@ -400,7 +385,6 @@ final class RefreshWorker {
       existingMap.add(new Pair<>(child, getAttributes(fs, childrenWithAttributes, child)));
     }
 
-    clearFsCache(fs);
     checkCancelled(dir);
     if (isDirectoryChanged(dir, cached, wanted)) {
       return false;
@@ -452,12 +436,7 @@ final class RefreshWorker {
     if (dirList != null) {
       attributes = dirList.get(child.getName());
     }
-    if (
-      attributes == null && (
-        (USE_LEGACY_LOCAL_FS_METHOD && fs instanceof LocalFileSystemImpl)
-        || !(fs instanceof BatchingFileSystem)
-      )
-    ) {
+    if (attributes == null && !(fs instanceof BatchingFileSystem)) {
       var t = System.nanoTime();
       attributes = computeAttributesForFile(fs, child);
       ioTime.addAndGet(System.nanoTime() - t);
@@ -481,19 +460,7 @@ final class RefreshWorker {
   private static Map<String, FileAttributes> computeAllChildrenAttributes(@NotNull BatchingFileSystem fs,
                                                                           @NotNull VirtualFile dir,
                                                                           @Nullable Set<String> filter) {
-    if (USE_LEGACY_LOCAL_FS_METHOD
-        && (fs instanceof LocalFileSystemImpl localFileSystem) ) {
-      String[] childrenNames = Cancellation.computeInNonCancelableSection(() -> localFileSystem.listWithCaching(dir, filter));
-      //map will be transformed to case-(in)sensitive up-the-stack anyway:
-      Map<String, FileAttributes> childrenWithAttributes = new HashMap<>(childrenNames.length);
-      for (String childName : childrenNames) {
-        childrenWithAttributes.put(childName, null);
-      }
-      return childrenWithAttributes;
-    }
-    else {
-      return Cancellation.computeInNonCancelableSection(() -> fs.listWithAttributes(dir, filter));
-    }
+    return Cancellation.computeInNonCancelableSection(() -> fs.listWithAttributes(dir, filter));
   }
 
   private ChildInfo childRecord(NewVirtualFileSystem fs, FakeVirtualFile child, FileAttributes attributes, boolean canonicalize) {
@@ -548,15 +515,9 @@ final class RefreshWorker {
     }
   }
 
-  private static void clearFsCache(NewVirtualFileSystem fs) {
-    if (USE_LEGACY_LOCAL_FS_METHOD && (fs instanceof LocalFileSystemImpl) ) {
-      ((LocalFileSystemImpl)fs).clearListCache();
-    }
-  }
-
   private static final class RefreshCancelledException extends RuntimeException {
     @Override
-    public synchronized Throwable fillInStackTrace() {
+    public Throwable fillInStackTrace() {
       return this;
     }
   }
