@@ -1086,6 +1086,9 @@ public class UsageViewImpl implements UsageViewEx {
     appendUsagesInBulk(allUsages).thenRun(() -> SwingUtilities.invokeLater(() -> {
       if (isDisposed()) return;
       if (myTree != null) {
+        if (!myPresentation.isDetachedMode()) {
+          expandTreeAfterReset();
+        }
         excludeUsages(excludedUsages.toArray(Usage.EMPTY_ARRAY));
         restoreUsageExpandState(states);
         updateImmediately();
@@ -1148,6 +1151,10 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void expandTree(int levels) {
     doExpandingCollapsing(() -> TreeUtil.expand(myTree, levels));
+  }
+
+  private void expandTreeAfterReset() {
+    expandTree(2);
   }
 
   private void doExpandingCollapsing(@NotNull Runnable task) {
@@ -1247,6 +1254,9 @@ public class UsageViewImpl implements UsageViewEx {
 
   public void refreshUsages() {
     reset();
+    if (!myPresentation.isDetachedMode()) {
+      SwingUtilities.invokeLater(() -> expandTreeAfterReset());
+    }
     doReRun();
   }
 
@@ -1278,10 +1288,6 @@ public class UsageViewImpl implements UsageViewEx {
     myBuilder.reset();
     synchronized (modelToSwingNodeChanges) {
       modelToSwingNodeChanges.clear();
-    }
-
-    if (!myPresentation.isDetachedMode()) {
-      SwingUtilities.invokeLater(() -> expandTree(2));
     }
   }
 
