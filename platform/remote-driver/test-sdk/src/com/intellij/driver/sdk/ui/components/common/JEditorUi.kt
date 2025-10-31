@@ -401,6 +401,8 @@ class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val previousOccurrenceButton = actionButton { byAccessibleName("Previous Occurrence") }
   val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
   val optionsButton = actionButton { byAccessibleName("Open in Window, Multiple Cursors") }
+  val regexButton = actionButton { byAccessibleName("Regex") }
+  val replaceButton = actionButton { byVisibleText("Replace") }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
