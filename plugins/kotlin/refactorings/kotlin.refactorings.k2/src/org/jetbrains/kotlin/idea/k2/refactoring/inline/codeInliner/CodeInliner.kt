@@ -117,6 +117,10 @@ class CodeInliner(
         val ktFile = elementToBeReplaced.containingKtFile
         for ((path, target) in codeToInline.fqNamesToImport) {
             val (fqName, allUnder, alias) = path
+            if (fqName.isRoot) {
+                continue
+            }
+
             if (fqName.startsWith(FqName.fromSegments(listOf("kotlin")))) {
                 //todo https://youtrack.jetbrains.com/issue/KTIJ-25928
                 continue
@@ -225,8 +229,11 @@ class CodeInliner(
         }
 
         val importDeclarations = codeToInline.fqNamesToImport.mapNotNull { importPath ->
+            val path = importPath.importPath
+            if (path.fqName.isRoot) return@mapNotNull null
+
             val target =
-                psiFactory.createImportDirective(importPath.importPath).mainReference?.resolve() as? KtNamedDeclaration
+                psiFactory.createImportDirective(path).mainReference?.resolve() as? KtNamedDeclaration
                     ?: return@mapNotNull null
             importPath to target
         }

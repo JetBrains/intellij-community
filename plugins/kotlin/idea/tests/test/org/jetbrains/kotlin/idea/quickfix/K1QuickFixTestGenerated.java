@@ -9241,6 +9241,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/deprecatedSymbolUsage/avoidCastingContext.kt");
             }
 
+            @TestMetadata("brokenImportToIgnore.kt")
+            public void testBrokenImportToIgnore() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/brokenImportToIgnore.kt");
+            }
+
             @TestMetadata("callChainBug.kt")
             public void testCallChainBug() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/callChainBug.kt");

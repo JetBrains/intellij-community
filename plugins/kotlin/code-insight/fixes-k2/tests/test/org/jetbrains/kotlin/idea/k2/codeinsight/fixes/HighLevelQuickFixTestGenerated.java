@@ -7488,6 +7488,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/avoidCastingContext.kt");
             }
 
+            @TestMetadata("brokenImportToIgnore.kt")
+            public void testBrokenImportToIgnore() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/brokenImportToIgnore.kt");
+            }
+
             @TestMetadata("callChainBug.kt")
             public void testCallChainBug() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/callChainBug.kt");
