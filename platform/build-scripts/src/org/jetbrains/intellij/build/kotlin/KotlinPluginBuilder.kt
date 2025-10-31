@@ -1,6 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
@@ -27,7 +25,7 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     const val MAIN_KOTLIN_PLUGIN_MODULE: String = "kotlin.plugin"
     const val MAIN_FRONTEND_MODULE_NAME: String = "kotlin.frontend.split"
 
-    val MODULES: List<String> = java.util.List.of(
+    val MODULES: List<String> = listOf(
       "kotlin.plugin.common",
       "kotlin.plugin.k1",
       "kotlin.plugin.k2",
@@ -216,19 +214,19 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.base.serialization",
     )
 
-    private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
+    private val KOTLIN_SCRIPTING_LIBRARIES = listOf(
       "kotlinc.kotlin-script-runtime",
       "kotlinc.kotlin-scripting-jvm"
     )
 
-    private val MODULES_SHARED_WITH_CLIENT = java.util.List.of(
+    private val MODULES_SHARED_WITH_CLIENT = listOf(
       "intellij.kotlin.base.resources",
       "intellij.kotlin.base.codeInsight.minimal",
       "intellij.kotlin.highlighting.minimal",
       "intellij.kotlin.formatter.minimal"
     )
 
-    private val LIBRARIES = java.util.List.of(
+    private val LIBRARIES = listOf(
       "kotlinc.analysis-api-platform-interface",
       "kotlinc.analysis-api",
       "kotlinc.analysis-api-fe10",
@@ -244,18 +242,18 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin-metadata",
     ) + KOTLIN_SCRIPTING_LIBRARIES
 
-    private val GRADLE_TOOLING_MODULES = java.util.List.of(
+    private val GRADLE_TOOLING_MODULES = listOf(
       "intellij.kotlin.base.projectModel",
       "intellij.kotlin.gradle.tooling.impl",
     )
 
-    private val GRADLE_TOOLING_LIBRARIES = java.util.List.of(
+    private val GRADLE_TOOLING_LIBRARIES = listOf(
       "kotlin-gradle-plugin-idea",
       "kotlin-gradle-plugin-idea-proto",
       "kotlin-tooling-core",
     )
 
-    private val COMPILER_PLUGINS = java.util.List.of(
+    private val COMPILER_PLUGINS = listOf(
       "kotlinc.allopen-compiler-plugin",
       "kotlinc.noarg-compiler-plugin",
       "kotlinc.sam-with-receiver-compiler-plugin",
@@ -270,99 +268,91 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
     )
   }
 
-  open fun kotlinPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) { spec ->
-      spec.directoryName = "Kotlin"
-      spec.mainJarName = "kotlin-plugin.jar"
+  @Suppress("DEPRECATION")
+  open fun kotlinPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout = PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) { spec ->
+    spec.directoryName = "Kotlin"
+    spec.mainJarName = "kotlin-plugin.jar"
 
-      for (moduleName in MODULES_SHARED_WITH_CLIENT) {
-        spec.withModule(moduleName, "kotlin-plugin-shared.jar")
-      }
-
-      for (moduleName in MODULES) {
-        spec.withModule(moduleName)
-      }
-      for (libraryName in LIBRARIES) {
-        spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
-      }
-
-      val toolingJarName = "kotlin-gradle-tooling.jar"
-      for (moduleName in GRADLE_TOOLING_MODULES) {
-        spec.withModule(moduleName, toolingJarName)
-      }
-      for (library in GRADLE_TOOLING_LIBRARIES) {
-        spec.withProjectLibraryUnpackedIntoJar(library, toolingJarName)
-      }
-
-      for (library in COMPILER_PLUGINS) {
-        spec.withProjectLibrary(library)
-      }
-
-      withKotlincKotlinCompilerCommonLibrary(spec, MAIN_KOTLIN_PLUGIN_MODULE)
-
-      spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
-      spec.withProjectLibrary("kotlinc.kotlin-compiler-ir")
-
-      spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
-      spec.withProjectLibrary("kotlinc.kotlin-jps-common")
-      //noinspection SpellCheckingInspection
-      spec.withProjectLibrary("vavr")
-      spec.withProjectLibrary("javax-inject")
-      spec.withProjectLibrary("jackson-dataformat-toml")
-
-      withKotlincInPluginDirectory(spec = spec)
-
-      spec.withCustomVersion(PluginVersionEvaluator { _, ideBuildVersion, _ ->
-        // in kt-branches we have own since and until versions
-        val sinceBuild = System.getProperty("kotlin.plugin.since")
-        val untilBuild = System.getProperty("kotlin.plugin.until")
-        val sinceUntil = if (sinceBuild != null && untilBuild != null) sinceBuild to untilBuild else null
-        if (ideBuildVersion.contains("IJ")) {
-          // TC configurations that are inherited from AbstractKotlinIdeArtifact.
-          // In this environment, ideBuildVersion equals to build number.
-          // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
-          val version = ideBuildVersion.replace("IJ", kind.toString())
-          Span.current().addEvent("Kotlin plugin IJ version: $version")
-          PluginVersionEvaluatorResult(pluginVersion = version, sinceUntil = sinceUntil)
-        }
-        else {
-          // IJ installer configurations.
-          PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion-$kind", sinceUntil = sinceUntil)
-        }
-      })
-
-      if (kind == KotlinPluginKind.AS) {
-        spec.withRawPluginXmlPatcher { text, _ ->
-          checkedReplace(
-            oldText = text,
-            regex = "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
-            newText = """<plugin id="com.intellij.modules.androidstudio"/>""",
-          )
-        }
-      }
-
-      addition?.invoke(spec)
+    for (moduleName in MODULES_SHARED_WITH_CLIENT) {
+      spec.withModule(moduleName, "kotlin-plugin-shared.jar")
     }
+
+    for (moduleName in MODULES) {
+      spec.withModule(moduleName)
+    }
+    for (libraryName in LIBRARIES) {
+      spec.withProjectLibraryUnpackedIntoJar(libraryName, spec.mainJarName)
+    }
+
+    val toolingJarName = "kotlin-gradle-tooling.jar"
+    for (moduleName in GRADLE_TOOLING_MODULES) {
+      spec.withModule(moduleName, toolingJarName)
+    }
+    for (library in GRADLE_TOOLING_LIBRARIES) {
+      spec.withProjectLibraryUnpackedIntoJar(library, toolingJarName)
+    }
+
+    for (library in COMPILER_PLUGINS) {
+      spec.withProjectLibrary(library)
+    }
+
+    withKotlincKotlinCompilerCommonLibrary(spec, MAIN_KOTLIN_PLUGIN_MODULE)
+
+    spec.withProjectLibrary("kotlinc.kotlin-compiler-fe10")
+    spec.withProjectLibrary("kotlinc.kotlin-compiler-ir")
+
+    spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
+    spec.withProjectLibrary("kotlinc.kotlin-jps-common")
+    spec.withProjectLibrary(@Suppress("SpellCheckingInspection") "vavr")
+    spec.withProjectLibrary("javax-inject")
+    spec.withProjectLibrary("jackson-dataformat-toml")
+
+    withKotlincInPluginDirectory(spec = spec)
+
+    spec.withCustomVersion(PluginVersionEvaluator { _, ideBuildVersion, _ ->
+      // in kt-branches we have own since and until versions
+      val sinceBuild = System.getProperty("kotlin.plugin.since")
+      val untilBuild = System.getProperty("kotlin.plugin.until")
+      val sinceUntil = if (sinceBuild != null && untilBuild != null) sinceBuild to untilBuild else null
+      if (ideBuildVersion.contains("IJ")) {
+        // TC configurations that are inherited from AbstractKotlinIdeArtifact.
+        // In this environment, ideBuildVersion equals to build number.
+        // The ideBuildVersion looks like XXX.YYYY.ZZ-IJ
+        val version = ideBuildVersion.replace("IJ", kind.toString())
+        Span.current().addEvent("Kotlin plugin IJ version: $version")
+        PluginVersionEvaluatorResult(pluginVersion = version, sinceUntil = sinceUntil)
+      }
+      else {
+        // IJ installer configurations.
+        PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion-$kind", sinceUntil = sinceUntil)
+      }
+    })
+
+    if (kind == KotlinPluginKind.AS) {
+      spec.withRawPluginXmlPatcher { text, _ ->
+        checkedReplace(
+          oldText = text,
+          regex = "<!-- IJ/AS-DEPENDENCY-PLACEHOLDER -->",
+          newText = """<plugin id="com.intellij.modules.androidstudio"/>""",
+        )
+      }
+    }
+
+    addition?.invoke(spec)
   }
 
   suspend fun build(home: Path, properties: ProductProperties) {
-    val context = BuildContextImpl.createContext(
-      setupTracer = true,
-      projectHome = home,
-      productProperties = properties,
-      options = BuildOptions(enableEmbeddedFrontend = false)
-    )
+    val context = BuildContextImpl.createContext(home, properties, BuildOptions(enableEmbeddedFrontend = false))
     createBuildTasks(context).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }
 
   /**
    * A special plugin for JetBrains Client
    */
-  fun kotlinFrontendPlugin(): PluginLayout {
-    return PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
-      spec.withModules(MODULES_SHARED_WITH_CLIENT)
-      spec.withProjectLibrary("kotlinc.kotlin-compiler-common")
-    }
+  @Suppress("DEPRECATION")
+  fun kotlinFrontendPlugin(): PluginLayout = PluginLayout.plugin(MAIN_FRONTEND_MODULE_NAME) { spec ->
+    spec.withModules(MODULES_SHARED_WITH_CLIENT)
+    spec.withProjectLibrary("kotlinc.kotlin-compiler-common")
   }
 
   fun kotlinScriptingPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
@@ -380,34 +370,34 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       addition?.invoke(spec)
     }
   }
-}
 
-private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
-  val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
-  spec.withProjectLibrary(kotlincKotlinCompilerCommon)
+  private fun withKotlincKotlinCompilerCommonLibrary(spec: PluginLayout.PluginLayoutSpec, mainPluginModule: String) {
+    val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
+    spec.withProjectLibrary(kotlincKotlinCompilerCommon)
 
-  spec.withPatch { patcher, context ->
-    val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
-    val jars = library.getPaths(JpsOrderRootType.COMPILED)
-    if (jars.size != 1) {
-      throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
-    }
+    spec.withPatch { patcher, context ->
+      val library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)!!
+      val jars = library.getPaths(JpsOrderRootType.COMPILED)
+      if (jars.size != 1) {
+        throw IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
+      }
 
-    consumeDataByPrefix(jars[0], "META-INF/extensions/") { name, data ->
-      patcher.patchModuleOutput(moduleName = mainPluginModule, path = name, content = data)
+      consumeDataByPrefix(jars[0], "META-INF/extensions/") { name, data ->
+        patcher.patchModuleOutput(moduleName = mainPluginModule, path = name, content = data)
+      }
     }
   }
-}
 
-private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
-  spec.withGeneratedResources { targetDir, context ->
-    val distLibName = "kotlinc.$libName"
-    val library = context.project.libraryCollection.findLibrary(distLibName)!!
-    val jars = library.getPaths(JpsOrderRootType.COMPILED)
-    if (jars.size != 1) {
-      throw IllegalStateException("$distLibName is expected to have only one jar")
+  private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
+    spec.withGeneratedResources { targetDir, context ->
+      val distLibName = "kotlinc.$libName"
+      val library = context.project.libraryCollection.findLibrary(distLibName)!!
+      val jars = library.getPaths(JpsOrderRootType.COMPILED)
+      if (jars.size != 1) {
+        throw IllegalStateException("$distLibName is expected to have only one jar")
+      }
+      Decompressor.Zip(jars[0]).extract(targetDir.resolve(target))
     }
-    Decompressor.Zip(jars[0]).extract(targetDir.resolve(target))
   }
 }
 

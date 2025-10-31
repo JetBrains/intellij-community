@@ -17,13 +17,8 @@ fun runEssentialPluginsTest(
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
 ): Unit = runBlocking(Dispatchers.Default) {
-  val buildContext = BuildContextImpl.createContext(
-    homePath,
-    productProperties,
-    setupTracer = false,
-    buildTools,
-    createBuildOptionsForTest(productProperties, homePath)
-  )
+  val options = createBuildOptionsForTest(productProperties, homePath)
+  val buildContext = BuildContextImpl.createContext(homePath, productProperties, options, buildTools, setupTracer = false)
   val essentialPlugins = readXmlAsModel(buildContext.appInfoXml.toByteArray()).children.filter { it.name == "essential-plugin" }.mapNotNull { it.content }
   val softly = SoftAssertions()
   println("Essential plugins: ${essentialPlugins.joinToString(", ")}")
