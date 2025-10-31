@@ -332,12 +332,12 @@ internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSe
 }
 
 internal fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackDto {
-  val id = getOrStoreGlobally(coroutineScope, session)
+  val (stack, id) = getOrStoreGlobally(coroutineScope, session)
   return XExecutionStackDto(
     id,
-    displayName,
-    icon?.rpcId(),
-    xExecutionStackDescriptorAsync?.asDeferred()
+    stack.displayName,
+    stack.icon?.rpcId(),
+    stack.xExecutionStackDescriptorAsync?.asDeferred()
   )
 }
 

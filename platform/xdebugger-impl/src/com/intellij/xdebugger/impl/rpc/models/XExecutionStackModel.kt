@@ -28,8 +28,10 @@ fun XExecutionStackId.findValue(): XExecutionStackModel? {
   return findValueById(this, type = XExecutionStackValueIdType)
 }
 
+private typealias StackAndId = Pair<XExecutionStack, XExecutionStackId>
+
 @ApiStatus.Internal
-fun XExecutionStack.getOrStoreGlobally(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackId {
+fun XExecutionStack.getOrStoreGlobally(coroutineScope: CoroutineScope, session: XDebugSessionImpl): StackAndId {
   return with(XExecutionStackDeduplicator.getInstance()) {
     getOrStoreGlobally(coroutineScope, session)
   }
@@ -39,7 +41,7 @@ fun XExecutionStack.getOrStoreGlobally(coroutineScope: CoroutineScope, session: 
 private class XExecutionStackDeduplicator {
   private val storage = ConcurrentHashMap<CoroutineScope, ScopeBoundStorage>()
 
-  fun XExecutionStack.getOrStoreGlobally(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackId {
+  fun XExecutionStack.getOrStoreGlobally(coroutineScope: CoroutineScope, session: XDebugSessionImpl): StackAndId {
     return getOrCreateStorage(coroutineScope).getOrStore(this) {
       storeValueGlobally(coroutineScope, XExecutionStackModel(coroutineScope, this, session), type = XExecutionStackValueIdType)
     }
@@ -57,10 +59,10 @@ private class XExecutionStackDeduplicator {
   }
 
   private class ScopeBoundStorage() {
-    private val storage = ConcurrentHashMap<XExecutionStack, XExecutionStackId>()
+    private val storage = ConcurrentHashMap<XExecutionStack, StackAndId>()
 
-    fun getOrStore(stack: XExecutionStack, createId: () -> XExecutionStackId): XExecutionStackId {
-      return storage.computeIfAbsent(stack) { createId() }
+    fun getOrStore(stack: XExecutionStack, createId: () -> XExecutionStackId): StackAndId {
+      return storage.computeIfAbsent(stack) { it to createId() }
     }
 
     fun clear() {
