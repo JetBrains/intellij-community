@@ -42,7 +42,7 @@ import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATI
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 34);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 35);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -61,6 +61,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
   private static final LongEventField TIME_TO_SHOW_CORRECT_ELEMENT = EventFields.Long("time_to_show_correct_element");
   private static final LongEventField TIME_TO_SHOW_FIRST_ELEMENT = EventFields.Long("time_to_show_first_element");
   private static final LongEventField TIME_TO_COMPUTE_CORRECT_ELEMENT = EventFields.Long("time_to_compute_correct_element");
+  private static final LongEventField INSERT_HANDLER_DURATION = EventFields.Long("insert_handler_duration");
   private static final IntEventField ORDER_ADDED_CORRECT_ELEMENT = EventFields.Int("order_added_correct_element");
   private static final BooleanEventField DUMB_FINISH = EventFields.Boolean("dumb_finish");
   private static final BooleanEventField DUMB_START = EventFields.Boolean("dumb_start");
@@ -91,6 +92,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
                                                                          TIME_TO_SHOW_CORRECT_ELEMENT,
                                                                          TIME_TO_SHOW_FIRST_ELEMENT,
                                                                          TIME_TO_COMPUTE_CORRECT_ELEMENT,
+                                                                         INSERT_HANDLER_DURATION,
                                                                          ORDER_ADDED_CORRECT_ELEMENT,
                                                                          DUMB_FINISH,
                                                                          DUMB_START,
@@ -131,6 +133,8 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     private @Nullable Long myTimestampCorrectElementShown = null;
     private @Nullable Long myTimestampCorrectElementComputed = null;
     private @Nullable Integer myOrderComputedCorrectElement = null;
+    private @Nullable Long myItemSelectedInLookupMs = null;
+    private @Nullable Long myItemInsertHandlerDurationMs = null;
     private final boolean myIsDumbStart;
     private final DependenciesState myIncompleteDependenciesStateStart;
     private final @Nullable Language myLanguage;
@@ -176,6 +180,12 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     }
 
     @Override
+    public boolean beforeItemSelected(@NotNull LookupEvent event) {
+      myItemSelectedInLookupMs = System.currentTimeMillis();
+      return true;
+    }
+
+    @Override
     public void itemSelected(@NotNull LookupEvent event) {
       LookupElement item = event.getItem();
       char completionChar = event.getCompletionChar();
@@ -186,6 +196,12 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
         myTimestampCorrectElementShown = item.getUserData(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS);
         myTimestampCorrectElementComputed = item.getUserData(LOOKUP_ELEMENT_RESULT_ADD_TIMESTAMP_MILLIS);
         myOrderComputedCorrectElement = item.getUserData(LOOKUP_ELEMENT_RESULT_SET_ORDER);
+
+        if (myItemSelectedInLookupMs != null) {
+          // insert handling happens between `beforeItemSelected` and `itemSelected`
+          myItemInsertHandlerDurationMs = System.currentTimeMillis() - myItemSelectedInLookupMs;
+        }
+
         if (isSelectedByTyping(myLookup, item)) {
           triggerLookupUsed(FinishType.TYPED, item, completionChar);
         }
@@ -285,6 +301,10 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       convertTimestampToDuration(data, TIME_TO_COMPUTE_CORRECT_ELEMENT, myTimestampCorrectElementComputed);
       if (myOrderComputedCorrectElement != null) {
         data.add(ORDER_ADDED_CORRECT_ELEMENT.with(myOrderComputedCorrectElement));
+      }
+
+      if (myItemInsertHandlerDurationMs != null) {
+        data.add(INSERT_HANDLER_DURATION.with(myItemInsertHandlerDurationMs));
       }
 
       // Indexing
