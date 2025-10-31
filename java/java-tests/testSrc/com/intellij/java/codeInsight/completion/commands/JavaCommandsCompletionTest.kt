@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
@@ -26,6 +27,7 @@ import com.intellij.platform.backend.documentation.DocumentationData
 import com.intellij.psi.CommonClassNames.JAVA_LANG_CLASS
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.replaceService
 import com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection
@@ -34,6 +36,10 @@ import javax.swing.JComponent
 
 @NeedsIndex.SmartMode(reason = "it requires highlighting")
 class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
+
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return JAVA_21
+  }
 
   override fun setUp() {
     super.setUp()
@@ -762,6 +768,40 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     }
   }
 
+  fun testInspectionFromAnotherLine() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.enableInspections(StreamApiMigrationInspection())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+        import java.io.BufferedReader;
+        import java.io.FileReader;
+        import java.io.IOException;
+
+        public class Test {
+          void main() throws IOException {
+              var reader = new BufferedReader(new FileReader("input.txt"));
+              String line;
+              while ((line = reader.readLine()) != null) {
+                  System.out.println(line);
+              }<caret>
+          }
+        }""".trimIndent())
+    myFixture.doHighlighting()
+    myFixture.type(".")
+    val elements = myFixture.completeBasic()
+    selectItem(elements.first { element -> element.lookupString.contains("Collapse loop with stream 'forEach()'", ignoreCase = true) })
+    myFixture.checkResult("""
+      import java.io.BufferedReader;
+      import java.io.FileReader;
+      import java.io.IOException;
+      
+      public class Test {
+        void main() throws IOException {
+            var reader = new BufferedReader(new FileReader("input.txt"));
+            reader.lines().forEach(System.out::println);
+        }
+      }""".trimIndent())
+  }
+
   fun testChangeSignature() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     var text = """
@@ -1079,7 +1119,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     
     public class A {
         void foo() {
-            ArrayList<String> strings = new ArrayList<String>();
+            ArrayList<String> strings = new ArrayList<>();
         }
     }
     """.trimIndent())
@@ -1109,7 +1149,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     
     public class A {
         void foo() {
-            ArrayList<String> strings = new ArrayList<String>();
+            ArrayList<String> strings = new ArrayList<>();
             new ArrayList<String>(strings);
         }
     }
@@ -1142,7 +1182,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     
     public class A {
         void foo() {
-            ArrayList<String> strings = new ArrayList<String>();
+            ArrayList<String> strings = new ArrayList<>();
         }
     }
     """.trimIndent())
@@ -1173,7 +1213,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     
     public class A {
         void foo() {
-            ArrayList<String> strings = new ArrayList<String>();
+            ArrayList<String> strings = new ArrayList<>();
         }
     }
     """.trimIndent())

@@ -241,7 +241,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
           val profileToUse = getInstance(psiFile.project).getCurrentProfile()
           val inspectionWrapper = InspectionProfileWrapper(profileToUse)
           val inspectionTools = getInspectionTools(inspectionWrapper, originalFile)
-          val lineRange = getLineRange(topLevelFile, topLevelOffset)
+          val lineRange = getLineRange(topLevelFile, currentOffset)
           val indicator = EmptyProgressIndicator()
           val inspectionResult = jobToIndicator(coroutineContext.job, indicator) {
             if (!isInjected) {
