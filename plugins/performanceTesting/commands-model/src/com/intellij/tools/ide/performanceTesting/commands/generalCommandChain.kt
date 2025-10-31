@@ -1175,6 +1175,10 @@ fun <T : CommandChain> T.replaceText(
   addCommand("${CMD_PREFIX}replaceText ${options}")
 }
 
+fun <T : CommandChain> T.insertText(offset: Int, text: String): T = apply {
+  addCommand("${CMD_PREFIX}replaceText -startOffset ${offset} -endOffset ${offset} -newText ${text}")
+}
+
 fun <T : CommandChain> T.saveDocumentsAndSettings(): T = apply {
   addCommand("${CMD_PREFIX}saveDocumentsAndSettings")
 }
