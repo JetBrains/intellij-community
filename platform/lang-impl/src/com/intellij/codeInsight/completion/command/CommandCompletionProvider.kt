@@ -434,7 +434,6 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     if ((injectedOffset == null || injectedFile == null) && isInjected) {
       return null
     }
-    copyTopFile.putCopyableUserData(COMMAND_COMPLETION_COPY, true)
     return AdjustedCompletionParameters(copyTopFile, injectedFile, adjustedOffset, injectedOffset)
   }
 
