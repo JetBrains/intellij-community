@@ -65,7 +65,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     if (!isBusy) {
       val content = source.getContent(event)
       val view = source.getView(content)
-      if (view != null) {
+      if (view != null && view.isShowing) {
         beforeUpdate(event, view)
         updateCursor(event, content, view)
         if (start && cursorType != Cursor.CUSTOM_CURSOR) {
