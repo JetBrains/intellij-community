@@ -25,7 +25,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
-import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
 import com.intellij.platform.util.coroutines.flow.debounceBatch
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -55,7 +54,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.InvalidPathException
@@ -75,14 +73,17 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     @JvmStatic
     fun isEnabled(project: Project, executable: GitExecutable): Boolean =
       (Registry.`is`("git.commit.gpg.signing.enable.embedded.pinentry", false) || application.isUnitTestMode)
-      && (SystemInfo.isUnix || (executable !is GitExecutable.Unknown && !executable.isLocal))
+      && (isRemDevOrWsl(executable) || isLocalUnix(executable))
       && signingIsEnabledInAnyRepo(project)
 
     private fun isUnitTestModeOnUnix(): Boolean =
       SystemInfo.isUnix && application.isUnitTestMode
 
+    private fun isLocalUnix(executable: GitExecutable): Boolean =
+      executable.isLocal && SystemInfo.isUnix
+
     private fun isRemDevOrWsl(executable: GitExecutable): Boolean =
-      AppMode.isRemoteDevHost() || (executable !is GitExecutable.Unknown && !executable.isLocal)
+      AppMode.isRemoteDevHost() || executable.isRemote
 
     // do not configure Gpg Agent for roots without commit.gpgSign and user.signingkey enabled
     private fun signingIsEnabledInAnyRepo(project: Project): Boolean = GitRepositoryManager.getInstance(project)
@@ -366,15 +367,7 @@ internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutabl
   }
 
   fun getCommandLine(): String {
-    val gitScriptGenerator = when (executable) {
-      is GitExecutable.Eel -> {
-        GitScriptGenerator((executable.eel.descriptor as? WslEelDescriptor)?.distribution)
-      }
-      else -> {
-        GitScriptGenerator(executable)
-      }
-    }
-    return gitScriptGenerator.addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)
+    return GitScriptGenerator(executable).addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)
   }
 
   private fun getScriptTemplate(fallbackPinentryPath: String?): String {

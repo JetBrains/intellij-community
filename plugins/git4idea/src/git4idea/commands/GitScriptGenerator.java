@@ -29,10 +29,6 @@ public class GitScriptGenerator extends ScriptGeneratorImpl {
     }
   }
 
-  public GitScriptGenerator(@Nullable WSLDistribution wslDistribution) {
-    myWSLDistribution = wslDistribution;
-  }
-
   @Override
   protected @NotNull String getJavaExecutablePath() {
     if (myWSLDistribution != null) {
