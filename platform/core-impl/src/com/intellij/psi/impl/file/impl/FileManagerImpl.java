@@ -185,11 +185,13 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void dispose() {
-    clearViewProviders();
+    clearViewProviders("Dispose");
   }
 
   @RequiresWriteLock
-  private void clearViewProviders() {
+  private void clearViewProviders(@NotNull String reason) {
+    LOG.debug("clearViewProviders: " + reason);
+
     DebugUtil.performPsiModification("clearViewProviders", () -> {
       myVFileToViewProviderMap.forEach((__, ___, provider) -> {
         markInvalidated(provider);
@@ -201,7 +203,7 @@ public final class FileManagerImpl implements FileManagerEx {
   @Override
   @TestOnly
   public void cleanupForNextTest() {
-    ApplicationManager.getApplication().runWriteAction(() -> clearViewProviders());
+    ApplicationManager.getApplication().runWriteAction(() -> clearViewProviders("clearViewProvidersForNextTest"));
 
     myVFileToPsiDirMap.set(null);
     myManager.dropPsiCaches();
@@ -429,7 +431,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
           possiblyInvalidatePhysicalPsi();
           if (clearViewProviders) {
-            clearViewProviders();
+            clearViewProviders("processFileTypesChanged");
           }
 
           myManager.propertyChanged(event);

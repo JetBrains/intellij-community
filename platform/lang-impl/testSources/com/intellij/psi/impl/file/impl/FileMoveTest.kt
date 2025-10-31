@@ -12,6 +12,7 @@ import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multi
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
+import com.intellij.psi.util.PsiUtilCore.ensureValid
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
@@ -211,7 +212,11 @@ internal class FileMoveTest {
   private suspend fun assertPsiFileIsValid(psiFile: PsiFile, vFile: VirtualFile) {
     readAction {
       if (!psiFile.isValid) {
-        fail("File ${psiFile.presentableTextWithContext()} must be valid. See registered files:" + dumpPsiFiles(vFile))
+        val invalidationException = runCatching {
+          ensureValid(psiFile)
+        }
+
+        fail("File ${psiFile.presentableTextWithContext()} must be valid. See registered files:" + dumpPsiFiles(vFile), invalidationException.exceptionOrNull())
       }
     }
   }
