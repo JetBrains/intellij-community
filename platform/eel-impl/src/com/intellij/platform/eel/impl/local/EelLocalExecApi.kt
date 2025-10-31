@@ -82,9 +82,17 @@ class EelLocalExecPosixApi(
       }
       else {
         service<CoroutineScopeService>().coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-          val shell = getUserShell()
-          // Timeout is chosen at random.
-          ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
+          try {
+            val shell = getUserShell()
+            // Timeout is chosen at random.
+            ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(shell, null, interactive, null), 30_000).first
+          }
+          catch (err: CancellationException) {
+            throw err
+          }
+          catch (err: Exception) {
+            throw EelExecApi.EnvironmentVariablesException(err.message.orEmpty(), err)
+          }
         }
       }
     }!!

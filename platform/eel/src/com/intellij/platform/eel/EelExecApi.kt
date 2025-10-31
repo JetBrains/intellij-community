@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.io.IOException
 import java.util.*
 
 /**
@@ -138,6 +139,17 @@ sealed interface EelExecApi {
    */
   @ApiStatus.Experimental
   fun environmentVariables(@GeneratedBuilder opts: EnvironmentVariablesOptions): Deferred<Map<String, String>>
+
+  /**
+   * Indicates on the failure during fetching environment variables.
+   * As an API user, you can't gracefully handle this error. You can either ignore it or show the message to the user as a critical error.
+   * The message text may be localized with the locale of the remote machine.
+   */
+  @ApiStatus.Experimental
+  class EnvironmentVariablesException : EelError, IOException {
+    constructor(message: String) : super(message)
+    constructor(message: String, cause: Throwable) : super(message, cause)
+  }
 
   interface EnvironmentVariablesOptions {
     /**
@@ -321,6 +333,8 @@ interface EelExecPosixApi : EelExecApi {
        * The fastest way to get environment variables. It doesn't call shell scripts written by users.
        * At least, the environment variable `PATH` exists, but it may differ from what the user has in their `~/.profile` written.
        * No guarantee for other environment variables.
+       *
+       * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
        */
       MINIMAL,
 
@@ -331,6 +345,8 @@ interface EelExecPosixApi : EelExecApi {
        * This mode may load not all environment variables, depending on what's written in user's configs
        * because default `~/.bashrc` files in some distros like Debian and Ubuntu contain strings like `[ -z "$PS1" ] && return`.
        * Often people put their adjustments at the bottom of the profile file, and therefore their code is not executed in the non-interactive mode.
+       *
+       * **Notice:** In this mode [EelExecApi.EnvironmentVariablesException] MAY be thrown.
        */
       LOGIN_NON_INTERACTIVE,
 
@@ -351,6 +367,8 @@ interface EelExecPosixApi : EelExecApi {
        * * `~/.bashrc` starts `screen` or `tmux`, the shell process hangs forever.
        * * `~/.bashrc` starts `ssh-agent`, and the operating system quickly becomes polluted with lots of unused SSH agents.
        * * `~/.bashrc` calls `curl` to write the current weather, news, jokes, etc. CPU consumption grows, IDE works slower.
+       *
+       * **Notice:** In this mode [EelExecApi.EnvironmentVariablesException] MAY be thrown.
        */
       @EelDelicateApi
       LOGIN_INTERACTIVE,
