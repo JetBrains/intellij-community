@@ -5,14 +5,24 @@ import com.intellij.lambda.testFramework.junit.GroupTestsByMode
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.tests.SampleTests.Companion.HelloBackendOnlyLambda
 import com.intellij.lambda.tests.SampleTests.Companion.HelloFrontendOnlyLambda
-import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestTemplate
+import java.time.Instant
+import java.util.*
 
 @ExecuteInMonolithAndSplitMode
 @GroupTestsByMode
 class FrontAndBackExampleTest {
+
+  private lateinit var testName: String
+
+  @BeforeEach
+  fun setUp(info: TestInfo) {
+    testName = info.displayName
+  }
 
   @Disabled
   @TestTemplate
@@ -23,11 +33,11 @@ class FrontAndBackExampleTest {
 
   @TestTemplate
   fun simpleUnitTest() {
-    ApplicationManager.getApplication().invokeAndWait { println("Test template test : badums") }
+    println("${Date.from(Instant.now())} Hello from simpleUnitTest! ${testName}")
   }
 
   @TestTemplate
   fun anotherTest() {
-    ApplicationManager.getApplication().invokeAndWait { println("Test template test : badums") }
+    println("${Date.from(Instant.now())} Hello from anotherTest! ${testName}")
   }
 }

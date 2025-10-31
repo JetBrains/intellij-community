@@ -1,1 +1,1 @@
-com.intellij.lambda.testFramework.junit.GroupTestsByModeFilter
+com.intellij.lambda.testFramework.junit.GroupByModePostDiscoveryFilter

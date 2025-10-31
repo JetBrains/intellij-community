@@ -59,7 +59,6 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
                                                                               "methodArguments" to argumentsToString(invocationContext.arguments)
                                                                             ))
     }
-
     invocation.skip()
     // TODO: https://youtrack.jetbrains.com/issue/AT-3414/Lambda-tests-implement-parameterization-for-all-possible-JUnit5-test-scenarios
     //  find a way to deal with JUnit5 test factory (see overrides above)
