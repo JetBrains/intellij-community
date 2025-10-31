@@ -776,6 +776,10 @@ object PluginManagerCore {
     return getPluginSet().buildPluginIdMap()
   }
 
+  /**
+   * **Note: ** [FileVisitResult.SKIP_SIBLINGS] is not supported.
+   * @return `false` if processing was terminated because of [FileVisitResult.TERMINATE], and `true` otherwise.
+   */
   @ApiStatus.Internal
   fun processAllNonOptionalDependencyIds(
     rootDescriptor: IdeaPluginDescriptorImpl,
