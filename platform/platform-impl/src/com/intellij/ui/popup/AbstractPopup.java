@@ -2875,7 +2875,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private @Nullable Point getStoredLocation() {
-    if (shouldUseTrueWaylandPopups()) return null; // not supported at the moment
     if (myDimensionServiceKey == null) return null;
     return getWindowStateService(getProjectDependingOnKey(myDimensionServiceKey)).getLocation(myDimensionServiceKey);
   }
