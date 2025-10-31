@@ -19,12 +19,17 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryDependency
+import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.IncompleteModelUtil.isIncompleteModel
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
@@ -63,6 +68,10 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
         val module = ModuleUtilCore.findModuleForPsiElement(psiFile) ?: return null
 
+        // In projects with JPS, the following situation occurs when raising a Kotlin stdlib version:
+        // The stdlib files are not yet loaded in the .m2 folder when this check happens: the notification shouldn't be shown
+        if (module.buildSystemType == BuildSystemType.JPS && !kotlinStdlibExistsOnDiskForJPS(module, project)) return null
+
         if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog(module)) {
             return null
         }
@@ -87,6 +96,26 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
         }
 
         return null
+    }
+
+    // We do this check only for JPS projects because for other build systems this problem is not topical
+    private fun kotlinStdlibExistsOnDiskForJPS(module: Module, project: Project): Boolean {
+        val moduleDependencies = module.findModuleEntity()?.dependencies ?: return false
+        val kotlinStdlibDependencies =
+            moduleDependencies.filterIsInstance<LibraryDependency>().filter { it.library.name.contains("kotlin-stdlib") }
+        if (kotlinStdlibDependencies.isEmpty()) return false
+        return kotlinStdlibDependencies.all {
+            dependencyFilesExistOnDisk(it, project)
+        }
+    }
+
+    private fun dependencyFilesExistOnDisk(dependency: LibraryDependency, project: Project): Boolean {
+        val libraryId = dependency.library
+        val libraryEntity = project.workspaceModel.currentSnapshot.resolve(libraryId)
+        val libraryRoots = libraryEntity?.roots ?: return false
+        if (libraryRoots.isEmpty()) return false
+        val jarsWithClasses = libraryRoots.filter { it.type == LibraryRootTypeId.COMPILED }
+        return jarsWithClasses.all { jar -> VirtualFileManager.getInstance().findFileByUrl(jar.url.url)?.exists() == true }
     }
 
     companion object {

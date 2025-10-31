@@ -61,6 +61,7 @@ jvm_library(
     "//platform/util",
     "//platform/workspace/storage",
     "//platform/vcs-impl/shared",
+    "//platform/backend/workspace",
   ]
 )
 ### auto-generated section `build intellij.kotlin.projectConfiguration` end
