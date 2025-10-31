@@ -50,6 +50,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.ReferenceQueueable;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.*;
@@ -382,8 +383,16 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
   }
 
-  private static void disposeEvictedInfos(@NotNull HighlightingSession session, @NotNull WhatTool predicate) {
-    List<HighlightInfo> evictedInfos = session.getDocument().getUserData(EVICTED_PSI_ELEMENTS);
+  private void disposeEvictedInfos(@NotNull HighlightingSession session, @NotNull WhatTool predicate) {
+    // first, visit all weak maps to call their processQueue() to induce `psiFileEvictionListener` to be called
+    Document document = session.getDocument();
+    Map<FileViewProvider, Map<Object, ToolHighlights>> hostMap = getOrCreateHostMap(document);
+    ((ReferenceQueueable)hostMap).processQueue();
+    hostMap.values()
+      .stream()
+      .flatMap(m -> m.values().stream())
+      .forEach(toolHighlights -> ((ReferenceQueueable)toolHighlights.elementHighlights).processQueue());
+    List<HighlightInfo> evictedInfos = document.getUserData(EVICTED_PSI_ELEMENTS);
     if (evictedInfos != null) {
       evictedInfos.removeIf(info -> {
         boolean matches = predicate.matches(info.toolId);
