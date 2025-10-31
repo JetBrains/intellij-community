@@ -36,8 +36,6 @@ class WelcomeToUnifiedWelcomeScreenBanner : PyCommunityToUnifiedWelcomeScreenBan
   private fun onBannerClosed() = PropertiesComponent.getInstance().setValue(BANNER_CLOSED_PROPERTY, true)
 
   override val promoImage: Icon = PycharmCommunityIdeImplIcons.Backgrounds.Promotion_bg
-
-  private val infoFontColor = JBColor(Color.decode("#6C707E"), Color.decode("#A8ADBD"))
   private val closeIcon = IconUtil.scale(PycharmCommunityIdeImplIcons.Icons.Close, null, 1.1f)
 
   private val myCloseAction =
@@ -77,9 +75,6 @@ class WelcomeToUnifiedWelcomeScreenBanner : PyCommunityToUnifiedWelcomeScreenBan
         }.customize(customRowGaps = UnscaledGapsY(top = 12))
         row {
           text(PyCharmCommunityCustomizationBundle.message("promotion.welcome.to.unified.main.text"))
-            .applyToComponent {
-              foreground = infoFontColor
-            }
         }.customize(customRowGaps = UnscaledGapsY(top = 4, bottom = 8))
       }
       row {
