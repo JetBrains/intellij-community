@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,10 @@ public final class JavaSdkVersionUtil {
     return null;
   }
 
+  /**
+   * Obsolete: ignores environment‑scoped SDKs (WSL, Docker, Remote Dev).
+   */
+  @ApiStatus.Obsolete
   public static @Nullable Sdk findJdkByVersion(@NotNull JavaSdkVersion version) {
     JavaSdk javaSdk = JavaSdk.getInstance();
     Sdk candidate = null;
