@@ -24,8 +24,18 @@ internal class FrontendXExecutionStack(
   val id: XExecutionStackId = stackDto.executionStackId
 
   override fun getTopFrame(): XStackFrame? {
-    // TODO[IJPL-177087]
-    return null
+    val frameDto = runCatching {
+      stackDto.topFrame.asCompletableFuture().getNow(null)
+    }.getOrNull() ?: return null
+    return suspendContextLifetimeScope.getOrCreateStackFrame(frameDto, project)
+  }
+
+  override fun getTopFrameAsync(): CompletableFuture<XStackFrame?> {
+    return stackDto.topFrame.asCompletableFuture().thenApply { frameDto ->
+      frameDto?.let {
+        suspendContextLifetimeScope.getOrCreateStackFrame(it, project)
+      }
+    }
   }
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {

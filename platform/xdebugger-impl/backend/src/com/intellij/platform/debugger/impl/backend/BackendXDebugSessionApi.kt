@@ -337,7 +337,10 @@ internal fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDeb
     id,
     stack.displayName,
     stack.icon?.rpcId(),
-    stack.xExecutionStackDescriptorAsync?.asDeferred()
+    stack.xExecutionStackDescriptorAsync?.asDeferred(),
+    stack.topFrameAsync.thenApply { frame ->
+      frame?.toRpc(coroutineScope, session)
+    }.asDeferred()
   )
 }
 

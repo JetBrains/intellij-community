@@ -115,7 +115,8 @@ data class XExecutionStackDto(
   val executionStackId: XExecutionStackId,
   val displayName: @Nls String,
   val icon: IconId?,
-  @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XDescriptor>?
+  @Serializable(with = DeferredSerializer::class) val descriptor: Deferred<XDescriptor>?,
+  @Serializable(with = DeferredSerializer::class) val topFrame: Deferred<XStackFrameDto?>,
 )
 
 @ApiStatus.Internal
