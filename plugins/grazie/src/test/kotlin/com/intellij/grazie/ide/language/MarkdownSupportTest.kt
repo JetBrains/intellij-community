@@ -1,9 +1,14 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("NonAsciiCharacters")
+
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.openapi.util.Disposer
+import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
+import com.intellij.spellchecker.dictionary.Dictionary
 
 
 class MarkdownSupportTest : GrazieTestBase() {
@@ -69,6 +74,30 @@ class MarkdownSupportTest : GrazieTestBase() {
     myFixture.configureByText("a.md", """
       <STYLE_SUGGESTION descr="ALL_OF_THE">All of the</STYLE_SUGGESTION> people I know came.
      """.trimIndent())
+    myFixture.checkHighlighting()
+  }
+
+  fun `test no typos in chinese texts with text-level spellchecker`() {
+    // It may look like a synthetic example that has nothing to do with the real world,
+    // but this is exactly what [androidDictionary] looks like
+    val name = "androidDictionary"
+    val words = setOf("foldable", "rollable", "wearable")
+    getInstance(project).spellChecker!!.addDictionary(object : Dictionary {
+      override fun getName(): String = name
+      override fun contains(word: String): Boolean = word in words
+      override fun getWords(): Set<String> = words
+    })
+    Disposer.register(testRootDisposable) { getInstance(project).spellChecker!!.removeDictionary(name) }
+
+    enableProofreadingFor(setOf(Lang.CHINESE))
+    myFixture.configureByText("a.md", """
+      文件不存在时应返回错误
+      相对路径不存在
+      期望返回错误但未返回
+      不应返回错误
+
+      <!-- 将文本粘贴在此，或者检测以下文本 我和她去看了<GRAMMAR_ERROR descr="wa5">二部</GRAMMAR_ERROR>电影。-->
+    """.trimIndent())
     myFixture.checkHighlighting()
   }
 }

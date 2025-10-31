@@ -2626,6 +2626,27 @@ jvm_import(
 )
 
 java_library(
+  name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-language-zh",
+  exports = [
+    ":org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19_http_import",
+    ":com_hankcs-hanlp-portable-1_8_2_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19_http_import",
+  jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19_http//file"
+)
+
+jvm_import(
+  name = "com_hankcs-hanlp-portable-1_8_2_http_import",
+  jar = "@com_hankcs-hanlp-portable-1_8_2_http//file",
+  source_jar = "@com_hankcs-hanlp-portable-1_8_2_http//file"
+)
+
+java_library(
   name = "grazie-tests-org-jetbrains-intellij-deps-languagetool-languagetool-core",
   exports = [
     ":org_jetbrains_intellij_deps_languagetool-languagetool-core-6_7_19_http_import",

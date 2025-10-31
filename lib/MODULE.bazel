@@ -3878,6 +3878,34 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-zh/6.7.19/language-zh-6.7.19.jar",
+  sha256 = "9aceb89c3f8b7f1b98eaef06b1b79e64ee5308f0edb2315785aad4f3c4045169",
+  downloaded_file_path = "language-zh-6.7.19.jar"
+)
+
+http_file(
+  name = "com_hankcs-hanlp-portable-1_8_2_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/hankcs/hanlp/portable-1.8.2/hanlp-portable-1.8.2.jar",
+  sha256 = "f4e8e42211f62dc952a669329f43b78c72927690407b1ccea37448c76f843379",
+  downloaded_file_path = "hanlp-portable-1.8.2.jar"
+)
+
+http_file(
+  name = "org_jetbrains_intellij_deps_languagetool-language-zh-6_7_19-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-zh/6.7.19/language-zh-6.7.19-sources.jar",
+  sha256 = "eff1e3b158421003d96435a54084742fe3b2ff460964df6c0248b2399e2070cf",
+  downloaded_file_path = "language-zh-6.7.19-sources.jar"
+)
+
+http_file(
+  name = "com_hankcs-hanlp-portable-1_8_2-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/hankcs/hanlp/portable-1.8.2/hanlp-portable-1.8.2-sources.jar",
+  sha256 = "d26cc39671d50b74f68863a273589af41129b08b79f4cb2e14321123e34e7cee",
+  downloaded_file_path = "hanlp-portable-1.8.2-sources.jar"
+)
+
+http_file(
   name = "org_languagetool-portuguese-pos-dict-1_2_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/languagetool/portuguese-pos-dict/1.2.0/portuguese-pos-dict-1.2.0.jar",
   sha256 = "fe8da88bb31b6372855741fbd81ee1c7477b4f8a0624d3dafd20ee23e184650e",
