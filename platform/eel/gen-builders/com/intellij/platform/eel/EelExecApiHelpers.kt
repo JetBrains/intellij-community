@@ -12,7 +12,6 @@ import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
-import java.util.*
 
 
 /**

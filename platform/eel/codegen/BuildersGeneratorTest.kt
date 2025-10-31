@@ -27,7 +27,9 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
@@ -84,6 +86,7 @@ import kotlin.Char
 import kotlin.OptIn
 import kotlin.Pair
 import kotlin.String
+import kotlin.assert
 import kotlin.check
 import kotlin.collections.ArrayDeque
 import kotlin.collections.addAll
@@ -111,14 +114,15 @@ import kotlin.takeIf
 import kotlin.text.Regex
 import kotlin.text.RegexOption
 import kotlin.text.buildString
+import kotlin.text.contains
 import kotlin.text.endsWith
+import kotlin.text.indexOf
 import kotlin.text.isBlank
 import kotlin.text.isNotBlank
 import kotlin.text.isNotEmpty
 import kotlin.text.lines
 import kotlin.text.lowercase
 import kotlin.text.matches
-import kotlin.text.orEmpty
 import kotlin.text.prependIndent
 import kotlin.text.removePrefix
 import kotlin.text.removeSuffix
@@ -355,9 +359,9 @@ class BuildersGeneratorTest {
 
       val jpsModuleQueue = mutableListOf(ultimateProject.findModuleByName(moduleName)!!)
 
-      val jdkName = "jbr-17"
+      val jdkName = "jbr-21"
       val projectJdkTable = ProjectJdkTable.getInstance(tempProject)
-      val projectJdk = JavaSdk.getInstance().createJdk("jbr-17", System.getProperty("java.home"))
+      val projectJdk = JavaSdk.getInstance().createJdk("jbr-21", System.getProperty("java.home"))
       projectJdkTable.addJdk(projectJdk)
       ProjectRootManager.getInstance(tempProject).setProjectSdkName(jdkName, JavaSdk.getInstance().name)
 
@@ -880,8 +884,31 @@ private fun renderPropertyInBuilder(
       }
 
     for ((enumMethodName, field) in fields) {
+      val passingAnnotations = field.annotations
+        .filter { annotation ->
+          val annotationClass =
+            annotation.nameReferenceElement?.resolve()?.let { it as? KtClass }
+            ?: return@filter false
+          annotationClass.annotationEntries.none { annotationOfAnnotation ->
+            annotationOfAnnotation.name == null &&
+            annotationOfAnnotation.shortName?.asString() == "Target" &&
+            annotationOfAnnotation.valueArguments.none { target ->
+              (target as KtValueArgument).renderWithFqnTypes() == "AnnotationTarget.FUNCTION"
+            }
+          }
+        }
+        .joinToString("") { "$it\n" }
+
+      // org.jetbrains.kotlin.light.classes.symbol.SymbolLightMemberBase.getDocComment
+      // is not implemented, it returns null and has a to-do comment.
+      val fieldDocComment = field.text.run {
+        val start = indexOf("/**")
+        val end = indexOf("*/")
+        if (start != -1 && end != -1) substring(start, end + 2) else ""
+      }
+
       append("""
-        ${field.docComment?.text.orEmpty()}fun $enumMethodName(): $builderName =
+        ${fieldDocComment}${passingAnnotations}fun $enumMethodName(): $builderName =
           ${property.name}($typeFqn.${field.name})""")
     }
   }

@@ -4,7 +4,9 @@
  */
 package com.intellij.platform.eel.fs
 
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.GeneratedBuilder
+import com.intellij.platform.eel.OwnedBuilder
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo.Permissions
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
@@ -23,7 +25,6 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
-import java.util.*
 
 
 @GeneratedBuilder.Result
@@ -450,12 +451,23 @@ object EelFileSystemApiHelpers {
       this.symlinkPolicy = arg
     }
 
+    /**
+     * Leaves symlinks unresolved.
+     * This option makes the operation a bit more efficient if it is not interested in symlinks.
+     */
     fun doNotResolve(): ListDirectoryWithAttrs =
       symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
 
+    /**
+     * Resolves a symlink and returns the information about the target of the symlink,
+     * But does not perform anything on the target of the symlink itself.
+     */
     fun justResolve(): ListDirectoryWithAttrs =
       symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
 
+    /**
+     * Resolves a symlink, follows it, and performs the required operation on target.
+     */
     fun resolveAndFollow(): ListDirectoryWithAttrs =
       symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
 
@@ -498,6 +510,7 @@ object EelFileSystemApiHelpers {
     fun doNotReplace(): Move =
       replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE)
 
+    /** For compatibility with Java NIO. */
     fun doNotReplaceDirectories(): Move =
       replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES)
 
@@ -697,12 +710,23 @@ object EelFileSystemApiHelpers {
       this.symlinkPolicy = arg
     }
 
+    /**
+     * Leaves symlinks unresolved.
+     * This option makes the operation a bit more efficient if it is not interested in symlinks.
+     */
     fun doNotResolve(): Stat =
       symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
 
+    /**
+     * Resolves a symlink and returns the information about the target of the symlink,
+     * But does not perform anything on the target of the symlink itself.
+     */
     fun justResolve(): Stat =
       symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
 
+    /**
+     * Resolves a symlink, follows it, and performs the required operation on target.
+     */
     fun resolveAndFollow(): Stat =
       symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
 
@@ -782,9 +806,16 @@ object EelFileSystemApiHelpers {
       this.entryOrder = arg
     }
 
+    /**
+     * Yield directory entries in alphabetical order.
+     */
     fun alphabetical(): WalkDirectory =
       entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
 
+    /**
+     * Yield directory entries in order in which they appear on the file system.
+     * If you do not care for the order of the files, this is the preferable option.
+     */
     fun random(): WalkDirectory =
       entryOrder(WalkDirectoryEntryOrder.RANDOM)
 
@@ -839,9 +870,46 @@ object EelFileSystemApiHelpers {
       this.traversalOrder = arg
     }
 
+    /**
+     * Breadth-first traversal.
+     * ```
+     * a/
+     * |- b/
+     * |  |- c
+     * |  |- d
+     * |- e
+     * ```
+     * Returned:
+     * ```
+     * a
+     * a/b
+     * a/e
+     * a/b/c
+     * a/b/d
+     * ```
+     */
     fun bfs(): WalkDirectory =
       traversalOrder(WalkDirectoryTraversalOrder.BFS)
 
+    /**
+     * Depth-first traversal, where directory entries are yielded in order they are encountered.
+     * If you do not care for the manner of traversal, this is the preferable option.
+     * ```
+     * a/
+     * |- b/
+     * |  |- c
+     * |  |- d
+     * |- e
+     * ```
+     * Returned:
+     * ```
+     * a
+     * a/b
+     * a/b/c
+     * a/b/d
+     * a/e
+     * ```
+     */
     fun dfs(): WalkDirectory =
       traversalOrder(WalkDirectoryTraversalOrder.DFS)
 

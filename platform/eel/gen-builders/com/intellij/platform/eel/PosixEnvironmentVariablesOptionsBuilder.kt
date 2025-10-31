@@ -6,6 +6,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions
 import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode
+import com.intellij.platform.eel.channels.EelDelicateApi
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -20,15 +21,58 @@ class PosixEnvironmentVariablesOptionsBuilder {
     this.mode = arg
   }
 
+  /**
+   * Works like [LOGIN_NON_INTERACTIVE], but in case of an error it returns [MINIMAL] instead of throwing an exception.
+   *
+   * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
+   */
   fun default(): PosixEnvironmentVariablesOptionsBuilder =
     mode(Mode.DEFAULT)
 
+  /**
+   *  **Use with caution, avoid when possible.**
+   *
+   * This mode executes a shell process supposed to load various profile scripts:
+   * `~/.profile`, `~/.bashrc`, `~/.zshrc`, `/etc/profile` and so on.
+   *
+   * The implementation launches an interactive shell session, so it reads all environment variables unlike [LOGIN_NON_INTERACTIVE].
+   *
+   * However, it's not conventional to run interactive shells without having an actual user interaction.
+   * And no way for user interaction is provided.
+   *
+   * Here are some real cases reported by our users. They're not exceptional cases but rather usual things.
+   * In these cases this mode led to inability to fetch environment variables or high CPU consumption:
+   * * `ssh-add` in `~/.bashrc` waits for a key passphrase, and the shell process hangs forever, IDE becomes unusable.
+   * * `~/.bashrc` starts `screen` or `tmux`, the shell process hangs forever.
+   * * `~/.bashrc` starts `ssh-agent`, and the operating system quickly becomes polluted with lots of unused SSH agents.
+   * * `~/.bashrc` calls `curl` to write the current weather, news, jokes, etc. CPU consumption grows, IDE works slower.
+   *
+   * **Notice:** In this mode [EelExecApi.EnvironmentVariablesException] MAY be thrown.
+   */
+  @EelDelicateApi
   fun loginInteractive(): PosixEnvironmentVariablesOptionsBuilder =
     mode(Mode.LOGIN_INTERACTIVE)
 
+  /**
+   * This mode executes a shell process supposed to load various profile scripts:
+   * `~/.profile`, `~/.bashrc`, `~/.zshrc`, `/etc/profile` and so on.
+   *
+   * This mode may load not all environment variables, depending on what's written in user's configs
+   * because default `~/.bashrc` files in some distros like Debian and Ubuntu contain strings like `[ -z "$PS1" ] && return`.
+   * Often people put their adjustments at the bottom of the profile file, and therefore their code is not executed in the non-interactive mode.
+   *
+   * **Notice:** In this mode [EelExecApi.EnvironmentVariablesException] MAY be thrown.
+   */
   fun loginNonInteractive(): PosixEnvironmentVariablesOptionsBuilder =
     mode(Mode.LOGIN_NON_INTERACTIVE)
 
+  /**
+   * The fastest way to get environment variables. It doesn't call shell scripts written by users.
+   * At least, the environment variable `PATH` exists, but it may differ from what the user has in their `~/.profile` written.
+   * No guarantee for other environment variables.
+   *
+   * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
+   */
   fun minimal(): PosixEnvironmentVariablesOptionsBuilder =
     mode(Mode.MINIMAL)
 
