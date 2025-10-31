@@ -9,14 +9,18 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcome
+import com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeSettings
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class PyV3EmptyProjectSettings(var generateWelcomeScript: Boolean = false) : PyV3ProjectTypeSpecificSettings {
+class PyV3EmptyProjectSettings(
+  var generateWelcomeScript: Boolean = PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject
+) : PyV3ProjectTypeSpecificSettings {
 
   override suspend fun generateProject(module: Module, baseDir: VirtualFile, sdk: Sdk): PyResult<Unit> {
+    PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject = generateWelcomeScript
     if (!generateWelcomeScript)
       return PyResult.success(Unit)
 
