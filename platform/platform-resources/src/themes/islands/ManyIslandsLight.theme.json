@@ -258,6 +258,19 @@
       "Borders.ContrastBorderColor": "#E8E9ED",
       "ToolWindow.Header.borderColor": "#E8E9ED",
       "Island.borderColor": "#F7F6F8"
+    },
+    
+    "Recap": {
+      "cardBackground": "#F7F8FA",
+      "cardBorderColor": "#F7F8FA",
+      "cardHeaderTitle": "#000000",
+      "cardHeaderSubtitle": "#6C707E",
+      "cardFooterForeground": "#6C707E",
+      "chroniclesBackground": "#EBECF0",
+      "chroniclesBorderColor": "#EBECF0",
+      "chroniclesBackgroundHovered": "#DFE1E5",
+      "chroniclesForeground": "#000000",
+      "chroniclesForegroundGreyed": "#868A91"
     }
   }
 }
