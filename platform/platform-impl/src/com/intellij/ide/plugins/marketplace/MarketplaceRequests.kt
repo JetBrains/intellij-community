@@ -43,6 +43,7 @@ import com.intellij.util.io.write
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.intellij.util.ui.IoErrorText
+import com.intellij.util.withQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.delay
@@ -58,7 +59,10 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InterruptedIOException
 import java.net.HttpURLConnection
+import java.net.URI
 import java.net.URLConnection
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -211,29 +215,29 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       try {
         if (ids.isEmpty()) return emptyList()
 
+        val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
         val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
             .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, false) }
         }
         else null
 
-        val params = buildMap {
-          put("build", ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber))
-          put("os", buildOsParameter())
-          put("arch", CpuArch.CURRENT.name)
+        val params = mutableListOf(
+          "build" to ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber),
+          "os" to buildOsParameter(),
+          "arch" to CpuArch.CURRENT.name
+        ).apply {
           if (machineId != null && updateCheck) {
-            put("mid", machineId)
+            add("mid" to machineId)
           }
-          ids.forEach {
-            put("pluginXmlId", it.idString)
-          }
+          addAll(ids.map { "pluginXmlId" to it.idString })
         }
 
-        val url = Urls.newFromEncoded(MarketplaceUrls.getSearchPluginsUpdatesUrl())
-          .addParameters(params)
-          .toExternalForm()
+        val query = params.joinToString(separator = "&") {
+          "${it.first}=${URLEncoder.encode(it.second, StandardCharsets.UTF_8)}"
+        }
 
-        return HttpRequests.request(url)
+        return HttpRequests.request(url.withQuery(query).toString())
           .accept(HttpRequests.JSON_CONTENT_TYPE)
           .setHeadersViaTuner()
           .productNameAsUserAgent()
