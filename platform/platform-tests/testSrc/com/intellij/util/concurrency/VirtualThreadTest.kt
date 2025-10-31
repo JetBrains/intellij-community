@@ -4,6 +4,7 @@ package com.intellij.util.concurrency
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
 import com.intellij.concurrency.virtualThreads.asyncAsVirtualThread
+import com.intellij.concurrency.virtualThreads.inVirtualThread
 import com.intellij.concurrency.virtualThreads.launchAsVirtualThread
 import com.intellij.concurrency.virtualThreads.virtualThread
 import com.intellij.diagnostic.dumpCoroutines
@@ -209,5 +210,15 @@ class VirtualThreadTest {
 
   fun interestingStackTrace(action: () -> Unit) {
     action()
+  }
+
+  @Test
+  fun `inVirtualThread runs computations in a virtual thread`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val x = inVirtualThread {
+      assertContains(Thread.currentThread().toString(), "DefaultDispatcher")
+      assertContains(Thread.currentThread().toString(), "VirtualThread")
+      42
+    }
+    assertEquals(42, x)
   }
 }

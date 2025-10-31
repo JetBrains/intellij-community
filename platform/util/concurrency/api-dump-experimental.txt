@@ -3,6 +3,7 @@
 *f:com.intellij.concurrency.virtualThreads.VirtualThreads
 - sf:asyncAsVirtualThread(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function0):kotlinx.coroutines.Deferred
 - bs:asyncAsVirtualThread$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function0,I,java.lang.Object):kotlinx.coroutines.Deferred
+- sf:inVirtualThread(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:launchAsVirtualThread(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function0):kotlinx.coroutines.Job
 - bs:launchAsVirtualThread$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function0,I,java.lang.Object):kotlinx.coroutines.Job
 - sf:virtualThread(Z,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function0):java.lang.Thread
