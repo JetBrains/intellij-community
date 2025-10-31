@@ -1758,6 +1758,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/smartStepIntoFunWithDefaultArgs.kt");
         }
 
+        @TestMetadata("smartStepIntoFunWithDestructuring.kt")
+        public void testSmartStepIntoFunWithDestructuring() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoFunWithDestructuring.kt");
+        }
+
         @TestMetadata("smartStepIntoFunWithInlineParameter.kt")
         public void testSmartStepIntoFunWithInlineParameter() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoFunWithInlineParameter.kt");

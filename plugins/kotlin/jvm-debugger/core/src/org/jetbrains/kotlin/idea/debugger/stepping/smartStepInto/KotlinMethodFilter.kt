@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.idea.debugger.core.isInlineLambdaMarkerVariableName
 import org.jetbrains.kotlin.idea.debugger.core.nameMatchesUpToDollar
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 
@@ -144,8 +145,12 @@ private fun Method.isIntrinsicEquals(): Boolean =
 
 fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
     val elementAt = positionManager.getSourcePosition(location)?.elementAt
+    // This filtering is a bit complicated, we already skip local properties and destructuring.
+    // Consider restricting a parent type instead (e.g., only function, class, property, ...).
+    // See IDEA-373171.
     val declaration = elementAt?.getParentOfTypesAndPredicate(false, KtDeclaration::class.java) {
-        it !is KtProperty || !it.isLocal
+        !(it is KtProperty && it.isLocal) &&
+                it !is KtDestructuringDeclaration
     } ?: return null
     if (declaration is KtProperty) {
         // Smart step into visitor provides accessor element as a declaration
