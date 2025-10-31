@@ -278,6 +278,7 @@
     "TextField.background": "InputBackground",
 
     "Component.borderColor": "ComponentBorder",
+    "Component.focusedBorderColor": "#212224",
 
     "ComboBox": {
       "background": "ComboboxBackground",
