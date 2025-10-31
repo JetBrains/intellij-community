@@ -293,7 +293,9 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
           int count = ac.getAccessibleChildrenCount();
           for (int i = 0; i < count; i++) {
             Accessible axComponent = a.getAccessibleContext().getAccessibleChild(i);
-            result.add(createAccessibleNode(axComponent));
+            if (axComponent != null) {
+              result.add(createAccessibleNode(axComponent));
+            }
           }
         }
       }
