@@ -82,7 +82,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       )
 
       val updatedTab = tab.copy(
-        shellCommand = options.shellCommand,
+        shellCommand = result.configuredOptions.initialShellCommand?.command ?: options.shellCommand,
         workingDirectory = result.configuredOptions.workingDirectory,
         sessionId = result.sessionId,
         portForwardingId = portForwardingId,
