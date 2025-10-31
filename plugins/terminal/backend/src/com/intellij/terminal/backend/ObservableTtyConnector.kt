@@ -1,6 +1,7 @@
 package com.intellij.terminal.backend
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
@@ -41,6 +42,7 @@ class ObservableTtyConnector(delegate: TtyConnector) : ProxyTtyConnector {
         action(listener)
       }
       catch (t: Throwable) {
+        if (Logger.shouldRethrow(t)) throw t
         thisLogger().error(t)
       }
     }
