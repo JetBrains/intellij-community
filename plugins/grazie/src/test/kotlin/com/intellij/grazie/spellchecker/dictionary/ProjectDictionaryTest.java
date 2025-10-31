@@ -69,6 +69,13 @@ public class ProjectDictionaryTest extends SpellcheckerInspectionTestCase {
     assertEquals(Alien, projectDictionary.lookup(eeee));
   }
 
+  public void testNoTyposInUpperCaseWords() {
+    var dictionary = createProjectDictionary(Set.of("pghost"));
+    assertEquals(Present, dictionary.lookup("PGHOST"));
+    assertEquals(Present, dictionary.lookup("Pghost"));
+    assertEquals(Alien, dictionary.lookup("pgHoSt"));
+  }
+
   public void testClear() {
     ProjectDictionary projectDictionary = createProjectDictionary(PROJECT_WORDS);
     projectDictionary.clear();
