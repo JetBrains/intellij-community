@@ -33,7 +33,7 @@ class DynamicPaidPluginsServiceTest {
   private val ultimatePluginId = PluginManagerCore.ULTIMATE_PLUGIN_ID.idString
 
   @Test
-  fun `test getPluginsToEnable returns only plugins that require ultimate`() {
+  fun `getPluginsToEnable returns only plugins that require ultimate`() {
     val simplePlugin = plugin {}
     val paidPlugin = plugin { depends(ultimatePluginId, optional = false) }
     val paidPlugin2 = plugin { dependencies { plugin(ultimatePluginId) } }
@@ -47,7 +47,7 @@ class DynamicPaidPluginsServiceTest {
   }
 
   @Test
-  fun `test getPluginsToEnable returns dependent paid plugin if all dependencies are installed and enabled`() {
+  fun `getPluginsToEnable returns dependent paid plugin if all dependencies are installed and enabled`() {
     val paidPlugin = plugin { depends(ultimatePluginId, optional = false) }
     val dependentPaidPlugin = plugin {
       dependencies {
@@ -64,7 +64,7 @@ class DynamicPaidPluginsServiceTest {
   }
 
   @Test
-  fun `test getPluginsToEnable does not return paid plugins that are explicitly disabled`() {
+  fun `getPluginsToEnable does not return paid plugins that are explicitly disabled`() {
     val disabledPaidPlugin = plugin { depends(ultimatePluginId, optional = false) }
 
     val pluginSet = generatePluginSet(disabledPaidPlugin)
@@ -75,7 +75,7 @@ class DynamicPaidPluginsServiceTest {
   }
 
   @Test
-  fun `test getPluginsToEnable does not return paid plugins with explicitly disabled dependencies`() {
+  fun `getPluginsToEnable does not return paid plugins with explicitly disabled dependencies`() {
     val disabledDependencyPlugin = plugin {}
     val paidPlugin = plugin {
       dependencies {
@@ -92,7 +92,7 @@ class DynamicPaidPluginsServiceTest {
   }
 
   @Test
-  fun `test getPluginsToEnable does not return paid plugins with required dependencies that are not installed`() {
+  fun `getPluginsToEnable does not return paid plugins with required dependencies that are not installed`() {
     val paidPluginWithMissingMainModulePluginDependency = plugin {
       dependencies {
         plugin(ultimatePluginId)
@@ -117,7 +117,7 @@ class DynamicPaidPluginsServiceTest {
   }
 
   @Test
-  fun `test getPluginsToEnable returns only compatible paid plugins`() {
+  fun `getPluginsToEnable returns only compatible paid plugins`() {
     val compatiblePaidPlugin = plugin { dependencies { plugin(ultimatePluginId) } }
     val incompatibleWithHostPlatformPaidPlugin = plugin {
       depends(ultimatePluginId)
@@ -137,7 +137,7 @@ class DynamicPaidPluginsServiceTest {
   }
 
   @Test
-  fun `test getPluginsToEnable does not return paid plugins that are already enabled`() {
+  fun `getPluginsToEnable does not return paid plugins that are already enabled`() {
     val paidPlugin = plugin { dependencies { plugin(ultimatePluginId) } }
 
     val pluginSet = generatePluginSet(paidPlugin, doNotDisable = setOf(paidPlugin))
