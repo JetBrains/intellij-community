@@ -13,6 +13,11 @@ import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  * A wrapper around [LightJavaCodeInsightFixtureTestCase] that is JUnit 5-compatible.
+ * 
+ * For JUnit 5 support, see the `intellij.platform.testFramework.junit5` module in `community/platform/testFramework/junit5`.
+ * 
+ * There is also a showcase of JUnit 5 in `community/platform/testFramework/junit5/test/showcase`.
+ * 
  * @see LightJavaCodeInsightFixtureTestCase
  * @see LightJavaCodeInsightFixtureTestCase4
  */
