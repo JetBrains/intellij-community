@@ -75,6 +75,7 @@ import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.*
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.provider.EelInitialization
@@ -82,6 +83,7 @@ import com.intellij.platform.eel.provider.EelUnavailableException
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.project.ProjectEntitiesStorage
 import com.intellij.platform.workspace.jps.JpsMetrics
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.serviceContainer.getComponentManagerImpl
 import com.intellij.ui.IdeUICustomization
@@ -688,12 +690,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             }
 
             if (Registry.`is`("ide.create.project.root.entity") && options.projectRootDir != null) {
-              val root = options.projectRootDir!!.toUri().toString().removeSuffix("/")
-              project.serviceAsync<ProjectRootPersistentStateComponent>().projectRootUrls += root
+              val root = options.projectRootDir!!.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+              project.serviceAsync<ProjectRootPersistentStateComponent>().projectRootUrls += root.url
 
               // We also register the project root here, so project view will have "files" node immediately.
               // Otherwise, it might appear too late causing issues like AMPER-4695
-              registerProjectRoot(project, options.projectRootDir!!)
+              registerProjectRoot(project, root)
             }
 
             if (!addToOpened(project)) {
