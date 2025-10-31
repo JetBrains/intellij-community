@@ -442,6 +442,6 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
    * @return true if VFS refresh is allowed to run in background write action
    */
   private fun isVfsRefreshInBackgroundWriteActionAllowed(): Boolean {
-    return useBackgroundWriteAction && Registry.`is`("vfs.refresh.use.background.write.action")
+    return useBackgroundWriteAction && Registry.`is`("vfs.refresh.use.background.write.action", true)
   }
 }
