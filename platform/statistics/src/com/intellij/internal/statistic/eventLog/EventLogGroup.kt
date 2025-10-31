@@ -66,7 +66,7 @@ open class EventLogGroup {
   // for binary compatibility
   @Deprecated("Please switch to constructor where group description is provided. " +
               "Current description can be found in metadata repository or in Data Office Web portal.",
-              ReplaceWith("EventLogGroup(id, version, recorder, \"TODO: provide group description\")"))
+              ReplaceWith("EventLogGroup(id, version, recorder, TODO(\"provide group description\"))"))
   @JvmOverloads
   constructor(
     @NonNls @EventIdName id: String,
@@ -104,7 +104,7 @@ open class EventLogGroup {
 
   @Deprecated("Please switch to method where event description is provided. " +
               "Current description can be found in metadata repository or in Data Office Web portal.",
-              ReplaceWith("registerEvent(eventId, \"TODO: provide event description\")"))
+              ReplaceWith("registerEvent(eventId, TODO(\"provide event description\"))"))
   fun registerEvent(@NonNls @EventIdName eventId: String): EventId {
     return EventId(this, eventId, null).also { addToRegisteredEvents(it) }
   }
@@ -139,7 +139,7 @@ open class EventLogGroup {
 
   @Deprecated("Please switch to method where event description is provided. " +
               "Current description can be found in metadata repository or in Data Office Web portal.",
-              ReplaceWith("registerEvent(eventId, eventField1, \"TODO: provide event description\")"))
+              ReplaceWith("registerEvent(eventId, eventField1, TODO(\"provide event description\"))"))
   fun <T1> registerEvent(
     @NonNls @EventIdName eventId: String,
     eventField1: EventField<T1>
@@ -148,7 +148,7 @@ open class EventLogGroup {
   }
 
   @Deprecated("This method was added for compatibility with Bazel.",
-              ReplaceWith("registerEvent(eventId, eventField1, \"TODO: provide event description\")"))
+              ReplaceWith("registerEvent(eventId, eventField1, TODO(\"provide event description\"))"))
   fun <T1> registerEvent(
     @NonNls @EventIdName eventId: String,
     eventField1: EventField<T1>,
@@ -175,7 +175,7 @@ open class EventLogGroup {
 
   @Deprecated("Please switch to method where event description is provided. " +
               "Current description can be found in metadata repository or in Data Office Web portal.",
-              ReplaceWith("registerEvent(eventId, eventField1, eventField2, \"TODO: provide event description\")"))
+              ReplaceWith("registerEvent(eventId, eventField1, eventField2, TODO(\"provide event description\"))"))
   fun <T1, T2> registerEvent(
     @NonNls @EventIdName eventId: String,
     eventField1: EventField<T1>,
@@ -201,7 +201,7 @@ open class EventLogGroup {
 
   @Deprecated("Please switch to method where event description is provided. " +
               "Current description can be found in metadata repository or in Data Office Web portal.",
-              ReplaceWith("registerEvent(eventId, eventField1, eventField2, eventField3, \"TODO: provide event description\")"))
+              ReplaceWith("registerEvent(eventId, eventField1, eventField2, eventField3, TODO(\"provide event description\"))"))
   fun <T1, T2, T3> registerEvent(
     @NonNls @EventIdName eventId: String,
     eventField1: EventField<T1>,
@@ -229,7 +229,7 @@ open class EventLogGroup {
 
   @Deprecated("Please switch to method where event description is provided. " +
               "Current description can be found in metadata repository or in Data Office Web portal.",
-              ReplaceWith("registerVarargEvent(eventId, \"TODO : provide event description\", fields)"))
+              ReplaceWith("registerVarargEvent(eventId, TODO(\"provide event description\"), fields)"))
   fun registerVarargEvent(@NonNls @EventIdName eventId: String, vararg fields: EventField<*>): VarargEventId {
     return VarargEventId(this, eventId, null, *fields).also { addToRegisteredEvents(it) }
   }
