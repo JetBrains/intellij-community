@@ -7,11 +7,13 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.CompletionItem;
 import com.intellij.modcompletion.CompletionItemProvider;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,8 +43,40 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
           sink.accept(new KeywordCompletionItem(JavaKeywords.SYNCHRONIZED, JavaTailTypes.SYNCHRONIZED_LPARENTH));
           sink.accept(new KeywordCompletionItem(JavaKeywords.THROW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
           sink.accept(new KeywordCompletionItem(JavaKeywords.NEW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+          if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, element)) {
+            sink.accept(new KeywordCompletionItem(JavaKeywords.ASSERT, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+          }
+          if (!(PsiTreeUtil.getParentOfType(element, PsiSwitchExpression.class, PsiLambdaExpression.class) 
+                  instanceof PsiSwitchExpression)) {
+            sink.accept(new KeywordCompletionItem(JavaKeywords.RETURN, getReturnTail(element)));
+          }
         }
       }
+    }
+  }
+
+  private static ModNavigatorTailType getReturnTail(PsiElement position) {
+    PsiElement scope = position;
+    while (true) {
+      if (scope instanceof PsiFile || scope instanceof PsiClassInitializer) {
+        return (ModNavigatorTailType)TailTypes.noneType();
+      }
+
+      if (scope instanceof PsiMethod method) {
+        if (method.isConstructor() || PsiTypes.voidType().equals(method.getReturnType())) {
+          return (ModNavigatorTailType)TailTypes.semicolonType();
+        }
+
+        return (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType();
+      }
+      if (scope instanceof PsiLambdaExpression lambda) {
+        final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
+        if (PsiTypes.voidType().equals(returnType)) {
+          return (ModNavigatorTailType)TailTypes.semicolonType();
+        }
+        return (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType();
+      }
+      scope = scope.getParent();
     }
   }
 
