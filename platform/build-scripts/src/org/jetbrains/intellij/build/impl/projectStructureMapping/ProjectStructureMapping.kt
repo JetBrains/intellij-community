@@ -100,13 +100,13 @@ internal fun buildJarContentReport(contentReport: ContentReport, zipFileWriter: 
   zipFileWriter.uncompressedData("non-bundled-plugins.yaml", buildPluginContentReport(contentReport.nonBundledPlugins, buildPaths))
 }
 
-private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, buildPaths: BuildPaths): ByteArray {
+private fun buildPluginContentReport(pluginToEntries: List<PluginBuildDescriptor>, buildPaths: BuildPaths): ByteArray {
   val out = ByteArrayOutputStream()
   val writer = createYamlGenerator(out)
 
   writer.writeStartArray()
   val written = HashSet<String>()
-  for ((plugin, entries) in pluginToEntries) {
+  for (plugin in pluginToEntries) {
     if (!written.add(createPluginKey(plugin))) {
       // duplicate, e.g. OS-specific plugin
       continue
@@ -115,7 +115,7 @@ private fun buildPluginContentReport(pluginToEntries: List<Pair<PluginBuildDescr
     val fileToPresentablePath = HashMap<Path, String>()
 
     val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
-    for (entry in entries) {
+    for (entry in plugin.distribution) {
       val presentablePath = fileToPresentablePath.computeIfAbsent(entry.path) {
         if (entry.path.startsWith(plugin.dir)) {
           plugin.dir.relativize(entry.path).toString().replace(File.separatorChar, '/')
@@ -240,9 +240,9 @@ private fun buildPlatformContentReport(
 
   writer.writeStartObject()
 
-  fun writeWithoutDuplicates(pairs: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>) {
+  fun writeWithoutDuplicates(pairs: List<PluginBuildDescriptor>) {
     val written = HashSet<String>()
-    for ((plugin, _) in pairs) {
+    for (plugin in pairs) {
       if (!written.add(createPluginKey(plugin))) {
         // duplicate, e.g. OS-specific plugin
         continue

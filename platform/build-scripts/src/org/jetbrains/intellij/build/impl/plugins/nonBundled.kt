@@ -25,8 +25,9 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.executeStep
+import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
-import org.jetbrains.intellij.build.impl.BuildContextImpl
+import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.DistributionBuilderState
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.NoDuplicateZipArchiveOutputStream
@@ -41,7 +42,6 @@ import org.jetbrains.intellij.build.impl.executableFileUnixMode
 import org.jetbrains.intellij.build.impl.generatePluginRepositoryMetaFile
 import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
 import org.jetbrains.intellij.build.impl.nonBundledPluginsStageDir
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
@@ -61,8 +61,9 @@ internal suspend fun buildNonBundledPlugins(
   buildPlatformLibJob: Job?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
+  descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
-): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
+): List<PluginBuildDescriptor> {
   return context.executeStep(spanBuilder("build non-bundled plugins").setAttribute("count", state.pluginsToPublish.size.toLong()), BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
     doBuildNonBundledPlugins(
       pluginsToPublish = pluginsToPublish,
@@ -71,6 +72,7 @@ internal suspend fun buildNonBundledPlugins(
       state = state,
       searchableOptionSet = searchableOptionSet,
       isUpdateFromSources = false,
+      descriptorCacheContainer = descriptorCacheContainer,
       context = context,
     )
   } ?: emptyList()
@@ -83,8 +85,9 @@ internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   isUpdateFromSources: Boolean,
+  descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
-): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
+): List<PluginBuildDescriptor> {
   if (pluginsToPublish.isEmpty()) {
     return emptyList()
   }
@@ -118,13 +121,14 @@ internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
     context = context,
     buildPlatformJob = buildPlatformLibJob,
     searchableOptionSet = searchableOptionSet,
+    descriptorCacheContainer = descriptorCacheContainer,
     pluginBuilt = { plugin, pluginDirOrFile ->
       val pluginVersion = if (plugin.mainModule == BUILT_IN_HELP_MODULE_NAME) {
         context.buildNumber
       }
       else {
         plugin.versionEvaluator.evaluate(
-          pluginXmlSupplier = { (context as BuildContextImpl).jarPackagerDependencyHelper.getPluginXmlContent(context.findRequiredModule(plugin.mainModule)) },
+          pluginXmlSupplier = { getUnprocessedPluginXmlContent(module = context.findRequiredModule(plugin.mainModule), context = context).decodeToString() },
           ideBuildVersion = context.pluginBuildNumber,
           context,
         ).pluginVersion
@@ -184,6 +188,7 @@ internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
       moduleOutputPatcher = moduleOutputPatcher,
       state = state,
       searchableOptionSetDescriptor = searchableOptionSet,
+      descriptorCacheContainer = descriptorCacheContainer,
       context = context,
     )
     pluginSpecs.add(spec)
@@ -255,7 +260,7 @@ private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, s
     writeNewFile(target) { outFileChannel ->
       NoDuplicateZipArchiveOutputStream(outFileChannel, context.options.compressZipFiles).use { out ->
         out.setUseZip64(Zip64Mode.Never)
-        out.dir(source, "${source.fileName}/", entryCustomizer = { entry, file, _ ->
+        out.dir(startDir = source, prefix = "${source.fileName}/", entryCustomizer = { entry, file, _ ->
           if (Files.isExecutable(file)) {
             entry.unixMode = executableFileUnixMode
           }
@@ -337,6 +342,7 @@ private suspend fun buildHelpPlugin(
   targetDir: Path,
   moduleOutputPatcher: ModuleOutputPatcher,
   state: DistributionBuilderState,
+  descriptorCacheContainer: DescriptorCacheContainer,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): PluginRepositorySpec {
@@ -344,7 +350,17 @@ private suspend fun buildHelpPlugin(
   val destFile = targetDir.resolve("$directory.zip")
   spanBuilder("build help plugin").setAttribute("dir", directory).use {
     val targetDir = pluginsToPublishDir.resolve(directory)
-    buildPlugins(moduleOutputPatcher, listOf(helpPlugin), os = null, targetDir, state, context, buildPlatformJob = null, searchableOptionSetDescriptor)
+    buildPlugins(
+      moduleOutputPatcher = moduleOutputPatcher,
+      plugins = listOf(helpPlugin),
+      os = null,
+      targetDir = targetDir,
+      state = state,
+      context = context,
+      buildPlatformJob = null,
+      descriptorCacheContainer = descriptorCacheContainer,
+      searchableOptionSet = searchableOptionSetDescriptor
+    )
     zipWithCompression(targetFile = destFile, dirs = mapOf(targetDir to ""))
     null
   }

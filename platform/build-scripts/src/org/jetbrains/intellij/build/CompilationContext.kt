@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
@@ -65,20 +65,20 @@ interface CompilationContext : ModuleOutputProvider {
 
   fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean = false): Path?
 
-  @ApiStatus.Internal
+  @Internal
   fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
 
   fun notifyArtifactBuilt(artifactPath: Path)
 
-  @ApiStatus.Internal
+  @Internal
   fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext
 
-  @ApiStatus.Internal
+  @Internal
   suspend fun prepareForBuild()
 
   suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 
-  @ApiStatus.Internal
+  @Internal
   suspend fun withCompilationLock(block: suspend () -> Unit)
 }
 

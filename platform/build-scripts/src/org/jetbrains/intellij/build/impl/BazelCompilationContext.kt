@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.URLUtil
@@ -74,7 +76,7 @@ class BazelCompilationContext(
   override fun findModule(name: String): JpsModule? = delegate.findModule(name)
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    val moduleOutputRoots = modulesToOutputRoots[module.name] ?: error("No output roots for module '${module.name}'")
+    val moduleOutputRoots = modulesToOutputRoots.get(module.name) ?: error("No output roots for module '${module.name}'")
     return if (forTests) moduleOutputRoots.testJars else moduleOutputRoots.productionJars
   }
 

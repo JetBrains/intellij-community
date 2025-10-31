@@ -69,6 +69,7 @@ internal class LocalDiskJarCacheManager(
       source.updateAssetDigest(hash)
     }
     hash.putInt(items.size)
+    producer.updateDigest(hash)
     val hashValue128 = hash.get()
 
     fileLocks.getLockByHash(hashValue128.asLong).withLock {

@@ -5,9 +5,11 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
+import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.impl.ModuleItem
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.jps.model.java.JavaResourceRootType
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsDependencyElement
@@ -15,7 +17,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.io.StringReader
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 internal val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "true").toBoolean()
@@ -31,9 +33,10 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
   }
 
   fun isPluginModulePackedIntoSeparateJar(module: JpsModule, layout: PluginLayout?, frontendModuleFilter: FrontendModuleFilter): Boolean {
-    if (layout != null && !frontendModuleFilter.isModuleCompatibleWithFrontend(layout.mainModule) && frontendModuleFilter.isModuleCompatibleWithFrontend(module.name)) { 
+    if (layout != null && !frontendModuleFilter.isModuleCompatibleWithFrontend(layout.mainModule) && frontendModuleFilter.isModuleCompatibleWithFrontend(module.name)) {
       return true
     }
+
     val modulesWithExcludedModuleLibraries = layout?.modulesWithExcludedModuleLibraries ?: emptySet()
     return module.name !in modulesWithExcludedModuleLibraries &&
            getLibraryDependencies(module = module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
@@ -71,33 +74,11 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     return moduleName.endsWith("._test")
   }
 
-  fun getPluginXmlContent(pluginModule: JpsModule): String {
-    val path = "META-INF/plugin.xml"
-    var pluginXmlContent = context.readFileContentFromModuleOutput(module = pluginModule, relativePath = path, forTests = false)
-    if (useTestSourceEnabled && pluginXmlContent == null) {
-      pluginXmlContent = context.readFileContentFromModuleOutput(module = pluginModule, relativePath = path, forTests = true)
-    }
-    return pluginXmlContent?.let { String(it, Charsets.UTF_8) }
-           ?: throw IllegalStateException("$path not found in ${pluginModule.name} module output")
-  }
-
   suspend fun getPluginIdByModule(pluginModule: JpsModule): String {
     // it is ok to read the plugin descriptor with unresolved x-include as the ID should be specified at the root
-    val root = readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
+    val root = readXmlAsModel(getUnprocessedPluginXmlContent(module = pluginModule, context = context))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")
     return element.content!!
-  }
-
-  /**
-   * Returns pairs of the module names and the corresponding [com.intellij.ide.plugins.ModuleLoadingRule].
-   */
-  fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<Pair<String, String?>> {
-    return readPluginContentFromDescriptor(getResolvedPluginDescriptor(pluginModule, moduleOutputPatcher))
-  }
-
-  // plugin patcher should be executed before
-  private fun getResolvedPluginDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): XmlElement {
-    return moduleOutputPatcher.getPatchedPluginXmlIfExists(pluginModule.name)?.let { readXmlAsModel(it) } ?: readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
   }
 
   // The x-include is not resolved. If the plugin.xml includes any files, the content from these included files will not be considered.
@@ -111,24 +92,10 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     }
   }
 
-  fun isOptionalLoadingRule(loadingRule: String?): Boolean = loadingRule != "required" && loadingRule != "embedded"
-
-  private fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<Pair<String, String?>> {
-    return sequence {
-      for (content in pluginDescriptor.children("content")) {
-        for (module in content.children("module")) {
-          val moduleName = module.attributes.get("name")?.takeIf { !it.contains('/') } ?: continue
-          val loadingRuleString = module.attributes.get("loading")
-          yield(moduleName to loadingRuleString)
-        }
-      }
-    }
-  }
-
   private fun getModuleDependencies(module: JpsModule): Sequence<JpsModuleDependency> {
     return sequence {
       for (element in module.dependenciesList.dependencies) {
-        if (element is JpsModuleDependency && isProductionRuntime(element, withTests = false)) {
+        if (element is JpsModuleDependency && isProductionRuntime(element = element, withTests = false)) {
           yield(element)
         }
       }
@@ -185,3 +152,17 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     return scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
   }
 }
+
+internal fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<Pair<String, String?>> {
+  return sequence {
+    for (content in pluginDescriptor.children("content")) {
+      for (module in content.children("module")) {
+        val moduleName = module.attributes.get("name")?.takeIf { !it.contains('/') } ?: continue
+        val loadingRuleString = module.attributes.get("loading")
+        yield(moduleName to loadingRuleString)
+      }
+    }
+  }
+}
+
+internal fun isOptionalLoadingRule(loadingRule: String?): Boolean = loadingRule != "required" && loadingRule != "embedded"

@@ -260,7 +260,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     if (context.generateRuntimeModuleRepository) {
       launch {
         val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
-                                     pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.second }
+                                     pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.distribution }
         spanBuilder("generate runtime repository").use(Dispatchers.IO) {
           generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
         }
@@ -285,20 +285,33 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
       // must be before generatePluginClassPath, because we modify plugin descriptors (e.g., rename classes)
       spanBuilder("scramble platform").use {
-        request.scrambleTool?.scramble(platform = platformLayout, platformFileEntries = platformFileEntries, context = context)
+        request.scrambleTool?.scramble(platformLayout = platformLayout, platformFileEntries = platformFileEntries, context = context)
       }
 
       launch {
         val (pluginEntries, additionalEntries) = pluginDistributionEntries
+        val cachedDescriptorContainer = platformLayout.descriptorCacheContainer
         spanBuilder("generate plugin classpath").use(Dispatchers.IO) {
-          val mainData = generatePluginClassPath(pluginEntries, moduleOutputPatcher)
+          val mainData = generatePluginClassPath(
+            pluginEntries = pluginEntries,
+            descriptorFileProvider = cachedDescriptorContainer,
+            platformLayout = platformLayout,
+            context = context,
+          )
           val additionalData = additionalEntries?.let { generatePluginClassPathFromPrebuiltPluginFiles(it) }
 
           val byteOut = ByteArrayOutputStream()
           val out = DataOutputStream(byteOut)
           val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
           platformDistributionEntriesDeferred.join()
-          writePluginClassPathHeader(out = out, isJarOnly = !request.isUnpackedDist, pluginCount = pluginCount, platformLayout = platformLayout, context = context)
+          writePluginClassPathHeader(
+            out = out,
+            isJarOnly = !request.isUnpackedDist,
+            pluginCount = pluginCount,
+            platformLayout = platformLayout,
+            descriptorCacheContainer = cachedDescriptorContainer,
+            context = context
+          )
           out.write(mainData)
           additionalData?.let { out.write(it) }
           out.close()
@@ -416,7 +429,7 @@ private suspend fun collectModulesToCompileForDistribution(context: BuildContext
 
 private suspend fun computeIdeFingerprint(
   platformDistributionEntriesDeferred: Deferred<List<DistributionFileEntry>>,
-  pluginDistributionEntriesDeferred: Deferred<Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?>>,
+  pluginDistributionEntriesDeferred: Deferred<Pair<List<PluginBuildDescriptor>, List<Pair<Path, List<Path>>>?>>,
   runDir: Path,
   homePath: Path,
 ) {
@@ -438,11 +451,11 @@ private suspend fun computeIdeFingerprint(
 
   val (pluginDistributionEntries, _) = pluginDistributionEntriesDeferred.await()
   hasher.putInt(pluginDistributionEntries.size)
-  for ((plugin, entries) in pluginDistributionEntries) {
-    hasher.putInt(entries.size)
+  for (plugin in pluginDistributionEntries) {
+    hasher.putInt(plugin.distribution.size)
 
     debug.append('\n').append(plugin.layout.mainModule).append('\n')
-    for (entry in entries) {
+    for (entry in plugin.distribution) {
       hasher.putLong(entry.hash)
       debug.append("  ").append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX)).append(" ").append(entry.path).append('\n')
     }
@@ -639,7 +652,7 @@ private suspend fun layoutPlatform(
   // cannot be in parallel
   val entries = layoutPlatformDistribution(
     moduleOutputPatcher = moduleOutputPatcher,
-    targetDirectory = runDir,
+    targetDir = runDir,
     platform = platformLayout,
     searchableOptionSet = searchableOptionSet,
     copyFiles = true,

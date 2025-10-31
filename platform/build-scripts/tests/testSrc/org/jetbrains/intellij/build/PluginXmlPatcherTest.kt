@@ -226,8 +226,9 @@ class PluginXmlPatcherTest {
     isEap: Boolean = false,
     retainProductDescriptorForBundledPlugin: Boolean = false,
   ) {
-    val result = doPatchPluginXml(
-      rootElement = JDOMUtil.load(before),
+    val result = JDOMUtil.load(before)
+    doPatchPluginXml(
+      rootElement = result,
       pluginModuleName = "x-plugin-module-name",
       pluginVersion = "x-plugin-version",
       releaseDate = "X-RELEASE-DATE-X",

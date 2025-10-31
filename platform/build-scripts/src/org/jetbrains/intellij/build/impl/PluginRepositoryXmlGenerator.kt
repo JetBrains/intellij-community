@@ -11,7 +11,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeMap
 import kotlin.io.path.createDirectories
 
 /**
@@ -45,7 +45,7 @@ private fun writePluginsXml(target: Path, categories: Map<String, List<Plugin>>)
             <version>${p.version}</version>
             <idea-version since-build="${p.sinceBuild}" until-build="${p.untilBuild}"/>
             <vendor>${XmlStringUtil.escapeString(p.vendor)}</vendor>
-            <download-url>${XmlStringUtil.escapeString(p.relativeFileUrl)}</download-url>
+            <download-url>${XmlStringUtil.escapeString(getRelativeFileUrl(p))}</download-url>
             ${p.description?.let { "<description>${XmlStringUtil.wrapInCDATA(p.description)}</description>" } ?: ""}
             ${p.depends}
           </idea-plugin>
@@ -86,8 +86,8 @@ private fun readPlugin(pluginZip: Path, pluginXml: ByteArray, buildNumber: Strin
       depends = depends.toString()
     )
   }
-  catch (t: Throwable) {
-    throw IllegalStateException("Unable to read: ${pluginXml.decodeToString()}", t)
+  catch (e: Throwable) {
+    throw IllegalStateException("Unable to read: ${pluginXml.decodeToString()}", e)
   }
 
   // todo this check never worked correctly because `new XmlParser().parse(pluginXml).description.text()` returns empty string if no value
@@ -122,15 +122,16 @@ private data class Plugin(
 )
 
 /** url-encodes relative path */
-private val Plugin.relativeFileUrl: String? get() {
-  if (relativeFilePath == null) return null
-  return URI(/* scheme = */ null, /* host = */ null, /* path = */ relativeFilePath, /* fragment = */ null).toString()
+private fun getRelativeFileUrl(plugin: Plugin): String? {
+  if (plugin.relativeFilePath == null) {
+    return null
+  }
+  return URI(/* scheme = */ null, /* host = */ null, /* path = */ plugin.relativeFilePath, /* fragment = */ null).toString()
 }
 
 @VisibleForTesting
-object PluginRepositoryXmlGeneratorTestUtils {
-  fun generatePluginRepositoryMetaFile(pluginSpecs: List<PluginRepositorySpec>, targetDir: Path, buildNumber: String): Path =
-    org.jetbrains.intellij.build.impl.generatePluginRepositoryMetaFile(pluginSpecs, targetDir, buildNumber)
+fun generatePluginRepositoryMetaFileForTests(pluginSpecs: List<PluginRepositorySpec>, targetDir: Path, buildNumber: String): Path {
+  return generatePluginRepositoryMetaFile(pluginSpecs, targetDir, buildNumber)
 }
 
 

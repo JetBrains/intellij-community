@@ -16,10 +16,10 @@ import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepos
 import com.intellij.util.containers.FList
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.hasModuleOutputPath
 import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_COMPACT_PATH
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
-import org.jetbrains.intellij.build.impl.hasModuleOutputPath
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -61,7 +61,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   }
   
   companion object {
-    suspend fun checkProductModules(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
+    fun checkProductModules(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
       createCheckers(context).forEach {
         it().use { checker ->
           checker.checkProductModules(productModulesModule, softly)
@@ -72,7 +72,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     /**
      * Verifies that the bundled plugins specified in product-modules.xml file in [productModulesModule] are present in the distribution.
      */
-    suspend fun checkBundledPluginsArePresent(productModulesModule: String, context: BuildContext, isEmbeddedVariant: Boolean, softly: SoftAssertions) {
+    fun checkBundledPluginsArePresent(productModulesModule: String, context: BuildContext, isEmbeddedVariant: Boolean, softly: SoftAssertions) {
       createCheckers(context).forEach {
         it().use { checker ->
           checker.checkBundledPluginsArePresent(productModulesModule, softly, isEmbeddedVariant)
@@ -85,7 +85,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
      * separate product: JARs referenced from its modules must not include resources from modules not included to the product, or they are
      * split by packages in a way that the class-loader may load relevant classes only.
      */
-    suspend fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
+    fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, context: BuildContext, softly: SoftAssertions) {
       createCheckers(context).forEach {
         it().use { checker ->
           checker.checkIntegrityOfEmbeddedFrontend(productModulesModule, softly)
@@ -110,7 +110,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   }
   private val moduleRepositoryData by lazy { RuntimeModuleRepositorySerialization.loadFromCompactFile(descriptorsFile) }
 
-  private suspend fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
+  private fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
     try {
       val productModules = loadProductModules(productModulesModule)
       val serviceModuleMapping = ServiceModuleMapping.buildMapping(productModules, includeDebugInfoInErrorMessage = true)
@@ -164,7 +164,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private suspend fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, softly: SoftAssertions) {
+  private fun checkIntegrityOfEmbeddedFrontend(productModulesModule: String, softly: SoftAssertions) {
     val productModules = loadProductModules(productModulesModule)
 
     val allProductModules = LinkedHashMap<RuntimeModuleId, FList<String>>()
@@ -198,7 +198,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
         continue
       }
       val module = context.findModule(rawModuleId)
-      if (module != null && context.hasModuleOutputPath(module, "${module.name}.xml")) {
+      if (module != null && hasModuleOutputPath(module = module, relativePath = "${module.name}.xml", context = context)) {
         // such a descriptor indicates that it's a module in plugin model V2, and its ClassLoader ignores classes from irrelevant packages,
         // so including its JAR to classpath should not cause problems
         continue
@@ -236,7 +236,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private suspend fun checkBundledPluginsArePresent(productModulesModule: String, softly: SoftAssertions, isEmbeddedVariant: Boolean) {
+  private fun checkBundledPluginsArePresent(productModulesModule: String, softly: SoftAssertions, isEmbeddedVariant: Boolean) {
     val rawProductModules = loadRawProductModules(productModulesModule)
     val productName = context.applicationInfo.productNameWithEdition
     val currentDistributionName = if (isEmbeddedVariant) productName else "'$productName Frontend'"
@@ -283,7 +283,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
   }
 
-  private suspend fun loadProductModules(productModulesModule: String): ProductModules {
+  private fun loadProductModules(productModulesModule: String): ProductModules {
     val relativePath = "META-INF/$productModulesModule/product-modules.xml"
     val debugName = "($relativePath file in $productModulesModule)"
     val content = context.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)
@@ -296,7 +296,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     }
   }
   
-  private suspend fun loadRawProductModules(productModulesModule: String): RawProductModules {
+  private fun loadRawProductModules(productModulesModule: String): RawProductModules {
     val relativePath = "META-INF/$productModulesModule/product-modules.xml"
     val debugName = "($relativePath file in $productModulesModule)"
     val content = context.readFileContentFromModuleOutput(context.findRequiredModule(productModulesModule), relativePath)

@@ -26,9 +26,6 @@ class DistributionBuilderState internal constructor(
       "Unresolved release-date: $releaseDate"
     }
   }
-
-  val platformModules: Sequence<String>
-    get() = platformLayout.includedModules.asSequence().map { it.moduleName }.distinct() + getToolModules().asSequence()
 }
 
 internal fun filterPluginsToPublish(plugins: MutableSet<PluginLayout>, context: BuildContext) {

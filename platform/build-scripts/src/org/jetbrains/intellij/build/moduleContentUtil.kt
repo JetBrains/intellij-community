@@ -17,13 +17,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
-suspend fun getUnprocessedPluginXmlContent(module: JpsModule, context: CompilationContext): ByteArray {
+fun getUnprocessedPluginXmlContent(module: JpsModule, context: CompilationContext): ByteArray {
   return requireNotNull(findUnprocessedDescriptorContent(module = module, path = "META-INF/plugin.xml", context = context)) {
     "META-INF/plugin.xml not found in ${module.name} module output"
   }
 }
 
-suspend fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: CompilationContext): ByteArray? {
+fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: CompilationContext): ByteArray? {
   var result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
   if (useTestSourceEnabled && result == null) {
     result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
@@ -68,7 +68,7 @@ internal fun findProductModulesFile(clientMainModuleName: String, context: Compi
   return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
 }
 
-internal suspend fun findFileInModuleDependencies(
+internal fun findFileInModuleDependencies(
   module: JpsModule,
   relativePath: String,
   context: CompilationContext,
@@ -88,7 +88,7 @@ internal suspend fun findFileInModuleDependencies(
   )
 }
 
-private suspend fun findFileInModuleDependenciesRecursive(
+private fun findFileInModuleDependenciesRecursive(
   module: JpsModule,
   relativePath: String,
   context: CompilationContext,
@@ -127,7 +127,7 @@ private suspend fun findFileInModuleDependenciesRecursive(
 }
 
 @Internal
-suspend fun hasModuleOutputPath(module: JpsModule, relativePath: String, context: CompilationContext): Boolean {
+fun hasModuleOutputPath(module: JpsModule, relativePath: String, context: CompilationContext): Boolean {
   return context.getModuleOutputRoots(module).any { output ->
     val attributes = try {
       Files.readAttributes(output, BasicFileAttributes::class.java)

@@ -8,18 +8,18 @@ import java.nio.file.Path
 
 internal data class ContentReport(
   @JvmField val platform: List<DistributionFileEntry>,
-  @JvmField val bundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
-  @JvmField val nonBundledPlugins: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>,
+  @JvmField val bundledPlugins: List<PluginBuildDescriptor>,
+  @JvmField val nonBundledPlugins: List<PluginBuildDescriptor>,
 ) {
   fun all(): Sequence<DistributionFileEntry> = sequence {
     yieldAll(platform)
-    yieldAll(bundledPlugins.flatMap { it.second })
-    yieldAll(nonBundledPlugins.flatMap { it.second })
+    yieldAll(bundledPlugins.flatMap { it.distribution })
+    yieldAll(nonBundledPlugins.flatMap { it.distribution })
   }
 
   fun bundled(): Sequence<DistributionFileEntry> = sequence {
     yieldAll(platform)
-    yieldAll(bundledPlugins.flatMap { it.second })
+    yieldAll(bundledPlugins.flatMap { it.distribution })
   }
 }
 

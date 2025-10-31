@@ -19,7 +19,7 @@ interface ScrambleTool {
   /**
    * Scramble [PluginLayout.mainJarName] in "[BuildPaths.distAllDir]/lib" directory
    */
-  suspend fun scramble(platform: PlatformLayout, platformFileEntries: List<DistributionFileEntry>, context: BuildContext)
+  suspend fun scramble(platformLayout: PlatformLayout, platformFileEntries: List<DistributionFileEntry>, context: BuildContext)
 
   suspend fun scramblePlugin(
     pluginLayout: PluginLayout,

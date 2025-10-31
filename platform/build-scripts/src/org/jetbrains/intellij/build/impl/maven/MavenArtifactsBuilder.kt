@@ -90,8 +90,9 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
 
     internal fun scopedDependencies(module: JpsModule): Map<JpsDependencyElement, DependencyScope> {
       val result = LinkedHashMap<JpsDependencyElement, DependencyScope>()
+      val javaExtensionService = JpsJavaExtensionService.getInstance()
       for (dependency in module.dependenciesList.dependencies) {
-        val extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependency) ?: continue
+        val extension = javaExtensionService.getDependencyExtension(dependency) ?: continue
         result[dependency] = when (extension.scope) {
           JpsJavaDependencyScope.COMPILE ->
             //if a dependency isn't exported, transitive dependencies will include it in runtime classpath only

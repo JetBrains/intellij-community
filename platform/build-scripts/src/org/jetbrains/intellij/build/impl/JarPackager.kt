@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.dynatrace.hash4j.hashing.HashFunnel
 import com.dynatrace.hash4j.hashing.HashStream64
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.util.PathUtilRt
@@ -151,7 +152,7 @@ class JarPackager private constructor(
   companion object {
     suspend fun pack(includedModules: Collection<ModuleItem>, outputDir: Path, context: BuildContext) {
       val packager = JarPackager(outDir = outputDir, context = context, platformLayout = null, isRootDir = false, moduleOutputPatcher = ModuleOutputPatcher())
-      packager.computeModuleSources(includedModules = includedModules, layout = null, searchableOptionSet = null)
+      packager.computeModuleSources(includedModules = includedModules, layout = null, searchableOptionSet = null, cachedDescriptorWriterProvider = null)
       buildJars(
         assets = packager.assets.values,
         layout = null,
@@ -174,10 +175,16 @@ class JarPackager private constructor(
       moduleOutputPatcher: ModuleOutputPatcher,
       dryRun: Boolean,
       searchableOptionSet: SearchableOptionSetDescriptor? = null,
+      descriptorCache: ScopedCachedDescriptorContainer? = null,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
       val packager = JarPackager(outDir = outputDir, context = context, platformLayout = platformLayout, isRootDir = isRootDir, moduleOutputPatcher = moduleOutputPatcher)
-      packager.computeModuleSources(includedModules = includedModules, layout = layout, searchableOptionSet = searchableOptionSet)
+      packager.computeModuleSources(
+        includedModules = includedModules,
+        layout = layout,
+        searchableOptionSet = searchableOptionSet,
+        cachedDescriptorWriterProvider = descriptorCache
+      )
       packager.computeModuleCustomLibrarySources(layout)
 
       val frontendModuleFilter = context.getFrontendModuleFilter()
@@ -250,7 +257,12 @@ class JarPackager private constructor(
     }
   }
 
-  private suspend fun computeModuleSources(includedModules: Collection<ModuleItem>, layout: BaseLayout?, searchableOptionSet: SearchableOptionSetDescriptor?) {
+  private suspend fun computeModuleSources(
+    includedModules: Collection<ModuleItem>,
+    layout: BaseLayout?,
+    searchableOptionSet: SearchableOptionSetDescriptor?,
+    cachedDescriptorWriterProvider: ScopedCachedDescriptorContainer?,
+  ) {
     val addedModules = HashSet<String>()
 
     val modulesWithCustomPath = HashSet<String>()
@@ -267,11 +279,12 @@ class JarPackager private constructor(
       computeModuleSourcesByContent(
         helper = helper,
         context = context,
-        layout = layout,
+        pluginLayout = layout,
         addedModules = addedModules,
         jarPackager = this,
         searchableOptionSet = searchableOptionSet,
         modulesWithCustomPath = modulesWithCustomPath,
+        pluginCachedDescriptorContainer = cachedDescriptorWriterProvider!!,
       )
     }
 
@@ -1047,6 +1060,7 @@ private suspend fun buildAsset(
           override fun updateDigest(digest: HashStream64) {
             if (layout is PluginLayout) {
               digest.putString(layout.mainModule)
+              digest.putUnorderedIterable(layout.pathsToScramble, HashFunnel.forString(), Hashing.xxh3_64())
             }
             else {
               digest.putInt(0)
@@ -1055,7 +1069,7 @@ private suspend fun buildAsset(
 
           override suspend fun produce(targetFile: Path) {
             val addDirEntries = includedModules.any { helper.isTestPluginModule(moduleName = it.key.moduleName, module = null) }
-            buildJar(targetFile, sources, nativeFileHandler, addDirEntries)
+            buildJar(targetFile = targetFile, sources = sources, nativeFileHandler = nativeFileHandler, addDirEntries = addDirEntries)
           }
 
           override fun consumeInfo(source: Source, size: Int, hash: Long) {
@@ -1109,7 +1123,6 @@ private class NativeFileHandlerImpl(private val context: BuildContext) : NativeF
     return !isNative(name) || NativeFilesMatcher.isCompatibleWithTargetPlatform(name, context.options.targetOs, context.options.targetArch)
   }
 
-  @Suppress("SpellCheckingInspection")
   override suspend fun sign(name: String, dataSupplier: () -> ByteBuffer): Path? {
     if (!context.isMacCodeSignEnabled || context.proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
       return null

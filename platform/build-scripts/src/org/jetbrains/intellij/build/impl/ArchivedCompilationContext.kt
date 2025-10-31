@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
@@ -20,7 +20,7 @@ import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.writeLines
 
-@ApiStatus.Internal
+@Internal
 class ArchivedCompilationContext(
   private val delegate: CompilationContext,
   private val storage: ArchivedCompilationOutputStorage = ArchivedCompilationOutputStorage(

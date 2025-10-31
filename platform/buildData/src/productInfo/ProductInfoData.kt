@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -43,7 +43,7 @@ class ProductInfoData private constructor(
   val flavors: List<ProductFlavorData> = emptyList(),
   
   // not used by the launcher; must be at the end
-  @ApiStatus.Internal
+  @Internal
   val layout: List<ProductInfoLayoutItem> = emptyList(),
 ) {
   companion object {
@@ -52,7 +52,7 @@ class ProductInfoData private constructor(
      * Some properties that are nullable in the primary constructor are deliberately marked as not-null in this function to state that they
      * are required in the current version, and internal clients may rely on their presence.
      */
-    @ApiStatus.Internal
+    @Internal
     @JvmStatic
     fun create(
       name: String,
@@ -97,7 +97,7 @@ class ProductInfoData private constructor(
 }
 
 @Serializable
-class ProductFlavorData @ApiStatus.Internal constructor(@JvmField val id: String)
+class ProductFlavorData @Internal constructor(@JvmField val id: String)
 
 /**
  * Describes 'launch' section in [product-info.json][ProductInfoData] file.
@@ -121,7 +121,7 @@ class ProductInfoLaunchData private constructor(
      * Some properties that are nullable in the primary constructor are deliberately marked as not-null in this function to state that they
      * are required in the current version, and internal clients may rely on their presence.
      */
-    @ApiStatus.Internal
+    @Internal
     @JvmStatic
     fun create(
       os: String,
@@ -152,7 +152,7 @@ class ProductInfoLaunchData private constructor(
 }
 
 @Serializable
-class CustomCommandLaunchData @ApiStatus.Internal constructor(
+class CustomCommandLaunchData @Internal constructor(
   val commands: List<String>,
   val vmOptionsFilePath: String? = null,
   val bootClassPathJarNames: List<String> = emptyList(),
@@ -163,7 +163,7 @@ class CustomCommandLaunchData @ApiStatus.Internal constructor(
 )
 
 @Serializable
-class CustomProperty @ApiStatus.Internal constructor(
+class CustomProperty @Internal constructor(
   val key: String,
   val value: String,
 )

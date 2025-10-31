@@ -100,7 +100,7 @@ interface BuildContext : CompilationContext {
    * Returns main modules' names of plugins bundled with the product.
    * In IDEs, which use path-based loader, this list is specified manually in [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.bundledPluginModules] property.
    */
-  suspend fun getBundledPluginModules(): List<String>
+  fun getBundledPluginModules(): List<String>
 
   /**
    * See [BuildOptions.PROVIDED_MODULES_LIST_STEP]
@@ -153,7 +153,7 @@ interface BuildContext : CompilationContext {
 
   fun getFrontendModuleFilter(): FrontendModuleFilter
   
-  suspend fun getContentModuleFilter(): ContentModuleFilter
+  fun getContentModuleFilter(): ContentModuleFilter
 
   val isEmbeddedFrontendEnabled: Boolean
 
@@ -174,8 +174,6 @@ interface BuildContext : CompilationContext {
   /**
    * Creates an instance of [IntellijProductRunner] which can be used to run the IDE being built with some command.
    * @param additionalPluginModules main modules of non-bundled plugins, which should be loaded inside the IDE process
-   * @param forceUseDevBuild if `true`, the 'dev build' approach will be used to run the IDE even if it uses the module-based loader
-   * which supports running the IDE without running the build scripts.
    */
   suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
 

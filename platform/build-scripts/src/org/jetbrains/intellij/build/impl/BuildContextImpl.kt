@@ -18,7 +18,6 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.ApplicationInfoPropertiesImpl
@@ -245,10 +244,11 @@ class BuildContextImpl internal constructor(
     distFiles.add(file)
   }
 
-  override suspend fun getBundledPluginModules(): List<String> =
-    bundledPluginModulesForModularLoader.await() ?: productProperties.productLayout.bundledPluginModules
+  override fun getBundledPluginModules(): List<String> {
+    return bundledPluginModulesForModularLoader ?: productProperties.productLayout.bundledPluginModules
+  }
 
-  private val bundledPluginModulesForModularLoader = asyncLazy("bundled plugin modules for modular loader") {
+  private val bundledPluginModulesForModularLoader by lazy {
     productProperties.rootModuleForModularLoader?.let { rootModule ->
       loadRawProductModules(rootModule, productProperties.productMode).bundledPluginMainModules.map {
         it.stringId
@@ -277,7 +277,7 @@ class BuildContextImpl internal constructor(
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
       val productModules = loadRawProductModules(rootModule, ProductMode.FRONTEND)
-      FrontendModuleFilterImpl.create(project, productModules, jarPackagerDependencyHelper)
+      FrontendModuleFilterImpl.createFrontendModuleFilter(project = project, productModules = productModules, context = this@BuildContextImpl)
     }
     else {
       EmptyFrontendModuleFilter
@@ -286,23 +286,21 @@ class BuildContextImpl internal constructor(
 
   override fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter
 
-  private val contentModuleFilter = computeContentModuleFilter()
+  private val _contentModuleFilter by lazy { computeContentModuleFilter() }
 
-  private fun computeContentModuleFilter(): Deferred<ContentModuleFilter> {
+  private fun computeContentModuleFilter(): ContentModuleFilter {
     if (productProperties.productMode == ProductMode.MONOLITH) {
       if (productProperties.productLayout.skipUnresolvedContentModules) {
-        return CompletableDeferred(SkipUnresolvedOptionalContentModuleFilter(context = this))
+        return SkipUnresolvedOptionalContentModuleFilter(context = this)
       }
-      return CompletableDeferred(IncludeAllContentModuleFilter)
+      return IncludeAllContentModuleFilter
     }
 
-    return asyncLazy("Content Modules Filter") {
-      val bundledPluginModules = getBundledPluginModules()
-      ContentModuleByProductModeFilter(project = project, bundledPluginModules = bundledPluginModules, productMode = productProperties.productMode)
-    }
+    val bundledPluginModules = getBundledPluginModules()
+    return ContentModuleByProductModeFilter(project = project, bundledPluginModules = bundledPluginModules, productMode = productProperties.productMode)
   }
 
-  override suspend fun getContentModuleFilter(): ContentModuleFilter = contentModuleFilter.await()
+  override fun getContentModuleFilter(): ContentModuleFilter = _contentModuleFilter
 
   override val isEmbeddedFrontendEnabled: Boolean
     get() = productProperties.embeddedFrontendRootModule != null && options.enableEmbeddedFrontend

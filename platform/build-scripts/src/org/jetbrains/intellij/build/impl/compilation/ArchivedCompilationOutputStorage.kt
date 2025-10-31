@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.impl.compilation
 
 import kotlinx.serialization.json.Json
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
@@ -13,12 +15,12 @@ import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.invariantSeparatorsPathString
 
-@ApiStatus.Internal
+@Internal
 class ArchivedCompilationOutputStorage(
   private val paths: BuildPaths,
   private val classesOutputDirectory: Path,
   private val messages: BuildMessages,
-  val archivedOutputDirectory: Path = getArchiveStorage(classesOutputDirectory.parent),
+  @JvmField internal val archivedOutputDirectory: Path = getArchiveStorage(classesOutputDirectory.parent),
 ) {
   private val unarchivedToArchivedMap = ConcurrentHashMap<Path, Path>()
   private var archiveIfAbsent = true
@@ -37,11 +39,11 @@ class ArchivedCompilationOutputStorage(
     for (line in Files.readAllLines(mappingFile)) {
       val eq = line.indexOf('=')
       if (eq == -1) continue
-      unarchivedToArchivedMap[classesOutputDirectory.resolve(line.substring(0, eq))] = Path.of(line.substring(eq + 1))
+      unarchivedToArchivedMap.put(classesOutputDirectory.resolve(line.substring(0, eq)), Path.of(line.substring(eq + 1)))
     }
   }
 
-  fun getArchived(path: Path): Path {
+   fun getArchived(path: Path): Path {
     if (Files.isRegularFile(path)) {
       return path
     }
@@ -81,5 +83,6 @@ class ArchivedCompilationOutputStorage(
   }
 
   internal fun getMapping(): List<Map.Entry<Path, Path>> = unarchivedToArchivedMap.entries.sortedBy { it.key.invariantSeparatorsPathString }
+
   internal fun getMappingMap(): Map<Path, Path> = Collections.unmodifiableMap(unarchivedToArchivedMap)
 }

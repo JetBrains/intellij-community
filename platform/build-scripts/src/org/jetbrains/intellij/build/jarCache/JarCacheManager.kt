@@ -12,7 +12,6 @@ import java.nio.file.Path
 internal interface SourceBuilder {
   val useCacheAsTargetFile: Boolean
 
-  // one module (source) can be included in different plugins - cache per plugin
   fun updateDigest(digest: HashStream64)
 
   suspend fun produce(targetFile: Path)

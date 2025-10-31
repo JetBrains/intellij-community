@@ -3,18 +3,17 @@
 
 package org.jetbrains.intellij.build.dev
 
+import com.fasterxml.jackson.core.JsonFactory
+import com.fasterxml.jackson.core.JsonToken
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.buildData.productInfo.ProductInfoData
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
-import org.jetbrains.intellij.build.impl.productInfo.jsonEncoder
 import org.jetbrains.intellij.build.productLayout.PRODUCT_REGISTRY_PATH
 import org.jetbrains.intellij.build.productLayout.ProductConfiguration
 import org.jetbrains.intellij.build.productLayout.ProductConfigurationRegistry
@@ -23,7 +22,6 @@ import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Properties
-import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.readLines
 
@@ -57,6 +55,49 @@ fun getIdeSystemProperties(runDir: Path): VmProperties {
   return VmProperties(result)
 }
 
+/**
+ * Extracts additionalJvmArguments from the first launch configuration in product-info.json using Jackson streaming parser.
+ * This avoids loading the entire JSON structure into memory when we only need a small subset of data.
+ */
+private fun extractAdditionalJvmArguments(productInfoFile: Path): List<String> {
+  val result = mutableListOf<String>()
+  val jsonFactory = JsonFactory()
+
+  productInfoFile.inputStream().use { input ->
+    jsonFactory.createParser(input).use { parser ->
+      // Find the "launch" array
+      while (parser.nextToken() != null) {
+        if (parser.currentToken == JsonToken.FIELD_NAME && parser.currentName() == "launch") {
+          // Move to START_ARRAY
+          parser.nextToken()
+          // Move to first object in array (START_OBJECT)
+          parser.nextToken()
+
+          // Find "additionalJvmArguments" in the first launch config
+          while (parser.nextToken() != JsonToken.END_OBJECT) {
+            if (parser.currentToken == JsonToken.FIELD_NAME && parser.currentName() == "additionalJvmArguments") {
+              // Move to START_ARRAY
+              parser.nextToken()
+
+              // Read all string values from the array
+              while (parser.nextToken() != JsonToken.END_ARRAY) {
+                if (parser.currentToken == JsonToken.VALUE_STRING) {
+                  result.add(parser.text)
+                }
+              }
+
+              // We found what we need, stop parsing
+              return result
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return result
+}
+
 fun readVmOptions(runDir: Path): List<String> {
   val result = ArrayList<String>()
 
@@ -68,15 +109,12 @@ fun readVmOptions(runDir: Path): List<String> {
   result.add("-Djb.vmOptionsFile=${vmOptionsFile}")
 
   val productInfoFile = runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME)
-  if (productInfoFile.exists()) {
-    val productJson = productInfoFile.inputStream().use { jsonEncoder.decodeFromStream<ProductInfoData>(it) }
-    val macroName = when (OsFamily.currentOs) {
-      OsFamily.WINDOWS -> "%IDE_HOME%"
-      OsFamily.MACOS -> $$"$APP_PACKAGE/Contents"
-      OsFamily.LINUX -> $$"$IDE_HOME"
-    }
-    result.addAll(productJson.launch[0].additionalJvmArguments.map { it.replace(macroName, runDir.toString()) })
+  val macroName = when (OsFamily.currentOs) {
+    OsFamily.WINDOWS -> "%IDE_HOME%"
+    OsFamily.MACOS -> $$"$APP_PACKAGE/Contents"
+    OsFamily.LINUX -> $$"$IDE_HOME"
   }
+  extractAdditionalJvmArguments(productInfoFile).mapTo(result) { it.replace(macroName, runDir.toString()) }
 
   return result
 }

@@ -35,9 +35,7 @@ import org.jetbrains.intellij.build.impl.compilation.reuseOrCompile
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesHandler
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.impl.moduleBased.buildOriginalModuleRepository
-import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.logFreeDiskSpace
-import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.intellij.build.telemetry.ConsoleSpanExporter
@@ -60,11 +58,9 @@ import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
-import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.attribute.BasicFileAttributes
 import java.util.stream.Stream
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeToOrNull
@@ -516,38 +512,6 @@ internal suspend fun resolveProjectDependencies(context: CompilationContext) {
   else {
     spanBuilder("resolve project dependencies").use {
       JpsCompilationRunner(context).resolveProjectDependencies()
-    }
-  }
-}
-
-@Internal
-suspend fun CompilationContext.hasModuleOutputPath(module: JpsModule, relativePath: String): Boolean {
-  return getModuleOutputRoots(module).any { output ->
-    val attributes = try {
-      Files.readAttributes(output, BasicFileAttributes::class.java)
-    }
-    catch (_: FileSystemException) {
-      return@any false
-    }
-
-    if (attributes.isDirectory) {
-      return@any Files.exists(output.resolve(relativePath))
-    }
-    else if (attributes.isRegularFile && output.toString().endsWith(".jar")) {
-      var found = false
-      readZipFile(output) { name, _ ->
-        if (name == relativePath) {
-          found = true
-          ZipEntryProcessorResult.STOP
-        }
-        else {
-          ZipEntryProcessorResult.CONTINUE
-        }
-      }
-      return@any found
-    }
-    else {
-      throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
     }
   }
 }

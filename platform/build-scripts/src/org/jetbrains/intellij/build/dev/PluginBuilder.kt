@@ -24,7 +24,6 @@ import org.jetbrains.intellij.build.impl.buildPlugins
 import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -39,7 +38,7 @@ internal suspend fun buildPlugins(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   buildPlatformJob: Job,
   moduleOutputPatcher: ModuleOutputPatcher,
-): Pair<List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, List<Pair<Path, List<Path>>>?> {
+): Pair<List<PluginBuildDescriptor>, List<Pair<Path, List<Path>>>?> {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)
 
   val pluginRootDir = runDir.resolve("plugins")
@@ -63,6 +62,7 @@ internal suspend fun buildPlugins(
       buildPlatformJob = buildPlatformJob,
       searchableOptionSet = searchableOptionSet,
       os = null,
+      descriptorCacheContainer = platform.descriptorCacheContainer,
       pluginBuilt = { layout, pluginDirOrFile ->
         handleCustomPlatformSpecificAssets(
           layout = layout,

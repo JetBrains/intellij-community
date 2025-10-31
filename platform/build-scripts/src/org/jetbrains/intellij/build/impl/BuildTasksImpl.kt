@@ -102,6 +102,7 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
       buildPlatformLibJob = null,
       state = distState,
       searchableOptionSet = searchableOptionSet,
+      descriptorCacheContainer = distState.platformLayout.descriptorCacheContainer,
       context = context,
     )
   }
@@ -391,8 +392,6 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
     val builtinModuleData = spanBuilder("build provided module list").use {
       Files.deleteIfExists(providedModuleFile)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      // it's necessary to use the dev build to get correct paths in 'layout' data
-
       context.createProductRunner().runProduct(
         args = listOf("listBundledPlugins", providedModuleFile.toString()),
         additionalVmProperties = additionalProperties(),
@@ -412,22 +411,22 @@ internal suspend fun createDistributionState(context: BuildContext): Distributio
     context.notifyArtifactBuilt(providedModuleFile)
 
     if (productLayout.buildAllCompatiblePlugins) {
-      collectCompatiblePluginsToPublish(builtinModuleData, pluginsToPublish, context)
+      collectCompatiblePluginsToPublish(builtinModuleData = builtinModuleData, pluginsToPublish = pluginsToPublish, context = context)
       filterPluginsToPublish(pluginsToPublish, context)
 
       // update enabledPluginModules to reflect changes in pluginsToPublish - used for buildProjectArtifacts
-      distributionState(pluginsToPublish, projectLibrariesUsedByPlugins, context)
+      distributionState(pluginsToPublish = pluginsToPublish, projectLibrariesUsedByPlugins = projectLibrariesUsedByPlugins, context = context)
     }
     else {
       val platform = createPlatformLayout(context)
-      DistributionBuilderState(platform, pluginsToPublish, context)
+      DistributionBuilderState(platformLayout = platform, pluginsToPublish = pluginsToPublish, context = context)
     }
   }
 }
 
 /**
  JDK17 falls back to `?` which is normal dir name. But JDK21 falls back to the `$HOME` which is `/` making all paths absolute causing permission
- problems. The script we start have a proper home directory passed via property, but it is not implicitly passed to the subprocesses, so we need to
+ problems. The script we start has a proper home directory passed via property, but it is not implicitly passed to the subprocesses, so we need to
  do this explicitly.
 
  @see https://youtrack.jetbrains.com/issue/IJPL-203604
@@ -459,7 +458,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   val distributionState = context.distributionState()
 
   coroutineScope {
-    createMavenArtifactJob(context, distributionState)
+    createMavenArtifactJob(distributionState.platformLayout, context)
 
     if (!context.shouldBuildDistributions()) {
       Span.current().addEvent("skip building product distributions because 'intellij.build.target.os' property is set to '${BuildOptions.OS_NONE}'")
@@ -474,6 +473,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
         buildPlatformLibJob = null,
         state = distributionState,
         searchableOptionSet = buildSearchableOptions(context),
+        descriptorCacheContainer = distributionState.platformLayout.descriptorCacheContainer,
         context = context
       )
       return@coroutineScope
@@ -514,7 +514,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   }
 }
 
-private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distributionState: DistributionBuilderState): Job? {
+private fun CoroutineScope.createMavenArtifactJob(platformLayout: PlatformLayout, context: BuildContext): Job? {
   val mavenArtifacts = context.productProperties.mavenArtifacts
   if (!mavenArtifacts.forIdeModules &&
       mavenArtifacts.additionalModules.isEmpty() &&
@@ -526,12 +526,13 @@ private fun CoroutineScope.createMavenArtifactJob(context: BuildContext, distrib
   return createSkippableJob(spanBuilder("generate maven artifacts"), BuildOptions.MAVEN_ARTIFACTS_STEP, context) {
     val platformModules = HashSet<String>()
     if (mavenArtifacts.forIdeModules) {
-      platformModules.addAll(distributionState.platformModules)
-      collectIncludedPluginModules(context.getBundledPluginModules(), result = platformModules, context)
+      platformLayout.includedModules.mapTo(platformModules) { it.moduleName }
+      platformModules.addAll(getToolModules())
+      collectIncludedPluginModules(enabledPluginModules = context.getBundledPluginModules(), result = platformModules, context = context)
     }
 
     val mavenArtifactsBuilder = MavenArtifactsBuilder(context)
-    val builtArtifacts = mutableMapOf<MavenArtifactData, List<Path>>()
+    val builtArtifacts = LinkedHashMap<MavenArtifactData, List<Path>>()
     if (!platformModules.isEmpty()) {
       mavenArtifactsBuilder.generateMavenArtifacts(
         moduleNamesToPublish = platformModules,
@@ -898,13 +899,13 @@ private fun checkPlatformSpecificPluginResources(pluginLayouts: List<PluginLayou
 fun getOsDistributionBuilder(os: OsFamily, libcImpl: LibcImpl, context: BuildContext, ideaProperties: CharSequence? = null): OsSpecificDistributionBuilder? {
   return when (os) {
     OsFamily.WINDOWS -> context.windowsDistributionCustomizer?.let {
-      WindowsDistributionBuilder(context, customizer = it, ideaProperties)
+      WindowsDistributionBuilder(context = context, customizer = it, ideaProperties = ideaProperties)
     }
     OsFamily.MACOS -> context.macDistributionCustomizer?.let {
-      MacDistributionBuilder(context, customizer = it, ideaProperties)
+      MacDistributionBuilder(context = context, customizer = it, ideaProperties = ideaProperties)
     }
     OsFamily.LINUX -> context.linuxDistributionCustomizer?.let {
-      LinuxDistributionBuilder(context, customizer = it, ideaProperties, targetLibcImpl = libcImpl as LinuxLibcImpl)
+      LinuxDistributionBuilder(context = context, customizer = it, ideaProperties = ideaProperties, targetLibcImpl = libcImpl as LinuxLibcImpl)
     }
   }
 }

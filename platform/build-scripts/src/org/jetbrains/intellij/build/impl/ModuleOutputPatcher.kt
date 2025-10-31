@@ -8,7 +8,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Base64
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 enum class PatchOverwriteMode {
@@ -21,7 +22,7 @@ class ModuleOutputPatcher {
   private val patches = ConcurrentHashMap<String, MutableMap<String, ByteArray>>()
 
   fun patchModuleOutput(moduleName: String, path: String, content: String, overwrite: PatchOverwriteMode = PatchOverwriteMode.FALSE) {
-    patchModuleOutput(moduleName = moduleName, path = path, content = content.toByteArray(StandardCharsets.UTF_8), overwrite = overwrite)
+    patchModuleOutput(moduleName = moduleName, path = path, content = content.encodeToByteArray(), overwrite = overwrite)
   }
 
   fun patchModuleOutput(moduleName: String, path: String, content: ByteArray, overwrite: Boolean) {

@@ -21,13 +21,10 @@ import org.jetbrains.jps.model.module.JpsModuleReference
  * (or prepared to be [org.jetbrains.intellij.build.productLayout.ProductModulesLayout.pluginModulesToPublish] published) with the product (except
  * project libraries which are explicitly included in layouts of all plugins depending on them by [BaseLayoutSpec.withProjectLibrary]).
  */
-class PlatformLayout : BaseLayout() {
+class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheContainer = DescriptorCacheContainer()) : BaseLayout() {
   internal var libAsProductModule: Set<String> = emptySet()
 
   private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
-
-  @JvmField
-  val cachedDescriptorContainer: CachedDescriptorContainer = CachedDescriptorContainer()
 
   @get:TestOnly
   val excludedProjectLibraries: Sequence<String>

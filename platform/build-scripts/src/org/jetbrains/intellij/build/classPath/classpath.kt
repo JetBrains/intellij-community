@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.classPath
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
-import org.jdom.CDATA
 import org.jdom.Element
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
@@ -15,11 +14,9 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.TEST_FRAMEWORK_MODULE_NAMES
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
-import org.jetbrains.intellij.build.findFileInModuleSources
-import org.jetbrains.intellij.build.impl.CachedDescriptorContainer
+import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.ModuleOutputProvider
+import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
 import org.jetbrains.intellij.build.impl.PlatformJarNames
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
@@ -27,14 +24,11 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.XIncludeElementResolver
-import org.jetbrains.intellij.build.impl.createXIncludePathResolver
+import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOwnedFileEntry
-import org.jetbrains.intellij.build.impl.resolveNonXIncludeElementFromCache
-import org.jetbrains.intellij.build.impl.toLoadPath
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.isWindows
@@ -101,14 +95,15 @@ internal data class PluginBuildDescriptor(
   @JvmField val dir: Path,
   @JvmField val os: OsFamily?,
   @JvmField val layout: PluginLayout,
-  @JvmField val moduleNames: List<String>,
+  @JvmField val distribution: Collection<DistributionFileEntry>,
 )
 
-internal fun writePluginClassPathHeader(
+internal suspend fun writePluginClassPathHeader(
   out: DataOutputStream,
   isJarOnly: Boolean,
   pluginCount: Int,
   platformLayout: PlatformLayout,
+  descriptorCacheContainer: DescriptorCacheContainer,
   context: BuildContext,
 ) {
   // format version
@@ -117,7 +112,7 @@ internal fun writePluginClassPathHeader(
   out.write(if (isJarOnly) 1 else 0)
 
   val mainPluginDescriptorContent = BufferExposingByteArrayOutputStream().use {
-    JDOMUtil.write(createCachedProductDescriptor(platformLayout, context), it)
+    JDOMUtil.write(createCachedProductDescriptor(platformLayout, descriptorCacheContainer.forPlatform(platformLayout), context), it)
     it
   }
 
@@ -129,83 +124,43 @@ internal fun writePluginClassPathHeader(
 }
 
 @VisibleForTesting
-fun createCachedProductDescriptor(platformLayout: PlatformLayout, context: BuildContext): Element {
-  val cachedDescriptorContainer = platformLayout.cachedDescriptorContainer
-  val mainPluginDescriptor = requireNotNull(cachedDescriptorContainer.productDescriptor) {
+suspend fun createCachedProductDescriptor(platformLayout: PlatformLayout, platformDescriptorCache: ScopedCachedDescriptorContainer, context: BuildContext): Element {
+  val mainPluginDescriptor = requireNotNull(platformDescriptorCache.getCachedFileData(PRODUCT_DESCRIPTOR_META_PATH)) {
     "Cannot find core plugin descriptor (module=${context.productProperties.applicationInfoModule})"
-  }
+  }.let { JDOMUtil.load(it) }
 
-  val xIncludeResolver = object : XIncludeElementResolver {
-    private val default by lazy {
-      createXIncludePathResolver(
-        includedPlatformModulesPartialList = platformLayout.includedModules.asSequence().map { it.moduleName }.distinct().toList(),
-        context = context,
-      )
-    }
-
-    override fun resolveElement(relativePath: String, isOptional: Boolean, isDynamic: Boolean): Element? {
-      platformLayout.cachedDescriptorContainer.getCachedFileData(toLoadPath(relativePath))?.let {
-        return JDOMUtil.load(it)
-      }
-      return default.resolvePath(relativePath = relativePath, base = null, isOptional = isOptional, isDynamic = isDynamic)?.let {
-        JDOMUtil.load(it)
-      }
-    }
-  }
-
+  val xIncludeResolver = XIncludeElementResolverImpl(
+    searchPath = listOf(DescriptorSearchScope(
+      modules = platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName },
+      descriptorCache = platformDescriptorCache,
+    )),
+    context = context,
+  )
   for (content in mainPluginDescriptor.getChildren("content")) {
     for (moduleElement in content.getChildren("module")) {
-      processProductModule(
-        moduleElement = moduleElement,
-        cachedDescriptorContainer = cachedDescriptorContainer,
-        xIncludeResolver = xIncludeResolver,
-        moduleOutputProvider = context,
-      )
+      resolveAndEmbedContentModuleDescriptor(moduleElement = moduleElement, descriptorCache = platformDescriptorCache, xIncludeResolver = xIncludeResolver, context = context)
     }
   }
 
   return mainPluginDescriptor
 }
 
-private fun processProductModule(
-  moduleElement: Element,
-  cachedDescriptorContainer: CachedDescriptorContainer,
-  moduleOutputProvider: ModuleOutputProvider,
-  xIncludeResolver: XIncludeElementResolver,
-) {
-  if (!moduleElement.content.isEmpty()) {
-    return
-  }
-
-  val moduleName = moduleElement.getAttributeValue("name") ?: return
-  val descriptorFile = "${moduleName.replace('/', '.')}.xml"
-
-  val cachedFileData = cachedDescriptorContainer.getCachedFileData(descriptorFile)
-  val xml = if (cachedFileData == null) {
-    val file = requireNotNull(findFileInModuleSources(module = moduleOutputProvider.findRequiredModule(moduleName), relativePath = descriptorFile)) {
-      "Cannot find file $descriptorFile in module $moduleName"
-    }
-    JDOMUtil.load(file)
-  }
-  else {
-    JDOMUtil.load(cachedFileData)
-  }
-
-  resolveNonXIncludeElementFromCache(original = xml, elementResolver = xIncludeResolver)
-  moduleElement.setContent(CDATA(JDOMUtil.write(xml)))
-}
-
-internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>>, moduleOutputPatcher: ModuleOutputPatcher): ByteArray {
+internal suspend fun generatePluginClassPath(
+  pluginEntries: List<PluginBuildDescriptor>,
+  descriptorFileProvider: DescriptorCacheContainer,
+  platformLayout: PlatformLayout,
+  context: BuildContext,
+): ByteArray {
   val byteOut = ByteArrayOutputStream()
   val out = DataOutputStream(byteOut)
 
   val uniqueGuard = HashSet<Path>()
-  for ((pluginAsset, entries) in pluginEntries) {
+  for (pluginAsset in pluginEntries) {
     val pluginDir = pluginAsset.dir
 
-    val files = ArrayList<Path>(entries.size)
+    val files = ArrayList<Path>(pluginAsset.distribution.size)
     uniqueGuard.clear()
-    for (entry in entries) {
+    for (entry in pluginAsset.distribution) {
       val relativeOutputFile = entry.relativeOutputFile
       if (relativeOutputFile != null && relativeOutputFile.contains('/')) {
         continue
@@ -228,19 +183,35 @@ internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescrip
       putMoreLikelyPluginJarsFirst(pluginDirName = pluginDir.fileName.toString(), filesInLibUnderPluginDir = files)
     }
 
-    var pluginDescriptorContent: ByteArray? = null
-    for (file in files) {
-      if (file.toString().endsWith(".jar")) {
-        pluginDescriptorContent = readPluginXml(file)
-        if (pluginDescriptorContent != null) {
-          break
-        }
-      }
+    val pluginDescriptorContainer = descriptorFileProvider.forPlugin(pluginDir)
+    var pluginDescriptorContent = requireNotNull(pluginDescriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH)) {
+      "Cannot find plugin descriptor file $PLUGIN_XML_RELATIVE_PATH in $pluginDir (descriptorFileProvider=$descriptorFileProvider"
+    }
+    val pluginLayout = pluginAsset.layout
+    val rootElement = JDOMUtil.load(pluginDescriptorContent)
+
+    if (!pluginLayout.pathsToScramble.isEmpty()) {
+      val platformDescriptorContainer = descriptorFileProvider.forPlatform(platformLayout)
+      val xIncludeResolver = XIncludeElementResolverImpl(
+        searchPath = listOf(
+          DescriptorSearchScope(pluginLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, pluginDescriptorContainer),
+          DescriptorSearchScope(platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }, platformDescriptorContainer),
+        ),
+        context = context)
+
+      embedContentModules(
+        rootElement = rootElement,
+        pluginLayout = pluginLayout,
+        pluginDescriptorContainer = pluginDescriptorContainer,
+        xIncludeResolver = xIncludeResolver,
+        context = context,
+      )
     }
 
-    if (pluginDescriptorContent == null) {
-      pluginDescriptorContent = moduleOutputPatcher.getPatchedPluginXml(pluginAsset.layout.mainModule)
-    }
+    pluginDescriptorContent = ByteArrayOutputStream().use {
+      JDOMUtil.write(rootElement, it)
+      it
+    }.toByteArray()
 
     writeEntry(out = out, files = files, pluginDir = pluginDir, pluginDescriptorContent = pluginDescriptorContent)
   }
@@ -252,7 +223,7 @@ internal fun generatePluginClassPath(pluginEntries: List<Pair<PluginBuildDescrip
 private fun readPluginXml(file: Path): ByteArray? {
   var result: ByteArray? = null
   readZipFile(file) { name, dataProvider ->
-    if (name == "META-INF/plugin.xml") {
+    if (name == PLUGIN_XML_RELATIVE_PATH) {
       val byteBuffer = dataProvider()
       val bytes = ByteArray(byteBuffer.remaining())
       byteBuffer.get(bytes, 0, bytes.size)
