@@ -41,7 +41,7 @@ private class MyDialog(project: Project, private val viewModel: ModulesViewModel
       ModuleList(viewModel.checkBoxItems,
                  viewModel.icons,
                  viewModel.checked,
-      viewModel::clicked,
+                 viewModel::clicked,
                  topLabel = message("python.sdk.configurator.frontend.choose.modules.text"),
                  projectStructureLabel = message("python.sdk.configurator.frontend.choose.modules.project.structure"),
                  environmentLabel = message("python.sdk.configurator.frontend.choose.modules.environment"))
