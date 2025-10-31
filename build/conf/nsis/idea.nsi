@@ -49,12 +49,6 @@ VIAddVersionKey /LANG=0 "ProductVersion" "${MUI_VERSION_MAJOR}.${MUI_VERSION_MIN
 VIFileVersion ${FILE_VERSION_NUM}
 VIProductVersion ${PRODUCT_VERSION_NUM}
 
-; Product with version (IntelliJ IDEA #xxxx).
-; Used in registry to put each build info into the separate subkey
-; Add&Remove programs doesn't understand subkeys in the Uninstall key,
-; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
-!define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
-
 Var startMenuFolder
 Var productLauncher
 Var rootRegKey
@@ -338,10 +332,10 @@ Function searchCurrentVersion
   ${LogText} ""
   ${LogText} "Checking if '${MUI_PRODUCT} ${VER_BUILD}' is already installed"
 
-  ReadRegStr $R0 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
+  ReadRegStr $R0 HKCU "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" ""
   ${If} $R0 == ""
   ${OrIfNot} ${FileExists} "$R0\bin\${PRODUCT_EXE_FILE}"
-    ReadRegStr $R0 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
+    ReadRegStr $R0 HKLM "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" ""
     ${If} $R0 == ""
     ${OrIfNot} ${FileExists} "$R0\bin\${PRODUCT_EXE_FILE}"
       Return
@@ -556,11 +550,11 @@ Section "IDEA Files" CopyIdeaFiles
 SectionEnd
 
 Function UninstallRecord
-  WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "" "$INSTDIR"
+  WriteRegStr SHCTX "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" "" "$INSTDIR"
   ${If} $startMenuFolder != ""
-    WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder" "$startMenuFolder"
+    WriteRegStr SHCTX "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" "MenuFolder" "$startMenuFolder"
   ${EndIf}
-  WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "AssociationKey" "${PRODUCT_PATHS_SELECTOR}"
+  WriteRegStr SHCTX "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" "AssociationKey" "${PRODUCT_PATHS_SELECTOR}"
 
   StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
   WriteRegStr SHCTX $0 "DisplayName" "${INSTALL_DIR_AND_SHORTCUT_NAME}"
