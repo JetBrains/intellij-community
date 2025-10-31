@@ -12,7 +12,7 @@ import javax.swing.Icon
 
 @Internal
 class PyV3EmptyProjectGenerator : PyV3ProjectBaseGenerator<PyV3EmptyProjectSettings>(
-  typeSpecificSettings = PyV3EmptyProjectSettings(generateWelcomeScript = false),
+  typeSpecificSettings = PyV3EmptyProjectSettings(),
   typeSpecificUI = PyV3EmptyProjectUI,
   _newProjectName = "PythonProject",
   supportsNotEmptyModuleStructure = true
