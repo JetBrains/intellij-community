@@ -35,6 +35,7 @@ final class PostUpdateTasks {
   static void updateWindowsRegistry(Path targetDir, String nameAndVersion, String buildNumber, boolean united) {
     var targetPath = targetDir.toString();
     updateUninstallerSection(targetPath, nameAndVersion, buildNumber);
+    updateManufacturerSection(targetPath, buildNumber, united);
     if (united) {
       updateContextMenuEntries(targetPath);
     }
@@ -62,6 +63,38 @@ final class PostUpdateTasks {
     }
     catch (Throwable t) {
       LOG.log(Level.WARNING, "updateUninstallerSection failed", t);
+    }
+  }
+
+  private static void updateManufacturerSection(String targetPath, String buildNumber, boolean united) {
+    try {
+      LOG.info("updateManufacturerSection for: " + targetPath);
+      var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
+      var baseKey = "Software\\JetBrains";
+      for (var rootKey : rootKeys) {
+        for (var productKey : Advapi32Util.registryGetKeys(rootKey, baseKey)) {
+          for (var buildKey : Advapi32Util.registryGetKeys(rootKey, baseKey + '\\' + productKey)) {
+            try {
+              var oldKey = baseKey + '\\' + productKey + '\\' + buildKey;
+              var location = Advapi32Util.registryGetStringValue(rootKey, oldKey, "");
+              if (targetPath.equalsIgnoreCase(location)) {
+                LOG.info("key: " + rootKeyName(rootKey) + '\\' + oldKey);
+                var newKey = baseKey + '\\' + (united ? stripCeSuffixes(productKey) : productKey) + '\\' + buildNumber;
+                Advapi32Util.registryCreateKey(rootKey, newKey);
+                for (var entry : Advapi32Util.registryGetValues(rootKey, oldKey).entrySet()) {
+                  Advapi32Util.registrySetStringValue(rootKey, newKey, entry.getKey(), entry.getValue().toString());
+                }
+                Advapi32Util.registryDeleteKey(rootKey, oldKey);
+                return;
+              }
+            }
+            catch (Win32Exception ignored) { }
+          }
+        }
+      }
+    }
+    catch (Throwable t) {
+      LOG.log(Level.WARNING, "updateManufacturerSection failed", t);
     }
   }
 
