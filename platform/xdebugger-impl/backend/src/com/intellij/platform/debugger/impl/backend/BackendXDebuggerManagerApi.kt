@@ -21,19 +21,17 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl.reshowInlayRunToCursor
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.rpc.models.storeGlobally
 import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import fleet.rpc.core.toRpc
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   override suspend fun initialize(projectId: ProjectId, capabilities: XFrontendDebuggerCapabilities) {
@@ -78,7 +76,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     return XDebugSessionDto(
       currentSession.id,
       currentSession.getMockRunContentDescriptorIfInitialized()?.id as RunContentDescriptorIdImpl?,
-      debugProcess.editorsProvider.toRpc(),
+      debugProcess.editorsProvider.toRpc(cs),
       initialSessionState,
       currentSession.suspendData(),
       currentSession.sessionName,
@@ -285,6 +283,7 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
   }
 }
 
-internal fun XDebuggerEditorsProvider.toRpc(): XDebuggerEditorsProviderDto {
-  return XDebuggerEditorsProviderDto(fileType.name, this)
+internal fun XDebuggerEditorsProvider.toRpc(cs: CoroutineScope): XDebuggerEditorsProviderDto {
+  val id = storeGlobally(cs)
+  return XDebuggerEditorsProviderDto(id, fileType.name, this)
 }

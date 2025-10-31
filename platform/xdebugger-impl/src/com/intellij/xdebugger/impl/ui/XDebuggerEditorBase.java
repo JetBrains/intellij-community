@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -63,6 +64,7 @@ import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class XDebuggerEditorBase implements Expandable {
   public static final Key<Boolean> XDEBUGGER_EDITOR_KEY = Key.create("is.xdebugger.editor");
@@ -127,13 +129,13 @@ public abstract class XDebuggerEditorBase implements Expandable {
     });
   }
 
-  private @NotNull @Unmodifiable Collection<Language> getSupportedLanguages() {
+  private CompletableFuture<@NotNull @Unmodifiable Collection<Language>> getSupportedLanguages() {
     XDebuggerEditorsProvider editorsProvider = getEditorsProvider();
-    if (myContext != null && editorsProvider instanceof XDebuggerEditorsProviderBase) {
-      return ((XDebuggerEditorsProviderBase)editorsProvider).getSupportedLanguages(myContext);
+    if (myContext != null && editorsProvider instanceof XDebuggerEditorsProviderBase base) {
+      return CompletableFuture.completedFuture(base.getSupportedLanguages(myContext));
     }
     else {
-      return editorsProvider.getSupportedLanguages(myProject, mySourcePosition);
+      return editorsProvider.getSupportedLanguagesAsync(myProject, mySourcePosition);
     }
   }
 
@@ -605,21 +607,24 @@ public abstract class XDebuggerEditorBase implements Expandable {
     void requestUpdate(Language currentLanguage) {
       ReadAction.nonBlocking(() -> getSupportedLanguages())
         .inSmartMode(myProject)
-        .finishOnUiThread(ModalityState.any(), languages -> {
-          boolean many = languages.size() > 1;
-          myLanguages = languages;
-
-          if (currentLanguage != null) {
-            setVisible(many);
-          }
-          setVisible(isVisible() || many);
-
-          if (currentLanguage != null && currentLanguage.getAssociatedFileType() != null) {
-            setText(currentLanguage.getDisplayName());
-          }
-        })
         .coalesceBy(this)
-        .submit(AppExecutorUtil.getAppExecutorService());
+        .submit(AppExecutorUtil.getAppExecutorService()).onSuccess(future -> {
+          future.thenAccept(languages -> {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              boolean many = languages.size() > 1;
+              myLanguages = languages;
+
+              if (currentLanguage != null) {
+                setVisible(many);
+              }
+              setVisible(isVisible() || many);
+
+              if (currentLanguage != null && currentLanguage.getAssociatedFileType() != null) {
+                setText(currentLanguage.getDisplayName());
+              }
+            }, ModalityState.any());
+          });
+        });
     }
   }
 

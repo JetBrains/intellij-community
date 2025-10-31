@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class XDebuggerEditorsProvider {
   public abstract @NotNull FileType getFileType();
@@ -42,6 +43,14 @@ public abstract class XDebuggerEditorsProvider {
   public @NotNull @Unmodifiable Collection<Language> getSupportedLanguages(@NotNull Project project, @Nullable XSourcePosition sourcePosition) {
     FileType type = getFileType();
     return type instanceof LanguageFileType ? Collections.singleton(((LanguageFileType)type).getLanguage()) : Collections.emptyList();
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<@NotNull @Unmodifiable Collection<Language>> getSupportedLanguagesAsync(
+    @NotNull Project project,
+    @Nullable XSourcePosition sourcePosition
+  ) {
+    return CompletableFuture.completedFuture(getSupportedLanguages(project, sourcePosition));
   }
 
   public @NotNull XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {

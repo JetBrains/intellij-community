@@ -30,7 +30,7 @@ internal suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
     id = breakpointId,
     initialState = getDtoState(xDebuggerManager.currentSession),
     typeId = XBreakpointTypeId(type.id),
-    editorsProviderDto = editorsProvider?.toRpc(),
+    editorsProviderDto = editorsProvider?.toRpc(coroutineScope),
     state = channelFlow {
       val currentSessionFlow = xDebuggerManager.currentSessionFlow
       breakpointChangedFlow().combine(currentSessionFlow) { _, currentSession ->

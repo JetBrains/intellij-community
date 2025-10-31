@@ -10,6 +10,7 @@ import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.rpc.UID
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nls
 @Rpc
 interface XDebugSessionApi : RemoteApi<Unit> {
   suspend fun createDocument(frontendDocumentId: FrontendDocumentId, sessionId: XDebugSessionId, expression: XExpressionDto, sourcePosition: XSourcePositionDto?, evaluationMode: EvaluationMode): XExpressionDocumentDto?
+  suspend fun supportedLanguages(projectId: ProjectId, editorsProviderId: XDebuggerEditorsProviderId, sourcePositionDto: XSourcePositionDto?): List<LanguageDto>
 
   suspend fun resume(sessionId: XDebugSessionId)
 
@@ -144,7 +146,12 @@ data class XDebugSessionState(
 
 @ApiStatus.Internal
 @Serializable
+data class XDebuggerEditorsProviderId(override val uid: UID) : Id
+
+@ApiStatus.Internal
+@Serializable
 data class XDebuggerEditorsProviderDto(
+  val id: XDebuggerEditorsProviderId,
   val fileTypeId: String,
   // TODO[IJPL-160146]: support [XDebuggerEditorsProvider] for local case in the same way as for remote
   @Transient val editorsProvider: XDebuggerEditorsProvider? = null,

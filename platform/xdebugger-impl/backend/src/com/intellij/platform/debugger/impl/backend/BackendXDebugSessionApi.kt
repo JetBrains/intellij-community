@@ -11,12 +11,15 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.project.ProjectId
+import com.intellij.platform.project.findProject
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.ThreeState
@@ -31,10 +34,11 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
 import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
-import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
 import com.intellij.xdebugger.impl.rpc.models.storeGlobally
+import com.intellij.xdebugger.impl.rpc.sourcePosition
+import com.intellij.xdebugger.impl.rpc.toRpc
 import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
@@ -55,6 +59,15 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     val project = session.project
     val editorsProvider = session.debugProcess.editorsProvider
     return createBackendDocument(project, frontendDocumentId, editorsProvider, expression, sourcePosition, evaluationMode)
+  }
+
+  override suspend fun supportedLanguages(projectId: ProjectId, editorsProviderId: XDebuggerEditorsProviderId, sourcePositionDto: XSourcePositionDto?): List<LanguageDto> {
+    val project = projectId.findProject()
+    val editorsProvider = editorsProviderId.findValue() ?: return emptyList()
+    val position = sourcePositionDto?.sourcePosition()
+    return smartReadAction(project) {
+      editorsProvider.getSupportedLanguages(project, position)
+    }.map { it.toRpc() }
   }
 
   override suspend fun resume(sessionId: XDebugSessionId) {
