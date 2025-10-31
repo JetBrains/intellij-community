@@ -8,10 +8,11 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.PlatformUtils
 import java.io.IOException
 
 internal class WSLInstallationsCollector : ApplicationUsagesCollector() {
-  private val group = EventLogGroup("wsl.installations", 1)
+  private val group = EventLogGroup("wsl.installations", 2)
   private val installationCountEvent = group.registerEvent("count", EventFields.Int("version"), EventFields.Int("count"))
 
   override fun getGroup(): EventLogGroup {
@@ -19,7 +20,7 @@ internal class WSLInstallationsCollector : ApplicationUsagesCollector() {
   }
 
   override fun getMetrics(): Set<MetricEvent> {
-    if (!WSLUtil.isSystemCompatible()) return emptySet()
+    if (!WSLUtil.isSystemCompatible() || PlatformUtils.isJetBrainsClient()) return emptySet()
 
     val distributionsWithVersions = try {
       WslDistributionManager.getInstance().loadInstalledDistributionsWithVersions()
