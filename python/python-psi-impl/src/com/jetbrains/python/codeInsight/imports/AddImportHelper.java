@@ -23,9 +23,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -790,18 +792,28 @@ public final class AddImportHelper {
    * @see #addOrUpdateFromImportStatement
    */
   public static void addImport(@NotNull PsiNamedElement target, @NotNull PsiFile file, @NotNull PyElement element) {
+    if (target.getContainingFile().equals(file)) return;
+    if (PyBuiltinCache.getInstance(element).isBuiltin(target)) return;
+
     if (target instanceof PsiFileSystemItem) {
       addFileSystemItemImport((PsiFileSystemItem)target, file, element);
       return;
     }
 
-    final String name = target.getName();
+    // If target is a class attribute, import the containing class
+    PsiNamedElement elementToImport = target;
+    var parent = ScopeUtil.getScopeOwner(target);
+    if (parent instanceof PyClass pyClass) {
+      elementToImport = pyClass;
+    }
+
+    final String name = elementToImport.getName();
     if (name == null) return;
 
-    final PsiFileSystemItem toImport = target.getContainingFile();
+    final PsiFileSystemItem toImport = elementToImport.getContainingFile();
     if (toImport == null) return;
 
-    final QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(target, element);
+    final QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(elementToImport, element);
     if (importPath == null) return;
 
     final String path = importPath.toString();
@@ -811,7 +823,7 @@ public final class AddImportHelper {
       addImportStatement(file, path, null, priority, element);
 
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), path + "." + name));
+      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(elementToImport), path + "." + name));
     }
     else {
       addOrUpdateFromImportStatement(file, path, name, null, priority, element);

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -896,6 +897,54 @@ public class Py3CompletionTest extends PyTestCase {
         }
       });
     });
+  }
+
+  @TestFor(issues = "PY-79283")
+  public void testImportClassFromAttribute() {
+    myFixture.configureByText("mod.py", """
+      class Class:
+          unique_attribute = 1
+      
+          def __init__(self):
+              self.unique_attribute_instance = 2
+      """);
+    doTestByText("Class.uniq<caret>");
+    myFixture.checkResult(
+      """
+        from mod import Class
+        
+        Class.unique_attribute"""
+    );
+  }
+
+  @TestFor(issues = "PY-79283")
+  public void testImportClassFromMethod() {
+    myFixture.configureByText("mod.py", """
+      class Class:
+          def unique_method(self): ...
+      """);
+    doTestByText("Class.uniq<caret>");
+    myFixture.checkResult(
+      """
+        from mod import Class
+        
+        Class.unique_method()"""
+    );
+  }
+
+  @TestFor(issues = "PY-79283")
+  public void testImportClassFromInnerClass() {
+    myFixture.configureByText("mod.py", """
+      class Class:
+          class UniqueClass: ...
+      """);
+    doTestByText("Class.Uniq<caret>");
+    myFixture.checkResult(
+      """
+        from mod import Class
+        
+        Class.UniqueClass"""
+    );
   }
 
   private void doTestVariants(String @NotNull ... expected) {

@@ -196,6 +196,7 @@ jvm_library(
     "//python/impl.helperLocator:community-helpersLocator",
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
+    "//platform/testFramework/core",
   ]
 )
 ### auto-generated section `build intellij.python.commonTests` end

@@ -24,5 +24,6 @@
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="TEST" />
   </component>
 </module>

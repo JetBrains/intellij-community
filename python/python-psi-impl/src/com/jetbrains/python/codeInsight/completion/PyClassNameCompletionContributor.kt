@@ -446,6 +446,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
       }
     }
 
+    @JvmStatic
     fun addImportForLookupElement(context: InsertionContext, item: LookupElement, tailOffset: Int) {
       val manager = PsiDocumentManager.getInstance(context.project)
       val document = manager.getDocument(context.file)
