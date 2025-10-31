@@ -18,6 +18,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.system.OS;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,10 @@ public final class LocalOptionsConfigurer {
       .shellCommand(initialCommand)
       .workingDirectory(workingDir)
       .envVariables(envs)
+      .modify(builder -> {
+        builder.setInitialShellCommand(new InitialShellCommand(initialCommand));
+        return Unit.INSTANCE;
+      })
       .build();
   }
 
