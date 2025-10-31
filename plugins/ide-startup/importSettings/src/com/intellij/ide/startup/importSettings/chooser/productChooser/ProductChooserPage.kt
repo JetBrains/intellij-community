@@ -14,7 +14,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.rd.createLifetime
+import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBSwingUtilities
@@ -82,6 +84,10 @@ internal class ProductChooserPage(val controller: ImportSettingsController, over
         accessibleContext.accessibleName = ImportSettingsBundle.message("choose.product.action.toolbar.accessible.name")
       }
     }
+    // Background painting doesn't work well with island themes.
+    ClientProperty.put(act.component, IdeBackgroundUtil.NO_BACKGROUND, true)
+    // Instead, we make the toolbar transparent to show the background.
+    act.component.isOpaque = false
     act.targetComponent = pane
 
     pane.add(act.component)
