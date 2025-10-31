@@ -89,7 +89,7 @@ final class FindInProjectTask {
       .thenComparing(VirtualFile::getName) // in case files without id are also searched
       .thenComparing(VirtualFile::getPath);
 
-  /** Total size of processed files before asking user 'too many files, should we continue?' */
+  /** Total size of processed files before asking the user 'too many files, should we continue?' */
   private static final int TOTAL_FILES_SIZE_LIMIT_BEFORE_ASKING = 70 * 1024 * 1024; // megabytes.
 
   private final FindModel findModel;
@@ -174,27 +174,27 @@ final class FindInProjectTask {
    * Find all usages of a given pattern in a given set of files, and deliver them to the usageProcessor. The pattern, set of files,
    * and most other details are defined by {@link #findModel}.
    * <p>
-   * To better understand find usage code take into account that find usage is not an abstract task -- it is very much tailored to
+   * To better understand find usage code take into account that find usage is not an abstract task -- it is heavily tailored to
    * the specific needs and user's expectations of FindUsage UX.
    * <p>
    * The find usages process is split into two phases:
    * <ol>
    *   <li>
    *     'Fast search': query the {@link #searchers} for a list of candidate files. Searchers represent a 'fast' way of finding
-   *     the matching candidates -- i.e. some kind of index. The files returned by the searchers are only candidates -- they
-   *     still must be checked against file mask, and looked up for the pattern.
+   *     the matching candidates -- i.e., some kind of index. The files returned by the searchers are only candidates -- they
+   *     still must be checked against the file mask and the pattern.
    *     On this stage we also scan through {@link #filesToScanInitially} -- those are files that were found previously. We
-   *     re-check them so that files that match before and still match now are remains at the top. This provides better UX
-   *     then search pattern is expanded as user types additional symbols.
+   *     re-check them so that the files, which match before and still match now, are remaining at the top. This provides better
+   *     UX then the search pattern is expanded as the user types additional symbols.
    *   </li>
    *   <li>
-   *     'Brute force search': query all files in the scope defined by {@link #findModel} (including files that were already
-   *     found by searchers on the 1st phase!), and process them, multi-threaded, against fileMask, and the pattern. On this
-   *     phase we skip files already processed on 1st phase.
+   *     'Brute force search': query all files in the scope defined by {@link #findModel} (including files that searchers already
+   *     found on the 1st phase!), and process them, multithreaded, against fileMask, and the pattern. On this phase we skip files
+   *     already processed on the 1st phase.
    *   </li>
    * </ol>
    * Those 2 phases combined give us the chance to deliver indexed files results almost instantly, keep top results consistent
-   * as user continues typing in the search pattern, and still search extensively over (partially-)not-indexed scopes -- slower,
+   * as the user continues typing in the search pattern, and still search extensively over (partially-)not-indexed scopes -- slower,
    * but still.
    */
   void findUsages(@NotNull FindUsagesProcessPresentation processPresentation,
