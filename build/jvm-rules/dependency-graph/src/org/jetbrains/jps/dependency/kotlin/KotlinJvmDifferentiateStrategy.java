@@ -420,8 +420,19 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
       for (Difference.Change<KmProperty, KotlinMeta.KmPropertiesDiff> propChange : metaDiff.properties().changed()) {
         KmProperty changedProp = propChange.getPast();
         KotlinMeta.KmPropertiesDiff propDiff = propChange.getDiff();
-        if (propDiff.accessRestricted() || propDiff.customAccessorAdded()) {
-          debug(context, "A property has become less accessible or got custom accessors; affecting its lookup usages ", changedProp.getName());
+
+        String affectLookupUsagesReason = null;
+        if (propDiff.accessRestricted()) {
+          affectLookupUsagesReason = "Property has become less accessible; affecting its lookup usages ";
+        }
+        else if (propDiff.customAccessorAdded()) {
+          affectLookupUsagesReason = "Custom accessors were added to a property; affecting its lookup usages ";
+        }
+        else if (propDiff.mutabilityChanged()) {
+          affectLookupUsagesReason = "Property mutability has changed (val <=> var); affecting its lookup usages ";
+        }
+        if (affectLookupUsagesReason != null) {
+          debug(context, affectLookupUsagesReason, changedProp.getName());
           affectMemberLookupUsages(context, changedClass, changedProp.getName(), future, cache);
         }
 

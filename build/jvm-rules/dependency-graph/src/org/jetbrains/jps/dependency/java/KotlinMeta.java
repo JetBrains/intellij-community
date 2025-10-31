@@ -477,7 +477,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     @Override
     public boolean unchanged() {
-      return !typeChanged() && !visibilityChanged() && !customAccessorAdded();
+      return !typeChanged() && !visibilityChanged() && !customAccessorAdded() && !mutabilityChanged();
     }
 
     public boolean typeChanged() {
@@ -490,6 +490,10 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
 
     public boolean becameNotNull() {
       return Attributes.isNullable(past.getReturnType()) && !Attributes.isNullable(now.getReturnType());
+    }
+
+    public boolean mutabilityChanged() {
+      return Attributes.isVar(past) != Attributes.isVar(now);
     }
 
     public boolean visibilityChanged() {
