@@ -252,6 +252,7 @@ public final class ThreadLeakTracker {
            || isStarterTestFramework(stackTrace)
            || isJMXRemoteCall(stackTrace)
            || isBuildLogCall(stackTrace)
+           || isVirtualThreadUnblocker(stackTrace)
            || isIjentMediatorThread(stackTrace)
            || windowsCompletionPortLeakForDocker(stackTrace)
            || isSwingAccessibilityThread(stackTrace);
@@ -417,6 +418,18 @@ public final class ThreadLeakTracker {
     //at com.intellij.platform.diagnostic.telemetry.exporters.BatchSpanProcessor$exportCurrentBatch$2.invokeSuspend(BatchSpanProcessor.kt:155)
 
     return ContainerUtil.exists(stackTrace, element -> element.getClassName().contains("org.jetbrains.intellij.build.ConsoleSpanExporter"));
+  }
+
+  /**
+   * Virtual thread unblocker is a special physical thread that tries to unblock virtual threads that are stuck on monitor acquisition.
+   */
+  private static boolean isVirtualThreadUnblocker(StackTraceElement[] stackTrace) {
+    // at java.base/java.lang.VirtualThread.takeVirtualThreadListToUnblock(Native Method)
+    // at java.base/java.lang.VirtualThread.unblockVirtualThreads(VirtualThread.java:1507)
+    // at java.base/java.lang.Thread.run(Thread.java:1474)
+    // at java.base/jdk.internal.misc.InnocuousThread.run(InnocuousThread.java:148)
+    return stackTrace[0].getClassName().equals("java.lang.VirtualThread") && stackTrace[0].getMethodName().equals("takeVirtualThreadListToUnblock")
+      && stackTrace[1].getClassName().equals("java.lang.VirtualThread") && stackTrace[1].getMethodName().equals("unblockVirtualThreads");
   }
 
   /**
