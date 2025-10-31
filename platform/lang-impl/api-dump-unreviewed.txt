@@ -2793,7 +2793,6 @@ c:com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler
 - p:generateStringToInsert(com.intellij.openapi.editor.Editor,I,I):java.lang.String
 - p:getMaxRBraceCount(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I):I
 - p:getRBraceOffset(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I):I
-- ps:getUnmatchedLBracesNumberBefore(com.intellij.openapi.editor.Editor,I,com.intellij.openapi.fileTypes.FileType):I
 - p:insertRBraces(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,I,I,java.lang.String):V
 - p:insertRBracesAtPosition(com.intellij.openapi.editor.Document,I,I,java.lang.String):V
 - s:isAfterUnmatchedLBrace(com.intellij.openapi.editor.Editor,I,com.intellij.openapi.fileTypes.FileType):Z
