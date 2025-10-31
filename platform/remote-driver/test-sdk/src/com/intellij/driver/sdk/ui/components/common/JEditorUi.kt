@@ -396,13 +396,16 @@ fun Finder.editorSearchReplace(@Language("xpath") xpath: String? = null, action:
 class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val searchField = textField { and(byClass("JBTextArea"), byAccessibleName("Search")) }
   val replaceField = textField { and(byClass("JBTextArea"), byAccessibleName("Replace")) }
+  val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
+  val regexButton = actionButton { byAccessibleName("Regex") }
+  val preserveCaseButton = actionButton { byAccessibleName("Preserve case") }
   val matchesLabel = x("//div[@class='ActionToolbarImpl']//div[@class='JLabel']")
   val nextOccurrenceButton = actionButton { byAccessibleName("Next Occurrence") }
   val previousOccurrenceButton = actionButton { byAccessibleName("Previous Occurrence") }
-  val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
+  val filterSearchResultsButton = actionButton { byAccessibleName("Filter Search Results") }
   val optionsButton = actionButton { byAccessibleName("Open in Window, Multiple Cursors") }
-  val regexButton = actionButton { byAccessibleName("Regex") }
   val replaceButton = actionButton { byVisibleText("Replace") }
+  val replaceAllButton = actionButton { byAccessibleName("Replace All") }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
