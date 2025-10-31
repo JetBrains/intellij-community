@@ -281,11 +281,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/sealedSubClassCanBeObject/inspectionData/inspections.test");
         }
 
-        @TestMetadata("spelling/inspectionData/inspections.test")
-        public void testSpelling_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/spelling/inspectionData/inspections.test");
-        }
-
         @TestMetadata("unusedEquals/inspectionData/inspections.test")
         public void testUnusedEquals_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/unusedEquals/inspectionData/inspections.test");

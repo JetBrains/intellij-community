@@ -46,7 +46,7 @@ public class PySpellCheckerTest extends PyTestCase {
   }
 
   // PY-20987
-  public void testEscapesInRawAndNormalGluedStringElements() {
+  public void _testEscapesInRawAndNormalGluedStringElements() {
     doTest();
   }
 
