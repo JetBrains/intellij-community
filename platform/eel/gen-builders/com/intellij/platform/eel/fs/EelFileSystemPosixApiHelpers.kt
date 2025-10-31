@@ -55,12 +55,23 @@ object EelFileSystemPosixApiHelpers {
       this.symlinkPolicy = arg
     }
 
+    /**
+     * Leaves symlinks unresolved.
+     * This option makes the operation a bit more efficient if it is not interested in symlinks.
+     */
     fun doNotResolve(): ListDirectoryWithAttrs =
       symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
 
+    /**
+     * Resolves a symlink and returns the information about the target of the symlink,
+     * But does not perform anything on the target of the symlink itself.
+     */
     fun justResolve(): ListDirectoryWithAttrs =
       symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
 
+    /**
+     * Resolves a symlink, follows it, and performs the required operation on target.
+     */
     fun resolveAndFollow(): ListDirectoryWithAttrs =
       symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
 
@@ -97,12 +108,23 @@ object EelFileSystemPosixApiHelpers {
       this.symlinkPolicy = arg
     }
 
+    /**
+     * Leaves symlinks unresolved.
+     * This option makes the operation a bit more efficient if it is not interested in symlinks.
+     */
     fun doNotResolve(): Stat =
       symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
 
+    /**
+     * Resolves a symlink and returns the information about the target of the symlink,
+     * But does not perform anything on the target of the symlink itself.
+     */
     fun justResolve(): Stat =
       symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
 
+    /**
+     * Resolves a symlink, follows it, and performs the required operation on target.
+     */
     fun resolveAndFollow(): Stat =
       symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
 

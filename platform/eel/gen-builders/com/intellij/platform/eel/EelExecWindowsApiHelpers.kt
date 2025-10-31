@@ -11,7 +11,6 @@ import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 
 /**
