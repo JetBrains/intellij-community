@@ -1,6 +1,7 @@
 from contextlib import contextmanager
 import sys
 
+from _pydevd_bundle.custom.pydevd_utils import should_evaluate_shape, has_attribute_safe
 from _pydevd_bundle.pydevd_constants import get_frame, RETURN_VALUES_DICT, ForkSafeLock, GENERATED_LEN_ATTR_NAME, silence_warnings_decorator
 from _pydevd_bundle.pydevd_xml import get_variable_details, get_type
 from _pydev_bundle.pydev_override import overrides
@@ -10,7 +11,7 @@ from _pydev_bundle import pydev_log
 from _pydevd_bundle import pydevd_vars
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle.pydevd_frame_utils import FramesList
-from _pydevd_bundle.pydevd_utils import ScopeRequest, DAPGrouper, Timer
+from _pydevd_bundle.pydevd_utils import ScopeRequest, DAPGrouper, Timer, is_string
 from typing import Optional
 
 
@@ -64,6 +65,17 @@ class _AbstractVariable(object):
 
         if is_raw_string:
             attributes.append("rawString")
+
+        try:
+            if should_evaluate_shape():
+                if has_attribute_safe(self.value, 'shape') and not callable(self.value.shape):
+                    shape = str(tuple(self.value.shape))
+                    attributes.append(f"shape: {shape}")
+                elif has_attribute_safe(self.value, '__len__') and not is_string(self.value):
+                    shape = str(len(self.value))
+                    attributes.append(f"shape: {shape}")
+        except:
+            pass
 
         name = self.name
 
