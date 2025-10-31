@@ -42,7 +42,7 @@ import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
 @ApiStatus.Internal
 class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(project) {
-  private var recentProjectTreeComponent: JComponent? = null
+  private var searchField: SearchTextField? = null
 
   override fun getTitle(): String = NonModalWelcomeScreenBundle.message("welcome.screen.project.view.title")
 
@@ -93,7 +93,6 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
 
     val projectFilteringTree = createRecentProjectTree()
     setupDragAndDrop(projectFilteringTree.component)
-    recentProjectTreeComponent = projectFilteringTree.component
 
     val topPanel = JBPanel<JBPanel<*>>().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
@@ -112,17 +111,18 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
   }
 
   override fun getComponentToFocus(): JComponent? {
-    return recentProjectTreeComponent
+    return searchField
   }
 
   override fun dispose() {
-    recentProjectTreeComponent = null
+    searchField = null
     super.dispose()
   }
 
   private fun searchPanel(recentProjectTree: RecentProjectFilteringTree) = panel {
     row {
       val projectSearch = createProjectSearchField(recentProjectTree)
+      searchField = projectSearch
       cell(projectSearch)
         .align(AlignX.FILL)
         .customize(UnscaledGaps(top = 4, bottom = 4, left = 20, right = 20))
