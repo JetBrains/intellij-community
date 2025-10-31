@@ -1093,7 +1093,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
           List<PsiFile> psiFiles = createTempFiles(N);
           for (PsiFile psiFile : psiFiles) {
             psiDocumentManager.addRunOnCommit(psiFile.getFileDocument(), d -> {
-              System.out.println("addrunoncommit "+d);
+              LOG.debug("addrunoncommit "+d);
               addRunOnCommitEntered.incrementAndGet();
               try {
                 allowToCommit.await();
@@ -1102,7 +1102,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
                 throw new RuntimeException(e);
               }
               committed.incrementAndGet();
-              System.out.println("committed "+d);
+              LOG.debug("committed "+d);
             });
           }
           psiFiles.clear();
