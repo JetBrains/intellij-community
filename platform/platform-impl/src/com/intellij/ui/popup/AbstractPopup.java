@@ -1465,6 +1465,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     myWindowListener = new MyWindowListener();
     window.addWindowListener(myWindowListener);
+    window.addComponentListener(myWindowListener);
 
     if (myWindow != null) {
       // dialog wrapper-based popups do this internally through peer,
@@ -2062,6 +2063,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (myWindow != null && getWndManager() != null) {
       getWndManager().resetWindow(myWindow);
       if (myWindowListener != null) {
+        myWindow.removeComponentListener(myWindowListener);
         myWindow.removeWindowListener(myWindowListener);
       }
 
@@ -2455,7 +2457,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     mySpeedSearchEmptyText = text;
   }
 
-  private final class MyWindowListener extends WindowAdapter {
+  private final class MyWindowListener extends WindowAdapter implements ComponentListener {
     @Override
     public void windowOpened(WindowEvent e) {
       updateMaskAndAlpha(myWindow);
@@ -2463,6 +2465,29 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     @Override
     public void windowClosing(final WindowEvent e) {
+      close();
+    }
+
+    @Override
+    public void componentResized(ComponentEvent e) { }
+
+    @Override
+    public void componentMoved(ComponentEvent e) { }
+
+    @Override
+    public void componentShown(ComponentEvent e) { }
+
+    @Override
+    public void componentHidden(ComponentEvent e) {
+      // On Wayland, a popup may be forcibly hidden by the environment with no way to show it again.
+      // There doesn't seem to be a way to detect this, but since we don't normally hide popups ourselves,
+      // it seems a safe assumption that it was hidden by Wayland.
+      if (StartupUiUtil.isWaylandToolkit()) {
+        close();
+      }
+    }
+
+    private void close() {
       resetWindow();
       cancel();
     }
