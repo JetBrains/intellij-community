@@ -1,0 +1,26 @@
+{
+    "ruleId": "control-flow-exception-rethrow",
+    "ruleName": "Rethrow Control Flow Exceptions",
+    "description": "Control flow exceptions (like interrupts, cancellations, etc.) should be rethrown rather than just logged. These exceptions are used for flow control and need to propagate up the call stack. Catching and only logging them can lead to unexpected behavior, as they're silently swallowed instead of properly handled by higher levels in the application.",
+    "language": "kotlin",
+    "severity": "ERROR",
+    "examples": {
+        "withViolation": [
+            "try {\n  action(listener)\n}\ncatch (t: Throwable) {\n  thisLogger().error(t)\n}"
+        ],
+        "withoutViolation": [
+            "try {\n  action(listener)\n}\ncatch (t: Throwable) {\n  if (Logger.shouldRethrow(t)) throw t\n  thisLogger().error(t)\n}"
+        ]
+    },
+    "commitReference": "6162790f2fe3890b9d3d6339cadb86288d4d3b35",
+    "verification": {
+        "before": {
+            "path": "plugins/terminal/backend/src/com/intellij/terminal/backend/ObservableTtyConnector.kt",
+            "revision": "de974edb23a8e656075cc94b37594fef34155690"
+        },
+        "after": {
+            "path": "plugins/terminal/backend/src/com/intellij/terminal/backend/ObservableTtyConnector.kt",
+            "revision": "6162790f2fe3890b9d3d6339cadb86288d4d3b35"
+        }
+    }
+}

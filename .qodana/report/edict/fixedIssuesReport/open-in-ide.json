@@ -1,0 +1,10 @@
+{
+  "cloud" : {
+    "url" : "https://qodana.cloud/projects/VOlla/reports/8EaeEa",
+    "reportId" : "8EaeEa",
+    "projectId" : "VOlla",
+    "projectName" : "test",
+    "host" : "https://qodana.cloud"
+  },
+  "vcs" : { }
+}

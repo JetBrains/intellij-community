@@ -1,0 +1,44 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "name": "SPDXRef-java",
+  "spdxVersion": "SPDX-2.3",
+  "dataLicense": "CC0-1.0",
+  "documentNamespace": "https://java-23524be9-dba1-4bc2-f197-5b37f95c3381",
+  "creationInfo": {
+    "creators": [
+      "Tool: Qodana",
+      "Organization: JetBrains s.r.o."
+    ],
+    "created": "2025-09-22T22:01:27Z"
+  },
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-java",
+      "name": "java",
+      "downloadLocation": "NOASSERTION",
+      "filesAnalyzed": false,
+      "licenseConcluded": "LicenseRef-PROPRIETARY-LICENSE",
+      "licenseDeclared": "NOASSERTION",
+      "licenseInfoFromFiles": [
+        "NOASSERTION"
+      ],
+      "copyrightText": "NOASSERTION",
+      "supplier": "NOASSERTION",
+      "primaryPackagePurpose": "SOURCE"
+    }
+  ],
+  "files": [],
+  "relationships": [
+    {
+      "spdxElementId": "SPDXRef-DOCUMENT",
+      "relationshipType": "DESCRIBES",
+      "relatedSpdxElement": "SPDXRef-java"
+    }
+  ],
+  "hasExtractedLicensingInfos": [
+    {
+      "licenseId": "LicenseRef-PROPRIETARY-LICENSE",
+      "extractedText": "Qodana didn't find a license in your project, that's why the project license is considered to be proprietary. Proprietary license rules are applied for dependency license compatibility checks."
+    }
+  ]
+}

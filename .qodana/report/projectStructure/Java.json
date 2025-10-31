@@ -1,0 +1,5068 @@
+{
+  "modules": [
+    {
+      "name": "intellij.html.tools",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.testng.rt.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.html.tools.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.jps.model",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.platform.eel",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.eel.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.model",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.dev.psiViewer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.lang",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.svn",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.jps.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.svn.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.platform.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.troveCompileOnly",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.relaxng",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.cucumber.testRunner",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.libraries.grpc.netty.shaded",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripting-support",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fe10.code-insight",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.commonsLangV2Shim",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle-tooling.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.git",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.xcode",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.configurations",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.frontmatter.yaml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.statistics.envTests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.kotlin.gradle.multiplatformTests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.nav.editor.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.debugger.impl.backend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.compiler.antTasks",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.java.resources",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testRunner",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.plugin.minorRider",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.uast.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.copyright",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.libraries.junit5",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.color.scheme.warmNeon",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.navbar.backend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.kotlin.devkit",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xslt.debugger.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.platform.whatsNew",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.build-attribution",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.lombok.generated",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.build-attribution.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.launcherGenerator",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.manifest",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.upgrade",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.upgrade.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "fleet.util.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.dvcs.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ijent",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.as-driver.utils",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.tasks",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.dom.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.j2k.k1.old.post-processing",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.guiForms.jps.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.android-extensions-stubs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.execution.process.mediator.client",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.toml.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.laf.macos",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.libraries.skiko",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.log",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jsp.base",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.network.ide.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.network.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.gradle-java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.dev.codeInsight",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.testng",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.inspections.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.jetbrains",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.structuralSearch",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.gitlab.yaml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.dev",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.libraries.ktor.client.cio",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspector.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.kernel.backend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.old-agp-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.text.matching",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fe10.analysis",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.scripting",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.visualStudioForMac",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.wsl.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.statistics.config",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.frontmatter",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.streaming.testUtil",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.remoteServers",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.streaming.integration",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compose-all-tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.apk",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.streaming.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diff.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.streaming",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device-explorer-monitor.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device-explorer-monitor",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testFramework.teamCity",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.sync.testUtils",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.idea.tools.launch",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.benchmarks",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xpath.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.android.bleak",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.uast",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.color.scheme.twilight",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.langInjection",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.warmup",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.sh.markdown",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.jps.antTasks",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.jbr",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.debugger",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.builtInHelp",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jsonpath",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.util.io.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.databinding",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.databinding.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.j2k.k1.new.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.dom",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.server.telemetry",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.core.nio.fs.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.toml.grazie",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.allopen.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.core.nio.fs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.guiForms.designer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.database",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.idea.community.build.tasks",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.notebooks.jupyter.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.database.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.dsl.toml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.terminal.sh",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.observable",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.buildScripts.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.rt.classLoader",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.android.core.instantapp",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.http",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.app-inspection.ide.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.transportDatabase",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.util.compiler-classpath",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.visualStudio",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.debugger.memory.agent",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.inspections-shared.tests.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.structureView.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.sync-perf-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.gitlab",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.uast.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.workspace.storage.testEntities",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.space.java.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.grazie.yaml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.nav.safeargs.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.parcelize.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.server-flags",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.tracing.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.repl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.native-symbolizer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.native-symbolizer",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.completion.tests.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diagnostic.telemetry.rt",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.android.adb.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.adb.ui.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.starter",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.fenceInjection",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.coverage",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis.quickFix",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jsr223",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.jshell.frontend",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.rendering",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.externalSystem",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.java.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.rendering.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.rpc.backend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.color.scheme.monokai",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.core",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.android.backup.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.xmlbeans",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.backup.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.backup",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.credentialStore.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.java.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.intentions.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.profilersAndroid.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.util.test-generator-fir",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.zip",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.platform.eel.provider",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.server.m36.impl",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.android.kotlin-integration-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.core.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.j2k.k1.new",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.javaFX.community",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.analysis",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.ml.models.local",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.dsl.kotlin",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.structural-search.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.evaluationPlugin.languages.kotlin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.toml.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.frontback.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.psi",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.gutter",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.diff",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.buildScripts.downloader",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.psi",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.smRunner.vcs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.resharper",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.bundled-compiler-plugins-support",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.progress.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.progress",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin-idea.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.pycharm.community.ide.impl.promotion",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.terminal.completion",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.nav.safeargs.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.editing.documentation",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.analytics",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.studio.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.noarg.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.workspace.jps.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.ide.starter.bus",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis.kotlin.tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.workspaceModel",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.refactorings.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.tips",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.connection-assistant",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.connection-assistant-test",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.grazie.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diagnostic.telemetry.exporters",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.adb.testUtil",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.adb.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.toolingExtension.tests",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.gradle.toolingExtension.impl",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.completion.impl.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.adb",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.evaluation",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.codenavigation",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.externalProcessAuthHelper",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.dependencyUpdater",
+      "languageLevel": 17
+    },
+    {
+      "name": "fleet.util.logging.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.layoutlib-loader",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.junit.v5.rt.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.psd",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.psd.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.analysis.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.avd",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.color.scheme.cobalt",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.resources.en",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.i18n",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.credentialStore",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testFramework.junit5.highlighting",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.network.view.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.network.view",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.profilers.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.server.m3.common",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.code-insight.intentions-shared.tests.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.inspectors-common.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.util.test-generator-api",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.javaFX.properties",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.execution.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.inspections",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.execution.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.javaFX",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testExtensions",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.frontback.psi",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.evaluationPlugin.languages",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.override-implement.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.toml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.dsl.flags",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.collaborationTools.auth.base",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.nav.safeargs.tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.buildScripts.codeOptimizer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.configurationScript.test.java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.configurationScript",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.settings.local",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.eclipse.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.platform.diagnostic.telemetry",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.java.dev",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.debugger.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.netbeans",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin-idea-base",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.progress.backend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.terminal",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.adt.ui.compose",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis.java.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.noarg.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.themes",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device-manager-v2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.sh.python",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.memory-usage",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.externalSystem.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.analysis.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.grazie.markdown",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.junit.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.project-wizard.idea.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xslt.debugger.impl.rt",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.scriptDebugger.protocolReaderRuntime",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.sam-with-receiver.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.color.scheme.all_hallows_eve",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.debuggers.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.debuggers",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.remoteServers.targetsIntegrationTests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.indexing.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.layout-ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.live-templates.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.aetherDependencyResolver",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.settingsSync",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.git",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.coverage",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.kotlin.idea.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.indexing.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.profilers.atrace",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.sdk",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.notebooks.visualization",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.experiment",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.jps.build.launcher",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.inspectors-common.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.featuresTrainer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.server.eventListener",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.evaluationPlugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.io.storages",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.util.project-model-updater",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.newUiOnboarding",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.javascript.protocolReader",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.injection.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.unscramble",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.impl.huggingFace",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.remote",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.evaluationPlugin.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.editors.manifest",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.collaborationTools",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.regexp",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.dsl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.dsl.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.dsl.testutils",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.cucumber.jvmFormatter5",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.ide.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.buildScripts",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.nav.safeargs.tests.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diagnostic.freezes",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.eclipse",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.decompiler",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.serviceContainer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.pycharm.community.build.debugBinaries",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tasks.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.marketplaceMl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.adt.testutils",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin-base.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.debugger",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.injection.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.stacktrace",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.compiler.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.evaluation.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.externalSystem.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.performanceTesting.vcs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.grazie.java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.externalSystem.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.kotlinx-serialization.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.designer.customview.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.designer.customview",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.plugin.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.junit.kotlin.tests.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.frontend.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.layout-inspector.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.parcelize.tests.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.native",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.kotlin.fir.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.restructuredtext.python",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.compose",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.line-markers.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.remoteServers.agent.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.devkit.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.kotlin.idea.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.impl.refactorings",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.execution",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.wear-whs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.res",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.execution.process.elevation",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.settingsRepository.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.settingsRepository",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.structureView",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.preview-fast-compile",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testFramework.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.git.rt",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.fir.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.model",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.dev.plugin.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.dev.noJava.plugin.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.libraries.microba",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.javaFX.sceneBuilder",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.terminal",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.cucumber.jvmFormatter3",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.platform.projectModel.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.rt.java8",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.driver.model",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.editors",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.codeStyle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.progress",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.idea",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.androidx-integration-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.plugin.modules",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.plugin.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diagnostic",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.markdown.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.helpers",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.helpers.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.actions",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.analysis.analysis-api.k2.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.pycharm.community.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.pycharm.community.customization",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tasks.java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.pycharm.community",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.rareRefactorings",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.grazie",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.langInjection",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin",
+      "languageLevel": 11
+    },
+    {
+      "name": "kotlin.base.frontend-agnostic",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.python.community.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.bootstrap.dev",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device-explorer-files",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.commonTests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device-explorer-files.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.lint.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.plugin.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.completion",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.psi",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.macro",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.designer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.searchEverywhereMl.ranking.yaml",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.kotlinx-serialization.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.designer.integration",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.ide.metrics.benchmark",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.images.build",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.junit.kotlin.tests.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.monolith",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.backend.workspace",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.designer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.pydev",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.instanceContainer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.dagger",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.runtime.repository.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "fleet.rpc.server",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.instanceContainer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.remote.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.dagger.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.ant.jps.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.artwork",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.repository.search",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.ant.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.java.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.filePrediction",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testFramework.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.project",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.backgroundtask.view.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.backgroundtask.view",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.execution.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.errorProne.compiler",
+      "languageLevel": 17
+    },
+    {
+      "name": "fleet.kernel",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.newProjectWizard.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.fir-all-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.newProjectWizard",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.git.featuresTrainer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.project.backend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.syntax",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.driver.client",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.copyright.vcs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.structuralSearch",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.highlighting.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.structuralSearch.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.smart.update",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.sdkUpdates.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.sdkUpdates",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.structuralSearch",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ml.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.backend.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.updater",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.device-explorer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.psi",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.android.mlkit",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.properties.resource.bundle.editor",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.mlkit.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.render-resources",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.render-resources.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fe10.plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.compiler.instrumentationUtil.java8",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.navbar.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.tests-compose",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.bootstrap",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.usageView",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device-explorer.integration.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device-explorer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.lvcs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.devLauncher",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.configurationStore.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.configurationStore.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.searchEverywhereMl.ranking.java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ijent.community.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.design-plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.impl.exec",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.log.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.runtime.product.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.lang.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.lang",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.compiler-plugin-support.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.ui.designer.overlays",
+      "languageLevel": 17
+    },
+    {
+      "name": "fleet.rhizomedb",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.inline.completion",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.performance-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.junit.groovy.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.textmate",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.jps.model.impl",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.featuresTrainer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.ide.customization",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.jps.model.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.modularize",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.plugin.descriptor",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.backgroundtask.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.lang.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.remoteControl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.coroutines.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fe10.kdoc",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.testutils",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.coroutines",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.test-framework",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.core.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tasks",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle-tooling.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.diagnostics",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.builtInServer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.duplicates.analysis",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.idea.community.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.idea.community.main.android",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.artifactResolver.common",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.debugger.impl.frontend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.compiler.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.markdown.utils",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.resources.en",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.compose-ide-plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.compose-ide-plugin.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.images",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.featuresTrainer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.commandInterface",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.uast.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.navbar.frontend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.performancePlugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.reproducibleBuilds.diff",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.searchEverywhereMl.ranking.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.models",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.models.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ijent.community.buildConstants",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.j2k.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.assistant-test",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.assistant",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.kotlin.plugin.community.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.laf.win10",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.log.graph",
+      "languageLevel": 17
+    },
+    {
+      "name": "fleet.reporting.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.assignment.common.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.execution.process.mediator.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.apiDump",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.guiForms.rt",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.runtime.loader",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.jsp.spi",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.wizard.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.wizard",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.langInjection.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.uast.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.testng.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.vcs.github",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.gradle-java.tests.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.wear-designer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.lang",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.wear-designer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspector.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.git",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.hg",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.tasks.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.trove",
+      "languageLevel": 7
+    },
+    {
+      "name": "kotlin.scripting-plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.libraries.grpc",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fe10.analysis-api-platform",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.classLoader",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.java.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.uiDesigner",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.vscode",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.copyright.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.statsCollector.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.statsCollector",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.frontmatter.toml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.statistics.devkit",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.completion",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.completionMlRankingModels",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.completionMlRankingModels.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diff.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.nav.editor.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.nav.editor",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.safemode.integration.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.compose-designer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.plugin.minor",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.compose-designer.integration",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.compose-designer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.safemode",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.compiler",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testFramework.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.remoteServers.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.logcat.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.logcat",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.libraries.junit4",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.bleak-config",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xslt.debugger",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.color.scheme.vibrant_ink",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.uast.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.navbar",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.warmup.performanceTesting",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.langInjection.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.kotlin.dev",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.jps.build.standalone",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.platform.debugger.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.lombok",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.dvcs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.classic.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.util.netty",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.databinding.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.as-driver.integration",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.j2k.k1.old",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.dom.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.kernel",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.apk",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.allopen.tests.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.guiForms.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.toml.json",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.langInjection",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jsp",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.idea.community.build.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.editor.ex",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.dev",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.ide-perf-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.ast",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.inspections-shared.tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.observable.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.spock.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.android.utp",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.groovy.constants.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.libraries.ktor.client",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.visualStudio2022",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.templates.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.templates",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.ui.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.workspace.storage.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.nav.safeargs.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.debugger.streams",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.glance-designer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.glance-designer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.run-configurations.junit-fe10",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.spellchecker",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.native-symbolizer.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diff",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.smali",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.completion.tests.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.statistics",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis.refactoring",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.base",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.devkit.workspaceModel.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.coverage.rt",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.externalSystem.dependencyUpdater",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.externalSystem.dependencyUpdater.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.core-fe10",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.color.scheme.rails_casts",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.core.impl",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.sync",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.idea.customization.base",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.sync.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xpath",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.tracing.rt",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.tools.ide.util.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.parcelize.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.sh.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.jshell.protocol",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.sh.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.jps.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.projectStructureTests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.util.io",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.idea.community.build.dependencies",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.json.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.analysis.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.j2k.k1.new.post-processing",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.parcelize.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.server.m40",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.execution.serviceView",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.ml.models.local.java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.preview-elements.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.guiForms.compiler",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.compiler-plugins.allopen.common.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.evaluationPlugin.languages.python",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.preview-elements",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.transport",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.imports",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.ex",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.buildScripts.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.javaFX.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.groovy.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.android.app-inspection.ide.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.psi.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.inspections.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.visualAssist",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.uast",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.nav.safeargs.common.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.sync-memory-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.editing.metrics",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.editor",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.grazie.xml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.android-material.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.workspace.storage",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.android-material",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.parcelize.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.refactorings.common.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.completion.impl.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diagnostic.telemetry.impl",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.platform.sqlite",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tasks.compatibility",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.compose.preview",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.common.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis.kotlin.tests.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jps.graphImplementationTests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.externalProcessAuthHelper.rt",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testFramework.junit5.jimfs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.java.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.color.scheme.github",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.byteCodeViewer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.rpc",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.intelliLang",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.avdmanager.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.credentialStore.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.ui.inspector",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.profilersAndroid",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.server.m3.impl",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.util.test-generator-fe10",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.communityOnly",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.intentions-shared.tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.jps.model",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.webp",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.javaFX.common",
+      "languageLevel": 11
+    },
+    {
+      "name": "kotlin.inspections-fe10",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.dsl.groovy",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.postfix-templates.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.xmlDom",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.evaluationPlugin.languages.java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.frontback.psi.impl",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.ide.designer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.buildScripts.devBuildServer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.gradle.project.sync",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.smRunner",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.navigator.testutils",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.navigator",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin-idea-base.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.studio.integration",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.qtcreator",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.nanoxml",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.nav.safeargs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.pycharm.community.ide.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.adt.ui.model",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.noarg.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.scriptDebugger.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.sh.terminal",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis.kotlin.tests.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.uiDesigner",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device-manager-v2.integration",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.workspace.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.ml-api-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.ml-api",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.project-wizard.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.grazie.properties",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.threadDumpParser",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.toolingExtension",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.markdown",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-reference-index.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.integration.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.buildCommon",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.extensions",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.android.layoutlib",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.layoutlib.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.junit.v5.rt",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.java.analysis",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.resources",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.color.scheme.blackboard",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.indexing.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.kotlin.output.parser",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.coverage.agent",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.idea.community.customization",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.inspectors-common.api-ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.network.model",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.profilers.integration",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.server.indexer",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.util.jdom",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.code-insight.intentions.shared",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.json",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.util.test-generator-all",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.vcs",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.injection.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.evaluationPlugin.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.override-implement.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.frontback.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.collaborationTools.auth",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.dsl.declarative",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.core.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.buildScripts.bazel",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.nav.safeargs.tests.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.parser",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.editors.strings",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.eclipse.common",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.java.decompiler.engine",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.properties",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diagnostic.startUpPerformanceReporter",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.settings",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.debugger.agent.holder",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.newUsersOnboarding",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.adt.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin-idea",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.keymap.eclipse",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.obsolete-compat",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.ide.performanceTesting.commands",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis.internal.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.externalSystem.rt",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.analysis",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.grazie.json",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.lombok.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.idea.community.build",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.plugin.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.icons",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.junit.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.kotlin.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.scriptDebugger.backend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.native.tooling.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.native.tooling",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.compiler-plugins.sam-with-receiver.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.remoteServers.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.searchEverywhereMl",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.live-templates.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.compose.compilerPlugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.indexing",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.analysis",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.indexing",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.core.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.run",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.kotlin.idea.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "fleet.preferences",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.debugger",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.structureView.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.profilers",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.sequence.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.notebooks.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.whats-new-assistant-test",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testFramework.junit5",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.whats-new-assistant",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.jps.build.javac.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.platform.util.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.server",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.emojipicker",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.util.compiler-dependencies",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.sdk",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.immutableKeyValueStore.benchmark",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.internal",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.cucumber.jvmFormatter4",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.platform.execution.dashboard",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.codeStyle.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.editors.fast",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.rd.community",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.idea.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.tools",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.terminal",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.terminal.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.xml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.apkanalyzer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.diagnostic.freezeAnalyzer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.driver.sdk",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tasks.jira",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.pycharm.community.build",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.adt.swingp",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.turboComplete.languages.kotlin.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.grazie.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.markdown",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.completionMlRanking.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.completionMlRanking",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.injection",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin-base",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.python.community.plugin.java",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.room",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.room.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.psi.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.compose-common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.compose-common.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.performanceTesting.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.searchEverywhereMl.typos",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.designer-perf-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.impl.lang.actions",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jvm.analysis",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.lint.common.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.kotlinx-serialization.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.ide.metrics.collector",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.monolith.main",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.plugin.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.junit.kotlin.tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.frontend",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.layout-inspector.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.layout-inspector.integration",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.layout-inspector",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.libraries.cglib",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.textmate.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.restructuredtext",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.remoteServers",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.kotlin.idea",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.artwork-compose",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.eelHelper",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.impl.inspections",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.rendering",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.images.copyright",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.kotlin.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.lang.testEntities",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.platform.jps.build.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.fir.frontend-independent",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.util.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.android.gradle.declarative.lang.ide.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.syntax.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.projectModel",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.cucumber.jvmFormatter",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.driver.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.clouds",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.declarative.lang.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.pycharm.community.ide.implTraining",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.jps.build",
+      "languageLevel": 11
+    },
+    {
+      "name": "kotlin.highlighting.shared.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.execution.common.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.execution.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.debugger.testFramework",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.spellchecker",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.agp-integration-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.all-tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.structureView",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.psi.impl",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.turboComplete",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.properties.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.gradle.toolingProxy",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.turboComplete.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.test",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fe10.project-structure",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.testsFromCompiler",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device-explorer-common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.bootstrap.coroutine",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.usageView.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.objectSerializer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.objectSerializer.annotations",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.objectSerializer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.lint",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.lvcs.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.lint.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.performanceTesting.remoteDriver",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.compiler-plugin-support.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.devLauncher.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.searchEverywhereMl.ranking.vcs",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.runtimeModuleRepository.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.android.design-plugin.descriptor",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.images",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.backend.observation",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.lang-databinding",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.performance-tests.performance-test-utils",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.repositorySearch.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.projectSystem.gradle.repositorySearch",
+      "languageLevel": 17
+    },
+    {
+      "name": "fleet.rpc",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.inspect",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.ui.resourcemanager",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.runtime.repository",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.junit.java.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.lang-databinding.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.sh.copyright.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.sh.copyright",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.ide.startup.importSettings",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.integration",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.ant",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.featuresTrainer.onboarding",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.jps.model.serialization",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.platform.jps.model.serialization.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.ide.resources",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.testFramework.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.preview-designer",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.preview-designer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.wear-pairing",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.app-inspection.inspectors.backgroundtask.model",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.lang.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.lang.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.wear-pairing.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.navigator",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.remoteDev.util",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.refactoring",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.execution",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.threading-checker.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.threading-checker",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.tests-common",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fe10.obsolete-compat",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.properties.psi",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.git.coverage",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.fir",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.builtInServer.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.builtInServer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.declarative.lang",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.copyright",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.gradle.declarative.lang.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.project",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.typeMigration",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.highlighting.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.durability",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.editing.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.maven.artifactResolver.m31",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.platform.statistics.uploader",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.compiler.instrumentationUtil",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.yaml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.feedback",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.model",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.rt",
+      "languageLevel": 7
+    },
+    {
+      "name": "intellij.platform.ml",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.testsBootstrap",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.commander",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.device",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tasks.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ide.bootstrap",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.navbar.monolith",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.boot",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.platform.ui.jcef",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.grazie",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.langInjection",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.performanceTesting",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.j2k.shared.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.ijent.community.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.concurrency",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.deploy",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.searchEverywhereMl.ranking.ext",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.vcs.log.graph.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.runtime.product",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.java.i18n",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.execution.process.mediator.daemon",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.tools.apiDump.testData",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.assignment.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.wizard.model",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.junit",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.compiler-configuration-ui",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.git",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.run-configurations.testng",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.formatter.minimal",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.statistics",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.features-trainer",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.j2k.k2.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.project-wizard.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.coverage",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.gradle-tooling.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.compiler-configuration",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.preferences",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.properties.psi.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.images",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.ide",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.lombok.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.code-insight.minimal",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fir.analysis-api-platform",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.project-model",
+      "languageLevel": 8
+    },
+    {
+      "name": "intellij.ae.database.community",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-reference-index",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.ml-completion.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.run-configurations.jvm",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.injection.k2.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin-idea.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.plugin-updater",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.indices.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.external-build-system",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.project-wizard.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.intentions.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.onboarding.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.test.parcelize.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.completion.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.indices",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.coverage.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.java.compiler.charts.jps",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.java.compiler.charts",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.maven.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.analysis-api-platform",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin-idea.k2.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.core.testartifacts",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.json.split",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.searching.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.webSymbols",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.structural-search.k2.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.gradle-java.tests.k1",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.i18n",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.markdown.plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.formatter",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.impl-base",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.live-templates.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.facet.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.ae.database.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.refactorings.tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.override-implement.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.ml-completion",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.sam-with-receiver.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.compiler-plugin-support.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.vcs.changeReminder",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.onboarding",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.fixes.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.run-configurations.junit",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-reference-index.tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.core",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.base.util",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.kotlin.gradle.multiplatform-tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.python.community.plugin.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.native",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.frontback",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.grazie",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.code-insight-toml",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.parcelize.tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.kotlin.onboarding-promoter",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.gradle",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.kotlinx-serialization.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.test.compose.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.resources",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.highlighting.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.kotlinx-serialization.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fir.project-structure",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.performanceExtendedPlugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.kotlin.extensions.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-decompiler",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.core.nio.fs.benchmarks",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.gradle-tooling",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.code-insight.descriptions",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.copyright",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.searching.base",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.line-markers.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.api",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.i18n.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.navigation",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.code-insight-common",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.yaml.editing",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.analysis.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.project-wizard.idea",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.eval4j",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.plugin.noKotlin",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.editorconfig",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.devkit.plugin",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.intentions.k2.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.jps",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.scripting",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.fixes.k2.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.analysis-api.utils",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.platforms",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.assignment.common.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.spellchecker",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.native.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.inspections.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.navigation.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.motion-editor",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.refactorings.rename.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.parcelize.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.compiler-plugin-support.common",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.kapt",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin.k2.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.code-insight-groovy",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.highlighting.minimal",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.coroutines",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.postfix-templates.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.scripting",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.assignment.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.jupyter.viewOnly",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.libraries.compose.desktop",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.sh",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.searching.test.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.project-structure",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.refactorings.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.kotlin.extensions",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.code-insight",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.gradle-tooling.impl",
+      "languageLevel": 8
+    },
+    {
+      "name": "kotlin.completion.impl.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.copyright.fir.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "fleet.util.os",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.project-configuration",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.kdoc",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.fir.code-insight",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.ae.database.counters.community",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.project-wizard.cli",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.structural-search.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml.frontback.impl",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.gradle.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.analysis",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.features-trainer.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.test.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.injection.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.nodeRpcClient",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.utils",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.j2k.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm-debugger.evaluation.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.project-wizard.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.xml",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.k2.lombok.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.uast.uast-kotlin.k2",
+      "languageLevel": 11
+    },
+    {
+      "name": "intellij.vcs.github.community",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.platform.images.backend.svg",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.util",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.gradle.gradle-java.tests.k2",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.k2.internal",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.jvm",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.psi",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.migration",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.allopen.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.android.kotlin.extensions.tooling",
+      "languageLevel": 17
+    },
+    {
+      "name": "intellij.settingsSync.git",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.code-insight.inspections.k2.tests",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.base.facet",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.project-wizard.compose",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.compiler-plugins.noarg.maven",
+      "languageLevel": 17
+    },
+    {
+      "name": "kotlin.refactorings.move.k2",
+      "languageLevel": 17
+    }
+  ]
+}

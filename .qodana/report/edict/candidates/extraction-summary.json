@@ -1,0 +1,32 @@
+{
+    "totalCommits": 1,
+    "analyzedCommits": 1,
+    "skippedCommits": 0,
+    "totalRules": 1,
+    "rulesByLanguage": {
+        "kotlin": 1
+    },
+    "rulesBySeverity": {
+        "WARNING": 1
+    },
+    "pipelineStatistics": {
+        "totalProcessed": 1,
+        "successful": 1,
+        "skipped": 0,
+        "generationFailed": 0,
+        "generationError": 0,
+        "verificationFailed": 0,
+        "verificationError": 0,
+        "totalProblemsDetected": 1,
+        "byState": {
+            "Success": 1
+        },
+        "stageFlow": {
+            "startedInPipeline": 1,
+            "passedToGeneration": 1,
+            "generatedSuccessfully": 1,
+            "passedToVerification": 1,
+            "verifiedSuccessfully": 1
+        }
+    }
+}

@@ -1,0 +1,107 @@
+{
+  "$schema": "https://raw.githubusercontent.com/schemastore/schemastore/master/src/schemas/json/sarif-2.1.0-rtm.5.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "QDJVM",
+          "fullName": "Qodana for JVM",
+          "version": "261.SNAPSHOT",
+          "rules": [
+            {
+              "id": "ControlFlowExceptionsShouldBeRethrown",
+              "shortDescription": {
+                "text": "Control flow exceptions should be rethrown"
+              },
+              "fullDescription": {
+                "text": "When catching Throwable or broad exception types, control flow exceptions (like InterruptedException, CancellationException) should be rethrown rather than just logged. Not rethrowing these exceptions can lead to silent failures in cancellation logic, thread interruption handling, or other control flow mechanisms.",
+                "markdown": "When catching Throwable or broad exception types, control flow exceptions (like InterruptedException, CancellationException) should be rethrown rather than just logged. Not rethrowing these exceptions can lead to silent failures in cancellation logic, thread interruption handling, or other control flow mechanisms."
+              },
+              "defaultConfiguration": {
+                "enabled": true,
+                "level": "warning",
+                "parameters": {
+                  "suppressToolId": "ControlFlowExceptionsShouldBeRethrown",
+                  "ideaSeverity": "WARNING",
+                  "qodanaSeverity": "High",
+                  "codeQualityCategory": "Unspecified"
+                }
+              },
+              "relationships": [
+                {
+                  "target": {
+                    "id": "FlexInspect",
+                    "index": 211,
+                    "toolComponent": {
+                      "name": "QDJVM"
+                    }
+                  },
+                  "kinds": [
+                    "superset"
+                  ]
+                }
+              ]
+            }
+          ],
+          "taxa": [],
+          "language": "en-US",
+          "contents": [
+            "localizedData",
+            "nonLocalizedData"
+          ],
+          "isComprehensive": false
+        },
+        "extensions": []
+      },
+      "invocations": [
+        {
+          "startTimeUtc": "2025-10-31T12:00:08.557971Z",
+          "exitCode": 0,
+          "executionSuccessful": true
+        }
+      ],
+      "language": "en-US",
+      "versionControlProvenance": [
+        {
+          "revisionId": "6162790f2fe3890b9d3d6339cadb86288d4d3b35",
+          "properties": {
+            "repoUrl": "",
+            "lastAuthorName": "alexey.afanasiev",
+            "vcsType": "Git",
+            "lastAuthorEmail": "alexey.afanasiev@jetbrains.com"
+          }
+        }
+      ],
+      "originalUriBaseIds": {
+        "SRCROOT": {
+          "description": {
+            "text": "The subdirectory within the project that was analyzed (--project-dir qodana CLI parameter)"
+          }
+        }
+      },
+      "results": [],
+      "automationDetails": {
+        "id": "intellij-community-1/qodana/2025-10-31",
+        "guid": "3c15df10-3ef2-4791-a965-50d0102aa80b",
+        "properties": {
+          "jobUrl": "",
+          "analysisKind": "other"
+        }
+      },
+      "newlineSequences": [
+        "\r\n",
+        "\n"
+      ],
+      "properties": {
+        "qodana.coverage.files.provided": false,
+        "configProfile": "path",
+        "deviceId": "200820300000000-0000-0000-0000-000000000000",
+        "qodanaNewResultSummary": {
+          "high": 2167,
+          "total": 2167
+        }
+      }
+    }
+  ]
+}

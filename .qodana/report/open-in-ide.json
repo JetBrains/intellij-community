@@ -1,0 +1,10 @@
+{
+  "cloud" : {
+    "url" : "https://qodana.cloud/projects/VOlla/reports/MrOKr4",
+    "reportId" : "MrOKr4",
+    "projectId" : "VOlla",
+    "projectName" : "test",
+    "host" : "https://qodana.cloud"
+  },
+  "vcs" : { }
+}

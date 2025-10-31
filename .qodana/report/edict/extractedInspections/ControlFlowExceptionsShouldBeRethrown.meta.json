@@ -1,0 +1,9 @@
+{
+    "description": "When catching Throwable or broad exception types, control flow exceptions (like InterruptedException, CancellationException) should be rethrown rather than just logged. Not rethrowing these exceptions can lead to silent failures in cancellation logic, thread interruption handling, or other control flow mechanisms. This rule ensures that such exceptions are properly propagated through the call stack.",
+    "numberOfCurrentProblems": 2167,
+    "numberOfFixedProblems": 179,
+    "commitInfo": {
+        "commit": "e9f3022de73aa78d26dd9069c71ec98b6d0e5db5",
+        "description": "commit e9f3022de73a\nAuthor: Ilia.Shulgin <ilia.shulgin@jetbrains.com>\nDate:   Fri Oct 25 14:58:10 2024 +0200\n\n    [git] IJPL-73153 Standardize commit message initialization\n    \n    GitOrigin-RevId: fa75a8e0b5f339a1cbea39698e354e9edbb9419c"
+    }
+}
