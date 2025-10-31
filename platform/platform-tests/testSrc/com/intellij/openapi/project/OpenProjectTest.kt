@@ -47,13 +47,22 @@ internal class OpenProjectTest(private val opener: Opener) {
         Opener("OpenFileAction-FolderAsProject", expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
           runBlocking { ProjectUtil.openExistingDir(it, AS_PROJECT, null) }
         },
-        Opener("OpenFileAction-FolderAsFolder", expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$")) {
+
+        // I don't have strong opinion about defaultProjectTemplateShouldBeAppliedOverride.
+        // Weak opinion: a folder is not a project => we don't need default project settings.
+        // Feel free to change the test if you have strong opinion about desired behavior.
+        Opener("OpenFileAction-FolderAsFolder", expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$"), defaultProjectTemplateShouldBeAppliedOverride = false) {
           runBlocking { ProjectUtil.openExistingDir(it, AS_FOLDER, null) }
         },
+
         Opener("CLI-FolderAsProject", expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
           runBlocking { CommandLineProcessor.doOpenFileOrProject(it, createOrOpenExistingProject = true, false) }.project!!
         },
-        Opener("CLI-FolderAsFolder", expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$")) {
+
+        // I don't have strong opinion about defaultProjectTemplateShouldBeAppliedOverride.
+        // Weak opinion: a folder is not a project => we don't need default project settings.
+        // Feel free to change the test if you have strong opinion about desired behavior.
+        Opener("CLI-FolderAsFolder", expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$"), defaultProjectTemplateShouldBeAppliedOverride = false) {
           runBlocking { CommandLineProcessor.doOpenFileOrProject(it, createOrOpenExistingProject = false, false) }.project!!
         },
       )
@@ -73,7 +82,7 @@ internal class OpenProjectTest(private val opener: Opener) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(ModuleAttachProcessor()), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.resolve(".idea").createDirectories()
-    openWithOpenerAndAssertProjectState(projectDir, defaultProjectTemplateShouldBeApplied = false)
+    openWithOpenerAndAssertProjectState(projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false)
   }
 
   @Test
@@ -81,7 +90,7 @@ internal class OpenProjectTest(private val opener: Opener) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(ModuleAttachProcessor()), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.createDirectories()
-    openWithOpenerAndAssertProjectState(projectDir, defaultProjectTemplateShouldBeApplied = true)
+    openWithOpenerAndAssertProjectState(projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: true)
   }
 
   @Test
@@ -91,7 +100,7 @@ internal class OpenProjectTest(private val opener: Opener) {
     val subProjectDir = projectDir.resolve("subproject")
     subProjectDir.resolve(".idea").createDirectories()
     projectDir.resolve(".idea").createDirectories()
-    openWithOpenerAndAssertProjectState(subProjectDir, defaultProjectTemplateShouldBeApplied = false)
+    openWithOpenerAndAssertProjectState(subProjectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false)
   }
 
   @Test
@@ -102,7 +111,7 @@ internal class OpenProjectTest(private val opener: Opener) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.resolve(".idea").createDirectories()
-    openWithOpenerAndAssertProjectState(projectDir, defaultProjectTemplateShouldBeApplied = false)
+    openWithOpenerAndAssertProjectState(projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false)
   }
 
   @Test
@@ -110,7 +119,7 @@ internal class OpenProjectTest(private val opener: Opener) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.createDirectories()
-    openWithOpenerAndAssertProjectState(projectDir, defaultProjectTemplateShouldBeApplied = true)
+    openWithOpenerAndAssertProjectState(projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: true)
   }
 
   @Test
@@ -120,7 +129,7 @@ internal class OpenProjectTest(private val opener: Opener) {
     val subProjectDir = projectDir.resolve("subproject")
     subProjectDir.resolve(".idea").createDirectories()
     projectDir.resolve(".idea").createDirectories()
-    openWithOpenerAndAssertProjectState(subProjectDir, defaultProjectTemplateShouldBeApplied = false)
+    openWithOpenerAndAssertProjectState(subProjectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false)
   }
 
   private suspend fun openWithOpenerAndAssertProjectState(
@@ -142,6 +151,7 @@ internal class Opener(
   private val name: String,
   val expectedModules: List<String>,
   val expectedRoots: List<String>,
+  val defaultProjectTemplateShouldBeAppliedOverride: Boolean? = null,
   val opener: (Path) -> Project?,
 ) {
   override fun toString() = name

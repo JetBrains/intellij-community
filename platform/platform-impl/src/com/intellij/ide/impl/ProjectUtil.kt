@@ -227,7 +227,7 @@ object ProjectUtil {
     if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
       // this customization is needed, because there is no way to pass original open options to the ProjectOpenProcessor
       // isNewProject = true because for existing projects we should have exit earlier inside `if (isValidProjectPath(file))`
-      project = PlatformProjectOpenProcessor.openProjectAsync(file, options.copy(isNewProject = true, useDefaultProjectAsTemplate = true))
+      project = PlatformProjectOpenProcessor.openProjectAsync(file, options.copy(isNewProject = true))
     }
     else {
       val virtualFile = nullableVirtualFileResult?.let {
@@ -716,7 +716,7 @@ object ProjectUtil {
       OpenProjectTask(projectToClose = currentProject).copy(
         projectRootDir = file,
         createModule = false,
-        useDefaultProjectAsTemplate = true,
+        useDefaultProjectAsTemplate = false,
         runConfigurators = false,
       )
     }
