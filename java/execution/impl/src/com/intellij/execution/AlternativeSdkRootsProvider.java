@@ -56,7 +56,7 @@ public final class AlternativeSdkRootsProvider extends AdditionalLibraryRootsPro
       .map(conf -> conf instanceof ConfigurationWithAlternativeJre jreConf && jreConf.isAlternativeJrePathEnabled() ?
         jreConf.getAlternativeJrePath() : null)
       .filter(Objects::nonNull)
-      .map(ProjectJdkTable.getInstance()::findJdk)
+      .map(ProjectJdkTable.getInstance(project)::findJdk)
       .filter(Objects::nonNull)
       .distinct()
       .toList();
