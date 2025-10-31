@@ -1,4 +1,4 @@
-name: Edict
+name: Edict2
 
 on:
   workflow_dispatch:
