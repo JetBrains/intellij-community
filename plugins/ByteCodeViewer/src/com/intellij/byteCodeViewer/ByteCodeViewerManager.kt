@@ -2,12 +2,13 @@
 package com.intellij.byteCodeViewer
 
 import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.openapi.compiler.CompilerPaths
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.resolveFromRootOrRelative
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
@@ -17,6 +18,7 @@ import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentsOfType
+import java.nio.file.Path
 import java.util.*
 
 public object ByteCodeViewerManager {
@@ -47,15 +49,17 @@ public object ByteCodeViewerManager {
       // source code; looking for a .class file in compiler output
       val fileIndex = ProjectFileIndex.getInstance(psiClass.project)
       val module = fileIndex.getModuleForFile(file) ?: return null
-      val compilerModuleExtension = CompilerModuleExtension.getInstance(module) ?: return null
-      val classRoot = when (fileIndex.isInTestSourceContent(file)) {
-        true -> compilerModuleExtension.compilerOutputPathForTests
-        false -> compilerModuleExtension.compilerOutputPath
+      for (compilerOutputPath in CompilerPaths.getOutputPaths(arrayOf(module))) {
+        if (compilerOutputPath == null) continue
+        val classRoot = VirtualFileManager.getInstance().findFileByNioPath(Path.of(compilerOutputPath)) ?: continue
+        val relativeClassFilePath = jvmClassName.replace('.', '/') + ".class"
+        val classFile = classRoot.resolveFromRootOrRelative(relativeClassFilePath)
+        if (classFile != null) {
+          return classFile
+        }
       }
-      if (classRoot == null) return null
-      val relativeClassFilePath = jvmClassName.replace('.', '/') + ".class"
-      return classRoot.resolveFromRootOrRelative(relativeClassFilePath)
     }
+    return null
   }
 
   @Deprecated(message = "Use findClassFile instead")
