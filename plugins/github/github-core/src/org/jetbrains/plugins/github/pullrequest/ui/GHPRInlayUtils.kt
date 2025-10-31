@@ -117,8 +117,6 @@ internal object GHPRInlayUtils {
     private var edge: Edge? = Edge.TOP
     private var oldRange: LineRange? = null
 
-    private val onEdgeTooltipText = GithubBundle.message("pull.request.review.new.comment.code.outline.tooltip")
-
     private val resizeCursor: Cursor = try {
       Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
     }
@@ -148,7 +146,7 @@ internal object GHPRInlayUtils {
       }
       listOf(editorEx.gutterComponentEx, editor.contentComponent).forEach { component ->
         HelpTooltip()
-          .setDescription(onEdgeTooltipText)
+          .setDescription(GithubBundle.message("pull.request.review.new.comment.code.outline.tooltip"))
           .setLocation(HelpTooltip.Alignment.CURSOR)
           .setInitialDelay(100)
           .installOn(component)
