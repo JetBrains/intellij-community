@@ -1012,30 +1012,45 @@ FunctionEnd
 ; $R2 - installation directory
 ; $productRegKey(out) - product version key if found
 Function un.DoFindProductKey
-  StrCpy $9 0
-
+  StrCpy $8 0
   ${Do}
+    ; iterating over manufacturer's products
     ${If} $R0 = 0
-      EnumRegKey $0 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $9
+      EnumRegKey $7 HKLM "$R1\${MANUFACTURER}" $8
     ${Else}
-      EnumRegKey $0 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $9
+      EnumRegKey $7 HKCU "$R1\${MANUFACTURER}" $8
     ${EndIf}
-    ${If} $0 == ""
+    ${If} $7 == ""
       ${Break}
     ${EndIf}
 
-    ${If} $R0 = 0
-      ReadRegStr $1 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$0" ""
-    ${Else}
-      ReadRegStr $1 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$0" ""
-    ${EndIf}
-    ${If} $1 == $R2
-      StrCpy $rootRegKey $R0
-      StrCpy $productRegKey "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$0"
-      ${Break}
-    ${EndIf}
+    StrCpy $9 0
+    ${Do}
+      ; iterating over product's builds
+      ${If} $R0 = 0
+        EnumRegKey $0 HKLM "$R1\${MANUFACTURER}\$7" $9
+      ${Else}
+        EnumRegKey $0 HKCU "$R1\${MANUFACTURER}\$7" $9
+      ${EndIf}
+      ${If} $0 == ""
+        ${Break}
+      ${EndIf}
 
-    IntOp $9 $9 + 1
+      ${If} $R0 = 0
+        ReadRegStr $1 HKLM "$R1\${MANUFACTURER}\$7\$0" ""
+      ${Else}
+        ReadRegStr $1 HKCU "$R1\${MANUFACTURER}\$7\$0" ""
+      ${EndIf}
+      ${If} $1 == $R2
+        StrCpy $rootRegKey $R0
+        StrCpy $productRegKey "$R1\${MANUFACTURER}\$7\$0"
+        Return
+      ${EndIf}
+
+      IntOp $9 $9 + 1
+    ${Loop}
+
+    IntOp $8 $8 + 1
   ${Loop}
 FunctionEnd
 
