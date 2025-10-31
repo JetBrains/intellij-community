@@ -111,8 +111,6 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
 
   @JdkConstants.CursorType
   open fun getResizeCursor(top: Int, left: Int, bottom: Int, right: Int, resizeArea: Insets): Int {
-    // Wayland doesn't allow to change window's location programmatically,
-    // so resizing from top/left shall be forbidden for now.
     if (top < resizeArea.top) {
       if (left < resizeArea.left * 2) return Cursor.NW_RESIZE_CURSOR
       if (right < resizeArea.right * 2) return Cursor.NE_RESIZE_CURSOR
