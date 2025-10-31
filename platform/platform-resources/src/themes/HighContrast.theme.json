@@ -695,6 +695,18 @@
         "labelBackground" : "#43474A",
         "foreground" : "#5F5F5F"
       }
+    },
+    "Recap": {
+      "cardBackground": "#000000",
+      "cardBorderColor": "#E6E6E6",
+      "cardHeaderTitle": "#FFFFFF",
+      "cardHeaderSubtitle": "#D38B35",
+      "cardFooterForeground": "#CED0D6",
+      "chroniclesBackground": "#000000",
+      "chroniclesBorderColor": "#E6E6E6",
+      "chroniclesBackgroundHovered": "#42424E",
+      "chroniclesForeground": "#DFE1E5",
+      "chroniclesForegroundGreyed": "#D8F45C"
     }
   },
 

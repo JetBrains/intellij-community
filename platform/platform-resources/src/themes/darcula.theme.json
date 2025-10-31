@@ -1179,6 +1179,19 @@
       "List.selectionBackground": "#36393a",
       "Panel.background": "#313435",
       "percent.foreground": "#404040"
+    },
+    
+    "Recap": {
+      "cardBackground": "#2B2B2B",
+      "cardBorderColor": "#2B2B2B",
+      "cardHeaderTitle": "#D3D3D3",
+      "cardHeaderSubtitle": "#B4B8BF",
+      "cardFooterForeground": "#CED0D6",
+      "chroniclesBackground": "#3D3F41",
+      "chroniclesBorderColor": "#3D3F41",
+      "chroniclesBackgroundHovered": "#5E6771",
+      "chroniclesForeground": "#DFE1E5",
+      "chroniclesForegroundGreyed": "#868A91"
     }
   },
 
