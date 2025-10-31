@@ -9,13 +9,10 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -39,16 +36,15 @@ import java.io.File
 @Service(Service.Level.PROJECT)
 internal class KotlinForwardDeclarationsModelChangeService(private val project: Project, cs: CoroutineScope) {
     init {
-        val busConnection = project.messageBus.connect()
-        busConnection.subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-            override fun changed(event: VersionedStorageChange) {
+        cs.launch {
+            WorkspaceModel.getInstance(project).eventLog.collect { event ->
                 val fwdDeclarationChanges = event.getChanges<KotlinForwardDeclarationsWorkspaceEntity>()
                 cleanUp(fwdDeclarationChanges)
 
-                val libraryChanges = event.getChanges<LibraryEntity>().ifEmpty { return }
+                val libraryChanges = event.getChanges<LibraryEntity>().ifEmpty { return@collect }
 
                 val nativeKlibs: Map<LibraryEntity, KLibRoot> =
-                    libraryChanges.toNativeKLibs(event.storageAfter).ifEmpty { return }
+                    libraryChanges.toNativeKLibs(event.storageAfter).ifEmpty { return@collect }
                 val workspaceModel = WorkspaceModel.getInstance(project)
                 val createEntityStorageChanges = createEntityStorageChanges(workspaceModel, nativeKlibs)
 
@@ -67,7 +63,7 @@ internal class KotlinForwardDeclarationsModelChangeService(private val project: 
                     }
                 }
             }
-        })
+        }
     }
 
     private fun cleanUp(fwdDeclarationChanges: List<EntityChange<KotlinForwardDeclarationsWorkspaceEntity>>) {
