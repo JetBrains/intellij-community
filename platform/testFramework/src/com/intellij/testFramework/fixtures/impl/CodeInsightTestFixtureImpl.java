@@ -2127,7 +2127,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testInlays(java.util.function.Function<? super Inlay<?>, String> inlayPresenter,
+  public void testInlays(@NotNull java.util.function.Function<? super Inlay<?>, String> inlayPresenter,
                          Predicate<? super Inlay<?>> inlayFilter) {
     InlayHintsChecker checker = new InlayHintsChecker(this);
     try {
