@@ -73,9 +73,6 @@ internal class PyCommunityToUnifiedWelcomeScreenBanner : PyCommunityToUnifiedWel
         }.customize(customRowGaps = UnscaledGapsY(top = 12))
         row {
           text(PyPromoSharedComponents.mainText)
-            .applyToComponent {
-              foreground = PyPromoSharedComponents.infoFontColor
-            }
         }.customize(customRowGaps = UnscaledGapsY(top = 4, bottom = 8))
       }
       row {
