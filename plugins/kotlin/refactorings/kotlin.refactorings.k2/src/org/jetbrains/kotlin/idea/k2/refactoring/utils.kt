@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
@@ -145,7 +146,7 @@ fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
     return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
         //specify companion name to avoid clashes with enum entries
-        (symbol.containingSymbol as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
+        (symbol.containingSymbol as KaClassifierSymbol).importableFqName!!.asString() + "." + symbol.name!!.asString()
     }
     else if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.OBJECT) {
         symbol.name!!.asString()

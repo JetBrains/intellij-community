@@ -2541,6 +2541,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImports.before.Main.kt");
             }
 
+            @TestMetadata("addImportsForCompanionReplacement.before.Main.kt")
+            public void testAddImportsForCompanionReplacement() throws Exception {
+                runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportsForCompanionReplacement.before.Main.kt");
+            }
+
             @TestMetadata("addImportsSimple.before.Main.kt")
             public void testAddImportsSimple() throws Exception {
                 runTest("testData/quickfix/deprecatedSymbolUsage/imports/addImportsSimple.before.Main.kt");
