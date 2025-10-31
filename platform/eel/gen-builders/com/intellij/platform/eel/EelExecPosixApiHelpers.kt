@@ -154,13 +154,16 @@ object EelExecPosixApiHelpers {
   class EnvironmentVariables(
     private val owner: EelExecPosixApi,
   ) : OwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
-    private var mode: Mode = Mode.LOGIN_NON_INTERACTIVE
+    private var mode: Mode = Mode.DEFAULT
 
     private var onlyActual: Boolean = false
 
     fun mode(arg: Mode): EnvironmentVariables = apply {
       this.mode = arg
     }
+
+    fun default(): EnvironmentVariables =
+      mode(Mode.DEFAULT)
 
     fun loginInteractive(): EnvironmentVariables =
       mode(Mode.LOGIN_INTERACTIVE)
