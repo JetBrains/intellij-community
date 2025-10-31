@@ -577,19 +577,18 @@ public final class Runner {
     else if (newVersion != null) {
       var parts = Utils.splitVersionString(newVersion);
       if (parts.length == 2) {
+        var p = parts[1].indexOf('.');
+        var united = p > 0 && Integer.parseInt(parts[1].substring(0, p)) >= 253;
         if (Utils.IS_WINDOWS) {
           ui.startProcess(UpdaterUI.message("updating.shortcuts"));
           ui.setProgressIndeterminate();
-          PostUpdateTasks.updateWindowsRegistry(targetDir, parts[0], parts[1]);
+          PostUpdateTasks.updateWindowsRegistry(targetDir, parts[0], parts[1], united);
           PostUpdateTasks.updateWindowsShortcuts(targetDir, parts[0]);
         }
-        else {
-          var p = parts[1].indexOf('.');
-          if (p > 0 && Integer.parseInt(parts[1].substring(0, p)) >= 253) {
-            ui.startProcess(UpdaterUI.message("updating.shortcuts"));
-            ui.setProgressIndeterminate();
-            PostUpdateTasks.updateDesktopEntries(targetDir);
-          }
+        else if (united) {
+          ui.startProcess(UpdaterUI.message("updating.shortcuts"));
+          ui.setProgressIndeterminate();
+          PostUpdateTasks.updateDesktopEntries(targetDir);
         }
       }
     }

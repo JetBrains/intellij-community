@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
+import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
 import mslinks.ShellLink;
 import org.jetbrains.annotations.Nullable;
@@ -31,20 +32,27 @@ final class PostUpdateTasks {
     }
   }
 
-  static void updateWindowsRegistry(Path targetDir, String nameAndVersion, String buildNumber) {
+  static void updateWindowsRegistry(Path targetDir, String nameAndVersion, String buildNumber, boolean united) {
+    var targetPath = targetDir.toString();
+    updateUninstallerSection(targetPath, nameAndVersion, buildNumber);
+    if (united) {
+      updateContextMenuEntries(targetPath);
+    }
+  }
+
+  private static void updateUninstallerSection(String targetPath, String nameAndVersion, String buildNumber) {
     try {
-      LOG.info("updateWindowsRegistry for: " + targetDir);
+      LOG.info("updateUninstallerSection for: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
       var keyPath = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
-      var targetPath = targetDir.toString();
       for (var rootKey : rootKeys) {
         for (var key : Advapi32Util.registryGetKeys(rootKey, keyPath)) {
           try {
-            var location = Advapi32Util.registryGetStringValue(rootKey, keyPath + "\\" + key, "InstallLocation");
+            var location = Advapi32Util.registryGetStringValue(rootKey, keyPath + '\\' + key, "InstallLocation");
             if (targetPath.equalsIgnoreCase(location)) {
-              LOG.info("key: " + rootKey + "\\" + keyPath + "\\" + key);
-              Advapi32Util.registrySetStringValue(rootKey, keyPath + "\\" + key, "DisplayName", nameAndVersion);
-              Advapi32Util.registrySetStringValue(rootKey, keyPath + "\\" + key, "DisplayVersion", buildNumber);
+              LOG.info("key: " + rootKeyName(rootKey) + '\\' + keyPath + '\\' + key);
+              Advapi32Util.registrySetStringValue(rootKey, keyPath + '\\' + key, "DisplayName", nameAndVersion);
+              Advapi32Util.registrySetStringValue(rootKey, keyPath + '\\' + key, "DisplayVersion", buildNumber);
               return;
             }
           }
@@ -53,8 +61,54 @@ final class PostUpdateTasks {
       }
     }
     catch (Throwable t) {
-      LOG.log(Level.WARNING, "updateWindowsRegistry failed", t);
+      LOG.log(Level.WARNING, "updateUninstallerSection failed", t);
     }
+  }
+
+  private static void updateContextMenuEntries(String targetPath) {
+    try {
+      LOG.info("updateContextMenuEntries for: " + targetPath);
+      var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
+      for (var rootKey : rootKeys) {
+        // file association target
+        processContextMenuKey(rootKey, "Software\\Classes", true, targetPath);
+        // "edit with" context menu
+        processContextMenuKey(rootKey, "Software\\Classes\\*\\shell", false, targetPath);
+        // folder context menu
+        processContextMenuKey(rootKey, "Software\\Classes\\Directory\\shell", false, targetPath);
+        processContextMenuKey(rootKey, "Software\\Classes\\Directory\\Background\\shell", false, targetPath);
+      }
+    }
+    catch (Throwable t) {
+      LOG.log(Level.WARNING, "updateContextMenuEntries failed", t);
+    }
+  }
+
+  private static void processContextMenuKey(WinReg.HKEY rootKey, String baseKey, boolean fileAssociation, String targetPath) {
+    for (var subKey : Advapi32Util.registryGetKeys(rootKey, baseKey)) {
+      if (fileAssociation && (baseKey.startsWith(".") || baseKey.startsWith("ms-") || baseKey.startsWith("microsoft"))) continue;
+      try {
+        var key = baseKey + '\\' + subKey;
+        var iconPath = fileAssociation
+          ? Advapi32Util.registryGetStringValue(rootKey, key + "\\DefaultIcon", "")
+          : Advapi32Util.registryGetStringValue(rootKey, key, "Icon");
+        if (iconPath.regionMatches(true, 0, targetPath, 0, targetPath.length())) {
+          var name = Advapi32Util.registryGetStringValue(rootKey, key, "");
+          var newName = stripCeSuffixes(name);
+          if (!name.equals(newName)) {
+            LOG.info("key: " + rootKeyName(rootKey) + '\\' + baseKey + '\\' + subKey);
+            Advapi32Util.registrySetStringValue(rootKey, key, "", newName);
+          }
+        }
+      }
+      catch (Win32Exception ignored) { }
+    }
+  }
+
+  private static String rootKeyName(WinReg.HKEY key) {
+    return key == WinReg.HKEY_CURRENT_USER ? "HKCU" :
+           key == WinReg.HKEY_LOCAL_MACHINE ? "HKLM" :
+           "0x" + Long.toHexString(Pointer.nativeValue(key.getPointer()));
   }
 
   static void updateWindowsShortcuts(Path targetDir, String nameAndVersion) {
@@ -174,7 +228,7 @@ final class PostUpdateTasks {
     for (int i = 0; i < content.size(); i++) {
       var line = content.get(i);
       if (line.startsWith("Name=")) {
-        var newLine = line.replace(" CE", "").replace(" Community Edition", "");
+        var newLine = stripCeSuffixes(line);
         if (!newLine.equals(line)) {
           content.set(i, newLine);
           updated = true;
@@ -205,5 +259,9 @@ final class PostUpdateTasks {
     catch (Exception e) {
       LOG.log(Level.WARNING, "refreshMenu failed", e);
     }
+  }
+
+  private static String stripCeSuffixes(String line) {
+    return line.replace(" CE", "").replace(" Community Edition", "");
   }
 }
