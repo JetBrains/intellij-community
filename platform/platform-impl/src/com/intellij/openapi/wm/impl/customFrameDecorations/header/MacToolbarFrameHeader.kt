@@ -25,6 +25,7 @@ import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.mac.MacMainFrameDecorator
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.jetbrains.JBR
@@ -133,9 +134,8 @@ internal class MacToolbarFrameHeader(
     repaintWhenProjectGradientOffsetChanged(this)
   }
 
-  override fun getComponentGraphics(graphics: Graphics?): Graphics? {
-    val componentGraphics = super.getComponentGraphics(graphics)
-    return InternalUICustomization.getInstance()?.transformGraphics(this, componentGraphics) ?: componentGraphics
+  override fun getComponentGraphics(graphics: Graphics): Graphics {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics))
   }
 
   private fun isCompactHeaderFast(): Boolean {
