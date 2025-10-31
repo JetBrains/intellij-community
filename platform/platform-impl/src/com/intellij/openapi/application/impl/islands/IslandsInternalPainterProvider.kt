@@ -13,4 +13,9 @@ internal class IslandsInternalPainterProvider : IslandsPainterProvider() {
   override fun useMacScrollBar(): Boolean {
     return InternalUICustomization.getInstance()?.isMacScrollBar == true
   }
+
+  override fun isTabOccupiesWholeHeight(): Boolean {
+    val customization = InternalUICustomization.getInstance()
+    return customization?.isTabOccupiesWholeHeight ?: super.isTabOccupiesWholeHeight()
+  }
 }

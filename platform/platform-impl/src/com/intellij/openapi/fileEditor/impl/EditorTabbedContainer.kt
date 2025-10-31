@@ -43,7 +43,6 @@ import com.intellij.ui.docking.DockableContent
 import com.intellij.ui.docking.DragSession
 import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelAvailable
 import com.intellij.ui.tabs.*
-import com.intellij.ui.tabs.JBTabPainter.Companion.DEFAULT
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.*
@@ -741,9 +740,7 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
     get() = UISettings.getInstance().closeTabButtonOnTheRight
 
   override fun shouldPaintFadeout(): Boolean {
-    val customization = InternalUICustomization.getInstance()
-    return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true) &&
-           (customization == null || customization.shouldPaintEditorFadeout)
+    return super.shouldPaintFadeout() && Registry.`is`("ide.editor.tabs.show.fadeout", true)
   }
 
   override fun editLabelForeground(baseForeground: Color?): Color? {
