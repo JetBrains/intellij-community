@@ -65,6 +65,26 @@ class EelLocalExecPosixApi(
       ?: object : EelExecPosixApi.PosixEnvironmentVariablesOptions, EelExecApi.EnvironmentVariablesOptions by opts {}
 
     val (cache, interactive) = when (opts.mode) {
+      EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.DEFAULT -> {
+        val newOpts = object : EelExecApi.EnvironmentVariablesOptions by opts, EelExecPosixApi.PosixEnvironmentVariablesOptions {
+          override val mode: EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode =
+            EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE
+        }
+
+        val loginNonInteractive = environmentVariables(newOpts).deferred
+
+        val result = CompletableDeferred<Map<String, String>>()
+        loginNonInteractive.job.invokeOnCompletion { error ->
+          result.completeWith(when (error) {
+            null -> Result.success(loginNonInteractive.getCompleted())
+            is EelExecApi.EnvironmentVariablesException -> Result.success(EnvironmentUtil.getSystemEnv())
+            else -> Result.failure(error)
+          })
+        }
+
+        return EnvironmentVariablesDeferred(result)
+      }
+
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.MINIMAL -> {
         return EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getSystemEnv()))
       }

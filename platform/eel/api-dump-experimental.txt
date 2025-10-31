@@ -118,6 +118,7 @@ f:com.intellij.platform.eel.EelExecApiKt
 - getMode():com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 *e:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 - java.lang.Enum
+- sf:DEFAULT:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 - sf:LOGIN_INTERACTIVE:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 - sf:LOGIN_NON_INTERACTIVE:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 - sf:MINIMAL:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
@@ -128,6 +129,7 @@ f:com.intellij.platform.eel.EelExecApiKt
 - sf:INSTANCE:com.intellij.platform.eel.EelExecPosixApiHelpers
 *f:com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
 - <init>(com.intellij.platform.eel.EelExecPosixApi):V
+- f:default():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
 - f:loginInteractive():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
 - f:loginNonInteractive():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
@@ -421,6 +423,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 *f:com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 - <init>():V
 - f:build():com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions
+- f:default():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 - f:loginInteractive():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 - f:loginNonInteractive():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 - f:minimal():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder

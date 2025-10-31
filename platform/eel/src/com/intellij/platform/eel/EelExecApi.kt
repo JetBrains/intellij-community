@@ -339,9 +339,16 @@ interface EelExecPosixApi : EelExecApi {
   ): EelExecApi.EnvironmentVariablesDeferred
 
   interface PosixEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions {
-    val mode: Mode get() = Mode.LOGIN_NON_INTERACTIVE
+    val mode: Mode get() = Mode.DEFAULT
 
     enum class Mode {
+      /**
+       * Works like [LOGIN_NON_INTERACTIVE], but in case of an error it returns [MINIMAL] instead of throwing an exception.
+       *
+       * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
+       */
+      DEFAULT,
+
       /**
        * The fastest way to get environment variables. It doesn't call shell scripts written by users.
        * At least, the environment variable `PATH` exists, but it may differ from what the user has in their `~/.profile` written.

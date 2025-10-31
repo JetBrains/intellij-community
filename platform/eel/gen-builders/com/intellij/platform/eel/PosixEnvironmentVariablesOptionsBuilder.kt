@@ -12,13 +12,16 @@ import org.jetbrains.annotations.ApiStatus
 @GeneratedBuilder.Result
 @ApiStatus.Experimental
 class PosixEnvironmentVariablesOptionsBuilder {
-  private var mode: Mode = Mode.LOGIN_NON_INTERACTIVE
+  private var mode: Mode = Mode.DEFAULT
 
   private var onlyActual: Boolean = false
 
   fun mode(arg: Mode): PosixEnvironmentVariablesOptionsBuilder = apply {
     this.mode = arg
   }
+
+  fun default(): PosixEnvironmentVariablesOptionsBuilder =
+    mode(Mode.DEFAULT)
 
   fun loginInteractive(): PosixEnvironmentVariablesOptionsBuilder =
     mode(Mode.LOGIN_INTERACTIVE)
