@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 enum class PyLspTool(@NlsSafe val presentableName: String, val  packageName: String) {
-  BASEDPYRIGHT("Basedpyright", "basedpyright"),
+  BASEDPYRIGHT("basedpyright", "basedpyright"),
   PYREFLY("Pyrefly", "pyrefly"),
   PYRIGHT("Pyright", "pyright"),
   RUFF("Ruff", "ruff"),
