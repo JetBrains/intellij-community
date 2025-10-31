@@ -11,7 +11,6 @@ import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -154,7 +153,7 @@ object EelExecPosixApiHelpers {
   @ApiStatus.Experimental
   class EnvironmentVariables(
     private val owner: EelExecPosixApi,
-  ) : OwnedBuilder<Deferred<Map<String, String>>> {
+  ) : OwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
     private var mode: Mode = Mode.LOGIN_NON_INTERACTIVE
 
     private var onlyActual: Boolean = false
@@ -188,7 +187,7 @@ object EelExecPosixApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.EelExecPosixApi.environmentVariables]
      * with an instance of [com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions].
      */
-    override suspend fun eelIt(): Deferred<Map<String, String>> =
+    override suspend fun eelIt(): EelExecApi.EnvironmentVariablesDeferred =
       owner.environmentVariables(
         PosixEnvironmentVariablesOptionsImpl(
           mode = mode,

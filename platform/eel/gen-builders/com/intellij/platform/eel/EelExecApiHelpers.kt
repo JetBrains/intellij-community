@@ -10,7 +10,6 @@ import com.intellij.platform.eel.EelExecApi.InteractionOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.util.*
@@ -80,7 +79,7 @@ object EelExecApiHelpers {
   @ApiStatus.Experimental
   class EnvironmentVariables(
     private val owner: EelExecApi,
-  ) : OwnedBuilder<Deferred<Map<String, String>>> {
+  ) : OwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
     private var onlyActual: Boolean = false
 
     /**
@@ -99,7 +98,7 @@ object EelExecApiHelpers {
      * Complete the builder and call [com.intellij.platform.eel.EelExecApi.environmentVariables]
      * with an instance of [com.intellij.platform.eel.EelExecApi.EnvironmentVariablesOptions].
      */
-    override suspend fun eelIt(): Deferred<Map<String, String>> =
+    override suspend fun eelIt(): EelExecApi.EnvironmentVariablesDeferred =
       owner.environmentVariables(
         EnvironmentVariablesOptionsImpl(
           onlyActual = onlyActual,

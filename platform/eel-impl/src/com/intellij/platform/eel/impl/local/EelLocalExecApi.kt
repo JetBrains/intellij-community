@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesDeferred
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -57,14 +58,15 @@ class EelLocalExecPosixApi(
   private val loginNonInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
   private val loginInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
 
-  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): Deferred<Map<String, String>> {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EnvironmentVariablesDeferred {
     val opts =
       opts as? EelExecPosixApi.PosixEnvironmentVariablesOptions
       ?: object : EelExecPosixApi.PosixEnvironmentVariablesOptions, EelExecApi.EnvironmentVariablesOptions by opts {}
 
     val (cache, interactive) = when (opts.mode) {
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.MINIMAL -> {
-        return CompletableDeferred(EnvironmentUtil.getSystemEnv())
+        return EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getSystemEnv()))
       }
 
       EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE -> {
@@ -97,7 +99,7 @@ class EelLocalExecPosixApi(
       }
     }!!
     result.start()
-    return result
+    return EnvironmentVariablesDeferred(result)
   }
 
   private suspend fun getUserShell(): String {
@@ -205,8 +207,8 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
 
   override val descriptor: EelDescriptor = LocalEelDescriptor
 
-  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): Deferred<Map<String, String>> =
-    CompletableDeferred(EnvironmentUtil.getEnvironmentMap())
+  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EnvironmentVariablesDeferred =
+    EnvironmentVariablesDeferred(CompletableDeferred(EnvironmentUtil.getEnvironmentMap()))
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
