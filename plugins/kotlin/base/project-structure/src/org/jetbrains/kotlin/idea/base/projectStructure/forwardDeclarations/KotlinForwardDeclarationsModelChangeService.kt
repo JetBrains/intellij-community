@@ -1,16 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifyLibraryEntity
 import com.intellij.platform.workspace.storage.EntityChange
-import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.util.PathUtil
 import kotlinx.coroutines.CoroutineScope
@@ -24,39 +25,38 @@ import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import java.io.File
 
 /**
- * Listener for background generation of K/N forward declaration files on workspace model updates.
+ * Service for background generation of K/N forward declaration files on workspace model updates.
  * Detected updates in relevant KLIB libraries trigger regeneration of synthetic Kotlin files.
  * Generated roots are stored inside a child [KotlinForwardDeclarationsWorkspaceEntity] of the affected library.
  *
  * @see [KotlinForwardDeclarationsFileGenerator]
  */
-internal class KotlinForwardDeclarationsModelChangeService(
-    private val project: Project,
-    private val cs: CoroutineScope,
-) : WorkspaceModelChangeListener {
-
-    override fun changed(event: VersionedStorageChange) {
+@Service(Service.Level.PROJECT)
+internal class KotlinForwardDeclarationsModelChangeService(private val project: Project, cs: CoroutineScope) {
+    init {
         cs.launch {
-            val fwdDeclarationChanges = event.getChanges<KotlinForwardDeclarationsWorkspaceEntity>()
-            cleanUp(fwdDeclarationChanges)
+            WorkspaceModel.getInstance(project).eventLog.collect { event ->
+                val fwdDeclarationChanges = event.getChanges<KotlinForwardDeclarationsWorkspaceEntity>()
+                cleanUp(fwdDeclarationChanges)
 
-            val libraryChanges = event.getChanges<LibraryEntity>().ifEmpty { return@launch }
+                val libraryChanges = event.getChanges<LibraryEntity>().ifEmpty { return@collect }
 
-            val nativeKlibs: Map<LibraryEntity, KLibRoot> =
-                libraryChanges.toNativeKLibs().ifEmpty { return@launch }
-            val workspaceModel = WorkspaceModel.getInstance(project)
-            val createEntityStorageChanges = createEntityStorageChanges(workspaceModel, nativeKlibs)
+                val nativeKlibs: Map<LibraryEntity, KLibRoot> =
+                    libraryChanges.toNativeKLibs().ifEmpty { return@collect }
+                val workspaceModel = WorkspaceModel.getInstance(project)
+                val createEntityStorageChanges = createEntityStorageChanges(workspaceModel, nativeKlibs)
 
-            cs.launch {
-                workspaceModel.update("Kotlin Forward Declarations workspace model update") { storage ->
-                    createEntityStorageChanges.forEach { (libraryEntity, builder) ->
+                cs.launch {
+                    workspaceModel.update("Kotlin Forward Declarations workspace model update") { storage ->
+                        createEntityStorageChanges.forEach { (libraryEntity, builder) ->
 
-                        // a hack to bypass workspace model issues; without the extra check entity updates lead to recursion
-                        if (libraryEntity.kotlinForwardDeclarationsWorkspaceEntity == null) {
-                            storage.modifyLibraryEntity(libraryEntity) {
-                                this.kotlinForwardDeclarationsWorkspaceEntity = builder
+                            // a hack to bypass workspace model issues; without the extra check entity updates lead to recursion
+                            if (libraryEntity.kotlinForwardDeclarationsWorkspaceEntity == null) {
+                                storage.modifyLibraryEntity(libraryEntity) {
+                                    this.kotlinForwardDeclarationsWorkspaceEntity = builder
+                                }
+                                storage.addEntity(builder)
                             }
-                            storage.addEntity(builder)
                         }
                     }
                 }
@@ -112,5 +112,14 @@ internal class KotlinForwardDeclarationsModelChangeService(
             .mapNotNull { it.url.virtualFile }
             .filter { it.isKlibLibraryRootForPlatform(NativeIdePlatformKind.defaultPlatform) }
             .toList()
+    }
+}
+
+/**
+ * Request [KotlinForwardDeclarationsModelChangeService] on startup to start receiving workspace model update events.
+ */
+internal class KotlinForwardDeclarationsStartupActivity : ProjectActivity {
+    override suspend fun execute(project: Project) {
+        project.service<KotlinForwardDeclarationsModelChangeService>()
     }
 }
