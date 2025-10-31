@@ -1,4 +1,4 @@
-name: Qodana
+name: Edict
 
 on:
   workflow_dispatch:
