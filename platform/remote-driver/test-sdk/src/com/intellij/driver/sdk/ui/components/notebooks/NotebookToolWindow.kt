@@ -4,6 +4,8 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.waitFor
+import kotlin.time.Duration.Companion.seconds
 
 internal val Finder.kotlinNotebookSessionToolWindow: KotlinNotebookToolWindowUiComponent
   get() = x("""
@@ -62,4 +64,6 @@ class KotlinNotebookToolWindowUiComponent(data: ComponentData) : UiComponent(dat
     get() = if (variablesButton == null) "" else {
       variablesToolWindowUiComponent.getAllTexts().joinToString("") { it.text }
     }
+
+  fun waitForVariablesViewText(text: String) = waitFor("expect $text in $variablesViewText", timeout = 25.seconds) { variablesViewText.contains(text) }
 }
