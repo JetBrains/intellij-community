@@ -209,10 +209,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      final List<EventPair<?>> data = ReadAction.compute(
-        //maybe readaction
-        () -> getCommonUsageInfo(finishType, currentItem, completionChar)
-      );
+      final List<EventPair<?>> data = ReadAction.compute(() -> getCommonUsageInfo(finishType, currentItem, completionChar));
 
       final List<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
