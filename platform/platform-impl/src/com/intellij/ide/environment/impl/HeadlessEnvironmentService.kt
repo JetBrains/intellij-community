@@ -22,7 +22,6 @@ class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService
     return getEnvironmentValueOrNull(key)
            ?: run {
              val throwable = MissingEnvironmentKeyException(key)
-             LOG.error(throwable)
              HeadlessLogging.logFatalError(MissingEnvironmentKeyException(key))
              throw throwable
            }
