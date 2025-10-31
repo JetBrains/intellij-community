@@ -22,7 +22,6 @@ import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalStartupKt;
@@ -46,8 +45,10 @@ public final class LocalOptionsConfigurer {
   private static final Logger LOG = Logger.getInstance(LocalOptionsConfigurer.class);
 
   public static @NotNull ShellStartupOptions configureStartupOptions(@NotNull ShellStartupOptions baseOptions, @NotNull Project project) {
-    String workingDir = getWorkingDirectory(baseOptions.getWorkingDirectory(), project);
-    List<String> initialCommand = getInitialCommand(baseOptions, project, workingDir);
+    String requestedWorkingDirectory = findValidWorkingDirectory(baseOptions.getWorkingDirectory());
+    boolean isRequestedWorkingDirectoryInvalid = baseOptions.getWorkingDirectory() != null && requestedWorkingDirectory == null;
+    String workingDir = requestedWorkingDirectory != null ? requestedWorkingDirectory : getDefaultWorkingDirectory(project);
+    List<String> initialCommand = getInitialCommand(baseOptions, project, workingDir, isRequestedWorkingDirectoryInvalid);
     var eelDescriptor = findEelDescriptor(workingDir, initialCommand);
     Map<String, String> envs = getTerminalEnvironment(baseOptions.getEnvVariables(), project, eelDescriptor, initialCommand);
 
@@ -67,12 +68,7 @@ public final class LocalOptionsConfigurer {
       .build();
   }
 
-  @VisibleForTesting
-  static @NotNull String getWorkingDirectory(@Nullable String directory, Project project) {
-    String validDirectory = findValidWorkingDirectory(directory);
-    if (validDirectory != null) {
-      return validDirectory;
-    }
+  private static @NotNull String getDefaultWorkingDirectory(@NotNull Project project) {
     String configuredWorkingDirectory = TerminalProjectOptionsProvider.getInstance(project).getStartingDirectory();
     if (configuredWorkingDirectory != null && isDirectory(configuredWorkingDirectory)) {
       return configuredWorkingDirectory;
@@ -161,9 +157,10 @@ public final class LocalOptionsConfigurer {
   private static @NotNull List<String> getInitialCommand(
     @NotNull ShellStartupOptions options,
     @NotNull Project project,
-    @NotNull String workingDir
+    @NotNull String workingDir,
+    boolean isRequestedWorkingDirectoryInvalid
   ) {
-    List<String> shellCommand = fixShellCommand(options.getShellCommand());
+    List<String> shellCommand = fixShellCommand(options.getShellCommand(), isRequestedWorkingDirectoryInvalid);
     if (shellCommand != null) {
       return shellCommand;
     }
@@ -171,10 +168,19 @@ public final class LocalOptionsConfigurer {
     return LocalTerminalStartCommandBuilder.convertShellPathToCommand(shellPath, workingDir);
   }
 
-  private static @Nullable List<String> fixShellCommand(@Nullable List<String> shellCommand) {
+  private static @Nullable List<String> fixShellCommand(
+    @Nullable List<String> shellCommand,
+    boolean isRequestedWorkingDirectoryInvalid
+  ) {
     if (OS.CURRENT == OS.Windows && !TerminalStartupKt.shouldUseEelApi() &&
         isUnixPath(ContainerUtil.getFirstItem(shellCommand))) {
       return null; // use the default shell path
+    }
+    if (isRequestedWorkingDirectoryInvalid && isUnixPath(ContainerUtil.getFirstItem(shellCommand))) {
+      // When switching between Host and DevContainer projects,
+      // terminal tabs are stored in the same place (unfortunately).
+      // Let's use the default shell path instead of the invalid stored shell path in such a case.
+      return null;
     }
     return shellCommand;
   }
