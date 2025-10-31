@@ -42,6 +42,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -431,10 +432,15 @@ public class WSLDistribution implements AbstractWslDistribution {
     testOverriddenWslExe = path;
   }
 
+  private static final AtomicBoolean isAttemptToFindWslExeLogged = new AtomicBoolean(false);
+
   public static @Nullable Path findWslExe() {
     if (testOverriddenWslExe != null) return testOverriddenWslExe;
 
     File file = PathEnvironmentVariableUtil.findInPath(WSL_EXE);
+    if (LOG.isTraceEnabled() && isAttemptToFindWslExeLogged.compareAndSet(false, true)) {
+      LOG.trace(new Throwable("findWslExe called"));
+    }
     return file != null ? file.toPath() : null;
   }
 
