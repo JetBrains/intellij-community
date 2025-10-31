@@ -45,7 +45,6 @@ import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -96,7 +95,6 @@ public abstract class PyTestCase extends UsefulTestCase {
         if (myFixture.getModule() != null) {
           PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
         }
-        PyModuleNameCompletionContributor.ENABLED = true;
         setLanguageLevel(null);
 
         myFixture.tearDown();

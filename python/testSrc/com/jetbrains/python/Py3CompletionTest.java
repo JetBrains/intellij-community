@@ -9,7 +9,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
@@ -181,7 +180,6 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   public void testAsync() {
-    PyModuleNameCompletionContributor.ENABLED = false;
     doTest();
   }
 

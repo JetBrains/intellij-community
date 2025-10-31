@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
@@ -29,7 +28,6 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.setTestDataPath(getTestDataPath());
-    PyModuleNameCompletionContributor.ENABLED = false;
   }
 
   protected void doTest() {
