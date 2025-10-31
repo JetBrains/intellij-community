@@ -85,6 +85,8 @@ public final @NonNls class JUnitCommonClassNames {
   public static final String ORG_JUNIT_EXPERIMENTAL_RUNNERS_ENCLOSED = "org.junit.experimental.runners.Enclosed";
   public static final String ORG_JUNIT_JUPITER_API_IO_TEMPDIR = "org.junit.jupiter.api.io.TempDir";
   public static final String ORG_JUNIT_PLATFORM_SUITE_API_SUITE = "org.junit.platform.suite.api.Suite";
+  public static final String ORG_JUNIT_PLATFORM_SUITE_API_AFTERSUITE = "org.junit.platform.suite.api.AfterSuite";
+  public static final String ORG_JUNIT_PLATFORM_SUITE_API_BEFORESUITE = "org.junit.platform.suite.api.BeforeSuite";
   // junit 6
   public static final String ORG_JUNIT_JUPITER_API_METHOD_ORDERER_DEFAULT = "org.junit.jupiter.api.MethodOrderer.Default";
 }
