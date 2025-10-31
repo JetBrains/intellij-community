@@ -18,6 +18,7 @@ import com.intellij.platform.buildData.productInfo.CustomPropertyNames
 import com.intellij.platform.ide.productInfo.IdeProductInfo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.JBAccountInfoService
+import com.intellij.ui.LicensingFacade
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import kotlinx.coroutines.*
@@ -47,7 +48,8 @@ internal object ITNProxy {
 
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
-  private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
+  private const val EA_NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
+  private const val DIOGEM_VIEW_URL = "https://diogen.labs.jb.gg/report/"
 
   internal val DEVICE_ID: String = DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
 
@@ -97,8 +99,19 @@ internal object ITNProxy {
   )
 
   fun getBrowseUrl(threadId: Long): String? =
-    if (PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))) NEW_THREAD_VIEW_URL + threadId
-    else null
+    when {
+      PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID)) -> when {
+        isInternalUser() -> DIOGEM_VIEW_URL + threadId
+        else -> EA_NEW_THREAD_VIEW_URL + threadId
+      }
+      else -> null
+    }
+
+  private fun isInternalUser(): Boolean {
+    val isJetBrainsEmail = JBAccountInfoService.getInstance()?.userData?.email?.endsWith("@jetbrains.com") == true
+    val isJetBrainsTeam = LicensingFacade.getInstance()?.licensedTo?.contains("JetBrains Team") == true
+    return isJetBrainsEmail || isJetBrainsTeam
+  }
 
   private val httpClient by lazy {
     HttpClient.newBuilder()
