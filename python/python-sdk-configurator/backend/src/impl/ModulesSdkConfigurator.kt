@@ -16,9 +16,8 @@ import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.create
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.popModulesSDKConfigurator
-import com.intellij.python.sdkConfigurator.common.impl.CreateSdkDTO
+import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
-import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
@@ -43,10 +42,43 @@ import kotlinx.coroutines.withContext
  */
 internal class ModulesSdkConfigurator private constructor(
   private val project: Project,
-  private val modules: Map<ModuleName, Pair<ModuleCreateInfo, CreateSdkDTO>>,
-  val modulesDTO: ModulesDTO = ModulesDTO(modules.map { Pair(it.key, it.value.second) }.toMap()),
+  private val modules: Map<ModuleName, ModuleCreateInfo>,
+) {
 
-  ) {
+  val modulesDTO: List<ModuleDTO>
+
+  init {
+    val children = HashMap<ModuleName, MutableSet<ModuleName>>()
+
+    // Find parents
+    for ((moduleName, createInfo) in modules) {
+      children.putIfAbsent(moduleName, HashSet())
+      when (createInfo) {
+        is ModuleCreateInfo.CreateSdkInfoWrapper -> Unit
+        is ModuleCreateInfo.SameAs -> {
+          children.getOrPut(createInfo.parentModuleName) { HashSet() }.add(moduleName)
+        }
+      }
+    }
+    //Map modules
+    modulesDTO = modules.mapNotNull { (moduleName, createInfo) ->
+      when (createInfo) {
+        is ModuleCreateInfo.CreateSdkInfoWrapper -> {
+          val version = when (val r = createInfo.createSdkInfo) {
+            is CreateSdkInfo.ExistingEnv -> r.version
+            is CreateSdkInfo.WillCreateEnv -> null
+          }
+          ModuleDTO(moduleName, createInfo.toolId.id, version, children[moduleName]!!.toList().sorted())
+        }
+        is ModuleCreateInfo.SameAs -> null
+      }
+    }
+      .sortedBy { it.name }
+      .toList()
+
+
+  }
+
   companion object {
     /**
      * Create instance and save in [project]
@@ -65,7 +97,7 @@ internal class ModulesSdkConfigurator private constructor(
       return instance
     }
 
-    private suspend fun getModulesWithoutSDKCreateInfo(project: Project): Map<ModuleName, Pair<ModuleCreateInfo, CreateSdkDTO>> = withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.looking")) {
+    private suspend fun getModulesWithoutSDKCreateInfo(project: Project): Map<ModuleName, ModuleCreateInfo> = withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.looking")) {
       val tools = PyProjectSdkConfigurationExtension.createMap()
       val limit = Semaphore(permits = Registry.intValue("intellij.python.sdkConfigurator.backend.sdk.parallel"))
       val now = System.currentTimeMillis()
@@ -80,21 +112,19 @@ internal class ModulesSdkConfigurator private constructor(
       val result = resultDef.awaitAll().filterNotNull()
       logger.debug { "SDKs calculated in ${System.currentTimeMillis() - now}ms" }
       result.associate { (module, createInfoAndDTO) ->
-        val (createInfo, dto) = createInfoAndDTO
-        //module.putUserData(modulesKey, createInfo)
-        Pair(module.name, Pair(createInfo, dto))
+        Pair(module.name, createInfoAndDTO)
       }
     }
 
     private val logger = fileLogger()
 
     private sealed interface ModuleCreateInfo {
-      data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo) : ModuleCreateInfo
+      data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo, val toolId: ToolId) : ModuleCreateInfo
       data class SameAs(val parentModuleName: ModuleName) : ModuleCreateInfo
     }
 
 
-    private suspend fun getModuleInfo(module: Module, configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension>): Pair<ModuleCreateInfo, CreateSdkDTO>? = // Save on module level
+    private suspend fun getModuleInfo(module: Module, configuratorsByTool: Map<ToolId, PyProjectSdkConfigurationExtension>): ModuleCreateInfo? = // Save on module level
       when (val r = module.suggestSdk()) {
         is SuggestedSdk.PyProjectIndependent -> {
           val tools = r.preferTools.map { configuratorsByTool[it]!! }
@@ -105,23 +135,15 @@ internal class ModulesSdkConfigurator private constructor(
           }
         }
         is SuggestedSdk.SameAs -> {
-          val createInfo = ModuleCreateInfo.SameAs(r.parentModule.name)
-          Pair(createInfo, createInfo.asDTO())
+          ModuleCreateInfo.SameAs(r.parentModule.name)
         }
         null -> null
       } // No tools or not pyproject.toml at all? Use EP as a fallback
       ?: PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull()?.let { CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO() }
 
 
-    private fun CreateSdkInfoWithTool.asDTO(): Pair<ModuleCreateInfo, CreateSdkDTO.ConfigurableModule> {
-      val version = when (val r = createSdkInfo) {
-        is CreateSdkInfo.ExistingEnv -> r.version
-        is CreateSdkInfo.WillCreateEnv -> null
-      }
-      return Pair(ModuleCreateInfo.CreateSdkInfoWrapper(createSdkInfo), CreateSdkDTO.ConfigurableModule(version, toolId.id))
-    }
+    private fun CreateSdkInfoWithTool.asDTO(): ModuleCreateInfo = ModuleCreateInfo.CreateSdkInfoWrapper(createSdkInfo, toolId)
 
-    private fun ModuleCreateInfo.SameAs.asDTO(): CreateSdkDTO.SameAs = CreateSdkDTO.SameAs(parentModuleName)
 
     /**
      * Key used to store instance in project by [create] to be used by [popModulesSDKConfigurator]
@@ -140,7 +162,7 @@ internal class ModulesSdkConfigurator private constructor(
       val modulesWithSameSdk = mutableMapOf<Module, Module>()
       for (module in modulesOnly.map { modulesMap[it] ?: error("No module $it, caller broke the contract") }) { // TODO: Run in parallel
         withBackgroundProgress(project, PySdkConfiguratorBundle.message("intellij.python.sdk.configuring.module", module.name)) {
-          val createInfo = (modules[module.name] ?: error("No create info for module $module, caller broke the contract")).first
+          val createInfo = (modules[module.name] ?: error("No create info for module $module, caller broke the contract"))
           when (createInfo) {
             is ModuleCreateInfo.CreateSdkInfoWrapper -> {
               when (val r = createInfo.createSdkInfo.sdkCreator(false)) {

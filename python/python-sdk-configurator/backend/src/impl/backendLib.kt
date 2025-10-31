@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.rpc.topics.sendToClient
+import com.intellij.python.sdkConfigurator.common.impl.ModulesDTO
 import com.intellij.python.sdkConfigurator.common.impl.SHOW_SDK_CONFIG_UI_TOPIC
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,9 +33,9 @@ internal suspend fun configureSdkAskingUser(project: Project) {
     askUserMutex.withLock {
       val moduleToSuggestedSdk = ModulesSdkConfigurator.create(project)
       val modulesDTO = moduleToSuggestedSdk.modulesDTO
-      if (modulesDTO.modules.isNotEmpty()) {
+      if (modulesDTO.isNotEmpty()) {
         // No need to send empty list
-        SHOW_SDK_CONFIG_UI_TOPIC.sendToClient(project, modulesDTO)
+        SHOW_SDK_CONFIG_UI_TOPIC.sendToClient(project, ModulesDTO(modulesDTO))
       }
     }
   }
