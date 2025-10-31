@@ -39,31 +39,6 @@ E.g.:
 Avoid including links to any discussions in commit messages (Slack, https://platform.jetbrains.com/, etc.). Instead, summarize the
 discussion right in the commit message, or create a YouTrack ticket and summarize it there.
 
-Avoid using previously encouraged subsystem prefix (e.g. `[groovy]`), because many projects do not have a subsystem. Instead, place
-the subsystem name right after the issue id.
-
-1. If the commit changes a product's distribution, the YouTrack ticket id is required to be present in the commit message.
-2. If the commit does not change a product's distribution (e.g., tests, documentation, formatting, etc.), the message should be in the following format:
-   ```
-   <non-production code change label>: <subject>
-        
-   <detailed description>
-   ```
-
-   Possible labels:
-   - `tests`, `test`
-   - `cleanup`, `typo`
-   - `refactor`, `refactoring` for small refactorings (e.g., renaming a local variable, extracting private method, changes which don't
-   affect public API signatures)
-   - `docs`, `doc`
-   - `format`, `style`
-
-   E.g.:
-
-   ```
-   typo: “accross” → “across”
-   ```
-
 ## Building the IDE
 
 Please read the [README.md](README.md) in order to understand how to build or
