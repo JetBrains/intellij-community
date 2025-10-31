@@ -192,9 +192,12 @@ class RecentProjectFilteringTree(
     }
   }
 
-  fun selectLastOpenedProject() {
+  /**
+   * @return true if the last opened project was selected
+   */
+  fun selectLastOpenedProject(): Boolean {
     val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
-    val projectPath = recentProjectsManager.getLastOpenedProject() ?: return
+    val projectPath = recentProjectsManager.getLastOpenedProject() ?: return false
 
     val node = TreeUtil.findNode(root, Condition {
       when (val item = TreeUtil.getUserObject(RecentProjectTreeItem::class.java, it)) {
@@ -206,7 +209,23 @@ class RecentProjectFilteringTree(
 
     if (node != null) {
       TreeUtil.selectNode(tree, node)
+      return true
     }
+    return false
+  }
+
+  @ApiStatus.Internal
+  fun selectLastOpenedProjectOrTheFirstInTree(): Boolean {
+    if (selectLastOpenedProject()) {
+      return true
+    }
+
+    val firstChild = root.firstChild
+    if (firstChild != null) {
+      TreeUtil.selectNode(tree, firstChild)
+      return true
+    }
+    return false
   }
 
   private class ProjectActionMouseListener(
