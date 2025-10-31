@@ -21,5 +21,5 @@ class GoWelcomeScreenUI(data: ComponentData) : WelcomeScreenUI(data) {
     get() = x(xQuery { byVisibleText("New…") })
 
   val cloneButton: UiComponent
-    get() = x(xQuery { byAccessibleName("Clone…") })
+    get() = x(xQuery { byAccessibleName("Clone Repository…") })
 }
