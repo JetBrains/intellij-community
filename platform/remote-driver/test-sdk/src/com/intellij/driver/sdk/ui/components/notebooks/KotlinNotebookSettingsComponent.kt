@@ -55,9 +55,6 @@ class KotlinNotebookUiSettingsComponent(data: ComponentData) : UiComponent(data)
       //div[@class='JBCheckBox' and contains(@text, 'after cell execution')]
     """.trimIndent())
 
-  val resolveMppDependenciesCheckBox: UiComponent
-    get() = x("//div[@class='JBCheckBox' and contains(@text, 'Resolve multiplatform')]")
-
   /**
    * NB: these action buttons are related to Settings Editor and should be accessed via [withSettingsEditorPanel]
    */
