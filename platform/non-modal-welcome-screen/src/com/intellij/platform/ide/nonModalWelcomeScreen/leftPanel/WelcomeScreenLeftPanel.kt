@@ -136,7 +136,7 @@ class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(pro
       treeBackground = null
     ).apply {
       tree.emptyText.text = NonModalWelcomeScreenBundle.message("welcome.screen.no.recent.projects")
-      selectLastOpenedProject()
+      selectLastOpenedProjectOrTheFirstInTree()
     }
 
   private fun createProjectSearchField(recentProjectTree: RecentProjectFilteringTree): SearchTextField =
