@@ -122,15 +122,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return !isManyIslandEnabled
     }
 
-  override val shouldPaintEditorFadeout: Boolean
-    get() {
-      return !isManyIslandEnabled
-    }
-
   override val isMainMenuBottomBorder: Boolean
     get() {
       return !isManyIslandEnabled
     }
+
+  override val isTabOccupiesWholeHeight: Boolean
+    get() = !isManyIslandEnabled
 
   override val toolWindowUIDecorator: ToolWindowUIDecorator = object : ToolWindowUIDecorator() {
     override fun decorateAndReturnHolder(divider: JComponent, child: JComponent, toolWindow: ToolWindow, originalBorderBuilder: () -> Border): JComponent {

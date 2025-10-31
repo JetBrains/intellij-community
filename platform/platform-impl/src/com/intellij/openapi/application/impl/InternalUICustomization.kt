@@ -62,8 +62,6 @@ open class InternalUICustomization {
 
   open val debuggerTabPainterAdapter: TabPainterAdapter? = null
 
-  open val shouldPaintEditorFadeout: Boolean = true
-
   open val toolWindowUIDecorator: ToolWindowUIDecorator = ToolWindowUIDecorator()
 
   open val toolWindowTabPainter: JBTabPainter = JBTabPainter.TOOL_WINDOW
@@ -76,6 +74,8 @@ open class InternalUICustomization {
     }
 
   open val isMainMenuBottomBorder: Boolean = true
+
+  open val isTabOccupiesWholeHeight: Boolean = true
 
   internal open fun configureToolWindowPane(toolWindowPaneParent: JComponent, buttonManager: ToolWindowButtonManager) {}
 
