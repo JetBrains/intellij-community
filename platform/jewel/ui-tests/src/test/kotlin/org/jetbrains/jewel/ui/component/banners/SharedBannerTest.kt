@@ -64,7 +64,7 @@ abstract class SharedBannerTest {
         ) {
             onNodeWithText("Action 1").assertIsDisplayed()
             onNodeWithText("Action 2").assertIsDisplayed()
-            onNodeWithText("More").assertIsDisplayed()
+            onNodeWithText("!action.text.more!").assertIsDisplayed()
 
             onNodeWithText("Action 3").assertIsNotDisplayed()
             onNodeWithText("Action 4").assertIsNotDisplayed()
@@ -108,10 +108,10 @@ abstract class SharedBannerTest {
             onNodeWithText("Action 1").performClick()
             onNodeWithText("Action 2").performClick()
 
-            onNodeWithText("More").performClick()
+            onNodeWithText("!action.text.more!").performClick()
             onNode(hasText("Action 3").and(hasAnyAncestor(isPopup()))).performClick()
 
-            onNodeWithText("More").performClick()
+            onNodeWithText("!action.text.more!").performClick()
             onNode(hasText("Action 4").and(hasAnyAncestor(isPopup()))).performClick()
 
             // All items got clicked
@@ -133,7 +133,7 @@ abstract class SharedBannerTest {
             }
         ) {
             // Clicking "More" show the popup
-            onNodeWithText("More").performClick()
+            onNodeWithText("!action.text.more!").performClick()
             onNode(hasText("Action 3").and(hasAnyAncestor(isPopup()))).assertIsDisplayed()
             onNode(hasText("Action 4").and(hasAnyAncestor(isPopup()))).assertIsDisplayed()
 
@@ -192,7 +192,7 @@ abstract class SharedBannerTest {
         ) {
             onRoot().printToLog("foo")
             onNodeWithText("Lorem ipsum dolor sit amet,", substring = true).assertIsNotDisplayed()
-            onNodeWithText("More").assertIsDisplayed()
+            onNodeWithText("!action.text.more!").assertIsDisplayed()
         }
     }
 
