@@ -42,6 +42,7 @@ class ObservableTtyConnector(delegate: TtyConnector) : ProxyTtyConnector {
         action(listener)
       }
       catch (t: Throwable) {
+        if (Logger.shouldRethrow(t)) throw t
         thisLogger().error(t)
       }
     }
