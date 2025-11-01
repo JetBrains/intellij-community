@@ -68,7 +68,7 @@ internal fun readDefaultTabStyle(): TabStyle {
                 contentHovered = 1f,
                 contentSelected = 1f,
             ),
-        scrollbarStyle = readScrollbarStyle(isDark),
+        scrollbarStyle = readTabStripScrollbarStyle(isDark),
     )
 }
 
@@ -122,6 +122,6 @@ internal fun readEditorTabStyle(): TabStyle {
                 contentHovered = 1f,
                 contentSelected = 1f,
             ),
-        scrollbarStyle = readScrollbarStyle(isDark),
+        scrollbarStyle = readTabStripScrollbarStyle(isDark),
     )
 }

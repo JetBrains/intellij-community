@@ -6,6 +6,8 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -15,6 +17,8 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,10 +40,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Hovered
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.AlwaysVisible
+import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenContainerHovered
 import org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility.WhenScrolling
 import org.jetbrains.jewel.ui.theme.scrollbarStyle
 import org.jetbrains.skiko.OS
@@ -48,6 +54,11 @@ import org.jetbrains.skiko.hostOs
 private const val ID_CONTENT = "VerticallyScrollableContainer_content"
 private const val ID_VERTICAL_SCROLLBAR = "VerticallyScrollableContainer_verticalScrollbar"
 private const val ID_HORIZONTAL_SCROLLBAR = "VerticallyScrollableContainer_horizontalScrollbar"
+
+public enum class ScrollbarPosition {
+    Start,
+    End,
+}
 
 /**
  * A vertically scrollable container that follows the standard visual styling.
@@ -87,7 +98,9 @@ public fun VerticallyScrollableContainer(
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
+    scrollbarPosition: ScrollbarPosition = ScrollbarPosition.End,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    containerInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable BoxScope.() -> Unit,
 ) {
     VerticallyScrollableContainer(
@@ -98,7 +111,35 @@ public fun VerticallyScrollableContainer(
         reverseLayout,
         userScrollEnabled = true,
         scrollbarEnabled,
+        scrollbarPosition,
         scrollbarInteractionSource,
+        containerInteractionSource,
+        content,
+    )
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+public fun VerticallyScrollableContainer(
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable BoxScope.() -> Unit,
+) {
+    VerticallyScrollableContainer(
+        modifier,
+        scrollbarModifier,
+        scrollState,
+        style,
+        reverseLayout,
+        scrollbarEnabled,
+        ScrollbarPosition.End,
+        scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
         content,
     )
 }
@@ -142,7 +183,9 @@ public fun VerticallyScrollableContainer(
     reverseLayout: Boolean = false,
     userScrollEnabled: Boolean = true,
     scrollbarEnabled: Boolean = userScrollEnabled,
+    scrollbarPosition: ScrollbarPosition = ScrollbarPosition.End,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    containerInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -158,12 +201,16 @@ public fun VerticallyScrollableContainer(
                 enabled = scrollbarEnabled,
                 reverseLayout = reverseLayout,
                 interactionSource = scrollbarInteractionSource,
+                containerState = it,
             )
         },
         verticalScrollbarVisible = scrollState.canScroll,
+        verticalScrollbarPosition = scrollbarPosition,
         horizontalScrollbar = null,
         horizontalScrollbarVisible = false,
+        horizontalScrollbarPosition = ScrollbarPosition.End,
         scrollbarStyle = style,
+        containerInteractionSource = containerInteractionSource,
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(
@@ -173,6 +220,34 @@ public fun VerticallyScrollableContainer(
             content()
         }
     }
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+public fun VerticallyScrollableContainer(
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    userScrollEnabled: Boolean = true,
+    scrollbarEnabled: Boolean = userScrollEnabled,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable BoxScope.() -> Unit,
+) {
+    VerticallyScrollableContainer(
+        modifier,
+        scrollbarModifier,
+        scrollState,
+        style,
+        reverseLayout,
+        userScrollEnabled,
+        scrollbarEnabled,
+        ScrollbarPosition.End,
+        scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
+        content,
+    )
 }
 
 @Suppress("ModifierNaming")
@@ -193,12 +268,16 @@ internal fun TextAreaScrollableContainer(
                 style = style,
                 modifier = Modifier.pointerHoverIcon(PointerIcon.Default).padding(1.dp),
                 keepVisible = keepVisible,
+                containerState = it,
             )
         },
         verticalScrollbarVisible = scrollState.canScroll,
+        verticalScrollbarPosition = ScrollbarPosition.End,
         horizontalScrollbar = null,
         horizontalScrollbarVisible = false,
+        horizontalScrollbarPosition = ScrollbarPosition.End,
         scrollbarStyle = style,
+        containerInteractionSource = remember { MutableInteractionSource() },
         modifier = Modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(contentModifier.layoutId(ID_CONTENT)) { content() }
@@ -262,7 +341,9 @@ public fun VerticallyScrollableContainer(
         style,
         reverseLayout,
         scrollbarEnabled,
+        ScrollbarPosition.End,
         scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
         content,
     )
 }
@@ -324,7 +405,9 @@ public fun VerticallyScrollableContainer(
         style,
         reverseLayout,
         scrollbarEnabled,
+        ScrollbarPosition.End,
         scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
         content,
     )
 }
@@ -369,7 +452,9 @@ public fun VerticallyScrollableContainer(
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
+    scrollbarPosition: ScrollbarPosition = ScrollbarPosition.End,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    containerInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -385,16 +470,46 @@ public fun VerticallyScrollableContainer(
                 enabled = scrollbarEnabled,
                 reverseLayout = reverseLayout,
                 interactionSource = scrollbarInteractionSource,
+                containerState = it,
             )
         },
         verticalScrollbarVisible = scrollState.canScroll,
+        verticalScrollbarPosition = scrollbarPosition,
         horizontalScrollbar = null,
         horizontalScrollbarVisible = false,
+        horizontalScrollbarPosition = ScrollbarPosition.End,
         scrollbarStyle = style,
+        containerInteractionSource = containerInteractionSource,
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(Modifier.layoutId(ID_CONTENT)) { content() }
     }
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+public fun VerticallyScrollableContainer(
+    scrollState: ScrollableState,
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable BoxScope.() -> Unit,
+) {
+    VerticallyScrollableContainer(
+        scrollState,
+        modifier,
+        scrollbarModifier,
+        style,
+        reverseLayout,
+        scrollbarEnabled,
+        ScrollbarPosition.End,
+        scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
+        content,
+    )
 }
 
 /**
@@ -435,7 +550,9 @@ public fun HorizontallyScrollableContainer(
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
+    scrollbarPosition: ScrollbarPosition = ScrollbarPosition.End,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    containerInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable BoxScope.() -> Unit,
 ) {
     HorizontallyScrollableContainer(
@@ -447,7 +564,35 @@ public fun HorizontallyScrollableContainer(
         userScrollEnabled = true,
         scrollbarEnabled = scrollbarEnabled,
         scrollbarInteractionSource = scrollbarInteractionSource,
+        scrollbarPosition = scrollbarPosition,
+        containerInteractionSource = containerInteractionSource,
         content = content,
+    )
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+public fun HorizontallyScrollableContainer(
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable BoxScope.() -> Unit,
+) {
+    HorizontallyScrollableContainer(
+        modifier,
+        scrollbarModifier,
+        scrollState,
+        style,
+        reverseLayout,
+        scrollbarEnabled,
+        ScrollbarPosition.End,
+        scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
+        content,
     )
 }
 
@@ -490,7 +635,9 @@ public fun HorizontallyScrollableContainer(
     reverseLayout: Boolean = false,
     userScrollEnabled: Boolean = true,
     scrollbarEnabled: Boolean = userScrollEnabled,
+    scrollbarPosition: ScrollbarPosition = ScrollbarPosition.End,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    containerInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -499,6 +646,7 @@ public fun HorizontallyScrollableContainer(
     ScrollableContainerImpl(
         verticalScrollbar = null,
         verticalScrollbarVisible = false,
+        verticalScrollbarPosition = ScrollbarPosition.End,
         horizontalScrollbar = {
             HorizontalScrollbar(
                 scrollState = scrollState,
@@ -508,10 +656,13 @@ public fun HorizontallyScrollableContainer(
                 enabled = scrollbarEnabled,
                 reverseLayout = reverseLayout,
                 interactionSource = scrollbarInteractionSource,
+                containerState = it,
             )
         },
         horizontalScrollbarVisible = scrollState.canScroll,
+        horizontalScrollbarPosition = scrollbarPosition,
         scrollbarStyle = style,
+        containerInteractionSource = containerInteractionSource,
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(
@@ -521,6 +672,34 @@ public fun HorizontallyScrollableContainer(
             content()
         }
     }
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+public fun HorizontallyScrollableContainer(
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    userScrollEnabled: Boolean = true,
+    scrollbarEnabled: Boolean = userScrollEnabled,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable BoxScope.() -> Unit,
+) {
+    HorizontallyScrollableContainer(
+        modifier,
+        scrollbarModifier,
+        scrollState,
+        style,
+        reverseLayout,
+        userScrollEnabled,
+        scrollbarEnabled,
+        ScrollbarPosition.End,
+        scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
+        content,
+    )
 }
 
 /**
@@ -580,7 +759,9 @@ public fun HorizontallyScrollableContainer(
         style,
         reverseLayout,
         scrollbarEnabled,
+        ScrollbarPosition.End,
         scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
         content,
     )
 }
@@ -642,7 +823,9 @@ public fun HorizontallyScrollableContainer(
         style,
         reverseLayout,
         scrollbarEnabled,
+        ScrollbarPosition.End,
         scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
         content,
     )
 }
@@ -687,7 +870,9 @@ public fun HorizontallyScrollableContainer(
     style: ScrollbarStyle = JewelTheme.scrollbarStyle,
     reverseLayout: Boolean = false,
     scrollbarEnabled: Boolean = true,
+    scrollbarPosition: ScrollbarPosition = ScrollbarPosition.End,
     scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    containerInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     content: @Composable BoxScope.() -> Unit,
 ) {
     var keepVisible by remember { mutableStateOf(false) }
@@ -705,14 +890,44 @@ public fun HorizontallyScrollableContainer(
                 enabled = scrollbarEnabled,
                 reverseLayout = reverseLayout,
                 interactionSource = scrollbarInteractionSource,
+                containerState = it,
             )
         },
+        verticalScrollbarPosition = ScrollbarPosition.End,
         horizontalScrollbarVisible = scrollState.canScroll,
+        horizontalScrollbarPosition = scrollbarPosition,
         scrollbarStyle = style,
+        containerInteractionSource = containerInteractionSource,
         modifier = modifier.withKeepVisible(style.scrollbarVisibility.lingerDuration, scope) { keepVisible = it },
     ) {
         Box(Modifier.layoutId(ID_CONTENT)) { content() }
     }
+}
+
+@Composable
+@Deprecated("Kept for binary compatibility.", level = DeprecationLevel.HIDDEN)
+public fun HorizontallyScrollableContainer(
+    scrollState: ScrollableState,
+    modifier: Modifier = Modifier,
+    scrollbarModifier: Modifier = Modifier,
+    style: ScrollbarStyle = JewelTheme.scrollbarStyle,
+    reverseLayout: Boolean = false,
+    scrollbarEnabled: Boolean = true,
+    scrollbarInteractionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    content: @Composable BoxScope.() -> Unit,
+) {
+    HorizontallyScrollableContainer(
+        scrollState,
+        modifier,
+        scrollbarModifier,
+        style,
+        reverseLayout,
+        scrollbarEnabled,
+        ScrollbarPosition.End,
+        scrollbarInteractionSource,
+        remember { MutableInteractionSource() },
+        content,
+    )
 }
 
 private fun Modifier.withKeepVisible(
@@ -740,27 +955,43 @@ private fun Modifier.withKeepVisible(
 
 @Composable
 private fun ScrollableContainerImpl(
-    verticalScrollbar: (@Composable () -> Unit)?,
+    verticalScrollbar: (@Composable (containerState: ScrollableContainerState) -> Unit)?,
     verticalScrollbarVisible: Boolean,
-    horizontalScrollbar: (@Composable () -> Unit)?,
+    verticalScrollbarPosition: ScrollbarPosition,
+    horizontalScrollbar: (@Composable (containerState: ScrollableContainerState) -> Unit)?,
     horizontalScrollbarVisible: Boolean,
+    horizontalScrollbarPosition: ScrollbarPosition,
     scrollbarStyle: ScrollbarStyle,
+    containerInteractionSource: MutableInteractionSource,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    var containerState by remember(containerInteractionSource) { mutableStateOf(ScrollableContainerState.of()) }
+
+    LaunchedEffect(containerInteractionSource) {
+        containerInteractionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is HoverInteraction ->
+                    containerState = containerState.copy(hovered = interaction is HoverInteraction.Enter)
+
+                else -> Unit
+            }
+        }
+    }
+
     Layout(
         content = {
             content()
 
             if (verticalScrollbar != null) {
-                Box(Modifier.layoutId(ID_VERTICAL_SCROLLBAR)) { verticalScrollbar() }
+                Box(Modifier.layoutId(ID_VERTICAL_SCROLLBAR)) { verticalScrollbar(containerState) }
             }
 
             if (horizontalScrollbar != null) {
-                Box(Modifier.layoutId(ID_HORIZONTAL_SCROLLBAR)) { horizontalScrollbar() }
+                Box(Modifier.layoutId(ID_HORIZONTAL_SCROLLBAR)) { horizontalScrollbar(containerState) }
             }
         },
-        modifier,
+        modifier.hoverable(containerInteractionSource),
     ) { measurables, incomingConstraints ->
         val verticalScrollbarMeasurable = measurables.find { it.layoutId == ID_VERTICAL_SCROLLBAR }
         val horizontalScrollbarMeasurable = measurables.find { it.layoutId == ID_HORIZONTAL_SCROLLBAR }
@@ -771,21 +1002,27 @@ private fun ScrollableContainerImpl(
         val sizeOffsetWhenBothVisible =
             if (accountForVerticalScrollbar && accountForHorizontalScrollbar) {
                 scrollbarStyle.scrollbarVisibility.trackThicknessExpanded.roundToPx()
-            } else 0
+            } else {
+                0
+            }
 
         val verticalScrollbarPlaceable =
             if (accountForVerticalScrollbar) {
                 val verticalScrollbarConstraints =
                     Constraints.fixedHeight(incomingConstraints.maxHeight - sizeOffsetWhenBothVisible)
                 verticalScrollbarMeasurable.measure(verticalScrollbarConstraints)
-            } else null
+            } else {
+                null
+            }
 
         val horizontalScrollbarPlaceable =
             if (accountForHorizontalScrollbar) {
                 val horizontalScrollbarConstraints =
                     Constraints.fixedWidth(incomingConstraints.maxWidth - sizeOffsetWhenBothVisible)
                 horizontalScrollbarMeasurable.measure(horizontalScrollbarConstraints)
-            } else null
+            } else {
+                null
+            }
 
         val isMacOs = hostOs == OS.MacOS
         val contentMeasurable = measurables.find { it.layoutId == ID_CONTENT } ?: error("Content not provided")
@@ -818,10 +1055,22 @@ private fun ScrollableContainerImpl(
 
         layout(width, height) {
             contentPlaceable.placeRelative(x = 0, y = 0, zIndex = 0f)
-            verticalScrollbarPlaceable?.placeRelative(x = width - verticalScrollbarPlaceable.width, y = 0, zIndex = 1f)
+            verticalScrollbarPlaceable?.placeRelative(
+                x =
+                    when (verticalScrollbarPosition) {
+                        ScrollbarPosition.Start -> 0
+                        ScrollbarPosition.End -> width - verticalScrollbarPlaceable.width
+                    },
+                y = 0,
+                zIndex = 1f,
+            )
             horizontalScrollbarPlaceable?.placeRelative(
                 x = 0,
-                y = height - horizontalScrollbarPlaceable.height,
+                y =
+                    when (horizontalScrollbarPosition) {
+                        ScrollbarPosition.Start -> 0
+                        ScrollbarPosition.End -> height - horizontalScrollbarPlaceable.height
+                    },
                 zIndex = 1f,
             )
         }
@@ -850,6 +1099,7 @@ private fun computeContentConstraints(
                 !isMacOs -> maxWidth // Scrollbars on Win/Linux are always overlaid
                 visibility is AlwaysVisible -> maxWidth - scrollbarWidth
                 visibility is WhenScrolling -> maxWidth
+                visibility is WhenContainerHovered -> maxWidth
                 else -> error("Unsupported visibility style: $visibility")
             }
         } else {
@@ -862,9 +1112,12 @@ private fun computeContentConstraints(
                 !isMacOs -> minWidth // Scrollbars on Win/Linux are always overlaid
                 visibility is AlwaysVisible -> minWidth - scrollbarWidth
                 visibility is WhenScrolling -> minWidth
+                visibility is WhenContainerHovered -> minWidth
                 else -> error("Unsupported visibility style: $visibility")
             }
-        } else 0
+        } else {
+            0
+        }
 
     fun maxHeight() =
         if (incomingConstraints.hasBoundedHeight) {
@@ -872,6 +1125,7 @@ private fun computeContentConstraints(
                 !isMacOs -> maxHeight // Scrollbars on Win/Linux are always overlaid
                 visibility is AlwaysVisible -> maxHeight - scrollbarHeight
                 visibility is WhenScrolling -> maxHeight
+                visibility is WhenContainerHovered -> maxHeight
                 else -> error("Unsupported visibility style: $visibility")
             }
         } else {
@@ -884,9 +1138,12 @@ private fun computeContentConstraints(
                 !isMacOs -> minHeight // Scrollbars on Win/Linux are always overlaid
                 visibility is AlwaysVisible -> minHeight - scrollbarHeight
                 visibility is WhenScrolling -> minHeight
+                visibility is WhenContainerHovered -> minHeight
                 else -> error("Unsupported visibility style: $visibility")
             }
-        } else 0
+        } else {
+            0
+        }
 
     return when {
         incomingConstraints.hasBoundedWidth && incomingConstraints.hasBoundedHeight -> {
@@ -930,8 +1187,25 @@ public fun scrollbarContentSafePadding(style: ScrollbarStyle = JewelTheme.scroll
         hostOs != OS.MacOS -> style.scrollbarVisibility.trackThicknessExpanded + 1.dp
         style.scrollbarVisibility is AlwaysVisible -> 0.dp
         style.scrollbarVisibility is WhenScrolling -> style.scrollbarVisibility.trackThicknessExpanded
+        style.scrollbarVisibility is WhenContainerHovered -> style.scrollbarVisibility.trackThicknessExpanded
         else -> error("Unsupported visibility: ${style.scrollbarVisibility}")
     }
 
 private val ScrollableState.canScroll
     get() = canScrollBackward || canScrollForward
+
+@Immutable
+@JvmInline
+public value class ScrollableContainerState(public val state: ULong) {
+    public val isHovered: Boolean
+        get() = state and Hovered != 0UL
+
+    override fun toString(): String = "ScrollableContainerState(isHovered=$isHovered)"
+
+    public fun copy(hovered: Boolean = isHovered): ScrollableContainerState = of(hovered)
+
+    public companion object {
+        public fun of(hovered: Boolean = false): ScrollableContainerState =
+            ScrollableContainerState((if (hovered) Hovered else 0UL))
+    }
+}

@@ -614,20 +614,53 @@ f:org.jetbrains.jewel.ui.component.RadioButtonState$Companion
 - f:of-fp8g3n8(Z,Z,Z,Z,Z,Z):J
 - bs:of-fp8g3n8$default(org.jetbrains.jewel.ui.component.RadioButtonState$Companion,Z,Z,Z,Z,Z,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.ScrollableContainerKt
-- sf:HorizontallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- bsf:HorizontallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- sf:HorizontallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,org.jetbrains.jewel.ui.component.ScrollbarPosition,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 - bsf:HorizontallyScrollableContainer(androidx.compose.foundation.lazy.LazyListState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 - bsf:HorizontallyScrollableContainer(androidx.compose.foundation.lazy.grid.LazyGridState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
-- sf:HorizontallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
-- sf:HorizontallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
-- sf:VerticallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- bsf:HorizontallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- sf:HorizontallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,org.jetbrains.jewel.ui.component.ScrollbarPosition,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- bsf:HorizontallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- sf:HorizontallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,Z,org.jetbrains.jewel.ui.component.ScrollbarPosition,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I,I):V
+- bsf:VerticallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- sf:VerticallyScrollableContainer(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,org.jetbrains.jewel.ui.component.ScrollbarPosition,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 - bsf:VerticallyScrollableContainer(androidx.compose.foundation.lazy.LazyListState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 - bsf:VerticallyScrollableContainer(androidx.compose.foundation.lazy.grid.LazyGridState,androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
-- sf:VerticallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
-- sf:VerticallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- bsf:VerticallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- sf:VerticallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,org.jetbrains.jewel.ui.component.ScrollbarPosition,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- bsf:VerticallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
+- sf:VerticallyScrollableContainer(androidx.compose.ui.Modifier,androidx.compose.ui.Modifier,androidx.compose.foundation.ScrollState,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,Z,org.jetbrains.jewel.ui.component.ScrollbarPosition,androidx.compose.foundation.interaction.MutableInteractionSource,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I,I):V
 - sf:scrollbarContentSafePadding(org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,androidx.compose.runtime.Composer,I,I):F
+f:org.jetbrains.jewel.ui.component.ScrollableContainerState
+- sf:Companion:org.jetbrains.jewel.ui.component.ScrollableContainerState$Companion
+- bsf:box-impl(J):org.jetbrains.jewel.ui.component.ScrollableContainerState
+- s:constructor-impl(J):J
+- sf:copy-Gk4N3iA(J,Z):J
+- bs:copy-Gk4N3iA$default(J,Z,I,java.lang.Object):J
+- equals(java.lang.Object):Z
+- s:equals-impl(J,java.lang.Object):Z
+- sf:equals-impl0(J,J):Z
+- f:getState-s-VKNKU():J
+- hashCode():I
+- s:hashCode-impl(J):I
+- sf:isHovered-impl(J):Z
+- s:toString-impl(J):java.lang.String
+- bf:unbox-impl():J
+f:org.jetbrains.jewel.ui.component.ScrollableContainerState$Companion
+- f:of-Gk4N3iA(Z):J
+- bs:of-Gk4N3iA$default(org.jetbrains.jewel.ui.component.ScrollableContainerState$Companion,Z,I,java.lang.Object):J
 f:org.jetbrains.jewel.ui.component.ScrollbarKt
 - sf:HorizontalScrollbar(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,androidx.compose.runtime.Composer,I,I):V
-- sf:VerticalScrollbar(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,androidx.compose.runtime.Composer,I,I):V
+- sf:HorizontalScrollbar-I2odmaw(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,J,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,androidx.compose.runtime.Composer,I,I):V
+- bsf:VerticalScrollbar(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,androidx.compose.runtime.Composer,I,I):V
+- sf:VerticalScrollbar-I2odmaw(androidx.compose.foundation.gestures.ScrollableState,androidx.compose.ui.Modifier,J,Z,Z,androidx.compose.foundation.interaction.MutableInteractionSource,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,androidx.compose.runtime.Composer,I,I):V
+e:org.jetbrains.jewel.ui.component.ScrollbarPosition
+- java.lang.Enum
+- sf:End:org.jetbrains.jewel.ui.component.ScrollbarPosition
+- sf:Start:org.jetbrains.jewel.ui.component.ScrollbarPosition
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.ScrollbarPosition
+- s:values():org.jetbrains.jewel.ui.component.ScrollbarPosition[]
 f:org.jetbrains.jewel.ui.component.SegmentedControlButtonData
 - sf:$stable:I
 - <init>(Z,kotlin.jvm.functions.Function4,kotlin.jvm.functions.Function0):V
@@ -1760,11 +1793,13 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarStyle$Companion
 f:org.jetbrains.jewel.ui.component.styling.ScrollbarStylingKt
 - sf:getLocalScrollbarStyle():androidx.compose.runtime.ProvidableCompositionLocal
 org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
+- sf:Companion:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$Companion
 - a:getExpandAnimationDuration-UwyO8pc():J
 - a:getLingerDuration-UwyO8pc():J
 - a:getThumbColorAnimationDuration-UwyO8pc():J
 - a:getTrackColorAnimationDuration-UwyO8pc():J
 - a:getTrackPadding():androidx.compose.foundation.layout.PaddingValues
+- a:getTrackPaddingExpanded():androidx.compose.foundation.layout.PaddingValues
 - a:getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
 - a:getTrackThickness-D9Ej5fM():F
 - a:getTrackThicknessExpanded-D9Ej5fM():F
@@ -1780,11 +1815,29 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible
 - getThumbColorAnimationDuration-UwyO8pc():J
 - getTrackColorAnimationDuration-UwyO8pc():J
 - getTrackPadding():androidx.compose.foundation.layout.PaddingValues
+- getTrackPaddingExpanded():androidx.compose.foundation.layout.PaddingValues
 - getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
 - getTrackThickness-D9Ej5fM():F
 - getTrackThicknessExpanded-D9Ej5fM():F
 - hashCode():I
 f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$AlwaysVisible$Companion
+f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$Companion
+f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenContainerHovered
+- org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
+- sf:$stable:I
+- sf:Companion:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenContainerHovered$Companion
+- equals(java.lang.Object):Z
+- getExpandAnimationDuration-UwyO8pc():J
+- getLingerDuration-UwyO8pc():J
+- getThumbColorAnimationDuration-UwyO8pc():J
+- getTrackColorAnimationDuration-UwyO8pc():J
+- getTrackPadding():androidx.compose.foundation.layout.PaddingValues
+- getTrackPaddingExpanded():androidx.compose.foundation.layout.PaddingValues
+- getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
+- getTrackThickness-D9Ej5fM():F
+- getTrackThicknessExpanded-D9Ej5fM():F
+- hashCode():I
+f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenContainerHovered$Companion
 f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
 - org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility
 - sf:$stable:I
@@ -1795,6 +1848,7 @@ f:org.jetbrains.jewel.ui.component.styling.ScrollbarVisibility$WhenScrolling
 - getThumbColorAnimationDuration-UwyO8pc():J
 - getTrackColorAnimationDuration-UwyO8pc():J
 - getTrackPadding():androidx.compose.foundation.layout.PaddingValues
+- getTrackPaddingExpanded():androidx.compose.foundation.layout.PaddingValues
 - getTrackPaddingWithBorder():androidx.compose.foundation.layout.PaddingValues
 - getTrackThickness-D9Ej5fM():F
 - getTrackThicknessExpanded-D9Ej5fM():F

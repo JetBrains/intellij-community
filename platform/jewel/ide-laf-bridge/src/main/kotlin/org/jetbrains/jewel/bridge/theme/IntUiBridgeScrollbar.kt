@@ -33,6 +33,25 @@ internal fun readScrollbarStyle(isDark: Boolean): ScrollbarStyle =
         scrollbarVisibility = readScrollbarVisibility(),
     )
 
+internal fun readTabStripScrollbarStyle(isDark: Boolean): ScrollbarStyle =
+    ScrollbarStyle(
+        colors = readScrollbarColors(isDark),
+        metrics = readScrollbarMetrics(),
+        trackClickBehavior = TrackClickBehavior.JumpToSpot,
+        scrollbarVisibility =
+            ScrollbarVisibility.WhenContainerHovered(
+                trackThickness = 5.dp,
+                trackThicknessExpanded = 5.dp,
+                trackPadding = PaddingValues(1.dp),
+                trackPaddingExpanded = PaddingValues(),
+                trackPaddingWithBorder = PaddingValues(1.dp),
+                trackColorAnimationDuration = 125.milliseconds,
+                expandAnimationDuration = 125.milliseconds,
+                thumbColorAnimationDuration = 125.milliseconds,
+                lingerDuration = 700.milliseconds,
+            ),
+    )
+
 private fun readScrollbarColors(isDark: Boolean) =
     if (hostOs.isMacOS) {
         readScrollbarMacColors(isDark)
@@ -357,4 +376,57 @@ public fun ScrollbarVisibility.AlwaysVisible.Companion.windowsAndLinux(
         trackColorAnimationDuration,
         Color.Unspecified,
         Color.Unspecified,
+    )
+
+public fun ScrollbarVisibility.WhenContainerHovered.Companion.default(): ScrollbarVisibility.WhenContainerHovered =
+    if (hostOs.isMacOS) {
+        ScrollbarVisibility.WhenContainerHovered.macOs()
+    } else {
+        ScrollbarVisibility.WhenContainerHovered.windowsAndLinux()
+    }
+
+public fun ScrollbarVisibility.WhenContainerHovered.Companion.macOs(
+    trackThickness: Dp = 11.dp,
+    trackThicknessExpanded: Dp = 14.dp,
+    trackPadding: PaddingValues = PaddingValues(2.dp),
+    trackPaddingExpanded: PaddingValues = trackPadding,
+    trackPaddingWithBorder: PaddingValues = PaddingValues(1.dp),
+    trackColorAnimationDuration: Duration = 125.milliseconds,
+    expandAnimationDuration: Duration = trackColorAnimationDuration,
+    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
+    lingerDuration: Duration = 700.milliseconds,
+): ScrollbarVisibility.WhenContainerHovered =
+    ScrollbarVisibility.WhenContainerHovered(
+        trackThickness = trackThickness,
+        trackThicknessExpanded = trackThicknessExpanded,
+        trackPadding = trackPadding,
+        trackPaddingExpanded = trackPaddingExpanded,
+        trackPaddingWithBorder = trackPaddingWithBorder,
+        trackColorAnimationDuration = trackColorAnimationDuration,
+        expandAnimationDuration = expandAnimationDuration,
+        thumbColorAnimationDuration = thumbColorAnimationDuration,
+        lingerDuration = lingerDuration,
+    )
+
+public fun ScrollbarVisibility.WhenContainerHovered.Companion.windowsAndLinux(
+    trackThickness: Dp = 11.dp,
+    trackThicknessExpanded: Dp = 14.dp,
+    trackPadding: PaddingValues = PaddingValues(),
+    trackPaddingExpanded: PaddingValues = trackPadding,
+    trackPaddingWithBorder: PaddingValues = trackPadding,
+    trackColorAnimationDuration: Duration = 125.milliseconds,
+    expandAnimationDuration: Duration = trackColorAnimationDuration,
+    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
+    lingerDuration: Duration = 700.milliseconds,
+): ScrollbarVisibility.WhenContainerHovered =
+    ScrollbarVisibility.WhenContainerHovered(
+        trackThickness = trackThickness,
+        trackThicknessExpanded = trackThicknessExpanded,
+        trackPadding = trackPadding,
+        trackPaddingExpanded = trackPaddingExpanded,
+        trackPaddingWithBorder = trackPaddingWithBorder,
+        trackColorAnimationDuration = trackColorAnimationDuration,
+        expandAnimationDuration = expandAnimationDuration,
+        thumbColorAnimationDuration = thumbColorAnimationDuration,
+        lingerDuration = lingerDuration,
     )

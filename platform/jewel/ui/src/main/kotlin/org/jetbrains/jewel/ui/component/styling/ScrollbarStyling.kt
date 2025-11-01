@@ -198,6 +198,9 @@ public sealed interface ScrollbarVisibility {
     /** The padding around the scrollbar track. */
     public val trackPadding: PaddingValues
 
+    /** The padding around the scrollbar track when expanded (e.g., on hover). */
+    public val trackPaddingExpanded: PaddingValues
+
     /** The padding around the scrollbar track when a border is visible. */
     public val trackPaddingWithBorder: PaddingValues
 
@@ -217,6 +220,8 @@ public sealed interface ScrollbarVisibility {
      * the user stops moving the mouse over the content.
      */
     public val lingerDuration: Duration
+
+    public companion object
 
     /**
      * A [ScrollbarVisibility] that keeps the scrollbar always visible.
@@ -253,6 +258,7 @@ public sealed interface ScrollbarVisibility {
         public override val trackThicknessExpanded: Dp = trackThickness
         public override val expandAnimationDuration: Duration = 0.milliseconds
         public override val lingerDuration: Duration = 0.milliseconds
+        public override val trackPaddingExpanded: PaddingValues = trackPadding
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -270,6 +276,7 @@ public sealed interface ScrollbarVisibility {
             if (trackThicknessExpanded != other.trackThicknessExpanded) return false
             if (expandAnimationDuration != other.expandAnimationDuration) return false
             if (lingerDuration != other.lingerDuration) return false
+            if (trackPaddingExpanded != other.trackPaddingExpanded) return false
 
             return true
         }
@@ -285,6 +292,7 @@ public sealed interface ScrollbarVisibility {
             result = 31 * result + trackThicknessExpanded.hashCode()
             result = 31 * result + expandAnimationDuration.hashCode()
             result = 31 * result + lingerDuration.hashCode()
+            result = 31 * result + trackPaddingExpanded.hashCode()
             return result
         }
 
@@ -299,7 +307,8 @@ public sealed interface ScrollbarVisibility {
                 "scrollbarBackgroundColorDark=$scrollbarBackgroundColorDark, " +
                 "trackThicknessExpanded=$trackThicknessExpanded, " +
                 "expandAnimationDuration=$expandAnimationDuration, " +
-                "lingerDuration=$lingerDuration" +
+                "lingerDuration=$lingerDuration, " +
+                "trackPaddingExpanded=$trackPaddingExpanded" +
                 ")"
         }
 
@@ -333,6 +342,8 @@ public sealed interface ScrollbarVisibility {
         public override val thumbColorAnimationDuration: Duration,
         public override val lingerDuration: Duration,
     ) : ScrollbarVisibility {
+        public override val trackPaddingExpanded: PaddingValues = trackPadding
+
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (javaClass != other?.javaClass) return false
@@ -347,6 +358,7 @@ public sealed interface ScrollbarVisibility {
             if (expandAnimationDuration != other.expandAnimationDuration) return false
             if (thumbColorAnimationDuration != other.thumbColorAnimationDuration) return false
             if (lingerDuration != other.lingerDuration) return false
+            if (trackPaddingExpanded != other.trackPaddingExpanded) return false
 
             return true
         }
@@ -360,6 +372,7 @@ public sealed interface ScrollbarVisibility {
             result = 31 * result + expandAnimationDuration.hashCode()
             result = 31 * result + thumbColorAnimationDuration.hashCode()
             result = 31 * result + lingerDuration.hashCode()
+            result = 31 * result + trackPaddingExpanded.hashCode()
             return result
         }
 
@@ -372,9 +385,92 @@ public sealed interface ScrollbarVisibility {
                 "trackColorAnimationDuration=$trackColorAnimationDuration, " +
                 "expandAnimationDuration=$expandAnimationDuration, " +
                 "thumbColorAnimationDuration=$thumbColorAnimationDuration, " +
-                "lingerDuration=$lingerDuration" +
+                "lingerDuration=$lingerDuration, " +
+                "trackPaddingExpanded=$trackPaddingExpanded" +
                 ")"
         }
+
+        public companion object
+    }
+
+    @GenerateDataFunctions
+    public class WhenContainerHovered(
+        public override val trackThickness: Dp,
+        public override val trackThicknessExpanded: Dp,
+        public override val trackPadding: PaddingValues,
+        public override val trackPaddingWithBorder: PaddingValues,
+        public override val trackColorAnimationDuration: Duration,
+        public override val expandAnimationDuration: Duration,
+        public override val thumbColorAnimationDuration: Duration,
+        public override val lingerDuration: Duration,
+        public override val trackPaddingExpanded: PaddingValues,
+    ) : ScrollbarVisibility {
+        @Deprecated("Kept for binary compatibility", level = DeprecationLevel.HIDDEN)
+        public constructor(
+            trackThickness: Dp,
+            trackThicknessExpanded: Dp,
+            trackPadding: PaddingValues,
+            trackPaddingWithBorder: PaddingValues,
+            trackColorAnimationDuration: Duration,
+            expandAnimationDuration: Duration,
+            thumbColorAnimationDuration: Duration,
+            lingerDuration: Duration,
+        ) : this(
+            trackThickness,
+            trackThicknessExpanded,
+            trackPadding,
+            trackPaddingWithBorder,
+            trackColorAnimationDuration,
+            expandAnimationDuration,
+            thumbColorAnimationDuration,
+            lingerDuration,
+            trackPadding,
+        )
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as WhenContainerHovered
+
+            if (trackThickness != other.trackThickness) return false
+            if (trackThicknessExpanded != other.trackThicknessExpanded) return false
+            if (trackPadding != other.trackPadding) return false
+            if (trackPaddingWithBorder != other.trackPaddingWithBorder) return false
+            if (trackColorAnimationDuration != other.trackColorAnimationDuration) return false
+            if (expandAnimationDuration != other.expandAnimationDuration) return false
+            if (thumbColorAnimationDuration != other.thumbColorAnimationDuration) return false
+            if (lingerDuration != other.lingerDuration) return false
+            if (trackPaddingExpanded != other.trackPaddingExpanded) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = trackThickness.hashCode()
+            result = 31 * result + trackThicknessExpanded.hashCode()
+            result = 31 * result + trackPadding.hashCode()
+            result = 31 * result + trackPaddingWithBorder.hashCode()
+            result = 31 * result + trackColorAnimationDuration.hashCode()
+            result = 31 * result + expandAnimationDuration.hashCode()
+            result = 31 * result + thumbColorAnimationDuration.hashCode()
+            result = 31 * result + lingerDuration.hashCode()
+            result = 31 * result + trackPaddingExpanded.hashCode()
+            return result
+        }
+
+        override fun toString(): String =
+            "WhenContainerHovered(" +
+                "trackThickness=$trackThickness, " +
+                "trackThicknessExpanded=$trackThicknessExpanded, " +
+                "trackPadding=$trackPadding, " +
+                "trackPaddingWithBorder=$trackPaddingWithBorder, " +
+                "trackColorAnimationDuration=$trackColorAnimationDuration, " +
+                "expandAnimationDuration=$expandAnimationDuration, " +
+                "thumbColorAnimationDuration=$thumbColorAnimationDuration, " +
+                "lingerDuration=$lingerDuration, " +
+                "trackPaddingExpanded=$trackPaddingExpanded" +
+                ")"
 
         public companion object
     }

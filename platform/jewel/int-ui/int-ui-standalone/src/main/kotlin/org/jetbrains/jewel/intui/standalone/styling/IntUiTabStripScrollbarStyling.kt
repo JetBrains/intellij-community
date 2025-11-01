@@ -31,7 +31,7 @@ public fun ScrollbarStyle.Companion.tabStripMacOsLight(
     colors: ScrollbarColors = ScrollbarColors.macOsLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripMacOs(),
     trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
-    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.WhenScrolling.default(),
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
@@ -44,7 +44,7 @@ public fun ScrollbarStyle.Companion.tabStripMacOsDark(
     colors: ScrollbarColors = ScrollbarColors.macOsDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripMacOs(),
     trackClickBehavior: TrackClickBehavior = TrackClickBehavior.NextPage,
-    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.WhenScrolling.default(),
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
@@ -57,7 +57,7 @@ public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxLight(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxLight(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripWindowsAndLinux(),
     trackClickBehavior: TrackClickBehavior = TrackClickBehavior.JumpToSpot,
-    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.AlwaysVisible.tabStrip(),
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
@@ -70,7 +70,7 @@ public fun ScrollbarStyle.Companion.tabStripWindowsAndLinuxDark(
     colors: ScrollbarColors = ScrollbarColors.windowsAndLinuxDark(),
     metrics: ScrollbarMetrics = ScrollbarMetrics.tabStripWindowsAndLinux(),
     trackClickBehavior: TrackClickBehavior = TrackClickBehavior.JumpToSpot,
-    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.AlwaysVisible.tabStrip(),
+    scrollbarVisibility: ScrollbarVisibility = ScrollbarVisibility.tabStrip(),
 ): ScrollbarStyle =
     ScrollbarStyle(
         colors = colors,
@@ -89,6 +89,16 @@ public fun ScrollbarMetrics.Companion.tabStripWindowsAndLinux(
     minThumbLength: Dp = 20.dp,
 ): ScrollbarMetrics = ScrollbarMetrics(thumbCornerSize, minThumbLength)
 
+@Deprecated(
+    "Replace with 'ScrollbarVisibility.tabStrip()' version",
+    ReplaceWith(
+        "ScrollbarVisibility.tabStrip(" +
+            "trackThickness = trackThickness," +
+            "trackPadding = trackPadding," +
+            "trackPaddingWithBorder = trackPaddingWithBorder" +
+            ")"
+    ),
+)
 public fun ScrollbarVisibility.AlwaysVisible.Companion.tabStrip(
     trackThickness: Dp = 4.dp,
     trackPadding: PaddingValues = PaddingValues(),
