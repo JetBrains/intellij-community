@@ -1,17 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.sanitizeFileName
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Collections
-import java.util.IdentityHashMap
 import java.util.logging.Handler
 import java.util.logging.LogRecord
-import kotlin.collections.ArrayDeque
 
 /**
  * Handler for logging attachments of [ExceptionWithAttachments] to log folder.
@@ -21,7 +19,7 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
     if (!isLoggable(record)) return
 
     val t = record.thrown ?: return
-    val ewas = findWithAttachments(t).ifEmpty { return }
+    val ewas = ExceptionUtil.findCauseAndSuppressed(t, ExceptionWithAttachments::class.java).ifEmpty { return }
 
     val hasAnyAttachments = ewas.any { it.attachments.isNotEmpty() }
     if (!hasAnyAttachments) return
@@ -104,30 +102,6 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
   @Throws(SecurityException::class)
   override fun close() {
     // no-op
-  }
-
-  private fun findWithAttachments(t: Throwable): List<ExceptionWithAttachments> {
-    val result = ArrayList<ExceptionWithAttachments>()
-    val visited = Collections.newSetFromMap(IdentityHashMap<Throwable, Boolean>())
-    val deque = ArrayDeque<Throwable>()
-    deque.add(t)
-    while (deque.isNotEmpty()) {
-      val cur = deque.removeFirst()
-      if (!visited.add(cur)) continue
-
-      if (cur is ExceptionWithAttachments) {
-        result.add(cur)
-      }
-
-      // Explore suppressed first to catch siblings as well
-      for (s in cur.suppressed) {
-        deque.addLast(s)
-      }
-      cur.cause?.let {
-        deque.addLast(it)
-      }
-    }
-    return result
   }
 
   private fun uniqueName(base: String, used: MutableSet<String>): String {
