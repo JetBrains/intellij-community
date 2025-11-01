@@ -5257,10 +5257,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202407181518_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202407181518/org.eclipse.jgit-6.6.1.202309021850-r-jb-202407181518.jar",
-  sha256 = "84f1d58dbf19cd7d42a5301bd256d589af1f520b4c90b8836cee7747f8726992",
-  downloaded_file_path = "org.eclipse.jgit-6.6.1.202309021850-r-jb-202407181518.jar"
+  name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar",
+  sha256 = "a36daede93f146973abf54462040963846e919e09a922302210c875337e36d3d",
+  downloaded_file_path = "org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356.jar"
 )
 
 http_file(
@@ -5271,10 +5271,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202407181518-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202407181518/org.eclipse.jgit-6.6.1.202309021850-r-jb-202407181518-sources.jar",
-  sha256 = "00ebdbe2f460ad6d2cf95f7f7b2e1304a527cc00cb8ac884e6670da5a950a3a7",
-  downloaded_file_path = "org.eclipse.jgit-6.6.1.202309021850-r-jb-202407181518-sources.jar"
+  name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/org.eclipse.jgit/6.6.1.202309021850-r-jb-202510311356/org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356-sources.jar",
+  sha256 = "dd0ea0af8c7b15235abfe25ca77ecc77bdcf22bbb1ba4052b3cf5e370d77c4b0",
+  downloaded_file_path = "org.eclipse.jgit-6.6.1.202309021850-r-jb-202510311356-sources.jar"
 )
 
 http_file(

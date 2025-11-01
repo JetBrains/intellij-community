@@ -3507,16 +3507,16 @@ jvm_import(
 java_library(
   name = "jetbrains-intellij-deps-eclipse-jgit",
   exports = [
-    ":org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202407181518_http_import",
+    ":org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http_import",
     ":com_googlecode_javaewah-JavaEWAH-1_2_3_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202407181518_http_import",
-  jar = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202407181518_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202407181518_http//file"
+  name = "org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http_import",
+  jar = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-org_eclipse_jgit-6_6_1_202309021850-r-jb-202510311356_http//file"
 )
 
 jvm_import(
