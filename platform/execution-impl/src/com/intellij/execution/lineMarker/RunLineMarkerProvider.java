@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * @author Dmitry Avdeev
@@ -57,6 +58,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
     }
     return 0;
   };
+  private static final Pattern NEWLINE = Pattern.compile("\n");
 
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
@@ -182,7 +184,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
       String actionId = executor.getContextActionId();
       String shortcutText = KeymapUtil.getShortcutText(actionId);
       @NotNull String shortcutColor = ColorUtil.toHex(JBUI.CurrentTheme.Tooltip.shortcutForeground());
-      return XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(tooltip).replaceAll("\n", "<br>") + CommonXmlStrings.NBSP + CommonXmlStrings.NBSP + "<font color='#" + shortcutColor + "'>" + XmlStringUtil.escapeString(shortcutText) + "</font>");
+      return XmlStringUtil.wrapInHtml(NEWLINE.matcher(XmlStringUtil.escapeString(tooltip)).replaceAll("<br>") + CommonXmlStrings.NBSP + CommonXmlStrings.NBSP + "<font color='#" + shortcutColor + "'>" + XmlStringUtil.escapeString(shortcutText) + "</font>");
     }
     else {
       return tooltip;

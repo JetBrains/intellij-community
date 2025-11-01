@@ -18,14 +18,17 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.regex.Pattern;
+
 import static com.intellij.formatting.Indent.Type.*;
 
 public class IndentCalculator {
-  
+
   private final @NotNull Project myProject;
   private final @NotNull Editor myEditor;
   private final @NotNull BaseLineOffsetCalculator myBaseLineOffsetCalculator;
   private final @NotNull Indent myIndent;
+  private static final Pattern TAB_PATTERN = Pattern.compile("\t");
 
   public IndentCalculator(@NotNull Project project,
                           @NotNull Editor editor,
@@ -50,7 +53,7 @@ public class IndentCalculator {
       return CharArrayUtil.shiftForward(currPosition.getChars(), currPosition.getStartOffset(), " \t\n\r");
     }
   };
-  
+
   @Nullable
   String getIndentString(@Nullable Language language, @NotNull SemanticEditorPosition currPosition) {
     String baseIndent = getBaseIndent(currPosition);
@@ -64,7 +67,7 @@ public class IndentCalculator {
         fileOptions;
       if (options != null) {
         final int indentLength =
-          baseIndent.replaceAll("\t", StringUtil.repeatSymbol(' ', options.TAB_SIZE)).length()
+          TAB_PATTERN.matcher(baseIndent).replaceAll(StringUtil.repeatSymbol(' ', options.TAB_SIZE)).length()
           + indentToSize(myIndent, options);
         return new IndentInfo(0, indentLength, 0, false).generateNewWhiteSpace(options);
       }
@@ -103,7 +106,7 @@ public class IndentCalculator {
     return 0;
   }
 
-  
+
   public interface BaseLineOffsetCalculator  {
     int getOffsetInBaseIndentLine(@NotNull SemanticEditorPosition position);
   }

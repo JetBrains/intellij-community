@@ -36,10 +36,12 @@ import java.awt.event.KeyEvent;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class LineTooltipRenderer extends ComparableObject.Impl implements TooltipRenderer {
 
   public static final int CONTENT_PADDING = 20;
+  private static final Pattern MNEMONIC_PATTERN = Pattern.compile(String.valueOf(UIUtil.MNEMONIC));
   /**
    * Html-like text for showing
    * Please note that the tooltip size is calculated dynamically based on the html so
@@ -189,7 +191,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     //setup text
     //noinspection HardCodedStringLiteral
-    String tooltipPreText = myText.replaceAll(String.valueOf(UIUtil.MNEMONIC), "");
+    String tooltipPreText = MNEMONIC_PATTERN.matcher(myText).replaceAll("");;
     String dressedText = dressDescription(editor, tooltipPreText, myCurrentWidth > 0);
 
     boolean expanded = myCurrentWidth > 0 && !dressedText.equals(tooltipPreText);

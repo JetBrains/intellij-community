@@ -15,25 +15,26 @@ import java.util.stream.Stream;
 
 /**
  * An immutable representation of HTML node. Could be used as a DSL to quickly generate HTML strings.
- * 
+ *
  * @see HtmlBuilder
  */
 public abstract class HtmlChunk {
   private static final class Empty extends HtmlChunk {
     private static final Empty INSTANCE = new Empty();
-    
+
     @Override
     public boolean isEmpty() {
       return true;
     }
-    
+
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
     }
   }
-  
+
   private static final class Text extends HtmlChunk {
     private final String myContent;
+    private static final Pattern NEWLINE_PATTERN = Pattern.compile("\n");
 
     private Text(String content) {
       myContent = content;
@@ -41,7 +42,10 @@ public abstract class HtmlChunk {
 
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
-      builder.append(StringUtil.escapeXmlEntities(myContent).replaceAll("\n", "<br/>"));
+      builder.append(
+        NEWLINE_PATTERN.matcher(StringUtil.escapeXmlEntities(myContent))
+          .replaceAll(Matcher.quoteReplacement("<br/>"))
+      );
     }
 
     @Override
@@ -54,7 +58,7 @@ public abstract class HtmlChunk {
       return Objects.hashCode(myContent);
     }
   }
-  
+
   private static final class Raw extends HtmlChunk {
     private static final Pattern CLASS = Pattern.compile("class=([\"'])([A-Za-z\\-_0-9]+)\\1");
     private final String myContent;
@@ -96,7 +100,7 @@ public abstract class HtmlChunk {
       return Objects.hashCode(myContent);
     }
   }
-  
+
   static final class Fragment extends HtmlChunk {
     private final List<? extends HtmlChunk> myContent;
 
@@ -150,7 +154,7 @@ public abstract class HtmlChunk {
       return Objects.hashCode(myContent);
     }
   }
-  
+
   private static final class Nbsp extends HtmlChunk {
     private static final HtmlChunk ONE = new Nbsp(1);
     private final int myCount;
@@ -209,7 +213,7 @@ public abstract class HtmlChunk {
           newAttributes = newAttributes.without("class");
           String existingStyle = newAttributes.get("style");
           if (existingStyle != null) {
-            style = existingStyle.endsWith(";") ? existingStyle + " " + style 
+            style = existingStyle.endsWith(";") ? existingStyle + " " + style
                                                 : existingStyle + "; " + style;
           }
           newAttributes = newAttributes.with("style", style);
@@ -443,11 +447,11 @@ public abstract class HtmlChunk {
   /**
    * Rewrites the HTML classes with the corresponding CSS styles.
    * Warning: this is a poor man replacement.
-   * May not work as expected, especially if you are using raw elements. 
+   * May not work as expected, especially if you are using raw elements.
    * Use only if you control the HTML generation.
-   * 
+   *
    * @param styles map where keys are class names and values are CSS definitions
-   * @return a new {@link HtmlChunk} where known classes from the supplied Map 
+   * @return a new {@link HtmlChunk} where known classes from the supplied Map
    * are replaced with supplied styles; unknown classes are left intact.
    */
   @ApiStatus.Experimental
@@ -622,7 +626,7 @@ public abstract class HtmlChunk {
   public static @NotNull Element font(@NonNls @NotNull String color) {
     return tag("font").attr("color", color);
   }
-  
+
   public static @NotNull Element font(int size) {
     return tag("font").attr("size", String.valueOf(size));
   }
@@ -645,7 +649,7 @@ public abstract class HtmlChunk {
 
   /**
    * Creates a HTML text node that represents a non-breaking space ({@code &nbsp;}).
-   * 
+   *
    * @return HtmlChunk that represents a sequence of non-breaking spaces
    */
   @Contract(pure = true)
@@ -655,7 +659,7 @@ public abstract class HtmlChunk {
 
   /**
    * Creates a HTML text node that represents a given number of non-breaking spaces
-   * 
+   *
    * @param count number of non-breaking spaces
    * @return HtmlChunk that represents a sequence of non-breaking spaces
    */
@@ -669,8 +673,8 @@ public abstract class HtmlChunk {
 
   /**
    * Creates a HTML text node
-   * 
-   * @param text text to display (no escaping should be done by caller). 
+   *
+   * @param text text to display (no escaping should be done by caller).
    *             All {@code '\n'} characters will be converted to {@code <br/>}
    * @return HtmlChunk that represents a HTML text node.
    */
@@ -743,7 +747,7 @@ public abstract class HtmlChunk {
    * The purpose of this method is to be able to externalize the text with embedded link. E.g.:
    * {@code "Click <a href=\"...\">here</a> for details"}. As an alternative, consider using
    * {@link #template(String, Map.Entry[])}.
-   * 
+   *
    * @param rawHtml raw HTML content. It's the responsibility of the caller to balance tags and escape HTML entities.
    * @return the HtmlChunk that represents the supplied content.
    */
@@ -766,7 +770,7 @@ public abstract class HtmlChunk {
 
   /**
    * Creates an element that represents an HTML link.
-   * 
+   *
    * @param target link target (HREF)
    * @param text link text chunk
    * @return the Element that represents a link
@@ -790,17 +794,17 @@ public abstract class HtmlChunk {
   }
 
   /**
-   * @return true if this chunk is empty (doesn't produce any text) 
+   * @return true if this chunk is empty (doesn't produce any text)
    */
   @Contract(pure = true)
   public boolean isEmpty() {
     return false;
   }
-  
+
 
   /**
    * Appends the rendered HTML representation of this chunk to the supplied builder
-   * 
+   *
    * @param builder builder to append to.
    */
   public abstract void appendTo(@NotNull StringBuilder builder);

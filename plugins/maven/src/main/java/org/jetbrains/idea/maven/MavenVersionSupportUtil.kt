@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 
@@ -30,6 +30,6 @@ internal object MavenVersionSupportUtil {
   fun isMaven2Used(project: Project): Boolean {
     val version = MavenDistributionsCache.getInstance(project).getSettingsDistribution().version
     if (version == null) return false
-    return StringUtil.compareVersionNumbers(version, "3") < 0
+    return VersionComparatorUtil.compare(version, "3") < 0
   }
 }
