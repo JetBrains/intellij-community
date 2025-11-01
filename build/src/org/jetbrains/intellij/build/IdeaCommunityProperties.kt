@@ -17,7 +17,12 @@ import java.nio.file.Path
 internal suspend fun createCommunityBuildContext(
   options: BuildOptions,
   projectHome: Path = COMMUNITY_ROOT.communityRoot,
-): BuildContext = BuildContextImpl.createContext(projectHome, IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot), options)
+): BuildContext = BuildContextImpl.createContext(
+  projectHome = projectHome,
+  productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot),
+  setupTracer = true,
+  options = options,
+)
 
 open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {
   companion object {
@@ -196,10 +201,9 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
   }
 
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    @Suppress("SpellCheckingInspection") "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+    "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
-  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    @Suppress("SpellCheckingInspection") "ideaIC-$buildNumber"
+  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "ideaIC-$buildNumber"
 
   override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "idea-ce"
 }

@@ -89,6 +89,7 @@ internal suspend fun buildNsisInstaller(
     spanBuilder("run NSIS tool to build .exe installer for Windows").use {
       val timeout = 2.hours
       if (OsFamily.currentOs == OsFamily.WINDOWS) {
+        @Suppress("SpellCheckingInspection")
         runProcess(
           args = listOf(
             nsisBin.toString(),
@@ -104,6 +105,7 @@ internal suspend fun buildNsisInstaller(
         )
       }
       else {
+        @Suppress("SpellCheckingInspection")
         runProcess(
           args = listOf(
             nsisBin.toString(),
@@ -116,7 +118,7 @@ internal suspend fun buildNsisInstaller(
           ),
           workingDir = box,
           timeout,
-          additionalEnvVariables = @Suppress("SpellCheckingInspection") mapOf("NSISDIR" to nsisDir.toString(), "LC_CTYPE" to "C.UTF-8"),
+          additionalEnvVariables = mapOf("NSISDIR" to nsisDir.toString(), "LC_CTYPE" to "C.UTF-8"),
         )
       }
     }
@@ -125,7 +127,7 @@ internal suspend fun buildNsisInstaller(
   val installerFile = context.paths.artifactDir.resolve("${installerFileName}.exe")
   check(Files.exists(installerFile)) { "Windows installer wasn't created." }
   context.executeStep(spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
-    context.signFiles(listOf(installerFile), BuildOptions.WIN_SIGN_OPTIONS)
+    context.signFiles(listOf(installerFile), options = BuildOptions.WIN_SIGN_OPTIONS)
   }
   context.notifyArtifactBuilt(installerFile)
 
@@ -155,7 +157,7 @@ private suspend fun prepareNsis(context: BuildContext, tempDir: Path): Pair<Path
     nsisDir
   }
   val ext = if (OsFamily.currentOs == OsFamily.WINDOWS) ".exe" else "-${OsFamily.currentOs.dirName}-${JvmArchitecture.currentJvmArch.dirName}"
-  val nsisBin = nsisDir.resolve("Bin/makensis${ext}")
+  @Suppress("SpellCheckingInspection") val nsisBin = nsisDir.resolve("Bin/makensis${ext}")
   require(nsisBin.isRegularFile()) { "'${nsisDir.fileName}' is missing" }
   NioFiles.setExecutable(nsisBin)
   return nsisDir to nsisBin
@@ -193,7 +195,6 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, uninstallerFileN
     }
   }
 
-  @Suppress("SpellCheckingInspection")
   Files.writeString(nsiConfDir.resolve("config.nsi"), $$"""
     !define INSTALLER_ARCH $${expectedArch}
     !define IMAGES_LOCATION "$${Path.of(customizer.installerImagesPath!!)}"
@@ -229,7 +230,12 @@ private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uni
   val toolFile =
     context.proprietaryBuildTools.signTool.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
     ?: error("No command line sign tool is configured")
-  val extensions = BuildOptions.WIN_SIGN_OPTIONS.entries.joinToString(prefix = " -extensions ", separator = ",") { "${it.key}=${it.value}" }
+  val extensions = BuildOptions.WIN_SIGN_OPTIONS
+                     .takeIf { it.any() }
+                     ?.entries?.asSequence()
+                     ?.map { "${it.key}=${it.value}" }
+                     ?.joinToString(prefix = " -extensions ", separator = ",")
+                   ?: ""
   val scriptFile = Files.writeString(nsiConfDir.resolve("sign-tool.cmd"), when (OsFamily.currentOs) {
     // moving the file back and forth is required for NSIS to fail if signing didn't happen
     OsFamily.WINDOWS -> """

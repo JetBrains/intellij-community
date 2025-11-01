@@ -45,6 +45,7 @@ fun createBuildOptionsForTest(
   skipDependencySetup: Boolean = false,
   testInfo: TestInfo? = null,
 ): BuildOptions {
+  
   val outDir = createTestBuildOutDir(productProperties)
   val options = BuildOptions(
     cleanOutDir = false,
@@ -54,15 +55,16 @@ fun createBuildOptionsForTest(
     jarCacheDir = homeDir.resolve("out/dev-run/jar-cache"),
     buildDateInSeconds = getDevModeOrTestBuildDateInSeconds(),
   )
-  customizeBuildOptionsForTest(options, outDir, skipDependencySetup, testInfo)
+  customizeBuildOptionsForTest(options = options, outDir = outDir, skipDependencySetup = skipDependencySetup, testInfo = testInfo)
   return options
 }
 
-fun createTestBuildOutDir(productProperties: ProductProperties): Path =
-  Files.createTempDirectory("test-build-${productProperties.baseFileName}")
+fun createTestBuildOutDir(productProperties: ProductProperties): Path {
+  return Files.createTempDirectory("test-build-${productProperties.baseFileName}")
+}
 
 private inline fun createBuildOptionsForTest(productProperties: ProductProperties, homeDir: Path, testInfo: TestInfo, customizer: (BuildOptions) -> Unit): BuildOptions {
-  val options = createBuildOptionsForTest(productProperties, homeDir, testInfo = testInfo)
+  val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homeDir, testInfo = testInfo)
   customizer(options)
   return options
 }
@@ -97,7 +99,7 @@ suspend inline fun createBuildContext(
 ): BuildContext {
   val options = createBuildOptionsForTest(productProperties, homeDir)
   buildOptionsCustomizer(options)
-  return BuildContextImpl.createContext(homeDir, productProperties, options, buildTools)
+  return BuildContextImpl.createContext(projectHome = homeDir, productProperties = productProperties, proprietaryBuildTools = buildTools, options = options)
 }
 
 fun runTestBuild(
@@ -108,8 +110,14 @@ fun runTestBuild(
   onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ) {
-  runTestBuild(homePath, productProperties, testInfo, buildTools, isReproducibilityTestAllowed = true, onSuccess = onSuccess,
-               buildOptionsCustomizer = buildOptionsCustomizer,
+  runTestBuild(
+    homeDir = homePath,
+    productProperties = productProperties,
+    testInfo = testInfo,
+    buildTools = buildTools,
+    isReproducibilityTestAllowed = true,
+    onSuccess = onSuccess,
+    buildOptionsCustomizer = buildOptionsCustomizer,
   )
 }
 
@@ -125,14 +133,25 @@ fun runTestBuild(
   onSuccess: suspend (BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ): Unit = runBlocking(Dispatchers.Default) {
-  val options = createBuildOptionsForTest(productProperties, homeDir, testInfo, buildOptionsCustomizer)
   if (isReproducibilityTestAllowed && BuildArtifactsReproducibilityTest.isEnabled) {
     val reproducibilityTest = BuildArtifactsReproducibilityTest()
     repeat(reproducibilityTest.iterations) { iterationNumber ->
       launch {
-        reproducibilityTest.configure(options)
         doRunTestBuild(
-          context = BuildContextImpl.createContext(homeDir, productProperties, options, buildTools, setupTracer = false),
+          context = BuildContextImpl.createContext(
+            projectHome = homeDir,
+            productProperties = productProperties,
+            setupTracer = false,
+            proprietaryBuildTools = buildTools,
+            options = createBuildOptionsForTest(
+              productProperties = productProperties,
+              homeDir = homeDir,
+              testInfo = testInfo,
+              customizer = buildOptionsCustomizer,
+            ).also {
+              reproducibilityTest.configure(it)
+            }
+          ),
           traceSpanName = "${testInfo.spanName}#${iterationNumber}",
           writeTelemetry = false,
           checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
@@ -149,7 +168,18 @@ fun runTestBuild(
   }
   else {
     doRunTestBuild(
-      context = BuildContextImpl.createContext(homeDir, productProperties, options, buildTools, setupTracer = false),
+      context = BuildContextImpl.createContext(
+        projectHome = homeDir,
+        productProperties = productProperties,
+        setupTracer = false,
+        proprietaryBuildTools = buildTools,
+        options = createBuildOptionsForTest(
+          productProperties = productProperties,
+          homeDir = homeDir,
+          testInfo = testInfo,
+          customizer = buildOptionsCustomizer,
+        ),
+      ),
       writeTelemetry = true,
       checkIntegrityOfEmbeddedFrontend = checkIntegrityOfEmbeddedFrontend,
       checkThatBundledPluginInFrontendArePresent = checkIntegrityOfEmbeddedFrontend,
@@ -214,9 +244,9 @@ private suspend fun doRunTestBuild(
         if (checkIntegrityOfEmbeddedFrontend) {
           val frontendRootModule = context.productProperties.embeddedFrontendRootModule
           if (frontendRootModule != null && context.generateRuntimeModuleRepository) {
-            RuntimeModuleRepositoryChecker.checkProductModules(frontendRootModule, context, softly)
+            RuntimeModuleRepositoryChecker.checkProductModules(productModulesModule = frontendRootModule, context = context, softly = softly)
             if (checkThatBundledPluginInFrontendArePresent) {
-              RuntimeModuleRepositoryChecker.checkBundledPluginsArePresent(frontendRootModule, context, isEmbeddedVariant = true, softly)
+              RuntimeModuleRepositoryChecker.checkBundledPluginsArePresent(productModulesModule = frontendRootModule, context = context, isEmbeddedVariant = true, softly = softly)
             }
             RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedFrontend(frontendRootModule, context, softly)
             checkKeymapPluginsAreBundledWithFrontend(frontendRootModule, context, softly)
