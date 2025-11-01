@@ -6,9 +6,6 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
-/**
- * Returns false if the dot-qualified expression could be a full reference to a Gradle version catalog property.
- */
 internal fun KtDotQualifiedExpression.hasWrappingVersionCatalogExpression() =
     parent is KtDotQualifiedExpression
             && parent.lastChild is KtNameReferenceExpression // this is false if parent expression ends with `.get()`
@@ -26,3 +23,15 @@ internal fun findTopmostVersionCatalogExpression(element: PsiElement?): KtDotQua
     }
     return fullExpression
 }
+
+fun KtDotQualifiedExpression.matchesTopmostCatalogReferencePattern(): Boolean =
+    this.hasOnlyNameReferences() && !hasWrappingVersionCatalogExpression()
+
+private fun KtDotQualifiedExpression.hasOnlyNameReferences(): Boolean =
+    this.children.all {
+        when (it) {
+            is KtNameReferenceExpression -> true
+            is KtDotQualifiedExpression -> it.hasOnlyNameReferences()
+            else -> false
+        }
+    }

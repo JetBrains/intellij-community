@@ -1161,6 +1161,7 @@ plugins/kotlin/gradle/code-insight-common
 plugins/kotlin/gradle/code-insight-groovy
 plugins/kotlin/gradle/code-insight-groovy/tests.k2
 plugins/kotlin/gradle/code-insight-toml
+plugins/kotlin/gradle/code-insight-toml/k2
 plugins/kotlin/gradle/gradle
 plugins/kotlin/gradle/gradle-java
 plugins/kotlin/gradle/gradle-java/k1

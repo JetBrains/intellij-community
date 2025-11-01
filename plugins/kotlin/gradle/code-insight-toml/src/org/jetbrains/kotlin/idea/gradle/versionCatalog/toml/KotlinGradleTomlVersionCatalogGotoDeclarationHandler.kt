@@ -26,8 +26,16 @@ class KotlinGradleTomlVersionCatalogGotoDeclarationHandler : GotoDeclarationHand
         if (!Registry.`is`(GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) return null
 
         val topmostDotExpression = findTopmostVersionCatalogExpression(sourceElement) ?: return null
-        return resolveViaCatalogAccessor(topmostDotExpression)
+        return resolveViaCatalogReferences(topmostDotExpression)
+            ?: resolveViaCatalogAccessor(topmostDotExpression)
     }
+
+    private fun resolveViaCatalogReferences(dotExpression: KtDotQualifiedExpression): Array<PsiElement>? =
+        dotExpression.references
+            .filterIsInstance<KtTomlVersionCatalogReference>()
+            .mapNotNull { it.resolve() }
+            .toTypedArray()
+            .ifEmpty { null }
 
     private fun resolveViaCatalogAccessor(dotExpression: KtDotQualifiedExpression): Array<PsiElement>? {
         val propertyGetter = dotExpression.toUElement()?.tryResolve()

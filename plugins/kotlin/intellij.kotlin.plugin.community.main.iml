@@ -109,6 +109,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.common" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.toml" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.toml.k2" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" exported="" />
     <orderEntry type="module" module-name="kotlin.idea" exported="" />
