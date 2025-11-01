@@ -397,6 +397,7 @@ class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val searchField = textField { and(byClass("JBTextArea"), byAccessibleName("Search")) }
   val replaceField = textField { and(byClass("JBTextArea"), byAccessibleName("Replace")) }
   val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
+  val newLineButton = actionButton { byAccessibleName("New Line") }
   val matchCaseButton = actionButton { byAccessibleName("Match Case") }
   val regexButton = actionButton { byAccessibleName("Regex") }
   val preserveCaseButton = actionButton { byAccessibleName("Preserve case") }
