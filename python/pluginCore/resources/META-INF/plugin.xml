@@ -21,6 +21,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.python-core-capable"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
   </dependencies>
 
   <content namespace="jetbrains">

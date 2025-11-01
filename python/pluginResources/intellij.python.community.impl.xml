@@ -195,7 +195,6 @@
     <registryKey key="python.test.autodetect.new.run.config" defaultValue="true" description="Python test autodetect configuration new UI"/>
     <registryKey key="python.run.doctest.via.pytest.configuration" defaultValue="true" description="Run doctest via pytest configuration"/>
     <registryKey key="run.with.py.tool" defaultValue="true" description="Run with Python tool"/>
-    <registryKey key="debugger.valueTooltipAutoShow" defaultValue="false" description="Auto show tooltip on mouse over." overrides="true"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
     <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
@@ -688,6 +687,9 @@
 
     <!-- uv -->
     <configurationType implementation="com.jetbrains.python.sdk.uv.run.UvRunConfigurationType"/>
+
+    <!-- Debugger Show value tooltip -->
+    <registryKey defaultValue="true" description="Show value tooltip" key="python.debugger.show.value.tooltip"/>
   </extensions>
 
   <extensionPoints>
