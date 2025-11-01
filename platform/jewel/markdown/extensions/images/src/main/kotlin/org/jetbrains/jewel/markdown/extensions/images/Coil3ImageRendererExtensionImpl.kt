@@ -45,10 +45,11 @@ internal class Coil3ImageRendererExtensionImpl(private val imageLoader: ImageLoa
      * @return An [InlineTextContent] that can be used by a `Text` or `BasicText` composable to render the image inline.
      */
     @Composable
-    public override fun renderImageContent(image: InlineMarkdown.Image): InlineTextContent {
+    public override fun renderImageContent(image: InlineMarkdown.Image): InlineTextContent? {
         val imageSourceResolver = LocalMarkdownImageSourceResolver.current
         val resolvedImageSource = remember(image.source) { imageSourceResolver.resolve(image.source) }
         var imageResult by remember(resolvedImageSource) { mutableStateOf<SuccessResult?>(null) }
+        var hasError by remember { mutableStateOf(false) }
 
         val painter =
             rememberAsyncImagePainter(
@@ -59,7 +60,9 @@ internal class Coil3ImageRendererExtensionImpl(private val imageLoader: ImageLoa
                         .size(Size.ORIGINAL)
                         .build(),
                 imageLoader = imageLoader,
+                onLoading = { hasError = false },
                 onSuccess = { successState ->
+                    hasError = false
                     // onSuccess should only be called once, but adding additional protection from
                     // unnecessary rerender
                     if (imageResult == null) {
@@ -67,9 +70,14 @@ internal class Coil3ImageRendererExtensionImpl(private val imageLoader: ImageLoa
                     }
                 },
                 onError = { error ->
+                    hasError = true
                     JewelLogger.getInstance(this.javaClass).warn("AsyncImage loading failed.", error.result.throwable)
                 },
             )
+
+        if (hasError) {
+            return null
+        }
 
         val placeholder =
             imageResult?.let {

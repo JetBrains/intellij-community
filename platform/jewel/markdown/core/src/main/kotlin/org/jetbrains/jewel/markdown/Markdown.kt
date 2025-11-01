@@ -3,9 +3,10 @@ package org.jetbrains.jewel.markdown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.runtime.Composable
@@ -302,12 +303,29 @@ public fun LazyMarkdown(
     blockRenderer: MarkdownBlockRenderer = JewelTheme.markdownBlockRenderer,
 ) {
     MaybeSelectable(selectable, modifier) {
-        LazyColumn(
-            state = state,
-            contentPadding = contentPadding,
-            verticalArrangement = Arrangement.spacedBy(markdownStyling.blockVerticalSpacing),
-        ) {
-            items(blocks) { block -> blockRenderer.RenderBlock(block, enabled, onUrlClick, Modifier) }
+        LazyColumn(state = state, contentPadding = contentPadding) {
+            itemsIndexed(blocks) { index, block ->
+                blockRenderer.RenderBlock(
+                    block = block,
+                    enabled = enabled,
+                    onUrlClick = onUrlClick,
+                    modifier =
+                        Modifier.padding(
+                            top =
+                                if (index == 0) {
+                                    0.dp
+                                } else {
+                                    (markdownStyling.blockVerticalSpacing / 2)
+                                },
+                            bottom =
+                                if (index == blocks.lastIndex) {
+                                    0.dp
+                                } else {
+                                    (markdownStyling.blockVerticalSpacing / 2)
+                                },
+                        ),
+                )
+            }
         }
     }
 }
