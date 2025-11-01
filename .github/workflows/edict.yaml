@@ -29,6 +29,5 @@ jobs:
           use-caches: false
           args: --profile-name,empty,--image,registry.jetbrains.team/p/sa/containers/qodana-jvm:ext,--script,distillate-commits:HEAD~1..HEAD,--property,llm.enable.grazie.token.from.environment.variable.or.file=true,--property,llm.requests.logging.mode=[HTTP_REQUESTS*],--property,ai-assistant-grazie-token=${{ secrets.GRAZIE_TOKEN }}
           upload-result: true
-          edict-test-dir: ${{ github.workspace }}/.qodana/report
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
