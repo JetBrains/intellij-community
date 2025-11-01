@@ -190,7 +190,9 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @RequiresWriteLock
   private void clearViewProviders(@NotNull String reason) {
-    LOG.debug("clearViewProviders: " + reason);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("clearViewProviders: " + reason);
+    }
 
     DebugUtil.performPsiModification("clearViewProviders", () -> {
       myVFileToViewProviderMap.forEach((__, ___, provider) -> {
