@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="com.intellij.grid.images.impl">
+<idea-plugin visibility="internal">
   <dependencies>
     <plugin id="com.intellij.platform.images"/>
     <module name="intellij.grid.core.impl"/>
