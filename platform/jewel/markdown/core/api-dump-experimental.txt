@@ -736,9 +736,12 @@ f:org.jetbrains.jewel.markdown.scrolling.AutoScrollingUtilKt
 - a:acceptTextLayout(org.jetbrains.jewel.markdown.MarkdownBlock,androidx.compose.ui.text.TextLayoutResult):V
 - pa:afterProcessing():V
 - pa:beforeProcessing():V
+- pa:findYCoordinateToScroll(I,kotlin.coroutines.Continuation):java.lang.Object
 - f:process(kotlin.jvm.functions.Function0):java.lang.Object
-- a:scrollToLine(I,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation):java.lang.Object
-- bs:scrollToLine$default(org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer,I,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- pa:scrollToCoordinate(I,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation):java.lang.Object
+- bs:scrollToCoordinate$default(org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer,I,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- F:scrollToLine(I,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation):java.lang.Object
+- bsF:scrollToLine$default(org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer,I,androidx.compose.animation.core.AnimationSpec,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 *f:org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer$Companion
 - f:create(androidx.compose.foundation.gestures.ScrollableState):org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
 *f:org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer$LocatableMarkdownBlock
