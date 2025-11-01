@@ -60,9 +60,6 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  *   provided by the [MarkdownParserFactory], but you can provide your own if you need to customize the parser — e.g.,
  *   to ignore certain tags. If [markdownMode] is `MarkdownMode.WithEditor`, make sure you set
  *   `includeSourceSpans(IncludeSourceSpans.BLOCKS)` on the parser.
- * @param languageRecognizer A lambda that can recognize code language names (e.g., when used for fenced code blocks)
- *   and convert them into a [MimeType]. By default, this uses [MimeType.Known.fromMarkdownLanguageName], but you can
- *   provide your own implementation to, for example, support languages that Jewel doesn't recognize yet.
  * @param parseEmbeddedHtml If `true`, a subset of native HTML elements will be parsed as Markdown blocks.
  */
 @ApiStatus.Experimental
@@ -72,22 +69,21 @@ public class MarkdownProcessor(
     private val markdownMode: MarkdownMode = MarkdownMode.Standalone,
     private val commonMarkParser: Parser =
         MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
-    private val languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
     private val parseEmbeddedHtml: Boolean = false,
 ) {
+    @Suppress("UnusedPrivateProperty") // languageRecognizer is only here for binary compat reasons
+    @Deprecated(
+        "`languageRecognizer` is not necessary anymore. Use the constructor without it.",
+        replaceWith = ReplaceWith("MarkdownProcessor(extensions, markdownMode, commonMarkParser)"),
+    )
     public constructor(
         extensions: List<MarkdownProcessorExtension> = emptyList(),
         markdownMode: MarkdownMode = MarkdownMode.Standalone,
         commonMarkParser: Parser =
             MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
+        languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
         parseEmbeddedHtml: Boolean = false,
-    ) : this(
-        extensions,
-        markdownMode,
-        commonMarkParser,
-        { MimeType.Known.fromMarkdownLanguageName(it) },
-        parseEmbeddedHtml,
-    )
+    ) : this(extensions, markdownMode, commonMarkParser, parseEmbeddedHtml)
 
     @Deprecated("Use a version with a `parseEmbeddedHtml` parameter", level = DeprecationLevel.HIDDEN)
     public constructor(
@@ -351,7 +347,7 @@ public class MarkdownProcessor(
     }
 
     private fun FencedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.FencedCodeBlock =
-        CodeBlock.FencedCodeBlock(content = literal.removeSuffix("\n"), mimeType = languageRecognizer(info))
+        CodeBlock.FencedCodeBlock(content = literal.removeSuffix("\n"), language = info)
 
     private fun IndentedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.IndentedCodeBlock =
         CodeBlock.IndentedCodeBlock(literal.trimEnd('\n'))
