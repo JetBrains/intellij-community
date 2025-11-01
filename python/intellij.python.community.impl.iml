@@ -191,5 +191,6 @@
     <orderEntry type="module" module-name="intellij.python.community.interpreters" />
     <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" />
     <orderEntry type="module" module-name="intellij.python.processOutput" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
   </component>
 </module>

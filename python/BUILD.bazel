@@ -354,6 +354,7 @@ jvm_library(
     "//python/interpreters",
     "//python/python-sdk-configurator/common",
     "//python/python-process-output:processOutput",
+    "//platform/xdebugger-impl/shared",
   ],
   exports = [
     "//python/openapi:community",
