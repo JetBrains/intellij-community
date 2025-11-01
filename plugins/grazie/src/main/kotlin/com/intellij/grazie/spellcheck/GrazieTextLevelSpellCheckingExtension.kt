@@ -18,7 +18,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieConfig.State.Processing
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.grazie.cloud.GrazieCloudConnector
-import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.MAX_TEXT_LENGTH_IN_PSI_ELEMENT
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection.Companion.sortByPriority
 import com.intellij.grazie.mlec.LanguageHolder
 import com.intellij.grazie.rule.SentenceBatcher
@@ -73,15 +73,17 @@ object GrazieTextLevelSpellCheckingExtension {
 
     val texts = sortByPriority(TextExtractor.findTextsExactlyAt(element, DOMAINS), session.priorityRange)
     if (texts.isEmpty()) return SpellCheckingResult.Ignored
-    val filteredTexts = texts.filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
-    if (filteredTexts.isEmpty()) return SpellCheckingResult.Checked
-
     //Bad optimization of internal code
     //Rewrite it before remove this
     //See https://youtrack.jetbrains.com/issue/PY-85199/PyCharm-freezes-on-opening-large-Jupyter-notebooks
-    if (GrazieInspection.skipCheckingTooLargeTexts(filteredTexts)) {
+    if (element.textLength > MAX_TEXT_LENGTH_IN_PSI_ELEMENT) {
       return SpellCheckingResult.Checked
     }
+
+
+    val filteredTexts = texts.filter { ProblemFilter.allIgnoringFilters(it).findAny().isEmpty }
+    if (filteredTexts.isEmpty()) return SpellCheckingResult.Checked
+
 
     val textSpeller = getTextSpeller(element.project) ?: return SpellCheckingResult.Ignored
     filteredTexts.asSequence()
@@ -135,7 +137,7 @@ object GrazieTextLevelSpellCheckingExtension {
         offset > typo.range.start && offset < typo.range.endExclusive
       }
       if (hasUnknownFragmentsInside) return@mapNotNull null
-      
+
       createTypo(typo.word, shiftedRange, element) {
         if (typo is CloudTypo) typo.fixes else LinkedSet()
       }
@@ -192,7 +194,7 @@ object GrazieTextLevelSpellCheckingExtension {
     override val fixes: LinkedSet<String> = lazyFixes()
   }
 
-  private class CloudTypo(override val word: String, override val range: ai.grazie.text.TextRange, override val fixes: LinkedSet<String>): Typo
+  private class CloudTypo(override val word: String, override val range: ai.grazie.text.TextRange, override val fixes: LinkedSet<String>) : Typo
 
   @Service
   private class SpellServerBatcherHolder : LanguageHolder<SentenceBatcher<SentenceWithProblems>>() {
@@ -201,8 +203,8 @@ object GrazieTextLevelSpellCheckingExtension {
     ) : SentenceBatcher<SentenceWithProblems>(language, 32), Disposable {
       override suspend fun parse(sentences: List<SentenceWithExclusions>, project: Project): Map<SentenceWithExclusions, SentenceWithProblems>? {
         return APIQueries.spell(sentences, language, project)
-                 ?.zip(sentences)
-                 ?.associate { it.second to it.first }
+          ?.zip(sentences)
+          ?.associate { it.second to it.first }
       }
 
       override fun dispose() {}
