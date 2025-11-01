@@ -149,10 +149,10 @@ public final class JavaTailTypes {
       return "CASE_ARROW";
     }
   };
-  private static final TailType BRACES = new BracesTailType();
-  public static final TailType FINALLY_LBRACE = BRACES;
-  public static final TailType TRY_LBRACE = BRACES;
-  public static final TailType DO_LBRACE = BRACES;
+  private static final ModNavigatorTailType BRACES = new BracesTailType();
+  public static final ModNavigatorTailType FINALLY_LBRACE = BRACES;
+  public static final ModNavigatorTailType TRY_LBRACE = BRACES;
+  public static final ModNavigatorTailType DO_LBRACE = BRACES;
 
   public static TailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
     boolean ruleFormatSwitch = SwitchUtils.isRuleFormatSwitch(block);

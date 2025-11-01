@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiAnnotation;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.patterns.StandardPatterns.string;
 
 /**
@@ -34,24 +35,56 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
     if (!context.isSmart()) {
       if (canAddKeywords(element)) {
         if (isStatementPosition(element)) {
-          sink.accept(new KeywordCompletionItem(JavaKeywords.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
-          sink.accept(new KeywordCompletionItem(JavaKeywords.WHILE, JavaTailTypes.WHILE_LPARENTH));
-          //sink.accept(new KeywordCompletionItem(JavaKeywords.DO, JavaTailTypes.DO_LBRACE));
-          sink.accept(new KeywordCompletionItem(JavaKeywords.FOR, JavaTailTypes.FOR_LPARENTH));
-          sink.accept(new KeywordCompletionItem(JavaKeywords.IF, JavaTailTypes.IF_LPARENTH));
-          //sink.accept(new KeywordCompletionItem(JavaKeywords.TRY, JavaTailTypes.TRY_LBRACE));
-          sink.accept(new KeywordCompletionItem(JavaKeywords.SYNCHRONIZED, JavaTailTypes.SYNCHRONIZED_LPARENTH));
-          sink.accept(new KeywordCompletionItem(JavaKeywords.THROW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
-          sink.accept(new KeywordCompletionItem(JavaKeywords.NEW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
-          if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, element)) {
-            sink.accept(new KeywordCompletionItem(JavaKeywords.ASSERT, (ModNavigatorTailType)TailTypes.insertSpaceType()));
-          }
-          if (!(PsiTreeUtil.getParentOfType(element, PsiSwitchExpression.class, PsiLambdaExpression.class) 
-                  instanceof PsiSwitchExpression)) {
-            sink.accept(new KeywordCompletionItem(JavaKeywords.RETURN, getReturnTail(element)));
-          }
+          addStatementKeywords(context, sink);
         }
       }
+    }
+  }
+
+  private static void addStatementKeywords(CompletionContext context, Consumer<CompletionItem> sink) {
+    PsiElement element = context.element();
+    PsiElement prevLeaf = FilterPositionUtil.searchNonSpaceNonCommentBack(element);
+    if (psiElement()
+      .withText("}")
+      .withParent(psiElement(PsiCodeBlock.class).withParent(or(psiElement(PsiTryStatement.class), psiElement(PsiCatchSection.class))))
+      .accepts(prevLeaf)) {
+      sink.accept(new KeywordCompletionItem(JavaKeywords.CATCH, JavaTailTypes.CATCH_LPARENTH));
+      sink.accept(new KeywordCompletionItem(JavaKeywords.FINALLY, JavaTailTypes.FINALLY_LBRACE));
+      if (prevLeaf != null && prevLeaf.getParent().getNextSibling() instanceof PsiErrorElement) {
+        return;
+      }
+    }
+    sink.accept(new KeywordCompletionItem(JavaKeywords.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
+    sink.accept(new KeywordCompletionItem(JavaKeywords.WHILE, JavaTailTypes.WHILE_LPARENTH));
+    sink.accept(new KeywordCompletionItem(JavaKeywords.DO, JavaTailTypes.DO_LBRACE));
+    sink.accept(new KeywordCompletionItem(JavaKeywords.FOR, JavaTailTypes.FOR_LPARENTH));
+    sink.accept(new KeywordCompletionItem(JavaKeywords.IF, JavaTailTypes.IF_LPARENTH));
+    sink.accept(new KeywordCompletionItem(JavaKeywords.TRY, JavaTailTypes.TRY_LBRACE));
+    sink.accept(new KeywordCompletionItem(JavaKeywords.SYNCHRONIZED, JavaTailTypes.SYNCHRONIZED_LPARENTH));
+    sink.accept(new KeywordCompletionItem(JavaKeywords.THROW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+    sink.accept(new KeywordCompletionItem(JavaKeywords.NEW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+    if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, element)) {
+      sink.accept(new KeywordCompletionItem(JavaKeywords.ASSERT, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+    }
+    if (!(PsiTreeUtil.getParentOfType(element, PsiSwitchExpression.class, PsiLambdaExpression.class) 
+            instanceof PsiSwitchExpression)) {
+      sink.accept(new KeywordCompletionItem(JavaKeywords.RETURN, getReturnTail(element)));
+    }
+    if (psiElement().withText(";").withSuperParent(2, PsiIfStatement.class).accepts(prevLeaf) ||
+        psiElement().withText("}").withSuperParent(3, PsiIfStatement.class).accepts(prevLeaf)) {
+      CompletionItem elseKeyword = new KeywordCompletionItem(JavaKeywords.ELSE, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType());
+      CharSequence text = element.getContainingFile().getFileDocument().getCharsSequence();
+      int offset = context.offset();
+      while (text.length() > offset && Character.isWhitespace(text.charAt(offset))) {
+        offset++;
+      }
+      if (text.length() > offset + JavaKeywords.ELSE.length() &&
+          text.subSequence(offset, offset + JavaKeywords.ELSE.length()).toString().equals(JavaKeywords.ELSE) &&
+          Character.isWhitespace(text.charAt(offset + JavaKeywords.ELSE.length()))) {
+        //TODO: priority
+        //elseKeyword = PrioritizedLookupElement.withPriority(elseKeyword, -1);
+      }
+      sink.accept(elseKeyword);
     }
   }
 

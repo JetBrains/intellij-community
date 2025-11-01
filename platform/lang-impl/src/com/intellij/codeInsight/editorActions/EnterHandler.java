@@ -304,13 +304,25 @@ public class EnterHandler extends BaseEnterHandler {
    *         {@code -1} if commit-free indent adjustment is unavailable in position.
    */
   public static int adjustLineIndentNoCommit(Language language, @NotNull Document document, @NotNull Editor editor, int offset) {
-    final CharSequence docChars = document.getCharsSequence();
-    int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
-    int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
     String newIndent = CodeStyle.getLineIndent(editor, language, offset, false);
     if (newIndent == null) {
       return -1;
     }
+    return adjustLineIndentNoCommit(document, offset, newIndent);
+  }
+
+  /**
+   * Adjusts indentation of the line with {@code offset} in {@code document}.
+   *
+   * @param document for indent adjustment
+   * @param offset   in {@code document} for indent adjustment
+   * @param newIndent new indentation string (containing spaces or linebreaks)
+   * @return new offset in the {@code document} after commit-free indent adjustment.
+   */
+  public static int adjustLineIndentNoCommit(@NotNull Document document, int offset, String newIndent) {
+    final CharSequence docChars = document.getCharsSequence();
+    int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
+    int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
     if (Strings.areSameInstance(newIndent, LineIndentProvider.DO_NOT_ADJUST)) {
       return offset;
     }

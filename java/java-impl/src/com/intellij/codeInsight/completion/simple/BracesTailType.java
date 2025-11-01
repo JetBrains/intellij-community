@@ -2,24 +2,24 @@
 
 package com.intellij.codeInsight.completion.simple;
 
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.codeInsight.editorActions.EnterHandler;
-import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionManager;
+import com.intellij.java.syntax.JavaSyntaxBundle;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-public class BracesTailType extends TailType {
+public class BracesTailType extends ModNavigatorTailType {
 
   @Override
-  public int processTail(final @NotNull Editor editor, int tailOffset) {
+  public int processTail(@NotNull Project project, @NotNull ModNavigator editor, int tailOffset) {
     int startOffset = tailOffset;
 
     CharSequence seq = editor.getDocument().getCharsSequence();
@@ -30,27 +30,34 @@ public class BracesTailType extends TailType {
       tailOffset = insertChar(editor, startOffset, '{');
     }
 
-    tailOffset = reformatBrace(editor, tailOffset, startOffset);
-
-    if (EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, tailOffset, getFileType(editor))) {
-      new EnterHandler(EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER))
-        .executeWriteAction(editor, editor.getCaretModel().getCurrentCaret(),
-                            DataManager.getInstance().getDataContext(editor.getContentComponent()));
-      return editor.getCaretModel().getOffset();
-    }
-    return tailOffset;
-  }
-
-  private static int reformatBrace(Editor editor, int tailOffset, int startOffset) {
-    Project project = editor.getProject();
-    if (project != null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (psiFile != null) {
-        editor.getCaretModel().moveToOffset(tailOffset);
-        CodeStyleManager.getInstance(project).reformatText(psiFile, startOffset, tailOffset);
-        tailOffset = editor.getCaretModel().getOffset();
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    Document document = editor.getDocument();
+    manager.commitDocument(document);
+    PsiFile psiFile = manager.getPsiFile(document);
+    if (psiFile != null) {
+      editor.moveCaretTo(tailOffset);
+      CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+      styleManager.reformatText(psiFile, startOffset, tailOffset);
+      int offset = editor.getCaretOffset();
+      PsiElement element = PsiTreeUtil.skipWhitespacesBackward(psiFile.findElementAt(offset));
+      if (PsiUtil.isJavaToken(element, JavaTokenType.LBRACE)) {
+        if (StreamEx.iterate(element, e -> e.getParent()).takeWhile(e -> e != null && !(e instanceof PsiFile))
+          .anyMatch(e -> e.getNextSibling() instanceof PsiErrorElement errorElement &&
+                         errorElement.getErrorDescription().equals(JavaSyntaxBundle.message("expected.rbrace")))) {
+          manager.doPostponedOperationsAndUnblockDocument(document);
+          document.insertString(offset, "\n\n}");
+          manager.commitDocument(document);
+          editor.moveCaretTo(offset + 1);
+          styleManager.reformatText(psiFile, offset, offset + 2);
+          offset = editor.getCaretOffset();
+          String newIndent = styleManager.getLineIndent(document, offset);
+          if (newIndent != null) {
+            int adjusted = EnterHandler.adjustLineIndentNoCommit(document, offset, newIndent);
+            editor.moveCaretTo(adjusted);
+          }
+        }
       }
     }
-    return tailOffset;
+    return editor.getCaretOffset();
   }
 }

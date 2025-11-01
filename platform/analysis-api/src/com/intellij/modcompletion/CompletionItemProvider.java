@@ -64,5 +64,12 @@ public interface CompletionItemProvider {
     public boolean isBasic() {
       return type == CompletionType.BASIC;
     }
+
+    /**
+     * @return caret offset
+     */
+    public int offset() {
+      return context.offset();
+    }
   }
 }
