@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.TEST_FRAMEWORK_MODULE_NAMES
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
+import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.impl.CachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -28,7 +29,6 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.XIncludeElementResolver
 import org.jetbrains.intellij.build.impl.createXIncludePathResolver
-import org.jetbrains.intellij.build.impl.findFileInModuleSources
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry

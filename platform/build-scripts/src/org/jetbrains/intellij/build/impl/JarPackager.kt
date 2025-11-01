@@ -38,6 +38,7 @@ import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeHashForModuleOutput
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
 import org.jetbrains.intellij.build.defaultLibrarySourcesNamesFilter
+import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry

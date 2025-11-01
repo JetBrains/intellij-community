@@ -10,10 +10,12 @@ import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
  *
  * @param moduleName The name of the module containing the resource (e.g., "intellij.platform.resources")
  * @param resourcePath The path to the resource within the module (e.g., "META-INF/PlatformLangPlugin.xml")
+ * @param ultimateOnly If true, this include is only processed in Ultimate builds (skipped in Community builds)
  */
 data class DeprecatedXmlInclude(
   @JvmField val moduleName: String,
   @JvmField val resourcePath: String,
+  @JvmField val ultimateOnly: Boolean = false,
 )
 
 /**
@@ -92,13 +94,21 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
 
   /**
    * Add an XML include (xi:include directive) by specifying module name and resource path.
-   * Example: include("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+   * Example: deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+   *
+   * For Ultimate-only includes that should be conditionally processed:
+   * Example: deprecatedInclude("intellij.platform.extended.community.impl", "META-INF/community-extensions.xml", ultimateOnly = true)
    *
    * @param moduleName The name of the module containing the resource
    * @param resourcePath The path to the resource within the module
+   * @param ultimateOnly If true, this include is only processed in Ultimate builds.
+   *   - When inlining: Skipped in Community builds
+   *   - When NOT inlining: Generates xi:include with xi:fallback wrapper for graceful handling
+   *
+   * @see <a href="programmatic-content.md#ultimate-only-includes">Ultimate-Only Includes Documentation</a>
    */
-  fun deprecatedInclude(moduleName: String, resourcePath: String) {
-    xmlIncludes.add(DeprecatedXmlInclude(moduleName, resourcePath))
+  fun deprecatedInclude(moduleName: String, resourcePath: String, ultimateOnly: Boolean = false) {
+    xmlIncludes.add(DeprecatedXmlInclude(moduleName, resourcePath, ultimateOnly))
   }
 
   /**

@@ -49,8 +49,6 @@ import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
@@ -327,11 +325,11 @@ class CompilationContextImpl private constructor(
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? {
-    return org.jetbrains.intellij.build.impl.findFileInModuleSources(module = findRequiredModule(moduleName), relativePath = relativePath)
+    return org.jetbrains.intellij.build.findFileInModuleSources(module = findRequiredModule(moduleName), relativePath = relativePath)
   }
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? {
-    return org.jetbrains.intellij.build.impl.findFileInModuleSources(module, relativePath)
+    return org.jetbrains.intellij.build.findFileInModuleSources(module, relativePath)
   }
 
   override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
@@ -509,23 +507,6 @@ private fun printEnvironmentDebugInfo() {
   for (propertyName in properties.keys.sortedBy { it as String }) {
     println("PROPERTY $propertyName = ${properties[propertyName].toString()}")
   }
-}
-
-private val rootTypeOrder = arrayOf(JavaResourceRootType.RESOURCE, JavaSourceRootType.SOURCE, JavaResourceRootType.TEST_RESOURCE, JavaSourceRootType.TEST_SOURCE)
-
-internal fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean = false): Path? {
-  for (type in rootTypeOrder) {
-    for (root in module.sourceRoots) {
-      if (type != root.rootType || (onlyProductionSources && !(root.rootType == JavaResourceRootType.RESOURCE || root.rootType == JavaSourceRootType.SOURCE))) {
-        continue
-      }
-      val sourceFile = JpsJavaExtensionService.getInstance().findSourceFile(root, relativePath)
-      if (sourceFile != null) {
-        return sourceFile
-      }
-    }
-  }
-  return null
 }
 
 internal suspend fun resolveProjectDependencies(context: CompilationContext) {

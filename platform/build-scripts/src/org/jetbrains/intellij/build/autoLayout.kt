@@ -7,7 +7,6 @@ import org.jetbrains.intellij.build.impl.JarPackager
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.findFileInModuleSources
 
 private const val VERIFIER_MODULE = "intellij.platform.commercial.verifier"
 

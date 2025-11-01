@@ -10,6 +10,7 @@ import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
+import org.jetbrains.intellij.build.findFileInModuleSources
 import java.nio.file.Path
 
 suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, pluginsToPublish: MutableSet<PluginLayout>, context: BuildContext) {

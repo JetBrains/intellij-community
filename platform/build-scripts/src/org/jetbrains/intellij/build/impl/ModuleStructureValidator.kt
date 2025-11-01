@@ -6,6 +6,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.impl.JpsJavaDependencyExtensionRole
 import org.jetbrains.jps.model.library.JpsLibrary
@@ -43,7 +44,10 @@ private val pathElements = hashSetOf("interface-class", "implementation-class")
 private val predefinedTypes = hashSetOf("java.lang.Object")
 private val ignoreModules = hashSetOf("intellij.java.testFramework", "intellij.platform.uast.testFramework")
 
-class ModuleStructureValidator(private val context: BuildContext, private val allProductModules: Collection<ModuleItem>) {
+class ModuleStructureValidator(
+  private val context: BuildContext,
+  private val allProductModules: Collection<ModuleItem>,
+) {
 
   private val errors = ArrayList<AssertionError>()
   private val libraryFiles = HashMap<JpsLibrary, Set<String>>()
@@ -171,20 +175,44 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
       }
     }
 
-    // start validating from product xml descriptor
-    var productDescriptorName = ""
-    var productDescriptorFile: Path? = null
-    for (c in listOf("META-INF/plugin.xml", "META-INF/${context.productProperties.platformPrefix}Plugin.xml")) {
-      productDescriptorName = c
-      productDescriptorFile = findDescriptorFile(productDescriptorName, roots) ?: continue
-    }
-    if (productDescriptorFile == null) {
-      errors.add(AssertionError("Can not find product descriptor $productDescriptorName"))
-      return
-    }
-
     val allDescriptors = HashSet<Path>()
-    validateXmlDescriptorsRec(productDescriptorFile, roots, libraries, allDescriptors)
+    
+    // Try to generate product XML from ProductModulesContentSpec if available
+    val productContentSpec = context.productProperties.getProductContentDescriptor()
+    if (productContentSpec == null) {
+      // Fallback: read product descriptor from disk (for products without ProductModulesContentSpec)
+      context.messages.info("ProductModulesContentSpec not available, reading product descriptor from disk")
+      var productDescriptorName = ""
+      var productDescriptorFile: Path? = null
+      for (c in listOf("META-INF/plugin.xml", "META-INF/${context.productProperties.platformPrefix}Plugin.xml")) {
+        productDescriptorName = c
+        productDescriptorFile = findDescriptorFile(productDescriptorName, roots) ?: continue
+      }
+      if (productDescriptorFile == null) {
+        errors.add(AssertionError("Can not find product descriptor $productDescriptorName"))
+        return
+      }
+      validateXmlDescriptorsRec(productDescriptorFile, roots, libraries, allDescriptors)
+    }
+    else {
+      context.messages.info("Generating product XML on-the-fly from ProductModulesContentSpec")
+
+      // Generate product XML with inlined module sets
+      val productXml = buildProductContentXml(
+        spec = productContentSpec,
+        moduleOutputProvider = context,
+        inlineXmlIncludes = true,
+        inlineModuleSets = true,
+        productPropertiesClass = context.productProperties.javaClass.name,
+        generatorCommand = "ModuleStructureValidator",
+        isUltimateBuild = context.productProperties.platformPrefix != "Idea",
+      )
+
+      // Parse generated XML and validate it
+      val generatedXmlElement = productXml.xml.byteInputStream().use(::readXmlAsModel)
+      validateGeneratedXmlDescriptors(generatedXmlElement, roots, libraries, allDescriptors)
+    }
+    
     validateXmlRegistrations(allDescriptors)
   }
 
@@ -192,27 +220,56 @@ class ModuleStructureValidator(private val context: BuildContext, private val al
     return libraries.firstOrNull { getLibraryFiles(it).contains(name) }
   }
 
+  /**
+   * Validates XML descriptors from a file on disk.
+   * This is the fallback for products without ProductModulesContentSpec.
+   */
   private fun validateXmlDescriptorsRec(descriptor: Path, roots: List<Path>, libraries: Set<JpsLibrary>, allDescriptors: MutableSet<Path>) {
     allDescriptors.add(descriptor)
-
-    val descriptorFiles = ArrayList<Path>()
     val xml = Files.newInputStream(descriptor).use(::readXmlAsModel)
+    processXmlIncludes(xml, roots + listOf(descriptor.parent), libraries, allDescriptors, sourceName = descriptor.name)
+  }
+  
+  /**
+   * Validates XML descriptors from generated product content.
+   * Used when ProductModulesContentSpec is available - module sets are inlined, so only regular descriptor includes remain.
+   */
+  private fun validateGeneratedXmlDescriptors(
+    xml: XmlElement,
+    roots: List<Path>, 
+    libraries: Set<JpsLibrary>, 
+    allDescriptors: MutableSet<Path>
+  ) {
+    processXmlIncludes(xml, roots, libraries, allDescriptors, sourceName = "generated product XML")
+  }
+  
+  /**
+   * Common logic to process xi:includes in XML descriptors and recursively validate them.
+   */
+  private fun processXmlIncludes(
+    xml: XmlElement,
+    roots: List<Path>,
+    libraries: Set<JpsLibrary>,
+    allDescriptors: MutableSet<Path>,
+    sourceName: String,
+  ) {
+    val descriptorFiles = ArrayList<Path>()
 
     for (includeNode in xml.children(includeName)) {
       val ref = includeNode.getAttributeValue("href") ?: continue
-      val descriptorFile = findDescriptorFile(ref, roots + listOf(descriptor.parent))
+      val descriptorFile = findDescriptorFile(ref, roots)
       if (descriptorFile == null) {
         val library1 = findLibraryWithFile(ref.removePrefix("/"), libraries)
         if (library1 != null) {
-          context.messages.warning("Descriptor '$ref' came from library '${library1.name}', referenced in '${descriptor.name}'")
+          context.messages.warning("Descriptor '$ref' came from library '${library1.name}', referenced in $sourceName")
         }
         else {
           val isOptional = includeNode.children.any { it.name == fallbackName }
           if (isOptional) {
-            context.messages.info("Ignore optional missing xml descriptor '$ref' referenced in '${descriptor.name}'")
+            context.messages.info("Ignore optional missing xml descriptor '$ref' referenced in $sourceName")
           }
           else {
-            errors.add(AssertionError("Can not find xml descriptor '$ref' referenced in '${descriptor.name}'"))
+            errors.add(AssertionError("Can not find xml descriptor '$ref' referenced in $sourceName"))
           }
         }
       }

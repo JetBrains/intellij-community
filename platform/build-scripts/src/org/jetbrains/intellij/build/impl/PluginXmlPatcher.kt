@@ -10,6 +10,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompatibleBuildRange
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.findFileInModuleSources
 
 private val buildNumberRegex = Regex("""(\d+\.)+\d+""")
 private val digitDotDigitRegex = Regex("""\d+\.\d+""")

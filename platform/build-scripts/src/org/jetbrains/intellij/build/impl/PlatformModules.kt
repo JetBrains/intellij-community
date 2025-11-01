@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.UTIL_RT_JAR
+import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
@@ -582,7 +583,9 @@ private suspend fun processAndGetProductPluginContentModules(
         moduleOutputProvider = context,
         inlineXmlIncludes = true,
         productPropertiesClass = context.productProperties::class.java.name,
-        generatorCommand = "(runtime)"
+        generatorCommand = "(runtime)",
+        inlineModuleSets = true,
+        isUltimateBuild = context.paths.projectHome != context.paths.communityHomeDir,
       )
       Span.current().addEvent("Generated ${buildResult.contentBlocks.size} content blocks with ${buildResult.contentBlocks.sumOf { it.modules.size }} total modules")
 

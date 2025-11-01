@@ -8,7 +8,6 @@ import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.findFileInModuleSources
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsDependencyElement
@@ -184,4 +183,12 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     }
     return scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
   }
+}
+
+suspend fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: CompilationContext): ByteArray? {
+  var result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
+  if (useTestSourceEnabled && result == null) {
+    result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
+  }
+  return result
 }

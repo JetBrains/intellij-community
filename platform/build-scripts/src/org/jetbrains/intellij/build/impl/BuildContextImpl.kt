@@ -39,6 +39,7 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.computeAppInfoXml
+import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
@@ -62,6 +63,8 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 import kotlin.time.Duration
+
+private val PLUGIN_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
 
 class BuildContextImpl internal constructor(
   internal val compilationContext: CompilationContext,
@@ -213,8 +216,6 @@ class BuildContextImpl internal constructor(
         jarCacheManager = jarCacheManager,
       )
     }
-
-    private val PLUGIN_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
   }
 
   override var builtinModule: BuiltinModulesFileData?
