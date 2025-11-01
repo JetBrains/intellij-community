@@ -33,10 +33,11 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
 
   // todo IJPL-339 do read only under read lock
   override fun cacheOrGet(file: VirtualFile, context: CodeInsightContext, provider: FileViewProvider): FileViewProvider {
+    log.trace { "cacheOrGet $file $context $provider" }
     val map = getFileProviderMap(file)
-    val result = map.cacheOrGet(context, provider)
-    log.trace { "cacheOrGet $file $context $result" }
-    return result
+    val effectiveViewProvider = map.cacheOrGet(context, provider)
+    log.trace { "cacheOrGet finished $file $context $provider, effectiveProvider=$effectiveViewProvider" }
+    return effectiveViewProvider
   }
 
   private fun getFileProviderMap(file: VirtualFile): FileProviderMap {
@@ -65,14 +66,13 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
 
   override fun get(file: VirtualFile, context: CodeInsightContext): FileViewProvider? {
     val result = cache.cache[file]?.get(context)
-    log.trace { "get $file $context $result" }
     return result
   }
 
   override fun removeAllFileViewProvidersAndSet(vFile: VirtualFile, viewProvider: FileViewProvider) {
+    log.trace { "removeAllAndSetAny $vFile $viewProvider" }
     val fileMap = getFileProviderMap(vFile)
     fileMap.removeAllAndSetAny(viewProvider)
-    log.trace { "removeAllAndSetAny $vFile $viewProvider" }
   }
 
   override fun remove(file: VirtualFile): Iterable<FileViewProvider>? {
@@ -86,9 +86,9 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
    */
   override fun remove(file: VirtualFile, context: CodeInsightContext, viewProvider: AbstractFileViewProvider): Boolean {
     log.trace { "remove $file $context $viewProvider" }
-    if (!cache.isInitialized) return false
-    val map = this.cache.cache[file] ?: return false
-    return map.remove(context, viewProvider)
+    val result = cache.isInitialized && cache.cache[file]?.remove(context, viewProvider) == true
+    log.trace { "remove finished $file $context $viewProvider, result=$result" }
+    return result
   }
 
   override fun processQueue() {
@@ -103,7 +103,9 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
     log.trace { "trySetContext $viewProvider $context" }
     val vFile = viewProvider.virtualFile
     val map = getFileProviderMap(vFile)
-    return map.trySetContext(viewProvider, context)
+    val effectiveContext = map.trySetContext(viewProvider, context)
+    log.trace { "trySetContext finished $viewProvider $context, effectiveContext=$effectiveContext" }
+    return effectiveContext
   }
 }
 
