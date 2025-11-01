@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.grid.json.impl">
+<idea-plugin>
   <dependencies>
     <module name="intellij.json.backend"/>
     <module name="intellij.grid.impl"/>
