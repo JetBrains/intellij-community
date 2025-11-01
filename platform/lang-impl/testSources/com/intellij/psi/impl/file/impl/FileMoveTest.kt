@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multiverseProjectFixture
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.util.PsiUtilCore.ensureValid
@@ -17,6 +18,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import com.intellij.testFramework.junit5.fixture.moduleInProjectFixture
+import com.intellij.util.ExceptionUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
@@ -90,7 +92,7 @@ internal class FileMoveTest {
     val psiFile = aJava.findPsiFile()
 
     val rawContext = CodeInsightContextManagerImpl.getInstanceImpl(project).getCodeInsightContextRaw(psiFile.viewProvider)
-    assert(rawContext == anyContext()) { psiFile.presentableTextWithContext() + ", " + dumpPsiFiles(aJava)}
+    assert(rawContext == anyContext()) { psiFile.presentableTextWithContext() + ", " + dumpPsiFiles(aJava) }
 
     moveFile(aJava, src2)
 
@@ -212,11 +214,8 @@ internal class FileMoveTest {
   private suspend fun assertPsiFileIsValid(psiFile: PsiFile, vFile: VirtualFile) {
     readAction {
       if (!psiFile.isValid) {
-        val invalidationException = runCatching {
-          ensureValid(psiFile)
-        }
-
-        fail("File ${psiFile.presentableTextWithContext()} must be valid. See registered files:" + dumpPsiFiles(vFile), invalidationException.exceptionOrNull())
+        val info = prepareInvalidationInfo(psiFile)
+        fail("File ${psiFile.presentableTextWithContext()} must be valid. See registered files:" + dumpPsiFiles(vFile) + info)
       }
     }
   }
@@ -257,5 +256,18 @@ internal class FileMoveTest {
 
   private fun PsiFile.presentableText(): String {
     return "File@" + System.identityHashCode(this)
+  }
+
+  private fun prepareInvalidationInfo(invalidPsi: PsiFile): String {
+    val invalidationException = runCatching {
+      ensureValid(invalidPsi)
+    }
+
+    val t = invalidationException.exceptionOrNull() ?: return ""
+    val e = ExceptionUtil.findCause(t, PsiInvalidElementAccessException::class.java) ?: return ""
+    if (e.attachments.isEmpty()) return ""
+
+    val attachments = e.attachments.joinToString(prefix = "\nDiagnostics:\n\n", separator = "\n\n") { it.displayText }
+    return attachments
   }
 }
