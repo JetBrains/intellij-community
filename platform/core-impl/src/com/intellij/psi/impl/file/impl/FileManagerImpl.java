@@ -120,11 +120,6 @@ public final class FileManagerImpl implements FileManagerEx {
     });
   }
 
-  /**
-   * Updates the context of [viewProvider] to [context] if the current context of viewProvider is anyContext.
-   *
-   * @return updated context of viewProvider, or `null` if viewProvider is missing in the cache.
-   */
   @ApiStatus.Internal
   @Override
   public @Nullable CodeInsightContext trySetContext(@NotNull FileViewProvider viewProvider, @NotNull CodeInsightContext context) {

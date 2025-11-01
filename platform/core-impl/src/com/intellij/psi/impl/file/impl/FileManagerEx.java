@@ -23,6 +23,12 @@ public interface FileManagerEx extends FileManager {
   @TestOnly
   void assertNoInjectedFragmentsStoredInMaps();
 
+  /**
+   * Updates the context of `viewProvider` to `context` if the current context of viewProvider is anyContext.
+   * If the current context of viewProvider is not anyContext, does nothing.
+   *
+   * @return the effective context of viewProvider, or `null` if viewProvider is missing in the cache.
+   */
   @Nullable CodeInsightContext trySetContext(@NotNull FileViewProvider viewProvider, @NotNull CodeInsightContext context);
 
   void removeFilesAndDirsRecursively(@NotNull VirtualFile vFile);
