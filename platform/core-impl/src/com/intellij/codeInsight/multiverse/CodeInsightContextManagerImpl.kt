@@ -123,7 +123,7 @@ class CodeInsightContextManagerImpl(
     log.trace { "requested preferred context of file ${file.path}" }
 
     return preferredContext.getOrPut(file) {
-      findFirstContext(file)
+      findFirstContext(file).also { log.assertTrue(it !== anyContext()) { "preferredContext must not be anyContext" } }
     }
   }
 
@@ -172,7 +172,6 @@ class CodeInsightContextManagerImpl(
     log.trace { "infer context of FileViewProvider ${fileViewProvider.virtualFile.path}" }
 
     val preferredContext = getPreferredContext(fileViewProvider.virtualFile)
-    log.assertTrue(preferredContext != anyContext()) { "preferredContext must not be anyContext" }
 
     val setContext = trySetContext(fileViewProvider, preferredContext)
 
