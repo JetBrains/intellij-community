@@ -13,6 +13,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
@@ -28,10 +29,9 @@ internal class FileContextTest {
     private val sourceRoot = sharedSourceRootFixture(module1, module2)
   }
 
-  private val fileFixture = sourceRoot.virtualFileFixture("TestCommon.txt", "Test file Common")
+  private val virtualFile by sourceRoot.virtualFileFixture("TestCommon.txt", "Test file Common")
+  private val project by projectFixture
 
-  private val virtualFile by lazy { fileFixture.get() }
-  private val project by lazy { projectFixture.get() }
   private val psiManager by lazy { PsiManager.getInstance(project) }
   private val contextManager by lazy { CodeInsightContextManagerImpl.getInstanceImpl(project) }
 
