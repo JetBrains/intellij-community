@@ -138,7 +138,11 @@ public class JulLogger extends Logger {
   }
 
   private static @NotNull Handler configureAttachmentHandler(@NotNull Path path, @Nullable Filter filter) {
-    return new AttachmentHandler(path, filter);
+    AttachmentHandler handler = new AttachmentHandler(path);
+    if (filter != null) {
+      handler.setFilter(filter);
+    }
+    return handler;
   }
 
   private static Handler configureConsoleHandler(boolean showDateInConsole, IdeaLogRecordFormatter layout, @Nullable Filter filter) {

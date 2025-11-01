@@ -9,21 +9,14 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Collections
 import java.util.IdentityHashMap
-import java.util.logging.Filter
 import java.util.logging.Handler
 import java.util.logging.LogRecord
 import kotlin.collections.ArrayDeque
 
-internal class AttachmentHandler(
-  private val logPath: Path,
-  logFilter: Filter?,
-) : Handler() {
-  init {
-    if (logFilter != null) {
-      filter = logFilter
-    }
-  }
-
+/**
+ * Handler for logging attachments of [ExceptionWithAttachments] to log folder.
+ */
+internal class AttachmentHandler(private val logPath: Path) : Handler() {
   override fun publish(record: LogRecord) {
     if (!isLoggable(record)) return
 
