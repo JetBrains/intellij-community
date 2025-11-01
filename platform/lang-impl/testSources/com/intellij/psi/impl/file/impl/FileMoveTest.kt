@@ -29,6 +29,10 @@ import org.junit.jupiter.api.fail
   category = CodeInsightContextManagerImpl::class,
   level = LogLevel.TRACE
 )
+@com.intellij.testFramework.junit5.LogLevel(
+  category = "#com.intellij.psi.impl.file.impl.MultiverseFileViewProviderCache",
+  level = LogLevel.TRACE
+)
 @TestApplication
 internal class FileMoveTest {
   private val projectFixture = multiverseProjectFixture(openAfterCreation = true) {
