@@ -12,6 +12,8 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
 import org.jetbrains.intellij.build.productLayout.ModuleSetProvider
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.productModules
 import java.nio.file.Path
 
 internal suspend fun createCommunityBuildContext(
@@ -118,6 +120,45 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     @Suppress("SpellCheckingInspection")
     qodanaProductProperties = QodanaProductProperties("QDJVMC", "Qodana Community for JVM")
     additionalVmOptions = persistentListOf("-Dllm.show.ai.promotion.window.on.start=false")
+  }
+
+  override fun getProductContentDescriptor(): ProductModulesContentSpec {
+    return getIntelliJCommunityProductContentDescriptor(includeCommunityExtensions = true)
+  }
+
+  protected fun getIntelliJCommunityProductContentDescriptor(
+    includeCommunityExtensions: Boolean,
+  ): ProductModulesContentSpec = productModules {
+    alias("com.intellij.modules.idea")
+    alias("com.intellij.modules.idea.community")
+    alias("com.intellij.modules.java-capable")
+    alias("com.intellij.modules.python-core-capable")
+    alias("com.intellij.modules.python-in-non-pycharm-ide-capable")
+    alias("com.intellij.platform.ide.provisioner")
+
+    deprecatedInclude("intellij.java.ide.resources", "META-INF/JavaIdePlugin.xml")
+    deprecatedInclude("intellij.idea.community.customization", "META-INF/tips-intellij-idea-community.xml")
+
+    moduleSet(CommunityModuleSets.debuggerStreams())
+
+    module("intellij.platform.coverage")
+    module("intellij.platform.coverage.agent")
+    module("intellij.xml.xmlbeans")
+    module("intellij.platform.ide.newUiOnboarding")
+    module("intellij.platform.ide.newUsersOnboarding")
+    module("intellij.ide.startup.importSettings")
+    module("intellij.platform.customization.min")
+    module("intellij.idea.customization.base")
+    module("intellij.idea.customization.backend")
+    module("intellij.platform.tips")
+
+    moduleSet(CommunityModuleSets.ideCommon())
+    moduleSet(CommunityModuleSets.rdCommon())
+
+    if (includeCommunityExtensions) {
+    deprecatedInclude("intellij.platform.extended.community.impl", "META-INF/community-extensions.xml", ultimateOnly = true)
+      }
+    deprecatedInclude("intellij.idea.community.customization", "META-INF/community-customization.xml")
   }
 
   override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {

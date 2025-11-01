@@ -1,18 +1,25 @@
+  <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+  <!-- To regenerate, run 'Generate Product Layouts' or directly CommunityModuleSets.main() -->
+  <!-- Source: org.jetbrains.intellij.build.IdeaCommunityProperties -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="/META-INF/JavaIdePlugin.xml"/>
-  <xi:include href="/META-INF/tips-intellij-idea-community.xml"/>
-
   <module value="com.intellij.modules.idea"/>
   <module value="com.intellij.modules.idea.community"/>
   <module value="com.intellij.modules.java-capable"/>
-  <module value="com.intellij.modules.python-core-capable"/> <!-- Python plugin can be installed -->
-  <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/> <!-- Enable Non-Pycharm-IDE support in the Python plugin -->
+  <module value="com.intellij.modules.python-core-capable"/>
+  <module value="com.intellij.modules.python-in-non-pycharm-ide-capable"/>
   <module value="com.intellij.platform.ide.provisioner"/>
 
+  <xi:include href="/META-INF/JavaIdePlugin.xml"/>
+  <xi:include href="/META-INF/tips-intellij-idea-community.xml"/>
+  <xi:include href="/META-INF/community-extensions.xml">
+    <xi:fallback/>
+  </xi:include>
+  <xi:include href="/META-INF/community-customization.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.debugger.streams.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
   <content namespace="jetbrains">
-    <module name="intellij.debugger.streams.core"/>
-    <module name="intellij.debugger.streams.shared"/>
-    <module name="intellij.debugger.streams.backend"/>
+    <!-- <editor-fold desc="additional"> -->
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>
@@ -23,20 +30,6 @@
     <module name="intellij.idea.customization.base"/>
     <module name="intellij.idea.customization.backend"/>
     <module name="intellij.platform.tips"/>
+    <!-- </editor-fold> -->
   </content>
-
-  <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
-  <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
-
-  <!--suppress XmlPathReference -->
-  <xi:include href="/META-INF/community-extensions.xml">
-    <xi:fallback/>
-  </xi:include>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <!--suppress PluginXmlRegistrationCheck -->
-    <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"
-                        serviceImplementation="com.intellij.openapi.updateSettings.base.ShowWhatIsNewPageAfterUpdateCustomization"
-                        overrides="true"/>
-  </extensions>
 </idea-plugin>

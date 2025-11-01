@@ -55,8 +55,13 @@ override fun getProductContentModules(): ProductModulesContentSpec {
   return productModules {
     // XML includes (optional - can also be defined in plugin.xml manually)
     // Specify module name and resource path within that module
-    include("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
-    include("intellij.gateway", "META-INF/Gateway.xml")
+    deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+    deprecatedInclude("intellij.gateway", "META-INF/Gateway.xml")
+    
+    // Ultimate-only includes (only included in Ultimate builds)
+    // When inlining: Skipped in Community builds
+    // When NOT inlining: Generates xi:include with xi:fallback for graceful handling
+    deprecatedInclude("intellij.platform.extended.community.impl", "META-INF/community-extensions.xml", ultimateOnly = true)
 
     // Include module sets
     moduleSet(CommunityModuleSets.essential())
@@ -76,63 +81,69 @@ override fun getProductContentModules(): ProductModulesContentSpec {
 }
 ```
 
-### 2. Add Marker Tags to plugin.xml
+### 2. Add pluginXmlPath to dev-build.json
 
-Add the marker tags where you want the content injected:
+Register the product's plugin.xml file path in `build/dev-build.json`:
 
-```xml
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-  <module value="com.jetbrains.gateway"/>
-
-  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
-
-  <!-- programmatic-content-start -->
-  <!-- Programmatic content modules will be generated here -->
-  <!-- Run UltimateModuleSets.main() to regenerate -->
-  <!-- programmatic-content-end -->
-</idea-plugin>
+```json
+"DataSpell": {
+  "modules": [...],
+  "class": "com.intellij.dataspell.build.DataSpellProperties",
+  "pluginXmlPath": "dataspell/ide/resources/META-INF/DataSpellPlugin.xml"
+}
 ```
 
-### 3. Generate Static Content
+This tells the generator which file to regenerate for this product.
 
-Run the generator to populate the content between markers:
+### 3. Generate Plugin.xml
+
+Run the generator to create the complete plugin.xml file:
 
 ```bash
-./gradlew :platform.buildScripts:run
+UltimateModuleSets.main()   # for ultimate + community + products
+CommunityModuleSets.main()  # for community products only
 ```
 
-This will generate content like:
+Or use the IDE's "Generate Product Layouts" run configuration.
+
+This will generate a complete plugin.xml file like:
 
 ```xml
-<!-- programmatic-content-start -->
-  <!-- DO NOT EDIT: This content is auto-generated from Kotlin code -->
-  <!-- To regenerate, run 'Generate Product Layouts' or directly: UltimateModuleSets.main() -->
-  <!-- Source: see getProductContentModules() in GatewayProperties.kt -->
+  <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+  <!-- To regenerate, run 'Generate Product Layouts' or directly UltimateModuleSets.main() -->
+  <!-- Source: com.intellij.dataspell.build.DataSpellProperties -->
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <module value="com.intellij.modules.dataspell"/>
+  <module value="com.intellij.modules.python-core-capable"/>
+  <module value="com.intellij.platform.ide.provisioner"/>
 
-  <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
-  <xi:include href="/META-INF/Gateway.xml"/>
-
-  <content namespace="jetbrains" source="essential">
-    <module name="intellij.platform.settings.local"/>
-    <module name="intellij.platform.backend"/>
+  <xi:include href="/META-INF/pycharm-core.xml"/>
+  <xi:include href="/META-INF/ultimate.xml"/>
+  <xi:include href="/META-INF/dataspell-customization.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.commercial.xml"/>
+  <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
+  <!-- ... -->
+  
+  <content namespace="jetbrains">
+    <!-- <editor-fold desc="additional"> -->
+    <module name="intellij.python.scientific"/>
+    <module name="intellij.platform.ide.newUiOnboarding"/>
     <!-- ... -->
+    <!-- </editor-fold> -->
   </content>
-  <content namespace="jetbrains" source="vcs">
-    <module name="intellij.platform.vcs"/>
-    <!-- ... -->
-  </content>
-  <!-- programmatic-content-end -->
+</idea-plugin>
 ```
 
 ## How It Works
 
-### Deduplication Strategy
+### File Generation Strategy
 
-The marker-based approach prevents duplicate content:
+The system generates complete plugin.xml files from Kotlin code:
 
-1. **Dev mode**: Build reads markers, removes old content, injects fresh content from Kotlin code
-2. **Non-dev mode**: Static XML already contains the content (generated once, committed to VCS)
-3. **No conflicts**: Build always replaces whatever is between markers
+1. **Static generation**: The entire plugin.xml is generated from `getProductContentDescriptor()` 
+2. **Auto-generated header**: Each file includes a "DO NOT EDIT" comment indicating it's generated
+3. **VCS-committed**: Generated files are committed to version control
+4. **Build-time injection**: At runtime, `buildProductContentXml()` is also called during build for validation
 
 ### Generated Content Structure
 
@@ -162,11 +173,28 @@ Each module set generates a separate `<content>` block with a `source` attribute
 
 To migrate a product to programmatic content:
 
-1. **Implement `getProductContentModules()`** in your `ProductProperties` class
-2. **Add marker tags** to your product's plugin.xml
-3. **Run the generator** to populate initial content
-4. **Commit the generated content** to VCS
-5. **Verify** both dev mode (build injects fresh) and non-dev mode (uses static) work
+1. **Implement `getProductContentDescriptor()`** in your `ProductProperties` class
+   - Define module aliases with `alias()`
+   - Add xi:includes with `deprecatedInclude()`
+   - Include module sets with `moduleSet()`
+   - Add individual modules with `module()` or `embeddedModule()`
+
+2. **Extract extensions** to separate XML files (e.g., `*-customization.xml`)
+   - Move `<extensions>` blocks from plugin.xml to dedicated files
+   - Reference them via `deprecatedInclude()`
+
+3. **Add pluginXmlPath** to `build/dev-build.json` for your product
+
+4. **Run the generator** to create the complete plugin.xml:
+   ```bash
+   UltimateModuleSets.main()  # or CommunityModuleSets.main()
+   ```
+
+5. **Verify generated file** matches expected structure
+
+6. **Commit all changes** to VCS (Kotlin code, generated XML, extracted extensions)
+
+7. **Test compilation** to ensure product builds correctly
 
 ## Example: Gateway
 
@@ -189,29 +217,71 @@ override fun getProductContentModules(): ProductModulesContentSpec {
 
 The content is generated into `/remote-dev/gateway/resources/META-INF/plugin.xml`.
 
+## Ultimate-Only Includes
+
+The `ultimateOnly` flag on `deprecatedInclude()` enables conditional inclusion of resources that only exist in Ultimate builds.
+
+### Behavior
+
+**When inlining** (`inlineXmlIncludes = true`):
+- Community builds: Skip the include entirely
+- Ultimate builds: Inline the content normally
+
+**When NOT inlining** (`inlineXmlIncludes = false`):
+- Generates `<xi:include>` with `<xi:fallback/>` wrapper for graceful handling:
+  ```xml
+  <xi:include href="/META-INF/community-extensions.xml">
+    <xi:fallback/>
+  </xi:include>
+  ```
+- Community builds: XInclude processor skips gracefully (file not found, fallback used)
+- Ultimate builds: XInclude processor includes the file normally
+
+### Example
+
+```kotlin
+override fun getProductContentModules(): ProductModulesContentSpec {
+  return productModules {
+    // Regular include - always processed
+    deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core.xml")
+    
+    // Ultimate-only - conditionally processed
+    deprecatedInclude("intellij.platform.extended.community.impl", 
+                     "META-INF/community-extensions.xml", 
+                     ultimateOnly = true)
+  }
+}
+```
+
+**Generated XML (Community build)**:
+```xml
+<xi:include href="/META-INF/pycharm-core.xml"/>
+<xi:include href="/META-INF/community-extensions.xml">
+  <xi:fallback/>
+</xi:include>
+```
+
+**Generated XML (Ultimate build)**:
+```xml
+<xi:include href="/META-INF/pycharm-core.xml"/>
+<xi:include href="/META-INF/community-extensions.xml"/>
+```
+
+### Use Cases
+
+Use `ultimateOnly = true` when:
+1. The included XML file exists only in Ultimate repository
+2. Multiple products (both Community and Ultimate variants) share the same descriptor
+3. You need backward compatibility during migration (xi:fallback allows runtime resolution)
+
 ## Implementation Details
 
 ### Key Functions
 
-- **`processProgrammaticModules()`** (PlatformModules.kt:610): Build-time injection
-- **`buildProductContentXml()`** (ModuleSetBuilder.kt:231): Static XML generation
-- **`generateProductXml()`** (ModuleSetBuilder.kt:299): Marker replacement
-- **`generateGatewayProductXml()`** (ModuleSetBuilder.kt:346): Gateway-specific helper
-
-### Marker Tags
-
-- `<!-- programmatic-content-start -->`: Start marker (self-closing tag)
-- `<!-- programmatic-content-end -->`: End marker (self-closing tag)
-
-These tags are preserved in the XML and used by both static generation and build-time injection.
-
-### Backward Compatibility
-
-If marker tags are not found:
-- **Build time**: Content is appended at the end (existing behavior)
-- **Static generation**: File is skipped (no changes)
-
-This ensures products can migrate incrementally without breaking existing builds.
+- **`buildProductContentXml()`** (generator.kt): Generates complete XML from ProductModulesContentSpec
+- **`generateProductXml()`** (generator.kt): Writes generated XML to plugin.xml file
+- **`generateAllProductXmlFiles()`** (generator.kt): Batch generation for all registered products
+- **`collectAndValidateAliases()`** (generator.kt): Validates module aliases for duplicates
 
 ## Benefits
 

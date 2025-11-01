@@ -1,0 +1,16 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true" description="Show unhandled exceptions that were thrown during interactive operation"
+                 key="ide.exceptions.show.interactive" overrides="true"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"
+                        serviceImplementation="com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider"
+                        overrides="true"/>
+    <applicationService serviceInterface="com.intellij.platform.ide.customization.ExternalProductResourceUrls"
+                        serviceImplementation="com.intellij.pycharm.community.customization.PyCharmExternalResourceUrls"
+                        overrides="true"/>
+    <defaultToolWindowLayout implementation="com.intellij.pycharm.community.customization.PyToolWindowLayoutProvider" order="last"/>
+    <ide.newUiOnboarding ideHelpName="pycharm">
+      <remove stepId="codeWithMe"/>
+    </ide.newUiOnboarding>
+  </extensions>
+</idea-plugin>
