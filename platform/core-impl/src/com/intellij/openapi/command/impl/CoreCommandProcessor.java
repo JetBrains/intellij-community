@@ -114,7 +114,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
 
     if (project != null && project.isDisposed()) {
-      LOG.error("Project " + project + " already disposed");
+      LOG.error("Failed to start a command because " + project + " is already disposed");
       return;
     }
 

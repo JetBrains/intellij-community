@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.ClientFileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -487,7 +488,7 @@ public class UndoManagerImpl extends UndoManager {
 
   private @Nullable UndoClientState getClientState() {
     try {
-      return getClientStateUnsafe();
+      return ProgressManager.getInstance().computeInNonCancelableSection(this::getClientStateUnsafe);
     } catch (Throwable ex) {
       LOG.error("Failed to get client state, the error may lead to undo inconsistency", ex);
       return null;
