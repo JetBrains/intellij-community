@@ -111,4 +111,10 @@ internal sealed interface FileViewProviderCache {
   fun interface CacheEntryConsumer {
     fun consume(file: VirtualFile, context: CodeInsightContext, provider: FileViewProvider)
   }
+
+  data class Entry(
+    val file: VirtualFile,
+    val context: CodeInsightContext,
+    val provider: FileViewProvider,
+  )
 }

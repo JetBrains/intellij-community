@@ -109,12 +109,6 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
   }
 }
 
-internal data class Entry(
-  val file: VirtualFile,
-  val context: CodeInsightContext,
-  val provider: FileViewProvider,
-)
-
 private val NULL: VirtualFile = LightVirtualFile()
 
 private typealias FullCacheMap = ConcurrentMap<VirtualFile, FileProviderMap>
