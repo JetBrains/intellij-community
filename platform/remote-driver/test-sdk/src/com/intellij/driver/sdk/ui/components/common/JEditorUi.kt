@@ -406,6 +406,7 @@ class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val optionsButton = actionButton { byAccessibleName("Open in Window, Multiple Cursors") }
   val replaceButton = actionButton { byVisibleText("Replace") }
   val replaceAllButton = actionButton { byAccessibleName("Replace All") }
+  val excludeButton = actionButton { byAccessibleName("Exclude") }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
