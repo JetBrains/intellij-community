@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.searchEverywhereMl">
+<idea-plugin>
   <id>com.intellij.searcheverywhere.ml</id>
   <name>Machine Learning in Search Everywhere</name>
   <vendor>JetBrains</vendor>

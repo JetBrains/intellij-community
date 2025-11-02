@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.searchEverywhereMl.typos">
+<idea-plugin>
 
   <resource-bundle>messages.searchEverywhereMlTyposBundle</resource-bundle>
 
