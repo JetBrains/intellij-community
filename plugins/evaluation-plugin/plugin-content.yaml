@@ -13,9 +13,6 @@
   - name: intellij.evaluationPlugin.core
     reason: <- intellij.evaluationPlugin
   contentModules:
-  - name: intellij.evaluationPlugin.languages.java
-  - name: intellij.evaluationPlugin.languages.python
-  - name: intellij.evaluationPlugin.languages.kotlin
   - name: intellij.evaluationPlugin.languages.cpp
   - name: intellij.evaluationPlugin.languages.cppRd
   - name: intellij.evaluationPlugin.languages.csharp
@@ -37,6 +34,15 @@
   - name: intellij.evaluationPlugin.fullLine
   - name: intellij.evaluationPlugin.agent
   - name: intellij.evaluationPlugin.ijnext
+- name: lib/modules/intellij.evaluationPlugin.languages.java.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.java
+- name: lib/modules/intellij.evaluationPlugin.languages.kotlin.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.kotlin
+- name: lib/modules/intellij.evaluationPlugin.languages.python.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.python
 - name: lib/modules/intellij.evaluationPlugin.llm.jar
   projectLibraries:
   - name: jerolba.carpet.record

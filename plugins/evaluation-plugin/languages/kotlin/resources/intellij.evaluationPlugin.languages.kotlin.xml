@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.cce.kotlin">
+<idea-plugin>
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
   </dependencies>

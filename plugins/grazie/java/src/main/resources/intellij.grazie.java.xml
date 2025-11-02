@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.grazie.ide.language.java">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.java"/>
   </dependencies>

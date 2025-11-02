@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.turboComplete">
+<idea-plugin>
   <id>com.intellij.turboComplete</id>
   <name>Turbo Complete</name>
   <vendor>JetBrains</vendor>

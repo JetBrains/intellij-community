@@ -2,9 +2,9 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.util.Comparator;
@@ -44,8 +44,8 @@ public class DescriptionTypeRelatedItemLineMarkerProviderTest extends Descriptio
     List<GutterMark> gutters = ContainerUtil.sorted(myFixture.findAllGutters("MyIntentionActionWithDescription.java"),
                                                     Comparator.comparing(GutterMark::getTooltipText));
     assertThat(gutters.size()).isEqualTo(2);
-    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(1), "Description", DevKitIcons.Gutter.DescriptionFile, "description.html");
-    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(0), "Before/After Templates", DevKitIcons.Gutter.Diff,
+    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(1), "Description", DevkitCoreIcons.Gutter.DescriptionFile, "description.html");
+    DevKitGutterTargetsChecker.checkGutterTargets(gutters.get(0), "Before/After Templates", DevkitCoreIcons.Gutter.Diff,
                                                   "after.java.template", "before.java.template");
   }
 

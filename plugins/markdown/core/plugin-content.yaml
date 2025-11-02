@@ -1,7 +1,6 @@
 - name: lib/markdown.jar
   contentModules:
   - name: intellij.markdown
-  - name: intellij.markdown.fenceInjection
   - name: intellij.markdown.frontmatter
   - name: intellij.markdown.frontmatter.yaml
   - name: intellij.markdown.frontmatter.toml
@@ -13,6 +12,9 @@
 - name: lib/modules/intellij.markdown.backend.jar
   contentModules:
   - name: intellij.markdown.backend
+- name: lib/modules/intellij.markdown.fenceInjection.jar
+  contentModules:
+  - name: intellij.markdown.fenceInjection
 - name: lib/modules/intellij.markdown.frontend.jar
   contentModules:
   - name: intellij.markdown.frontend

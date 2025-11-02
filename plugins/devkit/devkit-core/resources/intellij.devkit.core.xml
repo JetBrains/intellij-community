@@ -1,4 +1,4 @@
-<idea-plugin visibility="public" package="org.jetbrains.idea.devkit">
+<idea-plugin visibility="public">
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.java"/>
@@ -888,7 +888,7 @@
       <action id="DevKit.NewAction" class="org.jetbrains.idea.devkit.actions.templates.NewActionAction"
               icon="AllIcons.Actions.RunAnything"/>
       <action id="DevKit.NewService" class="org.jetbrains.idea.devkit.actions.templates.NewServiceAction"
-              icon="org.jetbrains.idea.devkit.DevKitIcons.Service"/>
+              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.Service"/>
       <action id="DevKit.NewState" class="org.jetbrains.idea.devkit.actions.templates.NewPersistentStateAction"
               icon="AllIcons.Ide.ConfigFile"/>
       <action id="DevKit.NewMessageBundleObject" class="org.jetbrains.idea.devkit.actions.templates.NewMessageBundleAction"

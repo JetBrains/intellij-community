@@ -373,7 +373,7 @@ class JarPackager private constructor(
       result
     }
 
-    moduleOutputRoots.forEach { moduleOutDir ->
+    for (moduleOutDir in moduleOutputRoots) {
       val source = createModuleSource(module, moduleOutDir, excludes)
       if (source != null) {
         moduleSources.add(source)
@@ -385,14 +385,7 @@ class JarPackager private constructor(
     }
 
     if (layout != null && (layout !is PluginLayout || !layout.modulesWithExcludedModuleLibraries.contains(moduleName))) {
-      computeSourcesForModuleLibs(
-        item = item,
-        layout = layout,
-        module = module,
-        copiedFiles = copiedFiles,
-        asset = jarAsset,
-        withTests = useTestModuleOutput,
-      )
+      computeSourcesForModuleLibs(item = item, layout = layout, module = module, copiedFiles = copiedFiles, asset = jarAsset, withTests = useTestModuleOutput)
     }
   }
 

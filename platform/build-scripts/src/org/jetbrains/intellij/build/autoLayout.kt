@@ -36,7 +36,7 @@ internal suspend fun inferModuleSources(
     }
 
     val moduleItem = ModuleItem(moduleName = name, relativeOutputFile = getDefaultJarName(layout, name, frontendModuleFilter), reason = "<- ${layout.mainModule}")
-    if (isIncludedIntoAnotherPlugin(platformLayout = platformLayout, moduleItem = moduleItem, context = context, layout = layout, moduleName = name)) {
+    if (isIncludedIntoAnotherPlugin(platformLayout = platformLayout, moduleItem = moduleItem, layout = layout, moduleName = name, context = context)) {
       continue
     }
 
@@ -145,13 +145,13 @@ private fun getDefaultJarName(layout: PluginLayout, moduleName: String, frontend
   }
 }
 
-private fun isIncludedIntoAnotherPlugin(platformLayout: PlatformLayout, moduleItem: ModuleItem, context: BuildContext, layout: PluginLayout, moduleName: String): Boolean {
-  if (moduleName == VERIFIER_MODULE) {
-    return false
+private fun isIncludedIntoAnotherPlugin(platformLayout: PlatformLayout, moduleItem: ModuleItem, layout: PluginLayout, moduleName: String, context: BuildContext): Boolean {
+  return when {
+    moduleName == VERIFIER_MODULE -> false
+    platformLayout.includedModules.contains(moduleItem) -> true
+    platformLayout.includedModules.any { it.moduleName == moduleName } -> true
+    else -> context.productProperties.productLayout.pluginLayouts.any { otherPluginLayout ->
+      otherPluginLayout !== layout && otherPluginLayout.includedModules.any { it.moduleName == moduleName }
+    }
   }
-
-  return platformLayout.includedModules.contains(moduleItem) ||
-         context.productProperties.productLayout.pluginLayouts.any { otherPluginLayout ->
-           otherPluginLayout !== layout && otherPluginLayout.includedModules.any { it.moduleName == moduleName }
-         }
 }

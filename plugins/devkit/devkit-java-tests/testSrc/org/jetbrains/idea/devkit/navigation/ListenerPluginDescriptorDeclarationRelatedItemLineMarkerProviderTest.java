@@ -2,10 +2,10 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 @SuppressWarnings("NewClassNamingConvention")
@@ -29,7 +29,7 @@ public class ListenerPluginDescriptorDeclarationRelatedItemLineMarkerProviderTes
     GutterMark gutter = myFixture.findGutter("MyListener.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("MyListenerTopic"),
-                                                  DevKitIcons.Gutter.Plugin, "listener");
+                                                  DevkitCoreIcons.Gutter.Plugin, "listener");
   }
 
   public void testListenerMultipleTopics() {
@@ -38,7 +38,7 @@ public class ListenerPluginDescriptorDeclarationRelatedItemLineMarkerProviderTes
     GutterMark gutter = myFixture.findGutter("MyListener.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("AnotherTopic", "MyListenerTopic", "YetAnotherTopic"),
-                                                  DevKitIcons.Gutter.Plugin, "listener");
+                                                  DevkitCoreIcons.Gutter.Plugin, "listener");
   }
 
   public void testTopicMultipleListeners() {
@@ -47,7 +47,7 @@ public class ListenerPluginDescriptorDeclarationRelatedItemLineMarkerProviderTes
     GutterMark gutter = myFixture.findGutter("MyTopic.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("AnotherListener", "MyListener"),
-                                                  DevKitIcons.Gutter.Plugin, "listener");
+                                                  DevkitCoreIcons.Gutter.Plugin, "listener");
   }
 
   private static String buildTooltipText(String... topics) {

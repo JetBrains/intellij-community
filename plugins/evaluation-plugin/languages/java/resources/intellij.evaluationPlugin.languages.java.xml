@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.cce.java">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.java"/>
     <plugin id="com.intellij.gradle"/>

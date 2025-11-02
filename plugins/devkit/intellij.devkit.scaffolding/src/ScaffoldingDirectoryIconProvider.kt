@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.scaffolding
 
+import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IconProvider
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -8,7 +9,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.ui.icons.IconWrapperWithToolTip
-import org.jetbrains.idea.devkit.DevKitIcons
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -37,10 +37,10 @@ internal class ScaffoldingDirectoryIconProvider : IconProvider() {
 private val pluginDirectoryIcon = AllIcons.Nodes.Plugin
   .withTooltip(messagePointer("plugin.directory.tooltip"))
 
-private val moduleDirectoryIcon = DevKitIcons.PluginModule
+private val moduleDirectoryIcon = DevkitCoreIcons.PluginModule
   .withTooltip(messagePointer("module.directory.tooltip"))
 
-private val legacyPluginWithModuleIcon = DevKitIcons.LegacyPluginModule
+private val legacyPluginWithModuleIcon = DevkitCoreIcons.LegacyPluginModule
   .withTooltip(messagePointer("plugin.and.module.directory.tooltip"))
 
 private fun Icon.withTooltip(message: Supplier<String>): Icon {

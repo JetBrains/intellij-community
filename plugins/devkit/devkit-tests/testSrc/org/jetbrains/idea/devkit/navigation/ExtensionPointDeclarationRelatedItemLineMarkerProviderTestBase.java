@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,7 +12,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
-import org.jetbrains.idea.devkit.DevKitIcons;
 
 public abstract class ExtensionPointDeclarationRelatedItemLineMarkerProviderTestBase extends JavaCodeInsightFixtureTestCase {
 
@@ -38,6 +38,6 @@ public abstract class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest
 
     final GutterMark gutter = myFixture.findGutter(filePath);
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;" + epFqn + "<br></body></html>",
-                                                  DevKitIcons.Gutter.Plugin, "extensionPoint");
+                                                  DevkitCoreIcons.Gutter.Plugin, "extensionPoint");
   }
 }

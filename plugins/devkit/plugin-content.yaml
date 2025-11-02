@@ -8,7 +8,6 @@
   modules:
   - name: intellij.devkit
   contentModules:
-  - name: intellij.devkit.core
   - name: intellij.devkit.gradle
   - name: intellij.devkit.i18n
   - name: intellij.devkit.intelliLang
@@ -27,6 +26,9 @@
 - name: lib/modules/intellij.devkit.compose.jar
   contentModules:
   - name: intellij.devkit.compose
+- name: lib/modules/intellij.devkit.core.jar
+  contentModules:
+  - name: intellij.devkit.core
 - name: lib/modules/intellij.devkit.modules.jar
   contentModules:
   - name: intellij.devkit.modules

@@ -36,7 +36,7 @@
                  restartRequired="true" description="Enables Compose UI previews tool window"/>
     <library.toolWindow id="ComposeUIPreview" anchor="right"
                         factoryClass="com.intellij.devkit.compose.preview.ComposePreviewToolWindowFactory"
-                        icon="org.jetbrains.idea.devkit.DevKitIcons.ComposeToolWindow"
+                        icon="com.intellij.devkit.core.icons.DevkitCoreIcons.ComposeToolWindow"
                         librarySearchClass="com.intellij.devkit.compose.preview.ComposePreviewSearcher"/>
     <implicitUsageProvider implementation="com.intellij.devkit.compose.preview.ComposePreviewImplicitUsageProvider"/>
   </extensions>
@@ -44,9 +44,9 @@
   <actions>
     <group id="ComposeToolsGroup" searchable="false">
       <action id="JewelToolwindow" class="com.intellij.devkit.compose.demo.dialog.JewelToolwindowAction"
-              icon="org.jetbrains.idea.devkit.DevKitIcons.ComposeToolWindow"/>
+              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.ComposeToolWindow"/>
       <action id="JewelComponentShowcaseDialog" class="com.intellij.devkit.compose.demo.dialog.ComponentShowcaseDialogAction"
-              icon="org.jetbrains.idea.devkit.DevKitIcons.Items"/>
+              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.Items"/>
       <action id="JewelWizardDialog" class="com.intellij.devkit.compose.demo.dialog.JewelWizardDialogAction"/>
       <action id="ComposeSandbox" class="com.intellij.devkit.compose.sandbox.ComposeSandboxAction" icon="AllIcons.FileTypes.UiForm"/>
 

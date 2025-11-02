@@ -120,10 +120,8 @@
   - name: intellij.grazie.core
     reason: <- intellij.grazie
   contentModules:
-  - name: intellij.grazie.java
   - name: intellij.grazie.json
   - name: intellij.grazie.markdown
-  - name: intellij.grazie.properties
   - name: intellij.grazie.xml
   - name: intellij.grazie.yaml
 - name: lib/javax.measure-unit-api.jar
@@ -131,6 +129,12 @@
   module: intellij.grazie.core
   files:
   - name: $MAVEN_REPOSITORY$/javax/measure/unit-api/1/unit-api-1.jar
+- name: lib/modules/intellij.grazie.java.jar
+  contentModules:
+  - name: intellij.grazie.java
+- name: lib/modules/intellij.grazie.properties.jar
+  contentModules:
+  - name: intellij.grazie.properties
 - name: lib/net.loomchild-segment.jar
   library: net.loomchild:segment:2.0.1
   module: intellij.grazie.core

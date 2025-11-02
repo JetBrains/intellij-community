@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.navigation;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.navigation.DomGotoRelatedItem;
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.devkit.core.icons.DevkitCoreIcons;
 import com.intellij.icons.AllIcons;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -14,7 +15,6 @@ import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PathUtil;
-import org.jetbrains.idea.devkit.DevKitIcons;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 
 import java.util.List;
@@ -40,7 +40,7 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
     GutterMark gutter = myFixture.findGutter("MyAction.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("singleDeclaration") ,
-                                                  DevKitIcons.Gutter.Plugin, "action");
+                                                  DevkitCoreIcons.Gutter.Plugin, "action");
   }
 
   public void testActionMultipleDeclarations() {
@@ -49,7 +49,7 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
     GutterMark gutter = myFixture.findGutter("MyAction.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("firstDeclaration", "secondDeclaration"),
-                                                  DevKitIcons.Gutter.Plugin, "action");
+                                                  DevkitCoreIcons.Gutter.Plugin, "action");
 
     List<GotoRelatedItem> relatedItems = NavigationUtil.collectRelatedItems(myFixture.findClass("MyAction"), SimpleDataContext.EMPTY_CONTEXT);
     assertSize(2, relatedItems);
@@ -65,7 +65,7 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
     GutterMark gutter = myFixture.findGutter("MyActionGroup.java");
     DevKitGutterTargetsChecker.checkGutterTargets(gutter,
                                                   buildTooltipText("firstDeclaration", "secondDeclaration"),
-                                                  DevKitIcons.Gutter.Plugin, "group");
+                                                  DevkitCoreIcons.Gutter.Plugin, "group");
   }
 
   private static String buildTooltipText(String... actionIds) {
