@@ -15,11 +15,11 @@
  */
 package org.intellij.lang.regexp.psi;
 
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface RegExpGroup extends RegExpAtom, PsiNamedElement {
+public interface RegExpGroup extends RegExpAtom, PsiNameIdentifierOwner {
 
   boolean isCapturing();
 

@@ -26,6 +26,7 @@ import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpPattern;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
   public RegExpGroupImpl(ASTNode astNode) {
@@ -96,6 +97,12 @@ public class RegExpGroupImpl extends RegExpElementImpl implements RegExpGroup {
       return Type.PCRE_BRANCH_RESET;
     }
     throw new AssertionError();
+  }
+
+  @Override
+  public @Nullable PsiElement getNameIdentifier() {
+    final ASTNode nameNode = getNode().findChildByType(RegExpTT.NAME);
+    return nameNode == null ? null : nameNode.getPsi();
   }
 
   public static boolean isPcreConditionalGroup(ASTNode node) {

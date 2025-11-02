@@ -25,6 +25,7 @@ import com.intellij.usages.ChunkExtractor;
 import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -205,7 +206,13 @@ public final class NonAsciiCharactersInspection extends LocalInspectionTool {
   }
 
   private static boolean isFileWorthIt(@NotNull PsiFile file) {
-    if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) return false;
+    if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
+      Language language = file.getLanguage();
+      language = Objects.requireNonNullElse(language.getBaseLanguage(), language);
+      if (!language.getID().equals("RegExp")) {
+        return false;
+      }
+    }
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return false;
     CharSequence text = file.getViewProvider().getContents();
