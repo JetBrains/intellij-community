@@ -89,7 +89,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = xx("//div[@class='LetsPlotComponent']", LetsPlotComponent::class.java).list()
   val toolbar: UiComponent
     get() = x("//div[@class='JupyterFileEditorToolbar']")
-  val kotlinNotebookToolbarActions: KotlinNotebookActionToolBarComponent
+  val kotlinNotebookToolbar: KotlinNotebookActionToolBarComponent
     get() = x(
       "//div[@class='ActionToolbarImpl' and contains(@myvisibleactions, 'Kotlin Notebook')]",
       KotlinNotebookActionToolBarComponent::class.java
@@ -288,7 +288,7 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     if (text.isEmpty()) return@step null
 
     val seconds = Regex("""(\d+)s""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
-    val millis  = Regex("""(\d+)ms""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
+    val millis = Regex("""(\d+)ms""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
 
     seconds * 1_000 + millis
   }

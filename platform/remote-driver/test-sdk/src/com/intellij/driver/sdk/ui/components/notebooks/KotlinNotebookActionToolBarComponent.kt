@@ -6,7 +6,7 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 
 fun Finder.openKotlinNotebookSettingsPanel() {
   notebookEditor {
-    kotlinNotebookToolbarActions.openSettingsButton.click()
+    kotlinNotebookToolbar.openSettingsButton.click()
   }
 }
 
@@ -27,8 +27,11 @@ class KotlinNotebookActionToolBarComponent(data: ComponentData) : UiComponent(da
   val dependenciesSelector: UiComponent
     get() = x("//div[@class='ActionButtonWithText' and contains(@javaclass, 'KotlinNotebookDependenciesComboBox')]")
 
-  val runModeSelector: UiComponent
-    get() = x("//div[@class='ActionButtonWithText' and contains(@javaclass, 'KotlinNotebookSessionModeComboBox')]")
+  val runModeSelector: RunModeSelectorComboBoxUiComponent
+    get() = x(
+      "//div[@class='ActionButtonWithText' and contains(@javaclass, 'KotlinNotebookSessionModeComboBox')]",
+      RunModeSelectorComboBoxUiComponent::class.java
+    )
 
   val openSettingsButton: UiComponent
     get() = x("//div[@myicon='settings.svg']")
