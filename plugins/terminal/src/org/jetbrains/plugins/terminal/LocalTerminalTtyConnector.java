@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.google.common.base.Ascii;
 import com.intellij.execution.ijent.IjentChildPtyProcessAdapter;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.terminal.pty.PtyProcessTtyConnector;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.jediterm.core.util.TermSize;
@@ -28,6 +29,11 @@ public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
     super(shellProcessHolder.getPtyProcess(), charset);
     myProcess = shellProcessHolder.getPtyProcess();
     myShellProcessHolder = shellProcessHolder;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull EelDescriptor getEelDescriptor() {
+    return myShellProcessHolder.getDescriptor();
   }
 
   @Override
