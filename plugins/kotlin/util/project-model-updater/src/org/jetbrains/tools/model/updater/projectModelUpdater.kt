@@ -18,10 +18,11 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
 
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
+    val kotlinCompilerCliVersion = if (System.getenv("JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT") == preferences.kotlincArtifactVersion) BOOTSTRAP_VERSION else preferences.kotlincArtifactVersion
     val kotlinDependenciesBazelFile = communityRoot.resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
     kotlinDependenciesBazelFile.writeText(
         kotlinDependenciesBazelFile.readText()
-            .replace(kotlinCompilerCliVersionRegex, "kotlinCompilerCliVersion = \"${preferences.kotlincArtifactVersion}\"")
+            .replace(kotlinCompilerCliVersionRegex, "kotlinCompilerCliVersion = \"$kotlinCompilerCliVersion\"")
             .replace(kotlincKotlinJpsPluginTestsVersionRegex, "kotlincKotlinJpsPluginTestsVersion = \"${preferences.jpsArtifactVersion}\"")
     )
 
