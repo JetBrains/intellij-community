@@ -1,10 +1,3 @@
-from _pydevd_bundle.custom.pydevd_utils import get_var_and_offset
-from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, \
-    StrPresentationProvider
-from _pydevd_bundle.pydevd_resolver import defaultResolver
-from .pydevd_helpers import find_mod_attr
-from _pydevd_bundle.custom.pydevd_repr_utils import get_value_repr
-
 import inspect
 
 try:
@@ -12,13 +5,20 @@ try:
 except:
     OrderedDict = dict
 
+from _pydevd_bundle.custom.pydevd_repr_utils import get_value_repr
+from _pydevd_bundle.custom.pydevd_utils import get_var_and_offset
+from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, \
+    StrPresentationProvider
+from _pydevd_bundle.pydevd_resolver import defaultResolver
+from .pydevd_helpers import find_mod_attr, sorted_attributes_key
+
 
 TOO_LARGE_MSG = "Maximum number of items (%s) reached. To show more items customize the value of the PYDEVD_CONTAINER_NUMPY_MAX_ITEMS environment variable."
 TOO_LARGE_ATTR = "Unable to handle:"
 IS_PYCHARM = True
 MAX_ITEMS_TO_HANDLE = 300 if not IS_PYCHARM else 100
 DEFAULT_PRECISION = 5
-
+ARRAY_CONTAINER_ATTR_NAME = "array"
 
 class NdArrayItemsContainer(object):
     pass
@@ -79,7 +79,7 @@ class NDArrayTypeResolveProvider(object):
                     setattr(container, TOO_LARGE_ATTR, TOO_LARGE_MSG)
                     break
             return container
-        if IS_PYCHARM and attribute == 'array':
+        if IS_PYCHARM and attribute == ARRAY_CONTAINER_ATTR_NAME:
             container = NdArrayItemsContainer()
             container.items = obj
             return container
@@ -105,10 +105,24 @@ class NDArrayTypeResolveProvider(object):
         if IS_PYCHARM:
             container = NdArrayItemsContainer()
             container.items = obj
-            ret['array'] = container
+            ret[ARRAY_CONTAINER_ATTR_NAME] = container
         else:
             ret['[0:%s] ' % (len(obj))] = list(obj[0:MAX_ITEMS_TO_HANDLE])
         return ret
+
+    def get_contents_debug_adapter_protocol(self, value, fmt):
+        dct = self.get_dictionary(value)
+        lst = sorted(dct.items(), key=lambda tup: sorted_attributes_key(tup[0]))
+
+        def evaluate_name(key):
+            if key == ARRAY_CONTAINER_ATTR_NAME:
+                # container is just a variable for display, it cannot be accessed
+                return ""
+            else:
+                return key
+
+        lst = [(key, value, evaluate_name(key)) for (key, value) in lst]
+        return lst
 
 class NDArrayStrProvider(StrPresentationProvider):
     def can_provide(self, type_object, type_name):
@@ -155,6 +169,19 @@ class NdArrayItemsContainerProvider(object):
         d['__len__'] = l
         return d
 
+    def get_contents_debug_adapter_protocol(self, value, fmt):
+        dct = self.get_dictionary(value)
+        lst = sorted(dct.items(), key=lambda tup: sorted_attributes_key(tup[0]))
+
+        def evaluate_name(key: str):
+            if key.isdigit():
+                # container indices have trailing zeros, we turn the representation
+                # into an int first
+                return f"[{int(key)}]"
+            return f".{key}"
+
+        lst = [(key, value, evaluate_name(key)) for (key, value) in lst]
+        return lst
 import sys
 
 if not sys.platform.startswith("java"):

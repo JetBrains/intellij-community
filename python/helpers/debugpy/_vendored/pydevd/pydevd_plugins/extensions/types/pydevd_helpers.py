@@ -24,3 +24,31 @@ def find_class_name(val):
         class_name = class_name[:-2]
 
     return class_name
+
+
+def get_contents_debug_adapter_protocol_container(resolver, value, fmt):
+    dct = resolver.get_dictionary(value)
+    lst = sorted(dct.items(), key=lambda tup: sorted_attributes_key(tup[0]))
+    def evaluate_name(key):
+        if not key.startswith("[") and not key.endswith("]"):
+            return f".{key}"
+        else:
+            return key
+    lst = [(key, value, evaluate_name(key)) for (key, value) in lst]
+    return lst
+
+
+def sorted_attributes_key(attr_name):
+    if attr_name.startswith("__"):
+        if attr_name.endswith("__"):
+            # __ double under before and after __
+            return 3, attr_name
+        else:
+            # __ double under before
+            return 2, attr_name
+    elif attr_name.startswith("_"):
+        # _ single under
+        return 1, attr_name
+    else:
+        # Regular (Before anything)
+        return 0, attr_name

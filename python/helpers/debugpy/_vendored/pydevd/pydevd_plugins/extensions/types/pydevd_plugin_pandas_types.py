@@ -1,13 +1,14 @@
 import sys
-
 from _pydevd_bundle.custom.pydevd_repr_utils import get_value_repr
-from _pydevd_bundle.pydevd_constants import PANDAS_MAX_ROWS, PANDAS_MAX_COLS, PANDAS_MAX_COLWIDTH
-from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
+from _pydevd_bundle.pydevd_constants import PANDAS_MAX_ROWS, PANDAS_MAX_COLS, \
+    PANDAS_MAX_COLWIDTH
+from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, \
+    StrPresentationProvider
 from _pydevd_bundle.pydevd_resolver import inspect, MethodWrapperType
 from _pydevd_bundle.pydevd_utils import Timer
-
-from .pydevd_helpers import find_mod_attr
 from contextlib import contextmanager
+
+from .pydevd_helpers import find_mod_attr, get_contents_debug_adapter_protocol_container
 
 
 def _get_dictionary(obj, replacements):
@@ -97,6 +98,9 @@ class PandasDataFrameTypeResolveProvider(object):
         }
         return _get_dictionary(obj, replacements)
 
+    def get_contents_debug_adapter_protocol(self, value, fmt):
+        return get_contents_debug_adapter_protocol_container(self, value, fmt)
+
     def get_str_in_context(self, df, context: str):
         """
         :param context:
@@ -143,6 +147,9 @@ class PandasSeriesTypeResolveProvider(object):
             "style": "<pandas.io.formats.style.Styler -- debugger: skipped eval>",
         }
         return _get_dictionary(obj, replacements)
+
+    def get_contents_debug_adapter_protocol(self, value, fmt):
+        return get_contents_debug_adapter_protocol_container(self, value, fmt)
 
     def get_str_in_context(self, df, context: str):
         """
