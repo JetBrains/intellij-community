@@ -37,12 +37,16 @@ public final class PythonRegexpInjector implements MultiHostInjector {
     addMethod("compile");
     addMethod("search");
     addMethod("match");
+    addMethod("fullmatch");
     addMethod("split");
+    addMethod("splititer");
     addMethod("findall");
     addMethod("finditer");
     addMethod("sub");
+    addMethod("subf");
     addMethod("subn");
-    addMethod("fullmatch");
+    addMethod("subfn");
+    addMethod("template");
   }
 
   private void addMethod(@NotNull String name) {
@@ -107,7 +111,7 @@ public final class PythonRegexpInjector implements MultiHostInjector {
   private @Nullable RegexpMethodDescriptor findRegexpMethodDescriptor(@Nullable PsiElement element) {
     if (element == null ||
         !(ScopeUtil.getScopeOwner(element) instanceof PyFile) ||
-        !ArrayUtil.contains(element.getContainingFile().getName(), "re.py", "re.pyi") ||
+        !ArrayUtil.contains(element.getContainingFile().getName(), "re.py", "re.pyi", "regex.py", "regex.pyi") ||
         !(element instanceof PyFunction)) {
       return null;
     }
