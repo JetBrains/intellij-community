@@ -2,15 +2,19 @@
 package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.AbstractFileViewProvider
 import com.intellij.psi.FileViewProvider
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 
 /**
@@ -27,16 +31,16 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
 
   // todo IJPL-339 do clear only under write lock
   override fun clear() {
-    log.trace { "clear cache" }
+    log.doTrace { "clear cache" }
     cache.invalidate()
   }
 
   // todo IJPL-339 do read only under read lock
   override fun cacheOrGet(file: VirtualFile, context: CodeInsightContext, provider: FileViewProvider): FileViewProvider {
-    log.trace { "cacheOrGet $file $context $provider" }
+    log.doTrace { "cacheOrGet $file $context $provider" }
     val map = getFileProviderMap(file)
     val effectiveViewProvider = map.cacheOrGet(context, provider)
-    log.trace { "cacheOrGet finished $file $context $provider, effectiveProvider=$effectiveViewProvider" }
+    log.doTrace { "cacheOrGet finished $file $context $provider, effectiveProvider=$effectiveViewProvider" }
     return effectiveViewProvider
   }
 
@@ -70,13 +74,13 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
   }
 
   override fun removeAllFileViewProvidersAndSet(vFile: VirtualFile, viewProvider: FileViewProvider) {
-    log.trace { "removeAllAndSetAny $vFile $viewProvider" }
+    log.doTrace { "removeAllAndSetAny $vFile $viewProvider" }
     val fileMap = getFileProviderMap(vFile)
     fileMap.removeAllAndSetAny(viewProvider)
   }
 
   override fun remove(file: VirtualFile): Iterable<FileViewProvider>? {
-    log.trace { "remove $file" }
+    log.doTrace { "remove $file" }
     val map = cache.cache.remove(file) ?: return null
     return map.entries.asSequence().map { it.value }.asIterable()
   }
@@ -85,9 +89,9 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
    * Removes cached value for ([file], [context]) pair only if the cached value equals [viewProvider]
    */
   override fun remove(file: VirtualFile, context: CodeInsightContext, viewProvider: AbstractFileViewProvider): Boolean {
-    log.trace { "remove $file $context $viewProvider" }
+    log.doTrace { "remove $file $context $viewProvider" }
     val result = cache.isInitialized && cache.cache[file]?.remove(context, viewProvider) == true
-    log.trace { "remove finished $file $context $viewProvider, result=$result" }
+    log.doTrace { "remove finished $file $context $viewProvider, result=$result" }
     return result
   }
 
@@ -100,12 +104,43 @@ internal class MultiverseFileViewProviderCache : FileViewProviderCache {
   }
 
   override fun trySetContext(viewProvider: FileViewProvider, context: CodeInsightContext): CodeInsightContext? {
-    log.trace { "trySetContext $viewProvider $context" }
+    log.doTrace { "trySetContext $viewProvider $context" }
     val vFile = viewProvider.virtualFile
     val map = getFileProviderMap(vFile)
     val effectiveContext = map.trySetContext(viewProvider, context)
-    log.trace { "trySetContext finished $viewProvider $context, effectiveContext=$effectiveContext" }
+    log.doTrace { "trySetContext finished $viewProvider $context, effectiveContext=$effectiveContext" }
     return effectiveContext
+  }
+}
+
+private inline fun Logger.doTrace(block: () -> String) {
+  if (!isTraceEnabled) return
+
+  val message = block()
+  if (stacktraceOnTraceLevelEnabled.get()) {
+    trace(Throwable(message))
+  }
+  else {
+    trace(message)
+  }
+}
+
+private val stacktraceOnTraceLevelEnabled = AtomicBoolean(false)
+
+@ApiStatus.Internal
+object MultiverseFileViewProviderCacheLog {
+  /**
+   * Works only if [log] level is set to `TRACE`.
+   * Use only when really necessary because it is rather expensive.
+   */
+  @JvmStatic
+  fun enableStacktraceOnTraceLevel(disposable: Disposable) {
+    val prevValue = stacktraceOnTraceLevelEnabled.getAndSet(true)
+    if (prevValue) return // no need to revert value after use
+
+    Disposer.register(disposable) {
+      stacktraceOnTraceLevelEnabled.set(false)
+    }
   }
 }
 

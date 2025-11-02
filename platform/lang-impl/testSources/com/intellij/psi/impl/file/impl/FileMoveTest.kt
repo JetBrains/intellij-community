@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.multiverseProjectFixture
 import com.intellij.psi.PsiFile
@@ -20,6 +21,7 @@ import com.intellij.testFramework.junit5.LogLevelWithClass
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import com.intellij.testFramework.junit5.fixture.moduleInProjectFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.ExceptionUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -35,6 +37,15 @@ import org.junit.jupiter.api.fail
 )
 @TestApplication
 internal class FileMoveTest {
+  @Suppress("unused")
+  private val enableStacktraceOnTraceLevel = testFixture {
+    val disposable = Disposer.newDisposable()
+    MultiverseFileViewProviderCacheLog.enableStacktraceOnTraceLevel(disposable)
+    initialized(Unit) {
+      Disposer.dispose(disposable)
+    }
+  }
+
   private val projectFixture = multiverseProjectFixture(openAfterCreation = true) {
     module("module1") {
       contentRoot("contentRoot1") {
