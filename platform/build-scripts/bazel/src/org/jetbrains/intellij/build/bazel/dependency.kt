@@ -114,11 +114,15 @@ internal fun generateDeps(
                                                 context.ultimateRoot?.let { ultimateRoot -> !it.startsWith(ultimateRoot) } ?: true }
       val isSnapshotVersion = isSnapshotOutsideOfTree ||
                               repositoryJpsLibrary?.properties?.data?.version?.endsWith("-SNAPSHOT") == true
+      val isKotlinDevVersionAsSnapshotOutsideOfTree = System.getenv("JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")?.let { kotlinCompilerCliVersion ->
+        val m2OrgJetBrainsKotlin = m2Repo.resolve("org").resolve("jetbrains").resolve("kotlin")
+        files.any { it.name.endsWith("-$kotlinCompilerCliVersion.jar") } && files.all { it.startsWith(m2OrgJetBrainsKotlin) }
+      } ?: false
       val targetNameSuffix = if (isProvided) PROVIDED_SUFFIX else ""
       val isModuleLibrary = element.libraryReference.parentReference is JpsModuleReference
       when {
-        // Library from .m2 or from any other place with a snapshot version
-        isSnapshotVersion -> {
+        // Library from .m2 or from any other place with a snapshot version, or repository kotlin dev libraries treated as snapshot
+        isSnapshotVersion || isKotlinDevVersionAsSnapshotOutsideOfTree -> {
           val firstFile = files.first()
           val libraryContainer = context.getLibraryContainer(module.isCommunity)
           val libSnapshotsDir = libraryContainer.buildFile.parent.resolve("snapshots").createDirectories()
