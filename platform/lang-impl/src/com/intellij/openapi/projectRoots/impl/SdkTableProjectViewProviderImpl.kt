@@ -15,7 +15,6 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.project.ProjectStoreOwner
 import org.jetbrains.annotations.Unmodifiable
-import java.nio.file.Path
 
 private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjectViewProvider, Disposable {
   @Suppress("SimpleRedundantLet")
@@ -72,7 +71,7 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
   }
 
   private fun validateDescriptor(sdk: Sdk): Boolean {
-    val sdkDescriptor = sdk.homePath?.let(Path::of)?.getEelDescriptor()
+    val sdkDescriptor = sdk.homePath?.let { getEelDescriptorOfHomePath(it) }
     return if (sdkDescriptor == null) {
       true
     }
