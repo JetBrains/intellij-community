@@ -31,6 +31,8 @@ jvm_library(
     "//platform/statistics",
     "//platform/core-ui",
     "//platform/lang-api:lang",
+    "//platform/eel",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.terminal.backend` end
