@@ -32,7 +32,18 @@ public interface RegExpLanguageHost {
   }
 
   boolean supportsPerl5EmbeddedComments();
-  boolean supportsPossessiveQuantifiers();
+  /**
+   * @deprecated use `supportsPossessiveQuantifiers(RegExpElement)`
+   */
+  @Deprecated
+  default boolean supportsPossessiveQuantifiers() {
+    return false;
+  }
+
+  default boolean supportsPossessiveQuantifiers(RegExpElement context) {
+    return supportsPossessiveQuantifiers();
+  }
+
   default boolean isDuplicateGroupNamesAllowed(@NotNull RegExpGroup group) {
     return false;
   }

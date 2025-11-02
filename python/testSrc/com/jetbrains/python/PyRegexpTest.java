@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.idea.TestFor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Pair;
@@ -13,6 +14,7 @@ import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 import org.intellij.lang.regexp.inspection.RegExpRedundantEscapeInspection;
 import org.intellij.lang.regexp.inspection.RegExpSimplifiableInspection;
 import org.jetbrains.annotations.NotNull;
@@ -251,6 +253,42 @@ public class PyRegexpTest extends PyTestCase {
                        "\\w+");
   }
 
+  @TestFor(issues="PY-61777")
+  public void testPossessiveQuantifierSupportedPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () ->
+      testHighlighting("""
+                           import re
+                           re.compile("a++ b*+ c?+")""")
+    );
+  }
+
+  @TestFor(issues="PY-61777")
+  public void testPossessiveQuantifierUnsupportedPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () ->
+      testHighlighting("""
+                           import re
+                           re.compile("a+<error descr="Nested quantifier in regexp">+</error> b*<error descr="Nested quantifier in regexp">+</error> c?<error descr="Nested quantifier in regexp">+</error>")""")
+    );
+  }
+
+  @TestFor(issues="PY-61777")
+  public void testAtomicGroupSupportedPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () ->
+      testHighlighting("""
+                           import re
+                           re.compile("(?>a+)")""")
+    );
+  }
+
+  @TestFor(issues="PY-61777")
+  public void testAtomicGroupUnsupportedPy3() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () ->
+      testHighlighting("""
+                           import re
+                           re.compile("<error descr="Atomic groups are not supported in this regex dialect">(?>a+)</error>")""")
+    );
+  }
+
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -273,6 +311,11 @@ public class PyRegexpTest extends PyTestCase {
 
   private void doTestHighlighting() {
     myFixture.testHighlighting(true, false, true, "regexp/" + getTestName(true) + ".py");
+  }
+
+  private void testHighlighting(String text) {
+    myFixture.configureByText("test.py", text);
+    myFixture.testHighlighting(true, false, true, "test.py");
   }
 
   private void doTestLexer(final String text, String... expectedTokens) {
