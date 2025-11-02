@@ -44,7 +44,7 @@ import static java.util.Objects.requireNonNullElse;
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public final class TestLoggerFactory implements Logger.Factory {
-  @SuppressWarnings("SpellCheckingInspection") private static final String LOG_DIR = "testlog";
+  private static final String LOG_DIR = "testlog";
   private static final String LOG_FILE_NAME = "idea.log";
   private static final String SPLIT_LOGS_SUBDIR = "splitTestLogs";
 
@@ -369,7 +369,7 @@ public final class TestLoggerFactory implements Logger.Factory {
       else {
         // mark each line in IDEA console with this hidden mark to be able to fold it automatically
         List<String> lines = LineTokenizer.tokenizeIntoList(buffer, false, false);
-        if (!lines.get(0).startsWith("\n")) lines = ContainerUtil.prepend(lines.subList(1, lines.size()),"\n" + lines.get(0));
+        if (!lines.getFirst().startsWith("\n")) lines = ContainerUtil.prepend(lines.subList(1, lines.size()), "\n" + lines.getFirst());
         System.err.println(String.join(FAILED_TEST_DEBUG_OUTPUT_MARKER + "\n", lines));
       }
     }
