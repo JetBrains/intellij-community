@@ -44,7 +44,7 @@ fun readJpsResolverSettings(communityRoot: Path, monorepoRoot: Path?): JpsResolv
         isUnderTeamcity &&
         !System.getenv("MODEL_UPDATER_ALLOW_UPDATING_SETTINGS_ON_TEAMCITY").toBoolean()
     ) {
-        val settings = JpsResolverSettings(false, false)
+        val settings = JpsResolverSettings(true, false)
         println("Under TeamCity, resetting settings to: $settings")
         return settings
     }
