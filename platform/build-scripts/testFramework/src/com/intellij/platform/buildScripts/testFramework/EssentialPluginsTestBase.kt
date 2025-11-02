@@ -30,7 +30,10 @@ fun runEssentialPluginsTest(
   val pluginById = getPluginByIdMap(buildContext)
   for (essentialPlugin in essentialPlugins) {
     val essentialPluginDescription = pluginById[essentialPlugin]
-    if(essentialPluginDescription == null) continue
+    if (essentialPluginDescription == null) {
+      continue
+    }
+
     essentialPluginDescription.requiredDependencies.filter { it in pluginById }.forEach { requiredPlugin ->
       println("$essentialPlugin depends on $requiredPlugin")
       if (requiredPlugin !in essentialPlugins) {
@@ -43,7 +46,7 @@ fun runEssentialPluginsTest(
 
 private data class PluginDescription(
   val pluginId: String,
-  val requiredDependencies: Set<String> = emptySet()
+  val requiredDependencies: Set<String> = emptySet(),
 )
 
 private suspend fun getPluginByIdMap(context: BuildContext): Map<String, PluginDescription> {

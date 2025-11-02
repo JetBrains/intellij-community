@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
@@ -336,14 +338,17 @@ class BuildContextImpl internal constructor(
     @Suppress("DEPRECATION")
     val artifactDir = if (prepareForBuild) paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode) else null
     val compilationContextCopy = compilationContext.createCopy(
-      messages, options, computeBuildPaths(options, buildOut, paths.projectHome, artifactDir)
+      messages, options, computeBuildPaths(options = options, buildOut = buildOut, projectHome = paths.projectHome, artifactDir = artifactDir)
     )
     val copy = BuildContextImpl(
-      compilationContextCopy, productProperties,
-      productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString),
-      productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
-      productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
-      proprietaryBuildTools, newAppInfo, jarCacheManager
+      compilationContext = compilationContextCopy,
+      productProperties = productProperties,
+      windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString),
+      linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
+      macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
+      proprietaryBuildTools = proprietaryBuildTools,
+      applicationInfo = newAppInfo,
+      jarCacheManager = jarCacheManager
     )
     if (prepareForBuild) {
       copy.compilationContext.prepareForBuild()
@@ -370,81 +375,81 @@ class BuildContextImpl internal constructor(
     if (bcpJarNames.isNotEmpty()) {
       val (pathSeparator, dirSeparator) = if (os == OsFamily.WINDOWS) ";" to "\\" else ":" to "/"
       val bootCp = bcpJarNames.joinToString(pathSeparator) { arrayOf(macroName, "lib", it).joinToString(dirSeparator) }
-      jvmArgs += "-Xbootclasspath/a:${bootCp}".let { if (isScript) '"' + it + '"' else it }
+      jvmArgs.add("-Xbootclasspath/a:${bootCp}".let { if (isScript) '"' + it + '"' else it })
     }
 
     if (productProperties.enableCds) {
       val cacheDir = if (os == OsFamily.WINDOWS) "%IDE_CACHE_DIR%\\" else $$"$IDE_CACHE_DIR/"
-      jvmArgs += "-XX:SharedArchiveFile=${cacheDir}${productProperties.baseFileName}${buildNumber}.jsa"
-      jvmArgs += "-XX:+AutoCreateSharedArchive"
+      jvmArgs.add("-XX:SharedArchiveFile=${cacheDir}${productProperties.baseFileName}${buildNumber}.jsa")
+      jvmArgs.add("-XX:+AutoCreateSharedArchive")
     }
     else {
       productProperties.classLoader?.let {
-        jvmArgs += "-Djava.system.class.loader=${it}"
+        jvmArgs.add("-Djava.system.class.loader=${it}")
       }
     }
 
-    jvmArgs += "-Didea.vendor.name=${applicationInfo.shortCompanyName}"
-    jvmArgs += "-Didea.paths.selector=${systemSelector}"
+    jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
+    jvmArgs.add("-Didea.paths.selector=${systemSelector}")
 
     // require bundled JNA dispatcher lib
-    jvmArgs += "-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it }
-    jvmArgs += "-Djna.nosys=true"
-    jvmArgs += "-Djna.noclasspath=true"
-    jvmArgs += "-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it }
-    jvmArgs += "-Dio.netty.allocator.type=pooled"
+    jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
+    jvmArgs.add("-Djna.nosys=true")
+    jvmArgs.add("-Djna.noclasspath=true")
+    jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
+    jvmArgs.add("-Dio.netty.allocator.type=pooled")
 
     if (useModularLoader || generateRuntimeModuleRepository) {
-      jvmArgs += "-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_COMPACT_PATH}".let { if (isScript) '"' + it + '"' else it }
+      jvmArgs.add("-Dintellij.platform.runtime.repository.path=${macroName}/${MODULE_DESCRIPTORS_COMPACT_PATH}".let { if (isScript) '"' + it + '"' else it })
     }
     if (useModularLoader) {
-      jvmArgs += "-Dintellij.platform.root.module=${productProperties.rootModuleForModularLoader!!}"
-      jvmArgs += "-Dintellij.platform.product.mode=${productProperties.productMode.id}"
+      jvmArgs.add("-Dintellij.platform.root.module=${productProperties.rootModuleForModularLoader!!}")
+      jvmArgs.add("-Dintellij.platform.product.mode=${productProperties.productMode.id}")
     }
 
     if (productProperties.platformPrefix != null) {
-      jvmArgs += "-Didea.platform.prefix=${productProperties.platformPrefix}"
+      jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
 
     if (os == OsFamily.WINDOWS) {
-      jvmArgs += "-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=${useMultiRoutingFs}"
+      jvmArgs.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=${useMultiRoutingFs}")
       if (useMultiRoutingFs) {
-        jvmArgs += MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS
+        jvmArgs.addAll(MULTI_ROUTING_FILE_SYSTEM_VMOPTIONS)
       }
     }
 
-    jvmArgs += productProperties.additionalIdeJvmArguments
-    jvmArgs += productProperties.getAdditionalContextDependentIdeJvmArguments(this)
+    jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
+    jvmArgs.addAll(productProperties.getAdditionalContextDependentIdeJvmArguments(this))
 
     if (productProperties.useSplash) {
       @Suppress("SpellCheckingInspection", "RedundantSuppression")
-      jvmArgs += ("-Dsplash=true")
+      jvmArgs.add("-Dsplash=true")
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-269280
-    jvmArgs += "-Daether.connector.resumeDownloads=false"
+    jvmArgs.add("-Daether.connector.resumeDownloads=false")
 
-    jvmArgs += "-Dcompose.swing.render.on.graphics=true"
+    jvmArgs.add("-Dcompose.swing.render.on.graphics=true")
 
     if (bundledRuntime.version >= 25) {
-      jvmArgs += "--enable-native-access=ALL-UNNAMED"
+      jvmArgs.add("--enable-native-access=ALL-UNNAMED")
     }
 
-    jvmArgs += getCommandLineArgumentsForOpenPackages(context = this, os)
+    jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(context = this, os))
 
     return jvmArgs
   }
 
   override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
     extraExecutablePatterns.updateAndGet { prev ->
-      prev.with(os, (prev[os] ?: persistentListOf()).add(pattern))
+      prev.with(os, (prev.get(os) ?: persistentListOf()).add(pattern))
     }
   }
 
   override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get()[os] ?: listOf()
 
   override val appInfoXml: String by lazy {
-    computeAppInfoXml(context = this, applicationInfo)
+    computeAppInfoXml(context = this, appInfo = applicationInfo)
   }
 
   override fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules {
@@ -508,9 +513,11 @@ internal fun findProductModulesFile(context: CompilationContext, clientMainModul
   return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
 }
 
-private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path = { project ->
-  val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
-  projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
+private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path {
+  return { project ->
+    val appInfo = ApplicationInfoPropertiesImpl(project, productProperties, buildOptions)
+    projectHome.resolve("out/${productProperties.getOutputDirectoryName(appInfo)}")
+  }
 }
 
 private fun isNightly(buildNumber: String): Boolean {
