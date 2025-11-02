@@ -1,4 +1,4 @@
-<idea-plugin package="git4idea.terminal">
+<idea-plugin>
   <dependencies>
     <plugin id="org.jetbrains.plugins.terminal"/>
   </dependencies>

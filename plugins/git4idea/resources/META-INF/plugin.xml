@@ -1,4 +1,4 @@
-<idea-plugin package="git4idea" xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
   <name>Git</name>
   <id>Git4Idea</id>
   <category>Version Controls</category>

@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.vcs.git.frontend">
+<idea-plugin>
   <resource-bundle>messages.GitFrontendBundle</resource-bundle>
 
   <dependencies>
