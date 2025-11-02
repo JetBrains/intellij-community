@@ -32,8 +32,9 @@ public final class PythonRegExpHost implements RegExpLanguageHost {
   }
 
   @Override
-  public boolean supportsPossessiveQuantifiers() {
-    return false;
+  public boolean supportsPossessiveQuantifiers(RegExpElement context) {
+    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(context.getProject()).getInjectionHost(context);
+    return host != null && LanguageLevel.forElement(host).isAtLeast(LanguageLevel.PYTHON311);
   }
 
   @Override
