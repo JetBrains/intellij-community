@@ -20,9 +20,11 @@ import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
 import org.intellij.lang.annotations.Language
+import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.time.Duration
+import com.intellij.openapi.editor.markup.EffectType
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
@@ -247,6 +249,18 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun getAllHighlights(): List<HighlightInfo> = editor.getMarkupModel().getAllHighlighters().mapNotNull {
     driver.utility(HighlightInfo::class).fromRangeHighlighter(it)
   } + driver.getHighlights(editor.getDocument())
+
+  fun getAllHighlightersTextAttributes() : List<TextAttributes> = editor.getMarkupModel().getAllHighlighters().mapNotNull {
+        val attrs = it.getTextAttributes() ?: return@mapNotNull null
+        TextAttributes(
+            it.getStartOffset(),
+            it.getEndOffset(),
+            EffectType.valueOf(attrs.getEffectType().toString()),
+            attrs.getEffectColor()?.run { Color(getRGB()) }
+          )
+      }
+
+    data class TextAttributes(val startOffset: Int, val endOffset: Int, val effectType: EffectType, val effectColor: Color?)
 }
 
 @Remote("com.jetbrains.performancePlugin.utils.IntentionActionUtils", plugin = "com.jetbrains.performancePlugin")

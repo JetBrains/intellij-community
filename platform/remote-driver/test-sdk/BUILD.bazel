@@ -22,6 +22,7 @@ jvm_library(
     "//platform/remote-driver/model",
     "//platform/util",
     "//platform/ui.jcef",
+    "//platform/core-api:core",
   ],
   exports = [
     "//platform/remote-driver/client",

@@ -6,6 +6,7 @@ import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
 import com.intellij.driver.sdk.remoteDev.GuestNavigationService
+import com.intellij.driver.sdk.ui.remote.ColorRef
 import java.awt.Point
 import java.awt.Rectangle
 import java.nio.file.Path
@@ -38,7 +39,11 @@ interface MarkupModel {
 }
 
 @Remote("com.intellij.openapi.editor.markup.RangeHighlighter")
-interface RangeHighlighter
+interface RangeHighlighter {
+  fun getStartOffset(): Int
+  fun getEndOffset(): Int
+  fun getTextAttributes(): TextAttributes?
+}
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
@@ -160,6 +165,15 @@ interface SelectionModel {
   fun getSelectedText(allCaret: Boolean = false): String?
   fun removeSelection()
 }
+
+@Remote("com.intellij.openapi.editor.markup.TextAttributes")
+interface TextAttributes {
+  fun getEffectType(): EffectType
+  fun getEffectColor(): ColorRef?
+}
+
+@Remote("com.intellij.openapi.editor.markup.EffectType")
+interface EffectType
 
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
   return withContext(OnDispatcher.EDT) {
