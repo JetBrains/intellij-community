@@ -38,7 +38,7 @@ private class StatisticsJobsScheduler : ApplicationActivity {
   override suspend fun execute() {
     coroutineScope {
       if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(StatisticsEventLoggerProvider.EP_NAME)) {
-        StatisticsEventLoggerProvider.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<StatisticsEventLoggerProvider> {
+        StatisticsEventLoggerProvider.EP_NAME.addExtensionPointListener(this@coroutineScope, object : ExtensionPointListener<StatisticsEventLoggerProvider> {
           override fun extensionAdded(extension: StatisticsEventLoggerProvider, pluginDescriptor: PluginDescriptor) {
             launch {
               launchStatisticsSendJob(extension, this)
@@ -55,8 +55,10 @@ private class StatisticsJobsScheduler : ApplicationActivity {
         })
       }
 
+      delay(5.seconds)
+
       launch {
-        delay(10.seconds)
+        delay(5.seconds)
 
         serviceAsync<StatisticsNotificationManager>().showNotificationIfNeeded()
       }
@@ -139,5 +141,5 @@ private suspend fun checkPreviousExternalUploadResult() {
 @ApiStatus.Internal
 @Service(Service.Level.APP)
 class StatisticsValidationUpdatedService {
-  val updatedDeferred = CompletableDeferred<Unit>()
+  val updatedDeferred: CompletableDeferred<Unit> = CompletableDeferred()
 }
