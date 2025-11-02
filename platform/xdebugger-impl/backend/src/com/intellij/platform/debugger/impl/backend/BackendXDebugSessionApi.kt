@@ -248,6 +248,11 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
       session.setBreakpointMuted(muted)
     }
   }
+
+  override suspend fun getUiUpdateEventsFlow(sessionId: XDebugSessionId): Flow<Unit> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    return session.debugProcess.sessionEventsProvider.getUiUpdateEventsFlow()
+  }
 }
 
 internal suspend fun createBackendDocument(
