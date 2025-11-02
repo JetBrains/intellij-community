@@ -289,6 +289,24 @@ public class PyRegexpTest extends PyTestCase {
     );
   }
 
+  @TestFor(issues="PY-35730")
+  public void testGroupNameIsValidIdentifier() {
+    //noinspection NonAsciiCharacters
+    testHighlighting(
+      """
+        import re
+        re.compile("(?P<水>水)")  # non-ascii is a valid group name, a warning will be reported by `NonAsciiCharactersInspection`
+        re.compile("(?P<𝕏>水)")  # ok character outside the BMP
+        
+        # broken case IJPL-217664
+        # re.compile("(?Perror descr="Invalid group name">😀</error>>水)")  # bad character outside the BMP
+        
+        re.compile("(?P<<error descr="Group name expected"> </error>a>水)")
+        re.compile("(?P<<error descr="Group name expected">0</error>a>水)")
+        re.compile("(?P<<error descr="Invalid group name">a$b</error>>水)")
+        """);
+  }
+
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
