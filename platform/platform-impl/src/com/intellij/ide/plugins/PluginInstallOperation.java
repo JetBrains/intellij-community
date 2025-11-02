@@ -341,7 +341,7 @@ public final class PluginInstallOperation {
       addedPluginIdsAfterInstallation.addAll(pluginDescriptor.getPluginAliases());
       for (var module : pluginDescriptor.getContentModules()) {
         addedPluginIdsAfterInstallation.addAll(module.getPluginAliases());
-        addedContentModuleIdsAfterInstallation.add(module.getModuleId());
+        addedContentModuleIdsAfterInstallation.add(module.moduleId);
       }
     }
 
@@ -458,7 +458,7 @@ public final class PluginInstallOperation {
 
       processRequiredModuleDependencies.apply(pluginDescriptor);
       for (var module : pluginDescriptor.getContentModules()) {
-        if (module.getModuleLoadingRule().getRequired()) {
+        if (module.moduleLoadingRule.getRequired()) {
           processRequiredModuleDependencies.apply(module);
         }
       }

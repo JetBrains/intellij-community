@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide.plugins
 
@@ -226,55 +226,55 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun findPluginByPlatformAlias(id: PluginId): IdeaPluginDescriptorImpl? =
-    getPluginSet().allPlugins.firstOrNull { it.pluginAliases.contains(id) }
+  fun findPluginByPlatformAlias(id: PluginId): IdeaPluginDescriptorImpl? = getPluginSet().allPlugins.firstOrNull { it.pluginAliases.contains(id) }
 
   @ApiStatus.Internal
   @JvmStatic
-  fun isPlatformClass(fqn: String): Boolean =
-    fqn.startsWith("java.") || fqn.startsWith("javax.") || fqn.startsWith("kotlin.") || fqn.startsWith("groovy.")
+  fun isPlatformClass(fqn: String): Boolean = fqn.startsWith("java.") || fqn.startsWith("javax.") || fqn.startsWith("kotlin.") || fqn.startsWith("groovy.")
 
   @ApiStatus.Internal
   fun isVendorItemTrusted(vendorItem: String): Boolean {
-    return if (vendorItem.isBlank()) {
-      false
+    if (vendorItem.isBlank()) {
+      return false
     }
     else {
-      isVendorJetBrains(vendorItem)
-      || vendorItem == ApplicationInfoImpl.getShadowInstance().companyName
-      || vendorItem == ApplicationInfoImpl.getShadowInstance().shortCompanyName
+      return isVendorJetBrains(vendorItem) ||
+             vendorItem == ApplicationInfoImpl.getShadowInstance().companyName ||
+             vendorItem == ApplicationInfoImpl.getShadowInstance().shortCompanyName
     }
   }
 
   @JvmStatic
-  fun isVendorTrusted(vendor: String): Boolean =
-    vendor.splitToSequence(',').any { isVendorItemTrusted(it.trim()) }
+  fun isVendorTrusted(vendor: String): Boolean = vendor.splitToSequence(',').any { isVendorItemTrusted(it.trim()) }
 
   @JvmStatic
-  fun isVendorTrusted(plugin: PluginDescriptor): Boolean =
-    isDevelopedByJetBrains(plugin) ||
-    isVendorTrusted(plugin.vendor ?: "") ||
-    isVendorTrusted(plugin.organization ?: "")
+  fun isVendorTrusted(plugin: PluginDescriptor): Boolean {
+    return isDevelopedByJetBrains(plugin) ||
+           isVendorTrusted(plugin.vendor ?: "") ||
+           isVendorTrusted(plugin.organization ?: "")
+  }
 
   @JvmStatic
-  fun isDevelopedByJetBrains(plugin: PluginDescriptor): Boolean =
-    CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
-    isDevelopedByJetBrains(plugin.getVendor()) ||
-    isDevelopedByJetBrains(plugin.organization)
-
-  @JvmStatic
-  @ApiStatus.Internal
-  fun isDevelopedExclusivelyByJetBrains(plugin: PluginDescriptor): Boolean =
-    CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
-    isDevelopedExclusivelyByJetBrains(plugin.getVendor()) ||
-    isDevelopedExclusivelyByJetBrains(plugin.organization)
-
-  @JvmStatic
-  fun isDevelopedByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, false)
+  fun isDevelopedByJetBrains(plugin: PluginDescriptor): Boolean {
+    return CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
+           isDevelopedByJetBrains(plugin.getVendor()) ||
+           isDevelopedByJetBrains(plugin.organization)
+  }
 
   @JvmStatic
   @ApiStatus.Internal
-  fun isDevelopedExclusivelyByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, true)
+  fun isDevelopedExclusivelyByJetBrains(plugin: PluginDescriptor): Boolean {
+    return CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
+           isDevelopedExclusivelyByJetBrains(plugin.getVendor()) ||
+           isDevelopedExclusivelyByJetBrains(plugin.organization)
+  }
+
+  @JvmStatic
+  fun isDevelopedByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString = vendorString, exclusively = false)
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun isDevelopedExclusivelyByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString = vendorString, exclusively = true)
 
   @JvmStatic
   private fun isDevelopedByJetBrains(vendorString: String?, exclusively: Boolean): Boolean = when {
@@ -551,7 +551,7 @@ object PluginManagerCore {
 
     if (initContext.checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
       throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
-        .apply { (pluginErrorsById[CORE_ID])?.let { addSuppressed(Exception(it.logMessage)) } }
+        .apply { (pluginErrorsById.get(CORE_ID))?.let { addSuppressed(Exception(it.logMessage)) } }
     }
 
     checkThirdPartyPluginsPrivacyConsent(parentActivity, idMap)
@@ -563,12 +563,12 @@ object PluginManagerCore {
     val pluginsToEnable = HashMap<PluginId, String>()
     
     fun registerLoadingError(loadingError: PluginNonLoadReason) {
-      pluginErrorsById[loadingError.plugin.pluginId] = loadingError
-      pluginsToDisable[loadingError.plugin.pluginId] = loadingError.plugin.name
+      pluginErrorsById.put(loadingError.plugin.pluginId, loadingError)
+      pluginsToDisable.put(loadingError.plugin.pluginId, loadingError.plugin.name)
       if (loadingError is PluginDependencyIsDisabled) {
         val disabledDependencyId = loadingError.dependencyId
         if (initContext.isPluginDisabled(disabledDependencyId)) {
-          pluginsToEnable[disabledDependencyId] = fullIdMap[disabledDependencyId]!!.getName()
+          pluginsToEnable.put(disabledDependencyId, fullIdMap.get(disabledDependencyId)!!.getName())
         }
       }
     }
@@ -624,7 +624,7 @@ object PluginManagerCore {
    */
   private fun checkThirdPartyPluginsPrivacyConsent(parentActivity: Activity?, idMap: Map<PluginId, IdeaPluginDescriptorImpl>) {
     val activity = parentActivity?.startChild("3rd-party plugins consent")
-    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { idMap[it] }
+    val aliens = ThirdPartyPluginsWithoutConsentFile.consumeAliensFile().mapNotNull { idMap.get(it) }
     if (!aliens.isEmpty()) {
       checkThirdPartyPluginsPrivacyConsent(aliens)
     }
@@ -641,7 +641,7 @@ object PluginManagerCore {
     }
     var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null
     for (id in essentialPlugins) {
-      val descriptor = idMap[id]
+      val descriptor = idMap.get(id)
       if (descriptor == null || !descriptor.isMarkedForLoading) {
         if (missing == null) {
           missing = ArrayList()
@@ -706,7 +706,7 @@ object PluginManagerCore {
     val text = CoreBundle.message("third.party.plugins.privacy.note.text", pluginList, ApplicationInfoImpl.getShadowInstance().shortCompanyName)
     val buttons = arrayOf(CoreBundle.message("third.party.plugins.privacy.note.accept"), CoreBundle.message("third.party.plugins.privacy.note.disable"))
     val icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.WarningDialog)
-    val choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, icon, buttons, buttons[0])
+    val choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, icon, buttons, buttons.get(0))
     return choice == 0
   }
 
@@ -871,7 +871,7 @@ object PluginManagerCore {
     val pluginIdMap = buildPluginIdMap()
     val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()
     for (essentialPluginId in initContext.essentialPlugins) {
-      val essentialPlugin = pluginIdMap[essentialPluginId]
+      val essentialPlugin = pluginIdMap.get(essentialPluginId)
                             ?: continue
       val isRequiredDependency = !processAllNonOptionalDependencies(essentialPlugin, pluginIdMap, contentModuleIdMap) { dependency ->
         if (dependency.getMainDescriptor() === pluginDescriptor) {
@@ -952,7 +952,7 @@ private fun selectPluginsForLoading(
       descriptor.contentModules.associateByTo(contentModuleIdMap) { it.moduleId }
     }
     for (id in rootPluginsToLoad) {
-      val descriptor = idMap[id] ?: continue
+      val descriptor = idMap.get(id) ?: continue
       pluginsToLoad.add(descriptor)
       processAllNonOptionalDependencies(descriptor, idMap, contentModuleIdMap) { dependency ->
         pluginsToLoad.add(dependency)
@@ -976,14 +976,14 @@ private fun selectPluginsForLoading(
         continue
       }
       descriptor.isMarkedForLoading = false
-      errors[descriptor.getPluginId()] = PluginLoadingIsDisabledCompletely(descriptor)
+      errors.put(descriptor.getPluginId(), PluginLoadingIsDisabledCompletely(descriptor))
     }
   }
   else {
     for (essentialId in initContext.essentialPlugins) {
-      val essentialPlugin = idMap[essentialId] ?: continue
+      val essentialPlugin = idMap.get(essentialId) ?: continue
       for (incompatibleId in essentialPlugin.incompatiblePlugins) {
-        val incompatiblePlugin = idMap[incompatibleId] ?: continue
+        val incompatiblePlugin = idMap.get(incompatibleId) ?: continue
         if (incompatiblePlugin.isMarkedForLoading) {
           incompatiblePlugin.isMarkedForLoading = false
           logger.info("Plugin '${incompatiblePlugin.name}' conflicts with required plugin '${essentialPlugin.name}' and won't be loaded")
@@ -1001,7 +1001,7 @@ private fun processAllNonOptionalDependencies(
   consumer: (PluginId?, IdeaPluginDescriptorImpl?) -> FileVisitResult,
 ): Boolean {
   fun processDependency(pluginId: PluginId?, moduleId: PluginModuleId?): Boolean {
-    val descriptor = if (pluginId != null) pluginIdMap[pluginId] else contentModuleIdMap[moduleId]
+    val descriptor = if (pluginId != null) pluginIdMap.get(pluginId) else contentModuleIdMap.get(moduleId)
     val pluginId = descriptor?.getPluginId() ?: pluginId
     when (consumer(pluginId, descriptor)) {
       FileVisitResult.TERMINATE -> return false
@@ -1121,7 +1121,7 @@ fun pluginRequiresUltimatePlugin(plugin: PluginId,
                                  pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>,
                                  contentModuleMap: Map<PluginModuleId, ContentModuleDescriptor>,
 ): Boolean {
-  val rootDescriptor = pluginMap[plugin]
+  val rootDescriptor = pluginMap.get(plugin)
   if (rootDescriptor == null) {
     return false
   }

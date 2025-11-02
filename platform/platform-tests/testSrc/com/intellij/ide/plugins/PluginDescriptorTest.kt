@@ -400,7 +400,7 @@ class PluginDescriptorTest {
     if (hostIds.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No host OS plugin aliases")
     }
-    val productAliases = PluginMainDescriptor.productModeAliasesForCorePlugin()
+    val productAliases = productModeAliasesForCorePlugin()
     if (productAliases.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
     }
@@ -418,7 +418,7 @@ class PluginDescriptorTest {
     if (hostIds.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No host arch plugin aliases")
     }
-    val productAliases = PluginMainDescriptor.productModeAliasesForCorePlugin()
+    val productAliases = productModeAliasesForCorePlugin()
     if (productAliases.isEmpty()) {
       logger<PluginDescriptorTest>().warn("No product mode plugin aliases")
     }

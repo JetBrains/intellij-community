@@ -721,7 +721,7 @@ class PluginModelValidator(
     sourceModule: JpsModule,
     moduleInfo: ModuleInfo,
   ) {
-    PluginMainDescriptor.reportMainDescriptorUnexpectedElements(pluginDescriptor) {
+    reportMainDescriptorUnexpectedElements(pluginDescriptor) {
       reportError(
         "Element '$it' has no effect in a plugin main descriptor",
         sourceModule,
