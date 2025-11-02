@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.frame
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
 import com.intellij.ui.AutoScrollToSourceHandler
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
@@ -17,6 +18,8 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JPanel
@@ -48,6 +51,19 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
         }
       }
     }.install(tree)
+
+    subscribeToThreadRefreshEvents(session)
+  }
+
+  private fun subscribeToThreadRefreshEvents(session: XDebugSessionProxy) {
+    session.coroutineScope.launch {
+      XDebugSessionApi.getInstance().getUiUpdateEventsFlow(session.id)
+        .collectLatest {
+          DebuggerUIUtil.invokeLater {
+            tree.setRoot(XThreadsRootNode(tree, session), false)
+          }
+        }
+    }
   }
 
   val tree: XDebuggerTree get() = treePanel.tree
