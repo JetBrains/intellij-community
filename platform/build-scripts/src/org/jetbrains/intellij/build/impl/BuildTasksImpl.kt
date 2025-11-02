@@ -41,6 +41,7 @@ import org.jetbrains.intellij.build.WindowsLibcImpl
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactData
 import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.plugins.buildNonBundledPlugins
@@ -568,7 +569,7 @@ private suspend fun checkProductProperties(context: BuildContext) {
   checkModule(properties.applicationInfoModule, "productProperties.applicationInfoModule", context)
   properties.embeddedFrontendRootModule?.let { embeddedFrontendRootModule ->
     checkModule(embeddedFrontendRootModule, "productProperties.embeddedFrontendRootModule", context)
-    if (findProductModulesFile(context, embeddedFrontendRootModule) == null) {
+    if (findProductModulesFile(embeddedFrontendRootModule, context) == null) {
       context.messages.logErrorAndThrow(
         "Cannot find product-modules.xml file in sources of '$embeddedFrontendRootModule' module specified as " +
         "'productProperties.embeddedFrontendRootModule'."

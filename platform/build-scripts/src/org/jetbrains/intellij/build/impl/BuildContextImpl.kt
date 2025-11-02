@@ -42,6 +42,7 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.computeAppInfoXml
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.runProcess
@@ -453,7 +454,7 @@ class BuildContextImpl internal constructor(
   }
 
   override fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules {
-    val productModulesFile = findProductModulesFile(context = this, clientMainModuleName = rootModuleName)
+    val productModulesFile = findProductModulesFile(clientMainModuleName = rootModuleName, context = this)
                              ?: error("Cannot find product-modules.xml file in $rootModuleName")
     val resolver = object : ResourceFileResolver {
       override fun readResourceFile(moduleId: RuntimeModuleId, relativePath: String): InputStream? {
@@ -507,10 +508,6 @@ class BuildContextImpl internal constructor(
   override suspend fun distributionState(): DistributionBuilderState {
     return distributionState.await()
   }
-}
-
-internal fun findProductModulesFile(context: CompilationContext, clientMainModuleName: String): Path? {
-  return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
 }
 
 private fun createBuildOutputRootEvaluator(projectHome: Path, productProperties: ProductProperties, buildOptions: BuildOptions): (JpsProject) -> Path {

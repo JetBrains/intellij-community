@@ -2,13 +2,34 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.util.lang.ImmutableZipFile
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleDependency
+import java.nio.file.FileSystemException
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
+
+suspend fun getUnprocessedPluginXmlContent(module: JpsModule, context: CompilationContext): ByteArray {
+  return requireNotNull(findUnprocessedDescriptorContent(module = module, path = "META-INF/plugin.xml", context = context)) {
+    "META-INF/plugin.xml not found in ${module.name} module output"
+  }
+}
+
+suspend fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: CompilationContext): ByteArray? {
+  var result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
+  if (useTestSourceEnabled && result == null) {
+    result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
+  }
+  return result
+}
 
 private val rootTypeOrder = arrayOf(JavaResourceRootType.RESOURCE, JavaSourceRootType.SOURCE, JavaResourceRootType.TEST_RESOURCE, JavaSourceRootType.TEST_SOURCE)
 
@@ -41,4 +62,98 @@ internal fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath
     }
   }
   return null
+}
+
+internal fun findProductModulesFile(clientMainModuleName: String, context: CompilationContext): Path? {
+  return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
+}
+
+internal suspend fun findFileInModuleDependencies(
+  module: JpsModule,
+  relativePath: String,
+  context: CompilationContext,
+  processedModules: MutableSet<String>,
+  recursiveModuleExclude: String? = null,
+): ByteArray? {
+  findFileInModuleLibraryDependencies(module, relativePath)?.let {
+    return it
+  }
+
+  return findFileInModuleDependenciesRecursive(
+    module = module,
+    relativePath = relativePath,
+    context = context,
+    processedModules = processedModules,
+    recursiveModuleExclude = recursiveModuleExclude,
+  )
+}
+
+private suspend fun findFileInModuleDependenciesRecursive(
+  module: JpsModule,
+  relativePath: String,
+  context: CompilationContext,
+  processedModules: MutableSet<String>,
+  recursiveModuleExclude: String?,
+): ByteArray? {
+  for (dependency in module.dependenciesList.dependencies) {
+    if (dependency !is JpsModuleDependency) {
+      continue
+    }
+
+    val moduleName = dependency.moduleReference.moduleName
+    if (!processedModules.add(moduleName)) {
+      continue
+    }
+
+    val dependentModule = context.findRequiredModule(moduleName)
+    findUnprocessedDescriptorContent(module = dependentModule, path = relativePath, context = context)?.let {
+      return it
+    }
+
+    // if recursiveModuleFilter is null, it means that non-direct search not needed
+    if (recursiveModuleExclude != null && !moduleName.startsWith(recursiveModuleExclude)) {
+      findFileInModuleDependenciesRecursive(
+        module = dependentModule,
+        relativePath = relativePath,
+        context = context,
+        recursiveModuleExclude = recursiveModuleExclude,
+        processedModules = processedModules,
+      )?.let {
+        return it
+      }
+    }
+  }
+  return null
+}
+
+@Internal
+suspend fun hasModuleOutputPath(module: JpsModule, relativePath: String, context: CompilationContext): Boolean {
+  return context.getModuleOutputRoots(module).any { output ->
+    val attributes = try {
+      Files.readAttributes(output, BasicFileAttributes::class.java)
+    }
+    catch (_: FileSystemException) {
+      return@any false
+    }
+
+    if (attributes.isDirectory) {
+      return@any Files.exists(output.resolve(relativePath))
+    }
+    else if (attributes.isRegularFile && output.toString().endsWith(".jar")) {
+      var found = false
+      readZipFile(output) { name, _ ->
+        if (name == relativePath) {
+          found = true
+          ZipEntryProcessorResult.STOP
+        }
+        else {
+          ZipEntryProcessorResult.CONTINUE
+        }
+      }
+      return@any found
+    }
+    else {
+      throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
+    }
+  }
 }

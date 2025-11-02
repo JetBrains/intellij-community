@@ -184,11 +184,3 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     return scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
   }
 }
-
-suspend fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: CompilationContext): ByteArray? {
-  var result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
-  if (useTestSourceEnabled && result == null) {
-    result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
-  }
-  return result
-}
