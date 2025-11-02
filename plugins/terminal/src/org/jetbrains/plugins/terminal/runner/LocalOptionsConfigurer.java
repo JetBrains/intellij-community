@@ -99,6 +99,8 @@ public final class LocalOptionsConfigurer {
       return null;
     }
 
+    if (!directoryPath.isAbsolute()) return null;
+
     if (Files.isDirectory(directoryPath)) {
       return directoryPath.toString();
     }
