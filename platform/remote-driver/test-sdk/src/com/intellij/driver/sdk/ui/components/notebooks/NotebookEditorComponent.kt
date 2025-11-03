@@ -157,13 +157,13 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     }
   }
 
-  fun runCellAndWaitExecuted(timeout: Duration = 30.seconds): Unit = step("Executing cell") {
+  fun runCellAndWaitExecuted(
+    timeout: Duration = 30.seconds,
+    expectedExecutionCount: Int = 1
+  ): Unit = step("Executing cell") {
     runCell()
     waitFor(timeout = timeout) {
-      // TODO: what if the cell we ran doesn't have an execution label yet, and we are waiting for the previous one?
-      notebookCellExecutionInfos.isNotEmpty() && notebookCellExecutionInfos.last().getParent().x {
-        contains(byAttribute("defaulticon", "greenCheckmark.svg"))
-      }.present()
+      areAllExecutionsFinishedSuccessfully(expectedExecutionCount)
     }
   }
 
@@ -192,14 +192,19 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     waitFor(timeout = timeout) {
       // TODO: what if we have some cells that were executed before, and their checkmarks are still there,
       //  while new execution labels are not yet created?
-      val infos = notebookCellExecutionInfos
+      areAllExecutionsFinishedSuccessfully(notebookCellEditors.size)
+    }
+  }
 
-      infos.isNotEmpty()
-      && infos.size == notebookCellEditors.size
-      && infos.all {
+  private fun areAllExecutionsFinishedSuccessfully(
+    expectedExecutionCount: Int
+  ): Boolean {
+    val infos = notebookCellExecutionInfos
+    return infos.isNotEmpty()
+           && infos.size == expectedExecutionCount
+           && infos.all {
         it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
       }
-    }
   }
 
   /**
