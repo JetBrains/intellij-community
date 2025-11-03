@@ -206,7 +206,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       // Not all names from typing.py are defined as classes
       return (
         definition instanceof PyClass ||
-        definition instanceof PyTypeAliasStatement ||
+        isSuitableTypeAlias(definition, context) ||
         ArrayUtil.contains(fqn.getFirstComponent(), "typing", "typing_extensions")
       );
     }
@@ -214,6 +214,13 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       return definition instanceof PyClass;
     }
     return true;
+  }
+
+  private static boolean isSuitableTypeAlias(@NotNull PyElement element, @NotNull TypeEvalContext context) {
+    if (element instanceof PyTargetExpression && element.getParent() instanceof PyAssignmentStatement assignmentStatement) {
+      if (PyTypingTypeProvider.isExplicitTypeAlias(assignmentStatement, context)) return true;
+    }
+    return element instanceof PyTypeAliasStatement;
   }
 
   private static boolean isInsideErrorElement(@NotNull PyReferenceExpression referenceExpression) {

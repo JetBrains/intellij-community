@@ -199,6 +199,24 @@ public class PyClassNameCompletionTest extends PyTestCase {
     });
   }
 
+  // PY-80238
+  public void testOldStyleTypeAliasCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, "OldStyleString", "OldStyleNumber", "OldStyleUnion");
+  }
+
+  // PY-80238
+  public void testNewTypeAliasCompletion() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertContainsElements(variants, "NewStyleString", "NewStyleNumber", "NewStyleUnion");
+  }
+
   @Nullable
   private static String getElementQualifiedName(@NotNull LookupElement le) {
     PsiElement element = le.getPsiElement();
