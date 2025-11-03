@@ -1,7 +1,7 @@
 <idea-plugin visibility="internal" package="com.intellij.ide.startup.importSettings">
   <actions>
     <!--suppress PluginXmlI18n -->
-    <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: ONE" internal="true"/>
+    <action id="ImportSettingDialogAction" class="com.intellij.ide.startup.importSettings.testActions.ImportSettingDialogAction" text="[INTERNAL] 3 Transfer: Show Import Settings Dialog" internal="true"/>
     <action id="StartWizardAction" class="com.intellij.ide.startup.importSettings.testActions.StartWizardAction" text="[INTERNAL] 5 Transfer: StartWizardAction" internal="true"/>
     <action id="OnboardingTestDialogAction" class="com.intellij.ide.startup.importSettings.testActions.OnboardingTestDialogAction" text="[INTERNAL] 4 Transfer: Onboarding Test Dialog Action" internal="true"/>
     <!--suppress PluginXmlCapitalization -->
