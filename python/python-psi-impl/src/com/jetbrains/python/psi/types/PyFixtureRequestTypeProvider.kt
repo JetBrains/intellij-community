@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.resolve.fromSdk
 import com.jetbrains.python.psi.resolve.resolveTopLevelMember
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.testing.pyTestFixtures.TEST_FIXTURE_DECORATOR_NAMES
+import com.jetbrains.python.testing.isTestElement
 import org.jetbrains.annotations.NotNull
 
 class PyFixtureRequestTypeProvider : PyTypeProviderBase() {
@@ -20,18 +21,29 @@ class PyFixtureRequestTypeProvider : PyTypeProviderBase() {
     @NotNull context: TypeEvalContext,
   ): Ref<PyType>? {
     if (param.name != "request") return null
-    val sdk = PythonSdkUtil.findPythonSdk(func) ?: return null
 
-    val resolveContext = fromSdk(func.project, sdk)
+    // Determine whether we are in a real pytest context
     val isFixture = func.decoratorList?.decorators?.any { decorator ->
-      TEST_FIXTURE_DECORATOR_NAMES.any { name -> decorator.name == name || decorator.name == name.substringAfterLast('.') }
+      TEST_FIXTURE_DECORATOR_NAMES.any { name ->
+        val short = name.substringAfterLast('.')
+        decorator.name == name || decorator.name == short
+      }
     } ?: false
+
+    // Only non-fixture branch needs additional gating
+    if (!isFixture && !isTestElement(func, context)) {
+      return null
+    }
+
+    val sdk = PythonSdkUtil.findPythonSdk(func) ?: return null
+    val resolveContext = fromSdk(func.project, sdk)
+
     val fixtureRequestQName = if (isFixture) {
       QualifiedName.fromDottedString("_pytest.fixtures.SubRequest")
-    }
-    else {
+    } else {
       QualifiedName.fromDottedString("_pytest.fixtures.TopRequest")
     }
+
     val fixtureRequestClass = resolveTopLevelMember(fixtureRequestQName, resolveContext) as? PyClass
 
     val finalClass = fixtureRequestClass
@@ -40,8 +52,7 @@ class PyFixtureRequestTypeProvider : PyTypeProviderBase() {
 
     return if (isFixture) {
       Ref.create(PyFixtureRequestType.createSubRequest(finalClass))
-    }
-    else {
+    } else {
       Ref.create(PyFixtureRequestType.createTopRequest(finalClass))
     }
   }
