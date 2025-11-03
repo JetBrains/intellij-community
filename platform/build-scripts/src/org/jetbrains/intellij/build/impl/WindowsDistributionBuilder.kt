@@ -36,6 +36,7 @@ import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibli
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
+import org.jetbrains.intellij.build.impl.stdioMcpRunner.generateStdioMcpRunnerLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.AddDirEntriesMode
 import org.jetbrains.intellij.build.io.copyDir
@@ -483,6 +484,7 @@ private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture,
     "bin/${it.productProperties.baseFileName}64.exe.vmoptions"
   }
   val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.WINDOWS)
+  val stdioMcpRunnerLaunchData = generateStdioMcpRunnerLaunchData(context)
   val json = generateProductInfoJson(
     relativePathToBin = "bin",
     builtinModules = context.builtinModule,
@@ -496,7 +498,7 @@ private suspend fun writeProductJsonFile(targetDir: Path, arch: JvmArchitecture,
         bootClassPathJarNames = context.bootClassPathJarNames,
         additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS, arch),
         mainClass = context.ideMainClassName,
-        customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData),
+        customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData, stdioMcpRunnerLaunchData),
       )
     ),
     context)

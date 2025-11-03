@@ -38,6 +38,7 @@ import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibli
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
+import org.jetbrains.intellij.build.impl.stdioMcpRunner.generateStdioMcpRunnerLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
@@ -392,6 +393,7 @@ class MacDistributionBuilder(
       "../bin/${it.productProperties.baseFileName}.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.MACOS)
+    val stdioMcpRunnerLaunchData = generateStdioMcpRunnerLaunchData(context)
     return generateProductInfoJson(
       relativePathToBin = "../bin",
       builtinModules = context.builtinModule,
@@ -405,7 +407,7 @@ class MacDistributionBuilder(
           bootClassPathJarNames = context.bootClassPathJarNames,
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch),
           mainClass = context.ideMainClassName,
-          customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData)
+          customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData, stdioMcpRunnerLaunchData)
         )
       ),
       context
