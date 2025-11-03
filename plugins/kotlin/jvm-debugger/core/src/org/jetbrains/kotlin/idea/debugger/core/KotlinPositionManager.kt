@@ -38,6 +38,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.childrenOfType
@@ -78,6 +79,7 @@ import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedNewIrBac
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -198,8 +200,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         val lambdaOrFunIfInside = getLambdaOrFunOnLineIfInside(location, file, sourceLineNumber)
         if (lambdaOrFunIfInside != null) {
             return readAction {
-                val elementAt = getFirstElementInsideLambdaOnLine(file, lambdaOrFunIfInside, sourceLineNumber)
-                elementAt?.let { SourcePosition.createFromElement(it) }
+                createLambdaSourcePosition(file, lambdaOrFunIfInside, sourceLineNumber)
                     ?: SourcePosition.createFromLine(file, sourceLineNumber)
             }
         }
@@ -220,19 +221,29 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return null
     }
 
-    private fun getFirstElementInsideLambdaOnLine(file: PsiFile, lambda: KtFunction, line: Int): PsiElement? {
+    private fun createLambdaSourcePosition(file: PsiFile, lambda: KtFunction, line: Int): SourcePosition? {
         val lineRange = file.getRangeOfLine(line) ?: return null
         val elementsOnLine = file.findElementsOfTypeInRange<PsiElement>(lineRange)
             .filter { it.startOffset in lineRange && it.parents.contains(lambda) }
 
         // Prefer elements that are inside body range
         val bodyRange = lambda.bodyExpression!!.textRange
-        elementsOnLine.firstOrNull { it.startOffset in bodyRange }?.let { return it }
+        val elementInBodyRange = elementsOnLine.firstOrNull { it.startOffset in bodyRange }
+        if (elementInBodyRange != null) {
+            return SourcePosition.createFromElement(elementInBodyRange)
+        }
 
         // Prefer KtElements
-        elementsOnLine.firstOrNull { it is KtElement }?.let { return it }
+        val element = elementsOnLine.firstOrNull { it is KtElement }
+            ?: elementsOnLine.firstOrNull()
+            ?: return null
 
-        return elementsOnLine.firstOrNull()
+        val pos = SourcePosition.createFromElement(element) ?: return null
+        return if (element is LeafPsiElement && element.elementType == KtTokens.LBRACE) {
+            KotlinLambdaStartSourcePosition(pos)
+        } else {
+            pos
+        }
     }
 
     private suspend fun Location.shouldBeTreatedAsReentrantSourcePosition(psiFile: PsiFile, sourceFileName: String): Boolean {

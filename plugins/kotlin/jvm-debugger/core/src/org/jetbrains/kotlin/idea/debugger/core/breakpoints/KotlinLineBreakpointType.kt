@@ -31,6 +31,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProp
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
+import org.jetbrains.kotlin.idea.debugger.KotlinLambdaStartSourcePosition
 import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.KotlinSourcePositionHighlighter
@@ -75,7 +76,7 @@ class KotlinLineBreakpointType :
         if (properties == null || properties is JavaLineBreakpointProperties) {
             if (position is KotlinReentrantSourcePosition) {
                 return false
-            } else if (properties != null && (properties as JavaLineBreakpointProperties).isAllPositions) {
+            } else if (properties != null && properties.isAllPositions) {
                 return true
             }
 
@@ -249,10 +250,15 @@ private fun KtFunction.getFirstLineWithExecutableCode(): Int? {
     return first.getLineNumber()
 }
 
-fun inTheMethod(pos: SourcePosition, method: PsiElement): Boolean {
+internal fun inTheMethod(pos: SourcePosition, method: PsiElement): Boolean {
     val elem = pos.elementAt ?: return false
     val topmostElement = getTopmostElementAtOffset(elem, elem.textRange.startOffset)
-    return Comparing.equal(topmostElement.getContainingMethod(), method)
+    val containingMethod = if (pos is KotlinLambdaStartSourcePosition) {
+        topmostElement
+    } else {
+        topmostElement.getContainingMethod()
+    }
+    return Comparing.equal(containingMethod, method)
 }
 
 private fun createLineSourcePosition(breakpoint: XLineBreakpointImpl<*>): SourcePosition? {

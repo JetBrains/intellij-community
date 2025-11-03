@@ -1323,6 +1323,11 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
             runTest("testData/stepping/custom/breakpointOnLambdaWithLocalFun.kt");
         }
 
+        @TestMetadata("breakpointOnLineWithLambdaStart.kt")
+        public void testBreakpointOnLineWithLambdaStart() throws Exception {
+            runTest("testData/stepping/custom/breakpointOnLineWithLambdaStart.kt");
+        }
+
         @TestMetadata("breakpointOnWhen.kt")
         public void testBreakpointOnWhen() throws Exception {
             runTest("testData/stepping/custom/breakpointOnWhen.kt");
