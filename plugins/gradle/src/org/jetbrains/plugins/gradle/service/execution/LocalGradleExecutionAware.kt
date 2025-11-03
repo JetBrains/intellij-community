@@ -145,7 +145,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
       LOG.warn("No Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
     }
-    checkForWslJdkOnWindows(project, homePath, projectSettings.externalProjectPath, task)
+    checkJdkCompatibility(project, homePath, projectSettings.externalProjectPath, task)
     if (!JdkUtil.checkForJdk(homePath)) {
       LOG.warn("Invalid Gradle JVM ($gradleJvm) home path: $sdkInfo")
       throw jdkConfigurationException("gradle.jvm.is.invalid")
@@ -156,10 +156,10 @@ class LocalGradleExecutionAware : GradleExecutionAware {
     }
   }
 
-  private fun checkForWslJdkOnWindows(project: Project, homePath: Path, externalProjectPath: String, task: ExternalSystemTask) {
+  private fun checkJdkCompatibility(project: Project, homePath: Path, externalProjectPath: String, task: ExternalSystemTask) {
     if (!JdkUtil.isCompatible(homePath, project)) {
       val isResolveProjectTask = task is ExternalSystemResolveProjectTask
-      val message = GradleBundle.message("gradle.incorrect.jvm.wslJdk.on.win.issue.description")
+      val message = GradleBundle.message("gradle.incorrect.jvm.issue.description", homePath, externalProjectPath)
       throw BuildIssueException(
         IncorrectGradleJdkIssue(
           externalProjectPath,
