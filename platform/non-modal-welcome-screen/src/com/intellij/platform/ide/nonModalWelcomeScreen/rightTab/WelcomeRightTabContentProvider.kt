@@ -31,6 +31,8 @@ interface WelcomeRightTabContentProvider {
   val featureButtonSize: FeatureButtonSize
     get() = FeatureButtonSize.COMMON
 
+  val isDisableOptionVisible: Boolean
+
   fun shouldBeFocused(project: Project): Boolean = true
 
   @Composable
