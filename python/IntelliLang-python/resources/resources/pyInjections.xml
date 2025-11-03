@@ -98,4 +98,57 @@
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(ALTER\\s+EXTENSION\\s.+?\\s(UPDATE|(SET SCHEMA)|ADD|DROP))")]]></place>
     <!-- PostgreSQL extension: ALTER EXTENSION smth (UPDATE|SET SCHEMA|ADD|DROP) -->
   </injection>
+
+  <injection language="JavaScript" injector-id="python">
+    <display-name>Playwright</display-name>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.async_api._generated.JSHandle"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.async_api._generated.JSHandle"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector", 0, "playwright.async_api._generated.ElementHandle"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector_all", 0, "playwright.async_api._generated.ElementHandle"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.async_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.async_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector", 1, "playwright.async_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector_all", 1, "playwright.async_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("wait_for_function", 0, "playwright.async_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.async_api._generated.Worker"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.async_api._generated.Worker"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.async_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.async_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector", 1, "playwright.async_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector_all", 1, "playwright.async_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("wait_for_function", 0, "playwright.async_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.async_api._generated.Locator"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_all", 0, "playwright.async_api._generated.Locator"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.async_api._generated.Locator"))]]></place>
+
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.sync_api._generated.JSHandle"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.sync_api._generated.JSHandle"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector", 0, "playwright.sync_api._generated.ElementHandle"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector_all", 0, "playwright.sync_api._generated.ElementHandle"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.sync_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.sync_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector", 1, "playwright.sync_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector_all", 1, "playwright.sync_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("wait_for_function", 0, "playwright.sync_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.sync_api._generated.Worker"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.sync_api._generated.Worker"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.sync_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.sync_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector", 1, "playwright.sync_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("eval_on_selector_all", 1, "playwright.sync_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("wait_for_function", 0, "playwright.sync_api._generated.Page"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate", 0, "playwright.sync_api._generated.Locator"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_all", 0, "playwright.sync_api._generated.Locator"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("evaluate_handle", 0, "playwright.sync_api._generated.Locator"))]]></place>
+
+  </injection>
+
+  <injection language="HTML" injector-id="python">
+    <display-name>Playwright</display-name>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("set_content", 0, "playwright.async_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("set_content", 0, "playwright.async_api._generated.Page"))]]></place>
+
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("set_content", 0, "playwright.sync_api._generated.Frame"))]]></place>
+    <place><![CDATA[pyLiteralExpression().and(pyMethodArgument("set_content", 0, "playwright.sync_api._generated.Page"))]]></place>
+  </injection>
 </component>
