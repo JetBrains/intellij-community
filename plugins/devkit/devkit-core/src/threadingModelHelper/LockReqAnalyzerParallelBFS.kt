@@ -1,17 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
+import com.intellij.concurrency.virtualThreads.asyncAsVirtualThread
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.PriorityBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.measureTime
 
@@ -33,16 +39,16 @@ class LockReqAnalyzerParallelBFS {
   private val config: AnalysisConfig
     get() = context.config
 
-  suspend fun analyzeMethod(method: PsiMethod, config: AnalysisConfig): AnalysisResult {
-    return analyzeMethodStreaming(method, config, object : LockReqConsumer {})
+  suspend fun analyzeMethod(method: SmartPsiElementPointer<PsiMethod>, config: AnalysisConfig): AnalysisResult {
+    return analyzeMethodStreaming(method, config, method.project, object : LockReqConsumer {})
   }
 
-  data class QueuePayload(val queue: Channel<Pair<PsiMethod, List<MethodCall>>>, val counter: AtomicInteger, val globalCounter: AtomicInteger)
+  data class QueuePayload(val queue: PriorityBlockingQueue<QueueEntry>, val counter: AtomicInteger, val globalCounter: AtomicInteger)
 
-  suspend fun analyzeMethodStreaming(method: PsiMethod, config: AnalysisConfig, consumer: LockReqConsumer): AnalysisResult {
-    consumer.onStart(method)
+  suspend fun analyzeMethodStreaming(method: SmartPsiElementPointer<PsiMethod>, config: AnalysisConfig, project: Project, consumer: LockReqConsumer): AnalysisResult {
+    consumer.onStart(method.element!!)
     val context = TraversalContext(config)
-    context(context, consumer) {
+    context(context, consumer, project) {
       traverseMethod(method)
     }
 
@@ -51,25 +57,37 @@ class LockReqAnalyzerParallelBFS {
     return result
   }
 
-  context(context: TraversalContext, consumer: LockReqConsumer)
-  private suspend fun traverseMethod(root: PsiMethod) {
-    val queue = Channel<Pair<PsiMethod, List<MethodCall>>>(UNLIMITED)
+  data class QueueEntry(val method: SmartPsiElementPointer<PsiMethod>, val path: List<MethodCall>) : Comparable<QueueEntry> {
+    override fun compareTo(other: QueueEntry): Int {
+      return compareValuesBy(this, other) {
+        it.path.size
+      }
+    }
+  }
+
+
+
+  context(project: Project, context: TraversalContext, consumer: LockReqConsumer)
+  private suspend fun traverseMethod(root: SmartPsiElementPointer<PsiMethod>) {
+    val queue = PriorityBlockingQueue<QueueEntry>()
     val totalSize = AtomicInteger(1)
-    smartReadAction(root.project) {
-      val sig = MethodSignature.fromMethod(root)
-      queue.trySend(root to listOf(MethodCall(root)))
+    smartReadAction(project) {
+      val method = root.element ?: return@smartReadAction
+      val sig = MethodSignature.fromMethod(method)
+      queue.put(QueueEntry(root, listOf(MethodCall(method))))
       sig
     }
 
     val payload = QueuePayload(queue, totalSize, AtomicInteger(1))
 
     println("Starting from clean queue!")
-    context(config, BaseLockReqRules(), root.project) {
+    context(config, BaseLockReqRules(), project) {
+      val isActive = AtomicBoolean(true)
       val time = measureTime {
         withContext(Dispatchers.Default) {
           repeat(Runtime.getRuntime().availableProcessors()) {
             launch {
-              processIncomingMethods(payload, root)
+              processIncomingMethods(payload, isActive)
             }
           }
         }
@@ -79,39 +97,51 @@ class LockReqAnalyzerParallelBFS {
   }
 
   context(context: TraversalContext, consumer: LockReqConsumer, rules: LockReqRules, project: Project)
-  private suspend fun processIncomingMethods(payload: QueuePayload, root: PsiMethod) {
+  private suspend fun processIncomingMethods(payload: QueuePayload, isActive: AtomicBoolean) {
     val (queue, totalSize) = payload
-    while (true) {
+    outerLoop@ while (isActive.get()) {
       val peekQueue = try {
-        queue.receive()
+        coroutineScope {
+          asyncAsVirtualThread {
+            queue.poll(10, TimeUnit.MILLISECONDS)
+          }.await()
+        }
       }
       catch (_: NoSuchElementException) {
         break // no more methods to analyze
       }
+      if (peekQueue == null) {
+        continue
+      }
       try {
-        smartReadAction(project = project) {
-          val (method, currentPath) = peekQueue
+        val (methodPointer, currentPath) = peekQueue
+        val key = readAction { MethodSignature.fromMethod(methodPointer.element!!) }
+        val newValue = currentPath.size
+        if (newValue >= config.maxDepth) {
+          continue
+        }
+        while (true) {
+          val existing = context.visited.putIfAbsent(key, newValue)
+          if (existing == null) {
+            break
+          }
+          if (existing <= newValue) {
+            //println("Refusing $key because existing $existing <= proposed $newValue")
+            continue@outerLoop // we have a shorter path already processed
+          }
+          if (context.visited.replace(key, existing, newValue)) {
+            // try replace existing long path with a short path
+            break
+          }
+          // otherwise, someone sneaked their computation; let's try again
+        }
+        payload.globalCounter.incrementAndGet()
+        println("Running analysis on $key (path length: $newValue)")
 
-          val time = measureTime {
+        val time = measureTime {
+          smartReadAction(project = project) {
+            val method = methodPointer.element ?: return@smartReadAction
 
-            val key = MethodSignature.fromMethod(method)
-            val newValue = currentPath.size
-            while (true) {
-              val existing = context.visited.putIfAbsent(key, newValue)
-              if (existing == null) {
-                break
-              }
-              if (existing <= newValue) {
-                return@smartReadAction // we have a shorter path already processed
-              }
-              if (context.visited.replace(key, existing, newValue)) {
-                // try replace existing long path with a short path
-                break
-              }
-              // otherwise, someone sneaked their computation; let's try again
-            }
-
-            payload.globalCounter.incrementAndGet()
             val annotationRequirements = context(config) {
               LockReqDetector.findAnnotationRequirements(method)
             }
@@ -121,19 +151,27 @@ class LockReqAnalyzerParallelBFS {
               consumer.onPath(path)
               println("Found requirement: $requirement")
             }
+          }
 
-            if (currentPath.size >= context.config.maxDepth) {
-              return@smartReadAction
-            }
+          val callees = smartReadAction(project) {
+            val method = methodPointer.element ?: return@smartReadAction emptyList()
             val ops = LockReqPsiOps.forLanguage(method.language)
-            ops.getMethodCallees(method).forEach {
+            ops.getMethodCallees(method).map { SmartPointerManager.createPointer(it) }
+          }
+
+          callees.forEach {
+            smartReadAction(project) {
+              val callee = it.element ?: return@smartReadAction
+              val ops = LockReqPsiOps.forLanguage(callee.language)
               context(ops, config) {
-                processCallee(payload, it, currentPath)
+                processCallee(payload, callee, currentPath)
               }
             }
           }
+        }
 
-          println("Traversed method ${method.containingClass?.qualifiedName}.${method.name} in $time, ${currentPath.size} steps deep (${
+        if (key.toString().contains("PsiDocumentManagerBase")) {
+          println("Traversed method ${key.qualifiedName} in $time, ${currentPath.size} steps deep (${
             currentPath.joinToString(" -> ") {
               "${it.containingClassName}.${it.methodName}"
             }
@@ -147,9 +185,12 @@ class LockReqAnalyzerParallelBFS {
       finally {
         val result = totalSize.decrementAndGet()
         if (result == 0) {
-          assert(queue.isEmpty)
+          assert(queue.isEmpty())
           println("Global counter: ${payload.globalCounter.get()}")
-          queue.close()
+          context.visited.forEach { signature, i ->
+            println("Visited $signature $i times")
+          }
+          isActive.set(false)
         }
       }
     }
@@ -207,6 +248,7 @@ class LockReqAnalyzerParallelBFS {
     }
     val newPath = currentPath + MethodCall(method)
     payload.counter.incrementAndGet()
-    assert(payload.queue.trySend(method to newPath).isSuccess)
+    //println("Adding ${method.name} with path of ${newPath.joinToString(" -> ") { it.containingClassName + "." + it.methodName}}")
+    payload.queue.put(QueueEntry(SmartPointerManager.createPointer(method), newPath))
   }
 }

@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.Cancellation.checkCancelled
+import com.intellij.psi.SmartPointerManager
 
 
 @Service(Service.Level.PROJECT)
@@ -29,12 +30,12 @@ class LockReqsService(private val project: Project) {
     withBackgroundProgress(project, "Analyzing lock requirements", true) {
       val method = smartReadAction(project) { methodPtr.element }
       if (method == null) return@withBackgroundProgress
-      val consumer = DefaultLockReqConsumer(method) { snapshot ->
+      val consumer = DefaultLockReqConsumer(methodPtr) { snapshot ->
         ApplicationManager.getApplication().invokeLater {
           _currentResults = listOf(snapshot)
         }
       }
-      analyzer.analyzeMethodStreaming(method, config, consumer)
+      analyzer.analyzeMethodStreaming(methodPtr, config, project, consumer)
     }
   }
 
@@ -46,7 +47,7 @@ class LockReqsService(private val project: Project) {
       val psiClass = psiPtr.element
       val results = psiClass?.methods?.map { method ->
         checkCancelled()
-        analyzer.analyzeMethod(method, config)
+        analyzer.analyzeMethod(SmartPointerManager.createPointer(method), config)
       } ?: emptyList()
       _currentResults = results
     }
@@ -61,7 +62,7 @@ class LockReqsService(private val project: Project) {
       val results = psiFile?.classes?.flatMap { psiClass ->
         psiClass.methods.map { method ->
           checkCancelled()
-          analyzer.analyzeMethod(method, config)
+          analyzer.analyzeMethod(SmartPointerManager.createPointer(method), config)
         }
       } ?: emptyList()
       _currentResults = results

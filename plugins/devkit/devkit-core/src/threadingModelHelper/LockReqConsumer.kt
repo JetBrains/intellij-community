@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.SmartPsiElementPointer
 
 interface LockReqConsumer {
   fun onStart(method: PsiMethod) {}
@@ -17,7 +18,7 @@ interface LockReqConsumer {
 }
 
 class DefaultLockReqConsumer(
-  private val method: PsiMethod,
+  private val method: SmartPsiElementPointer<PsiMethod>,
   private val onUpdate: ((AnalysisResult) -> Unit)? = null
 ) : LockReqConsumer {
 

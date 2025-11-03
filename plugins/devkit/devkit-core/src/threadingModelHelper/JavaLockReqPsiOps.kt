@@ -16,6 +16,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.Processor
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.measureTime
 
@@ -91,31 +92,47 @@ class JavaLockReqPsiOps : LockReqPsiOps {
     }
     val counter = AtomicInteger(1)
     val query = OverridingMethodsSearch.search(method, scope, true)
+    val list = ArrayList<PsiMethod>()
+    val abruptEnd = AtomicBoolean(false)
     blockingContextToIndicator {
       query.forEach(Processor {
         overridden ->
         val value = counter.incrementAndGet()
         if (value >= maxImpl) {
-          println("Too much inheritors for ${method.name}, stopping")
+          abruptEnd.set(true)
+          //println("Too much inheritors for ${method.name}, stopping")
           return@Processor false
         }
-        handler(overridden)
+        list.add(overridden)
         true
       })
+    }
+    if (!abruptEnd.get()) {
+      for (method in list) {
+        handler(method)
+      }
     }
   }
 
   override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiClass) -> Unit) {
     val query = ClassInheritorsSearch.search(interfaceClass, scope, true)
     val counter = AtomicInteger(1)
+    val abruptEnd = AtomicBoolean(false)
+    val list = mutableListOf<PsiClass>()
     query.forEach(Processor { implementor ->
       if (counter.incrementAndGet() >= maxImpl) {
-        println("Too many implementations for ${interfaceClass.name}, stopping")
+        //println("Too many implementations for ${interfaceClass.name}, stopping")
+        abruptEnd.set(true)
         return@Processor false
       }
-      handler(implementor)
+      list.add(implementor)
       true
     })
+    if (!abruptEnd.get()) {
+      for (clazz in list) {
+        handler(clazz)
+      }
+    }
   }
 
   override fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean {

@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -62,7 +63,7 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
     myFixture.configureByFile(relativeFileName)
     val className = relativeFileName.removeSuffix(".kt")
     val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.projectScope(project))
-    val method: PsiMethod = psiClass?.methods?.firstOrNull { m -> m.name == TEST_METHOD_NAME }!!
+    val method = SmartPointerManager.createPointer(psiClass?.methods?.firstOrNull { m -> m.name == TEST_METHOD_NAME }!!)
     val config = AnalysisConfig.forProject(project, LOCK_REQUIREMENTS)
     return runBlocking {
       analyzerBFS.analyzeMethod(method, config)

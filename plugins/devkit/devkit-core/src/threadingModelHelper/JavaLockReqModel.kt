@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.GlobalSearchScope
 import java.util.*
 
@@ -29,7 +30,7 @@ data class MethodCall(val method: PsiMethod, val methodName: String = method.nam
 
 data class ExecutionPath(val methodChain: List<MethodCall>, val lockRequirement: LockRequirement, val isSpeculative: Boolean = false)
 
-data class AnalysisResult(val method: PsiMethod, val paths: Set<ExecutionPath>, val messageBusTopics: Set<PsiClass>, val swingComponents: Set<MethodSignature>)
+data class AnalysisResult(val method: SmartPsiElementPointer<PsiMethod>, val paths: Set<ExecutionPath>, val messageBusTopics: Set<PsiClass>, val swingComponents: Set<MethodSignature>)
 
 /**
  * Input parameters for the search session

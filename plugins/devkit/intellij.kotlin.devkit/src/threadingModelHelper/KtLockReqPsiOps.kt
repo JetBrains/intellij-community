@@ -11,6 +11,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.Processor
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 class KtLockReqPsiOps() : LockReqPsiOps {
@@ -26,28 +27,44 @@ class KtLockReqPsiOps() : LockReqPsiOps {
       handler(method)
     }
     val counter = AtomicInteger(1)
+    val list = mutableListOf<PsiMethod>()
+    val abruptEnd: AtomicBoolean = AtomicBoolean(false)
     OverridingMethodsSearch.search(method, scope, true)
       .forEach(Processor { overridden ->
         if (counter.incrementAndGet() >= maxImpl) {
-          println("Too many inheritors for ${method.name}, stopping")
+          //println("Too many inheritors for ${method.name}, stopping")
+          abruptEnd.set(true)
           return@Processor false
         }
-        handler(overridden)
+        list.add(overridden)
         true
       })
+    if (!abruptEnd.get()) {
+      for (method in list) {
+        handler(method)
+      }
+    }
   }
 
   override fun findImplementations(interfaceClass: PsiClass, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiClass) -> Unit) {
     val counter = AtomicInteger(1)
+    val list = mutableListOf<PsiClass>()
+    val abruptEnd: AtomicBoolean = AtomicBoolean(false)
     ClassInheritorsSearch.search(interfaceClass, scope, true)
       .forEach(Processor { implementor ->
         if (counter.incrementAndGet() >= maxImpl) {
-          println("Too many implementations for ${interfaceClass.name}, stopping")
+          //println("Too many implementations for ${interfaceClass.name}, stopping")
+          abruptEnd.set(true)
           return@Processor false
         }
-        handler(implementor)
+        list.add(implementor)
         true
       })
+    if (!abruptEnd.get()) {
+      for (clazz in list) {
+        handler(clazz)
+      }
+    }
   }
 
   override fun inheritsFromAny(psiClass: PsiClass, baseClassNames: Collection<String>): Boolean {
