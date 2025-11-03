@@ -285,16 +285,14 @@ class EchoTeamCityMessages(object):
             diff_error = get_exception()
 
         if diff_error:
-            # Cut everything after postfix: it is internal view of DiffError
+            # Keep full pytest traceback; do not truncate by underscore separators to avoid losing frames.
             strace = str(report.longrepr)
-            data_postfix = "_ _ _ _ _"
-            # Error message in pytest must be in "file.py:22 AssertionError" format
-            # This message goes to strace
-            # With custom error we must add real exception class explicitly
-            if data_postfix in strace:
-                strace = strace[0:strace.index(data_postfix)].strip()
-                if strace.endswith(":") and diff_error.real_exception:
+            # If the message ends with ":", append the real exception class for clarity.
+            try:
+                if strace.endswith(":") and getattr(diff_error, "real_exception", None):
                     strace += " " + type(diff_error.real_exception).__name__
+            except Exception:
+                pass
             self.teamcity.testFailed(test_id, diff_error.msg or message, strace,
                                      flowId=test_id,
                                      comparison_failure=diff_error
