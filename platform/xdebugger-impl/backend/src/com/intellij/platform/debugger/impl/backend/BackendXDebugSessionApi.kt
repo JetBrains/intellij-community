@@ -243,7 +243,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
 
   override suspend fun getUiUpdateEventsFlow(sessionId: XDebugSessionId): Flow<Unit> {
     val session = sessionId.findValue() ?: return emptyFlow()
-    return session.debugProcess.sessionEventsProvider.getUiUpdateEventsFlow()
+    val eventsProvider = session.debugProcess.sessionEventsProvider ?: return emptyFlow()
+    return eventsProvider.getUiUpdateEventsFlow()
   }
 }
 
