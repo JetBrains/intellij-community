@@ -4,7 +4,6 @@ package com.intellij.codeInsight;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +16,6 @@ import java.util.stream.Collectors;
 /**
  * A class that represents nullability of a type, including the nullability itself, and the nullability source.
  */
-@ApiStatus.Experimental
 public final class TypeNullability {
   /**
    * Unknown nullability without the source 
