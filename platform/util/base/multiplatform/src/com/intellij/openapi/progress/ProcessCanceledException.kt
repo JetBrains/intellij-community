@@ -19,7 +19,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  *
  * @see com.intellij.openapi.progress.ProgressIndicator.checkCanceled
- * @see [Threading Model](https://plugins.jetbrains.com/docs/intellij/threading-model.html)
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/threading-model.html">Threading Model</a>
  */
 open class ProcessCanceledException : CancellationException, ControlFlowException {
   private var _cause: Throwable? = null
