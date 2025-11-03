@@ -149,4 +149,11 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     myFixture.renameElementAtCaret("abc")
     myFixture.checkResultByFile("after_rename_preserve_qualified_annotation.txt")
   }
+
+  fun testParametrizeCoversTransitiveFixture() {
+    myFixture.copyDirectoryToProject(".", ".")
+    myFixture.configureByFile("test_parametrize_transitive_fixture.py")
+    myFixture.enableInspections(PyTestParametrizedInspection::class.java)
+    myFixture.checkHighlighting(true, false, true)
+  }
 }
