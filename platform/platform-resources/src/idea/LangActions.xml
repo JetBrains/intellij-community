@@ -1149,6 +1149,7 @@
       <action id="DumpRunConfigurationTypesAction" internal="true" class="com.intellij.internal.DumpRunConfigurationTypesAction"/>
       <action id="DumpFormattingModel" class="com.intellij.internal.DumpFormattingModelAction" internal="true"/>
       <action id="CheckClassLoading" internal="true" class="com.intellij.internal.CheckClassLoadingAction"/>
+      <action id="DumpCodeStyleCache" class="com.intellij.ide.actions.DumpCodeStyleCacheAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
   </actions>
