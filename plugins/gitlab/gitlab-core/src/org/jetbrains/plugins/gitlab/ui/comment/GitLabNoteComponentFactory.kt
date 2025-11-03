@@ -51,7 +51,7 @@ internal object GitLabNoteComponentFactory {
   ): JComponent {
     val textPanel = createTextPanel(project, cs, vm.bodyHtml, vm.serverUrl, imageLoader).let { panel ->
       val actionsVm = vm.actionsVm ?: return@let panel
-      EditableComponentFactory.wrapTextComponent(cs, panel, actionsVm.editVm) {
+      GitLabEditableComponentFactory.wrapTextComponent(cs, panel, actionsVm.editVm) {
         GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE, place)
       }
     }
