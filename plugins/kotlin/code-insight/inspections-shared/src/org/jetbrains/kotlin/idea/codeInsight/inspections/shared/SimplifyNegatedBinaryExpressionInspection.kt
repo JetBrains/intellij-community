@@ -3,10 +3,13 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.*
-import com.intellij.openapi.editor.Editor
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplified
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplifiedWithoutChangingSemantics
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
@@ -14,33 +17,47 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimpli
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.psi.*
 
-internal class SimplifyNegatedBinaryExpressionInspection : AbstractApplicabilityBasedInspection<KtPrefixExpression>(KtPrefixExpression::class.java) {
 
-    override fun inspectionHighlightType(element: KtPrefixExpression): ProblemHighlightType =
-        if (element.canBeSimplifiedWithoutChangingSemantics()) super.inspectionHighlightType(element) else INFORMATION
+internal class SimplifyNegatedBinaryExpressionInspection :
+    KotlinApplicableInspectionBase.Simple<KtPrefixExpression, Boolean>() {
 
-    override fun inspectionText(element: KtPrefixExpression): String =
+    override fun KaSession.prepareContext(element: KtPrefixExpression): Boolean? =
+        if (element.canBeSimplified()) element.canBeSimplifiedWithoutChangingSemantics() else null
+
+    override fun isApplicableByPsi(element: KtPrefixExpression): Boolean = element.canBeSimplified()
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): KtVisitor<*, *> = prefixExpressionVisitor{
+        visitTargetElement(it, holder, isOnTheFly)
+    }
+
+    override fun getProblemDescription(element: KtPrefixExpression, context: Boolean): String =
         KotlinBundle.message("negated.operation.can.be.simplified")
 
-    override val defaultFixText get() = KotlinBundle.message("simplify.negated.operation")
+    override fun getProblemHighlightType(element: KtPrefixExpression, context: Boolean): ProblemHighlightType =
+        if (context) GENERIC_ERROR_OR_WARNING else INFORMATION
 
-    override fun fixText(element: KtPrefixExpression): String {
-        val expression = KtPsiUtil.deparenthesize(element.baseExpression) as? KtOperationExpression ?: return defaultFixText
-        val operation = expression.operationReference.getReferencedNameElementType() as? KtSingleValueToken ?: return defaultFixText
-        val negatedOperation = operation.negate() ?: return defaultFixText
-        val message = if (element.canBeSimplifiedWithoutChangingSemantics()) {
-            "replace.negated.0.operation.with.1"
-        } else {
-            "replace.negated.0.operation.with.1.may.change.semantics.with.floating.point.types"
+    override fun createQuickFix(
+        element: KtPrefixExpression,
+        context: Boolean,
+    ): KotlinModCommandQuickFix<KtPrefixExpression> = object : KotlinModCommandQuickFix<KtPrefixExpression>() {
+
+        override fun getFamilyName(): String = KotlinBundle.message("simplify.negated.operation")
+
+        override fun getName(): String {
+            val expression =  KtPsiUtil.deparenthesize(element.baseExpression) as? KtOperationExpression ?: return familyName
+            val operation = expression.operationReference.getReferencedNameElementType() as? KtSingleValueToken ?: return familyName
+            val negatedOperation = operation.negate() ?: return familyName
+            val message = if (element.canBeSimplifiedWithoutChangingSemantics())
+                "replace.negated.0.operation.with.1" else
+                "replace.negated.0.operation.with.1.may.change.semantics.with.floating.point.types"
+            return KotlinBundle.message(message, operation.value, negatedOperation.value)
         }
-        return KotlinBundle.message(message, operation.value, negatedOperation.value)
-    }
 
-    override fun isApplicable(element: KtPrefixExpression): Boolean {
-        return element.canBeSimplified()
-    }
-
-    override fun applyTo(element: KtPrefixExpression, project: Project, editor: Editor?) {
-        element.simplify()
+        override fun applyFix(project: Project, element: KtPrefixExpression, updater: ModPsiUpdater) {
+            element.simplify()
+        }
     }
 }
