@@ -16895,6 +16895,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unnecessaryVariable/it.kt");
             }
 
+            @TestMetadata("noConflictWithImplicitLambdaParameter.kt")
+            public void testNoConflictWithImplicitLambdaParameter() throws Exception {
+                runTest("testData/inspectionsLocal/unnecessaryVariable/noConflictWithImplicitLambdaParameter.kt");
+            }
+
             @TestMetadata("override.kt")
             public void testOverride() throws Exception {
                 runTest("testData/inspectionsLocal/unnecessaryVariable/override.kt");
