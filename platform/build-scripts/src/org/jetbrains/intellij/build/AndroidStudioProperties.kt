@@ -41,6 +41,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       // Bundle the GitHub and GitLab plugins, just like IdeaCommunityProperties does.
       "intellij.vcs.github.community",
       "intellij.vcs.gitlab.community",
+      // Bundle the ML completion ranking plugins, just like IntelliJ IDEA does (b/456525685).
+      "intellij.completionMlRanking",
+      "intellij.turboComplete",
       // Android Studio: package CIDR plugins.
       "intellij.cidr.clangd",
       "intellij.c",
