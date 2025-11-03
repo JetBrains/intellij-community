@@ -168,7 +168,7 @@ internal abstract class ChangeListCommitMessagePolicy(
   }
 
   override fun cleanupStoredMessage() {
-    changeListManager.editComment(currentChangeList.name, "")
+    editChangeLitComment("")
   }
 
   /**
@@ -188,8 +188,15 @@ internal abstract class ChangeListCommitMessagePolicy(
 
   protected fun saveMessageToChangeListDescription() {
     if (!currentMessageIsDisposable) {
-      changeListManager.editComment(currentChangeList.name, commitMessageUi.text)
+      editChangeLitComment(commitMessageUi.text)
     }
+  }
+
+  private fun editChangeLitComment(newText: String) {
+    // After updating the comment, value in currentChangeList is not updated automatically
+    changeListManager.editComment(currentChangeList.name, commitMessageUi.text)
+    val updatedCurrentChangeLit = changeListManager.getChangeList(currentChangeList.id) ?: return
+    onChangelistChanged(updatedCurrentChangeLit)
   }
 
   protected fun getCommitMessageForCurrentList(): CommitMessage? {
