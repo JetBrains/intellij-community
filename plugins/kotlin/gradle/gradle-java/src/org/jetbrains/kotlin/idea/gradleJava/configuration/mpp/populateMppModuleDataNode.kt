@@ -57,12 +57,6 @@ internal fun populateMppModuleDataNode(context: KotlinMppGradleProjectResolver.C
     context.createMppGradleSourceSetDataNodes()
 }
 
-internal fun shouldDelegateToOtherPlugin(compilation: KotlinCompilation): Boolean =
-    compilation.platform == KotlinPlatform.ANDROID
-
-internal fun shouldDelegateToOtherPlugin(kotlinSourceSet: KotlinSourceSet): Boolean =
-    kotlinSourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.ANDROID
-
 internal fun doCreateSourceSetInfo(
     mppModel: KotlinMPPGradleModel,
     sourceSet: KotlinSourceSet,
@@ -278,7 +272,7 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
     val sourceSetToCompilationData = LinkedHashMap<String, MutableSet<GradleSourceSetData>>()
     val sourceSetToCompilationJavaData = LinkedHashMap<String, MutableSet<JavaModuleData>>()
     for (target in mppModel.targets) {
-        if (shouldDelegateToOtherPlugin(target)) continue
+        if (target.isManagedByComAndroidLibraryPlugin) continue
         if (target.name == KotlinTarget.METADATA_TARGET_NAME) continue
         val targetData = KotlinTargetData(target.name).also {
             it.archiveFile = target.jar?.archiveFile
@@ -381,7 +375,7 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
     }
 
     for (sourceSet in mppModel.sourceSetsByName.values) {
-        if (shouldDelegateToOtherPlugin(sourceSet)) continue
+        if (sourceSet.isManagedByComAndroidLibraryPlugin) continue
 
         val platform = sourceSet.actualPlatforms.platforms.singleOrNull()
         val moduleId = KotlinModuleUtils.getKotlinModuleId(gradleModule, sourceSet, resolverCtx)
@@ -537,9 +531,6 @@ private fun getInternalModuleName(
 //flag for avoid double resolve from KotlinMPPGradleProjectResolver and KotlinAndroidMPPGradleProjectResolver
 private var DataNode<ModuleData>.isMppDataInitialized
         by NotNullableCopyableDataNodeUserDataProperty(Key.create("IS_MPP_DATA_INITIALIZED"), false)
-
-private fun shouldDelegateToOtherPlugin(kotlinTarget: KotlinTarget): Boolean =
-    kotlinTarget.platform == KotlinPlatform.ANDROID
 
 private fun createExternalSourceSet(
     ktSourceSet: KotlinSourceSet,

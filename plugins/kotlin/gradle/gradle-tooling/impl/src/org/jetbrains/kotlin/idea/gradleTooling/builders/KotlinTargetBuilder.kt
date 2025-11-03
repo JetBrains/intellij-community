@@ -26,6 +26,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         val platform = KotlinPlatform.byId(platformId) ?: return null
         val disambiguationClassifier = origin.disambiguationClassifier
         val targetPresetName: String? = origin.presetName
+        val isManagedByComAndroidLibraryPlugin = origin.isKotlinAndroidTargetClass
 
         val reflectionsByCompilations = origin.compilations?.associate { compilationReflection ->
             KotlinCompilationBuilder(platform, disambiguationClassifier).buildComponent(
@@ -83,6 +84,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             targetPresetName,
             disambiguationClassifier,
             platform,
+            isManagedByComAndroidLibraryPlugin,
             compilations,
             testRunTasks,
             nativeMainRunTasks,

@@ -29,6 +29,7 @@ class KotlinSourceSetImpl @OptIn(KotlinGradlePluginVersionDependentApi::class) c
     override val allDependsOnSourceSets: Set<String>,
     override val additionalVisibleSourceSets: Set<String>,
     override val androidSourceSetInfo: KotlinAndroidSourceSetInfo?,
+    override var isManagedByComAndroidLibraryPlugin: Boolean = false,
     override val actualPlatforms: KotlinPlatformContainerImpl = KotlinPlatformContainerImpl(),
     override var isTestComponent: Boolean = false,
     override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty(),
@@ -133,6 +134,7 @@ data class KotlinCompilationImpl(
     override val extras: IdeaKotlinExtras = IdeaKotlinExtras.empty(),
     override val isTestComponent: Boolean,
     override val archiveFile: File?,
+    override val isManagedByComAndroidLibraryPlugin: Boolean,
 ) : KotlinCompilation {
 
     // create deep copy
@@ -150,6 +152,7 @@ data class KotlinCompilationImpl(
         extras = IdeaKotlinExtras.copy(kotlinCompilation.extras),
         isTestComponent = kotlinCompilation.isTestComponent,
         archiveFile = kotlinCompilation.archiveFile,
+        isManagedByComAndroidLibraryPlugin = kotlinCompilation.isManagedByComAndroidLibraryPlugin,
     ) {
         disambiguationClassifier = kotlinCompilation.disambiguationClassifier
         platform = kotlinCompilation.platform
@@ -192,6 +195,7 @@ data class KotlinTargetImpl(
     override val presetName: String?,
     override val disambiguationClassifier: String?,
     override val platform: KotlinPlatform,
+    override val isManagedByComAndroidLibraryPlugin: Boolean,
     override val compilations: Collection<KotlinCompilation>,
     override val testRunTasks: Collection<KotlinTestRunTask>,
     override val nativeMainRunTasks: Collection<KotlinNativeMainRunTask>,
@@ -206,6 +210,7 @@ data class KotlinTargetImpl(
         target.presetName,
         target.disambiguationClassifier,
         KotlinPlatform.byId(target.platform.id) ?: KotlinPlatform.COMMON,
+        target.isManagedByComAndroidLibraryPlugin,
         target.compilations.map { initialCompilation ->
             (cloningCache[initialCompilation] as? KotlinCompilation)
                 ?: KotlinCompilationImpl(initialCompilation, cloningCache).also {
