@@ -1,0 +1,50 @@
+PsiJavaFile:NestedTag0Markdown.java
+  PsiImportList
+    <empty list>
+  PsiClass:A
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:interface('interface')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:A('A')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n  ')
+    PsiMethod:isX
+      PsiDocComment
+        PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+        PsiWhiteSpace(' ')
+        PsiInlineDocTag:@return
+          PsiDocToken:DOC_INLINE_TAG_START('{')
+          PsiDocToken:DOC_TAG_NAME('@return')
+          PsiWhiteSpace(' ')
+          PsiInlineDocTag:@code
+            PsiDocToken:DOC_INLINE_TAG_START('{')
+            PsiDocToken:DOC_TAG_NAME('@code')
+            PsiDocToken:DOC_COMMENT_DATA(' true')
+            PsiDocToken:DOC_INLINE_TAG_END('}')
+          PsiDocToken:DOC_COMMENT_DATA(' if and only if this is X')
+          PsiDocToken:DOC_INLINE_TAG_END('}')
+      PsiWhiteSpace('\n  ')
+      PsiModifierList:
+        <empty list>
+      PsiTypeParameterList
+        <empty list>
+      PsiTypeElement:boolean
+        PsiKeyword:boolean('boolean')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:isX('isX')
+      PsiParameterList:()
+        PsiJavaToken:LPARENTH('(')
+        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')
