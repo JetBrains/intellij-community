@@ -404,6 +404,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   }
 
   private void fireCodeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Firing code style settings changed event: " + event);
+    }
     MessageBus bus = getMessageBus();
     if (!bus.isDisposed()) {
       bus.syncPublisher(CodeStyleSettingsListener.TOPIC).codeStyleSettingsChanged(event);

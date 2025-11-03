@@ -119,10 +119,12 @@ public final class CodeStyle {
 
   private static @NotNull CodeStyleSettings getCachedOrProjectSettings(@NotNull Project project, @NotNull VirtualFile file) {
     CodeStyleSettings cachedSettings = CodeStyleCachingService.getInstance(project).tryGetSettings(file);
+    CodeStyleSettings settings = cachedSettings != null ? cachedSettings : getSettings(project);
     if (LOG.isDebugEnabled()) {
-      LOG.debug((cachedSettings != null ? "cached" : "project") + " settings for " + file.getName());
+      //noinspection ObjectToString
+      LOG.debug((cachedSettings != null ? "cached" : "project") + " settings (" + settings + " for " + file.getName());
     }
-    return cachedSettings != null ? cachedSettings : getSettings(project);
+    return settings;
   }
 
   private static @Nullable CodeStyleSettings getLocalOrTemporarySettings(@NotNull Project project) {

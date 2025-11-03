@@ -154,9 +154,14 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     boolean doNotKeepLineBreaks = confirmSecondReformat(psiFile);
     return new FutureTask<>(() -> {
       Ref<Boolean> result = new Ref<>();
-      CodeStyle.runWithLocalSettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
+      final var fileSettings = CodeStyle.getSettings(fileToProcess);
+      if (LOG.isDebugEnabled()) {
+        //noinspection ObjectToString
+        LOG.debug("reformat " + fileToProcess.getName() + " uses " + fileSettings);
+      }
+      CodeStyle.runWithLocalSettings(myProject, fileSettings, (localSettings) -> {
         if (doNotKeepLineBreaks) {
-          settings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
+          localSettings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
         }
         if (commitAction != null) {
           commitAction.run();
