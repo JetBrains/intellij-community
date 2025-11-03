@@ -50,7 +50,6 @@ public object ByteCodeViewerManager {
       val fileIndex = ProjectFileIndex.getInstance(psiClass.project)
       val module = fileIndex.getModuleForFile(file) ?: return null
       for (compilerOutputPath in CompilerPaths.getOutputPaths(arrayOf(module))) {
-        if (compilerOutputPath == null) continue
         val classRoot = VirtualFileManager.getInstance().findFileByNioPath(Path.of(compilerOutputPath)) ?: continue
         val relativeClassFilePath = jvmClassName.replace('.', '/') + ".class"
         val classFile = classRoot.resolveFromRootOrRelative(relativeClassFilePath)

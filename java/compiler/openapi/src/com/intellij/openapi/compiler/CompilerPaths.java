@@ -37,14 +37,14 @@ public class CompilerPaths {
   /**
    * @return a root directory where generated files for various compilers are stored
    */
-  public static File getGeneratedDataDirectory(Project project) {
+  public static @NotNull File getGeneratedDataDirectory(@NotNull Project project) {
     return new File(getCompilerSystemDirectory(project), ".generated");
   }
 
   /**
    * @return a root directory where compiler caches for the given project are stored
    */
-  public static @NotNull File getCacheStoreDirectory(final Project project) {
+  public static @NotNull File getCacheStoreDirectory(@NotNull Project project) {
     return new File(getCompilerSystemDirectory(project), ".caches");
   }
 
@@ -92,7 +92,7 @@ public class CompilerPaths {
    * The same as {@link #getModuleOutputDirectory} but returns String.
    * The method still returns a non-null value if the output path is specified in Settings but does not exist on disk.
    */
-  public static @Nullable String getModuleOutputPath(Module module, boolean forTestClasses) {
+  public static @Nullable String getModuleOutputPath(@Nullable Module module, boolean forTestClasses) {
     final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
     if (extension == null) {
       return null;
@@ -122,7 +122,7 @@ public class CompilerPaths {
     return outPathUrl != null ? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
-  public static @Nullable String getAnnotationProcessorsGenerationPath(Module module, boolean forTests) {
+  public static @Nullable String getAnnotationProcessorsGenerationPath(@NotNull Module module, boolean forTests) {
     final AnnotationProcessingConfiguration config = CompilerConfiguration
       .getInstance(module.getProject())
       .getAnnotationProcessingConfiguration(module);
@@ -148,7 +148,7 @@ public class CompilerPaths {
     return StringUtil.isEmpty(sourceDirName) ? path : path + "/" + sourceDirName;
   }
 
-  public static String @NotNull [] getOutputPaths(Module @NotNull [] modules) {
+  public static @NotNull String @NotNull [] getOutputPaths(@NotNull Module @NotNull [] modules) {
     Set<String> outputPaths = new OrderedSet<>();
     for (Module module : modules) {
       CompilerModuleExtension compilerModuleExtension = !module.isDisposed() ? CompilerModuleExtension.getInstance(module) : null;
