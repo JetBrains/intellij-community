@@ -38,8 +38,15 @@ class ShowDecompiledClassAction : AnAction() {
 
   private fun getPsiElement(e: AnActionEvent): PsiElement? {
     val project = e.project ?: return null
-    val editor = e.getData(CommonDataKeys.EDITOR) ?: return e.getData(CommonDataKeys.PSI_ELEMENT)
-    return PsiUtilBase.getPsiFileInEditor(editor, project)?.findElementAt(editor.caretModel.offset)
+    val editor = e.getData(CommonDataKeys.EDITOR)
+    val element = if (editor != null) {
+      PsiUtilBase.getPsiFileInEditor(editor, project)?.findElementAt(editor.caretModel.offset)
+    }
+    else {
+      e.getData(CommonDataKeys.PSI_ELEMENT)
+    }
+    if (element == null || !element.isValid) return null
+    return element
   }
 
   private fun getOriginalFile(psiElement: PsiElement?): VirtualFile? {
