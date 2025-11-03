@@ -699,7 +699,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (REPORT_NOT_ANNOTATED_GETTER) {
           if (!hasNullability(manager, getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
             reportProblem(holder, nameIdentifier, getterAnnoFix, "inspection.nullable.problems.annotated.field.getter.not.annotated",
-                          getPresentableAnnoName(field));
+                          StringUtil.getShortName(anno));
           }
         }
         if (annotated.isDeclaredNotNull && isNullableNotInferred(getter, false) ||
@@ -818,7 +818,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         if (nameIdentifier != null && nameIdentifier.isPhysical()) {
           reportProblem(holder, nameIdentifier, createAddAnnotationFix(anno, annoToRemove, parameter),
                         "inspection.nullable.problems.annotated.field.constructor.parameter.not.annotated",
-                        getPresentableAnnoName(field));
+                        StringUtil.getShortName(anno));
         }
       }
     });
