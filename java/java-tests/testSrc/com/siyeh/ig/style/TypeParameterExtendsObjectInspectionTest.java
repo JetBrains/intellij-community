@@ -6,6 +6,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,20 @@ public class TypeParameterExtendsObjectInspectionTest extends LightJavaInspectio
   public void testTypeParameterExtendsObject() {
     final TypeParameterExtendsObjectInspection inspection = getTypeParameterExtendsObjectInspection(false);
     myFixture.enableInspections(inspection);
+
+    doTest();
+  }
+
+  public void testTypeParameterExtendsObjectWithContainerAnnotation() {
+    final TypeParameterExtendsObjectInspection inspection = getTypeParameterExtendsObjectInspection(true);
+    myFixture.enableInspections(inspection);
+    @Language("JAVA") String nullMarked =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
+        public @interface NullMarked {}""";
+    myFixture.addClass(nullMarked);
 
     doTest();
   }

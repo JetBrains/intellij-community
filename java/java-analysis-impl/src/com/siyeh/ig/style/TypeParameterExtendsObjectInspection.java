@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -22,11 +23,13 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
@@ -135,7 +138,6 @@ public final class TypeParameterExtendsObjectInspection extends BaseInspection {
       registerError(nameIdentifier, Integer.valueOf(1));
     }
 
-
     @Override
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       super.visitTypeElement(typeElement);
@@ -154,11 +156,29 @@ public final class TypeParameterExtendsObjectInspection extends BaseInspection {
       if ((ignoreAnnotatedObject && extendsBound.hasAnnotations()) || !TypeUtils.isJavaLangObject(extendsBound.getType())) {
         return;
       }
+      if (ignoreAnnotatedObject && hasContainerAnnotations(PsiTreeUtil.getParentOfType(typeElement, PsiModifierListOwner.class))) return;
       final PsiElement firstChild = typeElement.getFirstChild();
       if (firstChild == null) {
         return;
       }
       registerError(firstChild, Integer.valueOf(2));
+    }
+
+    /**
+     * If there is a container {@code @NullMarked} annotation, then {@code <?>} means {@code <? extends @Nullable Object>}
+     * but {@code <? extends Object>} mean {@code <? extends @NonNull Object>}.
+     * So, in this case {@code extends Object} changes the behavior.
+     * There is a case when we can delete it:
+     * {@code <? extends @Nullable Object>}, but it seems it is better to preserve it because it makes code easier to understand
+     * @return if there is a container annotation on the given element
+     */
+    private static boolean hasContainerAnnotations(@Nullable PsiModifierListOwner modifierListOwner) {
+      if(modifierListOwner == null) return false;
+      NullableNotNullManager manager = NullableNotNullManager.getInstance(modifierListOwner.getProject());
+      if (manager != null && manager.findContainerAnnotation(modifierListOwner) != null) {
+        return true;
+      }
+      return false;
     }
   }
 }
