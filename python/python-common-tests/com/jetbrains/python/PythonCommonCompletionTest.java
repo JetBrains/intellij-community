@@ -2251,6 +2251,14 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     });
   }
 
+  // PY-62203 PY-84778
+  public void testMatchingSymbolsAndModulesSuggestedTogether() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("a.py");
+    myFixture.complete(CompletionType.BASIC, 1);
+    assertContainsElements(myFixture.getLookupElementStrings(), "dataclasses", "dataclass");
+  }
+
   private static void runWithImportableNamesInBasicCompletionDisabled(@NotNull Runnable action) {
     PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     boolean old = settings.INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION;
