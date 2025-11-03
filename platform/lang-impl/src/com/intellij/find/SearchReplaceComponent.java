@@ -368,12 +368,12 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
     updateTextComponentBorders();
     if (myModePanel != null) {
-      Border border = JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsets());
       if (myIslandsEnabled) {
-        myModePanel.setBorder(border);
+        myModePanel.setBorder(JBUI.Borders.empty(5, 3, 3, 3));
       }
       else {
-        myModePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1), border));
+        myModePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1),
+                                                    JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsets())));
       }
     }
   }
@@ -754,7 +754,13 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       component.setBorder(new DarculaTextBorder() {
         @Override
         public Insets getBorderInsets(Component c) {
-          return JBInsets.create(3, 6).asUIResource();
+          int top = 4;
+          int bottom = 2;
+          if (UISettings.getInstance().getCompactMode()) {
+            top = 2;
+            bottom = 4;
+          }
+          return new JBInsets(top, 6, bottom, 6).asUIResource();
         }
 
         @Override
