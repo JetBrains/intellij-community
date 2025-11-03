@@ -148,6 +148,30 @@ public class CompilerPaths {
     return StringUtil.isEmpty(sourceDirName) ? path : path + "/" + sourceDirName;
   }
 
+  /**
+   * Returns output paths for the given modules.
+   * <p>
+   * This method queries the {@link OrderEnumerationHandler} extension point,
+   * so it also returns the output paths other languages, not only Java.
+   * <h3>Example</h3>
+   * <p>
+   * Let's assume a typical Gradle-based Kotlin/JVM project, located at {@code $PROJECT_ROOT}, with {@code main} and {@code test} source sets.
+   * When triggered on the module corresponding to the {@code main} source set, this method may return:
+   * <p>
+   * <pre>{@code
+   * $PROJECT_ROOT/build/classes/java/main
+   * $PROJECT_ROOT/build/classes/kotlin/main
+   * $PROJECT_ROOT/build/resources/main
+   * }</pre>
+   * <p>
+   * And when triggered on the module corresponding to the {@code test} source set, this method may return:
+   *
+   * <pre>{@code
+   * $PROJECT_ROOT/build/classes/java/test
+   * $PROJECT_ROOT/build/classes/kotlin/test
+   * $PROJECT_ROOT/build/resources/test
+   * }</pre>
+   */
   public static @NotNull String @NotNull [] getOutputPaths(@NotNull Module @NotNull [] modules) {
     Set<String> outputPaths = new OrderedSet<>();
     for (Module module : modules) {

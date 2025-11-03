@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * Provides access to Java-specific settings of a module (output paths for production and test classes).
  *
  * @see com.intellij.openapi.roots.CompilerProjectExtension
+ * @see com.intellij.openapi.compiler.CompilerPaths
  */
 public abstract class CompilerModuleExtension extends ModuleExtension {
   public static final String PRODUCTION = "production";
@@ -22,6 +23,8 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
 
   /**
    * Returns a compiler output path for production sources of the module, if it is valid.
+   *
+   * @see com.intellij.openapi.compiler.CompilerPaths#getOutputPaths
    */
   public abstract @Nullable VirtualFile getCompilerOutputPath();
 
@@ -29,6 +32,8 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
 
   /**
    * Returns a compiler output path URL for production sources of the module.
+   *
+   * @see com.intellij.openapi.compiler.CompilerPaths#getOutputPaths
    */
   public abstract @Nullable String getCompilerOutputUrl();
 
