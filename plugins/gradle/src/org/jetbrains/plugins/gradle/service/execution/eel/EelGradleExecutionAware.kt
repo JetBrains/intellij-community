@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import org.jetbrains.annotations.ApiStatus
@@ -76,8 +75,6 @@ class EelGradleExecutionAware : GradleExecutionAware {
   }
 
   private fun Project.isEelSyncAvailable(): Boolean {
-    return Registry.`is`("gradle.sync.use.eel.for.wsl", false)
-           && projectFilePath != null
-           && getEelDescriptor() !is LocalEelDescriptor
+    return projectFilePath != null && getEelDescriptor() !is LocalEelDescriptor
   }
 }

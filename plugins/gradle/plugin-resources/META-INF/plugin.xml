@@ -145,10 +145,8 @@
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.GradleExcludeBuildFilesDataService"/>
     <externalProjectStructureCustomizer implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectStructureCustomizer"/>
     <externalIconProvider key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.ui.GradleIconProvider"/>
-    <externalExecutionAware id="gradleOnWsl" order="before gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.wsl.GradleOnWslExecutionAware"/>
     <externalExecutionAware id="gradle" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware"/>
-    <externalExecutionAware  id="gradleOnEel" order="before gradleOnWsl" key="GRADLE"
-                             implementationClass="org.jetbrains.plugins.gradle.service.execution.eel.EelGradleExecutionAware"/>
+    <externalExecutionAware  id="gradleOnEel" key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.eel.EelGradleExecutionAware"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
     <externalSystemTaskProgressIndicatorUpdater
@@ -247,7 +245,6 @@
                  description="Enable performance trace collection in the Gradle daemon collected by OTLP java agent"/>
     <registryKey key="gradle.daemon.legacy.dependency.resolver" defaultValue="false"
                  description="Use ArtifactResolutionQuery instead of ArtifactView to resolve Javadoc/Sources"/>
-    <registryKey key="gradle.sync.use.eel.for.wsl" defaultValue="true" description="Use EEL API for WSL projects"/>
     <registryKey key="gradle.auto.auto.jdk.fix.disabled" defaultValue="false"
                  description="Disable attempt to fix unknown JDK in Gradle configuration on project open"/>
 
