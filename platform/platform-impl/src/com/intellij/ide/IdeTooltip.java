@@ -50,6 +50,7 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   private int myCalloutShift = 4;
   private boolean myExplicitClose;
+  private boolean isCalloutEnabled = true;
 
   private int myPositionChangeX;
   private int myPositionChangeY;
@@ -238,6 +239,15 @@ public class IdeTooltip extends ComparableObject.Impl {
   public IdeTooltip setCalloutShift(int calloutShift) {
     myCalloutShift = calloutShift;
     return this;
+  }
+
+  public IdeTooltip setShowCallout(boolean showCallout) {
+    isCalloutEnabled = showCallout;
+    return this;
+  }
+
+  public boolean isCalloutEnabled() {
+    return isCalloutEnabled;
   }
 
   public void setComponent(Component component) {

@@ -638,7 +638,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
       .setBorderColor(borderColor)
       .setBorderInsets(tooltip.borderInsets)
       .setAnimationCycle(if (animationEnabled) RegistryManager.getInstance().intValue("ide.tooltip.animationCycle") else 0)
-      .setShowCallout(true)
+      .setShowCallout(tooltip.isCalloutEnabled)
       .setPointerSize(tooltip.pointerSize)
       .setCalloutShift(if (small && tooltip.calloutShift == 0) 2 else tooltip.calloutShift)
       .setPositionChangeXShift(tooltip.positionChangeX)

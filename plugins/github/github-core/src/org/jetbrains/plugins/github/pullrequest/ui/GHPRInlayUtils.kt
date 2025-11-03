@@ -11,7 +11,8 @@ import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterCon
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
-import com.intellij.ide.HelpTooltip
+import com.intellij.ide.IdeTooltip
+import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
@@ -21,6 +22,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.platform.util.coroutines.childScope
@@ -36,9 +38,9 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.comment.CommentedCodeFrameRenderer
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
 import java.awt.*
-import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.JLayer
 import javax.swing.SwingUtilities
 import javax.swing.plaf.LayerUI
@@ -57,10 +59,10 @@ internal object GHPRInlayUtils {
     var activeLineHighlighter: RangeHighlighter? = null
     val multilineCommentsDisabled = Registry.get("github.pr.new.multiline.comments.disabled").asBoolean()
     val frameResizer = if (vm is GHPREditorMappedComponentModel.NewComment<*> && !(isUnifiedDiff && multilineCommentsDisabled)) {
-      val frameResizer = ResizingFrameListener(editor, vm)
-      editor.addEditorMouseMotionListener(frameResizer)
-      editor.addEditorMouseListener(frameResizer)
-      frameResizer
+      ResizingFrameListener(editor, vm).also {
+        editor.addEditorMouseMotionListener(it)
+        editor.addEditorMouseListener(it)
+      }
     }
     else null
 
@@ -112,7 +114,10 @@ internal object GHPRInlayUtils {
   private const val OUTLINE_OUTSIDE_DETECTION_MARGIN = 3
   private const val OUTLINE_DETECTION_LINE_FRACTION = 0.3f
 
-  private class ResizingFrameListener(val editor: Editor, val vm: GHPREditorMappedComponentModel.NewComment<*>) : EditorMouseListener, EditorMouseMotionListener {
+  private class ResizingFrameListener(
+    private val editor: Editor,
+    private val vm: GHPREditorMappedComponentModel.NewComment<*>,
+  ) : EditorMouseListener, EditorMouseMotionListener {
     private val editorEx = editor as EditorEx
     private val model: CodeReviewEditorGutterControlsModel.WithMultilineComments?
       get() = editorEx.getUserData(CodeReviewCommentableEditorModel.KEY) as? CodeReviewEditorGutterControlsModel.WithMultilineComments
@@ -134,8 +139,9 @@ internal object GHPRInlayUtils {
       Cursor.getDefaultCursor()
     }
 
+    private var currentTooltip: IdeTooltip? = null
+
     init {
-      setupTooltips()
       SwingUtilities.invokeLater {
         val gutterComponent = editorEx.gutterComponentEx
         val gutterMousePos = gutterComponent.mousePosition ?: return@invokeLater
@@ -143,52 +149,13 @@ internal object GHPRInlayUtils {
 
         if (gutterMousePos.getEdge(yBorders) != null) {
           gutterComponent.cursor = resizeCursor
-          forceTooltip(gutterMousePos)
         }
       }
-    }
-
-    private fun setupTooltips() {
-      val condition: () -> Boolean = {
-        val yBorders = getYAxisBorders()
-        val mousePos = editorEx.gutterComponentEx.mousePosition ?: editor.contentComponent.mousePosition
-        yBorders != null && mousePos != null && mousePos.getEdge(yBorders) != null
-      }
-      listOf(editorEx.gutterComponentEx, editor.contentComponent).forEach { component ->
-        HelpTooltip()
-          .setDescription(GithubBundle.message("pull.request.review.new.comment.code.outline.tooltip"))
-          .setLocation(HelpTooltip.Alignment.CURSOR)
-          .setInitialDelay(100)
-          .installOn(component)
-
-        HelpTooltip.setMasterPopupOpenCondition(component, condition)
-      }
-    }
-
-    private fun forceTooltip(gutterMousePos: Point) {
-      val gutterComponent = editorEx.gutterComponentEx
-      val mouseEvent = MouseEvent(
-        gutterComponent,
-        MouseEvent.MOUSE_ENTERED,
-        System.currentTimeMillis(),
-        0,
-        gutterMousePos.x,
-        gutterMousePos.y,
-        0,
-        false,
-      )
-      gutterComponent.dispatchEvent(mouseEvent)
-    }
-
-    private fun hideTooltip() {
-      HelpTooltip.hide(editor.contentComponent)
-      HelpTooltip.hide(editorEx.gutterComponentEx)
     }
 
     override fun mouseDragged(e: EditorMouseEvent) {
       if (!isDraggingFrame || edge == null || oldRange == null) return
       e.consume() // to prevent selecting text while dragging
-      hideTooltip()
       val mouseY = e.mouseEvent.y.toFloat()
       val dragDelta = mouseY - dragStart
       val direction = if (dragDelta > 0) 1 else -1
@@ -245,19 +212,41 @@ internal object GHPRInlayUtils {
       isDraggingFrame = true
     }
 
+    override fun mouseEntered(e: EditorMouseEvent) {
+      if (isDraggingFrame) return
+      val yBorders = getYAxisBorders() ?: return
+      val point = e.mouseEvent.point
+      val onEdge = point.getEdge(yBorders) != null
+      if (onEdge) {
+        showTooltip(e.mouseEvent.component, point)
+      }
+    }
+
     override fun mouseMoved(e: EditorMouseEvent) {
       val yBorders = getYAxisBorders() ?: return
-      val onEdge = e.mouseEvent.point.getEdge(yBorders) != null
+      val point = e.mouseEvent.point
+      val onEdge = point.getEdge(yBorders) != null
       val gutterGlassComp = IdeGlassPaneUtil.find(editorEx.gutterComponentEx)
+
       if (onEdge) {
         editorEx.setCustomCursor(this, resizeCursor)
         gutterGlassComp.setCursor(resizeCursor, this)
       }
       else {
-        hideTooltip()
         editorEx.setCustomCursor(this, null)
         gutterGlassComp.setCursor(null, this)
       }
+
+      if (onEdge && !isDraggingFrame) {
+        showTooltip(e.mouseEvent.component, point)
+      }
+      else {
+        hideTooltip()
+      }
+    }
+
+    override fun mouseExited(event: EditorMouseEvent) {
+      hideTooltip()
     }
 
     private fun Point.getEdge(frameCoords: Pair<Float, Float>): Edge? {
@@ -282,6 +271,29 @@ internal object GHPRInlayUtils {
       val bottomY = editor.visualLineToY(editor.offsetToVisualPosition(bottomOffset).line).toFloat() + editor.lineHeight
 
       return topY to bottomY
+    }
+
+    private fun showTooltip(component: Component, point: Point) {
+      val offsetPoint = Point(point.x, point.y + editor.lineHeight) // offset for tooltip placement
+      currentTooltip?.let {
+        it.component = component
+        it.point = offsetPoint
+      }
+
+      if (currentTooltip == null) {
+        val label = JLabel(GithubBundle.message("pull.request.review.new.comment.code.outline.tooltip"))
+        currentTooltip = IdeTooltip(component, offsetPoint, label)
+          .setPreferredPosition(Balloon.Position.below)
+          .setShowCallout(false)
+      }
+      IdeTooltipManager.getInstance().show(currentTooltip!!, false)
+    }
+
+    private fun hideTooltip() {
+      currentTooltip?.let {
+        IdeTooltipManager.getInstance().hide(it)
+      }
+      currentTooltip = null
     }
 
     private enum class Edge {

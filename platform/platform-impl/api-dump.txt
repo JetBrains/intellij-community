@@ -146,6 +146,9 @@ com.intellij.ide.IdeEventQueue$EventDispatcher
 - a:dispatch(java.awt.AWTEvent):Z
 com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher
 - com.intellij.ide.IdeEventQueue$EventDispatcher
+c:com.intellij.ide.IdeTooltip
+- isCalloutEnabled():Z
+- setShowCallout(Z):com.intellij.ide.IdeTooltip
 com.intellij.ide.IdeTooltip$Ui
 - a:getShowingPoint():com.intellij.ui.awt.RelativePoint
 - a:isInside(com.intellij.ui.awt.RelativePoint):Z
