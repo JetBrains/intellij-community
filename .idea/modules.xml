@@ -475,7 +475,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/git/intellij.groovy.git.iml" filepath="$PROJECT_DIR$/plugins/groovy/git/intellij.groovy.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.tests.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/groovy-live-templates/intellij.groovy.live.templates.iml" filepath="$PROJECT_DIR$/plugins/groovy-live-templates/intellij.groovy.live.templates.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-psi/intellij.groovy.psi.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-psi/intellij.groovy.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt/intellij.groovy.rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt/intellij.groovy.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt/classLoader/intellij.groovy.rt.classLoader.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt/classLoader/intellij.groovy.rt.classLoader.iml" />
