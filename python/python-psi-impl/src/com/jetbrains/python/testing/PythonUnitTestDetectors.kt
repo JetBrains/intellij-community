@@ -9,18 +9,35 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.testing.pyTestFixtures.TEST_FIXTURE_DECORATOR_NAMES
 
 /**
- * Any "test_" function could be used as test by pytest.
+ * Pytest could use any "test_" function as a test.
  * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
  */
-fun isTestFunction(function: PyFunction) = function.name?.startsWith("test") == true
+fun isTestFunction(function: PyFunction): Boolean {
+  // Check if the function name starts with "test"
+  val isTestNamed = function.name?.startsWith("test") == true
+  if (!isTestNamed) return false
+
+  // Get the list of decorators, if any, otherwise consider this a test function
+  val decoratorList = function.decoratorList?.decorators ?: return true
+
+  // Determine if any decorator matches known pytest fixture names
+  val isPytestFixture = decoratorList.any { decorator ->
+    val decoratorName = decorator.callee?.text
+    decoratorName in TEST_FIXTURE_DECORATOR_NAMES
+  }
+
+  // A test function must not be a pytest fixture
+  return !isPytestFixture
+}
 
 /**
  * Inheritor of TestCase class is always test for unittest and could also be launched with pytest.
  * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
  */
-fun isUnitTestCaseClass(clazz: PyClass, context: TypeEvalContext) = clazz.inherits(context, "unittest.TestCase", "unittest.case.TestCase")
+fun isUnitTestCaseClass(clazz: PyClass, context: TypeEvalContext): Boolean = clazz.inherits(context, "unittest.TestCase", "unittest.case.TestCase")
 
 /**
  * Checks if class [isUnitTestCaseClass] or both conditions are true: it's name starts/ends with "Test" and it has at least one
@@ -55,13 +72,13 @@ fun isTestClass(clazz: PyClass, context: TypeEvalContext): Boolean {
 
 fun isTestFile(file: PyFile,
                context: TypeEvalContext): Boolean {
-  return if (file.topLevelClasses.stream().anyMatch { o: PyClass ->
+  return if (file.topLevelClasses.any { o: PyClass ->
       isTestClass(o, context)
     }) {
     true
   }
   else file.name.startsWith("test_") ||
-       file.topLevelFunctions.stream().anyMatch { o: PyFunction ->
+       file.topLevelFunctions.any { o: PyFunction ->
          isTestFunction(o)
        }
 }
