@@ -32,6 +32,7 @@ class MavenHttpProxyServerFixture(
   private var proxyUsername: String? = null
   private var proxyPassword: String? = null
   val requestedFiles: Queue<String> = ConcurrentLinkedQueue()
+  val requestedFilesWithCorrectAuth: Queue<String> = ConcurrentLinkedQueue()
   val port: Int
     get() = serverSocket.localPort
 
@@ -123,6 +124,7 @@ class MavenHttpProxyServerFixture(
     try {
       val headers = emptyReader(reader)
       if (isAuthInfoCorrect(headers)) {
+        requestedFilesWithCorrectAuth.add(tempUri.path)
         val serverResponse = makeHttpCall(clientUri)
         writeClientResponse(os, serverResponse)
       }
