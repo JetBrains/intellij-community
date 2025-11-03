@@ -273,6 +273,10 @@ From `productModuleLayout.kt`:
 ```
 
 **Handling depends on scrambling:**
+- **Scrambled plugins**: Don't embed → defer to plugin-classpath.txt (after scrambling)
+- **Non-scrambled plugins**: Embed now as CDATA with xi:includes resolved
+
+**Why the distinction?**
 - **Scrambled**: Embedding before scrambling would capture unscrambled class names in CDATA
 - **Non-scrambled**: Can safely embed immediately; xi:includes need resolution for separate classloader
 
@@ -345,6 +349,150 @@ From `productModuleLayout.kt`:
   │                                // class names after Phase 3   │
   │  Result: Binary file with pre-computed metadata              │
   └──────────────────────────────────────────────────────────────┘
+         │
+         v
+  ┌──────────────┐
+  │Distribution  │  Generate OS-specific distributions
+  │    Phase     │  Cache State: No longer needed
+  └──────────────┘
+```
+
+## Embedding Logic: Complete Matrix
+
+| Type | Scrambling Check | Condition | Action | Location |
+|------|-----------------|-----------|--------|----------|
+| **Product Module** | `isInScrambledFile`<br/>(embedded + closed-source) | `!isInScrambledFile` | **Embed now** in product XML<br/>(for xi:include resolution) | productModuleLayout.kt |
+| **Product Module** | `isInScrambledFile` | `isInScrambledFile` | **Don't embed**<br/>(use plugin-classpath.txt) | productModuleLayout.kt |
+| **Plugin Content** | `pathsToScramble.isEmpty()` | `.isEmpty()` | **Embed now** in plugin.xml | PluginXmlPatcher.kt |
+| **Plugin Content** | `pathsToScramble.isEmpty()` | `!.isEmpty()` | **Defer to plugin-classpath.txt** | classpath.kt |
+
+### Key Comment from productModuleLayout.kt
+
+```kotlin
+// We do not embed the module descriptor because scrambling can rename classes.
+//
+// However, we cannot rely solely on the `PLUGIN_CLASSPATH` descriptor: for non-embedded modules,
+// xi:included files (e.g., META-INF/VcsExtensionPoints.xml) are not resolvable from the core
+// classpath, since a non-embedded module uses a separate classloader.
+//
+// Because scrambling applies only (by policy) to embedded modules, we embed the module descriptor
+// for non-embedded modules to address this.
+//
+// Note: We could implement runtime loading via the module's classloader, but that would
+// significantly complicate the runtime code.
+
+if (!isInScrambledFile) {
+  resolveAndEmbedContentModuleDescriptor(...)
+}
+```
+
+**Why the distinction?**
+- **Embedded + closed-source modules** will be scrambled → defer to plugin-classpath.txt
+- **Non-embedded modules** need xi:includes resolved now → embed in product XML
+
+## The plugin-classpath.txt Mechanism
+
+### What is plugin-classpath.txt?
+
+A **binary optimization file** containing pre-computed plugin metadata:
+- Pre-sorted JAR paths
+- Pre-parsed plugin descriptors (with embedded content modules for scrambled plugins)
+- Eliminates disk I/O and JAR scanning at runtime
+
+**Location**: `lib/plugin-classpath.txt` in the distribution
+
+### Build-Time Generation (classpath.kt)
+
+**Functions**:
+- `writePluginClassPathHeader()` - Writes format version, product descriptor, plugin count
+- `generatePluginClassPath()` - Writes plugin entries with descriptors and file lists
+
+**Critical Code** (classpath.kt):
+```kotlin
+// ONLY embed if scrambling is enabled
+if (!pluginLayout.pathsToScramble.isEmpty()) {
+  val xIncludeResolver = createXIncludeElementResolver(
+    searchPath = listOf(
+      pluginLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }
+        to pluginDescriptorContainer,
+      platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName }
+        to platformDescriptorContainer,
+    ),
+    context = context,
+  )
+
+  embedContentModules(
+    rootElement = rootElement,
+    pluginLayout = pluginLayout,
+    pluginDescriptorContainer = pluginDescriptorContainer,
+    xIncludeResolver = xIncludeResolver,
+    context = context,
+  )
+}
+// else: Don't embed content modules; defer to plugin-classpath.txt
+//       (structural xi:includes ARE still resolved to find <content> tags)
+```
+
+### Runtime Loading (PluginDescriptorLoader.kt)
+
+**Process**:
+1. Read `plugin-classpath.txt` (binary format)
+2. Parse header (version, product descriptor, plugin count)
+3. For each plugin entry:
+   - Read file count, plugin dir, **descriptor bytes**
+   - Create FileItems array
+   - Parse descriptor from memory (no disk I/O!)
+4. Handle content modules:
+   - If `descriptorContent != null`: Parse embedded CDATA (scrambled names!)
+   - If `descriptorContent == null`: Load from file/JAR
+
+**Key Code** (PluginDescriptorLoader.kt):
+```kotlin
+for (module in descriptor.content.modules) {
+  if (module.descriptorContent == null) {
+    // Not embedded - load from separate file/JAR
+    // This happens for non-scrambled plugins
+    val jarFile = pluginDir.resolve("lib/modules/${module.moduleId.name}.jar")
+    classPath = Collections.singletonList(jarFile)
+    loadModuleFromSeparateJar(...)
+  }
+  else {
+    // Embedded as CDATA - parse directly from memory!
+    // This happens for scrambled plugins
+    // Class names are already scrambled!
+    val subRaw = PluginDescriptorFromXmlStreamConsumer(...).let {
+      it.consume(createXmlStreamReader(module.descriptorContent))
+      it.getBuilder()
+    }
+  }
+}
+```
+
+### Binary File Format
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   plugin-classpath.txt                       │
+├─────────────────────────────────────────────────────────────┤
+│ HEADER                                                       │
+├─────────────────────────────────────────────────────────────┤
+│ [1 byte]  Format Version (2)                                │
+│ [1 byte]  jarOnly Flag (0/1)                                │
+│ [4 bytes] Product Descriptor Size                           │
+│ [N bytes] Product Descriptor Content (XML with CDATA)       │
+│ [2 bytes] Plugin Count                                      │
+├─────────────────────────────────────────────────────────────┤
+│ PLUGIN ENTRIES (repeated for each plugin)                   │
+├─────────────────────────────────────────────────────────────┤
+│ [2 bytes] File Count                                        │
+│ [UTF]     Plugin Directory Name                             │
+│ [4 bytes] Plugin Descriptor Size                            │
+│ [N bytes] Plugin Descriptor Content (XML, possibly CDATA)   │
+│ [UTF]     File Path 1 (relative to plugin dir)             │
+│ [UTF]     File Path 2                                       │
+│ ...                                                          │
+│ [UTF]     File Path N                                       │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Performance Benefits
@@ -473,8 +621,8 @@ if (!isInScrambledFile) {
 ```
 
 **Why?**
-- **Scrambled embedded modules** will be scrambled → defer to plugin-classpath.txt
-- **Non-scrambled modules** need xi:includes resolved now → embed in product XML
+- **Scrambled embedded modules**: Use plugin-classpath.txt (class names will be obfuscated)
+- **Non-scrambled modules**: Embed now because separate classloader needs xi:includes resolved
 
 ## Plugin Content Module Handling (PluginLayout)
 
@@ -791,8 +939,8 @@ cd build/dist/plugins/YourPlugin
 unzip -p lib/your-plugin.jar META-INF/plugin.xml > after.xml
 
 # Compare class names
-grep -o 'class=\"[^\"]*\"' before.xml | head -10  # Original names
-grep -o 'class=\"[^\"]*\"' after.xml | head -10   # Scrambled names
+grep -o 'class="[^"]*"' before.xml | head -10  # Original names
+grep -o 'class="[^"]*"' after.xml | head -10   # Scrambled names
 ```
 
 #### Use ProductModulesXmlConsistencyTest
@@ -810,6 +958,41 @@ This test automatically checks:
 - Product descriptors don't contain unscrambled class names
 - Plugin descriptors in plugin-classpath.txt are properly scrambled
 - Content modules are correctly embedded
+
+### Troubleshooting Common Issues
+
+#### Issue: ClassNotFoundException at Runtime
+
+**Symptom**: Plugin fails to load with `ClassNotFoundException: com.example.OriginalClassName`
+
+**Cause**: Content module was embedded before scrambling with original class names, but the actual class was renamed.
+
+**Solution**:
+1. Verify `pathsToScramble` includes the module's JAR
+2. Check that embedding happens AFTER scrambling (Path 2)
+3. Verify cache was updated by scrambling
+
+#### Issue: Plugin Loads Slowly
+
+**Symptom**: Long startup time, many disk I/O operations
+
+**Cause**: Content modules not embedded in plugin-classpath.txt, falling back to runtime loading.
+
+**Solution**:
+1. Verify plugin-classpath.txt exists in `lib/` directory
+2. Check that `pathsToScramble` is configured correctly
+3. Ensure `embedContentModules()` is being called in classpath.kt
+
+#### Issue: Build Fails with "descriptor not found in cache"
+
+**Symptom**: Build error: "Could not find descriptor for module X in cache"
+
+**Cause**: Descriptor wasn't cached during Layout phase.
+
+**Solution**:
+1. Check that the module's JAR is being packaged correctly
+2. Verify JAR contains `META-INF/plugin.xml` or the expected descriptor
+3. Check JarPackager is caching descriptors properly
 
 ### Best Practices
 
