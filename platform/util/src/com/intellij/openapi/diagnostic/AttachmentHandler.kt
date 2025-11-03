@@ -103,7 +103,6 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
     // no-op
   }
 
-  @Throws(SecurityException::class)
   override fun close() {
     // no-op
   }
