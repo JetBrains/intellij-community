@@ -12,6 +12,7 @@ import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import com.intellij.vcs.git.rpc.GitOperationsApi
 import git4idea.GitStandardLocalBranch
+import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -19,11 +20,24 @@ class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = ActionData.create(e) != null
+    val data = ActionData.create(e)
+    with(e.presentation) {
+      if (data == null) {
+        isEnabledAndVisible = false
+        return
+      }
+      isEnabledAndVisible = true
+      isEnabled = data.hasTrackingInfos
+      if (!data.hasTrackingInfos) {
+        description = GitBundle.message("branches.tracking.branch.doesn.t.configured.for.s",
+                                        "'${data.branch.name}'")
+      }
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val data = ActionData.create(e) ?: return
+    if (!data.hasTrackingInfos) return
     val repositoryIds = data.repositories.map { it.repositoryId }
 
     GitOperationsApi.launchRequest(data.project) {
@@ -35,6 +49,7 @@ class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(
     val project: Project,
     val branch: GitStandardLocalBranch,
     val repositories: List<GitRepositoryModel>,
+    val hasTrackingInfos: Boolean,
   ) {
     companion object {
       fun create(e: AnActionEvent): ActionData? {
@@ -47,8 +62,7 @@ class GitCheckoutWithUpdateAction : GitBranchActionToBeWrapped, DumbAwareAction(
         return when {
           !hasRemotes(repositories) -> null
           isAlreadyCheckedOut(repositories, branch) -> null
-          !hasTrackingInfos(repositories, branch) -> null
-          else -> ActionData(project, branch, repositories)
+          else -> ActionData(project, branch, repositories, hasTrackingInfos = hasTrackingInfos(repositories, branch))
         }
       }
 
