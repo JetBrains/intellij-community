@@ -83,7 +83,6 @@ internal class OldJ2KPostProcessingRegistrarImpl : OldJ2KPostProcessingRegistrar
 
         registerInspectionBasedProcessing(IfThenToSafeAccessInspection())
         registerInspectionBasedProcessing(IfThenToElvisInspection(true))
-        registerInspectionBasedProcessing(KotlinInspectionFacade.instance.simplifyNegatedBinaryExpression)
         registerInspectionBasedProcessing(ReplaceGetOrSetInspection())
         registerInspectionBasedProcessing(AddOperatorModifierInspection())
         registerIntentionBasedProcessing(ObjectLiteralToLambdaIntention())
