@@ -256,7 +256,13 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (descriptor instanceof ProblemDescriptorWithReporterName name) {
       String reportingToolName = name.getReportingToolShortName();
-      toolWrapper = (LocalInspectionToolWrapper)myProfileWrapper.getInspectionTool(reportingToolName, psiElement);
+      LocalInspectionToolWrapper reassigned = (LocalInspectionToolWrapper)myProfileWrapper.getInspectionTool(reportingToolName, psiElement);
+      if (reassigned == null) {
+        LOG.error(toolWrapper +"(+"+toolWrapper.getTool().getClass()+") has reported " +descriptor+" which wants to reassign to other id '"+reportingToolName+"' but that tool is not available in the profile "+myProfileWrapper);
+      }
+      else {
+        toolWrapper = reassigned;
+      }
     }
     if (myIgnoreSuppressed && toolWrapper.getTool().isSuppressedFor(psiElement)) {
       registerSuppressedElements(psiElement, toolWrapper.getID(), toolWrapper.getAlternativeID(), mySuppressedElements);
