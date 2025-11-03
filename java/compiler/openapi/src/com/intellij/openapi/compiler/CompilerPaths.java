@@ -119,11 +119,13 @@ public class CompilerPaths {
         outPathUrl = ReadAction.compute(() -> extension.getCompilerOutputUrl());
       }
     }
-    return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
+    return outPathUrl != null ? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
   public static @Nullable String getAnnotationProcessorsGenerationPath(Module module, boolean forTests) {
-    final AnnotationProcessingConfiguration config = CompilerConfiguration.getInstance(module.getProject()).getAnnotationProcessingConfiguration(module);
+    final AnnotationProcessingConfiguration config = CompilerConfiguration
+      .getInstance(module.getProject())
+      .getAnnotationProcessingConfiguration(module);
     final String sourceDirName = config.getGeneratedSourcesDirectoryName(forTests);
     if (config.isOutputRelativeToContentRoot()) {
       final String[] roots = ModuleRootManager.getInstance(module).getContentRootUrls();
@@ -133,7 +135,9 @@ public class CompilerPaths {
       if (roots.length > 1) {
         Arrays.sort(roots);
       }
-      return StringUtil.isEmpty(sourceDirName)? VirtualFileManager.extractPath(roots[0]): VirtualFileManager.extractPath(roots[0]) + "/" + sourceDirName;
+      return StringUtil.isEmpty(sourceDirName)
+             ? VirtualFileManager.extractPath(roots[0])
+             : VirtualFileManager.extractPath(roots[0]) + "/" + sourceDirName;
     }
 
 
@@ -141,13 +145,13 @@ public class CompilerPaths {
     if (path == null) {
       return null;
     }
-    return StringUtil.isEmpty(sourceDirName)? path : path + "/" + sourceDirName;
+    return StringUtil.isEmpty(sourceDirName) ? path : path + "/" + sourceDirName;
   }
 
   public static String @NotNull [] getOutputPaths(Module @NotNull [] modules) {
     Set<String> outputPaths = new OrderedSet<>();
     for (Module module : modules) {
-      CompilerModuleExtension compilerModuleExtension = !module.isDisposed()? CompilerModuleExtension.getInstance(module) : null;
+      CompilerModuleExtension compilerModuleExtension = !module.isDisposed() ? CompilerModuleExtension.getInstance(module) : null;
       if (compilerModuleExtension == null) continue;
 
       String outputPathUrl = compilerModuleExtension.getCompilerOutputUrl();
