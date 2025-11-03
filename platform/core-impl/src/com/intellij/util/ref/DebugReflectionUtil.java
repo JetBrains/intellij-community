@@ -154,6 +154,7 @@ public final class DebugReflectionUtil {
         continue;
       }
       Object value = backLink.value;
+      //noinspection unchecked
       if (lookFor.isAssignableFrom(value.getClass()) && markLeaked(value) && !leakProcessor.process((V)value, backLink)) {
         return false;
       }
@@ -192,6 +193,7 @@ public final class DebugReflectionUtil {
     }
     if (rootClass.isArray()) {
       try {
+        //noinspection DataFlowIssue
         Object[] objects = (Object[])root;
         for (int i = 0; i < objects.length; i++) {
           Object value = objects[i];
