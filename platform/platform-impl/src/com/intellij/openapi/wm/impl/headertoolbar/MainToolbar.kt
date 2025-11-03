@@ -48,6 +48,7 @@ import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.showingScope
@@ -129,7 +130,6 @@ class MainToolbar(
     else {
       DefaultMainToolbarFlavor
     }
-    ClientProperty.put(this, IdeBackgroundUtil.NO_BACKGROUND, true)
     showingScope("Main toolbar update") {
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(LafManagerListener.TOPIC, LafManagerListener {
         updateToolbarActions()
@@ -181,7 +181,7 @@ class MainToolbar(
     }
   }
 
-  override fun getComponentGraphics(g: Graphics): Graphics = super.getComponentGraphics(IdeBackgroundUtil.getOriginalGraphics(g))
+  override fun getComponentGraphics(g: Graphics): Graphics = JBSwingUtilities.runGlobalCGTransform(this, g)
 
   suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar? = null) {
     val schema = CustomActionsSchema.getInstanceAsync()
