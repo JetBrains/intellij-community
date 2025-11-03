@@ -61,6 +61,14 @@ interface XDebugManagerProxy {
    */
   fun getXValueId(value: XValue): XValueId?
 
+  /**
+   * Gets ID of the given [stack].
+   *
+   * This method is used in split mode to pass the ID of the execution stack from frontend to backend.
+   * It's not supported in monolith mode.
+   */
+  fun getXExecutionStackId(stack: XExecutionStack): XExecutionStackId?
+
   companion object {
     private val EP_NAME = ExtensionPointName.create<XDebugManagerProxy>("com.intellij.xdebugger.managerProxy")
 

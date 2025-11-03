@@ -43,6 +43,9 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   // This method is not supported in monolith mode
   override fun getXValueId(value: XValue): XValueId? = null
 
+  // This method is not supported in monolith mode
+  override fun getXExecutionStackId(stack: XExecutionStack): XExecutionStackId? = null
+
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
     val sessionImpl = (session as XDebugSessionProxy.Monolith).sessionImpl
     return withCoroutineScopeForId(block) { scope ->

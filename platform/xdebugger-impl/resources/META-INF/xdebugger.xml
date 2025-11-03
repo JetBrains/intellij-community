@@ -181,6 +181,7 @@
     <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.RunContentDescriptorKeySerializer"/>
     <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.ExecutionEnvironmentKeySerializer"/>
     <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedValuesSerializer"/>
+    <remote.customDataContextSerializer implementation="com.intellij.xdebugger.impl.ui.XDebuggerTreeSelectedStacksSerializer"/>
 
     <intentionAction>
       <language>UAST</language>

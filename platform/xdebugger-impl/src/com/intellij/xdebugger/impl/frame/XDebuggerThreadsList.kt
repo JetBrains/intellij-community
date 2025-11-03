@@ -12,6 +12,8 @@ import com.intellij.ui.popup.list.GroupedItemsListRenderer
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XExecutionStack.AdditionalDisplayInfo
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy.Companion.getInstance
+import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -61,8 +63,17 @@ class XDebuggerThreadsList(
   override fun uiDataSnapshot(sink: DataSink) {
     sink[THREADS_LIST] = this
     stackUnderMouse?.stack?.let {
-      sink[XExecutionStack.SELECTED_STACKS] = listOf(it)
+      setSelectedStacks(sink, it)
     }
+  }
+
+  private fun setSelectedStacks(sink: DataSink, selection: XExecutionStack) {
+    val xDebugManagerProxy = getInstance()
+    val xExecutionStackId = xDebugManagerProxy.getXExecutionStackId(selection)
+    if (xExecutionStackId != null) {
+      sink[SplitDebuggerUIUtil.SPLIT_SELECTED_STACKS_KEY] = listOf(xExecutionStackId)
+    }
+    sink[XExecutionStack.SELECTED_STACKS] = listOf(selection)
   }
 
   private fun doInit() {
