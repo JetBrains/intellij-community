@@ -15,6 +15,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <legacyRunDashboardServiceSubstitutor implementation="com.intellij.platform.execution.dashboard.splitApi.LegacyRunDashboardServiceSubstitutorImpl"/>
     <remote.customDataContextSerializer implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceDataContextSerializer"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendLiveIconListener"/>
 
     <runDashboardManagerProxy
       implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManagerProxy"/>

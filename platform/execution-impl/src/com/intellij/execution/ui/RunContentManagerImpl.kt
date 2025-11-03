@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -34,6 +35,9 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
+import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.rpc.topics.ProjectRemoteTopic
+import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
@@ -43,6 +47,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.awt.KeyboardFocusManager
@@ -55,12 +60,17 @@ import javax.swing.Icon
 @JvmField
 val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
 
+@Serializable
+data class LiveIconEvent(val toolwindowId: String, val setActive: Boolean)
+
 @Suppress("LiftReturnOrAssignment")
 class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private val descriptors: MutableMap<RunContentDescriptorId, RunContentDescriptor> = ConcurrentHashMap()
 
   private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
   private val toolWindowIdZBuffer = ConcurrentLinkedDeque<String>()
+
+  val TOPIC = ProjectRemoteTopic("LiveIcon", LiveIconEvent.serializer())
 
   init {
     val containerFactory = DockableGridContainerFactory()
@@ -327,6 +337,10 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
                 toolWindowIcon = loadIconCustomVersionOrScale(icon = toolWindowIcon, size = 20)
               }
               toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
+              if(toolWindowId == "Services" && !IdeProductMode.isFrontend){
+                logger<RunContentManagerImpl>().warn("getting live icon")
+                TOPIC.broadcast(project, LiveIconEvent(toolWindowId, true))
+              }
             }
           }
 
@@ -631,7 +645,20 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private fun setToolWindowIcon(alive: Boolean, toolWindow: ToolWindow) {
     val base = toolWindowIdToBaseIcon.get(toolWindow.id)
     toolWindow.setIcon(if (alive) getLiveIndicator(base) else base ?: EmptyIcon.ICON_13)
+    if(toolWindow.id == "Services" && !IdeProductMode.isFrontend){ //todo probably also check if in split mode
+      TOPIC.broadcast(project, LiveIconEvent(toolWindow.id, alive))
+    }
   }
+
+  @ApiStatus.Internal
+  public fun setToolWindowIcon2(alive: Boolean, toolWindow: ToolWindow) {
+    if(toolWindowIdToBaseIcon.get(toolWindow.id) == null){
+
+    }
+    val base = toolWindowIdToBaseIcon.get(toolWindow.id)
+    toolWindow.setIcon(if (alive) getLiveIndicator(base) else base ?: EmptyIcon.ICON_13)
+  }
+
 
   private inner class CloseListener(content: Content, private val myExecutor: Executor) : BaseContentCloseListener(content, project) {
     override fun disposeContent(content: Content) {
