@@ -26,6 +26,7 @@ public final class ForkedDebuggerHelper {
   public static final String FINISH_PARAMS = "FINISH_PARAMS";
   public static final String DISPATCH_PORT_SYS_PROP = "idea.debugger.dispatch.port";
   public static final String DISPATCH_ADDR_SYS_PROP = "idea.debugger.dispatch.addr";
+  public static final String DEBUGGER_AGENT_SINK_PORT_SYS_PROP = "idea.debugger.agent.sink.port";
 
   // returns port at which debugger is supposed to communicate with debuggee process
   public static int setupDebugger(String debuggerId, String processName, String processParameters, String moduleDir) {
@@ -90,6 +91,10 @@ public final class ForkedDebuggerHelper {
 
   // copied from NetUtils
   private static int findAvailableSocketPort() throws IOException {
+    String sinkPortValue = System.getProperty(DEBUGGER_AGENT_SINK_PORT_SYS_PROP);
+    if (sinkPortValue != null) {
+      return Integer.parseInt(sinkPortValue);
+    }
     try (ServerSocket serverSocket = new ServerSocket(0)) {
       int port = serverSocket.getLocalPort();
       // workaround for linux : calling close() immediately after opening socket
