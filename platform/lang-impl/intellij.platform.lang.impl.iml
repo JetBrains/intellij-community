@@ -67,6 +67,7 @@
     <orderEntry type="module" module-name="intellij.libraries.commons.logging" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
+    <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.xstream" />
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />

@@ -949,7 +949,6 @@ plugins/grazie/src/test
 plugins/grazie/xml
 plugins/grazie/yaml
 plugins/groovy
-plugins/groovy-live-templates
 plugins/groovy/git
 plugins/groovy/groovy-psi
 plugins/groovy/groovy-uast-tests
