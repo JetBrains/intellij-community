@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProjectConfig
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion.Companion.defaultKotlinVersion
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getTopLevelBuildScriptPsiFile
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
@@ -20,27 +21,34 @@ abstract class AbstractGradleKotlinCompilerPluginProjectConfigurator(private val
     override fun configureModule(module: Module): PsiFile? {
         val project = module.project
         val changedFiles = ChangedConfiguratorFiles()
-        val file = project.getTopLevelBuildScriptPsiFile() ?: return null
+
+        val topLevelFile = project.getTopLevelBuildScriptPsiFile() ?: return null
+        val moduleFile = module.getBuildScriptPsiFile().takeIf { it != topLevelFile }
 
         coroutineScope.launchTracked {
             edtWriteAction {
-                project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", file.name), null) {
-                    val manipulator = GradleBuildScriptSupport.getManipulator(file)
-                    val version =
-                        manipulator.getKotlinVersionFromBuildScript() ?: defaultKotlinVersion
-                    manipulator.configureBuildScripts(
-                        kotlinPluginName,
-                        getKotlinPluginExpression(file is KtFile),
-                        PathUtil.KOTLIN_JAVA_STDLIB_NAME,
-                        addVersion = true,
-                        version = version,
-                        jvmTarget = null,
-                        changedFiles = changedFiles
-                    )
+                project.executeWriteCommand(KotlinIdeaGradleBundle.message("command.name.configure.0", topLevelFile.name), null) {
+                    topLevelFile.add(addVersion = true, changedFiles = changedFiles)
+                    moduleFile?.add(addVersion = false, changedFiles = changedFiles)
                 }
             }
         }
-        return file
+        return moduleFile ?: topLevelFile
+    }
+
+    private fun PsiFile.add(addVersion: Boolean, changedFiles: ChangedConfiguratorFiles) {
+        val manipulator = GradleBuildScriptSupport.getManipulator(this)
+        val version =
+            manipulator.getKotlinVersionFromBuildScript() ?: defaultKotlinVersion
+        manipulator.configureBuildScripts(
+            kotlinPluginName,
+            getKotlinPluginExpression(this is KtFile),
+            PathUtil.KOTLIN_JAVA_STDLIB_NAME,
+            addVersion = addVersion,
+            version = version,
+            jvmTarget = null,
+            changedFiles = changedFiles
+        )
     }
 
     protected abstract val kotlinPluginName: String
