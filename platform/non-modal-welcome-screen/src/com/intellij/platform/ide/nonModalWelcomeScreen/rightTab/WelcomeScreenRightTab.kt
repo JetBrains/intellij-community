@@ -128,13 +128,15 @@ class WelcomeScreenRightTab(
                horizontalAlignment = Alignment.CenterHorizontally) {
           SwitchPanel()
 
-          CheckboxRow(text = NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.always.show.on.startup"),
-                      textStyle = TextStyle(color = fontColor),
-                      modifier = Modifier.padding(vertical = 12.dp),
-                      checked = showOnStartup, onCheckedChange = {
-            showOnStartup = it
-            isRightTabEnabled = it
-          })
+          if (contentProvider.isDisableOptionVisible) {
+            CheckboxRow(text = NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.always.show.on.startup"),
+                        textStyle = TextStyle(color = fontColor),
+                        modifier = Modifier.padding(bottom = 12.dp),
+                        checked = showOnStartup, onCheckedChange = {
+              showOnStartup = it
+              isRightTabEnabled = it
+            })
+          }
         }
       }
     }
@@ -195,7 +197,7 @@ class WelcomeScreenRightTab(
 
   @Composable
   fun SwitchPanel() {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(bottom = 12.dp)) {
       InfoPanelItem(themeIconKey,
                     NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.theme.switch.prefix"),
                     ThemeModel())
