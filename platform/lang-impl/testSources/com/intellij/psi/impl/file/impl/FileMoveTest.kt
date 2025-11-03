@@ -50,7 +50,7 @@ internal class FileMoveTest {
     module("module1") {
       contentRoot("contentRoot1") {
         sourceRoot("src1") {
-          file("A.java", "public class A {}")
+          file("A.txt", "public class A {}")
         }
         sourceRoot("src1-2") {
         }
@@ -65,7 +65,7 @@ internal class FileMoveTest {
     module("module3") {
       contentRoot("contentRoot3") {
         sourceRoot("src34", "sharedRoot34") {
-          file("B.java", "public class B {}")
+          file("B.txt", "public class B {}")
         }
         sourceRoot("src34-2", "sharedRoot34-2") {
         }
@@ -83,8 +83,8 @@ internal class FileMoveTest {
 
   private val project by projectFixture
 
-  private val aJava by projectFixture.fileOrDirInProjectFixture("module1/contentRoot1/src1/A.java")
-  private val bJava by projectFixture.fileOrDirInProjectFixture("module3/contentRoot3/src34/B.java")
+  private val aTxt by projectFixture.fileOrDirInProjectFixture("module1/contentRoot1/src1/A.txt")
+  private val bTxt by projectFixture.fileOrDirInProjectFixture("module3/contentRoot3/src34/B.txt")
 
   private val src2 by projectFixture.fileOrDirInProjectFixture("module2/contentRoot2/src2")
   private val src4 by projectFixture.fileOrDirInProjectFixture("module4/contentRoot4/src4")
@@ -96,70 +96,70 @@ internal class FileMoveTest {
 
   @Test
   fun `file changes context after move`() = doTest {
-    val psiFile = aJava.findPsiFile()
+    val psiFile = aTxt.findPsiFile()
 
-    assertModuleContext(psiFile, aJava, "module1")
+    assertModuleContext(psiFile, aTxt, "module1")
 
-    moveFile(aJava, src2)
+    moveFile(aTxt, src2)
 
-    assertPsiFileIsValid(psiFile, aJava)
+    assertPsiFileIsValid(psiFile, aTxt)
 
-    val movedPsiFile = aJava.findPsiFile()
-    assertModuleContext(movedPsiFile, aJava, "module2")
+    val movedPsiFile = aTxt.findPsiFile()
+    assertModuleContext(movedPsiFile, aTxt, "module2")
   }
 
   @Test
   fun `file changes context after move for any-context`() = doTest {
-    val psiFile = aJava.findPsiFile()
+    val psiFile = aTxt.findPsiFile()
 
     val rawContext = CodeInsightContextManagerImpl.getInstanceImpl(project).getCodeInsightContextRaw(psiFile.viewProvider)
-    assert(rawContext == anyContext()) { psiFile.presentableTextWithContext() + ", " + dumpPsiFiles(aJava) }
+    assert(rawContext == anyContext()) { psiFile.presentableTextWithContext() + ", " + dumpPsiFiles(aTxt) }
 
-    moveFile(aJava, src2)
+    moveFile(aTxt, src2)
 
-    assertPsiFileIsValid(psiFile, aJava)
+    assertPsiFileIsValid(psiFile, aTxt)
 
-    val movedPsiFile = aJava.findPsiFile()
-    assertEquals("module2", movedPsiFile.getModuleContextName()) { dumpPsiFiles(bJava) }
+    val movedPsiFile = aTxt.findPsiFile()
+    assertEquals("module2", movedPsiFile.getModuleContextName()) { dumpPsiFiles(bTxt) }
   }
 
   @Test
   fun `shared file changes context after move`() = doTest {
-    val psiFile3 = bJava.findPsiFile(module3.asContext())
-    val psiFile4 = bJava.findPsiFile(module4.asContext())
+    val psiFile3 = bTxt.findPsiFile(module3.asContext())
+    val psiFile4 = bTxt.findPsiFile(module4.asContext())
 
     assertEquals("module3", psiFile3.getModuleContextName())
     assertEquals("module4", psiFile4.getModuleContextName())
 
-    moveFile(bJava, src2)
+    moveFile(bTxt, src2)
 
     readAction {
       assert(psiFile3.isValid xor psiFile4.isValid) {
         val text3 = psiFile3.presentableTextWithContext() + "[" + if (psiFile3.isValid) "valid]" else "invalid]"
         val text4 = psiFile3.presentableTextWithContext() + "[" + if (psiFile4.isValid) "valid]" else "invalid]"
-        text3 + " : " + text4 + ", " + dumpPsiFiles(bJava)
+        text3 + " : " + text4 + ", " + dumpPsiFiles(bTxt)
       }
     }
 
-    val movedPsiFile = bJava.findPsiFile()
-    assertModuleContext(movedPsiFile, bJava, "module2")
+    val movedPsiFile = bTxt.findPsiFile()
+    assertModuleContext(movedPsiFile, bTxt, "module2")
   }
 
   @Test
   fun `shared file changes context after move when one context survives`() = doTest { // this
-    val psiFile3 = bJava.findPsiFile(module3.asContext())
-    val psiFile4 = bJava.findPsiFile(module4.asContext())
+    val psiFile3 = bTxt.findPsiFile(module3.asContext())
+    val psiFile4 = bTxt.findPsiFile(module4.asContext())
 
     assertEquals("module3", psiFile3.getModuleContextName())
     assertEquals("module4", psiFile4.getModuleContextName())
 
-    moveFile(bJava, src4)
+    moveFile(bTxt, src4)
 
-    assertPsiFileIsNotValid(psiFile3, bJava)
-    assertPsiFileIsValid(psiFile4, bJava)
+    assertPsiFileIsNotValid(psiFile3, bTxt)
+    assertPsiFileIsValid(psiFile4, bTxt)
 
-    val movedPsiFile = bJava.findPsiFile()
-    assertModuleContext(movedPsiFile, bJava, "module4")
+    val movedPsiFile = bTxt.findPsiFile()
+    assertModuleContext(movedPsiFile, bTxt, "module4")
   }
 
   @Test
@@ -169,27 +169,27 @@ internal class FileMoveTest {
     val module3Context = ProjectModelContextBridge.getInstance(project).getContext(module3)!!
     val module4Context = ProjectModelContextBridge.getInstance(project).getContext(module4)!!
 
-    val psiFile3 = bJava.findPsiFile(module3Context)
-    val psiFile4 = bJava.findPsiFile(module4Context)
+    val psiFile3 = bTxt.findPsiFile(module3Context)
+    val psiFile4 = bTxt.findPsiFile(module4Context)
 
-    assertModuleContext(psiFile3, bJava, "module3")
-    assertModuleContext(psiFile4, bJava, "module4")
+    assertModuleContext(psiFile3, bTxt, "module3")
+    assertModuleContext(psiFile4, bTxt, "module4")
 
-    moveFile(bJava, src34)
+    moveFile(bTxt, src34)
 
-    assertPsiFileIsValid(psiFile3, bJava)
-    assertPsiFileIsValid(psiFile4, bJava)
+    assertPsiFileIsValid(psiFile3, bTxt)
+    assertPsiFileIsValid(psiFile4, bTxt)
   }
 
   @Test
   fun `file survives move`() = doTest {
-    val psiFile = aJava.findPsiFile()
-    assertModuleContext(psiFile, aJava, "module1")
+    val psiFile = aTxt.findPsiFile()
+    assertModuleContext(psiFile, aTxt, "module1")
 
-    moveFile(aJava, src12)
+    moveFile(aTxt, src12)
 
-    assertPsiFileIsValid(psiFile, aJava)
-    assertModuleContext(psiFile, aJava, "module1")
+    assertPsiFileIsValid(psiFile, aTxt)
+    assertModuleContext(psiFile, aTxt, "module1")
   }
 
   private suspend fun VirtualFile.findPsiFile(): PsiFile {
