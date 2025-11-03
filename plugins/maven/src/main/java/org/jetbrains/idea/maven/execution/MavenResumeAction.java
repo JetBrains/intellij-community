@@ -158,7 +158,7 @@ public class MavenResumeAction extends AnAction {
   }
 
   public static boolean isApplicable(@NotNull MavenRunConfiguration runConfiguration) {
-    return isApplicable(runConfiguration.getProject(), (JavaParameters)null, runConfiguration);
+    return isApplicable(runConfiguration.getProject(), null, runConfiguration);
   }
 
 
