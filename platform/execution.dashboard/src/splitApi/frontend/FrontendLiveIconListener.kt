@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.splitApi.frontend
 
-import com.intellij.execution.ui.LiveIconEvent
-import com.intellij.execution.ui.RunContentManager
-import com.intellij.execution.ui.RunContentManagerImpl
+import com.intellij.execution.rpc.LiveIconEvent
 import com.intellij.execution.ui.RunContentManagerImpl.Companion.getLiveIndicator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
@@ -23,14 +21,14 @@ import javax.swing.Icon
 class FrontendLiveIconListener() : ProjectRemoteTopicListener<LiveIconEvent> {
   private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
 
-  override val topic: ProjectRemoteTopic<LiveIconEvent> = ProjectRemoteTopic("LiveIcon", LiveIconEvent.serializer())
+  override val topic: ProjectRemoteTopic<LiveIconEvent> = ProjectRemoteTopic("RunDashboardLiveIcon", LiveIconEvent.serializer())
+
   override fun handleEvent(project: Project, event: LiveIconEvent) {
-    val toolWindowId = event.toolwindowId
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId) ?: return
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(event.toolwindowId) ?: return
     val toolWindowIcon = initializeOrGetBaseToolWindowIcon(toolWindow)
 
     RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch(Dispatchers.EDT) {
-      toolWindow.setIcon(if (event.setActive) getLiveIndicator(toolWindowIcon) else toolWindowIcon ?: EmptyIcon.ICON_13)
+      toolWindow.setIcon(if (event.alive) getLiveIndicator(toolWindowIcon) else toolWindowIcon ?: EmptyIcon.ICON_13)
     }
   }
 
