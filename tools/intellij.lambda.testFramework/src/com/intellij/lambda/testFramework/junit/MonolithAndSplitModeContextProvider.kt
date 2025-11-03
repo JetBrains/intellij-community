@@ -74,7 +74,7 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
   private fun createInvocationContext(mode: IdeRunMode, args: Array<Any>, context: ExtensionContext): TestTemplateInvocationContext {
     return object : TestTemplateInvocationContext {
       override fun getDisplayName(invocationIndex: Int): String {
-        MonolithAndSplitModeIdeInstanceInitializer.startIde(mode, context)
+        IdeInstance.startIde(mode, context)
 
         val params = if (args.isNotEmpty()) " with params: " + listOf(*args) else ""
         return if (params.isNotEmpty()) "[$mode] $params" else "[$mode]"
@@ -93,7 +93,7 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
             return when {
               paramCtx.parameter.type.isAssignableFrom(mode::class.java) -> mode
               paramCtx.parameter.type.isAssignableFrom(BackgroundRunWithLambda::class.java) -> {
-                MonolithAndSplitModeIdeInstanceInitializer.startIde(mode, context)
+                IdeInstance.startIde(mode, context)
               }
               else -> {
                 // The first parameter is the IdeRunMode, so offset argument index by 1

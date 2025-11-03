@@ -112,7 +112,6 @@ class GroupByModeTestEngine : TestEngine {
 
     try {
       val classSelectors = rootDescriptor.classSelectors
-      val configParams = rootDescriptor.configurationParameters
 
       if (classSelectors.isEmpty()) {
         println("GroupByModeTestEngine: No classes to execute")
@@ -168,7 +167,7 @@ class GroupByModeTestEngine : TestEngine {
     listener: EngineExecutionListener,
     isLastMode: Boolean,
   ) {
-    println("=== Executing ${modeDescriptor.mode} mode tests for ${modeDescriptor.className} ===")
+    println("=== Executing tests in ${modeDescriptor.mode} mode for ${modeDescriptor.className} ===")
 
     listener.executionStarted(modeDescriptor)
 

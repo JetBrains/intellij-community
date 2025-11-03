@@ -1,6 +1,7 @@
 package com.intellij.lambda.testFramework.junit
 
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
+import com.jetbrains.rd.util.printlnError
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.TestFactory
 import org.junit.jupiter.api.TestTemplate
@@ -57,21 +58,26 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
       it.annotationClass in allowedAnnotations
     }
 
+    val fullMethodName = "${invocationContext.targetClass.name}#${invocationContext.executable?.name}"
+
     if (!isAllowedTest) {
-      println("Method ${invocationContext.executable?.name} will not be executed inside IDE. Allowed annotations for test method ${allowedAnnotations.map { it.simpleName }}")
+      printlnError("Method $fullMethodName will not be executed inside IDE. " +
+                   "Allowed annotations for test method ${allowedAnnotations.map { it.simpleName }}")
       return invocation.proceed()
     }
 
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
+      println("Executing test method $fullMethodName inside IDE in mode ${IdeInstance.currentIdeMode}")
+
       // TODO: https://youtrack.jetbrains.com/issue/AT-3386/Lambda-tests-Start-different-instances-of-IDE-for-each-mode
       // TODO: provide and option to start IDE for every test
-      MonolithAndSplitModeIdeInstanceInitializer.ideBackgroundRun.runLambda(InjectedLambda::class,
-                                                                            params = mapOf(
-                                                                              "testClass" to (invocationContext.targetClass.name ?: ""),
-                                                                              "testMethod" to (invocationContext.executable?.name ?: ""),
-                                                                              "methodArguments" to argumentsToString(invocationContext.arguments)
-                                                                            ))
+      IdeInstance.ideBackgroundRun.runLambda(InjectedLambda::class,
+                                             params = mapOf(
+                                               "testClass" to (invocationContext.targetClass.name ?: ""),
+                                               "testMethod" to (invocationContext.executable?.name ?: ""),
+                                               "methodArguments" to argumentsToString(invocationContext.arguments)
+                                             ))
     }
     invocation.skip()
     // TODO: https://youtrack.jetbrains.com/issue/AT-3414/Lambda-tests-implement-parameterization-for-all-possible-JUnit5-test-scenarios
