@@ -8,6 +8,9 @@ import com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * This API is obsolete. Use [com.intellij.xdebugger.impl.actions.handlers.XDebuggerBackendOnlyActionHandler] instead.
+ */
 @ApiStatus.Obsolete
 abstract class XDebuggerSuspendedActionHandler : XDebuggerActionHandler() {
   @Suppress("UsagesOfObsoleteApi")

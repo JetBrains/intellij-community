@@ -46,6 +46,19 @@
 - com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 - <init>():V
 - p:getHandler(com.intellij.xdebugger.impl.DebuggerSupport):com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+*a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerBackendOnlyActionHandler
+- com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+- *sf:Companion:com.intellij.xdebugger.impl.actions.handlers.XDebuggerBackendOnlyActionHandler$Companion
+- <init>():V
+- f:isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
+- a:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
+- f:perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
+- a:perform(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):V
+*f:com.intellij.xdebugger.impl.actions.handlers.XDebuggerBackendOnlyActionHandler$Companion
+*a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerSuspendedBackendOnlyActionHandler
+- com.intellij.xdebugger.impl.actions.handlers.XDebuggerBackendOnlyActionHandler
+- <init>():V
+- isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
 *:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider
 - *sf:Companion:com.intellij.xdebugger.impl.collection.visualizer.XDebuggerNodeLinkActionProvider$Companion
 - s:computeHyperlink(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl):V
