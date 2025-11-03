@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.terminal
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.replaceService
+import com.intellij.vcs.git.terminal.*
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitBranch
@@ -241,8 +242,8 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
 
   private fun GitBranch.toCommandResult(currentBranch: GitLocalBranch): String =
     when (this) {
-      is GitRemoteBranch -> "remotes/${name}$COLUMN_SPLIT_CHARACTER"
-      is GitLocalBranch -> "heads/${name}$COLUMN_SPLIT_CHARACTER" + if (this == currentBranch) "*" else ""
+      is GitRemoteBranch -> "remotes/${name}${COLUMN_SPLIT_CHARACTER}"
+      is GitLocalBranch -> "heads/${name}${COLUMN_SPLIT_CHARACTER}" + if (this == currentBranch) "*" else ""
       else -> error("unknown branch type: $this")
     }
 

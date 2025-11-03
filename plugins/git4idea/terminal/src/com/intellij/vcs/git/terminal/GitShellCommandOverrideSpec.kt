@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.terminal
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.vcs.git.terminal
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.vcs.LocalFilePath
@@ -22,8 +22,7 @@ internal const val GET_LOCAL_BRANCHES_COMMAND = "$GET_ALL_BRANCHES_COMMAND \"ref
 internal const val GET_REMOTE_BRANCHES_COMMAND = "$GET_ALL_BRANCHES_COMMAND \"refs/remotes/**\""
 
 internal val ShellRuntimeContext.repository: GitRepository?
-  get() = GitUtil.getRepositoryManager(project)
-    .getRepositoryForFileQuick(LocalFilePath(currentDirectory, true))
+  get() = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(LocalFilePath(currentDirectory, true))
 
 // Find remote generators in the git.json file by searching for scripts doing:
 // remote -v

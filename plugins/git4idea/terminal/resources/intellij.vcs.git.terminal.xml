@@ -4,6 +4,6 @@
   </dependencies>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
-    <commandSpecsProvider implementation="git4idea.terminal.GitCommandSpecsProvider"/>
+    <commandSpecsProvider implementation="com.intellij.vcs.git.terminal.GitCommandSpecsProvider"/>
   </extensions>
 </idea-plugin>
