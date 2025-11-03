@@ -10,10 +10,6 @@ import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.SelfDiagnosing;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,8 +31,8 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
 
   private final DataEnumeratorEx<String> myNameStorage;
 
-  private final Int2ObjectMap<String> myIdToName = new Int2ObjectOpenHashMap<>();
-  private final Object2IntMap<String> myNameToId = new Object2IntOpenHashMap<>();
+  private final Map<Integer, String> myIdToName = new ConcurrentHashMap<>();
+  private final Map<String, Integer> myNameToId = new ConcurrentHashMap<>();
   private final Map<String, Supplier<? extends ObjectStubSerializer<?, ? extends Stub>>> myNameToLazySerializer = CollectionFactory.createSmallMemoryFootprintMap();
 
   private final ConcurrentIntObjectMap<ObjectStubSerializer<?, ? extends Stub>> myIdToSerializer =
@@ -73,7 +69,7 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
     Integer idValue = mySerializerToId.get(serializer);
     if (idValue == null) {
       String name = serializer.getExternalId();
-      idValue = myNameToId.getInt(name);
+      idValue = myNameToId.get(name);
       assert idValue > 0 : "No ID found for serializer " + objectInfo(serializer) + ", external id:" + name +
                            (serializer instanceof IElementType ? ", language:" + ((IElementType)serializer).getLanguage() : "");
       mySerializerToId.put(serializer, idValue);
@@ -119,15 +115,13 @@ final class StubSerializerEnumerator implements Flushable, Closeable {
   }
 
   int getSerializerId(@NotNull String name) {
-    return myNameToId.getInt(name);
+    return myNameToId.get(name);
   }
 
   @NotNull
   ObjectStubSerializer<?, ? extends Stub> getSerializer(@NotNull String name) throws SerializerNotFoundException {
-    int id = myNameToId.getInt(name);
-    return getSerializerById((id1, name1, externalId) -> {
-      return "Missed stub serializer for " + name;
-    }, id);
+    int id = myNameToId.get(name);
+    return getSerializerById((id1, name1, externalId) -> "Missed stub serializer for " + name, id);
   }
 
   @Nullable
