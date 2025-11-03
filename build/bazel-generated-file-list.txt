@@ -884,7 +884,6 @@ plugins/devkit/devkit-kotlin-tests
 plugins/devkit/devkit-tests
 plugins/devkit/intellij.devkit.compose
 plugins/devkit/intellij.devkit.debugger
-plugins/devkit/intellij.devkit.git
 plugins/devkit/intellij.devkit.gradle
 plugins/devkit/intellij.devkit.i18n
 plugins/devkit/intellij.devkit.intelliLang

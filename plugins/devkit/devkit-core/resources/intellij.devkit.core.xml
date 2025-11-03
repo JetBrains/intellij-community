@@ -708,10 +708,6 @@
     <registryKey key="tmh.generate.line.numbers" defaultValue="true"
                  description="Generate line numbers when instrumenting @RequiresEdt and similar annotations.
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
-    <registryKey key="kotlin.notebook.commit.message.validation.enabled" defaultValue="true"
-                 description="Enables commit messages validation for Kotlin Notebook plugin"/>
-    <registryKey key="kotlin.build.tools.code.ownership.commit.message.enabled" defaultValue="true"
-                 description="Enables commit messages validation for Kotlin Build Tools code ownership"/>
     <codeInsight.declarativeInlayProvider
       providerId="devkit.threading"
       bundle="messages.DevKitBundle"
@@ -723,13 +719,6 @@
       language="UAST"/>
     <registryKey key="devkit.inlay.threading" defaultValue="false"
                  description="Experimental inlays for Threading Annotations"/>
-
-    <registryKey key="intellij.monorepo.commit.message.validation.enabled" defaultValue="true"
-                 description="Enables commit messages validation for IntelliJ Monorepo"/>
-    <registryKey key="aia.commit.message.validation.enabled" defaultValue="true"
-                 description="Enables commit messages validation for AI Assistant project"/>
-    <registryKey key="toolbox.commit.message.validation.enabled" defaultValue="true"
-                 description="Enables commit messages validation for Toolbox project"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.contentReport.ContentReportGeneratedSourcesFilter"/>
 
