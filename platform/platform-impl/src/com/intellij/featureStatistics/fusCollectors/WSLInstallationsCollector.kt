@@ -12,7 +12,7 @@ import com.intellij.util.PlatformUtils
 import java.io.IOException
 
 internal class WSLInstallationsCollector : ApplicationUsagesCollector() {
-  private val group = EventLogGroup("wsl.installations", 2)
+  private val group = EventLogGroup("wsl.installations", 1)
   private val installationCountEvent = group.registerEvent("count", EventFields.Int("version"), EventFields.Int("count"))
 
   override fun getGroup(): EventLogGroup {
