@@ -205,6 +205,9 @@ class MavenIndexerCMDState(
     }
 
     private fun addDir(classpath: MutableList<Path>, dir: Path) {
+      if (!dir.isDirectory()) {
+        return
+      }
       dir.listDirectoryEntries("*.jar").forEach {
         classpath.add(it)
       }
