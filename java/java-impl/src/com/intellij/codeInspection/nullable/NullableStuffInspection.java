@@ -41,6 +41,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       checkbox("REPORT_NOTNULL_PARAMETER_OVERRIDES_NULLABLE", JavaBundle.message("inspection.nullable.problems.method.overrides.notnull.option")),
       checkbox("REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL", JavaBundle.message("inspection.nullable.problems.method.overrides.option"),
                checkbox("IGNORE_EXTERNAL_SUPER_NOTNULL", JavaBundle.message("inspection.nullable.problems.ignore.external.notnull"))),
+      checkbox("REPORT_NOT_ANNOTATED_INSTANTIATION_NOT_NULL_TYPE", JavaBundle.message("inspection.nullable.problems.method.non.annotated.type.argument.option")),
       checkbox("REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED", JavaBundle.message("inspection.nullable.problems.notnull.overrides.option")),
       checkbox("REPORT_NOT_ANNOTATED_GETTER", JavaBundle.message("inspection.nullable.problems.not.annotated.getters.for.annotated.fields")),
       checkbox("REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER", JavaBundle.message("inspection.nullable.problems.notnull.parameters.with.null.literal.option")),
