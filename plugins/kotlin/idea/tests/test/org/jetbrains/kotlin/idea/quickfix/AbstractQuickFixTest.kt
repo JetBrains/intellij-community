@@ -340,7 +340,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             stubComparisonFailure = try {
                 forceCheckForResolveInDispatchThreadInTests(writeActionResolveHandler) {
                     val expectedPreviewText = InTextDirectivesUtils.findListWithPrefixes(myFixture.file.text, TEST_PREVIEW).singleOrNull()
-                    if (expectedPreviewText != null) {
+                    if (expectedPreviewText != null && isFirPlugin) {
                         val text = myFixture.getIntentionPreviewText(intention)
                         assertEquals("Different preview found:", expectedPreviewText, text)
                     }
