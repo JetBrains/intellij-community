@@ -28,9 +28,6 @@
     <advancedSetting id="welcome.screen.non.modal.enabled" default="true"
                      groupKey="group.advanced.settings.welcome.screen"
                      bundle="messages.NonModalWelcomeScreenBundle"/>
-    <advancedSetting id="welcome.screen.non.modal.right.tab.enabled" default="true"
-                     groupKey="group.advanced.settings.welcome.screen"
-                     bundle="messages.NonModalWelcomeScreenBundle"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector"/>
 
