@@ -93,7 +93,7 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
   }
 
   @Override
-  public boolean hasModifierProperty(@NotNull String name) {
+  public boolean hasModifierProperty(@PsiModifier.ModifierConstant @NotNull String name) {
     return getModifierListInternal().hasModifierProperty(name);
   }
 
@@ -476,8 +476,9 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
       setMirrors(stubs, mirrors);
     }
 
-    // If the count of stubs and mirrors doesn't match, this it is possibly because the default constructor isn't present in the
-    // decompiled code because it was removed by Fernflower's "high readability" mode.
+    // If the count of stubs and mirrors doesn't match,
+    // it's probably because the default constructor (present in stubs) isn't present in the decompiled code (mirrors),
+    // because it was removed by Fernflower's "high readability" mode.
 
     // If after removing all constructors from both stubs and mirrors, the count is still different, then we cannot help.
     final long nonConstructorStubCount = stubs.stream().filter(method -> !method.isConstructor()).count();
