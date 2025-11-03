@@ -245,12 +245,13 @@ public final class GCWatcher {
 
     try {
       if (generateHeapDump) {
-        Path file = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
-        MemoryDumpHelper.captureMemoryDumpZipped(file);
+        Path path = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
+        MemoryDumpHelper.captureMemoryDumpZipped(path);
 
-        message += "\nMemory snapshot is available at " + file + "\n";
+        message += "\nMemory snapshot is available at " + path + "\n";
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("##teamcity[publishArtifacts '" + file + "']");
+        System.out.println("##teamcity[publishArtifacts '" + path + "']");
+        System.out.println("##teamcity[testMetadata testName='gcwatcher' key='my log' value='" + path + "' type='artifact']");
       }
     }
     catch (Exception e) {
