@@ -9,8 +9,10 @@ import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.platform.launcher.TestExecutionListener
+import org.junit.platform.launcher.TestPlan
 
-object IdeInstance {
+object IdeInstance : TestExecutionListener {
   internal lateinit var ideBackgroundRun: BackgroundRunWithLambda
     private set
   lateinit var currentIdeMode: IdeRunMode
@@ -41,5 +43,9 @@ object IdeInstance {
 
     println("Stopping IDE that is running in mode: $currentIdeMode")
     catchAll { ideBackgroundRun.forceKill() }
+  }
+
+  override fun testPlanExecutionFinished(testPlan: TestPlan) {
+    stopIde()
   }
 }
