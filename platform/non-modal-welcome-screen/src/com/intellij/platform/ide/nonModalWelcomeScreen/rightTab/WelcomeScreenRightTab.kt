@@ -142,7 +142,7 @@ class WelcomeScreenRightTab(
           SwitchPanel()
 
           if (contentProvider.isDisableOptionVisible) {
-            CheckboxRow(text = NonModalWelcomeScreenBundle.message("welcome.screen.right.tab.always.show.on.startup"),
+            CheckboxRow(text = NonModalWelcomeScreenBundle.message("welcome.screen.enabled.checkbox"),
                         textStyle = TextStyle(color = fontColor),
                         modifier = Modifier.padding(bottom = 12.dp),
                         checked = showOnStartup, onCheckedChange = {
