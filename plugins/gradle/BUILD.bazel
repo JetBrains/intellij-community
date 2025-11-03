@@ -75,6 +75,7 @@ jvm_library(
     "//platform/core-api:core",
     "//libraries/guava",
     "//platform/util/trove",
+    "//platform/util/coroutines",
   ],
   exports = [
     "//platform/external-system-api:externalSystem",
