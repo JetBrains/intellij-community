@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.base.searching.usages
 
@@ -14,16 +14,6 @@ interface KotlinMemberFindUsagesOptions {
 
 class KotlinClassFindUsagesOptions(project: Project) : KotlinMemberFindUsagesOptions, JavaClassFindUsagesOptions(project) {
     override var searchExpected: Boolean = true
-
-    var searchConstructorUsages: Boolean = true
-
-    override fun equals(other: Any?): Boolean {
-        return super.equals(other) && other is KotlinClassFindUsagesOptions && other.searchConstructorUsages == searchConstructorUsages
-    }
-
-    override fun hashCode(): Int {
-        return 31 * super.hashCode() + if (searchConstructorUsages) 1 else 0
-    }
 }
 
 interface KotlinCallableFindUsagesOptions : KotlinMemberFindUsagesOptions {

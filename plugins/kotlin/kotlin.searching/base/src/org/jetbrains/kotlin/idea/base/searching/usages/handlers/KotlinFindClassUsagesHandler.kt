@@ -69,7 +69,7 @@ class KotlinFindClassUsagesHandler(
         override fun buildTaskList(forHighlight: Boolean): Boolean {
             val classOrObject = element as KtClassOrObject
 
-            if (kotlinOptions.isUsages || kotlinOptions.searchConstructorUsages) {
+            if (kotlinOptions.isUsages || kotlinOptions.isConstructorUsages) {
                 processClassReferencesLater(classOrObject)
             }
 
@@ -81,7 +81,7 @@ class KotlinFindClassUsagesHandler(
                 if (!processCompanionObjectInternalReferences(classOrObject, referenceProcessor)) return false
             }
 
-            if (kotlinOptions.searchConstructorUsages) {
+            if (kotlinOptions.isConstructorUsages) {
                 for (constructor in classOrObject.allConstructors) {
                     addTask { ReferencesSearch.search(constructor, options.searchScope).forEach(referenceProcessor) }
                     addTask(
@@ -147,7 +147,7 @@ class KotlinFindClassUsagesHandler(
                 usagesQuery = FilteredQuery(usagesQuery) { !it.isImportUsage() }
             }
 
-            if (!kotlinOptions.searchConstructorUsages) {
+            if (!kotlinOptions.isConstructorUsages) {
                 usagesQuery = FilteredQuery(usagesQuery) { !it.isConstructorUsage(classOrObject) }
             } else if (!options.isUsages && classOrObject !is KtObjectDeclaration && !(classOrObject as KtClass).isEnum()) {
                 usagesQuery = FilteredQuery(usagesQuery) { it.isConstructorUsage(classOrObject) }

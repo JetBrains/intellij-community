@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.findUsages
 
@@ -18,12 +18,12 @@ internal enum class OptionsParser {
             return KotlinClassFindUsagesOptions(project).apply {
                 isUsages = false
                 isSearchForTextOccurrences = false
-                searchConstructorUsages = false
+                isConstructorUsages = false
                 for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
                     if (parseCommonOptions(this, s)) continue
 
                     when (s) {
-                        "constructorUsages" -> searchConstructorUsages = true
+                        "constructorUsages" -> isConstructorUsages = true
                         "derivedInterfaces" -> isDerivedInterfaces = true
                         "derivedClasses" -> isDerivedClasses = true
                         "functionUsages" -> isMethodsUsages = true
@@ -101,11 +101,12 @@ internal enum class OptionsParser {
         override fun parse(text: String, project: Project): FindUsagesOptions {
             return KotlinClassFindUsagesOptions(project).apply {
                 isUsages = false
-                searchConstructorUsages = false
+                isConstructorUsages = false
                 for (s in InTextDirectivesUtils.findListWithPrefixes(text, "// OPTIONS: ")) {
                     if (parseCommonOptions(this, s)) continue
 
                     when (s) {
+                        "constructorUsages" -> isConstructorUsages = true
                         "derivedInterfaces" -> isDerivedInterfaces = true
                         "derivedClasses" -> isDerivedClasses = true
                         "implementingClasses" -> isImplementingClasses = true

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -138,10 +139,10 @@ public final class JavaFindUsagesHelper {
 
     if (options instanceof JavaClassFindUsagesOptions classOptions && element instanceof PsiClass psiClass) {
       PsiManager manager = ReadAction.compute(() -> psiClass.getManager());
-      if (classOptions.isMethodsUsages){
+      if (classOptions.isMethodsUsages || classOptions.isConstructorUsages) {
         if (!addMethodUsages(psiClass, manager, classOptions, processor)) return false;
       }
-      if (classOptions.isFieldsUsages){
+      if (classOptions.isFieldsUsages) {
         if (!addFieldsUsages(psiClass, manager, classOptions, processor)) return false;
       }
       if (ReadAction.compute(() -> psiClass.isInterface())) {
@@ -284,8 +285,10 @@ public final class JavaFindUsagesHelper {
                                          @NotNull Processor<? super UsageInfo> processor) {
     if (options.isIncludeInherited) {
       PsiMethod[] methods = ReadAction.compute(() -> aClass.getAllMethods());
-      for(int i = 0; i < methods.length; i++){
+      for (int i = 0; i < methods.length; i++) {
         PsiMethod method = methods[i];
+        boolean include = ReadAction.compute(() -> method.isConstructor()) ? options.isConstructorUsages : options.isMethodsUsages;
+        if (!include) continue;
         // filter overridden methods
         int finalI = i;
         PsiClass methodClass = ReadAction.compute(() -> {
@@ -313,9 +316,17 @@ public final class JavaFindUsagesHelper {
       }
     }
     else {
-      PsiMethod[] methods = ReadAction.compute(() -> aClass.getMethods());
-      for (PsiMethod method : methods) {
-        if (!addElementUsages(method, options, processor)) return false;
+      if (!options.isUsages || !options.isConstructorUsages) { // ReferencesSearch on class already includes new instance creations.
+        PsiMethod[] methods = ReadAction.compute(() -> aClass.getMethods());
+        for (PsiMethod method : methods) {
+          boolean include = ReadAction.compute(() -> method.isConstructor()) ? options.isConstructorUsages : options.isMethodsUsages;
+          if (!include) continue;
+          if (!addElementUsages(method, options, processor)) return false;
+        }
+      }
+      if (!options.isUsages && options.isConstructorUsages) {
+        PsiMethod defaultConstructor = ReadAction.compute(() -> LightDefaultConstructor.create(aClass));
+        if (defaultConstructor != null && !addElementUsages(defaultConstructor, options, processor)) return false;
       }
     }
     return true;
