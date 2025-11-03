@@ -152,7 +152,7 @@ def _parse_parametrized(part):
     by this function
 
     """
-    match = re.match("^([^\\s)(]+)(\\(.+\\))$", part)
+    match = re.match("^([^\\s)(]+)(\\(.*\\))$", part)
     if not match:
         return [part]
     else:
