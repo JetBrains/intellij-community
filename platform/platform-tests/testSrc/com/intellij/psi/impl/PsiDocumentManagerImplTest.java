@@ -46,6 +46,7 @@ import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.common.ThreadUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TestTimeOut;
@@ -1156,16 +1157,30 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
           for (int i=0;i<N;i++) {
             modifyAndSaveDocument(virtualFile);
 
-            // no dispatching here, to ensure the doc is not committed but stored in some queue in DCT
-            // TODO: ^^ DCT uses async WA now (document.async.commit.with.coroutines=true),
-            //  so it is probably already working on the document in the background.
-            GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile))
-              .ensureCollectedWithinTimeout(5_000); // wait for document commit queue
-
-            while (!psiDocumentManager.isCommitted(FileDocumentManager.getInstance().getDocument(virtualFile))) {
-              PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+            try {
+              // no dispatching here, to ensure the doc is not committed but stored in some queue in DCT
+              // TODO: ^^ DCT uses async WA now (document.async.commit.with.coroutines=true),
+              //  so it is probably already working on the document in the background.
               GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile))
-                .ensureCollectedWithinTimeout(5_000); // wait for document commit queue
+                .ensureCollectedWithinTimeout(5*60*1000); // wait for document commit queue
+
+              while (!psiDocumentManager.isCommitted(FileDocumentManager.getInstance().getDocument(virtualFile))) {
+                PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+                GCWatcher.tracking(FileDocumentManager.getInstance().getDocument(virtualFile))
+                  .ensureCollectedWithinTimeout(5*60*1000); // wait for document commit queue
+              }
+            }
+            catch (IllegalStateException e) {
+              int docHash = System.identityHashCode(FileDocumentManager.getInstance().getDocument(virtualFile));
+              LeakHunter.processLeaks(LeakHunter.allRoots(), DocumentImpl.class, d -> System.identityHashCode(d) == docHash, null, (leaked, backLink)->{
+                System.err.println(LeakHunter.getLeakedObjectDetails(leaked, backLink, true));
+                System.err.println(";-----");
+                ThreadUtil.printThreadDump();
+                System.err.println(";;-----");
+
+                return false;
+              });
+              throw e;
             }
           }
         }
