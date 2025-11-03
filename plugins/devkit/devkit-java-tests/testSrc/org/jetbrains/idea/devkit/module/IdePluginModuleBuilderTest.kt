@@ -100,10 +100,12 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
                Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
           <depends>com.intellij.modules.platform</depends>
       
+          <resource-bundle>messages.MyMessageBundle</resource-bundle>
           <!-- Extensions defined by the plugin.
                Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
           <extensions defaultExtensionNs="com.intellij">
-      
+              <toolWindow id="MyToolWindow" factoryClass="com.example.demo.MyToolWindowFactory"
+                          icon="AllIcons.Toolwindows.ToolWindowPalette"/>
           </extensions>
       </idea-plugin>
     """.trimIndent())

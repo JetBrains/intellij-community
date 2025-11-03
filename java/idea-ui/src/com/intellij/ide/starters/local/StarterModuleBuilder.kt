@@ -356,7 +356,8 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
       dependencyConfig,
       getGeneratorContextProperties(sdk, dependencyConfig),
       getAssets(starter),
-      convertOutputLocationForTests(moduleContentRoot)
+      convertOutputLocationForTests(moduleContentRoot),
+      starterContext.includeExamples
     )
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
