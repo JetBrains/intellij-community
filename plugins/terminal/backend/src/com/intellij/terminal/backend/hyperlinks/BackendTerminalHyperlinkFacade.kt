@@ -5,6 +5,7 @@ import com.intellij.execution.filters.navigate
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.project.Project
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -64,11 +65,13 @@ class BackendTerminalHyperlinkFacade(
   suspend fun hyperlinkClicked(hyperlinkId: TerminalHyperlinkId, mouseEvent: EditorMouseEvent?) {
     val hyperlink = model.getHyperlink(hyperlinkId)?.hyperlinkInfo ?: return
     withContext(Dispatchers.EDT) { // navigation might need the WIL
-      if (hyperlink is HyperlinkInfoBase && mouseEvent != null) {
-        hyperlink.navigate(project, mouseEvent.editor, mouseEvent.logicalPosition)
-      }
-      else {
-        hyperlink.navigate(project)
+      SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+        if (hyperlink is HyperlinkInfoBase && mouseEvent != null) {
+          hyperlink.navigate(project, mouseEvent.editor, mouseEvent.logicalPosition)
+        }
+        else {
+          hyperlink.navigate(project)
+        }
       }
       ReworkedTerminalUsageCollector.logHyperlinkFollowed(hyperlink.javaClass)
     }
