@@ -17,7 +17,7 @@ import java.util.*
 @GroupTestsByMode
 class FrontAndBackExampleTest {
 
-  private lateinit var testName: String
+  private var testName: String = ""
 
   @BeforeEach
   fun setUp(info: TestInfo) {

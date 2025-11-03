@@ -2,9 +2,12 @@ package com.intellij.lambda.testFramework.junit
 
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.TestFactory
+import org.junit.jupiter.api.TestTemplate
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.InvocationInterceptor
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext
+import org.junit.jupiter.params.ParameterizedTest
 import java.lang.reflect.Method
 
 /**
@@ -46,6 +49,17 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
       System.err.println("Test ${invocationContext.executable?.name} has ${BackgroundRunWithLambda::class.qualifiedName} parameter. Test is expected to use it directly.")
       return invocation.proceed()
       // TODO: https://youtrack.jetbrains.com/issue/AT-3414/Lambda-tests-implement-parameterization-for-all-possible-JUnit5-test-scenarios
+    }
+
+    val allowedAnnotations = listOf(TestTemplate::class, TestFactory::class, ParameterizedTest::class)
+
+    val isAllowedTest = invocationContext.executable!!.annotations.any {
+      it.annotationClass in allowedAnnotations
+    }
+
+    if (!isAllowedTest) {
+      println("Method ${invocationContext.executable?.name} will not be executed inside IDE. Allowed annotations for test method ${allowedAnnotations.map { it.simpleName }}")
+      return invocation.proceed()
     }
 
     @Suppress("RAW_RUN_BLOCKING")
