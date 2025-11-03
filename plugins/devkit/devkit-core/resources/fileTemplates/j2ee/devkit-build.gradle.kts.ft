@@ -31,14 +31,7 @@ dependencies {
 #end
 
 #if ($context.hasLibrary("compose"))
-        bundledModules(
-            "intellij.libraries.skiko",
-            "intellij.libraries.compose.foundation.desktop",
-            "intellij.platform.compose",
-            "intellij.platform.jewel.foundation",
-            "intellij.platform.jewel.ui",
-            "intellij.platform.jewel.ideLafBridge"
-        )
+        composeUI()
 #end
 
 #if ($context.hasLibrary("java"))
