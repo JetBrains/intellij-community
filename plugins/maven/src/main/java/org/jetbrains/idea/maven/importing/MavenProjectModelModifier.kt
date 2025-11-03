@@ -235,7 +235,8 @@ class MavenProjectModelModifier(private val myProject: Project) : JavaProjectMod
         })
       val filesToUpdate = listOf(mavenProject.file)
       filesToUpdate.forEach { it.refresh(false, false) }
-      myProjectsManager.updateMavenProjects(MavenSyncSpec.incremental("MavenProjectModelModifier.changeLanguageLevel", false), filesToUpdate, emptyList())
+      // even if there are no changes in pom.xml, we may need to update IDEA module with the new language level (if it was changed manually)
+      myProjectsManager.updateMavenProjects(MavenSyncSpec.full("MavenProjectModelModifier.changeLanguageLevel", false), filesToUpdate, emptyList())
     }
   }
 
