@@ -218,7 +218,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
   override fun getRunContentDescriptor(): RunContentDescriptor {
     if (SplitDebuggerMode.showSplitWarnings()) {
-      LOG.error("RunContentDescriptor should not be used in split mode from XDebugSession")
+      LOG.error("[Split debugger] RunContentDescriptor should not be used in split mode from XDebugSession")
     }
     return getMockRunContentDescriptor()
   }
@@ -444,7 +444,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
     get() {
       if (SplitDebuggerMode.showSplitWarnings()) {
         // See "TODO [Debugger.sessionTab]" to see usages which are not yet properly migrated.
-        LOG.error("Debug tab should not be used in split mode from XDebugSession")
+        LOG.error("[Split debugger] Debug tab should not be used in split mode from XDebugSession")
       }
       return if (mySessionTab.isCompleted) mySessionTab.getCompleted() else null
     }
@@ -456,7 +456,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   override fun getUI(): RunnerLayoutUi? {
     // See "TODO [Debugger.RunnerLayoutUi]" to see usages which are not yet properly migrated.
     if (SplitDebuggerMode.showSplitWarnings()) {
-      LOG.error("RunnerLayoutUi should not be used in split mode from XDebugSession")
+      LOG.error("[Split debugger] RunnerLayoutUi should not be used in split mode from XDebugSession")
     }
     assertSessionTabInitialized()
     return sessionTab!!.ui

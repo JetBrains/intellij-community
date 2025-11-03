@@ -554,7 +554,7 @@ public final class DebuggerUIUtil {
    */
   public static @Nullable XDebugSession getSession(@NotNull AnActionEvent e) {
     if (SplitDebuggerMode.showSplitWarnings() && FrontendApplicationInfo.INSTANCE.getFrontendType() instanceof FrontendType.Remote) {
-      LOG.error("In Split mode DebuggerUIUtil#getSession(AnActionEvent) should not be called from the frontend. " +
+      LOG.error("[Split debugger] In Split mode DebuggerUIUtil#getSession(AnActionEvent) should not be called from the frontend. " +
                 "Please use DebuggerUIUtil#getSessionProxy(AnActionEvent) instead.");
     }
     XDebugSession session = e.getData(XDebugSession.DATA_KEY);
