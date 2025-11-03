@@ -29,7 +29,6 @@
   <content namespace="jetbrains">
     <module name="intellij.devkit.core"/>
     <module name="intellij.devkit.compose"/>
-    <module name="intellij.devkit.git"/>
     <module name="intellij.devkit.gradle"/>
     <module name="intellij.devkit.i18n"/>
     <module name="intellij.devkit.intelliLang"/>
