@@ -4,6 +4,7 @@ package com.intellij.openapi.diagnostic
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.sanitizeFileName
 import java.io.IOException
+import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
@@ -89,8 +90,9 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
   private fun writeStacktrace(dir: Path, t: Throwable) {
     try {
       val stacktraceFile = dir.resolve("stacktrace.txt")
-      val stackTraceBytes = t.stackTraceToString().toByteArray()
-      Files.write(stacktraceFile, stackTraceBytes)
+      PrintWriter(Files.newBufferedWriter(stacktraceFile)).use {
+        t.printStackTrace(it)
+      }
     }
     catch (_: IOException) {
       // ignore errors for individual files
