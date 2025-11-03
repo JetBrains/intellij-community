@@ -61,7 +61,7 @@ class InlineBreakpointsVariantsManager(private val project: Project) {
       .groupBy { it.line }
     return readAction {
       variants.mapValues { (line, variants) ->
-        val lineBreakpoints = lineToBreakpoints[line] ?: return@mapValues emptyList()
+        val lineBreakpoints = lineToBreakpoints[line] ?: emptyList()
         matchVariantsWithBreakpoints(variants, lineBreakpoints)
       }
     }
