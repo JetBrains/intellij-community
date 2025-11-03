@@ -71,9 +71,15 @@
 #if ($context.hasLibrary("database"))
     <depends>com.intellij.database</depends>
 #end
+#if ($context.getProperty("includeExamples") == "true")
+    <resource-bundle>messages.MyMessageBundle</resource-bundle>
+#end
     <!-- Extensions defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-
+#if ($context.getProperty("includeExamples") == "true")
+        <toolWindow id="MyToolWindow" factoryClass="${context.rootPackage}.MyToolWindowFactory"
+                    icon="AllIcons.Toolwindows.ToolWindowPalette"/>
+#end
     </extensions>
 </idea-plugin>

@@ -20,7 +20,10 @@ repositories {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
-        intellijIdeaUltimate("${context.getBomProperty("intellij.version")}")
+        ##intellijIdeaUltimate("${context.getBomProperty("intellij.version")}") todo enable release when compose module released
+        intellijIdea("253-EAP-SNAPSHOT") {
+            useInstaller = false
+        }
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
 
 #if ($context.hasLibraries())
