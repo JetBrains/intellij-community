@@ -65,7 +65,8 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
       return moduleName != "intellij.rider.test.framework" &&
              moduleName != "intellij.rider.test.framework.core" &&
              moduleName != "intellij.rider.test.framework.testng" &&
-             moduleName != "intellij.rider.test.framework.junit"
+             moduleName != "intellij.rider.test.framework.junit" &&
+             moduleName != "intellij.rider.test.framework.junit5"
     }
     return moduleName.endsWith("._test")
   }
