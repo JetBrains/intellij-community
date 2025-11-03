@@ -558,7 +558,7 @@ internal class BazelBuildFileGenerator(
         }
 
         @Suppress("CascadeIf")
-        if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.syntax.multiplatformSupport") {
+        if (module.name == "fleet.util.multiplatform" || module.name == "intellij.platform.multiplatformSupport") {
           option("exported_compiler_plugins", listOf("@lib//:expects-plugin"))
         }
         //else if (module.name == "fleet.rhizomedb") {

@@ -633,6 +633,7 @@ platform/ml-api
 platform/ml-impl
 platform/ml-logs
 platform/monolith
+platform/multiplatformSupport
 platform/navbar/backend
 platform/navbar/frontend
 platform/navbar/monolith
@@ -740,7 +741,6 @@ platform/structure-view-impl
 platform/syntax/syntax-api
 platform/syntax/syntax-extensions
 platform/syntax/syntax-i18n
-platform/syntax/syntax-multiplatformSupport
 platform/syntax/syntax-psi
 platform/syntax/syntax-psi-tests
 platform/syntax/syntax-scripts

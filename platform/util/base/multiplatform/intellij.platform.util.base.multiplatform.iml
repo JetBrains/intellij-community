@@ -33,6 +33,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-debug" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.syntax.multiplatformSupport" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.multiplatformSupport" scope="PROVIDED" />
   </component>
 </module>
