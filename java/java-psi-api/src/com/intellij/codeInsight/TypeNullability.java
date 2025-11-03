@@ -26,6 +26,10 @@ public final class TypeNullability {
    */
   public static final TypeNullability NOT_NULL_MANDATED = new TypeNullability(Nullability.NOT_NULL, NullabilitySource.Standard.MANDATED);
   /**
+   * Known not-null nullability
+   */
+  public static final TypeNullability NOT_NULL_KNOWN = new TypeNullability(Nullability.NOT_NULL, NullabilitySource.Standard.KNOWN);
+  /**
    * Mandated nullable nullability
    */
   public static final TypeNullability NULLABLE_MANDATED = new TypeNullability(Nullability.NULLABLE, NullabilitySource.Standard.MANDATED);

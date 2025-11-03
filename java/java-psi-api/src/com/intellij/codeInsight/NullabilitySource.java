@@ -34,6 +34,12 @@ public /* sealed */ interface NullabilitySource {
      */
     MANDATED,
     /**
+     * Type nullability is known from a particular code shape.
+     * While it may differ from one defined by the language constructs only,
+     * it's believed to be correct and more helpful to users. 
+     */
+    KNOWN,
+    /**
      * Type nullability is depicted explicitly by means of the language.
      * Currently, not possible in Java, but may be used in other languages like Kotlin.
      */
