@@ -37,16 +37,8 @@ public final class LoggerFactory implements Logger.Factory {
     var append = Boolean.parseBoolean(System.getProperty("idea.log.append", "true"));
     var persistAttachments = Boolean.parseBoolean(System.getProperty("idea.log.persist.attachments", "true"));
 
-    JulLogger.configureLogFileAndConsole(
-      getLogFilePath(),
-      append,
-      enableConsoleLogger,
-      true,
-      persistAttachments,
-      () -> IdeaLogger.dropFrequentExceptionsCaches(),
-      null,
-      null
-    );
+    JulLogger.configureLogFileAndConsole(getLogFilePath(), append, enableConsoleLogger, true, persistAttachments,
+                                         () -> IdeaLogger.dropFrequentExceptionsCaches(), null, null);
 
     var dialogAppender = new DialogAppender();
     dialogAppender.setLevel(Level.SEVERE);
