@@ -77,6 +77,10 @@ internal class ComponentAreaPopupContext(
       val position = calculatePosition(myComponentReference.get() ?: return, popup)
 
       alarm!!.addRequest(Runnable {
+        if (hideRequested) {
+          popup.cancel()
+          return@Runnable
+        }
         popup.show(position)
         relocatePopupIfNeeded(popup)
         val window = SwingUtilities.getWindowAncestor(popup.content)
@@ -117,15 +121,13 @@ internal class ComponentAreaPopupContext(
     }
 
     fun mouseOutsideOfSourceArea() {
-      if (!mouseInDocPopup && mouseMoved) {
+      if (popup?.isVisible == false) {
         hideRequested = true
-        if (popup?.isVisible == false) {
-          alarm?.cancelAllRequests()
-          popup?.cancel()
-        }
-        else {
-          scheduleHide()
-        }
+        alarm?.cancelAllRequests()
+        popup?.cancel()
+      } else if (!mouseInDocPopup && mouseMoved) {
+        hideRequested = true
+        scheduleHide()
       }
     }
 
