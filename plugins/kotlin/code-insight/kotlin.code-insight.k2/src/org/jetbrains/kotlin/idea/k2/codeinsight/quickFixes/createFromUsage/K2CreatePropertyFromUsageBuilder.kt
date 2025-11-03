@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.hasApplicableAllowedTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isApplicableTargetSet
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -262,6 +263,15 @@ object K2CreatePropertyFromUsageBuilder {
                     classOrFileName.toString()
                 )
             }
+        }
+
+        override fun generatePreview(
+            project: Project,
+            editor: Editor,
+            psiFile: PsiFile
+        ): IntentionPreviewInfo {
+            val container = (pointer.element as? PsiNamedElement)?.name ?: return super.generatePreview(project, editor, psiFile)
+            return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, container, "", declarationText)
         }
 
         private var declarationText: String = computeDeclarationText()

@@ -5942,6 +5942,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                     runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/objectMemberValNoReceiver.kt");
                 }
 
+                @TestMetadata("preview.kt")
+                public void testPreview() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/preview.kt");
+                }
+
                 @TestMetadata("privateForMembers.kt")
                 public void testPrivateForMembers() throws Exception {
                     runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/property/privateForMembers.kt");
