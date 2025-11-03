@@ -296,7 +296,7 @@ public abstract class XDebugProcess {
   }
 
   @ApiStatus.Internal
-  public XDebugSessionEventsProvider getSessionEventsProvider() {
+  public @Nullable XDebugSessionEventsProvider getSessionEventsProvider() {
     return null;
   }
 
