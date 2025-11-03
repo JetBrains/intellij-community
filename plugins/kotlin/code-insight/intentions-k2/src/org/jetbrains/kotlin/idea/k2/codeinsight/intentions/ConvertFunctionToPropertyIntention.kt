@@ -296,23 +296,24 @@ private fun checkValueArgumentsNotEmpty(callElement: KtCallElement, conflicts: M
 }
 
 private fun KaSession.addConflictIfSamePropertyFound(
-    callable: PsiNamedElement,
-    callableSymbol: KaCallableSymbol,
+    affectedCallable: PsiNamedElement,
+    initialElementFunctionSymbol: KaCallableSymbol,
     context: ConflictCheckContext
 ) {
-    val callableSymbolName = callableSymbol.name
-    val callableSymbolContainingSymbolDefaultType = (callableSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType
-    if (callable is KtNamedFunction) {
-        // A separate `analyze` is needed to avoid KaBaseIllegalPsiException on analyzing the `callable` as `KtNamedFunction`
-        analyze(callable) {
-            callable.containingKtFile
-                .scopeContext(callable)
+    val initialElementSymbolName = initialElementFunctionSymbol.name
+    val initialElementFunctionSymbolContainingSymbolDefaultType =
+        (initialElementFunctionSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType
+    if (affectedCallable is KtNamedFunction) {
+        // A separate `analyze` is needed to avoid KaBaseIllegalPsiException on analyzing the `affectedCallable` as `KtNamedFunction`
+        analyze(affectedCallable) {
+            affectedCallable.containingKtFile
+                .scopeContext(affectedCallable)
                 .compositeScope()
-                .callables { it == callableSymbolName }
+                .callables { it == initialElementSymbolName }
                 .filterIsInstance<KaPropertySymbol>()
                 .find {
                     val receiverType = it.receiverType ?: return@find false
-                    callableSymbolContainingSymbolDefaultType?.semanticallyEquals(receiverType)
+                    initialElementFunctionSymbolContainingSymbolDefaultType?.semanticallyEquals(receiverType)
                         ?: return@find false
                 }?.let { propertySymbol ->
                     propertySymbol.psi?.let { psiElement ->
@@ -325,8 +326,8 @@ private fun KaSession.addConflictIfSamePropertyFound(
                     }
                 }
         }
-    } else if (callable is PsiMethod) {
-        callable.checkDeclarationConflict(context.getterName, context.conflicts, context.callables)
+    } else if (affectedCallable is PsiMethod) {
+        affectedCallable.checkDeclarationConflict(context.getterName, context.conflicts, context.callables)
     }
 }
 
