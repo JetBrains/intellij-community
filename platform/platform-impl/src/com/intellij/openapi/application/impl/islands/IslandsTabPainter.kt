@@ -119,8 +119,6 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     else -> IslandsTabTheme()
   }
 
-  private val myFillBackground = isToolWindow || !isDefault
-
   override fun getTabTheme(): TabTheme = myTheme
 
   override fun getBackgroundColor(): Color = myTheme.background!!
@@ -141,10 +139,8 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
   }
 
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {
-    if (myFillBackground) {
-      g.color = getBackgroundColor()
-      RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())
-    }
+    g.color = getBackgroundColor()
+    RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())
   }
 
   open fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
