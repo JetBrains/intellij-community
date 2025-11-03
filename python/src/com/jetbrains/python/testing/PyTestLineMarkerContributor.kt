@@ -23,6 +23,11 @@ class PyTestLineMarkerContributor : RunLineMarkerContributor(), DumbAware {
       return null
     }
 
+    // If pytest is selected as the runner, only show gutter in files that pytest would collect by default
+    val module = com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement(testElement)
+    val pyFile = testElement.containingFile as? com.jetbrains.python.psi.PyFile
+    if (!PyTestDiscoveryUtil.isPyTestAllowedForFile(module, pyFile)) return null
+
     val typeEvalContext = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
     if ((testElement is PyClass || testElement is PyFunction)
         && isTestElement(testElement, ThreeState.UNSURE, typeEvalContext)) {
