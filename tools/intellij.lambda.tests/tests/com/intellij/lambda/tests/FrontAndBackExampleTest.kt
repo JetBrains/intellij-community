@@ -1,7 +1,6 @@
 package com.intellij.lambda.tests
 
 import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
-import com.intellij.lambda.testFramework.junit.GroupTestsByMode
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.tests.SampleTests.Companion.HelloBackendOnlyLambda
 import com.intellij.lambda.tests.SampleTests.Companion.HelloFrontendOnlyLambda
@@ -14,7 +13,6 @@ import java.time.Instant
 import java.util.*
 
 @ExecuteInMonolithAndSplitMode
-@GroupTestsByMode
 class FrontAndBackExampleTest {
 
   private var testName: String = ""

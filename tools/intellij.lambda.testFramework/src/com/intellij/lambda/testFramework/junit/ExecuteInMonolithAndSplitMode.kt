@@ -5,12 +5,13 @@ import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
 import java.lang.annotation.Inherited
 
+/** List of available IDE modes (monolith, split) */
 enum class IdeRunMode {
   MONOLITH, SPLIT
 }
 
 /**
- * Test will be executed in monolith and in split mode.
+ * Test will be executed in IDE in [IdeRunMode]
  */
 @Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
@@ -22,4 +23,5 @@ enum class IdeRunMode {
   RemoteDevRun::class
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@GroupTestsByMode
 annotation class ExecuteInMonolithAndSplitMode(vararg val mode: IdeRunMode = [IdeRunMode.MONOLITH, IdeRunMode.SPLIT])

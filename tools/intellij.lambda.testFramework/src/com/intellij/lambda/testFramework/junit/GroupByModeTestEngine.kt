@@ -8,7 +8,7 @@ import org.junit.platform.engine.support.descriptor.EngineDescriptor
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 
 /**
- * Custom TestEngine that wraps JUnit Jupiter and enables grouped-by-mode test execution.
+ * Custom TestEngine that wraps JUnit Jupiter and enables grouped by [IdeRunMode] test execution.
  *
  * When a test class is annotated with @GroupTestsByMode, this engine ensures
  * tests execute in two phases:
