@@ -16,3 +16,5 @@ fun main() {
         println()
     }
 }
+
+// IGNORE_K2

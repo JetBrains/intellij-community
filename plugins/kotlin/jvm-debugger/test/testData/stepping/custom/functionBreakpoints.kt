@@ -1,4 +1,4 @@
-// ENABLED_LANGUAGE_FEATURE: ContextReceivers
+
 package functionBreakpoints
 //FunctionBreakpoint!
 class A
@@ -114,12 +114,6 @@ class Impl : M(), I {
 
 class Context
 
-context(Context)
-//FunctionBreakpoint!
-fun funWithContext() {
-    println()
-}
-
 //FunctionBreakpoint!
 fun fooList(lst: List<String>) {}
 //FunctionBreakpoint!
@@ -160,10 +154,6 @@ fun main() {
     impl.f4()
 
     withAnnotation()
-
-    Context().run {
-        funWithContext()
-    }
 
     fooList(listOf())
     fooArray(arrayOf())

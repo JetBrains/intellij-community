@@ -1,5 +1,3 @@
-// FIR_COMPARISON
-// FIR_IDENTICAL
 class A
 
 class B {
@@ -12,3 +10,4 @@ fun test() {
 }
 
 // EXIST: bar
+// IGNORE_K2
