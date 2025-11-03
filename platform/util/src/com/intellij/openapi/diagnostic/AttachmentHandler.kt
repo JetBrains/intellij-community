@@ -26,6 +26,8 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
 
     val attachmentsDir = prepareDir(logPath, record) ?: return
 
+    log.info("Saving attachments of [${record.loggerName}] ${t.javaClass.name} to $attachmentsDir")
+
     writeStacktrace(attachmentsDir, t)
 
     if (ewas.singleOrNull() == t) {
@@ -174,3 +176,5 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
 
 private val dateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yy-MM-dd-HH-mm-ss")
 private val uppercaseMatcher = Regex("(?=[A-Z])")
+
+private val log = logger<AttachmentHandler>()
