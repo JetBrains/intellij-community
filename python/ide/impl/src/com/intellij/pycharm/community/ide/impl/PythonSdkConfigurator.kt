@@ -33,7 +33,6 @@ import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrLogException
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
@@ -80,7 +79,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     StartupManager.getInstance(project).runWhenProjectIsInitialized(object : Runnable, DumbAware {
       override fun run() {
         if (module.isDisposed) return
-        service<MyCoroutineScopeProvider>().coroutineScope.launch {
+        project.service<MyCoroutineScopeProvider>().coroutineScope.launch {
           val sdkInfos = findSuitableCreateSdkInfos(module)
           withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), true) {
             val lifetime = suppressTipAndInspectionsFor(module, "all suitable extensions")
@@ -271,5 +270,5 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 }
 
-@Service
-private class MyCoroutineScopeProvider(val coroutineScope: CoroutineScope)
+@Service(Service.Level.PROJECT)
+private class MyCoroutineScopeProvider(private val project: Project, val coroutineScope: CoroutineScope)
