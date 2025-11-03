@@ -22,7 +22,6 @@ import java.util.stream.IntStream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.InvertedNameIndex.NULL_NAME_ID;
 import static java.util.Comparator.comparing;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static java.util.stream.Collectors.joining;
 import static org.junit.Assert.*;
 
@@ -60,7 +59,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   }
 
   @NotNull
-  protected abstract T openStorage(final Path storageFile) throws IOException;
+  protected abstract T openStorage(Path storageFile) throws IOException;
 
 
   @Test
@@ -202,14 +201,14 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     final FSRecord recordReadBack = FSRecord.readFromStorage(storage, recordOriginal.id);
 
     //all fields are 0:
-    assertEquals("Cleaned record must have parent=0", recordReadBack.parentRef, 0);
-    assertEquals("Cleaned record must have name=0", recordReadBack.nameRef, 0);
-    assertEquals("Cleaned record must have flags=0", recordReadBack.flags, 0);
-    assertEquals("Cleaned record must have content=0", recordReadBack.contentRef, 0);
-    assertEquals("Cleaned record must have attribute=0", recordReadBack.attributeRef, 0);
-    assertEquals("Cleaned record must have length=0", recordReadBack.length, 0);
-    assertEquals("Cleaned record must have timestamp=0", recordReadBack.timestamp, 0);
-    assertEquals("Cleaned record must have modCount=0", recordReadBack.modCount, 0);
+    assertEquals("Cleaned record must have parent=0", 0, recordReadBack.parentRef);
+    assertEquals("Cleaned record must have name=0", 0, recordReadBack.nameRef);
+    assertEquals("Cleaned record must have flags=0", 0, recordReadBack.flags);
+    assertEquals("Cleaned record must have content=0", 0, recordReadBack.contentRef);
+    assertEquals("Cleaned record must have attribute=0", 0, recordReadBack.attributeRef);
+    assertEquals("Cleaned record must have length=0", 0, recordReadBack.length);
+    assertEquals("Cleaned record must have timestamp=0", 0, recordReadBack.timestamp);
+    assertEquals("Cleaned record must have modCount=0", 0, recordReadBack.modCount);
   }
 
   @Test
@@ -660,8 +659,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     //    that could leads to that:
     int CPUs = Runtime.getRuntime().availableProcessors();
     int recordsPerThread = maxRecordsToInsert / CPUs;
-    ExecutorService pool = Executors.newFixedThreadPool(CPUs);
-    try {
+    try (ExecutorService pool = Executors.newFixedThreadPool(CPUs)) {
       Callable<Object> insertingRecordsTask = () -> {
         for (int i = 0; i < recordsPerThread; i++) {
           int recordId = allocateRecordAndCheckConsistency(storage);
@@ -680,10 +678,6 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
       for (Future<Object> future : futures) {
         future.get();//give a chance to deliver exception
       }
-    }
-    finally {
-      pool.shutdown();
-      pool.awaitTermination(15, SECONDS);
     }
   }
 
@@ -706,7 +700,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
     public int parentRef;
     public int nameRef;
-    public int flags;
+    public @PersistentFS.Attributes int flags;
     public int attributeRef;
     public int contentRef;
     public long timestamp;
@@ -730,7 +724,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     public FSRecord(final int id,
                     final int parentRef,
                     final int nameRef,
-                    final int flags,
+                    @PersistentFS.Attributes final int flags,
                     final int attributeRef,
                     final int contentRef,
                     final long timestamp,
@@ -814,8 +808,9 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   }
 
   @NotNull
-  private static FSRecord generateRecordFields(final int recordId) {
+  private static FSRecord generateRecordFields(int recordId) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    //noinspection MagicConstant
     return new FSRecord(
       recordId,
       rnd.nextInt(0, recordId),
@@ -831,16 +826,16 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     );
   }
 
-  private static void assertEqualExceptModCount(final String message,
-                                                final FSRecord recordOriginal,
-                                                final FSRecord recordReadBack) {
+  private static void assertEqualExceptModCount(String message,
+                                                FSRecord recordOriginal,
+                                                FSRecord recordReadBack) {
     assertTrue(message + "\n" +
                "\toriginal:  " + recordOriginal + "\n" +
                "\tread back: " + recordReadBack + "\n",
                recordOriginal.equalsExceptModCount(recordReadBack));
   }
 
-  private static int allocateRecordAndCheckConsistency(final PersistentFSRecordsStorage storage) throws IOException {
+  private static int allocateRecordAndCheckConsistency(PersistentFSRecordsStorage storage) throws IOException {
     int newRecordId = storage.allocateRecord();
 
     int nameId = storage.getNameId(newRecordId);
