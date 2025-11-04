@@ -120,6 +120,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
       }
       if (project == activeProject) {
         logFocusRequest(c, project, false);
+        toFrontImpl(c);
         c.requestFocus();
         return ActionCallback.DONE;
       }
@@ -255,13 +256,17 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
 
   @Override
   public void toFront(JComponent c) {
+    toFrontImpl(c);
+  }
+
+  private void toFrontImpl(Component c) {
     assertDispatchThread();
 
     if (c == null) {
       return;
     }
 
-    Window window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, (Component)c);
+    Window window = ComponentUtil.getParentOfType((Class<? extends Window>)Window.class, c);
     if (window != null && window.isShowing()) {
       doWhenFocusSettlesDown(() -> {
         if (ApplicationManager.getApplication().isActive()) {
