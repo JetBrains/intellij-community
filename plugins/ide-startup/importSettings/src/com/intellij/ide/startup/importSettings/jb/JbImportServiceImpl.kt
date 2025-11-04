@@ -289,10 +289,11 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   private fun toJbProductInfo(confDir: Path): JbProductInfo? {
-    val ideName: String = IDEData.IDE_MAP.keys.filter { confDir.name.startsWith(it) }.maxByOrNull { it.length } ?: run {
+    val ideData = IDEData.getForConfigDir(confDir) ?: run {
       logger.info("$confDir is not prefixed with with any known IDE name. Skipping it")
       return null
     }
+    val ideName: String = ideData.folderName
     val ideVersion = confDir.name.substring(ideName.length)
     if (ideVersion.isEmpty()) {
       logger.info("$confDir doesn't contain any version info. Skipping it")
