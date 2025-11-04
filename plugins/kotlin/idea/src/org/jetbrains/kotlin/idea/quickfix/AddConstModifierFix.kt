@@ -7,13 +7,19 @@ import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.checkers.ConstModifierChecker
 import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 
 internal object ConstFixFactory : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-        val expr = diagnostic.psiElement as? KtReferenceExpression ?: return null
+        val expr = when (val psi = diagnostic.psiElement) {
+            is KtReferenceExpression -> psi
+            is KtQualifiedExpression -> psi.selectorExpression as? KtReferenceExpression
+            else -> null
+        } ?: return null
+
         val targetDescriptor = expr.resolveToCall()?.resultingDescriptor as? VariableDescriptor ?: return null
         val declaration = (targetDescriptor.source as? PsiSourceElement)?.psi as? KtProperty ?: return null
         if (ConstModifierChecker.canBeConst(declaration, declaration, targetDescriptor)) {
