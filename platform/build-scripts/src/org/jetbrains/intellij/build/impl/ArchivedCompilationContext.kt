@@ -48,7 +48,7 @@ class ArchivedCompilationContext(
 
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
-  override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
+  override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
     return delegate.getModuleOutputRoots(module, forTests).map { replaceWithCompressedIfNeeded(it) }
   }
 
@@ -56,7 +56,7 @@ class ArchivedCompilationContext(
     return doReplace(delegate.getModuleRuntimeClasspath(module, forTests), inputMapper = { Path.of(it) }, resultMapper = { it.toString() })
   }
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     val result = getModuleOutputRoots(module, forTests).mapNotNull { moduleOutput ->
       if (!moduleOutput.startsWith(archivesLocation)) {
         return delegate.readFileContentFromModuleOutput(module, relativePath)
@@ -85,7 +85,7 @@ class ArchivedCompilationContext(
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
-  suspend fun replaceWithCompressedIfNeeded(p: Path): Path = storage.getArchived(p)
+  fun replaceWithCompressedIfNeeded(p: Path): Path = storage.getArchived(p)
 
   suspend fun replaceWithCompressedIfNeededLP(files: List<Path>): List<Path> {
     return doReplace(files, inputMapper = { it }, resultMapper = { it })

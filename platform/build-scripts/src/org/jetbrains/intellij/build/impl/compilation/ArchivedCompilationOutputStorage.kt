@@ -41,7 +41,7 @@ class ArchivedCompilationOutputStorage(
     }
   }
 
-  suspend fun getArchived(path: Path): Path {
+  fun getArchived(path: Path): Path {
     if (Files.isRegularFile(path)) {
       return path
     }
@@ -62,7 +62,7 @@ class ArchivedCompilationOutputStorage(
     return unarchivedToArchivedMap.putIfAbsent(path, archived) ?: archived
   }
 
-  private suspend fun archive(path: Path): Path {
+  private fun archive(path: Path): Path {
     if (!Files.newDirectoryStream(path).use { stream -> stream.iterator().hasNext() }) {
       // Empty dir, no need to archive
       return path

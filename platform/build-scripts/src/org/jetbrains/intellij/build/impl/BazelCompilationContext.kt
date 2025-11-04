@@ -73,7 +73,7 @@ class BazelCompilationContext(
 
   override fun findModule(name: String): JpsModule? = delegate.findModule(name)
 
-  override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
+  override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
     val moduleOutputRoots = modulesToOutputRoots[module.name] ?: error("No output roots for module '${module.name}'")
     return if (forTests) moduleOutputRoots.testJars else moduleOutputRoots.productionJars
   }
@@ -93,7 +93,7 @@ class BazelCompilationContext(
 
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(module, relativePath, forTests)
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     val result = getModuleOutputRoots(module, forTests).mapNotNull { moduleOutput ->
       var fileContent: ByteArray? = null
       readZipFile(moduleOutput) { name, data ->

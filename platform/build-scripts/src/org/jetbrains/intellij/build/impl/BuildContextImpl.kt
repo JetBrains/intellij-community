@@ -41,7 +41,6 @@ import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.computeAppInfoXml
-import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.findProductModulesFile
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
@@ -67,6 +66,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.pathString
 import kotlin.time.Duration
 
+@Suppress("SpellCheckingInspection")
 private val PLUGIN_DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd")
 
 class BuildContextImpl internal constructor(
@@ -273,7 +273,7 @@ class BuildContextImpl internal constructor(
     compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
-  private val _frontendModuleFilter = asyncLazy("JetBrains client module filter") {
+  private val _frontendModuleFilter by lazy {
     val rootModule = productProperties.embeddedFrontendRootModule
     if (rootModule != null && options.enableEmbeddedFrontend) {
       val productModules = loadRawProductModules(rootModule, ProductMode.FRONTEND)
@@ -284,7 +284,7 @@ class BuildContextImpl internal constructor(
     }
   }
 
-  override suspend fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter.await()
+  override fun getFrontendModuleFilter(): FrontendModuleFilter = _frontendModuleFilter
 
   private val contentModuleFilter = computeContentModuleFilter()
 

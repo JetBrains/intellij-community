@@ -20,7 +20,7 @@ internal class FrontendModuleFilterImpl private constructor(
   private val includedProjectLibraryNames: Set<String>,
 ): FrontendModuleFilter {
   companion object {
-    suspend fun create(project: JpsProject, productModules: RawProductModules, jarPackagerDependencyHelper: JarPackagerDependencyHelper): FrontendModuleFilter {
+    fun create(project: JpsProject, productModules: RawProductModules, jarPackagerDependencyHelper: JarPackagerDependencyHelper): FrontendModuleFilter {
       val frontendModeMatcher = JpsProductModeMatcher(ProductMode.FRONTEND)
       val includedModuleNames = LinkedHashSet<String>()
       val includedProjectLibraryNames = LinkedHashSet<String>()
