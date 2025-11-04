@@ -479,6 +479,66 @@ public fun DefaultSplitButton(
 }
 
 /**
+ * A split button with only a primary action and custom secondary action handler, using the default visual style.
+ *
+ * This overload is for cases where you want to handle the secondary action manually without using a Jewel dropdown
+ * menu. **No popup menu will be created automatically** - you are responsible for implementing all popup logic in the
+ * `secondaryOnClick` callback.
+ *
+ * **When to use this overload:**
+ * - You need to create a custom popup using `JBPopupFactory` or other non-Jewel UI components
+ * - You want to perform a direct action on chevron click without showing a menu
+ * - You need full control over popup positioning, content, or behavior
+ *
+ * **When to use the `menuContent` overload instead:**
+ * - You want a standard Jewel dropdown menu with declarative [MenuScope] DSL
+ * - You need consistent menu styling with other Jewel components
+ * - You want automatic menu positioning and keyboard navigation
+ *
+ * **Important differences from the `menuContent` overload:**
+ * - This overload passes `secondaryContentMenu = null` to the implementation, ensuring no Jewel popup is created
+ * - The chevron click will only invoke your `secondaryOnClick` callback
+ * - You must handle all popup lifecycle, positioning, and disposal manually
+ *
+ * @param onClick Will be called when the user clicks the main button area
+ * @param secondaryOnClick Will be called when the user clicks the chevron section. You must implement all popup logic
+ *   here.
+ * @param modifier Modifier to be applied to the button
+ * @param enabled Controls the enabled state of the button. When false, the button will not be clickable
+ * @param interactionSource An optional [MutableInteractionSource] for observing and emitting [Interaction]s for this
+ *   button
+ * @param style The visual styling configuration for the split button including colors, metrics and layout parameters
+ * @param textStyle The typography style to be applied to the button's text content
+ * @param content The content to be displayed in the main button area
+ * @see DefaultSplitButton for the overload with automatic Jewel menu integration
+ */
+@Composable
+public fun DefaultSplitButton(
+    onClick: () -> Unit,
+    secondaryOnClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: SplitButtonStyle = JewelTheme.defaultSplitButtonStyle,
+    textStyle: TextStyle = JewelTheme.defaultTextStyle,
+    content: @Composable () -> Unit,
+) {
+    SplitButtonImpl(
+        onClick = onClick,
+        secondaryOnClick = secondaryOnClick,
+        enabled = enabled,
+        interactionSource = interactionSource,
+        style = style,
+        textStyle = textStyle,
+        menuStyle = JewelTheme.menuStyle,
+        isDefault = true,
+        modifier = modifier,
+        secondaryContentMenu = null,
+        content = content,
+    )
+}
+
+/**
  * A split button combining a primary action with a dropdown menu, using the default visual style.
  *
  * Provides two interactive areas: the main button area for the primary action and a chevron section that opens a
@@ -686,6 +746,7 @@ private fun SplitButtonImpl(
 
     var buttonWidth by remember { mutableStateOf(Dp.Unspecified) }
     var buttonState by remember(interactionSource) { mutableStateOf(ButtonState.of(enabled = enabled)) }
+    val hasSecondaryContent = (secondaryContentMenu != null || secondaryContent != null)
     val focusRequester = remember { FocusRequester() }
 
     Box(
@@ -701,10 +762,13 @@ private fun SplitButtonImpl(
                     if (keyEvent.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                     when {
                         keyEvent.key == Key.DirectionDown -> {
-                            popupVisible = true
-                            true
+                            if (hasSecondaryContent) {
+                                popupVisible = true
+                                true
+                            } else {
+                                false
+                            }
                         }
-
                         else -> false
                     }
                 }
@@ -727,15 +791,17 @@ private fun SplitButtonImpl(
                     isDefault = isDefault,
                     onChevronClick = {
                         secondaryOnClick()
-                        popupVisible = !popupVisible
-                        if (!buttonState.isFocused) focusRequester.requestFocus()
+                        if (hasSecondaryContent) {
+                            popupVisible = !popupVisible
+                            if (!buttonState.isFocused) focusRequester.requestFocus()
+                        }
                     },
                     modifier = Modifier.testTag("Jewel.SplitButton.SecondaryAction"),
                 )
             },
         )
 
-        if (popupVisible && enabled) {
+        if (popupVisible && enabled && hasSecondaryContent) {
             val splitButtonPopupModifier =
                 Modifier.heightIn(max = maxPopupHeight)
                     .widthIn(min = buttonWidth, max = maxPopupWidth.coerceAtLeast(buttonWidth))
