@@ -43,24 +43,27 @@ p6_3 = Point6(2, "1")  # E
 p6_4 = Point6(x=1.1, y=2)  # E
 
 
-# > At runtime, the ``namedtuple`` function disallows field names that are
-# > illegal Python identifiers and either raises an exception or replaces these
-# > fields with a parameter name of the form ``_N``. The behavior depends on
-# > the value of the ``rename`` argument. Type checkers may replicate this
-# > behavior statically.
+# > At runtime, the ``namedtuple`` function disallows field names that begin with
+# > an underscore or are illegal Python identifiers, and either raises an exception
+# > or replaces these fields with a parameter name of the form ``_N``. The behavior
+# > depends on the value of the ``rename`` argument. Type checkers may replicate
+# > this behavior statically.
 
 NT1 = namedtuple("NT1", ["a", "a"])  # E?: duplicate field name
 NT2 = namedtuple("NT2", ["abc", "def"])  # E?: illegal field name
 NT3 = namedtuple("NT3", ["abc", "def"], rename=False)  # E?: illegal field name
+NT4 = namedtuple("NT4", ["abc", "_d"], rename=False)  # E?: illegal field name
 
-NT4 = namedtuple("NT4", ["abc", "def"], rename=True)  # OK
-NT4(abc="", _1="")  # OK
+NT5 = namedtuple("NT5", ["abc", "def"], rename=True)  # OK
+NT5(abc="", _1="")  # OK
+NT6 = namedtuple("NT6", ["abc", "_d"], rename=True)  # OK
+NT6(abc="", _1="")  # OK
 
 
 # > The ``namedtuple`` function also supports a ``defaults`` keyword argument that
 # > specifies default values for the fields. Type checkers may support this.
 
-NT5 = namedtuple("NT5", "a b c", defaults=(1, 2))
-NT5(1)  # OK
-NT5(1, 2, 3)  # OK
-NT5()  # E: too few arguments
+NT7 = namedtuple("NT7", "a b c", defaults=(1, 2))
+NT7(1)  # OK
+NT7(1, 2, 3)  # OK
+NT7()  # E: too few arguments

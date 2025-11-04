@@ -49,6 +49,33 @@ p9 = Point(1, 2, "", "")  # E
 p10 = Point(1, 2, "", other="")  # E
 
 
+# > Fields must be annotated attributes - methods and un-annotated attributes are not
+# > considered fields.
+
+
+class Point2(NamedTuple):
+    x: int
+    y: int
+    units = "meters"  # Not a field
+
+    def is_origin(self) -> int:  # Not a field
+        return self.x == 0 and self.y == 0
+
+
+p11 = Point2(1, 2)
+assert_type(p11, Point2)
+x, y = p11
+
+p12 = Point2(1, 2, "")  # E
+
+
+# > Field names may not start with an underscore.
+
+class Point3(NamedTuple):
+    x: int
+    _y: int  # E: illegal field name
+
+
 # > The runtime implementation of ``NamedTuple`` enforces that fields with default
 # > values must come after fields without default values. Type checkers should
 # > likewise enforce this restriction::

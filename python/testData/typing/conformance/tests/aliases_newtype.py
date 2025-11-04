@@ -1,5 +1,5 @@
 """
-Tests the `typing.NewType` function.
+Tests the `typing.NewType` type constructor.
 """
 
 # Specification: https://typing.readthedocs.io/en/latest/spec/aliases.html#newtype
@@ -14,9 +14,12 @@ u2: UserId = UserId(42)  # OK
 
 assert_type(UserId(5) + 1, int)
 
-# > Both isinstance and issubclass, as well as subclassing will fail for
-# > NewType('Derived', Base) since function objects don’t support these
-# > operations.
+# > NewType('Derived', Base) returns a dummy object
+_: type = UserId  # E: `NewType()` does not return an instance of `type`
+
+# > Both ``isinstance`` and ``issubclass``, as well as subclassing will fail
+# > for ``NewType('Derived', Base)``, since the object returned by a call to
+# > ``NewType`` is not a class.
 isinstance(u2, UserId)  # E: not allowed in isinstance call
 
 

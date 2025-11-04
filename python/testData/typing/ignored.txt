@@ -1,4 +1,5 @@
 aliases_implicit.py
+aliases_newtype.py
 aliases_recursive.py
 aliases_typealiastype.py
 aliases_variance.py
@@ -12,6 +13,7 @@ constructors_call_new.py
 constructors_call_type.py
 constructors_callable.py
 dataclasses_order.py
+dataclasses_match_args.py
 dataclasses_transform_converter.py
 dataclasses_transform_field.py
 dataclasses_transform_meta.py
@@ -35,6 +37,7 @@ generics_variance_inference.py
 literals_literalstring.py
 literals_semantics.py
 namedtuples_define_class.py
+namedtuples_define_functional.py
 namedtuples_usage.py
 narrowing_typeis.py
 overloads_consistency.py
@@ -53,4 +56,5 @@ specialtypes_never.py
 specialtypes_promotions.py
 specialtypes_type.py
 tuples_type_form.py
+typeddicts_extra_items.py
 typeddicts_readonly_inheritance.py

@@ -4,7 +4,7 @@ Tests the handling of "infer_variance" parameter for TypeVar.
 
 # Specification: https://peps.python.org/pep-0695/#auto-variance-for-typevar
 
-from typing import Final, Generic, Iterator, Sequence, TypeVar
+from typing import Final, Generic, Iterator, overload, Sequence, TypeVar
 from dataclasses import dataclass
 
 
@@ -30,7 +30,17 @@ vco1_2: ShouldBeCovariant1[int] = ShouldBeCovariant1[float]()  # E
 
 
 class ShouldBeCovariant2(Sequence[T]):
-    pass
+    @overload
+    def __getitem__(self, index: int) -> T:
+        ...
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[T]:
+        ...
+    def __getitem__(self, index: int | slice) -> T | Sequence[T]:
+        ...
+
+    def __len__(self) -> int:
+        ...
 
 
 vco2_1: ShouldBeCovariant2[float] = ShouldBeCovariant2[int]()  # OK

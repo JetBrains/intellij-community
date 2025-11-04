@@ -16,7 +16,6 @@ def create_model(cls: T) -> T:
 
 
 @overload
-@dataclass_transform(kw_only_default=True, order_default=True)
 def create_model(
     *,
     frozen: bool = False,

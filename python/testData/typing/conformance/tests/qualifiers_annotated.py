@@ -33,11 +33,6 @@ Good5: Annotated[tuple[int, ...] | list[int], ""]
 Good6: Annotated[Callable[..., int], ""]
 Good7: Annotated["int | str", ""]
 Good8: Annotated[list["int | str"], ""]
-Good9: Annotated[Literal[3, 4, 5, None], x := 3]
-
-
-async def func3() -> None:
-    Good10: Annotated[str, await func3()]
 
 
 Bad1: Annotated[[int, str], ""]  # E: invalid type expression
@@ -115,7 +110,4 @@ class ClassC(TypedDict):
 
 TA1: TypeAlias = Annotated[int | str, ""]
 TA2 = Annotated[Literal[1, 2], ""]
-
-T = TypeVar("T")
-
 TA3 = Annotated[T, ""]

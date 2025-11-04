@@ -54,7 +54,7 @@ class ChildA(ParentA):
         return 1
 
     @overload  # E[method4]
-    def method4(self, x: int) -> int:
+    def method4(self, x: int) -> int:  # E[method4]
         ...
 
     @overload

@@ -127,7 +127,8 @@ T4 = TypeVar("T4", default=int)
 def func1(x: int | set[T4]) -> T4: ...
 
 
-assert_type(func1(0), int)
+assert_type(func1(0), int)  # E[optional-default-use]
+assert_type(func1(0), Any)  # E[optional-default-use]
 
 
 # > A ``TypeVar`` that immediately follows a ``TypeVarTuple`` is not allowed
@@ -167,4 +168,4 @@ class Foo7(Generic[DefaultIntT]):
 
 
 assert_type(Foo7.meth, Callable[[Foo7[int]], Foo7[int]])
-assert_type(Foo7.attr, int)
+assert_type(Foo7().attr, int)

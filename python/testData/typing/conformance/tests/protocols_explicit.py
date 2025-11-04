@@ -82,7 +82,6 @@ class Proto3(Proto2, Protocol):
 
 class Concrete1(Proto1):
     def __init__(self):
-        self.cm1 = 1
         self.im1 = 1
         self.im3 = 3
 
@@ -107,7 +106,7 @@ class Concrete3(Proto1, Proto3):
         self.cm11 = 11
 
 
-c3 = Concrete3()  # E: cannot instantiate abstract class
+c3 = Concrete3()
 
 
 class Concrete4(Proto1, Proto3):

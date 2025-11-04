@@ -69,7 +69,7 @@ class Base:
     def invalid_final(self, x: int) -> int:  # E[invalid_final]
         ...
     @overload  # E[invalid_final]
-    @final
+    @final  # E[invalid_final]
     def invalid_final(self, x: str) -> str:  # E[invalid_final]
         ...
     @overload
@@ -82,7 +82,7 @@ class Base:
     def invalid_final_2(self, x: int) -> int:  # E[invalid_final_2]
         ...
     @overload  # E[invalid_final_2]
-    @final
+    @final  # E[invalid_final_2]
     def invalid_final_2(self, x: str) -> str: ...  # E[invalid_final_2]
 
     # These methods are just here for the @override test below. We use an
@@ -143,7 +143,7 @@ class Child(Base):  # E[override-final]
     @overload  # E[override_impl]: @override should appear only on first overload
     def to_override(self, x: int) -> int: ...
     @overload
-    @override
+    @override  # E[override_impl]: @override should appear only on first overload
     def to_override(  # E[override_impl]: @override should appear only on first overload
         self, x: str
     ) -> str:  # E[override_impl]: @override should appear only on first overload

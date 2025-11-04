@@ -81,17 +81,17 @@ class C:
     def func5(*args: object) -> int | str:  # E[func5]
         return 1
 
-    @overload  # E[func6]
+    @overload  # E[func6+]
     @classmethod
-    def func6(cls, x: int, /) -> int:  # E[func6]
+    def func6(cls, x: int, /) -> int:  # E[func6+]
         ...
 
     @overload
-    def func6(self, x: str, /) -> str:  # E[func6]
+    def func6(self, x: str, /) -> str:  # E[func6+]
         ...
 
-    @classmethod
-    def func6(cls, *args: int | str) -> int | str:  # E[func6]
+    @classmethod  # E[func6+]
+    def func6(cls, *args: int | str) -> int | str:  # E[func6+]
         return 1
 
 
@@ -119,7 +119,7 @@ class Base:
     # The @final decorator should not be on one of the overloads:
 
     @overload  # E[invalid_final] @final should be on implementation only
-    @final
+    @final  # E[invalid_final]
     def invalid_final(self, x: int) -> int:  # E[invalid_final]
         ...
 
@@ -173,7 +173,7 @@ class Child(Base):  # E[override-final]
     # questions of override LSP compatibility and focus only on the override):
 
     @overload  # E[override-final]
-    def final_method(self, x: int) -> int: ...
+    def final_method(self, x: int) -> int: ...  # E[override-final]
 
     @overload
     def final_method(self, x: str) -> str: ...
