@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
+import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -11,6 +12,8 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -41,14 +44,17 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
+import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.console.PythonConsoleView;
@@ -340,6 +346,20 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       return;
     }
     waitForConnection(getConnectionMessage(), getConnectionTitle());
+  }
+
+  @Override
+  public @NotNull XDebugTabLayouter createTabLayouter() {
+    return new XDebugTabLayouter() {
+      @Override
+      public void registerAdditionalContent(@NotNull RunnerLayoutUi ui) {
+        if (ExperimentalUI.isNewUI()) {
+          ui.getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
+                                                 XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
+                                                 new LayoutAttractionPolicy.FocusOnce());
+        }
+      }
+    };
   }
 
   protected void waitForConnection(final @ProgressText String connectionMessage, @ProgressTitle String connectionTitle) {

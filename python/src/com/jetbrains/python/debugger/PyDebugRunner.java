@@ -2,7 +2,6 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.ExecutionResult;
@@ -23,7 +22,6 @@ import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.layout.LayoutAttractionPolicy;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,12 +38,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.*;
@@ -55,9 +51,9 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.*;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PySdkExtKt;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
@@ -241,18 +237,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           return pyDebugProcess;
         }
       });
-
-    if (ExperimentalUI.isNewUI()) {
-      RunnerLayoutUi sessionUi = session.getUI();
-      if (sessionUi != null) {
-        sessionUi.getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
-                                                      XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
-                                                      new LayoutAttractionPolicy.FocusOnce());
-      }
-      else {
-        // TODO [Debugger.RunnerLayoutUi]
-      }
-    }
     return session;
   }
 
@@ -267,18 +251,6 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
           return pyDebugProcess;
         }
       });
-
-    if (ExperimentalUI.isNewUI()) {
-      RunnerLayoutUi sessionUi = session.getUI();
-      if (sessionUi != null) {
-        sessionUi.getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
-                                                      XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
-                                                      new LayoutAttractionPolicy.FocusOnce());
-      }
-      else {
-        // TODO [Debugger.RunnerLayoutUi]
-      }
-    }
     return session;
   }
 
