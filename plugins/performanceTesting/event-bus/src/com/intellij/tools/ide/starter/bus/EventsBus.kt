@@ -19,7 +19,7 @@ object EventsBus {
   fun executeWithExceptionHandling(ignoreExceptions: Boolean = true, block: () -> Unit) {
     runCatching { block() }.onFailure { t ->
         if (ignoreExceptions) {
-          LOG.info("Ignored: $t")
+          LOG.info("Ignored: ${t.stackTraceToString()}")
         } else {
           throw t
         }
