@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -1024,6 +1025,83 @@ class ListComboBoxUiTest {
 
         // The popup should have the combobox width (200dp) as minimum, not the smaller popupModifier width (100dp)
         popupMenu.assertHeightIsEqualTo(500.dp)
+    }
+
+    @Test
+    fun `commit mapped selection to external on popup close after delete and re-add`() {
+        val focusRequester = FocusRequester()
+        // Hoist states outside composition to mutate during the test
+        var items by mutableStateOf((1..5).map { "Item $it" })
+        var selectedIndex by mutableIntStateOf(2) // start at "Item 3"
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = items,
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { selectedIndex = it },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    // Use item text as key to allow mapping across re-adds
+                    itemKeys = { _: Int, item: String -> item },
+                )
+            }
+        }
+
+        // Focus and open popup
+        focusRequester.requestFocus()
+        comboBox.assertIsDisplayed().assertIsFocused().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // Simulate delete + re-add while popup is open
+        composeRule.runOnUiThread { items = emptyList() }
+        composeRule.waitForIdle()
+        composeRule.runOnUiThread { items = (1..5).map { "Item $it" } }
+        composeRule.waitForIdle()
+
+        // Drive: Down then Enter
+        comboBox.performKeyPress(Key.DirectionDown, rule = composeRule)
+        comboBox.performKeyPress(Key.Enter, rule = composeRule)
+
+        // Popup should close and selection should advance to Item 4 (index 3)
+        popupMenu.assertDoesNotExist()
+        assertEquals(3, selectedIndex)
+        composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 4", includeEditableText = false)
+    }
+
+    @Test
+    fun `external selection is reconciled to mapped keys on popup close when changed programmatically while visible`() {
+        val focusRequester = FocusRequester()
+        val items by mutableStateOf((1..5).map { "Item $it" })
+        var selectedIndex by mutableIntStateOf(2) // start at "Item 3"
+
+        composeRule.setContent {
+            IntUiTheme {
+                ListComboBox(
+                    items = items,
+                    selectedIndex = selectedIndex,
+                    onSelectedItemChange = { selectedIndex = it },
+                    modifier = Modifier.testTag("ComboBox").width(200.dp).focusRequester(focusRequester),
+                    itemKeys = { _: Int, item: String -> item },
+                )
+            }
+        }
+
+        // Focus and open popup
+        focusRequester.requestFocus()
+        comboBox.assertIsDisplayed().assertIsFocused().performClick()
+        popupMenu.assertIsDisplayed()
+
+        // Programmatic external change while popup is visible (should be gated by ListComboBoxImpl)
+        composeRule.runOnUiThread { selectedIndex = 3 } // "Item 4"
+        composeRule.waitForIdle()
+
+        // Close without selecting anything from the popup so that commit-on-close logic reconciles divergence
+        comboBox.performKeyPress(Key.Enter, rule = composeRule)
+
+        // After close, external selection should be reconciled to mapped keys (back to index 2 -> "Item 3")
+        popupMenu.assertDoesNotExist()
+        assertEquals(2, selectedIndex)
+        composeRule.onNode(hasTestTag("ComboBox")).assertTextEquals("Item 3", includeEditableText = false)
     }
 
     private fun editableListComboBox(): SemanticsNodeInteraction {

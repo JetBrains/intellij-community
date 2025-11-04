@@ -42,6 +42,7 @@ import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.itemsIndexed
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
+import org.jetbrains.jewel.foundation.lazy.tree.NoopListKeyActions
 import org.jetbrains.jewel.foundation.lazy.visibleItemsRange
 import org.jetbrains.jewel.foundation.modifier.onMove
 import org.jetbrains.jewel.foundation.modifier.thenIf
@@ -679,6 +680,44 @@ internal fun <T : Any> ListComboBoxImpl(
         hoveredItemIndex = -1
     }
 
+    fun navigateDown() {
+        if (items.isEmpty()) return
+        var currentSelection = listState.selectedItemIndex(items, itemKeys)
+        // When there is a preview-selected item, pressing down will actually change the
+        // selected value to the one underneath it (unless it's the last one)
+        if (hoveredItemIndex >= 0 && hoveredItemIndex < items.lastIndex) {
+            currentSelection = hoveredItemIndex
+            resetPreviewSelectedIndex()
+        }
+        setSelectedItem((currentSelection + 1).coerceAtMost(items.lastIndex))
+    }
+
+    fun navigateUp() {
+        if (items.isEmpty()) return
+        var currentSelection = listState.selectedItemIndex(items, itemKeys)
+        // When there is a preview-selected item, pressing up will actually change the
+        // selected value to the one above it (unless it's the first one)
+        if (hoveredItemIndex > 0) {
+            currentSelection = hoveredItemIndex
+            resetPreviewSelectedIndex()
+        }
+        setSelectedItem((currentSelection - 1).coerceAtLeast(0))
+    }
+
+    fun selectHome(): Boolean {
+        if (items.isEmpty()) return false
+        setSelectedItem(0)
+        resetPreviewSelectedIndex()
+        return true
+    }
+
+    fun selectEnd(): Boolean {
+        if (items.isEmpty()) return false
+        setSelectedItem(items.lastIndex)
+        resetPreviewSelectedIndex()
+        return true
+    }
+
     val contentPadding = style.metrics.popupContentPadding
 
     val popupMaxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
@@ -693,52 +732,64 @@ internal fun <T : Any> ListComboBoxImpl(
         )
     }
 
+    fun commitSelectionFromHoverOrMapped() {
+        val mappedIndex = listState.selectedItemIndex(items, itemKeys)
+        val targetIndex =
+            when {
+                hoveredItemIndex >= 0 -> hoveredItemIndex
+                mappedIndex >= 0 -> mappedIndex
+                else -> null
+            }
+        if (targetIndex != null) {
+            setSelectedItem(targetIndex)
+            resetPreviewSelectedIndex()
+        }
+    }
+
+    fun handlePopupKeyDown(event: androidx.compose.ui.input.key.KeyEvent): Boolean =
+        if (!popupManager.isPopupVisible.value) false
+        else
+            when (event.key) {
+                Key.MoveHome,
+                Key.Home -> selectHome()
+                Key.MoveEnd -> selectEnd()
+                Key.DirectionDown -> {
+                    navigateDown()
+                    true
+                }
+                Key.DirectionUp -> {
+                    navigateUp()
+                    true
+                }
+                Key.Enter,
+                Key.NumPadEnter -> {
+                    commitSelectionFromHoverOrMapped()
+                    popupManager.setPopupVisible(false)
+                    true
+                }
+                else -> false
+            }
+
     ComboBoxImpl(
         modifier =
             modifier
                 .onSizeChanged { comboBoxWidth = with(density) { it.width.toDp() } }
                 .onPreviewKeyEvent {
                     if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-
-                    if (it.key == Key.Enter || it.key == Key.NumPadEnter) {
-                        if (popupManager.isPopupVisible.value && hoveredItemIndex >= 0) {
-                            setSelectedItem(hoveredItemIndex)
-                            resetPreviewSelectedIndex()
-                        }
-                        popupManager.setPopupVisible(false)
-                        true
-                    } else {
-                        false
-                    }
+                    return@onPreviewKeyEvent handlePopupKeyDown(it)
                 },
         popupModifier = popupModifier,
         enabled = enabled,
         maxPopupHeight = popupMaxHeight,
         maxPopupWidth = maxPopupWidth.takeOrElse { comboBoxWidth },
-        onArrowDownPress = {
-            var currentSelection = listState.selectedItemIndex(items, itemKeys)
-
-            // When there is a preview-selected item, pressing down will actually change the
-            // selected value to the one underneath it (unless it's the last one)
-            if (hoveredItemIndex >= 0 && hoveredItemIndex < items.lastIndex) {
-                currentSelection = hoveredItemIndex
-                resetPreviewSelectedIndex()
-            }
-
-            setSelectedItem((currentSelection + 1).coerceAtMost(items.lastIndex))
-        },
-        onArrowUpPress = {
-            var currentSelection = listState.selectedItemIndex(items, itemKeys)
-
-            // When there is a preview-selected item, pressing up will actually change the
-            // selected value to the one above it (unless it's the first one)
-            if (hoveredItemIndex > 0) {
-                currentSelection = hoveredItemIndex
-                resetPreviewSelectedIndex()
-            }
-
-            setSelectedItem((currentSelection - 1).coerceAtLeast(0))
-        },
+        onArrowDownPress = down@{
+                if (popupManager.isPopupVisible.value) return@down
+                navigateDown()
+            },
+        onArrowUpPress = up@{
+                if (popupManager.isPopupVisible.value) return@up
+                navigateUp()
+            },
         style = style,
         interactionSource = interactionSource,
         outline = outline,
@@ -788,6 +839,8 @@ private fun <T : Any> PopupContent(
                 val selectedIndex = selectedItemsIndexes.firstOrNull()
                 if (selectedIndex != null) onSelectedItemChange(selectedIndex)
             },
+            // Disable inner list keyboard navigation while popup is visible; navigation is handled at ComboBox level
+            keyActions = NoopListKeyActions,
         ) {
             itemsIndexed(
                 items = items,
