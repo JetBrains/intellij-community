@@ -14,7 +14,6 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PathManager.getSystemDir
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.LaterInvocator
@@ -1986,6 +1985,7 @@ object MavenUtil {
     val schemaLocations = schemaLocation.split(' ')
     return (xmlns == MAVEN_4_XMLNS || xmlns == MAVEN_4_XMLNS_HTTPS)
            && schemaLocations.all {
+      it.isNullOrBlank() ||
       it == MAVEN_4_XMLNS ||
       it == MAVEN_4_XMLNS_HTTPS ||
       it == MAVEN_4_XSD ||
