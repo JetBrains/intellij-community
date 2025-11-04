@@ -6,9 +6,9 @@ import fleet.util.multiplatform.Actual
 import java.util.concurrent.ConcurrentHashMap as JavaConcurrentHashMap
 
 @Actual
-internal fun <K, V> ConcurrentHashMapJvm(): ConcurrentHashMap<K, V> = MultiplatformConcurrentHashMap(JavaConcurrentHashMap())
+internal fun <K, V> MultiplatformConcurrentHashMapJvm(): MultiplatformConcurrentHashMap<K, V> = MultiplatformMultiplatformConcurrentHashMapJvmImpl(JavaConcurrentHashMap())
 
-private class MultiplatformConcurrentHashMap<K, V>(val hashMap: JavaConcurrentHashMap<K, V>) : MutableMap<K, V> by hashMap, ConcurrentHashMap<K, V> {
+private class MultiplatformMultiplatformConcurrentHashMapJvmImpl<K, V>(val hashMap: JavaConcurrentHashMap<K, V>) : MutableMap<K, V> by hashMap, MultiplatformConcurrentHashMap<K, V> {
   override fun remove(key: K, value: V): Boolean {
     return hashMap.remove(key, value)
   }

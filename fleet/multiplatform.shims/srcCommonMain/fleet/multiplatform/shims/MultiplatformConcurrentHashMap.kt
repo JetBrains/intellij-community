@@ -6,11 +6,11 @@ import fleet.util.multiplatform.linkToActual
 /**
  * On JVM, this is a wrapper for [java.util.concurrent.ConcurrentHashMap]
  *
- * @see [ConcurrentHashMapJvm] and [ConcurrentHashMapWasmJs] actual implementations
+ * @see [MultiplatformMultiplatformConcurrentHashMapJvmImpl] and [MultiplatformConcurrentHashMapWasmJsImpl] actual implementations
  */
-fun <K, V> ConcurrentHashMap(): ConcurrentHashMap<K, V> = linkToActual()
+fun <K, V> MultiplatformConcurrentHashMap(): MultiplatformConcurrentHashMap<K, V> = linkToActual()
 
-interface ConcurrentHashMap<K, V>: MutableMap<K, V> {
+interface MultiplatformConcurrentHashMap<K, V>: MutableMap<K, V> {
   fun putIfAbsent(key: K, value: V): V?
 
   fun computeIfAbsent(key: K, f: (K) -> V): V

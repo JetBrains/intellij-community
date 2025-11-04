@@ -18,7 +18,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.serialization.json.Json
-import fleet.multiplatform.shims.ConcurrentHashMap
+import fleet.multiplatform.shims.MultiplatformConcurrentHashMap
 import fleet.multiplatform.shims.MultiplatformConcurrentHashSet
 import fleet.util.async.withSupervisor
 import kotlinx.serialization.builtins.serializer
@@ -33,10 +33,10 @@ class RpcExecutor private constructor(
   private val rpcCallDispatcher: CoroutineDispatcher?,
 ) {
 
-  private val remoteObjects = ConcurrentHashMap<InstanceId, ServiceImplementation>()
-  private val resources = ConcurrentHashMap<InstanceId, Job>()
-  private val children: ConcurrentHashMap<InstanceId, Set<InstanceId>> = ConcurrentHashMap()
-  private val parents: ConcurrentHashMap<InstanceId, InstanceId> = ConcurrentHashMap()
+  private val remoteObjects = MultiplatformConcurrentHashMap<InstanceId, ServiceImplementation>()
+  private val resources = MultiplatformConcurrentHashMap<InstanceId, Job>()
+  private val children: MultiplatformConcurrentHashMap<InstanceId, Set<InstanceId>> = MultiplatformConcurrentHashMap()
+  private val parents: MultiplatformConcurrentHashMap<InstanceId, InstanceId> = MultiplatformConcurrentHashMap()
 
   companion object {
     internal val logger = KLoggers.logger(RpcExecutor::class)
@@ -100,10 +100,10 @@ class RpcExecutor private constructor(
     }
   }
 
-  private val requestJobs = ConcurrentHashMap<UID, CompletableJob>()
-  private val routeRequests = ConcurrentHashMap<UID/*route*/, MultiplatformConcurrentHashSet<UID/*requestId*/>>()
-  private val channels = ConcurrentHashMap<UID, InternalStreamDescriptor>()
-  private val routeChannels = ConcurrentHashMap<UID/*route*/, MultiplatformConcurrentHashSet<UID/*channelId*/>>()
+  private val requestJobs = MultiplatformConcurrentHashMap<UID, CompletableJob>()
+  private val routeRequests = MultiplatformConcurrentHashMap<UID/*route*/, MultiplatformConcurrentHashSet<UID/*requestId*/>>()
+  private val channels = MultiplatformConcurrentHashMap<UID, InternalStreamDescriptor>()
+  private val routeChannels = MultiplatformConcurrentHashMap<UID/*route*/, MultiplatformConcurrentHashSet<UID/*channelId*/>>()
 
   private suspend fun send(message: TransportMessage) {
     sendSuspend(::sendAsync, message)
