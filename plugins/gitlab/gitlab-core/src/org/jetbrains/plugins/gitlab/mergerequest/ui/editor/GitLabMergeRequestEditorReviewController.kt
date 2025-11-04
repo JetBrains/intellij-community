@@ -25,6 +25,8 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel.FileReviewState
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -52,21 +54,40 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
         .flatMapLatest {
           it?.currentMergeRequestReviewVm ?: flowOf(null)
         }.collectLatest { reviewVm ->
-          reviewVm?.getFileVm(file)?.collectScoped { fileVm ->
-            if (fileVm != null) supervisorScope {
-              launchNow {
-                ReviewInEditorUtil.showReviewToolbar(reviewVm, editor)
-              }
-
-              val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
-              val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.getOrNull()?.incoming != true }
-              combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.distinctUntilChanged().collectLatest { enabled ->
-                if (enabled) showReview(fileVm, editor)
-              }
+          reviewVm?.getFileStateFlow(file)?.collectScoped { fileState ->
+            when (fileState) {
+              is FileReviewState.ReviewEnabled -> showReview(reviewVm, fileState.vm, editor)
+              FileReviewState.ReviewDisabledEmptyDiff -> showEmptyDiffNotification(reviewVm, editor)
+              FileReviewState.NotInReview -> return@collectScoped
             }
           }
         }
     }.cancelOnDispose(editorDisposable)
+  }
+
+  private suspend fun showReview(
+    reviewVm: GitLabMergeRequestEditorReviewViewModel,
+    fileVm: GitLabMergeRequestEditorReviewFileViewModel,
+    editor: EditorEx,
+  ): Nothing {
+    supervisorScope {
+      launchNow {
+        ReviewInEditorUtil.showReviewToolbar(reviewVm, editor)
+      }
+
+      val enabledFlow = reviewVm.discussionsViewOption.map { it != DiscussionsViewOption.DONT_SHOW }
+      val syncedFlow = reviewVm.localRepositorySyncStatus.map { it?.getOrNull()?.incoming != true }
+      combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.distinctUntilChanged().collectLatest { enabled ->
+        if (enabled) showReview(fileVm, editor)
+      }
+      awaitCancellation()
+    }
+  }
+
+  private suspend fun showEmptyDiffNotification(reviewVm: GitLabMergeRequestEditorReviewViewModel, editor: Editor): Nothing {
+    ReviewInEditorUtil.showReviewToolbarWithWarning(reviewVm, editor) {
+      GitLabBundle.message("merge.request.editor.empty.patch.warning")
+    }
   }
 
   private suspend fun showReview(fileVm: GitLabMergeRequestEditorReviewFileViewModel, editor: EditorEx): Nothing {

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.EdtImmediate
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -21,6 +22,8 @@ import com.intellij.ui.JBColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 
 object ReviewInEditorUtil {
@@ -105,23 +108,50 @@ object ReviewInEditorUtil {
   }
 
   suspend fun showReviewToolbarWithActions(vm: CodeReviewInEditorViewModel, editor: Editor, vararg additionalActions: AnAction): Nothing {
-    withContext(Dispatchers.EDT) {
-      val toolbarActionGroup = DefaultActionGroup(
+    val toolbarActionGroup = withContext(Dispatchers.UI) {
+      DefaultActionGroup(
         *additionalActions,
         CodeReviewInEditorToolbarActionGroup(vm),
         Separator.getInstance()
       )
+    }
 
+    showInspectionWidgetAction(editor, toolbarActionGroup)
+  }
+
+  /**
+   * This is a very special case for GitLab plugin to show on a file with an empty diff
+   */
+  @ApiStatus.Internal
+  suspend fun showReviewToolbarWithWarning(
+    vm: CodeReviewInEditorViewModel, editor: Editor,
+    vararg additionalActions: AnAction,
+    warningSupplier: () -> @Nls String,
+  ): Nothing {
+    val toolbarActionGroup = withContext(Dispatchers.UI) {
+      DefaultActionGroup(
+        *additionalActions,
+        CodeReviewInEditorToolbarActionGroup(vm, warningSupplier),
+        Separator.getInstance()
+      )
+    }
+
+    showInspectionWidgetAction(editor, toolbarActionGroup)
+  }
+
+  // Awaits cancellation indefinitely until scope is cancelled
+  private suspend fun showInspectionWidgetAction(editor: Editor, action: AnAction): Nothing {
+    withContext(Dispatchers.EDT) {
       val editorMarkupModel = editor.markupModel as? EditorMarkupModel
       if (editorMarkupModel == null) {
         error("Editor markup model is not available")
       }
-      editorMarkupModel.addInspectionWidgetAction(toolbarActionGroup, Constraints.FIRST)
+      editorMarkupModel.addInspectionWidgetAction(action, Constraints.FIRST)
       try {
         awaitCancellation()
       }
       finally {
-        editorMarkupModel.removeInspectionWidgetAction(toolbarActionGroup)
+        editorMarkupModel.removeInspectionWidgetAction(action)
       }
     }
   }
