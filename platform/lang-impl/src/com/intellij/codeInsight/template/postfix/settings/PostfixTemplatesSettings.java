@@ -38,7 +38,7 @@ public final class PostfixTemplatesSettings implements PersistentStateComponent<
 
   private boolean postfixTemplatesEnabled = true;
   private boolean templatesCompletionEnabled = true;
-  private boolean showAsSeparateGroup = true;
+  private boolean showAsSeparateGroup = false;
   private int myShortcut = TemplateSettings.TAB_CHAR;
 
   public boolean isTemplateEnabled(@NotNull PostfixTemplate template, @NotNull PostfixTemplateProvider provider) {
