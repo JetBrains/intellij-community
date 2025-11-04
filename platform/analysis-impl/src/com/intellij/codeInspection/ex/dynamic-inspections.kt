@@ -33,18 +33,37 @@ sealed class DynamicInspectionDescriptor {
         else -> error("Got ${tool}, expected ${LocalInspectionTool::class.java} or ${GlobalInspectionTool::class.java}")
       }
     }
-  }
 
-  val toolWrapper: InspectionToolWrapper<*, *> by lazy {
-    when(this) {
-      is Local -> DynamicLocalInspectionToolWrapper(tool)
-      is Global -> DynamicGlobalInspectionToolWrapper(tool)
+    fun fromLocalToolWithWrapper(
+      tool: LocalInspectionTool,
+      wrapperFactory: (LocalInspectionTool) -> InspectionToolWrapper<*,*>
+    ): DynamicInspectionDescriptor {
+      return LocalWithCustomWrapper(tool, wrapperFactory)
     }
   }
 
-  class Local(val tool: LocalInspectionTool) : DynamicInspectionDescriptor()
+  abstract val toolWrapper: InspectionToolWrapper<*, *>
 
-  class Global(val tool: GlobalInspectionTool) : DynamicInspectionDescriptor()
+  class Local(val tool: LocalInspectionTool) : DynamicInspectionDescriptor() {
+    override val toolWrapper: InspectionToolWrapper<*, *> by lazy {
+      DynamicLocalInspectionToolWrapper(tool)
+    }
+  }
+
+  class Global(val tool: GlobalInspectionTool) : DynamicInspectionDescriptor() {
+    override val toolWrapper: InspectionToolWrapper<*, *> by lazy {
+      DynamicGlobalInspectionToolWrapper(tool)
+    }
+  }
+
+  class LocalWithCustomWrapper(
+    val tool: LocalInspectionTool,
+    private val wrapperFactory: (LocalInspectionTool) -> InspectionToolWrapper<*,*>
+  ) : DynamicInspectionDescriptor() {
+    override val toolWrapper: InspectionToolWrapper<*, *> by lazy {
+      wrapperFactory(tool)
+    }
+  }
 
   private class DynamicLocalInspectionToolWrapper(tool: LocalInspectionTool) : LocalInspectionToolWrapper(tool) {
     override fun createCopy(): LocalInspectionToolWrapper = DynamicLocalInspectionToolWrapper(tool)
