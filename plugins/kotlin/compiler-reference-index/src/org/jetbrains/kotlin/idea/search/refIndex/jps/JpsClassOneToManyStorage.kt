@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.search.refIndex
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.search.refIndex.jps
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentMapBuilder
@@ -14,8 +13,7 @@ import kotlin.io.path.deleteIfExists
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
-@IntellijInternalApi
-class ClassOneToManyStorage(storagePath: Path) {
+internal class JpsClassOneToManyStorage(storagePath: Path) {
     init {
         val storageName = storagePath.name
         storagePath.parent.listDirectoryEntries("$storageName*").ifNotEmpty {
@@ -25,9 +23,9 @@ class ClassOneToManyStorage(storagePath: Path) {
     }
 
     private val storage = PersistentMapBuilder.newBuilder(
-      storagePath,
-      EnumeratorStringDescriptor.INSTANCE,
-      externalizer,
+        storagePath,
+        EnumeratorStringDescriptor.INSTANCE,
+        externalizer,
     ).build()
 
     fun closeAndClean(): Unit = storage.closeAndClean()
@@ -42,12 +40,12 @@ class ClassOneToManyStorage(storagePath: Path) {
         if (!deep) return values
 
         return generateRecursiveSequence(values) {
-          storage[it]?.asSequence() ?: emptySequence()
+            storage[it]?.asSequence() ?: emptySequence()
         }
     }
 
     companion object {
         private val externalizer = StringCollectionExternalizer<Collection<String>>(::ArrayList)
-        private val LOG = logger<ClassOneToManyStorage>()
+        private val LOG = logger<JpsClassOneToManyStorage>()
     }
 }

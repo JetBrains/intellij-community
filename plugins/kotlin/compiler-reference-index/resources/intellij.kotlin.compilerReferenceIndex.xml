@@ -22,6 +22,19 @@
             implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
   </extensions>
 
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.kotlinCompilerReferenceIndexStorageProvider"
+            interface="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinCompilerReferenceIndexStorageProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.jps.JpsKotlinCompilerReferenceIndexStorageProvider"
+            order="last"/>
+  </extensions>
+
   <actions>
     <action
             class="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexVerifierAction"
