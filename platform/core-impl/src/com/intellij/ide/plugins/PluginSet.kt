@@ -63,8 +63,8 @@ class PluginSet internal constructor(
   /**
    * Returns a map from plugin ID and plugin aliases to the corresponding plugin or module descriptors from all plugins, not only enabled.
    */
-  fun buildPluginIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> {
-    val pluginIdResolutionMap = HashMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>()
+  fun buildPluginIdMap(): Map<PluginId, PluginModuleDescriptor> {
+    val pluginIdResolutionMap = HashMap<PluginId, MutableList<PluginModuleDescriptor>>()
     for (plugin in allPlugins) {
       pluginIdResolutionMap.computeIfAbsent(plugin.pluginId) { ArrayList() }.add(plugin)
       for (pluginAlias in plugin.pluginAliases) {
