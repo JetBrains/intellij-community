@@ -44,11 +44,6 @@ class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorVie
     with(templatePresentation) {
       isPopupGroup = true
       putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
-      description = CollaborationToolsBundle.message("review.editor.mode.description.title")
-      val tooltip = HelpTooltip()
-        .setTitle(CollaborationToolsBundle.message("review.editor.mode.description.title"))
-        .setDescription(CollaborationToolsBundle.message("review.editor.mode.description"))
-      putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
     }
   }
 
@@ -56,6 +51,12 @@ class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorVie
     val shown = vm.discussionsViewOption.value != DiscussionsViewOption.DONT_SHOW
     val synced = !vm.updateRequired.value
     with(e.presentation) {
+      description = CollaborationToolsBundle.message("review.editor.mode.description.title")
+      val tooltip = HelpTooltip()
+        .setTitle(CollaborationToolsBundle.message("review.editor.mode.description.title"))
+        .setDescription(CollaborationToolsBundle.message("review.editor.mode.description"))
+      putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
+
       if (shown) {
         text = CollaborationToolsBundle.message("review.editor.mode.title")
         icon = if (synced) null else getWarningIcon()
