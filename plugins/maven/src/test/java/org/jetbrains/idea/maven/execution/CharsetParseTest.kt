@@ -7,6 +7,7 @@ import org.jetbrains.idea.maven.execution.run.extractCodepageFromChcp
 import org.jetbrains.idea.maven.execution.run.extractCodepageFromLocale
 import org.jetbrains.idea.maven.execution.run.getAllWindowsCodePages
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.nio.charset.Charset
@@ -61,7 +62,7 @@ class CharsetParseTest {
       LC_ALL=
     """.trimIndent())
 
-    assertEquals("US-ASCII", extractCodepageFromLocale(executeResult))
+    assertNull(extractCodepageFromLocale(executeResult))
   }
 
   @Test
