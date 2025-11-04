@@ -3181,8 +3181,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
     synchronized (caretMoveService) {
-      caretMoveService.setEditor(this);
-      caretMoveService.setCursorPosition();
+      caretMoveService.setCursorPosition(this);
     }
   }
 

@@ -61,21 +61,19 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
       }.toTypedArray())
     }
   }
-
-  var editor: EditorImpl?
-    get() = editorFlow.value
-    set(value) {
-      editorFlow.value = value
-    }
-
   private val lastPosMap: MutableMap<Caret, Point2D> = ConcurrentHashMap()
 
-  private val editorFlow = MutableStateFlow<EditorImpl?>(null)
-  private val setPositionRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  // Replaying 128 requests is probably way too much, actually 2 should be enough. It shouldn't break
+  // anything though, since most of the time this would not contain more than 2 elements
+  // one for the main editor and one for the lite editor that can sometimes be opened on top
+  private val setPositionRequests = MutableSharedFlow<EditorImpl?>(replay = 128, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
-      editorFlow.combine(setPositionRequests) { editor, _ -> editor }.collectLatest { editor ->
+      // The best option here would be to use `collectLatest` for each editor, but since service returns
+      // a singleton, we will use collect until a better solution is found. This is unfortunate, since in selection
+      // using `collectLatest` achieves a better and smoother feel
+      setPositionRequests.collect { editor ->
         if (editor != null) {
           runCatching {
             processRequest(editor)
@@ -87,8 +85,8 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     }
   }
 
-  fun setCursorPosition() {
-    check(setPositionRequests.tryEmit(Unit))
+  fun setCursorPosition(editor: EditorImpl) {
+    check(setPositionRequests.tryEmit(editor))
   }
 
   private suspend fun processRequest(editor: EditorImpl) {
