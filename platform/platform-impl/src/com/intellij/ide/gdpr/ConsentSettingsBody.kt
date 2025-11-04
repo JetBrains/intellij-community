@@ -64,7 +64,7 @@ internal fun createConsentSettings(consentMapping: MutableCollection<ConsentStat
 }
 
 internal fun partitionConsentsAndLocalConsents(consents: List<Consent>): Pair<List<Consent>, List<Consent>> {
-  val localConsentIds = LocalConsentOptions.getLocalConsents().map(Consent::getId)
+  val localConsentIds = LocalConsentOptions.getLocalConsents().first.map(Consent::getId)
   return consents.partition { consent -> consent.id !in localConsentIds }
 }
 

@@ -36,7 +36,7 @@ public final class ConsentConfigurable extends ConfigurableBase<ConsentSettingsU
       @Override
       public void apply(@NotNull List<Consent> consents) {
         super.apply(consents);
-        List<String> localSettingIds = ContainerUtil.map(LocalConsentOptions.INSTANCE.getLocalConsents(), Consent::getId);
+        List<String> localSettingIds = ContainerUtil.map(LocalConsentOptions.INSTANCE.getLocalConsents().getFirst(), Consent::getId);
         AppUIUtil.saveConsents(ContainerUtil.filter(consents, consent -> !localSettingIds.contains(consent.getId())));
         AppUIUtil.saveConsentsAsLocalConsents(ContainerUtil.filter(consents, consent -> localSettingIds.contains(consent.getId())));
       }
