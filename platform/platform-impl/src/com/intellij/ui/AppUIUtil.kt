@@ -186,6 +186,14 @@ private fun removeTraceLocalConsents(localConsents: MutableList<Consent>) {
   }
 }
 
+private fun removeTraceConsents(consents: MutableList<Consent>) { // IJPL-208500, IJPL-212133
+  consents.removeIf { consent ->
+    ConsentOptions.condTraceDataCollectionConsent().test(consent) ||
+    ConsentOptions.condTraceDataCollectionComConsent().test(consent) ||
+    ConsentOptions.condTraceDataCollectionNonComConsent().test(consent)
+  }
+}
+
 object AppUIUtil {
   @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
@@ -347,8 +355,8 @@ object AppUIUtil {
         result.addAll(consents)
       }
     }
-    result.removeIf(ConsentOptions.condTraceDataCollectionConsent()) // IJPL-208500
-    result.removeIf(ConsentOptions.condAiDataCollectionConsent()) // IJPL-195651; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
+    removeTraceConsents(result)
+    result.removeIf(ConsentOptions.condAiDataCollectionConsent()) // IJPL-195651 and IJPL-210395; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
     return result
   }
 
