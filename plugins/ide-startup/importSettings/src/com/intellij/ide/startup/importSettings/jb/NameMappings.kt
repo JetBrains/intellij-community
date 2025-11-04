@@ -5,7 +5,9 @@ import com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.*
 import com.intellij.ide.startup.importSettings.data.IconProductSize
 import com.intellij.ide.startup.importSettings.jb.IDEData.Companion.IDE_MAP
 import com.intellij.util.PlatformUtils
+import java.nio.file.Path
 import javax.swing.Icon
+import kotlin.io.path.name
 
 object NameMappings {
 
@@ -94,6 +96,13 @@ enum class IDEData(val code: String,
       else -> {
         null
       }
+    }
+
+    fun getForConfigDir(configDir: Path): IDEData? {
+      return IDEData.IDE_MAP
+        .filter { configDir.name.startsWith(it.key) }
+        .maxByOrNull { it.key.length }
+        ?.value
     }
   }
 }
