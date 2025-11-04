@@ -1079,6 +1079,7 @@
     <annotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkAnnotator" order="last"/>
 
     <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingPanelProvider"/>
+    <problemsViewHighlightingProblemFactory id="default" implementation="com.intellij.analysis.problemsView.toolWindow.DefaultHighlightingProblemFactory"/>
     <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewProjectErrorsPanelProvider"/>
 
     <projectService serviceInterface="com.intellij.analysis.problemsView.ProblemsCollector"
