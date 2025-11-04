@@ -307,8 +307,13 @@ class TranslatingExecutionListener(
   override fun executionSkipped(testDescriptor: TestDescriptor, reason: String) {
     if (!shouldInclude(testDescriptor)) return
 
-    val synthetic = getOrCreateSyntheticDescriptor(testDescriptor)
-    delegate.executionSkipped(synthetic, reason)
+    // Only report skipped if the descriptor was already registered via dynamicTestRegistered or executionStarted
+    val synthetic = descriptorMap[testDescriptor.uniqueId]
+    if (synthetic != null && synthetic.parent.isPresent) {
+      delegate.executionSkipped(synthetic, reason)
+    }
+    // If the descriptor doesn't exist in our map or has no parent,
+    // it means it was filtered out and never registered - silently ignore it
   }
 
   override fun executionStarted(testDescriptor: TestDescriptor) {
