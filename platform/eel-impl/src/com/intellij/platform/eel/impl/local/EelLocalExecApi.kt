@@ -26,6 +26,7 @@ import com.intellij.util.fastutil.skip
 import com.pty4j.PtyProcess
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
@@ -57,6 +58,12 @@ class EelLocalExecPosixApi(
 
   private val loginNonInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
   private val loginInteractiveCache = AtomicReference<Deferred<Map<String, String>>?>()
+
+  @TestOnly
+  fun clearCaches() {
+    loginNonInteractiveCache.set(null)
+    loginInteractiveCache.set(null)
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EnvironmentVariablesDeferred {
@@ -99,7 +106,7 @@ class EelLocalExecPosixApi(
     }
 
     val result = cache.updateAndGet { old ->
-      if (old != null && !opts.onlyActual && !old.isActive) {
+      if (old != null && !opts.onlyActual && old.isCompleted && old.getCompletionExceptionOrNull() == null) {
         old
       }
       else {

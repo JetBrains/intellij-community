@@ -9,8 +9,10 @@ import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.util.*
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -112,38 +114,58 @@ sealed interface EelExecApi {
   @OptIn(EelDelicateApi::class)
   @ApiStatus.Experimental
   @ApiStatus.Obsolete
-  suspend fun fetchLoginShellEnvVariables(): Map<String, String> =
-    when (this) {
+  suspend fun fetchLoginShellEnvVariables(): Map<String, String> {
+    return when (this) {
       is EelExecPosixApi -> {
-        if (this is LocalEelExecApi) {
-          @Suppress("checkedExceptions") environmentVariables().minimal().eelIt().await()
-        }
-        else {
-          var now = 0L
-          // The previous implementation used the same timeout, and in the previous implementation it was chosen as a wild guess.
-          val cacheDuration = 10_000_000_000L
-          val expireAt = cacheForObsoleteEnvVarExpireAt.compute(descriptor) { _, expireAt ->
-            now = System.nanoTime()
-            if (expireAt != null && expireAt <= now) expireAt
-            else now + cacheDuration
-          }!!
-          try {
-            withTimeout(3.seconds) {  // Just a random timeout.
-              environmentVariables().loginInteractive().onlyActual(expireAt <= now).eelIt().await()
-            }
+        var now = 0L
+        val cacheDuration =
+          if (this is LocalEelExecApi) {
+            // The previous implementation of fetchLoginShellEnvVariables for the local Eel had an infinite cache.
+            Long.MAX_VALUE
           }
-          catch (err: Exception) {
-            when (err) {
-              is EnvironmentVariablesException -> Unit
-              is TimeoutCancellationException -> currentCoroutineContext().ensureActive()
-              else -> throw err
-            }
-            environmentVariables().minimal().eelIt().await()
+          else {
+            fetchLoginShellEnvVariablesCacheExpirationTime.inWholeNanoseconds
+          }
+
+        // The previous implementation used the same timeout, and in the previous implementation it was chosen as a wild guess.
+        val (expireAt, completedSuccessfullyLastTime) = cacheForObsoleteEnvVarExpireAt.compute(descriptor) { _, expireAtAndSucceeded ->
+          now = System.nanoTime()
+          when {
+            expireAtAndSucceeded != null && expireAtAndSucceeded.first <= now -> expireAtAndSucceeded
+            cacheDuration == Long.MAX_VALUE -> Long.MAX_VALUE to true
+            else -> now + cacheDuration to true
+          }
+        }!!
+        try {
+          when {
+            expireAt <= now ->
+              return environmentVariables().loginInteractive().onlyActual(true).eelIt().await()
+
+            completedSuccessfullyLastTime ->
+              return environmentVariables().loginInteractive().onlyActual(false).eelIt().await()
+
+            else -> Unit
           }
         }
+        catch (err: Exception) {
+          cacheForObsoleteEnvVarExpireAt.compute(descriptor) { _, expireAtAndSucceeded ->
+            if (expireAtAndSucceeded == expireAt to true)
+              expireAt to false
+            else
+              expireAtAndSucceeded
+          }
+          when (err) {
+            is EnvironmentVariablesException -> Unit
+            is TimeoutCancellationException -> currentCoroutineContext().ensureActive()
+            else -> throw err
+          }
+        }
+        @Suppress("checkedExceptions")
+        environmentVariables().minimal().eelIt().await()
       }
       is EelExecWindowsApi -> @Suppress("checkedExceptions") environmentVariables().eelIt().await()
     }
+  }
 
   /**
    * Gets the same environment variables on the remote machine as the user would get.
@@ -464,4 +486,16 @@ suspend fun EelExecApi.getShell(): Pair<EelPath, String> {
 @ApiStatus.Internal
 interface LocalEelExecApi
 
-private val cacheForObsoleteEnvVarExpireAt = Collections.synchronizedMap(WeakHashMap<EelDescriptor, Long>())
+/**
+ * Value:
+ * * Cache write time in nanoseconds
+ * * `true` if the cache corresponds to a success record, false otherwise.
+ */
+@ApiStatus.Internal
+@VisibleForTesting
+val cacheForObsoleteEnvVarExpireAt: MutableMap<EelDescriptor, Pair<Long, Boolean>> = Collections.synchronizedMap(WeakHashMap())
+
+// The previous implementation used the same timeout, and in the previous implementation it was chosen as a wild guess.
+@ApiStatus.Internal
+@VisibleForTesting
+var fetchLoginShellEnvVariablesCacheExpirationTime: Duration = 10.seconds
