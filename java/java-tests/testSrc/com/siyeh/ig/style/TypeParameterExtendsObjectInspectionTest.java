@@ -39,6 +39,14 @@ public class TypeParameterExtendsObjectInspectionTest extends LightJavaInspectio
         public @interface NullMarked {}""";
     myFixture.addClass(nullMarked);
 
+    @Language("JAVA") String nullUnmarked =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target({ElementType.TYPE, ElementType.METHOD})
+        public @interface NullUnmarked {}""";
+    myFixture.addClass(nullUnmarked);
+
     doTest();
   }
 

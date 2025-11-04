@@ -1,4 +1,5 @@
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.NullUnmarked;
 
 class TypeParameterExtendsObjectWithContainerAnnotation {
   @NullMarked
@@ -6,6 +7,9 @@ class TypeParameterExtendsObjectWithContainerAnnotation {
     Lib<?> t();
 
     void checkNeverNull(Lib<? extends Object> lib);
+
+    @NullUnmarked
+    void checkNeverNull2(Lib<<warning descr="Wildcard type argument '?' explicitly extends 'java.lang.Object'">?</warning> extends Object> lib);
   }
 }
 
