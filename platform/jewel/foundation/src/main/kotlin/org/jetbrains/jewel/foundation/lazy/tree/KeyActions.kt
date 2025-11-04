@@ -353,3 +353,19 @@ public open class DefaultSelectableLazyColumnKeyActions(
         }
     }
 }
+
+@ApiStatus.Internal
+@InternalJewelApi
+public object NoopListKeyActions : KeyActions {
+    override val keybindings: SelectableColumnKeybindings
+        get() = DefaultSelectableColumnKeybindings
+
+    override val actions: SelectableColumnOnKeyEvent = DefaultSelectableOnKeyEvent(keybindings)
+
+    override fun handleOnKeyEvent(
+        event: KeyEvent,
+        keys: List<SelectableLazyListKey>,
+        state: SelectableLazyListState,
+        selectionMode: SelectionMode,
+    ): KeyEvent.() -> Boolean = { false }
+}
