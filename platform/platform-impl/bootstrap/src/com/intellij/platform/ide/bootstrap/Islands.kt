@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
   val app = ApplicationManager.getApplication()
-  if (!app.isEAP || app.isUnitTestMode || app.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
+  if (app.isUnitTestMode || app.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
     return
   }
 
