@@ -498,6 +498,16 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       if (shouldRestart) {
         withContext(Dispatchers.EDT) {
           logger.info("Calling restart...")
+          runCatching {
+            val properties = listOf(
+              InitialConfigImportState.FIRST_SESSION_KEY to true.toString(),
+              InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY to true.toString(),
+              InitialConfigImportState.CONFIG_IMPORTED_FROM_PATH to productInfo.configDir.toString(),
+            )
+            CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile()
+          }.onFailure {
+            logger.warn("Could not write config migration options", it)
+          }
           ApplicationManagerEx.getApplicationEx().restart(true)
         }
       }

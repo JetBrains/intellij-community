@@ -56,11 +56,12 @@ object InitialConfigImportState {
   @JvmStatic
   @Throws(IOException::class)
   fun writeOptionsForRestart(newConfigDir: Path) {
-    val properties = ArrayList<String>()
-    properties.add(FIRST_SESSION_KEY)
-    if (isConfigImported()) {
-      properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)
+    val properties = buildList {
+      add(FIRST_SESSION_KEY)
+      if (isConfigImported()) {
+        add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY)
+      }
     }
-    SetProperties(properties).writeConfigMarkerFile(newConfigDir)
+    SetProperties.setToTrue(properties).writeConfigMarkerFile(newConfigDir)
   }
 }

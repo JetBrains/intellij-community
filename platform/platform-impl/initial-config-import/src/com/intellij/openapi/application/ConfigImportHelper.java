@@ -122,8 +122,8 @@ public final class ConfigImportHelper {
 
     if (migrationOption instanceof CustomConfigMigrationOption.SetProperties sp) {
       var properties = sp.getProperties();
-      log.info("Enabling system properties after restart: " + properties);
-      for (var property : properties) System.setProperty(property, Boolean.TRUE.toString());
+      log.info("Setting system properties after restart: " + properties);
+      for (var property : properties) System.setProperty(property.getFirst(), property.getSecond());
       return;
     }
     else if (migrationOption instanceof CustomConfigMigrationOption.MigratePluginsFromCustomPlace migratePluginsOption) {
