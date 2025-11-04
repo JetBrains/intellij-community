@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
@@ -496,8 +495,14 @@ class SePopupContentPane(
 
   private suspend fun refreshPresentations() {
     val currentTab = vmState.value?.currentTab ?: return
-    val visibleRange = resultList.firstVisibleIndex..resultList.lastVisibleIndex
-    val visibleRows = visibleRange.mapNotNull { resultListModel.get(it) as? SeResultListItemRow }
+
+    val listSize = resultListModel.size
+    val firstIndex = resultList.firstVisibleIndex.takeIf { it in 0..<listSize } ?: return
+    val lastIndex = resultList.lastVisibleIndex.takeIf { it in 0..<listSize && it >= firstIndex} ?: return
+
+    val visibleRows = (firstIndex..lastIndex).mapNotNull {
+      resultListModel.get(it) as? SeResultListItemRow
+    }
 
     coroutineScope {
       visibleRows.forEach { itemRow ->
