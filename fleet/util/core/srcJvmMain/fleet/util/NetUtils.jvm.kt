@@ -1,13 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.util
 
-import fleet.multiplatform.shims.ConcurrentHashSet
+import fleet.multiplatform.shims.MultiplatformConcurrentHashSet
 import java.net.InetAddress
 import java.net.ServerSocket
 import kotlin.random.Random
 import kotlin.random.nextInt
 
-private val used = ConcurrentHashSet<Int>()
+private val used = MultiplatformConcurrentHashSet<Int>()
 
 // https://en.wikipedia.org/wiki/Ephemeral_port
 private val portsRange = (1 shl 15) + (1 shl 14) until (1 shl 16)

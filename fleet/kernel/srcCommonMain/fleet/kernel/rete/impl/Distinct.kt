@@ -2,19 +2,19 @@
 package fleet.kernel.rete.impl
 
 import fleet.kernel.rete.*
-import fleet.multiplatform.shims.ConcurrentHashSet
+import fleet.multiplatform.shims.MultiplatformConcurrentHashSet
 
 internal fun <T : Any> SubscriptionScope.distinct(producer: Producer<T>): Producer<T> =
   run {
     val broadcast = Broadcaster<T>()
-    val memory = HashMap<T, MutableSet<Match<T>>>()
+    val memory = HashMap<T, MultiplatformConcurrentHashSet<Match<T>>>()
     producer.collect { token ->
       val v = token.match.value
       when (token.added) {
         true -> {
           when (val matches = memory[v]) {
             null -> {
-              val ms = ConcurrentHashSet<Match<T>>()
+              val ms = MultiplatformConcurrentHashSet<Match<T>>()
               memory[v] = ms
               ms.add(token.match)
               broadcast(Token(true, distinctMatchValue(v, ms)))
@@ -29,7 +29,7 @@ internal fun <T : Any> SubscriptionScope.distinct(producer: Producer<T>): Produc
             if (matches.remove(token.match)) {
               if (matches.isEmpty()) {
                 memory.remove(v)
-                broadcast(Token(false, distinctMatchValue(v, emptySet())))
+                broadcast(Token(false, distinctMatchValue(v, MultiplatformConcurrentHashSet.empty())))
               }
             }
           }
@@ -44,7 +44,7 @@ internal fun <T : Any> SubscriptionScope.distinct(producer: Producer<T>): Produc
     }
   }
 
-private fun <T> distinctMatchValue(v: T, ms: Set<Match<T>>): Match<T> =
+private fun <T> distinctMatchValue(v: T, ms: MultiplatformConcurrentHashSet<Match<T>>): Match<T> =
   Match.validatable(v) {
     val anyValid = ms.any { match ->
       match.validate() == ValidationResultEnum.Valid
