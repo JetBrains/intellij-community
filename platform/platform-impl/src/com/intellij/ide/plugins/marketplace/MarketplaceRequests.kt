@@ -9,8 +9,7 @@ import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.auth.PluginRepositoryAuthService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
-import com.intellij.ide.plugins.marketplace.utils.buildEncodedArchParameter
-import com.intellij.ide.plugins.marketplace.utils.buildEncodedOsParameter
+import com.intellij.ide.plugins.marketplace.utils.buildOsParameter
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
 import com.intellij.ide.plugins.newui.PluginUiModelBuilderFactory
@@ -34,6 +33,7 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.util.PlatformUtils
+import com.intellij.util.Urls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.HttpRequests
@@ -43,7 +43,6 @@ import com.intellij.util.io.write
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import com.intellij.util.ui.IoErrorText
-import com.intellij.util.withQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.delay
@@ -59,10 +58,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InterruptedIOException
 import java.net.HttpURLConnection
-import java.net.URI
 import java.net.URLConnection
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -215,28 +211,29 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       try {
         if (ids.isEmpty()) return emptyList()
 
-        val url = URI(MarketplaceUrls.getSearchPluginsUpdatesUrl())
         val machineId = if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates") // same as regular updates
             .takeIf { !PropertiesComponent.getInstance().getBoolean(UpdateCheckerFacade.MACHINE_ID_DISABLED_PROPERTY, false) }
         }
         else null
 
-        val query = buildString {
-          append("build=${ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber)}")
-          append("&os=${buildEncodedOsParameter()}")
-          append("&arch=${buildEncodedArchParameter()}")
+        val params = buildMap {
+          put("build", ApplicationInfoImpl.orFromPluginCompatibleBuild(buildNumber))
+          put("os", buildOsParameter())
+          put("arch", CpuArch.CURRENT.name)
           if (machineId != null && updateCheck) {
-            append("&mid=$machineId")
+            put("mid", machineId)
           }
-          for (id in ids) {
-            append("&pluginXmlId=${URLEncoder.encode(id.idString, StandardCharsets.UTF_8)}")
+          ids.forEach {
+            put("pluginXmlId", it.idString)
           }
         }
 
-        val urlString = url.withQuery(query).toString()
+        val url = Urls.newFromEncoded(MarketplaceUrls.getSearchPluginsUpdatesUrl())
+          .addParameters(params)
+          .toExternalForm()
 
-        return HttpRequests.request(urlString)
+        return HttpRequests.request(url)
           .accept(HttpRequests.JSON_CONTENT_TYPE)
           .setHeadersViaTuner()
           .productNameAsUserAgent()
