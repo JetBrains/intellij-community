@@ -45,10 +45,9 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
     private final ConfigurationModuleSelector moduleSelector;
     private final Project project;
 
-    private static ClassBrowser createApplicationClassBrowser(
+    private ClassBrowser createApplicationClassBrowser(
             Project project,
-            Computable<? extends Module> moduleSelector,
-            LabeledComponent<ModuleDescriptionsComboBox> moduleChooser
+            Computable<? extends Module> moduleSelector
     ) {
         ClassFilter applicationClass =
                 aClass -> aClass instanceof KtLightClass &&
@@ -121,7 +120,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
     private void createUIComponents() {
         mainClassEditorField = new LabeledComponent<>();
         mainClassEditorField.setComponent(ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), VISIBILITY_CHECKER,
-                                                                            createApplicationClassBrowser(project, () -> moduleSelector.getModule(), moduleChooser)));
+                                                                            createApplicationClassBrowser(project, () -> moduleSelector.getModule())));
     }
 
     @Override

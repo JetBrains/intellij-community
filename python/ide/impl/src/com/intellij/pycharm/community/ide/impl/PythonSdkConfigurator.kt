@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -71,6 +72,12 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return
     }
     if (PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()?.isNotBlank() == true) {
+      return
+    }
+    /*
+     * We have an explicit SDK configuration for the welcome project, so we have to skip this configurator.
+     */
+    if (WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
       return
     }
 
@@ -234,7 +241,8 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdkCreator == null) {
       return false
     }
-    return sdkCreator(true).getOrLogException(thisLogger()) != null
+    sdkCreator(true).getOrLogException(thisLogger())
+    return true
   }
 
   private suspend fun searchPreviousUsed(

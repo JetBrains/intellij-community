@@ -33,6 +33,7 @@
     <extensionPoint qualifiedName="com.intellij.javadocTagInfo" area="IDEA_PROJECT" interface="com.intellij.psi.javadoc.JavadocTagInfo" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.importFilter" interface="com.intellij.codeInsight.ImportFilter" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javaMainMethodProvider" interface="com.intellij.codeInsight.runner.JavaMainMethodProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.java.expressionTypeNullabilityPatcher" interface="com.intellij.codeInsight.JavaExpressionTypeNullabilityPatcher" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.superMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.deepestSuperMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.multiReleaseSupport" interface="com.intellij.psi.util.JavaMultiReleaseModuleSupport" dynamic="true"/>

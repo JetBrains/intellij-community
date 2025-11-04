@@ -3,9 +3,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightUtilCore;
-import com.intellij.codeInspection.dataFlow.ContractReturnValue;
-import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.codeInspection.dataFlow.MutationSignature;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.java.codeserver.core.JavaPsiReferenceUtil;
 import com.intellij.java.codeserver.core.JavaPsiReferenceUtil.ForwardReferenceProblem;
 import com.intellij.java.syntax.parser.JavaKeywords;
@@ -30,6 +28,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -1655,5 +1654,61 @@ public final class ExpressionUtils {
       return false;
     }
     return codeBlock.getStatementCount() == 1;
+  }
+
+  /**
+   * @param expression expression to test
+   * @return true if this expression represents a predicate-like function (accepting one parameter and returning a boolean value),
+   * which returns false for null values (may return false for some non-null values as well). This method is pattern-based,
+   * so it may not recognize specific patterns.
+   */
+  public static boolean isNullFilteringFunction(@NotNull PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiLambdaExpression lambda) {
+      PsiParameter[] parameters = lambda.getParameterList().getParameters();
+      if (parameters.length != 1) return false;
+      PsiParameter parameter = parameters[0];
+      PsiExpression expr = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
+      while (expr instanceof PsiPolyadicExpression polyadicExpression) {
+        if (polyadicExpression.getOperationTokenType() == JavaTokenType.ANDAND) {
+          expr = polyadicExpression.getOperands()[0];
+          continue;
+        }
+        return getVariableFromNullComparison(expr, false) == parameter;
+      }
+      PsiExpression negated = BoolUtils.getNegated(expr);
+      boolean nullTrue = false;
+      if (negated != null) {
+        expr = negated;
+        nullTrue = true;
+      }
+      if (expr instanceof PsiInstanceOfExpression instanceOf && isReferenceTo(instanceOf.getOperand(), parameter)) {
+        return !nullTrue;
+      }
+      if (expr instanceof PsiMethodCallExpression call) {
+        PsiMethod method = call.resolveMethod();
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (args.length == 0) return false;
+        return isNullFilteringMethod(method, nullTrue, arg -> isReferenceTo(args[arg], parameter));
+      }
+    }
+    if (expression instanceof PsiMethodReferenceExpression methodRef && methodRef.resolve() instanceof PsiMethod method) {
+      return isNullFilteringMethod(method, false, arg -> arg == 0);
+    }
+    return false;
+  }
+
+  private static boolean isNullFilteringMethod(@Nullable PsiMethod method, boolean nullTrue, @NotNull IntPredicate isWantedArg) {
+    if (method == null || !JavaMethodContractUtil.isPure(method)) return false;
+    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
+    for (MethodContract contract : contracts) {
+      if (!(ContainerUtil.getOnlyItem(contract.getConditions()) instanceof ContractValue.Condition condition)) return false;
+      int argEqNull = condition.getArgumentComparedTo(ContractValue.nullValue(), true).orElse(-1);
+      if (argEqNull != -1 && isWantedArg.test(argEqNull)) {
+        ContractReturnValue value = contract.getReturnValue();
+        return value.equals(ContractReturnValue.returnBoolean(nullTrue));
+      }
+    }
+    return false;
   }
 }

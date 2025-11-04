@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.EditorInfo;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,6 +45,16 @@ public class JavaTypeProviderTest extends LightJavaCodeInsightTestCase {
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Type:</td><td>double</td></tr>" +
            "<tr><td align=\"left\" style=\"color:#909090\" valign=\"top\">Range:</td><td>&lt;= 0.5 || &gt;= 1.8 (or NaN)</td></tr>" +
            "</table>");
+  }
+
+  @TestFor(issues = "IDEA-381645")
+  public void testGenericNoHint() {
+    doTest("""
+             void test(java.util.Optional<java.util.List<String>> opt) {
+                 System.out.println(<selection>opt</selection>);
+             }
+             }}""", "Optional&lt;List&lt;String&gt;&gt;", 
+           "Optional&lt;List&lt;String&gt;&gt;");
   }
   
   public void testFloatConstantHint() {

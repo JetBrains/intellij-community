@@ -328,6 +328,7 @@ public final class FileBasedIndexScanUtil {
     }
   }
 
+  /** @return true if this index is not automatically updated, but needs to be updated explicitly */
   public static boolean isManuallyManaged(@NotNull ID<?, ?> id) {
     return id == TodoIndexId.INSTANCE.getName();
   }

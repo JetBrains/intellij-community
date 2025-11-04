@@ -112,7 +112,6 @@ interface XDebugSessionProxy {
   suspend fun runToPosition(position: XSourcePosition, ignoreBreakpoints: Boolean)
   suspend fun resume()
   suspend fun pause()
-  suspend fun switchToTopFrame()
 
   companion object {
     @JvmField
@@ -330,12 +329,6 @@ interface XDebugSessionProxy {
     override suspend fun resume() {
       withContext(Dispatchers.EDT) {
         session.resume()
-      }
-    }
-
-    override suspend fun switchToTopFrame() {
-      withContext(Dispatchers.EDT) {
-        session.showExecutionPoint()
       }
     }
 

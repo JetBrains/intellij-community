@@ -128,7 +128,7 @@ class Maven4ModelVersionErrorParser(
   override fun processLogLine(project: Project, logLine: String, reader: BuildOutputInstantReader?, messageConsumer: Consumer<in BuildEvent>): Boolean {
     val buildIssue = createBuildIssue(logLine, project) ?: return false
     val console = eventHandlerProvider(project)
-    val kind = MessageEvent.Kind.WARNING
+    val kind = if(logLine.startsWith("[ERROR]")) MessageEvent.Kind.ERROR else MessageEvent.Kind.WARNING
     console.addBuildIssue(buildIssue, kind)
     return true
   }

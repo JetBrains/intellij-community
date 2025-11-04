@@ -20,9 +20,11 @@ import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
 import org.intellij.lang.annotations.Language
+import java.awt.Color
 import java.awt.Point
 import java.awt.Rectangle
 import kotlin.time.Duration
+import com.intellij.openapi.editor.markup.EffectType
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
@@ -247,6 +249,18 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
   fun getAllHighlights(): List<HighlightInfo> = editor.getMarkupModel().getAllHighlighters().mapNotNull {
     driver.utility(HighlightInfo::class).fromRangeHighlighter(it)
   } + driver.getHighlights(editor.getDocument())
+
+  fun getAllHighlightersTextAttributes() : List<TextAttributes> = editor.getMarkupModel().getAllHighlighters().mapNotNull {
+        val attrs = it.getTextAttributes() ?: return@mapNotNull null
+        TextAttributes(
+            it.getStartOffset(),
+            it.getEndOffset(),
+            EffectType.valueOf(attrs.getEffectType().toString()),
+            attrs.getEffectColor()?.run { Color(getRGB()) }
+          )
+      }
+
+    data class TextAttributes(val startOffset: Int, val endOffset: Int, val effectType: EffectType, val effectColor: Color?)
 }
 
 @Remote("com.jetbrains.performancePlugin.utils.IntentionActionUtils", plugin = "com.jetbrains.performancePlugin")
@@ -396,11 +410,20 @@ fun Finder.editorSearchReplace(@Language("xpath") xpath: String? = null, action:
 class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val searchField = textField { and(byClass("JBTextArea"), byAccessibleName("Search")) }
   val replaceField = textField { and(byClass("JBTextArea"), byAccessibleName("Replace")) }
+  val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
+  val newLineButton = actionButton { byAccessibleName("New Line") }
+  val matchCaseButton = actionButton { byAccessibleName("Match Case") }
+  val regexButton = actionButton { byAccessibleName("Regex") }
+  val preserveCaseButton = actionButton { byAccessibleName("Preserve case") }
   val matchesLabel = x("//div[@class='ActionToolbarImpl']//div[@class='JLabel']")
   val nextOccurrenceButton = actionButton { byAccessibleName("Next Occurrence") }
   val previousOccurrenceButton = actionButton { byAccessibleName("Previous Occurrence") }
-  val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
+  val filterSearchResultsButton = actionButton { byAccessibleName("Filter Search Results") }
   val optionsButton = actionButton { byAccessibleName("Open in Window, Multiple Cursors") }
+  val replaceButton = actionButton { byVisibleText("Replace") }
+  val replaceAllButton = actionButton { byAccessibleName("Replace All") }
+  val excludeButton = actionButton { byAccessibleName("Exclude") }
+  val closeSearchReplaceButton = actionButton { byAccessibleName("Close") }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")

@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.jdk;
 
 import com.siyeh.InspectionGadgetsBundle;
@@ -17,4 +18,5 @@ public class VarargParameterFixTest extends IGQuickFixesTestCase {
   public void testGenericType() { doTest(); }
   public void testEnumConstants() { doTest(); }
   public void testConstructorCall() { doTest(); }
+  public void testJavadocReference() { doTest(); }
 }

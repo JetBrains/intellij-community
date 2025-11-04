@@ -4,6 +4,8 @@ package com.intellij.platform.debugger.impl.backend
 import com.intellij.execution.RunContentDescriptorIdImpl
 import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.openapi.editor.impl.findEditorOrNull
 import com.intellij.platform.debugger.impl.rpc.*
@@ -28,6 +30,7 @@ import fleet.rpc.core.toRpc
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
@@ -107,33 +110,38 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun createSessionEvents(currentSession: XDebugSessionImpl, initialSessionState: XDebugSessionState): Flow<XDebuggerSessionEvent> = channelFlow {
+    // Offload serialization from listener to background
+    val rawEvents = Channel<() -> XDebuggerSessionEvent>(Channel.UNLIMITED)
+
     val listener = object : XDebugSessionListener {
       override fun sessionPaused() {
-        trySend(XDebuggerSessionEvent.SessionPaused(currentSession.state(), currentSession.suspendData()))
+        rawEvents.trySend { XDebuggerSessionEvent.SessionPaused(currentSession.state(), currentSession.suspendData()) }
       }
 
       override fun sessionResumed() {
-        trySend(XDebuggerSessionEvent.SessionResumed(currentSession.state()))
+        rawEvents.trySend { XDebuggerSessionEvent.SessionResumed(currentSession.state()) }
       }
 
       override fun sessionStopped() {
-        trySend(XDebuggerSessionEvent.SessionStopped(currentSession.state()))
+        rawEvents.trySend { XDebuggerSessionEvent.SessionStopped(currentSession.state()) }
       }
 
       override fun beforeSessionResume() {
-        trySend(XDebuggerSessionEvent.BeforeSessionResume(currentSession.state()))
+        rawEvents.trySend { XDebuggerSessionEvent.BeforeSessionResume(currentSession.state()) }
       }
 
       override fun stackFrameChanged() {
         val suspendScope = currentSession.currentSuspendCoroutineScope ?: return
-        val stackFrameDto = currentSession.currentStackFrame?.toRpc(suspendScope, currentSession)
-        trySend(XDebuggerSessionEvent.StackFrameChanged(
-          currentSession.state(),
-          currentSession.currentPosition?.toRpc(),
-          currentSession.topFramePosition?.toRpc(),
-          currentSession.isTopFrameSelected,
-          stackFrameDto,
-        ))
+        rawEvents.trySend {
+          val stackFrameDto = currentSession.currentStackFrame?.toRpc(suspendScope, currentSession)
+          XDebuggerSessionEvent.StackFrameChanged(
+            currentSession.state(),
+            currentSession.currentPosition?.toRpc(),
+            currentSession.topFramePosition?.toRpc(),
+            currentSession.isTopFrameSelected,
+            stackFrameDto,
+          )
+        }
       }
 
       override fun stackFrameChanged(changedByUser: Boolean) {
@@ -144,11 +152,11 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
       }
 
       override fun settingsChanged() {
-        trySend(XDebuggerSessionEvent.SettingsChanged)
+        rawEvents.trySend { XDebuggerSessionEvent.SettingsChanged }
       }
 
       override fun breakpointsMuted(muted: Boolean) {
-        trySend(XDebuggerSessionEvent.BreakpointsMuted(muted))
+        rawEvents.trySend { XDebuggerSessionEvent.BreakpointsMuted(muted) }
       }
     }
     currentSession.addSessionListener(listener, this.asDisposable())
@@ -162,8 +170,14 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
     else if (!currentSession.isPaused && initialSessionState.isPaused) {
       listener.sessionResumed()
     }
-    awaitClose()
-  }.buffer(Channel.UNLIMITED)
+
+    rawEvents.consumeEach { eventProducer ->
+      val element = fileLogger().runAndLogException {
+        eventProducer()
+      } ?: return@consumeEach
+      send(element)
+    }
+  }.buffer()
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun createSessionManagerEvents(projectId: ProjectId, initialSessionIds: Set<XDebugSessionId>): Flow<XDebuggerManagerSessionEvent> {

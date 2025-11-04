@@ -5,13 +5,29 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethod;
 import org.jetbrains.annotations.NotNull;
 
-public class GrTraitMethod extends LightMethod implements PsiMirrorElement {
+import java.util.concurrent.locks.ReentrantLock;
 
+public class GrTraitMethod extends LightMethod implements PsiMirrorElement {
+  private final ReentrantLock myLock = new ReentrantLock();
+  private boolean isNavigationMethodSet = false;
   public GrTraitMethod(@NotNull PsiClass containingClass,
                        @NotNull PsiMethod method,
                        @NotNull PsiSubstitutor substitutor) {
     super(containingClass.getManager(), method, containingClass, containingClass.getLanguage(), substitutor);
-    setNavigationElement(method);
+  }
+
+  @Override
+  public @NotNull PsiElement getNavigationElement() {
+    try {
+      myLock.lock();
+      if (!isNavigationMethodSet) {
+        isNavigationMethodSet = true;
+        setNavigationElement(myMethod);
+      }
+    } finally {
+      myLock.unlock();
+    }
+    return super.getNavigationElement();
   }
 
   @Override

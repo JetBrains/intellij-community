@@ -56,7 +56,7 @@ final class FunctionChecker {
         }
       }
     }
-    if (qualifier instanceof PsiTypeElement typeElement) {
+    if (qualifier instanceof PsiTypeElement typeElement && expression.isConstructor()) {
       PsiType psiType = typeElement.getType();
       if (psiType instanceof PsiClassType) {
         final PsiJavaCodeReferenceElement referenceElement = typeElement.getInnermostComponentReferenceElement();

@@ -57,9 +57,9 @@ public final class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate 
         }
       }
     }
-    else if (element instanceof PsiDocMethodOrFieldRef) {
-      String[] signature = ((PsiDocMethodOrFieldRef)element).getSignature();
-      PsiElement nameElement = ((PsiDocMethodOrFieldRef)element).getNameElement();
+    else if (element instanceof PsiDocMethodOrFieldRef ref) {
+      String[] signature = ref.getSignature();
+      PsiElement nameElement = ref.getNameElement();
       if (signature != null && nameElement != null) {
         final @NonNls StringBuffer newText = new StringBuffer();
         newText.append("/** @see #").append(nameElement.getText()).append('(');

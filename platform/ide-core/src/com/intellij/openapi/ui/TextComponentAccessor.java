@@ -2,7 +2,9 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,10 +19,15 @@ import java.awt.*;
 public interface TextComponentAccessor<T extends Component> {
   /**
    * Get text from component
+   * <p>
+   *   Note that this method is declared {@code @Nullable} for backwards compatibility.
+   *   In actual implementations it's recommended to override it to return {@code @NotNull}.
+   * </p>
+   *
    * @param component a component to examine
    * @return the text (possibly adjusted)
    */
-  @NlsSafe String getText(T component);
+  @NlsSafe @Nullable String getText(T component);
 
   /**
    * Set text to the component
@@ -55,8 +62,8 @@ public interface TextComponentAccessor<T extends Component> {
    */
   TextComponentAccessor<JTextField> TEXT_FIELD_WHOLE_TEXT = new TextComponentAccessor<>() {
     @Override
-    public String getText(JTextField textField) {
-      return textField.getText();
+    public @NotNull String getText(JTextField textField) {
+      return StringUtil.notNullize(textField.getText());
     }
 
     @Override
@@ -70,8 +77,11 @@ public interface TextComponentAccessor<T extends Component> {
    */
   TextComponentAccessor<JComboBox> STRING_COMBOBOX_WHOLE_TEXT = new TextComponentAccessor<>() {
     @Override
-    public String getText(JComboBox comboBox) {
-      Object item = comboBox.getEditor().getItem();
+    public @NotNull String getText(JComboBox comboBox) {
+      var editor = comboBox.getEditor();
+      if (editor == null) return "";
+      Object item = editor.getItem();
+      if (item == null) return "";
       return item.toString();
     }
 

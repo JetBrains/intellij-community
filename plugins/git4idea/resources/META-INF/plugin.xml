@@ -20,8 +20,8 @@
   <xi:include href="intellij.vcs.git.xml"/>
 
   <content namespace="jetbrains">
-    <module name="intellij.vcs.git/localHistory"/>
-    <module name="intellij.vcs.git/terminal"/>
+    <module name="intellij.vcs.git.localHistory"/>
+    <module name="intellij.vcs.git.terminal"/>
     <module name="intellij.vcs.git.coverage"/>
     <!--It makes sense to reconsider this dependency in the future
     by moving intellij.vcs.git to intellij.vcs.git.backend and making content of this module shared-->

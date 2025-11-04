@@ -62,7 +62,10 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
         else {
           val evictionTrackingDuration = currentTime - cacheEvictionTrackingStart
           if (evictionTrackingDuration > HIGH_CACHE_EVICTION_RATE_MIN_DURATION) {
-            val dump = dumpState(cacheEvictionRate)
+            val dump = buildString {
+              appendLine("Too high cache eviction rate detected")
+              dumpState(this, cacheEvictionRate)
+            }
             val attachment = Attachment("codeStyleCacheDump.txt", dump)
             val threadDump = ThreadDumper.dumpThreadsToString()
             val attachment2 = Attachment("threadDump.txt", threadDump)
@@ -81,10 +84,9 @@ class TooFrequentCodeStyleComputationWatcher(val project: Project) {
     lastCacheAccessTime = currentTime
   }
 
+  @ApiStatus.Internal
   @Synchronized
-  internal fun dumpState(currentEvictionRate: Double): String {
-    val sb = StringBuilder()
-    sb.appendLine("Too high cache eviction rate detected")
+  fun dumpState(sb: StringBuilder, currentEvictionRate: Double): String {
     sb.appendLine("Opened editors:")
     EditorFactory.getInstance().editorList
       .filter { it.project == project }

@@ -39,7 +39,7 @@ private val LOG = logger<ChangedFilesCollector>()
 private const val MIN_CHANGES_TO_PROCESS_ASYNC = 20
 
 /**
- * Collects file changes supplied from VFS via [AsyncFileListener] into [myEventMerger].
+ * Collects file changes supplied from VFS via [AsyncFileListener] into [eventMerger].
  * Collected changes could be accessed via [getEventMerger]
  */
 @ApiStatus.Internal
@@ -80,7 +80,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
         // so we don't need to clear collectors.
         return@runReadAction
       }
-      processFilesInReadAction(VfsEventProcessor { true })
+      processFilesInReadAction { true }
     }
   }
 
@@ -152,7 +152,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
       return
     }
 
-    vfsEventsExecutor.execute(Runnable {
+    vfsEventsExecutor.execute {
       try {
         processFilesInReadActionWithYieldingToWriteAction()
 
@@ -173,7 +173,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
       finally {
         scheduledVfsEventsWorkers.decrementAndGet()
       }
-    })
+    }
   }
 
   fun processFilesToUpdateInReadAction() {
@@ -183,10 +183,11 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
 
       override fun process(info: VfsEventsMerger.ChangeInfo): Boolean {
         LOG.debug("Processing ", info)
+        val fileId = info.fileId
         try {
           val fileId = info.getFileId()
           val file = info.file
-          val dirtyQueueProjects = dirtyFiles.getProjects(info.getFileId())
+          val dirtyQueueProjects = dirtyFiles.getProjects(fileId)
           if (info.isTransientStateChanged) {
             fileBasedIndex.doTransientStateChangeForFile(fileId, file, dirtyQueueProjects)
           }
@@ -199,6 +200,8 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
           if (info.isFileAdded) {
             fileBasedIndex.scheduleFileForIncrementalIndexing(fileId, file, /*onlyContentChanged: */false, dirtyQueueProjects)
           }
+
+
           if (StubIndexImpl.PER_FILE_ELEMENT_TYPE_STUB_CHANGE_TRACKING_SOURCE ==
             StubIndexImpl.PerFileElementTypeStubChangeTrackingSource.ChangedFilesCollector) {
             perFileElementTypeUpdateProcessor.processUpdate(file)
@@ -211,7 +214,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
           throw t
         }
         finally {
-          dirtyFiles.removeFile(info.getFileId())
+          dirtyFiles.removeFile(fileId)
         }
         return true
       }
@@ -242,12 +245,12 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
         override fun process(changeInfo: VfsEventsMerger.ChangeInfo): Boolean {
           withLock(fileBasedIndex.writeLock) {
             try {
-              ProgressManager.getInstance().executeNonCancelableSection(Runnable {
+              ProgressManager.getInstance().executeNonCancelableSection {
                 processor.process(changeInfo)
-              })
+              }
             }
             finally {
-              IndexingStamp.flushCache(changeInfo.getFileId())
+              IndexingStamp.flushCache(changeInfo.fileId)
             }
           }
           return true

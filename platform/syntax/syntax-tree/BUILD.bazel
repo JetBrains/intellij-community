@@ -10,8 +10,8 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
-  name = "platform_syntax_multiplatformSupport_provided",
-  lib = "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport"
+  name = "platform_multiplatformSupport_provided",
+  lib = "//platform/multiplatformSupport"
 )
 
 jvm_library(
@@ -29,7 +29,7 @@ jvm_library(
     "//platform/syntax/syntax-i18n:i18n",
     "//platform/syntax/syntax-extensions:extensions",
     "//platform/syntax/syntax-util:util",
-    ":platform_syntax_multiplatformSupport_provided",
+    ":platform_multiplatformSupport_provided",
   ]
 )
 ### auto-generated section `build intellij.platform.syntax.tree` end

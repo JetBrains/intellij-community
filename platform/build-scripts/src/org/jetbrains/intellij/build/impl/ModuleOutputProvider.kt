@@ -22,7 +22,7 @@ interface ModuleOutputProvider {
           }
         }
 
-        override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
+        override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
           val url = JpsJavaExtensionService.getInstance().getOutputUrl(/* module = */ module, /* forTests = */ forTests)
           requireNotNull(url) {
             "Output directory for ${module.name} isn't set"
@@ -37,5 +37,5 @@ interface ModuleOutputProvider {
 
   fun findRequiredModule(name: String): JpsModule
 
-  suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
+  fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
 }

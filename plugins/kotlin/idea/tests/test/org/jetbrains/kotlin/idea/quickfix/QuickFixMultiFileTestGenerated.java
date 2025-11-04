@@ -2885,6 +2885,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             public void testConstVal() throws Exception {
                 runTest("testData/quickfix/modifiers/constVal.before.Main.kt");
             }
+
+            @TestMetadata("constValQualified.before.Main.kt")
+            public void testConstValQualified() throws Exception {
+                runTest("testData/quickfix/modifiers/constValQualified.before.Main.kt");
+            }
         }
     }
 

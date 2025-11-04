@@ -20,9 +20,10 @@ public interface PsiCompiledElement extends PsiElement {
   PsiElement getMirror();
 
   /**
-   * @return a mirror which was obtained via {@link #getMirror()} some time ago, if somebody bothered to called it.
-   * There are no guarantees about lifecycle of this cached element and this method could return null any time whenever it feels like.
-   * It's guaranteed however that this method doesn't call {@link com.intellij.openapi.fileTypes.BinaryFileDecompiler}
+   * Returns the mirror which was obtained via {@link #getMirror()} some time ago, if somebody bothered to call it.
+   * <p>
+   * There are no guarantees about the lifecycle of this cached element, and this method could return null any time, whenever it feels like.
+   * It's guaranteed however that this method doesn't call {@link com.intellij.openapi.fileTypes.BinaryFileDecompiler}.
    */
   @ApiStatus.Internal
   @Nullable

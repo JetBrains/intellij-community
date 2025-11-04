@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
@@ -11,6 +12,7 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.findParentOfType
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
@@ -24,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -42,6 +45,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+import org.jetbrains.kotlin.types.Variance
 
 object K2CreateParameterFromUsageBuilder {
     fun generateCreateParameterAction(element: KtElement): List<IntentionAction>? {
@@ -125,6 +130,24 @@ object K2CreateParameterFromUsageBuilder {
         override fun startInWriteAction(): Boolean = false
         override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = originalExprPointer.element != null
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
+
+        @OptIn(KaExperimentalApi::class)
+        override fun generatePreview(
+            project: Project,
+            editor: Editor,
+            psiFile: PsiFile
+        ): IntentionPreviewInfo {
+            val container = containerPointer.element ?: return IntentionPreviewInfo.EMPTY
+            val originalExpression = originalExprPointer.element ?: return IntentionPreviewInfo.EMPTY
+
+            val typeText = analyze(container) {
+                getExpectedType(originalExpression).render(position = Variance.IN_VARIANCE)
+            }
+            val valVar =
+                if (valVar == CreateParameterUtil.ValVar.VAR) "var " else if (valVar == CreateParameterUtil.ValVar.VAL) "val " else ""
+
+            return IntentionPreviewInfo.CustomDiff(KotlinFileType.INSTANCE, container.name, "", "$valVar${propertyName.quoteIfNeeded()}: $typeText")
+        }
 
         context(_: KaSession)
         private fun getExpectedType(expression: KtExpression): KaType {

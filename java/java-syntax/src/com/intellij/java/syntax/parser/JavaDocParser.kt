@@ -20,6 +20,7 @@ class JavaDocParser(
   val languageLevel: LanguageLevel,
 ) {
   private var braceScope: Int = 0
+  private var closingStatusList: MutableList<Boolean> = mutableListOf() // true for all '{' opening an inline tag
 
   fun parseJavadocReference(parser: JavaParser) {
     parser.referenceParser.parseJavaCodeReference(builder, true, true, false, false)
@@ -67,14 +68,6 @@ class JavaDocParser(
   ) {
     var tokenType = getTokenType()
     if (tokenType === JavaDocSyntaxTokenType.DOC_INLINE_TAG_START) {
-      var braceScope = getBraceScope()
-      if (braceScope > 0) {
-        setBraceScope(braceScope + 1)
-        builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
-        builder.advanceLexer()
-        return
-      }
-
       val tag = builder.mark()
       builder.advanceLexer()
 
@@ -83,30 +76,42 @@ class JavaDocParser(
         tag.rollbackTo()
         builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
         builder.advanceLexer()
+        closingStatusList.add(false)
         return
       }
 
-      setBraceScope(braceScope + 1)
+      closingStatusList.add(true)
+
       var inlineTagName: String? = ""
+      var isSnippet = false
 
       while (true) {
         tokenType = getTokenType()
         if (tokenType === JavaDocSyntaxTokenType.DOC_TAG_NAME) {
           inlineTagName = builder.tokenText
+          isSnippet = inlineTagName == SNIPPET_TAG
         }
         else if (tokenType == null || tokenType === JavaDocSyntaxTokenType.DOC_COMMENT_END) {
           break
         }
 
-        parseDataItem(inlineTagName, true)
         if (tokenType === JavaDocSyntaxTokenType.DOC_INLINE_TAG_END) {
-          braceScope = getBraceScope()
-          if (braceScope > 0) setBraceScope(--braceScope)
-          if (braceScope == 0) break
+          val shouldClose = closingStatusList.removeLast()
+          if (shouldClose) {
+            setBraceScope(getBraceScope() - 1)
+            builder.advanceLexer()
+            break
+          } else {
+            builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
+            builder.advanceLexer()
+            continue
+          }
         }
+
+        parseDataItem(inlineTagName, true)
       }
 
-      if (SNIPPET_TAG == inlineTagName) {
+      if (isSnippet) {
         tag.done(JavaDocSyntaxElementType.DOC_SNIPPET_TAG)
       }
       else {
@@ -698,7 +703,7 @@ class JavaDocParser(
   }
 
   private fun remapAndAdvance() {
-    if (INLINE_TAG_BORDERS_SET.contains(builder.tokenType) && getBraceScope() != 1) {
+    if (INLINE_TAG_BORDERS_SET.contains(builder.tokenType) && getBraceScope() == 0) {
       builder.remapCurrentToken(JavaDocSyntaxTokenType.DOC_COMMENT_DATA)
     }
     builder.advanceLexer()

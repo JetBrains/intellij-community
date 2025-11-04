@@ -24,6 +24,9 @@
     <extensionPoint name="fileHistoryPerformanceListener"
                     interface="com.intellij.vcs.log.history.FileHistoryPerformanceListener"
                     dynamic="true"/>
+    <extensionPoint name="vcsLogChangesTreeBuilder"
+                    interface="com.intellij.vcs.log.ui.frame.VcsLogChangesTreeModifier"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

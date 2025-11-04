@@ -55,6 +55,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         const val FORCE_PACKAGE_FOLDER_DIRECTIVE = "FORCE_PACKAGE_FOLDER"
         const val K1_TOOL_DIRECTIVE = "K1_TOOL:"
         const val K2_TOOL_DIRECTIVE = "K2_TOOL:"
+        const val TEST_PREVIEW = "TEST_PREVIEW:"
 
         private val quickFixesAllowedToResolveInWriteAction = AllowedToResolveUnderWriteActionData(
             IDEA_TEST_DATA_DIR.resolve("quickfix/allowResolveInWriteAction.txt").path,
@@ -338,6 +339,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             val element = PsiUtilBase.getElementAtCaret(editor)
             stubComparisonFailure = try {
                 forceCheckForResolveInDispatchThreadInTests(writeActionResolveHandler) {
+                    val expectedPreviewText = InTextDirectivesUtils.findListWithPrefixes(myFixture.file.text, TEST_PREVIEW).singleOrNull()
+                    if (expectedPreviewText != null && isFirPlugin) {
+                        val text = myFixture.getIntentionPreviewText(intention)
+                        assertEquals("Different preview found:", expectedPreviewText, text)
+                    }
                     myFixture.launchAction(intention)
                 }
                 null

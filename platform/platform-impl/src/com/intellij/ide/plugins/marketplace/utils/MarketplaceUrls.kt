@@ -65,8 +65,8 @@ object MarketplaceUrls {
       "build" to IDE_BUILD_FOR_REQUEST,
       "max" to count.toString(),
       "all" to includeIncompatible.toString(),
-      "os" to buildEncodedOsParameter(),
-      "arch" to buildEncodedArchParameter()
+      "os" to buildOsParameter(),
+      "arch" to CpuArch.CURRENT.name
     )
     return Urls.newFromEncoded(
       "${getPluginManagerUrl()}/api/search/plugins?$query"
@@ -119,10 +119,4 @@ object MarketplaceUrls {
   private fun PluginId.urlEncode(): String = URLUtil.encodeURIComponent(idString)
 }
 
-internal fun buildEncodedOsParameter(): String? {
-  return URLEncoder.encode("${OS.CURRENT} ${OS.CURRENT.version()}", StandardCharsets.UTF_8)
-}
-
-internal fun buildEncodedArchParameter(): String? {
-  return URLEncoder.encode(CpuArch.CURRENT.name, StandardCharsets.UTF_8)
-}
+internal fun buildOsParameter(): String? = "${OS.CURRENT} ${OS.CURRENT.version()}"

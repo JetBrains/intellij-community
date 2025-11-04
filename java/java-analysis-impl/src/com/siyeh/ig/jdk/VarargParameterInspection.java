@@ -24,7 +24,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -53,7 +55,7 @@ public final class VarargParameterInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new VarargParameterFix();
   }
 
@@ -91,7 +93,8 @@ public final class VarargParameterInspection extends BaseInspection {
       if (IntentionPreviewUtils.isIntentionPreviewActive()) {
         return SyntaxTraverser.psiTraverser(method.getContainingFile())
           .filter(ref -> ref instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)ref).isReferenceTo(method) ||
-                         ref instanceof PsiEnumConstant && method.isEquivalentTo(((PsiEnumConstant)ref).resolveMethod()))
+                         ref instanceof PsiEnumConstant && method.isEquivalentTo(((PsiEnumConstant)ref).resolveMethod()) ||
+                         ref instanceof PsiDocMethodOrFieldRef && ref.getReference() instanceof PsiReference docRef && docRef.isReferenceTo(method))
           .toList();
       }
       final Collection<PsiReference> references = ReferencesSearch.search(method).findAll();
@@ -118,6 +121,7 @@ public final class VarargParameterInspection extends BaseInspection {
       }
       for (PsiElement reference : references) {
         modifyCall(typeText, parameters.length - 1, reference);
+        modifyJavadoc(parameters.length - 1, reference);
       }
       final PsiType arrayType = type.toArrayType();
       final PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(lastParameter.getProject()).createTypeElement(arrayType);
@@ -128,8 +132,39 @@ public final class VarargParameterInspection extends BaseInspection {
       new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
     }
 
+    public static void modifyJavadoc(int indexOfFirstVarargArgument, @NotNull PsiElement reference) {
+      if(!(reference instanceof PsiDocMethodOrFieldRef ref)) return;
+      String[] signature = ref.getSignature();
+      if (signature == null || signature.length -1 != indexOfFirstVarargArgument) return;
+      PsiElement name = ref.getNameElement();
+      if (name == null) return;
+      String vararg = signature[indexOfFirstVarargArgument];
+      if (!vararg.endsWith("...")) return;
+      vararg = vararg.substring(0, vararg.length() - 3) + "[]";
+
+      final StringBuilder text = new StringBuilder();
+      text.append("/** {@link #").append(name.getText()).append("(");
+      for (int i = 0; i < signature.length -1; i++) {
+        text.append(signature[i]).append(",");
+      }
+      text.append(vararg).append(")} */");
+      final Project project = reference.getProject();
+      PsiComment comment = JavaPsiFacade.getElementFactory(project).createCommentFromText(text.toString(), reference);
+
+      PsiElement inlineDocTag = ContainerUtil.find(comment.getChildren(), c -> c instanceof PsiInlineDocTag);
+      if (inlineDocTag == null) return;
+      PsiElement newElement = ContainerUtil.find(inlineDocTag.getChildren(), c -> c instanceof PsiDocMethodOrFieldRef);
+      if(newElement == null) return;
+      reference.replace(newElement);
+    }
+
     public static void modifyCall(String arrayTypeText, int indexOfFirstVarargArgument, @NotNull PsiElement reference) {
-      final PsiCall call = (PsiCall)(reference instanceof PsiCall ? reference : reference.getParent());
+      final PsiCall call = reference instanceof PsiCall psiCall
+                           ? psiCall
+                           : reference.getParent() instanceof PsiCall psiCall
+                             ? psiCall
+                             : null;
+      if (call == null) return;
       JavaResolveResult result = call.resolveMethodGenerics();
       if (result instanceof MethodCandidateInfo &&
           ((MethodCandidateInfo)result).getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {

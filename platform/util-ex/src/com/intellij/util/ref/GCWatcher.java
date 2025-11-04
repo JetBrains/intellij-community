@@ -93,8 +93,8 @@ public final class GCWatcher {
    * <p>Use methods with a fixed number of arguments instead.</p>
    */
   @Contract(pure = true)
-  public static @NotNull GCWatcher tracking(Object... objects) {
-    throw new UnsupportedOperationException("Use a method with fixed number of arguments instead");
+  public static @NotNull GCWatcher tracking(@SuppressWarnings("unused") Object... objects) {
+    throw new UnsupportedOperationException("Use .tracking() method with fixed number of arguments instead");
   }
 
   @Contract(pure = true)
@@ -116,7 +116,7 @@ public final class GCWatcher {
   }
 
   private boolean isEverythingCollected() {
-    return ContainerUtil.and(myReferences, e -> e.refersTo(null));
+    return ContainerUtil.all(myReferences, e -> e.refersTo(null));
   }
 
   private void removeQueuedObjects() {
@@ -213,7 +213,7 @@ public final class GCWatcher {
 
     while (!collected && System.currentTimeMillis() < timeoutDeadline) {
       runWhileWaiting.run();
-      TimeoutUtil.sleep(300); // let other threads to do some progress
+      TimeoutUtil.sleep(10); // let other threads to do some progress
       collected = tryCollect(log, timeoutDeadline, runWhileWaiting);
     }
 
@@ -245,12 +245,13 @@ public final class GCWatcher {
 
     try {
       if (generateHeapDump) {
-        Path file = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
-        MemoryDumpHelper.captureMemoryDumpZipped(file);
+        Path path = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), "GCWatcher.hprof.zip");
+        MemoryDumpHelper.captureMemoryDumpZipped(path);
 
-        message += "\nMemory snapshot is available at " + file + "\n";
+        message += "\nMemory snapshot is available at " + path + "\n";
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("##teamcity[publishArtifacts '" + file + "']");
+        System.out.println("##teamcity[publishArtifacts '" + path + "']");
+        System.out.println("##teamcity[testMetadata testName='gcwatcher' key='my log' value='" + path + "' type='artifact']");
       }
     }
     catch (Exception e) {

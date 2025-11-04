@@ -412,20 +412,16 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   public int allocateRecord() throws IOException {
     Page headerPage = headerPage();
     ByteBuffer headerPageBuffer = headerPage.rawPageBuffer();
-    while (true) {// CAS loop:
-      int allocatedRecords = (int)INT_HANDLE.getVolatile(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET);
-      int newAllocatedRecords = allocatedRecords + 1;
-      if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET, allocatedRecords, newAllocatedRecords)) {
+    int allocatedRecords = (int)INT_HANDLE.getAndAdd(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET, 1);
+    int newAllocatedRecords = allocatedRecords + 1;
+    long recordOffsetInFile = recordOffsetInFile(newAllocatedRecords);
+    int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+    Page page = storage.pageByOffset(recordOffsetInFile);
+    ByteBuffer pageBuffer = page.rawPageBuffer();
+    incrementRecordVersion(pageBuffer, recordOffsetOnPage);
 
-        long recordOffsetInFile = recordOffsetInFile(newAllocatedRecords);
-        int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-        Page page = storage.pageByOffset(recordOffsetInFile);
-        ByteBuffer pageBuffer = page.rawPageBuffer();
-        incrementRecordVersion(pageBuffer, recordOffsetOnPage);
-
-        return newAllocatedRecords;
-      }
-    }
+    //return newAllocatedRecords=allocatedRecords+1, because NULL_ID=0 is reserved, while valid fileIds start from 1:
+    return newAllocatedRecords;
   }
 
   // 'one field at a time' operations

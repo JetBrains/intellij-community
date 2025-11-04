@@ -368,5 +368,6 @@
 
     <registryKey key="batch.inspections.ignored.jvm.languages" defaultValue="Groovy,Scala"
                  description="Disable UAST processing for JVM languages; a comma separated list of UAST capable language ids."/>
+    <java.expressionTypeNullabilityPatcher implementation="com.intellij.psi.impl.StreamNullabilityPatcher"/>
   </extensions>
 </idea-plugin>

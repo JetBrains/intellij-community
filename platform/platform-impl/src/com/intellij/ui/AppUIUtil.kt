@@ -187,6 +187,14 @@ private fun removeTraceLocalConsents(localConsents: MutableList<Consent>) {
   }
 }
 
+private fun removeTraceConsents(consents: MutableList<Consent>) { // IJPL-208500, IJPL-212133
+  consents.removeIf { consent ->
+    ConsentOptions.condTraceDataCollectionConsent().test(consent) ||
+    ConsentOptions.condTraceDataCollectionComConsent().test(consent) ||
+    ConsentOptions.condTraceDataCollectionNonComConsent().test(consent)
+  }
+}
+
 object AppUIUtil {
   @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
@@ -348,7 +356,7 @@ object AppUIUtil {
         result.addAll(consents)
       }
     }
-    result.removeIf(ConsentOptions.condTraceDataCollectionConsent()) // IJPL-208500
+    removeTraceConsents(result)
     if (!options.isEAP || !Registry.`is`("llm.llmc.data.collection.enabled", true)) {
       result.removeIf(ConsentOptions.condAiDataCollectionConsent()) // IJPL-195651 and IJPL-210395; AI data collection (LLMC) consent should not be present on UI while it's staying a default consent as a part of migration from LLMC to TRACE consent
     }
@@ -358,7 +366,7 @@ object AppUIUtil {
   @JvmStatic
   @ApiStatus.Internal
   fun loadLocalConsentsAsConsentsForEditing(): List<Consent> {
-    val localConsents = LocalConsentOptions.getLocalConsents().toMutableList()
+    val localConsents = LocalConsentOptions.getLocalConsents().first.toMutableList()
     if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
       removeTraceLocalConsents(localConsents)
     } else {

@@ -220,6 +220,9 @@ class RecentProjectFilteringTree(
       return true
     }
 
+    if (root.childCount <= 0) {
+      return false
+    }
     val firstChild = root.firstChild
     if (firstChild != null) {
       TreeUtil.selectNode(tree, firstChild)

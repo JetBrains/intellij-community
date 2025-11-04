@@ -63,8 +63,6 @@ interface XDebugSessionApi : RemoteApi<Unit> {
   suspend fun getFileColorsFlow(sessionId: XDebugSessionId): Flow<XFileColorDto>
   suspend fun scheduleFileColorComputation(sessionId: XDebugSessionId, virtualFileId: VirtualFileId)
 
-  suspend fun switchToTopFrame(sessionId: XDebugSessionId)
-
   suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean)
 
   suspend fun getUiUpdateEventsFlow(sessionId: XDebugSessionId): Flow<Unit>

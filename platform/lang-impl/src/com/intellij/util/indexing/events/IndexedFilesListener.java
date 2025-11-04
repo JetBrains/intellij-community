@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,10 +17,10 @@ import java.util.List;
 
 @Internal
 public abstract class IndexedFilesListener implements AsyncFileListener {
-  private final @NotNull VfsEventsMerger myEventMerger = new VfsEventsMerger();
+  private final @NotNull VfsEventsMerger eventMerger = new VfsEventsMerger();
 
   public @NotNull VfsEventsMerger getEventMerger() {
-    return myEventMerger;
+    return eventMerger;
   }
 
   public void scheduleForIndexingRecursively(@NotNull VirtualFile file, boolean onlyContentDependent) {
@@ -35,10 +35,6 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     else {
       recordFileEvent(file, onlyContentDependent);
     }
-  }
-
-  protected void recordFileEvent(@NotNull VirtualFile fileOrDir, boolean onlyContentDependent) {
-    myEventMerger.recordFileEvent(fileOrDir, onlyContentDependent);
   }
 
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
@@ -85,10 +81,6 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     };
   }
 
-  protected void recordFileRemovedEvent(@NotNull VirtualFile file) {
-    myEventMerger.recordFileRemovedEvent(file);
-  }
-
   private void processAfterEvents(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       VirtualFile fileToIndex = null;
@@ -131,5 +123,13 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
         scheduleForIndexingRecursively(fileToIndex, onlyContentDependent);
       }
     }
+  }
+
+  protected void recordFileEvent(@NotNull VirtualFile fileOrDir, boolean onlyContentDependent) {
+    eventMerger.recordFileEvent(fileOrDir, onlyContentDependent);
+  }
+
+  protected void recordFileRemovedEvent(@NotNull VirtualFile file) {
+    eventMerger.recordFileRemovedEvent(file);
   }
 }

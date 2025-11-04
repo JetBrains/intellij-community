@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.find.ngrams.TrigramIndex;
@@ -838,21 +838,21 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
     final VirtualFile testFile = myFixture.addFileToProject("test.txt", "test").getVirtualFile();
     final int testFileId = ((VirtualFileWithId)testFile).getId();
 
-    assertEquals(("file: " + testFileId + "; operation: CONTENT_CHANGE ADD"), listener.indexingOperation(testFile));
+    assertEquals(("[file: " + testFileId + ", operation: {CONTENT_CHANGE ADD }]"), listener.indexingOperation(testFile));
 
     FileContentUtilCore.reparseFiles(Collections.singletonList(testFile));
 
-    assertEquals(("file: " + testFileId + "; operation: ADD"), listener.indexingOperation(testFile));
+    assertEquals(("[file: " + testFileId + ", operation: {ADD }]"), listener.indexingOperation(testFile));
 
     WriteAction.run(() -> VfsUtil.saveText(testFile, "foo"));
     WriteAction.run(() -> VfsUtil.saveText(testFile, "bar"));
 
-    assertEquals(("file: " + testFileId + "; operation: CONTENT_CHANGE"), listener.indexingOperation(testFile));
+    assertEquals(("[file: " + testFileId + ", operation: {CONTENT_CHANGE }]"), listener.indexingOperation(testFile));
 
     WriteAction.run(() -> VfsUtil.saveText(testFile, "baz"));
     WriteAction.run(() -> testFile.delete(null));
 
-    assertEquals(("file: " + testFileId + "; operation: REMOVE"), listener.indexingOperation(testFile));
+    assertEquals(("[file: " + testFileId + ", operation: {REMOVE }]"), listener.indexingOperation(testFile));
   }
 
   public void test_files_inside_copied_directory_are_indexed() throws IOException {

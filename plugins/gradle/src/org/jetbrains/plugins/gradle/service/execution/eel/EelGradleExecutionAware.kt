@@ -29,9 +29,14 @@ class EelGradleExecutionAware : GradleExecutionAware {
     // nothing to do
   }
 
-  override fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project): Boolean {
-    return project.getEelDescriptor() !is LocalEelDescriptor
-  }
+  /**
+   * This method is used ONLY for Gradle debugging purposes.
+   * We are using proxy to proxy all debugger requests to the debugging agent, so, we're always dealing with the local environment.
+   * Inside a container/WSL, the target address is always 127.0.0.1:%any free WSL/Docker port%.
+   * On the local side the target address is always 127.0.0.1:%proxied port to the remote%.
+   * So, [isRemoteRun] should always return `false`.
+   */
+  override fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project): Boolean = false
 
   override fun getEnvironmentConfigurationProvider(
     projectPath: String,

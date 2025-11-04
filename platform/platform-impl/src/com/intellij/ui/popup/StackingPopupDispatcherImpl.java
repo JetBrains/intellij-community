@@ -109,7 +109,7 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
           return false;
         }
         final Component content = popup.getContent();
-        if (!UIUtil.isShowing(content)) {
+        if (!content.isShowing()) {
           popup.cancel();
           return false;
         }

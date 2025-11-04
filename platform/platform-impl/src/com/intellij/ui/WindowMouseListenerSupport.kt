@@ -1,7 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.getPopupParentBounds
 import com.jetbrains.JBR
 import org.intellij.lang.annotations.JdkConstants
 import org.jetbrains.annotations.ApiStatus
@@ -65,7 +68,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     if (!isBusy) {
       val content = source.getContent(event)
       val view = source.getView(content)
-      if (view != null) {
+      if (view != null && view.isShowing) {
         beforeUpdate(event, view)
         updateCursor(event, content, view)
         if (start && cursorType != Cursor.CUSTOM_CURSOR) {
@@ -111,8 +114,6 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
 
   @JdkConstants.CursorType
   open fun getResizeCursor(top: Int, left: Int, bottom: Int, right: Int, resizeArea: Insets): Int {
-    // Wayland doesn't allow to change window's location programmatically,
-    // so resizing from top/left shall be forbidden for now.
     if (top < resizeArea.top) {
       if (left < resizeArea.left * 2) return Cursor.NW_RESIZE_CURSOR
       if (right < resizeArea.right * 2) return Cursor.NE_RESIZE_CURSOR
@@ -158,7 +159,9 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
         if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_HORIZ, state)) delta.x = 0
         if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_VERT, state)) delta.y = 0
       }
+      val oldBounds = Rectangle(bounds)
       source.updateBounds(bounds, view, delta.x, delta.y)
+      makeChangeValid(oldBounds, bounds, view)
       val currentViewBounds = view.bounds
       if (bounds != currentViewBounds) {
         val moved = bounds.x != currentViewBounds.x || bounds.y != currentViewBounds.y
@@ -171,6 +174,8 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     }
     event.consume()
   }
+
+  protected open fun makeChangeValid(oldBounds: Rectangle, newBounds: Rectangle, view: Component) { }
 
   protected abstract fun onDraggingStarted(session: WindowListenerSession)
 
@@ -291,6 +296,41 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
     }
   }
 
+  override fun makeChangeValid(oldBounds: Rectangle, newBounds: Rectangle, view: Component) {
+    if (!isRelativeMovementMode()) return
+
+    val windowBounds = getPopupParentBounds(view) ?: return
+    LOG.debug { "Trying to fit the popup into $windowBounds after change $oldBounds -> $newBounds" }
+    val newBoundsBeforeFit = if (LOG.isDebugEnabled) Rectangle(newBounds) else null
+
+    // Moving or resized, for each axis either the leftmost or the rightmost coordinate might have changed, but not both.
+    // This means we can calculate X/Y based on unchanged width/height and the other way.
+    val minX = windowBounds.x - (newBounds.width - 1) // must not move completely outside to the left
+    val maxX = windowBounds.x + (windowBounds.width - 1) // must not move completely outside to the right
+    val minWidth = windowBounds.x - newBounds.x + 1 // must not resize so that the right edge moves outside to the left
+    val minY = windowBounds.y - (newBounds.height - 1) // ditto for Y
+    val maxY = windowBounds.y + (windowBounds.height - 1)
+    val minHeight = windowBounds.y - newBounds.y + 1
+    LOG.debug { "The allowed value by parent bounds are: x=$minX..$maxX, width>=$minWidth, y=$minY..$maxY, height>=$minHeight" }
+
+    if (newBounds.x != oldBounds.x) { // moved or resized from the left
+      newBounds.x = newBounds.x.coerceIn(minX..maxX)
+    }
+    else if (newBounds.width != oldBounds.width) { // resized from the right
+      newBounds.width = newBounds.width.coerceAtLeast(minWidth)
+    }
+    if (newBounds.y != oldBounds.y) { // moved or resized from the top
+      newBounds.y = newBounds.y.coerceIn(minY..maxY)
+    }
+    else if (newBounds.height != oldBounds.height) { // resized from the bottom
+      newBounds.height = newBounds.height.coerceAtLeast(minHeight)
+    }
+
+    if (newBoundsBeforeFit != null && newBounds != newBoundsBeforeFit) {
+      LOG.debug { "New bounds after fitting: $newBoundsBeforeFit -> $newBounds" }
+    }
+  }
+
   private fun isRelativeMovementMode(): Boolean = isTruePopup && JBR.isRelativePointerMovementSupported()
 
   override fun moveAfterMouseRelease(): Boolean = !isRelativeMovementMode()
@@ -299,3 +339,5 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
     return component is Window && component.type != Window.Type.POPUP
   }
 }
+
+private val LOG = logger<WindowMouseListenerSupport>()

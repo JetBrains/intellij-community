@@ -71,7 +71,7 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     return moduleName.endsWith("._test")
   }
 
-  suspend fun getPluginXmlContent(pluginModule: JpsModule): String {
+  fun getPluginXmlContent(pluginModule: JpsModule): String {
     val path = "META-INF/plugin.xml"
     var pluginXmlContent = context.readFileContentFromModuleOutput(module = pluginModule, relativePath = path, forTests = false)
     if (useTestSourceEnabled && pluginXmlContent == null) {
@@ -91,12 +91,12 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
   /**
    * Returns pairs of the module names and the corresponding [com.intellij.ide.plugins.ModuleLoadingRule].
    */
-  suspend fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<Pair<String, String?>> {
+  fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<Pair<String, String?>> {
     return readPluginContentFromDescriptor(getResolvedPluginDescriptor(pluginModule, moduleOutputPatcher))
   }
 
   // plugin patcher should be executed before
-  private suspend fun getResolvedPluginDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): XmlElement {
+  private fun getResolvedPluginDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): XmlElement {
     return moduleOutputPatcher.getPatchedPluginXmlIfExists(pluginModule.name)?.let { readXmlAsModel(it) } ?: readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
   }
 

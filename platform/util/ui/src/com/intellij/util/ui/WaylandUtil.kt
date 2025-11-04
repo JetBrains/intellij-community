@@ -11,6 +11,27 @@ import java.awt.Window
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
+fun getPopupParentBounds(popup: Component): Rectangle? {
+  if (!popup.isShowing) {
+    LOG.warn("Impossible to determine the valid bounds because the popup is not showing: $popup")
+    return null
+  }
+  val validBounds = getNearestTopLevelParentBounds(popup) ?: return null
+  LOG.debug { "The allowed bounds in screen coordinates are $validBounds" }
+  val directParent = popup.parent
+  if (directParent == null) {
+    LOG.warn("Impossible to determine the valid bounds because the popup has no direct parent: $popup")
+    return null
+  }
+  // Now convert the allowed bounds to the direct parent's coordinate system.
+  val directParentLocation = directParent.locationOnScreen
+  validBounds.x -= directParentLocation.x
+  validBounds.y -= directParentLocation.y
+  LOG.debug { "The allowed bounds in parent coordinates are $validBounds" }
+  return validBounds
+}
+
+@ApiStatus.Internal
 fun moveToFitChildPopupX(childBounds: Rectangle, parent: Component) {
   if (!parent.isShowing) {
     LOG.warn("Impossible to fit the child popup to the main window because the parent is not showing: $parent")
@@ -22,10 +43,7 @@ fun moveToFitChildPopupX(childBounds: Rectangle, parent: Component) {
   SwingUtilities.convertPointToScreen(childLocation, parent)
   LOG.debug { "The initial child location relative to the screen is $childLocation" }
 
-  val topLevelWindow = ComponentUtil.findUltimateParent(parent)
-  if (topLevelWindow !is Window) return
-  val topLevelBounds = Rectangle(topLevelWindow.locationOnScreen, topLevelWindow.size)
-  LOG.debug { "The top level bounds are $topLevelBounds" }
+  val topLevelBounds = getNearestTopLevelParentBounds(parent) ?: return
 
   val parentLocation = parent.location
   LOG.debug { "The relative parent location is $parentLocation" }
@@ -46,6 +64,21 @@ fun moveToFitChildPopupX(childBounds: Rectangle, parent: Component) {
   SwingUtilities.convertPointFromScreen(childLocation, parent)
   childBounds.location = childLocation
   LOG.debug { "The final result is $childBounds" }
+}
+
+private fun getNearestTopLevelParentBounds(component: Component): Rectangle? {
+  // Can't use ComponentUtil.findUltimateParent() because we need the nearest non-popup window,
+  // as it's what Wayland considers to be the owner of the popup.
+  val topLevelWindow = ComponentUtil.findParentByCondition(component) { c ->
+    c is Window && c.type != Window.Type.POPUP
+  }
+  if (topLevelWindow !is Window) { // pretty much a non-null check with a smart cast
+    LOG.warn("The top level parent isn't a window, but $topLevelWindow")
+    return null
+  }
+  val topLevelBounds = Rectangle(topLevelWindow.locationOnScreen, topLevelWindow.size)
+  LOG.debug { "The top level bounds are $topLevelBounds" }
+  return topLevelBounds
 }
 
 private fun fitValue(location: Int, width: Int, start1: Int, end1: Int, start2: Int, end2: Int, preferLess: Boolean): Int {

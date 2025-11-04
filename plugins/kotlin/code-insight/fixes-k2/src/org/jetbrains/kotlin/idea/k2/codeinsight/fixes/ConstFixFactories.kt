@@ -11,13 +11,18 @@ import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object ConstFixFactories {
     val addConstModifierFixFactory =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NonConstValUsedInConstantExpression ->
-            val expression = diagnostic.psi as? KtReferenceExpression ?: return@ModCommandBased emptyList()
+            val expression = when (val psi = diagnostic.psi) {
+                is KtReferenceExpression -> psi
+                is KtQualifiedExpression -> psi.selectorExpression as? KtReferenceExpression
+                else -> null
+            } ?: return@ModCommandBased emptyList()
 
             val property: KtProperty = analyze(expression) {
                 val propertySymbol = expression.mainReference.resolveToSymbol() ?: return@analyze null

@@ -114,7 +114,8 @@ internal object GHPRInlayUtils {
 
   private class ResizingFrameListener(val editor: Editor, val vm: GHPREditorMappedComponentModel.NewComment<*>) : EditorMouseListener, EditorMouseMotionListener {
     private val editorEx = editor as EditorEx
-    private val model = editorEx.getUserData(CodeReviewCommentableEditorModel.KEY) as? CodeReviewEditorGutterControlsModel.WithMultilineComments
+    private val model: CodeReviewEditorGutterControlsModel.WithMultilineComments?
+      get() = editorEx.getUserData(CodeReviewCommentableEditorModel.KEY) as? CodeReviewEditorGutterControlsModel.WithMultilineComments
 
     private var isDraggingFrame: Boolean = false
       set(value) {
@@ -222,9 +223,9 @@ internal object GHPRInlayUtils {
     override fun mouseReleased(e: EditorMouseEvent) {
       isDraggingFrame = false
 
-      if (oldRange != null && model != null) {
+      if (oldRange != null) {
         val range = vm.range.value?.second ?: return
-        model.updateCommentLines(oldRange!!, LineRange(range.first, range.last))
+        model?.updateCommentLines(oldRange!!, LineRange(range.first, range.last)) ?: return
         editorEx.setCustomCursor(this, null)
       }
     }

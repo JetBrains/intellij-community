@@ -24,9 +24,11 @@ class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
       <version>1.0.0</version>
       
 """)
-    testString("[ERROR] Maven model problem: 'subprojects' unexpected subprojects element at ${projectPom.path}:-1:-1", TRIGGER_LINES_UNIX) {
+    val issues = testString("[ERROR] Maven model problem: 'subprojects' unexpected subprojects element at ${projectPom.path}:-1:-1", TRIGGER_LINES_UNIX) {
       it.pathString == projectPom.path
     }
+    assertEquals(1, issues.size)
+    assertEquals(MessageEvent.Kind.ERROR, issues[0].second)
   }
 
 
@@ -37,11 +39,12 @@ class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
     testString("[ERROR] Maven model problem: 'subprojects' unexpected subprojects element at C:\\Users\\User.Name\\IdeaProjects\\spring-petclinic\\pom.xml:-1:-1", TRIGGER_LINES_WINDOWS) {
       it.pathString == "C:\\Users\\User.Name\\IdeaProjects\\spring-petclinic\\pom.xml"
     }
+    Unit
   }
 
 
-  private suspend fun testString(message: String, triggerLines: List<Regex>, pathChecker: (Path) -> Boolean) {
-    val issues = ArrayList<BuildIssue>()
+  private suspend fun testString(message: String, triggerLines: List<Regex>, pathChecker: (Path) -> Boolean): ArrayList<Pair<BuildIssue, MessageEvent.Kind>> {
+    val issues = ArrayList<Pair<BuildIssue, MessageEvent.Kind>>()
 
     importProjectAsync("""
       <groupId>com.example</groupId>
@@ -53,7 +56,7 @@ class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
       {
         object : MavenBuildIssueHandler {
           override fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind) {
-            issues.add(issue)
+            issues.add(issue to kind)
           }
 
         }
@@ -68,6 +71,7 @@ class Maven4ModelVersionErrorParserTest : MavenMultiVersionImportingTestCase() {
 
     assertEquals("Expected 1 event, ", 1, issues.size)
     assertNotNull("No message error events received", issues[0])
-    assertTrue("No quickfixes available", issues[0].quickFixes.isNotEmpty())
+    assertTrue("No quickfixes available", issues[0].first.quickFixes.isNotEmpty())
+    return issues
   }
 }

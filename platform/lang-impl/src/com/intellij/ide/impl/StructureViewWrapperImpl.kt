@@ -506,8 +506,8 @@ class StructureViewWrapperImpl(
       }
     }
     withContext(Dispatchers.EDT) {
-      contentManager.removeAllContents(true)
       updateHeaderActions(myStructureView)
+      contentManager.removeAllContents(true)
       if (myModuleStructureComponent == null && myStructureView == null) {
         val panel: JBPanelWithEmptyText = object : JBPanelWithEmptyText() {
           override fun getBackground(): Color {

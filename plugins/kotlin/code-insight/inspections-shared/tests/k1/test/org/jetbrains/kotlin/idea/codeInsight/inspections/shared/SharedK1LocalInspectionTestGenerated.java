@@ -6757,6 +6757,60 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/suspiciousJavaClassCallableReference")
+    public static class SuspiciousJavaClassCallableReference extends AbstractSharedK1LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("expressionReceiver_explicit.kt")
+        public void testExpressionReceiver_explicit() throws Exception {
+            runTest("../testData/inspectionsLocal/suspiciousJavaClassCallableReference/expressionReceiver_explicit.kt");
+        }
+
+        @TestMetadata("expressionReceiver_implicit.kt")
+        public void testExpressionReceiver_implicit() throws Exception {
+            runTest("../testData/inspectionsLocal/suspiciousJavaClassCallableReference/expressionReceiver_implicit.kt");
+        }
+
+        @TestMetadata("fixAvailableOnDoubleColon.kt")
+        public void testFixAvailableOnDoubleColon() throws Exception {
+            runTest("../testData/inspectionsLocal/suspiciousJavaClassCallableReference/fixAvailableOnDoubleColon.kt");
+        }
+
+        @TestMetadata("fixNotAvailableOnReceiver.kt")
+        public void testFixNotAvailableOnReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/suspiciousJavaClassCallableReference/fixNotAvailableOnReceiver.kt");
+        }
+
+        @TestMetadata("typeReceiver.kt")
+        public void testTypeReceiver() throws Exception {
+            runTest("../testData/inspectionsLocal/suspiciousJavaClassCallableReference/typeReceiver.kt");
+        }
+
+        @TestMetadata("typeReceiver_typeArguments.kt")
+        public void testTypeReceiver_typeArguments() throws Exception {
+            runTest("../testData/inspectionsLocal/suspiciousJavaClassCallableReference/typeReceiver_typeArguments.kt");
+        }
+
+        @TestMetadata("typeReceiver_typeArgumentsChain.kt")
+        public void testTypeReceiver_typeArgumentsChain() throws Exception {
+            runTest("../testData/inspectionsLocal/suspiciousJavaClassCallableReference/typeReceiver_typeArgumentsChain.kt");
+        }
+
+        @TestMetadata("unrelatedProperty.kt")
+        public void testUnrelatedProperty() throws Exception {
+            runTest("../testData/inspectionsLocal/suspiciousJavaClassCallableReference/unrelatedProperty.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/suspiciousVarProperty")
     public static class SuspiciousVarProperty extends AbstractSharedK1LocalInspectionTest {
         @java.lang.Override

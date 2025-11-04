@@ -82,7 +82,8 @@ public final class JavaMemberNameCompletionContributor extends CompletionContrib
       completeComponentName(lookupSet, component, result.getPrefixMatcher());
     }
 
-      if (PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class)).accepts(position)) {
+    if (PsiJavaPatterns.psiElement().nameIdentifierOf(PsiJavaPatterns.psiMethod().withParent(PsiClass.class)).accepts(position) &&
+        !(PsiUtil.isJavaToken(PsiTreeUtil.prevVisibleLeaf(position), JavaTokenType.DOT))) {
       completeMethodName(lookupSet, parameters.getPosition().getParent(), result.getPrefixMatcher());
     }
 

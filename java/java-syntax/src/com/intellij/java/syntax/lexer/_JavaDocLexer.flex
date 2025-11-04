@@ -219,8 +219,8 @@ LEADING_TOKEN_MARKDOWN="///"
   }
 }
 
-<INLINE_TAG_NAME> "@code" { yybegin(CODE_TAG_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
-<INLINE_TAG_NAME> "@literal" { yybegin(CODE_TAG_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
+<INLINE_TAG_NAME> "@"("code"|"literal") { yybegin(CODE_TAG_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
+<INLINE_TAG_NAME> "@"("return"|"summary") { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <INLINE_TAG_NAME> "@snippet" { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <INLINE_TAG_NAME> "@"{INLINE_TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, CODE_TAG, CODE_TAG_SPACE, SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES,
@@ -228,7 +228,7 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}"
 
 <COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE> . { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
 <CODE_TAG, CODE_TAG_SPACE> . { yybegin(CODE_TAG); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
-<COMMENT_DATA_START> "@"("author"|"code"|"deprecated"|"docRoot"|"hidden"|"index"|"implNote"|"literal"|"return"|"serial"|"summary") { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
+<COMMENT_DATA_START> "@"("author"|"deprecated"|"hidden"|"index"|"implNote"|"return"|"serial") { yybegin(DOC_TAG_VALUE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 <COMMENT_DATA_START> "@"{TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return JavaDocSyntaxTokenType.DOC_TAG_NAME; }
 
 <SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES> {

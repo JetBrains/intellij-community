@@ -55,4 +55,11 @@ public final class CodeStyleSettingsChangeEvent {
   public @Nullable CodeStyleSettings getSettings() {
     return mySettings;
   }
+
+  @Override
+  public String toString() {
+    return "CodeStyleSettingsChangeEvent[project=" + myProject +
+           ", file=" + (myFile != null ? myFile.getName() : "null") +
+           ", settings=" + mySettings + "]";
+  }
 }

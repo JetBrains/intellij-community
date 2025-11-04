@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
+    <commandSpecsProvider implementation="com.intellij.vcs.git.terminal.GitCommandSpecsProvider"/>
+  </extensions>
+</idea-plugin>

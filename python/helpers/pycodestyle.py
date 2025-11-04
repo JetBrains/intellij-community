@@ -59,8 +59,14 @@ import tokenize
 import warnings
 from fnmatch import fnmatch
 from functools import lru_cache
-from itertools import pairwise
 from optparse import OptionParser
+
+# this is a performance hack.  see https://bugs.python.org/issue43014
+if (
+        sys.version_info < (3, 10) and
+        callable(getattr(tokenize, '_compile', None))
+):  # pragma: no cover (<py310)
+    tokenize._compile = lru_cache(tokenize._compile)  # type: ignore
 
 __version__ = '2.14.0'
 
@@ -496,7 +502,7 @@ def missing_whitespace_after_keyword(logical_line, tokens):
     E275: from importable.module import(bar, baz)
     E275: if(foo): bar
     """
-    for tok0, tok1 in pairwise(tokens):
+    for tok0, tok1 in zip(tokens, tokens[1:]):
         # This must exclude the True/False/None singletons, which can
         # appear e.g. as "if x is None:", and async/await, which were
         # valid identifier names in old Python versions.
@@ -506,7 +512,7 @@ def missing_whitespace_after_keyword(logical_line, tokens):
                 tok0.string not in SINGLETONS and
                 not (tok0.string == 'except' and tok1.string == '*') and
                 not (tok0.string == 'yield' and tok1.string == ')') and
-                (tok1.string and tok1.string != ':' and tok1.string != '\n')):
+                tok1.string not in ':\n'):
             yield tok0.end, "E275 missing whitespace after keyword"
 
 
@@ -1154,22 +1160,6 @@ def imports_on_separate_lines(logical_line):
             yield found, "E401 multiple imports on one line"
 
 
-_STRING_PREFIXES = frozenset(('u', 'U', 'b', 'B', 'r', 'R'))
-
-
-def _is_string_literal(line):
-    if line:
-        first_char = line[0]
-        if first_char in _STRING_PREFIXES:
-            first_char = line[1]
-        return first_char == '"' or first_char == "'"
-    return False
-
-
-_ALLOWED_KEYWORDS_IN_IMPORTS = (
-    'try', 'except', 'else', 'finally', 'with', 'if', 'elif')
-
-
 @register_check
 def module_imports_on_top_of_file(
         logical_line, indent_level, checker_state, noqa):
@@ -1188,6 +1178,15 @@ def module_imports_on_top_of_file(
 
     Okay: if x:\n    import os
     """  # noqa
+    def is_string_literal(line):
+        if line[0] in 'uUbB':
+            line = line[1:]
+        if line and line[0] in 'rR':
+            line = line[1:]
+        return line and (line[0] == '"' or line[0] == "'")
+
+    allowed_keywords = (
+        'try', 'except', 'else', 'finally', 'with', 'if', 'elif')
 
     if indent_level:  # Allow imports in conditional statement/function
         return
@@ -1195,25 +1194,25 @@ def module_imports_on_top_of_file(
         return
     if noqa:
         return
-    if logical_line.startswith(('import ', 'from ')):
+    line = logical_line
+    if line.startswith('import ') or line.startswith('from '):
         if checker_state.get('seen_non_imports', False):
             yield 0, "E402 module level import not at top of file"
-    elif not checker_state.get('seen_non_imports', False):
-        if DUNDER_REGEX.match(logical_line):
-            return
-        elif logical_line.startswith(_ALLOWED_KEYWORDS_IN_IMPORTS):
-            # Allow certain keywords intermixed with imports in order to
-            # support conditional or filtered importing
-            return
-        elif _is_string_literal(logical_line):
-            # The first literal is a docstring, allow it. Otherwise,
-            # report error.
-            if checker_state.get('seen_docstring', False):
-                checker_state['seen_non_imports'] = True
-            else:
-                checker_state['seen_docstring'] = True
-        else:
+    elif re.match(DUNDER_REGEX, line):
+        return
+    elif any(line.startswith(kw) for kw in allowed_keywords):
+        # Allow certain keywords intermixed with imports in order to
+        # support conditional or filtered importing
+        return
+    elif is_string_literal(line):
+        # The first literal is a docstring, allow it. Otherwise, report
+        # error.
+        if checker_state.get('seen_docstring', False):
             checker_state['seen_non_imports'] = True
+        else:
+            checker_state['seen_docstring'] = True
+    else:
+        checker_state['seen_non_imports'] = True
 
 
 @register_check
@@ -1628,29 +1627,6 @@ def ambiguous_identifier(logical_line, tokens):
         prev_start = start
 
 
-# https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals
-_PYTHON_3000_VALID_ESC = frozenset([
-    '\n',
-    '\\',
-    '\'',
-    '"',
-    'a',
-    'b',
-    'f',
-    'n',
-    'r',
-    't',
-    'v',
-    '0', '1', '2', '3', '4', '5', '6', '7',
-    'x',
-
-    # Escape sequences only recognized in string literals
-    'N',
-    'u',
-    'U',
-])
-
-
 @register_check
 def python_3000_invalid_escape_sequence(logical_line, tokens, noqa):
     r"""Invalid escape sequences are deprecated in Python 3.6.
@@ -1661,27 +1637,41 @@ def python_3000_invalid_escape_sequence(logical_line, tokens, noqa):
     if noqa:
         return
 
+    # https://docs.python.org/3/reference/lexical_analysis.html#string-and-bytes-literals
+    valid = [
+        '\n',
+        '\\',
+        '\'',
+        '"',
+        'a',
+        'b',
+        'f',
+        'n',
+        'r',
+        't',
+        'v',
+        '0', '1', '2', '3', '4', '5', '6', '7',
+        'x',
+
+        # Escape sequences only recognized in string literals
+        'N',
+        'u',
+        'U',
+    ]
+
     prefixes = []
     for token_type, text, start, _, _ in tokens:
-        if (
-                token_type == tokenize.STRING or
-                token_type == FSTRING_START or
-                token_type == TSTRING_START
-        ):
+        if token_type in {tokenize.STRING, FSTRING_START, TSTRING_START}:
             # Extract string modifiers (e.g. u or r)
             prefixes.append(text[:text.index(text[-1])].lower())
 
-        if (
-                token_type == tokenize.STRING or
-                token_type == FSTRING_MIDDLE or
-                token_type == TSTRING_MIDDLE
-        ):
+        if token_type in {tokenize.STRING, FSTRING_MIDDLE, TSTRING_MIDDLE}:
             if 'r' not in prefixes[-1]:
                 start_line, start_col = start
                 pos = text.find('\\')
                 while pos >= 0:
                     pos += 1
-                    if text[pos] not in _PYTHON_3000_VALID_ESC:
+                    if text[pos] not in valid:
                         line = start_line + text.count('\n', 0, pos)
                         if line == start_line:
                             col = start_col + pos
@@ -1693,11 +1683,7 @@ def python_3000_invalid_escape_sequence(logical_line, tokens, noqa):
                         )
                     pos = text.find('\\', pos + 1)
 
-        if (
-                token_type == tokenize.STRING or
-                token_type == FSTRING_END or
-                token_type == TSTRING_END
-        ):
+        if token_type in {tokenize.STRING, FSTRING_END, TSTRING_END}:
             prefixes.pop()
 
 

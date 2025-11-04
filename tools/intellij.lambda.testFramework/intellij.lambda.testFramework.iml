@@ -37,6 +37,9 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.launcher" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
@@ -50,6 +53,7 @@
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="library" name="kodein-di-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" />
+    <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.driver" />

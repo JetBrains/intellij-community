@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
-import com.intellij.codeWithMe.ClientId;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
@@ -12,15 +10,17 @@ import com.intellij.execution.runners.AsyncProgramRunner;
 import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+
+import java.util.concurrent.Callable;
 
 public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
   @Override
@@ -37,12 +37,12 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
    * {@link PythonCommandLineState} inheritors must be ready to be called on any thread, so we can run then on the background thread.
    * Any other state must be invoked on EDT only
    */
-  private static void execute(@NotNull RunProfileState profileState, @NotNull Runnable runnable) {
-    var clientIdRunnable = ClientId.decorateRunnable(runnable);
+  private static <R> CancellablePromise<R> execute(@NotNull RunProfileState profileState, @NotNull Callable<R> supplier) {
     if (profileState instanceof PythonCommandLineState) {
-      AppExecutorUtil.getAppExecutorService().execute(clientIdRunnable);
-    } else {
-      ApplicationManager.getApplication().invokeAndWait(clientIdRunnable);
+      return executeInBgt(supplier);
+    }
+    else {
+      return executeInEdt(supplier);
     }
   }
 
@@ -58,24 +58,34 @@ public class PythonRunner extends AsyncProgramRunner<RunnerSettings> {
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    AsyncPromise<RunContentDescriptor> promise = new AsyncPromise<>();
-    execute(state, () -> {
-      try {
-
-        ExecutionResult executionResult;
-        if (state instanceof PythonCommandLineState) {
-          // TODO [cloud-api.python] profile functionality must be applied here:
-          //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineFirst() - host:port is put in user data
-          executionResult = ((PythonCommandLineState)state).execute(env.getExecutor());
-        }
-        else {
-          executionResult = state.execute(env.getExecutor(), this);
-        }
-        ApplicationManager.getApplication().invokeLater(
-          () -> promise.setResult(DefaultProgramRunnerKt.showRunContent(executionResult, env)),
-          ModalityState.any());
+    return execute(state, () -> {
+      ExecutionResult executionResult;
+      if (state instanceof PythonCommandLineState) {
+        // TODO [cloud-api.python] profile functionality must be applied here:
+        //      - com.jetbrains.django.run.DjangoServerRunConfiguration.patchCommandLineFirst() - host:port is put in user data
+        executionResult = ((PythonCommandLineState)state).execute(env.getExecutor());
       }
-      catch (ExecutionException e) {
+      else {
+        executionResult = state.execute(env.getExecutor(), this);
+      }
+      return executionResult;
+    }).thenAsync((ExecutionResult executionResult) -> {
+      return executeInEdt(() -> DefaultProgramRunnerKt.showRunContent(executionResult, env));
+    });
+  }
+
+  private static <V> CancellablePromise<V> executeInEdt(Callable<V> callable) {
+    return AppUIExecutor.onUiThread().submit(callable);
+  }
+
+  private static  <V> CancellablePromise<V> executeInBgt(Callable<V> callable) {
+    AsyncPromise<V> promise = new AsyncPromise<>();
+    AppExecutorUtil.getAppExecutorService().execute(() -> {
+      try {
+        V result = callable.call();
+        promise.setResult(result);
+      }
+      catch (Exception e) {
         promise.setError(e);
       }
     });

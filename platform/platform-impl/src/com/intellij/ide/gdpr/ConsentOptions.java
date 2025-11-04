@@ -30,8 +30,8 @@ import java.util.stream.Stream;
 public final class ConsentOptions implements ModificationTracker {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
 
-  private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
-  private static final String RECONFIRM_CONSENTS_PROPERTY = "test.force.reconfirm.consents";
+  public static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
+  public static final String RECONFIRM_CONSENTS_PROPERTY = "test.force.reconfirm.consents";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final String AI_DATA_COLLECTION_OPTION_ID = "ai.data.collection.and.use.policy";
@@ -209,16 +209,22 @@ public final class ConsentOptions implements ModificationTracker {
     return consent -> AI_DATA_COLLECTION_OPTION_ID.equals(consent.getId());
   }
 
+  /**
+   * Should only be used to limit the visibility of the outdated TRACE consent in the settings.
+   */
   public static @NotNull Predicate<Consent> condTraceDataCollectionNonComConsent() {
     return consent -> TRACE_DATA_COLLECTION_NON_COM_OPTION_ID.equals(consent.getId());
   }
 
+  /**
+   * Should only be used to limit the visibility of the outdated TRACE consent in the settings.
+   */
   public static @NotNull Predicate<Consent> condTraceDataCollectionComConsent() {
     return consent -> TRACE_DATA_COLLECTION_COM_OPTION_ID.equals(consent.getId());
   }
 
   /**
-   * Should only be used to limit the visibility of the outdated TRACE content in the settings.
+   * Should only be used to limit the visibility of the outdated TRACE consent in the settings.
    */
   public static @NotNull Predicate<Consent> condTraceDataCollectionConsent() {
     return consent -> TRACE_DATA_COLLECTION_OPTION_ID.equals(consent.getId());

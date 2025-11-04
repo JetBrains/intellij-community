@@ -1,8 +1,5 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.inspections.shared">
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade"
-            serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinInspectionFacadeImpl"/>
 
     <codeInsight.blockingMethodChecker
             implementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection.CoroutineBlockingMethodChecker"/>
@@ -624,6 +621,14 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.suspicious.equals.combination.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousJavaClassCallableReferenceInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.suspicious.javaClass.callable.reference.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceAssertBooleanWithAssertEqualityInspection"
                      groupPath="Kotlin"

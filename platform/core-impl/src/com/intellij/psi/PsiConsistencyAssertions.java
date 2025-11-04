@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * check for PSI text consistency with both document text and AST node text, and log mismatches
  */
 @ApiStatus.Internal
-public class PsiConsistencyAssertions {
+public final class PsiConsistencyAssertions {
   public static void assertNoFileTextMismatch(@NotNull PsiFile psiFile, @NotNull ASTNode tree, @NotNull String psiFileText) {
     FileViewProvider viewProvider = psiFile.getViewProvider();
     Document document = viewProvider instanceof AbstractFileViewProvider
@@ -59,6 +60,8 @@ public class PsiConsistencyAssertions {
     message += "\nlanguage=" + psiFile.getLanguage();
     message += "\ndoc.length=" + docLength;
     message += "\npsiFile.length=" + psiLength;
+    message += "\ncached psiFiles=" + PsiManagerEx.getInstanceEx(psiFile.getProject()).getFileManagerEx().findCachedViewProviders(viewProvider.getVirtualFile()).size();
+
     String psiFileTextLength;
     try {
       if (psiFileText == null) {

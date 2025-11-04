@@ -11,6 +11,8 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
 /**
@@ -46,10 +48,12 @@ private class ExistingJdkConfigurationActivity : ProjectActivity {
     val detectedPaths = serviceAsync<JdkFinder>().suggestHomePaths(project)
     val paths = detectedPaths.filter { it in javaHomePaths }.ifEmpty { detectedPaths }
 
-    val jdkPathToSetup = paths
-      .map { it to JdkVersionDetector.getInstance().detectJdkVersionInfo(it) }
-      .maxByOrNull { it.second?.version?.feature ?: 0 }
-      ?.first ?: return
+    val jdkPathToSetup = withContext(Dispatchers.IO) {
+      paths
+        .map { it to JdkVersionDetector.getInstance().detectJdkVersionInfo(it) }
+        .maxByOrNull { it.second?.version?.feature ?: 0 }
+        ?.first
+    } ?: return
 
     edtWriteAction {
       rootManager.projectSdk = service<AddJdkService>().createIncompleteJdk(jdkPathToSetup)

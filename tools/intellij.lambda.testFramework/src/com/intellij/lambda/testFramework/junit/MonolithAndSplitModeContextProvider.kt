@@ -16,15 +16,33 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
   override fun supportsTestTemplate(context: ExtensionContext): Boolean = getModesToRun(context).isNotEmpty()
 
   private fun getModesToRun(context: ExtensionContext): List<IdeRunMode> {
+    // Check if we're running under GroupByModeTestEngine with a mode filter
+    val modeFilter = context.getConfigurationParameter("test.mode.filter").orElse(null)
+
     val methodAnnotation = AnnotationUtils.findAnnotation(context.testMethod, ExecuteInMonolithAndSplitMode::class.java)
     if (methodAnnotation.isPresent) {
-      return methodAnnotation.get().mode.toList()
+      val allModes = methodAnnotation.get().mode.toList()
+      // If mode filter is set, only return that mode
+      return if (modeFilter != null) {
+        val filterMode = IdeRunMode.valueOf(modeFilter)
+        allModes.filter { it == filterMode }
+      }
+      else {
+        allModes
+      }
     }
 
     val classAnnotation = AnnotationUtils.findAnnotation(context.testClass, ExecuteInMonolithAndSplitMode::class.java)
-
     if (classAnnotation.isPresent) {
-      return classAnnotation.get().mode.toList()
+      val allModes = classAnnotation.get().mode.toList()
+      // If mode filter is set, only return that mode
+      return if (modeFilter != null) {
+        val filterMode = IdeRunMode.valueOf(modeFilter)
+        allModes.filter { it == filterMode }
+      }
+      else {
+        allModes
+      }
     }
 
     throw IllegalStateException("The test is expected to have ${ExecuteInMonolithAndSplitMode::javaClass.name} annotation")
@@ -38,7 +56,7 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
     // Test with parameters in the method signature
     val parametrizedRuns = getArgumentsProvider(context).map(Function { provider: ArgumentsProvider ->
       try {
-        // PARAMETERIZED CASE: Generate tests for each argument in each LambdaRdIdeType
+        // PARAMETERIZED CASE: Generate tests for each argument in each mode
         provider.provideArguments(context).flatMap { args: Arguments ->
           modesToRun.stream().map { mode -> createInvocationContext(mode, args.get(), context) }
         }
@@ -49,14 +67,14 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
     })
     if (parametrizedRuns.isPresent) return parametrizedRuns.get()
 
-    // SIMPLE CASE - test without parameters: Generate one test for each LambdaRdIdeType
+    // SIMPLE CASE - test without parameters: Generate one test for each mode
     return modesToRun.stream().map { mode -> createInvocationContext(mode, emptyArray(), context) }
   }
 
   private fun createInvocationContext(mode: IdeRunMode, args: Array<Any>, context: ExtensionContext): TestTemplateInvocationContext {
     return object : TestTemplateInvocationContext {
       override fun getDisplayName(invocationIndex: Int): String {
-        MonolithAndSplitModeIdeInstanceInitializer.startIde(mode, context)
+        IdeInstance.startIde(mode, context)
 
         val params = if (args.isNotEmpty()) " with params: " + listOf(*args) else ""
         return if (params.isNotEmpty()) "[$mode] $params" else "[$mode]"
@@ -75,7 +93,7 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
             return when {
               paramCtx.parameter.type.isAssignableFrom(mode::class.java) -> mode
               paramCtx.parameter.type.isAssignableFrom(BackgroundRunWithLambda::class.java) -> {
-                MonolithAndSplitModeIdeInstanceInitializer.startIde(mode, context)
+                IdeInstance.startIde(mode, context)
               }
               else -> {
                 // The first parameter is the IdeRunMode, so offset argument index by 1

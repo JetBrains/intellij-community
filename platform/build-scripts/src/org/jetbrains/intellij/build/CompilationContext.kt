@@ -45,7 +45,7 @@ interface CompilationContext : ModuleOutputProvider {
    * A directory or a .jar file.
    */
   @Deprecated(message = "Please use `getModuleOutputRoots`", replaceWith = ReplaceWith("getModuleOutputRoots(module, forTests)"))
-  suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path {
+  fun getModuleOutputDir(module: JpsModule, forTests: Boolean = false): Path {
     val outputRoots = getModuleOutputRoots(module, forTests)
     return outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
   }
@@ -66,7 +66,7 @@ interface CompilationContext : ModuleOutputProvider {
   fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean = false): Path?
 
   @ApiStatus.Internal
-  suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
+  fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
 
   fun notifyArtifactBuilt(artifactPath: Path)
 

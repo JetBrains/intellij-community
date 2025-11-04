@@ -314,7 +314,7 @@ class CompilationContextImpl private constructor(
 
   override fun findModule(name: String): JpsModule? = moduleOutputProvider.findModule(name)
 
-  override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = moduleOutputProvider.getModuleOutputRoots(module, forTests)
+  override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> = moduleOutputProvider.getModuleOutputRoots(module, forTests)
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
     val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
@@ -332,7 +332,7 @@ class CompilationContextImpl private constructor(
     return org.jetbrains.intellij.build.findFileInModuleSources(module, relativePath)
   }
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
     @Suppress("DEPRECATION")
     val file = getModuleOutputDir(module, forTests).resolve(relativePath)
     try {

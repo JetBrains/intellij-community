@@ -12,14 +12,17 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public final class ProjectFilesCondition {
   private static final int MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT = 2;
-  private final VirtualFile myRestrictedTo;
-  private final GlobalSearchScope myFilter;
-  private int myFilesFromOtherProjects;
-  private final IdFilter myIndexableFilesFilter;
 
-  public ProjectFilesCondition(IdFilter indexableFilesFilter,
-                               GlobalSearchScope filter,
-                               VirtualFile restrictedTo,
+  private final IdFilter myIndexableFilesFilter;
+  private final GlobalSearchScope myFilter;
+  private final VirtualFile myRestrictedTo;
+
+  private int myFilesFromOtherProjects;
+
+  //indexableFilesFilter = (ProjectIndexableFilesFilter | null)
+  public ProjectFilesCondition(@Nullable IdFilter indexableFilesFilter,
+                               @Nullable GlobalSearchScope filter,
+                               @Nullable VirtualFile restrictedTo,
                                boolean includeFilesFromOtherProjects) {
     myRestrictedTo = restrictedTo;
     myFilter = filter;
@@ -29,20 +32,25 @@ public final class ProjectFilesCondition {
     }
   }
 
-  private boolean acceptsFileAndId(VirtualFile file, int fileId) {
-    if (myIndexableFilesFilter != null && !myIndexableFilesFilter.containsFileId(fileId)) {
-      if (myFilesFromOtherProjects >= MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) return false;
-      ++myFilesFromOtherProjects;
+  private boolean acceptsFileAndId(@Nullable VirtualFile file, int fileId) {
+    if (belongsTo(file, fileId)) {
       return true;
     }
 
-    if (FileBasedIndexEx.belongsToScope(file, myRestrictedTo, myFilter)) return true;
-
+    //even if the file doesn't belong to the project/scope provided -- give it a chance!
+    // MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT chances, really:
     if (myFilesFromOtherProjects < MAX_FILES_TO_UPDATE_FROM_OTHER_PROJECT) {
-      ++myFilesFromOtherProjects;
+      myFilesFromOtherProjects++;
       return true;
     }
     return false;
+  }
+
+  private boolean belongsTo(@Nullable VirtualFile file, int fileId) {
+    if (myIndexableFilesFilter != null && !myIndexableFilesFilter.containsFileId(fileId)) {
+      return false;
+    }
+    return FileBasedIndexEx.belongsToScope(file, myRestrictedTo, myFilter);
   }
 
   public boolean acceptsFile(@Nullable VirtualFile file) {

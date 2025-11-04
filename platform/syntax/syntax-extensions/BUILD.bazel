@@ -10,8 +10,8 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
-  name = "platform_syntax_multiplatformSupport_provided",
-  lib = "//platform/syntax/syntax-multiplatformSupport:multiplatformSupport"
+  name = "platform_multiplatformSupport_provided",
+  lib = "//platform/multiplatformSupport"
 )
 
 jvm_library(
@@ -24,7 +24,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
     "//platform/syntax/syntax-api:syntax",
-    ":platform_syntax_multiplatformSupport_provided",
+    ":platform_multiplatformSupport_provided",
   ]
 )
 
@@ -42,7 +42,7 @@ jvm_library(
     "@lib//:kotlin-test-junit",
     "//platform/syntax/syntax-api:syntax",
     "//platform/syntax/syntax-api:syntax_test_lib",
-    ":platform_syntax_multiplatformSupport_provided",
+    ":platform_multiplatformSupport_provided",
   ]
 )
 ### auto-generated section `build intellij.platform.syntax.extensions` end

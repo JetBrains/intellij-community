@@ -6,12 +6,12 @@ import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
 import java.util.*
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
@@ -109,13 +109,14 @@ sealed interface EelExecApi {
    * This method is still not deprecated only because it has an automatically refreshable cache inside.
    * In contrast, [environmentVariables] only allows manually invalidating the cache.
    */
+  @OptIn(EelDelicateApi::class)
   @ApiStatus.Experimental
   @ApiStatus.Obsolete
   suspend fun fetchLoginShellEnvVariables(): Map<String, String> =
     when (this) {
       is EelExecPosixApi -> {
         if (this is LocalEelExecApi) {
-          environmentVariables().minimal().eelIt().await()
+          @Suppress("checkedExceptions") environmentVariables().minimal().eelIt().await()
         }
         else {
           var now = 0L
@@ -126,10 +127,22 @@ sealed interface EelExecApi {
             if (expireAt != null && expireAt <= now) expireAt
             else now + cacheDuration
           }!!
-          environmentVariables().loginInteractive().onlyActual(expireAt <= now).eelIt().await()
+          try {
+            withTimeout(3.seconds) {  // Just a random timeout.
+              environmentVariables().loginInteractive().onlyActual(expireAt <= now).eelIt().await()
+            }
+          }
+          catch (err: Exception) {
+            when (err) {
+              is EnvironmentVariablesException -> Unit
+              is TimeoutCancellationException -> currentCoroutineContext().ensureActive()
+              else -> throw err
+            }
+            environmentVariables().minimal().eelIt().await()
+          }
         }
       }
-      is EelExecWindowsApi -> environmentVariables().eelIt().await()
+      is EelExecWindowsApi -> @Suppress("checkedExceptions") environmentVariables().eelIt().await()
     }
 
   /**

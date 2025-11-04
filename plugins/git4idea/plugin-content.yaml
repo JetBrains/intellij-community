@@ -7,6 +7,12 @@
 - name: lib/modules/intellij.vcs.git.frontend.jar
   contentModules:
   - name: intellij.vcs.git.frontend
+- name: lib/modules/intellij.vcs.git.localHistory.jar
+  contentModules:
+  - name: intellij.vcs.git.localHistory
+- name: lib/modules/intellij.vcs.git.terminal.jar
+  contentModules:
+  - name: intellij.vcs.git.terminal
 - name: lib/vcs-git-frontend.jar
   contentModules:
   - name: intellij.vcs.git.shared

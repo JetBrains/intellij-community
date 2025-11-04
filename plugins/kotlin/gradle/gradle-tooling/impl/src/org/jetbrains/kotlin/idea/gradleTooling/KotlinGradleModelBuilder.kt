@@ -213,7 +213,9 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
     }
 
     override fun buildAll(modelName: String, project: Project): KotlinGradleModelImpl? {
-        return buildAll(project, builderContext = null, parameter = null)
+        return GradleOpenTelemetry.callWithSpan("kotlin_import_daemon_jvm_buildAll") {
+            buildAll(project, builderContext = null, parameter = null)
+        }
     }
 
     override fun buildAll(
@@ -222,7 +224,9 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         builderContext: ModelBuilderContext,
         parameter: ModelBuilderService.Parameter?
     ): KotlinGradleModelImpl? {
-        return buildAll(project, builderContext, parameter)
+        return GradleOpenTelemetry.callWithSpan("kotlin_import_daemon_jvm_param_buildAll") {
+            buildAll(project, builderContext, parameter)
+        }
     }
 
     private fun buildAll(

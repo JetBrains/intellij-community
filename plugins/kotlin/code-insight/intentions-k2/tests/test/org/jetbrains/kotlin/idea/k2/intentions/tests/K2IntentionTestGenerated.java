@@ -9118,6 +9118,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/introduceImportAlias/notApplicableLocalVariable.kt");
         }
 
+        @TestMetadata("notApplicableOnImport.kt")
+        public void testNotApplicableOnImport() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceImportAlias/notApplicableOnImport.kt");
+        }
+
         @TestMetadata("notApplicablePackage.kt")
         public void testNotApplicablePackage() throws Exception {
             runTest("../../../idea/tests/testData/intentions/introduceImportAlias/notApplicablePackage.kt");

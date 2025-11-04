@@ -520,10 +520,6 @@ class FrontendXDebuggerSession private constructor(
     XDebugSessionApi.getInstance().resume(id)
   }
 
-  override suspend fun switchToTopFrame() {
-    XDebugSessionApi.getInstance().switchToTopFrame(id)
-  }
-
   companion object {
 
     suspend fun create(

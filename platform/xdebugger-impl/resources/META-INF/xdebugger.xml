@@ -174,7 +174,7 @@
                  description="Use LUXed evaluation debugger popup"
                  key="xdebugger.lux.evaluation.popup"/>
 
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  description="Throw warnings and errors about misusages of frontend components on the backend (and vice versa)"
                  key="xdebugger.toolwindow.split.warnings"/>
 

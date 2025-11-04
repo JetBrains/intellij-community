@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.gdpr.localConsents.LocalConsentOptions;
 import com.intellij.ide.gdpr.ui.consents.*;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.NlsSafe;
@@ -107,8 +108,8 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     if (ConsentOptions.condAiDataCollectionConsent().test(consent)) {
       return new AiDataCollectionConsentUi(consent);
     }
-    if (ConsentOptions.condTraceDataCollectionComConsent().test(consent) ||
-        ConsentOptions.condTraceDataCollectionNonComConsent().test(consent)) {
+    if (LocalConsentOptions.condTraceDataCollectionComLocalConsent().test(consent) ||
+        LocalConsentOptions.condTraceDataCollectionNonComLocalConsent().test(consent)) {
       return new TraceDataCollectionConsentUI(consent);
     }
     return new DefaultConsentUi(consent);

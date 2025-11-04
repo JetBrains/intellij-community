@@ -601,6 +601,11 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
             runTest("pureKotlin/propertyRedeclaration/");
         }
 
+        @TestMetadata("valPropertyBecameWritable")
+        public void testValPropertyBecameWritable() throws Exception {
+            runTest("pureKotlin/valPropertyBecameWritable/");
+        }
+
         @TestMetadata("publicPropertyWithPrivateSetter")
         public void testPublicPropertyWithPrivateSetter() throws Exception {
             runTest("pureKotlin/publicPropertyWithPrivateSetter/");

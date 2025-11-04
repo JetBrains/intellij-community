@@ -10537,6 +10537,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/it.kt");
             }
 
+            @TestMetadata("noConflictWithImplicitLambdaParameter.kt")
+            public void testNoConflictWithImplicitLambdaParameter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/noConflictWithImplicitLambdaParameter.kt");
+            }
+
             @TestMetadata("override.kt")
             public void testOverride() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryVariable/override.kt");

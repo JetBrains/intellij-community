@@ -190,11 +190,11 @@ public final class JavaTypeProvider extends ExpressionTypeProvider<PsiElement> {
     }
     infoLines.removeIf(pair -> pair.getSecond().isEmpty());
     if (!infoLines.isEmpty()) {
-      infoLines.add(0, Pair.create(JavaBundle.message("type.information.type"), basicType));
+      infoLines.addFirst(Pair.create(JavaBundle.message("type.information.type"), basicType));
       HtmlChunk[] rows = ContainerUtil.map2Array(infoLines, HtmlChunk.class, pair -> makeHtmlRow(pair.getFirst(), pair.getSecond()));
       return HtmlChunk.tag("table").children(rows).toString();
     }
-    return basicType;
+    return HtmlChunk.text(basicType).toString();
   }
 
   private static HtmlChunk makeHtmlRow(@NotNull @Nls String titleText, @Nls String contentText) {

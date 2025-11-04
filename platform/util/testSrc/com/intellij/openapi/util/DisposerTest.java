@@ -12,11 +12,11 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NonNls;
 import org.junit.*;
 import org.junit.rules.TestName;
 
-import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -27,6 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
@@ -526,18 +527,20 @@ public class DisposerTest  {
     for (int i=0; i < 1000 && System.currentTimeMillis() < deadline; i++) {
       myDisposeActions.clear();
       myDisposedObjects.clear();
-      MyLoggingDisposable parent = new MyLoggingDisposable("parent"+i);
-      MyLoggingDisposable child = new MyLoggingDisposable("child" + i);
-      Future<Boolean> future = executor.submit(() -> Disposer.tryRegister(parent, child));
+      AtomicReference<MyLoggingDisposable> parent = new AtomicReference<>(new MyLoggingDisposable("parent" + i));
+      AtomicReference<MyLoggingDisposable> child = new AtomicReference<>(new MyLoggingDisposable("child" + i));
+      Future<Boolean> future = executor.submit(() -> Disposer.tryRegister(parent.get(), child.get()));
 
-      Disposer.dispose(parent);
+      Disposer.dispose(parent.get());
 
       boolean registered = future.get();
-      assertTrue(parent.isDisposed());
-      assertEquals(registered, child.isDisposed());
-      LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
-      Reference.reachabilityFence(parent);
-      Reference.reachabilityFence(child);
+      assertTrue(parent.get().isDisposed());
+      assertEquals(registered, child.get().isDisposed());
+      GCWatcher tracking = GCWatcher.tracking(parent.get(), child.get());
+      parent.set(null);
+      child.set(null);
+      myDisposedObjects.clear();
+      tracking.ensureCollectedWithinTimeout((int)(System.currentTimeMillis() - deadline));
     }
   }
 
@@ -675,22 +678,26 @@ public class DisposerTest  {
   @Test
   public void testDoubleRegisterMustNotLeakOneOfTheInstances() {
     LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
-    Disposable parent = new MyLoggingDisposable("parent");
+    AtomicReference<MyLoggingDisposable> parent = new AtomicReference<>(new MyLoggingDisposable("parent"));
     class MyChildDisposable extends MyLoggingDisposable {
       private MyChildDisposable(String aName) {
         super(aName);
       }
     }
-    Disposable child = new MyChildDisposable("child");
-    Disposer.register(parent, child);
-    Disposer.register(parent, child);
-    Disposer.dispose(child);
-    //noinspection UnusedAssignment
-    child = null;
+    AtomicReference<MyLoggingDisposable> child = new AtomicReference<>(new MyChildDisposable("child"));
+    Disposer.register(parent.get(), child.get());
+    Disposer.register(parent.get(), child.get());
+    Disposer.dispose(child.get());
     myDisposedObjects.clear();
-    LeakHunter.checkLeak(Disposer.getTree(), MyChildDisposable.class);
-    Disposer.dispose(parent);
-    LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
+    GCWatcher tracking = GCWatcher.tracking(child.get());
+    child.set(null);
+    tracking.ensureCollectedWithinTimeout(60_000);
+
+    Disposer.dispose(parent.get());
+    myDisposedObjects.clear();
+    GCWatcher trackingPa = GCWatcher.tracking(parent.get());
+    parent.set(null);
+    trackingPa.ensureCollectedWithinTimeout(60_000);
   }
 
   @Test

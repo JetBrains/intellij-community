@@ -249,13 +249,6 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     session.fileColorsComputer.sendRequest(file)
   }
 
-  override suspend fun switchToTopFrame(sessionId: XDebugSessionId) {
-    val session = sessionId.findValue() ?: return
-    withContext(Dispatchers.EDT) {
-      session.showExecutionPoint()
-    }
-  }
-
   override suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean) {
     val session = sessionDataId.findValue()?.session ?: return
     withContext(Dispatchers.EDT) {
@@ -265,7 +258,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
 
   override suspend fun getUiUpdateEventsFlow(sessionId: XDebugSessionId): Flow<Unit> {
     val session = sessionId.findValue() ?: return emptyFlow()
-    return session.debugProcess.sessionEventsProvider.getUiUpdateEventsFlow()
+    val eventsProvider = session.debugProcess.sessionEventsProvider ?: return emptyFlow()
+    return eventsProvider.getUiUpdateEventsFlow()
   }
 }
 

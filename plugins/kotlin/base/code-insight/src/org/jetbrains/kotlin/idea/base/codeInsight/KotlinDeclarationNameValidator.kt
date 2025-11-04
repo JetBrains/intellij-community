@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.codeInsight
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -43,8 +45,21 @@ class KotlinDeclarationNameValidator(
         }
 
         return visibleDeclarationsContext.siblings(withItself = checkVisibleDeclarationsContext).none { declaration ->
-            declaration.findDescendantOfType<KtNamedDeclaration> { it.isConflicting(identifier) } != null
+            declaration.findDescendantOfType<KtNamedDeclaration> { it.isConflicting(identifier) } != null ||
+                    hasConflictWithImplicitLambdaParameter(identifier, declaration)
         }
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    private fun hasConflictWithImplicitLambdaParameter(identifier: Name, declaration: PsiElement): Boolean {
+        if (identifier != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) return false
+        return declaration.findDescendantOfType<KtFunctionLiteral> {
+            !it.hasParameterSpecification() && allowAnalysisOnEdt {
+                analyze(visibleDeclarationsContext) {
+                    it.symbol.valueParameters.singleOrNull()?.isImplicitLambdaParameter == true
+                }
+            }
+        } != null
     }
 
     @OptIn(KaExperimentalApi::class)

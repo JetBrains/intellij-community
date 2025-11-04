@@ -332,7 +332,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     nameAndButtons!!.add(versionPanel)
 
     createButtons()
-    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else if (updateDescriptor != null) updateButton else gearButton)!!)
+    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else if (pluginManagerCustomizer != null && updateDescriptor == null) gearButton else updateButton)!!)
 
     topPanel.add(ErrorComponent().also { errorComponent = it }, VerticalLayout.FILL_HORIZONTAL)
     topPanel.add(licensePanel)

@@ -1401,6 +1401,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             public void testConstVal() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/modifiers/constVal.before.Main.kt");
             }
+
+            @TestMetadata("constValQualified.before.Main.kt")
+            public void testConstValQualified() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/constValQualified.before.Main.kt");
+            }
         }
     }
 
