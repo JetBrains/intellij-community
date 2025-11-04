@@ -198,7 +198,8 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         public String getText(JComboBox comboBox) {
           Object item = comboBox.getEditor().getItem();
           if (item.toString().isEmpty()) {
-            final String text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
+            var text = projectDefaultAccessor.getText(myXsltFile.getChildComponent());
+            if (text == null) text = "";
             final VirtualFile file =
               VirtualFileManager.getInstance()
                 .findFileByUrl(VfsUtil.pathToUrl(text.replace(File.separatorChar, '/')));
