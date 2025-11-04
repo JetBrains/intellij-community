@@ -1,25 +1,30 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.threadingModelHelper
+package org.jetbrains.idea.devkit.threadingModelHelper.java
 
 import com.intellij.openapi.progress.blockingContextToIndicator
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaRecursiveElementVisitor
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiMethodReferenceExpression
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiType
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.Processor
+import org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
+import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.measureTime
-
 
 /**
  * Actual visitor of bodies for the searched methods
@@ -95,12 +100,10 @@ class JavaLockReqPsiOps : LockReqPsiOps {
     val list = ArrayList<PsiMethod>()
     val abruptEnd = AtomicBoolean(false)
     blockingContextToIndicator {
-      query.forEach(Processor {
-        overridden ->
+      query.forEach(Processor { overridden ->
         val value = counter.incrementAndGet()
         if (value >= maxImpl) {
           abruptEnd.set(true)
-          //println("Too much inheritors for ${method.name}, stopping")
           return@Processor false
         }
         list.add(overridden)
@@ -121,7 +124,6 @@ class JavaLockReqPsiOps : LockReqPsiOps {
     val list = mutableListOf<PsiClass>()
     query.forEach(Processor { implementor ->
       if (counter.incrementAndGet() >= maxImpl) {
-        //println("Too many implementations for ${interfaceClass.name}, stopping")
         abruptEnd.set(true)
         return@Processor false
       }
@@ -152,5 +154,15 @@ class JavaLockReqPsiOps : LockReqPsiOps {
 
   override fun extractTypeArguments(type: PsiType): List<PsiType> {
     return (type as? PsiClassType)?.parameters?.toList() ?: emptyList()
+  }
+
+  override fun extractSignature(element: PsiElement): MethodSignature {
+    val method = element as PsiMethod
+    return MethodSignature.fromMethod(method)
+  }
+
+  override fun extractTargetElement(file: PsiFile, caretOffset: Int): PsiMethod? {
+    val elementAtCaret = file.findElementAt(caretOffset) ?: return null
+    return elementAtCaret.parentOfType<PsiMethod>()
   }
 }

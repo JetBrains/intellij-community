@@ -17,16 +17,23 @@ enum class RequirementReason { ANNOTATION, ASSERTION, SWING_COMPONENT, MESSAGE_B
 
 data class LockRequirement(val source: PsiElement, val constraintType: ConstraintType, val requirementReason: RequirementReason)
 
-data class MethodSignature(val qualifiedName: String, val parameterTypes: List<String>) {
+data class MethodSignature(val containingClassName: String, val methodName: String, val parameterTypes: List<String>) {
   companion object {
     fun fromMethod(method: PsiMethod): MethodSignature = MethodSignature(
-      qualifiedName = "${method.containingClass?.qualifiedName}.${method.name}",
+      containingClassName = method.containingClass?.qualifiedName ?: "<anon>",
+      methodName = method.name,
       parameterTypes = method.parameterList.parameters.map { it.type.canonicalText }
     )
   }
 }
 
-data class MethodCall(val method: PsiMethod, val methodName: String = method.name, val containingClassName: String? = method.containingClass!!.name, val isPolymorphic: Boolean = false, val isMessageBusCall: Boolean = false)
+data class MethodCall(val methodName: String, val containingClassName: String?, val isPolymorphic: Boolean= false, val isMessageBusCall: Boolean = false) {
+  companion object {
+    fun fromMethod(method: PsiMethod): MethodCall {
+      return MethodCall(method.name, method.containingClass!!.name)
+    }
+  }
+}
 
 data class ExecutionPath(val methodChain: List<MethodCall>, val lockRequirement: LockRequirement, val isSpeculative: Boolean = false)
 

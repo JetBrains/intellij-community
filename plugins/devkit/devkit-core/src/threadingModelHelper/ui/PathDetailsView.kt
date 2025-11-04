@@ -157,8 +157,8 @@ internal fun PathDetailsView(
       OutlinedButton(
         onClick = {
           val chain = selectedPath.methodChain.joinToString(" -> ") { call ->
-            val cls = call.method.containingClass?.qualifiedName ?: "Unknown"
-            "$cls.${call.method.name}"
+            val cls = call.containingClassName ?: "Unknown"
+            "$cls.${call.methodName}"
           }
           val requirement = when (selectedPath.lockRequirement.constraintType) {
             ConstraintType.READ -> "RequiresReadLock"

@@ -21,7 +21,7 @@ internal data class LockReqsViewState(
         .filter { path ->
           if (q.isEmpty()) return@filter true
           val chain = path.methodChain.joinToString(" -> ") { c ->
-            "${c.method.containingClass?.qualifiedName}.${c.method.name}"
+            "${c.containingClassName}.${c.methodName}"
           }
           chain.contains(q, ignoreCase = true)
         }

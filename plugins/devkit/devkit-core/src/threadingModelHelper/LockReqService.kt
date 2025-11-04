@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.Cancellation.checkCancelled
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 
 
@@ -28,44 +29,12 @@ class LockReqsService(private val project: Project) {
     val analyzer = LockReqAnalyzerParallelBFS()
     val config = AnalysisConfig.forProject(project, LOCK_REQUIREMENTS)
     withBackgroundProgress(project, "Analyzing lock requirements", true) {
-      val method = smartReadAction(project) { methodPtr.element }
-      if (method == null) return@withBackgroundProgress
       val consumer = DefaultLockReqConsumer(methodPtr) { snapshot ->
         ApplicationManager.getApplication().invokeLater {
           _currentResults = listOf(snapshot)
         }
       }
       analyzer.analyzeMethodStreaming(methodPtr, config, project, consumer)
-    }
-  }
-
-  suspend fun analyzeClass(psiPtr: SmartPsiElementPointer<PsiClass>) {
-    val config = AnalysisConfig.forProject(project, LOCK_REQUIREMENTS)
-    val analyzer = LockReqAnalyzerParallelBFS()
-
-    withBackgroundProgress(project, "", true) {
-      val psiClass = psiPtr.element
-      val results = psiClass?.methods?.map { method ->
-        checkCancelled()
-        analyzer.analyzeMethod(SmartPointerManager.createPointer(method), config)
-      } ?: emptyList()
-      _currentResults = results
-    }
-  }
-
-  suspend fun analyzeFile(filePtr: SmartPsiElementPointer<PsiJavaFile>) {
-    val config = AnalysisConfig.forProject(project, LOCK_REQUIREMENTS)
-    val analyzer = LockReqAnalyzerParallelBFS()
-
-    withBackgroundProgress(project, "", true) {
-      val psiFile = filePtr.element
-      val results = psiFile?.classes?.flatMap { psiClass ->
-        psiClass.methods.map { method ->
-          checkCancelled()
-          analyzer.analyzeMethod(SmartPointerManager.createPointer(method), config)
-        }
-      } ?: emptyList()
-      _currentResults = results
     }
   }
 }

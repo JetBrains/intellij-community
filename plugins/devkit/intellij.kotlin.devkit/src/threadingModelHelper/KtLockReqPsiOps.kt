@@ -3,6 +3,8 @@ package org.jetbrains.idea.devkit.kotlin.threadingModelHelper
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
@@ -11,6 +13,13 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.Processor
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
+import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
+import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.uast.UMethod
+import org.jetbrains.uast.getUastParentOfType
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -81,5 +90,19 @@ class KtLockReqPsiOps() : LockReqPsiOps {
 
   override fun extractTypeArguments(type: PsiType): List<PsiType> {
     return (type as? PsiClassType)?.parameters?.toList() ?: emptyList()
+  }
+
+  override fun extractSignature(element: PsiElement): MethodSignature {
+    val method = element.getUastParentOfType<UMethod>()!!.javaPsi
+    return MethodSignature.fromMethod(method)
+  }
+
+  override fun extractTargetElement(file: PsiFile, caretOffset: Int): PsiMethod? {
+    if (file !is KtFile) {
+      return null
+    }
+    val elementAtOffset = file.findElementAt(caretOffset)
+    val uMethod = elementAtOffset.getUastParentOfType<UMethod>(false)
+    return uMethod?.javaPsi
   }
 }

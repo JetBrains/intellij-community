@@ -786,7 +786,7 @@
 
     <LockReqPsiOps
       language="JAVA"
-      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.JavaLockReqPsiOps"/>
+      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.java.JavaLockReqPsiOps"/>
   </extensions>
   <applicationListeners>
     <listener class="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher$ComposeHotReloadRegistryListener"
@@ -815,6 +815,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.lockAnalysisActionProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockAnalysisActionProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"

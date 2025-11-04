@@ -1,8 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.threadingModelHelper
 
-import com.intellij.concurrency.virtualThreads.asyncAsVirtualThread
-import com.intellij.openapi.application.readAction
+import com.intellij.concurrency.virtualThreads.inVirtualThread
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -10,8 +9,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.ConcurrentHashMap
@@ -22,8 +21,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.measureTime
 
 /**
- * The main controller of call graph traversal
- * The analysis is performed in parallel
+ * The main controller of call graph traversal.
+ *
+ * The analysis is performed in parallel, with priority queue maintaining bfs-like traversal.
+ * A major challenge here is the determinism of the operation for given arguments -- due to parallel processing, the order of arrival of
+ * nodes to the processing functions is undefined, and we need to account for possibility to see the same node under different execution paths that have different lengths.
  */
 class LockReqAnalyzerParallelBFS {
 
@@ -45,19 +47,19 @@ class LockReqAnalyzerParallelBFS {
 
   data class QueuePayload(val queue: PriorityBlockingQueue<QueueEntry>, val counter: AtomicInteger, val globalCounter: AtomicInteger)
 
-  suspend fun analyzeMethodStreaming(method: SmartPsiElementPointer<PsiMethod>, config: AnalysisConfig, project: Project, consumer: LockReqConsumer): AnalysisResult {
-    consumer.onStart(method.element!!)
+  suspend fun analyzeMethodStreaming(methodPointer: SmartPsiElementPointer<PsiMethod>, config: AnalysisConfig, project: Project, consumer: LockReqConsumer): AnalysisResult {
+    consumer.onStart(methodPointer)
     val context = TraversalContext(config)
     context(context, consumer, project) {
-      traverseMethod(method)
+      traverseMethod(methodPointer)
     }
 
-    val result = AnalysisResult(method, context.paths, context.messageBusTopics, context.swingComponents)
+    val result = AnalysisResult(methodPointer, context.paths, context.messageBusTopics, context.swingComponents)
     consumer.onDone(result)
     return result
   }
 
-  data class QueueEntry(val method: SmartPsiElementPointer<PsiMethod>, val path: List<MethodCall>) : Comparable<QueueEntry> {
+  data class QueueEntry(val method: SmartPsiElementPointer<PsiMethod>, val signature: MethodSignature, val path: List<MethodCall>) : Comparable<QueueEntry> {
     override fun compareTo(other: QueueEntry): Int {
       return compareValuesBy(this, other) {
         it.path.size
@@ -65,16 +67,14 @@ class LockReqAnalyzerParallelBFS {
     }
   }
 
-
-
   context(project: Project, context: TraversalContext, consumer: LockReqConsumer)
   private suspend fun traverseMethod(root: SmartPsiElementPointer<PsiMethod>) {
     val queue = PriorityBlockingQueue<QueueEntry>()
     val totalSize = AtomicInteger(1)
     smartReadAction(project) {
       val method = root.element ?: return@smartReadAction
-      val sig = MethodSignature.fromMethod(method)
-      queue.put(QueueEntry(root, listOf(MethodCall(method))))
+      val sig = LockReqPsiOps.forLanguage(method.language).extractSignature(method)
+      queue.put(QueueEntry(root, sig, listOf(MethodCall(sig.containingClassName, sig.methodName))))
       sig
     }
 
@@ -101,10 +101,8 @@ class LockReqAnalyzerParallelBFS {
     val (queue, totalSize) = payload
     outerLoop@ while (isActive.get()) {
       val peekQueue = try {
-        coroutineScope {
-          asyncAsVirtualThread {
-            queue.poll(10, TimeUnit.MILLISECONDS)
-          }.await()
+        inVirtualThread {
+          queue.poll(10, TimeUnit.MILLISECONDS)
         }
       }
       catch (_: NoSuchElementException) {
@@ -114,8 +112,7 @@ class LockReqAnalyzerParallelBFS {
         continue
       }
       try {
-        val (methodPointer, currentPath) = peekQueue
-        val key = readAction { MethodSignature.fromMethod(methodPointer.element!!) }
+        val (methodPointer, key, currentPath) = peekQueue
         val newValue = currentPath.size
         if (newValue >= config.maxDepth) {
           continue
@@ -126,7 +123,6 @@ class LockReqAnalyzerParallelBFS {
             break
           }
           if (existing <= newValue) {
-            //println("Refusing $key because existing $existing <= proposed $newValue")
             continue@outerLoop // we have a shorter path already processed
           }
           if (context.visited.replace(key, existing, newValue)) {
@@ -171,7 +167,7 @@ class LockReqAnalyzerParallelBFS {
         }
 
         if (key.toString().contains("PsiDocumentManagerBase")) {
-          println("Traversed method ${key.qualifiedName} in $time, ${currentPath.size} steps deep (${
+          println("Traversed method ${key.containingClassName}.${key.methodName} in $time, ${currentPath.size} steps deep (${
             currentPath.joinToString(" -> ") {
               "${it.containingClassName}.${it.methodName}"
             }
@@ -197,11 +193,12 @@ class LockReqAnalyzerParallelBFS {
 
   }
 
+  @RequiresReadLock
   context(config: AnalysisConfig, ops: LockReqPsiOps, context: TraversalContext, consumer: LockReqConsumer, rules: LockReqRules)
   private fun processCallee(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>) {
 
     val requirements = LockReqDetector.findBodyRequirements(method)
-    requirements.forEach { requirement ->
+    for (requirement in requirements) {
       val path = ExecutionPath(currentPath, requirement)
       context.paths.add(path)
       consumer.onPath(path)
@@ -225,10 +222,12 @@ class LockReqAnalyzerParallelBFS {
     }
   }
 
+  @RequiresReadLock
   context(config: AnalysisConfig, ops: LockReqPsiOps, context: TraversalContext, consumer: LockReqConsumer, lockReqRules: LockReqRules)
   private fun handleMessageBusCall(payload: QueuePayload, method: PsiMethod, currentPath: List<MethodCall>) {
     ProgressManager.checkCanceled()
-    LockReqDetector.extractMessageBusTopic(method)?.let { topicClass ->
+    val topicClass = LockReqDetector.extractMessageBusTopic(method)
+    if (topicClass != null) {
       context.messageBusTopics.add(topicClass)
       consumer.onMessageBusTopic(topicClass)
       ops.findImplementations(topicClass, context.config.scope, context.config.maxImplementations) { listener ->
@@ -246,9 +245,9 @@ class LockReqAnalyzerParallelBFS {
       }) {
       return
     }
-    val newPath = currentPath + MethodCall(method)
+    val newPath = currentPath + MethodCall.fromMethod(method)
     payload.counter.incrementAndGet()
-    //println("Adding ${method.name} with path of ${newPath.joinToString(" -> ") { it.containingClassName + "." + it.methodName}}")
-    payload.queue.put(QueueEntry(SmartPointerManager.createPointer(method), newPath))
+    val signature = MethodSignature.fromMethod(method)
+    payload.queue.put(QueueEntry(SmartPointerManager.createPointer(method), signature, newPath))
   }
 }

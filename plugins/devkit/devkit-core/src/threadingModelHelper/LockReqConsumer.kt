@@ -6,7 +6,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPsiElementPointer
 
 interface LockReqConsumer {
-  fun onStart(method: PsiMethod) {}
+  fun onStart(method: SmartPsiElementPointer<PsiMethod>) {}
 
   fun onPath(path: ExecutionPath) {}
 
@@ -26,7 +26,7 @@ class DefaultLockReqConsumer(
   private val topics = java.util.concurrent.CopyOnWriteArraySet<PsiClass>()
   private val swing = java.util.concurrent.CopyOnWriteArraySet<MethodSignature>()
 
-  override fun onStart(method: PsiMethod) {
+  override fun onStart(method: SmartPsiElementPointer<PsiMethod>) {
     clear()
     publish()
   }

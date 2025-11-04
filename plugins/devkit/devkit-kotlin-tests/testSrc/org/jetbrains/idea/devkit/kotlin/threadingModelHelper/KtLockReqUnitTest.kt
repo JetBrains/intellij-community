@@ -52,7 +52,7 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
 
   private fun formatResult(result: AnalysisResult): List<String> {
     val actualPaths = result.paths.map { path ->
-      val chain = path.methodChain.joinToString(" -> ") { "${it.method.containingClass?.name}.${it.method.name}" }
+      val chain = path.methodChain.joinToString(" -> ") { "${it.containingClassName}.${it.methodName}" }
       val requirement = "${path.lockRequirement.constraintType.name}.${path.lockRequirement.requirementReason.name}"
       "$chain => $requirement"
     }

@@ -26,7 +26,7 @@ internal fun PathListView(
     if (query.isEmpty()) paths
     else paths.filter { path ->
       val chain = path.methodChain.joinToString(" -> ") {
-        "${it.method.containingClass?.qualifiedName}.${it.method.name}"
+        "${it.containingClassName}.${it.methodName}"
       }
       chain.contains(query, ignoreCase = true)
     }
@@ -49,7 +49,7 @@ internal fun PathListView(
       items(
         items = filteredPaths,
         key = { path ->
-          val chain = path.methodChain.joinToString("->") { it.method.name }
+          val chain = path.methodChain.joinToString("->") { it.methodName }
           "${chain}|${path.lockRequirement.constraintType}|${path.lockRequirement.requirementReason}|${path.isSpeculative}"
         }
       ) { path ->
