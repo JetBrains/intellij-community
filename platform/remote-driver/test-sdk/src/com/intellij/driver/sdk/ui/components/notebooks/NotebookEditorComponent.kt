@@ -326,6 +326,8 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
         waitFor("wait for project tree to load", 30.seconds) {
           getAllTexts().isNotEmpty()
         }
+        leftToolWindowToolbar.projectButton.open() // making sure the project view is in focus
+        invokeAction("ScrollPane-scrollHome") // making sure the first line is within the visible bounds
         getAllTexts().first().strictClick()
       }
     }
