@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  * check for PSI text consistency with both document text and AST node text, and log mismatches
  */
 @ApiStatus.Internal
-public class PsiConsistencyAssertions {
+public final class PsiConsistencyAssertions {
   public static void assertNoFileTextMismatch(@NotNull PsiFile psiFile, @NotNull ASTNode tree, @NotNull String psiFileText) {
     FileViewProvider viewProvider = psiFile.getViewProvider();
     Document document = viewProvider instanceof AbstractFileViewProvider
