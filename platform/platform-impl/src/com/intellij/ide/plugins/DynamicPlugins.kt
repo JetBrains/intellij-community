@@ -426,6 +426,7 @@ object DynamicPlugins {
            !plugin.isRequireRestart &&
            plugin.actions.isEmpty() &&
            checkNoComponentsOrServiceOverrides(plugin) == null &&
+           plugin.extensions.isNotEmpty() &&
            plugin.extensions.all { isUIOnlyExtension(it.key) }
   }
 
