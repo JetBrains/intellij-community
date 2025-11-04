@@ -92,7 +92,7 @@ internal class ProblemsViewHighlightingWatcher(
     !isValid(highlighter) -> null
     else -> {
       synchronized(lock) {
-        problems.computeIfAbsent(highlighter) { HighlightingProblem(provider, file, highlighter) }
+        problems.computeIfAbsent(highlighter) { HighlightingProblemFactory.EP_NAME.extensionList.first().createHighlightingProblem(provider, file, highlighter) }
       }
     }
   }
