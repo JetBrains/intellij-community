@@ -74,9 +74,14 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
 
   @Override
   protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile psiFile, final boolean processChangedTextOnly) {
+    // Task prepared by prepareTask is executed on EDT, but calculation of VCS changes may include operations
+    // forbidden on EDT (e.g., git cli invocations).
+    // It should not be wrapped in read action, as needsReadActionToPrepareTask returns true.
+    Collection<TextRange> preComputedRanges =
+      !processChangedTextOnly ? null : VcsFacade.getInstance().getChangedTextRanges(myProject, psiFile);
     return new FutureTask<>(() -> {
       try {
-        Collection<TextRange> ranges = getRangesToFormat(psiFile, processChangedTextOnly);
+        Collection<TextRange> ranges = preComputedRanges == null ? getRangesToFormat(psiFile, processChangedTextOnly) : preComputedRanges;
         Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
 
         if (document != null && Rearranger.EXTENSION.forLanguage(psiFile.getLanguage()) != null) {

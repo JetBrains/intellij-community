@@ -139,8 +139,9 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       return new FutureTask<>(() -> false);
     }
 
+    List<TextRange> changedRangesToFormate = processChangedTextOnly ? getChangedRangesToFormat(psiFile) : null;
     Computable<List<TextRange>> prepareRangesForFormat = () -> {
-      List<TextRange> formattingRanges = getRangesToFormat(psiFile, processChangedTextOnly);
+      List<TextRange> formattingRanges = changedRangesToFormate == null ? getRangesToFormat(psiFile) : changedRangesToFormate;
       CodeFormattingData.prepare(fileToProcess, formattingRanges);
       return formattingRanges;
     };
@@ -171,6 +172,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       });
       return result.get();
     });
+  }
+
+  private static @NotNull List<TextRange> getChangedRangesToFormat(@NotNull PsiFile psiFile) {
+    ChangedRangesInfo ranges = ReadAction.compute(() -> VcsFacade.getInstance().getChangedRangesInfo(psiFile));
+    return ranges != null ? ranges.allChangedRanges : Collections.emptyList();
   }
 
   private static boolean isSecondReformatDisabled() {
@@ -288,11 +294,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
-  private @NotNull List<TextRange> getRangesToFormat(@NotNull PsiFile file, boolean processChangedTextOnly) {
-    if (processChangedTextOnly) {
-      ChangedRangesInfo info = VcsFacade.getInstance().getChangedRangesInfo(file);
-      return info != null ? info.allChangedRanges : Collections.emptyList();
-    }
+  private @NotNull List<TextRange> getRangesToFormat(@NotNull PsiFile file) {
     if (mySelectionModel != null) {
       return getSelectedRanges(mySelectionModel);
     }
