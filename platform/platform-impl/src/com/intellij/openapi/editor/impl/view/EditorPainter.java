@@ -124,7 +124,11 @@ public final class EditorPainter implements TextDrawingCallback {
 
     g.setTransform(transform);
     g.setComposite(oldComposite);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA);
+    if (oldAA != null) {
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldAA);
+    } else {
+      g.getRenderingHints().remove(RenderingHints.KEY_ANTIALIASING);
+    }
   }
 
   void repaintCarets() {
