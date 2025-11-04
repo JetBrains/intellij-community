@@ -54,6 +54,7 @@ sealed class IdeaPluginDescriptorImpl(
   @Transient
   var jarFiles: List<Path>? = null
 
+  /** **DO NOT USE** outside plugin subsystem internal code. It is public now due to an unfinished migration */
   var isMarkedForLoading: Boolean = true
   private var _pluginClassLoader: ClassLoader? = null
 
