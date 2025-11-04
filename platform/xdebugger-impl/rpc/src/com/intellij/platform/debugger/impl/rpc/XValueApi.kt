@@ -20,6 +20,7 @@ interface XValueApi : RemoteApi<Unit> {
 
   fun computeChildren(xValueId: XValueId): Flow<XValueComputeChildrenEvent>
   fun computeXValueGroupChildren(xValueGroupId: XValueGroupId): Flow<XValueComputeChildrenEvent>
+  fun computeExpandedChildren(frameId: XStackFrameId, root: XDebuggerTreeExpandedNode): Flow<PreloadChildrenEvent>
 
   suspend fun disposeXValue(xValueId: XValueId)
 
@@ -57,3 +58,40 @@ data class XInlineDebuggerDataDto(
   val canCompute: ThreeState,
   val sourcePositionsFlow: RpcFlow<XSourcePositionDto>,
 )
+
+@ApiStatus.Internal
+@Serializable
+data class XDebuggerTreeExpandedNode(
+  val name: String,
+  val children: List<XDebuggerTreeExpandedNode>,
+)
+
+@ApiStatus.Internal
+@Serializable
+sealed interface PreloadChildrenEvent {
+  @Serializable
+  sealed interface ToBePreloaded : PreloadChildrenEvent {
+    val id: Id
+
+    @Serializable
+    data class Value(override val id: XValueId) : ToBePreloaded
+
+    @Serializable
+    data class Group(override val id: XValueGroupId) : ToBePreloaded
+  }
+
+  @Serializable
+  sealed interface ExpandedChildrenEvent : PreloadChildrenEvent {
+    val id: Id
+    val event: XValueComputeChildrenEvent
+
+    @Serializable
+    data class Frame(override val id: XStackFrameId, override val event: XValueComputeChildrenEvent) : ExpandedChildrenEvent
+
+    @Serializable
+    data class Value(override val id: XValueId, override val event: XValueComputeChildrenEvent) : ExpandedChildrenEvent
+
+    @Serializable
+    data class Group(override val id: XValueGroupId, override val event: XValueComputeChildrenEvent) : ExpandedChildrenEvent
+  }
+}

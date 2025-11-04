@@ -43,8 +43,6 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
-
 public abstract class XVariablesViewBase extends XDebugView {
   private final XDebuggerTreePanel myTreePanel;
   private MySelectionListener mySelectionListener;
@@ -144,10 +142,17 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
   }
 
+  @ApiStatus.Internal
+  protected void onTreeStateSaved(@NotNull XDebuggerTreeState state, @NotNull Object frameEqualityObject) {
+  }
+
   private void saveCurrentTreeState() {
     removeSelectionListener();
-    if (myFrameEqualityObject != null && (myTreeRestorer == null || myTreeRestorer.isFinished())) {
-      myTreeStates.put(myFrameEqualityObject, XDebuggerTreeState.saveState(getTree()));
+    Object equalityObject = myFrameEqualityObject;
+    if (equalityObject != null && (myTreeRestorer == null || myTreeRestorer.isFinished())) {
+      XDebuggerTreeState state = XDebuggerTreeState.saveState(getTree());
+      myTreeStates.put(equalityObject, state);
+      onTreeStateSaved(state, equalityObject);
     }
     disposeTreeRestorer();
   }

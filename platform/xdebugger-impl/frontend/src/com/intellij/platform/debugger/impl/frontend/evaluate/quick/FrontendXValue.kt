@@ -68,7 +68,7 @@ class FrontendXValue private constructor(
   var canMarkValue: Boolean = false
     private set
 
-  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue) {
+  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue, xValueDto.id) {
     XValueApi.getInstance().computeChildren(xValueDto.id)
   }
 

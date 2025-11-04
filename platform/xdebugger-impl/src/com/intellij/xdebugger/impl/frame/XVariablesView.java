@@ -16,6 +16,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -90,6 +91,14 @@ public class XVariablesView extends XVariablesViewBase {
         requestClear();
       }
     }, session.getProject().getDisposed());
+  }
+
+  @Override
+  protected final void onTreeStateSaved(@NotNull XDebuggerTreeState state, @NotNull Object frameEqualityObject) {
+    XDebugSessionProxy sessionProxy = getSessionProxy();
+    if (sessionProxy != null) {
+      sessionProxy.onTreeStateSaved(state, frameEqualityObject);
+    }
   }
 
   @Override

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValueContainer
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.createFrontendXDebuggerEvaluator
 import com.intellij.platform.debugger.impl.rpc.*
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XSourcePosition
@@ -18,6 +19,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.sourcePosition
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -39,11 +41,14 @@ internal class FrontendXStackFrame(
   private val textPresentation: XStackFramePresentation,
   canDrop: ThreeState,
 ) : XStackFrame(), XDebuggerFramesList.ItemWithSeparatorAbove {
+  private val preloadManagerContainer = PreloadManagerContainer(suspendContextLifetimeScope)
+  private val cs = suspendContextLifetimeScope.childScope("StackFrame $id", preloadManagerContainer)
+
   private val evaluator by lazy {
     createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, evaluatorDto, id)
   }
 
-  private val xValueContainer = FrontendXValueContainer(project, suspendContextLifetimeScope, false) {
+  private val xValueContainer = FrontendXValueContainer(project, cs, false, id) {
     XExecutionStackApi.getInstance().computeVariables(id)
   }
 
@@ -61,6 +66,10 @@ internal class FrontendXStackFrame(
   // For speedsearch in the frame list. We can't use text presentation for that as it might differ from the UI presentation.
   // Yet search shouldn't do any RPC to call customizePresentation on a backend counterpart.
   private val currentUiPresentation = MutableStateFlow(XStackFrameUiPresentationContainer())
+
+  fun initializePreload(treeState: XDebuggerTreeState, oldFrameEqualityObject: Any) {
+    preloadManagerContainer.initializePreload(treeState, this, oldFrameEqualityObject)
+  }
 
   override fun getSourcePosition(): XSourcePosition? {
     return sourcePosition?.sourcePosition()

@@ -18,7 +18,7 @@ internal class FrontendXValueGroup(
   hasParentValue: Boolean,
 ) : XValueGroup(xValueGroupDto.groupName) {
 
-  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue) {
+  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue, xValueGroupDto.id) {
     XValueApi.getInstance().computeXValueGroupChildren(xValueGroupDto.id)
   }
 
