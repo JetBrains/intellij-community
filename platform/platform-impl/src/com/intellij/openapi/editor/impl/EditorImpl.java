@@ -127,6 +127,7 @@ import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
@@ -664,9 +665,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myFocusModeModel;
   }
 
+  private final AtomicBoolean gainedFocus = new AtomicBoolean(false);
+
   @Override
   public void focusGained(@NotNull FocusEvent e) {
     myCaretCursor.activate();
+    gainedFocus.set(true);
     for (Caret caret : myCaretModel.getAllCarets()) {
       int caretLine = caret.getLogicalPosition().line;
       repaintLines(caretLine, caretLine);
@@ -3176,12 +3180,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
 
   private void setCursorPosition() {
-    if (!getSettings().isAnimatedCaret()) {
-      EditorCaretMoveService.setCursorPositionImmediately(this);
-      return;
-    }
     synchronized (caretMoveService) {
-      caretMoveService.setCursorPosition(this);
+      if (!getSettings().isAnimatedCaret() || gainedFocus.getAndSet(false)) {
+        caretMoveService.setCursorPositionImmediately(this);
+      } else {
+        caretMoveService.setCursorPosition(this);
+      }
     }
   }
 

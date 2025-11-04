@@ -47,21 +47,23 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
 
       CaretUpdate(pos1, width, caret, isRtl)
     }
-
-    /**
-     * Set the cursor position immediately without animation. This does not go through the
-     * coroutine-based logic which can delay the cursor position update. This is required for
-     * the ImmediatePainterTest to work.
-     */
-    @JvmStatic
-    fun setCursorPositionImmediately(editor: EditorImpl) {
-      val animationStates = calculateUpdates(editor)
-      editor.myCaretCursor.setPositions(animationStates.map { state ->
-        EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl)
-      }.toTypedArray())
-    }
   }
   private val lastPosMap: MutableMap<Caret, Point2D> = ConcurrentHashMap()
+
+  /**
+   * Set the cursor position immediately without animation. This does not go through the
+   * coroutine-based logic which can delay the cursor position update. This is required for
+   * the ImmediatePainterTest to work.
+   */
+  fun setCursorPositionImmediately(editor: EditorImpl) {
+    val animationStates = calculateUpdates(editor)
+    for (state in animationStates) {
+      lastPosMap[state.caret] = state.finalPos
+    }
+    editor.myCaretCursor.setPositions(animationStates.map { state ->
+      EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl)
+    }.toTypedArray())
+  }
 
   // Replaying 128 requests is probably way too much, actually 2 should be enough. It shouldn't break
   // anything though, since most of the time this would not contain more than 2 elements
