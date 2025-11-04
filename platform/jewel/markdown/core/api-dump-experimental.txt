@@ -129,6 +129,16 @@
 - equals(java.lang.Object):Z
 - f:getContent():java.lang.String
 - hashCode():I
+*f:org.jetbrains.jewel.markdown.MarkdownBlock$HtmlBlockWithAttributes
+- org.jetbrains.jewel.markdown.MarkdownBlock
+- org.jetbrains.jewel.markdown.WithChildBlocks
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.markdown.MarkdownBlock,java.util.Map):V
+- equals(java.lang.Object):Z
+- f:getAttributes():java.util.Map
+- getChildren():java.util.List
+- f:getMdBlock():org.jetbrains.jewel.markdown.MarkdownBlock
+- hashCode():I
 *:org.jetbrains.jewel.markdown.MarkdownBlock$ListBlock
 - org.jetbrains.jewel.markdown.MarkdownBlock
 - org.jetbrains.jewel.markdown.WithChildBlocks
@@ -315,6 +325,7 @@ f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
 *c:org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer
 - org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 - sf:$stable:I
+- *sf:Companion:org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer$Companion
 - <init>(org.jetbrains.jewel.markdown.rendering.MarkdownStyling,java.util.List,org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer):V
 - b:<init>(org.jetbrains.jewel.markdown.rendering.MarkdownStyling,java.util.List,org.jetbrains.jewel.markdown.rendering.InlineMarkdownRenderer,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - pf:MaybeScrollingContainer(Z,androidx.compose.ui.Modifier,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
@@ -354,6 +365,7 @@ f:org.jetbrains.jewel.markdown.processing.ProcessingUtilKt
 - render(org.jetbrains.jewel.markdown.MarkdownBlock$Paragraph,org.jetbrains.jewel.markdown.rendering.MarkdownStyling$Paragraph,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
 - render(org.jetbrains.jewel.markdown.MarkdownBlock,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function0,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
 - renderThematicBreak(org.jetbrains.jewel.markdown.rendering.MarkdownStyling$ThematicBreak,Z,androidx.compose.ui.Modifier,androidx.compose.runtime.Composer,I):V
+*f:org.jetbrains.jewel.markdown.rendering.DefaultMarkdownBlockRenderer$Companion
 *:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver
 - *sf:Companion:org.jetbrains.jewel.markdown.rendering.ImageSourceResolver$Companion
 - a:resolve(java.lang.String):java.lang.String
