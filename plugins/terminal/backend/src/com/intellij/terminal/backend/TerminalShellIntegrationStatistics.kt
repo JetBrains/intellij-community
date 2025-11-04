@@ -1,9 +1,9 @@
 package com.intellij.terminal.backend
 
 import com.intellij.openapi.project.Project
-import fleet.multiplatform.shims.ConcurrentHashMap
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class TerminalShellIntegrationStatisticsListener(private val project: Project) : TerminalShellIntegrationEventsListener {

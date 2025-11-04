@@ -7,12 +7,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
 internal class GitRepositoryIdCache(private val project: Project, cs: CoroutineScope) {
-  private val cache: MutableMap<RepositoryId, GitRepository?> = ConcurrentHashMap()
+  private val cache: MutableMap<RepositoryId, GitRepository> = ConcurrentHashMap()
 
   init {
     project.messageBus.connect(cs).subscribe<VcsRepositoryMappingListener>(

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import fleet.multiplatform.shims.ConcurrentHashMap
+import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
 internal class GitCompareBranchesFilesManager(private val project: Project) : Disposable {

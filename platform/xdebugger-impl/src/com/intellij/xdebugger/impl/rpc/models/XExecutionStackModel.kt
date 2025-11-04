@@ -11,9 +11,9 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.impl.XDebugSessionImpl
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 
 @ConsistentCopyVisibility
 @ApiStatus.Internal

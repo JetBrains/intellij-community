@@ -9,8 +9,8 @@ import com.intellij.platform.execution.dashboard.splitApi.RunDashboardLuxedConte
 import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceRpc
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
-import fleet.multiplatform.shims.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
+import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
 internal class FrontendRunDashboardLuxHolder(val project: Project, val coroutineScope: CoroutineScope) {

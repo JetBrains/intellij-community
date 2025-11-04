@@ -12,10 +12,10 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.MessageBusConnection
-import fleet.multiplatform.shims.ConcurrentHashMap
 import git4idea.config.GitConfigUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.jvm.optionals.getOrNull
 
 @ApiStatus.Experimental
