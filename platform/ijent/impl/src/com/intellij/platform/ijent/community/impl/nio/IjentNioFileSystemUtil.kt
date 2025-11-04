@@ -4,9 +4,12 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.util.IntelliJCoroutinesFacade
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.*
+import kotlin.time.Duration.Companion.milliseconds
 
 internal fun Path.toEelPath(): EelPath =
   when {
@@ -22,9 +25,18 @@ internal fun Path.toEelPath(): EelPath =
  *
  * In addition, we suppress work stealing in this `runBlocking`, as it should return as fast as it can on its own.
  */
-@Suppress("SSBasedInspection")
 @ApiStatus.Internal
 fun <T> fsBlocking(body: suspend () -> T): T {
+  return IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds) {
+    fsBlockingWithoutParallelismCompensation {
+      body()
+    }
+  }
+}
+
+@Suppress("SSBasedInspection")
+@VisibleForTesting
+fun <T> fsBlockingWithoutParallelismCompensation(body: suspend () -> T): T {
   return runBlocking(NestedBlockingEventLoop(Thread.currentThread())) {
     body()
   }
