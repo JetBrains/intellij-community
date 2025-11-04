@@ -10,7 +10,7 @@ public class StreamFilterPatching {
   }
 
   public static List<Integer> getIntegersMR2(List<@Nullable Integer> integers) {
-    return <warning descr="Returning a class with nullable type parameters when a class with non-null type parameters is expected">integers.stream().filter(Objects::isNull).toList()</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">integers.stream().filter(Objects::isNull).toList()</warning>;
   }
 
   public static List<Integer> getIntegersLambda(List<@Nullable Integer> integers) {
@@ -18,7 +18,7 @@ public class StreamFilterPatching {
   }
 
   public static List<Integer> getIntegersLambda2(List<@Nullable Integer> integers) {
-    return <warning descr="Returning a class with nullable type parameters when a class with non-null type parameters is expected">integers.stream().filter(obj -> Objects.isNull(obj)).toList()</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">integers.stream().filter(obj -> Objects.isNull(obj)).toList()</warning>;
   }
 
   public static List<Integer> getIntegersLambda3(List<@Nullable Integer> integers) {

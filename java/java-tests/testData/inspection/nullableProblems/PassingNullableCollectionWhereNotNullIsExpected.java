@@ -31,9 +31,9 @@ class JC {
     Supplier<List<@NotNull String>> supplier = () -> <warning descr="Assigning a collection of nullable elements into a collection of non-null elements">list</warning>;
     Supplier<List<@NotNull String>> supplierRef = <warning descr="Assigning a collection of nullable elements into a collection of non-null elements">this::getNullableList</warning>;
 
-    Supplier<List<@NotNull String>> supplier3 = () -> { return <warning descr="Returning a class with nullable type parameters when a class with non-null type parameters is expected">list</warning>;};
+    Supplier<List<@NotNull String>> supplier3 = () -> { return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">list</warning>;};
 
-    return <warning descr="Returning a class with nullable type parameters when a class with non-null type parameters is expected">list</warning>;
+    return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">list</warning>;
   }
   
 }

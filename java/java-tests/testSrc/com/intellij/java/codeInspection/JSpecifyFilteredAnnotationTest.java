@@ -575,8 +575,8 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
         case "inspection.nullable.problems.Nullable.method.overrides.NotNull",
              "inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
              "assigning.a.collection.of.nullable.elements",
-             "returning.a.class.with.nullable.parameters",
-             "returning.a.class.with.notnull.parameters"
+             "returning.a.class.with.nullable.arguments",
+             "returning.a.class.with.notnull.arguments"
           //,  "non.null.type.argument.is.expected"  //todo see IDEA-377707
           -> warnings.put(anchor, "jspecify_nullness_mismatch");
         case "inspection.nullable.problems.method.overrides.NotNull", "inspection.nullable.problems.parameter.overrides.NotNull" ->
