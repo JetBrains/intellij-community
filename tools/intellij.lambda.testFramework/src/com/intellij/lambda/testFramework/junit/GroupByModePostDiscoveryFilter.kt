@@ -1,15 +1,20 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.tools.ide.util.common.logOutput
 import org.junit.platform.engine.FilterResult
 import org.junit.platform.engine.TestDescriptor
 import org.junit.platform.engine.support.descriptor.ClassSource
 import org.junit.platform.launcher.PostDiscoveryFilter
 
 /**
- * Filters out @GroupTestsByMode classes from Jupiter engine execution.
- * These classes will only be executed by GroupByModeTestEngine.
+ * Filters out classes with [ExecuteInMonolithAndSplitMode] annotation from Jupiter engine execution.
+ * These classes will only be executed by [GroupByModeTestEngine].
  */
 class GroupByModePostDiscoveryFilter : PostDiscoveryFilter {
+  companion object {
+    private val className = GroupByModePostDiscoveryFilter::class.simpleName
+    private fun log(message: String) = logOutput("[$className]: $message")
+  }
 
   override fun apply(testDescriptor: TestDescriptor): FilterResult {
     // Only filter Jupiter engine's tests
@@ -23,9 +28,9 @@ class GroupByModePostDiscoveryFilter : PostDiscoveryFilter {
     if (source is ClassSource) {
       try {
         val clazz = Class.forName(source.className)
-        if (clazz.isAnnotationPresent(GroupTestsByMode::class.java)) {
-          println("GroupByModePostDiscoveryFilter: Excluding ${source.className} from Jupiter")
-          return FilterResult.excluded("Managed by GroupByModeTestEngine")
+        if (clazz.isAnnotationPresent(ExecuteInMonolithAndSplitMode::class.java)) {
+          log("Excluding ${source.className} from Jupiter")
+          return FilterResult.excluded("Managed by ${GroupByModeTestEngine::class.simpleName}")
         }
       }
       catch (e: ClassNotFoundException) {
@@ -40,9 +45,9 @@ class GroupByModePostDiscoveryFilter : PostDiscoveryFilter {
       if (parentSource is ClassSource) {
         try {
           val clazz = Class.forName(parentSource.className)
-          if (clazz.isAnnotationPresent(GroupTestsByMode::class.java)) {
-            println("GroupByModePostDiscoveryFilter: Excluding ${testDescriptor.displayName} (parent has @GroupTestsByMode)")
-            return FilterResult.excluded("Parent managed by GroupByModeTestEngine")
+          if (clazz.isAnnotationPresent(ExecuteInMonolithAndSplitMode::class.java)) {
+            log("Excluding ${testDescriptor.displayName} (parent has @${ExecuteInMonolithAndSplitMode::class.simpleName})")
+            return FilterResult.excluded("Parent managed by ${GroupByModeTestEngine::class.simpleName}")
           }
         }
         catch (e: ClassNotFoundException) {
@@ -52,6 +57,6 @@ class GroupByModePostDiscoveryFilter : PostDiscoveryFilter {
       parent = parent.parent.orElse(null)
     }
 
-    return FilterResult.included("Not a GroupTestsByMode test")
+    return FilterResult.included("Not a @${ExecuteInMonolithAndSplitMode::class.simpleName} test")
   }
 }

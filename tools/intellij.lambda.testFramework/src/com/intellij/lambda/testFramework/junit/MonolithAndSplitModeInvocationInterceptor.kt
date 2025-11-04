@@ -49,7 +49,6 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
     if (invocationContext.arguments.any { it::class == BackgroundRunWithLambda::class }) {
       System.err.println("Test ${invocationContext.executable?.name} has ${BackgroundRunWithLambda::class.qualifiedName} parameter. Test is expected to use it directly.")
       return invocation.proceed()
-      // TODO: https://youtrack.jetbrains.com/issue/AT-3414/Lambda-tests-implement-parameterization-for-all-possible-JUnit5-test-scenarios
     }
 
     val allowedAnnotations = listOf(TestTemplate::class, TestFactory::class, ParameterizedTest::class)
@@ -58,7 +57,7 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
       it.annotationClass in allowedAnnotations
     }
 
-    val fullMethodName = "${invocationContext.targetClass.name}#${invocationContext.executable?.name}"
+    val fullMethodName = "${invocationContext.targetClass.name}.${invocationContext.executable?.name}"
 
     if (!isAllowedTest) {
       printlnError("Method $fullMethodName will not be executed inside IDE. " +
@@ -70,8 +69,6 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
     runBlocking {
       println("Executing test method $fullMethodName inside IDE in mode ${IdeInstance.currentIdeMode}")
 
-      // TODO: https://youtrack.jetbrains.com/issue/AT-3386/Lambda-tests-Start-different-instances-of-IDE-for-each-mode
-      // TODO: provide and option to start IDE for every test
       IdeInstance.ideBackgroundRun.runLambda(InjectedLambda::class,
                                              params = mapOf(
                                                "testClass" to (invocationContext.targetClass.name ?: ""),
@@ -80,8 +77,6 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
                                              ))
     }
     invocation.skip()
-    // TODO: https://youtrack.jetbrains.com/issue/AT-3414/Lambda-tests-implement-parameterization-for-all-possible-JUnit5-test-scenarios
-    //  find a way to deal with JUnit5 test factory (see overrides above)
     return null
   }
 }

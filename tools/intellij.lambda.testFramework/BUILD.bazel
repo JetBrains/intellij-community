@@ -50,6 +50,7 @@ jvm_library(
     "//platform/usageView",
     "@lib//:kodein-di-jvm",
     "//tools/intellij.tools.ide.starter:ide-starter",
+    "//tools/intellij.tools.ide.util.common:ide-util-common",
     "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//tools/intellij.tools.ide.starter.driver:ide-starter-driver",

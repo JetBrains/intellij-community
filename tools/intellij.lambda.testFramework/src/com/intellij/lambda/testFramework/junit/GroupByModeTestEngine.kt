@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.tools.ide.util.common.logOutput
 import org.junit.platform.engine.*
 import org.junit.platform.engine.discovery.ClassSelector
 import org.junit.platform.engine.reporting.ReportEntry
@@ -10,16 +11,19 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 /**
  * Custom TestEngine that wraps JUnit Jupiter and enables grouped by [IdeRunMode] test execution.
  *
- * When a test class is annotated with @GroupTestsByMode, this engine ensures
+ * When a test class is annotated with [ExecuteInMonolithAndSplitMode], this engine ensures
  * tests execute in two phases:
  * 1. All MONOLITH mode tests across all methods
  * 2. All SPLIT mode tests across all methods
  */
 class GroupByModeTestEngine : TestEngine {
-
   companion object {
     const val ENGINE_ID = "group-by-mode"
     private const val JUPITER_ENGINE_ID = "junit-jupiter"
+
+    private val annotationName = ExecuteInMonolithAndSplitMode::class.simpleName
+    private val engineClassName = GroupByModeTestEngine::class.simpleName
+    private fun log(message: String) = logOutput("[$engineClassName]: $message")
   }
 
   private val jupiterEngine: TestEngine by lazy {
@@ -31,15 +35,15 @@ class GroupByModeTestEngine : TestEngine {
   override fun getId(): String = ENGINE_ID
 
   override fun discover(discoveryRequest: EngineDiscoveryRequest, uniqueId: UniqueId): TestDescriptor {
-    println("GroupByModeTestEngine: Starting discovery with request: ${discoveryRequest.getSelectorsByType(ClassSelector::class.java).map { it.className }}")
+    log("Starting discovery with request: ${discoveryRequest.getSelectorsByType(ClassSelector::class.java).map { it.className }}")
 
-    // Filter to only get classes with @GroupTestsByMode
+    // Filter to only get classes with @ExecuteInMonolithAndSplitMode
     val groupedClassSelectors = discoveryRequest.getSelectorsByType(ClassSelector::class.java)
       .filter { selector ->
         try {
           val clazz = Class.forName(selector.className)
-          val hasAnnotation = clazz.isAnnotationPresent(GroupTestsByMode::class.java)
-          println("GroupByModeTestEngine: Class ${selector.className} has @GroupTestsByMode: $hasAnnotation")
+          val hasAnnotation = clazz.isAnnotationPresent(ExecuteInMonolithAndSplitMode::class.java)
+          log("Class ${selector.className} has @$annotationName: $hasAnnotation")
           hasAnnotation
         }
         catch (e: ClassNotFoundException) {
@@ -48,11 +52,11 @@ class GroupByModeTestEngine : TestEngine {
       }
 
     if (groupedClassSelectors.isEmpty()) {
-      println("GroupByModeTestEngine: No tests with @GroupTestsByMode found, returning empty descriptor")
+      log("No tests with @$annotationName found, returning empty descriptor")
       return EngineDescriptor(uniqueId, "Group by Mode (no tests)")
     }
 
-    println("GroupByModeTestEngine: Found ${groupedClassSelectors.size} classes with @GroupTestsByMode: ${groupedClassSelectors.map { it.className }}")
+    log("Found ${groupedClassSelectors.size} classes with @$annotationName: ${groupedClassSelectors.map { it.className }}")
 
     // Create custom engine descriptor that stores the configuration
     val engineDescriptor = GroupedModeEngineDescriptor(
@@ -67,7 +71,7 @@ class GroupByModeTestEngine : TestEngine {
         Class.forName(selector.className)
       }
       catch (e: ClassNotFoundException) {
-        println("GroupByModeTestEngine: Could not load class ${selector.className}")
+        log("Could not load class ${selector.className}")
         continue
       }
 
@@ -101,10 +105,10 @@ class GroupByModeTestEngine : TestEngine {
     val rootDescriptor = executionRequest.rootTestDescriptor
     val listener = executionRequest.engineExecutionListener
 
-    println("GroupByModeTestEngine: Executing with descriptor type: ${rootDescriptor.javaClass.simpleName}")
+    log("Executing with descriptor type: ${rootDescriptor.javaClass.simpleName}")
 
     if (rootDescriptor !is GroupedModeEngineDescriptor) {
-      println("GroupByModeTestEngine: Unknown descriptor type, skipping")
+      log("Unknown descriptor type, skipping")
       return
     }
 
@@ -114,7 +118,7 @@ class GroupByModeTestEngine : TestEngine {
       val classSelectors = rootDescriptor.classSelectors
 
       if (classSelectors.isEmpty()) {
-        println("GroupByModeTestEngine: No classes to execute")
+        log("No classes to execute")
         listener.executionFinished(rootDescriptor, TestExecutionResult.successful())
         return
       }
@@ -142,7 +146,7 @@ class GroupByModeTestEngine : TestEngine {
           }
           catch (e: Exception) {
             // Don't finish the class descriptor yet on error
-            println("GroupByModeTestEngine: Error in $mode mode: ${e.message}")
+            log("Error in $mode mode: ${e.message}")
             e.printStackTrace()
           }
         }
@@ -203,7 +207,7 @@ class GroupByModeTestEngine : TestEngine {
       val jupiterUniqueId = UniqueId.forEngine(JUPITER_ENGINE_ID)
       val freshJupiterDescriptor = jupiterEngine.discover(freshRequest, jupiterUniqueId)
 
-      println("GroupByModeTestEngine: Found ${freshJupiterDescriptor.descendants.size} descendants for ${modeDescriptor.mode}")
+      log("Found ${freshJupiterDescriptor.descendants.size} descendants for ${modeDescriptor.mode}")
 
       // Create translating listener that reports under our mode descriptor
       val translatingListener = TranslatingExecutionListener(
@@ -225,7 +229,7 @@ class GroupByModeTestEngine : TestEngine {
 
       // Only allow cleanup on the last mode to keep application alive between modes
       if (!isLastMode) {
-        println("GroupByModeTestEngine: Skipping cleanup between modes")
+        log("Skipping cleanup between modes")
       }
       else {
         listener.executionFinished(modeDescriptor, TestExecutionResult.successful())
@@ -258,7 +262,7 @@ class GroupedClassDescriptor(
 ) : org.junit.platform.engine.support.descriptor.AbstractTestDescriptor(
   uniqueId,
   className,
-  classSource ?: org.junit.platform.engine.support.descriptor.ClassSource.from(className)
+  classSource ?: ClassSource.from(className)
 ) {
 
   override fun getType(): TestDescriptor.Type = TestDescriptor.Type.CONTAINER
