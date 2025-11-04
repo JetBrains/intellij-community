@@ -228,7 +228,7 @@ public final class SdkConfigurationUtil {
                                        @Nullable SdkAdditionalData additionalData,
                                        @Nullable String customSdkSuggestedName,
                                        @NotNull Supplier<? extends @NotNull ProjectJdkTable> projectJdkTableSupplier) {
-    return createSdk(allSdks, sdkType.sdkPath(homeDir), sdkType, additionalData, customSdkSuggestedName, projectJdkTableSupplier);
+    return createSdk(null, allSdks, sdkType.sdkPath(homeDir), sdkType, additionalData, customSdkSuggestedName, projectJdkTableSupplier);
   }
 
   public static @NotNull Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
@@ -236,7 +236,7 @@ public final class SdkConfigurationUtil {
                                        @NotNull SdkType sdkType,
                                        @Nullable SdkAdditionalData additionalData,
                                        @Nullable String customSdkSuggestedName) {
-    return createSdk(allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance());
+    return createSdk(null, allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance());
   }
 
   @ApiStatus.Internal
@@ -246,10 +246,11 @@ public final class SdkConfigurationUtil {
                                        @NotNull SdkType sdkType,
                                        @Nullable SdkAdditionalData additionalData,
                                        @Nullable String customSdkSuggestedName) {
-    return createSdk(allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance(project));
+    return createSdk(project, allSdks, homePath, sdkType, additionalData, customSdkSuggestedName, () -> ProjectJdkTable.getInstance(project));
   }
 
-  private static @NotNull Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
+  private static @NotNull Sdk createSdk(@Nullable Project project,
+                                        @NotNull Collection<? extends Sdk> allSdks,
                                         @NotNull String homePath,
                                         @NotNull SdkType sdkType,
                                         @Nullable SdkAdditionalData additionalData,
@@ -259,7 +260,7 @@ public final class SdkConfigurationUtil {
                            ? createUniqueSdkName(sdkType, homePath, allSdks)
                            : createUniqueSdkName(customSdkSuggestedName, allSdks);
 
-    Sdk sdk = SdkUtils.createSdkForEnvironment(projectJdkTableSupplier.get(), sdkName, sdkType, homePath);
+    Sdk sdk = SdkUtils.createSdkForEnvironment(projectJdkTableSupplier.get(), project, sdkName, sdkType, homePath);
     SdkModificator sdkModificator = sdk.getSdkModificator();
     if (additionalData != null) {
       // additional initialization.

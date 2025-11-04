@@ -220,7 +220,7 @@ public final class LocalShellIntegrationInjector {
       Instant started = Instant.now();
       Path remoteBaseDirectory = transferLocalContentToRemote(baseDirectory, new EelPathUtils.TransferTarget.Temporary(eelDescriptor));
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Transferred shell integration files to remote (" + eelDescriptor.getMachine().getName() + ") in "
+        LOG.debug("Transferred shell integration files to remote (" + eelDescriptor.getName() + ") in "
                   + Duration.between(started, Instant.now()).toMillis() + "ms: "
                   + baseDirectory + " -> " + remoteBaseDirectory
          );
@@ -228,7 +228,7 @@ public final class LocalShellIntegrationInjector {
       return asEelPath(remoteBaseDirectory.resolve(relativePath)).toString();
     }
     catch (Exception e) {
-      LOG.warn("Unable to transfer shell integration (" + baseDirectory + ") to remote (" + eelDescriptor.getMachine().getName() + ")", e);
+      LOG.warn("Unable to transfer shell integration (" + baseDirectory + ") to remote (" + eelDescriptor.getName() + ")", e);
       return null;
     }
   }

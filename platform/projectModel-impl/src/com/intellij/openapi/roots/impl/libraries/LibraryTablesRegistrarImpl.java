@@ -45,7 +45,7 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
     if (!Registry.is("ide.workspace.model.per.environment.model.separation", false)) {
       return getLibraryTable();
     }
-    EelMachine eelMachine = EelProviderUtil.getEelDescriptor(project).getMachine();
+    EelMachine eelMachine = EelProviderUtil.getEelMachine(project);
     return GlobalLibraryTableBridge.Companion.getInstance(eelMachine);
   }
 

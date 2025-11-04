@@ -80,7 +80,7 @@ class ExecServiceShowCaseTest {
       }
       SimpleApiExecType.FULL_PATH -> {
         var fullPath = eel.exec.findExeFilesInPath(binary).firstOrNull()
-                       ?: error("no $binary found on ${eel.descriptor.machine.name}")
+                       ?: error("no $binary found on ${eel.descriptor.name}")
         if (rainyDay) {
           fullPath = fullPath.resolve("junk")
         }

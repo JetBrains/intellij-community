@@ -8,6 +8,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.jetbrains.python.PathShortener.Companion.create
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path

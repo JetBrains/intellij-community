@@ -27,9 +27,8 @@
 - <init>(java.lang.String):V
 - getMessage():java.lang.String
 *:com.intellij.platform.eel.EelDescriptor
-- a:getMachine():com.intellij.platform.eel.EelMachine
-- *:getOsFamily():com.intellij.platform.eel.EelOsFamily
-- *:toEelApi(kotlin.coroutines.Continuation):java.lang.Object
+- *a:getName():java.lang.String
+- *a:getOsFamily():com.intellij.platform.eel.EelOsFamily
 *:com.intellij.platform.eel.EelError
 *f:com.intellij.platform.eel.EelError$Unknown
 - com.intellij.platform.eel.EelError
@@ -175,8 +174,7 @@ f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
 - s:valueOf(java.lang.String):com.intellij.platform.eel.EelIpPreference
 - s:values():com.intellij.platform.eel.EelIpPreference[]
 *:com.intellij.platform.eel.EelMachine
-- *a:getName():java.lang.String
-- *a:getOsFamily():com.intellij.platform.eel.EelOsFamily
+- a:ownsPath(java.nio.file.Path):Z
 - *a:toEelApi(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelNetworkError
 - com.intellij.platform.eel.EelError

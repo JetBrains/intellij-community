@@ -10,13 +10,37 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.project.ProjectStoreOwner
 import org.jetbrains.annotations.Unmodifiable
+import java.nio.file.InvalidPathException
+import kotlin.io.path.Path
 
-private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjectViewProvider, Disposable {
+private fun EelMachine.ownsSdk(sdk: Sdk): Boolean {
+  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+    return true
+  }
+
+  return try {
+    val nioPath = sdk.homePath?.let(::Path)
+
+    return if (nioPath != null) {
+      ownsPath(nioPath)
+    }
+    else {
+      this == LocalEelMachine
+    }
+  }
+  catch (_: InvalidPathException) {
+    this == LocalEelMachine
+  }
+}
+
+private class SdkTableProjectViewProviderImpl(private val project: Project) : SdkTableProjectViewProvider, Disposable {
   @Suppress("SimpleRedundantLet")
   private val descriptor = (project as? ProjectStoreOwner)
                              ?.let { it.componentStore.storeDescriptor.historicalProjectBasePath.getEelDescriptor() }
@@ -37,7 +61,7 @@ private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjec
   override fun getSdkTableView(): ProjectJdkTable {
     val generalTable = ProjectJdkTable.getInstance()
     if (perEnvironmentModelSeparation) {
-      return ProjectJdkTableProjectView(descriptor, generalTable)
+      return ProjectJdkTableProjectView(project.getEelMachine(), generalTable)
     }
     else {
       return generalTable
@@ -48,10 +72,10 @@ private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjec
   }
 }
 
-private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val delegate: ProjectJdkTable) : ProjectJdkTable() {
+private class ProjectJdkTableProjectView(val eelMachine: EelMachine, val delegate: ProjectJdkTable) : ProjectJdkTable() {
   override fun findJdk(name: String): Sdk? {
     if (delegate is EnvironmentScopedSdkTableOps) {
-      return delegate.findJdk(name, descriptor)
+      return delegate.findJdk(name, eelMachine)
     }
     return delegate.allJdks.find {
       it.name == name && validateDescriptor(it)
@@ -60,7 +84,7 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
 
   override fun findJdk(name: String, type: String): Sdk? {
     if (delegate is EnvironmentScopedSdkTableOps) {
-      return delegate.findJdk(name, type, descriptor)
+      return delegate.findJdk(name, type, eelMachine)
     }
     // sometimes delegate.findJdk can do mutating operations, like in the case of ProjectJdkTableImpl
     return delegate.allJdks.find { it.name == name && it.sdkType.name == type && validateDescriptor(it) } ?: delegate.findJdk(name, type)
@@ -71,13 +95,7 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
   }
 
   private fun validateDescriptor(sdk: Sdk): Boolean {
-    val sdkDescriptor = sdk.homePath?.let { getEffectiveWorkspaceEelDescriptorOfHomePath(it) }
-    return if (sdkDescriptor == null) {
-      true
-    }
-    else {
-      sdkDescriptor == this.descriptor
-    }
+    return eelMachine.ownsSdk(sdk)
   }
 
   override fun getSdksOfType(type: SdkTypeId): @Unmodifiable List<Sdk?> {
@@ -106,7 +124,7 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
 
   override fun createSdk(name: String, sdkType: SdkTypeId): Sdk {
     if (delegate is EnvironmentScopedSdkTableOps) {
-      return delegate.createSdk(name, sdkType, descriptor)
+      return delegate.createSdk(name, sdkType, eelMachine)
     }
     return delegate.createSdk(name, sdkType)
   }

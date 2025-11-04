@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.eel.annotations.NativePath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.util.text.nullize
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise

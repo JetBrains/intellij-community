@@ -26,33 +26,36 @@ public final class UnknownMissingSdk {
                                                            @NotNull UnknownSdk unknownSdk,
                                                            @NotNull Supplier<? extends @Nullable UnknownSdkLocalSdkFix> localSdkFixAction,
                                                            @NotNull Supplier<? extends @Nullable UnknownSdkDownloadableSdkFix> downloadFixAction) {
-    return new UnknownMissingSdkFix(project, unknownSdk, createMissingFixAction(unknownSdk, localSdkFixAction, downloadFixAction));
+    return new UnknownMissingSdkFix(project, unknownSdk, createMissingFixAction(project, unknownSdk, localSdkFixAction, downloadFixAction));
   }
 
-  public static @Nullable UnknownSdkFixAction createMissingFixAction(@NotNull UnknownSdk unknownSdk,
+  public static @Nullable UnknownSdkFixAction createMissingFixAction(@Nullable Project project,
+                                                                     @NotNull UnknownSdk unknownSdk,
                                                                      @NotNull Supplier<? extends @Nullable UnknownSdkLocalSdkFix> localSdkFixAction,
                                                                      @NotNull Supplier<? extends @Nullable UnknownSdkDownloadableSdkFix> downloadFixAction) {
     var localSdkFix = localSdkFixAction.get();
     if (localSdkFix != null) {
-      return createMissingSdkFixAction(unknownSdk, localSdkFix);
+      return createMissingSdkFixAction(project, unknownSdk, localSdkFix);
     }
 
     var downloadFix = downloadFixAction.get();
     if (downloadFix != null) {
-      return createMissingSdkFixAction(unknownSdk, downloadFix);
+      return createMissingSdkFixAction(project, unknownSdk, downloadFix);
     }
 
     return null;
   }
 
-  public static @NotNull UnknownSdkFixAction createMissingSdkFixAction(@NotNull UnknownSdk unknownSdk,
+  public static @NotNull UnknownSdkFixAction createMissingSdkFixAction(@Nullable Project project,
+                                                                       @NotNull UnknownSdk unknownSdk,
                                                                        @NotNull UnknownSdkLocalSdkFix localSdkFix) {
-    return new UnknownMissingSdkFixLocal(unknownSdk, localSdkFix);
+    return new UnknownMissingSdkFixLocal(project, unknownSdk, localSdkFix);
   }
 
-  public static @NotNull UnknownSdkFixAction createMissingSdkFixAction(@NotNull UnknownSdk unknownSdk,
+  public static @NotNull UnknownSdkFixAction createMissingSdkFixAction(@Nullable Project project,
+                                                                       @NotNull UnknownSdk unknownSdk,
                                                                        @NotNull UnknownSdkDownloadableSdkFix downloadFix) {
-    return new UnknownMissingSdkFixDownload(unknownSdk, downloadFix);
+    return new UnknownMissingSdkFixDownload(project, unknownSdk, downloadFix);
   }
 
 

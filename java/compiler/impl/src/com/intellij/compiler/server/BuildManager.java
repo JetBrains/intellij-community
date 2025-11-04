@@ -901,7 +901,7 @@ public final class BuildManager implements Disposable {
       else {
         var optionsPath = PathManager.getOptionsDir().toString();
         if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-          optionsPath = asEelPath(OptionsDirectoryProcessor.transferOptionsToRemote(PathManager.getOptionsDir(), eelDescriptor)).toString();
+          optionsPath = asEelPath(OptionsDirectoryProcessor.transferOptionsToRemote(PathManager.getOptionsDir(), project)).toString();
         }
         else {
           optionsPath = pathMapper.apply(optionsPath);

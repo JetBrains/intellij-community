@@ -4,22 +4,21 @@
 
 package com.intellij.openapi.projectRoots.impl
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.LocalEelMachine
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.*
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
-fun findClashingSdk(sdkName: String, sdk: Sdk): SdkEntity? {
-  val machine = sdk.homePath?.let { Path.of(it) }?.getEelDescriptor()?.machine ?: LocalEelMachine
+fun findClashingSdk(project: Project?, sdkName: String, sdk: Sdk): SdkEntity? {
+  val machine = project?.getEelMachine() ?: sdk.homePath?.let { Path.of(it) }?.getEelDescriptor()?.getResolvedEelMachine() ?: LocalEelMachine
   val relevantSnapshot = GlobalWorkspaceModel.getInstance(machine).currentSnapshot
   return relevantSnapshot.entities(SdkEntity::class.java).find { it.name == sdkName }
 }
@@ -90,13 +89,14 @@ fun getEffectiveWorkspaceEelDescriptorOfHomePath(homePath: String): EelDescripto
  * @return a newly created [Sdk] associated with the specific environment
  */
 fun ProjectJdkTable.createSdkForEnvironment(
+  project: Project?,
   name: String,
   sdkType: SdkTypeId,
   homePathForEnvironmentDetection: String,
 ): Sdk =
   if (this is EnvironmentScopedSdkTableOps) {
     val eelDescriptor = getEffectiveWorkspaceEelDescriptorOfHomePath(homePathForEnvironmentDetection)
-    createSdk(name, sdkType, eelDescriptor)
+    createSdk(name, sdkType, project?.getEelMachine() ?: eelDescriptor.getResolvedEelMachine() ?: LocalEelMachine)
   }
   else {
     createSdk(name, sdkType)

@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelMachine
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -21,9 +22,9 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface EnvironmentScopedSdkTableOps {
-  fun findJdk(name: String, eelDescriptor: EelDescriptor): Sdk?
+  fun findJdk(name: String, eelMachine: EelMachine): Sdk?
 
-  fun findJdk(name: String, type: String, eelDescriptor: EelDescriptor): Sdk?
+  fun findJdk(name: String, type: String, eelMachine: EelMachine): Sdk?
 
   /**
    * Creates an SDK whose backing entity is stored in the [com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel]
@@ -40,5 +41,5 @@ interface EnvironmentScopedSdkTableOps {
    *                      [com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel] will own the created SDK.
    * @return a new [Sdk] registered in the environment specified by [eelDescriptor].
    */
-  fun createSdk(name: String, sdkType: SdkTypeId, eelDescriptor: EelDescriptor): Sdk
+  fun createSdk(name: String, sdkType: SdkTypeId, eelMachine: EelMachine): Sdk
 }

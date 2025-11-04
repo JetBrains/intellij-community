@@ -13,6 +13,7 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
@@ -183,7 +184,7 @@ internal class SdkModificatorBridgeImpl(
   private fun getMachine(path: String?): EelMachine {
     path ?: return LocalEelMachine
     return try {
-      Path.of(path).getEelDescriptor().machine
+      Path.of(path).getEelDescriptor().getResolvedEelMachine() ?: LocalEelMachine
     }
     catch (_: InvalidPathException) {
       // sometimes (in Ruby) the SDK home is set to 'temp:///root/nostubs'

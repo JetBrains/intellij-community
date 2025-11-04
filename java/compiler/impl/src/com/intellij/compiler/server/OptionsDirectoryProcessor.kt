@@ -4,9 +4,11 @@
 
 package com.intellij.compiler.server
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.EelProvider.Companion.EP_NAME
+import com.intellij.platform.eel.provider.LocalEelMachine
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import java.nio.file.Files
@@ -15,15 +17,15 @@ import kotlin.io.path.*
 
 private val ENVIRONMENT_ASSOCIATED_FILENAMES = setOf("jdk.table.xml", "applicationLibraries.xml")
 
-internal fun transferOptionsToRemote(optionsDir: Path, eelDescriptor: EelDescriptor): Path {
+internal fun transferOptionsToRemote(optionsDir: Path, project: Project): Path {
+  val eelDescriptor = project.getEelDescriptor()
+  val machine = project.getEelMachine()
+
   if (!Registry.`is`("ide.workspace.model.per.environment.model.separation", true)) {
     return transferLocalContentToRemote(optionsDir, EelPathUtils.TransferTarget.Temporary(eelDescriptor))
   }
-  val machine = eelDescriptor.machine
-  val internalName = EP_NAME.extensionList.firstNotNullOfOrNull { provider ->
-    provider.getInternalName(machine)
-  }
-  if (internalName == null) {
+  val internalName = machine.internalName
+  if (internalName == LocalEelMachine.internalName) {
     return transferLocalContentToRemote(optionsDir, EelPathUtils.TransferTarget.Temporary(eelDescriptor))
   }
   val parentForProcessedOptionsDir = Files.createTempDirectory(internalName)

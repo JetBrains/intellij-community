@@ -9,6 +9,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.eel.provider.EelMachineProvider
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
@@ -75,6 +77,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     get() = 5.seconds
 
   override fun loadInitialState(
+    eelMachine: EelMachine,
     environmentName: InternalEnvironmentName,
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
@@ -82,6 +85,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   ): () -> Unit = jpsLoadInitialStateMs.addMeasuredTime {
     if (loadedFromCache) {
       val callback = bridgesInitializationCallback(
+        eelMachine,
         environmentName = environmentName,
         mutableStorage = mutableStorage,
         initialEntityStorage = initialEntityStorage,
@@ -92,12 +96,13 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
         callback()
         coroutineScope.launch {
           waitForActiveProjectJobs()
-          delayLoadGlobalWorkspaceModel(environmentName)
+          delayLoadGlobalWorkspaceModel(eelMachine, environmentName)
         }
       }
     }
     else {
       loadGlobalEntitiesToEmptyStorage(
+        eelMachine,
         environmentName = environmentName,
         mutableStorage = mutableStorage,
         initialEntityStorage = initialEntityStorage,
@@ -240,7 +245,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   }
 
   @VisibleForTesting
-  protected open suspend fun delayLoadGlobalWorkspaceModel(environmentName: InternalEnvironmentName) {
+  protected open suspend fun delayLoadGlobalWorkspaceModel(eelMachine: EelMachine, environmentName: InternalEnvironmentName) {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentNameAsync(environmentName)
     if (loadedFromDisk[environmentName] == true || !globalWorkspaceModel.loadedFromCache) {
       return
@@ -250,6 +255,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
 
     // We don't need to initialize bridges one more time at delay loading. Otherwise, we will get the new instance of bridge in the mappings
     loadGlobalEntitiesToEmptyStorage(
+      eelMachine,
       environmentName = environmentName,
       mutableStorage = mutableStorage,
       initialEntityStorage = globalWorkspaceModel.entityStorage,
@@ -265,6 +271,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   }
 
   private fun loadGlobalEntitiesToEmptyStorage(
+    eelMachine: EelMachine,
     environmentName: InternalEnvironmentName,
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
@@ -284,7 +291,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
       newEntities.exception?.let { throw it }
     }
     val callback = if (initializeBridges) {
-      bridgesInitializationCallback(environmentName, mutableStorage, initialEntityStorage, true)
+      bridgesInitializationCallback(eelMachine, environmentName, mutableStorage, initialEntityStorage, true)
     }
     else {
       { }
@@ -300,16 +307,12 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   }
 
   private fun bridgesInitializationCallback(
+    eelMachine: EelMachine,
     environmentName: InternalEnvironmentName,
     mutableStorage: MutableEntityStorage,
     initialEntityStorage: VersionedEntityStorage,
     notifyListeners: Boolean,
   ): () -> Unit {
-    val eelMachine =
-      EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
-        eelProvider.getEelMachineByInternalName(environmentName.name)
-      }
-      ?: LocalEelMachine
     val callbacks = GlobalEntityBridgeAndEventHandler.getAllGlobalEntityHandlers(eelMachine)
       .map { it.initializeBridgesAfterLoading(mutableStorage, initialEntityStorage) }
     return {

@@ -6,6 +6,7 @@ package com.intellij.platform.eel.impl.fs
 import com.intellij.platform.eel.EelSharedSecrets
 import com.intellij.platform.eel.impl.fs.EelFilesAccessorImpl.Companion.shouldInvokeOriginal
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.toEelApi
 import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 

@@ -42,8 +42,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.java.LanguageLevel
@@ -182,10 +185,9 @@ private fun ValidationInfoBuilder.validateJdkAndProjectCompatibility(intent: Any
     else -> null
   } ?: return null
 
-  val jdkRelatedMachine = Path.of(path).getEelDescriptor().machine
-  val projectRelatedMachine = eelDescriptor.machine
-  if (jdkRelatedMachine != projectRelatedMachine) {
-    return error(JavaUiBundle.message("jdk.incompatible.location.error", jdkRelatedMachine.name, projectRelatedMachine.name))
+  val projectRelatedMachine = eelDescriptor.getResolvedEelMachine() ?: LocalEelMachine
+  if (!projectRelatedMachine.ownsPath(Path.of(path))) {
+    return error(JavaUiBundle.message("jdk.incompatible.location.error", Path.of(path).getEelDescriptor().name, eelDescriptor.name))
   }
 
   return null
@@ -513,7 +515,7 @@ private fun computeRegisteredSdks(key: EelDescriptor?): List<ExistingJdk> {
     .filter { jdk ->
       jdk.sdkType is JavaSdkType &&
       jdk.sdkType !is DependentSdkType &&
-      (key == null || ProjectSdksModel.sdkMatchesEel(key, jdk))
+      (key == null || ProjectSdksModel.sdkMatchesEel(key.getResolvedEelMachine() ?: LocalEelMachine, jdk))
     }
     .map { ExistingJdk(it) }
 }

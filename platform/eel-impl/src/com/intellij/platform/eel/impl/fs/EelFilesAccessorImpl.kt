@@ -9,6 +9,7 @@ import com.intellij.platform.eel.fs.readFile
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.runBlocking

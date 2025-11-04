@@ -81,8 +81,8 @@ fun CoroutineScope.registerIjentNioFs(
 
   EelProvider.EP_NAME.point.registerExtension(
     object : EelProvider {
-      override suspend fun tryInitialize(@MultiRoutingFileSystemPath path: String) {
-        // Nothing.
+      override suspend fun tryInitialize(@MultiRoutingFileSystemPath path: String): EelMachine? {
+        return null
       }
 
       override fun getEelDescriptor(@MultiRoutingFileSystemPath path: Path): EelDescriptor? =
@@ -91,14 +91,6 @@ fun CoroutineScope.registerIjentNioFs(
 
       override fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<String>? =
         if (eelDescriptor == ijent.descriptor) listOf(root)
-        else null
-
-      override fun getInternalName(eelMachine: EelMachine): String? =
-        if (eelMachine == ijent.descriptor.machine) ijent.descriptor.machine.name
-        else null
-
-      override fun getEelMachineByInternalName(internalName: String): EelMachine? =
-        if (internalName == ijent.descriptor.machine.name) ijent.descriptor.machine
         else null
     },
     disposable,

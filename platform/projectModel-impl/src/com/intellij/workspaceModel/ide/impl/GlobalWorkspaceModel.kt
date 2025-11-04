@@ -17,9 +17,9 @@ import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.EelMachine
-import com.intellij.platform.eel.provider.EelProvider
+import com.intellij.platform.eel.provider.EelMachineProvider
 import com.intellij.platform.eel.provider.LocalEelMachine
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
@@ -147,7 +147,7 @@ class GlobalWorkspaceModel internal constructor(
 
     val callback = JpsGlobalModelSynchronizer.getInstance()
       .apply { setVirtualFileUrlManager(globalWorkspaceModels.virtualFileManager) }
-      .loadInitialState(internalEnvironmentName, mutableEntityStorage, entityStorage, loadedFromCache)
+      .loadInitialState(eelMachine, internalEnvironmentName, mutableEntityStorage, entityStorage, loadedFromCache)
     val changes = (mutableEntityStorage as MutableEntityStorageInstrumentation).collectChanges()
     entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, mutableEntityStorage.collectSymbolicEntityIdsChanges(), {}, {})
     callback.invoke()
@@ -261,7 +261,7 @@ class GlobalWorkspaceModel internal constructor(
     globalWorkspaceModels.globalWorkspaceModelCache?.scheduleCacheSave()
     isFromGlobalWorkspaceModel = true
     for (project in initializingAndOpenProjects) {
-      if (project.isDisposed || project.getEelDescriptor().machine != eelMachine) {
+      if (project.isDisposed || project.getEelMachine() != eelMachine) {
         continue
       }
       applyStateToProject(project)
@@ -393,10 +393,6 @@ class GlobalWorkspaceModel internal constructor(
       return ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().getGlobalModel(eelMachine)
     }
 
-    fun getInstanceByEnvironmentName(environmentName: InternalEnvironmentName): GlobalWorkspaceModel {
-      return ApplicationManager.getApplication().service<GlobalWorkspaceModelRegistry>().getGlobalModelByEnvironmentName(environmentName)
-    }
-
     suspend fun getInstanceByEnvironmentNameAsync(environmentName: InternalEnvironmentName): GlobalWorkspaceModel {
       return ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().getGlobalModelByEnvironmentName(environmentName)
     }
@@ -467,13 +463,13 @@ class GlobalWorkspaceModelRegistry {
     return environmentToModel.computeIfAbsent(protectedMachine) { GlobalWorkspaceModel(globalWorkspaceModels, protectedMachine, internalEnvironmentName) }
   }
 
-  fun getGlobalModelByEnvironmentName(name: InternalEnvironmentName): GlobalWorkspaceModel {
+  suspend fun getGlobalModelByEnvironmentName(name: InternalEnvironmentName): GlobalWorkspaceModel {
     val protectedName = if (Registry.`is`("ide.workspace.model.per.environment.model.separation")) name else InternalEnvironmentName.Local
     val machine = if (protectedName == InternalEnvironmentName.Local) {
       LocalEelMachine
     }
     else {
-      EelProvider.EP_NAME.extensionList.firstNotNullOf { eelProvider -> eelProvider.getEelMachineByInternalName(protectedName.name) }
+      EelMachineProvider.getEelMachineByInternalName(protectedName.name)
     }
     val model = getGlobalModel(machine)
     return model
@@ -506,8 +502,5 @@ private fun EelMachine.getInternalEnvironmentNameImpl(): InternalEnvironmentName
     InternalEnvironmentName.Local
   }
   else {
-    val name = EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
-      eelProvider.getInternalName(eelMachine = this)
-    } ?: throw IllegalArgumentException("Descriptor $this must be registered before using in Workspace Model")
-    InternalEnvironmentName.of(name)
+    InternalEnvironmentName.of(internalName)
   }

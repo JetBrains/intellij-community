@@ -672,7 +672,7 @@ public final class JarRepositoryManager {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     String repositoryPath = getJPSLocalMavenRepositoryForIdeaProject(project).toString();
-    final EelMachine targetRepositoryMachine = EelProviderUtil.getEelDescriptor(Path.of(repositoryPath)).getMachine();
+    final EelMachine targetRepositoryMachine = EelProviderUtil.getEelMachine(project);
     for (Artifact each : artifacts) {
       long ms = System.currentTimeMillis();
       try {
@@ -684,7 +684,7 @@ public final class JarRepositoryManager {
             FileUtil.copy(repoFile, toFile);
           }
         }
-        else if (!targetRepositoryMachine.equals(EelProviderUtil.getEelDescriptor(Path.of(each.getFile().getPath())).getMachine())) {
+        else if (!targetRepositoryMachine.ownsPath(Path.of(each.getFile().getPath()))) {
           // if .m2 is located remotely, then we need to copy the files to the remote location
           String suffix = repoFile.getAbsolutePath().substring(repositoryPath.length());
           String actualPath = repositoryPath + suffix;

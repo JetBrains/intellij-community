@@ -344,6 +344,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
         indicator.checkCanceled()
 
         val possibleFix = UnknownMissingSdk.createMissingFixAction(
+          project,
           unknownSdk,
           Supplier { resolveLocalFix(resolvers, unknownSdk, indicator) },
           Supplier { resolveDownloadFix(resolvers, unknownSdk, indicator) }

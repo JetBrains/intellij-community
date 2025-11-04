@@ -19,7 +19,7 @@ import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
@@ -67,7 +67,7 @@ class ModuleBridgeLoaderService : InitProjectActivity {
 
       val start = Milliseconds.now()
 
-      val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine)
+      val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelMachine())
       globalWorkspaceModel.registerInitializingProjectForUpdatesFromGlobalModel(project)
 
       if (workspaceModel.loadedFromCache) {

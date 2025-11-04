@@ -49,7 +49,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
-import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.EelMachine;
 import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PlatformIcons;
@@ -548,9 +548,9 @@ public final class ModuleStructureConfigurable extends BaseStructureConfigurable
       modules = myContext.myModulesConfigurator.addNewModule(basePath);
     }
     if (modules != null && !modules.isEmpty()) {
-      EelDescriptor eelDescriptor = Registry.is("java.home.finder.use.eel") ? EelProviderUtil.getEelDescriptor(myProject) : null;
+      EelMachine eelMachine = Registry.is("java.home.finder.use.eel") ? EelProviderUtil.getEelMachine(myProject) : null;
       //new module wizard may add yet another SDK to the project
-      myProjectStructureConfigurable.getProjectJdksModel().syncSdks(eelDescriptor);
+      myProjectStructureConfigurable.getProjectJdksModel().syncSdks(eelMachine);
       for (Module module : modules) {
         addModuleNode(module);
       }

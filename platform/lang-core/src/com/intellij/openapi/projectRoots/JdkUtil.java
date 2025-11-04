@@ -134,7 +134,7 @@ public final class JdkUtil {
    * @return if the JDK can be run on this machine.
    */
   public static boolean isCompatible(@NotNull Path jdkHomePath, @NotNull Project project) {
-    return EelProviderUtil.getEelDescriptor(jdkHomePath).getMachine().equals(EelProviderUtil.getEelDescriptor(project).getMachine());
+    return EelProviderUtil.getEelMachine(project).ownsPath(jdkHomePath);
   }
 
   /**
