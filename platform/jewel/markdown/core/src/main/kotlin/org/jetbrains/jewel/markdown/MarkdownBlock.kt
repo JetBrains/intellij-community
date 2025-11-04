@@ -268,4 +268,35 @@ public sealed interface MarkdownBlock {
 
         override fun toString(): String = "Paragraph(inlineContent=$inlineContent)"
     }
+
+    @ApiStatus.Experimental
+    @ExperimentalJewelApi
+    @GenerateDataFunctions
+    public class HtmlBlockWithAttributes(
+        public val mdBlock: MarkdownBlock,
+        public val attributes: Map<String, String>,
+    ) : MarkdownBlock, WithChildBlocks {
+        override val children: List<MarkdownBlock>
+            get() = listOf(mdBlock)
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as HtmlBlockWithAttributes
+
+            if (mdBlock != other.mdBlock) return false
+            if (attributes != other.attributes) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = mdBlock.hashCode()
+            result = 31 * result + attributes.hashCode()
+            return result
+        }
+
+        override fun toString(): String = "HtmlBlockWithAttributes(mdBlock=$mdBlock, attributes=$attributes)"
+    }
 }
