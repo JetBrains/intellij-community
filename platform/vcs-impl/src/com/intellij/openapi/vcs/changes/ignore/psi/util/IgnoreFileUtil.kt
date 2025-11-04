@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.ignore.psi.util
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
@@ -71,12 +72,14 @@ private fun changeIgnoreFile(project: Project,
   val determinedVcs = (vcs ?: VcsUtil.getVcsFor(project, ignoreFile)?.keyInstanceMethod) ?: return
   val ignoredFileContentProvider = VcsImplUtil.findIgnoredFileContentProvider(project, determinedVcs) ?: return
   ApplicationManager.getApplication().invokeAndWait {
-    runUndoTransparentWriteAction {
-      if (project.isDisposed) return@runUndoTransparentWriteAction
-      if (PsiManager.getInstance(project).findFile(ignoreFile)?.language !is IgnoreLanguage) return@runUndoTransparentWriteAction
-      action(ignoredFileContentProvider)
-      ignoreFile.save()
-    }
+    CommandProcessor.getInstance().executeCommand(project, {
+      runUndoTransparentWriteAction {
+        if (project.isDisposed) return@runUndoTransparentWriteAction
+        if (PsiManager.getInstance(project).findFile(ignoreFile)?.language !is IgnoreLanguage) return@runUndoTransparentWriteAction
+        action(ignoredFileContentProvider)
+        ignoreFile.save()
+      }
+    }, null, null)
   }
 }
 
