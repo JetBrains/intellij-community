@@ -70,7 +70,7 @@ class GitLabMarkdownToHtmlConverter(
     internal const val OPEN_MR_LINK_PREFIX = "glmergerequest:"
   }
 
-  private val uploadFileUrlBase: String = projectCoordinates.serverPath.toString() + "/-/project/" + projectId.guessRestId() + "/uploads/"
+  private val projectWebUrlBase: String = projectCoordinates.serverPath.toString() + "/-/project/" + projectId.guessRestId()
   private val projectApiUri: URI = projectCoordinates.restApiUri
   private val projectPath: GitLabProjectPath = projectCoordinates.projectPath
 
@@ -85,7 +85,7 @@ class GitLabMarkdownToHtmlConverter(
     // TODO: fix bug with CRLF line endings from markdown library
     val text = preprocessMergeRequestIds(processIssueIdsMarkdown(project, markdownSource)).replace("\r", "")
     val flavourDescriptor = GitLabFlavourDescriptor(repository, projectPath, CodeBlockHtmlSyntaxHighlighter(project),
-                                                    uploadFileUrlBase, projectApiUri)
+                                                    projectWebUrlBase, projectApiUri)
 
     return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
   }
@@ -97,7 +97,7 @@ class GitLabMarkdownToHtmlConverter(
     private val gitRepository: GitRepository,
     private val projectPath: GitLabProjectPath,
     private val htmlSyntaxHighlighter: HtmlSyntaxHighlighter,
-    private val uploadFileUrlBase: String,
+    private val projectWebUrlBase: String,
     private val projectApiUri: URI
   ) : GFMFlavourDescriptor() {
 
@@ -118,7 +118,7 @@ class GitLabMarkdownToHtmlConverter(
 
     override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
       val map = super.createHtmlGeneratingProviders(linkMap, baseURI)
-      val linkProcessor = LinkDestinationProcessor(gitRepository, projectPath, uploadFileUrlBase)
+      val linkProcessor = LinkDestinationProcessor(gitRepository, projectPath, projectWebUrlBase)
       val referenceLinkProvider = GitLabReferenceLinksGeneratingProvider(linkMap, baseURI,
                                                                          absolutizeAnchorLinks,
                                                                          linkProcessor).makeXssSafe(useSafeLinks)
@@ -298,7 +298,7 @@ class GitLabMarkdownToHtmlConverter(
   private class LinkDestinationProcessor(
     val gitRepository: GitRepository,
     val projectPath: GitLabProjectPath,
-    val uploadFileUrlBase: String,
+    val projectWebUrlBase: String,
   ) : DestinationProcessor() {
     override fun processDestination(
       linkDestination: String,
@@ -323,7 +323,7 @@ class GitLabMarkdownToHtmlConverter(
 
       // "uploads" files links should be updated to absolute URLs of the web files
       if (linkDestination.startsWith(UPLOADS_PATH)) {
-        return uploadFileUrlBase + linkDestination.substring(UPLOADS_PATH.length)
+        return projectWebUrlBase + linkDestination
       }
 
       // Otherwise, the destination is a file in the current git repo, so we can make the link go to it directly
