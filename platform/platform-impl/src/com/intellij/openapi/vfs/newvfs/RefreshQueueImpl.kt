@@ -70,7 +70,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
         queueSession(session, session.modality)
       }
     }
-    else if (EDT.isCurrentThreadEdt()) {
+    else if (EDT.isCurrentThreadEdt() || ApplicationManager.getApplication().isWriteAccessAllowed) {
       (TransactionGuard.getInstance() as TransactionGuardImpl).assertWriteActionAllowed()
       val events = runRefreshSession(session, -1L)
       fireEvents(events, session)
