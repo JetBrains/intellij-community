@@ -41,11 +41,6 @@ class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorVie
       isPopupGroup = true
       putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
       putClientProperty(ActionUtil.USE_SMALL_FONT_IN_TOOLBAR, true)
-      description = CollaborationToolsBundle.message("review.editor.mode.description.title")
-      val tooltip = HelpTooltip()
-        .setTitle(CollaborationToolsBundle.message("review.editor.mode.description.title"))
-        .setDescription(CollaborationToolsBundle.message("review.editor.mode.description"))
-      putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
     }
   }
 
@@ -53,6 +48,12 @@ class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorVie
     val shown = vm.discussionsViewOption.value != DiscussionsViewOption.DONT_SHOW
     val synced = !vm.updateRequired.value
     with(e.presentation) {
+      description = CollaborationToolsBundle.message("review.editor.mode.description.title")
+      val tooltip = HelpTooltip()
+        .setTitle(CollaborationToolsBundle.message("review.editor.mode.description.title"))
+        .setDescription(CollaborationToolsBundle.message("review.editor.mode.description"))
+      putClientProperty(ActionButton.CUSTOM_HELP_TOOLTIP, tooltip)
+
       if (shown) {
         text = CollaborationToolsBundle.message("review.editor.mode.title")
         putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)
