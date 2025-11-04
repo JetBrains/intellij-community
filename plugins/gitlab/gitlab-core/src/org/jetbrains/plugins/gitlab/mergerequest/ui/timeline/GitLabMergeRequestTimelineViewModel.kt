@@ -12,10 +12,10 @@ import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import java.net.URL
 
 interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
@@ -39,7 +39,8 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   private val projectData: GitLabProject,
   private val preferences: GitLabMergeRequestsPreferences,
   override val currentUser: GitLabUserDTO,
-  private val mergeRequest: GitLabMergeRequest
+  private val mergeRequest: GitLabMergeRequest,
+  htmlConverter: GitLabMarkdownToHtmlConverter,
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(this::class, Dispatchers.Default)
@@ -47,12 +48,10 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
   override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
-    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, title,
-                               projectData.contextDataLoader.uploadFileUrlBase)
+    htmlConverter.convertToHtml(title)
   }.modelFlow(cs, LOG)
   override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
-    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, description,
-                               projectData.contextDataLoader.uploadFileUrlBase)
+    htmlConverter.convertToHtml(description)
   }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 
@@ -62,7 +61,7 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
   override val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
     mergeRequest.createTimelineItemsFlow(showEvents)
       .transformConsecutiveSuccesses {
-        mapDataToModel({ it.id }, { createItemVm(it, projectData.contextDataLoader.uploadFileUrlBase) }, {})
+        mapDataToModel({ it.id }, { createItemVm(it, htmlConverter) }, {})
       }
       .modelFlow(cs, LOG)
 
@@ -144,17 +143,17 @@ internal class LoadAllGitLabMergeRequestTimelineViewModel(
       }
     }
 
-  private fun CoroutineScope.createItemVm(item: GitLabMergeRequestTimelineItem, basePath: String)
+  private fun CoroutineScope.createItemVm(item: GitLabMergeRequestTimelineItem, htmlConverter: GitLabMarkdownToHtmlConverter)
     : GitLabMergeRequestTimelineItemViewModel =
     when (item) {
       is GitLabMergeRequestTimelineItem.Immutable ->
-        GitLabMergeRequestTimelineItemViewModel.Immutable.fromModel(project, mergeRequest, item, basePath)
+        GitLabMergeRequestTimelineItemViewModel.Immutable.fromModel(item, htmlConverter)
       is GitLabMergeRequestTimelineItem.UserDiscussion ->
-        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mergeRequest, item.discussion).also {
+        GitLabMergeRequestTimelineItemViewModel.Discussion(project, cs, projectData, currentUser, mergeRequest, item.discussion, htmlConverter).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
       is GitLabMergeRequestTimelineItem.DraftNote ->
-        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, item.note, projectData).also {
+        GitLabMergeRequestTimelineItemViewModel.DraftNote(project, cs, mergeRequest, item.note, htmlConverter).also {
           handleDiffRequests(it.diffVm, _diffRequests::emit)
         }
     }

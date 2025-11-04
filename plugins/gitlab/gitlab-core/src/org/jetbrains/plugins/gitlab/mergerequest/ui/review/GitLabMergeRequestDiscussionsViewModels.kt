@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import java.time.Instant.EPOCH
 import java.util.*
 
@@ -73,14 +74,17 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   parentCs: CoroutineScope,
   projectData: GitLabProject,
   private val currentUser: GitLabUserDTO,
-  private val mergeRequest: GitLabMergeRequest
+  private val mergeRequest: GitLabMergeRequest,
+  htmlConverter: GitLabMarkdownToHtmlConverter,
 ) : GitLabMergeRequestDiscussionsViewModels {
   private val cs = parentCs.childScope("GitLab Merge Request Review Discussions", Dispatchers.Default)
 
   override val discussions: DiscussionsFlow = mergeRequest.discussions
     .map { ComputedResult.fromResult(it) }
     .transformConsecutiveSuccesses {
-      mapStatefulToStateful { GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it) }
+      mapStatefulToStateful {
+        GitLabMergeRequestDiscussionViewModelBase(project, this, projectData, currentUser, it, htmlConverter)
+      }
     }
     .stateInNow(cs, ComputedResult.loading())
 
@@ -88,8 +92,9 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     .map { ComputedResult.fromResult(it) }
     .transformConsecutiveSuccesses {
       mapFiltered { it.discussionId == null }
-        .mapStatefulToStateful { GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest,
-                                                                                    projectData.contextDataLoader) }
+        .mapStatefulToStateful {
+          GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest, htmlConverter)
+        }
     }
     .stateInNow(cs, ComputedResult.loading())
 

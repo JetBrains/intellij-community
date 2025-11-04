@@ -8,7 +8,6 @@ import com.intellij.markdown.utils.MarkdownToHtmlConverter
 import com.intellij.markdown.utils.lang.CodeBlockHtmlSyntaxHighlighter
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import git4idea.repo.GitRepository
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementType
@@ -42,42 +41,50 @@ import org.intellij.markdown.parser.sequentialparsers.impl.EmphStrongDelimiterPa
 import org.intellij.markdown.parser.sequentialparsers.impl.InlineLinkParser
 import org.intellij.markdown.parser.sequentialparsers.impl.MathParser
 import org.intellij.markdown.parser.sequentialparsers.impl.ReferenceLinkParser
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.plugins.gitlab.api.GitLabId
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 
 
-private val MARKDOWN_IMAGE_SETTINGS: IElementType = MarkdownElementType("MARKDOWN_IMAGE_SETTINGS")
+/**
+ * Class which converts GitLab Markdown notes to HTML string.
+ */
+@ApiStatus.Internal
+class GitLabMarkdownToHtmlConverter(
+  private val project: Project,
+  private val repository: GitRepository,
+  projectCoordinates: GitLabProjectCoordinates,
+  projectId: GitLabId,
+) {
 
-private const val UPLOADS_PATH = "/uploads/"
+  companion object {
+    private val MARKDOWN_IMAGE_SETTINGS = MarkdownElementType("MARKDOWN_IMAGE_SETTINGS")
+    private const val UPLOADS_PATH = "/uploads/"
+    internal const val OPEN_FILE_LINK_PREFIX = "glfilelink:"
+    internal const val OPEN_MR_LINK_PREFIX = "glmergerequest:"
+  }
 
-object GitLabUIUtil {
-  const val OPEN_FILE_LINK_PREFIX = "glfilelink:"
-  const val OPEN_MR_LINK_PREFIX = "glmergerequest:"
+  private val uploadFileUrlBase: String = projectCoordinates.serverPath.toString() + "/-/project/" + projectId.guessRestId() + "/uploads/"
+  private val projectApiUri: URI = projectCoordinates.restApiUri
+  private val projectPath: GitLabProjectPath = projectCoordinates.projectPath
 
   /**
-   * Makes file links relative to the git repository root.
-   * Also parses issue IDs and merge request IDs and makes appropriate links. MR ID links are used again
-   * by a custom hyperlink listener to perform appropriate actions.
-   *
-   * @param projectPath Path of the repository (group/subgroup/repo-name), used for recognizing site-relative links.
-   *
-   * @see org.jetbrains.plugins.gitlab.mergerequest.util.GitLabHtmlPaneUtilKt.addGitLabHyperlinkListener
+   * Makes file links relative to the git repository root or to the external root.
+   * Also, parses issue IDs and merge request IDs and makes appropriate links.
+   * Custom links are processed again by a custom hyperlink listener to perform appropriate actions.
+   * @see org.jetbrains.plugins.gitlab.mergerequest.util.addGitLabHyperlinkListener
    */
-  internal fun convertToHtml(
-    project: Project,
-    gitRepository: GitRepository,
-    projectPath: GitLabProjectPath,
-    markdownSource: @NonNls String,
-    uploadFileUrlBase: String,
-    projectApiUri: URI = URI(uploadFileUrlBase) // todo: use correct value
-  ): @NlsSafe String {
+  fun convertToHtml(markdownSource: @NonNls String): String {
     if (markdownSource.isBlank()) return markdownSource
     // TODO: fix bug with CRLF line endings from markdown library
     val text = preprocessMergeRequestIds(processIssueIdsMarkdown(project, markdownSource)).replace("\r", "")
-    val flavourDescriptor = GitLabFlavourDescriptor(gitRepository, projectPath, CodeBlockHtmlSyntaxHighlighter(project),
+    val flavourDescriptor = GitLabFlavourDescriptor(repository, projectPath, CodeBlockHtmlSyntaxHighlighter(project),
                                                     uploadFileUrlBase, projectApiUri)
 
     return MarkdownToHtmlConverter(flavourDescriptor).convertMarkdownToHtml(text, null)
@@ -205,9 +212,12 @@ object GitLabUIUtil {
    *
    */
   private class GitLabImageWithSettingsGeneratingProvider(
-    linkMap: LinkMap, baseURI: URI?, projectApiUri: URI, absolutizeAnchorLinks: Boolean,
+    linkMap: LinkMap,
+    baseURI: URI?,
+    projectApiUri: URI,
+    absolutizeAnchorLinks: Boolean,
+  ) : ImageGeneratingProvider(linkMap, baseURI) {
 
-    ) : ImageGeneratingProvider(linkMap, baseURI) {
     val imageLinkProcessor = ImageLinkDestinationProcessor(projectApiUri)
     val inlineLinkImageProvider = GitLabLinkGeneratingProvider(imageLinkProcessor)
     val referenceLinkImageProvider = GitLabReferenceLinksGeneratingProvider(linkMap, baseURI,
@@ -281,7 +291,7 @@ object GitLabUIUtil {
     }
   }
 
-  abstract class DestinationProcessor {
+  private abstract class DestinationProcessor {
     abstract fun processDestination(linkDestination: String): CharSequence
   }
 
@@ -330,7 +340,7 @@ object GitLabUIUtil {
   }
 
   private class ImageLinkDestinationProcessor(
-    val projectApiUri: URI,
+    private val projectApiUri: URI,
   ) : DestinationProcessor() {
     override fun processDestination(
       linkDestination: String,

@@ -14,69 +14,69 @@ import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.emoji.GitLabReactionsViewModel
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabDiscussionStateContainer
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteAdminActionsViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import java.net.URL
 import java.util.*
 
 sealed interface GitLabMergeRequestTimelineItemViewModel {
   sealed class Immutable(
-    private val project: Project,
-    private val mr: GitLabMergeRequest,
     private val model: GitLabMergeRequestTimelineItem.Immutable,
-    private val uploadFileUrlBase: String,
+    private val htmlConverter: GitLabMarkdownToHtmlConverter
   ) : GitLabMergeRequestTimelineItemViewModel {
     val date = model.date
     val actor = model.actor
 
     val contentHtml: String? by lazy {
       (model as? GitLabMergeRequestTimelineItem.SystemNote)?.content?.let {
-        GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it, uploadFileUrlBase)
+        htmlConverter.convertToHtml(it)
       }
     }
 
     companion object {
       fun fromModel(
-        project: Project,
-        mr: GitLabMergeRequest,
         model: GitLabMergeRequestTimelineItem.Immutable,
-        uploadFileUrlBase: String,
+        htmlConverter: GitLabMarkdownToHtmlConverter,
       ): Immutable {
 
         return when (model) {
-          is GitLabMergeRequestTimelineItem.StateEvent -> StateEvent(project, mr, model, uploadFileUrlBase)
-          is GitLabMergeRequestTimelineItem.LabelEvent -> LabelEvent(project, mr, model, uploadFileUrlBase)
-          is GitLabMergeRequestTimelineItem.MilestoneEvent -> MilestoneEvent(project, mr, model, uploadFileUrlBase)
-          is GitLabMergeRequestTimelineItem.SystemNote -> SystemNote(project, mr, model, uploadFileUrlBase)
+          is GitLabMergeRequestTimelineItem.StateEvent -> StateEvent(model, htmlConverter)
+          is GitLabMergeRequestTimelineItem.LabelEvent -> LabelEvent(model, htmlConverter)
+          is GitLabMergeRequestTimelineItem.MilestoneEvent -> MilestoneEvent(model, htmlConverter)
+          is GitLabMergeRequestTimelineItem.SystemNote -> SystemNote(model, htmlConverter)
         }
       }
     }
   }
 
-  class StateEvent(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.StateEvent,
-                   uploadFileUrlBase: String)
-    : Immutable(project, mr, model, uploadFileUrlBase) {
+  class StateEvent(
+    model: GitLabMergeRequestTimelineItem.StateEvent,
+    htmlConverter: GitLabMarkdownToHtmlConverter,
+  ) : Immutable(model, htmlConverter) {
     val event = model.event
   }
 
-  class LabelEvent(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.LabelEvent,
-                   uploadFileUrlBase: String)
-    : Immutable(project, mr, model, uploadFileUrlBase) {
+  class LabelEvent(
+    model: GitLabMergeRequestTimelineItem.LabelEvent,
+    htmlConverter: GitLabMarkdownToHtmlConverter,
+  ) : Immutable(model, htmlConverter) {
     val event = model.event
   }
 
-  class MilestoneEvent(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.MilestoneEvent,
-                       uploadFileUrlBase: String)
-    : Immutable(project, mr, model, uploadFileUrlBase) {
+  class MilestoneEvent(
+    model: GitLabMergeRequestTimelineItem.MilestoneEvent,
+    htmlConverter: GitLabMarkdownToHtmlConverter,
+  ) : Immutable(model, htmlConverter) {
     val event = model.event
   }
 
-  class SystemNote(project: Project, mr: GitLabMergeRequest, model: GitLabMergeRequestTimelineItem.SystemNote,
-                   uploadFileUrlBase: String)
-    : Immutable(project, mr, model, uploadFileUrlBase) {
+  class SystemNote(
+    model: GitLabMergeRequestTimelineItem.SystemNote,
+    htmlConverter: GitLabMarkdownToHtmlConverter,
+  ) : Immutable(model, htmlConverter) {
     val content = model.content
   }
 
@@ -86,10 +86,11 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     projectData: GitLabProject,
     currentUser: GitLabUserDTO,
     mr: GitLabMergeRequest,
-    discussion: GitLabMergeRequestDiscussion
+    discussion: GitLabMergeRequestDiscussion,
+    htmlConverter: GitLabMarkdownToHtmlConverter
   ) : GitLabMergeRequestTimelineItemViewModel,
       GitLabMergeRequestTimelineDiscussionViewModel
-      by GitLabMergeRequestTimelineDiscussionViewModelImpl(project, parentCs, projectData, currentUser, mr, discussion) {
+      by GitLabMergeRequestTimelineDiscussionViewModelImpl(project, parentCs, projectData, currentUser, mr, discussion, htmlConverter) {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (other !is Discussion) return false
@@ -107,7 +108,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     parentCs: CoroutineScope,
     mr: GitLabMergeRequest,
     note: GitLabMergeRequestNote,
-    projectData: GitLabProject
+    htmlConverter: GitLabMarkdownToHtmlConverter
   ) : GitLabMergeRequestTimelineItemViewModel, GitLabNoteViewModel {
     private val cs = parentCs.childScope(this::class)
 
@@ -123,7 +124,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
 
     override val body: StateFlow<String> = note.body
     override val bodyHtml: StateFlow<String> = body.mapStateInNow(cs) {
-      GitLabUIUtil.convertToHtml(project, mr.gitRepository, mr.glProject.projectPath, it, projectData.contextDataLoader.uploadFileUrlBase)
+      htmlConverter.convertToHtml(it)
     }
 
     override val discussionState: StateFlow<GitLabDiscussionStateContainer> =

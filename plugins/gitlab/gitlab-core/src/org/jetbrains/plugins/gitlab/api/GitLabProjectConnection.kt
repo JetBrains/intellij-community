@@ -38,7 +38,7 @@ class GitLabProjectConnection(
 
   val imageLoader: GitLabImageLoader = GitLabImageLoader(apiClient, repo.repository)
 
-  val projectData: GitLabProject = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, glProject, currentUser, tokenRefreshFlow, imageLoader)
+  val projectData: GitLabProject = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, glProject, currentUser, tokenRefreshFlow)
 
   val serverVersion: GitLabVersion? = glMetadata?.version
 

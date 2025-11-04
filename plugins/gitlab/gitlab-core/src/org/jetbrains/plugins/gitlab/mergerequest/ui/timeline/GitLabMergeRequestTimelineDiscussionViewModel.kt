@@ -20,6 +20,7 @@ import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteViewModelImpl
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import java.net.URL
 
 interface GitLabMergeRequestTimelineDiscussionViewModel :
@@ -48,7 +49,8 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   projectData: GitLabProject,
   currentUser: GitLabUserDTO,
   private val mr: GitLabMergeRequest,
-  private val discussion: GitLabMergeRequestDiscussion
+  private val discussion: GitLabMergeRequestDiscussion,
+  htmlConverter: GitLabMarkdownToHtmlConverter
 ) : GitLabMergeRequestTimelineDiscussionViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -57,7 +59,9 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val mainNote: Flow<GitLabNoteViewModel> = discussion.notes
     .map { it.first() }
     .distinctUntilChangedBy { it.id }
-    .mapScoped { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(true), currentUser) }
+    .mapScoped {
+      GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(true), currentUser, htmlConverter)
+    }
     .modelFlow(cs, LOG)
 
   override val id: String = discussion.id.toString()
@@ -78,7 +82,9 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
 
   override val replies: StateFlow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
-    .mapStatefulToStateful { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser) }
+    .mapStatefulToStateful {
+      GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser, htmlConverter)
+    }
     .stateIn(cs, SharingStarted.Lazily, listOf())
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy

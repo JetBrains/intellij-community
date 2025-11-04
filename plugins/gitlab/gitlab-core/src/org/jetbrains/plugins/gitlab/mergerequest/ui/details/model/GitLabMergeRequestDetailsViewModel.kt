@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.reviewState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 
 @ApiStatus.Internal
 interface GitLabMergeRequestDetailsViewModel : CodeReviewDetailsViewModel, GitLabMergeRequestViewModel {
@@ -47,6 +47,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   projectData: GitLabProject,
   private val mergeRequest: GitLabMergeRequest,
   private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  htmlConverter: GitLabMarkdownToHtmlConverter,
 ) : GitLabMergeRequestDetailsViewModel {
 
   private val cs = parentCs.childScope(this::class)
@@ -56,15 +57,13 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   override val author: GitLabUserDTO = mergeRequest.author
 
   override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
-    GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, title,
-                               projectData.contextDataLoader.uploadFileUrlBase)
+    htmlConverter.convertToHtml(title)
   }.modelFlow(cs, LOG)
   override val description: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
     processIssueIdsHtml(project, description)
   }.modelFlow(cs, LOG)
   override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map {
-    if (it.isNotBlank()) GitLabUIUtil.convertToHtml(project, mergeRequest.gitRepository, mergeRequest.glProject.projectPath, it,
-                                                    projectData.contextDataLoader.uploadFileUrlBase) else it
+    if (it.isNotBlank()) htmlConverter.convertToHtml(it) else it
   }.modelFlow(cs, LOG)
   override val reviewRequestState: SharedFlow<ReviewRequestState> = mergeRequest.details.map { it.reviewState }
     .modelFlow(cs, LOG)
@@ -86,7 +85,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
   override val branchesVm = GitLabMergeRequestBranchesViewModel(cs, mergeRequest, projectData.projectMapping)
   override val statusVm = GitLabMergeRequestStatusViewModelImpl(project, cs, projectData.projectMapping.gitRepository,
                                                                 projectData.projectMapping.repository.serverPath, mergeRequest)
-  override val changesVm = GitLabMergeRequestChangesViewModelImpl(project, cs, mergeRequest, projectData.contextDataLoader)
+  override val changesVm = GitLabMergeRequestChangesViewModelImpl(project, cs, mergeRequest, htmlConverter)
 
   override fun reloadData() {
     cs.launchNow {

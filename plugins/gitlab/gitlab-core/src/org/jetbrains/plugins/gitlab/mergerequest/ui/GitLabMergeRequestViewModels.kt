@@ -31,6 +31,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDis
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModelsImpl
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.GitLabMergeRequestTimelineViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.timeline.LoadAllGitLabMergeRequestTimelineViewModel
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 /**
@@ -48,23 +49,28 @@ internal class GitLabMergeRequestViewModels(
   private val openMergeRequestTimeline: (String, Boolean) -> Unit,
   private val openMergeRequestDiff: (String, Boolean) -> Unit,
 ) {
+  private val htmlConverter: GitLabMarkdownToHtmlConverter = GitLabMarkdownToHtmlConverter(project,
+                                                                                   projectData.projectMapping.gitRepository,
+                                                                                   projectData.projectMapping.repository,
+                                                                                   projectData.gitLabProjectId)
+
   private val cs = parentCs.childScope(javaClass.name)
 
   private val lazyDetailsVm = lazy {
-    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, avatarIconProvider).also {
+    GitLabMergeRequestDetailsViewModelImpl(project, cs, currentUser, projectData, mergeRequest, avatarIconProvider, htmlConverter).also {
       setupDetailsVm(it)
     }
   }
   val detailsVm: GitLabMergeRequestDetailsViewModel by lazyDetailsVm
 
   val timelineVm: GitLabMergeRequestTimelineViewModel by lazy {
-    LoadAllGitLabMergeRequestTimelineViewModel(project, cs, projectData, project.service(), currentUser, mergeRequest).also {
+    LoadAllGitLabMergeRequestTimelineViewModel(project, cs, projectData, project.service(), currentUser, mergeRequest, htmlConverter).also {
       setupTimelineVm(it)
     }
   }
 
   private val discussionsVms: GitLabMergeRequestDiscussionsViewModels by lazy {
-    GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, projectData, currentUser, mergeRequest)
+    GitLabMergeRequestDiscussionsViewModelsImpl(project, cs, projectData, currentUser, mergeRequest, htmlConverter)
   }
 
   private val _diffVm by lazy {

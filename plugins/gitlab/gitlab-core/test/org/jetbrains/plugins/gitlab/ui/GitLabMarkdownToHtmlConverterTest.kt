@@ -10,9 +10,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.GitLabRestIdData
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.api.restApiUri
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil.OPEN_FILE_LINK_PREFIX
-import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil.OPEN_MR_LINK_PREFIX
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_FILE_LINK_PREFIX
+import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_MR_LINK_PREFIX
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.io.File
 import java.nio.file.Path
@@ -20,7 +19,7 @@ import java.nio.file.Path
 private const val IMAGES_API_BASE = """http://base/url/api/v4/projects/test-account%2Fmr-test"""
 private const val WEB_BASE = """http://base/url/-/project/testRestId"""
 
-class GitLabUIUtilTest : LightPlatformTestCase() {
+class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
   private val gitRoot = "/tmp/git-repo"
 
   private lateinit var gitRepository: GitRepository
@@ -314,7 +313,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
     val projectPath = GitLabProjectPath("test-account", "mr-test")
     val projectCoordinates = GitLabProjectCoordinates(serverPath, projectPath)
     val projectId = GitLabRestIdData("testRestId")
-    val uploadFileUrlBase: String = projectCoordinates.serverPath.toString() + "/-/project/" + projectId.guessRestId() + "/uploads/"
-    return GitLabUIUtil.convertToHtml(project, gitRepository, projectPath, markdownSource, uploadFileUrlBase, projectCoordinates.restApiUri )
+    val converter = GitLabMarkdownToHtmlConverter(project, gitRepository, projectCoordinates, projectId)
+    return converter.convertToHtml(markdownSource)
   }
 }
