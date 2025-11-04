@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
+import com.intellij.platform.FolderProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.ide.bootstrap.CommandLineArgs
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
@@ -92,10 +93,12 @@ object CommandLineProcessor {
           createModule = false
           useDefaultProjectAsTemplate = false
           projectRootDir = file
+          processorChooser = { FolderProjectOpenProcessor() }
         }
       }
       try {
         val project = ProjectUtil.openOrImportAsync(file, options)
+        // project is null, for example, when a regular file is opened
         if (project != null) {
           val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForProject(project).asDeferred() else OK_FUTURE
           return CommandLineProcessorResult(project, future)

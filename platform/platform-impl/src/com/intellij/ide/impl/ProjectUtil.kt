@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
+import com.intellij.platform.FolderProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.attachToProjectAsync
@@ -224,17 +225,12 @@ object ProjectUtil {
     LOG.info("Processors found for project in $file: ${processors.joinToString { it.name }}")
 
     val project: Project?
-    if (processors.size == 1 && processors[0] is PlatformProjectOpenProcessor) {
-      // this customization is needed, because there is no way to pass original open options to the ProjectOpenProcessor
-      // isNewProject = true because for existing projects we should have exit earlier inside `if (isValidProjectPath(file))`
-      project = PlatformProjectOpenProcessor.openProjectAsync(file, options.copy(isNewProject = true))
-    }
-    else {
-      val virtualFile = nullableVirtualFileResult?.let {
-        it.getOrThrow() ?: return null
-      } ?: ProjectUtilCore.getFileAndRefresh(file) ?: return null
-      project = chooseProcessorAndOpenAsync(processors, virtualFile, options)
-    }
+    val virtualFile = nullableVirtualFileResult?.let {
+      it.getOrThrow() ?: return null
+    } ?: ProjectUtilCore.getFileAndRefresh(file) ?: return null
+
+    // isNewProject = true because for existing projects we should have exit earlier inside `if (isValidProjectPath(file))`
+    project = chooseProcessorAndOpenAsync(processors, virtualFile, options.copy(isNewProject = true))
     return project?.let { postProcess(it) }
   }
 
@@ -272,8 +268,13 @@ object ProjectUtil {
     virtualFile: VirtualFile,
     options: OpenProjectTask,
   ): Project? {
-    val processor = when (processors.size) {
-      1 -> {
+    val chooser = options.processorChooser
+    val processor = when {
+      chooser != null -> {
+        LOG.info("options.openProcessorChooser will handle the open processor dilemma")
+        chooser(processors) as ProjectOpenProcessor
+      }
+      processors.size == 1 -> {
         processors.first()
       }
       else -> {
@@ -282,16 +283,9 @@ object ProjectUtil {
           processors.first()
         }
         else {
-          val chooser = options.processorChooser
-          if (chooser == null) {
-            withContext(Dispatchers.EDT) {
-              SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
-            } ?: return null
-          }
-          else {
-            LOG.info("options.openProcessorChooser will handle the open processor dilemma")
-            chooser(processors) as ProjectOpenProcessor
-          }
+          withContext(Dispatchers.EDT) {
+            SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile)
+          } ?: return null
         }
       }
     }
@@ -299,7 +293,13 @@ object ProjectUtil {
     LOG.info("Using processor ${processor.name} to open the project at ${virtualFile.path}")
 
     try {
-      return processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+      return if (processor is PlatformProjectOpenProcessor) {
+        // this customization is needed, because there is no way to pass original OpenOptions to the ProjectOpenProcessor
+        PlatformProjectOpenProcessor.openProjectAsync(virtualFile.toNioPath(), options)
+      }
+      else {
+        processor.openProjectAsync(virtualFile, options.projectToClose, options.forceOpenInNewFrame)
+      }
     }
     catch (e: UnsupportedOperationException) {
       if (e != ProjectOpenProcessor.unimplementedOpenAsync) {
@@ -718,6 +718,8 @@ object ProjectUtil {
         createModule = false,
         useDefaultProjectAsTemplate = false,
         runConfigurators = false,
+        // suppress chooser dialog if there are other build files like Gradle or Maven
+        processorChooser = { FolderProjectOpenProcessor() },
       )
     }
 

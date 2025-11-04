@@ -74,6 +74,7 @@
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
 
+    <projectOpenProcessor implementation="com.intellij.platform.FolderProjectOpenProcessor"/>
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"/>
@@ -139,6 +140,9 @@
 
     <registryKey key="ide.project.view.new.file.popup" defaultValue="false"
                  description="Switches submenu in File - New to popup step" />
+
+    <registryKey key="ide.allow.folder.as.project" defaultValue="false"
+                 description="Allow opening folder as project without modules" />
   </extensions>
 
   <xi:include href="/META-INF/diff-impl.xml">

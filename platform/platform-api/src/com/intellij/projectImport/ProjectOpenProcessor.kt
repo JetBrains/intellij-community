@@ -105,14 +105,14 @@ abstract class ProjectOpenProcessor {
   /**
    * Returns true if this processor is able to import the project after it has been opened in IDEA.
    *
-   * @see .importProjectAfterwards
+   * @see importProjectAfterwards
    */
   open fun canImportProjectAfterwards(): Boolean = false
 
   /**
    * Import the project after it has already been opened in IDEA.
    *
-   * @see .canImportProjectAfterwards
+   * @see canImportProjectAfterwards
    */
   @Deprecated("use async method instead")
   open fun importProjectAfterwards(project: Project, file: VirtualFile) {
@@ -122,7 +122,7 @@ abstract class ProjectOpenProcessor {
   /**
    * Import the project after it has already been opened in IDEA.
    *
-   * @see .canImportProjectAfterwards
+   * @see canImportProjectAfterwards
    */
   open suspend fun importProjectAfterwardsAsync(project: Project, file: VirtualFile) {
     withContext(Dispatchers.EDT) {

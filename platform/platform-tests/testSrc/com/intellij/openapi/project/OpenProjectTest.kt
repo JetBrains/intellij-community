@@ -5,10 +5,16 @@ import com.intellij.ide.CommandLineProcessor
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.FolderOpeningMode.AS_FOLDER
 import com.intellij.ide.impl.ProjectUtil.FolderOpeningMode.AS_PROJECT
+import com.intellij.ide.impl.SelectProjectOpenProcessorDialog
+import com.intellij.openapi.project.TestOpenMode.ModeFolderAsFolder
+import com.intellij.openapi.project.TestOpenMode.ModeFolderAsProject
+import com.intellij.openapi.project.TestProjectSource.SourceCLI
+import com.intellij.openapi.project.TestProjectSource.SourceOpenFileAction
 import com.intellij.platform.ModuleAttachProcessor
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.projectImport.ProjectAttachProcessor
+import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
@@ -17,21 +23,29 @@ import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
+import kotlin.io.path.writeText
 
 // terms:
 // valid: .idea exists
 // clean: .idea doesn't exists
 // existing: project directory exists
 // nested: .idea exists and ../.idea exists too
+// multibuild: does not exist, and there are 2 marker build files (pom.xml and build.gradle)
+// TODO: open regular file
 
 // with ability to attach - there is some defined ProjectAttachProcessor extension (e.g. WS, PS).
 // with inability to attach - there is no any defined ProjectAttachProcessor extension (e.g. IU, IC).
+
+
+enum class TestProjectSource { SourceOpenFileAction, SourceCLI }
+enum class TestOpenMode { ModeFolderAsProject, ModeFolderAsFolder }
 
 @RunWith(Parameterized::class)
 internal class OpenProjectTest(private val opener: Opener) {
@@ -39,30 +53,29 @@ internal class OpenProjectTest(private val opener: Opener) {
     @JvmField
     @ClassRule
     val appRule = ApplicationRule()
-
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun params(): Iterable<Opener> {
       return listOf(
-        Opener("OpenFileAction-FolderAsProject", expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
+        Opener(SourceOpenFileAction, ModeFolderAsProject, expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
           runBlocking { ProjectUtil.openExistingDir(it, AS_PROJECT, null) }
         },
 
         // I don't have strong opinion about defaultProjectTemplateShouldBeAppliedOverride.
         // Weak opinion: a folder is not a project => we don't need default project settings.
         // Feel free to change the test if you have strong opinion about desired behavior.
-        Opener("OpenFileAction-FolderAsFolder", expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$"), defaultProjectTemplateShouldBeAppliedOverride = false) {
+        Opener(SourceOpenFileAction, ModeFolderAsFolder, expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$"), defaultProjectTemplateShouldBeAppliedOverride = false) {
           runBlocking { ProjectUtil.openExistingDir(it, AS_FOLDER, null) }
         },
 
-        Opener("CLI-FolderAsProject", expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
+        Opener(SourceCLI, ModeFolderAsProject, expectedModules = listOf($$"$ROOT$"), expectedRoots = listOf($$"$ROOT$")) {
           runBlocking { CommandLineProcessor.doOpenFileOrProject(it, createOrOpenExistingProject = true, false) }.project!!
         },
 
         // I don't have strong opinion about defaultProjectTemplateShouldBeAppliedOverride.
         // Weak opinion: a folder is not a project => we don't need default project settings.
         // Feel free to change the test if you have strong opinion about desired behavior.
-        Opener("CLI-FolderAsFolder", expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$"), defaultProjectTemplateShouldBeAppliedOverride = false) {
+        Opener(SourceCLI, ModeFolderAsFolder, expectedModules = emptyList(), expectedRoots = listOf($$"$ROOT$"), defaultProjectTemplateShouldBeAppliedOverride = false) {
           runBlocking { CommandLineProcessor.doOpenFileOrProject(it, createOrOpenExistingProject = false, false) }.project!!
         },
       )
@@ -132,13 +145,62 @@ internal class OpenProjectTest(private val opener: Opener) {
     openWithOpenerAndAssertProjectState(subProjectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false)
   }
 
+  @Test
+  fun `open multibuild existing project dir with inability to attach`() = runBlocking(Dispatchers.Default) {
+    Assume.assumeTrue(
+      "This test does not handle ProjectAsProject mode yet, because `null` from SelectProjectOpenProcessorDialog" +
+      " has different behavior when opening folder from CLI and from open action, and we don't want to cement this behavior in tests.",
+      opener.mode == ModeFolderAsFolder,
+    )
+
+    val processorNames = ProjectOpenProcessor.EXTENSION_POINT_NAME.extensionList.map(ProjectOpenProcessor::name)
+    assertThat(processorNames).`as` { "Use intellij.idea.community.main as a classpath" }.containsAll(listOf("Maven", "Gradle"))
+    ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
+    val projectDir = setupMultibuildProject()
+    var suggestedProcessors: List<String>? = null
+    SelectProjectOpenProcessorDialog.setTestDialog(disposableRule.disposable) { processor, virtualFile ->
+      suggestedProcessors = processor.map(ProjectOpenProcessor::name)
+      null // do not open project (~cancel)
+    }
+    openWithOpenerAndAssertProjectState(projectDir, opener.defaultProjectTemplateShouldBeAppliedOverride ?: false) {
+      assertThat(suggestedProcessors).`as`("SelectProjectOpenProcessorDialog should not be shown").isNull()
+    }
+  }
+
+  private fun setupMultibuildProject(): Path {
+    val projectDir = tempDir.newPath("project")
+    projectDir.createDirectories()
+    projectDir.resolve("pom.xml").writeText("""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+          <modelVersion>4.0.0</modelVersion>
+          <groupId>link.sharpe</groupId>
+          <artifactId>mavenproject1</artifactId>
+          <version>1.0-SNAPSHOT</version>
+      </project>
+    """.trimIndent())
+
+    projectDir.resolve("settings.gradle").writeText("""
+      rootProject.name = 'spring-petclinic'
+    """.trimIndent())
+
+    projectDir.resolve("build.gradle").writeText("""
+      group = 'com.example'
+      version = '1.0.0-SNAPSHOT'
+    """.trimIndent())
+
+    return projectDir
+  }
+
   private suspend fun openWithOpenerAndAssertProjectState(
     projectDir: Path,
     defaultProjectTemplateShouldBeApplied: Boolean,
+    beforeOtherChecks: ((Project) -> Unit)? = null,
   ) {
     checkDefaultProjectAsTemplate { checkDefaultProjectAsTemplateTask ->
       val project = opener.opener(projectDir)!!
       project.useProject {
+        beforeOtherChecks?.invoke(project)
         assertThatProjectContainsModules(project, opener.getExpectedModules(projectDir))
         assertThatProjectContainsRootEntities(project, opener.getExpectedRoots(projectDir))
         checkDefaultProjectAsTemplateTask(project, defaultProjectTemplateShouldBeApplied)
@@ -148,13 +210,14 @@ internal class OpenProjectTest(private val opener: Opener) {
 }
 
 internal class Opener(
-  private val name: String,
+  val source: TestProjectSource,
+  val mode: TestOpenMode,
   val expectedModules: List<String>,
   val expectedRoots: List<String>,
   val defaultProjectTemplateShouldBeAppliedOverride: Boolean? = null,
   val opener: (Path) -> Project?,
 ) {
-  override fun toString() = name
+  override fun toString() = "${source.toString().substringAfter("Source")}-${mode.toString().substringAfter("Mode")}"
 
   private fun expandPath(list: List<String>, root: Path): List<Path> {
     return list
