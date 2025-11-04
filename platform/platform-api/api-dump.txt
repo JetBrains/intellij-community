@@ -909,9 +909,7 @@ com.intellij.ui.SimpleColoredComponent$FragmentTextClipper
 com.intellij.ui.SimpleListCellRenderer$Customizer
 - a:customize(com.intellij.ui.components.JBLabel,java.lang.Object,I):V
 c:com.intellij.ui.components.AnActionLink
-- sf:Companion:com.intellij.ui.components.AnActionLink$Companion
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String,com.intellij.openapi.actionSystem.Presentation):V
-f:com.intellij.ui.components.AnActionLink$Companion
 com.intellij.ui.components.Interpolable
 - a:getTargetValue():I
 - a:getValue():I

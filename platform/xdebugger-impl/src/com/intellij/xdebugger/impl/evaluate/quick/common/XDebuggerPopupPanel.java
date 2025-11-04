@@ -205,13 +205,11 @@ public abstract class XDebuggerPopupPanel {
   }
 
   private class ActionWrapper extends AnActionWrapper implements CustomComponentAction {
-    private final AnAction myDelegate;
     private final @NotNull String myActionPlace;
     private @Nullable Component myProvider;
 
     ActionWrapper(AnAction delegate, @NotNull String actionPlace) {
       super(delegate);
-      myDelegate = delegate;
       myActionPlace = actionPlace;
     }
 
@@ -223,17 +221,19 @@ public abstract class XDebuggerPopupPanel {
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       Presentation presentation = e.getPresentation();
-      presentation.setEnabled(presentation.isEnabled() && shouldBeVisible(myDelegate));
-      presentation.setVisible(presentation.isVisible() && shouldBeVisible(myDelegate));
+      AnAction delegate = getDelegate();
+      presentation.setEnabled(presentation.isEnabled() && shouldBeVisible(delegate));
+      presentation.setVisible(presentation.isVisible() && shouldBeVisible(delegate));
     }
 
     @Override
     public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-      if (myDelegate instanceof Separator) {
+      AnAction delegate = getDelegate();
+      if (delegate instanceof Separator) {
         return getSecretComponentForToolbar(); // this is necessary because the toolbar hide if all action panels are not visible
       }
 
-      myDelegate.applyTextOverride(myActionPlace, presentation);
+      delegate.applyTextOverride(myActionPlace, presentation);
 
       ActionLinkButton button = new ActionLinkButton(this, presentation, myProvider);
       ClientProperty.put(button, InplaceEditor.IGNORE_MOUSE_EVENT, true);

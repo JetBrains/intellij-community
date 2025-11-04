@@ -52,7 +52,7 @@ open class AnActionLink(@Nls text: String,
     }
   }
 
-  companion object {
+  internal companion object {
     private fun performAction(
       event: ActionEvent,
       presentation: Presentation?,
