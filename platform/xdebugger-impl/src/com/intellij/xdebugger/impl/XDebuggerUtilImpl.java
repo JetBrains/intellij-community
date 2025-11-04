@@ -56,7 +56,6 @@ import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
@@ -899,7 +898,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public static void rebuildTreeAndViews(XDebuggerTree tree) {
     if (tree.isDetached()) {
-      tree.rebuildAndRestore(XDebuggerTreeState.saveState(tree));
+      tree.rebuild();
     }
     rebuildAllSessionsViews(tree.getProject());
   }

@@ -13,7 +13,6 @@ import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import org.jetbrains.annotations.NotNull;
 
 class ShowTypesAction extends DumbAwareToggleAction implements SplitDebuggerAction {
@@ -31,7 +30,7 @@ class ShowTypesAction extends DumbAwareToggleAction implements SplitDebuggerActi
       if (DebuggerUIUtil.isInDetachedTree(e)) {
         XDebuggerTree tree = XDebuggerTree.getTree(e);
         if (tree != null) {
-          tree.rebuildAndRestore(XDebuggerTreeState.saveState(tree));
+          tree.rebuild();
         }
       }
       XDebugSessionProxy session = DebuggerUIUtil.getSessionProxy(e);

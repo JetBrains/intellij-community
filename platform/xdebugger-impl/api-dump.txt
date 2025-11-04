@@ -75,6 +75,8 @@ com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
 - a:getIcon():javax.swing.Icon
 - a:getId():java.lang.String
 - a:getPresentation():java.lang.String
+c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+- rebuild():V
 com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
 - com.intellij.xdebugger.Obsolescent
 - javax.swing.tree.TreeNode

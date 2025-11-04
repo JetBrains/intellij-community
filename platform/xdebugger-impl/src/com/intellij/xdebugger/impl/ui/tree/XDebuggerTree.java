@@ -393,6 +393,14 @@ public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvi
     sink.set(SELECTED_NODES, List.of(selection));
   }
 
+  public void rebuild() {
+    rebuildAndRestore(XDebuggerTreeState.saveState(this));
+  }
+
+  /**
+   * Consider using {@link #rebuild()} instead.
+   */
+  @ApiStatus.Internal
   public void rebuildAndRestore(final XDebuggerTreeState treeState) {
     Object rootNode = myTreeModel.getRoot();
     if (rootNode instanceof XDebuggerTreeNode) {

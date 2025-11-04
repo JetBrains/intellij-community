@@ -1074,7 +1074,6 @@ c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - isUnderRemoteDebug():Z
 - markNodesObsolete():V
 - nodeLoaded(com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode,java.lang.String):V
-- rebuildAndRestore(com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState):V
 - removeTreeListener(com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener):V
 - selectNodeOnLoad(com.intellij.openapi.util.Condition,com.intellij.openapi.util.Condition):V
 - setRoot(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode,Z):V
