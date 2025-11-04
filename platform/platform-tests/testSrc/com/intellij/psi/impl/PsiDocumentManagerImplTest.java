@@ -45,6 +45,7 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.testFramework.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -1138,6 +1139,9 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
       @Override
       public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, Throwable t) {
         if (message.contains("Too many uncommitted documents")) {
+          return Action.NONE;
+        }
+        if (t instanceof AlreadyDisposedException) {
           return Action.NONE;
         }
         error.compareAndSet(null, t);
