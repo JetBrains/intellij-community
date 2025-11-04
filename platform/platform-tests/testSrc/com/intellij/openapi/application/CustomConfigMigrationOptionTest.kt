@@ -39,9 +39,26 @@ class CustomConfigMigrationOptionTest : ConfigImportHelperBaseTest() {
   }
 
   @Test
-  fun `marker file with properties to set`() {
+  fun `marker file with legacy properties to set`() {
     val properties = listOf("intellij.first.ide.session", "intellij.config.imported.in.current.session")
     val configDir = createMarkerFile("properties ${properties.joinToString(" ")}")
+    val expectedProperties = properties.map { it to "true" }
+
+    val option = readOption(configDir)
+    assertThat(option).isInstanceOf(CustomConfigMigrationOption.SetProperties::class.java)
+    assertEquals("Properties parsed incorrectly", expectedProperties, (option as CustomConfigMigrationOption.SetProperties).properties)
+  }
+
+  @Test
+  fun `marker file with properties to set`() {
+    val properties = listOf(
+      "intellij.first.ide.session" to "true",
+      "intellij.config.imported.in.current.session" to "true",
+      "intellij.config.imported.from" to "/Users/John.Doe/Library/Application Support/JetBrains/IntelliJIdea2026.1",
+      "intellij.config.another.property" to "C:\\Documents and Settings\\User\\Application Data\\Tmp",
+    )
+    val content = "set-properties ${properties.joinToString(";") { it.toList().joinToString(" ") }}"
+    val configDir = createMarkerFile(content)
 
     val option = readOption(configDir)
     assertThat(option).isInstanceOf(CustomConfigMigrationOption.SetProperties::class.java)

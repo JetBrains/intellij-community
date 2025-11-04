@@ -59,8 +59,13 @@ sealed class CustomConfigMigrationOption {
     override fun getStringPresentation(): String = MIGRATE_PLUGINS_PREFIX + configLocation.toString().replace('\\', '/')
   }
 
-  class SetProperties(val properties: List<String>) : CustomConfigMigrationOption() {
-    override fun getStringPresentation(): String = PROPERTIES_PREFIX + properties.joinToString(separator = " ")
+  class SetProperties(val properties: List<Pair<String, String>>) : CustomConfigMigrationOption() {
+    override fun getStringPresentation(): String = SET_PROPERTIES_PREFIX + properties.joinToString(separator = ";") { it.first + " " + it.second }
+
+    companion object {
+      @JvmStatic
+      fun setToTrue(properties: List<String>): SetProperties = SetProperties(properties.map { it to true.toString() })
+    }
   }
 
   object MergeConfigs : CustomConfigMigrationOption() {
@@ -72,6 +77,8 @@ sealed class CustomConfigMigrationOption {
 
     private const val IMPORT_PREFIX = "import "
     private const val MIGRATE_PLUGINS_PREFIX = "migrate-plugins "
+    private const val SET_PROPERTIES_PREFIX = "set-properties "
+    @Deprecated("Legacy version for compatibility with Toolbox", replaceWith = ReplaceWith("SET_PROPERTIES_PREFIX"))
     private const val PROPERTIES_PREFIX = "properties "
     private const val MERGE_CONFIGS_COMMAND = "merge-configs"
 
@@ -101,8 +108,19 @@ sealed class CustomConfigMigrationOption {
             MigratePluginsFromCustomPlace(markerFile.fileSystem.getPath(line.removePrefix(MIGRATE_PLUGINS_PREFIX)))
           }
 
+          // legacy SetProperties parsing
           line.startsWith(PROPERTIES_PREFIX) -> {
             val properties = line.removePrefix(PROPERTIES_PREFIX).split(' ')
+            SetProperties.setToTrue(properties)
+          }
+
+          line.startsWith(SET_PROPERTIES_PREFIX) -> {
+            val properties = line.removePrefix(SET_PROPERTIES_PREFIX).split(';')
+              .mapNotNull {
+                val list = it.split(' ', limit = 2)
+                if (list.size < 2) null else list[0] to list[1]
+              }
+
             SetProperties(properties)
           }
 
