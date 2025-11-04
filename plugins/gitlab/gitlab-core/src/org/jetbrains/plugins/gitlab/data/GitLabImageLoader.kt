@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gitlab.data
 
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
-import com.intellij.collaboration.util.resolveRelative
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.ImageUtil
@@ -12,7 +11,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.api.request.loadImage
-import org.jetbrains.plugins.gitlab.api.restApiUri
 import java.awt.Image
 import java.net.URI
 import java.net.URL
@@ -40,10 +38,6 @@ class GitLabImageLoader(
 
   override suspend fun load(baseUrl: URL?, src: String): Image? {
     try {
-      if (src.startsWith("/uploads/")) {
-        val uriString = gitLabProjectCoordinates.restApiUri.resolveRelative(src.trimStart('/')).toString()
-        return apiClient.loadImage(uriString)
-      }
       val uri = URI.create(src)
       return apiClient.loadImage(uri)
     }
