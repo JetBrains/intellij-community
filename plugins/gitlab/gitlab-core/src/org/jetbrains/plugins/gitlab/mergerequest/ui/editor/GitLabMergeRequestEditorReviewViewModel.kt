@@ -81,7 +81,7 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
     changes.patchesByChange.filterKeys { it in allChanges }
   }
 
-  private val filesVms: MutableMap<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>> = mutableMapOf()
+  private val filesVms: MutableMap<FilePath, Flow<FileReviewState>> = mutableMapOf()
   private val diffRequestsMulticaster = EventDispatcher.create(DiffRequestListener::class.java)
 
   internal val discussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestEditorDiscussionViewModel>>> =
@@ -211,29 +211,30 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
   /**
    * A view model for [virtualFile] review
    */
-  fun getFileVm(virtualFile: VirtualFile): Flow<GitLabMergeRequestEditorReviewFileViewModel?> {
+  fun getFileStateFlow(virtualFile: VirtualFile): Flow<FileReviewState> {
     if (!virtualFile.isValid || virtualFile.isDirectory ||
         !VfsUtilCore.isAncestor(projectMapping.remote.repository.root, virtualFile, true)) {
-      return flowOf(null)
+      return flowOf(FileReviewState.NotInReview)
     }
     val filePath = VcsContextFactory.getInstance().createFilePathOn(virtualFile)
     changesRequest.tryEmit(Unit)
     //TODO: do not recreate VMs on changes change
     return filesVms.getOrPut(filePath) {
-      actualChanges.filterNotNull().map { parsedChanges ->
+      actualChanges.filterNotNull().mapScoped { parsedChanges ->
         val change = parsedChanges.changes.find { it.filePathAfter == filePath }
         if (change == null) {
-          return@map null
+          return@mapScoped FileReviewState.NotInReview
         }
         val diffData = parsedChanges.patchesByChange[change] ?: run {
           LOG.info("Diff data not found for change $change")
-          return@map null
+          return@mapScoped FileReviewState.NotInReview
+        }
+        if (diffData.patch.hunks.isEmpty()) {
+          return@mapScoped FileReviewState.ReviewDisabledEmptyDiff
         }
 
         val changeSelection = ListSelection.create(parsedChanges.changes, change)
-        changeSelection to diffData
-      }.mapNullableScoped { (changes, diffData) ->
-        createChangeVm(changes, diffData)
+        FileReviewState.ReviewEnabled(createChangeVm(changeSelection, diffData))
       }
     }
   }
@@ -270,6 +271,12 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
     data object Loading : ChangesState
     data object Error : ChangesState
     class Loaded(val changes: GitBranchComparisonResult) : ChangesState
+  }
+
+  sealed interface FileReviewState {
+    data object NotInReview : FileReviewState
+    data object ReviewDisabledEmptyDiff : FileReviewState
+    data class ReviewEnabled(val vm: GitLabMergeRequestEditorReviewFileViewModel) : FileReviewState
   }
 }
 
