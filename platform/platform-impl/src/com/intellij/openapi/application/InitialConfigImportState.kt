@@ -15,6 +15,7 @@ import java.nio.file.Path
 object InitialConfigImportState {
   const val FIRST_SESSION_KEY: String = "intellij.first.ide.session"
   const val CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY: String = "intellij.config.imported.in.current.session"
+  const val CONFIG_IMPORTED_FROM_PATH: String = "intellij.config.imported.from"
   const val CUSTOM_MARKER_FILE_NAME: String = "migrate.config"
   const val FRONTEND_PLUGINS_TO_MIGRATE_DIR_NAME: String = "frontend-to-migrate"
   const val MIGRATION_INSTALLED_PLUGINS_TXT: String = "migration_installed_plugins.txt"

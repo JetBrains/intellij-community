@@ -80,7 +80,6 @@ import java.util.stream.Collectors;
 public final class ConfigImportHelper {
   public static final String IMPORT_FROM_ENV_VAR = "JB_IMPORT_SETTINGS_FROM";
   public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?(\\D+)(\\d+(?:\\.\\d+)*)");
-  public static final String CONFIG_IMPORTED_FROM_PATH = "intellij.config.imported.from";
 
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
   private static final String UPDATE_ONLY_INCOMPATIBLE_PLUGINS_PROPERTY = "idea.config.import.update.incompatible.plugins.only"; // if true, only incompatible will be updated
@@ -232,7 +231,7 @@ public final class ConfigImportHelper {
           importScenarioStatistics = ImportOldConfigsUsagesCollector.InitialImportScenario.IMPORTED_FROM_PREVIOUS_VERSION;
         }
 
-        System.setProperty(CONFIG_IMPORTED_FROM_PATH, oldConfigDir.toString());
+        System.setProperty(InitialConfigImportState.CONFIG_IMPORTED_FROM_PATH, oldConfigDir.toString());
 
         doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
