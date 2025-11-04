@@ -14,7 +14,7 @@ object WslPromoPanelUsageCollector: CounterUsagesCollector()  {
     return GROUP
   }
 
-  private val GROUP = EventLogGroup("recent.projects.panel", 1)
+  private val GROUP = EventLogGroup("recent.projects.panel", 2)
 
   private val GO_TO_PROJECTS: EventId = GROUP.registerEvent(
     "go.to.projects.button.clicked",
