@@ -2,6 +2,7 @@
 package com.intellij.grazie.spellcheck
 
 import ai.grazie.detector.heuristics.rule.RuleFilter
+import ai.grazie.nlp.langs.Language
 import ai.grazie.utils.toLinkedSet
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieDynamic.getLangDynamicFolder
@@ -134,6 +135,8 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
       checkers = heavyInit()
     }
   }
+
+  fun hasSpellerTool(langs: List<Lang>): Boolean = langs.any { lang -> checkers.any { it.lang == lang } }
 
   fun lookup(word: String): Dictionary.LookupStatus {
     val myCheckers = filterCheckers(word)
