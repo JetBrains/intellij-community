@@ -254,8 +254,12 @@ public class MarkdownHtmlConverterTest {
             processor.processMarkdownDocument("<img alt=\"Jewel logo\" src=\"art/jewel-logo.svg\" width=\"20%\"/>")
 
         parsed.assertEquals(
-            MarkdownBlock.Paragraph(
-                listOf(InlineMarkdown.Image(source = "art/jewel-logo.svg", alt = "Jewel logo", title = null))
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("width" to "20%", "src" to "art/jewel-logo.svg", "alt" to "Jewel logo"),
+                mdBlock =
+                    MarkdownBlock.Paragraph(
+                        listOf(InlineMarkdown.Image(source = "art/jewel-logo.svg", alt = "Jewel logo", title = null))
+                    ),
             )
         )
     }
@@ -530,6 +534,30 @@ public class MarkdownHtmlConverterTest {
         parsed.assertEquals(
             MarkdownBlock.Heading(inlineContent = listOf(InlineMarkdown.Text("Head")), level = 3),
             MarkdownBlock.Paragraph(listOf(InlineMarkdown.Text("Tail"))),
+        )
+    }
+
+    @Test
+    public fun `wraps blocks with HtmlBlockWithAttributes -- p with attributes`() {
+        val parsed = processor.processMarkdownDocument("<p class=\"greeting\" align='center'>Hello</p>")
+
+        parsed.assertEquals(
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("class" to "greeting", "align" to "center"),
+                mdBlock = MarkdownBlock.Paragraph(listOf(InlineMarkdown.Text("Hello"))),
+            )
+        )
+    }
+
+    @Test
+    public fun `wraps blocks with HtmlBlockWithAttributes -- h3 with attributes`() {
+        val parsed = processor.processMarkdownDocument("<h3 id=\"title\" align='center'>Head</h3>")
+
+        parsed.assertEquals(
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("id" to "title", "align" to "center"),
+                mdBlock = MarkdownBlock.Heading(inlineContent = listOf(InlineMarkdown.Text("Head")), level = 3),
+            )
         )
     }
 }
