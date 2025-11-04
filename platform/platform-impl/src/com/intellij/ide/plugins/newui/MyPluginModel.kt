@@ -868,6 +868,9 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   open fun runRestartButton(component: Component) {
+    if (LOG.isDebugEnabled) {
+      LOG.warn(Throwable("Restart button clicked"))
+    }
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(component).asContextElement()) {
       if (myPluginManagerCustomizer != null && component is JComponent) {
         myPluginManagerCustomizer.requestRestart(PluginModelFacade(this@MyPluginModel), component)
