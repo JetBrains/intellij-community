@@ -366,7 +366,7 @@ object AppUIUtil {
   @JvmStatic
   @ApiStatus.Internal
   fun loadLocalConsentsAsConsentsForEditing(): List<Consent> {
-    val localConsents = LocalConsentOptions.getLocalConsents().toMutableList()
+    val localConsents = LocalConsentOptions.getLocalConsents().first.toMutableList()
     if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
       removeTraceLocalConsents(localConsents)
     } else {
