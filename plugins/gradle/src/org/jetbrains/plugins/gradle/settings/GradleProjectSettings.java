@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.xmlb.Converter;
 import com.intellij.util.xmlb.annotations.*;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
@@ -38,6 +39,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   private @Nullable String myGradleJvm;
   private @Nullable DistributionType myDistributionType;
+  @OptionTag(converter = PathConverter.class)
   private @Nullable Path myGradleHome;
   private boolean disableWrapperSourceDistributionNotification;
   private boolean resolveModulePerSourceSet;
@@ -86,6 +88,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   /**
    * @deprecated Use getGradleHomePath instead
    */
+  @Transient
   @Deprecated
   public @Nullable @NlsSafe String getGradleHome() {
     Path path = getGradleHomePath();
@@ -100,6 +103,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     setGradleHomePath(StringUtil.isEmpty(gradleHome) ? null : Path.of(gradleHome));
   }
 
+  @Transient
   public @Nullable Path getGradleHomePath() {
     return myGradleHome;
   }
@@ -316,6 +320,22 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
     public @Nullable String getGradleHome() {
       return gradleHome;
+    }
+  }
+
+  static class PathConverter extends Converter<Path> {
+
+    @Override
+    public @Nullable Path fromString(@NotNull String value) {
+      return Path.of(value);
+    }
+
+    @Override
+    public @Nullable String toString(Path value) {
+      if (value == null) {
+        return null;
+      }
+      return value.toString();
     }
   }
 }
