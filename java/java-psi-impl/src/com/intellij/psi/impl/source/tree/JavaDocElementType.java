@@ -74,6 +74,7 @@ public interface JavaDocElementType {
     }
   };
 
+  /// TokenSet for both [classic][#DOC_COMMENT] and [Markdown][#DOC_MARKDOWN_COMMENT] Javadoc comments types 
   TokenSet DOC_COMMENT_TOKENS = TokenSet.create(DOC_COMMENT, DOC_MARKDOWN_COMMENT);
 
   @SuppressWarnings("unused") // used in plugins
