@@ -40,6 +40,7 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.TransferTarget
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.search.ExecutionSearchScopes
+import com.intellij.util.containers.with
 import com.intellij.util.io.Compressor
 import com.intellij.util.io.outputStream
 import com.intellij.util.text.nullize
@@ -81,11 +82,11 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)
 
       val charset = tryToGetCharset(env, eelApi)
-      if (charset != null) {
-        env["JAVA_TOOL_OPTIONS"] = listOfNotNull(env["JAVA_TOOL_OPTIONS"], "-Dfile.encoding=UTF-8").joinToString(" ")
-      }
+      val envWithCharsets =
+        env.with("JAVA_TOOL_OPTIONS",
+                 listOfNotNull(env["JAVA_TOOL_OPTIONS"], "-Dfile.encoding=${charset?.name() ?: "UTF-8"}").joinToString(" "))
 
-      val processHandler = runProcessInEel(eelApi, exe, env, charset ?: Charsets.UTF_8)
+      val processHandler = runProcessInEel(eelApi, exe, envWithCharsets, charset ?: Charsets.UTF_8)
       JavaRunConfigurationExtensionManager.instance
         .attachExtensionsToProcess(myConfiguration, processHandler, environment.runnerSettings)
       return@runWithModalProgressBlocking processHandler
