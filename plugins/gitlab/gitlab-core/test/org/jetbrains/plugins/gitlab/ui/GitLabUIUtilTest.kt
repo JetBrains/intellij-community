@@ -7,17 +7,24 @@ import git4idea.repo.GitRepository
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.GitLabRestIdData
+import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.api.restApiUri
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil.OPEN_FILE_LINK_PREFIX
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil.OPEN_MR_LINK_PREFIX
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.io.File
 import java.nio.file.Path
+
+private const val IMAGES_API_BASE = """http://base/url/api/v4/projects/test-account%2Fmr-test"""
+private const val WEB_BASE = """http://base/url/-/project/testRestId"""
 
 class GitLabUIUtilTest : LightPlatformTestCase() {
   private val gitRoot = "/tmp/git-repo"
 
   private lateinit var gitRepository: GitRepository
   private lateinit var gitRootVf: VirtualFile
-
-  private val baseUrl = "http://base/url/uploads/"
 
   override fun setUp() {
     super.setUp()
@@ -35,10 +42,9 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
   // https://youtrack.jetbrains.com/issue/IJPL-148576
   fun `test link with query does not throw an exception`() {
     assertNoThrowable {
-      GitLabUIUtil.convertToHtml(
-        project, gitRepository, GitLabProjectPath("test-account", "mr-test"), """
+      convertToHtml("""
         [link](/some/invalid/file/path?query=123)
-      """.trimIndent(), baseUrl)
+      """.trimIndent())
     }
   }
 
@@ -55,7 +61,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         [link](bla.md)
       """.trimIndent())
 
-    assertThat(parsed.substituteSeparators()).contains("${GitLabUIUtil.OPEN_FILE_LINK_PREFIX}${gitRoot}/bla.md")
+    assertThat(parsed.substituteSeparators()).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/bla.md")
   }
 
   fun `test nested file link gets file link prefix`() {
@@ -63,7 +69,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         [link](directory/a/b/bla.md)
       """.trimIndent())
 
-    assertThat(parsed.substituteSeparators()).contains("${GitLabUIUtil.OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
+    assertThat(parsed.substituteSeparators()).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
   }
 
   fun `test nested file link with backslashes gets file link prefix`() {
@@ -71,7 +77,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         [link](directory\a\b\bla.md)
       """.trimIndent())
 
-    assertThat(parsed.substituteSeparators()).contains("${GitLabUIUtil.OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
+    assertThat(parsed.substituteSeparators()).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
   }
 
   fun `test uploads files link rendering`() {
@@ -79,7 +85,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         [link](/uploads/a/b/c.jpg) some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><a href="${baseUrl}a/b/c.jpg" title="link">link</a> some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><a href="$WEB_BASE/uploads/a/b/c.jpg" title="link">link</a> some text</p></body>""")
   }
 
   fun `test simple MR link gets MR link prefix`() {
@@ -87,7 +93,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         !53
       """.trimIndent())
 
-    assertThat(parsed).contains("${GitLabUIUtil.OPEN_MR_LINK_PREFIX}53")
+    assertThat(parsed).contains("${OPEN_MR_LINK_PREFIX}53")
   }
 
   fun `test images rendering`() {
@@ -95,7 +101,8 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg)
       """.trimIndent())
 
-    assertThat(parsed.substituteSeparators()).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /></p></body>""")
+
+    assertThat(parsed.substituteSeparators()).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
 
   fun `test images rendering with one setting`() {
@@ -103,7 +110,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
 
   fun `test images rendering with one percent setting`() {
@@ -111,16 +118,15 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10%}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
-
 
   fun `test images rendering with two settings`() {
     val parsed = convertToHtml("""
         ![link](/uploads/a/b/c.jpg){width=10 height=10}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
 
   fun `test images rendering with two precent settings`() {
@@ -128,7 +134,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10% height=10%}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
 
   fun `test images rendering with many settings`() {
@@ -136,7 +142,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10 other=123 other2=123}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
 
   fun `test images rendering with many percent settings`() {
@@ -144,7 +150,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10% height=10% other=123% other2=123%}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
 
   fun `test images rendering with different settings`() {
@@ -152,7 +158,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10% other=123 other2=123%}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
 
   fun `test images rendering with two double quote settings`() {
@@ -160,7 +166,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width="10" height="10"}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
 
   fun `test images rendering with two double quote settings and some text`() {
@@ -168,7 +174,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width="10" height="10"} some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /> some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /> some text</p></body>""")
   }
 
   fun `test images rendering with different settings and some text`() {
@@ -176,7 +182,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10% other=123 other2=123%} some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /> some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /> some text</p></body>""")
   }
 
   fun `test images rendering with settings and additional curly braces section`() {
@@ -184,7 +190,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10} {here is the additional section}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" /> {here is the additional section}</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /> {here is the additional section}</p></body>""")
   }
 
   fun `test images rendering with settings and immediate symbols after curly braces`() {
@@ -192,7 +198,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10}immediate text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" />immediate text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" />immediate text</p></body>""")
   }
 
   fun `test images rendering with settings and immediate curly braces after curly braces section`() {
@@ -200,7 +206,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg){width=10 height=10}{here is the additional section}
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p><img src="/uploads/a/b/c.jpg" alt="link" />{here is the additional section}</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" />{here is the additional section}</p></body>""")
   }
 
   fun `test images rendering with settings reference link`() {
@@ -264,7 +270,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         The link [link-description][link] and some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p>The link <a href="http://base/url/uploads/some/path.pdf" title="label">link-description</a> and some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="$WEB_BASE/uploads/some/path.pdf" title="label">link-description</a> and some text</p></body>""")
   }
 
   fun `test full reference link for local file`() {
@@ -291,7 +297,7 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
         The link [link] and some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p>The link <a href="http://base/url/uploads/some/path.pdf" title="label">link</a> and some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="$WEB_BASE/uploads/some/path.pdf" title="label">link</a> and some text</p></body>""")
   }
 
   fun `test short reference link for local file`() {
@@ -304,8 +310,11 @@ class GitLabUIUtilTest : LightPlatformTestCase() {
   }
 
   private fun convertToHtml(markdownSource: String): @NlsSafe String {
-    val parsed = GitLabUIUtil.convertToHtml(
-      project, gitRepository, GitLabProjectPath("test-account", "mr-test"), markdownSource, baseUrl)
-    return parsed
+    val serverPath = GitLabServerPath("http://base/url")
+    val projectPath = GitLabProjectPath("test-account", "mr-test")
+    val projectCoordinates = GitLabProjectCoordinates(serverPath, projectPath)
+    val projectId = GitLabRestIdData("testRestId")
+    val uploadFileUrlBase: String = projectCoordinates.serverPath.toString() + "/-/project/" + projectId.guessRestId() + "/uploads/"
+    return GitLabUIUtil.convertToHtml(project, gitRepository, projectPath, markdownSource, uploadFileUrlBase, projectCoordinates.restApiUri )
   }
 }
