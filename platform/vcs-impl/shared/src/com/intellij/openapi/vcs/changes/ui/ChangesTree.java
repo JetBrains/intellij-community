@@ -511,31 +511,20 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
 
   public void selectFile(@Nullable FilePath toSelect) {
     if (toSelect == null) return;
-
-    int rowInTree = findRowContainingFile(getRoot(), toSelect);
-    if (rowInTree == -1) return;
-
-    setSelectionRow(rowInTree);
-    TreeUtil.showRowCentered(this, rowInTree, false);
+    TreeNode node = findNodeContainingFile(getRoot(), toSelect);
+    TreeUtil.selectNode(this, node);
   }
 
-  private int findRowContainingFile(@NotNull TreeNode root, @NotNull FilePath toSelect) {
-    TreeNode targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
+  private static @Nullable TreeNode findNodeContainingFile(@NotNull TreeNode root, @NotNull FilePath toSelect) {
+    return TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
       if (node instanceof DefaultMutableTreeNode) {
         Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
         if (userObject instanceof Change) {
           return matches((Change)userObject, toSelect);
         }
       }
-
       return false;
     });
-    if (targetNode != null) {
-      return TreeUtil.getRowForNode(this, (DefaultMutableTreeNode)targetNode);
-    }
-    else {
-      return -1;
-    }
   }
 
   private static boolean matches(@NotNull Change change, @NotNull FilePath toSelect) {
