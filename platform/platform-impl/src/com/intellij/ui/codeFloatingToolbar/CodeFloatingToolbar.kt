@@ -194,7 +194,7 @@ class CodeFloatingToolbar(
     val hint = super.createHint()
     val buttons = UIUtil.findComponentsOfType(hint.component, ActionButton::class.java)
     buttons.forEach { button ->
-      if (button.action !is ShowsDropdownIconInFloatingToolbar) {
+      if (button.presentation.getClientProperty(ActionUtil.HIDE_DROPDOWN_ICON) == null) {
         button.presentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
       }
       showMenuPopupOnMouseHover(button)
