@@ -22,17 +22,19 @@ open class PerformFixesTask(project: Project, descriptors: List<CommonProblemDes
   override fun <D : CommonProblemDescriptor> collectFix(fix: QuickFix<D>, descriptor: D, project: Project): BatchExecutionResult {
     if (fix is ModCommandQuickFix) {
       descriptor as ProblemDescriptor
-      val action = ModCommandService.getInstance().unwrap(fix)
       val context = ActionContext.from(descriptor)
-      if (action != null && action.getPresentation(context) == null) {
-        return ModCommandExecutor.Result.NOTHING
-      }
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(context.file.fileDocument)
       val command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
         ThrowableComputable<ModCommand, RuntimeException> {
-            ReadAction.nonBlocking(Callable { fix.perform(myProject, descriptor) })
-              .expireWhen { myProject.isDisposed }
-              .executeSynchronously()
+          ReadAction.nonBlocking(Callable {
+            val action = ModCommandService.getInstance().unwrap(fix)
+            if (action != null && action.getPresentation(context) == null) {
+              return@Callable ModCommand.nop()
+            }
+            return@Callable fix.perform(myProject, descriptor)
+          })
+            .expireWhen { myProject.isDisposed }
+            .executeSynchronously()
           }, LangBundle.message("apply.fixes"), true, myProject)
       if (command == null) return ModCommandExecutor.Result.ABORT
       return ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(descriptor), command)
