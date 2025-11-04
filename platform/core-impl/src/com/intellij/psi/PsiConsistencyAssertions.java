@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,8 @@ public class PsiConsistencyAssertions {
     message += "\nlanguage=" + psiFile.getLanguage();
     message += "\ndoc.length=" + docLength;
     message += "\npsiFile.length=" + psiLength;
+    message += "\ncached psiFiles=" + PsiManagerEx.getInstanceEx(psiFile.getProject()).getFileManagerEx().findCachedViewProviders(viewProvider.getVirtualFile()).size();
+
     String psiFileTextLength;
     try {
       if (psiFileText == null) {
