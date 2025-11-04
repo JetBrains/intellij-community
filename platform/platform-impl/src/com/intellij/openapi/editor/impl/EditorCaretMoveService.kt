@@ -14,9 +14,6 @@ import com.intellij.util.MathUtil.clamp
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
 import java.awt.geom.Point2D
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.*
@@ -112,7 +109,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
 
       val effectiveSpeed = (BASE_SPEED * (1.0 + ACCEL_FACTOR * ln1p(distance / 5.0))).toFloat()
 
-      val duration = max(distance / effectiveSpeed * MILLIS_SECOND, 40f)
+      val duration = clamp(distance / effectiveSpeed * MILLIS_SECOND, 40f, 80f)
       duration
     }
 
