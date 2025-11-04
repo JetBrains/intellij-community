@@ -75,7 +75,7 @@ class MavenNewModelVersionInOldSchemaInspectionTest: MavenDomTestCase()  {
     setRawPomFile("""<?xml version="1.0"?>
       <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/maven-v4_1_0.xsd ">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0  http://maven.apache.org/maven-v4_1_0.xsd">
         <modelVersion>4.1.0</modelVersion>
         <groupId>my.group</groupId>
         <artifactId>artifact</artifactId>
