@@ -234,7 +234,8 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdkCreator == null) {
       return false
     }
-    return sdkCreator(true).getOrLogException(thisLogger()) != null
+    sdkCreator(true).getOrLogException(thisLogger())
+    return true
   }
 
   private suspend fun searchPreviousUsed(
