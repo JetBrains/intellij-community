@@ -9,6 +9,7 @@ import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.FencedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.CodeBlock.IndentedCodeBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.Heading
 import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlock
+import org.jetbrains.jewel.markdown.MarkdownBlock.HtmlBlockWithAttributes
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.OrderedList
 import org.jetbrains.jewel.markdown.MarkdownBlock.ListBlock.UnorderedList
@@ -74,6 +75,7 @@ private fun MarkdownBlock.findDifferenceWith(expected: MarkdownBlock, indentSize
         is ListBlock -> diffList(this, expected, indentSize, indent)
         is ListItem -> children.findDifferences((expected as ListItem).children, indentSize)
         is ThematicBreak -> emptyList() // They can only differ in their node
+        is HtmlBlockWithAttributes -> diffHtmlBlockWithAttributes(this, expected, indent)
         else -> error("Unsupported MarkdownBlock: ${this.javaClass.name}")
     }
 }
@@ -97,6 +99,18 @@ private fun diffHtmlBlock(actual: HtmlBlock, expected: MarkdownBlock, indent: St
         )
     }
 }
+
+private fun diffHtmlBlockWithAttributes(actual: HtmlBlockWithAttributes, expected: MarkdownBlock, indent: String) =
+    buildList {
+        if (actual.attributes != (expected as HtmlBlockWithAttributes).attributes) {
+            add(
+                "$indent * HTML block attributes mismatch.\n\n" +
+                    "$indent     Actual:   ${actual.attributes}\n" +
+                    "$indent     Expected: ${expected.attributes}\n"
+            )
+        }
+        addAll(actual.mdBlock.findDifferenceWith(expected.mdBlock, indentSize = indent.length))
+    }
 
 private fun diffFencedCodeBlock(actual: FencedCodeBlock, expected: MarkdownBlock, indent: String) = buildList {
     if (actual.mimeType != (expected as FencedCodeBlock).mimeType) {

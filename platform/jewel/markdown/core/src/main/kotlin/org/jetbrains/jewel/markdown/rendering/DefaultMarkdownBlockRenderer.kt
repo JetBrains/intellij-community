@@ -18,11 +18,14 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.withCompositionLocal
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -137,6 +140,8 @@ public open class DefaultMarkdownBlockRenderer(
             is ListItem -> RenderListItem(block, enabled, onUrlClick, modifier)
             is Paragraph -> RenderParagraph(block, rootStyling.paragraph, enabled, onUrlClick, modifier)
             ThematicBreak -> RenderThematicBreak(rootStyling.thematicBreak, enabled, modifier)
+            is MarkdownBlock.HtmlBlockWithAttributes ->
+                RenderHtmlBlockWithAttributes(block, enabled, onUrlClick, modifier)
             is CustomBlock -> {
                 rendererExtensions
                     .find { it.blockRenderer?.canRender(block) == true }
@@ -220,6 +225,7 @@ public open class DefaultMarkdownBlockRenderer(
                 onTextLayout = onTextLayout,
                 inlineContent = images,
                 style = mergedStyle,
+                textAlign = LocalTextAlignment.current,
             )
         }
     }
@@ -296,6 +302,7 @@ public open class DefaultMarkdownBlockRenderer(
                     style = mergedStyle,
                     modifier = Modifier.focusProperties { this.canFocus = false },
                     inlineContent = images,
+                    textAlign = LocalTextAlignment.current,
                 )
             }
 
@@ -571,6 +578,7 @@ public open class DefaultMarkdownBlockRenderer(
                     Modifier.focusProperties { canFocus = false }
                         .padding(styling.padding)
                         .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                textAlign = LocalTextAlignment.current,
             )
         }
     }
@@ -643,6 +651,7 @@ public open class DefaultMarkdownBlockRenderer(
             modifier =
                 Modifier.focusProperties { canFocus = false }
                     .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+            textAlign = LocalTextAlignment.current,
         )
     }
 
@@ -660,6 +669,7 @@ public open class DefaultMarkdownBlockRenderer(
                     style = textStyle,
                     color = textStyle.color.takeOrElse { LocalContentColor.current },
                     modifier = Modifier.focusProperties { canFocus = false },
+                    textAlign = LocalTextAlignment.current,
                 )
             }
         }
@@ -740,6 +750,37 @@ public open class DefaultMarkdownBlockRenderer(
     }
 
     @Composable
+    private fun RenderHtmlBlockWithAttributes(
+        block: MarkdownBlock.HtmlBlockWithAttributes,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+        modifier: Modifier = Modifier,
+    ) {
+        val textAlignment: TextAlign =
+            when (block.attributes["align"]) {
+                "left" -> TextAlign.Start
+                "center" -> TextAlign.Center
+                "right" -> TextAlign.End
+                else -> {
+                    RenderBlock(block.mdBlock, enabled, onUrlClick, modifier)
+                    return
+                }
+            }
+        val contentAlignment =
+            when (textAlignment) {
+                TextAlign.Start -> Alignment.TopStart
+                TextAlign.Center -> Alignment.TopCenter
+                TextAlign.End -> Alignment.TopEnd
+                else -> Alignment.TopStart
+            }
+        withCompositionLocal(LocalTextAlignment provides textAlignment) {
+            Box(modifier = modifier.fillMaxWidth(), contentAlignment = contentAlignment) {
+                RenderBlock(block.mdBlock, enabled, onUrlClick, Modifier.align(contentAlignment))
+            }
+        }
+    }
+
+    @Composable
     private fun RenderImages(images: Map<String, InlineTextContent>, modifier: Modifier = Modifier) {
         if (images.isEmpty()) return
 
@@ -773,6 +814,13 @@ public open class DefaultMarkdownBlockRenderer(
     @ExperimentalJewelApi
     override operator fun plus(extension: MarkdownRendererExtension): MarkdownBlockRenderer =
         DefaultMarkdownBlockRenderer(rootStyling, rendererExtensions = rendererExtensions + extension, inlineRenderer)
+
+    public companion object {
+        @Suppress("VariableNaming")
+        private val LocalTextAlignment: ProvidableCompositionLocal<TextAlign> = staticCompositionLocalOf {
+            TextAlign.Start
+        }
+    }
 }
 
 private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = buildList {
