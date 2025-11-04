@@ -231,4 +231,17 @@ class VfsRefreshTest {
     }
     assertEquals(currentCounter, newCounter, "There should be no write action if there was nothing to refresh")
   }
+
+  @Test
+  fun `synchronous refresh in a background write action can terminate successfully`() = timeoutRunBlocking {
+    val file = createTempFile()
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(file)!!
+    writeAction {
+      virtualFile.writeText("42")
+    }
+    backgroundWriteAction {
+      virtualFile.refresh(false, false)
+    }
+    // if this test terminates, there was no hanging
+  }
 }
