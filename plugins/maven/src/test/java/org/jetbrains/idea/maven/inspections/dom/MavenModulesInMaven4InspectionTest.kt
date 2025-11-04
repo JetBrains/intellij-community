@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.inspections.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.inspections.MavenModulesInMaven4Inspection
 import org.junit.Test
 
@@ -45,7 +46,7 @@ class MavenModulesInMaven4InspectionTest : MavenDomTestCase() {
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>test</version>
-      <warning descr="Tag <modules> is deprecated, should be replaced to <subprojects>"><modules>
+      <warning descr="${MavenDomBundle.message("inspection.modules.tag.in.maven.4")}"><modules>
         <module>m1</module>
         <module>m2</module>
         <module>m1/sub1</module>
@@ -53,7 +54,7 @@ class MavenModulesInMaven4InspectionTest : MavenDomTestCase() {
 """)
     checkHighlighting()
 
-    val intention = fixture.availableIntentions.singleOrNull { it.text == "Replace to <subprojects>" }
+    val intention = fixture.availableIntentions.singleOrNull { it.text == MavenDomBundle.message("inspection.modules.tag.in.maven.4.name") }
     assertNotNull("Cannot find intention", intention)
     fixture.launchAction(intention!!)
 
