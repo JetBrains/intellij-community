@@ -459,7 +459,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
       LOG.error("[Split debugger] RunnerLayoutUi should not be used in split mode from XDebugSession")
     }
     assertSessionTabInitialized()
-    return sessionTab!!.ui
+    return sessionTab?.ui
   }
 
   override fun isMixedMode(): Boolean {
