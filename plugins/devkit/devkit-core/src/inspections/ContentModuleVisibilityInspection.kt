@@ -9,11 +9,14 @@ import com.intellij.codeInspection.util.IntentionName
 import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
+import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlFile
@@ -54,10 +57,10 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     holder: DomElementAnnotationHolder,
   ) {
     val currentXmlFile = dependencyValue.xmlElement?.containingFile as? XmlFile ?: return
-    val productionXmlFilesScope = getProjectProductionXmlFilesScope(currentXmlFile.project)
-    val currentModuleIncludingFiles = getInclusionContextsForContentModuleOrPluginXmlFile(currentXmlFile, productionXmlFilesScope)
+    val xmlFilesScope = getXmlFilesScope(currentXmlFile.project)
+    val currentModuleIncludingFiles = getInclusionContextsForContentModuleOrPluginXmlFile(currentXmlFile, xmlFilesScope)
     val dependencyXmlFile = moduleDependency.xmlElement?.containingFile as? XmlFile ?: return
-    val dependencyIncludingFiles = getInclusionContextsForContentModuleOrPluginXmlFile(dependencyXmlFile, productionXmlFilesScope)
+    val dependencyIncludingFiles = getInclusionContextsForContentModuleOrPluginXmlFile(dependencyXmlFile, xmlFilesScope)
 
     for (currentModuleInclusionContext in currentModuleIncludingFiles) {
       for (dependencyInclusionContext in dependencyIncludingFiles) {
@@ -149,13 +152,37 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     val moduleVirtualFile = xmlFile.virtualFile ?: return emptyList()
     val psiManager = xmlFile.manager
     return PluginIdDependenciesIndex.findFilesIncludingContentModule(moduleVirtualFile, scope)
-      .mapNotNull { psiManager.findFile(it) as? XmlFile }
-      .flatMap { xmlFile ->
-        val currentDescriptor = DescriptorUtil.getIdeaPlugin(xmlFile) ?: return@flatMap emptyList()
-        getRootIncludingPlugins(xmlFile, currentDescriptor, registrationPlace = currentDescriptor, scope)
-      }
+      .mapToXmlFileAndIdeaPlugin(psiManager)
+      .withoutLibraryDuplicates(xmlFile.project)
+      .flatMap { (xmlFile, ideaPlugin) -> getRootIncludingPlugins(xmlFile, ideaPlugin, registrationPlace = ideaPlugin, scope) }
       .distinct()
       .sortedWith(compareBy<ContentModuleInclusionContext> { it.rootPlugin.pluginIdOrPlainFileName }.thenBy { it.registrationPlace.pluginIdOrPlainFileName })
+  }
+
+  private fun Collection<VirtualFile>.mapToXmlFileAndIdeaPlugin(psiManager: PsiManager): List<Pair<XmlFile, IdeaPlugin>> {
+    return mapNotNull {
+      val xmlFile = psiManager.findFile(it) as? XmlFile ?: return@mapNotNull null
+      val ideaPlugin = DescriptorUtil.getIdeaPlugin(xmlFile) ?: return@mapNotNull null
+      xmlFile to ideaPlugin
+    }
+  }
+
+  private fun List<Pair<XmlFile, IdeaPlugin>>.withoutLibraryDuplicates(project: Project): List<Pair<XmlFile, IdeaPlugin>> {
+    val productionScope = GlobalSearchScopesCore.projectProductionScope(project)
+    return groupBy { it.second.pluginIdOrPlainFileName }
+      .flatMap { (_, files) ->
+        when {
+          files.size == 1 -> files
+          else -> {
+            val productionFiles = files.filter { productionScope.contains(it.first.virtualFile) }
+            return if (productionFiles.size < files.size && productionFiles.isNotEmpty()) {
+              productionFiles
+            } else {
+              files
+            }
+          }
+        }
+      }
   }
 
   private data class ContentModuleInclusionContext(
@@ -193,10 +220,10 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
   ) {
     val currentXmlFile = dependencyValue.xmlElement?.containingFile as? XmlFile ?: return
     val project = currentXmlFile.project
-    val productionXmlFilesScope = getProjectProductionXmlFilesScope(project)
-    val currentModuleInclusionContexts = getInclusionContextsForContentModuleOrPluginXmlFile(currentXmlFile, productionXmlFilesScope)
+    val xmlFilesScope = getXmlFilesScope(project)
+    val currentModuleInclusionContexts = getInclusionContextsForContentModuleOrPluginXmlFile(currentXmlFile, xmlFilesScope)
     val dependencyXmlFile = moduleDependency.xmlElement?.containingFile as? XmlFile ?: return
-    val dependencyInclusionContexts = getInclusionContextsForContentModuleOrPluginXmlFile(dependencyXmlFile, productionXmlFilesScope)
+    val dependencyInclusionContexts = getInclusionContextsForContentModuleOrPluginXmlFile(dependencyXmlFile, xmlFilesScope)
     for (currentModuleInclusionContext in currentModuleInclusionContexts) {
       val currentModuleIncludingPlugin = currentModuleInclusionContext.rootPlugin
       if (dependencyInclusionContexts.any { it.rootPlugin == currentModuleIncludingPlugin }) continue // are included in the same plugin
@@ -234,8 +261,13 @@ internal class ContentModuleVisibilityInspection : DevKitPluginXmlInspectionBase
     }
   }
 
-  private fun getProjectProductionXmlFilesScope(project: Project): GlobalSearchScope {
-    return GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScopesCore.projectProductionScope(project), XmlFileType.INSTANCE)
+  private fun getXmlFilesScope(project: Project): GlobalSearchScope {
+    val productionScope = GlobalSearchScopesCore.projectProductionScope(project)
+    val librariesScope = ProjectScope.getLibrariesScope(project)
+    return GlobalSearchScope.getScopeRestrictedByFileTypes(
+      productionScope.union(librariesScope),
+      XmlFileType.INSTANCE
+    )
   }
 
   /**
