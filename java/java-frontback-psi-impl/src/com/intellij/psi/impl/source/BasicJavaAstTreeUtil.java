@@ -301,9 +301,20 @@ public final class BasicJavaAstTreeUtil {
     return findParent(e, set);
   }
 
-  private static @Nullable ASTNode findParent(@NotNull ASTNode element, @NotNull IElementType type) {
+  private static @Nullable ASTNode findAncestorWithParentOfType(@NotNull ASTNode element, @NotNull IElementType type, @Nullable ParentAwareTokenSet stopAt) {
+    for (ASTNode currentElement = element, parent = element.getTreeParent(); parent != null; currentElement = parent, parent = parent.getTreeParent()) {
+      IElementType parentType = parent.getElementType();
+      if (is(parentType, type)) return currentElement;
+      else if (stopAt != null && is(parentType, stopAt)) return null;
+    }
+    return null;
+  }
+
+  private static @Nullable ASTNode findParent(@NotNull ASTNode element, @NotNull IElementType type, @Nullable ParentAwareTokenSet stopAt) {
     for (ASTNode parent = element.getTreeParent(); parent != null; parent = parent.getTreeParent()) {
-      if (is(parent.getElementType(), type)) return parent;
+      IElementType parentType = parent.getElementType();
+      if (is(parentType, type)) return parent;
+      else if (stopAt != null && is(parentType, stopAt)) return null;
     }
     return null;
   }
@@ -317,10 +328,24 @@ public final class BasicJavaAstTreeUtil {
 
 
   public static @Nullable ASTNode getParentOfType(@Nullable ASTNode e, @NotNull IElementType elementType) {
+    return getParentOfType(e, elementType, null);
+  }
+
+  /**
+   * Finds the first ancestor which parent element type is equals to {@code elementType}
+   */
+  public static @Nullable ASTNode getAncestorWithParentOfType(@Nullable ASTNode e, @NotNull IElementType elementType, @Nullable ParentAwareTokenSet stopAt) {
     if (e == null) {
       return null;
     }
-    return findParent(e, elementType);
+    return findAncestorWithParentOfType(e, elementType, stopAt);
+  }
+
+  public static @Nullable ASTNode getParentOfType(@Nullable ASTNode e, @NotNull IElementType elementType, @Nullable ParentAwareTokenSet stopAt) {
+    if (e == null) {
+      return null;
+    }
+    return findParent(e, elementType, stopAt);
   }
 
   public static @Nullable ASTNode getMethodExpression(@Nullable ASTNode element) {

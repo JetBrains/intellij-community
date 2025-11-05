@@ -337,8 +337,8 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         }
         return Indent.getNoneIndent();
       }
-      final ASTNode grandParent = skipParenthesesUp(parent.getTreeParent());
-      if (grandParent != null && grandParent.getElementType() == JavaElementType.CONDITIONAL_EXPRESSION) {
+
+      if (JavaFormatterConditionalExpressionUtil.isInsideConditionalExpression(parent)) {
         return Indent.getSpaceIndent(0, true);
       }
     }
@@ -838,19 +838,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return
         new LegacyChainedMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
     }
-    return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode, shouldUseSpaceIndentInCallChain(node)).build(nodes);
+    return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings,
+                                            myFormattingMode, JavaFormatterConditionalExpressionUtil.isInsideConditionalExpression(node)).build(nodes);
   }
 
-  private static boolean shouldUseSpaceIndentInCallChain(@NotNull ASTNode node) {
-    ASTNode parent = skipParenthesesUp(node);
-    if (parent == null) return false;
-    while (parent != null && parent.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
-      parent = parent.getTreeParent();
-      if (parent == null || parent.getElementType() != JavaElementType.METHOD_CALL_EXPRESSION) return false;
-      parent = skipParenthesesUp(parent);
-    }
-    return parent != null && parent.getElementType() == JavaElementType.CONDITIONAL_EXPRESSION;
-  }
 
   private boolean shouldAlignChild(final @NotNull ASTNode child) {
     int role = getChildRole(child);
