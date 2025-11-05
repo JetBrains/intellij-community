@@ -11,9 +11,13 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.endOffset
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.base.psi.getReturnTypeReference
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -215,6 +219,7 @@ private fun convertFunctionToProperty(
                 )
                 convertFunction(it, context, moveCaret = it == mainElement)
             }
+
             is PsiMethod -> it.name = newGetterName
         }
     }
@@ -295,39 +300,50 @@ private fun checkValueArgumentsNotEmpty(callElement: KtCallElement, conflicts: M
     return false
 }
 
+@OptIn(KaExperimentalApi::class)
 private fun KaSession.addConflictIfSamePropertyFound(
     affectedCallable: PsiNamedElement,
     initialElementFunctionSymbol: KaCallableSymbol,
     context: ConflictCheckContext
 ) {
-    val initialElementSymbolName = initialElementFunctionSymbol.name
-    val initialElementFunctionSymbolContainingSymbolDefaultType =
-        (initialElementFunctionSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType
     if (affectedCallable is KtNamedFunction) {
-        // A separate `analyze` is needed to avoid KaBaseIllegalPsiException on analyzing the `affectedCallable` as `KtNamedFunction`
-        analyze(affectedCallable) {
-            affectedCallable.containingKtFile
-                .scopeContext(affectedCallable)
-                .compositeScope()
-                .callables { it == initialElementSymbolName }
-                .filterIsInstance<KaPropertySymbol>()
-                .find {
-                    val receiverType = it.receiverType ?: return@find false
-                    initialElementFunctionSymbolContainingSymbolDefaultType?.semanticallyEquals(receiverType)
-                        ?: return@find false
-                }?.let { propertySymbol ->
-                    propertySymbol.psi?.let { psiElement ->
-                        reportDeclarationConflict(context.conflicts, declaration = psiElement) { s ->
-                            KotlinBundle.message(
-                                "0.already.exists",
-                                s
-                            )
-                        }
-                    }
-                }
-        }
+        val containingSymbolType = (initialElementFunctionSymbol.containingSymbol as? KaClassifierSymbol)?.defaultType
+        val initialElementTypePointer = containingSymbolType?.createPointer() ?: return
+        val initialElementSymbolName = initialElementFunctionSymbol.name
+        affectedCallable.checkDeclarationConflict(initialElementTypePointer, initialElementSymbolName, context.conflicts)
     } else if (affectedCallable is PsiMethod) {
         affectedCallable.checkDeclarationConflict(context.getterName, context.conflicts, context.callables)
+    }
+}
+
+@OptIn(KaExperimentalApi::class)
+private fun KtNamedFunction.checkDeclarationConflict(
+    initialElementTypePointer: KaTypePointer<KaType>,
+    initialElementSymbolName: Name?,
+    conflicts: MutableMap<PsiElement, ModShowConflicts.Conflict>
+) {
+    val affectedCallable = this
+    // A separate `analyze` is needed to avoid KaBaseIllegalPsiException on analyzing the `affectedCallable` as `KtNamedFunction`
+    analyze(affectedCallable) {
+        val initialElementType = initialElementTypePointer.restore() ?: return@analyze
+        affectedCallable.containingKtFile
+            .scopeContext(affectedCallable)
+            .compositeScope()
+            .callables { it == initialElementSymbolName }
+            .filterIsInstance<KaPropertySymbol>()
+            .find {
+                val receiverType = it.receiverType ?: return@find false
+                initialElementType.semanticallyEquals(receiverType)
+            }?.let { propertySymbol ->
+                propertySymbol.psi?.let { psiElement ->
+                    reportDeclarationConflict(conflicts, declaration = psiElement) { s ->
+                        KotlinBundle.message(
+                            "0.already.exists",
+                            s
+                        )
+                    }
+                }
+            }
     }
 }
 
