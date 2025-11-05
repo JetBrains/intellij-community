@@ -9,6 +9,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.createTestOpenProjectOptions
+import com.intellij.testFramework.useProjectAsync
 import com.intellij.workspaceModel.ide.ProjectRootEntity
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
@@ -28,11 +29,12 @@ class ProjectRootEntityTest {
       val name = "new project"
       val projectFile = TemporaryDirectory.generateTemporaryPath(name)
       projectFile.createDirectories()
-      val options = createTestOpenProjectOptions().copy(projectName = name)
-      val project = ProjectUtil.openOrImportAsync(projectFile, options)!!
-      ProjectRootsSynchronizer().execute(project) // background startup activities are not executed in unit tests on project open
-      val roots = project.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()
-      assertThat(roots.map { it.root }).isEqualTo(listOf(projectFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())))
+      val options = createTestOpenProjectOptions().copy(projectName = name, projectRootDir = projectFile)
+      ProjectUtil.openOrImportAsync(projectFile, options)!!.useProjectAsync { project ->
+        ProjectRootsSynchronizer().execute(project) // background startup activities are not executed in unit tests on project open
+        val roots = project.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()
+        assertThat(roots.map { it.root }).isEqualTo(listOf(projectFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())))
+      }
     }
   }
 }
