@@ -15,6 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
 import com.intellij.execution.rpc.emitLiveIconEventIfInBackend
+import com.intellij.execution.rpc.emitOpenToolWindowEventIfInBackend
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -418,7 +419,11 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         // It shouldn't harm in any case - having no focused component isn't useful at all.
         focus = true
       }
+      if(descriptor.activationCallback != null)
+        println("activation callback")
       getToolWindowManager().getToolWindow(toolWindowId)!!.activate(descriptor.activationCallback, focus, focus)
+      val contentId = descriptor.id as? RunContentDescriptorIdImpl ?: return@Runnable
+      emitOpenToolWindowEventIfInBackend(project, toolWindowId, focus, contentId)
     }, project.disposed)
   }
 
