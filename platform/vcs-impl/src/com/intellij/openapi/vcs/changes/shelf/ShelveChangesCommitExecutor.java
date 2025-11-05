@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.shelf;
 
@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.concurrent.CancellationException;
 
 public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
   private static final Logger LOG = Logger.getInstance(ShelveChangesCommitExecutor.class);
@@ -63,7 +64,10 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
           ChangeListManager.getInstance(myProject).scheduleAutomaticEmptyChangeListDeletion(changeList, true);
         }
       }
-      catch (final Exception ex) {
+      catch (CancellationException e) {
+        throw e;
+      }
+      catch (Exception ex) {
         LOG.info(ex);
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(
           () -> Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle()), ModalityState.nonModal(), myProject);
