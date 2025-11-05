@@ -148,6 +148,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
   private boolean myShowMarketplaceTab;
 
   private Boolean myPluginsAutoUpdateEnabled;
+  private volatile Boolean myDisposeStarted = false;
 
   public PluginManagerConfigurablePanel() {
     myPluginModelFacade = new PluginModelFacade(new MyPluginModel(null));
@@ -1940,6 +1941,7 @@ public final class PluginManagerConfigurablePanel implements Disposable {
 
   @Override
   public void dispose() {
+    myDisposeStarted = true;
     InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
     if (myPluginModelFacade.getModel().toBackground()) {
       pluginsState.clearShutdownCallback();
@@ -1991,7 +1993,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
       try {
         apply();
         WelcomeScreenEventCollector.logPluginsModified();
-        InstalledPluginsState.getInstance().runShutdownCallback();
+        if (myDisposeStarted) { //To avoid race condition when dispose is called before apply callback gets called
+          InstalledPluginsState.getInstance().runShutdownCallback();
+        }
       }
       catch (ConfigurationException exception) {
         Logger.getInstance(PluginsTabFactory.class).error(exception);
@@ -2025,7 +2029,9 @@ public final class PluginManagerConfigurablePanel implements Disposable {
         });
       }
 
-      installedPluginsState.runShutdownCallback();
+      if (myDisposeStarted) {
+        installedPluginsState.runShutdownCallback();
+      }
     });
   }
 
