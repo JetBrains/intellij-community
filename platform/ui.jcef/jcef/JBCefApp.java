@@ -122,11 +122,9 @@ public final class JBCefApp {
       if (isRemoteEnabledSystemProp != null) {
         final boolean val = isRemoteEnabledSystemProp.trim().compareToIgnoreCase("true") == 0;
         LOG.info(String.format("Force %s out-of-process jcef mode.", val ? "enabled" : "disabled"));
-      } else {
-        if (StartupUiUtil.isWayland())
-          LOG.debug("Out-of-process jcef mode is temporarily disabled in Wayland"); // TODO: fix https://youtrack.jetbrains.com/issue/IJPL-161273
-        else
-          System.setProperty(PROPERTY_NAME, "true");
+      }
+      else {
+        System.setProperty(PROPERTY_NAME, "true");
       }
     }
 
