@@ -41,11 +41,13 @@ import com.intellij.xdebugger.mixedMode.XMixedModeProcessesConfiguration
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.asPromise
 import javax.swing.event.HyperlinkListener
 
 /**
@@ -69,29 +71,27 @@ class XMixedModeCombinedDebugProcess(
   private val lowExtension get() = low.mixedModeDebugProcessExtension as XMixedModeLowLevelDebugProcessExtension
   private val highExtension get() = high.mixedModeDebugProcessExtension as XMixedModeHighLevelDebugProcessExtension
   private var positionReachedInProgress: Boolean = false
-  init {
-    coroutineScope.launch(Dispatchers.Default) {
-      while (true) {
-        when(val newState = stateMachine.stateChannel.receive()) {
-          is BothStopped -> {
-            val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
-            withContext(Dispatchers.EDT) {
-              positionReachedInProgress = true
-              try {
-                session.positionReached(ctx, myAttract)
-              }
-              finally {
-                positionReachedInProgress = false
-                myAttract = false
-              }
+  private val stateMachineRunningJob : Job = coroutineScope.launch(Dispatchers.Default) {
+    while (true) {
+      when(val newState = stateMachine.stateChannel.receive()) {
+        is BothStopped -> {
+          val ctx = XMixedModeSuspendContext(session, newState.low, newState.high, lowExtension, stateMachine.suspendContextCoroutine)
+          withContext(Dispatchers.EDT) {
+            positionReachedInProgress = true
+            try {
+              session.positionReached(ctx, myAttract)
+            }
+            finally {
+              positionReachedInProgress = false
+              myAttract = false
             }
           }
-          is BothRunningBase -> {
-            highLevelDebugProcessReady = true
-            withContext(Dispatchers.EDT) { session.sessionResumed() }
-          }
-          is Exited -> break
         }
+        is BothRunningBase -> {
+          highLevelDebugProcessReady = true
+          withContext(Dispatchers.EDT) { session.sessionResumed() }
+        }
+        is Exited -> break
       }
     }
   }
@@ -163,7 +163,9 @@ class XMixedModeCombinedDebugProcess(
 
   override fun stopAsync(): Promise<in Any> {
     stateMachine.set(Stop)
-    return high.stopAsync().thenAsync { low.stopAsync() }
+
+    @Suppress("UNCHECKED_CAST")
+    return high.stopAsync().thenAsync { low.stopAsync() }.thenAsync { stateMachineRunningJob.asPromise() as Promise<Any> }
   }
 
   override fun resume(context: XSuspendContext?) {
