@@ -9,10 +9,10 @@ import org.jetbrains.annotations.Nullable;
 
 public class TestOutputEvent extends TreeNodeEvent {
   private final String myText;
-  private final Key myOutputType;
+  private final Key<?> myOutputType;
 
-  public TestOutputEvent(@NotNull BaseTestMessage message, @NotNull String text, @NotNull Key outputType) {
-    super(message.getTestName(), TreeNodeEvent.getNodeId(message));
+  public TestOutputEvent(@NotNull BaseTestMessage message, @NotNull String text, @NotNull Key<?> outputType) {
+    super(message.getTestName(), getNodeId(message));
     myText = text;
     myOutputType = outputType;
   }
@@ -34,7 +34,7 @@ public class TestOutputEvent extends TreeNodeEvent {
     return myText;
   }
 
-  public @NotNull Key getOutputType() {
+  public @NotNull Key<?> getOutputType() {
     return myOutputType;
   }
 

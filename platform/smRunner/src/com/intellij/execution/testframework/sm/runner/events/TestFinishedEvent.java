@@ -14,7 +14,7 @@ public class TestFinishedEvent extends TreeNodeEvent {
   }
 
   public TestFinishedEvent(@NotNull TestFinished testFinished, @Nullable Long duration, String outputFile) {
-    this(testFinished.getTestName(), TreeNodeEvent.getNodeId(testFinished), duration, outputFile);
+    this(testFinished.getTestName(), getNodeId(testFinished), duration, outputFile);
   }
 
   public TestFinishedEvent(@Nullable String name, @Nullable String id, @Nullable Long duration) {

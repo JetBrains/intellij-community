@@ -18,7 +18,7 @@ public abstract class TreeNodeEvent {
   }
 
   protected void fail(@NotNull String message) {
-    throw new IllegalStateException(message + ", " + toString());
+    throw new IllegalStateException(message + ", " + this);
   }
 
   public @Nullable String getName() {

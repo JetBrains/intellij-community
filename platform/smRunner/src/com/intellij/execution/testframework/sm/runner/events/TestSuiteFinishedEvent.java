@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 public class TestSuiteFinishedEvent extends TreeNodeEvent {
 
   public TestSuiteFinishedEvent(@NotNull TestSuiteFinished suiteFinished) {
-    this(suiteFinished.getSuiteName(), TreeNodeEvent.getNodeId(suiteFinished));
+    this(suiteFinished.getSuiteName(), getNodeId(suiteFinished));
   }
 
   public TestSuiteFinishedEvent(@NotNull String name) {

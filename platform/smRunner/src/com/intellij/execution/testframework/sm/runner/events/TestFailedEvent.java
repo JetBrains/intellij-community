@@ -29,14 +29,16 @@ public class TestFailedEvent extends TreeNodeEvent {
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError) {
     this(testFailed, testError, null);
   }
+
   public TestFailedEvent(@NotNull TestFailed testFailed, boolean testError, @Nullable String expectedFilePath) {
     this(testFailed, testError, expectedFilePath, null);
-  }  
+  }
+
   public TestFailedEvent(@NotNull TestFailed testFailed,
                          boolean testError,
                          @Nullable String expectedFilePath,
                          @Nullable String actualFilePath) {
-    super(testFailed.getTestName(), TreeNodeEvent.getNodeId(testFailed));
+    super(testFailed.getTestName(), getNodeId(testFailed));
     if (testFailed.getFailureMessage() == null) throw new NullPointerException();
     myLocalizedFailureMessage = testFailed.getFailureMessage();
     myStacktrace = testFailed.getStacktrace();

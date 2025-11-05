@@ -34,20 +34,20 @@ public class TestSuiteStartedEvent extends BaseStartedNodeEvent {
 
   public TestSuiteStartedEvent(@NotNull TestSuiteStarted suiteStarted,
                                @Nullable String locationUrl) {
-    this(suiteStarted, locationUrl, BaseStartedNodeEvent.getMetainfo(suiteStarted));
+    this(suiteStarted, locationUrl, getMetainfo(suiteStarted));
   }
 
   public TestSuiteStartedEvent(@NotNull TestSuiteStarted suiteStarted,
                                @Nullable String locationUrl,
                                @Nullable String metainfo) {
     super(suiteStarted.getSuiteName(),
-          TreeNodeEvent.getNodeId(suiteStarted),
+          getNodeId(suiteStarted),
           getParentNodeId(suiteStarted),
           locationUrl,
           metainfo,
-          BaseStartedNodeEvent.getNodeType(suiteStarted),
-          BaseStartedNodeEvent.getNodeArgs(suiteStarted),
-          BaseStartedNodeEvent.isRunning(suiteStarted));
+          getNodeType(suiteStarted),
+          getNodeArgs(suiteStarted),
+          isRunning(suiteStarted));
   }
 
   public TestSuiteStartedEvent(@NotNull String name,
