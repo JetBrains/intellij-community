@@ -2610,11 +2610,6 @@ f:com.intellij.codeInsight.documentation.QuickDocUtil
 - s:inferLinkFromFullDocumentation(com.intellij.lang.documentation.DocumentationProvider,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,java.lang.String):java.lang.String
 - s:updateQuickDoc(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,java.lang.String):V
 - s:updateQuickDocAsync(com.intellij.psi.PsiElement,java.lang.CharSequence,com.intellij.util.Consumer):V
-f:com.intellij.codeInsight.editorActions.AutoHardWrapHandler
-- sf:AUTO_WRAP_LINE_IN_PROGRESS_KEY:com.intellij.openapi.util.Key
-- <init>():V
-- s:getInstance():com.intellij.codeInsight.editorActions.AutoHardWrapHandler
-- wrapLineIfNecessary(com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.DataContext,J):V
 c:com.intellij.codeInsight.editorActions.BackspaceHandler
 - com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler$ForEachCaret
 - pf:myOriginalHandler:com.intellij.openapi.editor.actionSystem.EditorActionHandler
