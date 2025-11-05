@@ -6,6 +6,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.InjectionEditService;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -586,7 +587,18 @@ final class PsiUpdateImpl {
 
     @Override
     public int getCaretOffset() {
-      return myCaretOffset;
+      int offset = myCaretOffset;
+      PsiLanguageInjectionHost host = tracker().getHostCopy();
+      if (host != null) {
+        InjectedLanguageManager instance = InjectedLanguageManager.getInstance(myActionContext.project());
+        PsiFile file = findInjectedFile(instance, host);
+        Document document = file.getFileDocument();
+        if (document instanceof DocumentWindow window) {
+          offset = window.hostToInjected(offset);
+          offset = instance.mapInjectedOffsetToUnescaped(file, offset);
+        }
+      }
+      return offset;
     }
 
     @Override
