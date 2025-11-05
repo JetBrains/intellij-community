@@ -56,11 +56,14 @@ class ScriptMavenExecutionTest : MavenExecutionTest() {
     ))
     projectsManager.addManagedFiles(listOf(anotherLinkedProject))
     createFakeProjectWrapper()
-    mavenGeneralSettings.mavenHomeType = MavenWrapper
-    val path = MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toString()
-    val executionInfo = execute(MavenRunnerParameters(true, anotherLinkedProject.parent.path, null as String?, mutableListOf("verify"), emptyList()))
-    assertTrue("Should run bundled maven ($path) in this case, but command line was: ${executionInfo.system}",
-               executionInfo.system.contains(if (SystemInfo.isWindows) "\\bin\\mvn.cmd" else "/bin/mvn"))
+    waitForImportWithinTimeout {
+      mavenGeneralSettings.mavenHomeType = MavenWrapper
+      val path = MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toString()
+      val executionInfo = execute(MavenRunnerParameters(true, anotherLinkedProject.parent.path, null as String?, mutableListOf("verify"), emptyList()))
+      assertTrue("Should run bundled maven ($path) in this case, but command line was: ${executionInfo.system}",
+                 executionInfo.system.contains(if (SystemInfo.isWindows) "\\bin\\mvn.cmd" else "/bin/mvn"))
+
+    }
   }
 
   private fun createFakeProjectWrapper() {
