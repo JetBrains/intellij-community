@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform
 
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.openapi.project.Project
-import com.intellij.psi.*
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType
@@ -15,10 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalSourceOutOfBlockModificationEvent
-import org.jetbrains.kotlin.analysis.api.platform.modification.publishModuleOutOfBlockModificationEvent
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.psi.KtCodeFragment
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
@@ -45,9 +46,16 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
 
         val rootElement = event.parent
 
+        // No reasons to invalidate injected documents before an actual replacement.
         if (rootElement != null && eventCode != PsiEventType.BEFORE_CHILD_REPLACEMENT) {
-            // no reasons to invalidate injected documents before and actual replacement
-            invalidateCachesInInjectedDocuments(rootElement)
+            if (isInjectionChange(rootElement)) {
+                // Finding the exact `KtFile` for the injection is expensive and can lead to freezes (see KTIJ-36275). A global modification
+                // event can be published without a `KtFile`/`KaModule`. Since changes in injected files should be rare, such an event
+                // should be fine performance-wise.
+                project.publishGlobalSourceOutOfBlockModificationEvent()
+
+                return
+            }
         }
 
         val child = when (eventCode) {
@@ -85,32 +93,26 @@ class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : 
         KaSourceModificationService.getInstance(project).handleElementModification(child ?: rootElement, modificationType)
     }
 
-    private fun invalidateCachesInInjectedDocuments(rootElement: PsiElement) {
+    private fun isInjectionChange(rootElement: PsiElement): Boolean {
         // check if the change is inside some possibly injected file, e.g., inside a string literal
-        val injectionHost = rootElement.parentOfType<PsiLanguageInjectionHost>() ?: return
+        val injectionHost = rootElement.parentOfType<PsiLanguageInjectionHost>()
+        if (injectionHost == null) {
+            return false
+        }
 
         @Suppress("DEPRECATION") // there is no other injection API to do this
         val injectedDocuments = InjectedLanguageUtilBase.getCachedInjectedDocuments(rootElement.containingFile)
-        if (injectedDocuments.isEmpty()) return
+        if (injectedDocuments.isEmpty()) return false
 
-        for (injectedDocument in injectedDocuments) {
-            if (rootElement.containsInjection(injectedDocument)) {
-                invalidateCachesForInjectedKotlinCode(injectedDocument)
-            }
-        }
+        // Compute the text range once since it's not necessarily cached and can cause performance issues if repeatedly accessed (see
+        // KTIJ-36275).
+        val textRange = rootElement.textRange
+
+        return injectedDocuments.any { it.containsInjectionAt(textRange) }
     }
 
-    private fun PsiElement.containsInjection(injectedDocument: DocumentWindow): Boolean {
-        return injectedDocument.hostRanges.any { this.textRange.intersects(it) }
-    }
-
-    private fun invalidateCachesForInjectedKotlinCode(injectedDocument: DocumentWindow) {
-        val ktFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument) as? KtFile ?: return
-
-        KotlinProjectStructureProvider
-            .getModule(project, ktFile, useSiteModule = null)
-            .publishModuleOutOfBlockModificationEvent()
-    }
+    private fun DocumentWindow.containsInjectionAt(textRange: TextRange): Boolean =
+        this.hostRanges.any { textRange.intersects(it) }
 }
 
 /**
