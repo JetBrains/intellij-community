@@ -2,6 +2,9 @@ inputs:
   os:
     description: 'linux, windows or mac'
     required: true
+  arch:
+    description: 'x64 or aarch64'
+    required: true
   extension:
     description: 'tar.gz, exe or sit'
     required: true
@@ -21,7 +24,7 @@ runs:
       shell: bash
       # language=bash
       run: docker build . --target ${{inputs.product}} --tag ${{inputs.product}}
-    - name: Build .${{inputs.extension}}
+    - name: Build ${{inputs.arch}}.${{inputs.extension}}
       shell: bash
       # language=bash
-      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" ${{inputs.product}} -Dintellij.build.target.os=${{inputs.os}}
+      run: docker run --rm --user "$(id -u)" --volume "${PWD}:/community" ${{inputs.product}} -Dintellij.build.target.os=${{inputs.os}} -Dintellij.build.target.arch=${{inputs.arch}}
