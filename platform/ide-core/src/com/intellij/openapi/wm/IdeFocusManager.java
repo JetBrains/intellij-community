@@ -37,6 +37,22 @@ import java.awt.*;
  * {@code IdeFocusManager.getGlobalInstance()} can be used.
  */
 public abstract class IdeFocusManager implements FocusRequestor {
+  /**
+   * Requests focus on the given component within its window, and focuses the window if it belongs to the active project.
+   * <p>
+   *   If the given (or guessed) project is the active project,
+   *   then this method makes the best effort to focus the component and its containing window,
+   *   bringing it to the front if possible, as if invoking both {@link Window#toFront()} and {@link Component#requestFocus()}.
+   * </p>
+   * <p>
+   *   If the given (or guessed) project is not the active project, then focus is requested for the given component in its window,
+   *   as if by calling {@link Component#requestFocusInWindow()}.
+   *   So if the user is currently working in another project, no sudden focus stealing will occur.
+   * </p>
+   * @param c the component to focus
+   * @param project the project the component belongs to (if {@code null}, will be guessed by the component)
+   * @return a callback that will finish when the request is sent, possibly immediately
+   */
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
     return requestFocus(c, false);
   }
