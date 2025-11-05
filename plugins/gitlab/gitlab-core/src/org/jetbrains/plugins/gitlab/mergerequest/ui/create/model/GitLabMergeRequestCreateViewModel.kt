@@ -197,13 +197,13 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     }
 
     cs.launch {
-      combine(commits, branchState) { commitsResult, branchState ->
+      combineAndCollect(commits, branchState) { commitsResult, branchState ->
         val commits = commitsResult?.getOrNull()
         if (commits != null && commits.size == 1 && titleText.value.isEmpty()) {
-          setTitle(commits.first().subject.lines().firstOrNull() ?: return@combine)
+          setTitle(commits.first().subject.lines().firstOrNull() ?: return@combineAndCollect)
         }
         else if (titleText.value.isEmpty()) {
-          setTitle(when (val branch = branchState?.headBranch ?: return@combine) {
+          setTitle(when (val branch = branchState?.headBranch ?: return@combineAndCollect) {
                      is GitRemoteBranch -> branch.nameForRemoteOperations
                      else -> branch.name
                    })
