@@ -11,11 +11,13 @@ import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
  * @param moduleName The name of the module containing the resource (e.g., "intellij.platform.resources")
  * @param resourcePath The path to the resource within the module (e.g., "META-INF/PlatformLangPlugin.xml")
  * @param ultimateOnly If true, this include is only processed in Ultimate builds (skipped in Community builds)
+ * @param optional If true, this include is always generated with xi:fallback and never inlined (safe for files that may not exist)
  */
 data class DeprecatedXmlInclude(
   @JvmField val moduleName: String,
   @JvmField val resourcePath: String,
   @JvmField val ultimateOnly: Boolean = false,
+  @JvmField val optional: Boolean = false,
 )
 
 /**
@@ -99,16 +101,21 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * For Ultimate-only includes that should be conditionally processed:
    * Example: deprecatedInclude("intellij.platform.extended.community.impl", "META-INF/community-extensions.xml", ultimateOnly = true)
    *
+   * For optional includes that may not exist in all builds (always uses xi:fallback):
+   * Example: deprecatedInclude("intellij.rider.languages", "intellij.rider.languages.xml", optional = true)
+   *
    * @param moduleName The name of the module containing the resource
    * @param resourcePath The path to the resource within the module
    * @param ultimateOnly If true, this include is only processed in Ultimate builds.
    *   - When inlining: Skipped in Community builds
    *   - When NOT inlining: Generates xi:include with xi:fallback wrapper for graceful handling
+   * @param optional If true, this include is never inlined and always generates xi:include with xi:fallback.
+   *   Use this for includes that may not exist in all build configurations (e.g., Rider-specific XML files).
    *
    * @see <a href="programmatic-content.md#ultimate-only-includes">Ultimate-Only Includes Documentation</a>
    */
-  fun deprecatedInclude(moduleName: String, resourcePath: String, ultimateOnly: Boolean = false) {
-    xmlIncludes.add(DeprecatedXmlInclude(moduleName, resourcePath, ultimateOnly))
+  fun deprecatedInclude(moduleName: String, resourcePath: String, ultimateOnly: Boolean = false, optional: Boolean = false) {
+    xmlIncludes.add(DeprecatedXmlInclude(moduleName, resourcePath, ultimateOnly, optional))
   }
 
   /**

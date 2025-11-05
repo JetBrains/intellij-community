@@ -283,6 +283,7 @@ object CommunityModuleSets : ModuleSetProvider {
     module("intellij.platform.vcs.dvcs")
     module("intellij.platform.vcs.dvcs.impl")
     embeddedModule("intellij.platform.vcs")
+    embeddedModule("intellij.platform.diff.impl")
 
     moduleSet(vcsShared())
     moduleSet(vcsFrontend())

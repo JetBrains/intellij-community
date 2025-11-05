@@ -50,7 +50,6 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
   "intellij.platform.kernel",
 
   "intellij.platform.analysis.impl",
-  "intellij.platform.diff.impl",
   "intellij.platform.editor.ex",
   "intellij.platform.externalProcessAuthHelper",
   "intellij.platform.lvcs",

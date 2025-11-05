@@ -27,6 +27,7 @@
     <module name="intellij.platform.vcs.dvcs"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.platform.vcs" loading="embedded"/>
+    <module name="intellij.platform.diff.impl" loading="embedded"/>
     <!-- </editor-fold> -->
   </content>
 </idea-plugin>

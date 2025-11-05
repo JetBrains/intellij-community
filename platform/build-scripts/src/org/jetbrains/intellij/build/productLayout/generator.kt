@@ -464,7 +464,7 @@ private fun generateXIncludes(
                ?: findFileInModuleLibraryDependencies(module = module, relativePath = resourcePath)?.let { JDOMUtil.load(it) }
                ?: error("Resource '$resourcePath' not found in module '${module.name}' sources or libraries (referenced in xi:include)")
 
-    if (inlineXmlIncludes) {
+    if (inlineXmlIncludes && !include.optional) {
       withEditorFold(sb, "  ", "Inlined from ${include.moduleName}/$resourcePath") {
         // Inline the actual XML content
         for (element in data.children) {
@@ -476,8 +476,8 @@ private fun generateXIncludes(
     }
     else {
       // Generate xi:include with absolute path (resources are in /META-INF/... in jars)
-      // Wrap ultimate-only xi-includes with xi:fallback for graceful handling in Community builds
-      if (include.ultimateOnly) {
+      // Wrap ultimate-only and optional xi-includes with xi:fallback for graceful handling
+      if (include.ultimateOnly || include.optional) {
         sb.append("""  <xi:include href="${resourcePathToXIncludePath(resourcePath)}">""")
         sb.append("\n")
         sb.append("""    <xi:fallback/>""")

@@ -6,8 +6,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
 import io.opentelemetry.api.trace.Span
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ContentModuleFilter
@@ -43,85 +41,83 @@ internal fun getProductModuleJarName(moduleName: String, context: BuildContext, 
 }
 
 // result _must be_ consistent, do not use Set.of or HashSet here
-internal suspend fun processAndGetProductPluginContentModules(
+internal fun processAndGetProductPluginContentModules(
   layout: PlatformLayout,
   descriptorCache: ScopedCachedDescriptorContainer,
   includedPlatformModulesPartialList: Collection<String>,
   context: BuildContext,
 ): Set<ModuleItem> {
-  return withContext(Dispatchers.IO) {
-    val productPluginSourceModuleName = context.productProperties.applicationInfoModule
-    val file = requireNotNull(
-      context.findFileInModuleSources(productPluginSourceModuleName, PLUGIN_XML_RELATIVE_PATH)
-      ?: context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
-    ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
+  val productPluginSourceModuleName = context.productProperties.applicationInfoModule
+  val file = requireNotNull(
+    context.findFileInModuleSources(productPluginSourceModuleName, PLUGIN_XML_RELATIVE_PATH)
+    ?: context.findFileInModuleSources(moduleName = productPluginSourceModuleName, relativePath = "META-INF/${context.productProperties.platformPrefix}Plugin.xml")
+  ) { "Cannot find product plugin descriptor in '$productPluginSourceModuleName' module" }
 
-    val element: Element
-    val moduleToSetChainMapping: Map<String, List<String>>?
-    val programmaticModulesSpec = context.productProperties.getProductContentDescriptor()
-    if (programmaticModulesSpec == null) {
-      element = JDOMUtil.load(file)
-      moduleToSetChainMapping = null
-    }
-    else {
-      val buildResult = buildProductContentXml(
-        spec = programmaticModulesSpec,
-        moduleOutputProvider = context,
-        inlineXmlIncludes = true,
-        inlineModuleSets = true,
-        productPropertiesClass = context.productProperties::class.java.name,
-        generatorCommand = "(runtime)",
-        isUltimateBuild = context.paths.projectHome != context.paths.communityHomeDir
-      )
-      Span.current().addEvent("Generated ${buildResult.contentBlocks.size} content blocks with ${buildResult.contentBlocks.sumOf { it.modules.size }} total modules")
-
-      element = JDOMUtil.load(buildResult.xml)
-      moduleToSetChainMapping = buildResult.moduleToSetChainMapping
-    }
-
-    // Scrambling isn’t an issue: the scrambler can modify XML.
-    // If a file is included, we assume—and it should be the case—that both the including module and the module containing the included file are scrambled together.
-    // Note: CDATA isn’t processed, so embedded content modules use different logic.
-    // We must resolve includes to collect all content modules, since the <content> tag may
-    // be specified in an included file. This is done not only for performance but for correctness.
-    val xIncludeResolver = XIncludeElementResolverImpl(
-      searchPath = listOf(DescriptorSearchScope(includedPlatformModulesPartialList, descriptorCache)),
-      context = context
-    )
-    resolveIncludes(element = element, elementResolver = xIncludeResolver)
-
-    val frontendModuleFilter = context.getFrontendModuleFilter()
-    val moduleItems = LinkedHashSet<ModuleItem>()
-    filterAndProcessContentModules(rootElement = element, pluginMainModuleName = null, context = context) { moduleElement, moduleName, loadingRule ->
-      processProductModule(
-        isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRule.EMBEDDED.name.lowercase(),
-        moduleName = moduleName,
-        moduleElement = moduleElement,
-        frontendModuleFilter = frontendModuleFilter,
-        result = moduleItems,
-        moduleToSetChainOverride = moduleToSetChainMapping,
-        descriptorCache = descriptorCache,
-        xIncludeResolver = xIncludeResolver,
-        context = context,
-      )
-    }
-
-    val data = JDOMUtil.write(element)
-    layout.withPatch { moduleOutputPatcher, _, _ ->
-      moduleOutputPatcher.patchModuleOutput(moduleName = productPluginSourceModuleName, path = "META-INF/${file.fileName}", content = data)
-    }
-
-    descriptorCache.put(PRODUCT_DESCRIPTOR_META_PATH, data.encodeToByteArray())
-
-    moduleItems
+  val element: Element
+  val moduleToSetChainMapping: Map<String, List<String>>?
+  val programmaticModulesSpec = context.productProperties.getProductContentDescriptor()
+  if (programmaticModulesSpec == null) {
+    element = JDOMUtil.load(file)
+    moduleToSetChainMapping = null
   }
+  else {
+    val buildResult = buildProductContentXml(
+      spec = programmaticModulesSpec,
+      moduleOutputProvider = context,
+      inlineXmlIncludes = true,
+      inlineModuleSets = true,
+      productPropertiesClass = context.productProperties::class.java.name,
+      generatorCommand = "(runtime)",
+      isUltimateBuild = context.paths.projectHome != context.paths.communityHomeDir
+    )
+    Span.current().addEvent("Generated ${buildResult.contentBlocks.size} content blocks with ${buildResult.contentBlocks.sumOf { it.modules.size }} total modules")
+
+    element = JDOMUtil.load(buildResult.xml)
+    moduleToSetChainMapping = buildResult.moduleToSetChainMapping
+  }
+
+  // Scrambling isn’t an issue: the scrambler can modify XML.
+  // If a file is included, we assume—and it should be the case—that both the including module and the module containing the included file are scrambled together.
+  // Note: CDATA isn’t processed, so embedded content modules use different logic.
+  // We must resolve includes to collect all content modules, since the <content> tag may
+  // be specified in an included file. This is done not only for performance but for correctness.
+  val xIncludeResolver = XIncludeElementResolverImpl(
+    searchPath = listOf(DescriptorSearchScope(includedPlatformModulesPartialList, descriptorCache)),
+    context = context
+  )
+  resolveIncludes(element = element, elementResolver = xIncludeResolver)
+
+  val frontendModuleFilter = context.getFrontendModuleFilter()
+  val moduleItems = LinkedHashSet<ModuleItem>()
+  filterAndProcessContentModules(rootElement = element, pluginMainModuleName = null, context = context) { moduleElement, moduleName, loadingRule ->
+    processProductModule(
+      isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRule.EMBEDDED.name.lowercase(),
+      moduleName = moduleName,
+      moduleElement = moduleElement,
+      frontendModuleFilter = frontendModuleFilter,
+      result = moduleItems,
+      moduleToSetChainOverride = moduleToSetChainMapping,
+      descriptorCache = descriptorCache,
+      xIncludeResolver = xIncludeResolver,
+      context = context,
+    )
+  }
+
+  val data = JDOMUtil.write(element)
+  layout.withPatch { moduleOutputPatcher, _, _ ->
+    moduleOutputPatcher.patchModuleOutput(moduleName = productPluginSourceModuleName, path = "META-INF/${file.fileName}", content = data)
+  }
+
+  descriptorCache.put(PRODUCT_DESCRIPTOR_META_PATH, data.encodeToByteArray())
+
+  return moduleItems
 }
 
-internal suspend inline fun filterAndProcessContentModules(
+internal inline fun filterAndProcessContentModules(
   rootElement: Element,
   pluginMainModuleName: String?,
   context: BuildContext,
-  crossinline contentHandler: suspend (moduleElement: Element, moduleName: String, loadingRule: String?) -> Unit,
+  crossinline contentHandler: (moduleElement: Element, moduleName: String, loadingRule: String?) -> Unit,
 ) {
   var contentModuleFilter: ContentModuleFilter? = null
   for (content in rootElement.getChildren("content")) {
@@ -149,7 +145,7 @@ internal suspend inline fun filterAndProcessContentModules(
   }
 }
 
-private suspend fun processProductModule(
+private fun processProductModule(
   moduleElement: Element,
   frontendModuleFilter: FrontendModuleFilter,
   result: LinkedHashSet<ModuleItem>,

@@ -145,10 +145,6 @@
                  description="Allow opening folder as project without modules" />
   </extensions>
 
-  <xi:include href="/META-INF/diff-impl.xml">
-    <xi:fallback/>
-  </xi:include>
-
   <xi:include href="/META-INF/compose.xml">
     <xi:fallback/>
   </xi:include>
