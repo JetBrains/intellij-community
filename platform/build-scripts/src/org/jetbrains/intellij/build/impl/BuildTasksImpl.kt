@@ -92,8 +92,8 @@ internal class BuildTasksImpl(private val context: BuildContextImpl) : BuildTask
     checkPluginModules(mainPluginModules, "mainPluginModules", context)
     copyDependenciesFile(context)
     val pluginsToPublish = getPluginLayoutsByJpsModuleNames(modules = mainPluginModules, productLayout = context.productProperties.productLayout, toPublish = true)
-    val distState = createDistributionBuilderState(pluginsToPublish, context)
     context.compileModules(null)
+    val distState = createDistributionBuilderState(pluginsToPublish, context)
 
     val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
     buildNonBundledPlugins(
