@@ -2,6 +2,7 @@
 package git4idea.inMemory.rebase.log
 
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -61,6 +62,7 @@ internal abstract class GitInMemoryCommitEditingOperation(
     }
     catch (e: VcsException) {
       if (showFailureNotification) notifyOperationFailed(e)
+      LOG.warn("Failed to execute in-memory rebase operation", e)
       return GitCommitEditingOperationResult.Incomplete
     }
   }
@@ -114,5 +116,6 @@ internal abstract class GitInMemoryCommitEditingOperation(
   companion object {
     @NonNls
     private val REFLOG_MESSAGE_SUFFIX = "by ${ApplicationNamesInfo.getInstance().fullProductName} Git plugin"
+    private val LOG = logger<GitInMemoryCommitEditingOperation>()
   }
 }
