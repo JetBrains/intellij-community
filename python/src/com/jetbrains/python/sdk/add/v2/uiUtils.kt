@@ -126,7 +126,7 @@ class PythonNewEnvironmentDialogNavigator {
 
   private fun loadSelectionMode(
     properties: PropertiesComponent,
-    allowedInterpreterTypes: Collection<PythonInterpreterSelectionMode>
+    allowedInterpreterTypes: Collection<PythonInterpreterSelectionMode>,
   ): PythonInterpreterSelectionMode? {
     val modeString = properties.getValue(FAV_MODE) ?: return null
     val mode = modeString.toEnumOrNull<PythonInterpreterSelectionMode>() ?: return null
@@ -157,7 +157,8 @@ class PythonNewEnvironmentDialogNavigator {
   private inline fun <reified T : Enum<T>> String.toEnumOrNull(): T? {
     return try {
       enumValueOf<T>(this)
-    } catch (_: IllegalArgumentException) {
+    }
+    catch (_: IllegalArgumentException) {
       thisLogger().debug("Failed to convert '$this' to ${T::class.simpleName}")
       null
     }
@@ -216,8 +217,10 @@ private val userHomePath = lazy {
 
 /**
  * Replaces [userHomePath] in  [sdkHomePath] to `~`
+ * Use [com.jetbrains.python.PathShorter] instead
  */
 @ApiStatus.Internal
+@Deprecated("Use PathShorter")
 fun replaceHomePathToTilde(sdkHomePath: @NonNls String): @NlsSafe String {
   try {
     val path = Path(sdkHomePath.trim()).normalize()
