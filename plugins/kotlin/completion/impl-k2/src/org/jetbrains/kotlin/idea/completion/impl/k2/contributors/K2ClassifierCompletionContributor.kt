@@ -283,6 +283,8 @@ internal open class K2ClassifierCompletionContributor : K2CompletionContributor<
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
     ): Sequence<LookupElementBuilder> = sequence {
         if (classifierSymbol is KaNamedClassSymbol &&
+            classifierSymbol.classKind != KaClassKind.OBJECT &&
+            classifierSymbol.classKind != KaClassKind.ENUM_CLASS &&
             classifierSymbol.modality != KaSymbolModality.SEALED &&
             classifierSymbol.modality != KaSymbolModality.ABSTRACT &&
             expectedType != null &&

@@ -734,6 +734,16 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/constructor/MultipleConstructors.kt");
             }
 
+            @TestMetadata("NestedEnum.kt")
+            public void testNestedEnum() throws Exception {
+                runTest("../testData/basic/common/constructor/NestedEnum.kt");
+            }
+
+            @TestMetadata("NestedObject.kt")
+            public void testNestedObject() throws Exception {
+                runTest("../testData/basic/common/constructor/NestedObject.kt");
+            }
+
             @TestMetadata("PreferConstructorInReturn.kt")
             public void testPreferConstructorInReturn() throws Exception {
                 runTest("../testData/basic/common/constructor/PreferConstructorInReturn.kt");

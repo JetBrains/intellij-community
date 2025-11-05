@@ -768,6 +768,16 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/constructor/MultipleConstructors.kt");
         }
 
+        @TestMetadata("NestedEnum.kt")
+        public void testNestedEnum() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/NestedEnum.kt");
+        }
+
+        @TestMetadata("NestedObject.kt")
+        public void testNestedObject() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/NestedObject.kt");
+        }
+
         @TestMetadata("PreferConstructorInReturn.kt")
         public void testPreferConstructorInReturn() throws Exception {
             runTest("../../completion/testData/basic/common/constructor/PreferConstructorInReturn.kt");
