@@ -13,46 +13,52 @@ on:
         required: true
 
 jobs:
-  build-linux:
+  build-linux-x64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/build_ide
         with:
           os: linux
+          arch: x64
           extension: tar.gz
           product: ${{inputs.product}}
       - uses: ./.github/actions/upload_ide
         with:
           os: linux
+          arch: x64
           extension: tar.gz
           artifacts_dir: ${{inputs.artifacts_dir}}
-  build-windows:
+  build-windows-x64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/build_ide
         with:
           os: windows
+          arch: x64
           extension: exe
           product: ${{inputs.product}}
       - uses: ./.github/actions/upload_ide
         with:
           os: windows
+          arch: x64
           extension: exe
           artifacts_dir: ${{inputs.artifacts_dir}}
-  build-macos:
+  build-macos-aarch64:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
       - uses: ./.github/actions/build_ide
         with:
           os: mac
+          arch: aarch64
           extension: sit
           product: ${{inputs.product}}
       - uses: ./.github/actions/upload_ide
         with:
           os: mac
+          arch: aarch64
           extension: sit
           artifacts_dir: ${{inputs.artifacts_dir}}
       - name: Upload .dmg build scripts
@@ -64,18 +70,18 @@ jobs:
           path: ${{inputs.artifacts_dir}}/macos-dmg-build/
   build-dmg:
     runs-on: macos-latest
-    needs: build-macos
+    needs: build-macos-aarch64
     steps:
       - uses: actions/checkout@v4.2.2
       - name: Download .dmg build scripts
         uses: actions/download-artifact@v4.1.8
         with:
           name: dmg-build-scripts
-      - name: Download .sit
+      - name: Download aarch64.sit
         uses: actions/download-artifact@v4.1.8
         with:
-          name: mac-sit-unsigned
-      - name: Build .dmg
+          name: mac-aarch64-sit-unsigned
+      - name: Build aarch64.dmg
         shell: bash
         # language=bash
         run: /bin/bash ./build.sh
@@ -83,5 +89,6 @@ jobs:
         uses: ./.github/actions/upload_ide
         with:
           os: mac
+          arch: aarch64
           extension: dmg
           artifacts_dir: .
