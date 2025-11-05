@@ -4,6 +4,7 @@ package git4idea.rebase
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -81,7 +82,8 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
       executeInMemoryWithFallback(
         inMemoryOperation = {
           val objectRepo = GitObjectRepository(repository)
-          GitInMemoryRewordOperation(objectRepo, commit, newMessage).execute()
+          val showFailureNotification = Registry.`is`("git.in.memory.interactive.rebase.notify.errors")
+          GitInMemoryRewordOperation(objectRepo, commit, newMessage).execute(showFailureNotification)
         },
         fallbackOperation = {
           coroutineToIndicator {
