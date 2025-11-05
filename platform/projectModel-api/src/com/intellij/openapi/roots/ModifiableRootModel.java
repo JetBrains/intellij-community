@@ -143,7 +143,7 @@ public interface ModifiableRootModel extends ModuleRootModel {
 
   /**
    * Commits changes to a {@link ModuleRootManager}.
-   * Should be invoked in a write action. After <code>commit()<code>, the model
+   * Should be invoked in a write action. After <code>commit()</code>, the model
    * becomes read-only.
    * <p>
    * Use of {@link ModuleRootModificationUtil#updateModel(Module, Consumer)} is recommended.
