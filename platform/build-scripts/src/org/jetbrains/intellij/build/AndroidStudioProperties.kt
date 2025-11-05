@@ -56,7 +56,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.android.gradle.declarative.lang.ide",
       "intellij.eclipse",
       "intellij.featuresTrainer",
-      "intellij.grazie",
       "intellij.java.byteCodeViewer",
       "intellij.marketplaceMl", // Currently experimental and disabled by default anyway (in IJ 2024.2).
       "intellij.maven",
