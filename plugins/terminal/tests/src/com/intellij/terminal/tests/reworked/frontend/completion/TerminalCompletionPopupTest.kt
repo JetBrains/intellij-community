@@ -1,11 +1,14 @@
 package com.intellij.terminal.tests.reworked.frontend.completion
 
 import com.intellij.openapi.application.EDT
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil.update
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.Dispatchers
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -228,6 +231,68 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
 
     val firstElement = fixture.getCurrentItem()
     assertEquals("shared\\", firstElement?.lookupString)
+  }
+
+  @Test
+  fun `test terminal LookupElement#object is ShellCompletionSuggestion`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd st")
+    fixture.callCompletionPopup()
+    val elements = fixture.getLookupElements()
+    assertThat(elements)
+      .isNotEmpty
+      .allMatch { it.`object` is ShellCompletionSuggestion }
+    Unit
+  }
+
+  @Test
+  fun `test TerminalCommandCompletion#COMPLETING_COMMAND_KEY is set in lookup when completion popup is shown`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd st")
+    fixture.callCompletionPopup()
+
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.items).isNotEmpty
+    assertThat(lookup.getUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY))
+      .isEqualTo("test_cmd st")
+    Unit
+  }
+
+  @Test
+  fun `test TerminalCommandCompletion#LAST_SELECTED_ITEM_KEY is updated in the lookup on selected item change`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd st")
+    fixture.callCompletionPopup()
+
+    // Check that the initial selected item value is set
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.items.map { it.lookupString })
+      .hasSameElementsAs(listOf("start", "status", "stop"))
+    val firstSelectedItem = lookup.getUserData(TerminalCommandCompletion.LAST_SELECTED_ITEM_KEY)
+    assertThat(firstSelectedItem).isNotNull
+
+    // Narrow down the prefix and check that the selected item value is updated
+    fixture.type("o")
+    assertThat(lookup.items.map { it.lookupString })
+      .hasSameElementsAs(listOf("stop"))
+    val secondSelectedItem = lookup.getUserData(TerminalCommandCompletion.LAST_SELECTED_ITEM_KEY)
+    assertThat(secondSelectedItem)
+      .isNotNull
+      .matches { it?.lookupString == "stop" }
+      .isNotEqualTo(firstSelectedItem)
+
+    // Type an unrelated prefix to close the popup and check that the last selected item stay the same.
+    fixture.type(" ")
+    assertThat(lookup.isLookupDisposed).isTrue
+    val lastSelectedItem = lookup.getUserData(TerminalCommandCompletion.LAST_SELECTED_ITEM_KEY)
+    assertThat(lastSelectedItem)
+      .isNotNull
+      .isEqualTo(secondSelectedItem)
+
+    Unit
   }
 
   private suspend fun createFixture(): TerminalCompletionFixture {

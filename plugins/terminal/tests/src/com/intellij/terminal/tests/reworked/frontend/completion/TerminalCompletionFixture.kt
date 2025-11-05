@@ -97,9 +97,12 @@ class TerminalCompletionFixture(val project: Project, val testRootDisposable: Di
     awaitLookupPrefixUpdated()
   }
 
+  fun getActiveLookup(): LookupImpl? {
+    return LookupManager.getInstance(project).activeLookup as? LookupImpl
+  }
+
   fun isLookupActive(): Boolean {
-    val lookupManager = LookupManager.getInstance(project)
-    return lookupManager.activeLookup != null
+    return getActiveLookup() != null
   }
 
   fun getLookupElements(): List<LookupElement> {
