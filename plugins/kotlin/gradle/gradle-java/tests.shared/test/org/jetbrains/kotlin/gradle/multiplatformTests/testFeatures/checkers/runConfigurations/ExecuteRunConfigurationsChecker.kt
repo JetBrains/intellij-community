@@ -60,7 +60,7 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
         val expectedTestDataFile = findMostSpecificExistingFileOrNewDefault(checkerClassifier = "run-output-$fqn")
 
         KotlinTestUtils.assertEqualsToFile(expectedTestDataFile, actualOutput) { text ->
-            text.replace(Regex("""\d\d?:\d\d?:\d\d?\s*(\w\w)?:"""), "<time>:")
+            text.replace(Regex("""\d\d?:\d\d?:\d\d?[\s ]*(\w\w)?:"""), "<time>:")
                 .replace(Regex("""\h*Download.*\n"""), "")
                 .lineSequence()
                 .map { it.split("//").first().trimEnd() } // Support comments
