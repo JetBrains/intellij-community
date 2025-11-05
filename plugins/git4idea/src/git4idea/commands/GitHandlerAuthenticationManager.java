@@ -190,6 +190,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
 
     GitCommand command = myHandler.getCommand();
     boolean isCommandSupported = command == GitCommand.COMMIT
+                                 || command == GitCommand.REVERT
                                  || command == GitCommand.TAG
                                  || command == GitCommand.MERGE
                                  || command == GitCommand.CHERRY_PICK
