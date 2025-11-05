@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -554,5 +556,12 @@ public class ClsPsiTest extends LightIdeaTestCase {
     assertFalse(mirror.isValid());
     assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror)).contains(
       PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
+  }
+
+  public void testClsArrayTypeCreation() {
+    PsiJavaFile file = getFile("ClsContainer");
+    PsiType type = file.getClasses()[0].getMethods()[3].getReturnType();
+    TypeNullability nullability = type.getNullability();
+    assertEquals(Nullability.NOT_NULL, nullability.nullability());
   }
 }

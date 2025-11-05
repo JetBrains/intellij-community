@@ -249,4 +249,9 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
+  public void testJSpecifyArrayNullability() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
 }

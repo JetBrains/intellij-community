@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -11,6 +12,7 @@ import com.intellij.psi.impl.source.tree.java.ParameterElement;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ref.GCWatcher;
+import org.intellij.lang.annotations.Language;
 
 public class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
   public void test_AST_should_be_on_a_soft_reference__for_changed_files_as_well() {
@@ -88,6 +90,134 @@ public class AstLeaksTest extends LightJavaCodeInsightFixtureTestCase {
 
     assertTrue(type.equalsToText(String.class.getName()));
     assertFalse(file.isContentsLoaded());
+  }
+
+  public void testNullabilityCorrectLoad() {
+    @Language("JAVA") String nullMarked =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
+        public @interface NullMarked {}""";
+    myFixture.addClass(nullMarked);
+    final PsiClass cls = myFixture.addClass(
+      """
+        @org.jspecify.annotations.NullMarked
+        class Foo { 
+          static void test(java.util.Map<String, ? extends java.lang.String[]> args) {} 
+        }""");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(cls.getNode());
+    PsiType type = cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getType();
+    assertTrue(type instanceof PsiClassReferenceType);
+
+    LeakHunter.checkLeak(type, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
+
+    GCWatcher.tracking(cls.getNode()).ensureCollected();
+    assertFalse(file.isContentsLoaded());
+
+    assertTrue(type.equalsToText("java.util.Map<java.lang.String,? extends java.lang.String[]>"));
+    assertFalse(file.isContentsLoaded());
+    PsiType targetType = ((PsiWildcardType)((PsiClassReferenceType)(type)).getParameters()[1]).getBound();
+    assertTrue(targetType instanceof PsiArrayType);
+    assertTrue(targetType.equalsToText("java.lang.String[]"));
+    assertFalse(file.isContentsLoaded());
+    assertSame(targetType.getNullability().nullability(), Nullability.NOT_NULL);
+  }
+
+  public void testNullabilityCorrectLoadGetBeforeAsymPath() {
+    @Language("JAVA") String nullMarked =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
+        public @interface NullMarked {}""";
+    myFixture.addClass(nullMarked);
+    final PsiClass cls = myFixture.addClass(
+      """
+        @org.jspecify.annotations.NullMarked
+        class Foo { 
+          static void test(java.util.Map<String, java.lang.String[]> args) {} 
+        }""");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(cls.getNode());
+    PsiType type = cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getType();
+    assertTrue(type instanceof PsiClassReferenceType);
+    //don't create intermediate variables, it is necessary to skip it for gc collection
+    PsiType targetType = ((PsiTypeElement)cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getChildren()[0].getChildren()[3].getChildren()[4]).getType();
+    LeakHunter.checkLeak(targetType, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
+    GCWatcher.tracking(cls.getNode()).ensureCollected();
+    assertFalse(file.isContentsLoaded());
+    assertTrue(type.equalsToText("java.util.Map<java.lang.String,java.lang.String[]>"));
+    assertFalse(file.isContentsLoaded());
+    assertTrue(targetType instanceof PsiArrayType);
+    assertTrue(targetType.equalsToText("java.lang.String[]"));
+    assertFalse(file.isContentsLoaded());
+    assertSame(targetType.getNullability().nullability(), Nullability.NOT_NULL);
+  }
+
+  public void testNullabilityCorrectLoadGetBefore() {
+    @Language("JAVA") String nullMarked =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
+        public @interface NullMarked {}""";
+    myFixture.addClass(nullMarked);
+    final PsiClass cls = myFixture.addClass(
+      """
+        @org.jspecify.annotations.NullMarked
+        class Foo { 
+          static void test(java.util.Map<String, ? extends java.lang.String[]> args) {} 
+        }""");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(cls.getNode());
+    PsiType type = cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getType();
+    assertTrue(type instanceof PsiClassReferenceType);
+    //don't create an intermediate variables, it is necessary to skip it for gc collection
+    PsiType targetType = ((PsiTypeElement)cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getChildren()[0].getChildren()[3].getChildren()[4].getChildren()[4]).getType();
+    LeakHunter.checkLeak(targetType, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
+    GCWatcher.tracking(cls.getNode()).ensureCollected();
+    assertFalse(file.isContentsLoaded());
+    assertTrue(type.equalsToText("java.util.Map<java.lang.String,? extends java.lang.String[]>"));
+    assertFalse(file.isContentsLoaded());
+    assertTrue(targetType instanceof PsiArrayType);
+    assertTrue(targetType.equalsToText("java.lang.String[]"));
+    assertFalse(file.isContentsLoaded());
+    assertSame(targetType.getNullability().nullability(), Nullability.NOT_NULL);
+  }
+
+  public void testNullabilityCorrectLoadEllipsis() {
+    @Language("JAVA") String nullMarked =
+      """
+        package org.jspecify.annotations;
+        import java.lang.annotation.*;
+        @Target({ElementType.TYPE, ElementType.METHOD, ElementType.MODULE})
+        public @interface NullMarked {}""";
+    myFixture.addClass(nullMarked);
+    final PsiClass cls = myFixture.addClass(
+      """
+        @org.jspecify.annotations.NullMarked
+        class Foo { 
+          static void test(String... args) {} 
+        }""");
+    PsiFileImpl file = (PsiFileImpl)cls.getContainingFile();
+    assertNotNull(cls.getNode());
+    PsiType type = cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getType();
+    assertTrue(type instanceof PsiEllipsisType);
+
+    LeakHunter.checkLeak(type, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
+
+    GCWatcher.tracking(cls.getNode()).ensureCollected();
+    assertFalse(file.isContentsLoaded());
+
+    assertTrue(type.equalsToText("java.lang.String..."));
+    assertFalse(file.isContentsLoaded());
+    assertSame(type.getNullability().nullability(), Nullability.NOT_NULL);
   }
 
   public void test_no_hard_refs_to_AST_via_array_component_type() {

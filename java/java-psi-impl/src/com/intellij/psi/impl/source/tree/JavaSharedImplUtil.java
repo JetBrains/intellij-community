@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.java.AnnotationElement;
 import com.intellij.psi.tree.IElementType;
@@ -43,7 +44,9 @@ public final class JavaSharedImplUtil {
     List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor, stopAt);
     if (allAnnotations == null) return null;
     for (int i = 0, size = allAnnotations.size(); i < size; i++) {
-      type = ((ellipsisType && i == size - 1) ? new PsiEllipsisType(type) : type.createArrayType())
+      type = ((ellipsisType && i == size - 1) ?
+              new PsiEllipsisType(type).withContainerNullability(PsiTypeElementImpl.createTypeElementPointer(typeElement) ) :
+              type.createArrayType().withContainerNullability(PsiTypeElementImpl.createTypeElementPointer(typeElement)))
         .annotate(TypeAnnotationProvider.Static.create(allAnnotations.get(i)));
     }
 

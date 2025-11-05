@@ -475,8 +475,11 @@ public final class GenericsUtil {
       }
     }
     else if (type instanceof PsiArrayType) {
-      PsiType component = eliminateWildcards(((PsiArrayType)type).getComponentType(), false);
-      PsiType newArray = type instanceof PsiEllipsisType ? new PsiEllipsisType(component) : new PsiArrayType(component);
+      PsiArrayType psiArrayType = (PsiArrayType)type;
+      PsiType component = eliminateWildcards(psiArrayType.getComponentType(), false);
+      PsiType newArray = type instanceof PsiEllipsisType ?
+                         new PsiEllipsisType(component).withContainerNullability(psiArrayType) :
+                         new PsiArrayType(component).withContainerNullability(psiArrayType);
       return newArray.annotate(type.getAnnotationProvider()).withNullability(type.getNullability());
     }
     else if (type instanceof PsiWildcardType) {

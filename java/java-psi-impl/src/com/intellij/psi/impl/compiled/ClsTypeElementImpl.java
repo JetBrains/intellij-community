@@ -189,9 +189,9 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     PsiType type = deepestChild.getType();
     for (int i = depth - 1; i >= 0; i--) {
       if (i == 0 && isVarArgs()) {
-        type = new PsiEllipsisType(type);
+        type = new PsiEllipsisType(type).withContainerNullability(PsiTypeElementPointer.constant(deepestChild));
       } else {
-        type = type.createArrayType();
+        type = type.createArrayType().withContainerNullability(PsiTypeElementPointer.constant(deepestChild));
       }
       type = type.annotate(containers.get(i).getProvider(this));
     }
