@@ -89,7 +89,6 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
         // Compute action availability, but only show all of them once everything's computed,
         // to preserve the order of intentions (because read actions finish in an unpredictable order).
         ReadAction.nonBlocking(() -> action.isAvailable(project, editor, psiFile))
-          .expireWith(project)
           .inSmartMode(project)
           .finishOnUiThread(ModalityState.nonModal(), isAvailable -> {
             isActionAvailable.put(descriptor, isAvailable);
