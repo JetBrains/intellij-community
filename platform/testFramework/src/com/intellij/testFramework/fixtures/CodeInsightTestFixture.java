@@ -145,6 +145,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * To copy into the root of the test project directory, pass <code>""</code> (an empty string) for {@code targetPath}.
    *
    * @param sourceFilePath path to the source directory, relative to the testdata path.
+   *                       The testdata path is the path returned by {@link #getTestDataPath()}.
    * @param targetPath     path to the destination, relative to the source root of the test project.
    * @return the VirtualFile for the copied directory in the test project directory.
    */
