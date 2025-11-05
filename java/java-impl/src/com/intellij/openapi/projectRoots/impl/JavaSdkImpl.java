@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.testFramework.TestJdkAnnotationsFilesProvider;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
@@ -454,10 +455,16 @@ public final class JavaSdkImpl extends JavaSdk {
       // Bazel-provided test dependencies, from runfiles tree
       String testSrcDir = System.getenv("TEST_SRCDIR");
       if (testSrcDir != null && !testSrcDir.isBlank()) {
-        Path root1 = Path.of(testSrcDir, "community+/java/jdkAnnotations");
-        Path root2 = Path.of(testSrcDir, "_main/java/jdkAnnotations");
-
-        Path rootPath = Files.isDirectory(root1) ? root1 : Files.isDirectory(root2) ? root2 : null;
+        ServiceLoader<TestJdkAnnotationsFilesProvider> providerClasses = ServiceLoader.load(TestJdkAnnotationsFilesProvider.class);
+        var iterator = providerClasses.iterator();
+        if (!iterator.hasNext()) {
+          throw new IllegalStateException("TestJdkAnnotationsFilesProvider service provider not found");
+        }
+        TestJdkAnnotationsFilesProvider provider = iterator.next();
+        if (iterator.hasNext()) {
+          throw new IllegalStateException("more than one TestJdkAnnotationsFilesProvider service providers found. Only one is expected");
+        }
+        Path rootPath = provider.getJdkAnnotationsPath();
         if (rootPath != null) {
           String path = FileUtil.toSystemIndependentName(rootPath.toString());
           root = refresh ? lfs.refreshAndFindFileByPath(path) : lfs.findFileByPath(path);
