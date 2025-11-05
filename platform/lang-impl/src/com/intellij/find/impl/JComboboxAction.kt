@@ -65,7 +65,7 @@ class JComboboxAction(val project: Project, private val disposable: Disposable, 
     private val itemListener = ItemListener { rebuild() }
     private val findModelObserver = FindModel.FindModelObserver { findModel ->
       runInEdt {
-        selectedItem = if (findModel.fileFilter == null) emptyText else findModel.fileFilter
+        selectedItem = findModel.fileFilter ?: emptyText
       }
     }
     private val documentListener = object : DocumentAdapter() {
