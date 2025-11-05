@@ -53,6 +53,7 @@ import com.sun.jna.platform.win32.WinBase
 import com.sun.jna.platform.win32.WinNT
 import com.sun.jna.ptr.IntByReference
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.IOException
@@ -378,11 +379,26 @@ object CodeWithMeClientDownloader {
 
   fun downloadFrontendAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
                              progressIndicator: ProgressIndicator): FrontendInstallation {
+    return downloadFrontendAndJdkImpl(sessionInfoResponse, progressIndicator, useEmbeddedClientIfAvailable = true)
+  }
+
+  @TestOnly
+  fun downloadFrontendAndJdk(sessionInfoResponse: JetBrainsClientDownloadInfo,
+                             progressIndicator: ProgressIndicator,
+                             useEmbeddedClientIfAvailable: Boolean): FrontendInstallation {
+    return downloadFrontendAndJdkImpl(sessionInfoResponse, progressIndicator, useEmbeddedClientIfAvailable)
+  }
+
+  private fun downloadFrontendAndJdkImpl(sessionInfoResponse: JetBrainsClientDownloadInfo,
+                                         progressIndicator: ProgressIndicator,
+                                         useEmbeddedClientIfAvailable: Boolean): FrontendInstallation {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-    val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.clientBuildNumber)
-    if (embeddedClientLauncher != null) {
-      return EmbeddedFrontendInstallation(embeddedClientLauncher)
+    if (useEmbeddedClientIfAvailable) {
+      val embeddedClientLauncher = createEmbeddedClientLauncherIfAvailable(sessionInfoResponse.clientBuildNumber)
+      if (embeddedClientLauncher != null) {
+        return EmbeddedFrontendInstallation(embeddedClientLauncher)
+      }
     }
 
     val tempDir = FileUtil.createTempDirectory("jb-cwm-dl", null).toPath()
