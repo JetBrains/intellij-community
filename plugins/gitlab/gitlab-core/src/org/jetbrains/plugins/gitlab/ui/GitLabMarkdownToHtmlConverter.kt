@@ -8,6 +8,7 @@ import com.intellij.markdown.utils.MarkdownToHtmlConverter
 import com.intellij.markdown.utils.lang.CodeBlockHtmlSyntaxHighlighter
 import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.toCanonicalPath
 import git4idea.repo.GitRepository
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementType
@@ -49,7 +50,6 @@ import org.jetbrains.plugins.gitlab.api.restApiUri
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.URI
 import java.nio.file.InvalidPathException
-import java.nio.file.Path
 
 
 /**
@@ -260,7 +260,12 @@ class GitLabMarkdownToHtmlConverter(
       val linkInfo = linkMap.getLinkInfo(label.getTextInNode(text)) ?: return null
       val linkTextNode = node.children.firstOrNull { it.type == MarkdownElementTypes.LINK_TEXT }
 
-      val destination = EntityConverter.replaceEntities(linkInfo.destination, processEntities = true, processEscapes = true)
+      // cannot use `linkInfo.destination` because all its backslashes are url-encoded
+      val destinationText = linkInfo.node.children
+        .first { it.type == MarkdownElementTypes.LINK_DESTINATION }
+        .getTextInNode(text)
+
+      val destination = EntityConverter.replaceEntities(destinationText, processEntities = true, processEscapes = true)
 
       val processedDestination = destinationProcessor.processDestination(destination)
 
@@ -328,8 +333,9 @@ class GitLabMarkdownToHtmlConverter(
 
       // Otherwise, the destination is a file in the current git repo, so we can make the link go to it directly
       try {
-        val path = Path.of(linkDestination)
-        val fileDestination = gitRepository.root.toNioPath().resolve(path).toString()
+        val fileDestination = gitRepository.root.toNioPath()
+          .resolve(linkDestination.replace('\\', '/'))
+          .toCanonicalPath()
         val fileDescription = "$OPEN_FILE_LINK_PREFIX${fileDestination}"
         return fileDescription
       }

@@ -13,7 +13,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_FILE_LINK_PREFIX
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter.Companion.OPEN_MR_LINK_PREFIX
 import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
-import java.io.File
 import java.nio.file.Path
 
 private const val IMAGES_API_BASE = """http://base/url/api/v4/projects/test-account%2Fmr-test"""
@@ -35,8 +34,6 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
       every { root } returns gitRootVf
     }
   }
-
-  private fun @NlsSafe String.substituteSeparators(): String = replace(File.separator, "/")
 
   // https://youtrack.jetbrains.com/issue/IJPL-148576
   fun `test link with query does not throw an exception`() {
@@ -60,7 +57,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         [link](bla.md)
       """.trimIndent())
 
-    assertThat(parsed.substituteSeparators()).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/bla.md")
+    assertThat(parsed).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/bla.md")
   }
 
   fun `test nested file link gets file link prefix`() {
@@ -68,7 +65,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         [link](directory/a/b/bla.md)
       """.trimIndent())
 
-    assertThat(parsed.substituteSeparators()).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
+    assertThat(parsed).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
   }
 
   fun `test nested file link with backslashes gets file link prefix`() {
@@ -76,7 +73,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         [link](directory\a\b\bla.md)
       """.trimIndent())
 
-    assertThat(parsed.substituteSeparators()).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
+    assertThat(parsed).contains("${OPEN_FILE_LINK_PREFIX}${gitRoot}/directory/a/b/bla.md")
   }
 
   fun `test uploads files link rendering`() {
@@ -100,8 +97,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         ![link](/uploads/a/b/c.jpg)
       """.trimIndent())
 
-
-    assertThat(parsed.substituteSeparators()).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p><img src="$IMAGES_API_BASE/uploads/a/b/c.jpg" alt="link" title="link" /></p></body>""")
   }
 
   fun `test images rendering with one setting`() {
@@ -278,7 +274,18 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         The link [link-description][link] and some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p>The link <a href="glfilelink:\local\file\some\path.pdf" title="label">link-description</a> and some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="glfilelink:/local/file/some/path.pdf" title="label">link-description</a> and some text</p></body>""")
+  }
+
+  fun `test full reference link for local file with backslashes`() {
+    val parsed = convertToHtml("""
+        [link]: win\local\file\some\path.pdf "label"
+        The link [link-description][link] and some text
+      """.trimIndent())
+
+    assertThat(parsed).isEqualTo(
+      """<body><p>The link <a href="glfilelink:/tmp/git-repo/win/local/file/some/path.pdf" title="label">link-description</a> and some text</p></body>"""
+    )
   }
 
   fun `test short reference link with absolute web url`() {
@@ -305,7 +312,7 @@ class GitLabMarkdownToHtmlConverterTest : LightPlatformTestCase() {
         The link [link] and some text
       """.trimIndent())
 
-    assertThat(parsed).isEqualTo("""<body><p>The link <a href="glfilelink:\local\file\some\path.pdf" title="label">link</a> and some text</p></body>""")
+    assertThat(parsed).isEqualTo("""<body><p>The link <a href="glfilelink:/local/file/some/path.pdf" title="label">link</a> and some text</p></body>""")
   }
 
   private fun convertToHtml(markdownSource: String): @NlsSafe String {
