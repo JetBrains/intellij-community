@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="private">
   <dependencies>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.sdk"/>
