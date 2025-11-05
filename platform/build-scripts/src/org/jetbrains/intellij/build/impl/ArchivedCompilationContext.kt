@@ -17,6 +17,8 @@ import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.File
+import java.io.IOException
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.writeLines
 
@@ -63,14 +65,24 @@ class ArchivedCompilationContext(
       }
 
       var fileContent: ByteArray? = null
-      readZipFile(moduleOutput) { name, data ->
-        if (name == relativePath) {
-          fileContent = data().toByteArray()
-          ZipEntryProcessorResult.STOP
+      try {
+        readZipFile(moduleOutput) { name, data ->
+          if (name == relativePath) {
+            fileContent = data().toByteArray()
+            ZipEntryProcessorResult.STOP
+          }
+          else {
+            ZipEntryProcessorResult.CONTINUE
+          }
         }
-        else {
-          ZipEntryProcessorResult.CONTINUE
+      }
+      catch (e: IOException) {
+        // If the zip file doesn't exist, return null and let other output roots be tried
+        if (generateSequence<Throwable>(e) { it.cause }.any { it is NoSuchFileException }) {
+          return@mapNotNull null
         }
+        // re-throw unexpected I/O errors (corrupted zip, permissions, etc.)
+        throw e
       }
       return@mapNotNull fileContent
     }

@@ -24,11 +24,16 @@ fun getUnprocessedPluginXmlContent(module: JpsModule, context: CompilationContex
 }
 
 fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: CompilationContext): ByteArray? {
-  var result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
-  if (useTestSourceEnabled && result == null) {
-    result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
+  try {
+    val result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
+    if (result == null && useTestSourceEnabled) {
+      return context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = true)
+    }
+    return result
   }
-  return result
+  catch (e: Throwable) {
+    throw IllegalStateException("Cannot read $path from ${module.name} module output", e)
+  }
 }
 
 private val rootTypeOrder = arrayOf(JavaResourceRootType.RESOURCE, JavaSourceRootType.SOURCE, JavaResourceRootType.TEST_RESOURCE, JavaSourceRootType.TEST_SOURCE)

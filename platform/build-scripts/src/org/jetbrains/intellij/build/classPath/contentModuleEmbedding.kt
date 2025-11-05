@@ -28,9 +28,11 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.findFileInModuleDependencies
+import org.jetbrains.intellij.build.findFileInModuleSources
 import org.jetbrains.intellij.build.findUnprocessedDescriptorContent
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
+import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.XIncludeElementResolver
@@ -218,19 +220,21 @@ internal fun embedContentModule(
  * @param context The compilation context
  * @return The resolved descriptor element with xi:includes processed
  */
-internal fun resolveContentModuleDescriptor(
+private fun resolveContentModuleDescriptor(
   moduleName: String,
   descriptorCache: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolver,
-  context: CompilationContext,
+  context: ModuleOutputProvider,
 ): Element {
   val descriptorFilename = contentModuleNameToDescriptorFileName(moduleName)
   val data = descriptorCache.getCachedFileData(descriptorFilename)
   val element = if (data == null) {
     val jpsModuleName = moduleName.substringBeforeLast('/')
-    val data = requireNotNull(findUnprocessedDescriptorContent(module = context.findRequiredModule(jpsModuleName), path = descriptorFilename, context = context)) {
+    // todo fix fleet build and use file from module output
+    val file = requireNotNull(findFileInModuleSources(module = context.findRequiredModule(jpsModuleName), relativePath = descriptorFilename)) {
       "Cannot find file $descriptorFilename in module $jpsModuleName"
     }
+    val data = Files.readAllBytes(file)
     descriptorCache.putIfAbsent(descriptorFilename, data)
     JDOMUtil.load(data)
   }
