@@ -127,6 +127,7 @@ class TerminalLookupPrefixUpdater private constructor(
       if (lookup.isLookupDisposed) {
         return
       }
+      lookup.fireBeforeAppendPrefix(c)
       lookup.appendPrefix(c)
     }
   }
