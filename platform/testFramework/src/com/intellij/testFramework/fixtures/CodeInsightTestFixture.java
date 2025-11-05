@@ -74,7 +74,7 @@ import java.util.function.Predicate;
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/tests-and-fixtures.html">Tests and Fixtures</a>
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-highlighting.html">Testing Highlighting</a>
  * @see IdeaTestFixtureFactory#createCodeInsightFixture(IdeaProjectTestFixture)
- */ 
+ */
 public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   String CARET_MARKER = EditorTestUtil.CARET_TAG;
   String ERROR_MARKER = "error";
@@ -393,10 +393,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return available intentions.
    */
   @NotNull
-  @Unmodifiable List<IntentionAction> getAvailableIntentions(@TestDataFile String @NotNull ... filePaths);
+  @Unmodifiable
+  List<IntentionAction> getAvailableIntentions(@TestDataFile String @NotNull ... filePaths);
 
   @NotNull
-  @Unmodifiable List<IntentionAction> getAllQuickFixes(@TestDataFile String @NotNull ... filePaths);
+  @Unmodifiable
+  List<IntentionAction> getAllQuickFixes(@TestDataFile String @NotNull ... filePaths);
 
   @NotNull
   @Unmodifiable
@@ -578,10 +580,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * launches the Find Usages action, and returns the items displayed in the usage view.
    */
   @NotNull
-  @Unmodifiable Collection<Usage> testFindUsagesUsingAction(@TestDataFile String @NotNull ... fileNames);
+  @Unmodifiable
+  Collection<Usage> testFindUsagesUsingAction(@TestDataFile String @NotNull ... fileNames);
 
   @NotNull
-  @Unmodifiable Collection<UsageInfo> findUsages(@NotNull PsiElement to);
+  @Unmodifiable
+  Collection<UsageInfo> findUsages(@NotNull PsiElement to);
 
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from the usages.
@@ -589,7 +593,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   String getUsageViewTreeTextRepresentation(@NotNull Collection<? extends UsageInfo> usages);
 
-  @NotNull String getUsageViewTreeTextRepresentation(@NotNull @Unmodifiable List<? extends UsageTarget> usageTargets, @NotNull @Unmodifiable Collection<? extends Usage> usages);
+  @NotNull String getUsageViewTreeTextRepresentation(@NotNull @Unmodifiable List<? extends UsageTarget> usageTargets,
+                                                     @NotNull @Unmodifiable Collection<? extends Usage> usages);
 
   /**
    * @return a text representation of {@link com.intellij.usages.UsageView} created from usages of {@code to}
@@ -619,7 +624,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #findGutter(String)
    */
   @NotNull
-  @Unmodifiable List<GutterMark> findGuttersAtCaret();
+  @Unmodifiable
+  List<GutterMark> findGuttersAtCaret();
 
   @NotNull
   PsiManager getPsiManager();
@@ -717,7 +723,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   PsiElement getElementAtCaret();
 
   /**
-   * Renames element in position marked by {@link #CARET_MARKER} using direct call of {@link RenameProcessor#run()}
+   * Renames an element at the position marked by {@link #CARET_MARKER} by calling {@link RenameProcessor#run()} directly.
    *
    * @param newName new name for the element.
    * @apiNote method {@link #renameElementAtCaretUsingHandler(String)} is more generic
@@ -739,7 +745,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void renameElementAtCaretUsingHandler(@NotNull String newName);
 
   /**
-   * Renames element using direct call of {@link RenameProcessor#run()}.
+   * Renames the element by calling {@link RenameProcessor#run()} directly.
    *
    * @param element element to rename
    * @param newName new name for the element
@@ -830,7 +836,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @see #completeBasic()
    */
   @NotNull
-  @Unmodifiable List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeIfOnlyOneOrNoCompletion,
+  @Unmodifiable
+  List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeIfOnlyOneOrNoCompletion,
                                              @Nullable Character charToTypeIfMultipleCompletions);
 
   /**
@@ -842,7 +849,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *                                  or it has only one completion that was performed automatically.
    */
   @NotNull
-  @Unmodifiable List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
+  @Unmodifiable
+  List<LookupElement> completeBasicAllCarets(@Nullable Character charToTypeAfterCompletion);
 
   /**
    * Get elements found by the Goto Class action called with the given pattern
@@ -853,7 +861,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return a list of the results (likely PsiElements) found for the given pattern.
    */
   @NotNull
-  @Unmodifiable List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
+  @Unmodifiable
+  List<Object> getGotoClassResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
 
   /**
    * Get elements found by the Goto Symbol action called with the given pattern.
@@ -864,7 +873,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return a list of the results (likely PsiElements) found for the given pattern.
    */
   @NotNull
-  @Unmodifiable List<Object> getGotoSymbolResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
+  @Unmodifiable
+  List<Object> getGotoSymbolResults(@NotNull String pattern, boolean searchEverywhere, @Nullable PsiElement contextForSorting);
 
   /**
    * Get breadcrumbs to be generated for position marked by {@link #CARET_MARKER} in the loaded file.
