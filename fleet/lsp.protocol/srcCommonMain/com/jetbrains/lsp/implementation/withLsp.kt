@@ -186,7 +186,7 @@ suspend fun withLsp(
                                     outgoing.send(LSP.json.encodeToJsonElement(ResponseMessage.serializer(), responseMessage))
                                 }
                             }.also { requestJob ->
-                                incomingRequestsJobs.put(request.id, requestJob)
+                                incomingRequestsJobs[request.id] = requestJob
                                 requestJob.invokeOnCompletion {
                                     incomingRequestsJobs.remove(request.id)
                                 }
