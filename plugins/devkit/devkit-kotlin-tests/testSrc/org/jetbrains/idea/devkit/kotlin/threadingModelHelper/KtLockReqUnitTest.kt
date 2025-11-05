@@ -11,23 +11,36 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
-import org.jetbrains.idea.devkit.threadingModelHelper.LOCK_REQUIREMENTS
+import org.jetbrains.idea.devkit.threadingModelHelper.ConstraintType
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
+import java.util.EnumSet
 
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
 class KtLockReqUnitTest : BasePlatformTestCase() {
 
-  private var analyzerBFS: LockReqAnalyzerParallelBFS = LockReqAnalyzerParallelBFS()
+  private val analyzerBFS: LockReqAnalyzerParallelBFS = LockReqAnalyzerParallelBFS()
 
   override fun setUp() {
     super.setUp()
-    myFixture.addFileToProject("com/intellij/util/concurrency/annotations.java", """
+    myFixture.addFileToProject("com/intellij/util/concurrency/annotations/RequiresReadLock.java", """
         package com.intellij.util.concurrency.annotations;
         public @interface RequiresReadLock {}
+        """.trimIndent())
+    myFixture.addFileToProject("com/intellij/util/concurrency/annotations/RequiresWriteLock.java", """
+        package com.intellij.util.concurrency.annotations;
         public @interface RequiresWriteLock {}
+        """.trimIndent())
+    myFixture.addFileToProject("com/intellij/util/concurrency/annotations/RequiresEdt.java", """
+        package com.intellij.util.concurrency.annotations;
         public @interface RequiresEdt {}
+        """.trimIndent())
+    myFixture.addFileToProject("com/intellij/util/concurrency/annotations/RequiresBackgroundThread.java", """
+        package com.intellij.util.concurrency.annotations;
         public @interface RequiresBackgroundThread {}
+        """.trimIndent())
+    myFixture.addFileToProject("com/intellij/util/concurrency/annotations/RequiresReadLockAbsence.java", """
+        package com.intellij.util.concurrency.annotations;
         public @interface RequiresReadLockAbsence {}
         """.trimIndent())
     myFixture.addFileToProject("com/intellij/util/concurrency/ThreadingAssertions.java", """
@@ -64,7 +77,7 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
     val className = relativeFileName.removeSuffix(".kt")
     val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.projectScope(project))
     val method = SmartPointerManager.createPointer(psiClass?.methods?.firstOrNull { m -> m.name == TEST_METHOD_NAME }!!)
-    val config = AnalysisConfig.forProject(project, LOCK_REQUIREMENTS)
+    val config = AnalysisConfig.forProject(project, EnumSet.allOf(ConstraintType::class.java))
     return runBlocking {
       analyzerBFS.analyzeMethod(method, config)
     }
@@ -118,7 +131,7 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
   fun testCyclicRecursiveCallsKt() {
     val result = doKotlinTest("CyclicRecursiveCalls.kt")
     val expected = listOf(
-      "CyclicRecursiveCalls.testMethod -> CyclicRecursiveCalls.methodB => READ.ANNOTATION"
+      "CyclicRecursiveCalls.testMethod -> CyclicRecursiveCalls.methodA -> CyclicRecursiveCalls.methodB => READ.ANNOTATION"
     )
     assertEquals(expected.sorted(), formatResult(result).sorted())
   }
@@ -162,7 +175,7 @@ class KtLockReqUnitTest : BasePlatformTestCase() {
   fun testCompanionDefaultArgsKt() {
     val result = doKotlinTest("CompanionDefaultArgs.kt")
     val expected = listOf(
-      "CompanionDefaultArgs.testMethod -> CompanionDefaultArgs.annoFun => READ.ANNOTATION",
+      "CompanionDefaultArgs.testMethod -> Companion.annoFun => READ.ANNOTATION",
       "CompanionDefaultArgs.testMethod -> CompanionDefaultArgs.defaultArgFun => READ.ASSERTION"
     )
     assertEquals(expected.sorted(), formatResult(result).sorted())

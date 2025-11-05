@@ -12,29 +12,35 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.util.Processor
+import org.jetbrains.idea.devkit.threadingModelHelper.BaseLockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqRules
 import org.jetbrains.idea.devkit.threadingModelHelper.MethodSignature
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
+import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.UCallableReferenceExpression
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UMethod
 import org.jetbrains.uast.getUastParentOfType
+import org.jetbrains.uast.toUElement
+import org.jetbrains.uast.tryResolve
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-class KtLockReqPsiOps() : LockReqPsiOps {
+class KtLockReqPsiOps : LockReqPsiOps {
 
-  private val resolver: KtCallResolver = KtFirUastCallResolver()
 
   override fun getMethodCallees(method: PsiMethod): List<PsiMethod> {
-    return resolver.resolveCallees(method).distinct()
+    return resolveCalleesWithUast(method).distinct()
   }
 
   override fun findInheritors(method: PsiMethod, scope: GlobalSearchScope, maxImpl: Int, handler: (PsiMethod) -> Unit) {
-    if (method.body != null) {
-      handler(method)
-    }
+    handler(method)
     val counter = AtomicInteger(1)
     val list = mutableListOf<PsiMethod>()
     val abruptEnd: AtomicBoolean = AtomicBoolean(false)
@@ -85,7 +91,8 @@ class KtLockReqPsiOps() : LockReqPsiOps {
   }
 
   override fun resolveReturnType(method: PsiMethod): PsiClass? {
-    return resolver.resolveReturnPsiClass(method)
+    val returnType = method.returnType as? PsiClassType ?: return null
+    return returnType.resolve()
   }
 
   override fun extractTypeArguments(type: PsiType): List<PsiType> {
@@ -104,5 +111,55 @@ class KtLockReqPsiOps() : LockReqPsiOps {
     val elementAtOffset = file.findElementAt(caretOffset)
     val uMethod = elementAtOffset.getUastParentOfType<UMethod>(false)
     return uMethod?.javaPsi
+  }
+
+  private val rules: LockReqRules = BaseLockReqRules()
+
+  private fun resolveCalleesWithUast(method: PsiMethod): List<PsiMethod> {
+    val set = LinkedHashSet<PsiMethod>()
+    val uMethod = method.toUElement(UMethod::class.java) ?: return emptyList()
+    uMethod.accept(object : AbstractUastVisitor() {
+
+      override fun visitExpression(node: UExpression): Boolean {
+        node.tryResolve()?.let { resolved ->
+          if (resolved !is PsiMethod) {
+            return@let
+          }
+          set.add(resolved)
+          val qName = resolved.containingClass?.qualifiedName
+          if (node is UCallExpression && qName == rules.disposerUtilityClassFqn && rules.disposeMethodNames.contains(resolved.name)) {
+            disposeTargets(node).forEach { set.add(it) }
+          }
+        }
+        return super.visitExpression(node)
+      }
+
+      override fun visitCallableReferenceExpression(node: UCallableReferenceExpression): Boolean {
+        (node.resolve() as? PsiMethod)?.let { set.add(it) }
+        return super.visitCallableReferenceExpression(node)
+      }
+    })
+    return set.toList()
+  }
+
+  private fun disposeTargets(node: UCallExpression): List<PsiMethod> {
+    val arg = node.valueArguments.firstOrNull() ?: return emptyList()
+    val psiType = arg.getExpressionType() as? PsiClassType ?: return emptyList()
+    val psiClass = psiType.resolve() ?: return emptyList()
+
+    fun zeroArgDispose(c: PsiClass): List<PsiMethod> = c.findMethodsByName("dispose", true)
+      .filter { it.parameterList.parametersCount == 0 }
+
+    val direct = zeroArgDispose(psiClass)
+    if (direct.isNotEmpty()) return direct
+
+    val disposableFqn = rules.disposableInterfaceFqn
+    if (InheritanceUtil.isInheritor(psiClass, disposableFqn)) {
+      val project = (node.sourcePsi ?: return emptyList()).project
+      val disposableClass = com.intellij.psi.JavaPsiFacade.getInstance(project)
+        .findClass(disposableFqn, com.intellij.psi.search.GlobalSearchScope.allScope(project))
+      if (disposableClass != null) return zeroArgDispose(disposableClass)
+    }
+    return emptyList()
   }
 }

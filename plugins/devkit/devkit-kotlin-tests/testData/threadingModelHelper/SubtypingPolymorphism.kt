@@ -3,9 +3,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.ThreadingAssertions
 
 class SubtypingPolymorphism {
-  fun testMethod() {
-    val services: List<BaseService> = listOf(FileService(), UIService(), DBService())
-    services.forEach { it.execute() }
+  fun testMethod(p: BaseService) {
+    p.execute()
   }
 }
 

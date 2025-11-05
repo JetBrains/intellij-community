@@ -2,20 +2,21 @@
 package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.SmartPointerManager
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
+import java.util.EnumSet
 
 
 @TestDataPath($$"$CONTENT_ROOT/testData/threadingModelHelper/")
 class JavaLockReqUnitTest : BasePlatformTestCase() {
 
-  //private lateinit var analyzerDFS: JavaLockReqAnalyzerDFS
   private val analyzerBFS = LockReqAnalyzerParallelBFS()
 
   override fun setUp() {
     super.setUp()
-    //analyzerDFS = JavaLockReqAnalyzerDFS()
     myFixture.addFileToProject("com/intellij/util/concurrency/annotations.java", """
         package com.intellij.util.concurrency.annotations;
         public @interface RequiresReadLock {}
@@ -46,18 +47,14 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
 
   fun testNoLockRequirements() {
     val result = doTest("NoLockRequirements")
-    val actualPathsDFS = formatResult(result.first)
-    val actualPathsBFS = formatResult(result.second)
-    assertTrue(actualPathsDFS.isEmpty())
+    val actualPathsBFS = formatResult(result)
     assertTrue(actualPathsBFS.isEmpty())
   }
 
   fun testAssertionInNestedBlock() {
     val result = doTest("AssertionInNestedBlock")
     val expectedPaths = listOf("AssertionInNestedBlock.testMethod => READ.ASSERTION")
-    val actualPathsDFS = formatResult(result.first)
-    val actualPathsBFS = formatResult(result.second)
-    assertEquals(expectedPaths.sorted(), actualPathsDFS.sorted())
+    val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
@@ -65,9 +62,7 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     val result = doTest("AnnotationInChain")
     val expectedPaths = listOf("AnnotationInChain.testMethod -> AnnotationInChain.intermediateMethod" +
                                " -> AnnotationInChain.targetMethod => READ.ANNOTATION")
-    val actualPathsDFS = formatResult(result.first)
-    val actualPathsBFS = formatResult(result.second)
-    assertEquals(expectedPaths.sorted(), actualPathsDFS.sorted())
+    val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
@@ -75,18 +70,14 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     val result = doTest("BothAnnotationAndAssertion")
     val expectedPaths = listOf("BothAnnotationAndAssertion.testMethod => WRITE.ANNOTATION",
                                "BothAnnotationAndAssertion.testMethod => BGT.ASSERTION")
-    val actualPathsDFS = formatResult(result.first)
-    val actualPathsBFS = formatResult(result.second)
-    assertEquals(expectedPaths.sorted(), actualPathsDFS.sorted())
+    val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
   fun testCyclicRecursiveCalls() {
     val result = doTest("CyclicRecursiveCalls")
     val expectedPaths = listOf("CyclicRecursiveCalls.testMethod -> CyclicRecursiveCalls.methodB => READ.ANNOTATION")
-    val actualPathsDFS = formatResult(result.first)
-    val actualPathsBFS = formatResult(result.second)
-    assertEquals(expectedPaths.sorted(), actualPathsDFS.sorted())
+    val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
@@ -94,20 +85,15 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
     val result = doTest("DifferentClassesMethods")
     val expectedPaths = listOf("DifferentClassesMethods.testMethod -> Helper.helperMethod -> Service.serviceMethod => EDT.ANNOTATION",
                                "DifferentClassesMethods.testMethod -> Helper.helperMethod => WRITE.ASSERTION")
-    val actualPathsDFS = formatResult(result.first)
-    val actualPathsBFS = formatResult(result.second)
-    assertEquals(expectedPaths.sorted(), actualPathsDFS.sorted())
+    val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
   fun testMultipleAssertionsInMethod() {
     val result = doTest("MultipleAssertionsInMethod")
     val expectedPaths = listOf("MultipleAssertionsInMethod.testMethod => READ.ASSERTION")
-    val actualPathsDFS = formatResult(result.first)
-    val actualPathsBFS = formatResult(result.second)
-    assertEquals(1, actualPathsDFS.size)
+    val actualPathsBFS = formatResult(result)
     assertEquals(1, actualPathsBFS.size)
-    assertEquals(expectedPaths.sorted(), actualPathsDFS.sorted())
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
@@ -115,9 +101,7 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
   fun testLambdaWithMethodReference() {
     val result = doTest("LambdaWithMethodReference")
     val expectedPaths = listOf("LambdaWithMethodReference.testMethod -> LambdaWithMethodReference.processItem => READ.ASSERTION")
-    val actualPathsDFS = formatResult(result.first)
-    val actualPathsBFS = formatResult(result.second)
-    assertEquals(expectedPaths.sorted(), actualPathsDFS.sorted())
+    val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
@@ -128,19 +112,18 @@ class JavaLockReqUnitTest : BasePlatformTestCase() {
       "SubtypingPolymorphism.testMethod -> UIService.execute => EDT.ASSERTION",
       "SubtypingPolymorphism.testMethod -> DBService.execute => READ.ASSERTION"
     )
-    val actualPathsDFS = formatResult(result.first)
-    val actualPathsBFS = formatResult(result.second)
-    assertEquals(expectedPaths.sorted(), actualPathsDFS.sorted())
+    val actualPathsBFS = formatResult(result)
     assertEquals(expectedPaths.sorted(), actualPathsBFS.sorted())
   }
 
-  private fun doTest(className: String): Pair<AnalysisResult, AnalysisResult> {
+  private fun doTest(className: String): AnalysisResult {
     val fileName = "${getTestName(false)}.java"
     val psiJavaFile = myFixture.configureByFile(fileName) as PsiJavaFile
     val targetClass = psiJavaFile.classes.find { it.name == className } ?: error("Could not find class $className")
     val targetMethod = targetClass.methods.find { it.name == TEST_METHOD_NAME } ?: error("Could not find method $TEST_METHOD_NAME")
-    TODO()
-    //return Pair(runBlocking { analyzerBFS.analyzeMethod(targetMethod, AnalysisConfig.forProject(psiJavaFile.project, null!!)) }, runBlocking { analyzerBFS.analyzeMethod(targetMethod) })
+    return runBlocking {
+      analyzerBFS.analyzeMethod(SmartPointerManager.createPointer(targetMethod), AnalysisConfig.forProject(psiJavaFile.project, EnumSet.allOf(ConstraintType::class.java)))
+    }
   }
 
   private fun formatResult(result: AnalysisResult): List<String> {

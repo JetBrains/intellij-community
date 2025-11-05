@@ -74,7 +74,7 @@ class LockReqAnalyzerParallelBFS {
     smartReadAction(project) {
       val method = root.element ?: return@smartReadAction
       val sig = LockReqPsiOps.forLanguage(method.language).extractSignature(method)
-      queue.put(QueueEntry(root, sig, listOf(MethodCall(sig.containingClassName, sig.methodName))))
+      queue.put(QueueEntry(root, sig, listOf(MethodCall(sig.methodName, sig.containingClassName))))
       sig
     }
 

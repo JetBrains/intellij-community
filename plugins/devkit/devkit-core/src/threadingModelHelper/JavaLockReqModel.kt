@@ -30,7 +30,7 @@ data class MethodSignature(val containingClassName: String, val methodName: Stri
 data class MethodCall(val methodName: String, val containingClassName: String?, val isPolymorphic: Boolean= false, val isMessageBusCall: Boolean = false) {
   companion object {
     fun fromMethod(method: PsiMethod): MethodCall {
-      return MethodCall(method.name, method.containingClass!!.name)
+      return MethodCall(method.name, method.containingClass?.name ?: "<anon>")
     }
   }
 }
