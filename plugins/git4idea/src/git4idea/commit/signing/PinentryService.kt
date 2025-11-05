@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commit.signing
 
 import com.intellij.externalProcessAuthHelper.toExternalAppEntry
@@ -14,7 +14,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi.ExternalCliOptions
 import com.intellij.platform.eel.path.EelPath
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.net.NetUtils
 import git4idea.gpg.CryptoUtils
 import git4idea.gpg.PinentryApp
@@ -119,14 +118,6 @@ internal class PinentryService(private val cs: CoroutineScope) {
       }
     }
 
-    cs.launch {
-      while (isActive) {
-        delay(100L)
-      }
-    }.invokeOnCompletion {
-      stopSession()
-    }
-
     return Address(host, port)
   }
 
@@ -170,7 +161,7 @@ internal class PinentryService(private val cs: CoroutineScope) {
     fun requestPassword(description: @NlsSafe String?): String?
   }
 
-  private class DefaultPasswordUiRequester() : PasswordUiRequester {
+  private class DefaultPasswordUiRequester : PasswordUiRequester {
     override fun requestPassword(description: @NlsSafe String?): String? {
       return Messages.showPasswordDialog(
         if (description != null) description else GitBundle.message("gpg.pinentry.default.description"),
