@@ -2187,6 +2187,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             runTest("../../completion/testData/handlers/ClassCompletionImportBeforeIfInReturn.kt");
         }
 
+        @TestMetadata("ClassCompletionImportWithoutPrefix.kt")
+        public void testClassCompletionImportWithoutPrefix() throws Exception {
+            runTest("../../completion/testData/handlers/ClassCompletionImportWithoutPrefix.kt");
+        }
+
         @TestMetadata("ClassCompletionInImport.kt")
         public void testClassCompletionInImport() throws Exception {
             runTest("../../completion/testData/handlers/ClassCompletionInImport.kt");
