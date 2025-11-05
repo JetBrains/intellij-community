@@ -159,11 +159,11 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
 
   fun runCellAndWaitExecuted(
     timeout: Duration = 30.seconds,
-    expectedExecutionCount: Int = 1
+    expectedFinalExecutionCount: Int = 1,
   ): Unit = step("Executing cell") {
     runCell()
     waitFor(timeout = timeout) {
-      areAllExecutionsFinishedSuccessfully(expectedExecutionCount)
+      areAllExecutionsFinishedSuccessfully(expectedFinalExecutionCount)
     }
   }
 
@@ -178,7 +178,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       val last = notebookCellExecutionInfos.lastOrNull()
       if (last == null) {
         false
-      } else {
+      }
+      else {
         val timeBefore = last.getExecutionTimeInMsSafe()
         wait(250.milliseconds)
         val timeAfter = last.getExecutionTimeInMsSafe()
@@ -196,15 +197,19 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     }
   }
 
+  /**
+   * Checks if there are exactly [expectedFinalExecutionCount] finished cells with green checkmark
+   * in the current notebook editor.
+   */
   private fun areAllExecutionsFinishedSuccessfully(
-    expectedExecutionCount: Int
+    expectedFinalExecutionCount: Int,
   ): Boolean {
     val infos = notebookCellExecutionInfos
-    return infos.isNotEmpty()
-           && infos.size == expectedExecutionCount
-           && infos.all {
-        it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
-      }
+    return infos.isNotEmpty() &&
+           infos.size == expectedFinalExecutionCount &&
+           infos.all {
+             it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
+           }
   }
 
   /**
