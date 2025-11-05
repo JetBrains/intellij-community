@@ -78,18 +78,17 @@ class ProductPluginInitContext(
       val frontend = PluginModuleId("intellij.platform.frontend", PluginModuleId.JETBRAINS_NAMESPACE)
       val backend = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
 
-      val unavailableModuleId = when (productModeId) {
-        /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
-        "monolith" -> frontendSplit
-        "backend" -> frontend
-        "frontend" -> backend
-        else -> null
-      }
-
       for (moduleId in listOf(frontend, backend, frontendSplit)) {
-        val unavailabilityReason = if (moduleId == unavailableModuleId) {
-          UnsuitableProductModeModuleUnavailabilityReason(moduleId, productModeId)
-        } else null
+        val isAvailable = when (productModeId) {
+          /** intellij.platform.backend.split is currently available in 'monolith' mode because it's used as a backend in CodeWithMe */
+          "monolith" -> moduleId != frontendSplit
+          "backend" -> moduleId != frontend && moduleId != frontendSplit
+          "frontend" -> moduleId != backend
+          else -> true
+        }
+        val unavailabilityReason =
+          if (isAvailable) null
+          else UnsuitableProductModeModuleUnavailabilityReason(moduleId, productModeId)
         val replaced = put(moduleId, EnvironmentConfiguredModuleData(unavailabilityReason))
         check(replaced == null) { "$moduleId is already registered as environment-configured module" }
       }
