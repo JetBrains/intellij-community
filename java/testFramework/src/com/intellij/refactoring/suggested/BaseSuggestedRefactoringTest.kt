@@ -64,7 +64,7 @@ abstract class BaseSuggestedRefactoringTest : LightJavaCodeInsightFixtureTestCas
     )
   }
 
-  private fun doTest(
+  protected fun doTest(
     initialText: String,
     actionName: String,
     textAfterRefactoring: String,

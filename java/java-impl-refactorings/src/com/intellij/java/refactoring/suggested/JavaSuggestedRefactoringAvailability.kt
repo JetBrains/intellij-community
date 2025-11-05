@@ -18,6 +18,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
   SuggestedRefactoringAvailability(refactoringSupport) {
   private val HAS_OVERRIDES = Key<Boolean>("JavaSuggestedRefactoringAvailability.HAS_OVERRIDES")
   private val HAS_USAGES = Key<Boolean>("JavaSuggestedRefactoringAvailability.HAS_USAGES")
+  private val HAS_NOT_MATCHED_PARAMETERS = Key<Boolean>("JavaSuggestedRefactoringAvailability.HAS_NOT_MATCHED_PARAMETERS")
 
   // disable refactoring suggestion for method which overrides another method
   override fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
@@ -113,9 +114,14 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
     val declaration = anchor as? PsiMethod ?: return state
     val restoredDeclarationCopy = state.restoredDeclarationCopy() as PsiMethod
     val psiFile = declaration.containingFile
+    val oldSignature = extractAnnotationsWithResolve(state.oldSignature, restoredDeclarationCopy, psiFile)
+    val newSignature = extractAnnotationsWithResolve(state.newSignature, declaration, psiFile)
+    if(oldSignature == null || newSignature == null) {
+      return state.withAdditionalData(HAS_NOT_MATCHED_PARAMETERS, true)
+    }
     return state
-      .withOldSignature(extractAnnotationsWithResolve(state.oldSignature, restoredDeclarationCopy, psiFile))
-      .withNewSignature(extractAnnotationsWithResolve(state.newSignature, declaration, psiFile))
+      .withOldSignature(oldSignature)
+      .withNewSignature(newSignature)
   }
 
   override fun detectAvailableRefactoring(state: SuggestedRefactoringState): SuggestedRefactoringData? {
@@ -123,6 +129,7 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
     val whatToUpdate: String
     val declaration: PsiElement
     val anchor = state.anchor
+    if (updatedState.additionalData[HAS_NOT_MATCHED_PARAMETERS] == true) return null
     if (anchor is PsiCallExpression) {
       updatedState = callStateToDeclarationState(updatedState) ?: return null
       declaration = anchor.resolveMethod() ?: return null
@@ -183,9 +190,9 @@ class JavaSuggestedRefactoringAvailability(refactoringSupport: SuggestedRefactor
   }
 
   // Annotations were extracted without use of resolve. We must extract them again using more precise method.
-  private fun extractAnnotationsWithResolve(signature: Signature, declaration: PsiMethod, psiFile: PsiFile): Signature {
+  private fun extractAnnotationsWithResolve(signature: Signature, declaration: PsiMethod, psiFile: PsiFile): Signature? {
     val psiParameters = declaration.parameterList.parameters
-    require(signature.parameters.size == psiParameters.size)
+    if(signature.parameters.size != psiParameters.size) return null
 
     return Signature.create(
       signature.name,
