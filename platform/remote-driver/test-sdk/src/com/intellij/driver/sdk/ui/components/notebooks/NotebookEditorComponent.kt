@@ -149,14 +149,6 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     deleteCell.click()
   }
 
-  fun restartHighlighting() {
-    driver.withContext {
-      invokeActionWithRetries("RestartKotlinNotebookHighlighting")
-
-      waitForHighlighting()
-    }
-  }
-
   fun runCellAndWaitExecuted(
     timeout: Duration = 30.seconds,
     expectedFinalExecutionCount: Int = 1,
@@ -294,7 +286,6 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
   fun JLabelUiComponent.getExecutionTimeInMsSafe(): Long? = step("Get cell execution time") {
     if (this.notPresent()) return@step null
     val text = this.getText()
-    if (text == null) return@step null
     if (text.isEmpty()) return@step null
 
     val seconds = Regex("""(\d+)s""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
@@ -303,12 +294,12 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     seconds * 1_000 + millis
   }
 
-  fun JLabelUiComponent.getExecutionTimeInMs(): Long = step("Get cell execution time") {
+  fun JLabelUiComponent.getExecutionTime(): Duration = step("Get cell execution time") {
     this.getText().run {
       val matchSeconds = Regex("\\d+s").find(this)?.value?.substringBefore("s")?.toLong() ?: 0
       val matchMs = Regex("\\d+ms").find(this)?.value?.substringBefore("ms")?.toLong() ?: 0
 
-      matchSeconds * 1000 + matchMs
+      matchSeconds.seconds + matchMs.milliseconds
     }
   }
 }

@@ -12,11 +12,11 @@ class JLabelUiComponent(data: ComponentData) : UiComponent(data) {
 
   private val fixture by lazy { driver.cast(component, JLabelRef::class) }
 
-  fun getText() = fixture.getText()
+  fun getText(): String = fixture.getText().orEmpty()
 }
 
 @Remote("javax.swing.JLabel")
 interface JLabelRef {
 
-  fun getText(): String
+  fun getText(): String?
 }
