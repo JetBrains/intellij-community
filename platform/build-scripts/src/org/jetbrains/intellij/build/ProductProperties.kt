@@ -382,7 +382,7 @@ abstract class ProductProperties {
    * @return specification of programmatic content modules, or null to use only XML-based includes
    * @see org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
    */
-  open fun getProductContentDescriptor(): ProductModulesContentSpec? = null
+  abstract fun getProductContentDescriptor(): ProductModulesContentSpec?
 
   /**
    * @return custom properties for [com.intellij.platform.buildData.productInfo.ProductInfoData].

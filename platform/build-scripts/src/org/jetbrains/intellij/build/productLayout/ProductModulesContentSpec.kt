@@ -160,8 +160,8 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
       deprecatedXmlIncludes = java.util.List.copyOf(xmlIncludes),
       moduleSets = java.util.List.copyOf(moduleSets),
       additionalModules = java.util.List.copyOf(additionalModules),
-      excludedModules = excludedModules,
-      moduleLoadingOverrides = loadingOverrides,
+      excludedModules = java.util.Set.copyOf(excludedModules),
+      moduleLoadingOverrides = java.util.Map.copyOf(loadingOverrides),
     )
   }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.java.impl;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,12 +134,12 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
       properties instanceof JavaSourceRootProperties ? ((JavaSourceRootProperties)properties).getPackagePrefix().replace('.', '/') :
       properties instanceof JavaResourceRootProperties ? ((JavaResourceRootProperties)properties).getRelativeOutputPath() : "";
 
-    var normalizedPrefix = StringUtil.trimStart(prefix, "/");
+    var normalizedPrefix = Strings.trimStart(prefix, "/");
     if (!normalizedPrefix.isEmpty() && !normalizedPrefix.endsWith("/")) {
       normalizedPrefix += "/";
     }
 
-    var normalizedRelativePath = StringUtil.trimStart(relativePath, "/");
+    var normalizedRelativePath = Strings.trimStart(relativePath, "/");
     if (normalizedRelativePath.startsWith(normalizedPrefix)) {
       var result = root.getPath().resolve(normalizedRelativePath.substring(normalizedPrefix.length()));
       if (Files.exists(result)) {
