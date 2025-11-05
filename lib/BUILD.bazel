@@ -202,44 +202,44 @@ jvm_import(
 java_library(
   name = "android-nav-editor-eclipse-layout-kernel",
   exports = [
-    ":org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0-_alg_layered_http_import",
-    ":org_eclipse_elk-org_eclipse_elk_core-0_3_0-_core_http_import",
-    ":org_eclipse_elk-org_eclipse_elk_graph-0_3_0-_graph_http_import",
-    ":org_eclipse_emf-org_eclipse_emf_common-2_12_0-_common_http_import",
-    ":org_eclipse_emf-org_eclipse_emf_ecore-2_12_0-_ecore_http_import",
-    ":org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0-_alg_common_compaction_http_import",
+    ":org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0_http_import",
+    ":org_eclipse_elk-org_eclipse_elk_core-0_3_0_http_import",
+    ":org_eclipse_elk-org_eclipse_elk_graph-0_3_0_http_import",
+    ":org_eclipse_emf-org_eclipse_emf_common-2_12_0_http_import",
+    ":org_eclipse_emf-org_eclipse_emf_ecore-2_12_0_http_import",
+    ":org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0-_alg_layered_http_import",
-  jar = "@org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0-_alg_layered_http//file"
+  name = "org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0_http_import",
+  jar = "@org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0_http//file"
 )
 
 jvm_import(
-  name = "org_eclipse_elk-org_eclipse_elk_core-0_3_0-_core_http_import",
-  jar = "@org_eclipse_elk-org_eclipse_elk_core-0_3_0-_core_http//file"
+  name = "org_eclipse_elk-org_eclipse_elk_core-0_3_0_http_import",
+  jar = "@org_eclipse_elk-org_eclipse_elk_core-0_3_0_http//file"
 )
 
 jvm_import(
-  name = "org_eclipse_elk-org_eclipse_elk_graph-0_3_0-_graph_http_import",
-  jar = "@org_eclipse_elk-org_eclipse_elk_graph-0_3_0-_graph_http//file"
+  name = "org_eclipse_elk-org_eclipse_elk_graph-0_3_0_http_import",
+  jar = "@org_eclipse_elk-org_eclipse_elk_graph-0_3_0_http//file"
 )
 
 jvm_import(
-  name = "org_eclipse_emf-org_eclipse_emf_common-2_12_0-_common_http_import",
-  jar = "@org_eclipse_emf-org_eclipse_emf_common-2_12_0-_common_http//file"
+  name = "org_eclipse_emf-org_eclipse_emf_common-2_12_0_http_import",
+  jar = "@org_eclipse_emf-org_eclipse_emf_common-2_12_0_http//file"
 )
 
 jvm_import(
-  name = "org_eclipse_emf-org_eclipse_emf_ecore-2_12_0-_ecore_http_import",
-  jar = "@org_eclipse_emf-org_eclipse_emf_ecore-2_12_0-_ecore_http//file"
+  name = "org_eclipse_emf-org_eclipse_emf_ecore-2_12_0_http_import",
+  jar = "@org_eclipse_emf-org_eclipse_emf_ecore-2_12_0_http//file"
 )
 
 jvm_import(
-  name = "org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0-_alg_common_compaction_http_import",
-  jar = "@org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0-_alg_common_compaction_http//file"
+  name = "org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0_http_import",
+  jar = "@org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0_http//file"
 )
 
 jvm_import(
@@ -2944,27 +2944,27 @@ jvm_import(
 java_library(
   name = "java-coverage-_ja_co_co",
   exports = [
-    ":org_jacoco-org_jacoco_ant-0_8_14-_ant_http_import",
-    ":org_jacoco-org_jacoco_core-0_8_14-_core_http_import",
+    ":org_jacoco-org_jacoco_ant-0_8_14_http_import",
+    ":org_jacoco-org_jacoco_core-0_8_14_http_import",
     ":org_ow2_asm-asm-9_9_http_import",
     ":org_ow2_asm-asm-commons-9_9_http_import",
     ":org_ow2_asm-asm-tree-9_9_http_import",
-    ":org_jacoco-org_jacoco_report-0_8_14-_report_http_import",
-    ":org_jacoco-org_jacoco_agent-0_8_14-_agent_http_import",
+    ":org_jacoco-org_jacoco_report-0_8_14_http_import",
+    ":org_jacoco-org_jacoco_agent-0_8_14_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "org_jacoco-org_jacoco_ant-0_8_14-_ant_http_import",
-  jar = "@org_jacoco-org_jacoco_ant-0_8_14-_ant_http//file",
-  source_jar = "@org_jacoco-org_jacoco_ant-0_8_14-_ant_http//file"
+  name = "org_jacoco-org_jacoco_ant-0_8_14_http_import",
+  jar = "@org_jacoco-org_jacoco_ant-0_8_14_http//file",
+  source_jar = "@org_jacoco-org_jacoco_ant-0_8_14_http//file"
 )
 
 jvm_import(
-  name = "org_jacoco-org_jacoco_core-0_8_14-_core_http_import",
-  jar = "@org_jacoco-org_jacoco_core-0_8_14-_core_http//file",
-  source_jar = "@org_jacoco-org_jacoco_core-0_8_14-_core_http//file"
+  name = "org_jacoco-org_jacoco_core-0_8_14_http_import",
+  jar = "@org_jacoco-org_jacoco_core-0_8_14_http//file",
+  source_jar = "@org_jacoco-org_jacoco_core-0_8_14_http//file"
 )
 
 jvm_import(
@@ -2986,15 +2986,15 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_jacoco-org_jacoco_report-0_8_14-_report_http_import",
-  jar = "@org_jacoco-org_jacoco_report-0_8_14-_report_http//file",
-  source_jar = "@org_jacoco-org_jacoco_report-0_8_14-_report_http//file"
+  name = "org_jacoco-org_jacoco_report-0_8_14_http_import",
+  jar = "@org_jacoco-org_jacoco_report-0_8_14_http//file",
+  source_jar = "@org_jacoco-org_jacoco_report-0_8_14_http//file"
 )
 
 jvm_import(
-  name = "org_jacoco-org_jacoco_agent-0_8_14-_agent_http_import",
-  jar = "@org_jacoco-org_jacoco_agent-0_8_14-_agent_http//file",
-  source_jar = "@org_jacoco-org_jacoco_agent-0_8_14-_agent_http//file"
+  name = "org_jacoco-org_jacoco_agent-0_8_14_http_import",
+  jar = "@org_jacoco-org_jacoco_agent-0_8_14_http//file",
+  source_jar = "@org_jacoco-org_jacoco_agent-0_8_14_http//file"
 )
 
 java_library(
@@ -3108,8 +3108,8 @@ jvm_import(
 
 jvm_import(
   name = "javax-annotation-api",
-  jar = "@javax_annotation-javax_annotation-api-1_3_2-api_http//file",
-  source_jar = "@javax_annotation-javax_annotation-api-1_3_2-api_http//file",
+  jar = "@javax_annotation-javax_annotation-api-1_3_2_http//file",
+  source_jar = "@javax_annotation-javax_annotation-api-1_3_2_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4915,8 +4915,8 @@ jvm_import(
 
 jvm_import(
   name = "libraries-cglib-cglib",
-  jar = "@cglib-cglib-nodep-3_3_0-nodep_http//file",
-  source_jar = "@cglib-cglib-nodep-3_3_0-nodep_http//file",
+  jar = "@cglib-cglib-nodep-3_3_0_http//file",
+  source_jar = "@cglib-cglib-nodep-3_3_0_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -5661,8 +5661,8 @@ jvm_import(
 
 jvm_import(
   name = "libraries-xerces-_xerces",
-  jar = "@xerces-xercesImpl-2_12_2-Impl_http//file",
-  source_jar = "@xerces-xercesImpl-2_12_2-Impl_http//file",
+  jar = "@xerces-xercesImpl-2_12_2_http//file",
+  source_jar = "@xerces-xercesImpl-2_12_2_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -6046,7 +6046,7 @@ java_library(
     ":org_codehaus_plexus-plexus-interpolation-1_27_http_import",
     ":org_apache_maven-maven-artifact-3_9_9_http_import",
     ":org_apache_maven-maven-builder-support-3_9_9_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3_http_import",
     ":org_apache_maven-maven-repository-metadata-3_9_9_http_import",
     ":org_apache_maven_resolver-maven-resolver-api-1_9_22_http_import",
     ":org_apache_maven_resolver-maven-resolver-spi-1_9_22_http_import",
@@ -6094,9 +6094,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-_inject_http_import",
-  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-_inject_http//file",
-  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-_inject_http//file"
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3_http_import",
+  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3_http//file",
+  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3_http//file"
 )
 
 jvm_import(
@@ -6175,10 +6175,10 @@ java_library(
     ":org_eclipse_aether-aether-impl-1_0_2_v20150114_http_import",
     ":org_eclipse_aether-aether-api-1_0_2_v20150114_http_import",
     ":org_eclipse_aether-aether-util-1_0_2_v20150114_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-_plexus_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http_import",
     ":javax_enterprise-cdi-api-1_0_http_import",
     ":javax_annotation-jsr250-api-1_0_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http_import",
     ":org_codehaus_plexus-plexus-interpolation-1_21_http_import",
     ":org_codehaus_plexus-plexus-utils-3_0_22_http_import",
     ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
@@ -6281,9 +6281,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-_plexus_http_import",
-  jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-_plexus_http//file",
-  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-_plexus_http//file"
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http_import",
+  jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http//file",
+  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http//file"
 )
 
 jvm_import(
@@ -6299,9 +6299,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-_inject_http_import",
-  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-_inject_http//file",
-  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-_inject_http//file"
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http_import",
+  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http//file",
+  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http//file"
 )
 
 jvm_import(
@@ -6376,9 +6376,9 @@ java_library(
     ":org_apache_maven_resolver-maven-resolver-util-1_6_3_http_import",
     ":org_apache_maven_shared-maven-shared-utils-3_3_4_http_import",
     ":commons-io-commons-io-2_6_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5-_plexus_http_import",
-    ":javax_annotation-javax_annotation-api-1_2-api_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5_http_import",
+    ":javax_annotation-javax_annotation-api-1_2_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5_http_import",
     ":com_google_inject-guice-4_2_2-no_aop_http_import",
     ":aopalliance-aopalliance-1_0_http_import",
     ":com_google_guava-guava-25_1-android_http_import",
@@ -6507,26 +6507,27 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5-_plexus_http_import",
-  jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5-_plexus_http//file",
-  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5-_plexus_http//file"
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5_http_import",
+  jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5_http//file",
+  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5_http//file"
 )
 
 jvm_import(
-  name = "javax_annotation-javax_annotation-api-1_2-api_http_import",
-  jar = "@javax_annotation-javax_annotation-api-1_2-api_http//file",
-  source_jar = "@javax_annotation-javax_annotation-api-1_2-api_http//file"
+  name = "javax_annotation-javax_annotation-api-1_2_http_import",
+  jar = "@javax_annotation-javax_annotation-api-1_2_http//file",
+  source_jar = "@javax_annotation-javax_annotation-api-1_2_http//file"
 )
 
 jvm_import(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5-_inject_http_import",
-  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5-_inject_http//file",
-  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5-_inject_http//file"
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5_http_import",
+  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5_http//file",
+  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5_http//file"
 )
 
 jvm_import(
   name = "com_google_inject-guice-4_2_2-no_aop_http_import",
-  jar = "@com_google_inject-guice-4_2_2-no_aop_http//file"
+  jar = "@com_google_inject-guice-4_2_2-no_aop_http//file",
+  source_jar = "@com_google_inject-guice-4_2_2-no_aop_http//file"
 )
 
 jvm_import(
@@ -6821,7 +6822,7 @@ java_library(
     ":org_apache_maven_resolver-maven-resolver-spi-1_3_1_http_import",
     ":org_apache_maven_shared-maven-shared-utils-3_2_1_http_import",
     ":commons-io-commons-io-2_5_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http_import",
     ":javax_inject-javax_inject-1_http_import",
     ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
     ":org_apache_maven-maven-resolver-provider-3_6_0_http_import",
@@ -6832,7 +6833,7 @@ java_library(
     ":org_apache_maven_resolver-maven-resolver-impl-1_3_1_http_import",
     ":org_codehaus_plexus-plexus-utils-3_1_0_http_import",
     ":org_codehaus_plexus-plexus-interpolation-1_25_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-_plexus_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http_import",
     ":javax_enterprise-cdi-api-1_0_http_import",
     ":javax_annotation-jsr250-api-1_0_http_import",
     ":org_codehaus_plexus-plexus-component-annotations-1_7_1_http_import",
@@ -6920,9 +6921,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-_inject_http_import",
-  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-_inject_http//file",
-  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-_inject_http//file"
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http_import",
+  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http//file",
+  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http//file"
 )
 
 jvm_import(
@@ -6974,9 +6975,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-_plexus_http_import",
-  jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-_plexus_http//file",
-  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-_plexus_http//file"
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http_import",
+  jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http//file",
+  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http//file"
 )
 
 jvm_import(
@@ -7121,10 +7122,10 @@ java_library(
     ":org_sonatype_plexus-plexus-cipher-1_4_http_import",
     ":org_codehaus_plexus-plexus-utils-3_0_22_http_import",
     ":org_codehaus_plexus-plexus-interpolation-1_21_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-_plexus_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http_import",
     ":javax_enterprise-cdi-api-1_0_http_import",
     ":javax_annotation-jsr250-api-1_0_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http_import",
     ":org_codehaus_plexus-plexus-component-annotations-1_6_http_import",
     ":org_apache_maven_wagon-wagon-provider-api-2_10_http_import",
   ],
@@ -7168,10 +7169,10 @@ java_library(
     ":org_eclipse_aether-aether-impl-1_0_2_v20150114_http_import",
     ":org_eclipse_aether-aether-api-1_0_2_v20150114_http_import",
     ":org_eclipse_aether-aether-util-1_0_2_v20150114_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-_plexus_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http_import",
     ":javax_enterprise-cdi-api-1_0_http_import",
     ":javax_annotation-jsr250-api-1_0_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http_import",
     ":org_codehaus_plexus-plexus-interpolation-1_21_http_import",
     ":org_codehaus_plexus-plexus-utils-3_0_22_http_import",
     ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
@@ -7217,10 +7218,10 @@ java_library(
     ":org_apache_maven_wagon-wagon-provider-api-2_10_http_import",
     ":org_codehaus_plexus-plexus-utils-3_0_22_http_import",
     ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-_plexus_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http_import",
     ":javax_enterprise-cdi-api-1_0_http_import",
     ":javax_annotation-jsr250-api-1_0_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http_import",
     ":org_codehaus_plexus-plexus-component-annotations-1_6_http_import",
     ":org_sonatype_plexus-plexus-sec-dispatcher-1_3_http_import",
     ":org_sonatype_plexus-plexus-cipher-1_7_http_import",
@@ -7239,7 +7240,8 @@ jvm_import(
 
 jvm_import(
   name = "com_google_inject-guice-4_0-no_aop_http_import",
-  jar = "@com_google_inject-guice-4_0-no_aop_http//file"
+  jar = "@com_google_inject-guice-4_0-no_aop_http//file",
+  source_jar = "@com_google_inject-guice-4_0-no_aop_http//file"
 )
 
 jvm_import(
@@ -7321,7 +7323,7 @@ java_library(
     ":org_apache_maven_resolver-maven-resolver-spi-1_3_1_http_import",
     ":org_apache_maven_shared-maven-shared-utils-3_2_1_http_import",
     ":commons-io-commons-io-2_5_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http_import",
     ":javax_inject-javax_inject-1_http_import",
     ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
     ":org_apache_maven-maven-resolver-provider-3_6_0_http_import",
@@ -7332,7 +7334,7 @@ java_library(
     ":org_apache_maven_resolver-maven-resolver-impl-1_3_1_http_import",
     ":org_codehaus_plexus-plexus-utils-3_1_0_http_import",
     ":org_codehaus_plexus-plexus-interpolation-1_25_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-_plexus_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http_import",
     ":javax_enterprise-cdi-api-1_0_http_import",
     ":javax_annotation-jsr250-api-1_0_http_import",
     ":org_codehaus_plexus-plexus-component-annotations-1_7_1_http_import",
@@ -7371,10 +7373,10 @@ java_library(
     ":org_apache_maven_resolver-maven-resolver-util-1_3_1_http_import",
     ":org_apache_maven_shared-maven-shared-utils-3_2_1_http_import",
     ":commons-io-commons-io-2_5_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-_plexus_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http_import",
     ":javax_enterprise-cdi-api-1_0_http_import",
     ":javax_annotation-jsr250-api-1_0_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http_import",
     ":com_google_inject-guice-4_2_1-no_aop_http_import",
     ":aopalliance-aopalliance-1_0_http_import",
     ":com_google_guava-guava-25_1-android_http_import",
@@ -7394,7 +7396,8 @@ java_library(
 
 jvm_import(
   name = "com_google_inject-guice-4_2_1-no_aop_http_import",
-  jar = "@com_google_inject-guice-4_2_1-no_aop_http//file"
+  jar = "@com_google_inject-guice-4_2_1-no_aop_http//file",
+  source_jar = "@com_google_inject-guice-4_2_1-no_aop_http//file"
 )
 
 java_library(
@@ -7417,7 +7420,7 @@ java_library(
     ":org_apache_maven-maven-resolver-provider-3_6_0_http_import",
     ":org_apache_maven_resolver-maven-resolver-impl-1_3_1_http_import",
     ":org_apache_maven_resolver-maven-resolver-spi-1_3_1_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-_inject_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http_import",
     ":org_apache_maven-maven-plugin-api-3_6_0_http_import",
     ":org_apache_maven-maven-model-3_6_0_http_import",
     ":org_apache_maven-maven-model-builder-3_6_0_http_import",
@@ -7438,7 +7441,7 @@ java_library(
     ":javax_annotation-jsr250-api-1_0_http_import",
     ":org_codehaus_plexus-plexus-utils-3_1_0_http_import",
     ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-_plexus_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http_import",
     ":javax_enterprise-cdi-api-1_0_http_import",
     ":org_codehaus_plexus-plexus-component-annotations-1_7_1_http_import",
     ":org_sonatype_plexus-plexus-sec-dispatcher-1_4_http_import",
@@ -7555,7 +7558,7 @@ java_library(
     ":org_apache_maven-maven-model-builder-4_0_0-rc-4_http_import",
     ":org_codehaus_plexus-plexus-interpolation-1_28_http_import",
     ":org_apache_maven-maven-plugin-api-4_0_0-rc-4_http_import",
-    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4-_plexus_http_import",
+    ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4_http_import",
     ":org_apache_maven-maven-settings-4_0_0-rc-4_http_import",
     ":org_apache_maven-maven-settings-builder-4_0_0-rc-4_http_import",
     ":org_apache_maven-maven-toolchain-builder-4_0_0-rc-4_http_import",
@@ -7812,9 +7815,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4-_plexus_http_import",
-  jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4-_plexus_http//file",
-  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4-_plexus_http//file"
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4_http_import",
+  jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4_http//file",
+  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4_http//file"
 )
 
 jvm_import(
@@ -7928,8 +7931,8 @@ java_library(
 
 jvm_import(
   name = "maven-server-m40-org-eclipse-sisu-eclipse-sisu-inject-0-9-0-_m3",
-  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-_inject_http//file",
-  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-_inject_http//file",
+  jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3_http//file",
+  source_jar = "@org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -9600,15 +9603,15 @@ jvm_import(
 
 jvm_import(
   name = "settings_repository-eclipse-jgit-ssh-apache",
-  jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-_ssh_apache_http//file",
-  source_jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-_ssh_apache_http//file",
+  jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http//file",
+  source_jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "settings_repository-eclipse-jgit-ssh-apache-agent",
-  jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r-_ssh_apache_agent_http//file",
-  source_jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r-_ssh_apache_agent_http//file",
+  jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r_http//file",
+  source_jar = "@org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -10007,8 +10010,8 @@ jvm_import(
 
 jvm_import(
   name = "xtext-xbase",
-  jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0-_xbase_lib_http//file",
-  source_jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0-_xbase_lib_http//file",
+  jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0_http//file",
+  source_jar = "@org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0_http//file",
   visibility = ["//visibility:public"]
 )
 

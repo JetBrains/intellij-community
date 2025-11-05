@@ -112,42 +112,42 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0-_alg_layered_http",
+  name = "org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/elk/org.eclipse.elk.alg.layered/0.3.0/org.eclipse.elk.alg.layered-0.3.0.jar",
   sha256 = "08267d824581f81af8a196d4551decae1256a454e618409a363e3e1574b06520",
   downloaded_file_path = "org.eclipse.elk.alg.layered-0.3.0.jar"
 )
 
 http_file(
-  name = "org_eclipse_elk-org_eclipse_elk_core-0_3_0-_core_http",
+  name = "org_eclipse_elk-org_eclipse_elk_core-0_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/elk/org.eclipse.elk.core/0.3.0/org.eclipse.elk.core-0.3.0.jar",
   sha256 = "7ec333e41fb3924fb85f50c54b6aff0587c3b19935447f1c35c95e10752a7bdc",
   downloaded_file_path = "org.eclipse.elk.core-0.3.0.jar"
 )
 
 http_file(
-  name = "org_eclipse_elk-org_eclipse_elk_graph-0_3_0-_graph_http",
+  name = "org_eclipse_elk-org_eclipse_elk_graph-0_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/elk/org.eclipse.elk.graph/0.3.0/org.eclipse.elk.graph-0.3.0.jar",
   sha256 = "3d8d9bf2df6e72c8a2dfd42adf79e3b8b417cd76958b3912a7dd62dfef816ca3",
   downloaded_file_path = "org.eclipse.elk.graph-0.3.0.jar"
 )
 
 http_file(
-  name = "org_eclipse_emf-org_eclipse_emf_common-2_12_0-_common_http",
+  name = "org_eclipse_emf-org_eclipse_emf_common-2_12_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/emf/org.eclipse.emf.common/2.12.0/org.eclipse.emf.common-2.12.0.jar",
   sha256 = "80b9ddd0174bbc5623767ed9f4c96b17ae98ffaefb8edbcc780d59b0d7efef83",
   downloaded_file_path = "org.eclipse.emf.common-2.12.0.jar"
 )
 
 http_file(
-  name = "org_eclipse_emf-org_eclipse_emf_ecore-2_12_0-_ecore_http",
+  name = "org_eclipse_emf-org_eclipse_emf_ecore-2_12_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/emf/org.eclipse.emf.ecore/2.12.0/org.eclipse.emf.ecore-2.12.0.jar",
   sha256 = "2ac691cc4fa09fdf18beef6bdd457b7bdfe4d301f9707a8c89c6cb209139f4f9",
   downloaded_file_path = "org.eclipse.emf.ecore-2.12.0.jar"
 )
 
 http_file(
-  name = "org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0-_alg_common_compaction_http",
+  name = "org_eclipse_elk-org_eclipse_elk_alg_common_compaction-0_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/elk/org.eclipse.elk.alg.common.compaction/0.3.0/org.eclipse.elk.alg.common.compaction-0.3.0.jar",
   sha256 = "7b5a2c04f1c942af3d8b891a9a535e74cfa45b4151b7835c3e9f63e96ec0332f",
   downloaded_file_path = "org.eclipse.elk.alg.common.compaction-0.3.0.jar"
@@ -4550,14 +4550,14 @@ http_file(
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_ant-0_8_14-_ant_http",
+  name = "org_jacoco-org_jacoco_ant-0_8_14_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.14/org.jacoco.ant-0.8.14.jar",
   sha256 = "9fff68954d5de3aad2bf838eaf886ed67d2c22a2d6c6f095548bade8c45caeae",
   downloaded_file_path = "org.jacoco.ant-0.8.14.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_core-0_8_14-_core_http",
+  name = "org_jacoco-org_jacoco_core-0_8_14_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14.jar",
   sha256 = "28abbf0eea5a08e4f24097f2fbac663ca17c341c25c3a04d90d6cd325943c995",
   downloaded_file_path = "org.jacoco.core-0.8.14.jar"
@@ -4585,28 +4585,28 @@ http_file(
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_report-0_8_14-_report_http",
+  name = "org_jacoco-org_jacoco_report-0_8_14_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14.jar",
   sha256 = "a3e2026060ab8b8d5c650706406234bb4c033dfd5376afeb8b1666e8ed27c453",
   downloaded_file_path = "org.jacoco.report-0.8.14.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_agent-0_8_14-_agent_http",
+  name = "org_jacoco-org_jacoco_agent-0_8_14_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14.jar",
   sha256 = "20be9853385bdfc65a5929643412d09243d14514304b89ba23a265158cc8792b",
   downloaded_file_path = "org.jacoco.agent-0.8.14.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_ant-0_8_14-_ant-sources_http",
+  name = "org_jacoco-org_jacoco_ant-0_8_14-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.ant/0.8.14/org.jacoco.ant-0.8.14-sources.jar",
   sha256 = "c6a7e71b8b80a3f51d19153092cfb1ad3f5985c1653ff864710ff5b3e6bd27a6",
   downloaded_file_path = "org.jacoco.ant-0.8.14-sources.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_core-0_8_14-_core-sources_http",
+  name = "org_jacoco-org_jacoco_core-0_8_14-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.core/0.8.14/org.jacoco.core-0.8.14-sources.jar",
   sha256 = "1550fd5081ecd2c2ad053994c23d91a4cef6dcbed4c4dac95130e7d75fa9cd3c",
   downloaded_file_path = "org.jacoco.core-0.8.14-sources.jar"
@@ -4634,14 +4634,14 @@ http_file(
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_report-0_8_14-_report-sources_http",
+  name = "org_jacoco-org_jacoco_report-0_8_14-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.report/0.8.14/org.jacoco.report-0.8.14-sources.jar",
   sha256 = "80ac2fac212d6a4583b7f025dc7b602f384a9dfcdbccd0e9cb78c415e9f5ffc6",
   downloaded_file_path = "org.jacoco.report-0.8.14-sources.jar"
 )
 
 http_file(
-  name = "org_jacoco-org_jacoco_agent-0_8_14-_agent-sources_http",
+  name = "org_jacoco-org_jacoco_agent-0_8_14-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.14/org.jacoco.agent-0.8.14-sources.jar",
   sha256 = "8a643b749deb255d7a42c445c3053c9ec263e27103becdaaf88cedda44357255",
   downloaded_file_path = "org.jacoco.agent-0.8.14-sources.jar"
@@ -4795,14 +4795,14 @@ http_file(
 )
 
 http_file(
-  name = "javax_annotation-javax_annotation-api-1_3_2-api_http",
+  name = "javax_annotation-javax_annotation-api-1_3_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2.jar",
   sha256 = "e04ba5195bcd555dc95650f7cc614d151e4bcd52d29a10b8aa2197f3ab89ab9b",
   downloaded_file_path = "javax.annotation-api-1.3.2.jar"
 )
 
 http_file(
-  name = "javax_annotation-javax_annotation-api-1_3_2-api-sources_http",
+  name = "javax_annotation-javax_annotation-api-1_3_2-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.3.2/javax.annotation-api-1.3.2-sources.jar",
   sha256 = "128971e52e0d84a66e3b6e049dab8ad7b2c58b7e1ad37fa2debd3d40c2947b95",
   downloaded_file_path = "javax.annotation-api-1.3.2-sources.jar"
@@ -7238,14 +7238,14 @@ http_file(
 )
 
 http_file(
-  name = "cglib-cglib-nodep-3_3_0-nodep_http",
+  name = "cglib-cglib-nodep-3_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/cglib/cglib-nodep/3.3.0/cglib-nodep-3.3.0.jar",
   sha256 = "3366d2c88fb576e486d830f521184e8f1839f8c15dcd2151a3f6e1f62b0b37a0",
   downloaded_file_path = "cglib-nodep-3.3.0.jar"
 )
 
 http_file(
-  name = "cglib-cglib-nodep-3_3_0-nodep-sources_http",
+  name = "cglib-cglib-nodep-3_3_0-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/cglib/cglib-nodep/3.3.0/cglib-nodep-3.3.0-sources.jar",
   sha256 = "d7f1df1382ec3ad04cd2f982d99062ce2279a40c1506a14309cde6c8bea7081b",
   downloaded_file_path = "cglib-nodep-3.3.0-sources.jar"
@@ -8358,14 +8358,14 @@ http_file(
 )
 
 http_file(
-  name = "xerces-xercesImpl-2_12_2-Impl_http",
+  name = "xerces-xercesImpl-2_12_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xerces/xercesImpl/2.12.2/xercesImpl-2.12.2.jar",
   sha256 = "6fc991829af1708d15aea50c66f0beadcd2cfeb6968e0b2f55c1b0909883fe16",
   downloaded_file_path = "xercesImpl-2.12.2.jar"
 )
 
 http_file(
-  name = "xerces-xercesImpl-2_12_2-Impl-sources_http",
+  name = "xerces-xercesImpl-2_12_2-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/xerces/xercesImpl/2.12.2/xercesImpl-2.12.2-sources.jar",
   sha256 = "3c531edfc074e3e0885e5d4a777a9e7317e108028be50ef6e893a5a9cf3e12c2",
   downloaded_file_path = "xercesImpl-2.12.2-sources.jar"
@@ -8988,7 +8988,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-_inject_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.inject/0.9.0.M3/org.eclipse.sisu.inject-0.9.0.M3.jar",
   sha256 = "15335c4dcf082f599fb8eddcfb58d6a7e9a9c97de2883c257089a479b9b24522",
   downloaded_file_path = "org.eclipse.sisu.inject-0.9.0.M3.jar"
@@ -9079,7 +9079,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-_inject-sources_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_9_0_M3-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.inject/0.9.0.M3/org.eclipse.sisu.inject-0.9.0.M3-sources.jar",
   sha256 = "68df3b63392acf086ea869ae57638f7915e5b6cef05c2d2dd4220b96206b4211",
   downloaded_file_path = "org.eclipse.sisu.inject-0.9.0.M3-sources.jar"
@@ -9247,7 +9247,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-_plexus_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.plexus/0.3.2/org.eclipse.sisu.plexus-0.3.2.jar",
   sha256 = "f5cfe0d88e8276971db4ecff0e4186d5f2ec5fdb1b6bb8c2f359fdc4b43eb8b2",
   downloaded_file_path = "org.eclipse.sisu.plexus-0.3.2.jar"
@@ -9268,7 +9268,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-_inject_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.2/org.eclipse.sisu.inject-0.3.2.jar",
   sha256 = "66e87705a818da44eb080a7bb1fc431de987754b4f92aa85f69991bfc677d40d",
   downloaded_file_path = "org.eclipse.sisu.inject-0.3.2.jar"
@@ -9415,7 +9415,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-_plexus-sources_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.plexus/0.3.2/org.eclipse.sisu.plexus-0.3.2-sources.jar",
   sha256 = "d8091fc791e3027dd72e51f0dabcd387f27dba8fffa79511edea29f33213a8a8",
   downloaded_file_path = "org.eclipse.sisu.plexus-0.3.2-sources.jar"
@@ -9436,7 +9436,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-_inject-sources_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.2/org.eclipse.sisu.inject-0.3.2-sources.jar",
   sha256 = "739d7228920a97892b9c6b6e4d16799930e8d2439543e71fa7a7c849a39cc8a1",
   downloaded_file_path = "org.eclipse.sisu.inject-0.3.2-sources.jar"
@@ -9632,21 +9632,21 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5-_plexus_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.plexus/0.3.5/org.eclipse.sisu.plexus-0.3.5.jar",
   sha256 = "7e4c61096d70826f20f7a7d55c59a5528e7aa5ad247ee2dfe544e4dd25f6a784",
   downloaded_file_path = "org.eclipse.sisu.plexus-0.3.5.jar"
 )
 
 http_file(
-  name = "javax_annotation-javax_annotation-api-1_2-api_http",
+  name = "javax_annotation-javax_annotation-api-1_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.2/javax.annotation-api-1.2.jar",
   sha256 = "5909b396ca3a2be10d0eea32c74ef78d816e1b4ead21de1d78de1f890d033e04",
   downloaded_file_path = "javax.annotation-api-1.2.jar"
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5-_inject_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.5/org.eclipse.sisu.inject-0.3.5.jar",
   sha256 = "c5994010bcdce1d2bd603a4d50c47191ddbd7875d1157b23aaa26d33c82fda13",
   downloaded_file_path = "org.eclipse.sisu.inject-0.3.5.jar"
@@ -9870,21 +9870,21 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5-_plexus-sources_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_5-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.plexus/0.3.5/org.eclipse.sisu.plexus-0.3.5-sources.jar",
   sha256 = "a4e2859e47244ff97f5581e2ffd9abfe29d031971a91bdf15a968cf8aa903539",
   downloaded_file_path = "org.eclipse.sisu.plexus-0.3.5-sources.jar"
 )
 
 http_file(
-  name = "javax_annotation-javax_annotation-api-1_2-api-sources_http",
+  name = "javax_annotation-javax_annotation-api-1_2-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/annotation/javax.annotation-api/1.2/javax.annotation-api-1.2-sources.jar",
   sha256 = "8bd08333ac2c195e224cc4063a72f4aab3c980cf5e9fb694130fad41689689d0",
   downloaded_file_path = "javax.annotation-api-1.2-sources.jar"
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5-_inject-sources_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_5-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.5/org.eclipse.sisu.inject-0.3.5-sources.jar",
   sha256 = "d8877eabe79aafaf64fb10e94fad4b53ab89d587d48a935af276e45ea13427bc",
   downloaded_file_path = "org.eclipse.sisu.inject-0.3.5-sources.jar"
@@ -10353,7 +10353,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-_inject_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.3/org.eclipse.sisu.inject-0.3.3.jar",
   sha256 = "c6935e0b7d362ed4ca768c9b71d5d4d98788ff0a79c0d2bb954c221a078b166b",
   downloaded_file_path = "org.eclipse.sisu.inject-0.3.3.jar"
@@ -10416,7 +10416,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-_plexus_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.plexus/0.3.3/org.eclipse.sisu.plexus-0.3.3.jar",
   sha256 = "98045f5ecd802d6a96ba00394f8cb61259f9ac781ec2cb51ca0cb7b2c94ac720",
   downloaded_file_path = "org.eclipse.sisu.plexus-0.3.3.jar"
@@ -10528,7 +10528,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-_inject-sources_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.inject/0.3.3/org.eclipse.sisu.inject-0.3.3-sources.jar",
   sha256 = "1f4d2575cb004f3fbd8e687c5dfa42d7478e1cf98e0cafa6e22dd1304cdfc6d7",
   downloaded_file_path = "org.eclipse.sisu.inject-0.3.3-sources.jar"
@@ -10591,7 +10591,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-_plexus-sources_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.plexus/0.3.3/org.eclipse.sisu.plexus-0.3.3-sources.jar",
   sha256 = "349dd64dca9d0007d7037862759fd8f74c7a0a5de29cfa1cec1ae2fb25eaa49b",
   downloaded_file_path = "org.eclipse.sisu.plexus-0.3.3-sources.jar"
@@ -11081,7 +11081,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4-_plexus_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.plexus/0.9.0.M4/org.eclipse.sisu.plexus-0.9.0.M4.jar",
   sha256 = "b90579bc652eac7331436e0a25533fce14130b9c6e015f2dd3a3d4bb07e942b7",
   downloaded_file_path = "org.eclipse.sisu.plexus-0.9.0.M4.jar"
@@ -11473,7 +11473,7 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4-_plexus-sources_http",
+  name = "org_eclipse_sisu-org_eclipse_sisu_plexus-0_9_0_M4-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/sisu/org.eclipse.sisu.plexus/0.9.0.M4/org.eclipse.sisu.plexus-0.9.0.M4-sources.jar",
   sha256 = "cfec21fafbea8f5d1ad12fb60fb3e08aef2c43dcec893092c8188b7e3ef48387",
   downloaded_file_path = "org.eclipse.sisu.plexus-0.9.0.M4-sources.jar"
@@ -14238,28 +14238,28 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-_ssh_apache_http",
+  name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar",
   sha256 = "cc379265edb2b74850156c16fefd7990281bf47e33fe7665e838f8b5fdb94755",
   downloaded_file_path = "org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r.jar"
 )
 
 http_file(
-  name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-_ssh_apache-sources_http",
+  name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache-6_6_1_202309021850-r-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r-sources.jar",
   sha256 = "b84dd40c74729ab1db113f939b4b3cf9b05ae8ec3172e9b36de6136fd75a1ab3",
   downloaded_file_path = "org.eclipse.jgit.ssh.apache-6.6.1.202309021850-r-sources.jar"
 )
 
 http_file(
-  name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r-_ssh_apache_agent_http",
+  name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar",
   sha256 = "4ddd0cf1a7ece350b33f0a6b865e8fb777c30a2282a0fbd1754020a4e06af481",
   downloaded_file_path = "org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r.jar"
 )
 
 http_file(
-  name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r-_ssh_apache_agent-sources_http",
+  name = "org_eclipse_jgit-org_eclipse_jgit_ssh_apache_agent-6_6_1_202309021850-r-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.ssh.apache.agent/6.6.1.202309021850-r/org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r-sources.jar",
   sha256 = "998dc72ea9de378d3a4a9cd09f38b68e74fb1f802291153ae307fb95544af331",
   downloaded_file_path = "org.eclipse.jgit.ssh.apache.agent-6.6.1.202309021850-r-sources.jar"
@@ -14875,14 +14875,14 @@ http_file(
 )
 
 http_file(
-  name = "org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0-_xbase_lib_http",
+  name = "org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.40.0/org.eclipse.xtext.xbase.lib-2.40.0.jar",
   sha256 = "5a810154295fc20a0268cae4cbbc6e5a35a8b32480d8727dc8301910524e4b79",
   downloaded_file_path = "org.eclipse.xtext.xbase.lib-2.40.0.jar"
 )
 
 http_file(
-  name = "org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0-_xbase_lib-sources_http",
+  name = "org_eclipse_xtext-org_eclipse_xtext_xbase_lib-2_40_0-sources_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/xtext/org.eclipse.xtext.xbase.lib/2.40.0/org.eclipse.xtext.xbase.lib-2.40.0-sources.jar",
   sha256 = "02cb060d48ce04b31f210a5da11d81e435bf6f9d18ab1d070753d69f8a450958",
   downloaded_file_path = "org.eclipse.xtext.xbase.lib-2.40.0-sources.jar"

@@ -389,14 +389,48 @@ private fun getFileMavenFileDescription(m2Repo: Path, lib: JpsTypedLibrary<JpsSi
   val version = jarSubPath.getName(jarSubPath.nameCount - 2).toString()
   val artifactId = jarSubPath.getName(jarSubPath.nameCount - 3).toString()
 
-  val libraryDescriptor = lib.properties.data
-  for (verification in libraryDescriptor.artifactsVerification) {
-    if (JpsPathUtil.urlToNioPath(verification.url) == jar) {
-      return MavenFileDescription(groupId, artifactId, version, path = jar, sha256checksum = verification.sha256sum)
-    }
+  val classifier = jar.name
+    .removePrefixStrict("$artifactId-$version")
+    .removeSuffixStrict(".jar")
+    .removePrefix("-")
+    .ifEmpty { null }
+
+  val coordinates = MavenCoordinates(
+    groupId = groupId,
+    artifactId = artifactId,
+    version = version,
+    classifier = classifier,
+  )
+
+  val sha256sum = lib.properties.data.artifactsVerification
+    .firstOrNull { JpsPathUtil.urlToNioPath(it.url) == jar }
+    ?.sha256sum
+
+  return MavenFileDescription(mavenCoordinates = coordinates, path = jar, sha256checksum = sha256sum)
+}
+
+private fun String.removeSuffixStrict(suffix: String): String {
+  require(suffix.isNotEmpty()) {
+    "suffix must not be empty"
   }
 
-  return MavenFileDescription(groupId, artifactId, version, path = jar, sha256checksum = null)
+  val result = removeSuffix(suffix)
+  require(result != this) {
+    "String must end with $suffix: $this"
+  }
+  return result
+}
+
+private fun String.removePrefixStrict(prefix: String): String {
+  require(prefix.isNotEmpty()) {
+    "prefix must not be empty"
+  }
+
+  val result = removePrefix(prefix)
+  require(result != this) {
+    "String must start with $prefix: $this"
+  }
+  return result
 }
 
 private fun isTestFriend(
@@ -593,17 +627,6 @@ private fun needsBackwardCompatibleTestDependency(
     // See: https://youtrack.jetbrains.com/issue/IJI-2851/ (auto-add dependency on test target only for existing bad modules and forbid it for everything else).
     return true
   }
-}
-
-private fun addSuffix(s: BazelLabel, @Suppress("SameParameterValue") labelSuffix: String): BazelLabel {
-  val lastSlashIndex = s.label.lastIndexOf('/')
-  val labelWithSuffix = (if (s.label.indexOf(':', lastSlashIndex) == -1) {
-    s.label + ":" + s.label.substring(lastSlashIndex + 1)
-  }
-  else {
-    s.label
-  }) + labelSuffix
-  return s.copy(label = labelWithSuffix)
 }
 
 internal fun hasOnlyTestResources(moduleDescriptor: ModuleDescriptor): Boolean {
