@@ -9,6 +9,7 @@ import com.intellij.notebooks.visualization.ui.EditorCell
 import com.intellij.notebooks.visualization.ui.ProgressStatus
 import com.intellij.notebooks.visualization.ui.notebook
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareAction.SimpleDumbAwareAction
 
@@ -52,7 +53,7 @@ class EditorCellRunGutterController(
   override fun checkAndRebuildInlays() {}
 
   private fun updateGutterAction() {
-    //For markdown, it will set up in markdown component
+    //For Markdown, it will set up in a Markdown component
     if (cell.type == CellType.MARKDOWN)
       return
 
@@ -63,7 +64,10 @@ class EditorCellRunGutterController(
       return
     }
 
-    cell.gutterAction.set(newAction)
+    // This should be called on EDT only, because inside we are accessing EditorEx.xyToLogicalPosition().
+    runInEdt {
+      cell.gutterAction.set(newAction)
+    }
   }
 
   private fun calculateAction(): DumbAwareAction? {
