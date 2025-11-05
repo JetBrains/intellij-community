@@ -628,7 +628,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       throw failedError;
     }
     // the fix-me test passed -> the bug/feature was fixed!
-    fail("Test (" + comment + ") FIXED!");
+    fail("Test " + comment + " was previously failing and was suppressed, but now it passes");
   }
 }
 
