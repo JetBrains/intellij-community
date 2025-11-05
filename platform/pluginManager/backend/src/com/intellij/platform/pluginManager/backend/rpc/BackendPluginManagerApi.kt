@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.pluginManager.backend.rpc
 
+import com.intellij.ide.plugins.CustomPluginRepositoryService
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -101,6 +102,7 @@ class BackendPluginManagerApi : PluginManagerApi {
     val list = UpdateSettings.getInstance().storedPluginHosts
     list.clear()
     list.addAll(repositoryUrls)
+    CustomPluginRepositoryService.getInstance().clearCache()
   }
 
   override suspend fun loadDescriptorById(pluginId: PluginId): PluginDto? {
