@@ -236,10 +236,10 @@ private class TerminalEventDispatcher(
       "Terminal.MoveToolWindowTabRight",
       "Terminal.ClearBuffer",
       "Terminal.Find",
-      "Terminal.CommandCompletion.Gen2",
-      "Terminal.EnterCommandCompletion",
-      "Terminal.UpCommandCompletion",
-      "Terminal.DownCommandCompletion",
+      "Terminal.CommandCompletion.Invoke",
+      "Terminal.CommandCompletion.InsertSuggestion",
+      "Terminal.CommandCompletion.SelectSuggestionAbove",
+      "Terminal.CommandCompletion.SelectSuggestionBelow",
       "Terminal.InsertInlineCompletion",
     )
 

@@ -2,7 +2,7 @@ package com.intellij.settingsSync.core.git
 
 import com.intellij.settingsSync.core.git.table.SettingsHistoryTable
 import com.intellij.settingsSync.core.git.table.SettingsHistoryTableModel
-import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.ScrollPaneFactory
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.visible.VisiblePackRefresher
 import java.awt.BorderLayout
@@ -19,6 +19,6 @@ internal class SettingsHistoryPanel(logData: VcsLogData, refresher: VisiblePackR
     tableModel.bindTable(settingsHistoryTable)
 
     settingsHistoryTable.tableHeader.setUI(null)
-    add(JBScrollPane(settingsHistoryTable), BorderLayout.CENTER)
+    add(ScrollPaneFactory.createScrollPane(settingsHistoryTable, true), BorderLayout.CENTER)
   }
 }

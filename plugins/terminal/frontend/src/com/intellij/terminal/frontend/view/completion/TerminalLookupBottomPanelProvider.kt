@@ -126,7 +126,7 @@ internal class TerminalLookupBottomPanelProvider : LookupBottomPanelProvider {
   }
 
   private fun getInsertionShortcutText(): String? {
-    val actionId = "Terminal.EnterCommandCompletion"
+    val actionId = "Terminal.CommandCompletion.InsertSuggestion"
     val shortcuts = KeymapManager.getInstance().activeKeymap
       .getShortcuts(actionId)
       .mapNotNull { it as? KeyboardShortcut }

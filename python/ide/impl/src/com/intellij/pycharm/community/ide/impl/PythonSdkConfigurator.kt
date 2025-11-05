@@ -4,10 +4,13 @@ package com.intellij.pycharm.community.ide.impl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.getOrInitializeModule
@@ -20,6 +23,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -30,7 +34,6 @@ import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrLogException
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
@@ -39,7 +42,9 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setSdkUs
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.suppressTipAndInspectionsFor
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.impl.PySdkBundle
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -69,19 +74,28 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()?.isNotBlank() == true) {
       return
     }
+    /*
+     * We have an explicit SDK configuration for the welcome project, so we have to skip this configurator.
+     */
+    if (WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+      return
+    }
 
     val module = moduleRef.getOrInitializeModule(project, baseDir).also { thisLogger().debug { "Module: $it" } }
 
-    StartupManager.getInstance(project).runWhenProjectIsInitialized {
-      PyPackageCoroutine.launch(project) {
-        if (module.isDisposed) return@launch
-        val sdkInfos = findSuitableCreateSdkInfos(module)
-        withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), true) {
-          val lifetime = suppressTipAndInspectionsFor(module, "all suitable extensions")
-          lifetime.use { configureSdk(project, module, sdkInfos) }
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(object : Runnable, DumbAware {
+      override fun run() {
+        if (module.isDisposed) return
+        project.service<MyCoroutineScopeProvider>().coroutineScope.launch {
+          val sdkInfos = findSuitableCreateSdkInfos(module)
+          withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), true) {
+            val lifetime = suppressTipAndInspectionsFor(module, "all suitable extensions")
+            lifetime.use { configureSdk(project, module, sdkInfos) }
+          }
         }
       }
     }
+    )
   }
 
   private suspend fun findSuitableCreateSdkInfos(module: Module): List<CreateSdkInfo> = withContext(Dispatchers.Default) {
@@ -227,7 +241,8 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdkCreator == null) {
       return false
     }
-    return sdkCreator(true).getOrLogException(thisLogger()) != null
+    sdkCreator(true).getOrLogException(thisLogger())
+    return true
   }
 
   private suspend fun searchPreviousUsed(
@@ -262,3 +277,6 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     return ProjectRootManager.getInstance(ProjectManager.getInstance().defaultProject).projectSdk?.takeIf { it.sdkType is PythonSdkType }
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class MyCoroutineScopeProvider(private val project: Project, val coroutineScope: CoroutineScope)

@@ -620,6 +620,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblem.kt");
         }
 
+        @TestMetadata("mismatchPackageDirectoryFileLevelProblemDeclarations.kt")
+        public void testMismatchPackageDirectoryFileLevelProblemDeclarations() throws Exception {
+            runTest("testData/highlighterMetaInfo/mismatchPackageDirectoryFileLevelProblemDeclarations.kt");
+        }
+
         @TestMetadata("NamedArguments.kt")
         public void testNamedArguments() throws Exception {
             runTest("testData/highlighterMetaInfo/NamedArguments.kt");

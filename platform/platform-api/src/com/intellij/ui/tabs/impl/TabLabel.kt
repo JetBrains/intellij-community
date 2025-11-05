@@ -302,7 +302,8 @@ open class TabLabel @Internal constructor(
   protected fun paintFadeout(g: Graphics) {
     val g2d = g.create() as Graphics2D
     try {
-      val tabBg = effectiveBackground
+      val isTabOccupiesWholeHeight = IslandsPainterProvider.getInstance()?.isTabOccupiesWholeHeight() != false
+      val tabBg = if (isTabOccupiesWholeHeight) effectiveBackground else tabs.tabPainter.getBackgroundColor()
       val transparent = ColorUtil.withAlpha(tabBg, 0.0)
       val borderThickness = tabs.borderThickness
       val width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200))
@@ -318,8 +319,10 @@ open class TabLabel @Internal constructor(
       val contentRect = labelPlaceholder.bounds
       // Fadeout for right side before pin/close button (needed only in side placements and in squeezing layout)
       if (contentRect.width < labelPlaceholder.preferredSize.width + tabs.tabHGap) {
-        val rightRect = Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, rect.height - 2 * borderThickness)
-        paintGradientRect(g2d, rightRect, transparent, tabBg)
+        if (isTabOccupiesWholeHeight) { // Can be implemented later for isTabOccupiesWholeHeight
+          val rightRect = Rectangle(contentRect.x + contentRect.width - width, borderThickness, width, rect.height - 2 * borderThickness)
+          paintGradientRect(g2d, rightRect, transparent, tabBg)
+        }
       }
       else if (tabs.effectiveLayout.isScrollable && rect.width < preferredSize.width + tabs.tabHGap
       ) {

@@ -98,7 +98,7 @@
       "selectedBackground": "ToolWindowBackground",
       "hoverBackground": "#FFFFFF12",
       "separatorColor": "#FFFFFF16",
-      "foreground": "#6F737A"
+      "foreground": "#FFFFFF65"
     },
 
     "MainToolbar": {
@@ -112,7 +112,11 @@
       "background": "BackgroundLight",
       "borderColor": "BorderTransparent",
       "Breadcrumbs.foreground": "#9da0a8",
-      "Widget.foreground": "#9da0a8"
+      "Widget.foreground": "#9da0a8",
+      "Breadcrumbs.hoverBackground": "#FFFFFF18",
+      "Breadcrumbs.selectionBackground": "#FFFFFF18",
+      "Breadcrumbs.selectionInactiveBackground": "#FFFFFF18",
+      "Widget.hoverBackground": "#FFFFFF18"
     },
 
     "ToolWindow": {
@@ -133,6 +137,22 @@
         "borderColor": "BorderTransparent",
         "separatorColor": "Gray5"
       }
+    },
+
+    "StripeToolbar.Button": {
+      "size": "37,40",
+      "leftStripeIcon.padding": "5,5,5,2",
+      "rightStripeIcon.padding": "5,2,5,5",
+      "leftStripeIcon.padding.compact": "4,5,4,3",
+      "rightStripeIcon.padding.compact": "4,3,4,5",
+      "leftStripeIconWithName.padding": "4,6,4,2",
+      "rightStripeIconWithName.padding": "4,2,4,6",
+      "leftStripeIconWithName.padding.compact": "3,4,3,2",
+      "rightStripeIconWithName.padding.compact": "3,2,3,4",
+      "leftStripeTextOffset": 2,
+      "leftStripeTextOffset.compact": 0,
+      "rightStripeTextOffset": -2,
+      "rightStripeTextOffset.compact": 0
     },
 
     "EditorTabs": {
@@ -258,6 +278,7 @@
     "TextField.background": "InputBackground",
 
     "Component.borderColor": "ComponentBorder",
+    "Component.focusedBorderColor": "#212224",
 
     "ComboBox": {
       "background": "ComboboxBackground",
@@ -705,6 +726,19 @@
       "Island.borderColor": "#212326"
     },
 
-    "AlertDialog.background": "PopupBackground"
+    "AlertDialog.background": "PopupBackground",
+    
+    "Recap": {
+      "cardBackground": "#1E1F22",
+      "cardBorderColor": "#1E1F22",
+      "cardHeaderTitle": "#F0F1F2",
+      "cardHeaderSubtitle": "#B4B8BF",
+      "cardFooterForeground": "#CED0D6",
+      "chroniclesBackground": "#2B2D30",
+      "chroniclesBorderColor": "#2B2D30",
+      "chroniclesBackgroundHovered": "#393B40",
+      "chroniclesForeground": "#DFE1E5",
+      "chroniclesForegroundGreyed": "#868A91"
+    }
   }
 }

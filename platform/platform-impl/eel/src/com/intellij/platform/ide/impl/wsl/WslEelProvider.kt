@@ -4,21 +4,19 @@ package com.intellij.platform.ide.impl.wsl
 import com.intellij.execution.eel.MultiRoutingFileSystemUtils
 import com.intellij.execution.ijent.nio.IjentEphemeralRootAwareFileSystemProvider
 import com.intellij.execution.wsl.*
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
-import com.intellij.platform.eel.impl.fs.EelEarlyAccessChecker
+import com.intellij.platform.eel.impl.fs.telemetry.TracingFileSystemProvider
 import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend
 import com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
-import com.intellij.platform.eel.impl.fs.telemetry.TracingFileSystemProvider
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
@@ -75,14 +73,15 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
 
     val key = if (useNewFileSystem) wslRoot else distributionId
     return providersCache.computeIfAbsent(key) {
-      service<EelEarlyAccessChecker>().check(sanitizedPath)
-
       val ijentUri = URI("ijent", "wsl", "/$distributionId", null, null)
 
       val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
 
       try {
-        val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope, WslEelDescriptor(WSLDistribution(distributionId), wslRoot))
+        val descriptor = WslEelDescriptor(WSLDistribution(distributionId), wslRoot)
+        val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope, descriptor, checkIsIjentInitialized = {
+          WslIjentManager.getInstance().isIjentInitialized(descriptor)
+        })
         val fs = ijentFsProvider.newFileSystem(ijentUri, IjentNioFileSystemProvider.newFileSystemMap(ijentFs))
 
         coroutineScope.coroutineContext.job.invokeOnCompletion {

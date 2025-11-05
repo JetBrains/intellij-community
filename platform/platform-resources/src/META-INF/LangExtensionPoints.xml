@@ -463,6 +463,8 @@
 
     <extensionPoint name="defaultLiveTemplatesProvider" interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>
     <extensionPoint name="defaultLiveTemplates" beanClass="com.intellij.codeInsight.template.impl.DefaultLiveTemplateEP" dynamic="true"/>
+    <extensionPoint name="templateFilter" interface="com.intellij.codeInsight.template.TemplateFilter" dynamic="true"/>
+    <extensionPoint name="templateGroupHintProvider" interface="com.intellij.codeInsight.template.TemplateGroupHintProvider" dynamic="true"/>
     <extensionPoint name="codeInsight.implementMethod" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.LanguageCodeInsightActionHandler"/>
     </extensionPoint>
@@ -738,6 +740,9 @@
                     qualifiedName="com.intellij.microservices.endpointsSidePanelProvider" dynamic="true"/>
     <extensionPoint interface="com.intellij.microservices.endpoints.EndpointsProjectModel"
                     qualifiedName="com.intellij.microservices.endpointsProjectModel" dynamic="true"/>
+
+    <extensionPoint interface="com.intellij.util.gotoByName.FindActionSearchableOptionsFilter"
+                    qualifiedName="com.intellij.findActionSearchableOptionsFilter" dynamic="true"/>"
 
     <extensionPoint interface="com.intellij.microservices.url.UrlResolverFactory"
                     qualifiedName="com.intellij.microservices.urlResolverFactory" dynamic="true"/>

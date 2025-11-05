@@ -9,14 +9,22 @@ resourcegroup(
 
 jvm_library(
   name = "frontend",
+  module_name = "intellij.platform.ide.nonModalWelcomeScreen.frontend",
   visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   resources = [":frontend_resources"],
-  runtime_deps = [
+  deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/compose",
     "//platform/non-modal-welcome-screen",
-  ]
+    "//platform/analysis-api:analysis",
+    "//platform/util",
+    "//platform/lang-impl",
+    "//platform/core-ui",
+    "//platform/project/shared:project",
+    "//fleet/rpc",
+  ],
+  plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.frontend` end

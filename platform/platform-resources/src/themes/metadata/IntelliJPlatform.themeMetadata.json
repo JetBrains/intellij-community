@@ -1707,6 +1707,11 @@
       "since": "2023.1"
     },
     {
+      "key": "StatusBar.Widget.hoverInsets",
+      "description": "Insets of the hover area around status bar widgets",
+      "since": "2025.3"
+    },
+    {
       "key": "StripeToolbar.Button.size",
       "description": "Tool window stripe button size",
       "since": "2023.1"
@@ -1717,9 +1722,34 @@
       "since": "2023.1"
     },
     {
-      "key": "StripeToolbar.Button.iconPadding",
-      "description": "Tool window stripe button icon padding",
-      "since": "2023.1"
+      "key": "StripeToolbar.Button.leftStripeIcon.padding",
+      "description": "Tool window left stripe button icon padding",
+      "since": "2025.3"
+    },
+    {
+      "key": "StripeToolbar.Button.rightStripeIcon.padding",
+      "description": "Tool window right stripe button icon padding",
+      "since": "2025.3"
+    },
+    {
+      "key": "StripeToolbar.Button.leftStripeIconWithName.padding",
+      "description": "Tool window left stripe button icon padding with tool window names on",
+      "since": "2025.3"
+    },
+    {
+      "key": "StripeToolbar.Button.rightStripeIconWithName.padding",
+      "description": "Tool window right stripe button icon padding with tool window names on",
+      "since": "2025.3"
+    },
+    {
+      "key": "StripeToolbar.Button.leftStripeTextOffset",
+      "description": "The horizontal text offset for tool window names on the left stripe",
+      "since": "2025.3"
+    },
+    {
+      "key": "StripeToolbar.Button.rightStripeTextOffset",
+      "description": "The horizontal text offset for tool window names on the right stripe",
+      "since": "2025.3"
     },
     {
       "key": "List.hoverBackground",

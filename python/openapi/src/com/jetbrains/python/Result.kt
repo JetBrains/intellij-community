@@ -128,15 +128,18 @@ fun <SUCC, NEW_S, ERR> Result<SUCC, ERR>.mapResult(map: (SUCC) -> Result<NEW_S, 
     is Failure -> this
   }
 
-fun <T> Result<T, *>.orLogException(logger: Logger): T? =
+fun <T> Result<T, *>.orLogException(logger: Logger): T? = orLogExceptionImpl(logger, false)
+fun <T> Result<T, *>.orLogExceptionAsWarn(logger: Logger): T? = orLogExceptionImpl(logger, true)
+
+private fun <T> Result<T, *>.orLogExceptionImpl(logger: Logger, asWarn: Boolean): T? =
   when (val r = this) {
     is Failure -> {
       when (val err = r.error) {
         is Throwable -> {
-          logger.error(err)
+          if (asWarn) logger.warn(err) else logger.error(err)
         }
         else -> {
-          logger.error(err.toString())
+          if (asWarn) logger.warn(err.toString()) else logger.error(err.toString())
         }
       }
       null
@@ -177,6 +180,7 @@ inline fun <S, E, E2> Result<S, E>.mapError(code: (E) -> E2): Result<S, E2> =
 
 // aliases to drop-in replace for kotlin Result
 fun <S, E> Result<S, E>.getOrLogException(logger: Logger): S? = this.orLogException(logger)
+fun <S, E> Result<S, E>.getOrLogExceptionAsWarn(logger: Logger): S? = this.orLogExceptionAsWarn(logger)
 fun <S, E> Result<S, E>.getOrNull(): S? = this.successOrNull
 val <S, E> Result<S, E>.isFailure: Boolean get() = this is Failure
 val <S, E> Result<S, E>.isSuccess: Boolean get() = this is Success

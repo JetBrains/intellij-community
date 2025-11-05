@@ -236,6 +236,8 @@ internal class ShellProcessHolder(
   val ptyProcess: PtyProcess = eelProcess.convertToJavaProcess() as PtyProcess
   private val shellPid: EelApi.Pid = eelProcess.pid
 
+  val descriptor: EelDescriptor get() = eelApi.descriptor
+
   fun terminatePosixShell() {
     terminalApplicationScope().launch(Dispatchers.IO) {
       if (!ptyProcess.isAlive) {

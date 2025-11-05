@@ -1,10 +1,4 @@
-# load("@protobuf//bazel:java_proto_library.bzl", "java_proto_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-
-# java_proto_library(
-#     name = "worker_protocol_java_proto",
-#     deps = ["@bazel_worker_api//:worker_protocol_proto"],
-# )
 
 kt_jvm_library(
     name = "worker-framework",
@@ -15,47 +9,22 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        "//:jackson-core",
+        "//:jackson-core_import",
     ],
     deps = [
-        "//:annotations",
-        "//:kotlin-stdlib",
-        "//:kotlinx-coroutines-core",
-        "//:netty-buffer",
-        "//:netty-common",
-        "//:opentelemetry-api",
-        "//:opentelemetry-context",
-        "//:opentelemetry-exporter-logging-otlp",
-        "//:opentelemetry-exporter-otlp",
-        "//:opentelemetry-sdk",
-        "//:opentelemetry-sdk-common",
-        "//:opentelemetry-sdk-trace",
-        "//:opentelemetry-semconv",
-        "//:protobuf-java",
+        "//:annotations_import",
+        "//:kotlin-stdlib_import",
+        "//:kotlinx-coroutines-core_import",
+        "//:netty-buffer_import",
+        "//:netty-common_import",
+        "//:opentelemetry-api_import",
+        "//:opentelemetry-context_import",
+        "//:opentelemetry-exporter-logging-otlp_import",
+        "//:opentelemetry-exporter-otlp_import",
+        "//:opentelemetry-sdk-common_import",
+        "//:opentelemetry-sdk-trace_import",
+        "//:opentelemetry-sdk_import",
+        "//:opentelemetry-semconv_import",
+        "//:protobuf-java_import",
     ],
 )
-
-# kt_jvm_library(
-#     name = "worker_test_lib",
-#     srcs = ["WorkRequestHandlerTest.kt"],
-#     associates = [":worker-framework"],
-#     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
-#     runtime_deps = [
-#         "@junit_jupiter_engine//jar",
-#         "@junit_platform_commons//jar",
-#         "@junit_platform_engine//jar",
-#         "@junit_platform_launcher//jar",
-#         "@junit_platform_reporting//jar",
-#         "@opentest4j//jar",
-#     ],
-#     deps = [
-#         "@assertj//jar",
-#         "@junit_jupiter_api//jar",
-#     ],
-# )
-
-# java_junit5_test(
-#     name = "worker_test",
-#     test_class = "org.jetbrains.bazel.jvm.WorkRequestHandlerTest",
-#     runtime_deps = [":worker_test_lib"],
-# )

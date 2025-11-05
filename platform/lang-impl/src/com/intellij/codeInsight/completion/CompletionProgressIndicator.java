@@ -87,7 +87,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private final @NotNull Caret myCaret;
   private @Nullable CompletionParameters myParameters;
   private final @NotNull CodeCompletionHandlerBase handler;
-  private final @NotNull CompletionLookupArrangerImpl myArranger;
+  private @NotNull CompletionLookupArrangerImpl myArranger;
   private final @NotNull CompletionType myCompletionType;
   private final int myInvocationCount;
   private @NotNull OffsetsInFile myHostOffsets;
@@ -162,14 +162,14 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
    */
   private volatile int myUnfreezeAfterNItems = -1;
 
-  CompletionProgressIndicator(@NotNull Editor editor,
-                              @NotNull Caret caret,
-                              int invocationCount,
-                              @NotNull CodeCompletionHandlerBase handler,
-                              @NotNull OffsetMap offsetMap,
-                              @NotNull OffsetsInFile hostOffsets,
-                              boolean hasModifiers,
-                              @NotNull LookupImpl lookup) {
+  public CompletionProgressIndicator(@NotNull Editor editor,
+                                     @NotNull Caret caret,
+                                     int invocationCount,
+                                     @NotNull CodeCompletionHandlerBase handler,
+                                     @NotNull OffsetMap offsetMap,
+                                     @NotNull OffsetsInFile hostOffsets,
+                                     boolean hasModifiers,
+                                     @NotNull LookupImpl lookup) {
     myEditor = editor;
     myCaret = caret;
     this.handler = handler;
@@ -399,6 +399,13 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   @Override
   public void setParameters(@NotNull CompletionParameters parameters) {
     myParameters = parameters;
+  }
+
+  public void setLookupArranger(@NotNull CompletionLookupArrangerImpl arranger) {
+    myArranger = arranger;
+    lookup.setArranger(arranger);
+    // Refresh to update the presentableArranger in the lookup
+    lookup.refreshUi(true, false);
   }
 
   @Override

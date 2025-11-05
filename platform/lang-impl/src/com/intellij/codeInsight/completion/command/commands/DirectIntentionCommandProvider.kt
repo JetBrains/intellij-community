@@ -396,7 +396,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
               val suffix = "</html>"
               if (name.startsWith(prefix) && name.endsWith(suffix)) {
                 @Suppress("HardCodedStringLiteral")
-                name = name.substring(prefix.length, name.length - suffix.length)
+                name = name.replace(Regex("<[^>]+>"), "")
               }
               val command = DirectErrorFixCompletionCommand(presentableName = name,
                                                             priority = 100,

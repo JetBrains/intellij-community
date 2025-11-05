@@ -292,7 +292,11 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   private static @Nullable Span startProcessSpan(@Nullable ProgressIndicator progress) {
     String progressText = getProgressIndicatorText(progress);
-    return progressManagerTracer.spanBuilder("Progress: " + progressText, TracerLevel.DEFAULT).startSpan();
+    if (progressText != null) {
+      return progressManagerTracer.spanBuilder("Progress: " + progressText, TracerLevel.DEFAULT).startSpan();
+    } else {
+      return null;
+    }
   }
 
   private static void assertNoOtherThreadUnder(@NotNull ProgressIndicator progress) {

@@ -16,6 +16,7 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnvFromFilePanel
+import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -23,7 +24,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onSuccess
 import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlSdkUtils
@@ -37,6 +37,7 @@ import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
+import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.findAmongRoots
@@ -78,10 +79,16 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
     }
     val canManage = condaPath != null
     val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
+    val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     when {
-      canManage && checkExistence && getCondaEnvIdentity(module, condaPath.path) != null -> EnvCheckerResult.EnvFound("", intentionName)
-      canManage -> EnvCheckerResult.EnvNotFound(intentionName)
+      canManage && checkExistence -> {
+        getCondaEnvIdentity(module, condaPath.path)?.let { env ->
+          val binaryToExec = BinOnEel(Path.of(condaPath.path))
+          CondaExecutor.getPythonInfo(binaryToExec, env).findEnvOrNull(intentionName)
+        } ?: envNotFound
+      }
+      canManage -> envNotFound
       else -> EnvCheckerResult.CannotConfigure
     }
   }

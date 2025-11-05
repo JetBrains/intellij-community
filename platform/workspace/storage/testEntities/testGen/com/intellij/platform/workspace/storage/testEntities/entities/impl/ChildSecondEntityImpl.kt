@@ -1,16 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -23,7 +21,9 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildAbstractBaseEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.ChildSecondEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ChildSecondEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentAbEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentAbEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -31,9 +31,9 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentAbEnt
 internal class ChildSecondEntityImpl(private val dataSource: ChildSecondEntityData) : ChildSecondEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ParentAbEntity::class.java, ChildAbstractBaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false
-    )
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentAbEntity::class.java,
+                                                                                ChildAbstractBaseEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -67,8 +67,8 @@ internal class ChildSecondEntityImpl(private val dataSource: ChildSecondEntityDa
   }
 
 
-  internal class Builder(result: ChildSecondEntityData?) : ModifiableWorkspaceEntityBase<ChildSecondEntity, ChildSecondEntityData>(result),
-                                                           ChildSecondEntity.Builder {
+  internal class Builder(result: ChildSecondEntityData?) : ModifiableWorkspaceEntityBase<ChildSecondEntity, ChildSecondEntityData>(
+    result), ChildSecondEntityBuilder {
     internal constructor() : this(ChildSecondEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -148,16 +148,16 @@ internal class ChildSecondEntityImpl(private val dataSource: ChildSecondEntityDa
         changedProperty.add("commonData")
       }
 
-    override var parentEntity: ParentAbEntity.Builder
+    override var parentEntity: ParentAbEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ParentAbEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentAbEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID, this) as? ParentAbEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentAbEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentAbEntity.Builder
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentAbEntityBuilder
         }
       }
       set(value) {
@@ -208,7 +208,7 @@ internal class ChildSecondEntityData : WorkspaceEntityData<ChildSecondEntity>() 
   internal fun isCommonDataInitialized(): Boolean = ::commonData.isInitialized
   internal fun isSecondDataInitialized(): Boolean = ::secondData.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ChildSecondEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ChildSecondEntity> {
     val modifiable = ChildSecondEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -228,17 +228,16 @@ internal class ChildSecondEntityData : WorkspaceEntityData<ChildSecondEntity>() 
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSecondEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSecondEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ChildSecondEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ChildSecondEntity(commonData, secondData, entitySource) {
-      parents.filterIsInstance<ParentAbEntity.Builder>().singleOrNull()?.let { this.parentEntity = it }
+      parents.filterIsInstance<ParentAbEntityBuilder>().singleOrNull()?.let { this.parentEntity = it }
     }
   }
 

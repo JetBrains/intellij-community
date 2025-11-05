@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.errorProcessing.PyResult
@@ -54,7 +55,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   else {
     null
   }
-
 
 
   @ApiStatus.Internal
@@ -228,7 +228,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   @ApiStatus.Internal
   open suspend fun extractDependencies(): PyResult<List<PythonPackage>>? = null
 
-    @ApiStatus.Internal
+  @ApiStatus.Internal
   suspend fun waitForInit() {
     initializationJob?.join()
     if (shouldBeInitInstantly()) {
@@ -256,18 +256,18 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
   private fun shouldBeInitInstantly(): Boolean = ApplicationManager.getApplication().isUnitTestMode
 
   companion object {
+    @RequiresBackgroundThread
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
-      val manager = pythonPackageManagerService.forSdk(project, sdk)
+      return runBlockingMaybeCancellable {
+        val manager = pythonPackageManagerService.forSdk(project, sdk)
 
-
-      if (manager.shouldBeInitInstantly()) {
-        runBlockingMaybeCancellable {
+        if (manager.shouldBeInitInstantly()) {
           manager.initInstalledPackages()
         }
-      }
 
-      return manager
+        manager
+      }
     }
 
     @Topic.AppLevel
@@ -277,7 +277,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) : Dispos
     @ApiStatus.Internal
     data class PackageManagerErrorMessage(
       @param:Nls val descriptionMessage: String,
-      @param:Nls val fixCommandMessage: String
+      @param:Nls val fixCommandMessage: String,
     )
   }
 }

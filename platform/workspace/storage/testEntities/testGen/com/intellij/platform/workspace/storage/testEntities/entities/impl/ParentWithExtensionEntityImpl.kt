@@ -1,16 +1,14 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -18,12 +16,13 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithExtensionEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ParentWithExtensionEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ParentWithExtensionEntityImpl(private val dataSource: ParentWithExtensionEntityData) : ParentWithExtensionEntity,
-                                                                                                      WorkspaceEntityBase(dataSource) {
+internal class ParentWithExtensionEntityImpl(private val dataSource: ParentWithExtensionEntityData) : ParentWithExtensionEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -50,8 +49,8 @@ internal class ParentWithExtensionEntityImpl(private val dataSource: ParentWithE
   }
 
 
-  internal class Builder(result: ParentWithExtensionEntityData?) :
-    ModifiableWorkspaceEntityBase<ParentWithExtensionEntity, ParentWithExtensionEntityData>(result), ParentWithExtensionEntity.Builder {
+  internal class Builder(result: ParentWithExtensionEntityData?) : ModifiableWorkspaceEntityBase<ParentWithExtensionEntity, ParentWithExtensionEntityData>(
+    result), ParentWithExtensionEntityBuilder {
     internal constructor() : this(ParentWithExtensionEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -127,7 +126,7 @@ internal class ParentWithExtensionEntityData : WorkspaceEntityData<ParentWithExt
 
   internal fun isDataInitialized(): Boolean = ::data.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ParentWithExtensionEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ParentWithExtensionEntity> {
     val modifiable = ParentWithExtensionEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -147,15 +146,14 @@ internal class ParentWithExtensionEntityData : WorkspaceEntityData<ParentWithExt
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ParentWithExtensionEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ParentWithExtensionEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ParentWithExtensionEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ParentWithExtensionEntity(data, entitySource) {
     }
   }

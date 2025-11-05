@@ -125,6 +125,7 @@
     <registryKey key="grazie.skip.precommit.checks"
                  defaultValue="true"
                  description="Controls whether expensive linguistic checks should be performed during pre-commit code analysis"/>
+    <registryKey key="grazie.show.gpl.warning" defaultValue="false" description="Whether to show warning for GPL licensed languages"/>
 
     <!-- Order matters here, please do not change it until it's on purpose -->
     <grazie.textChecker implementation="com.intellij.grazie.text.AsyncTreeRuleChecker$Grammar" id="treeRules"/>

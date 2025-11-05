@@ -44,7 +44,7 @@ import org.jetbrains.jewel.foundation.lazy.tree.KeyActions
 import org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions
 
 @Composable
-@Deprecated("Use SelectableLazyColumn with 'interactionSource' parameter instead")
+@Deprecated("Use SelectableLazyColumn with 'interactionSource' parameter instead", level = DeprecationLevel.HIDDEN)
 public fun SelectableLazyColumn(
     modifier: Modifier = Modifier,
     selectionMode: SelectionMode = SelectionMode.Multiple,

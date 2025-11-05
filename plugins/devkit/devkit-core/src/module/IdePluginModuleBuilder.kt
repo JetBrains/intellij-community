@@ -47,6 +47,8 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
   override fun getTestFrameworks(): List<StarterTestRunner> = emptyList()
   override fun getMinJavaVersion(): JavaVersion = LanguageLevel.JDK_21.toJavaVersion()
 
+  override fun isExampleCodeProvided(): Boolean = true
+
   override fun getLanguages(): List<StarterLanguage> {
     return listOf(KOTLIN_STARTER_LANGUAGE) // Java and Kotlin both are available out of the box
   }
@@ -136,6 +138,20 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
       assets.add(GeneratorResourceFile(".run/Run IDE with Plugin.run.xml",
                                        javaClass.getResource("/assets/devkit-Run_IDE_with_Plugin_run.xml")!!))
+
+      if (starterContext.includeExamples) {
+        val template = if (starterContext.libraryIds.contains("compose"))
+          DevKitFileTemplatesFactory.TOOLWINDOW_COMPOSE_EXAMPLE_KT
+        else
+          DevKitFileTemplatesFactory.TOOLWINDOW_EXAMPLE_KT
+
+        assets.add(GeneratorTemplateFile("src/main/kotlin/${packagePath}/MyToolWindow.kt", ftManager.getJ2eeTemplate(template)))
+
+        assets.add(GeneratorTemplateFile("src/main/resources/messages/MyMessageBundle.properties",
+                                         ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.MESSAGE_BUNDLE_EXAMPLE_PROPERTIES)))
+        assets.add(GeneratorTemplateFile("src/main/kotlin/${packagePath}/MyMessageBundle.kt",
+                                         ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.MESSAGE_BUNDLE_EXAMPLE_KT)))
+      }
     }
     else {
       assets.add(GeneratorResourceFile(".gitignore", javaClass.getResource("/assets/devkit-theme.gitignore.txt")!!))
@@ -174,7 +190,8 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
   override fun getGeneratorContextProperties(sdk: Sdk?, dependencyConfig: DependencyConfig): Map<String, String> {
     return mapOf(
       "pluginTitle" to Strings.capitalize(starterContext.artifact),
-      "themeName" to sanitizeThemeFilename(starterContext.artifact)
+      "themeName" to sanitizeThemeFilename(starterContext.artifact),
+      "includeExamples" to starterContext.includeExamples.toString()
     )
   }
 

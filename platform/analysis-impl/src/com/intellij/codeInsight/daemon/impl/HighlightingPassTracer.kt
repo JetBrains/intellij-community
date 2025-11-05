@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 object HighlightingPassTracer {
   @JvmField
-  val HIGHLIGHTING_PASS_TRACER: IJTracer = TelemetryManager.getTracer(Scope("HighlightingPasses"))
+  val HIGHLIGHTING_PASS_TRACER: IJTracer = TelemetryManager.getTracer(Scope("HighlightingPasses", verbose = true))
   @JvmField
   val FILE_ATTR_SPAN_KEY: AttributeKey<String> = AttributeKey.stringKey("file")
   @JvmField

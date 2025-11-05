@@ -109,6 +109,12 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getIntType());
       }
+      else if ("enum.StrEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
+        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
+      }
+      else if ((PyNames.TYPE_ENUM_FLAG + ".value").equals(name)&& anchor instanceof PyReferenceExpression) {
+        return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getIntType());
+      }
       else if ((PyNames.TYPE_ENUM + ".value").equals(name) &&
                anchor instanceof PyReferenceExpression anchorExpr && context.maySwitchToAST(anchor)) {
         final PyExpression qualifier = anchorExpr.getQualifier();
@@ -118,16 +124,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
           if (enumType != null) {
             PyClass enumClass = enumType.getPyClass();
             if (isCustomEnum(enumClass, context)) {
-              PyTargetExpression firstEnumItem = ContainerUtil.getFirstItem(enumClass.getClassAttributes());
-              if (firstEnumItem != null) {
-                EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, firstEnumItem, context);
-                if (attributeInfo != null) {
-                  return Ref.create(attributeInfo.assignedValueType);
-                }
-              }
-              else {
-                return Ref.create();
-              }
+              return Ref.create(getEnumValueType(enumClass, context));
             }
           }
         }
@@ -345,6 +342,47 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
         return new PyCallableTypeImpl(Collections.emptyList(), classType.toInstance());
       }
     }
+    return null;
+  }
+
+  // Handle IntEnum/IntFlag, StrEnum, and fall back to assigned type or unknown
+  private static @Nullable PyType getEnumValueType(@NotNull PyClass enumClass, @NotNull TypeEvalContext context) {
+    PyBuiltinCache cache = PyBuiltinCache.getInstance(enumClass);
+
+    if (enumClass.isSubclass("enum.IntEnum", context) ||
+        enumClass.isSubclass("enum.IntFlag", context) ||
+        enumClass.isSubclass("enum.Flag", context)) {
+      return cache.getIntType();
+    }
+    if (enumClass.isSubclass("enum.StrEnum", context)) {
+      return cache.getStrType();
+    }
+
+    // If it's a mixin with basic scalar types - check str first for the failing test
+    if (enumClass.isSubclass("builtins.str", context) || enumClass.isSubclass("str", context)) {
+      return cache.getStrType();
+    }
+    if (enumClass.isSubclass("builtins.int", context) || enumClass.isSubclass("int", context)) {
+      return cache.getIntType();
+    }
+    if (enumClass.isSubclass("builtins.bytes", context) || enumClass.isSubclass("bytes", context)) {
+      return cache.getBytesType(LanguageLevel.forElement(enumClass));
+    }
+    if (enumClass.isSubclass("builtins.float", context) || enumClass.isSubclass("float", context)) {
+      return cache.getFloatType();
+    }
+    if (enumClass.isSubclass("builtins.bool", context) || enumClass.isSubclass("bool", context)) {
+      return cache.getBoolType();
+    }
+
+    // Fallback: Infer from first MEMBER's assigned value (not non-members like helpers/descriptors)
+    for (PyTargetExpression targetExpr : enumClass.getClassAttributes()) {
+      EnumAttributeInfo attributeInfo = getEnumAttributeInfo(enumClass, targetExpr, context);
+      if (attributeInfo != null && attributeInfo.attributeKind == EnumAttributeKind.MEMBER) {
+        return attributeInfo.assignedValueType;
+      }
+    }
+
     return null;
   }
 

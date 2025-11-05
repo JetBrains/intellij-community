@@ -98,6 +98,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
       TYPED,
       ESCAPE_PRESSED,
       BACKSPACE_PRESSED,
+      @Deprecated("Not used anymore")
       KEY_PRESSED,
       INVALIDATED,
       MOUSE_PRESSED,

@@ -18,10 +18,14 @@ import org.commonmark.renderer.text.TextContentRenderer
 import org.commonmark.renderer.text.TextContentRenderer.TextContentRendererExtension
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 import org.jetbrains.jewel.markdown.extensions.MarkdownBlockProcessorExtension
+import org.jetbrains.jewel.markdown.extensions.MarkdownHtmlConverterExtension
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
+import org.jetbrains.jewel.markdown.processing.html.HtmlElementConverter
+import org.jetbrains.jewel.markdown.processing.html.MarkdownHtmlNode
 import org.jetbrains.jewel.markdown.processing.readInlineMarkdown
 
 /**
@@ -37,6 +41,8 @@ public object GitHubTableProcessorExtension : MarkdownProcessorExtension {
     override val textRendererExtension: TextContentRendererExtension = GitHubTablesCommonMarkExtension
 
     override val blockProcessorExtension: MarkdownBlockProcessorExtension = GitHubTablesProcessorExtension
+
+    override val htmlConverterExtension: MarkdownHtmlConverterExtension = GitHubTablesHtmlConverterExtension
 
     private object GitHubTablesProcessorExtension : MarkdownBlockProcessorExtension {
         override fun canProcess(block: CustomBlock): Boolean = block is CommonMarkTableBlock
@@ -124,5 +130,54 @@ private object GitHubTablesCommonMarkExtension : ParserExtension, TextContentRen
 
     override fun extend(rendererBuilder: TextContentRenderer.Builder) {
         rendererBuilder.extensions(listOf(TablesExtension.create()))
+    }
+}
+
+private object GitHubTablesHtmlConverterExtension : MarkdownHtmlConverterExtension {
+    override val supportedTags: Set<String>
+        get() = setOf("table")
+
+    override fun provideConverter(tagName: String): HtmlElementConverter = GitHubTableHtmlElementConverter
+
+    private object GitHubTableHtmlElementConverter : HtmlElementConverter {
+        override fun convert(
+            htmlElement: MarkdownHtmlNode.Element,
+            convertChildren: MarkdownHtmlNode.Element.() -> List<MarkdownBlock>,
+            convertInlines: (List<MarkdownHtmlNode>) -> List<InlineMarkdown>,
+        ): MarkdownBlock? {
+            val tbody =
+                htmlElement.children.filterIsInstance<MarkdownHtmlNode.Element>().find { it.tag == "tbody" }
+                    ?: return null
+            val htmlRows = tbody.children.filterIsInstance<MarkdownHtmlNode.Element>().filter { it.tag == "tr" }
+            if (htmlRows.isEmpty()) return null
+            val markdownRows: List<MutableList<TableCell>> = buildList {
+                for (i in 0..htmlRows.lastIndex) {
+                    add(
+                        htmlRows[i]
+                            .rowElements()
+                            .mapIndexed { index, rowCell ->
+                                val inlines = convertInlines(rowCell.children)
+                                if (inlines.isEmpty()) return@mapIndexed TableCell(i, index, emptyList(), null)
+                                TableCell(rowIndex = i, columnIndex = index, content = inlines, alignment = null)
+                            }
+                            .toMutableList()
+                    )
+                }
+            }
+            val maxColumns = markdownRows.maxOf { it.size }
+            for ((rowIndex, row) in markdownRows.withIndex()) {
+                for (columnIndex in row.size until maxColumns) {
+                    row.add(TableCell(rowIndex, columnIndex, emptyList(), null))
+                }
+            }
+            val header = TableHeader(markdownRows.first())
+            val rows = markdownRows.drop(1).mapIndexed(::TableRow)
+            return TableBlock(header, rows)
+        }
+
+        // html allows mixing header (<th>) and row (<td>) elements deliberately,
+        // so each of them can be used in any row
+        private fun MarkdownHtmlNode.Element.rowElements(): List<MarkdownHtmlNode.Element> =
+            children.filterIsInstance<MarkdownHtmlNode.Element>().filter { it.tag == "td" || it.tag == "th" }
     }
 }

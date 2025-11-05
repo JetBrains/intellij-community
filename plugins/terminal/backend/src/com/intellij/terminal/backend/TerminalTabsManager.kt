@@ -5,21 +5,29 @@ import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.asSafely
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.terminal.LocalTerminalTtyConnector
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.reworked.session.TerminalSessionTab
 import org.jetbrains.plugins.terminal.session.impl.TerminalCloseEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.pathString
 
 @OptIn(AwaitCancellationAndInvoke::class)
 @Service(Service.Level.PROJECT)
@@ -82,14 +90,16 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       )
 
       val updatedTab = tab.copy(
-        shellCommand = options.shellCommand,
+        shellCommand = result.configuredOptions.initialShellCommand?.command ?: options.shellCommand,
         workingDirectory = result.configuredOptions.workingDirectory,
         sessionId = result.sessionId,
         portForwardingId = portForwardingId,
       )
       tabs[tabId] = updatedTab
 
-      trackWorkingDirectory(updatedTab, scope.childScope("Working directory tracking"))
+      // to be replaced with another way of getting EelDescriptor
+      val eelDescriptor = result.ttyConnector.connector.asSafely<LocalTerminalTtyConnector>()?.eelDescriptor
+      trackWorkingDirectory(updatedTab, eelDescriptor, scope.childScope("Working directory tracking"))
 
       scope.awaitCancellationAndInvoke {
         updateTabsAndStore { tabs ->
@@ -143,7 +153,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
    * So, the working directory is persisted in the [TerminalTabsStorage]
    * and can be used to start the new session on the next IDE launch.
    */
-  private fun trackWorkingDirectory(tab: TerminalSessionTab, coroutineScope: CoroutineScope) {
+  private fun trackWorkingDirectory(tab: TerminalSessionTab, eelDescriptor: EelDescriptor?, coroutineScope: CoroutineScope) {
     val sessionId = tab.sessionId ?: error("This method should be called only for tabs with started sessions: $tab")
     val session = TerminalSessionsManager.getInstance().getSession(sessionId) ?: error("No session for tab $tab")
 
@@ -153,15 +163,39 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       var currentDirectory: String? = tab.workingDirectory
       outputFlow.collect { events ->
         for (event in events) {
-          if (event is TerminalStateChangedEvent && event.state.currentDirectory != currentDirectory) {
-            currentDirectory = event.state.currentDirectory
-            updateTabsAndStore { tabs ->
-              val updatedTab = tabs[tab.id]?.copy(workingDirectory = currentDirectory) ?: return@updateTabsAndStore
-              tabs[tab.id] = updatedTab
+          if (event is TerminalStateChangedEvent) {
+            val newCurrentDirectory = convertRemoteDirectoryToHost(event.state.currentDirectory, eelDescriptor)
+            if (newCurrentDirectory != currentDirectory) {
+              currentDirectory = newCurrentDirectory
+              updateTabsAndStore { tabs ->
+                val updatedTab = tabs[tab.id]?.copy(workingDirectory = newCurrentDirectory) ?: return@updateTabsAndStore
+                tabs[tab.id] = updatedTab
+              }
             }
           }
         }
       }
+    }
+  }
+
+  private fun convertRemoteDirectoryToHost(remotePath: String, descriptor: EelDescriptor?): String {
+    if (descriptor == null) return remotePath
+    val eelPath: EelPath = try {
+      EelPath.parse(remotePath, descriptor)
+    }
+    catch (e: EelPathException) {
+      LOG.debug(e) {
+        "Failed to convert remote path ($remotePath) to host: descriptor=$descriptor"
+      }
+      return remotePath
+    }
+    return try {
+      eelPath.asNioPath().pathString
+    }
+    catch (e: IllegalArgumentException) {
+      LOG.info("Failed to convert remote path ($remotePath) to host: " +
+               "EelPath($eelPath) -> Nio conversion failed, descriptor=$descriptor", e)
+      remotePath
     }
   }
 

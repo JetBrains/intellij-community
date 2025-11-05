@@ -24,6 +24,7 @@ jvm_library(
     "//platform/eel-impl",
     "//platform/ijent",
     "//platform/eel-provider",
+    "//platform/core-impl",
   ]
 )
 ### auto-generated section `build intellij.platform.ijent.community.impl` end

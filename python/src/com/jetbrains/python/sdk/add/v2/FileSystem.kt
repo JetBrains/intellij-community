@@ -10,9 +10,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.where
 import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
@@ -25,6 +23,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrLogException
+import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
@@ -187,9 +186,7 @@ sealed interface FileSystem<P : PathHolder> {
       return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
     }
 
-    override suspend fun which(cmd: String): PathHolder.Eel? {
-      return eelApi.exec.where(cmd)?.asNioPath()?.let { PathHolder.Eel(it) }
-    }
+    override suspend fun which(cmd: String): PathHolder.Eel? = detectTool(cmd, eelApi).mapSuccess { PathHolder.Eel(it) }.successOrNull
   }
 
   data class Target(
@@ -327,6 +324,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
   val allValidSdks = PythonSdkUtil
     .getAllSdks()
     .filter { sdk ->
+      if (sdk.isCondaVirtualEnv) return@filter false
       if (sdk.targetAdditionalData != null) return@filter false
 
       try {

@@ -12,7 +12,13 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":compose-runtime-desktop_resources"],
-  exports = ["@lib//:libraries-compose-runtime-desktop-compose-runtime-desktop"],
-  runtime_deps = ["@lib//:libraries-compose-runtime-desktop-compose-runtime-desktop"]
+  exports = [
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+  ],
+  runtime_deps = [
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+  ]
 )
 ### auto-generated section `build intellij.libraries.compose.runtime.desktop` end

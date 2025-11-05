@@ -24,7 +24,6 @@ jvm_library(
     "//platform/lang-impl",
     "//plugins/IntelliLang:langInjection",
     "//platform/projectModel-api:projectModel",
-    "//platform/backend",
     "@lib//:kotlin-stdlib",
     ":xml_langInjection_provided",
   ]

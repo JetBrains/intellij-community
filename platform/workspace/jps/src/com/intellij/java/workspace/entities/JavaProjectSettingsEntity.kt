@@ -2,6 +2,7 @@
 package com.intellij.java.workspace.entities
 
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntityBuilder
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -16,41 +17,46 @@ interface JavaProjectSettingsEntity : WorkspaceEntity {
   val languageLevelDefault: Boolean?
 
   //region generated code
-  @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<JavaProjectSettingsEntity> {
-    override var entitySource: EntitySource
-    var projectSettings: ProjectSettingsEntity.Builder
-    var compilerOutput: VirtualFileUrl?
-    var languageLevelId: String?
-    var languageLevelDefault: Boolean?
+  @Deprecated(message = "Use JavaProjectSettingsEntityBuilder instead")
+  interface Builder : JavaProjectSettingsEntityBuilder {
+    @Deprecated(message = "Use new API instead")
+    fun getProjectSettings(): ProjectSettingsEntity.Builder = projectSettings as ProjectSettingsEntity.Builder
+
+    @Deprecated(message = "Use new API instead")
+    fun setProjectSettings(value: ProjectSettingsEntity.Builder) {
+      projectSettings = value
+    }
   }
 
   companion object : EntityType<JavaProjectSettingsEntity, Builder>() {
+    @Deprecated(message = "Use new API instead")
     @JvmOverloads
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
-    ): Builder {
-      val builder = builder()
-      builder.entitySource = entitySource
-      init?.invoke(builder)
-      return builder
-    }
+    ): Builder = JavaProjectSettingsEntityType.compatibilityInvoke(entitySource, init)
   }
   //endregion
 
 }
 
 //region generated code
+@Deprecated(message = "Use new API instead")
 fun MutableEntityStorage.modifyJavaProjectSettingsEntity(
   entity: JavaProjectSettingsEntity,
   modification: JavaProjectSettingsEntity.Builder.() -> Unit,
-): JavaProjectSettingsEntity = modifyEntity(JavaProjectSettingsEntity.Builder::class.java, entity, modification)
+): JavaProjectSettingsEntity {
+  return modifyEntity(JavaProjectSettingsEntity.Builder::class.java, entity, modification)
+}
 
+@Deprecated(message = "Use new API instead")
 var ProjectSettingsEntity.Builder.javaProjectSettings: JavaProjectSettingsEntity.Builder?
-  by WorkspaceEntity.extensionBuilder(JavaProjectSettingsEntity::class.java)
+  get() = (this as ProjectSettingsEntityBuilder).javaProjectSettings as JavaProjectSettingsEntity.Builder?
+  set(value) {
+    (this as ProjectSettingsEntityBuilder).javaProjectSettings = value
+  }
 //endregion
 
 val ProjectSettingsEntity.javaProjectSettings: JavaProjectSettingsEntity?

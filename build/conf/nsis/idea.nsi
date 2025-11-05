@@ -49,12 +49,6 @@ VIAddVersionKey /LANG=0 "ProductVersion" "${MUI_VERSION_MAJOR}.${MUI_VERSION_MIN
 VIFileVersion ${FILE_VERSION_NUM}
 VIProductVersion ${PRODUCT_VERSION_NUM}
 
-; Product with version (IntelliJ IDEA #xxxx).
-; Used in registry to put each build info into the separate subkey
-; Add&Remove programs doesn't understand subkeys in the Uninstall key,
-; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
-!define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
-
 Var startMenuFolder
 Var productLauncher
 Var rootRegKey
@@ -338,10 +332,10 @@ Function searchCurrentVersion
   ${LogText} ""
   ${LogText} "Checking if '${MUI_PRODUCT} ${VER_BUILD}' is already installed"
 
-  ReadRegStr $R0 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
+  ReadRegStr $R0 HKCU "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" ""
   ${If} $R0 == ""
   ${OrIfNot} ${FileExists} "$R0\bin\${PRODUCT_EXE_FILE}"
-    ReadRegStr $R0 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
+    ReadRegStr $R0 HKLM "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" ""
     ${If} $R0 == ""
     ${OrIfNot} ${FileExists} "$R0\bin\${PRODUCT_EXE_FILE}"
       Return
@@ -556,11 +550,11 @@ Section "IDEA Files" CopyIdeaFiles
 SectionEnd
 
 Function UninstallRecord
-  WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "" "$INSTDIR"
+  WriteRegStr SHCTX "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" "" "$INSTDIR"
   ${If} $startMenuFolder != ""
-    WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "MenuFolder" "$startMenuFolder"
+    WriteRegStr SHCTX "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" "MenuFolder" "$startMenuFolder"
   ${EndIf}
-  WriteRegStr SHCTX "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" "AssociationKey" "${PRODUCT_PATHS_SELECTOR}"
+  WriteRegStr SHCTX "Software\${MANUFACTURER}\${MUI_PRODUCT}\${VER_BUILD}" "AssociationKey" "${PRODUCT_PATHS_SELECTOR}"
 
   StrCpy $0 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
   WriteRegStr SHCTX $0 "DisplayName" "${INSTALL_DIR_AND_SHORTCUT_NAME}"
@@ -1012,30 +1006,45 @@ FunctionEnd
 ; $R2 - installation directory
 ; $productRegKey(out) - product version key if found
 Function un.DoFindProductKey
-  StrCpy $9 0
-
+  StrCpy $8 0
   ${Do}
+    ; iterating over manufacturer's products
     ${If} $R0 = 0
-      EnumRegKey $0 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $9
+      EnumRegKey $7 HKLM "$R1\${MANUFACTURER}" $8
     ${Else}
-      EnumRegKey $0 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}" $9
+      EnumRegKey $7 HKCU "$R1\${MANUFACTURER}" $8
     ${EndIf}
-    ${If} $0 == ""
+    ${If} $7 == ""
       ${Break}
     ${EndIf}
 
-    ${If} $R0 = 0
-      ReadRegStr $1 HKLM "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$0" ""
-    ${Else}
-      ReadRegStr $1 HKCU "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$0" ""
-    ${EndIf}
-    ${If} $1 == $R2
-      StrCpy $rootRegKey $R0
-      StrCpy $productRegKey "$R1\${MANUFACTURER}\${MUI_PRODUCT}\$0"
-      ${Break}
-    ${EndIf}
+    StrCpy $9 0
+    ${Do}
+      ; iterating over product's builds
+      ${If} $R0 = 0
+        EnumRegKey $0 HKLM "$R1\${MANUFACTURER}\$7" $9
+      ${Else}
+        EnumRegKey $0 HKCU "$R1\${MANUFACTURER}\$7" $9
+      ${EndIf}
+      ${If} $0 == ""
+        ${Break}
+      ${EndIf}
 
-    IntOp $9 $9 + 1
+      ${If} $R0 = 0
+        ReadRegStr $1 HKLM "$R1\${MANUFACTURER}\$7\$0" ""
+      ${Else}
+        ReadRegStr $1 HKCU "$R1\${MANUFACTURER}\$7\$0" ""
+      ${EndIf}
+      ${If} $1 == $R2
+        StrCpy $rootRegKey $R0
+        StrCpy $productRegKey "$R1\${MANUFACTURER}\$7\$0"
+        Return
+      ${EndIf}
+
+      IntOp $9 $9 + 1
+    ${Loop}
+
+    IntOp $8 $8 + 1
   ${Loop}
 FunctionEnd
 
@@ -1168,19 +1177,27 @@ Function un.DeleteShortcuts
 FunctionEnd
 
 Function un.UpdatePathEnvVar
-  ReadRegStr $0 HKCU "Environment" "${MUI_PRODUCT}"
-  ${If} $0 == "$INSTDIR\bin"
-    ReadRegStr $1 HKCU "Environment" "Path"
-    ${UnStrRep} $2 $1 ";%${MUI_PRODUCT}%" ""
-    ${If} $2 != $1
-    ${AndIf} $2 != ""
-      DetailPrint "Updating the 'Path' environment variable."
-      WriteRegExpandStr HKCU "Environment" "Path" "$2"
+  StrCpy $9 0
+  ${Do}
+    EnumRegValue $0 HKCU "Environment" $9
+    ${If} $0 == ""
+      ${Break}
     ${EndIf}
-    DetailPrint "Deleting the '${MUI_PRODUCT}' environment variable."
-    DeleteRegValue HKCU "Environment" "${MUI_PRODUCT}"
-    Call un.PostEnvChangeEvent
-  ${EndIf}
+    ReadRegStr $1 HKCU "Environment" $0
+    ${If} $1 == "$INSTDIR\bin"
+      ReadRegStr $1 HKCU "Environment" "Path"
+      ${UnStrRep} $2 $1 ";%$0%" ""
+      ${If} $2 != $1
+      ${AndIf} $2 != ""
+        DetailPrint "Updating the 'Path' environment variable."
+        WriteRegExpandStr HKCU "Environment" "Path" "$2"
+        DetailPrint "Deleting the '$0' environment variable."
+        DeleteRegValue HKCU "Environment" $0
+        Call un.PostEnvChangeEvent
+      ${EndIf}
+    ${EndIf}
+    IntOp $9 $9 + 1
+  ${Loop}
 FunctionEnd
 
 Function un.CachesAndSettings
@@ -1215,9 +1232,28 @@ Function un.CachesAndSettings
 FunctionEnd
 
 Function un.UpdateContextMenu
-  DeleteRegKey SHCTX "Software\Classes\*\shell\Open with ${MUI_PRODUCT}"
-  DeleteRegKey SHCTX "Software\Classes\Directory\shell\${MUI_PRODUCT}"
-  DeleteRegKey SHCTX "Software\Classes\Directory\Background\shell\${MUI_PRODUCT}"
+  StrCpy $R0 "*"
+  Call un.DoUpdateContextMenu
+  StrCpy $R0 "Directory"
+  Call un.DoUpdateContextMenu
+  StrCpy $R0 "Directory\Background"
+  Call un.DoUpdateContextMenu
+FunctionEnd
+
+; $R0 - a classes subkey
+Function un.DoUpdateContextMenu
+  StrCpy $9 0
+  ${Do}
+    EnumRegKey $0 SHCTX "Software\Classes\$R0\shell" $9
+    ${If} $0 == ""
+      ${Break}
+    ${EndIf}
+    ReadRegStr $1 SHCTX "Software\Classes\$R0\shell\$0" "Icon"
+    ${If} $1 == "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+      DeleteRegKey SHCTX "Software\Classes\$R0\shell\$0"
+    ${EndIf}
+    IntOp $9 $9 + 1
+  ${Loop}
 FunctionEnd
 
 Function un.ProductAssociation

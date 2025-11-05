@@ -742,6 +742,26 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     }
   }
 
+  fun testRedCodeImportWithTags() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    runBlocking {
+      myFixture.configureByText(JavaFileType.INSTANCE, """
+        private record Person(String name, int age) {
+            private Person(String name) {
+                this.name = name;
+            }
+        
+            public static void main(String[] args) {
+                var person = new Person()<caret>;
+            }
+        }""".trimIndent())
+      myFixture.doHighlighting()
+      myFixture.type(".")
+      val elements = myFixture.completeBasic()
+      assertTrue(elements.any { element -> element.lookupString.contains("Change signature of Person(String)", ignoreCase = true) })
+    }
+  }
+
   fun testChangeSignature() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
     var text = """

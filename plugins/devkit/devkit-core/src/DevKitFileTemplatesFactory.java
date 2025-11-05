@@ -20,6 +20,11 @@ public final class DevKitFileTemplatesFactory implements FileTemplateGroupDescri
   public static final String GRADLE_WRAPPER_PROPERTIES = "devkit-gradle-wrapper.properties";
   public static final String GRADLE_PROPERTIES = "devkit-gradle.properties";
 
+  public static final String TOOLWINDOW_EXAMPLE_KT = "devkit-MyToolWindow.kt";
+  public static final String TOOLWINDOW_COMPOSE_EXAMPLE_KT = "devkit-compose-MyToolWindow.kt";
+  public static final String MESSAGE_BUNDLE_EXAMPLE_PROPERTIES = "devkit-MyMessageBundle.properties";
+  public static final String MESSAGE_BUNDLE_EXAMPLE_KT = "devkit-MyMessageBundle.kt";
+
   @Override
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
     FileTemplateGroupDescriptor root = new FileTemplateGroupDescriptor(DevKitBundle.message("module.builder.title"), AllIcons.Nodes.Plugin);
@@ -46,6 +51,11 @@ public final class DevKitFileTemplatesFactory implements FileTemplateGroupDescri
     newProjectRoot.addTemplate(SETTINGS_GRADLE_KTS);
     newProjectRoot.addTemplate(GRADLE_WRAPPER_PROPERTIES);
     newProjectRoot.addTemplate(GRADLE_PROPERTIES);
+
+    newProjectRoot.addTemplate(TOOLWINDOW_EXAMPLE_KT);
+    newProjectRoot.addTemplate(TOOLWINDOW_COMPOSE_EXAMPLE_KT);
+    newProjectRoot.addTemplate(MESSAGE_BUNDLE_EXAMPLE_PROPERTIES);
+    newProjectRoot.addTemplate(MESSAGE_BUNDLE_EXAMPLE_KT);
 
     root.addTemplate(templatesRoot);
     root.addTemplate(newProjectRoot);

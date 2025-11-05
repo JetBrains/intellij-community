@@ -1073,7 +1073,7 @@ class LineStatusTrackerManager(
           val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: continue
 
           val provider = getTrackerProvider(virtualFile, document)
-          if (provider != ChangelistsLocalStatusTrackerProvider) continue
+          if (provider !is ChangelistsAwareLocalStatusTrackerProvider) continue
 
           switchTracker(virtualFile, document)
 
@@ -1410,7 +1410,10 @@ private sealed class Result<T> {
   class Error<T> : Result<T>()
 }
 
-private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTrackerContentLoader() {
+@ApiStatus.Internal
+interface ChangelistsAwareLocalStatusTrackerProvider
+
+private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTrackerContentLoader(), ChangelistsAwareLocalStatusTrackerProvider {
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
     if (!LineStatusTrackerManager.getInstance(project).arePartialChangelistsEnabled(file)) return false
     if (!super.isTrackedFile(project, file)) return false
@@ -1454,7 +1457,8 @@ private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerCont
   }
 }
 
-private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTrackerContentLoader {
+@ApiStatus.Internal
+abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTrackerContentLoader {
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
     if (!LineStatusTrackerBaseContentUtil.isSupported(project, file)) return false
     return LineStatusTrackerBaseContentUtil.isTracked(project, file)

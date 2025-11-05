@@ -27,6 +27,10 @@ public interface DifferentiateParameters {
   @NotNull
   Predicate<? super NodeSource> belongsToCurrentCompilationChunk();
 
+  default @NotNull LogConsumer logConsumer() {
+    return LogConsumer.EMPTY;
+  }
+
   @NotNull
   static Predicate<? super NodeSource> affectableInCurrentChunk(DifferentiateParameters params) {
     var inCurrentChunk = params.belongsToCurrentCompilationChunk();

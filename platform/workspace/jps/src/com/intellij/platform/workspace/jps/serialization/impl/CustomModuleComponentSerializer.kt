@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
+import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -20,7 +21,7 @@ interface CustomModuleComponentSerializer {
   /**
    * [detachedModuleEntity] - module entity that is not added to the builder. You can change it by casting to builder and modify properties
    */
-  fun loadComponent(detachedModuleEntity: ModuleEntity.Builder,
+  fun loadComponent(detachedModuleEntity: ModuleEntityBuilder,
                     componentTag: Element,
                     errorReporter: ErrorReporter,
                     virtualFileManager: VirtualFileUrlManager)

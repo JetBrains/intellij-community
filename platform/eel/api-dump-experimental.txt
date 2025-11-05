@@ -45,11 +45,19 @@
 - <init>():V
 - <init>(java.lang.Throwable):V
 *:com.intellij.platform.eel.EelExecApi
-- *a:environmentVariables(com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions):kotlinx.coroutines.Deferred
+- *a:environmentVariables(com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions):com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
 - *:fetchLoginShellEnvVariables(kotlin.coroutines.Continuation):java.lang.Object
 - *a:findExeFilesInPath(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - *a:getDescriptor():com.intellij.platform.eel.EelDescriptor
 - *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
+- *f:await(kotlin.coroutines.Continuation):java.lang.Object
+- *f:getDeferred():kotlinx.coroutines.Deferred
+*f:com.intellij.platform.eel.EelExecApi$EnvironmentVariablesException
+- java.io.IOException
+- com.intellij.platform.eel.EelError
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
 *:com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions
 - getOnlyActual():Z
 *:com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions
@@ -103,13 +111,14 @@ f:com.intellij.platform.eel.EelExecApiKt
 - *sf:where(com.intellij.platform.eel.EelExecApi,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelExecPosixApi
 - com.intellij.platform.eel.EelExecApi
-- *a:environmentVariables(com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions):kotlinx.coroutines.Deferred
+- *a:environmentVariables(com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions):com.intellij.platform.eel.EelExecApi$EnvironmentVariablesDeferred
 - *a:spawnProcess(com.intellij.platform.eel.EelExecApi$ExecuteProcessOptions,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions
 - com.intellij.platform.eel.EelExecApi$EnvironmentVariablesOptions
 - getMode():com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 *e:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 - java.lang.Enum
+- sf:DEFAULT:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 - sf:LOGIN_INTERACTIVE:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 - sf:LOGIN_NON_INTERACTIVE:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
 - sf:MINIMAL:com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions$Mode
@@ -120,6 +129,7 @@ f:com.intellij.platform.eel.EelExecApiKt
 - sf:INSTANCE:com.intellij.platform.eel.EelExecPosixApiHelpers
 *f:com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
 - <init>(com.intellij.platform.eel.EelExecPosixApi):V
+- f:default():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
 - eelIt(kotlin.coroutines.Continuation):java.lang.Object
 - f:loginInteractive():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
 - f:loginNonInteractive():com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
@@ -413,6 +423,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 *f:com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 - <init>():V
 - f:build():com.intellij.platform.eel.EelExecPosixApi$PosixEnvironmentVariablesOptions
+- f:default():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 - f:loginInteractive():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 - f:loginNonInteractive():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 - f:minimal():com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder

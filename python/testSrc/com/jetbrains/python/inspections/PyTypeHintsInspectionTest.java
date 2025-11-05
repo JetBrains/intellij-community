@@ -3169,6 +3169,36 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     }
   }
 
+  // PY-84570
+  public void testListLiteralIsNotConsideredTypeAlias() {
+    doTestByText("""
+                   from enum import Enum
+                   from typing import TypeAlias
+                   
+                   class Direction(Enum):
+                       NORTH = "N"
+                       SOUTH = "S"
+                       EAST = "E"
+                       WEST = "W"
+                   
+                   CARTESIAN = [Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST]
+                   print(CARTESIAN[0])
+                   
+                   type Alias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">[int, str]</warning>
+                   myAlias: TypeAlias = <warning descr="Assigned value of type alias must be a correct type">[int, str]</warning>
+                   """);
+  }
+
+  // PY-85120
+  public void testTargetExpressionWithAnnotationNotConsideredTypeAlias() {
+    doTestByText("""
+                   a: list[int] | None = None  # Not a type alias
+                   
+                   if a:
+                       _ = a[1]  # No error expected
+                   """);
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

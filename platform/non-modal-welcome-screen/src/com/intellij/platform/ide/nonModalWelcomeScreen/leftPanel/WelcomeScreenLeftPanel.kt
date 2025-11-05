@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider.Companion.isWelcomeScreenProject
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
@@ -31,6 +32,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.BoxLayout
 import javax.swing.Icon
@@ -38,24 +40,9 @@ import javax.swing.JComponent
 import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 import javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
-internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(project) {
-  private var recentProjectTreeComponent: JComponent? = null
-
-  init {
-    // Sync initial visibility based on currently selected file
-    syncPaneVisibilityWithCurrentEditor()
-    project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-      override fun selectionChanged(event: FileEditorManagerEvent) {
-        val isWelcome = event.newFile?.fileType is WelcomeScreenRightTabVirtualFile.WelcomeScreenFileType
-        if (isWelcome) {
-          ensurePaneVisible(true)
-          ProjectViewImpl.getInstance(project).changeView(ID)
-        } else {
-          ensurePaneVisible(false)
-        }
-      }
-    })
-  }
+@ApiStatus.Internal
+class WelcomeScreenLeftPanel(private val project: Project) : ProjectViewPane(project) {
+  private var searchField: SearchTextField? = null
 
   override fun getTitle(): String = NonModalWelcomeScreenBundle.message("welcome.screen.project.view.title")
 
@@ -63,9 +50,11 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
 
   override fun getIcon(): Icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Folder)
 
-  override fun isInitiallyVisible(): Boolean = isWelcomeScreenProject(project) && isWelcomeFileSelected()
+  override fun isInitiallyVisible(): Boolean = isWelcomeScreenProject(project)
 
-  override fun isDefaultPane(project: Project): Boolean = isWelcomeScreenProject(project) && isWelcomeFileSelected()
+  override fun isDefaultPane(project: Project): Boolean {
+    return !Registry.`is`("ide.welcome.screen.change.project.view.depending.on.opened.file", false) && isWelcomeScreenProject(project)
+  }
 
   override fun getWeight(): Int = -10 // TODO: Increase weight?
 
@@ -104,7 +93,6 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
 
     val projectFilteringTree = createRecentProjectTree()
     setupDragAndDrop(projectFilteringTree.component)
-    recentProjectTreeComponent = projectFilteringTree.component
 
     val topPanel = JBPanel<JBPanel<*>>().apply {
       layout = BoxLayout(this, BoxLayout.Y_AXIS)
@@ -123,41 +111,18 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
   }
 
   override fun getComponentToFocus(): JComponent? {
-    return recentProjectTreeComponent
+    return searchField
   }
 
   override fun dispose() {
-    recentProjectTreeComponent = null
+    searchField = null
     super.dispose()
-  }
-
-  private fun isWelcomeFileSelected(): Boolean {
-    val selected = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
-    return selected?.fileType is WelcomeScreenRightTabVirtualFile.WelcomeScreenFileType
-  }
-
-  private fun ensurePaneVisible(visible: Boolean) {
-    val projectView = ProjectViewImpl.getInstance(project)
-    val existing = projectView.getProjectViewPaneById(ID)
-    if (visible) {
-      if (existing == null) {
-        // Re-add this pane so that its tab appears
-        projectView.addProjectPane(this)
-      }
-    } else {
-      if (existing != null) {
-        projectView.removeProjectPane(existing)
-      }
-    }
-  }
-
-  private fun syncPaneVisibilityWithCurrentEditor() {
-    ensurePaneVisible(isWelcomeFileSelected())
   }
 
   private fun searchPanel(recentProjectTree: RecentProjectFilteringTree) = panel {
     row {
       val projectSearch = createProjectSearchField(recentProjectTree)
+      searchField = projectSearch
       cell(projectSearch)
         .align(AlignX.FILL)
         .customize(UnscaledGaps(top = 4, bottom = 4, left = 20, right = 20))
@@ -171,7 +136,7 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
       treeBackground = null
     ).apply {
       tree.emptyText.text = NonModalWelcomeScreenBundle.message("welcome.screen.no.recent.projects")
-      selectLastOpenedProject()
+      selectLastOpenedProjectOrTheFirstInTree()
     }
 
   private fun createProjectSearchField(recentProjectTree: RecentProjectFilteringTree): SearchTextField =
@@ -186,6 +151,6 @@ internal class WelcomeScreenLeftPanel(private val project: Project) : ProjectVie
   }
 
   companion object {
-    internal const val ID = "NonModalWelcomeScreenProjectPane"
+    const val ID = "NonModalWelcomeScreenProjectPane"
   }
 }

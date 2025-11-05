@@ -475,7 +475,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/git/intellij.groovy.git.iml" filepath="$PROJECT_DIR$/plugins/groovy/git/intellij.groovy.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.tests.iml" filepath="$PROJECT_DIR$/plugins/groovy/jps-plugin/intellij.groovy.jps.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/groovy-live-templates/intellij.groovy.live.templates.iml" filepath="$PROJECT_DIR$/plugins/groovy-live-templates/intellij.groovy.live.templates.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/groovy-psi/intellij.groovy.psi.iml" filepath="$PROJECT_DIR$/plugins/groovy/groovy-psi/intellij.groovy.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt/intellij.groovy.rt.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt/intellij.groovy.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/groovy/rt/classLoader/intellij.groovy.rt.classLoader.iml" filepath="$PROJECT_DIR$/plugins/groovy/rt/classLoader/intellij.groovy.rt.classLoader.iml" />
@@ -1129,6 +1128,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/ide-laf-bridge/intellij.platform.jewel.ideLafBridge.iml" filepath="$PROJECT_DIR$/platform/jewel/ide-laf-bridge/intellij.platform.jewel.ideLafBridge.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/int-ui/int-ui-decorated-window/intellij.platform.jewel.intUi.decoratedWindow.iml" filepath="$PROJECT_DIR$/platform/jewel/int-ui/int-ui-decorated-window/intellij.platform.jewel.intUi.decoratedWindow.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/int-ui/int-ui-standalone/intellij.platform.jewel.intUi.standalone.iml" filepath="$PROJECT_DIR$/platform/jewel/int-ui/int-ui-standalone/intellij.platform.jewel.intUi.standalone.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/jewel/int-ui/int-ui-standalone-tests/intellij.platform.jewel.intUi.standalone.tests.iml" filepath="$PROJECT_DIR$/platform/jewel/int-ui/int-ui-standalone-tests/intellij.platform.jewel.intUi.standalone.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/markdown/core/intellij.platform.jewel.markdown.core.iml" filepath="$PROJECT_DIR$/platform/jewel/markdown/core/intellij.platform.jewel.markdown.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/markdown/extensions/autolink/intellij.platform.jewel.markdown.extensions.autolink.iml" filepath="$PROJECT_DIR$/platform/jewel/markdown/extensions/autolink/intellij.platform.jewel.markdown.extensions.autolink.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/jewel/markdown/extensions/gfm-alerts/intellij.platform.jewel.markdown.extensions.gfmAlerts.iml" filepath="$PROJECT_DIR$/platform/jewel/markdown/extensions/gfm-alerts/intellij.platform.jewel.markdown.extensions.gfmAlerts.iml" />

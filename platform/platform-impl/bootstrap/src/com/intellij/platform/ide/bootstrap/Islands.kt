@@ -20,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
   val app = ApplicationManager.getApplication()
-  if (!app.isEAP || app.isUnitTestMode || app.isHeadlessEnvironment || AppMode.isRemoteDevHost() || PlatformUtils.isDataSpell()) {
+  if (app.isUnitTestMode || app.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
     return
   }
 
@@ -30,11 +30,13 @@ suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
 
   val properties = serviceAsync<PropertiesComponent>()
 
-  if (PlatformUtils.isRider() && !properties.getBoolean("rider.color.scheme.updated", false)) {
-    properties.setValue("rider.color.scheme.updated", true)
+  if (PlatformUtils.isRider() && (!properties.getBoolean("rider.color.scheme.updated", false) || afterImportSettings)) {
+    if (!afterImportSettings) {
+      properties.setValue("rider.color.scheme.updated", true)
+    }
 
     val finish = withContext(Dispatchers.EDT) {
-      changeColorSchemeForRiderIslandsDarkTheme()
+      changeColorSchemeForRiderIslandsDarkTheme(afterImportSettings)
     }
     if (finish) {
       return
@@ -42,20 +44,15 @@ suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
   }
 
   if (afterImportSettings) {
-    if (properties.getValue("ide.islands.show.feedback2") != "show.promo") {
+    if (properties.getValue("ide.islands.show.feedback3") != "done") {
       return
     }
   }
-  else if (properties.getBoolean("ide.islands.ab2", false)) {
+  else if (properties.getBoolean("ide.islands.ab3", false)) {
     return
   }
 
-  // ignore users who were enabled in 25.2
-  if (properties.getValue("ide.islands.show.feedback") != null) {
-    return
-  }
-
-  properties.setValue("ide.islands.ab2", true)
+  properties.setValue("ide.islands.ab3", true)
 
   withContext(Dispatchers.EDT) {
     enableTheme()
@@ -64,9 +61,6 @@ suspend fun applyIslandsTheme(afterImportSettings: Boolean) {
 
 private suspend fun enableTheme() {
   val lafManager = serviceAsync<LafManager>()
-  if (lafManager.autodetect) {
-    return
-  }
 
   val currentTheme = lafManager.currentUIThemeLookAndFeel?.id ?: return
   if (currentTheme != "ExperimentalDark" && currentTheme != "ExperimentalLight" && currentTheme != "ExperimentalLightWithLightHeader") {
@@ -88,7 +82,7 @@ private suspend fun enableTheme() {
 
   val newTheme = UiThemeProviderListManager.getInstance().findThemeById(if (isLight) "Islands Light" else "Islands Dark") ?: return
 
-  PropertiesComponent.getInstance().setValue("ide.islands.show.feedback2", "show.promo")
+  PropertiesComponent.getInstance().setValue("ide.islands.show.feedback3", "done")
 
   lafManager.setCurrentLookAndFeel(newTheme, true)
 
@@ -104,12 +98,14 @@ private suspend fun enableTheme() {
   lafManager.updateUI()
 }
 
-private suspend fun changeColorSchemeForRiderIslandsDarkTheme(): Boolean {
+private suspend fun changeColorSchemeForRiderIslandsDarkTheme(afterImportSettings: Boolean): Boolean {
   val colorsManager = EditorColorsManager.getInstance()
   val lafManager = serviceAsync<LafManager>()
   val currentLaf = lafManager.currentUIThemeLookAndFeel ?: return false
 
-  if (currentLaf.id != "Islands Dark" || colorsManager.globalScheme.displayName != "Rider Dark") {
+  val colorScheme = if (afterImportSettings) "Islands Dark" else "Rider Dark"
+
+  if (currentLaf.id != "Islands Dark" || colorsManager.globalScheme.displayName != colorScheme) {
     return false
   }
 

@@ -19,11 +19,17 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   val testCommandSpec = ShellCommandSpec("test_cmd") {
     subcommands {
       subcommand("status")
-      subcommand("start")
       subcommand("stop")
       subcommand("set")
       subcommand("sync")
       subcommand("show")
+
+      subcommand("start") {
+        argument {
+          isOptional = true
+          suggestions("platform/", "platform-ui/", "shared\\", "shared-ui\\")
+        }
+      }
     }
 
     subcommands {
@@ -171,6 +177,19 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `test completion popup closes on non-matching prefix`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd st")
+    fixture.callCompletionPopup()
+    assertSameElements(fixture.getLookupElements().map { it.lookupString },
+                       listOf("start", "status", "stop"))
+
+    fixture.type("x")
+    assertFalse(fixture.isLookupActive())
+  }
+
+  @Test
   fun `test completion popup closes when any text appears below the line with cursor`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixture = createFixture()
 
@@ -181,6 +200,34 @@ class TerminalCompletionPopupTest : BasePlatformTestCase() {
 
     fixture.outputModel.update(1, "some text")
     assertFalse(fixture.isLookupActive())
+  }
+
+  @Test
+  fun `test exact match for directory item is placed first (Unix separator)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd start plat")
+    fixture.callCompletionPopup()
+    assertSameElements(fixture.getLookupElements().map { it.lookupString },
+                       listOf("platform/", "platform-ui/"))
+    fixture.type("form")
+
+    val firstElement = fixture.getCurrentItem()
+    assertEquals("platform/", firstElement?.lookupString)
+  }
+
+  @Test
+  fun `test exact match for directory item is placed first (Windows separator)`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    val fixture = createFixture()
+
+    fixture.type("test_cmd start sha")
+    fixture.callCompletionPopup()
+    assertSameElements(fixture.getLookupElements().map { it.lookupString },
+                       listOf("shared\\", "shared-ui\\"))
+    fixture.type("red")
+
+    val firstElement = fixture.getCurrentItem()
+    assertEquals("shared\\", firstElement?.lookupString)
   }
 
   private suspend fun createFixture(): TerminalCompletionFixture {

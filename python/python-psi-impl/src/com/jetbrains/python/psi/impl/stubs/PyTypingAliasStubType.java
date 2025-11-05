@@ -80,7 +80,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       return null;
     }
 
-    if (isExplicitTypeAlias(target) || looksLikeTypeHint(value)) {
+    if (isExplicitTypeAlias(target) || (looksLikeTypeHint(value) && target.getAnnotation() == null)) {
       return value;
     }
     return null;
@@ -181,6 +181,15 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
         if (node.asQualifiedName() == null) {
           illegal[0] = true;
         }
+      }
+
+      @Override
+      public void visitPyListLiteralExpression(@NotNull PyListLiteralExpression node) {
+        if (node == expression) {
+          illegal[0] = true;
+          return;
+        }
+        super.visitElement(node);
       }
 
       @Override

@@ -26,11 +26,11 @@ import java.util.*;
 public final class LibraryGraphLoader {
   private static final int CACHE_SIZE = 1024; // todo: make configurable
 
-  private static final LoadingCache<LibDescriptor, Pair<NodeSourceSnapshot, Graph>> ourCache = Caffeine
+  private static final LoadingCache<@NotNull LibDescriptor, Pair<NodeSourceSnapshot, Graph>> ourCache = Caffeine
     .newBuilder()
     .softValues()
     .maximumSize(CACHE_SIZE)
-    .build(desc -> loadReadonlyLibraryGraph(desc.loadPath));
+    .build(desc -> loadReadonlyLibraryGraph(desc.library, desc.loadPath));
 
   public static Pair<NodeSourceSnapshot, Graph> getLibraryGraph(NodeSource library, String digest, Path loadPath) {
     return ourCache.get(new LibDescriptor(library, digest, loadPath));
@@ -40,23 +40,24 @@ public final class LibraryGraphLoader {
     ourCache.invalidateAll();
   }
 
-  private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(Path jarPath) throws IOException {
+  private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(NodeSource lib, Path jarPath) throws IOException {
     try (var is = new BufferedInputStream(Files.newInputStream(jarPath))) {
-      return loadReadonlyLibraryGraph(new DeltaImpl(Set.of(), Set.of(), GraphImpl.IndexFactory.mandatoryIndices()) /*depGraph.createDelta(Set.of(), Set.of(), false)*/, ClassDataZipEntry.fromSteam(is));
+      return loadReadonlyLibraryGraph(lib, new DeltaImpl(Set.of(), Set.of(), GraphImpl.IndexFactory.mandatoryIndices()) /*depGraph.createDelta(Set.of(), Set.of(), false)*/, ClassDataZipEntry.fromSteam(is));
     }
   }
 
-  private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(Delta delta, Iterator<ClassDataZipEntry> entries) {
-    // for this presentation, we use packages as 'node sources', and class files in the corresponding package as 'nodes'
+  private static Pair<NodeSourceSnapshot, Graph> loadReadonlyLibraryGraph(NodeSource lib, Delta delta, Iterator<ClassDataZipEntry> entries) {
+    // for this presentation, we use packages within the given library as 'node sources', and class files in the corresponding package as 'nodes'
     Map<String, Iterable<NodeSource>> sourcesMap = new HashMap<>();
     Map<NodeSource, List<Pair<String, Long>>> packagesMap = new HashMap<>();
+    String prefix = lib.toString() + "!/";
     while (entries.hasNext()) {
       ClassDataZipEntry entry = entries.next();
       String parent = entry.getParent();
       if (parent != null) {
         var libNode = JvmClassNodeBuilder.createForLibrary(entry.getPath(), entry.getClassReader()).getResult();
         if (JvmClassNodeBuilder.isAbiNode(libNode)) { // with this check, the code is applicable for non-abi jars too
-          Iterable<NodeSource> libSrc = sourcesMap.computeIfAbsent(parent, n -> Set.of(new PathSource(n)));
+          Iterable<NodeSource> libSrc = sourcesMap.computeIfAbsent(parent, n -> Set.of(new PathSource(prefix + n)));
           delta.associate(libNode, libSrc);
           packagesMap.computeIfAbsent(libSrc.iterator().next(), s -> new ArrayList<>()).add(Pair.create(entry.getPath(), Hashing.xxh3_64().hashBytesToLong(entry.getContent())));
         }
@@ -77,28 +78,19 @@ public final class LibraryGraphLoader {
     return Pair.create(new SourceSnapshotImpl(snapshotMap), delta);
   }
 
-  private static final class LibDescriptor {
-    final @NotNull NodeSource library;
-    final @NotNull String digest;
-    final @NotNull Path loadPath;
-
-    LibDescriptor(@NotNull NodeSource library, @NotNull String digest, @NotNull Path loadPath) {
-      this.library = library;
-      this.digest = digest;
-      this.loadPath = loadPath;
-    }
+  private record LibDescriptor(@NotNull NodeSource library, @NotNull String digest, @NotNull Path loadPath) {
 
     @Override
-    public boolean equals(Object o) {
-      if (!(o instanceof final LibDescriptor that)) {
-        return false;
+      public boolean equals(Object o) {
+        if (!(o instanceof final LibDescriptor that)) {
+          return false;
+        }
+        return Objects.equals(library, that.library) && Objects.equals(digest, that.digest);
       }
-      return Objects.equals(library, that.library) && Objects.equals(digest, that.digest);
-    }
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(library, digest);
+      @Override
+      public int hashCode() {
+        return Objects.hash(library, digest);
+      }
     }
-  }
 }

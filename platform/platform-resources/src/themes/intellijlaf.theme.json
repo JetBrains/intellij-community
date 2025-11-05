@@ -1334,6 +1334,18 @@
         "labelBackground" : "#DFDFDF",
         "foreground" : "#B0B0B0"
       }
+    },
+    "Recap": {
+      "cardBackground": "#FFFFFF",
+      "cardBorderColor": "#FFFFFF",
+      "cardHeaderTitle": "#000000",
+      "cardHeaderSubtitle": "#6C707E",
+      "cardFooterForeground": "#6C707E",
+      "chroniclesBackground": "#F7F8FA",
+      "chroniclesBorderColor": "#F7F8FA",
+      "chroniclesBackgroundHovered": "#E9EAEE",
+      "chroniclesForeground": "#000000",
+      "chroniclesForegroundGreyed": "#868A91"
     }
   },
 

@@ -488,6 +488,8 @@ class WSLDistributionTest {
           }
 
           override val isIjentAvailable: Boolean = true
+
+          override fun isIjentInitialized(descriptor: EelDescriptor): Boolean = true
         },
         disposable,
       )
@@ -564,8 +566,8 @@ private class MockIjentExecApi(private val adapter: GeneralCommandLine, private 
   }
 
   override suspend fun fetchLoginShellEnvVariables(): Map<String, String> = mapOf("SHELL" to TEST_SHELL)
-  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): Deferred<Map<String, String>> =
-    CompletableDeferred(mapOf("SHELL" to TEST_SHELL))
+  override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EelExecApi.EnvironmentVariablesDeferred =
+    EelExecApi.EnvironmentVariablesDeferred(CompletableDeferred(mapOf("SHELL" to TEST_SHELL)))
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> = listOf(EelPath.parse("/bin/$binaryName", descriptor))
   override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): ExternalCliEntrypoint {
     throw UnsupportedOperationException()

@@ -70,8 +70,9 @@ internal fun DecoratedWindowScope.TitleBarView() {
 
         Row(Modifier.align(Alignment.End)) {
             Tooltip({ Text("Open Jewel Github repository") }) {
+                val jewelGithubLink = "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel"
                 IconButton(
-                    { Desktop.getDesktop().browse(URI.create("https://github.com/JetBrains/jewel")) },
+                    { Desktop.getDesktop().browse(URI.create(jewelGithubLink)) },
                     Modifier.size(40.dp).padding(5.dp),
                 ) {
                     Icon(ShowcaseIcons.gitHub, "Github")

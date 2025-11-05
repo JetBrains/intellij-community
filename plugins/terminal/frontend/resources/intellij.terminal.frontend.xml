@@ -88,17 +88,21 @@
     <action id="Terminal.CommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCommandCompletionAction">
       <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
     </action>
-    <action id="Terminal.CommandCompletion.Gen2" class="com.intellij.terminal.frontend.action.TerminalCommandCompletionActionGen2"
+    <action id="Terminal.CommandCompletion.Invoke" class="com.intellij.terminal.frontend.action.TerminalCommandCompletionActionGen2"
             use-shortcut-of="CodeCompletion">
+      <override-text place="GoToAction"/>
     </action>
-    <action id="Terminal.EnterCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionEnterAction">
-      <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
+    <action id="Terminal.CommandCompletion.InsertSuggestion" class="com.intellij.terminal.frontend.action.TerminalCompletionEnterAction"
+            use-shortcut-of="EditorChooseLookupItem">
+      <override-text place="GoToAction"/>
     </action>
-    <action id="Terminal.UpCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionUpAction">
-      <keyboard-shortcut first-keystroke="UP" keymap="$default"/>
+    <action id="Terminal.CommandCompletion.SelectSuggestionAbove" class="com.intellij.terminal.frontend.action.TerminalCompletionUpAction"
+            use-shortcut-of="EditorUp">
+      <override-text place="GoToAction"/>
     </action>
-    <action id="Terminal.DownCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionDownAction">
-      <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
+    <action id="Terminal.CommandCompletion.SelectSuggestionBelow" class="com.intellij.terminal.frontend.action.TerminalCompletionDownAction"
+            use-shortcut-of="EditorDown">
+      <override-text place="GoToAction"/>
     </action>
     <action id="Terminal.Escape" class="com.intellij.terminal.frontend.action.TerminalEscapeAction" use-shortcut-of="EditorEscape"/>
     <action id="Terminal.OpenInReworkedTerminal" class="com.intellij.terminal.frontend.action.RevealFileInReworkedTerminalAction"

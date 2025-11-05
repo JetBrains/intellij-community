@@ -44,7 +44,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val file = holder.file
-    if (ignoreGrammarChecking(file) || hasTooLowSeverity(session)) return PsiElementVisitor.EMPTY_VISITOR
+    if (ignoreGrammarChecking(file) || hasTooLowSeverity(session) || areDisabled(session)) return PsiElementVisitor.EMPTY_VISITOR
 
     val checkedDomains = checkedDomains()
     val areChecksDisabled = getDisabledChecker(file)
@@ -86,6 +86,15 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
 
   private fun hasTooLowSeverity(session: LocalInspectionToolSession): Boolean {
     return inspections.all { InspectionProfileManager.hasTooLowSeverity(session, it) }
+  }
+
+  private fun areDisabled(session: LocalInspectionToolSession): Boolean {
+    val project = session.file.project
+    val profile = InspectionProfileManager.getInstance(project).currentProfile
+    return inspections.all { inspection ->
+      val tools = profile.getToolsOrNull(inspection.shortName, project)
+      tools == null || !tools.isEnabled
+    }
   }
 
   /**

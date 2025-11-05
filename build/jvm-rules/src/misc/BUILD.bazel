@@ -1,26 +1,25 @@
 load("@bazel_skylib//rules:common_settings.bzl", "string_list_flag")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
-# load("@rules_graalvm//graalvm:defs.bzl", "native_image")
-
-kt_jvm_library(
-    name = "worker-lib",
-    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
-    srcs = glob(["*.kt"]),
-    deps = [
-        "//src/worker-framework",
-        "//zip",
-        "//:opentelemetry-api",
-    ],
-    visibility = ["//visibility:public"],
-)
 
 java_binary(
     name = "worker-jvm",
-    runtime_deps = [":worker-lib"],
     main_class = "org.jetbrains.bazel.jvm.JvmWorker",
-#     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use :worker-jvm-jvm_flags
+    #     jvm_flags = [],  -- Note(k15tfu): ignored w/ deploy jar, use :worker-jvm-jvm_flags
     visibility = ["//visibility:public"],
+    runtime_deps = [":worker-lib"],
+)
+
+kt_jvm_library(
+    name = "worker-lib",
+    srcs = glob(["*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:opentelemetry-api_import",
+        "//src/worker-framework",
+        "//zip",
+    ],
 )
 
 string_list_flag(
@@ -36,20 +35,3 @@ string_list_flag(
     ],
     visibility = ["//visibility:public"],
 )
-
-# native_image(
-#     name = "worker-native",
-#     deps = [":worker-lib"],
-#     extra_args = [
-#         "-H:+UnlockExperimentalVMOptions",
-#         "-H:+CompactingOldGen",
-#         "-Djava.awt.headless=true",
-#         "-Dapple.awt.UIElement=true",
-#         "-march=native",
-#         "-O3",
-#     ],
-#     reflection_configuration = ":reflection-config.json",
-#     main_class = "org.jetbrains.bazel.jvm.JvmWorker",
-#     native_image_tool = "@graalvm//:native-image",
-#     visibility = ["//visibility:public"],
-# )

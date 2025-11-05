@@ -8,6 +8,7 @@ import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.DigestUtil
 import org.jetbrains.annotations.ApiStatus
@@ -55,6 +56,7 @@ object GrazieRemote {
    */
   @RequiresEdt
   fun getLanguagesBasedOnUserAgreement(languages: Collection<Lang>, project: Project): Collection<Lang> {
+    if (!Registry.`is`("grazie.show.gpl.warning")) return languages
     val gplLanguages = languages
       .filter { it.hunspellRemote?.isGplLicensed == true }
       .toList()

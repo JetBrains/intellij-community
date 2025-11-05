@@ -88,6 +88,11 @@ public final class GitCommand {
    */
   public static final @NonNls String IJ_HANDLER_MARKER_ENV = "INTELLIJ_GIT_EXECUTABLE";
 
+  /**
+   * Environment variable that allows to specify the descriptive text written to the reflog
+   */
+  public static final @NonNls String GIT_REFLOG_ACTION_ENV = "GIT_REFLOG_ACTION";
+
   @ApiStatus.Internal
   public enum LockingPolicy {
     READ,

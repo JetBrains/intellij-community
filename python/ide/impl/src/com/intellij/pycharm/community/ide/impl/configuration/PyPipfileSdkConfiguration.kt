@@ -16,6 +16,8 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.PipEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
+import com.intellij.pycharm.community.ide.impl.findEnvOrNull
+import com.intellij.python.community.execService.ZeroCodeStdoutParserTransformer
 import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.intellij.python.sdk.ui.icons.PythonSdkUIIcons
 import com.intellij.ui.IdeBorderFactory
@@ -29,6 +31,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.*
 import com.jetbrains.python.sdk.findAmongRoots
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.impl.resolvePythonBinary
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pipenv.*
@@ -72,10 +75,19 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
     when {
       canManage && checkExistence -> {
         PropertiesComponent.getInstance().pipenvPath = pipEnvExecutable.pathString
-        val envPath = runPipEnv(module.basePath?.toNioPathOrNull(), "--venv").mapSuccess { Path.of(it) }.successOrNull
+        val envPath = runPipEnv(
+          module.basePath?.toNioPathOrNull(),
+          "--venv",
+          transformer = ZeroCodeStdoutParserTransformer { PyResult.success(Path.of(it)) }
+        ).successOrNull
         val path = envPath?.resolvePythonBinary()
-        val envExists = path?.let { LocalFileSystem.getInstance().refreshAndFindFileByPath(it.pathString) != null } ?: false
-        if (envExists) EnvCheckerResult.EnvFound("", intentionName) else envNotFound
+        val envExists = path?.let {
+          LocalFileSystem.getInstance().refreshAndFindFileByPath(it.pathString) != null
+        } ?: false
+        if (envExists) {
+          path.findEnvOrNull(intentionName) ?: envNotFound
+        }
+        else envNotFound
       }
       canManage -> envNotFound
       else -> EnvCheckerResult.CannotConfigure
@@ -128,12 +140,12 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(pipEnv)) }
       if (path == null) {
-        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", pipEnv))
+        return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", pipEnv))
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.toString())
       if (file == null) {
-        return@withBackgroundProgress PyResult.localizedError(PyBundle.message("cannot.find.executable", "python", path))
+        return@withBackgroundProgress PyResult.localizedError(PySdkBundle.message("cannot.find.executable", "python", path))
       }
 
       PySdkConfigurationCollector.logPipEnv(module.project, PipEnvResult.CREATED)

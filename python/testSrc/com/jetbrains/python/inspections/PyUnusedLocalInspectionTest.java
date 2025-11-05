@@ -247,6 +247,11 @@ def test():
     doTest();
   }
 
+  // PY-84107
+  public void testNewStyleTypeParameterInFuncNotMarkedAsUnused() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

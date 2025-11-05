@@ -11,11 +11,12 @@ import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Internal
-class InlineCompletionShortcutAfterLineElement(
+class InlineCompletionShortcutAfterLineElement @JvmOverloads constructor(
   lineNumber: Int,
   val isMultiline: Boolean,
-  insertActionId: String
-) : InlineCompletionShortcutHintElementBase(lineNumber, insertActionId) {
+  insertActionId: String,
+  forcedHint: InlineCompletionShortcutHint? = null,
+) : InlineCompletionShortcutHintElementBase(lineNumber, insertActionId, forcedHint) {
 
   override fun toPresentable(): InlineCompletionElement.Presentable {
     return Presentable(element = this, hint)

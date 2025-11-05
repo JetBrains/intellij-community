@@ -17,7 +17,7 @@ public final class PycharmCommunityIdeImplIcons {
   }
 
   public static final class Backgrounds {
-    /** 770x128 */ public static final @NotNull Icon Promotion_bg = load("backgrounds/promotion_bg.svg", -1173415960, 0);
+    /** 770x128 */ public static final @NotNull Icon Promotion_bg = load("backgrounds/promotion_bg.svg", -823698107, 0);
   }
 
   public static final class Icons {

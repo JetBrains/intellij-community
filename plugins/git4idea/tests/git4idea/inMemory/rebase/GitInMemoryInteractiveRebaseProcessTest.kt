@@ -197,7 +197,7 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
       }
       assertCommitted(3) {
         added("src/main/java/service/UserService.java", "public class UserService {}")
-        added("src/main/java/model/User.java",  "public class User {}")
+        added("src/main/java/model/User.java", "public class User {}")
         added("config/application.yml", "server:\n  port: 8080")
       }
       assertCommitted(4) {
@@ -443,5 +443,69 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
 
     assertEquals("Commit hashes should not change for commits that were not modified", listOf(commitAHashBefore, commitBHashBefore),
                  listOf(commitAHashAfter, commitBHashAfter))
+  }
+
+  fun `test drop commit that adds two files updates working tree and index`() {
+    file("a.txt").create("content a").add()
+    val firstCommit = commitDetails(commit("Add a"))
+
+    file("a.txt").write("local modified content")
+
+    file("b.txt").create("content b").add()
+    file("c.txt").create("content c").add()
+    commit("Add b, c")
+
+    file("a.txt").add()
+
+    logData.refreshAndWait(repo, true)
+    updateChangeListManager()
+
+    val entries = getEntriesUsingLog(repo, firstCommit, logData)
+    val model = convertToModel(entries)
+
+    model.drop(listOf(1)) // drop "Add b, c" commit
+
+    val validationResult = GitInMemoryRebaseData.createValidatedRebaseData(model, firstCommit, entries.last().commitDetails.id) as GitInMemoryRebaseData.Companion.ValidationResult.Valid
+
+    GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run() as GitCommitEditingOperationResult.Complete
+
+    repo.assertLatestHistory(
+      "Add a",
+      "initial"
+    )
+
+    updateChangeListManager()
+
+    assertEquals("local modified content", file("a.txt").read())
+    file("b.txt").assertNotExists()
+    file("c.txt").assertNotExists()
+  }
+
+  fun `test drop commit fails when local changes would be overwritten`() {
+    file("a.txt").create("content a").add()
+    val firstCommit = commitDetails(commit("Add a"))
+    file("b.txt").create("content b").addCommit("Add b")
+
+    file("b.txt").write("local modified content")
+
+    logData.refreshAndWait(repo, true)
+    updateChangeListManager()
+
+    val entries = getEntriesUsingLog(repo, firstCommit, logData)
+    val model = convertToModel(entries)
+
+    model.drop(listOf(1))
+
+    val validationResult = GitInMemoryRebaseData.createValidatedRebaseData(model, firstCommit, entries.last().commitDetails.id) as GitInMemoryRebaseData.Companion.ValidationResult.Valid
+
+    val lastCommitHashBefore = repo.last()
+    val result = GitInMemoryInteractiveRebaseProcess(objectRepo, validationResult.rebaseData).run()
+
+    assertTrue(result is GitCommitEditingOperationResult.Incomplete)
+
+    val lastCommitHashAfter = repo.last()
+    assertEquals(lastCommitHashBefore, lastCommitHashAfter)
+    file("b.txt").assertExists()
+    assertEquals("local modified content", file("b.txt").read())
   }
 }

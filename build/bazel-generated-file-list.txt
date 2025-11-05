@@ -582,6 +582,7 @@ platform/jewel/foundation
 platform/jewel/ide-laf-bridge
 platform/jewel/int-ui/int-ui-decorated-window
 platform/jewel/int-ui/int-ui-standalone
+platform/jewel/int-ui/int-ui-standalone-tests
 platform/jewel/markdown/core
 platform/jewel/markdown/extensions/autolink
 platform/jewel/markdown/extensions/gfm-alerts
@@ -948,7 +949,6 @@ plugins/grazie/src/test
 plugins/grazie/xml
 plugins/grazie/yaml
 plugins/groovy
-plugins/groovy-live-templates
 plugins/groovy/git
 plugins/groovy/groovy-psi
 plugins/groovy/groovy-uast-tests

@@ -19,15 +19,19 @@ High-level steps:
    ```shell
    ./gradlew check detekt detektMain detektTest --continue
    ```
-4. Run the Metalava validator against the previous release on the `master` branch, and fix any issues you find:
+4. In all Metalava baseline files (`metalava/{moduleName}-baseline[-stable]-current.txt`), remove all findings, only
+   leaving the baseline version header on the first line. This lets you see all issues accumulated over this release in
+   the following steps
+5. Run the Metalava validator against the previous release on the `master` branch, and fix any issues you find:
    ```shell
    ./scripts/metalava-signatures.main.kts validate --release <previous-release>
    ```
-5. Generate the new Metalava signatures for the new release:
+6. Generate the new Metalava signatures for the new release:
    ```shell
    ./scripts/metalava-signatures.main.kts update --release <new-release>
    ```
-6. Cherry-pick the changes to the target release branches (e.g., `252`)
+7. Commit all changes and get them merged to `master`
+8. Cherry-pick the changes to the target release branches (e.g., `252`)
    1. Make sure you've not included IJP major release-specific changes
    2. Update the Kotlin version in the [Gradle version catalog](../gradle/libs.versions.toml) to match the IJ Platform's Kotlin version
    3. Update other related versions if needed
@@ -42,7 +46,7 @@ High-level steps:
        ./scripts/metalava-signatures.sh --validate --release <new-release>
        ```
    11. Open a merge request for each cherry-pick branch on Space
-7. When both MRs are approved and merged:
+9. When both MRs are approved and merged:
    1. Run the TeamCity job to publish the artefacts to Maven Central
    2. Tag the commits the releases were cut from, with this format: `JEWEL-[Jewel version]-[major IJP version]`. For
       example, for Jewel 0.30.0, `JEWEL-0.30.0-251` on the 251 branch and `JEWEL-0.30.0-252` on the 252 branch.

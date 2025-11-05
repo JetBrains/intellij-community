@@ -78,7 +78,6 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/testFramework",
-    "//plugins/groovy-live-templates",
   ]
 )
 ### auto-generated section `build kotlin.code-insight.live-templates.shared` end

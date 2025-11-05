@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -16,12 +15,13 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.AnotherNameId
 import com.intellij.platform.workspace.storage.testEntities.entities.NameId
 import com.intellij.platform.workspace.storage.testEntities.entities.WithListSoftLinksEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.WithListSoftLinksEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class WithListSoftLinksEntityImpl(private val dataSource: WithListSoftLinksEntityData) : WithListSoftLinksEntity,
-                                                                                                  WorkspaceEntityBase(dataSource) {
+internal class WithListSoftLinksEntityImpl(private val dataSource: WithListSoftLinksEntityData) : WithListSoftLinksEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
 
@@ -56,8 +56,8 @@ internal class WithListSoftLinksEntityImpl(private val dataSource: WithListSoftL
   }
 
 
-  internal class Builder(result: WithListSoftLinksEntityData?) :
-    ModifiableWorkspaceEntityBase<WithListSoftLinksEntity, WithListSoftLinksEntityData>(result), WithListSoftLinksEntity.Builder {
+  internal class Builder(result: WithListSoftLinksEntityData?) : ModifiableWorkspaceEntityBase<WithListSoftLinksEntity, WithListSoftLinksEntityData>(
+    result), WithListSoftLinksEntityBuilder {
     internal constructor() : this(WithListSoftLinksEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -219,7 +219,7 @@ internal class WithListSoftLinksEntityData : WorkspaceEntityData<WithListSoftLin
     return changed
   }
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<WithListSoftLinksEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<WithListSoftLinksEntity> {
     val modifiable = WithListSoftLinksEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -239,8 +239,7 @@ internal class WithListSoftLinksEntityData : WorkspaceEntityData<WithListSoftLin
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.WithListSoftLinksEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.WithListSoftLinksEntity") as EntityMetadata
   }
 
   override fun clone(): WithListSoftLinksEntityData {
@@ -254,7 +253,7 @@ internal class WithListSoftLinksEntityData : WorkspaceEntityData<WithListSoftLin
     return WithListSoftLinksEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return WithListSoftLinksEntity(myName, links, entitySource) {
     }
   }

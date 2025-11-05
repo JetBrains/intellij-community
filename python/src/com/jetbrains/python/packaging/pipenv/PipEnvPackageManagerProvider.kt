@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PipEnvPackageManagerProvider : PythonPackageManagerProvider {
-  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? =
+  override suspend fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? =
     if (sdk.isPipEnv) PipEnvPackageManager(project, sdk) else null
 
 }

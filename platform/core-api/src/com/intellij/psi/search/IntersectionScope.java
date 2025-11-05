@@ -112,6 +112,11 @@ final class IntersectionScope extends GlobalSearchScope implements VirtualFileEn
   }
 
   @Override
+  public @NotNull String toFullString() {
+    return "Intersection: (" + myScope1.toFullString() + ", " + myScope2.toFullString() + ")";
+  }
+
+  @Override
   public @Nullable VirtualFileEnumeration extractFileEnumeration() {
     VirtualFileEnumeration fileEnumeration1 = VirtualFileEnumeration.extract(myScope1);
     VirtualFileEnumeration fileEnumeration2 = VirtualFileEnumeration.extract(myScope2);

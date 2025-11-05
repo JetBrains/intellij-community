@@ -8,6 +8,7 @@ import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.model.VersionCatalogsModel
 import org.jetbrains.plugins.gradle.model.projectModel.modifyGradleBuildEntity
 import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity
+import org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntityBuilder
 import org.jetbrains.plugins.gradle.model.versionCatalogs.versionCatalogs
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.*
@@ -38,7 +39,7 @@ internal class GradleVersionCatalogSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     buildModel: GradleLightBuild,
     entitySource: GradleVersionCatalogEntitySource,
-  ): List<GradleVersionCatalogEntity.Builder> {
+  ): List<GradleVersionCatalogEntityBuilder> {
     val versionCatalogModel = context.getBuildModel(buildModel, VersionCatalogsModel::class.java) ?: return emptyList()
 
     return versionCatalogModel.catalogsLocations.map { (catalogName, catalogPath) ->

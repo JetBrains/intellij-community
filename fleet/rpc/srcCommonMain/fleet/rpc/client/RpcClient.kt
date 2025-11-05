@@ -227,6 +227,7 @@ private class RpcClient(
         cause = ex
       }
       finally {
+
         if (cause != null) {
           logger.debug(cause) { "Cancelling request queue" }
         }
@@ -235,10 +236,10 @@ private class RpcClient(
         }
         transport.outgoing.close()
         val ex = cause?.causeOfType<TransportDisconnectedException>()?.let { RpcClientDisconnectedException(null, it) }
-                 ?: cause
-                 ?: RpcClientDisconnectedException("Transport channel closed without cause", cause = null)
+                 ?: RpcClientDisconnectedException("Transport channel closed without TransportDisconnectedException", cause)
         resumeAllOngoingCallsWithThrowable(ex)
         requestsChannel.close(cause)
+        currentCoroutineContext().ensureActive()
         throw ex
       }
     }

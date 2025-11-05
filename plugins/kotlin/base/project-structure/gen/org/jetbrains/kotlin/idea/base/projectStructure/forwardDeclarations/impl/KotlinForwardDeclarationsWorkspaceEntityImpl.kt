@@ -3,15 +3,15 @@
 package org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.impl
 
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -26,6 +26,7 @@ import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStor
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntity
+import org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsWorkspaceEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -65,7 +66,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
 
 
   internal class Builder(result: KotlinForwardDeclarationsWorkspaceEntityData?) : ModifiableWorkspaceEntityBase<KotlinForwardDeclarationsWorkspaceEntity, KotlinForwardDeclarationsWorkspaceEntityData>(
-    result), KotlinForwardDeclarationsWorkspaceEntity.Builder {
+    result), KotlinForwardDeclarationsWorkspaceEntityBuilder {
     internal constructor() : this(KotlinForwardDeclarationsWorkspaceEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -164,16 +165,16 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
         forwardDeclarationRootsUpdater.invoke(value)
       }
 
-    override var library: LibraryEntity.Builder
+    override var library: LibraryEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(LIBRARY_CONNECTION_ID, this) as? LibraryEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(LIBRARY_CONNECTION_ID, this) as? LibraryEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntity.Builder
+          this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)]!! as LibraryEntityBuilder
         }
       }
       set(value) {
@@ -210,7 +211,7 @@ internal class KotlinForwardDeclarationsWorkspaceEntityData : WorkspaceEntityDat
 
   internal fun isForwardDeclarationRootsInitialized(): Boolean = ::forwardDeclarationRoots.isInitialized
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<KotlinForwardDeclarationsWorkspaceEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<KotlinForwardDeclarationsWorkspaceEntity> {
     val modifiable = KotlinForwardDeclarationsWorkspaceEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -244,9 +245,9 @@ internal class KotlinForwardDeclarationsWorkspaceEntityData : WorkspaceEntityDat
     return KotlinForwardDeclarationsWorkspaceEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return KotlinForwardDeclarationsWorkspaceEntity(forwardDeclarationRoots, entitySource) {
-      parents.filterIsInstance<LibraryEntity.Builder>().singleOrNull()?.let { this.library = it }
+      parents.filterIsInstance<LibraryEntityBuilder>().singleOrNull()?.let { this.library = it }
     }
   }
 

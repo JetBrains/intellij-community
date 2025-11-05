@@ -21,7 +21,12 @@ sealed interface ShellName {
     val ZSH: ShellName = of("zsh")
     val FISH: ShellName = of("fish")
     val POWERSHELL: ShellName = of("powershell")
+    val PWSH: ShellName = of("pwsh")
+
+    fun isPowerShell(shellName: ShellName): Boolean {
+      return shellName == POWERSHELL || shellName == PWSH
+    }
   }
 }
 
-private class ShellNameImpl(override val value: String) : ShellName
+private data class ShellNameImpl(override val value: String) : ShellName

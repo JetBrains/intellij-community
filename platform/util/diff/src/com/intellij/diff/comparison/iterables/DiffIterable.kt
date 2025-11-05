@@ -10,8 +10,9 @@ import com.intellij.diff.util.Range
  * All [Range] are not empty (have at least one element in one of the sides). Ranges do not overlap.
  *
  *
- * Differences are guaranteed to be 'squashed': there are no two changed or two unchanged [Range] with
- * `(range1.end1 == range2.start1 && range1.end2 == range2.start2)`.
+ * Differences are NOT guaranteed to be 'squashed': there could be two changed [Range] with
+ * `(range1.end1 == range2.start1 && range1.end2 == range2.start2)` in case they are assigned to
+ * different change lists.
  *
  * @see FairDiffIterable
  *

@@ -105,7 +105,7 @@ open class EditorComposite internal constructor(
   @JvmField internal val project: Project,
   @JvmField @Internal val coroutineScope: CoroutineScope,
 ) : FileEditorComposite, Disposable {
-  private val clientId: ClientId = ClientId.current
+  internal val clientId: ClientId = ClientId.current
 
   private var tabbedPaneWrapper: TabbedPaneWrapper? = null
   private var compositePanel: EditorCompositePanel = EditorCompositePanel(composite = this)
@@ -1082,7 +1082,8 @@ internal fun focusEditorOnComposite(
     }
     else {
       if (toFront) {
-        IdeFocusManager.getGlobalInstance().requestFocusInProject(preferredFocusedComponent, composite.project)
+        IdeFocusManager.getGlobalInstance().toFront(preferredFocusedComponent)
+        preferredFocusedComponent.requestFocus()
       }
       else {
         preferredFocusedComponent.requestFocusInWindow()

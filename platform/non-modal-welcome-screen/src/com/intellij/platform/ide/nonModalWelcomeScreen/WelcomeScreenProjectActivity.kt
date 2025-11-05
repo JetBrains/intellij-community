@@ -15,7 +15,6 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRig
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 import com.intellij.util.application
 import com.intellij.util.asSafely
-import kotlinx.coroutines.coroutineScope
 
 private class WelcomeScreenProjectActivity : ProjectActivity {
   init {
@@ -33,18 +32,16 @@ private class WelcomeScreenProjectActivity : ProjectActivity {
       WelcomeScreenRightTab.show(project)
     }
   }
-}
 
-private suspend fun dropModalWelcomeScreenOnClose(project: Project) {
-  CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, !isNonModalWelcomeScreenEnabled)
-  subscribeToSettingsChanges(project)
-}
+  private suspend fun dropModalWelcomeScreenOnClose(project: Project) {
+    CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, !isNonModalWelcomeScreenEnabled)
+    subscribeToSettingsChanges(project)
+  }
 
-private suspend fun subscribeToSettingsChanges(project: Project) {
-  coroutineScope {
+  private suspend fun subscribeToSettingsChanges(project: Project) {
     application
       .messageBus
-      .connect(this@coroutineScope)
+      .connect(WelcomeScreenScopeHolder.getInstanceAsync(project).coroutineScope)
       .subscribe(AdvancedSettingsChangeListener.TOPIC,
                  object : AdvancedSettingsChangeListener {
                    override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
@@ -54,20 +51,20 @@ private suspend fun subscribeToSettingsChanges(project: Project) {
                      }
                      if (id == NON_MODAL_WELCOME_SCREEN_SETTING_ID) {
                        val welcomeScreenTabEnabled = newValue.asSafely<Boolean>() ?: return
-                       if (!welcomeScreenTabEnabled) {
+                       if (welcomeScreenTabEnabled) {
+                         WelcomeScreenTabUsageCollector.logWelcomeScreenTabEnabled()
+                       } else {
                          WelcomeScreenTabUsageCollector.logWelcomeScreenTabDisabled()
                        }
                      }
                    }
                  })
   }
-}
 
-private suspend fun subscribeToWelcomeScreenTabClose(project: Project) {
-  coroutineScope {
+  private suspend fun subscribeToWelcomeScreenTabClose(project: Project) {
     project
       .messageBus
-      .connect(this@coroutineScope)
+      .connect(WelcomeScreenScopeHolder.getInstanceAsync(project).coroutineScope)
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER,
                  object : FileEditorManagerListener {
                    override fun fileClosed(source: FileEditorManager, file: VirtualFile) {

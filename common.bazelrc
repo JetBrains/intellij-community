@@ -9,20 +9,25 @@
 # Limit the server memory usage as per https://youtrack.jetbrains.com/issue/IJI-3103#focus=Comments-27-12862178.0-0
 startup --host_jvm_args=-Xmx12g
 
+# IJI-2767 Bazel: move bazel output root to a standard location
+startup:macos --output_user_root=~/Library/Caches/JetBrains/MonorepoBazel
+startup:linux --output_user_root=~/.cache/JetBrains/MonorepoBazel
+startup:windows --output_user_root=~/AppData/Local/JetBrains/MonorepoBazel
+
 # Use low-latency ZGC to prevent overflow when watching local filesystem for changes on Windows
 #
 # G1GC pauses the sun.nio.fs.WindowsWatchService.Poller's thread, delaying asynchronous callback processing long enough
 # that ReadDirectoryChangesW returns zero bytes transferred (aka StandardWatchEventKinds.OVERFLOW):
 # https://github.com/openjdk/jdk/blob/6705a9255d28f351950e7fbca9d05e73942a4e27/src/java.base/windows/classes/sun/nio/fs/WindowsWatchService.java#L630
-startup --host_jvm_args=-XX:+UseZGC
+startup:windows --host_jvm_args=-XX:+UseZGC
 
 # Increase file watch service queue maximum size to prevent overflow when watching local filesystem for changes on Windows
 # https://github.com/openjdk/jdk/blob/6705a9255d28f351950e7fbca9d05e73942a4e27/src/java.base/share/classes/sun/nio/fs/AbstractWatchKey.java#L39
-startup --host_jvm_args=-Djdk.nio.file.WatchService.maxEventsPerPoll=1000000  # 1M
+startup:windows --host_jvm_args=-Djdk.nio.file.WatchService.maxEventsPerPoll=1000000  # 1M
 
 # Increase size of per-directory buffer for events to prevent overflow when watching local filesystem for changes on Windows
 # https://github.com/JetBrains/JetBrainsRuntime/blob/d7e087876fa0326af082e705483a079b919242bc/src/java.base/windows/classes/sun/nio/fs/WindowsWatchService.java#L290
-startup --host_jvm_args=-Djdk.nio.file.WatchService.bufferSizeToRetrieveEventsPerDirectory=524288  # 512K
+startup:windows --host_jvm_args=-Djdk.nio.file.WatchService.bufferSizeToRetrieveEventsPerDirectory=524288  # 512K
 
 # Disk cache
 common --experimental_disk_cache_gc_max_size=32G --experimental_disk_cache_gc_max_age=28d
@@ -42,6 +47,9 @@ common --@rules_jvm//:koltin_inc_threshold=0 --@rules_jvm//:java_inc_threshold=0
 # configure resources
 common --local_resources=memory=HOST_RAM*.77 --local_resources=cpu=HOST_CPUS*2
 common --jobs=HOST_CPUS*2 --worker_max_multiplex_instances=JvmCompile=HOST_CPUS*2
+
+# Force all workers to quit after the build to prevent excessive memory usage when idle
+common --worker_quit_after_build
 
 # hide Java 8 deprecation warnings
 common --javacopt=-Xlint:-options

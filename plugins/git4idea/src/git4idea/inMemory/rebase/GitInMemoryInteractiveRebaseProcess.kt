@@ -67,7 +67,8 @@ internal class GitInMemoryInteractiveRebaseProcess(
       baseCommit = objectRepo.findCommit(objectRepo.commitTree(objectRepo.emptyTree.oid, listOf(), byteArrayOf()))
     }
 
-    return CommitEditingResult(baseCommit.oid)
+    val modifiesTree = baseCommit.treeOid != baseToHeadCommitsRange.last().treeOid
+    return CommitEditingResult(baseCommit.oid, requiresWorkingTreeUpdate = modifiesTree)
   }
 
   private fun processEntry(

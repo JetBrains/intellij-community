@@ -10,10 +10,10 @@ import com.intellij.python.hatch.PythonVirtualEnvironment
 import com.intellij.python.hatch.getHatchEnvVirtualProjectPath
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.sdk.impl.resolvePythonBinary
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.impl.resolvePythonBinary
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.persist
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -51,6 +51,6 @@ private fun PythonVirtualEnvironment.Existing.suggestHatchSdkName(): @NlsSafe St
   val nonDefaultEnvName = pythonHomePath.name.takeIf { it != normalizedProjectName }
 
   val envNamePrefix = nonDefaultEnvName?.let { "$it@" } ?: ""
-  val sdkName = "Hatch ($envNamePrefix$normalizedProjectName) [$pythonVersion]"
+  val sdkName = "Hatch ($envNamePrefix$normalizedProjectName) [${pythonInfo.languageLevel}]"
   return sdkName
 }

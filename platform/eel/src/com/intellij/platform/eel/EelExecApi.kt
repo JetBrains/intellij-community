@@ -6,11 +6,12 @@ import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.path.EelPath
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
+import java.io.IOException
 import java.util.*
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
@@ -108,13 +109,14 @@ sealed interface EelExecApi {
    * This method is still not deprecated only because it has an automatically refreshable cache inside.
    * In contrast, [environmentVariables] only allows manually invalidating the cache.
    */
+  @OptIn(EelDelicateApi::class)
   @ApiStatus.Experimental
   @ApiStatus.Obsolete
   suspend fun fetchLoginShellEnvVariables(): Map<String, String> =
     when (this) {
       is EelExecPosixApi -> {
         if (this is LocalEelExecApi) {
-          environmentVariables().minimal().eelIt().await()
+          @Suppress("checkedExceptions") environmentVariables().minimal().eelIt().await()
         }
         else {
           var now = 0L
@@ -125,10 +127,22 @@ sealed interface EelExecApi {
             if (expireAt != null && expireAt <= now) expireAt
             else now + cacheDuration
           }!!
-          environmentVariables().loginInteractive().onlyActual(expireAt <= now).eelIt().await()
+          try {
+            withTimeout(3.seconds) {  // Just a random timeout.
+              environmentVariables().loginInteractive().onlyActual(expireAt <= now).eelIt().await()
+            }
+          }
+          catch (err: Exception) {
+            when (err) {
+              is EnvironmentVariablesException -> Unit
+              is TimeoutCancellationException -> currentCoroutineContext().ensureActive()
+              else -> throw err
+            }
+            environmentVariables().minimal().eelIt().await()
+          }
         }
       }
-      is EelExecWindowsApi -> environmentVariables().eelIt().await()
+      is EelExecWindowsApi -> @Suppress("checkedExceptions") environmentVariables().eelIt().await()
     }
 
   /**
@@ -137,7 +151,31 @@ sealed interface EelExecApi {
    * See also [EelExecPosixApi.PosixEnvironmentVariablesOptions].
    */
   @ApiStatus.Experimental
-  fun environmentVariables(@GeneratedBuilder opts: EnvironmentVariablesOptions): Deferred<Map<String, String>>
+  fun environmentVariables(@GeneratedBuilder opts: EnvironmentVariablesOptions): EnvironmentVariablesDeferred
+
+  /**
+   * Indicates on the failure during fetching environment variables.
+   * As an API user, you can't gracefully handle this error. You can either ignore it or show the message to the user as a critical error.
+   * The message text may be localized with the locale of the remote machine.
+   */
+  @ApiStatus.Experimental
+  class EnvironmentVariablesException : EelError, IOException {
+    constructor(message: String) : super(message)
+    constructor(message: String, cause: Throwable) : super(message, cause)
+  }
+
+  /**
+   * This wrapper around [Deferred] exists only for pointing to the thrown error.
+   */
+  @ApiStatus.Experimental
+  class EnvironmentVariablesDeferred @ApiStatus.Internal constructor(
+    @ApiStatus.Experimental
+    val deferred: Deferred<Map<String, String>>
+  ) {
+    @ApiStatus.Experimental
+    @ThrowsChecked(EnvironmentVariablesException::class)
+    suspend fun await(): Map<String, String> = deferred.await()
+  }
 
   interface EnvironmentVariablesOptions {
     /**
@@ -311,16 +349,25 @@ interface EelExecPosixApi : EelExecApi {
   @ApiStatus.Experimental
   override fun environmentVariables(
     @GeneratedBuilder(PosixEnvironmentVariablesOptions::class) opts: EelExecApi.EnvironmentVariablesOptions,
-  ): Deferred<Map<String, String>>
+  ): EelExecApi.EnvironmentVariablesDeferred
 
   interface PosixEnvironmentVariablesOptions : EelExecApi.EnvironmentVariablesOptions {
-    val mode: Mode get() = Mode.LOGIN_NON_INTERACTIVE
+    val mode: Mode get() = Mode.DEFAULT
 
     enum class Mode {
+      /**
+       * Works like [LOGIN_NON_INTERACTIVE], but in case of an error it returns [MINIMAL] instead of throwing an exception.
+       *
+       * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
+       */
+      DEFAULT,
+
       /**
        * The fastest way to get environment variables. It doesn't call shell scripts written by users.
        * At least, the environment variable `PATH` exists, but it may differ from what the user has in their `~/.profile` written.
        * No guarantee for other environment variables.
+       *
+       * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
        */
       MINIMAL,
 
@@ -331,6 +378,8 @@ interface EelExecPosixApi : EelExecApi {
        * This mode may load not all environment variables, depending on what's written in user's configs
        * because default `~/.bashrc` files in some distros like Debian and Ubuntu contain strings like `[ -z "$PS1" ] && return`.
        * Often people put their adjustments at the bottom of the profile file, and therefore their code is not executed in the non-interactive mode.
+       *
+       * **Notice:** In this mode [EelExecApi.EnvironmentVariablesException] MAY be thrown.
        */
       LOGIN_NON_INTERACTIVE,
 
@@ -351,6 +400,8 @@ interface EelExecPosixApi : EelExecApi {
        * * `~/.bashrc` starts `screen` or `tmux`, the shell process hangs forever.
        * * `~/.bashrc` starts `ssh-agent`, and the operating system quickly becomes polluted with lots of unused SSH agents.
        * * `~/.bashrc` calls `curl` to write the current weather, news, jokes, etc. CPU consumption grows, IDE works slower.
+       *
+       * **Notice:** In this mode [EelExecApi.EnvironmentVariablesException] MAY be thrown.
        */
       @EelDelicateApi
       LOGIN_INTERACTIVE,

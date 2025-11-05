@@ -4170,6 +4170,15 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  @TestFor(issues="PY-83339")
+  public void testAssertNarrowsOptionalAfterAssert() {
+    doTest("int", """
+      def foo(param: int | None):
+          assert param
+          expr = param
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

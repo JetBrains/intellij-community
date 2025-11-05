@@ -5,12 +5,10 @@ import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestM
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_21
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
 import com.intellij.testFramework.utils.editor.getVirtualFile
-import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.module.IdePluginModuleBuilder.PluginType
 import org.junit.Assert.assertFalse
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertIterableEquals
-import org.junit.jupiter.api.fail
 
 private const val PLUGIN_XML_LOCATION = "src/main/resources/META-INF/plugin.xml"
 
@@ -52,22 +50,17 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
     assertIterableEquals(expectedPluginIds.toList(), bundledPluginIds + pluginIds, "plugins of build.gradle.kts do not match")
   }
 
-  private fun assertPluginXmlDependencies(@Language("XML") vararg libraries: String) {
+  private fun assertPluginXmlDependencies(vararg libraries: String) {
     fixture.configureFromTempProjectFile(PLUGIN_XML_LOCATION)
     assertNoUnprocessedTemplates()
 
     val text = fixture.editor.document.text
 
-    val prefix = "<dependencies>"
-    val from = text.indexOf(prefix)
-    val to = text.lastIndexOf("</dependencies>")
-
-    if (from == -1 || to == -1) fail("dependencies tag not found in plugin.xml")
-
-    val dependencies = text.substring(from + prefix.length, to)
-      .split('\n')
-      .map { it.trim() }
+    val dependencies = Regex("<depends>(.+?)</depends>\\s*")
+      .findAll(text)
+      .map { it.groupValues[1].trim() }
       .filter { it.isNotBlank() }
+      .toList()
 
     assertIterableEquals(libraries.toList(), dependencies, "dependencies of plugin.xml do not match")
   }
@@ -105,15 +98,14 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
       
           <!-- Product and plugin compatibility requirements.
                Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
-          <dependencies>
-              <plugin id="com.intellij.modules.platform"/>
-
-          </dependencies>
-
+          <depends>com.intellij.modules.platform</depends>
+      
+          <resource-bundle>messages.MyMessageBundle</resource-bundle>
           <!-- Extensions defined by the plugin.
                Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
           <extensions defaultExtensionNs="com.intellij">
-      
+              <toolWindow id="MyToolWindow" factoryClass="com.example.demo.MyToolWindowFactory"
+                          icon="AllIcons.Toolwindows.ToolWindowPalette"/>
           </extensions>
       </idea-plugin>
     """.trimIndent())
@@ -133,8 +125,8 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
     assertBuildGradlePlugins("org.jetbrains.kotlin")
 
     assertPluginXmlDependencies(
-      "<module name=\"intellij.platform.compose\"/>",
-      "<plugin id=\"org.jetbrains.kotlin\"/>"
+      "com.intellij.modules.compose",
+      "org.jetbrains.kotlin"
     )
   }
 
@@ -145,7 +137,7 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
     assertBuildGradlePlugins("com.intellij.java")
 
     assertPluginXmlDependencies(
-      "<plugin id=\"com.intellij.java\"/>"
+      "com.intellij.java"
     )
   }
 
@@ -156,8 +148,8 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
     assertBuildGradlePlugins("JavaScript", "PythonCore")
 
     assertPluginXmlDependencies(
-      "<plugin id=\"JavaScript\"/>",
-      "<plugin id=\"PythonCore\"/>"
+      "JavaScript",
+      "PythonCore"
     )
   }
 
@@ -168,8 +160,8 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
     assertBuildGradlePlugins("com.intellij.modules.json", "org.intellij.plugins.markdown")
 
     assertPluginXmlDependencies(
-      "<plugin id=\"com.intellij.modules.json\"/>",
-      "<plugin id=\"org.intellij.plugins.markdown\"/>"
+      "com.intellij.modules.json",
+      "org.intellij.plugins.markdown"
     )
   }
 
@@ -181,7 +173,7 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
     assertNoUnprocessedTemplates()
 
     assertPluginXmlDependencies(
-      "<plugin id=\"com.intellij.modules.lsp\"/>"
+      "com.intellij.modules.lsp"
     )
   }
 
@@ -193,8 +185,8 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
     assertBuildGradlePlugins("org.jetbrains.plugins.yaml", "org.jetbrains.plugins.go")
 
     assertPluginXmlDependencies(
-      "<plugin id=\"org.jetbrains.plugins.yaml\"/>",
-      "<plugin id=\"org.jetbrains.plugins.go\"/>"
+      "org.jetbrains.plugins.yaml",
+      "org.jetbrains.plugins.go"
     )
   }
 
@@ -206,9 +198,9 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
     assertBuildGradlePlugins("com.intellij.database", "com.jetbrains.php")
 
     assertPluginXmlDependencies(
-      "<plugin id=\"com.intellij.modules.xml\"/>",
-      "<plugin id=\"com.jetbrains.php\"/>",
-      "<plugin id=\"com.intellij.database\"/>"
+      "com.intellij.modules.xml",
+      "com.jetbrains.php",
+      "com.intellij.database"
     )
   }
 
@@ -220,7 +212,7 @@ class IdePluginModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_21)
     assertBuildGradlePlugins("org.jetbrains.plugins.ruby")
 
     assertPluginXmlDependencies(
-      "<plugin id=\"org.jetbrains.plugins.ruby\"/>"
+      "org.jetbrains.plugins.ruby"
     )
   }
 

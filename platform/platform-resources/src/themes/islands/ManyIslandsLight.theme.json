@@ -56,7 +56,7 @@
       "selectedBackground": "BackgroundMid",
       "hoverBackground": "#0000000D",
       "separatorColor": "#00000012",
-      "foreground": "#818594"
+      "foreground": "#00000099"
     },
 
     "MainToolbar": {
@@ -67,7 +67,11 @@
 
     "StatusBar": {
       "background": "BackgroundDark",
-      "borderColor": "BorderTransparent"
+      "borderColor": "BorderTransparent",
+      "Breadcrumbs.hoverBackground": "#00000010",
+      "Breadcrumbs.selectionBackground": "#00000010",
+      "Breadcrumbs.selectionInactiveBackground": "#00000010",
+      "Widget.hoverBackground": "#00000010"
     },
 
     "ToolWindow": {
@@ -86,6 +90,22 @@
         "background": "BackgroundDark",
         "borderColor": "BorderTransparent"
       }
+    },
+
+    "StripeToolbar.Button": {
+      "size": "37,40",
+      "leftStripeIcon.padding": "5,5,5,2",
+      "rightStripeIcon.padding": "5,2,5,5",
+      "leftStripeIcon.padding.compact": "4,5,4,3",
+      "rightStripeIcon.padding.compact": "4,3,4,5",
+      "leftStripeIconWithName.padding": "4,6,4,2",
+      "rightStripeIconWithName.padding": "4,2,4,6",
+      "leftStripeIconWithName.padding.compact": "3,4,3,2",
+      "rightStripeIconWithName.padding.compact": "3,2,3,4",
+      "leftStripeTextOffset": 2,
+      "leftStripeTextOffset.compact": 0,
+      "rightStripeTextOffset": -2,
+      "rightStripeTextOffset.compact": 0
     },
 
     "EditorTabs": {
@@ -238,6 +258,19 @@
       "Borders.ContrastBorderColor": "#E8E9ED",
       "ToolWindow.Header.borderColor": "#E8E9ED",
       "Island.borderColor": "#F7F6F8"
+    },
+    
+    "Recap": {
+      "cardBackground": "#F7F8FA",
+      "cardBorderColor": "#F7F8FA",
+      "cardHeaderTitle": "#000000",
+      "cardHeaderSubtitle": "#6C707E",
+      "cardFooterForeground": "#6C707E",
+      "chroniclesBackground": "#EBECF0",
+      "chroniclesBorderColor": "#EBECF0",
+      "chroniclesBackgroundHovered": "#DFE1E5",
+      "chroniclesForeground": "#000000",
+      "chroniclesForegroundGreyed": "#868A91"
     }
   }
 }

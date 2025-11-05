@@ -29,6 +29,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -78,6 +79,7 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
 
   private var testCoroutineScope: CoroutineScope? = null
   private val myCoroutineScope: CoroutineScope get() = testCoroutineScope ?: cs
+  private val isSubscribedToWorkspaceModelChanges = AtomicBoolean(false)
 
   /**
    * Should be used only in tests. Required to promote errors to tests via [testScope].
@@ -90,6 +92,46 @@ class RepositoryLibraryUtils(private val project: Project, private val cs: Corou
   @TestOnly
   fun resetTestCoroutineScope() {
     testCoroutineScope = null
+  }
+
+
+  suspend fun subscribeToWorkspaceModelUpdates() {
+    if (isSubscribedToWorkspaceModelChanges.compareAndSet(false, true)) {
+      WorkspaceModel.getInstance(project).eventLog.collect { event ->
+        val settings = RepositoryLibrarySettings.getInstanceOrDefaults(project)
+        val jarRepositoryAutoBindEnabled = settings.isJarRepositoryAutoBindEnabled()
+        val sha256ChecksumAutoBuildEnabled = settings.isSha256ChecksumAutoBuildEnabled()
+
+        // exit fast, avoid heavy computations if the feature is not enabled
+        if (!jarRepositoryAutoBindEnabled && !sha256ChecksumAutoBuildEnabled) {
+          return@collect
+        }
+
+        val changedLibraryEntities = mutableSetOf<LibraryEntity?>()
+
+        // Handle library roots change
+        event.getChanges(LibraryEntity::class.java).forEach {
+          when (it) {
+            is EntityChange.Added, is EntityChange.Replaced -> changedLibraryEntities.add(it.newEntity)
+            else -> {}
+          }
+        }
+
+        // Handle library version change
+        event.getChanges(LibraryPropertiesEntity::class.java).forEach {
+          when (it) {
+            is EntityChange.Added, is EntityChange.Replaced -> changedLibraryEntities.add(it.newEntity?.library)
+            else -> {}
+          }
+        }
+
+        computeExtendedPropertiesFor(libraries = changedLibraryEntities.filterNotNull().toSet(),
+                                     buildSha256Checksum = sha256ChecksumAutoBuildEnabled,
+                                     guessAndBindRemoteRepository = jarRepositoryAutoBindEnabled)
+      }
+    } else {
+      logger.error("An attempt to subscribe to WSM updates more than once")
+    }
   }
 
   /**

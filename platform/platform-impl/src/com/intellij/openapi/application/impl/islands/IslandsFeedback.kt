@@ -2,11 +2,9 @@
 package com.intellij.openapi.application.impl.islands
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.AppearanceConfigurable
 import com.intellij.ide.ui.LafManager
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -15,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import java.lang.ref.WeakReference
 
@@ -27,8 +24,6 @@ internal class IslandsFeedback : ProjectActivity {
 
     internal fun isIslandTheme(themeId: String) = themeId == "Islands Dark" || themeId == "Islands Light"
 
-    internal fun getReadMoreUrl() = "https://blog.jetbrains.com/platform/2025/09/islands-theme-the-new-look-coming-to-jetbrains-ides/"
-
     @Volatile
     private var myFirstProject = true
   }
@@ -39,8 +34,7 @@ internal class IslandsFeedback : ProjectActivity {
 
       if (!ApplicationManager.getApplication().isUnitTestMode &&
           !ApplicationManager.getApplication().isHeadlessEnvironment &&
-          !AppMode.isRemoteDevHost() &&
-          !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI()) {
+          !AppMode.isRemoteDevHost() && ExperimentalUI.isNewUI()) {
 
         handleFeedback(project)
       }
@@ -49,12 +43,6 @@ internal class IslandsFeedback : ProjectActivity {
 }
 
 private fun handleFeedback(project: Project) {
-  val properties = PropertiesComponent.getInstance()
-
-  if (properties.getValue("ide.islands.show.feedback2") == "show.promo") {
-    properties.setValue("ide.islands.show.feedback2", "done")
-    showPromoNotification(WeakReference(project))
-  }
 }
 
 private fun showPromoNotification(projectRef: WeakReference<Project>) {
@@ -64,7 +52,7 @@ private fun showPromoNotification(projectRef: WeakReference<Project>) {
   notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("got.it.button.name")) {})
 
   notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("ide.islands.read.more")) {
-    BrowserUtil.browse(IslandsFeedback.getReadMoreUrl())
+    //BrowserUtil.browse(IslandsFeedback.getReadMoreUrl())
   })
 
   notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("ide.islands.switch.theme")) {

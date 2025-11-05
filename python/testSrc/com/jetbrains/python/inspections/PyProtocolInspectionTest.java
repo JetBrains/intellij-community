@@ -44,6 +44,69 @@ public class PyProtocolInspectionTest extends PyInspectionTestCase {
     });
   }
 
+  // PY-76903
+  public void testProtocolCannotBeInstantiated() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class P(Protocol):
+                           ...
+                   
+                   p = <warning descr="Cannot instantiate protocol class 'P'">P()</warning>
+                   """);
+  }
+
+  // PY-76903
+  public void testProtocolSubclassCanBeInstantiated() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class P(Protocol):
+                       ...
+                   
+                   
+                   class C(P):
+                       ...
+                   
+                   c = C()
+                   """);
+  }
+
+  // PY-76903
+  public void testProtocolFunctionCall() {
+    doTestByText("""
+                   from typing import Protocol
+                   
+                   class P(Protocol):
+                       def foo(self) -> None: ...
+                   
+                   
+                   def f(p: P):
+                       p.foo()
+                   """);
+  }
+
+  // PY-76903
+  public void testProtocolTypeButConcreteValue() {
+    doTestByText("""
+                   from typing import Protocol, reveal_type
+                   
+                   class P(Protocol):
+                       def foo(self) -> None: ...
+                   
+                   
+                   class I(P):
+                       def foo(self) -> None: ...
+                   
+                   
+                   def f() -> type[P]:
+                       return I
+                   
+                   t = f()
+                   t()
+                   """);
+  }
+
   @Override
   protected void doTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doTest());

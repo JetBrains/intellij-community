@@ -362,7 +362,11 @@ class GlobalWorkspaceModel internal constructor(
       return ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().getGlobalModel(eelMachine)
     }
 
-    suspend fun getInstanceByEnvironmentName(environmentName: InternalEnvironmentName): GlobalWorkspaceModel {
+    fun getInstanceByEnvironmentName(environmentName: InternalEnvironmentName): GlobalWorkspaceModel {
+      return ApplicationManager.getApplication().service<GlobalWorkspaceModelRegistry>().getGlobalModelByEnvironmentName(environmentName)
+    }
+
+    suspend fun getInstanceByEnvironmentNameAsync(environmentName: InternalEnvironmentName): GlobalWorkspaceModel {
       return ApplicationManager.getApplication().serviceAsync<GlobalWorkspaceModelRegistry>().getGlobalModelByEnvironmentName(environmentName)
     }
 
@@ -404,11 +408,11 @@ class GlobalWorkspaceModel internal constructor(
 
 private fun VirtualFileUrl.createCopyAtManager(manager: VirtualFileUrlManager): VirtualFileUrl = manager.getOrCreateFromUrl(url)
 
-private fun ExcludeUrlEntity.copy(entitySource: EntitySource, manager: VirtualFileUrlManager): ExcludeUrlEntity.Builder {
+private fun ExcludeUrlEntity.copy(entitySource: EntitySource, manager: VirtualFileUrlManager): ExcludeUrlEntityBuilder {
   return ExcludeUrlEntity(url.createCopyAtManager(manager), entitySource)
 }
 
-private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPropertiesEntity.Builder {
+private fun LibraryPropertiesEntity.copy(entitySource: EntitySource): LibraryPropertiesEntityBuilder {
   val originalPropertiesXmlTag = propertiesXmlTag
   return LibraryPropertiesEntity(entitySource) {
     this.propertiesXmlTag = originalPropertiesXmlTag

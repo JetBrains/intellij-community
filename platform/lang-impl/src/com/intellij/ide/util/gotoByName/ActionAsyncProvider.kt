@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.SearchTopHitProvider
@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
+import com.intellij.util.gotoByName.FindActionSearchableOptionsFilter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.asFlow
@@ -36,7 +37,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<ActionAsyncProvider>()
 
@@ -131,7 +131,9 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
       val wrapper = wrapAnAction(action, presentationProvider)
       val degree = matcher.matchingDegree(pattern)
       val matchedValue = abbreviationMatchedValue(wrapper, pattern, degree)
-      if (!consumer(matchedValue)) cancel()
+      if (!consumer(matchedValue)) {
+        cancel()
+      }
     }
   }
 
@@ -162,7 +164,9 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
         return@forEachConcurrentOrdered matchedValue
     }, { matchedValue ->
-      if (!consumer(matchedValue)) cancel()
+      if (!consumer(matchedValue)) {
+        cancel()
+      }
     })
   }
 
@@ -391,7 +395,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
       res
     }
 
-    var registrarDescriptionsPromise: Deferred<Collection<OptionDescription>?> = async {
+    val registrarDescriptionsPromise: Deferred<Collection<OptionDescription>?> = async {
       val registrar = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl
       val words = registrar.getProcessedWords(pattern)
       val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
@@ -402,6 +406,9 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
           ?.filter {
             @Suppress("HardCodedStringLiteral")
             !(it.path == "ActionManager" || filterOutInspections && it.groupName == "Inspections")
+          }
+          ?.filter { description ->
+            FindActionSearchableOptionsFilter.EP_NAME.extensionList.all { findActionFilter -> findActionFilter.isAvailable(description) }
           }
           ?.toHashSet()
         if (descriptions.isNullOrEmpty()) {
@@ -451,7 +458,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
   }
 
   private suspend fun loadAction(id: String): AnAction? {
-    return withContext(coroutineContext) {
+    return withContext(currentCoroutineContext()) {
       actionManager.getAction(id)
     }
   }

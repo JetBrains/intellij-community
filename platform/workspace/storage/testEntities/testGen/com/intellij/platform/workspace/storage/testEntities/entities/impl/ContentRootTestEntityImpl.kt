@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -18,25 +17,29 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestEntityBuilder
 import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestOrderEntity
+import com.intellij.platform.workspace.storage.testEntities.entities.SourceRootTestOrderEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTestEntityData) : ContentRootTestEntity,
-                                                                                              WorkspaceEntityBase(dataSource) {
+internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTestEntityData) : ContentRootTestEntity, WorkspaceEntityBase(
+  dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId =
-      ConnectionId.create(ModuleTestEntity::class.java, ContentRootTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val SOURCEROOTORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ContentRootTestEntity::class.java, SourceRootTestOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
-    )
-    internal val SOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(
-      ContentRootTestEntity::class.java, SourceRootTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false
-    )
+    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, ContentRootTestEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val SOURCEROOTORDER_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootTestEntity::class.java,
+                                                                                   SourceRootTestOrderEntity::class.java,
+                                                                                   ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val SOURCEROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootTestEntity::class.java,
+                                                                               SourceRootTestEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -66,8 +69,8 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
   }
 
 
-  internal class Builder(result: ContentRootTestEntityData?) :
-    ModifiableWorkspaceEntityBase<ContentRootTestEntity, ContentRootTestEntityData>(result), ContentRootTestEntity.Builder {
+  internal class Builder(result: ContentRootTestEntityData?) : ModifiableWorkspaceEntityBase<ContentRootTestEntity, ContentRootTestEntityData>(
+    result), ContentRootTestEntityBuilder {
     internal constructor() : this(ContentRootTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -142,16 +145,16 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
 
       }
 
-    override var module: ModuleTestEntity.Builder
+    override var module: ModuleTestEntityBuilder
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleTestEntity.Builder)
-          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(MODULE_CONNECTION_ID, this) as? ModuleTestEntityBuilder)
+          ?: (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntity.Builder
+          this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)]!! as ModuleTestEntityBuilder
         }
       }
       set(value) {
@@ -182,18 +185,17 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
         changedProperty.add("module")
       }
 
-    override var sourceRootOrder: SourceRootTestOrderEntity.Builder?
+    override var sourceRootOrder: SourceRootTestOrderEntityBuilder?
       get() {
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
-            SOURCEROOTORDER_CONNECTION_ID, this
-          ) as? SourceRootTestOrderEntity.Builder)
-          ?: (this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootTestOrderEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(SOURCEROOTORDER_CONNECTION_ID,
+                                                                             this) as? SourceRootTestOrderEntityBuilder)
+          ?: (this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootTestOrderEntityBuilder)
         }
         else {
-          this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootTestOrderEntity.Builder
+          this.entityLinks[EntityLink(true, SOURCEROOTORDER_CONNECTION_ID)] as? SourceRootTestOrderEntityBuilder
         }
       }
       set(value) {
@@ -222,18 +224,18 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
 
     // List of non-abstract referenced types
     var _sourceRoots: List<SourceRootTestEntity>? = emptyList()
-    override var sourceRoots: List<SourceRootTestEntity.Builder>
+    override var sourceRoots: List<SourceRootTestEntityBuilder>
       get() {
         // Getter of the list of non-abstract referenced types
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID, this)!!
-            .toList() as List<SourceRootTestEntity.Builder>) +
-          (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntity.Builder> ?: emptyList())
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(SOURCEROOTS_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<SourceRootTestEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntityBuilder> ?: emptyList())
         }
         else {
-          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntity.Builder> ?: emptyList()
+          this.entityLinks[EntityLink(true, SOURCEROOTS_CONNECTION_ID)] as? List<SourceRootTestEntityBuilder> ?: emptyList()
         }
       }
       set(value) {
@@ -275,7 +277,7 @@ internal class ContentRootTestEntityImpl(private val dataSource: ContentRootTest
 internal class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEntity>() {
 
 
-  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<ContentRootTestEntity> {
+  override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<ContentRootTestEntity> {
     val modifiable = ContentRootTestEntityImpl.Builder(null)
     modifiable.diff = diff
     modifiable.id = createEntityId()
@@ -295,17 +297,16 @@ internal class ContentRootTestEntityData : WorkspaceEntityData<ContentRootTestEn
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity"
-    ) as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ContentRootTestEntity") as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return ContentRootTestEntity::class.java
   }
 
-  override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
+  override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
     return ContentRootTestEntity(entitySource) {
-      parents.filterIsInstance<ModuleTestEntity.Builder>().singleOrNull()?.let { this.module = it }
+      parents.filterIsInstance<ModuleTestEntityBuilder>().singleOrNull()?.let { this.module = it }
     }
   }
 

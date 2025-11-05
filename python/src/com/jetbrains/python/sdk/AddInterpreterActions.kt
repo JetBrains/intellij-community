@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
@@ -131,15 +130,10 @@ private class AddInterpreterOnTargetAction(
 
   private fun exitHandler(dialogWrapper: TargetEnvironmentWizard) {
     if (dialogWrapper.exitCode != OK_EXIT_CODE) return
-    val model = PyConfigurableInterpreterList.getInstance(project).model
     val sdk = (dialogWrapper.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk ?: return
 
     PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = true)
-    if (model.findSdk(sdk.name) == null) {
-      model.addSdk(sdk)
-      model.apply()
-      onSdkCreated.accept(sdk)
-    }
+    onSdkCreated.accept(sdk)
   }
 }
 

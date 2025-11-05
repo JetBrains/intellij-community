@@ -4,6 +4,13 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("//:jvm.bzl", "jvm_import")
 load("//:src/jvm-args.bzl", "get_jvm_flags")
 
+java_binary(
+    name = "kotlin-builder-wasmjs",
+    main_class = "org.jetbrains.bazel.kotlin.builder.wasmjs.WasmJsBuildWorker",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":kotlin-builder-wasmjs-lib"],
+)
+
 kt_jvm_library(
     name = "kotlin-builder-wasmjs-lib",
     srcs = [
@@ -12,20 +19,13 @@ kt_jvm_library(
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     visibility = ["//visibility:public"],
     runtime_deps = [
-        "//:kotlin-reflect",
-        "//:kotlinx-coroutines-core",
+        "//:kotlin-reflect_import",
+        "//:kotlinx-coroutines-core_import",
     ],
     deps = [
-        "//:kotlin-compiler-for-wasmjs",
-        "//:kotlin-stdlib",
+        "//:kotlin-compiler-for-wasmjs_import",
+        "//:kotlin-stdlib_import",
     ],
-)
-
-java_binary(
-    name = "kotlin-builder-wasmjs",
-    main_class = "org.jetbrains.bazel.kotlin.builder.wasmjs.WasmJsBuildWorker",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-builder-wasmjs-lib"],
 )
 
 string_list_flag(

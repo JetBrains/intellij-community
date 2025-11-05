@@ -4,10 +4,10 @@ package com.jetbrains.python.sdk.pipenv
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.where
+import com.intellij.python.community.execService.ProcessOutputTransformer
+import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.community.impl.pipenv.pipenvPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -15,6 +15,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.detectTool
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
@@ -26,27 +27,20 @@ import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
 @Internal
-suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> {
+suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> =
+  runPipEnv(dirPath, args = args, transformer = ZeroCodeStdoutTransformer)
+
+@Internal
+suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
   val executable = getPipEnvExecutable().getOr { return it }
-  return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args)
+  return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args, transformer = transformer)
 }
 
 /**
  * Detects the pipenv executable in `$PATH`.
  */
 @Internal
-suspend fun detectPipEnvExecutable(): PyResult<Path> {
-  val name = when {
-    SystemInfo.isWindows -> "pipenv.exe"
-    else -> "pipenv"
-  }
-  val executablePath = localEel.exec.where(name)?.asNioPath()
-  if (executablePath == null) {
-    return PyResult.localizedError(PyBundle.message("cannot.find.executable", name, localEel.descriptor.machine.name))
-  }
-
-  return PyResult.success(executablePath)
-}
+suspend fun detectPipEnvExecutable(eel: EelApi = localEel): PyResult<Path> = detectTool("pipenv", eel)
 
 @Internal
 fun detectPipEnvExecutableOrNull(): Path? {

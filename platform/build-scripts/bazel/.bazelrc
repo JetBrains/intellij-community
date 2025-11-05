@@ -1,3 +1,8 @@
+# IJI-2767 Bazel: move bazel output root to a standard location
+startup:macos --output_user_root=~/Library/Caches/JetBrains/MonorepoBazel
+startup:linux --output_user_root=~/.cache/JetBrains/MonorepoBazel
+startup:windows --output_user_root=~/AppData/Local/JetBrains/MonorepoBazel
+
 build --nobuild_runfile_links
 
 # rules_kotlin Compiling Kotlin on Windows appears to require --legacy_external_runfiles https://github.com/bazelbuild/rules_kotlin/issues/1309

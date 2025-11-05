@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -54,6 +53,11 @@ abstract class WelcomeScreenProjectProvider {
       return extension.doIsWelcomeScreenProject(project)
     }
 
+    fun isEditableWelcomeProject(project: Project): Boolean {
+      val extension = getWelcomeScreenProjectProvider() ?: return false
+      return extension.doIsWelcomeScreenProject(project) && extension.doIsEditableProject(project)
+    }
+
     fun isForceDisabledFileColors(): Boolean {
       val extension = getWelcomeScreenProjectProvider() ?: return false
       return extension.doIsForceDisabledFileColors()
@@ -78,7 +82,6 @@ abstract class WelcomeScreenProjectProvider {
       serviceAsync<WindowsDefenderChecker>().markProjectPath(projectPath, /*skip =*/ true)
 
       val project = extension.doCreateOrOpenWelcomeScreenProject(projectPath)
-      FUSProjectHotStartUpMeasurer.reportWelcomeScreenShown()
       LOG.info("Opened the welcome screen project at $projectPath")
       LOG.debug("Project: ", project)
 
@@ -97,6 +100,15 @@ abstract class WelcomeScreenProjectProvider {
   protected abstract fun getWelcomeScreenProjectName(): String
 
   protected abstract fun doIsWelcomeScreenProject(project: Project): Boolean
+
+  /**
+   * Return true if your project is not only a welcome screen, but also a real project where the user can create, store and edit files.
+   * Junie and other features might be disabled for non-editable welcome screen projects.
+   * See MTRH-1423
+   */
+  protected open fun doIsEditableProject(project: Project): Boolean {
+    return false
+  }
 
   protected abstract fun doIsForceDisabledFileColors(): Boolean
 

@@ -153,9 +153,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : C
     progressIcon.toolTipText = JavaStartersBundle.message("message.state.connecting.and.retrieving.options")
 
     return panel {
-      row {
-        label(JavaStartersBundle.message("title.project.server.url.label"))
-
+      row(JavaStartersBundle.message("title.project.server.url.label")) {
         cell(serverUrlLink)
         cell(serverSettingsButton)
         cell(retryButton)

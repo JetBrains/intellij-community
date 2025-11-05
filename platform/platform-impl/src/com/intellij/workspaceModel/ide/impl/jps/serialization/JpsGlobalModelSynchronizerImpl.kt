@@ -155,18 +155,20 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     entityStorage: EntityStorage, serializer: JpsFileEntityTypeSerializer<WorkspaceEntity>,
     contentWriter: JpsAppFileContentWriter,
   ) {
-    val entities = entityStorage.entities(serializer.mainEntityClass).toList()
+    val entities = entityStorage.entities(serializer.mainEntityClass)
     LOG.info("Saving global entities ${serializer.mainEntityClass.name} to files")
 
-    val filteredEntities = if (serializer.mainEntityClass == LibraryEntity::class.java) {
-      // We need to filter custom libraries, they will be serialized by the client code and not by the platform
-      entities.filter { it.entitySource is JpsGlobalFileEntitySource }
-    }
-    else entities
-
-    if (serializer.mainEntityClass == SdkEntity::class.java) {
-      assertUnexpectedAdditionalDataModification(entityStorage)
-    }
+    val filteredEntities =
+      when (serializer.mainEntityClass) {
+        LibraryEntity::class.java -> {
+          // We need to filter custom libraries, they will be serialized by the client code and not by the platform
+          entities.filter { it.entitySource is JpsGlobalFileEntitySource }.toList()
+        }
+        SdkEntity::class.java -> {
+          filterValidSdkEntitiesAssertingUnexpectedAdditionalDataModification(entityStorage)
+        }
+        else -> entities.toList()
+      }
 
     if (filteredEntities.isEmpty()) {
       // Remove empty files
@@ -178,10 +180,27 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   }
 
 
-  private fun assertUnexpectedAdditionalDataModification(entityStorage: EntityStorage) {
+  /**
+   * Collects SDK entities that are safe to serialize and emits diagnostics if the runtime bridge's
+   * `SdkAdditionalData` diverges from what is stored in the entity.
+   *
+   * Contract:
+   * - Always returns all SDK entities that have a corresponding
+   *   [com.intellij.openapi.projectRoots.impl.SdkBridge].
+   * - Never blocks saving; on mismatch, logs a diagnostic to help detect missed calls to
+   *   [com.intellij.openapi.projectRoots.SdkAdditionalData.markAsCommited].
+   */
+  private fun filterValidSdkEntitiesAssertingUnexpectedAdditionalDataModification(entityStorage: EntityStorage): List<WorkspaceEntity> {
+    val result = mutableListOf<WorkspaceEntity>()
     for (sdkEntity in entityStorage.entities(SdkEntity::class.java)) {
-      val projectJdkImpl = entityStorage.sdkMap.getDataByEntity(sdkEntity) ?: error(
-        "SdkBridge has to be available for the SdkEntity: ${sdkEntity.name}; type: ${sdkEntity.type}; path: ${sdkEntity.homePath}")
+      val projectJdkImpl = entityStorage.sdkMap.getDataByEntity(sdkEntity)
+      if (projectJdkImpl == null) {
+        LOG.error("SdkBridge has to be available for the SdkEntity: ${sdkEntity.name}; type: ${sdkEntity.type}; path: ${sdkEntity.homePath}")
+        continue
+      }
+      else {
+        result.add(sdkEntity)
+      }
       val additionalData = projectJdkImpl.sdkAdditionalData
       if (additionalData == null) continue
       val additionalDataElement = Element(ELEMENT_ADDITIONAL)
@@ -197,6 +216,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
                   "Probably inconsistent update of the $className, see the documentation of `SdkAdditionalData#markAsCommited` for more information")
       }
     }
+    return result
   }
 
   private suspend fun waitForActiveProjectJobs() {
@@ -221,7 +241,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
 
   @VisibleForTesting
   protected open suspend fun delayLoadGlobalWorkspaceModel(environmentName: InternalEnvironmentName) {
-    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentName(environmentName)
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentNameAsync(environmentName)
     if (loadedFromDisk[environmentName] == true || !globalWorkspaceModel.loadedFromCache) {
       return
     }
@@ -265,7 +285,8 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
     }
     val callback = if (initializeBridges) {
       bridgesInitializationCallback(environmentName, mutableStorage, initialEntityStorage, true)
-    } else {
+    }
+    else {
       { }
     }
     loadedFromDisk[environmentName] = true

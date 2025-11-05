@@ -9,6 +9,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.readText
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
+import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.api.SuggestedSdk
 import com.intellij.python.pyproject.model.api.suggestSdk
@@ -88,10 +89,14 @@ class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
     else true to module.name
 
     val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.uv.environment", projectName)
+    val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     return when {
-      checkExistence && getUvEnv(if (checkToml) module else module.getSdkAssociatedModule()) != null -> EnvCheckerResult.EnvFound("", intentionName)
-      canManage -> EnvCheckerResult.EnvNotFound(intentionName)
+      checkExistence -> {
+        val detectedSdk = getUvEnv(if (checkToml) module else module.getSdkAssociatedModule())
+        detectedSdk?.findEnvOrNull(intentionName) ?: if (canManage) envNotFound else EnvCheckerResult.CannotConfigure
+      }
+      canManage -> envNotFound
       else -> EnvCheckerResult.CannotConfigure
     }
   }
@@ -118,8 +123,8 @@ class PyUvSdkConfiguration : PyProjectTomlConfigurationExtension {
       getUvEnv(sdkAssociatedModule)?.homePath?.toNioPathOrNull()?.let {
         setupExistingEnvAndSdk(it, workingDir, false, workingDir, existingSdks)
       } ?: run {
-        logger.error("Can't find existing uv environment in project, but it was expected. " +
-                     "Probably it was deleted. New environment will be created")
+        logger.warn("Can't find existing uv environment in project, but it was expected. " +
+                    "Probably it was deleted. New environment will be created")
         setupNewUvSdkAndEnv(workingDir, existingSdks, null)
       }
     }

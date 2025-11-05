@@ -170,6 +170,7 @@ class TerminalViewImpl(
       scrollingModel = null,
       alternateBufferModel,
       shellIntegrationDeferred = null,
+      startupOptionsDeferred = null,
       typeAhead = null,
     )
     configureOutputEditor(
@@ -217,6 +218,7 @@ class TerminalViewImpl(
       scrollingModel,
       outputModel,
       shellIntegrationDeferred,
+      startupOptionsDeferred,
       typeAhead = outputModelController
     )
 
@@ -255,7 +257,7 @@ class TerminalViewImpl(
       coroutineScope = hyperlinkScope,
     )
 
-    outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Gen2")
+    outputEditor.putUserData(CompletionPhase.CUSTOM_CODE_COMPLETION_ACTION_ID, "Terminal.CommandCompletion.Invoke")
 
     val terminalAliasesStorage = TerminalAliasesStorage()
     outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)

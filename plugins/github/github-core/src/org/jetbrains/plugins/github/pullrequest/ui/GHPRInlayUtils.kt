@@ -45,15 +45,15 @@ internal object GHPRInlayUtils {
   internal fun installInlayHoverOutline(
     parentCs: CoroutineScope,
     editor: Editor,
-    side: Side?,
+    isUnifiedDiff: Boolean,
     locationToLine: ((DiffLineLocation) -> Int?)?,
     vm: GHPREditorMappedComponentModel,
   ) {
     val cs: CoroutineScope = parentCs.childScope("Comment inlay hover controller")
+
     var activeLineHighlighter: RangeHighlighter? = null
-    val isUnifiedDiffViewer = side == null
     val multilineCommentsDisabled = Registry.get("github.pr.new.multiline.comments.disabled").asBoolean()
-    val frameResizer = if (vm is GHPREditorMappedComponentModel.NewComment<*> && !(isUnifiedDiffViewer && multilineCommentsDisabled)) {
+    val frameResizer = if (vm is GHPREditorMappedComponentModel.NewComment<*> && !(isUnifiedDiff && multilineCommentsDisabled)) {
       val frameResizer = ResizingFrameListener(editor, vm)
       editor.addEditorMouseMotionListener(frameResizer)
       editor.addEditorMouseListener(frameResizer)
@@ -80,13 +80,15 @@ internal object GHPRInlayUtils {
         }
         val startOffset = editor.document.getLineStartOffset(commentRange.first)
         val endOffset = editor.document.getLineEndOffset(commentRange.last)
-        val renderer = CommentedCodeFrameRenderer(commentRange.first, commentRange.last, side)
+        val editorSide = if ((editor as? EditorEx)?.verticalScrollbarOrientation == EditorEx.VERTICAL_SCROLLBAR_LEFT) Side.LEFT else Side.RIGHT
+        val renderer = CommentedCodeFrameRenderer(commentRange.first, commentRange.last, editorSide)
         activeLineHighlighter = editor.markupModel.addRangeHighlighter(startOffset, endOffset, HighlighterLayer.LAST, null, HighlighterTargetArea.LINES_IN_RANGE).also { highlighter ->
           highlighter.customRenderer = renderer
           highlighter.lineMarkerRenderer = renderer
         }
       }
     }
+
     cs.launch {
       try {
         awaitCancellation()
@@ -103,12 +105,18 @@ internal object GHPRInlayUtils {
       }
     }
   }
-
+  private const val OUTLINE_OUTSIDE_DETECTION_MARGIN = 3
+  private const val OUTLINE_DETECTION_LINE_FRACTION = 0.3f
   private class ResizingFrameListener(val editor: Editor, val vm: GHPREditorMappedComponentModel.NewComment<*>) : EditorMouseListener, EditorMouseMotionListener {
     private val editorEx = editor as EditorEx
     private val model = editorEx.getUserData(CodeReviewCommentableEditorModel.KEY) as? CodeReviewEditorGutterControlsModel.WithMultilineComments
 
     private var isDraggingFrame: Boolean = false
+      set(value) {
+        vm.isHidden(value)
+        field = value
+      }
+
     private var dragStart: Int = 0
     private var edge: Edge? = Edge.TOP
     private var oldRange: LineRange? = null
@@ -168,10 +176,10 @@ internal object GHPRInlayUtils {
 
     override fun mouseReleased(e: EditorMouseEvent) {
       isDraggingFrame = false
+
       if (oldRange != null && model != null) {
         val range = vm.range.value?.second ?: return
         model.updateCommentLines(oldRange!!, LineRange(range.first, range.last))
-        vm.isHidden(false)
         editorEx.setCustomCursor(this, null)
       }
     }
@@ -187,8 +195,8 @@ internal object GHPRInlayUtils {
         Edge.BOTTOM -> yBordersPositions.second - 1
         else -> return
       }.toInt()
+
       isDraggingFrame = true
-      vm.isHidden(true)
     }
 
     override fun mouseMoved(e: EditorMouseEvent) {
@@ -208,19 +216,23 @@ internal object GHPRInlayUtils {
     private fun Point.getEdge(frameCoords: Pair<Float, Float>): Edge? {
       val topY = frameCoords.first
       val botY = frameCoords.second
+
       if (this.x.toFloat() !in 0f..editor.contentComponent.width.toFloat()) return null
-      if (this.y.toFloat() in (topY - 3).coerceAtLeast(0f)..topY + editor.lineHeight / 2) return Edge.TOP
-      if (this.y.toFloat() in botY - editor.lineHeight / 2..botY + 3) return Edge.BOTTOM
+      if (this.y.toFloat() in (topY - OUTLINE_OUTSIDE_DETECTION_MARGIN).coerceAtLeast(0f)..topY + editor.lineHeight * OUTLINE_DETECTION_LINE_FRACTION) return Edge.TOP
+      if (this.y.toFloat() in botY - editor.lineHeight * OUTLINE_DETECTION_LINE_FRACTION..botY + OUTLINE_OUTSIDE_DETECTION_MARGIN) return Edge.BOTTOM
       return null
     }
 
     private fun getYAxisBorders(): Pair<Float, Float>? {
       val range = vm.range.value?.second ?: return null
       val doc = editor.document
+
       val topOffset = doc.getLineStartOffset(range.first)
       val bottomOffset = doc.getLineEndOffset(range.last)
+
       val topY = editor.visualLineToY(editor.offsetToVisualPosition(topOffset).line).toFloat()
       val bottomY = editor.visualLineToY(editor.offsetToVisualPosition(bottomOffset).line).toFloat() + editor.lineHeight
+
       return topY to bottomY
     }
 

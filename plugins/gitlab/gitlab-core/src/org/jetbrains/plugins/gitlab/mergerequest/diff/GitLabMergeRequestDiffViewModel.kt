@@ -15,7 +15,6 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
@@ -38,9 +37,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestRev
 import kotlin.time.Duration.Companion.ZERO
 import kotlin.time.Duration.Companion.minutes
 
-/**
- * A viewmodel for the merge request diff window capable of showing different file diffs
- */
 @ApiStatus.Internal
 interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel, CodeReviewDiffProcessorViewModel<GitLabMergeRequestDiffChangeViewModel> {
   fun getViewModelFor(change: RefComparisonChange): Flow<GitLabMergeRequestDiffReviewViewModel?>
@@ -49,8 +45,6 @@ interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel, C
     val KEY: Key<GitLabMergeRequestDiffViewModel> = Key.create("GitLab.MergeRequest.Diff.ViewModel")
   }
 }
-
-private val LOG = logger<GitLabMergeRequestDiffProcessorViewModelImpl>()
 
 internal class GitLabMergeRequestDiffProcessorViewModelImpl(
   private val project: Project,
@@ -106,16 +100,7 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
       changesFetchFlow
         .mapNotNull { it.getOrNull() }
         .mapScoped { changes ->
-          val patchWithHistory = changes.patchesByChange[change]
-          if (patchWithHistory == null) {
-            LOG.warn("Could not find patch for change $change")
-            return@mapScoped null
-          }
-          if (patchWithHistory.patch.hunks.isEmpty()) {
-            LOG.warn("Empty patch for change $change")
-            return@mapScoped null
-          }
-          createChangeVm(changes, change, patchWithHistory)
+          changes.patchesByChange[change]?.let { createChangeVm(changes, change, it) }
         }.stateIn(cs, SharingStarted.WhileSubscribed(5.minutes, ZERO), null)
     }
 

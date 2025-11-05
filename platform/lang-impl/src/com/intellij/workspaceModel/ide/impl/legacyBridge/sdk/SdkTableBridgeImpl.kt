@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.platform.workspace.jps.entities.SdkRoot
 import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
 import com.intellij.platform.workspace.jps.entities.modifySdkEntity
+import com.intellij.platform.workspace.storage.InternalEnvironmentName
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
@@ -48,19 +49,30 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
     return null
   }
 
+  override fun findSdkByName(name: String, environmentName: InternalEnvironmentName): Sdk? {
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceByEnvironmentName(environmentName)
+    val currentSnapshot = globalWorkspaceModel.currentSnapshot
+    val sdkEntity = currentSnapshot.entities(SdkEntity::class.java)
+                      .firstOrNull { Comparing.strEqual(name, it.name) } ?: return null
+    return currentSnapshot.sdkMap.getDataByEntity(sdkEntity)
+  }
+
   override fun getAllSdks(): List<Sdk> {
     val globalWorkspaceModels = GlobalWorkspaceModel.getInstancesBlocking()
-    return globalWorkspaceModels.map {
-      it.currentSnapshot
-    }.flatMap { snapshot ->
-      snapshot.entities(SdkEntity::class.java).mapNotNull { snapshot.sdkMap.getDataByEntity(it) }
-    }.toList()
+    return globalWorkspaceModels.flatMap {
+      val snapshot = it.currentSnapshot
+      snapshot.entities(SdkEntity::class.java).mapNotNull { sdkEntity -> snapshot.sdkMap.getDataByEntity(sdkEntity) }
+    }
   }
 
   override fun createSdk(name: String, type: SdkTypeId, homePath: String?): Sdk {
     val descriptor = homePath?.toNioPathOrNull()?.getEelDescriptor() ?: LocalEelDescriptor
     val environmentName = descriptor.machine.getInternalEnvironmentName()
     return ProjectJdkImpl(name, type, homePath ?: "", null, environmentName)
+  }
+
+  override fun createSdk(name: String, type: SdkTypeId, environmentName: InternalEnvironmentName): Sdk {
+    return ProjectJdkImpl(name, type, "", null, environmentName)
   }
 
   override fun addNewSdk(sdk: Sdk) {

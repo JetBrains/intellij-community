@@ -3,6 +3,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsSafe
@@ -29,7 +30,8 @@ import javax.swing.border.Border
 import kotlin.math.max
 
 @ApiStatus.Internal
-abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: ToolWindowAnchor) : JBPanel<ToolWindowToolbar>() {
+abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: ToolWindowAnchor) : JBPanel<ToolWindowToolbar>(),
+                                                                                                 BorderPainterHolder {
   lateinit var defaults: List<String>
 
   internal abstract val bottomStripe: AbstractDroppableStripe
@@ -42,7 +44,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   private var hasVisibleButtons = false
   private val visibleButtonsListeners = mutableListOf<() -> Unit>()
 
-  internal var borderPainter: BorderPainter = DefaultBorderPainter()
+  override var borderPainter: BorderPainter = DefaultBorderPainter()
 
   protected open fun init() {
     layout = myResizeManager.createLayout()

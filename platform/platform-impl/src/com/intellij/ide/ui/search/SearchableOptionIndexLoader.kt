@@ -107,7 +107,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
       }
 
       val configs = storage.get(word)
-      val packed = SearchableOptionsRegistrarImpl.pack(id, hit, path, groupName, identifierTable)
+      val packed = packSearchableOptions(id = id, hit = hit, path = path, groupName = groupName, identifierTable = identifierTable)
       if (configs == null) {
         storage.put(word, longArrayOf(packed))
       }

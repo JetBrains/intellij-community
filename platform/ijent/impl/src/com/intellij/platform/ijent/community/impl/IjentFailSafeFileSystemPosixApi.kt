@@ -1,14 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl
 
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
-import com.intellij.platform.eel.fs.WalkDirectoryEntryResult
-import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.fs.EelFileSystemPosixApi
-import com.intellij.platform.eel.fs.EelOpenedFile
-import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentApi
@@ -16,6 +13,7 @@ import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -43,14 +41,16 @@ import java.util.concurrent.atomic.AtomicReference
 fun IjentFailSafeFileSystemPosixApi(
   coroutineScope: CoroutineScope,
   descriptor: EelDescriptor,
+  checkIsIjentInitialized: (() -> Boolean)?,
 ): IjentFileSystemApi {
-  val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, descriptor)
+  val holder = DelegateHolder<IjentPosixApi, IjentFileSystemPosixApi>(coroutineScope, descriptor, checkIsIjentInitialized)
   return IjentFailSafeFileSystemPosixApiImpl(holder, descriptor)
 }
 
 private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
   private val coroutineScope: CoroutineScope,
-  private val descriptor: EelDescriptor
+  private val descriptor: EelDescriptor,
+  private val isIjentInitialized: (() -> Boolean)?,
 ) {
   private val delegate = AtomicReference<Deferred<I>?>(null)
 
@@ -73,6 +73,10 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
     }!!
 
   suspend fun <R> withDelegateRetrying(block: suspend F.() -> R): R {
+    if (isIjentInitialized?.invoke() == false) {
+      checkEarlyAccess()
+    }
+
     return try {
       withDelegateFirstAttempt(block)
     }
@@ -97,6 +101,41 @@ private class DelegateHolder<I : IjentApi, F : IjentFileSystemApi>(
     IjentUnavailableException.unwrapFromCancellationExceptions {
       @Suppress("UNCHECKED_CAST") (getDelegate().await().fs as F).block()
     }
+}
+
+private fun checkEarlyAccess() {
+  val application = ApplicationManagerEx.getApplicationEx()
+  if (application?.isUnitTestMode != false) {
+    return
+  }
+
+  // TODO Remove later.
+  if (ApplicationManagerEx.isInIntegrationTest()) {
+    return
+  }
+
+  if (!EDT.isCurrentThreadEdt()) {
+    return
+  }
+
+  // Q: What happened?
+  // A: Some code tried to access \\wsl.localhost before the initialization of the IJent file system.
+  //    Therefore, the code will access the original filesystem of WSL brought by Microsoft,
+  //    and the code won't access our polished file system with various workarounds, optimizations, etc.
+  //    Also, the code that triggered this error is an obstacle for implementing DevContainers over Eel.
+  //
+  // Q: How to fix it?
+  // A: Call `com.intellij.platform.eel.provider.EelInitialization.runEelInitialization` in advance.
+  //    Sometimes it's easy, sometimes you have to rework the UI/UX, sorry for that.
+  //
+  // Q: Why not initialize the IJent filesystem lazily, right here, at this moment?
+  // A: It does. However, IJent initialization is much heavier than accessing some files over IJent.
+  //    This error is shown when the initialization happens in EDT, which can freeze the UI.
+  //
+  // Q: Isn't accessing the file system in EDT a bad practice in general?
+  // A: In general, yes. However, there's too much code that does it anyway.
+  //    This error highlights at least the most problematic code.
+  LOG.error("Remote file system accessed in EDT before Eel initialization. The description is in the source code.")
 }
 
 /**
@@ -257,3 +296,5 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     createTemporaryFile(options)
   }
 }
+
+private val LOG = logger<IjentFailSafeFileSystemPosixApiImpl>()

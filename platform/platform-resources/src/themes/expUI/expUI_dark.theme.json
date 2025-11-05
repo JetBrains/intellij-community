@@ -1209,7 +1209,20 @@
     "ManagedIdeMenuItemHover": "Gray4",
 
     "InlineBanner.hoverBackground": "#FFFFFF14",
-    "InlineBanner.pressedBackground": "#FFFFFF1E"
+    "InlineBanner.pressedBackground": "#FFFFFF1E",
+    
+    "Recap": {
+      "cardBackground": "#1E1F22",
+      "cardBorderColor": "#1E1F22",
+      "cardHeaderTitle": "#F0F1F2",
+      "cardHeaderSubtitle": "#B4B8BF",
+      "cardFooterForeground": "#CED0D6",
+      "chroniclesBackground": "#2B2D30",
+      "chroniclesBorderColor": "#2B2D30",
+      "chroniclesBackgroundHovered": "#393B40",
+      "chroniclesForeground": "#DFE1E5",
+      "chroniclesForegroundGreyed": "#868A91"
+    }
   },
 
   "icons": {

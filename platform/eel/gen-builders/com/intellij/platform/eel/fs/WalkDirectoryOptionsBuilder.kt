@@ -45,9 +45,16 @@ class WalkDirectoryOptionsBuilder(
     this.entryOrder = arg
   }
 
+  /**
+   * Yield directory entries in alphabetical order.
+   */
   fun alphabetical(): WalkDirectoryOptionsBuilder =
     entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
 
+  /**
+   * Yield directory entries in order in which they appear on the file system.
+   * If you do not care for the order of the files, this is the preferable option.
+   */
   fun random(): WalkDirectoryOptionsBuilder =
     entryOrder(WalkDirectoryEntryOrder.RANDOM)
 
@@ -102,9 +109,46 @@ class WalkDirectoryOptionsBuilder(
     this.traversalOrder = arg
   }
 
+  /**
+   * Breadth-first traversal.
+   * ```
+   * a/
+   * |- b/
+   * |  |- c
+   * |  |- d
+   * |- e
+   * ```
+   * Returned:
+   * ```
+   * a
+   * a/b
+   * a/e
+   * a/b/c
+   * a/b/d
+   * ```
+   */
   fun bfs(): WalkDirectoryOptionsBuilder =
     traversalOrder(WalkDirectoryTraversalOrder.BFS)
 
+  /**
+   * Depth-first traversal, where directory entries are yielded in order they are encountered.
+   * If you do not care for the manner of traversal, this is the preferable option.
+   * ```
+   * a/
+   * |- b/
+   * |  |- c
+   * |  |- d
+   * |- e
+   * ```
+   * Returned:
+   * ```
+   * a
+   * a/b
+   * a/b/c
+   * a/b/d
+   * a/e
+   * ```
+   */
   fun dfs(): WalkDirectoryOptionsBuilder =
     traversalOrder(WalkDirectoryTraversalOrder.DFS)
 

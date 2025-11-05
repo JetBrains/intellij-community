@@ -25,13 +25,15 @@ class StripeButtonSeparator: JComponent() {
 
   override fun paintComponent(g: Graphics) {
     super.paintComponent(g)
-
-    val width = JBUI.scale(24)
-    val x = (this.width - width) / 2
-    val y = height / 2
+    val padding = SquareStripeButtonLook.getIconPadding(isOnTheLeftStripe())
+    val fullWidth = this.width
+    val fullHeight = this.height
+    val visibleWidth = JBUI.scale(24)
     val height = JBUI.scale(1)
-
+    val paintAreaWidth = fullWidth - (padding.left + padding.right)
+    val x = padding.left + (paintAreaWidth - visibleWidth) / 2
+    val y = fullHeight / 2
     g.color = JBUI.CurrentTheme.ToolWindow.stripeSeparatorColor(dndState)
-    g.fillRect(x, y, width, height)
+    g.fillRect(x, y, visibleWidth, height)
   }
 }

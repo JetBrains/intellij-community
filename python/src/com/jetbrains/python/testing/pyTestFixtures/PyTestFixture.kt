@@ -12,13 +12,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
-import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.stubs.PyDecoratorStub
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex
 import com.jetbrains.python.psi.stubs.PyTestFixtureDecoratorStub
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.testing.PyTestFactory
 import com.jetbrains.python.testing.TestRunnerService
 import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
@@ -405,7 +405,7 @@ internal fun isPyTestEnabled(module: Module): Boolean {
   // Must be true even if SDK is not set
   if (factory.id == PyTestFactory.id) return true
 
-  val sdk = module.getSdk() ?: return false
+  val sdk = module.pythonSdk ?: return false
   val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk, module.project) else factory).id
   return factoryId == PyTestFactory.id
 }

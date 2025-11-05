@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
@@ -132,7 +132,7 @@ abstract class TrustedProjectsHeavyTestCase {
     val fileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
     val moduleEntity = ModuleEntity(moduleName, emptyList(), NonPersistentEntitySource) {
       this.contentRoots = contentRoots.map {
-        ContentRootEntity.invoke(it.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource)
+        ContentRootEntity(it.toVirtualFileUrl(fileUrlManager), emptyList(), NonPersistentEntitySource)
       }
     }
     entityStorage.addEntity(moduleEntity)

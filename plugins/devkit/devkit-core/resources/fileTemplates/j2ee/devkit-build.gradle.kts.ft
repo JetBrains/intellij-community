@@ -20,7 +20,7 @@ repositories {
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
     intellijPlatform {
-        intellijIdeaUltimate("${context.getBomProperty("intellij.version")}")
+        intellijIdea("${context.getBomProperty("intellij.version")}")
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
 
 #if ($context.hasLibraries())
@@ -28,14 +28,7 @@ dependencies {
 #end
 
 #if ($context.hasLibrary("compose"))
-        bundledModules(
-            "intellij.libraries.skiko",
-            "intellij.libraries.compose.foundation.desktop",
-            "intellij.platform.compose",
-            "intellij.platform.jewel.foundation",
-            "intellij.platform.jewel.ui",
-            "intellij.platform.jewel.ideLafBridge"
-        )
+        composeUI()
 #end
 
 #if ($context.hasLibrary("java"))

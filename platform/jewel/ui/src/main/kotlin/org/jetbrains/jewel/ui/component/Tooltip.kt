@@ -2,7 +2,6 @@ package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.TooltipPlacement
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,9 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -33,6 +30,7 @@ import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
 import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
+import org.jetbrains.jewel.ui.popupShadowAndBorder
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 import org.jetbrains.jewel.ui.util.isDark
 
@@ -174,18 +172,14 @@ private fun TooltipImpl(
     ) {
         Box(
             modifier =
-                Modifier.shadow(
-                        elevation = style.metrics.shadowSize,
+                Modifier.popupShadowAndBorder(
                         shape = RoundedCornerShape(style.metrics.cornerSize),
-                        ambientColor = style.colors.shadow,
-                        spotColor = Color.Transparent,
+                        shadowSize = style.metrics.shadowSize,
+                        shadowColor = style.colors.shadow,
+                        borderWidth = style.metrics.borderWidth,
+                        borderColor = style.colors.border,
                     )
                     .background(color = style.colors.background, shape = RoundedCornerShape(style.metrics.cornerSize))
-                    .border(
-                        width = style.metrics.borderWidth,
-                        color = style.colors.border,
-                        shape = RoundedCornerShape(style.metrics.cornerSize),
-                    )
                     .padding(style.metrics.contentPadding)
         ) {
             OverrideDarkMode(style.colors.background.isDark()) { tooltip() }
