@@ -3,6 +3,8 @@ package org.jetbrains.idea.devkit.threadingModelHelper
 
 import com.intellij.concurrency.virtualThreads.inVirtualThread
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
@@ -28,6 +30,10 @@ import kotlin.time.measureTime
  * nodes to the processing functions is undefined, and we need to account for possibility to see the same node under different execution paths that have different lengths.
  */
 class LockReqAnalyzerParallelBFS {
+
+  companion object {
+    private val LOG: Logger = Logger.getInstance(LockReqAnalyzerParallelBFS::class.java)
+  }
 
   private data class TraversalContext(
     val config: AnalysisConfig,
@@ -80,7 +86,9 @@ class LockReqAnalyzerParallelBFS {
 
     val payload = QueuePayload(queue, totalSize, AtomicInteger(1))
 
-    println("Starting from clean queue!")
+    LOG.trace {
+      "Starting analysis on ${root.element?.name}"
+    }
     context(config, BaseLockReqRules(), project) {
       val isActive = AtomicBoolean(true)
       val time = measureTime {
@@ -92,7 +100,7 @@ class LockReqAnalyzerParallelBFS {
           }
         }
       }
-      println("Lock analysis complete in $time")
+      LOG.info("Lock analysis complete in $time")
     }
   }
 
@@ -132,7 +140,9 @@ class LockReqAnalyzerParallelBFS {
           // otherwise, someone sneaked their computation; let's try again
         }
         payload.globalCounter.incrementAndGet()
-        println("Running analysis on $key (path length: $newValue)")
+        LOG.trace {
+          "Running analysis on $key (path length: $newValue)"
+        }
 
         val time = measureTime {
           smartReadAction(project = project) {
@@ -145,7 +155,9 @@ class LockReqAnalyzerParallelBFS {
               val path = ExecutionPath(currentPath, requirement)
               context.paths.add(path)
               consumer.onPath(path)
-              println("Found requirement: $requirement")
+              LOG.trace {
+                "Found requirement: $requirement"
+              }
             }
           }
 
@@ -167,24 +179,32 @@ class LockReqAnalyzerParallelBFS {
         }
 
         if (key.toString().contains("PsiDocumentManagerBase")) {
-          println("Traversed method ${key.containingClassName}.${key.methodName} in $time, ${currentPath.size} steps deep (${
-            currentPath.joinToString(" -> ") {
-              "${it.containingClassName}.${it.methodName}"
-            }
-          })")
+          LOG.trace {
+            "Traversed method ${key.containingClassName}.${key.methodName} in $time, ${currentPath.size} steps deep (${
+              currentPath.joinToString(" -> ") {
+                "${it.containingClassName}.${it.methodName}"
+              }
+            })"
+          }
         }
       }
       catch (e: Throwable) {
-        println("Exception while processing method: ${e.message}")
+        LOG.trace {
+          "Exception while processing method: ${e.message}"
+        }
         throw e
       }
       finally {
         val result = totalSize.decrementAndGet()
         if (result == 0) {
           assert(queue.isEmpty())
-          println("Global counter: ${payload.globalCounter.get()}")
-          context.visited.forEach { signature, i ->
-            println("Visited $signature $i times")
+          LOG.trace {
+            buildString {
+              "Global counter: ${payload.globalCounter.get()}"
+              context.visited.forEach { signature, i ->
+                appendLine("Visited $signature $i times")
+              }
+            }
           }
           isActive.set(false)
         }
@@ -202,7 +222,9 @@ class LockReqAnalyzerParallelBFS {
       val path = ExecutionPath(currentPath, requirement)
       context.paths.add(path)
       consumer.onPath(path)
-      println("Found requirement: $requirement")
+      LOG.trace {
+        "Found requirement: $requirement"
+      }
     }
     if (requirements.isNotEmpty()) {
       return // this is not interesting further
