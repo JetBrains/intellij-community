@@ -46,6 +46,9 @@
     <lang.syntaxHighlighterFactory
       language="Requirements"
       implementationClass="com.jetbrains.python.requirements.RequirementsSyntaxHighlighterFactory"/>
+    <lang.commenter
+      language="Requirements"
+      implementationClass="com.jetbrains.python.requirements.RequirementsCommenter"/>
     <multiHostInjector implementation="com.jetbrains.python.requirements.injection.TomlRequirementsLanguageInjector"/>
 
     <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
