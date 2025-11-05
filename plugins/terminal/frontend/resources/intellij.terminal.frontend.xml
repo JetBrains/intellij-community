@@ -50,6 +50,8 @@
                             implementationClass="com.intellij.terminal.frontend.view.completion.TerminalCommandSpecCompletionContributorGen2"
                             order="first, before terminalPowerShell, after ml_context"/>
     <lookup.bottomPanelProvider implementation="com.intellij.terminal.frontend.view.completion.TerminalLookupBottomPanelProvider"/>
+    <statistics.collectorExtension implementation="com.intellij.terminal.frontend.view.completion.TerminalCompletionUsageCollectorExtension"/>
+    <lookup.usageDetails implementation="com.intellij.terminal.frontend.view.completion.TerminalCompletionUsageDescriptor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">

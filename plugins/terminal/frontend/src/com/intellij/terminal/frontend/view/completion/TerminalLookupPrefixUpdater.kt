@@ -116,7 +116,7 @@ class TerminalLookupPrefixUpdater private constructor(
       // Hide the lookup if the prefix became empty after truncation
       val curPrefix = calculateCurPrefix()
       if (curPrefix != null && curPrefix.isEmpty()) {
-        lookup.hideLookup(true)
+        lookup.hideLookup(false)
         return
       }
     }
@@ -138,7 +138,7 @@ class TerminalLookupPrefixUpdater private constructor(
       CompletionServiceImpl.currentCompletionProgressIndicator?.scheduleRestart()
     }
     else {
-      lookup.hideLookup(true)
+      lookup.hideLookup(false)
     }
   }
 

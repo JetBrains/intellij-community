@@ -23,6 +23,7 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.TerminalCommandCompletionServices
 import org.jetbrains.plugins.terminal.block.reworked.TerminalAliasesStorage
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isSuppressCompletion
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
@@ -68,6 +69,11 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
     val command = outputModel.getText(commandStartOffset, outputModel.startOffset + caretOffset.toLong()).toString()
+
+    // Save the original command to use in other contexts
+    val completionProcess = parameters.process as? CompletionProcessEx
+    completionProcess?.putUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY, command)
+
     val tokens = shellSupport.getCommandTokens(parameters.editor.project!!, command) ?: return
     val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
       tokens + ""  // user inserted space after the last token, so add empty incomplete token as last

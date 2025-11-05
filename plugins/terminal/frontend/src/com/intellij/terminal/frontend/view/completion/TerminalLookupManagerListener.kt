@@ -1,6 +1,8 @@
 package com.intellij.terminal.frontend.view.completion
 
 import com.google.common.base.Ascii
+import com.intellij.codeInsight.completion.CompletionProcessEx
+import com.intellij.codeInsight.completion.CompletionService
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -13,6 +15,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import kotlinx.coroutines.cancel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
@@ -111,6 +114,25 @@ private class TerminalLookupListener : LookupListener {
   override fun firstElementShown() {
     TerminalUsageLocalStorage.getInstance().recordCompletionPopupShown()
   }
+
+  /**
+   * Adds [TerminalCommandCompletion.COMPLETING_COMMAND_KEY] to the lookup once it is shown.
+   */
+  override fun lookupShown(event: LookupEvent) {
+    val process = CompletionService.getCompletionService().currentCompletion as? CompletionProcessEx ?: return
+    val command = process.getUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY) ?: return
+    val lookup = event.lookup as? LookupImpl ?: return
+    lookup.putUserData(TerminalCommandCompletion.COMPLETING_COMMAND_KEY, command)
+  }
+
+  /**
+   * Stores the last selected item in the lookup by [TerminalCommandCompletion.LAST_SELECTED_ITEM_KEY].
+   */
+  override fun currentItemChanged(event: LookupEvent) {
+    val lookup = event.lookup as? LookupImpl ?: return
+    val item = event.item ?: return
+    lookup.putUserData(TerminalCommandCompletion.LAST_SELECTED_ITEM_KEY, item)
+  }
 }
 
 /**
@@ -180,7 +202,7 @@ private class TerminalLookupOutputModelListener(
   override fun afterContentChanged(event: TerminalContentChangeEvent) {
     val textBelowCursor = event.model.getTextBelowCursorLine().trim()
     if (textBelowCursor != initialTextBelowCursor) {
-      lookup.hideLookup(true)
+      lookup.hideLookup(false)
     }
   }
 
