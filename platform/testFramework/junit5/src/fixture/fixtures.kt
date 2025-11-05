@@ -47,6 +47,13 @@ import kotlin.io.path.Path
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.exists
 
+// Adapted from com.intellij.clion.testFramework.nolang.junit5.core.FixturesKt.testNameFixture
+@TestOnly
+fun testNameFixture(): TestFixture<String> = testFixture {
+  val testName = it.testName
+  initialized(testName) {}
+}
+
 @TestOnly
 fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path> = testFixture {
   val tempDir = withContext(Dispatchers.IO) {

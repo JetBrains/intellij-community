@@ -5,7 +5,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.io.toNioPathOrNull
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -73,8 +72,7 @@ fun codeInsightFixture(
 
   val codeInsightFixture = CodeInsightTestFixtureImpl(projectFixture, tempDirFixture)
   val rootPath = context.findAnnotation(TestDataPath::class.java)?.value?.removePrefix($$"$PROJECT_ROOT/") ?: ""
-  val subPath = context.findAnnotation(TestSubPath::class.java)?.value
-                ?: PlatformTestUtil.getTestName(context.testName, true)
+  val subPath = context.findAnnotation(TestSubPath::class.java)?.value ?: ""
   val homeDir = IdeaTestExecutionPolicy.getHomePathWithPolicy().toNioPathOrNull()
   check(homeDir != null) {
     "Couldn't create nio.Path from ${IdeaTestExecutionPolicy.getHomePathWithPolicy()}"

@@ -4,6 +4,7 @@ package com.intellij.testFramework.junit5.fixture
 import com.intellij.platform.eel.EelApi
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.platform.commons.support.AnnotationSupport
+import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 internal class TestContextImpl(private val context: ExtensionContext, override val eel: EelApi?) : TestContext {
@@ -11,7 +12,13 @@ internal class TestContextImpl(private val context: ExtensionContext, override v
     get() = context.uniqueId
 
   override val testName: String
-    get() = context.displayName
+    get() {
+      val displayName = context.displayName
+      val start = 0 // "test".length // TODO: Decide whether to trim "test" prefix if is present
+      val end = displayName.indexOf("(")
+      return displayName.substring(start, start + 1).lowercase(Locale.getDefault()) +
+             displayName.substring(start + 1, end)
+    }
 
   override fun <T : Annotation> findAnnotation(clazz: Class<T>): T? {
     var extContext: ExtensionContext? = context
