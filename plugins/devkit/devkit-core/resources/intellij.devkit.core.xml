@@ -7,12 +7,6 @@
     <module name="intellij.properties.backend"/>
     <module name="intellij.properties.backend.psi"/>
     <module name="intellij.libraries.xerces"/>
-
-    <module name="intellij.platform.jewel.foundation"/>
-    <module name="intellij.platform.jewel.ui"/>
-    <module name="intellij.platform.jewel.ideLafBridge"/>
-    <module name="intellij.libraries.compose.foundation.desktop"/>
-    <module name="intellij.libraries.skiko"/>
   </dependencies>
 
   <resource-bundle>messages.DevKitBundle</resource-bundle>
@@ -715,7 +709,6 @@
     <notificationGroup id="testdata" displayType="BALLOON" bundle="messages.DevKitBundle" key="notification.group.testdata"/>
 
     <!-- Threading Model Helper -->
-
     <buildProcess.parametersProvider implementation="org.jetbrains.idea.devkit.threadingModelHelper.TMHBuildProcessParametersProvider"/>
     <registryKey key="tmh.generate.assertions.for.annotations" defaultValue="true"
                  description="Generate assertions for @RequiresEdt and similar annotations.
@@ -736,11 +729,6 @@
                  description="Experimental inlays for Threading Annotations"/>
 
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.contentReport.ContentReportGeneratedSourcesFilter"/>
-
-    <toolWindow
-      id="Locking Requirements"
-      factoryClass="org.jetbrains.idea.devkit.threadingModelHelper.LockReqsToolWindowFactory"
-      anchor="bottom"/>
 
     <!-- INTERNAL -->
     <consoleFilterProvider implementation="org.jetbrains.idea.devkit.run.ModulePathFilterProvider"/>
@@ -815,11 +803,6 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps"/>
-    </extensionPoint>
-    <extensionPoint qualifiedName="DevKit.lang.lockAnalysisActionProvider"
-                    beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockAnalysisActionProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
@@ -945,7 +928,6 @@
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" id="ShowSerializedXml"/>
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowHelpPageByIdAction" id="ShowHelpPageById"/>
       <action id="AnalyzeUnloadablePlugins" internal="true" class="org.jetbrains.idea.devkit.internal.AnalyzeUnloadablePluginsAction"/>
-      <action id="LockReqAnalysis" internal="true" class="org.jetbrains.idea.devkit.threadingModelHelper.LockReqAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 

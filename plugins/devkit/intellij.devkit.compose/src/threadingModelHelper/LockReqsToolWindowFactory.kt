@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.threadingModelHelper
+package com.intellij.devkit.compose.threadingModelHelper
 
+import com.intellij.devkit.compose.threadingModelHelper.ui.LockReqsToolWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
-import org.jetbrains.idea.devkit.threadingModelHelper.ui.LockReqsToolWindow
 import org.jetbrains.jewel.bridge.JewelComposePanel
 
 class LockReqsToolWindowFactory : ToolWindowFactory {
@@ -16,4 +16,3 @@ class LockReqsToolWindowFactory : ToolWindowFactory {
     toolWindow.contentManager.addContent(content)
   }
 }
-

@@ -1,21 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.threadingModelHelper
+package com.intellij.devkit.compose.threadingModelHelper
 
-import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiMethod
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.SmartPsiElementPointer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.Cancellation.checkCancelled
-import com.intellij.psi.PsiElement
-import com.intellij.psi.SmartPointerManager
+import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
+import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
+import org.jetbrains.idea.devkit.threadingModelHelper.DefaultLockReqConsumer
+import org.jetbrains.idea.devkit.threadingModelHelper.LOCK_REQUIREMENTS
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqAnalyzerParallelBFS
 
 
 @Service(Service.Level.PROJECT)
@@ -27,7 +26,7 @@ class LockReqsService(private val project: Project) {
 
   suspend fun analyzeMethod(methodPtr: SmartPsiElementPointer<PsiMethod>) {
     val analyzer = LockReqAnalyzerParallelBFS()
-    val config = AnalysisConfig.forProject(project, LOCK_REQUIREMENTS)
+    val config = AnalysisConfig.Companion.forProject(project, LOCK_REQUIREMENTS)
     withBackgroundProgress(project, "Analyzing lock requirements", true) {
       val consumer = DefaultLockReqConsumer(methodPtr) { snapshot ->
         ApplicationManager.getApplication().invokeLater {

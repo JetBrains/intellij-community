@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.threadingModelHelper
+package com.intellij.devkit.compose.threadingModelHelper
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -7,13 +7,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiMethod
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.currentThreadCoroutineScope
-import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps
 
 class LockReqAction : AnAction() {
 

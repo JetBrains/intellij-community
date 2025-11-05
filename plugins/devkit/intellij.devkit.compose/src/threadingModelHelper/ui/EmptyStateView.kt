@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.devkit.threadingModelHelper.ui
+package com.intellij.devkit.compose.threadingModelHelper.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,41 +11,35 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.intellij.psi.PsiMethod
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
+
 @Composable
-internal fun NoPathsFoundView() {
+internal fun EmptyStateView() {
   Box(
     modifier = Modifier.fillMaxSize(),
     contentAlignment = Alignment.Center
   ) {
     Column(
       horizontalAlignment = Alignment.CenterHorizontally,
-      verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
       Icon(
-        key = AllIconsKeys.General.InspectionsOK,
+        key = AllIconsKeys.Debugger.ThreadRunning,
         contentDescription = null,
-        modifier = Modifier.size(64.dp),
-        tint = JewelTheme.globalColors.outlines.focused
+        tint = JewelTheme.globalColors.text.disabled
       )
       Text(
-        text = "No lock requirements found",
+        text = "No lock requirements analyzed yet",
         style = JewelTheme.defaultTextStyle.copy(
-          fontSize = JewelTheme.defaultTextStyle.fontSize * 1.5,
           fontWeight = FontWeight.Medium
-        )
-      )
-      Text(
-        text = "Method and its callees",
+        ),
         color = JewelTheme.globalColors.text.info
       )
       Text(
-        text = "do not require any read locks",
+        text = "Place cursor on a method and run 'Analyze Lock Requirements'",
         color = JewelTheme.globalColors.text.info
       )
     }
