@@ -22,25 +22,26 @@ import java.util.List;
 import static com.intellij.psi.formatter.java.JavaFormatterUtil.getWrapType;
 
 class ChainMethodCallsBlockBuilder {
-  private final CommonCodeStyleSettings mySettings;
+  private final @NotNull CommonCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings.IndentOptions myIndentSettings;
-  private final JavaCodeStyleSettings myJavaSettings;
+  private final @NotNull JavaCodeStyleSettings myJavaSettings;
 
   private final Wrap myBlockWrap;
   private final Alignment myBlockAlignment;
   private final Indent myBlockIndent;
 
-  private final FormattingMode myFormattingMode;
+  private final @NotNull FormattingMode myFormattingMode;
 
   private static final int MANY_METHOD_CALLS_FACTOR = 3;
+  private final boolean myEnforceSpaceIndent;
 
   ChainMethodCallsBlockBuilder(Alignment alignment,
-                                      Wrap wrap,
-                                      Indent indent,
-                                      CommonCodeStyleSettings settings,
-                                      JavaCodeStyleSettings javaSettings,
-                                      @NotNull FormattingMode formattingMode)
-  {
+                               Wrap wrap,
+                               Indent indent,
+                               @NotNull CommonCodeStyleSettings settings,
+                               @NotNull JavaCodeStyleSettings javaSettings,
+                               @NotNull FormattingMode formattingMode,
+                               boolean enforceSpaceIndent) {
     myBlockWrap = wrap;
     myBlockAlignment = alignment;
     myBlockIndent = indent;
@@ -48,6 +49,7 @@ class ChainMethodCallsBlockBuilder {
     myIndentSettings = settings.getIndentOptions();
     myJavaSettings = javaSettings;
     myFormattingMode = formattingMode;
+    myEnforceSpaceIndent = enforceSpaceIndent;
   }
 
   public Block build(List<? extends ASTNode> nodes)  {
@@ -68,7 +70,7 @@ class ChainMethodCallsBlockBuilder {
 
     int commonIndentSize = mySettings.KEEP_BUILDER_METHODS_INDENTS ? getCommonIndentSize(methodCall) : -1;
 
-    CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode);
+    CallChunkBlockBuilder builder = new CallChunkBlockBuilder(mySettings, myJavaSettings, myFormattingMode, myEnforceSpaceIndent);
     for (int i = 0; i < methodCall.size(); i++) {
       ChainedCallChunk currentCallChunk = methodCall.get(i);
       if (isMethodCall(currentCallChunk) && !isBuilderMethod(currentCallChunk, mySettings) || isComment(currentCallChunk)) {

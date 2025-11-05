@@ -337,9 +337,21 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         }
         return Indent.getNoneIndent();
       }
+      final ASTNode grandParent = skipParenthesesUp(parent.getTreeParent());
+      if (grandParent != null && grandParent.getElementType() == JavaElementType.CONDITIONAL_EXPRESSION) {
+        return Indent.getSpaceIndent(0, true);
+      }
     }
 
     return null;
+  }
+
+  private static @Nullable ASTNode skipParenthesesUp(@NotNull ASTNode node) {
+    ASTNode currNode = node.getTreeParent();
+    while (currNode != null && currNode.getElementType() == JavaElementType.PARENTH_EXPRESSION) {
+      currNode = currNode.getTreeParent();
+    }
+    return currNode;
   }
 
   private static @Nullable ASTNode skipCommentsAndWhitespacesBackwards(@NotNull ASTNode node) {
@@ -826,7 +838,18 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return
         new LegacyChainedMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
     }
-    return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
+    return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode, shouldUseSpaceIndentInCallChain(node)).build(nodes);
+  }
+
+  private static boolean shouldUseSpaceIndentInCallChain(@NotNull ASTNode node) {
+    ASTNode parent = skipParenthesesUp(node);
+    if (parent == null) return false;
+    while (parent != null && parent.getElementType() == JavaElementType.REFERENCE_EXPRESSION) {
+      parent = parent.getTreeParent();
+      if (parent == null || parent.getElementType() != JavaElementType.METHOD_CALL_EXPRESSION) return false;
+      parent = skipParenthesesUp(parent);
+    }
+    return parent != null && parent.getElementType() == JavaElementType.CONDITIONAL_EXPRESSION;
   }
 
   private boolean shouldAlignChild(final @NotNull ASTNode child) {
