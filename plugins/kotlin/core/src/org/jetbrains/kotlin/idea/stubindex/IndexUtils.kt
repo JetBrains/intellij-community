@@ -4,17 +4,15 @@
 
 package org.jetbrains.kotlin.idea.stubindex
 
-import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.NamedStub
 import com.intellij.psi.stubs.StubElement
-import com.intellij.psi.tree.TokenSet
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.stubs.*
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -124,29 +122,9 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
     }
 }
 
-private val STRING_TEMPLATE_EMPTY_ARRAY = emptyArray<KtStringTemplateExpression>()
-private val STRING_TEMPLATE_TYPES = TokenSet.create(KtStubElementTypes.STRING_TEMPLATE)
-
-private fun ValueArgument.stringTemplateExpression(): KtStringTemplateExpression? {
-    if (this is StubBasedPsiElement<*>) {
-        stub?.let {
-            val constantExpressions = it.getChildrenByType(STRING_TEMPLATE_TYPES, STRING_TEMPLATE_EMPTY_ARRAY)
-            return constantExpressions.firstOrNull()
-        }
-    }
-    return getArgumentExpression() as? KtStringTemplateExpression
-}
-
-// TODO: it has to be dropped as soon as JvmFileClassUtil.getLiteralStringFromAnnotation fix 1.5.20 in compiler
-private fun JvmFileClassUtil.stringFromAnnotation(annotation: KtAnnotationEntry): String? {
-    val stringTemplateExpression = annotation.valueArguments.firstOrNull()?.stringTemplateExpression()
-    return stringTemplateExpression?.entries?.singleOrNull()?.safeAs<KtLiteralStringTemplateEntry>()?.text
-}
-
 fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     if (stub.shortName != JvmFileClassUtil.JVM_NAME_SHORT) return
-
-    val jvmName = JvmFileClassUtil.stringFromAnnotation(stub.psi) ?: return
+    val jvmName = JvmFileClassUtil.getLiteralStringFromAnnotation(stub.psi) ?: return
     val annotatedElementName = stub.parentStub.parentStub.annotatedJvmNameElementName ?: return
 
     if (annotatedElementName != jvmName) {
@@ -164,7 +142,7 @@ private val StubElement<*>.annotatedJvmNameElementName: String?
     }
 
 private val KotlinStubWithFqName<*>.modifierList: KotlinModifierListStub?
-    get() = findChildStubByType(KtStubElementTypes.MODIFIER_LIST)
+    get() = findChildStubByElementType(KtNodeTypes.MODIFIER_LIST) as? KotlinModifierListStub
 
 fun <TDeclaration : KtCallableDeclaration> KotlinCallableStubBase<TDeclaration>.isDeclaredInObject(): Boolean {
     if (isTopLevel) return false

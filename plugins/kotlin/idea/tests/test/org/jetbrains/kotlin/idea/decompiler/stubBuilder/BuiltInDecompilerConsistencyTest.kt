@@ -8,11 +8,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.FileContentImpl
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInMetadataStubBuilder
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinClassFileDecompiler
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
@@ -20,7 +22,6 @@ import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.metadata.deserialization.Flags
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -92,8 +93,8 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
             val file = fileContent.file
             if (ClsKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(file) == null) continue
             val fileStub = classFileDecompiler.stubBuilder.buildFileStub(fileContent) ?: continue
-            val classStub = fileStub.findChildStubByType(KtStubElementTypes.CLASS) ?: continue
-            val classFqName = classStub.fqName!!
+            val classStub = fileStub.findChildStubByElementType(KtNodeTypes.CLASS) ?: continue
+            val classFqName = classStub.psi.kotlinFqName!!
             val builtInClassStub = builtInFileStub.childrenStubs.firstOrNull {
                 it is KotlinClassStub && it.fqName == classFqName
             } ?: continue

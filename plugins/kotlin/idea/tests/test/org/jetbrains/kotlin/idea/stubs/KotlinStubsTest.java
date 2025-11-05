@@ -17,10 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex;
 import org.jetbrains.kotlin.idea.test.AstAccessControl;
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndMultiplatformStdlibDescriptor;
-import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.*;
-import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
@@ -36,25 +33,6 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
         return KotlinJdkAndMultiplatformStdlibDescriptor.Companion.getJDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES();
-    }
-
-    public void testSuperclassNames() {
-        PsiFile psiFile = myFixture.configureByText("foo.kt", "import java.util.ArrayList as alist\nclass C(): alist() { }");
-        List<KtDeclaration> declarations = ((KtFile) psiFile).getDeclarations();
-        KtClass ktClass = (KtClass) declarations.get(0);
-        KotlinClassStub stub = KtStubElementTypes.CLASS.createStub(
-                ktClass, KotlinFileStubImpl.Companion.forFile(FqName.ROOT));
-        List<String> names = stub.getSuperNames();
-        assertSameElements(names, "ArrayList", "alist");
-    }
-
-    public void testClassIsTrait() {
-        PsiFile psiFile = myFixture.configureByText("foo.kt", "interface Test { }");
-        List<KtDeclaration> declarations = ((KtFile) psiFile).getDeclarations();
-        KtClass ktClass = (KtClass) declarations.get(0);
-        KotlinClassStub stub = KtStubElementTypes.CLASS.createStub(
-                ktClass, KotlinFileStubImpl.Companion.forFile(FqName.ROOT));
-        assertEquals(true, stub.isInterface());
     }
 
     public void testScriptDeclaration() {

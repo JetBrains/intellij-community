@@ -2,9 +2,12 @@
 
 package org.jetbrains.kotlin.idea.stubindex;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IndexSink;
+import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.KtNodeTypes;
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics;
 import org.jetbrains.kotlin.idea.base.psi.KotlinStubUtils;
 import org.jetbrains.kotlin.lexer.KtTokens;
@@ -15,7 +18,6 @@ import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 import org.jetbrains.kotlin.psi.stubs.*;
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
 import org.jetbrains.kotlin.psi.stubs.elements.StubIndexService;
 import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl;
 
@@ -149,7 +151,12 @@ public class IdeStubIndexService extends StubIndexService {
     }
 
     private static @Nullable KotlinModifierListStub getModifierListStub(@NotNull KotlinStubWithFqName<?> stub) {
-        return stub.findChildStubByType(KtStubElementTypes.MODIFIER_LIST);
+        StubElement<? extends PsiElement> stubByElementType = stub.findChildStubByElementType(KtNodeTypes.MODIFIER_LIST);
+        if (stubByElementType instanceof KotlinModifierListStub modifierListStub) {
+            return modifierListStub;
+        }
+
+        return null;
     }
 
     @Override

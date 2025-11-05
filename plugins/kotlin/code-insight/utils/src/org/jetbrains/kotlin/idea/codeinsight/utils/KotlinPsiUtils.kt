@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.lang.jvm.JvmModifier
@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 
 fun KtContainerNode.getControlFlowElementDescription(): String? {
     when (node.elementType) {
@@ -282,7 +281,7 @@ private fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
     val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression
         ?: return false
 
-    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT
+    return deparenthesized.iElementType == KtNodeTypes.INTEGER_CONSTANT
             && deparenthesized.text.toIntOrNull() == value
 }
 

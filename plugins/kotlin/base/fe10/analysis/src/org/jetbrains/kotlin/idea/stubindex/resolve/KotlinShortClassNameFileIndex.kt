@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.ide.highlighter.JavaClassFileType
@@ -7,17 +7,17 @@ import com.intellij.lang.LighterASTTokenNode
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
-import com.intellij.psi.tree.TokenSet
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.CollectionDataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.indices.names.readKotlinMetadataDefinition
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
+import org.jetbrains.kotlin.psi.stubs.elements.KtTokenSets.INSIDE_DIRECTIVE_EXPRESSIONS
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
 
 class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection<String>>() {
@@ -72,9 +72,9 @@ class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection
         KotlinFileType.INSTANCE -> {
           val tree = (fileContent as PsiDependentFileContent).getLighterAST()
           val fqNames = mutableListOf<String>()
-          val packageDirective = LightTreeUtil.firstChildOfType(tree, tree.root, KtStubElementTypes.PACKAGE_DIRECTIVE)
+          val packageDirective = LightTreeUtil.firstChildOfType(tree, tree.root, KtNodeTypes.PACKAGE_DIRECTIVE)
           if (packageDirective != null) {
-            val packageName = LightTreeUtil.firstChildOfType(tree, packageDirective, PackageTokenSet.PACKAGE_REFERENCES_TOKENS)
+            val packageName = LightTreeUtil.firstChildOfType(tree, packageDirective, INSIDE_DIRECTIVE_EXPRESSIONS)
             if (packageName != null) {
                 LightTreeUtil.toFilteredString(tree, packageName, null).split(".").mapTo(fqNames) {
                     KtPsiUtil.unquoteIdentifier(it)
@@ -85,9 +85,9 @@ class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection
           object : RecursiveLighterASTNodeWalkingVisitor(tree) {
 
             override fun visitNode(element: LighterASTNode) {
-              if (element.tokenType == KtStubElementTypes.CLASS ||
-                  element.tokenType == KtStubElementTypes.OBJECT_DECLARATION ||
-                  element.tokenType == KtStubElementTypes.ENUM_ENTRY
+              if (element.tokenType == KtNodeTypes.CLASS ||
+                  element.tokenType == KtNodeTypes.OBJECT_DECLARATION ||
+                  element.tokenType == KtNodeTypes.ENUM_ENTRY
               ) {
                 val nameIdentifier = LightTreeUtil.firstChildOfType(tree, element, KtTokens.IDENTIFIER)
                 if (nameIdentifier != null) {
@@ -102,9 +102,9 @@ class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection
             }
 
             override fun elementFinished(element: LighterASTNode) {
-              if (element.tokenType == KtStubElementTypes.CLASS ||
-                  element.tokenType == KtStubElementTypes.OBJECT_DECLARATION ||
-                  element.tokenType == KtStubElementTypes.ENUM_ENTRY
+              if (element.tokenType == KtNodeTypes.CLASS ||
+                  element.tokenType == KtNodeTypes.OBJECT_DECLARATION ||
+                  element.tokenType == KtNodeTypes.ENUM_ENTRY
               ) {
                 val nameIdentifier = LightTreeUtil.firstChildOfType(tree, element, KtTokens.IDENTIFIER)
                 if (nameIdentifier != null) {
@@ -127,8 +127,4 @@ class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection
       }
       map
     }
-}
-
-object PackageTokenSet {
-    val PACKAGE_REFERENCES_TOKENS = TokenSet.create(KtStubElementTypes.DOT_QUALIFIED_EXPRESSION, KtStubElementTypes.REFERENCE_EXPRESSION)
 }
