@@ -344,6 +344,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     committer.addResultHandler(new CheckinHandlersNotifier(committer, singletonList(checkinHandler)));
     committer.runCommit("Commit", true);
 
+    ChangeListManagerImpl.getInstanceImpl(getProject()).waitEverythingDoneInTestMode();
     EDT.dispatchAllInvocationEvents(); // wait com.intellij.vcs.commit.Committer.finishCommit
   }
 

@@ -3922,11 +3922,11 @@ f:com.intellij.vcs.commit.AbstractCommitWorkflowKt
 - sf:setCleanupCommitMessage(com.intellij.openapi.vcs.changes.CommitContext,Z):V
 a:com.intellij.vcs.commit.AbstractCommitter
 - com.intellij.vcs.commit.Committer
-- sf:Companion:com.intellij.vcs.commit.AbstractCommitter$Companion
 - <init>(com.intellij.openapi.project.Project,java.lang.String,Z):V
 - pa:commit():V
+- f:getCurrentReporter():com.intellij.platform.util.progress.RawProgressReporter
 - f:runCommit(java.lang.String,Z):V
-f:com.intellij.vcs.commit.AbstractCommitter$Companion
+- f:setCurrentReporter(com.intellij.platform.util.progress.RawProgressReporter):V
 f:com.intellij.vcs.commit.ChangeListCommitState
 - <init>(com.intellij.openapi.vcs.changes.LocalChangeList,java.util.List,java.lang.String):V
 - f:getChangeList():com.intellij.openapi.vcs.changes.LocalChangeList

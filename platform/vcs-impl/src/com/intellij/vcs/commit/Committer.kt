@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -12,6 +12,10 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.forEachLoggingErrors
+import com.intellij.vcs.VcsDisposable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -49,8 +53,10 @@ abstract class Committer(
       addException(e)
     }
     finally {
-      runInEdt {
-        finishCommit(useCustomPostRefresh, canceled)
+      VcsDisposable.getInstance(project).coroutineScope.launch {
+        withContext(Dispatchers.EDT) {
+          finishCommit(useCustomPostRefresh, canceled)
+        }
       }
     }
   }
