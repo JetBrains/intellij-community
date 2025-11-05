@@ -840,24 +840,26 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
   }
 
   private suspend fun updateButtons(applyResult: ApplyPluginsStateResult) {
-    for (component in myInstalledPluginComponents) {
-      val pluginId = component.pluginModel.pluginId
-      val installedPlugin = applyResult.visiblePlugins.firstOrNull { it.pluginId == pluginId } ?: continue
-      val installationState = applyResult.installationStates[pluginId] ?: continue
-      component.updateButtons(installedPlugin, installationState)
-    }
-    for (plugins in myMarketplacePluginComponentMap.values) {
-      for (plugin in plugins) {
-        if (plugin.myInstalledDescriptorForMarketplace != null) {
-          val pluginId = plugin.pluginModel.pluginId
-          val installedPlugin = applyResult.visiblePlugins.firstOrNull { it.pluginId == pluginId } ?: continue
-          val installationState = applyResult.installationStates[pluginId] ?: continue
-          plugin.updateButtons(installedPlugin, installationState)
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      for (component in myInstalledPluginComponents) {
+        val pluginId = component.pluginModel.pluginId
+        val installedPlugin = applyResult.visiblePlugins.firstOrNull { it.pluginId == pluginId } ?: continue
+        val installationState = applyResult.installationStates[pluginId] ?: continue
+        component.updateButtons(installedPlugin, installationState)
+      }
+      for (plugins in myMarketplacePluginComponentMap.values) {
+        for (plugin in plugins) {
+          if (plugin.myInstalledDescriptorForMarketplace != null) {
+            val pluginId = plugin.pluginModel.pluginId
+            val installedPlugin = applyResult.visiblePlugins.firstOrNull { it.pluginId == pluginId } ?: continue
+            val installationState = applyResult.installationStates[pluginId] ?: continue
+            plugin.updateButtons(installedPlugin, installationState)
+          }
         }
       }
-    }
-    for (detailPanel in myDetailPanels) {
-      detailPanel.updateAll()
+      for (detailPanel in myDetailPanels) {
+        detailPanel.updateAll()
+      }
     }
   }
 
