@@ -1,6 +1,7 @@
 package com.intellij.python.sdkConfigurator.common.impl
 
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.serialization.Serializable
 
 typealias ModuleName = @NlsSafe String
@@ -15,7 +16,7 @@ data class ModuleDTO(
   val name: ModuleName,
   val createdByTool: ToolIdDTO,
   val existingPyVersion: @NlsSafe String?,
-  val childModules: List<ModuleName>,
+  val childModules: ImmutableList<ModuleName>,
 )
 
 @Serializable

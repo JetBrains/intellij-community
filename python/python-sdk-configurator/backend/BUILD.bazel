@@ -39,6 +39,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/workspace/jps",
     "//platform/workspace/storage",
+    "@lib//:kotlinx-collections-immutable",
   ]
 )
 ### auto-generated section `build intellij.python.sdkConfigurator.backend` end

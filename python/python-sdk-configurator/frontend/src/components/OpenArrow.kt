@@ -15,6 +15,7 @@ import org.jetbrains.jewel.ui.theme.comboBoxStyle
 internal fun OpenArrow(opened: Boolean, onOpenChangeState: (Boolean) -> Unit, modifier: Modifier = Modifier) {
   var opened by remember { mutableStateOf(opened) }
   val rotate = if (opened) 360f else 270f
+
   Icon(key = JewelTheme.comboBoxStyle.icons.chevronDown,
        "",
        Modifier.rotate(rotate).clickable(onClick = {

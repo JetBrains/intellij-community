@@ -24,6 +24,7 @@ import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.setAssociationToPath
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -68,7 +69,7 @@ internal class ModulesSdkConfigurator private constructor(
             is CreateSdkInfo.ExistingEnv -> r.pythonInfo.languageLevel.toPythonVersion()
             is CreateSdkInfo.WillCreateEnv -> null
           }
-          ModuleDTO(moduleName, createInfo.toolId.id, version, children[moduleName]!!.toList().sorted())
+          ModuleDTO(moduleName, createInfo.toolId.id, version, children[moduleName]!!.toList().sorted().toPersistentList())
         }
         is ModuleCreateInfo.SameAs -> null
       }

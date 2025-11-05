@@ -21,7 +21,7 @@ internal suspend fun askUser(project: Project, modules: ModulesDTO, onResult: (S
   withContext(Dispatchers.EDT) {
     val myDialog = MyDialog(project, viewModel)
     if (myDialog.showAndGet()) {
-      onResult(viewModel.checked)
+      onResult(viewModel.checkedModules)
     }
   }
 }
@@ -38,10 +38,7 @@ private class MyDialog(project: Project, private val viewModel: ModulesViewModel
   override fun createCenterPanel(): JComponent {
     enableNewSwingCompositing()
     return compose(focusOnClickInside = true, content = {
-      ModuleList(viewModel.checkBoxItems,
-                 viewModel.icons,
-                 viewModel.checked,
-                 viewModel::clicked,
+      ModuleList(viewModel,
                  topLabel = message("python.sdk.configurator.frontend.choose.modules.text"),
                  projectStructureLabel = message("python.sdk.configurator.frontend.choose.modules.project.structure"),
                  environmentLabel = message("python.sdk.configurator.frontend.choose.modules.environment"))
