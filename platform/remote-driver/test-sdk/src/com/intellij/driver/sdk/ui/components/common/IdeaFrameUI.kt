@@ -15,6 +15,7 @@ import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.ui
 import java.awt.Frame
+import java.awt.Point
 import javax.swing.JFrame
 
 fun Finder.ideFrame() = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
@@ -71,7 +72,7 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
 
   override fun toFront() {
     super.toFront()
-    mainToolbar.click()
+    click(Point(component.width / 2, 0))
   }
 
   fun isMinimized() = ideaFrameComponent.getState() == Frame.ICONIFIED
