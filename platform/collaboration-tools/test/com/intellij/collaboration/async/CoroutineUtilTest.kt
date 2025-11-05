@@ -18,6 +18,33 @@ import kotlin.time.Duration.Companion.seconds
 
 class CoroutineUtilTest {
   @Test
+  fun `flatMapLatestEach emits an empty list for empty inputs`() = runTest {
+    val input = flowOf(emptyList<Int>())
+    val output = input.flatMapLatestEach { flowOf(it + 1 /* this one is 'latest' */) }.toList()
+
+    assertThat(output)
+      .containsExactly(arrayOf())
+  }
+
+  @Test
+  fun `flatMapLatestEach correctly handles single item`() = runTest {
+    val input = flowOf(listOf(1))
+    val output = input.flatMapLatestEach { flowOf(it + 1) }.toList()
+
+    assertThat(output)
+      .containsExactly(arrayOf(2))
+  }
+
+  @Test
+  fun `flatMapLatestEach correctly handles many items`() = runTest {
+    val input = flowOf(listOf(), listOf(1), listOf(1, 3)).onEach { delay(100) }
+    val output = input.flatMapLatestEach { flowOf(it + 1) }.toList()
+
+    assertThat(output)
+      .containsExactly(arrayOf(), arrayOf(2), arrayOf(2, 4))
+  }
+
+  @Test
   fun `Collecting batches works`() = runTest {
     val collectedList = flowOf(listOf(1, 2), listOf(3), listOf(4, 5))
       .collectBatches()

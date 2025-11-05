@@ -135,12 +135,10 @@ private class DiffEditorModel(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val linesWithNewCommentsFlow: StateFlow<Set<Int>> =
-    diffVm.newComments.flatMapLatest { vms ->
-      if (vms.isEmpty()) flowOf(emptySet())
-      else combine(vms.map { it.location.map { loc -> locationToLine(loc.lineLocation) } }) { lines ->
-        lines.filterNotNull().toSet()
-      }
-    }.stateInNow(cs, emptySet())
+    diffVm.newComments.flatMapLatestEach { vm ->
+      vm.location.map { loc -> locationToLine(loc.lineLocation) }
+    }.map { lines -> lines.filterNotNull().toSet() }
+      .stateInNow(cs, emptySet())
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
     combine(diffVm.locationsWithDiscussions, linesWithNewCommentsFlow) { locationsWithDiscussions, linesWithNewComments ->

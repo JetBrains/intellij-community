@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.ui.clone.model
 
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.async.collectBatches
+import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -48,10 +49,10 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
   override val items: StateFlow<List<GitLabCloneListItem>> =
     reloadSignal.withInitial(Unit).transformLatest { _ ->
 
-        try {
-          _isLoading.value = true
-          val token = accountManager.findCredentials(account) ?: run {
-            emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken(account))))
+      try {
+        _isLoading.value = true
+        val token = accountManager.findCredentials(account) ?: run {
+          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken(account))))
           return@transformLatest
         }
         val apiClient = apiManager.getClient(account.server) { token }
@@ -67,13 +68,13 @@ private class GitLabCloneRepositoriesForAccountViewModelImpl(
         emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.ConnectionError(account))))
       }
       catch (e: Throwable) {
-          if (e is HttpStatusErrorException && e.statusCode == 401) {
-            emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken(account))))
-          }
-          else {
-            val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
-            emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(account, errorMessage))))
-          }
+        if (e is HttpStatusErrorException && e.statusCode == 401) {
+          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken(account))))
+        }
+        else {
+          val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
+          emit(listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(account, errorMessage))))
+        }
       }
       finally {
         _isLoading.value = false
@@ -136,11 +137,10 @@ internal class GitLabCloneRepositoriesListViewModelImpl(
     .stateIn(cs, SharingStarted.Eagerly, listOf())
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val allItems: StateFlow<List<GitLabCloneListItem>> = listsPerAccount.flatMapLatest { vms ->
-    combine(vms.map { model -> model.items }) {
-      it.flatMap { it }
-    }
-  }.stateIn(cs, SharingStarted.Eagerly, listOf())
+  override val allItems: StateFlow<List<GitLabCloneListItem>> = listsPerAccount
+    .flatMapLatestEach { model -> model.items }
+    .map { itemsList -> itemsList.flatMap { it } }
+    .stateIn(cs, SharingStarted.Eagerly, listOf())
 
   override fun reload() {
     cs.launch {

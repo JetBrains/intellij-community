@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.editor
 
-import com.intellij.collaboration.async.combineState
-import com.intellij.collaboration.async.mapState
-import com.intellij.collaboration.async.mapStatefulToStateful
-import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.collaboration.util.Hideable
@@ -45,12 +42,10 @@ internal class GHPRReviewFileEditorModel internal constructor(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val linesWithNewCommentsFlow: StateFlow<Set<Int>> =
-    fileVm.newComments.flatMapLatest { vms ->
-      if (vms.isEmpty()) flowOf(emptySet())
-      else combine(vms.map { it.location.map { loc -> loc.lineIdx } }) { lines ->
-        lines.toSet()
-      }
-    }.stateInNow(cs, emptySet())
+    fileVm.newComments.flatMapLatestEach { vm ->
+      vm.location.map { loc -> loc.lineIdx }
+    }.map { it.toSet() }
+      .stateInNow(cs, emptySet())
 
   override val gutterControlsState: StateFlow<CodeReviewEditorGutterControlsModel.ControlsState?> =
     combine(postReviewRanges, fileVm.linesWithComments, linesWithNewCommentsFlow) { postReviewRanges, linesWithComments, newCommentsLines ->

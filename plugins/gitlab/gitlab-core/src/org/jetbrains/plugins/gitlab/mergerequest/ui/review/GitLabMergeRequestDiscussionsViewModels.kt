@@ -239,7 +239,8 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
       val changeIndices = allChanges.changes.mapIndexed { idx, change -> change to idx }.toMap()
       val comparator = positionComparator(changeIndices::get)
 
-      return combine(allDiscussions.map { threadData ->
+      return if (allDiscussions.isEmpty()) flowOf(TreeSet())
+      else combine(allDiscussions.map { threadData ->
         threadData.position.mapState { position ->
           val commitOid = position?.sha ?: return@mapState null
           val change = allChanges.findCumulativeChange(commitOid, position.filePath) ?: return@mapState null

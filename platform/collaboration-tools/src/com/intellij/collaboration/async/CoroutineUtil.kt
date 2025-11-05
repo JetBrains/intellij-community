@@ -333,7 +333,7 @@ inline fun <T, reified R> Flow<Iterable<T>>.flatMapLatestEach(crossinline transf
  */
 inline fun <T, reified R> Iterable<T>.mapEach(crossinline transform: (T) -> Flow<R>): Flow<Array<R>> {
   val nestedFlows = map(transform)
-  return combine(nestedFlows) { it }
+  return if (nestedFlows.isEmpty()) flowOf(arrayOf()) else combine(nestedFlows) { it }
 }
 
 fun <T> Flow<Collection<T>>.mapFiltered(predicate: (T) -> Boolean): Flow<List<T>> = map { it.filter(predicate) }
