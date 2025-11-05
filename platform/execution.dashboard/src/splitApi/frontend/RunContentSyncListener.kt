@@ -1,7 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.execution.dashboard.splitApi.frontend
 
-import com.intellij.execution.rpc.LiveIconEvent
+import com.intellij.execution.rpc.RPC_SYNC_RUN_TOPIC
+import com.intellij.execution.rpc.RunContentSyncEvent
 import com.intellij.execution.ui.RunContentManagerImpl.Companion.getLiveIndicator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
@@ -18,17 +19,28 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.swing.Icon
 
-class FrontendLiveIconListener() : ProjectRemoteTopicListener<LiveIconEvent> {
+class RunContentSyncListener() : ProjectRemoteTopicListener<RunContentSyncEvent> {
   private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
 
-  override val topic: ProjectRemoteTopic<LiveIconEvent> = ProjectRemoteTopic("RunDashboardLiveIcon", LiveIconEvent.serializer())
+  override val topic: ProjectRemoteTopic<RunContentSyncEvent> = RPC_SYNC_RUN_TOPIC
 
-  override fun handleEvent(project: Project, event: LiveIconEvent) {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(event.toolwindowId) ?: return
-    val toolWindowIcon = initializeOrGetBaseToolWindowIcon(toolWindow)
+  override fun handleEvent(project: Project, event: RunContentSyncEvent) {
+    val cs = RunDashboardCoroutineScopeProvider.getInstance(project).cs
+    when (event) {
+      is RunContentSyncEvent.ShowLiveIcon -> {
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(event.toolwindowId) ?: return
+        val toolWindowIcon = initializeOrGetBaseToolWindowIcon(toolWindow)
+        cs.launch(Dispatchers.EDT) {
+          toolWindow.setIcon(if (event.alive) getLiveIndicator(toolWindowIcon) else toolWindowIcon ?: EmptyIcon.ICON_13)
+        }
+      }
 
-    RunDashboardCoroutineScopeProvider.getInstance(project).cs.launch(Dispatchers.EDT) {
-      toolWindow.setIcon(if (event.alive) getLiveIndicator(toolWindowIcon) else toolWindowIcon ?: EmptyIcon.ICON_13)
+      is RunContentSyncEvent.OpenToolWindow -> {
+        val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(event.toolwindowId) ?: return
+        cs.launch(Dispatchers.EDT) {
+          toolwindow.activate (null, event.focus, event.focus)
+        } //todo: here we need more than just opening it, we also need to select the currently running configuration
+      }
     }
   }
 

@@ -14,8 +14,8 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
-import com.intellij.execution.rpc.emitLiveIconEventIfInBackend
-import com.intellij.execution.rpc.emitOpenToolWindowEventIfInBackend
+import com.intellij.execution.rpc.emitLiveIconUpdate
+import com.intellij.execution.rpc.emitToolWindowOpen
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -330,7 +330,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
               }
               toolWindow!!.setIcon(getLiveIndicator(toolWindowIcon))
 
-              emitLiveIconEventIfInBackend(project, toolWindowId, alive = true)
+              emitLiveIconUpdate(project, toolWindowId, alive = true)
             }
           }
 
@@ -419,11 +419,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         // It shouldn't harm in any case - having no focused component isn't useful at all.
         focus = true
       }
-      if(descriptor.activationCallback != null)
-        println("activation callback")
       getToolWindowManager().getToolWindow(toolWindowId)!!.activate(descriptor.activationCallback, focus, focus)
-      val contentId = descriptor.id as? RunContentDescriptorIdImpl ?: return@Runnable
-      emitOpenToolWindowEventIfInBackend(project, toolWindowId, focus, contentId)
+      emitToolWindowOpen(project, toolWindowId, focus)
     }, project.disposed)
   }
 
@@ -640,7 +637,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     val base = toolWindowIdToBaseIcon.get(toolWindow.id)
     toolWindow.setIcon(if (alive) getLiveIndicator(base) else base ?: EmptyIcon.ICON_13)
 
-    emitLiveIconEventIfInBackend(project, toolWindow.id, alive = false)
+    emitLiveIconUpdate(project, toolWindow.id, alive = false)
   }
 
   private inner class CloseListener(content: Content, private val myExecutor: Executor) : BaseContentCloseListener(content, project) {
