@@ -25,6 +25,8 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -33,7 +35,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
 
 import java.util.*;
@@ -352,9 +353,12 @@ public class XDebuggerTestUtil {
   public static void disposeDebugSession(final XDebugSession debugSession) {
     WriteAction.runAndWait(() -> {
       XDebugSessionImpl session = (XDebugSessionImpl)debugSession;
-      XDebugSessionTab tab = session.getSessionTab();
-      if (tab != null) {
-        Disposer.dispose(tab);
+      XDebugSessionProxy sessionProxy = XDebugManagerProxy.getInstance().findSessionProxy(session.getProject(), session.getId());
+      if (sessionProxy != null) {
+        XDebugSessionTab sessionTab = sessionProxy.getSessionTab();
+        if (sessionTab != null) {
+          Disposer.dispose(sessionTab);
+        }
       }
       ConsoleView consoleView = session.getConsoleView();
       if (consoleView != null) {
