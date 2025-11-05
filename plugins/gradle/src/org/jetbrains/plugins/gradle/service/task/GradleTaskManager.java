@@ -131,8 +131,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     @NotNull GradleExecutionSettings settings,
     @NotNull GradleExecutionContext context
   ) {
-    setupGradleScriptDebugging(settings);
     setupDebuggerProxy(context, settings);
+    setupGradleScriptDebugging(settings);
     setupDebuggerDispatchPort(settings);
     setupBuiltInTestEvents(settings, context);
 
