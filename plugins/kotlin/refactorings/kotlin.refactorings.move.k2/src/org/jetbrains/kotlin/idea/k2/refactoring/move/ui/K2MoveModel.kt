@@ -4,7 +4,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.MutableBooleanProperty
-import com.intellij.openapi.observable.properties.ObservableBooleanProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsContexts
@@ -33,15 +34,13 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
-import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
  * @see K2MoveDescriptor
  */
-sealed class K2MoveModel(observableUiSettings: ObservableUiSettings) : K2MoveModelObservableSettings {
+sealed class K2MoveModel(private val observableUiSettings: ObservableUiSettings) : K2MoveModelObservableSettings {
     init {
         observableUiSettings.registerK2MoveModelSettings(this)
     }
@@ -76,6 +75,10 @@ sealed class K2MoveModel(observableUiSettings: ObservableUiSettings) : K2MoveMod
     }
 
     open fun buildPanel(panel: Panel): Unit = with(panel) {
+        val mppDeclarationSelectedObservable = observableUiSettings.mppDeclarationsSelectedObservable.transform { isSelected ->
+            isSelected && inSourceRoot
+        }
+
         row {
             panel {
                 searchForText.createComboBox(this)
@@ -83,21 +86,25 @@ sealed class K2MoveModel(observableUiSettings: ObservableUiSettings) : K2MoveMod
             }.align(AlignY.TOP + AlignX.LEFT)
             panel {
                 searchInComments.createComboBox(this)
-                mppDeclarations.createComboBox(this, inSourceRoot && this@K2MoveModel is Declarations)
+                mppDeclarations.createComboBox(
+                    panel = this,
+                    visible = mppDeclarationSelectedObservable,
+                    enabled = mppDeclarationSelectedObservable,
+                )
             }.align(AlignY.TOP + AlignX.RIGHT)
         }
     }
 
-    override val mppDeclarationsObservable: ObservableBooleanProperty
+    override val mppDeclarationsSettingObservable: ObservableProperty<Boolean>
         get() = mppDeclarations.observableProperty
 
-    override val searchForTextObservable: ObservableBooleanProperty
+    override val searchForTextSettingObservable: ObservableProperty<Boolean>
         get() = searchForText.observableProperty
 
-    override val searchInCommentsObservable: ObservableBooleanProperty
+    override val searchInCommentsSettingObservable: ObservableProperty<Boolean>
         get() = searchInComments.observableProperty
 
-    override val searchReferencesObservable: ObservableBooleanProperty
+    override val searchReferencesSettingObservable: ObservableProperty<Boolean>
         get() = searchReferences.observableProperty
 
     enum class Setting(private val text: @NlsContexts.Checkbox String) {
@@ -143,19 +150,36 @@ sealed class K2MoveModel(observableUiSettings: ObservableUiSettings) : K2MoveMod
         };
 
         abstract var state: Boolean
-        // lazy prevents service access from constructor
+        // lazy to avoid service access from constructor
         internal val observableProperty: MutableBooleanProperty by lazy { AtomicBooleanProperty(state) }
 
-        fun createComboBox(panel: Panel, enabled: Boolean = true) {
+        fun createComboBox(
+            panel: Panel,
+            enabled: Boolean = true,
+            visible: Boolean = true,
+        ) {
+            createComboBox(
+                panel = panel,
+                enabled = ConstantBooleanObservableProperty(enabled),
+                visible = ConstantBooleanObservableProperty(visible)
+            )
+        }
+
+        fun createComboBox(
+            panel: Panel,
+            enabled: ObservableProperty<Boolean>,
+            visible: ObservableProperty<Boolean>,
+        ) {
             panel.row {
-                val checkBox = checkBox(text).enabled(enabled)
-                if (enabled) {
-                    checkBox.bindSelected(::state)
-                    // bind doesn't register state changes before dialog confirmation, but the UI should be updated on all state changes
-                    checkBox.onChanged { observableProperty.set(it.isSelected) }
-                } else {
-                    checkBox.selected(false)
-                }
+                val checkBox = checkBox(text).enabledIf(enabled).visibleIf(visible)
+                checkBox.onChanged { observableProperty.set(it.isSelected) }
+                // reset only is intentional
+                enabled.afterChange { isEnabled -> if (!isEnabled) checkBox.selected(false) }
+                checkBox.bindSelected(::state)
+                // value set in bindSelected doesn't trigger listeners
+                val initial = enabled.get() && state
+                checkBox.selected(initial)
+                observableProperty.set(initial)
             }.layout(RowLayout.PARENT_GRID)
         }
     }
@@ -226,7 +250,7 @@ sealed class K2MoveModel(observableUiSettings: ObservableUiSettings) : K2MoveMod
                         && name == fileName
             }
             if (!fileName.isValidKotlinFile()) return false
-            val files = source.elements.map { it.containingFile }
+            val files = source.elements.map { it.containingFile }.toSet()
             return files.size != 1 || !(files.single() as KtFile).isTargetFile() || target.isMoveToExplicitPackage()
         }
 
@@ -258,7 +282,7 @@ sealed class K2MoveModel(observableUiSettings: ObservableUiSettings) : K2MoveMod
             val searchForReferences = if (inSourceRoot) searchReferences.state else false
             val searchForText = searchForText.state
             val searchInComments = searchInComments.state
-            if (mppDeclarations.state && declarations.any { it.isExpectDeclaration() || it.hasActualModifier() }) {
+            if (mppDeclarations.state && declarations.any { it.isExpectOrActual() }) {
                 val descriptors = declarations.flatMap { elem ->
                     ExpectActualUtils.withExpectedActuals(elem).filterIsInstance<KtNamedDeclaration>()
                 }.groupBy { elem ->
@@ -340,7 +364,7 @@ sealed class K2MoveModel(observableUiSettings: ObservableUiSettings) : K2MoveMod
                         || declarationsFromFiles.isEmpty()
                         || (targetContainer is PsiDirectory && targetContainer.getPackage() == null) -> {
                     // this move can contain foreign language files
-                    val source = K2MoveSourceModel.FileSource(elementsToMove.toFileElements().toSet())
+                    val source = K2MoveSourceModel.FileSource(elementsToMove.toFileElements().toSet(), observableUiSettings)
                     val target = if (targetContainer is PsiDirectory) {
                         val pkg = targetContainer.getFqNameWithImplicitPrefixOrRoot()
                         K2MoveTargetModel.SourceDirectory(
@@ -360,7 +384,7 @@ sealed class K2MoveModel(observableUiSettings: ObservableUiSettings) : K2MoveMod
                 }
 
                 targetContainer is KtFile || targetContainer.isSingleClassContainer() || isSingleFileMove(elementsToMove) -> {
-                    val source = K2MoveSourceModel.ElementSource(declarationsFromFiles.toSet())
+                    val source = K2MoveSourceModel.ElementSource(declarationsFromFiles.toSet(), observableUiSettings)
                     val targetFile = targetContainer?.containingFile
                     val target = if (targetFile is KtFile) {
                         K2MoveTargetModel.File(targetFile, observableUiSettings)

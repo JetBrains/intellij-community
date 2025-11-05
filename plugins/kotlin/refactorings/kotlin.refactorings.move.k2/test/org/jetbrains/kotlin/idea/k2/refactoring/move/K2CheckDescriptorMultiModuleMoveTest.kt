@@ -54,6 +54,20 @@ class K2CheckDescriptorMultiModuleMoveTest : AbstractK2CheckDescriptorMultiModul
         )
     }
 
+    @TestMetadata("moveActualAndRegularFunctionConventionalSourceSetNames")
+    @Throws(Exception::class)
+    fun testMoveActualAndRegularFunctionConventionalSourceSetNames() {
+        doTest(
+            "moveActualAndRegularFunctionConventionalSourceSetNames/moveActualAndRegularFunctionConventionalSourceSetNames.test",
+            configureMoveModel = { moveModel ->
+                setAllMoveSettingsOn(moveModel)
+                setNewTargetPackageInSameRoot(moveModel, FqName("bar"))
+                setTargetFile(moveModel, "target.kt")
+            },
+            checkMoveDescriptor = { moveOperationDescriptor -> checkNoMoveOutsideSourceRoot(moveOperationDescriptor) },
+        )
+    }
+
     @TestMetadata("moveActualClass")
     @Throws(Exception::class)
     fun testMoveActualClass() {
@@ -112,17 +126,28 @@ class K2CheckDescriptorMultiModuleMoveTest : AbstractK2CheckDescriptorMultiModul
         targetModel.directory = packageSubdirectory
     }
 
+    /**
+     * Imitates target file change through the file chooser.
+     */
+    private fun setTargetFile(moveModel: K2MoveModel, fileName: String) {
+        val moveTarget = moveModel.target
+        if (moveTarget !is K2MoveTargetModel.FileChooser)
+            throw AssertionError("Unexpected move target model: ${moveTarget::class.simpleName}")
+        moveTarget.fileName = fileName
+    }
+
     private fun checkNoMoveOutsideSourceRoot(moveOperationDescriptor: K2MoveOperationDescriptor<*>) {
         moveOperationDescriptor.moveDescriptors.forEach { descriptor ->
-            val element = descriptor.source.elements.singleOrNull() ?: error("Single source element to move is expected")
-            val elementSourceDir = element.containingFile.sourceRoot ?: error("Can't find source root for element")
-            val targetRoot = descriptor.target.baseDirectory.sourceRoot ?: error("Can't find source root for target")
-            assert(elementSourceDir == targetRoot) {
-                """Element was unexpectedly moved outside of its source root:
+            descriptor.source.elements.forEach { element ->
+                val elementSourceDir = element.containingFile.sourceRoot ?: error("Can't find source root for element")
+                val targetRoot = descriptor.target.baseDirectory.sourceRoot ?: error("Can't find source root for target")
+                assert(elementSourceDir == targetRoot) {
+                    """Element was unexpectedly moved outside of its source root:
                             |${element.text}
                             |Element root: ${elementSourceDir.path}
                             |Target root: ${targetRoot.path}
                             |""".trimMargin()
+                }
             }
         }
     }

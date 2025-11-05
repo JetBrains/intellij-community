@@ -2,6 +2,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
+import com.intellij.openapi.observable.properties.MutableBooleanProperty
+import com.intellij.openapi.observable.properties.ObservableBooleanProperty
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
@@ -13,6 +16,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.list.createTargetPresentationRenderer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.AbstractKotlinMemberInfoModel
@@ -23,15 +27,25 @@ import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.JComponent
 
-sealed interface K2MoveSourceModel<T : PsiElement> {
-    val elements: Set<T>
+sealed class K2MoveSourceModel<T : PsiElement>(
+    observableUiSettings: ObservableUiSettings
+): K2SourceModelObservableSettings {
+    abstract val elements: Set<T>
 
-    fun toDescriptor(): K2MoveSourceDescriptor<T>?
+    abstract fun toDescriptor(): K2MoveSourceDescriptor<T>?
 
-    fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
+    abstract fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
-    class FileSource(fsItems: Set<PsiFileSystemItem>) : K2MoveSourceModel<PsiFileSystemItem> {
+    init {
+        observableUiSettings.registerK2SourceModelSettings(this)
+    }
+
+    class FileSource(
+        fsItems: Set<PsiFileSystemItem>,
+        observableUiSettings: ObservableUiSettings,
+    ) : K2MoveSourceModel<PsiFileSystemItem>(observableUiSettings) {
         override var elements: Set<PsiFileSystemItem> = fsItems
+        override val mppDeclarationsSelectedObservable: ObservableBooleanProperty = ConstantBooleanObservableProperty(false)
 
         override fun toDescriptor(): K2MoveSourceDescriptor.FileSource = K2MoveSourceDescriptor.FileSource(elements)
 
@@ -47,9 +61,8 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
             }
 
             panel.group(RefactoringBundle.message("move.files.group")) {
-                lateinit var list: JBList<TargetPresentation>
                 row {
-                    list = cell(JBList(CollectionListModel(presentableFiles)).apply {
+                    cell(JBList(CollectionListModel(presentableFiles)).apply {
                         cellRenderer = createTargetPresentationRenderer { it }
                     }).align(Align.FILL).component
                 }.resizableRow()
@@ -57,9 +70,14 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
         }
     }
 
-    class ElementSource(declarations: Set<KtNamedDeclaration>) : K2MoveSourceModel<KtNamedDeclaration> {
+    class ElementSource(
+        declarations: Set<KtNamedDeclaration>,
+        observableUiSettings: ObservableUiSettings,
+    ) : K2MoveSourceModel<KtNamedDeclaration>(observableUiSettings) {
         override var elements: Set<KtNamedDeclaration> = declarations
             private set
+        override val mppDeclarationsSelectedObservable: MutableBooleanProperty =
+            AtomicBooleanProperty(hasExpectOrActualElements())
 
         private lateinit var memberSelectionPanel: KotlinMemberSelectionPanel
 
@@ -83,6 +101,7 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
                     val table = memberSelectionPanel.table
                     table.addMemberInfoChangeListener {
                         elements = table.selectedMemberInfos.map { it.member }.toSet()
+                        mppDeclarationsSelectedObservable.set(hasExpectOrActualElements())
                         if (elements.isEmpty()) {
                             onError(KotlinBundle.message("text.no.elements.to.move.are.selected"), memberSelectionPanel.table)
                         } else {
@@ -116,6 +135,9 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
                 isChecked = elementsToMove.contains(declaration)
             }
         }
+
+        private fun hasExpectOrActualElements(): Boolean =
+            elements.any { it.isExpectOrActual() }
     }
 }
 

@@ -58,6 +58,8 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//platform/observable",
     "//java/openapi:java",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
   ]
 )
 
@@ -115,6 +117,8 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//platform/observable",
     "//java/openapi:java",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
   ]
 )
 ### auto-generated section `build intellij.kotlin.refactorings.move` end

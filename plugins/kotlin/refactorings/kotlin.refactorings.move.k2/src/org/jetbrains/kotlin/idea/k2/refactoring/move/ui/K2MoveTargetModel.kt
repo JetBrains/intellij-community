@@ -6,9 +6,11 @@ import com.intellij.ide.util.DirectoryChooser
 import com.intellij.ide.util.TreeJavaClassChooserDialog
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.observable.properties.AtomicBooleanProperty
-import com.intellij.openapi.observable.properties.MutableBooleanProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.properties.*
+import com.intellij.openapi.observable.util.and
+import com.intellij.openapi.observable.util.equalsTo
+import com.intellij.openapi.observable.util.operation
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.registry.Registry
@@ -33,37 +35,42 @@ import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinFileChooserDialog
+import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import javax.swing.JComponent
 import javax.swing.event.DocumentEvent
 
-sealed interface K2MoveTargetModel {
-    val directory: PsiDirectory
+sealed class K2MoveTargetModel(
+    protected val observableUiSettings: ObservableUiSettings
+) : K2TargetModelObservableSettings {
+    init {
+        observableUiSettings.registerK2TargetModelSettings(this)
+    }
 
-    val pkgName: FqName
+    abstract val directory: PsiDirectory
 
-    val explicitPkgMoveFqName: FqName?
+    abstract val pkgName: FqName
 
-    val observableUiSettings: ObservableUiSettings
+    abstract val explicitPkgMoveFqName: FqName?
 
     /**
      * Creates a [K2MoveTargetDescriptor] from this model.
      * @param kmpSourceRoot source KMP directory that corresponds to the base [directory] in a different source set.
      * `null` for non expect-actual moves.
      */
-    fun toDescriptor(kmpSourceRoot: PsiDirectory? = null): K2MoveTargetDescriptor
+    abstract fun toDescriptor(kmpSourceRoot: PsiDirectory? = null): K2MoveTargetDescriptor
 
-    fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
+    abstract fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
     @ApiStatus.Internal
     abstract class SourceDirectoryChooser(
         override var pkgName: FqName,
         override var directory: PsiDirectory,
         override val explicitPkgMoveFqName: FqName?,
-        override val observableUiSettings: ObservableUiSettings,
-    ) : K2MoveTargetModel {
+        observableUiSettings: ObservableUiSettings,
+    ) : K2MoveTargetModel(observableUiSettings) {
         private val initialDirectory = directory
 
         protected lateinit var pkgChooser: PackageNameReferenceEditorCombo
@@ -163,20 +170,24 @@ sealed interface K2MoveTargetModel {
         override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             panel.installPkgChooser(onError, revalidateButtons)
         }
+
+        override val sourceSetSuffix: ObservableProperty<String?>
+            get() = ConstantObservableProperty(null)
     }
 
     @ApiStatus.Internal
     abstract class FileChooser(
-        fileName: String,
+        @set:ApiStatus.Internal
+        var fileName: String,
         pkg: FqName,
         directory: PsiDirectory,
         explicitPkgMoveFqName: FqName?,
         observableUiSettings: ObservableUiSettings,
     ) : SourceDirectoryChooser(pkg, directory, explicitPkgMoveFqName, observableUiSettings) {
-        var fileName: String = fileName
-            protected set
 
         private var selectedFile: KtFile? = null
+        private val mppSuffixObservableProperty: AtomicProperty<String?> =
+            AtomicProperty(findFileSuffix(fileName))
 
         override fun updateDirectory(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             super.updateDirectory(onError, revalidateButtons)
@@ -220,9 +231,20 @@ sealed interface K2MoveTargetModel {
                     } else {
                         onError(null, fileChooser)
                     }
+                    mppSuffixObservableProperty.set(findFileSuffix(fileName))
                     revalidateButtons()
                 }
             })
+        }
+
+        override val sourceSetSuffix: ObservableProperty<String?>
+            get() = mppSuffixObservableProperty
+
+        private fun findFileSuffix(fileName: String): String? {
+            val sourceRootVirtualFile = directory.sourceRoot ?: return null
+            val sourceRootPsiDir = sourceRootVirtualFile.toPsiDirectory(directory.project) ?: return null
+            val suffix = findSourceSetNameStem(sourceRootPsiDir)
+            return if (fileName.endsWith(".$suffix.kt")) suffix else null
         }
     }
 
@@ -274,7 +296,8 @@ sealed interface K2MoveTargetModel {
             return if (destinationTargetType == MoveTargetType.CLASS && selectedClass != null) {
                 K2MoveTargetDescriptor.ClassOrObject(selectedClass)
             } else {
-                K2MoveTargetDescriptor.File(fileName, pkgName, kmpSourceRoot ?: directory)
+                val fileNameWithKmpSuffixHandled = findSuffixedFileName(fileName, kmpSourceRoot)
+                K2MoveTargetDescriptor.File(fileNameWithKmpSuffixHandled, pkgName, kmpSourceRoot ?: directory)
             }
         }
 
@@ -322,43 +345,92 @@ sealed interface K2MoveTargetModel {
             })
         }
 
+        private fun Panel.installTargetFileSelector(
+            onError: (String?, JComponent) -> Unit,
+            revalidateButtons: () -> Unit,
+            installTitleElement: Row.() -> Unit,
+        ) {
+            val iconInfoObservableProperty = observableUiSettings.mppDeclarationsSettingObservable
+                .and(observableUiSettings.sourceSetSuffix.transform { it.isNullOrBlank() })
+            val iconWarningObservableProperty = observableUiSettings.mppDeclarationsSettingObservable
+                .and(observableUiSettings.sourceSetSuffix.transform { !it.isNullOrBlank() })
+
+            row {
+                panel {
+                    row {
+                        installTitleElement()
+                        icon(AllIcons.General.ContextHelp).align(AlignX.RIGHT).gap(RightGap.SMALL).applyToComponent {
+                            toolTipText = RefactoringBundle.message("tooltip.text.move.kmp.target.file")
+                        }.visibleIf(observableUiSettings.mppDeclarationsSettingObservable)
+                    }
+                }
+                installFileChooser(onError, revalidateButtons)
+            }.layout(RowLayout.LABEL_ALIGNED)
+            row("") {
+                icon(AllIcons.General.Warning).align(AlignX.LEFT).gap(RightGap.SMALL)
+                    .visibleIf(iconWarningObservableProperty)
+                icon(AllIcons.General.Information).align(AlignX.LEFT).gap(RightGap.SMALL)
+                    .visibleIf(iconInfoObservableProperty)
+                val warningLabel = label("").bindText(
+                    operation(iconInfoObservableProperty, iconWarningObservableProperty) { info, warning ->
+                        when {
+                            info -> RefactoringBundle.message("move.added.kmp.suffixes.info")
+                            warning -> RefactoringBundle.message(
+                                "move.added.kmp.suffixes.warning.0",
+                                observableUiSettings.sourceSetSuffix.get().orEmpty(),
+                            )
+                            else -> ""
+                        }
+                    }
+                ).visibleIf(observableUiSettings.mppDeclarationsSettingObservable)
+                // placeholder to avoid resizing on changes in the settings
+                label("").visibleIf(observableUiSettings.mppDeclarationsSettingObservable.equalsTo(false))
+                    .applyToComponent { preferredSize = warningLabel.component.preferredSize }
+            }
+        }
+
+        private fun Panel.installTargetSelectionRadioGroup(
+            onError: (String?, JComponent) -> Unit,
+            revalidateButtons: () -> Unit,
+        ) {
+            buttonsGroup(indent = false) {
+                installTargetFileSelector(onError, revalidateButtons) {
+                    radioButton(KotlinBundle.message("refactoring.file.destination"), MoveTargetType.FILE)
+                        .onChanged {
+                            destinationTargetType = MoveTargetType.FILE
+                            fileChooser.isEnabled = true
+                            pkgChooser.isEnabled = true
+                            destinationChooser.isEnabled = true
+                            classChooser.isEnabled = false
+                            revalidateButtons()
+                        }
+                }
+                row {
+                    radioButton(KotlinBundle.message("refactoring.class.destination"), MoveTargetType.CLASS)
+                        .onChanged {
+                            destinationTargetType = MoveTargetType.CLASS
+                            fileChooser.isEnabled = false
+                            pkgChooser.isEnabled = false
+                            destinationChooser.isEnabled = false
+                            classChooser.isEnabled = true
+                            revalidateButtons()
+                        }
+                    installClassTargetChooser(onError, revalidateButtons)
+                }.layout(RowLayout.LABEL_ALIGNED)
+            }.bind(::destinationTargetType.toMutableProperty())
+        }
+
         override fun buildPanel(
             panel: Panel,
             onError: (String?, JComponent) -> Unit,
             revalidateButtons: () -> Unit
         ) {
             panel.installPkgChooser(onError, revalidateButtons)
-
             if (Registry.`is`("kotlin.move.show.move.to.class")) {
-                panel.buttonsGroup(indent = true) {
-                    panel.row {
-                        radioButton(KotlinBundle.message("refactoring.file.destination"), MoveTargetType.FILE)
-                            .onChanged {
-                                destinationTargetType = MoveTargetType.FILE
-                                fileChooser.isEnabled = true
-                                pkgChooser.isEnabled = true
-                                destinationChooser.isEnabled = true
-                                classChooser.isEnabled = false
-                                revalidateButtons()
-                            }
-                        installFileChooser(onError, revalidateButtons)
-                    }
-                    panel.row {
-                        radioButton(KotlinBundle.message("refactoring.class.destination"), MoveTargetType.CLASS)
-                            .onChanged {
-                                destinationTargetType = MoveTargetType.CLASS
-                                fileChooser.isEnabled = false
-                                pkgChooser.isEnabled = false
-                                destinationChooser.isEnabled = false
-                                classChooser.isEnabled = true
-                                revalidateButtons()
-                            }
-                        installClassTargetChooser(onError, revalidateButtons)
-                    }
-                }.bind(::destinationTargetType.toMutableProperty())
+                panel.installTargetSelectionRadioGroup(onError, revalidateButtons)
             } else {
-                panel.row {
-                    installFileChooser(onError, revalidateButtons)
+                panel.installTargetFileSelector(onError, revalidateButtons) {
+                    label(KotlinBundle.message("label.text.file"))
                 }
             }
         }

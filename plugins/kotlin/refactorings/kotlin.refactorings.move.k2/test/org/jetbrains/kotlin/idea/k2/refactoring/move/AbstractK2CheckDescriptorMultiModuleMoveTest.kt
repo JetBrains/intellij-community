@@ -41,8 +41,8 @@ abstract class AbstractK2CheckDescriptorMultiModuleMoveTest : KotlinMultiFileTes
                         config: JsonObject
                     ) {
                         allowAnalysisOnEdt {
-                            val elementAtCaret = elementsAtCaret.single()
-                            val editor = elementAtCaret.findExistingEditor()
+                            val firstElementAtCaret = elementsAtCaret.first()
+                            val editor = firstElementAtCaret.findExistingEditor()
                             val moveModel = K2MoveModel.create(elementsAtCaret.toTypedArray<PsiElement>(), null, editor)
                                 ?: error("Failed to create move model")
                             configureMoveModel(moveModel)
