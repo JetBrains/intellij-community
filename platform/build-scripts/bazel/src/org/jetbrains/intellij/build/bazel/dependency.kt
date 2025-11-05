@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.bazel
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
@@ -106,6 +107,13 @@ internal fun generateDeps(
       )
     }
     else if (element is JpsLibraryDependency) {
+      if (element.libraryReference.parentReference.resolve() is JpsGlobal) {
+        // <orderEntry type="library" name="Python 3.9 interpreter library" level="application" />
+        // application level references are something we should not handle (it's outside the current project model anyway)
+        println("WARN: application-level library reference '${element.libraryReference}' in module ${module.module.name}, ignored")
+        continue
+      }
+
       val jpsLibrary = element.library ?: error("library dependency '$element' from module ${module.module.name} is not resolved")
       val files: List<Path> = jpsLibrary.getPaths(JpsOrderRootType.COMPILED)
       val repositoryJpsLibrary = jpsLibrary.asTyped(JpsRepositoryLibraryType.INSTANCE)
