@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.SmartPointerManager
@@ -15,6 +17,8 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.devkit.DevKitBundle
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -92,10 +96,13 @@ class LockReqAnalyzerParallelBFS {
     context(config, BaseLockReqRules(), project) {
       val isActive = AtomicBoolean(true)
       val time = measureTime {
-        withContext(Dispatchers.Default) {
-          repeat(Runtime.getRuntime().availableProcessors()) {
-            launch {
-              processIncomingMethods(payload, isActive)
+        reportRawProgress { reporter ->
+          val reportingHolder = Collections.synchronizedList<MethodSignature>(ArrayList())
+          withContext(Dispatchers.Default) {
+            repeat(Runtime.getRuntime().availableProcessors()) {
+              launch {
+                processIncomingMethods(payload, isActive, reporter, reportingHolder)
+              }
             }
           }
         }
@@ -105,7 +112,7 @@ class LockReqAnalyzerParallelBFS {
   }
 
   context(context: TraversalContext, consumer: LockReqConsumer, rules: LockReqRules, project: Project)
-  private suspend fun processIncomingMethods(payload: QueuePayload, isActive: AtomicBoolean) {
+  private suspend fun processIncomingMethods(payload: QueuePayload, isActive: AtomicBoolean, reporter: RawProgressReporter, reportingHolder: MutableList<MethodSignature>) {
     val (queue, totalSize) = payload
     outerLoop@ while (isActive.get()) {
       val peekQueue = try {
@@ -140,51 +147,43 @@ class LockReqAnalyzerParallelBFS {
           // otherwise, someone sneaked their computation; let's try again
         }
         payload.globalCounter.incrementAndGet()
+        reporter.fraction(payload.globalCounter.get().toDouble() / (payload.globalCounter.get() + payload.counter.get()))
+        reportingHolder.add(key)
+        reportProgressCounters(payload, reporter)
+        reportCurrentlyProcessedMethod(reportingHolder, reporter)
         LOG.trace {
           "Running analysis on $key (path length: $newValue)"
         }
 
-        val time = measureTime {
-          smartReadAction(project = project) {
-            val method = methodPointer.element ?: return@smartReadAction
+        smartReadAction(project = project) {
+          val method = methodPointer.element ?: return@smartReadAction
 
-            val annotationRequirements = context(config) {
-              LockReqDetector.findAnnotationRequirements(method)
-            }
-            annotationRequirements.forEach { requirement ->
-              val path = ExecutionPath(currentPath, requirement)
-              context.paths.add(path)
-              consumer.onPath(path)
-              LOG.trace {
-                "Found requirement: $requirement"
-              }
-            }
+          val annotationRequirements = context(config) {
+            LockReqDetector.findAnnotationRequirements(method)
           }
-
-          val callees = smartReadAction(project) {
-            val method = methodPointer.element ?: return@smartReadAction emptyList()
-            val ops = LockReqPsiOps.forLanguage(method.language)
-            ops.getMethodCallees(method).map { SmartPointerManager.createPointer(it) }
-          }
-
-          callees.forEach {
-            smartReadAction(project) {
-              val callee = it.element ?: return@smartReadAction
-              val ops = LockReqPsiOps.forLanguage(callee.language)
-              context(ops, config) {
-                processCallee(payload, callee, currentPath)
-              }
+          annotationRequirements.forEach { requirement ->
+            val path = ExecutionPath(currentPath, requirement)
+            context.paths.add(path)
+            consumer.onPath(path)
+            LOG.trace {
+              "Found requirement: $requirement"
             }
           }
         }
 
-        if (key.toString().contains("PsiDocumentManagerBase")) {
-          LOG.trace {
-            "Traversed method ${key.containingClassName}.${key.methodName} in $time, ${currentPath.size} steps deep (${
-              currentPath.joinToString(" -> ") {
-                "${it.containingClassName}.${it.methodName}"
-              }
-            })"
+        val callees = smartReadAction(project) {
+          val method = methodPointer.element ?: return@smartReadAction emptyList()
+          val ops = LockReqPsiOps.forLanguage(method.language)
+          ops.getMethodCallees(method).map { SmartPointerManager.createPointer(it) }
+        }
+
+        callees.forEach {
+          smartReadAction(project) {
+            val callee = it.element ?: return@smartReadAction
+            val ops = LockReqPsiOps.forLanguage(callee.language)
+            context(ops, config) {
+              processCallee(payload, callee, currentPath)
+            }
           }
         }
       }
@@ -196,6 +195,8 @@ class LockReqAnalyzerParallelBFS {
       }
       finally {
         val result = totalSize.decrementAndGet()
+        reportingHolder.removeIf { it == peekQueue.signature }
+        reportCurrentlyProcessedMethod(reportingHolder, reporter)
         if (result == 0) {
           assert(queue.isEmpty())
           LOG.trace {
@@ -211,6 +212,16 @@ class LockReqAnalyzerParallelBFS {
       }
     }
 
+  }
+
+  private fun reportProgressCounters(payload: QueuePayload, reporter: RawProgressReporter) {
+    reporter.text(DevKitBundle.message("progress.text.processed.0.out.of.1.methods", payload.globalCounter.get(), payload.globalCounter.get() + payload.counter.get()))
+  }
+
+  fun reportCurrentlyProcessedMethod(holder: MutableList<MethodSignature>, rawReporter: RawProgressReporter) {
+    val presentableName = holder.getOrNull(0) ?: return
+    val qualifiedName = presentableName.containingClassName + "." + presentableName.methodName
+    rawReporter.details(DevKitBundle.message("progress.details.analyzing.method.during.lock.requirement.search", qualifiedName))
   }
 
   @RequiresReadLock

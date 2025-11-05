@@ -9,6 +9,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.intellij.devkit.compose.DevkitComposeBundle
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisConfig
 import org.jetbrains.idea.devkit.threadingModelHelper.AnalysisResult
@@ -26,8 +27,8 @@ class LockReqsService(private val project: Project) {
 
   suspend fun analyzeMethod(methodPtr: SmartPsiElementPointer<PsiMethod>) {
     val analyzer = LockReqAnalyzerParallelBFS()
-    val config = AnalysisConfig.Companion.forProject(project, LOCK_REQUIREMENTS)
-    withBackgroundProgress(project, "Analyzing lock requirements", true) {
+    val config = AnalysisConfig.forProject(project, LOCK_REQUIREMENTS)
+    withBackgroundProgress(project, DevkitComposeBundle.message("progress.title.analyzing.lock.requirements"), true) {
       val consumer = DefaultLockReqConsumer(methodPtr) { snapshot ->
         ApplicationManager.getApplication().invokeLater {
           _currentResults = listOf(snapshot)
