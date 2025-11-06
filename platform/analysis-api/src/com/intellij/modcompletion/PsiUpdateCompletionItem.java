@@ -5,6 +5,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /**
@@ -14,12 +15,22 @@ import org.jetbrains.annotations.NotNullByDefault;
 public abstract class PsiUpdateCompletionItem implements CompletionItem {
   @Override
   public ModCommand perform(ActionContext actionContext, InsertionContext insertionContext) {
-    return ModCommand.psiUpdate(actionContext, updater -> {
-      if (insertionContext.mode() == InsertionMode.OVERWRITE) {
-        updater.getDocument().deleteString(
-          actionContext.offset(), calculateEndOffsetForOverwrite(updater.getDocument(), actionContext.offset()));
-      }
-      update(actionContext, insertionContext, updater);
+    String lookupString = mainLookupString();
+    int completionStart = actionContext.selection().getStartOffset();
+    int prefixEnd = actionContext.selection().getEndOffset();
+    int updatedCaretPos = completionStart + lookupString.length();
+    ActionContext finalActionContext = actionContext
+      .withSelection(TextRange.create(updatedCaretPos, updatedCaretPos))
+      .withOffset(updatedCaretPos);
+    return ModCommand.psiUpdate(finalActionContext, doc -> {
+      doc.deleteString(completionStart, prefixEnd);
+    }, updater -> {
+      Document document = updater.getDocument();
+      document.replaceString(completionStart,
+                             insertionContext.mode() == InsertionMode.OVERWRITE ?
+                             calculateEndOffsetForOverwrite(document, completionStart) : completionStart, lookupString);
+      updater.moveCaretTo(updatedCaretPos);
+      update(actionContext.withOffset(updatedCaretPos), insertionContext, updater);
     });
   }
 

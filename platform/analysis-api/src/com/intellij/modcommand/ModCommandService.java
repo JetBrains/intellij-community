@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -57,6 +58,7 @@ public interface ModCommandService {
    * Implementation of ModCommand.psiUpdate; should not be used directly.
    */
   @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
+                                @NotNull Consumer<@NotNull Document> copyCleaner, 
                                 @NotNull Consumer<@NotNull ModPsiUpdater> updater);
 
   /**

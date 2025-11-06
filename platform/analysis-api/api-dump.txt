@@ -601,6 +601,8 @@ com.intellij.lang.documentation.ExternalDocumentationProvider
 com.intellij.lang.refactoring.NamesValidator
 - a:isIdentifier(java.lang.String,com.intellij.openapi.project.Project):Z
 - a:isKeyword(java.lang.String,com.intellij.openapi.project.Project):Z
+f:com.intellij.modcommand.ActionContext
+- withSelection(com.intellij.openapi.util.TextRange):com.intellij.modcommand.ActionContext
 com.intellij.modcommand.ModCommand
 - andThen(com.intellij.modcommand.ModCommand):com.intellij.modcommand.ModCommand
 - s:chooseAction(java.lang.String,java.util.List):com.intellij.modcommand.ModCommand
@@ -648,7 +650,7 @@ com.intellij.modcommand.ModCommandService
 - a:chooseFileAndPerform(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.modcommand.ModCommandAction,I):com.intellij.modcommand.ModCommandWithContext
 - s:getInstance():com.intellij.modcommand.ModCommandService
 - a:insertText(com.intellij.modcommand.ActionContext,java.lang.String,Z):com.intellij.modcommand.ModCommand
-- a:psiUpdate(com.intellij.modcommand.ActionContext,java.util.function.Consumer):com.intellij.modcommand.ModCommand
+- a:psiUpdate(com.intellij.modcommand.ActionContext,java.util.function.Consumer,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 - a:unwrap(com.intellij.codeInspection.LocalQuickFix):com.intellij.modcommand.ModCommandAction
 - a:updateOption(com.intellij.psi.PsiElement,com.intellij.codeInspection.InspectionProfileEntry,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 - a:wrap(com.intellij.modcommand.ModCommandAction):com.intellij.codeInsight.intention.IntentionAction

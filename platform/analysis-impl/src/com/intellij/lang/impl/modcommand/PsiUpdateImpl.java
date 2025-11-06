@@ -48,13 +48,14 @@ final class PsiUpdateImpl {
   private static final Key<PsiFile> ORIGINAL_FILE_FOR_INJECTION = Key.create("ORIGINAL_FILE_FOR_INJECTION");
 
   static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
+                                       @NotNull Consumer<@NotNull Document> copyCleaner, 
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     var runnable = new Runnable() {
       private ModPsiUpdaterImpl myUpdater;
 
       @Override
       public void run() {
-        myUpdater = new ModPsiUpdaterImpl(context);
+        myUpdater = new ModPsiUpdaterImpl(context, copyCleaner);
         updater.accept(myUpdater);
       }
 
@@ -86,12 +87,15 @@ final class PsiUpdateImpl {
     private boolean myDeleted;
     private boolean myGuardModification;
 
-    FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles) {
+    FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles, @NotNull Consumer<@NotNull Document> copyCleaner) {
       Project project = origFile.getProject();
       myCopyFile = copyFile(project, origFile);
       PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, f -> myDeleted = true);
-      myDocument = myCopyFile.getViewProvider().getDocument();
       assert !myCopyFile.getViewProvider().isEventSystemEnabled() : "Event system for " + myCopyFile.getName();
+      myManager = PsiDocumentManager.getInstance(project);
+      myDocument = myCopyFile.getFileDocument();
+      copyCleaner.accept(myDocument);
+      myManager.commitDocument(myDocument);
       InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(project);
       boolean injected = injectionManager.isInjectedFragment(origFile);
       if (injected) {
@@ -125,7 +129,6 @@ final class PsiUpdateImpl {
       myPositionDocument.addDocumentListener(this, this);
       myOrigText = myTargetFile.getText();
       myOrigFile = origFile;
-      myManager = PsiDocumentManager.getInstance(project);
       PostprocessReformattingAspect.getInstance(project).forcePostprocessFormat(myCopyFile, this);
     }
 
@@ -257,6 +260,7 @@ final class PsiUpdateImpl {
     private int myCaretOffset;
     private int myCaretVirtualEnd;
     private @NotNull TextRange mySelection;
+    private final Consumer<@NotNull Document> myCopyCleaner;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
     private @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> myTemplateFinishFunction = f -> nop();
@@ -301,10 +305,11 @@ final class PsiUpdateImpl {
       }
     }
 
-    private ModPsiUpdaterImpl(@NotNull ActionContext actionContext) {
+    private ModPsiUpdaterImpl(@NotNull ActionContext actionContext, @NotNull Consumer<@NotNull Document> copyCleaner) {
       myActionContext = actionContext;
       myCaretOffset = myCaretVirtualEnd = actionContext.offset();
       mySelection = actionContext.selection();
+      myCopyCleaner = copyCleaner;
     }
     
     private @NotNull FileTracker tracker() {
@@ -325,7 +330,7 @@ final class PsiUpdateImpl {
 
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {
       FileTracker result = myChangedFiles.computeIfAbsent(file, origFile -> {
-        var tracker = new FileTracker(origFile, myChangedFiles);
+        var tracker = new FileTracker(origFile, myChangedFiles, myActionContext.file() == file ? myCopyCleaner : doc -> {});
         Disposer.register(this, tracker);
         return tracker;
       });

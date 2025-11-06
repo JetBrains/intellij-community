@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.*;
@@ -17,12 +18,14 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcompletion.CompletionItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.client.ClientProjectSession;
 import com.intellij.openapi.client.ClientSessionsUtil;
 import com.intellij.openapi.command.CommandProcessor;
@@ -35,6 +38,7 @@ import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -646,6 +650,28 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }, null, null);
   }
 
+  private static void insertItem(char completionChar,
+                                 @NotNull Editor editor,
+                                 int start, 
+                                 @NotNull PsiFile psiFile,
+                                 CompletionItemLookupElement wrapper) {
+    CompletionItem.InsertionContext insertionContext = new CompletionItem.InsertionContext(
+      completionChar == REPLACE_SELECT_CHAR ?
+      CompletionItem.InsertionMode.OVERWRITE : CompletionItem.InsertionMode.INSERT,
+      completionChar);
+    ActionContext actionContext = ActionContext.from(editor, psiFile);
+    ActionContext finalActionContext = actionContext
+      .withOffset(start)
+      .withSelection(TextRange.create(start, actionContext.offset()));
+    Project project = actionContext.project();
+    ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(
+        () -> wrapper.item().perform(finalActionContext, insertionContext)).executeSynchronously(),
+      AnalysisBundle.message("complete"), true, project);
+    WriteAction.run(() -> editor.getDocument().deleteString(start, actionContext.offset()));
+    ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor);
+  }
+
   void finishLookupInWritableFile(char completionChar, @Nullable LookupElement item) {
     if (item == null || !item.isValid() || item instanceof EmptyLookupItem) {
       hideWithItemSelected(null, completionChar);
@@ -668,15 +694,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     myFinishing = true;
     if (fireBeforeItemSelected(item, completionChar)) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        editor.getDocument().startGuardedBlockChecking();
-        try {
-          insertLookupString(item, getPrefixLength(item));
-        }
-        finally {
-          editor.getDocument().stopGuardedBlockChecking();
-        }
-      });
+      if (item instanceof CompletionItemLookupElement wrapper) {
+        PsiFile file = Objects.requireNonNull(getPsiFile(), "PsiFile must be known for ModCommand completion");
+        editor.getCaretModel().runForEachCaret(__ -> {
+          insertItem(completionChar, editor, editor.getCaretModel().getOffset() - getPrefixLength(item), file, wrapper);
+        });
+      } else {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          editor.getDocument().startGuardedBlockChecking();
+          try {
+            insertLookupString(item, getPrefixLength(item));
+          }
+          finally {
+            editor.getDocument().stopGuardedBlockChecking();
+          }
+        });
+      }
     }
 
     if (isLookupDisposed()) { // any document listeners could close us

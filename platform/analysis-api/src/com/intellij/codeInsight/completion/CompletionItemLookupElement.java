@@ -1,12 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.analysis.AnalysisBundle;
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcompletion.CompletionItem;
 import com.intellij.modcompletion.CompletionItemPresentation;
 import org.jetbrains.annotations.ApiStatus;
@@ -66,15 +62,7 @@ public final class CompletionItemLookupElement extends LookupElement {
 
   @Override
   public void handleInsert(InsertionContext context) {
-    CompletionItem.InsertionContext insertionContext = new CompletionItem.InsertionContext(
-      context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ?
-      CompletionItem.InsertionMode.OVERWRITE : CompletionItem.InsertionMode.INSERT,
-      context.getCompletionChar());
-    ActionContext actionContext = ActionContext.from(context.getEditor(), context.getFile());
-    ModCommandExecutor.executeInteractively(
-      actionContext,
-      AnalysisBundle.message("complete"), context.getEditor(),
-      () -> item.perform(actionContext, insertionContext));
+    throw new UnsupportedOperationException("Should not be called: unwrap the element via item() method and process it as a ModCommand");
   }
 
   @Override
