@@ -103,6 +103,22 @@
 
     <!-- </editor-fold> -->
 
+    <!-- <editor-fold desc="nested: libraries.fleet"> -->
+    <module name="fleet.andel" loading="embedded"/>
+    <module name="fleet.bifurcan" loading="embedded"/>
+    <module name="fleet.fastutil" loading="embedded"/>
+    <module name="fleet.kernel" loading="embedded"/>
+    <module name="fleet.multiplatform.shims" loading="embedded"/>
+    <module name="fleet.reporting.api" loading="embedded"/>
+    <module name="fleet.reporting.shared" loading="embedded"/>
+    <module name="fleet.rhizomedb" loading="embedded"/>
+    <module name="fleet.rpc" loading="embedded"/>
+    <module name="fleet.util.codepoints" loading="embedded"/>
+    <module name="fleet.util.core" loading="embedded"/>
+    <module name="fleet.util.logging.api" loading="embedded"/>
+    <module name="fleet.util.serialization" loading="embedded"/>
+    <!-- </editor-fold> -->
+
     <!-- <editor-fold desc="direct modules"> -->
     <module name="intellij.platform.settings.local"/>
     <module name="intellij.platform.backend"/>

@@ -39,6 +39,8 @@ object CommunityModuleSets : ModuleSetProvider {
   fun essential(): ModuleSet = moduleSet("essential") {
     // Include libraries first (they are xi:included in essential.xml)
     moduleSet(libraries())
+    // Fleet libraries are used by core functionality like Project, so should be essential
+    moduleSet(fleet())
 
     // Core essential modules
     module("intellij.platform.settings.local")
@@ -388,6 +390,27 @@ object CommunityModuleSets : ModuleSetProvider {
     module("intellij.rd.ide.model.generated")
     module("intellij.rd.platform")
     module("intellij.rd.ui")
+  }
+
+  /**
+   * Fleet libraries used in IntelliJ Platform. They are built from sources and put in the distribution.
+   * Corresponds to intellij.moduleSets.fleet.xml
+   */
+  fun fleet(): ModuleSet = moduleSet("libraries.fleet") {
+    // These modules are embedded because some of them are used by V1 platform modules
+    embeddedModule("fleet.andel")
+    embeddedModule("fleet.bifurcan")
+    embeddedModule("fleet.fastutil")
+    embeddedModule("fleet.kernel")
+    embeddedModule("fleet.multiplatform.shims")
+    embeddedModule("fleet.reporting.api")
+    embeddedModule("fleet.reporting.shared")
+    embeddedModule("fleet.rhizomedb")
+    embeddedModule("fleet.rpc")
+    embeddedModule("fleet.util.codepoints")
+    embeddedModule("fleet.util.core")
+    embeddedModule("fleet.util.logging.api")
+    embeddedModule("fleet.util.serialization")
   }
 
   /**
