@@ -19,6 +19,7 @@ import org.assertj.swing.edt.GuiQuery
 import org.assertj.swing.timing.Pause.pause
 import org.assertj.swing.util.Modifiers
 import java.awt.*
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.io.ByteArrayOutputStream
@@ -42,6 +43,14 @@ internal class SmoothRobot @JvmOverloads constructor(
       simpleWaitForIdle(true)
       timeoutToFindPopup(1000)
     }
+  }
+
+  @Suppress("TestOnlyProblems")
+  fun hasInputFocus(): Boolean {
+    val eventQueue = IdeEventQueue.getInstance()
+    val keyEventsPostedBefore = eventQueue.keyboardEventPosted.get()
+    pressAndReleaseKey(KeyEvent.VK_F13) // let's hope there is no action assigned to F13
+    return keyEventsPostedBefore < eventQueue.keyboardEventPosted.get()
   }
 
   fun getColor(component: Component, point: Point? = null): Color {

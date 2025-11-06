@@ -6,6 +6,7 @@ import java.awt.Point
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.robot.SmoothRobot", plugin = REMOTE_ROBOT_MODULE_ID)
 interface Robot {
+  fun hasInputFocus(): Boolean
   fun moveMouse(component: Component)
   fun moveMouse(component: Component, point: Point)
   fun moveMouse(point: Point)
