@@ -51,6 +51,10 @@ public final class HardwareCollector implements TroubleInfoCollector {
   }
 
   public String collectHardwareInfo() {
+    return collectHardwareInfo(true);
+  }
+
+  public String collectHardwareInfo(Boolean skipNetworkReporting) {
     if (!JnaLoader.isLoaded()) {
       return "Failed to collect computer system info: JNA is not loaded)";
     }
@@ -105,24 +109,25 @@ public final class HardwareCollector implements TroubleInfoCollector {
         logger.warn("Failed to collect filesystem info", e);
         info.add("Failed to collect filesystem info: " + e.getMessage());
       }
-
-      try {
-        info.add("\n=====NETWORK SUMMARY=====\n");
-        printNetworkInterfaces(hal.getNetworkIFs());
-        printNetworkParameters(os.getNetworkParams());
+      // getaddrinfo() throws nodename nor servname provided, or not known locally on macOS, allow skipping it for local runs
+      if (skipNetworkReporting) {
+        try {
+          info.add("\n=====NETWORK SUMMARY=====\n");
+          printNetworkInterfaces(hal.getNetworkIFs());
+          printNetworkParameters(os.getNetworkParams());
+        }
+        catch (Throwable e) {
+          logger.warn("Failed to collect network info", e);
+          info.add("Failed to collect network info: " + e.getMessage());
+        }
       }
-      catch (Throwable e) {
-        logger.warn("Failed to collect network info", e);
-        info.add("Failed to collect network info: " + e.getMessage());
-      }
-
       try {
         info.add("\n=====GRAPHICS SUMMARY=====\n");
         printDisplays(hal.getDisplays());
         printGraphicsCards(hal.getGraphicsCards());
       }
       catch (Throwable e) {
-        logger.warn("Failed to collect network info", e);
+        logger.warn("Failed to collect graphic system info", e);
         info.add("Failed to collect network info: " + e.getMessage());
       }
       StringBuilder output = new StringBuilder();
