@@ -47,26 +47,35 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
     final String interfaceName = extensionPoint.getInterface().getStringValue();
     if (interfaceName != null) {
-      final DomExtension implementationAttribute =
-        registrar.registerGenericAttributeValueChildExtension(IMPLEMENTATION_XML_NAME, PsiClass.class)
-          .setConverter(CLASS_CONVERTER)
-          .addCustomAnnotation(new MyImplementationExtendClass(interfaceName))
-          .addCustomAnnotation(MyRequired.INSTANCE);
-
-      final PsiClass interfaceClass = extensionPoint.getInterface().getValue();
-      if (interfaceClass != null) {
-        implementationAttribute.setDeclaringElement(interfaceClass);
-      }
-      else {
-        implementationAttribute.setDeclaringElement(extensionPoint);
-      }
-
-      registerXmlb(registrar, interfaceClass, Collections.emptyList());
+      processInterfaceBasedExtension(registrar, extensionPoint, interfaceName);
     }
     else {
-      final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
-      registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
+      processBeanBasedExtension(registrar, extensionPoint);
     }
+  }
+
+  private static void processInterfaceBasedExtension(@NotNull DomExtensionsRegistrar registrar,
+                                                     ExtensionPoint extensionPoint,
+                                                     String interfaceName) {
+    final DomExtension implementationAttribute =
+      registrar.registerGenericAttributeValueChildExtension(IMPLEMENTATION_XML_NAME, PsiClass.class)
+        .setConverter(CLASS_CONVERTER)
+        .addCustomAnnotation(new MyImplementationExtendClass(interfaceName))
+        .addCustomAnnotation(MyRequired.INSTANCE);
+
+    final PsiClass interfaceClass = extensionPoint.getInterface().getValue();
+    if (interfaceClass != null) {
+      implementationAttribute.setDeclaringElement(interfaceClass);
+    }
+    else {
+      implementationAttribute.setDeclaringElement(extensionPoint);
+    }
+    registerXmlb(registrar, interfaceClass, Collections.emptyList());
+  }
+
+  private static void processBeanBasedExtension(@NotNull DomExtensionsRegistrar registrar, ExtensionPoint extensionPoint) {
+    final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
+    registerXmlb(registrar, beanClass, extensionPoint.getWithElements());
   }
 
   private static void registerXmlb(DomExtensionsRegistrar registrar,
@@ -81,6 +90,21 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       public void visitAttribute(@NotNull PsiField field, @NotNull @NonNls String attributeName, RequiredFlag required) {
         final With withElement = findWithElement(elements, field);
         final PsiType fieldType = field.getType();
+        Class<?> attributeValueClass = getAttributeValueClass(attributeName, fieldType, withElement);
+        final DomExtension extension =
+          registrar.registerGenericAttributeValueChildExtension(new XmlName(attributeName), attributeValueClass)
+            .setDeclaringElement(field);
+        markAsRequiredIfNeeded(extension, required);
+
+        if (attributeValueClass == String.class) {
+          markAsString(extension, field, fieldType, attributeName);
+        }
+        else if (attributeValueClass == PsiClass.class) {
+          markAsClass(extension, true, withElement);
+        }
+      }
+
+      private static @NotNull Class<?> getAttributeValueClass(@NonNls @NotNull String attributeName, PsiType fieldType, With withElement) {
         Class<?> clazz = String.class;
         if (PsiTypes.booleanType().equals(fieldType)) {
           clazz = Boolean.class;
@@ -92,16 +116,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         else if (withElement != null || Extension.isClassField(attributeName)) {
           clazz = PsiClass.class;
         }
-        final DomExtension extension =
-          registrar.registerGenericAttributeValueChildExtension(new XmlName(attributeName), clazz).setDeclaringElement(field);
-        markAsRequired(extension, required);
-
-        if (clazz == String.class) {
-          markStringProperty(extension, field, fieldType, attributeName);
-        }
-        else if (clazz == PsiClass.class) {
-          markAsClass(extension, true, withElement);
-        }
+        return clazz;
       }
 
       @Override
@@ -111,7 +126,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         final DomExtension extension =
           registrar.registerFixedNumberChildExtension(new XmlName(tagName), isBoolean ? SimpleBooleanTagValue.class : SimpleTagValue.class)
             .setDeclaringElement(field);
-        markAsRequired(extension, required);
+        markAsRequiredIfNeeded(extension, required);
 
         if (isBoolean) {
           return;
@@ -120,7 +135,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         final With withElement = findWithElement(elements, field);
         markAsClass(extension, Extension.isClassField(field.getName()), withElement);
 
-        markStringProperty(extension, field, field.getType(), tagName);
+        markAsString(extension, field, field.getType(), tagName);
       }
 
       @Override
@@ -168,7 +183,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static void markAsRequired(DomExtension extension, ExtensionPointBinding.BindingVisitor.RequiredFlag required) {
+  private static void markAsRequiredIfNeeded(DomExtension extension, ExtensionPointBinding.BindingVisitor.RequiredFlag required) {
     if (required == ExtensionPointBinding.BindingVisitor.RequiredFlag.REQUIRED) {
       extension.addCustomAnnotation(MyRequired.INSTANCE);
     }
@@ -177,7 +192,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
   }
 
-  private static void markStringProperty(DomExtension extension, PsiField field, PsiType fieldType, String propertyName) {
+  private static void markAsString(DomExtension extension, PsiField field, PsiType fieldType, String propertyName) {
     if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
       extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
     }
@@ -228,19 +243,19 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
           }
         });
 
-        markAsRequired(extension, required);
+        markAsRequiredIfNeeded(extension, required);
       }
       else if (tagName != null && attrName == null) {
         final DomExtension extension = registrar
           .registerCollectionChildrenExtension(new XmlName(tagName), SimpleTagValue.class)
           .setDeclaringElement(field);
-        markAsRequired(extension, required);
+        markAsRequiredIfNeeded(extension, required);
       }
       else if (tagName != null) {
         final DomExtension extension = registrar
           .registerCollectionChildrenExtension(new XmlName(tagName), DomElement.class)
           .setDeclaringElement(field);
-        markAsRequired(extension, required);
+        markAsRequiredIfNeeded(extension, required);
         extension.addExtender(new DomExtender() {
           @Override
           public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
@@ -260,7 +275,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
           final DomExtension extension = registrar
             .registerCollectionChildrenExtension(new XmlName(classTagName), DomElement.class)
             .setDeclaringElement(field);
-          markAsRequired(extension, required);
+          markAsRequiredIfNeeded(extension, required);
           extension.addExtender(new DomExtender() {
             @Override
             public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
