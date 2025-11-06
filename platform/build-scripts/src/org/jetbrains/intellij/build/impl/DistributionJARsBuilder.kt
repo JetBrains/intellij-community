@@ -520,18 +520,23 @@ internal suspend fun buildPlugins(
   val scrambleTasks = mutableListOf<ScrambleTask>()
 
   val entries = coroutineScope {
-    plugins.map { plugin ->
-      val directoryName = plugin.directoryName
+    plugins.map { pluginLayout ->
+      val directoryName = pluginLayout.directoryName
       val pluginDir = targetDir.resolve(directoryName)
 
-      if (plugin.mainModule != BUILT_IN_HELP_MODULE_NAME) {
+      if (pluginLayout.mainModule != BUILT_IN_HELP_MODULE_NAME) {
         launch {
-          checkOutputOfPluginModules(mainPluginModule = plugin.mainModule, includedModules = plugin.includedModules, moduleExcludes = plugin.moduleExcludes, context = context)
+          checkOutputOfPluginModules(
+            mainPluginModule = pluginLayout.mainModule,
+            includedModules = pluginLayout.includedModules,
+            moduleExcludes = pluginLayout.moduleExcludes,
+            context = context,
+          )
         }
 
         patchPluginXml(
           moduleOutputPatcher = moduleOutputPatcher,
-          pluginLayout = plugin,
+          pluginLayout = pluginLayout,
           releaseDate = context.applicationInfo.majorReleaseDate,
           releaseVersion = context.applicationInfo.releaseVersionForLicensing,
           pluginsToPublish = state.pluginsToPublish,
@@ -542,15 +547,15 @@ internal suspend fun buildPlugins(
         )
       }
 
-      val task = async(CoroutineName("Build plugin (module=${plugin.mainModule})")) {
+      val task = async(CoroutineName("Build plugin (module=${pluginLayout.mainModule})")) {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
           val (entries, file) = layoutDistribution(
-            layout = plugin,
+            layout = pluginLayout,
             platformLayout = state.platformLayout,
             targetDir = pluginDir,
             copyFiles = true,
             moduleOutputPatcher = moduleOutputPatcher,
-            includedModules = plugin.includedModules,
+            includedModules = pluginLayout.includedModules,
             searchableOptionSet = searchableOptionSet,
             cachedDescriptorWriterProvider = descriptorCacheContainer.forPlugin(pluginDir),
             context = context,
@@ -560,12 +565,12 @@ internal suspend fun buildPlugins(
             entries
           }
           else {
-            entries + pluginBuilt(plugin, file)
+            entries + pluginBuilt(pluginLayout, file)
           }
         }
       }
 
-      if (!plugin.pathsToScramble.isEmpty()) {
+      if (!pluginLayout.pathsToScramble.isEmpty()) {
         val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
         if (scrambleTool == null) {
           Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled", attributes)
@@ -575,11 +580,11 @@ internal suspend fun buildPlugins(
         }
         else {
           // we cannot start executing right now because the plugin can use other plugins in a scramble classpath
-          scrambleTasks.add(ScrambleTask(plugin = plugin, pluginDir = pluginDir, targetDir = targetDir))
+          scrambleTasks.add(ScrambleTask(plugin = pluginLayout, pluginDir = pluginDir, targetDir = targetDir))
         }
       }
 
-      PluginBuildDescriptor(dir = pluginDir, os = os, layout = plugin, distribution = task.await())
+      PluginBuildDescriptor(dir = pluginDir, os = os, layout = pluginLayout, distribution = task.await())
     }
   }
 

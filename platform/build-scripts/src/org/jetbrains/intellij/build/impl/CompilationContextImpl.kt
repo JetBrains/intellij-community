@@ -59,7 +59,6 @@ import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.stream.Stream
 import kotlin.io.path.invariantSeparatorsPathString
@@ -329,14 +328,7 @@ class CompilationContextImpl private constructor(
   }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    @Suppress("DEPRECATION")
-    val file = getModuleOutputDir(module, forTests).resolve(relativePath)
-    try {
-      return Files.readAllBytes(file)
-    }
-    catch (_: NoSuchFileException) {
-      return null
-    }
+    return moduleOutputProvider.readFileContentFromModuleOutput(module, relativePath, forTests)
   }
 
   override fun notifyArtifactBuilt(artifactPath: Path) {

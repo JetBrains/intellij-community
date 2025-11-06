@@ -72,10 +72,6 @@ class ModuleOutputPatcher {
     }
   }
 
-  fun getPatchedPluginXmlIfExists(moduleName: String): ByteArray? {
-    return patches.get(moduleName)?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value
-  }
-
   fun getPatchedPluginXml(moduleName: String): ByteArray {
     return patches.get(moduleName)?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value
            ?: error("patched plugin.xml not found for $moduleName module")

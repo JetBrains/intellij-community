@@ -23,6 +23,7 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
+import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
@@ -181,10 +182,13 @@ internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
 
   val helpPlugin = buildHelpPlugin(context.pluginBuildNumber, context)
   if (helpPlugin != null) {
+    val helpPluginLayout = helpPlugin.first
+    val targetDir = context.nonBundledPluginsToBePublished
+    descriptorCacheContainer.forPlugin(targetDir.resolve(helpPluginLayout.directoryName)).put(PLUGIN_XML_RELATIVE_PATH, helpPlugin.second.encodeToByteArray())
     val spec = buildHelpPlugin(
-      helpPlugin = helpPlugin,
+      helpPluginLayout = helpPluginLayout,
       pluginsToPublishDir = stageDir,
-      targetDir = context.nonBundledPluginsToBePublished,
+      targetDir = targetDir,
       moduleOutputPatcher = moduleOutputPatcher,
       state = state,
       searchableOptionSetDescriptor = searchableOptionSet,
@@ -337,7 +341,7 @@ private fun validatePlugin(file: Path, context: BuildContext, span: Span) {
 }
 
 private suspend fun buildHelpPlugin(
-  helpPlugin: PluginLayout,
+  helpPluginLayout: PluginLayout,
   pluginsToPublishDir: Path,
   targetDir: Path,
   moduleOutputPatcher: ModuleOutputPatcher,
@@ -346,13 +350,13 @@ private suspend fun buildHelpPlugin(
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
   context: BuildContext,
 ): PluginRepositorySpec {
-  val directory = helpPlugin.directoryName
+  val directory = helpPluginLayout.directoryName
   val destFile = targetDir.resolve("$directory.zip")
   spanBuilder("build help plugin").setAttribute("dir", directory).use {
     val targetDir = pluginsToPublishDir.resolve(directory)
     buildPlugins(
       moduleOutputPatcher = moduleOutputPatcher,
-      plugins = listOf(helpPlugin),
+      plugins = listOf(helpPluginLayout),
       os = null,
       targetDir = targetDir,
       state = state,
@@ -364,5 +368,5 @@ private suspend fun buildHelpPlugin(
     zipWithCompression(targetFile = destFile, dirs = mapOf(targetDir to ""))
     null
   }
-  return PluginRepositorySpec(pluginZip = destFile, pluginXml = moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
+  return PluginRepositorySpec(pluginZip = destFile, pluginXml = moduleOutputPatcher.getPatchedPluginXml(helpPluginLayout.mainModule))
 }

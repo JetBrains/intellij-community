@@ -66,7 +66,7 @@ interface CompilationContext : ModuleOutputProvider {
   fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean = false): Path?
 
   @Internal
-  fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
+  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray?
 
   fun notifyArtifactBuilt(artifactPath: Path)
 

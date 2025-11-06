@@ -6,6 +6,8 @@ package org.jetbrains.intellij.build.impl
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 interface ModuleOutputProvider {
@@ -13,6 +15,17 @@ interface ModuleOutputProvider {
     fun jps(modules: List<JpsModule>): ModuleOutputProvider {
       return object : ModuleOutputProvider {
         private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
+        override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+          val outputRoots = getModuleOutputRoots(module, forTests)
+          val outputDir = outputRoots.singleOrNull() ?: error("More than one output root for module '${module.name}': ${outputRoots.joinToString()}")
+          val file = outputDir.resolve(relativePath)
+          try {
+            return Files.readAllBytes(file)
+          }
+          catch (_: NoSuchFileException) {
+            return null
+          }
+        }
 
         override fun findModule(name: String): JpsModule? = nameToModule.get(name.removeSuffix("._test"))
 
@@ -32,6 +45,8 @@ interface ModuleOutputProvider {
       }
     }
   }
+
+  fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean = false): ByteArray?
 
   fun findModule(name: String): JpsModule?
 

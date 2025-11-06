@@ -49,9 +49,9 @@ internal suspend fun patchPluginXml(
   releaseDate: String,
   releaseVersion: String,
   pluginsToPublish: Set<PluginLayout?>,
-  context: BuildContext,
   platformDescriptorCache: ScopedCachedDescriptorContainer,
   pluginDescriptorCache: ScopedCachedDescriptorContainer,
+  context: BuildContext,
 ) {
   val pluginModule = context.findRequiredModule(pluginLayout.mainModule)
   val descriptorContent = pluginLayout.rawPluginXmlPatcher(getUnprocessedPluginXmlContent(pluginModule, context).decodeToString(), context)

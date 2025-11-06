@@ -3,6 +3,8 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.lang.ImmutableZipFile
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -17,13 +19,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
-fun getUnprocessedPluginXmlContent(module: JpsModule, context: CompilationContext): ByteArray {
-  return requireNotNull(findUnprocessedDescriptorContent(module = module, path = "META-INF/plugin.xml", context = context)) {
+fun getUnprocessedPluginXmlContent(module: JpsModule, context: ModuleOutputProvider): ByteArray {
+  return requireNotNull(findUnprocessedDescriptorContent(module = module, path = PLUGIN_XML_RELATIVE_PATH, context = context)) {
     "META-INF/plugin.xml not found in ${module.name} module output"
   }
 }
 
-fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: CompilationContext): ByteArray? {
+fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: ModuleOutputProvider): ByteArray? {
   try {
     val result = context.readFileContentFromModuleOutput(module = module, relativePath = path, forTests = false)
     if (result == null && useTestSourceEnabled) {

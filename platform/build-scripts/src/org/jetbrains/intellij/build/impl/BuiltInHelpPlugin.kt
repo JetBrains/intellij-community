@@ -18,7 +18,7 @@ import kotlin.io.path.exists
 
 internal const val BUILT_IN_HELP_MODULE_NAME = "intellij.builtInHelp"
 
-internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
+internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair<PluginLayout, String>? {
   val productName = context.applicationInfo.fullProductName
   val resourceRoot = context.paths.projectHome.resolve("help/plugin-resources")
   if (Files.notExists(resourceRoot.resolve("topics/app.js"))) {
@@ -26,16 +26,17 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
     return null
   }
 
+  val pluginXml = pluginXml(pluginVersion, context)
   return PluginLayout.pluginAutoWithCustomDirName(BUILT_IN_HELP_MODULE_NAME) { spec ->
     val productLowerCase = productName.replace(' ', '-').lowercase()
     spec.mainJarName = "$productLowerCase-help.jar"
     spec.directoryName = "${productName.replace(" ", "")}Help"
     spec.excludeFromModule(BUILT_IN_HELP_MODULE_NAME, "com/jetbrains/builtInHelp/indexer/**")
-    spec.withPatch { patcher, buildContext ->
+    spec.withPatch { patcher, _ ->
       patcher.patchModuleOutput(
         moduleName = BUILT_IN_HELP_MODULE_NAME,
         path = "META-INF/plugin.xml",
-        content = pluginXml(buildContext, pluginVersion),
+        content = pluginXml,
         overwrite = PatchOverwriteMode.TRUE
       )
     }
@@ -49,11 +50,11 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
         context = context,
       )
     }
-  }
+  } to pluginXml
 }
 
-private fun pluginXml(buildContext: BuildContext, version: String): String {
-  val productName = buildContext.applicationInfo.fullProductName
+private fun pluginXml(version: String, context: BuildContext): String {
+  val productName = context.applicationInfo.fullProductName
   val productLowerCase = productName.replace(" ", "-").lowercase()
   val pluginId = "bundled-$productLowerCase-help"
   val pluginName = "$productName Help"
