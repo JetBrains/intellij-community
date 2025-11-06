@@ -14,15 +14,17 @@ import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import kotlin.reflect.KClass
 
 class BackgroundRunWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTestSession, val backendRdSession: LambdaRdTestSession?) : IBackgroundRun by delegate {
+  @Deprecated("Use runSerializedLambda instead")
   internal suspend fun LambdaRdTestSession.runLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
     runLambda.startSuspending(rdSession.protocol!!.lifetime,
                               LambdaRdTestActionParameters(namedLambdaClass.java.canonicalName, params.toLambdaParams()))
   }
-
+  @Deprecated("Use runSerializedLambda instead")
   suspend fun runLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
     return rdSession.runLambda(namedLambdaClass, params)
   }
 
+  @Deprecated("Use runSerializedLambdaInBackend instead")
   suspend fun runLambdaInBackend(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
     return (backendRdSession ?: rdSession).runLambda(namedLambdaClass, params)
   }
