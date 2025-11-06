@@ -74,7 +74,7 @@ abstract class IjentSessionProcessMediator private constructor(
       require(parentScope.coroutineContext[Job] != null) {
         "Scope $parentScope has no Job"
       }
-      val context = IjentThreadPool.asCoroutineDispatcher()
+      val context = IjentThreadPool.coroutineContext
       val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel, LOG)
 
       val lastStderrMessages = MutableSharedFlow<String?>(
@@ -86,7 +86,7 @@ abstract class IjentSessionProcessMediator private constructor(
       // stderr logger should outlive the current scope. In case if an error appears, the scope is cancelled immediately, but the whole
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
-      GlobalScope.launch(IjentThreadPool.asCoroutineDispatcher() + ijentProcessScope.coroutineNameAppended("stderr logger")) {
+      GlobalScope.launch(IjentThreadPool.coroutineContext + ijentProcessScope.coroutineNameAppended("stderr logger")) {
         IjentSessionMediatorUtils.ijentProcessStderrLogger(process.errorStream, ijentLabel, lastStderrMessages, LOG)
       }
 

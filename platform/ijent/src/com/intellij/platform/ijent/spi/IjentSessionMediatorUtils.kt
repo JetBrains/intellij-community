@@ -25,7 +25,7 @@ object IjentSessionMediatorUtils {
   private val loggedErrors = Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap<Throwable, Boolean>())
 
   fun createProcessScope(parentScope: CoroutineScope, ijentLabel: String, logger: Logger): CoroutineScope {
-    val context = IjentThreadPool.asCoroutineDispatcher()
+    val context = IjentThreadPool.coroutineContext
     // Prevents from logging the error by the default exception handler.
     // Errors are logged explicitly in this function.
     val dummyExceptionHandler = CoroutineExceptionHandler { _, err -> /* nothing */ }

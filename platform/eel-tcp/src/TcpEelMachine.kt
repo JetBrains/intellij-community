@@ -15,7 +15,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.job
 import java.util.concurrent.ConcurrentHashMap
 
@@ -36,7 +35,7 @@ private suspend fun getOrCreateIjentApi(connectionInfo: TcpEndpoint, descriptor:
       val strategy = object : IjentIsolatedTcpDeployingStrategy() {
         val processExit = CompletableDeferred<Unit>()
         override suspend fun deployEnvironment(): IjentSessionMediator {
-          val scope = service<TcpEelScopeHolder>().coroutineScope.childScope("Ijent TCP $connectionInfo", context = IjentThreadPool.asCoroutineDispatcher())
+          val scope = service<TcpEelScopeHolder>().coroutineScope.childScope("Ijent TCP $connectionInfo", context = IjentThreadPool.coroutineContext)
           scope.coroutineContext.job.invokeOnCompletion { processExit.complete(Unit) }
           return IjentTcpSessionMediator(scope, processExit)
         }

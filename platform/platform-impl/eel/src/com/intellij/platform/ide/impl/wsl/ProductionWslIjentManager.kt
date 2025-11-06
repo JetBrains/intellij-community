@@ -17,7 +17,6 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -36,7 +35,7 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
   override val processAdapterScope: CoroutineScope = run {
     scope.childScope(
       name = "IjentChildProcessAdapter scope for all WSL",
-      context = IjentThreadPool.asCoroutineDispatcher(),
+      context = IjentThreadPool.coroutineContext,
       supervisor = true,
     )
   }

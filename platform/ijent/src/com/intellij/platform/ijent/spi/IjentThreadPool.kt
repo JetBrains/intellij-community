@@ -1,15 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.ExecutorCoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 
 /**
  * IJent implementation should use this thread pool for running every coroutine inside.
@@ -48,6 +53,35 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
   private val threads: MutableSet<Thread> = Collections.newSetFromMap(ContainerUtil.createConcurrentWeakMap())
   private val threadCounter = AtomicInteger()
 
+  /** It's intentionally private to make the use of the annotation `@OptIn` impossible. */
+  @RequiresOptIn(
+    level = RequiresOptIn.Level.ERROR,
+    message = "Do not use this method nor `kotlinx.coroutines.asCoroutineDispatcher`, use [IjentThreadPool.coroutineContext] instead."
+  )
+  private annotation class ErrorMarker
+
+  @ErrorMarker
+  @Suppress("unused")
+  fun asCoroutineDispatcher(): ExecutorCoroutineDispatcher {
+    throw IllegalStateException("Should never be called")
+  }
+
+  val coroutineContext: CoroutineContext = run {
+    // This tricky code calls `kotlinx.coroutines.asCoroutineDispatcher` for this thread pool instead of this method recursively.
+    val dispatcher = with(this as ExecutorService) {
+      asCoroutineDispatcher()
+    }
+
+    val exceptionHandler = CoroutineExceptionHandler { context, exception ->
+      // IjentUnavailableException is silently ignored - it's already logged during its creation.
+      if (exception !is IjentUnavailableException) {
+        logger<IjentThreadPool>().error("Uncaught exception in IJent coroutine $context", exception)
+      }
+    }
+
+    dispatcher + exceptionHandler
+  }
+
   override fun shutdown() {
     throw IllegalStateException("Should never be called")
   }
@@ -66,22 +100,6 @@ object IjentThreadPool : ExecutorService by Executors.newCachedThreadPool(IjentT
         override fun run() {
           try {
             r.run()
-          }
-          catch (_: IjentUnavailableException) {
-            // This exception is already logged during its creation.
-            // No need to log it again.
-          }
-          catch (err: Throwable) {
-            if (err.javaClass.name.startsWith(IjentUnavailableException::class.java.name)) {
-              thisLogger().error("We deal with classloaders here again.\n" +
-                                 "Expected class: ${IjentUnavailableException::class.java.name},\n" +
-                                 "  loaded by: ${IjentUnavailableException::class.java.classLoader},\n" +
-                                 "Actual class: ${err.javaClass}\n" +
-                                 "  loaded by: ${err.javaClass.classLoader}", err)
-            }
-            else {
-              throw err
-            }
           }
           finally {
             threads.remove(this)
