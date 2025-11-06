@@ -8,8 +8,10 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcompletion.CompletionItem;
 import com.intellij.modcompletion.CompletionItemPresentation;
+import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +122,15 @@ public final class CompletionItemLookupElement extends LookupElement {
   public void renderElement(LookupElementPresentation presentation) {
     CompletionItemPresentation itemPresentation = item.presentation();
     // TODO: apply styles when possible
-    presentation.setItemText(itemPresentation.mainText().toText());
+    MarkupText mainText = itemPresentation.mainText();
+    presentation.setItemText(mainText.toText());
+    MarkupText.Fragment onlyFragment = ContainerUtil.getOnlyItem(mainText.fragments());
+    if (onlyFragment != null) {
+      switch (onlyFragment.kind()) {
+        case STRONG -> presentation.setItemTextBold(true);
+        case EMPHASIZED -> presentation.setItemTextItalic(true);
+      }
+    }
     presentation.setTailText(" (MC)");
     presentation.setTypeText(itemPresentation.detailText().toText());
   }
