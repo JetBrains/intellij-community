@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework.metaInfo
 
+import com.intellij.python.junit5Tests.framework.MultiFileTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -14,7 +15,7 @@ import java.nio.file.Path
 import kotlin.io.path.relativeTo
 import kotlin.jvm.optionals.getOrNull
 
-internal fun ExtensionContext.resolveTestName(): String {
+fun ExtensionContext.resolveTestName(): String {
   return testMethod.map { PlatformTestUtil.getTestName(it.name, true) }.getOrNull()
          ?: error("Can't resolve test name for ${testMethod.map { it.name }}")
 }
@@ -27,7 +28,7 @@ internal fun ExtensionContext.resolveTestName(): String {
  * - Injects [TestClassInfoData] and [TestMethodInfoData] as parameters into test methods for easy use.
  * - Supports deriving test resource paths based on naming conventions and annotations.
  */
-internal class TestMetaInfoExtension : BeforeAllCallback, BeforeEachCallback, Extension, ParameterResolver {
+class TestMetaInfoExtension : BeforeAllCallback, BeforeEachCallback, Extension, ParameterResolver {
   companion object {
     fun ExtensionContext.getTestClassInfo(): TestClassInfoData {
       val store = getStore(Namespace.GLOBAL)
@@ -90,7 +91,10 @@ internal class TestMetaInfoExtension : BeforeAllCallback, BeforeEachCallback, Ex
       val testClassInfo = context.getTestClassInfo()
       testClassInfo.testDataPath?.let { testDataPath ->
         val testName = context.resolveTestName()
-        testClassInfo.getTestResourcePath(testName)?.relativeTo(testDataPath)
+        val path = testClassInfo.getTestResourcePath(testName)?.relativeTo(testDataPath)
+        val multiFileTest = context.testMethod.get().getAnnotation(MultiFileTest::class.java)
+        if (multiFileTest != null) path?.resolve(multiFileTest.mainFileName)
+                                   ?: error("Test file ${multiFileTest.mainFileName} not found in $path") else path
       }
     }
 

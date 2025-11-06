@@ -9,11 +9,17 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.python.junit5Tests.framework.MultiFileTest
+import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension.Companion.getTestClassInfo
+import com.intellij.python.junit5Tests.framework.metaInfo.resolveTestName
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.junit5.fixture.LookupFixture
 import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.getLookupFixtureManager
 import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.registerImplicitFixtures
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.pathInProjectFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.PythonMockSdk
 import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.runBlocking
@@ -56,6 +62,9 @@ class PyCodeInsightJUnit5Extension : BeforeAllCallback, BeforeEachCallback {
     val classLevelManager = context.parent.get().getLookupFixtureManager()
     val projectFixture = classLevelManager.getRequired<Project>()
     val implicitFixtures = mutableListOf<LookupFixture>()
+    val metaInfo = context.getTestClassInfo()
+    val testName = context.resolveTestName()
+
     val codeInsightFixture = codeInsightFixture(projectFixture, projectFixture.pathInProjectFixture(Path.of("")))
     classLevelManager.getOrDefault {
       codeInsightFixture.also {
@@ -64,6 +73,13 @@ class PyCodeInsightJUnit5Extension : BeforeAllCallback, BeforeEachCallback {
     }
     runBlocking {
       context.registerImplicitFixtures(implicitFixtures, static = false)
+    }
+    codeInsightFixture.get().testDataPath = metaInfo.testDataPath?.resolve(testName)?.toString()
+                                            ?: error("Cannot resolve test data path for $testName")
+
+    val isMultiFile = context.testMethod.get().getAnnotation(MultiFileTest::class.java) != null
+    if (isMultiFile) {
+      codeInsightFixture.get().copyDirectoryToProject("", "")
     }
 
     val testInstance = context.requiredTestInstance

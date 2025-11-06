@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections.JUnit5
 
 import com.intellij.psi.PsiFile
 import com.intellij.python.junit5Tests.framework.FolderTest
+import com.intellij.python.junit5Tests.framework.MultiFileTest
 import com.intellij.python.junit5Tests.framework.metaInfo.Repository
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.testFramework.TestDataPath
@@ -36,6 +37,12 @@ class PyJUnit5CodeInsightExampleTest {
       x = <warning descr="Expected type 'int', got 'str' instead">"123"</warning>
       x: int = <warning descr="Expected type 'int', got 'str' instead">"123"</warning>
     """.trimIndent())
+  }
+
+  @Test
+  @MultiFileTest
+  fun multiFileTest(mainFile: PsiFile) {
+    codeInsightFixture.doTestByFile(mainFile)
   }
 
   @Test
