@@ -1,0 +1,9 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="fleet.util.logging.api"/>
+    <module name="fleet.reporting.api"/>
+    <module name="fleet.reporting.shared"/>
+    <module name="fleet.multiplatform.shims"/>
+    <module name="fleet.util.serialization"/>
+  </dependencies>
+</idea-plugin>

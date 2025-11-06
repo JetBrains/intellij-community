@@ -1,0 +1,6 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="fleet.reporting.api"/>
+    <module name="fleet.multiplatform.shims"/>
+  </dependencies>
+</idea-plugin>
