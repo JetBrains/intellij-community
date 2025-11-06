@@ -53,6 +53,11 @@ public interface CompletionItem {
   record InsertionContext(InsertionMode mode, char insertionCharacter) {
     
   }
+
+  /**
+   * Default insertion context for 'insert' mode
+   */
+  InsertionContext DEFAULT_INSERTION_CONTEXT = new InsertionContext(InsertionMode.INSERT, '\n');
   
   enum InsertionMode {
     /**

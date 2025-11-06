@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcompletion.CompletionItem;
 import com.intellij.modcompletion.CompletionItemPresentation;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -54,8 +55,7 @@ public final class CompletionItemLookupElement extends LookupElement {
    */
   @RequiresReadLock
   public ModCommand computeCommand(ActionContext actionContext, CompletionItem.InsertionContext insertionContext) {
-    if (insertionContext.mode() != CompletionItem.InsertionMode.INSERT ||
-        insertionContext.insertionCharacter() != '\n') {
+    if (!insertionContext.equals(CompletionItem.DEFAULT_INSERTION_CONTEXT)) {
       return item.perform(actionContext, insertionContext);
     }
     ModCommand command = getCachedCommand(actionContext, insertionContext);
@@ -80,21 +80,27 @@ public final class CompletionItemLookupElement extends LookupElement {
    */
   public @Nullable ModCommand getCachedCommand(ActionContext actionContext, CompletionItem.InsertionContext insertionContext) {
     ModCommand command = myCachedCommand;
-    if (command == null || insertionContext.mode() != CompletionItem.InsertionMode.INSERT ||
-        insertionContext.insertionCharacter() != '\n') {
+    if (command == null || !insertionContext.equals(CompletionItem.DEFAULT_INSERTION_CONTEXT)) {
       return null;
     }
-    if (isApplicableToContext(command, actionContext)) return command;
+    if (isApplicableToContext(command, actionContext)) {
+      return command;
+    }
     return null;
   }
 
   private static boolean isApplicableToContext(ModCommand command, ActionContext context) {
     VirtualFile file = context.file().getVirtualFile();
     String text = context.file().getFileDocument().getText();
+    TextRange selection = context.selection();
+    if (!selection.isEmpty()) {
+      text = text.substring(0, selection.getStartOffset())
+             + text.substring(selection.getEndOffset());
+    }
     for (ModCommand subCommand : command.unpack()) {
       if (subCommand instanceof ModUpdateFileText update) {
-        if (update.file().equals(file) && update.oldText().equals(text)) {
-          return true;
+        if (update.file().equals(file)) {
+          return update.oldText().equals(text);
         }
       }
     }

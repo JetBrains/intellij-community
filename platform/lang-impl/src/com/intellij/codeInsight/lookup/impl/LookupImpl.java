@@ -57,6 +57,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -69,6 +70,7 @@ import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
+import org.slf4j.LoggerFactory;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -88,6 +90,7 @@ import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
+  private static final org.slf4j.Logger log = LoggerFactory.getLogger(LookupImpl.class);
 
   private final LookupOffsets myOffsets;
   private final Editor editor;
@@ -1164,6 +1167,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       LookupEvent event = new LookupEvent(this, currentItem, (char)0);
       for (LookupListener listener : myListeners) {
         listener.currentItemChanged(event);
+      }
+    }
+    if (currentItem instanceof CompletionItemLookupElement wrapper) {
+      PsiFile file = getPsiFile();
+      if (file != null) {
+        ActionContext actionContext = ActionContext.from(editor, file);
+        int start = actionContext.offset() - getPrefixLength(currentItem);
+        ActionContext finalActionContext = actionContext
+          .withOffset(start)
+          .withSelection(TextRange.create(start, actionContext.offset()));
+        // Cache current item result
+        ReadAction.nonBlocking(
+          () -> wrapper.computeCommand(finalActionContext, CompletionItem.DEFAULT_INSERTION_CONTEXT))
+          .expireWith(this)
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     }
     myPreview.updatePreview(currentItem);
