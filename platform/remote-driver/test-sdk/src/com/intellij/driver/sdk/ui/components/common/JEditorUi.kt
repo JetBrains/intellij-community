@@ -425,6 +425,7 @@ class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val replaceAllButton = actionButton { byAccessibleName("Replace All") }
   val excludeButton = actionButton { byAccessibleName("Exclude") }
   val closeSearchReplaceButton = actionButton { byAccessibleName("Close") }
+  val searchHistoryButton = actionButton { byAccessibleName("Search History") }
 
   // The components below are available in "find in large file" only
   val matchCaseCheckBox = checkBox { byAccessibleName("Match сase") }
