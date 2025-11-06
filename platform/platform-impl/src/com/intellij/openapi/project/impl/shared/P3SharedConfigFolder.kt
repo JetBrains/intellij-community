@@ -12,10 +12,6 @@ import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.impl.processPerProjectSupport
-import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import com.intellij.openapi.util.registry.RegistryManager
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -62,7 +58,6 @@ private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener 
 
     app.messageBus.connect(this@coroutineScope).subscribe(DynamicPluginListener.TOPIC, serviceAsync<P3DynamicPluginSynchronizer>())
     coroutineScope {
-      setupSyncEarlyAccessRegistry(path, this)
       setupSyncDisabledPlugins(path, this)
     }
   }
@@ -77,26 +72,6 @@ private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener 
     DisabledPluginsState.addDisablePluginListener {
       syncDisabledPluginsRequests.tryEmit(Unit)
     }
-  }
-
-  private suspend fun setupSyncEarlyAccessRegistry(path: Path, asyncScope: CoroutineScope) {
-    withContext(Dispatchers.IO) {
-      syncCustomConfigFile(path, EarlyAccessRegistryManager.fileName)
-    }
-    val saveEarlyAccessRegistryRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    asyncScope.launch(Dispatchers.IO) {
-      saveEarlyAccessRegistryRequests.debounce(100).collectLatest {
-        EarlyAccessRegistryManager.syncAndFlush()
-        syncCustomConfigFile(path, EarlyAccessRegistryManager.fileName)
-      }
-    }
-    ApplicationManager.getApplication().messageBus.connect().subscribe(RegistryManager.TOPIC, object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) {
-        if (value.key in EarlyAccessRegistryManager.getOrLoadMap()) {
-          saveEarlyAccessRegistryRequests.tryEmit(Unit)
-        }
-      }
-    })
   }
 
   private fun syncCustomConfigFile(originalConfigDir: Path, fileName: String) {
