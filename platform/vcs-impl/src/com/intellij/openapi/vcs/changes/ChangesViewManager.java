@@ -36,7 +36,10 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.util.*;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ModalityUiUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -55,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EventListener;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -218,8 +220,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
   @Override
   public boolean isAllowExcludeFromCommit() {
-    if (myToolWindowPanel == null) return false;
-    return myToolWindowPanel.isAllowExcludeFromCommit();
+    return myProject.getService(AllowExcludeFromCommitStateHolder.class).getAllowExcludeFromCommit().getValue();
   }
 
   public void closeEditorPreview(boolean onlyIfEmpty) {
@@ -314,8 +315,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
     private @Nullable ChangesViewCommitPanel myCommitPanel;
     private @Nullable ChangesViewCommitWorkflowHandler myCommitWorkflowHandler;
-
-    private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
 
     private boolean myDisposed = false;
 
@@ -464,13 +463,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
     private ChangesViewDiffPreviewProcessor createDiffPreviewProcessor(boolean isInEditor) {
       ChangesViewDiffPreviewProcessor processor = new ChangesViewDiffPreviewProcessor(myChangesView.getTree(), isInEditor);
-      this.addListener(new Listener() {
-        @Override
-        public void allowExcludeFromCommitChanged() {
-          processor.setAllowExcludeFromCommit(ChangesViewToolWindowPanel.this.isAllowExcludeFromCommit());
-        }
-      }, processor);
-      processor.setAllowExcludeFromCommit(this.isAllowExcludeFromCommit());
+      processor.subscribeOnAllowExcludeFromCommit();
       return processor;
     }
 
@@ -486,8 +479,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       if (myCommitWorkflowHandler == newWorkflowHandler) return;
 
       if (newWorkflowHandler != null) {
-        newWorkflowHandler.addActivityListener(() -> myDispatcher.getMulticaster().allowExcludeFromCommitChanged());
-
         ChangesViewCommitPanel newCommitPanel = (ChangesViewCommitPanel)newWorkflowHandler.getUi();
         newCommitPanel.registerRootComponent(this);
         myCommitPanelSplitter.setSecondComponent(newCommitPanel.getComponent());
@@ -501,17 +492,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
         myCommitWorkflowHandler = null;
         myCommitPanel = null;
       }
-
-      myDispatcher.getMulticaster().allowExcludeFromCommitChanged();
       configureToolbars();
-    }
-
-    public boolean isAllowExcludeFromCommit() {
-      return ChangesViewManager.isAllowExcludeFromCommit(myCommitWorkflowHandler);
-    }
-
-    public void addListener(@NotNull Listener listener, @NotNull Disposable disposable) {
-      myDispatcher.addListener(listener, disposable);
     }
 
     private void configureToolbars() {
@@ -561,10 +542,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     private void invokeLaterIfNeeded(Runnable runnable) {
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), myProject.getDisposed(), runnable);
     }
-
-    public interface Listener extends EventListener {
-      void allowExcludeFromCommitChanged();
-    }
   }
 
   public static @NotNull @Nls String getLocalChangesToolWindowName(@NotNull Project project) {
@@ -580,9 +557,5 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
   @ApiStatus.Internal
   public @Nullable ChangesViewProxy getChangesView() {
     return myChangesView;
-  }
-
-  private static boolean isAllowExcludeFromCommit(@Nullable ChangesViewCommitWorkflowHandler handler) {
-    return handler != null && handler.isActive();
   }
 }

@@ -5,6 +5,8 @@ import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.*
@@ -15,8 +17,13 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitNode
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.vcs.VcsDisposable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -78,6 +85,16 @@ class ChangesViewDiffPreviewProcessor(
     busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingsListener())
 
     TreeHandlerChangesTreeTracker(tree, this, handler).track()
+  }
+
+  fun subscribeOnAllowExcludeFromCommit() {
+    VcsDisposable.getInstance(project).coroutineScope.launch {
+      project.serviceAsync<AllowExcludeFromCommitStateHolder>().allowExcludeFromCommit.collect {
+        withContext(Dispatchers.EDT) {
+          setAllowExcludeFromCommit(it)
+        }
+      }
+    }.cancelOnDispose(this)
   }
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {
