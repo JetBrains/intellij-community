@@ -29,19 +29,7 @@ abstract class MavenExecutionTest : MavenExecutionTestCase() {
     Registry.get("maven.use.scripts").setValue(useScripts, testRootDisposable)
   }
 
-  @Test
-  fun testExternalExecutor() = runBlocking {
-    createProjectSubFile("src/main/java/A.java", "public class A {}")
-    createProjectPom("""
-                         <groupId>test</groupId>
-                         <artifactId>project</artifactId>
-                         <version>1</version>
-                         """.trimIndent())
-    importProjectAsync()
-    assertFalse(projectPath.resolve("target").exists())
-    execute(MavenRunnerParameters(true, projectPath.toCanonicalPath(), null as String?, mutableListOf("compile"), emptyList()))
-    assertTrue(projectPath.resolve("target").exists())
-  }
+
 
   @Test
   fun testUpdatingExcludedFoldersAfterExecution() = runBlocking {

@@ -69,7 +69,9 @@ public final class MavenExternalParameters {
 
   /**
    * @param runConfiguration used to creation fix if maven home not found
+   * @deprecated use maven script running instead
    */
+  @Deprecated
   public static JavaParameters createJavaParameters(final @NotNull Project project,
                                                     final @NotNull MavenRunnerParameters parameters,
                                                     @Nullable MavenGeneralSettings coreSettings,
@@ -140,7 +142,7 @@ public final class MavenExternalParameters {
 
     if (parameters.isResolveToWorkspace()) {
       try {
-        String resolverJar = getArtifactResolverJar(mavenVersion);
+        String resolverJar = getArtifactResolverJar();
         confFile = patchConfFile(confFile, resolverJar);
 
         File modulesPathsFile = dumpModulesPaths(project);
@@ -212,7 +214,7 @@ public final class MavenExternalParameters {
     return tmpConf;
   }
 
-  private static void patchConfFile(Path originalConf, Path dest, String library) throws IOException {
+  public static void patchConfFile(Path originalConf, Path dest, String library) throws IOException {
 
     try (Scanner sc = new Scanner(originalConf, StandardCharsets.UTF_8);
          BufferedWriter out = new BufferedWriter(new OutputStreamWriter(Files.newOutputStream(dest), StandardCharsets.UTF_8))) {
@@ -234,7 +236,8 @@ public final class MavenExternalParameters {
     }
   }
 
-  private static String getArtifactResolverJar(@Nullable String mavenVersion) throws IOException {
+
+  public static String getArtifactResolverJar() throws IOException {
     Class<?> marker = MavenArtifactResolvedM31RtMarker.class;
 
     File classDirOrJar = new File(PathUtil.getJarPathForClass(marker));
@@ -257,42 +260,10 @@ public final class MavenExternalParameters {
     return tempFile.getAbsolutePath();
   }
 
-  private static File dumpModulesPaths(@NotNull Project project) throws IOException {
+  public static File dumpModulesPaths(@NotNull Project project) throws IOException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    Properties res = new Properties();
-
-    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
-
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      if (manager.isMavenizedModule(module)) {
-        MavenProject mavenProject = manager.findProject(module);
-        if (mavenProject != null && !manager.isIgnored(mavenProject)) {
-          res.setProperty(mavenProject.getMavenId().getGroupId()
-                          + ':' + mavenProject.getMavenId().getArtifactId()
-                          + ":pom"
-                          + ':' + mavenProject.getMavenId().getVersion(),
-                          mavenProject.getFile().getPath());
-
-          res.setProperty(mavenProject.getMavenId().getGroupId()
-                          + ':' + mavenProject.getMavenId().getArtifactId()
-                          + ':' + mavenProject.getPackaging()
-                          + ':' + mavenProject.getMavenId().getVersion(),
-                          mavenProject.getOutputDirectory());
-
-          res.setProperty(mavenProject.getMavenId().getGroupId()
-                          + ':' + mavenProject.getMavenId().getArtifactId()
-                          + ":test-jar"
-                          + ':' + mavenProject.getMavenId().getVersion(),
-                          mavenProject.getTestOutputDirectory());
-
-          addArtifactFileMapping(res, mavenProject, "sources");
-          addArtifactFileMapping(res, mavenProject, "test-sources");
-          addArtifactFileMapping(res, mavenProject, "javadoc");
-          addArtifactFileMapping(res, mavenProject, "test-javadoc");
-        }
-      }
-    }
+    Properties res = getProjectModuleMap(project);
 
     File file = new File(PathManager.getSystemPath(), "Maven/idea-projects-state-" + project.getLocationHash() + ".properties");
     FileUtil.ensureExists(file.getParentFile());
@@ -302,6 +273,43 @@ public final class MavenExternalParameters {
     }
 
     return file;
+  }
+
+  public static @NotNull Properties getProjectModuleMap(@NotNull Project project) {
+    Properties res = new Properties();
+
+    MavenProjectsManager manager = MavenProjectsManager.getInstance(project);
+
+    for (MavenProject mavenProject : manager.getProjects()) {
+      if (!manager.isIgnored(mavenProject)) {
+        res.setProperty(mavenProject.getMavenId().getGroupId()
+                        + ':' + mavenProject.getMavenId().getArtifactId()
+                        + ":pom"
+                        + ':' + mavenProject.getMavenId().getVersion(),
+                        mavenProject.getFile().getPath());
+
+        if ("pom".equals(mavenProject.getPackaging())) {
+          continue;
+        }
+        res.setProperty(mavenProject.getMavenId().getGroupId()
+                        + ':' + mavenProject.getMavenId().getArtifactId()
+                        + ':' + mavenProject.getPackaging()
+                        + ':' + mavenProject.getMavenId().getVersion(),
+                        mavenProject.getOutputDirectory());
+
+        res.setProperty(mavenProject.getMavenId().getGroupId()
+                        + ':' + mavenProject.getMavenId().getArtifactId()
+                        + ":test-jar"
+                        + ':' + mavenProject.getMavenId().getVersion(),
+                        mavenProject.getTestOutputDirectory());
+
+        addArtifactFileMapping(res, mavenProject, "sources");
+        addArtifactFileMapping(res, mavenProject, "test-sources");
+        addArtifactFileMapping(res, mavenProject, "javadoc");
+        addArtifactFileMapping(res, mavenProject, "test-javadoc");
+      }
+    }
+    return res;
   }
 
   private static void addArtifactFileMapping(@NotNull Properties res, @NotNull MavenProject mavenProject, @NotNull String classifier) {
@@ -315,7 +323,7 @@ public final class MavenExternalParameters {
     }
   }
 
-  private static @NotNull Sdk getJdk(@Nullable Project project, String jreName, boolean isGlobalRunnerSettings)
+  public static @NotNull Sdk getJdk(@Nullable Project project, String jreName, boolean isGlobalRunnerSettings)
     throws ExecutionException {
     if (jreName.equals(MavenRunnerSettings.USE_INTERNAL_JAVA)) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
@@ -422,8 +430,8 @@ public final class MavenExternalParameters {
    * @param runConfiguration used to creation fix if maven home not found
    */
   public static @NotNull @NlsSafe String resolveMavenHome(@NotNull MavenGeneralSettings coreSettings,
-                                        @NotNull Project project,
-                                        @NotNull String workingDir, @Nullable MavenRunConfiguration runConfiguration)
+                                                          @NotNull Project project,
+                                                          @NotNull String workingDir, @Nullable MavenRunConfiguration runConfiguration)
     throws ExecutionException {
     MavenHomeType type = coreSettings.getMavenHomeType();
     Path file = null;

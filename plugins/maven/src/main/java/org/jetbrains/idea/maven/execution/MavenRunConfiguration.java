@@ -124,7 +124,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
   @Override
   public RunProfileState getState(final @NotNull Executor executor, final @NotNull ExecutionEnvironment env) {
-    if (Registry.is("maven.use.scripts") && !configurationWithShIssues()) {
+    if (Registry.is("maven.use.scripts")) {
       if (env.getTargetEnvironmentRequest() instanceof LocalTargetEnvironmentRequest) {
         return new MavenShCommandLineState(env, this);
       }
@@ -135,11 +135,6 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
 
     return new MavenCommandLineState(env, this);
-  }
-
-  private boolean configurationWithShIssues() {
-    //IDEA-377217
-    return getRunnerParameters().isResolveToWorkspace();
   }
 
   public @NotNull RemoteConnectionCreator createRemoteConnectionCreator(JavaParameters javaParameters) {
