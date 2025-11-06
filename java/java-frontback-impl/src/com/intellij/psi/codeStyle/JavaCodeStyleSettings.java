@@ -689,7 +689,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Ja
     return myDoNotImportInner.equals(otherSettings.getDoNotImportInner());
   }
 
-  private static class JavaLegacySettings {
+  private final static class JavaLegacySettings {
     public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
     public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
     public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
