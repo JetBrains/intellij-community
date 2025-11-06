@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.isRegularFile
 
 
 @Service(Service.Level.PROJECT)
@@ -446,7 +447,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     aggregatorProject: MavenProjectData,
     tree: ProjectTree,
   ): Job = this.launch Read@{
-    val modulesList = parentModel.getChildrenText("modules", "module")
+    val modulesList = aggregatorProject.mavenModel.modules
     modulesList.forEach {
       this.launch {
         try {
@@ -495,8 +496,20 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     mavenModel.name = MavenJDOMUtil.findChildValueByPath(rootModel, "name", id.artifactId)
     mavenModel.build.finalName = MavenJDOMUtil.findChildValueByPath(rootModel, "build.finalName")
 
-    mavenModel.modules = rootModel.getChildrenText("modules", "module")
     mavenModel.packaging = rootModel.getChildTextTrim("packaging") ?: "jar"
+
+    val modulesString = rootModel.getChildrenText("modules", "module")
+    val subprojectsString = rootModel.getChildrenText("subprojects", "subproject")
+    mavenModel.modules = modulesString + subprojectsString
+
+    if (mavenModel.packaging == "pom" &&
+        mavenModel.modules.isEmpty() &&
+        rootModel.getChild("modules") == null &&
+        rootModel.getChild("subprojects") == null &&
+        rootModel.getChildTextTrim("modelVersion") != MavenConstants.MODEL_VERSION_4_0_0
+    ) {
+      mavenModel.modules = scanChildFoldersWithPoms(file)
+    }
 
     val buildDir = MavenJDOMUtil.findChildValueByPath(rootModel, "build.directory") ?: "target"
     mavenModel.build.directory = parentFolder.resolve(buildDir).toString()
@@ -504,14 +517,16 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     mavenModel.build.testOutputDirectory = parentFolder.resolve("$buildDir/test-classes").toString()
 
     declaredDependencies.addAll(
-      MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency").map {
+      MavenJDOMUtil.findChildrenByPath(rootModel, "dependencies", "dependency").map
+      {
         DependencyData(extractId(it), it.getChildTextTrim("scope"), it.getChildTextTrim("classifier"))
       }
     )
 
     dependencyManagement.addAll(
       MavenJDOMUtil.findChildrenByPath(rootModel.getChild("dependencyManagement"), "dependencies", "dependency")
-        .map { DependencyData(extractId(it), it.getChildTextTrim("scope"), it.getChildTextTrim("classifier")) }
+        .map
+        { DependencyData(extractId(it), it.getChildTextTrim("scope"), it.getChildTextTrim("classifier")) }
     )
 
     applyReadStateToMavenProject(mavenModel, mavenProject)
@@ -540,6 +555,13 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       }
     }
 
+  }
+
+  private fun scanChildFoldersWithPoms(file: VirtualFile): List<String> {
+    val parentDir = file.parent ?: return emptyList()
+    return parentDir.children.filter { it.isDirectory }
+      .filter { it.toNioPath().resolve("pom.xml").isRegularFile() }
+      .map { it.name }
   }
 
   private fun applyReadStateToMavenProject(mavenModel: MavenModel, mavenProject: MavenProject) {
@@ -710,6 +732,7 @@ private class ProjectTree {
       managedMavenIds[trimVersion(root.mavenId)] = root
     }
   }
+
   suspend fun replace(newMavenId: MavenId, oldMavenId: MavenId) {
     mutex.withLock {
       val data = fullMavenIds[oldMavenId] ?: return@withLock

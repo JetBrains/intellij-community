@@ -844,6 +844,134 @@ class MavenStaticSyncTest : AbstractMavenStaticSyncTest() {
   }
 
   @Test
+  fun testImportProjectWithModules() = runBlocking {
+    createModulePom("m2", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m2</artifactId>
+        """)
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <modules>
+                        <module>m2</module>
+                    </modules>
+                    """.trimIndent())
+    assertModules("project", "m2")
+  }
+
+  @Test
+  fun testImportProjectWithSubprojects() = runBlocking {
+    assumeModel_4_1_0("for 4.1.0")
+    createModulePom("m2", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m2</artifactId>
+        """)
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <subprojects>
+                        <subproject>m2</subproject>
+                    </subprojects>
+                    """.trimIndent())
+    assertModules("project", "m2")
+  }
+
+  @Test
+  fun testImportProjectScanSubdirectories() = runBlocking {
+    assumeModel_4_1_0("for 4.1.0")
+    createModulePom("m2", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m2</artifactId>
+        """)
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    """.trimIndent())
+    assertModules("project", "m1", "m2")
+  }
+
+  @Test
+  fun testImportProjectDoesNotScanSubdirectoriesIfModel400() = runBlocking {
+    assumeModel_4_0_0("for 4.0.0")
+    createModulePom("m2", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m2</artifactId>
+        """)
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    """.trimIndent())
+    assertModules("project")
+  }
+
+  @Test
+  fun testImportProjectDoesNotScanSubdirectoriesIfEmptyTag() = runBlocking {
+    assumeModel_4_1_0("for 4.1.0")
+    createModulePom("m2", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m2</artifactId>
+        """)
+    createModulePom("m1", """
+         <parent>
+                <groupId>test</groupId>
+                <artifactId>project</artifactId>
+                <version>1</version>
+        </parent>
+        <artifactId>m1</artifactId>
+        """)
+    importProjectAsync("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <packaging>pom</packaging>
+                    <subprojects/>
+                    """.trimIndent())
+    assertModules("project")
+  }
+
+  @Test
   fun testImportProjectWithCyclicAggregatorsModulesShouldFinish() = runBlocking {
     createModulePom("m1", """
          <parent>
