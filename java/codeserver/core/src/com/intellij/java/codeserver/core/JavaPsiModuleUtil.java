@@ -431,7 +431,7 @@ public final class JavaPsiModuleUtil {
       PsiJavaModuleReference ref = statement.getModuleReference();
       if (ref != null) {
         if (JAVA_BASE.equals(ref.getCanonicalText())) explicitJavaBase = true;
-        for (ResolveResult result : ref.multiResolve(false)) {
+        for (ResolveResult result : ref.multiResolve(true)) {
           PsiJavaModule dependency = (PsiJavaModule)result.getElement();
           assert dependency != null : result;
           relations.putValue(module, dependency);
@@ -491,6 +491,8 @@ public final class JavaPsiModuleUtil {
     }
 
     public boolean reads(PsiJavaModule source, PsiJavaModule destination) {
+      source = getPhysicalModule(source);
+      destination = getPhysicalModule(destination);
       Collection<PsiJavaModule> nodes = myGraph.getNodes();
       if (nodes.contains(destination) && nodes.contains(source)) {
         Iterator<PsiJavaModule> directReaders = myGraph.getOut(destination);
@@ -505,6 +507,7 @@ public final class JavaPsiModuleUtil {
     }
 
     private @Nullable ModulePackageConflict findConflict(@NotNull PsiJavaModule source) {
+      source = getPhysicalModule(source);
       Map<String, PsiJavaModule> exports = new HashMap<>();
       return processExports(source, (pkg, m) -> {
         PsiJavaModule found = exports.put(pkg, m);
@@ -516,10 +519,11 @@ public final class JavaPsiModuleUtil {
     }
 
     private @Nullable PsiJavaModule findOrigin(@NotNull PsiJavaModule module, @NotNull String packageName) {
-      return processExports(module, (pkg, m) -> packageName.equals(pkg) ? m : null);
+      return processExports(getPhysicalModule(module), (pkg, m) -> packageName.equals(pkg) ? m : null);
     }
 
     private <T> @Nullable T processExports(@NotNull PsiJavaModule start, @NotNull BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
+      start = getPhysicalModule(start);
       return myGraph.getNodes().contains(start) ? processExports(start.getName(), start, true, new HashSet<>(), processor) : null;
     }
 
@@ -528,6 +532,7 @@ public final class JavaPsiModuleUtil {
                                            boolean direct,
                                            @NotNull Set<? super PsiJavaModule> visited,
                                            @NotNull BiFunction<? super String, ? super PsiJavaModule, ? extends T> processor) {
+      module = getPhysicalModule(module);
       if (visited.add(module)) {
         if (!direct) {
           for (PsiPackageAccessibilityStatement statement : module.getExports()) {
@@ -556,11 +561,12 @@ public final class JavaPsiModuleUtil {
 
     public @NotNull Set<PsiJavaModule> getAllDependencies(@NotNull PsiJavaModule module, boolean transitive) {
       Set<PsiJavaModule> requires = new HashSet<>();
-      collectDependencies(module, requires, transitive);
+      collectDependencies(getPhysicalModule(module), requires, transitive);
       return requires;
     }
 
     private void collectDependencies(@NotNull PsiJavaModule module, @NotNull Set<PsiJavaModule> dependencies, boolean transitive) {
+      module = getPhysicalModule(module);
       for (Iterator<PsiJavaModule> iterator = myGraph.getIn(module); iterator.hasNext();) {
         PsiJavaModule dependency = iterator.next();
         if (!dependencies.contains(dependency) && (!transitive || myTransitiveEdges.contains(key(dependency, module)))) {
@@ -568,6 +574,14 @@ public final class JavaPsiModuleUtil {
           collectDependencies(dependency, dependencies, transitive);
         }
       }
+    }
+
+    private static @NotNull PsiJavaModule getPhysicalModule(@NotNull PsiJavaModule from) {
+      if (from.isPhysical()) return from;
+      if (!(from.getContainingFile() instanceof PsiJavaFile file)) return from;
+      if (!(file.getOriginalFile() instanceof PsiJavaFile origin)) return from;
+      if (origin.getModuleDeclaration() instanceof PsiJavaModule result) return result;
+      return from;
     }
   }
 
