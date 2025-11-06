@@ -47,7 +47,6 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
   "intellij.platform.remoteServers.agent.rt",
   "intellij.platform.usageView",
   "intellij.platform.execution",
-  "intellij.platform.kernel",
 
   "intellij.platform.analysis.impl",
   "intellij.platform.editor.ex",

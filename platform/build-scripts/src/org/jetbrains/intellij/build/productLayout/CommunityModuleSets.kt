@@ -132,6 +132,7 @@ object CommunityModuleSets : ModuleSetProvider {
     moduleSet(fleet())
 
     embeddedModule("intellij.platform.rpc")
+    embeddedModule("intellij.platform.kernel")
     module("intellij.platform.rpc.backend")
 
     module("intellij.platform.kernel.impl")

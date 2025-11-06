@@ -2120,9 +2120,6 @@
   <xi:include href="/META-INF/RemoteDevUtil.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="intellij.platform.kernel.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="intellij.platform.project.xml">
     <xi:fallback/>
   </xi:include>

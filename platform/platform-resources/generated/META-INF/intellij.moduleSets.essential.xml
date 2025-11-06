@@ -122,6 +122,7 @@
 
     <!-- <editor-fold desc="direct modules"> -->
     <module name="intellij.platform.rpc" loading="embedded"/>
+    <module name="intellij.platform.kernel" loading="embedded"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.kernel.impl"/>
     <module name="intellij.platform.kernel.backend"/>
