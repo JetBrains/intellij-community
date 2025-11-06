@@ -16,6 +16,7 @@ import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.actionButton
+import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
@@ -424,6 +425,14 @@ class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
   val replaceAllButton = actionButton { byAccessibleName("Replace All") }
   val excludeButton = actionButton { byAccessibleName("Exclude") }
   val closeSearchReplaceButton = actionButton { byAccessibleName("Close") }
+
+  // The components below are available in "find in large file" only
+  val matchCaseCheckBox = checkBox { byAccessibleName("Match сase") }
+  val wordsCheckBox = checkBox { byAccessibleName("Words") }
+  val regexCheckBox = checkBox { byAccessibleName("Regex") }
+  val searchAllButton = actionButton { byAccessibleName("Search All") }
+  val searchBackwardButton = actionButton { byAccessibleName("Search Backward") }
+  val searchForwardButton = actionButton { byAccessibleName("Search Forward") }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
