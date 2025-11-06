@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
+import org.jetbrains.intellij.build.impl.BUILT_IN_HELP_MODULE_NAME
 import org.jetbrains.intellij.build.impl.JarPackager
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PlatformLayout
@@ -71,7 +72,13 @@ internal suspend fun computeModuleSourcesByContent(
   pluginCachedDescriptorContainer: ScopedCachedDescriptorContainer,
 ) {
   // plugin patcher must be executed before
-  val element = requireNotNull(pluginCachedDescriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH)) {
+  val cachedFileData = pluginCachedDescriptorContainer.getCachedFileData(PLUGIN_XML_RELATIVE_PATH)
+  // quick fix of clion installer - not clear yet why a proper fix didn't help
+  if (cachedFileData == null && pluginLayout.mainModule == BUILT_IN_HELP_MODULE_NAME) {
+    return
+  }
+
+  val element = requireNotNull(cachedFileData) {
     "Plugin descriptor '$PLUGIN_XML_RELATIVE_PATH' is not found in cached descriptor container, " +
     "plugin patcher must be executed before (pluginMainModule=${pluginLayout.mainModule}, pluginCachedDescriptorContainer=$pluginCachedDescriptorContainer)"
   }.let { JDOMUtil.load(it) }
