@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.impl
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.python.community.execService.ProcessEvent
 import com.intellij.python.community.execService.ProcessEvent.OutputType
@@ -12,11 +13,14 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 
 /**
  * Awaits of process result and reports its stdout/stderr as a progress.
  */
-internal suspend fun Process.awaitWithReporting(progressListener: FlowCollector<ProcessEvent.ProcessOutput>?): EelProcessExecutionResult =
+@ApiStatus.Internal
+suspend fun Process.awaitWithReporting(progressListener: FlowCollector<ProcessEvent.ProcessOutput>?): EelProcessExecutionResult =
   coroutineScope {
     val stdout = async { report(STDOUT, progressListener) }
     val stderr = async { report(STDERR, progressListener) }
@@ -36,7 +40,13 @@ private suspend fun Process.report(outputType: OutputType, to: FlowCollector<Pro
 
     val currentLine = StringBuilder()
     while (true) {
-      val char = reader.read()
+      val char = try {
+        reader.read() // Read might throw IOException if steam is closed explicitly in JVM, see test with the same commit
+      }
+      catch (e: IOException) {
+        logger.warn("Error reading from process", e)
+        -1
+      }
       if (char == -1) break // EOF
 
       when (val c = char.toChar()) {
@@ -72,3 +82,5 @@ private suspend fun Process.report(outputType: OutputType, to: FlowCollector<Pro
   }
   return@withContext result.toString().encodeToByteArray()
 }
+
+private val logger = fileLogger()
