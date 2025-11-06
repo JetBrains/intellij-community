@@ -7,7 +7,7 @@ import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.performDebuggerActionAsync
-import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.future.await
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -26,7 +26,7 @@ private val ourHandler = object : XDebuggerProxySuspendedActionHandler() {
   override fun perform(session: XDebugSessionProxy, dataContext: DataContext) {
     performDebuggerActionAsync(session.project, dataContext) {
       val executionStack = session.getCurrentExecutionStack() ?: return@performDebuggerActionAsync
-      val topFrame = executionStack.topFrameAsync.asDeferred().await() ?: return@performDebuggerActionAsync
+      val topFrame = executionStack.topFrameAsync.await() ?: return@performDebuggerActionAsync
       session.setCurrentStackFrame(executionStack, topFrame, true)
     }
   }
