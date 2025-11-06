@@ -27,6 +27,13 @@ import kotlin.time.Duration.Companion.milliseconds
  * While composable is displayed. call [processFilterUpdates]
  */
 internal class ModulesViewModel(modulesDTO: ModulesDTO) {
+  // To be called when "ok" button should be enabled
+  @Volatile
+  var okButtonEnabledListener: ((enabled: Boolean) -> Unit)? = null
+    set(value) {
+      field = value
+      callEnabledButtonListener() // Set value as soon as set
+    }
   val icons: ImmutableMap<ToolIdDTO, IconKey> = persistentMapOf(*modulesDTO.modules
     .mapNotNull { module ->
       val toolId = module.createdByTool
@@ -59,6 +66,13 @@ internal class ModulesViewModel(modulesDTO: ModulesDTO) {
     }
     else {
       checkedModules.removeAll(toChange)
+    }
+    callEnabledButtonListener()
+  }
+
+  private fun callEnabledButtonListener() {
+    this.okButtonEnabledListener?.let { listener ->
+      listener(checkedModules.isNotEmpty())
     }
   }
 

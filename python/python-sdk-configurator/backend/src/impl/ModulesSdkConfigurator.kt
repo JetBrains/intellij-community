@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessModuleDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -18,12 +19,14 @@ import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.C
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.popModulesSDKConfigurator
 import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
+import com.jetbrains.python.PathShorter
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.setAssociationToPath
+import com.jetbrains.python.venvReader.Directory
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -44,6 +47,7 @@ import kotlinx.coroutines.withContext
 internal class ModulesSdkConfigurator private constructor(
   private val project: Project,
   private val modules: Map<ModuleName, ModuleCreateInfo>,
+  private val pathShorter: PathShorter,
 ) {
 
   val modulesDTO: List<ModuleDTO>
@@ -69,22 +73,24 @@ internal class ModulesSdkConfigurator private constructor(
             is CreateSdkInfo.ExistingEnv -> r.pythonInfo.languageLevel.toPythonVersion()
             is CreateSdkInfo.WillCreateEnv -> null
           }
-          ModuleDTO(moduleName, createInfo.toolId.id, version, children[moduleName]!!.toList().sorted().toPersistentList())
+          ModuleDTO(moduleName,
+                    path = createInfo.moduleDir?.let { pathShorter.toString(it) },
+                    createdByTool = createInfo.toolId.id,
+                    existingPyVersion = version,
+                    childModules = children[moduleName]!!.toList().sorted().toPersistentList())
         }
         is ModuleCreateInfo.SameAs -> null
       }
     }
       .sortedBy { it.name }
       .toList()
-
-
   }
 
   companion object {
     /**
      * Create instance and save in [project]
      */
-    suspend fun create(project: Project): ModulesSdkConfigurator = ModulesSdkConfigurator(project, getModulesWithoutSDKCreateInfo(project)).also {
+    suspend fun create(project: Project): ModulesSdkConfigurator = ModulesSdkConfigurator(project, getModulesWithoutSDKCreateInfo(project), PathShorter.create(project)).also {
       project.putUserData(key, it)
     }
 
@@ -120,7 +126,7 @@ internal class ModulesSdkConfigurator private constructor(
     private val logger = fileLogger()
 
     private sealed interface ModuleCreateInfo {
-      data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo, val toolId: ToolId) : ModuleCreateInfo
+      data class CreateSdkInfoWrapper(val createSdkInfo: CreateSdkInfo, val toolId: ToolId, val moduleDir: Directory?) : ModuleCreateInfo
       data class SameAs(val parentModuleName: ModuleName) : ModuleCreateInfo
     }
 
@@ -132,7 +138,7 @@ internal class ModulesSdkConfigurator private constructor(
           tools.firstNotNullOfOrNull { tool ->
             val createInfo = (tool.asPyProjectTomlSdkConfigurationExtension()?.createSdkWithoutPyProjectTomlChecks(module)
                               ?: tool.checkEnvironmentAndPrepareSdkCreator(module)) ?: return@firstNotNullOfOrNull null
-            CreateSdkInfoWithTool(createInfo, tool.toolId).asDTO()
+            CreateSdkInfoWithTool(createInfo, tool.toolId).asDTO(r.moduleDir)
           }
         }
         is SuggestedSdk.SameAs -> {
@@ -140,10 +146,10 @@ internal class ModulesSdkConfigurator private constructor(
         }
         null -> null
       } // No tools or not pyproject.toml at all? Use EP as a fallback
-      ?: PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull()?.let { CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO() }
+      ?: PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull()?.let { CreateSdkInfoWithTool(it.createSdkInfo, it.toolId).asDTO(module.guessModuleDir()?.toNioPath()) }
 
 
-    private fun CreateSdkInfoWithTool.asDTO(): ModuleCreateInfo = ModuleCreateInfo.CreateSdkInfoWrapper(createSdkInfo, toolId)
+    private fun CreateSdkInfoWithTool.asDTO(moduleDir: Directory?): ModuleCreateInfo = ModuleCreateInfo.CreateSdkInfoWrapper(createSdkInfo, toolId, moduleDir)
 
 
     /**

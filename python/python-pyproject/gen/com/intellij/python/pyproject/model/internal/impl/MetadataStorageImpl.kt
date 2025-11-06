@@ -54,6 +54,11 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                       valueType = primitiveTypeStringNotNullable, withDefault = false)),
                                 supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId")))),
                                                                             primitive = primitiveTypeMapNotNullable), withDefault = false),
+        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "dirWithToml",
+                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
+                                                                                typeMetadata = FinalClassMetadata.KnownClass(
+                                                                                  fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                            withDefault = false),
         OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "module",
                             valueType = ValueTypeMetadata.EntityReference(connectionType = ConnectionId.ConnectionType.ONE_TO_ONE,
                                                                           entityFqName = "com.intellij.platform.workspace.jps.entities.ModuleEntity",
@@ -70,7 +75,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntity", metadataHash = 1939139269)
+    addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntity", metadataHash = 1371919551)
     addMetadataHash(typeFqn = "com.intellij.python.common.tools.ToolId", metadataHash = -1193602517)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = -575206713)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -1282078904)
