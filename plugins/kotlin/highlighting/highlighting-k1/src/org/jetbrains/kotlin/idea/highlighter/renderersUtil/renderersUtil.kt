@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
+@file:OptIn(LegacyRenderingContextApi::class)
+
 package org.jetbrains.kotlin.idea.highlighter.renderersUtil
 
 import com.google.common.html.HtmlEscapers
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.diagnostics.rendering.LegacyRenderingContextApi
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.diagnostics.rendering.SmartTypeRenderer
 import org.jetbrains.kotlin.diagnostics.rendering.asRenderer
