@@ -27,6 +27,7 @@ class SampleTests {
   fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {
     //works in both modes if
     // headless is turned off for monolith in com.intellij.lambda.testFramework.starter.NewContextWithLambdaKt.newContextWithLambda
+    // as ProjectManager returns empty projects list in headless
     JpsEmptyProject.projectInfo.projectDir.resolve("src").resolve("FormattingExamplesExpected.java").let {
       if (!it.exists()) {
         it.parent.createDirectories()
