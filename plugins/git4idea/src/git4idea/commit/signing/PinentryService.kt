@@ -188,7 +188,7 @@ internal class PinentryService(private val cs: CoroutineScope) {
 
     companion object {
       const val PREFIX = PinentryApp.PREFIX
-      const val ENTRYPOINT_PREFIX = PinentryApp.ENTRYPOINT_PREFIX
+      const val ENTRYPOINT_PREFIX = PinentryApp.EEL_ENTRYPOINT_PREFIX
     }
   }
 

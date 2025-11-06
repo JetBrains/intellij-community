@@ -54,6 +54,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.InvalidPathException
@@ -224,8 +225,8 @@ internal class GpgAgentConfigurator(private val project: Project, private val cs
     }
   }
 
-  private suspend fun generatePinentryLauncher(executable: GitExecutable, gpgAgentPaths: GpgAgentPaths, pinentryFallback: String?) {
-    LOG.info("Creating pinentry launcher with fallback: ${pinentryFallback ?: "-"}")
+  private suspend fun generatePinentryLauncher(executable: GitExecutable, gpgAgentPaths: GpgAgentPaths, pinentryFallback: String) {
+    LOG.info("Creating pinentry launcher with fallback: ${pinentryFallback}")
     PinentryShellScriptLauncherGenerator(executable).generate(project, gpgAgentPaths, pinentryFallback)
   }
 
@@ -344,7 +345,7 @@ private class GpgAgentCommandExecutorImpl(
 
 internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutable) {
 
-  suspend fun generate(project: Project, gpgAgentPaths: GpgAgentPaths, fallbackPinentryPath: String?) = withContext(Dispatchers.IO) {
+  suspend fun generate(project: Project, gpgAgentPaths: GpgAgentPaths, fallbackPinentryPath: String) = withContext(Dispatchers.IO) {
     val path = gpgAgentPaths.gpgPinentryAppLauncher
     try {
       path.createParentDirectories().writeText(getScriptTemplate(fallbackPinentryPath))
@@ -370,14 +371,8 @@ internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutabl
     return GitScriptGenerator(executable).addParameters(*getCommandLineParameters()).commandLine(PinentryApp::class.java, false)
   }
 
-  private fun getScriptTemplate(fallbackPinentryPath: String?): String {
-    // language="Shell Script"
-    val fallbackLine = if (fallbackPinentryPath != null) {
-      """exec ${CommandLineUtil.posixQuote(fallbackPinentryPath)} "$@""""
-    } else {
-      """echo ERR pinentry program is not set"""
-    }
-    // language="Shell Script"
+  @Language("ShellScript")
+  private fun getScriptTemplate(fallbackPinentryPath: String): String {
     return run {
       """|#!/bin/sh
          |if [ -n "${'$'}$PINENTRY_USER_DATA_ENV" ]; then
@@ -394,7 +389,7 @@ internal class PinentryShellScriptLauncherGenerator(val executable: GitExecutabl
          |    ;;
          |  esac
          |fi
-         |$fallbackLine
+         |exec ${CommandLineUtil.posixQuote(fallbackPinentryPath)} "$@"
       """.trimMargin()
     }
   }
