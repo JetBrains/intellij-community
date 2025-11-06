@@ -11,7 +11,6 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
-import org.jetbrains.intellij.build.TEST_FRAMEWORK_MODULE_NAMES
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
@@ -52,7 +51,7 @@ internal fun generateClassPathByLayoutReport(libDir: Path, entries: List<Distrib
 
     if (entry is ModuleOutputEntry) {
       val moduleName = entry.owner.moduleName
-      if (TEST_FRAMEWORK_MODULE_NAMES.contains(moduleName) || moduleName.startsWith("intellij.platform.unitTestMode")) {
+      if (moduleName.startsWith("intellij.platform.unitTestMode")) {
         continue
       }
       if (skipNioFs && moduleName == "intellij.platform.core.nio.fs") {
@@ -98,7 +97,7 @@ internal data class PluginBuildDescriptor(
   @JvmField val distribution: Collection<DistributionFileEntry>,
 )
 
-internal suspend fun writePluginClassPathHeader(
+internal fun writePluginClassPathHeader(
   out: DataOutputStream,
   isJarOnly: Boolean,
   pluginCount: Int,
@@ -124,7 +123,7 @@ internal suspend fun writePluginClassPathHeader(
 }
 
 @VisibleForTesting
-suspend fun createCachedProductDescriptor(platformLayout: PlatformLayout, platformDescriptorCache: ScopedCachedDescriptorContainer, context: BuildContext): Element {
+fun createCachedProductDescriptor(platformLayout: PlatformLayout, platformDescriptorCache: ScopedCachedDescriptorContainer, context: BuildContext): Element {
   val mainPluginDescriptor = requireNotNull(platformDescriptorCache.getCachedFileData(PRODUCT_DESCRIPTOR_META_PATH)) {
     "Cannot find core plugin descriptor (module=${context.productProperties.applicationInfoModule})"
   }.let { JDOMUtil.load(it) }
@@ -145,7 +144,7 @@ suspend fun createCachedProductDescriptor(platformLayout: PlatformLayout, platfo
   return mainPluginDescriptor
 }
 
-internal suspend fun generatePluginClassPath(
+internal fun generatePluginClassPath(
   pluginEntries: List<PluginBuildDescriptor>,
   descriptorFileProvider: DescriptorCacheContainer,
   platformLayout: PlatformLayout,

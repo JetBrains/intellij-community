@@ -27,8 +27,7 @@ val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListO
   "intellij.maven.testFramework",
   "intellij.tools.reproducibleBuilds.diff",
   "intellij.space.java.jps",
-  *JewelMavenArtifacts.STANDALONE.keys.toTypedArray(),
-)
+) + JewelMavenArtifacts.STANDALONE.keys
 
 internal suspend fun createCommunityBuildContext(
   options: BuildOptions,
@@ -40,7 +39,7 @@ internal suspend fun createCommunityBuildContext(
   options = options,
 )
 
-open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIdeaProperties() {
+open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrainsProductProperties() {
   override val moduleSetsProviders: List<ModuleSetProvider>
     get() = listOf(CommunityModuleSets)
 
@@ -48,6 +47,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     get() = "idea"
 
   init {
+    configurePropertiesForAllEditionsOfIntelliJIdea(this)
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.customization"
     scrambleMainJar = false
