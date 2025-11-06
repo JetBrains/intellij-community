@@ -2,11 +2,22 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.BuildPaths
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
+
+/**
+ * Represents a content module with optional loading attribute.
+ *
+ * @param name Module name
+ * @param loading Optional loading mode (e.g., ModuleLoadingRule.EMBEDDED)
+ */
+@Serializable
+data class ContentModule(
+  @JvmField val name: String,
+  @JvmField val loading: ModuleLoadingRule? = null,
+)
 
 /**
  * Represents a named collection of content modules.
@@ -17,6 +28,7 @@ import java.nio.file.Path
  * @param nestedSets List of nested module sets (for xi:include generation)
  * @param alias Optional module alias for `<module value="..."/>` declaration (e.g., "com.intellij.modules.xml")
  */
+@Serializable
 data class ModuleSet(
   @JvmField val name: String,
   @JvmField val modules: List<ContentModule>,
@@ -38,6 +50,7 @@ interface ModuleSetProvider {
 /**
  * DSL builder for creating ModuleSets with reduced boilerplate.
  */
+@ProductDslMarker
 class ModuleSetBuilder {
   private val modules = mutableListOf<ContentModule>()
   private val nestedSets = mutableListOf<ModuleSet>()
@@ -147,15 +160,6 @@ private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, inde
 }
 
 /**
- * Result of building module set XML.
- * Contains the XML string and count of direct modules (excluding nested).
- */
-data class ModuleSetBuildResult(
-  val xml: String,
-  val directModuleCount: Int,
-)
-
-/**
  * Builds the XML content for a module set.
  *
  * @param moduleSet The module set to build XML for
@@ -200,32 +204,6 @@ internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): ModuleSetBu
   }
 
   return ModuleSetBuildResult(xml, directModuleCount)
-}
-
-/**
- * Discovers all module set functions in the given object using reflection.
- * Returns all public functions that:
- * - Return ModuleSet
- * - Take no parameters
- * - Are not named 'main'
- *
- * @param obj The object to scan for module set functions (e.g., CommunityModuleSets, UltimateModuleSets)
- * @return List of all discovered ModuleSets
- */
-private fun discoverModuleSets(obj: Any): List<ModuleSet> {
-  val lookup = MethodHandles.lookup()
-  val clazz = obj.javaClass
-  val methodType = MethodType.methodType(ModuleSet::class.java)
-
-  val declaredMethods = clazz.declaredMethods
-  val result = ArrayList<ModuleSet>(declaredMethods.size)
-  for (method in declaredMethods) {
-    if (method.parameterCount == 0 && java.lang.reflect.Modifier.isPublic(method.modifiers) && method.returnType == ModuleSet::class.java) {
-      val moduleSet = lookup.findVirtual(clazz, method.name, methodType).invoke(obj) as ModuleSet
-      result.add(moduleSet)
-    }
-  }
-  return result
 }
 
 /**

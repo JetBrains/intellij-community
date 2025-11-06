@@ -283,6 +283,173 @@ Use `ultimateOnly = true` when:
 - **`generateAllProductXmlFiles()`** (generator.kt): Batch generation for all registered products
 - **`collectAndValidateAliases()`** (generator.kt): Validates module aliases for duplicates
 
+## JSON Analysis Endpoint
+
+The module set system provides a JSON analysis endpoint for programmatic querying and tooling integration. This endpoint is used by the Plugin Model Analyzer MCP server and other build tools.
+
+### Usage
+
+Run the module set main function with the `--json` flag:
+
+```bash
+# Generate complete analysis for all products and module sets
+UltimateModuleSets.main(args = ["--json"])
+
+# Community products only
+CommunityModuleSets.main(args = ["--json"])
+```
+
+### Filtering Output
+
+Use the `--json` flag with a filter to get specific sections:
+
+```bash
+# Get only products
+--json='{"filter":"products"}'
+
+# Get only module sets
+--json='{"filter":"moduleSets"}'
+
+# Include duplicate analysis
+--json='{"includeDuplicates":true}'
+```
+
+### Output Structure
+
+The JSON output contains comprehensive analysis of the module system:
+
+#### 1. Module Distribution
+
+Maps each module to the module sets and products that include it:
+
+```json
+{
+  "moduleDistribution": {
+    "intellij.platform.vcs.impl": {
+      "inModuleSets": ["vcs", "ide.common"],
+      "inProducts": ["WebStorm", "GoLand", "CLion", "PyCharm", ...]
+    }
+  }
+}
+```
+
+**Use case:** Find where a specific module is used across the codebase.
+
+#### 2. Module Set Hierarchy
+
+Shows the include relationships between module sets:
+
+```json
+{
+  "moduleSetHierarchy": {
+    "ide.common": {
+      "includes": ["essential", "vcs"],
+      "includedBy": ["ide.ultimate"],
+      "moduleCount": 145
+    }
+  }
+}
+```
+
+**Use case:** Understand module set dependencies and nesting structure.
+
+#### 3. Module Usage Index
+
+Comprehensive reverse lookup with source file paths:
+
+```json
+{
+  "moduleUsageIndex": {
+    "modules": {
+      "intellij.platform.vcs.impl": {
+        "moduleSets": [
+          {
+            "name": "vcs",
+            "location": "community",
+            "sourceFile": "community/platform/build-scripts/product-dsl/src/CommunityModuleSets.kt"
+          }
+        ],
+        "products": [
+          {
+            "name": "WebStorm",
+            "sourceFile": "platform/buildScripts/src/productLayout/UltimateModuleSets.kt"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+**Use case:** Trace module ownership and find where to make changes.
+
+#### 4. Product Composition Analysis
+
+Detailed breakdown of each product's composition:
+
+```json
+{
+  "productCompositionAnalysis": {
+    "CLion": {
+      "composition": {
+        "totalAliases": 3,
+        "totalModuleSets": 12,
+        "totalDirectModules": 45,
+        "totalModules": 523
+      },
+      "operations": [
+        {"type": "alias", "value": "com.jetbrains.modules.cidr.lang"},
+        {"type": "moduleSet", "value": "commercial"},
+        {"type": "module", "value": "intellij.clion.core"}
+      ]
+    }
+  }
+}
+```
+
+**Use case:** Analyze product composition and optimize module dependencies.
+
+#### 5. Duplicate Analysis (Optional)
+
+When `includeDuplicates: true` is set, detects duplicate xi:include elements:
+
+```json
+{
+  "duplicateAnalysis": {
+    "ReSharper Backend": {
+      "/META-INF/intellij.moduleSets.essential.xml": [
+        {
+          "directInclude": true,
+          "deprecatedIncludeRefs": [
+            "intellij.platform.resources -> /META-INF/PlatformLangPlugin.xml"
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+**Use case:** Identify redundant includes that can be removed.
+
+### Integration with MCP Server
+
+The Plugin Model Analyzer MCP server (`build/mcp-servers/module-analyzer`) uses this JSON endpoint to provide:
+
+- `analyze_module_structure` - Complete module system analysis
+- `get_module_info` - Query specific module details
+- `find_module_paths` - Trace module to product paths
+- `get_module_set_hierarchy` - Query module set relationships
+- `list_products` - List products filtered by criteria
+- `validate_community_products` - Ensure community/ultimate separation
+
+### Implementation
+
+The JSON generation is implemented in:
+- `ModuleSetRunner.kt` - Orchestration and CLI parsing
+- `ModuleSetJsonExport.kt` - JSON generation logic
+- `ModuleSetDiscovery.kt` - Module set discovery via reflection
+
 ## Benefits
 
 1. **Type safety**: Kotlin code with IDE support (autocomplete, refactoring)
@@ -290,6 +457,7 @@ Use `ultimateOnly = true` when:
 3. **Single source of truth**: One Kotlin definition for both dev and non-dev modes
 4. **Maintainability**: Easier to see what modules a product includes
 5. **VCS-friendly**: Static files work without dev mode infrastructure
+6. **Programmatic access**: JSON endpoint enables tooling and automation
 
 ## See Also
 

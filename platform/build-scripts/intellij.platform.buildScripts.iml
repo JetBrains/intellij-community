@@ -420,5 +420,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.platform.plugins.parser.impl" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.productDsl" exported="" />
   </component>
 </module>

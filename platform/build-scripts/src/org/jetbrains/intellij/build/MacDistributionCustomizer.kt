@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 import java.util.function.Predicate
 
 open class MacDistributionCustomizer {
@@ -142,7 +142,7 @@ open class MacDistributionCustomizer {
     RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, targetDir)
   }
 
-  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> {
+  open fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, context: BuildContext): Sequence<String> {
     val basePatterns = sequenceOf(
       "bin/*.sh",
       "plugins/**/*.sh",

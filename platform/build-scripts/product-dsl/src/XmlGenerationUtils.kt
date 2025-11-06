@@ -27,6 +27,7 @@ internal fun visitAllModuleSets(sets: List<ModuleSet>, visitor: (ModuleSet) -> U
 
 /**
  * Recursively collects all aliases from a module set and its nested sets.
+ * Collects the single `alias` field (for module set's own capability).
  *
  * @param moduleSet The module set to collect aliases from
  * @param result Accumulator for collecting aliases (avoids intermediate allocations)
@@ -68,6 +69,31 @@ internal inline fun withEditorFold(sb: StringBuilder, indent: String, descriptio
 }
 
 /**
+ * Recursively collects all module names from a module set and its nested sets.
+ *
+ * @param moduleSet The module set to collect modules from
+ * @param excludedModules Set of module names to exclude
+ * @return Set of all module names found in the module set hierarchy
+ */
+internal fun collectAllModuleNames(moduleSet: ModuleSet, excludedModules: Set<String> = emptySet()): Set<String> {
+  val result = HashSet<String>()
+  
+  fun collect(set: ModuleSet) {
+    for (module in set.modules) {
+      if (module.name !in excludedModules) {
+        result.add(module.name)
+      }
+    }
+    for (nestedSet in set.nestedSets) {
+      collect(nestedSet)
+    }
+  }
+  
+  collect(moduleSet)
+  return result
+}
+
+/**
  * Gets direct modules from a module set (excluding modules from nested sets and excluded modules).
  *
  * @param moduleSet The module set to get direct modules from
@@ -101,4 +127,39 @@ internal fun getDirectModules(moduleSet: ModuleSet, excludedModules: Set<String>
     }
   }
   return directModules
+}
+
+/**
+ * Checks if a module set contains (directly or transitively) any nested set whose name is in the given set.
+ * Used to detect when a parent module set contains overridden nested sets.
+ */
+internal fun containsOverriddenNestedSet(moduleSet: ModuleSet, overriddenNames: Set<ModuleSetName>): Boolean {
+  // Check direct nested sets
+  for (nestedSet in moduleSet.nestedSets) {
+    if (ModuleSetName(nestedSet.name) in overriddenNames) {
+      return true
+    }
+    // Check recursively
+    if (containsOverriddenNestedSet(nestedSet, overriddenNames)) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * Finds all nested set names (directly or transitively) that are in the given set of names.
+ * Used for generating descriptive comments about which nested sets are overridden.
+ */
+internal fun findOverriddenNestedSetNames(moduleSet: ModuleSet, overriddenNames: Set<ModuleSetName>): List<ModuleSetName> {
+  val result = mutableListOf<ModuleSetName>()
+  for (nestedSet in moduleSet.nestedSets) {
+    val nestedSetName = ModuleSetName(nestedSet.name)
+    if (nestedSetName in overriddenNames) {
+      result.add(nestedSetName)
+    }
+    // Check recursively
+    result.addAll(findOverriddenNestedSetNames(nestedSet, overriddenNames))
+  }
+  return result
 }

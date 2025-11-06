@@ -11,6 +11,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer

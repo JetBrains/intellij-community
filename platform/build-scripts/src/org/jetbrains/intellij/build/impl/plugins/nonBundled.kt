@@ -22,8 +22,8 @@ import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent

@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
 import org.jetbrains.intellij.build.BuildPaths
 import java.nio.file.Path
 
@@ -460,15 +459,5 @@ object CommunityModuleSets : ModuleSetProvider {
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.
     // Products that need rd.common include it explicitly in their product files.
   }
-}
 
-/**
- * Represents a content module with optional loading attribute.
- *
- * @param name Module name
- * @param loading Optional loading mode (e.g., ModuleLoadingRule.EMBEDDED)
- */
-data class ContentModule(
-  @JvmField val name: String,
-  @JvmField val loading: ModuleLoadingRule? = null,
-)
+}

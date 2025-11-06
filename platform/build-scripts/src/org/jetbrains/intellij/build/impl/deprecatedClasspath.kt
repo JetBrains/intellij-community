@@ -7,8 +7,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.MAVEN_REPO
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
-import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent

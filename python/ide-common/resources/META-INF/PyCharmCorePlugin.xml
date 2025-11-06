@@ -13,11 +13,11 @@
   <xi:include href="/META-INF/pycharm-core-customization.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
+  <!-- <editor-fold desc="additional"> -->
   <content namespace="jetbrains">
-    <!-- <editor-fold desc="additional"> -->
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.tips"/>
-    <!-- </editor-fold> -->
   </content>
+  <!-- </editor-fold> -->
 </idea-plugin>

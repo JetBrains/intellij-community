@@ -3,8 +3,6 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.lang.ImmutableZipFile
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -18,6 +16,9 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
+
+const val PLUGIN_XML_RELATIVE_PATH: String = "META-INF/plugin.xml"
+val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "true").toBoolean()
 
 fun getUnprocessedPluginXmlContent(module: JpsModule, context: ModuleOutputProvider): ByteArray {
   return requireNotNull(findUnprocessedDescriptorContent(module = module, path = PLUGIN_XML_RELATIVE_PATH, context = context)) {
@@ -40,7 +41,7 @@ fun findUnprocessedDescriptorContent(module: JpsModule, path: String, context: M
 
 private val rootTypeOrder = arrayOf(JavaResourceRootType.RESOURCE, JavaSourceRootType.SOURCE, JavaResourceRootType.TEST_RESOURCE, JavaSourceRootType.TEST_SOURCE)
 
-internal fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean = false): Path? {
+fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProductionSources: Boolean = false): Path? {
   for (type in rootTypeOrder) {
     for (root in module.sourceRoots) {
       if (type != root.rootType || (onlyProductionSources && !(root.rootType == JavaResourceRootType.RESOURCE || root.rootType == JavaSourceRootType.SOURCE))) {
@@ -55,9 +56,9 @@ internal fun findFileInModuleSources(module: JpsModule, relativePath: String, on
   return null
 }
 
-internal fun isModuleNameLikeFilename(relativePath: String): Boolean = relativePath.startsWith("intellij.") || relativePath.startsWith("fleet.")
+fun isModuleNameLikeFilename(relativePath: String): Boolean = relativePath.startsWith("intellij.") || relativePath.startsWith("fleet.")
 
-internal fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath: String): ByteArray? {
+fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath: String): ByteArray? {
   for (dependency in module.dependenciesList.dependencies) {
     if (dependency is JpsLibraryDependency) {
       val library = dependency.library ?: continue
@@ -71,14 +72,14 @@ internal fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath
   return null
 }
 
-internal fun findProductModulesFile(clientMainModuleName: String, context: CompilationContext): Path? {
+fun findProductModulesFile(clientMainModuleName: String, context: ModuleOutputProvider): Path? {
   return findFileInModuleSources(context.findRequiredModule(clientMainModuleName), "META-INF/$clientMainModuleName/product-modules.xml")
 }
 
-internal fun findFileInModuleDependencies(
+fun findFileInModuleDependencies(
   module: JpsModule,
   relativePath: String,
-  context: CompilationContext,
+  context: ModuleOutputProvider,
   processedModules: MutableSet<String>,
   recursiveModuleExclude: String? = null,
 ): ByteArray? {
@@ -98,7 +99,7 @@ internal fun findFileInModuleDependencies(
 private fun findFileInModuleDependenciesRecursive(
   module: JpsModule,
   relativePath: String,
-  context: CompilationContext,
+  context: ModuleOutputProvider,
   processedModules: MutableSet<String>,
   recursiveModuleExclude: String?,
 ): ByteArray? {
@@ -134,7 +135,7 @@ private fun findFileInModuleDependenciesRecursive(
 }
 
 @Internal
-fun hasModuleOutputPath(module: JpsModule, relativePath: String, context: CompilationContext): Boolean {
+fun hasModuleOutputPath(module: JpsModule, relativePath: String, context: ModuleOutputProvider): Boolean {
   return context.getModuleOutputRoots(module).any { output ->
     val attributes = try {
       Files.readAttributes(output, BasicFileAttributes::class.java)

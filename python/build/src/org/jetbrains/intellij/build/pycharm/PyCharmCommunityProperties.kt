@@ -74,8 +74,8 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core-customization.xml")
   }
 
-  override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
-    super.copyAdditionalFiles(context, targetDir)
+  override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
+    super.copyAdditionalFiles(targetDir, context)
 
     val licenseTargetDir = targetDir.resolve("license")
     copyFileToDir(context.paths.communityHomeDir.resolve("LICENSE.txt"), licenseTargetDir)
@@ -98,8 +98,8 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
 
     override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties) = "PyCharm Community Edition"
 
-    override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
-      super.copyAdditionalFiles(context, targetDir, arch)
+    override suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
+      super.copyAdditionalFiles(targetDir, arch, context)
       PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-win*.zip")
     }
 

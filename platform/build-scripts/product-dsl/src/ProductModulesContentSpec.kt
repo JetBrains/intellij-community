@@ -4,6 +4,14 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import kotlinx.serialization.Serializable
+
+/**
+ * Marker annotation for the product DSL to prevent implicit receiver scope leakage.
+ * This ensures that methods from outer DSL scopes are not accidentally accessible in nested blocks.
+ */
+@DslMarker
+annotation class ProductDslMarker
 
 /**
  * Represents an XML include directive that references a resource within a module.
@@ -13,11 +21,58 @@ import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
  * @param ultimateOnly If true, this include is only processed in Ultimate builds (skipped in Community builds)
  * @param optional If true, this include is always generated with xi:fallback and never inlined (safe for files that may not exist)
  */
+@Serializable
 data class DeprecatedXmlInclude(
   @JvmField val moduleName: String,
   @JvmField val resourcePath: String,
   @JvmField val ultimateOnly: Boolean = false,
   @JvmField val optional: Boolean = false,
+)
+
+/**
+ * Tracks how a product spec is composed (e.g., via include(), moduleSet(), etc.).
+ * This enables tracing module origins and detecting redundancies.
+ */
+@Serializable
+data class SpecComposition(
+  /** Type of composition (inline spec, module set reference, or deprecated XML include) */
+  @JvmField val type: CompositionType,
+  /** Reference name (module set name or function name) if applicable */
+  @JvmField val reference: String? = null,
+  /** Breadcrumb trail showing the composition path */
+  @JvmField val path: List<String> = emptyList(),
+  /** Source location where this composition was added (file:line) */
+  @JvmField val sourceLocation: String? = null,
+)
+
+/**
+ * Type of composition operation that added content to a product spec.
+ */
+@Serializable
+enum class CompositionType {
+  /** include(spec) - embedded content from another ProductModulesContentSpec */
+  INLINE_SPEC,
+  /** moduleSet(...) - reference to a module set */
+  MODULE_SET_REF,
+  /** deprecatedInclude(...) - reference to an XML file */
+  DEPRECATED_XML,
+  /** module() / embeddedModule() / requiredModule() - direct module addition */
+  DIRECT_MODULE,
+  /** alias() - module alias addition */
+  ALIAS,
+}
+
+/**
+ * Metadata about a product spec's origin for traceability.
+ */
+@Serializable
+data class SpecMetadata(
+  /** Name of the product or function that created this spec */
+  @JvmField val name: String? = null,
+  /** Source file path relative to project root */
+  @JvmField val sourceFile: String? = null,
+  /** Function name that created this spec */
+  @JvmField val sourceFunction: String? = null,
 )
 
 /**
@@ -32,6 +87,7 @@ data class DeprecatedXmlInclude(
  *
  * @see org.jetbrains.intellij.build.ProductProperties.getProductContentDescriptor
  */
+@Serializable
 class ProductModulesContentSpec(
   /**
    * Product module aliases for `<module value="..."/>` declarations (e.g., "com.jetbrains.gateway", "com.intellij.modules.idea").
@@ -48,10 +104,10 @@ class ProductModulesContentSpec(
   @JvmField val deprecatedXmlIncludes: List<DeprecatedXmlInclude>,
 
   /**
-   * Module sets to include. Each set contains a named collection of modules.
-   * Module sets are processed in order and can overlap (duplicates are handled).
+   * Module sets to include with optional loading overrides.
+   * When a module set has overrides, it will be inlined in XML instead of using xi:include.
    */
-  @JvmField val moduleSets: List<ModuleSet>,
+  @JvmField val moduleSets: List<ModuleSetWithOverrides>,
 
   /**
    * Additional individual modules to include beyond those from module sets.
@@ -66,23 +122,36 @@ class ProductModulesContentSpec(
   @JvmField val excludedModules: Set<String>,
 
   /**
-   * Loading attribute overrides for specific modules.
-   * Map of module name to loading mode (e.g., [ModuleLoadingRule.EMBEDDED]).
-   * This allows changing the loading mode of modules from module sets.
+   * Composition graph tracking how this spec was assembled.
+   * Records all include(), moduleSet(), and other composition operations.
+   * Used for analysis, tracing, and redundancy detection.
    */
-  @JvmField val moduleLoadingOverrides: Map<String, ModuleLoadingRule>,
+  @JvmField val compositionGraph: List<SpecComposition> = emptyList(),
+
+  /**
+   * Metadata about this spec's origin (product name, source file, function).
+   * Useful for debugging and tracing where a spec was created.
+   */
+  @JvmField val metadata: SpecMetadata? = null,
 )
 
 /**
  * DSL builder for creating ProductModulesContentSpec with reduced boilerplate.
  */
+@ProductDslMarker
 class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   private val productModuleAliases = mutableListOf<String>()
   private val xmlIncludes = mutableListOf<DeprecatedXmlInclude>()
-  private val moduleSets = mutableListOf<ModuleSet>()
+  private val moduleSets = mutableListOf<ModuleSetWithOverrides>()
   private val additionalModules = mutableListOf<ContentModule>()
   private val excludedModules = mutableSetOf<String>()
-  private val loadingOverrides = mutableMapOf<String, ModuleLoadingRule>()
+
+  // Composition tracking
+  private val compositionGraph = mutableListOf<SpecComposition>()
+  private val pathStack = mutableListOf<String>() // Current path for nested compositions
+
+  // Metadata for this spec
+  internal var metadata: SpecMetadata? = null
 
   /**
    * Add a product module alias for `<module value="..."/>` declaration.
@@ -92,6 +161,47 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    */
   fun alias(value: String) {
     productModuleAliases.add(value)
+    compositionGraph.add(SpecComposition(
+      type = CompositionType.ALIAS,
+      reference = value,
+      path = pathStack.toList(),
+      sourceLocation = null // TODO: capture if needed
+    ))
+  }
+
+  /**
+   * Include another ProductModulesContentSpec, merging all its contents into this builder.
+   * This enables composition of product spec fragments for reuse across products.
+   *
+   * Example:
+   * ```
+   * override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
+   *   include(commonCapabilityAliases())     // include spec fragment with common aliases
+   *   include(platformCommonIncludes())      // include spec fragment with deprecatedIncludes
+   *   moduleSet(commercialIdeBase())         // include module set
+   * }
+   * ```
+   *
+   * @param spec The ProductModulesContentSpec to merge into this builder
+   */
+  fun include(spec: ProductModulesContentSpec) {
+    // Record composition before flattening (for analysis)
+    compositionGraph.add(SpecComposition(
+      type = CompositionType.INLINE_SPEC,
+      reference = spec.metadata?.name ?: spec.metadata?.sourceFunction,
+      path = pathStack.toList(),
+      sourceLocation = spec.metadata?.sourceFile
+    ))
+
+    // Flatten content (existing behavior for backward compatibility)
+    productModuleAliases.addAll(spec.productModuleAliases)
+    xmlIncludes.addAll(spec.deprecatedXmlIncludes)
+    moduleSets.addAll(spec.moduleSets)
+    additionalModules.addAll(spec.additionalModules)
+    excludedModules.addAll(spec.excludedModules)
+
+    // Also preserve the nested spec's composition graph for deep analysis
+    compositionGraph.addAll(spec.compositionGraph)
   }
 
   /**
@@ -116,13 +226,48 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    */
   fun deprecatedInclude(moduleName: String, resourcePath: String, ultimateOnly: Boolean = false, optional: Boolean = false) {
     xmlIncludes.add(DeprecatedXmlInclude(moduleName, resourcePath, ultimateOnly, optional))
+    compositionGraph.add(SpecComposition(
+      type = CompositionType.DEPRECATED_XML,
+      reference = "$moduleName:$resourcePath",
+      path = pathStack.toList(),
+      sourceLocation = null
+    ))
   }
 
   /**
-   * Add a module set.
+   * Add a module set without loading overrides.
    */
   fun moduleSet(set: ModuleSet) {
-    moduleSets.add(set)
+    addModuleSet(set = set, overrides = emptyMap())
+  }
+
+  /**
+   * Add a module set with loading overrides for specific modules.
+   * When overrides are provided, the module set will be inlined in the product XML
+   * instead of being referenced via xi:include.
+   *
+   * Example:
+   * ```
+   * moduleSet(UltimateModuleSets.commercialIdeBase()) {
+   *   overrideAsEmbedded("intellij.rd.platform")
+   *   overrideAsEmbedded("intellij.rd.ui")
+   *   overrideAsRequired("intellij.some.module")
+   * }
+   * ```
+   */
+  inline fun moduleSet(set: ModuleSet, block: ModuleLoadingOverrideBuilder.() -> Unit) {
+    addModuleSet(set, ModuleLoadingOverrideBuilder().apply(block).build())
+  }
+
+  @PublishedApi
+  internal fun addModuleSet(set: ModuleSet, overrides: Map<String, ModuleLoadingRule>) {
+    moduleSets.add(ModuleSetWithOverrides(set, overrides))
+    compositionGraph.add(SpecComposition(
+      type = CompositionType.MODULE_SET_REF,
+      reference = set.name,
+      path = pathStack.toList(),
+      sourceLocation = null
+    ))
   }
 
   /**
@@ -130,6 +275,12 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    */
   fun module(name: String, loading: ModuleLoadingRule? = null) {
     additionalModules.add(ContentModule(name, loading))
+    compositionGraph.add(SpecComposition(
+      type = CompositionType.DIRECT_MODULE,
+      reference = name,
+      path = pathStack.toList(),
+      sourceLocation = null
+    ))
   }
 
   /**
@@ -137,6 +288,12 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    */
   fun embeddedModule(name: String) {
     additionalModules.add(ContentModule(name, ModuleLoadingRule.EMBEDDED))
+    compositionGraph.add(SpecComposition(
+      type = CompositionType.DIRECT_MODULE,
+      reference = name,
+      path = pathStack.toList(),
+      sourceLocation = null
+    ))
   }
 
   /**
@@ -144,6 +301,12 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    */
   fun requiredModule(name: String) {
     additionalModules.add(ContentModule(name, ModuleLoadingRule.REQUIRED))
+    compositionGraph.add(SpecComposition(
+      type = CompositionType.DIRECT_MODULE,
+      reference = name,
+      path = pathStack.toList(),
+      sourceLocation = null
+    ))
   }
 
   /**
@@ -151,13 +314,6 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    */
   fun exclude(moduleName: String) {
     excludedModules.add(moduleName)
-  }
-
-  /**
-   * Override the loading mode for a specific module.
-   */
-  fun override(moduleName: String, loading: ModuleLoadingRule) {
-    loadingOverrides.put(moduleName, loading)
   }
 
   @PublishedApi
@@ -168,7 +324,8 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
       moduleSets = java.util.List.copyOf(moduleSets),
       additionalModules = java.util.List.copyOf(additionalModules),
       excludedModules = java.util.Set.copyOf(excludedModules),
-      moduleLoadingOverrides = java.util.Map.copyOf(loadingOverrides),
+      compositionGraph = java.util.List.copyOf(compositionGraph),
+      metadata = metadata,
     )
   }
 }
@@ -191,9 +348,8 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
  *     // Individual modules
  *     embeddedModule("com.example.additional")
  *
- *     // Exclusions and overrides
+ *     // Exclusions
  *     exclude("unwanted.module")
- *     override("some.module", ModuleLoadingRule.OPTIONAL)
  *   }
  * }
  * ```

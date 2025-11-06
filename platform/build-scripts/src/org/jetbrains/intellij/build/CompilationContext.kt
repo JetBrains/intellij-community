@@ -5,7 +5,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
-import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject

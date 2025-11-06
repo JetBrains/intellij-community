@@ -10,8 +10,8 @@ import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ContentModuleFilter
 import org.jetbrains.intellij.build.FrontendModuleFilter
+import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.DescriptorSearchScope
-import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.resolveAndEmbedContentModuleDescriptor
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR

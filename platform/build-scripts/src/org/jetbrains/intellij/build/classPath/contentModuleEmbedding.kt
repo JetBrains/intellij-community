@@ -27,11 +27,11 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.findFileInModuleDependencies
 import org.jetbrains.intellij.build.findUnprocessedDescriptorContent
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
-import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
 import org.jetbrains.intellij.build.impl.XIncludeElementResolver
@@ -40,8 +40,6 @@ import org.jetbrains.intellij.build.impl.resolveIncludes
 import org.jetbrains.intellij.build.impl.toLoadPath
 import java.io.IOException
 import java.nio.file.Files
-
-internal const val PLUGIN_XML_RELATIVE_PATH = "META-INF/plugin.xml"
 
 /**
  * Defines a search scope for resolving XInclude references in plugin descriptors.

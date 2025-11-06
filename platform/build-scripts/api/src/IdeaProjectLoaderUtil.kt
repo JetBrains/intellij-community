@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.lang.UrlClassLoader
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -60,7 +59,7 @@ internal object IdeaProjectLoaderUtil {
   /**
    * This method only for internal usage. Use [BuildPaths.ULTIMATE_HOME] instead.
    */
-  @ApiStatus.Internal
+  @Internal
   fun guessUltimateHome(): Path {
     return searchForAnyMarkerFile(listOf(ULTIMATE_REPO_MARKER_FILE))
   }
@@ -68,7 +67,7 @@ internal object IdeaProjectLoaderUtil {
   /**
    * This method only for internal usage. Use [BuildPaths.COMMUNITY_ROOT] instead.
    */
-  @ApiStatus.Internal
+  @Internal
   fun guessCommunityHome(): BuildDependenciesCommunityRoot {
     val directMarker = COMMUNITY_REPO_MARKER_FILE
     val inSubdirMarker = Path.of("community").resolve(COMMUNITY_REPO_MARKER_FILE)
@@ -85,7 +84,7 @@ internal object IdeaProjectLoaderUtil {
   /**
    * This method only for internal usage. Use [BuildPaths.MAYBE_ULTIMATE_HOME] instead.
    */
-  @ApiStatus.Internal
+  @Internal
   fun maybeUltimateHome(): Path? {
     return searchForOptionalMarkerFile(listOf(ULTIMATE_REPO_MARKER_FILE))
   }
