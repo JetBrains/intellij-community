@@ -54,8 +54,8 @@ class PluginVerifier internal constructor(
     reportDir: Path,
     plugin: VerifierPluginInfo,
     ide: VerifierIdeInfo,
-    errFile: Path?,
-    outFile: Path?,
+    errFile: Path? = null,
+    outFile: Path? = null,
     runtimeDir: Path? = null,
     mute: List<String> = emptyList(),
   ): Boolean {
@@ -81,8 +81,8 @@ class PluginVerifier internal constructor(
       ),
       workingDir = reportDir,
       additionalEnvVariables = emptyMap(),
-      inheritOut = false,
-      inheritErrToOut = false,
+      inheritOut = outFile == null,
+      inheritErrToOut = errFile == null,
       stdErrConsumer = {
         errFile?.appendText("$it\n")
         println("Plugin verifier error: $it")
