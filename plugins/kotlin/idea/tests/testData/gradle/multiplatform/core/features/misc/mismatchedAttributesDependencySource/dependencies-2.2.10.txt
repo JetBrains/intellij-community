@@ -4,26 +4,20 @@ project
 project.consumer
 
 project.consumer.commonMain
-    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (COMPILE)
     producer.commonMain (COMPILE)
 
 project.consumer.commonTest
-    org.jetbrains.kotlin:kotlin-stdlib:commonNonJvmMain:{{KGP_VERSION}} (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:webMain:{{KGP_VERSION}} (TEST)
     producer.commonMain (TEST)
 
 project.consumer.jsMain
     org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
     producer.commonMain (COMPILE)
     producer.jsMain (COMPILE)
-    producer.webMain (COMPILE)
 
 project.consumer.jsTest
     org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (TEST)
     producer.commonMain (TEST)
     producer.jsMain (TEST)
-    producer.webMain (TEST)
 
 project.consumer.linuxMain
 
@@ -36,18 +30,6 @@ project.consumer.linuxX64Test
 project.consumer.nativeMain
 
 project.consumer.nativeTest
-
-project.consumer.webMain
-    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
-    producer.commonMain (COMPILE)
-    producer.jsMain (COMPILE)
-    producer.webMain (COMPILE)
-
-project.consumer.webTest
-    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (TEST)
-    producer.commonMain (TEST)
-    producer.jsMain (TEST)
-    producer.webMain (TEST)
 
 
 Test configuration:
