@@ -54,6 +54,7 @@ fun testNameFixture(): TestFixture<String> = testFixture {
   initialized(testName) {}
 }
 
+@JvmOverloads
 @TestOnly
 fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path> = testFixture {
   val tempDir = withContext(Dispatchers.IO) {
@@ -114,6 +115,7 @@ fun TestFixture<Project>.moduleInProjectFixture(name: String): TestFixture<Modul
   initialized(module) {}
 }
 
+@JvmOverloads
 @TestOnly
 fun projectFixture(
   pathFixture: TestFixture<Path> = tempPathFixture(),
@@ -134,6 +136,7 @@ fun projectFixture(
   }
 }
 
+@JvmOverloads
 @TestOnly
 fun TestFixture<Project>.moduleFixture(
   name: String? = null,
@@ -157,6 +160,7 @@ fun TestFixture<Project>.moduleFixture(
  * If [addPathToSourceRoot], we add [pathFixture] to the module sources,
  * which is convenient for the scripting languages where module root is also source root
  */
+@JvmOverloads
 @TestOnly
 fun TestFixture<Project>.moduleFixture(
   pathFixture: TestFixture<Path>,
@@ -208,6 +212,7 @@ fun disposableFixture(): TestFixture<Disposable> = testFixture { context ->
  *        created directory.
  * @return A fixture providing a PsiDirectory instance representing the initialized source root.
  */
+@JvmOverloads
 @OptIn(ExperimentalPathApi::class)
 @TestOnly
 fun TestFixture<Module>.sourceRootFixture(

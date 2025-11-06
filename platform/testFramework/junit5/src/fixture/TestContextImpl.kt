@@ -13,11 +13,15 @@ internal class TestContextImpl(private val context: ExtensionContext, override v
 
   override val testName: String
     get() {
-      val displayName = context.displayName
-      val start = 0 // "test".length // TODO: Decide whether to trim "test" prefix if is present
+      val displayName = if (context.displayName.startsWith("test") && context.displayName.length > 4) {
+        context.displayName.substring("test".length)
+      }
+      else {
+        context.displayName
+      }
       val end = displayName.indexOf("(")
-      return displayName.substring(start, start + 1).lowercase(Locale.getDefault()) +
-             displayName.substring(start + 1, end)
+      return displayName.substring(0, 1).lowercase(Locale.getDefault()) +
+             displayName.substring(1, end)
     }
 
   override fun <T : Annotation> findAnnotation(clazz: Class<T>): T? {

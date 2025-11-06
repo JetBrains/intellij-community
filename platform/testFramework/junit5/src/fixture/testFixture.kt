@@ -25,6 +25,7 @@ import kotlin.reflect.KProperty
  * }
  * ```
  */
+@JvmOverloads
 @TestOnly
 fun <T> testFixture(debugString: String = "", initializer: TestFixtureInitializer<T>): TestFixture<T> {
   return TestFixtureImpl(debugString, initializer)
