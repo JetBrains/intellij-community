@@ -19,10 +19,12 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 class GroupByModeTestEngine : TestEngine {
   companion object {
     const val ENGINE_ID = "group-by-mode"
+    val engineClassName = GroupByModeTestEngine::class.simpleName
+
     private const val JUPITER_ENGINE_ID = "junit-jupiter"
 
     private val annotationName = ExecuteInMonolithAndSplitMode::class.simpleName
-    private val engineClassName = GroupByModeTestEngine::class.simpleName
+
     private fun log(message: String) = logOutput("[$engineClassName]: $message")
   }
 
@@ -35,6 +37,11 @@ class GroupByModeTestEngine : TestEngine {
   override fun getId(): String = ENGINE_ID
 
   override fun discover(discoveryRequest: EngineDiscoveryRequest, uniqueId: UniqueId): TestDescriptor {
+    if (!isGroupedExecutionEnabled) {
+      log("$engineClassName will not be used because grouped execution is disabled")
+      return GroupedModeEngineDescriptor(uniqueId, listOf(), discoveryRequest.configurationParameters)
+    }
+
     log("Starting discovery with request: ${discoveryRequest.getSelectorsByType(ClassSelector::class.java).map { it.className }}")
 
     // Filter to only get classes with @ExecuteInMonolithAndSplitMode

@@ -25,3 +25,6 @@ enum class IdeRunMode {
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 annotation class ExecuteInMonolithAndSplitMode(vararg val mode: IdeRunMode = [IdeRunMode.MONOLITH, IdeRunMode.SPLIT])
+
+
+internal val isGroupedExecutionEnabled: Boolean = false
