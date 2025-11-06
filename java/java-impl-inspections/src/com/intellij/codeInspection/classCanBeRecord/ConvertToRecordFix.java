@@ -403,8 +403,9 @@ public final class ConvertToRecordFix implements LocalQuickFix {
       }
 
       final Set<PsiStatement> otherStatements = new HashSet<>(bodyProcessor.getOtherStatements());
-      return new RecordConstructorCandidate(type, constructorMethod, bodyProcessor.getParamsToFields(),
-                                            bodyProcessor.getFieldNamesToInitializers(), otherStatements);
+      return new RecordConstructorCandidate(
+        type, constructorMethod, bodyProcessor.getParamsToFields(), bodyProcessor.getFieldNamesToInitializers(), otherStatements
+      );
     }
   }
 
@@ -412,10 +413,13 @@ public final class ConvertToRecordFix implements LocalQuickFix {
    * Encapsulates information about converting of a single constructor, for example, whether it is canonical or not.
    */
   @NotNullByDefault
-  record RecordConstructorCandidate(Kind kind, PsiMethod constructor, Map<PsiParameter, @Nullable PsiField> paramsToFields,
-                                    LinkedHashMap<String, PsiExpression> fieldNamesToInitializers,
-                                    // TODO(bartekpacia): change type to SequencedMap once we move to Java 21
-                                    Set<PsiStatement> otherStatements) {
+  record RecordConstructorCandidate(
+    Kind kind,
+    PsiMethod constructor,
+    Map<PsiParameter, @Nullable PsiField> paramsToFields,
+    LinkedHashMap<String, PsiExpression> fieldNamesToInitializers, // TODO(bartekpacia): change type to SequencedMap once we move to Java 21
+    Set<PsiStatement> otherStatements
+  ) {
 
     /// The "kind" of record constructor that [#constructor] will take after being converted to a record (if at all).
     enum Kind {
