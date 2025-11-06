@@ -33,11 +33,11 @@ private class ExecutionPointManagerChangeListener(val project: Project) : XDebug
 
     session.addSessionListener(object : XDebugSessionListener {
       override fun stackFrameChanged() {
-        updateExecutionPosition(project)
+        updateExecutionPosition(project, XDebugMonolithUtils.findSessionById(session.id)?.currentSourceKind)
       }
 
       override fun sessionResumed() {
-        updateExecutionPosition(project)
+        updateExecutionPosition(project, XDebugMonolithUtils.findSessionById(session.id)?.currentSourceKind)
       }
 
       override fun sessionPaused() {
@@ -45,7 +45,7 @@ private class ExecutionPointManagerChangeListener(val project: Project) : XDebug
       }
 
       override fun sessionStopped() {
-        updateExecutionPosition(project)
+        updateExecutionPosition(project, XDebugMonolithUtils.findSessionById(session.id)?.currentSourceKind)
       }
 
     }, session.coroutineScope.asDisposable())
