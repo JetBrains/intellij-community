@@ -885,7 +885,6 @@ c:com.intellij.codeInsight.lookup.EqTailType
 c:com.intellij.codeInsight.lookup.LookupItem
 - com.intellij.codeInsight.lookup.LookupElement
 - java.lang.Comparable
-- sf:CASE_INSENSITIVE:java.lang.Object
 - sf:CLASS_CONDITION_KEY:com.intellij.openapi.util.ClassConditionKey
 - sf:EMPTY_ARRAY:com.intellij.codeInsight.lookup.LookupItem[]
 - sf:FORCE_QUALIFY:java.lang.Object
@@ -914,7 +913,6 @@ c:com.intellij.codeInsight.lookup.LookupItem
 - s:handleCompletionChar(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.lookup.LookupElement,C):com.intellij.codeInsight.TailType
 - handleInsert(com.intellij.codeInsight.completion.InsertionContext):V
 - hashCode():I
-- isCaseSensitive():Z
 - renderElement(com.intellij.codeInsight.lookup.LookupElementPresentation):V
 - setAttribute(com.intellij.openapi.util.Key,java.lang.Object):V
 - setAttribute(java.lang.Object,java.lang.Object):V

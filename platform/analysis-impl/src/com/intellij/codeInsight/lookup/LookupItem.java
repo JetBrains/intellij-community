@@ -33,8 +33,6 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
 
   public static final Object FORCE_QUALIFY = Key.create("FORCE_QUALIFY");
 
-  public static final Object CASE_INSENSITIVE = Key.create("CASE_INSENSITIVE");
-
   public static final Key<TailType> TAIL_TYPE_ATTR = Key.create("myTailType"); // one of constants defined in SimpleTailType interface
 
   private Object myObject;
@@ -284,10 +282,5 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable<Lo
   @Override
   public @NotNull Set<String> getAllLookupStrings() {
     return myAllLookupStrings;
-  }
-
-  @Override
-  public boolean isCaseSensitive() {
-    return !Boolean.TRUE.equals(getAttribute(CASE_INSENSITIVE));
   }
 }
