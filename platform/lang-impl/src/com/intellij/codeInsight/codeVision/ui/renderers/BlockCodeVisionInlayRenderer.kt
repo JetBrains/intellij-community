@@ -30,7 +30,7 @@ open class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
   }
 
   override fun calcHeightInPixels(inlay: Inlay<*>): Int {
-    return painter.inlayHeightInPixels(inlay.editor) ?: super.calcHeightInPixels(inlay)
+    return painter.inlayHeightInPixels(inlay.editor, inlay) ?: super.calcHeightInPixels(inlay)
   }
 
   private fun painterPosition(inlay: Inlay<*>): Int {
