@@ -2534,10 +2534,10 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-gradle-api-9_0_0_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.0.0/gradle-api-9.0.0.jar",
-  sha256 = "b21806c4075aa42d4534ba7257097aea091ab99c40466b0f850872cfc07e7507",
-  downloaded_file_path = "gradle-api-9.0.0.jar"
+  name = "org_jetbrains_intellij_deps-gradle-api-9_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/gradle-api/9.2.0/gradle-api-9.2.0.jar",
+  sha256 = "31544d2c27027027718397666f91fc1de36d77929e7376dd310d4f675321a5f1",
+  downloaded_file_path = "gradle-api-9.2.0.jar"
 )
 
 http_file(

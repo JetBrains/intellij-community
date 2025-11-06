@@ -1733,7 +1733,7 @@ jvm_import(
 
 jvm_import(
   name = "gradle",
-  jar = "@org_jetbrains_intellij_deps-gradle-api-9_0_0_http//file",
+  jar = "@org_jetbrains_intellij_deps-gradle-api-9_2_0_http//file",
   visibility = ["//visibility:public"]
 )
 
