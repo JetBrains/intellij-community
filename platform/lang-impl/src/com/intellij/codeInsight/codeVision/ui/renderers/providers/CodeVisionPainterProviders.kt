@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
@@ -87,6 +88,7 @@ private class ZeroWidthCodeVisionEntryPainter : ICodeVisionEntryBasePainter<Zero
   }
 }
 
-internal fun CodeVisionEntry.painter(): ICodeVisionEntryBasePainter<CodeVisionEntry> {
+@ApiStatus.Internal
+fun CodeVisionEntry.painter(): ICodeVisionEntryBasePainter<CodeVisionEntry> {
   return INSTANCE.getPainter(this@painter)
 }
