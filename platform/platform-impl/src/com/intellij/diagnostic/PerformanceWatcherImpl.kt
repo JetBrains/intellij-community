@@ -29,6 +29,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.basicAttributesIfExists
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.io.sanitizeFileName
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -157,10 +158,14 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
         service.setNewThreadListener { _, _ ->
           val executorSize = service.backendPoolExecutorSize
           if (executorSize > reasonableThreadPoolSize.asInteger() + allAvailableProcessors) {
-            val message = "Too many threads: $executorSize created in the global Application pool. " +
-                          "($reasonableThreadPoolSize, available processors: $allAvailableProcessors)"
-            val file = dumpThreads(pathPrefix = "newPooledThread/", appendMillisecondsToFileName = true, contentsPrefix = message, stripDump = true)
-            LOG.info(message + if (file == null) "" else "; thread dump is saved to '$file'")
+            // if this listener is called on EDT, then thread dump collection leads to a freeze
+            @OptIn(DelicateCoroutinesApi::class)
+            launch(blockingDispatcher) {
+              val message = "Too many threads: $executorSize created in the global Application pool. " +
+                            "($reasonableThreadPoolSize, available processors: $allAvailableProcessors)"
+              val file = dumpThreads(pathPrefix = "newPooledThread/", appendMillisecondsToFileName = true, contentsPrefix = message, stripDump = true)
+              LOG.info(message + if (file == null) "" else "; thread dump is saved to '$file'")
+            }
           }
         }
       }
