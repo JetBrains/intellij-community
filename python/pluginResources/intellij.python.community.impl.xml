@@ -1094,7 +1094,7 @@
 
       <action id="UvSyncAction"
               class="com.jetbrains.python.uv.packaging.UvSyncAction"
-              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+              icon="com.intellij.icons.AllIcons.Actions.Install"/>
 
 
       <separator/>
@@ -1105,13 +1105,13 @@
 
       <action id="PoetryUpdateAction"
               class="com.jetbrains.python.poetry.packaging.PoetryUpdateAction"
-              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+              icon="com.intellij.icons.AllIcons.Actions.Install"/>
 
       <separator/>
 
       <action id="HatchRunAction"
               class="com.jetbrains.python.hatch.packaging.HatchRunAction"
-              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+              icon="com.intellij.icons.AllIcons.Actions.Install"/>
 
       <separator/>
 
@@ -1120,7 +1120,7 @@
               icon="com.intellij.icons.AllIcons.General.Export"/>
       <action id="CondaUpdateEnvAction"
               class="com.jetbrains.python.packaging.conda.actions.CondaUpdateEnvAction"
-              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+              icon="com.intellij.icons.AllIcons.Actions.Install"/>
 
       <separator/>
 
@@ -1129,7 +1129,7 @@
               icon="com.jetbrains.python.icons.PythonIcons.Python.ReferencedFile"/>
       <action id="PipUpdateEnvAction"
               class="com.jetbrains.python.packaging.pip.actions.PipUpdateEnvAction"
-              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+              icon="com.intellij.icons.AllIcons.Actions.Install"/>
 
       <separator/>
 
@@ -1138,11 +1138,11 @@
               icon="com.intellij.icons.AllIcons.Diff.Lock"/>
       <action id="PipEnvInstallDependenciesAction"
               class="com.jetbrains.python.packaging.pipenv.actions.PipEnvInstallEnvAction"
-              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
-
+              icon="com.intellij.icons.AllIcons.Actions.Install"/>
       <separator/>
 
-      <add-to-group group-id="EditorContextBarMenu" anchor="first"/>
+      <add-to-group group-id="ExternalSystemView.ProjectMenu" anchor="last"/>
+      <add-to-group group-id="RunContextGroup"/>
     </group>
   </actions>
 
