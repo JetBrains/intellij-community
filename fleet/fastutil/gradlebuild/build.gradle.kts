@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // IMPORT__MARKER_START
 import fleet.buildtool.conventions.configureAtMostOneJvmTargetOrThrow
 import fleet.buildtool.conventions.withJavaSourceSet
@@ -35,6 +36,7 @@ kotlin {
   wasmJs {
     browser {}
   }
+  sourceSets.jvmMain.configure { resources.srcDir(layout.projectDirectory.dir("../resources")) }
   sourceSets.commonMain.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonMain")) }
   sourceSets.commonMain.configure { resources.srcDir(layout.projectDirectory.dir("../resourcesCommonMain")) }
   sourceSets.commonTest.configure { kotlin.srcDir(layout.projectDirectory.dir("../srcCommonTest")) }
