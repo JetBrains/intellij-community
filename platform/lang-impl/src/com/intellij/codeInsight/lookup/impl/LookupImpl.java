@@ -664,10 +664,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       .withOffset(start)
       .withSelection(TextRange.create(start, actionContext.offset()));
     Project project = actionContext.project();
-    ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking(
-        () -> wrapper.item().perform(finalActionContext, insertionContext)).executeSynchronously(),
-      AnalysisBundle.message("complete"), true, project);
+    ModCommand command = wrapper.getCachedCommand(finalActionContext, insertionContext);
+    if (command == null) {
+      command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        () -> ReadAction.nonBlocking(
+          () -> wrapper.computeCommand(finalActionContext, insertionContext)).executeSynchronously(),
+        AnalysisBundle.message("complete"), true, project);
+    }
     WriteAction.run(() -> editor.getDocument().deleteString(start, actionContext.offset()));
     ModCommandExecutor.getInstance().executeInteractively(actionContext, command, editor);
   }
