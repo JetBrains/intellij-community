@@ -1,7 +1,7 @@
 <idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <!--<module name="intellij.platform.rpc"/>-->
+    <module name="intellij.platform.rpc"/>
   </dependencies>
 
   <extensionPoints>

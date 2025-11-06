@@ -103,7 +103,8 @@
 
     <!-- </editor-fold> -->
 
-    <!-- <editor-fold desc="nested: libraries.fleet"> -->
+    <!-- <editor-fold desc="nested: rpc"> -->
+    <!-- <editor-fold desc="nested: rpc > libraries.fleet"> -->
     <module name="fleet.andel" loading="embedded"/>
     <module name="fleet.bifurcan" loading="embedded"/>
     <module name="fleet.fastutil" loading="embedded"/>
@@ -120,11 +121,19 @@
     <!-- </editor-fold> -->
 
     <!-- <editor-fold desc="direct modules"> -->
-    <module name="intellij.platform.settings.local"/>
-    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.rpc" loading="embedded"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.kernel.impl"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.rpc.topics" loading="embedded"/>
+    <module name="intellij.platform.rpc.topics.backend"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+    <!-- </editor-fold> -->
+    <!-- </editor-fold> -->
+
+    <!-- <editor-fold desc="direct modules"> -->
+    <module name="intellij.platform.settings.local"/>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.project.backend"/>
     <module name="intellij.platform.progress.backend"/>
     <module name="intellij.platform.lang.impl.backend"/>
@@ -175,9 +184,6 @@
     <module name="intellij.platform.completion.backend"/>
     <module name="intellij.platform.analysis" loading="embedded"/>
     <module name="intellij.platform.polySymbols" loading="embedded"/>
-    <module name="intellij.platform.rpc.topics" loading="embedded"/>
-    <module name="intellij.platform.rpc.topics.backend"/>
-    <module name="intellij.platform.rpc.topics.frontend"/>
     <!-- </editor-fold> -->
   </content>
 </idea-plugin>

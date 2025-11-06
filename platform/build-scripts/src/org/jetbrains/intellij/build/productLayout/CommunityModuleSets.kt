@@ -39,15 +39,12 @@ object CommunityModuleSets : ModuleSetProvider {
   fun essential(): ModuleSet = moduleSet("essential") {
     // Include libraries first (they are xi:included in essential.xml)
     moduleSet(libraries())
-    // Fleet libraries are used by core functionality like Project, so should be essential
-    moduleSet(fleet())
+    // RPC is used by core IDE functionality, so it is essential
+    moduleSet(rpc())
 
     // Core essential modules
     module("intellij.platform.settings.local")
     module("intellij.platform.backend")
-    module("intellij.platform.rpc.backend")
-    module("intellij.platform.kernel.impl")
-    module("intellij.platform.kernel.backend")
     module("intellij.platform.project.backend")
     module("intellij.platform.progress.backend")
     module("intellij.platform.lang.impl.backend")
@@ -124,6 +121,22 @@ object CommunityModuleSets : ModuleSetProvider {
 
     embeddedModule("intellij.platform.analysis")
     embeddedModule("intellij.platform.polySymbols")
+  }
+
+  /**
+   * Provides RPC functionality.
+   * Corresponds to intellij.moduleSets.rpc.xml
+   */
+  fun rpc(): ModuleSet = moduleSet("rpc") {
+    // Fleet libraries are required for RPC
+    moduleSet(fleet())
+
+    embeddedModule("intellij.platform.rpc")
+    module("intellij.platform.rpc.backend")
+
+    module("intellij.platform.kernel.impl")
+    module("intellij.platform.kernel.backend")
+
     embeddedModule("intellij.platform.rpc.topics")
     module("intellij.platform.rpc.topics.backend")
     module("intellij.platform.rpc.topics.frontend")
