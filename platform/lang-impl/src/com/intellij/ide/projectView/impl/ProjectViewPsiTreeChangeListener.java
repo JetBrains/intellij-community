@@ -1,6 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package com.intellij.ide.projectView;
+package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -15,7 +15,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
+abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
   private final PsiModificationTracker myModificationTracker;
   private long myModificationCount;
 

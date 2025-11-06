@@ -4,7 +4,6 @@ package com.intellij.ide.projectView.impl;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.bookmark.BookmarksListener;
 import com.intellij.ide.bookmark.FileBookmarksListener;
-import com.intellij.ide.projectView.ProjectViewPsiTreeChangeListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
