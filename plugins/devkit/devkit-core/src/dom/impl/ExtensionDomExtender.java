@@ -105,18 +105,16 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
       }
 
       private static @NotNull Class<?> getAttributeValueClass(@NonNls @NotNull String attributeName, PsiType fieldType, With withElement) {
-        Class<?> clazz = String.class;
         if (PsiTypes.booleanType().equals(fieldType)) {
-          clazz = Boolean.class;
+          return Boolean.class;
         }
-        else if (PsiTypes.intType().equals(fieldType) ||
-                 fieldType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
-          clazz = Integer.class;
+        else if (PsiTypes.intType().equals(fieldType) || fieldType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)) {
+          return Integer.class;
         }
         else if (withElement != null || Extension.isClassField(attributeName)) {
-          clazz = PsiClass.class;
+          return PsiClass.class;
         }
-        return clazz;
+        return String.class;
       }
 
       @Override
@@ -128,14 +126,11 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
             .setDeclaringElement(field);
         markAsRequiredIfNeeded(extension, required);
 
-        if (isBoolean) {
-          return;
+        if (!isBoolean) {
+          final With withElement = findWithElement(elements, field);
+          markAsClass(extension, Extension.isClassField(field.getName()), withElement);
+          markAsString(extension, field, field.getType(), tagName);
         }
-
-        final With withElement = findWithElement(elements, field);
-        markAsClass(extension, Extension.isClassField(field.getName()), withElement);
-
-        markAsString(extension, field, field.getType(), tagName);
       }
 
       @Override
@@ -143,17 +138,18 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
                                    @Nullable String tagName,
                                    @NotNull PsiAnnotation collectionAnnotation,
                                    RequiredFlag required) {
-        if (tagName == null) {
-          registerCollectionBinding(field, registrar, collectionAnnotation, required);
-          return;
+        if (tagName != null) {
+          registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class)
+            .addExtender(new DomExtender() {
+              @Override
+              public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
+                registerCollectionBinding(field, registrar, collectionAnnotation, required);
+              }
+            });
         }
-
-        registrar.registerFixedNumberChildExtension(new XmlName(tagName), DomElement.class).addExtender(new DomExtender() {
-          @Override
-          public void registerExtensions(@NotNull DomElement domElement, @NotNull DomExtensionsRegistrar registrar) {
-            registerCollectionBinding(field, registrar, collectionAnnotation, required);
-          }
-        });
+        else {
+          registerCollectionBinding(field, registrar, collectionAnnotation, required);
+        }
       }
     });
   }
@@ -184,11 +180,9 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
   }
 
   private static void markAsRequiredIfNeeded(DomExtension extension, ExtensionPointBinding.BindingVisitor.RequiredFlag required) {
-    if (required == ExtensionPointBinding.BindingVisitor.RequiredFlag.REQUIRED) {
-      extension.addCustomAnnotation(MyRequired.INSTANCE);
-    }
-    else if (required == ExtensionPointBinding.BindingVisitor.RequiredFlag.REQUIRED_ALLOW_EMPTY) {
-      extension.addCustomAnnotation(MyRequiredCanBeEmpty.INSTANCE);
+    switch (required) {
+      case REQUIRED -> extension.addCustomAnnotation(MyRequired.INSTANCE);
+      case REQUIRED_ALLOW_EMPTY -> extension.addCustomAnnotation(MyRequiredCanBeEmpty.INSTANCE);
     }
   }
 
