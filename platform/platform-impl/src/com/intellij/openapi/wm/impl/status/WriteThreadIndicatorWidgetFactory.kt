@@ -13,10 +13,12 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.UIBundle
 import com.intellij.util.ThreeState
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -94,6 +96,16 @@ private class WriteThreadWidget : CustomStatusBarWidget {
   override fun ID(): String = ID
 
   private inner class MyComponent : JPanel() {
+
+    init {
+      if (ExperimentalUI.isNewUI()) {
+        isOpaque = false
+
+        // Don't allow hover be inside the widget
+        border = JBUI.Borders.empty()
+      }
+    }
+
     override fun getPreferredSize(): Dimension = WIDGET_SIZE
 
     override fun getMinimumSize(): Dimension = WIDGET_SIZE
@@ -104,6 +116,10 @@ private class WriteThreadWidget : CustomStatusBarWidget {
       super.paint(g)
       if (g !is Graphics2D) {
         return
+      }
+
+      if (ExperimentalUI.isNewUI()) {
+        g.translate((width - WIDGET_SIZE.width) / 2, (height - WIDGET_SIZE.height) / 2)
       }
 
       for ((xOffset, stats) in statsDeque.withIndex()) {
