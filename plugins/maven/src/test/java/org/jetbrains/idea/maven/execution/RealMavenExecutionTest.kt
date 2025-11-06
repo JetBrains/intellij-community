@@ -80,6 +80,7 @@ class RealMavenExecutionTest : MavenExecutionTest() {
 
   @Test
   fun testProjectWithVmOptionsWithVMOptions() = runBlocking {
+    assumeVersionAtLeast("3.6.3")
     useProject("mavenProjectWithVmOptionsInEnforcer")
     val executionInfo = execute(
       MavenRunnerParameters(true,
