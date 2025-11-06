@@ -17,6 +17,7 @@ import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.IdeUICustomization
@@ -50,6 +51,15 @@ public class JavaAutoImportOptions(public val project: Project) : UiDslUnnamedCo
                                                            JavaBundle.message("auto.static.import.comment"),
                                                            JavaBundle.message("auto.static.import.class"),
                                                            JavaBundle.message("auto.static.import.scope")) {
+
+    override fun validate(value: Any?, component: JComponent?): ValidationInfo? {
+      val info = super.validate(value, component)
+      if (info != null && value is String && value.startsWith("-")) {
+        val cutInfo = super.validate(value.substring(1), component)
+        if (cutInfo == null) return null
+      }
+      return info
+    }
 
     override fun getIdeRows(): Array<out String> {
       return JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames.toTypedArray()

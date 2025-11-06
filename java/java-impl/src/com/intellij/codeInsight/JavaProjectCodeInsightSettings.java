@@ -25,6 +25,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.regex.Matcher;
@@ -43,10 +44,34 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
     return project.getService(JavaProjectCodeInsightSettings.class);
   }
 
-  public List<String> getAllIncludedAutoStaticNames() {
+  public AutoStaticNameContainer getAllIncludedAutoStaticNames() {
     List<String> names = new ArrayList<>(includedAutoStaticNames);
     names.addAll(JavaIdeCodeInsightSettings.getInstance().includedAutoStaticNames);
-    return names;
+    return AutoStaticNameContainer.create(names);
+  }
+
+  public record AutoStaticNameContainer(LinkedHashSet<String> includedNames, LinkedHashSet<String> excludedNames) {
+
+    public boolean containsName(@NotNull String name) {
+      return (includedNames.contains(name) || includedNames.contains(StringUtil.getPackageName(name))) &&
+             !(excludedNames.contains(name) || excludedNames.contains(StringUtil.getPackageName(name)));
+    }
+
+    public static AutoStaticNameContainer create(List<String> allNames) {
+      LinkedHashSet<String> includedNames = new LinkedHashSet<>();
+      LinkedHashSet<String> excludedNames = new LinkedHashSet<>();
+      for (String name : allNames) {
+        if (name == null) continue;
+        if (StringUtil.isEmptyOrSpaces(name)) continue;
+        if (name.startsWith("-")) {
+          excludedNames.add(name.substring(1));
+        }
+        else {
+          includedNames.add(name);
+        }
+      }
+      return new AutoStaticNameContainer(includedNames, excludedNames);
+    }
   }
 
   /**
@@ -58,8 +83,8 @@ public class JavaProjectCodeInsightSettings implements PersistentStateComponent<
    */
   public boolean isStaticAutoImportName(@Nullable String name) {
     if (name == null) return false;
-    List<String> names = getAllIncludedAutoStaticNames();
-    return names.contains(name) || names.contains(StringUtil.getPackageName(name));
+    AutoStaticNameContainer names = getAllIncludedAutoStaticNames();
+    return names.containsName(name);
   }
 
   public boolean isExcluded(@NotNull String name) {

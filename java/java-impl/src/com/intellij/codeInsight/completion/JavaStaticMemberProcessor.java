@@ -42,24 +42,42 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     JavaProjectCodeInsightSettings codeInsightSettings = JavaProjectCodeInsightSettings.getSettings(project);
     JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
     GlobalSearchScope resolveScope = parameters.getOriginalFile().getResolveScope();
-    for (String name : codeInsightSettings.getAllIncludedAutoStaticNames()) {
+    JavaProjectCodeInsightSettings.AutoStaticNameContainer autoContainer = codeInsightSettings.getAllIncludedAutoStaticNames();
+    for (String name : autoContainer.includedNames()) {
       PsiClass aClass = javaPsiFacade.findClass(name, resolveScope);
-      if (aClass != null && isAccessibleClass(aClass)) {
-        importMembersOf(aClass);
+      if (aClass != null &&
+          aClass.getQualifiedName() != null &&
+          isAccessibleClass(aClass)) {
+        for (PsiMethod method : aClass.getAllMethods()) {
+          if (method.hasModifierProperty(PsiModifier.STATIC) &&
+              autoContainer.containsName(aClass.getQualifiedName() + "." + method.getName())) {
+            importMember(method);
+          }
+        }
+        for (PsiField psiField : aClass.getAllFields()) {
+          if (psiField.hasModifierProperty(PsiModifier.STATIC) &&
+              autoContainer.containsName(aClass.getQualifiedName() + "." + psiField.getName())) {
+            importMember(psiField);
+          }
+        }
       }
       else {
         String shortMemberName = StringUtil.getShortName(name);
         String containingMemberName = StringUtil.getPackageName(name);
         if (containingMemberName.isEmpty() || shortMemberName.isEmpty()) continue;
         PsiClass containingClass = javaPsiFacade.findClass(containingMemberName, resolveScope);
-        if (containingClass != null && isAccessibleClass(containingClass)) {
+        if (containingClass == null || containingClass.getQualifiedName() == null) continue;
+        if (isAccessibleClass(containingClass)) {
           for (PsiMethod method : containingClass.findMethodsByName(shortMemberName, true)) {
-            if (method.hasModifierProperty(PsiModifier.STATIC)) {
+            if (method.hasModifierProperty(PsiModifier.STATIC) &&
+                autoContainer.containsName(containingClass.getQualifiedName() + "." + method.getName())) {
               importMember(method);
             }
           }
           PsiField psiField = containingClass.findFieldByName(shortMemberName, true);
-          if (psiField != null && psiField.hasModifierProperty(PsiModifier.STATIC)) {
+          if (psiField != null &&
+              psiField.hasModifierProperty(PsiModifier.STATIC) &&
+              autoContainer.containsName(containingClass.getQualifiedName() + "." + psiField.getName())) {
             importMember(psiField);
           }
         }

@@ -124,10 +124,10 @@ abstract class ImportTable extends ListTableWithButtons<ImportTable.Item> implem
 
         new ComponentValidator(validatorsDisposable).withValidator(() -> {
           String text = cellEditor.getText();
-          boolean hasError = !StringUtil.isEmpty(text) && !ourPackagePattern.matcher(text).matches();
+          ValidationInfo info = validate(text, cellEditor);
+          boolean hasError = info != null;
           ValidationUtils.setExtension(cellEditor, ValidationUtils.ERROR_EXTENSION, hasError);
-
-          return validationInfoProducer.apply(text, cellEditor);
+          return info;
         }).andRegisterOnDocumentListener(cellEditor).installOn(cellEditor);
 
         return new DefaultCellEditor(cellEditor);
@@ -139,7 +139,7 @@ abstract class ImportTable extends ListTableWithButtons<ImportTable.Item> implem
         cellEditor.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, Boolean.TRUE);
 
         return new ValidatingTableCellRendererWrapper(new DefaultTableCellRenderer()).
-          withCellValidator((value, row, column) -> validationInfoProducer.apply(value, null)).
+          withCellValidator((value, row, column) -> validate(value, null)).
           bindToEditorSize(cellEditor::getPreferredSize);
       }
 
@@ -153,6 +153,10 @@ abstract class ImportTable extends ListTableWithButtons<ImportTable.Item> implem
         item.row = value;
       }
     };
+  }
+
+  protected @Nullable ValidationInfo validate(@Nullable Object value, @Nullable JComponent component) {
+    return validationInfoProducer.apply(value, component);
   }
 
   @Override

@@ -139,7 +139,7 @@ public abstract class StaticMemberProcessor {
     }
   }
 
-  private boolean isStaticallyImportable(@NotNull PsiMember member) {
+  protected boolean isStaticallyImportable(@NotNull PsiMember member) {
     return member.hasModifierProperty(PsiModifier.STATIC) && isAccessible(member) && !isExcluded(member);
   }
 

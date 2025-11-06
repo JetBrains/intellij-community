@@ -18,7 +18,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,15 +27,15 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
     JavaProjectCodeInsightSettings settings = JavaProjectCodeInsightSettings.getSettings(holder.getProject());
-    List<String> names = settings.getAllIncludedAutoStaticNames();
-    if (names.isEmpty()) {
+    JavaProjectCodeInsightSettings.AutoStaticNameContainer autoStaticNames = settings.getAllIncludedAutoStaticNames();
+    if (autoStaticNames.includedNames().isEmpty()) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    Set<String> shortNames = names.stream()
+    Set<String> shortNames = autoStaticNames.includedNames().stream()
       .map(name -> StringUtil.getShortName(name))
       .collect(Collectors.toSet());
 
-    Set<String> classShortNames = names.stream()
+    Set<String> classShortNames = autoStaticNames.includedNames().stream()
       .map(name -> StringUtil.getShortName(StringUtil.getPackageName(name)))
       .filter(name -> !name.isBlank())
       .collect(Collectors.toSet());
@@ -57,9 +56,45 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
         holder.registerProblem(qualifierReference,
                                JavaBundle.message("inspection.static.import.can.be.used.display.name"),
                                new StaticImportFix(),
-                               new DeleteSettingsFromAutoImportTable(context.fqn));
+                               new DeleteSettingsFromAutoImportTable(context.fqn),
+                               new AddExclusionFromAutoImportTable(context.fqn));
       }
     };
+  }
+
+  private static class AddExclusionFromAutoImportTable extends ModCommandQuickFix {
+    private final String myFqn;
+
+    private AddExclusionFromAutoImportTable(String fqn) { myFqn = fqn; }
+
+    @Override
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      if (element == null) return ModCommand.nop();
+      JavaIdeCodeInsightSettings settings = JavaIdeCodeInsightSettings.getInstance();
+      if (settings.includedAutoStaticNames.contains(myFqn) || settings.includedAutoStaticNames.contains(StringUtil.getPackageName(myFqn))) {
+        return ModCommand.updateOptionList(element,
+                                           "JavaIdeCodeInsightSettings.includedAutoStaticNames",
+                                           strings -> {
+                                             strings.add("-" + myFqn);
+                                           });
+      }
+      return ModCommand.updateOptionList(element,
+                                         "JavaProjectCodeInsightSettings.includedAutoStaticNames",
+                                         strings -> {
+                                           strings.add("-" + myFqn);
+                                         });
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return JavaBundle.message("inspection.static.import.can.be.used.exclude.from.auto.import.name", myFqn);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return JavaBundle.message("inspection.static.import.can.be.used.exclude.from.auto.import.family.name");
+    }
   }
 
   private static class DeleteSettingsFromAutoImportTable extends ModCommandQuickFix {
@@ -76,15 +111,19 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
         return ModCommand.updateOptionList(element,
                                            "JavaIdeCodeInsightSettings.includedAutoStaticNames",
                                            strings -> {
-                                             strings.remove(myFqn);
-                                             strings.remove(StringUtil.getPackageName(myFqn));
+                                             strings.removeIf(t ->
+                                                                t.startsWith(StringUtil.getPackageName(myFqn)) ||
+                                                                t.startsWith("-" + StringUtil.getPackageName(myFqn))
+                                             );
                                            });
       }
       return ModCommand.updateOptionList(element,
                                          "JavaProjectCodeInsightSettings.includedAutoStaticNames",
                                          strings -> {
-                                           strings.remove(myFqn);
-                                           strings.remove(StringUtil.getPackageName(myFqn));
+                                           strings.removeIf(t->
+                                                              t.startsWith(StringUtil.getPackageName(myFqn)) ||
+                                                              t.startsWith("-" + StringUtil.getPackageName(myFqn))
+                                             );
                                          });
     }
 
