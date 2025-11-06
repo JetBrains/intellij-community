@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.intellij.tools.build.bazel.jvmIncBuilder
 
 import com.intellij.openapi.diagnostic.DefaultLogger
@@ -63,6 +65,8 @@ internal class IJPrintStreamLogger(category: String, private val stream: PrintSt
     throw UnsupportedOperationException()
   }
 
+  @Deprecated("Deprecated in Java")
+  @Suppress("UnstableApiUsage")
   override fun setLevel(p0: Level) {
     throw UnsupportedOperationException()
   }
