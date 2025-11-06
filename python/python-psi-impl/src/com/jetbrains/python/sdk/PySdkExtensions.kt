@@ -20,12 +20,11 @@ val Editor.pythonSdk: Sdk?
 
 fun Sdk.getExecutablePath(name: String): Path? = homePath?.let {
   val base = Path(it)
-  if (OS.CURRENT == OS.Windows) {
-    val candidates = listOf("exe", "bat", "cmd", "com").map { ext -> Path(it + "." + ext) }
-    val found = candidates.firstNotNullOfOrNull { candidate -> PythonSdkUtil.getExecutablePath(candidate, name) }
-    found ?: PythonSdkUtil.getExecutablePath(base, name)
+  val candidates = if (OS.CURRENT == OS.Windows) {
+    listOf("exe", "bat", "cmd", "com").map { ext -> "$name.$ext" }.plusElement(name)
   }
   else {
-    PythonSdkUtil.getExecutablePath(base, name)
+    listOf(name)
   }
+  candidates.firstNotNullOfOrNull { candidate -> PythonSdkUtil.getExecutablePath(base, candidate) }
 }
