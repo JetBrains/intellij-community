@@ -98,13 +98,19 @@ internal class MavenWrapperSupport {
     if (!zipFile.exists()) {
       throw RuntimeException(SyncBundle.message("cannot.download.zip.from", urlString))
     }
-    val home = unpackZipFile(zipFile, indicator).toRealPath()
+
+    val existingMavenHome = zipFile.parent.listDirectoryEntries().firstOrNull { it.isDirectory() }?.toRealPath()
+    if (null != existingMavenHome) {
+      return LocalMavenDistribution(existingMavenHome, urlString)
+    }
+
+    unzip(zipFile, indicator)
+    val home = extractMavenHomeDirectory(zipFile)
     setDistributionPath(project, urlString, home)
     return LocalMavenDistribution(home, urlString)
   }
 
-  private fun unpackZipFile(zipFile: Path, indicator: ProgressIndicator?): Path {
-    unzip(zipFile, indicator)
+  private fun extractMavenHomeDirectory(zipFile: Path): Path {
     val dirs = zipFile.parent.listDirectoryEntries().filter { it.isDirectory() }
     if (dirs.size != 1) {
       MavenLog.LOG.warn("Expected exactly 1 top level dir in Maven distribution, found: $dirs")
@@ -114,7 +120,7 @@ internal class MavenWrapperSupport {
     if (mavenHome.getEelDescriptor().osFamily.isPosix) {
       makeMavenBinRunnable(mavenHome)
     }
-    return mavenHome
+    return mavenHome.toRealPath()
   }
 
   private fun makeMavenBinRunnable(mavenHome: Path) {
