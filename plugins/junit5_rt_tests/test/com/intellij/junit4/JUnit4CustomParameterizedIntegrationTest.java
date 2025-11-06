@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.junit4;
 
 import com.intellij.execution.ExecutionException;
@@ -15,6 +15,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 @RunWith(Parameterized.class)
 public class JUnit4CustomParameterizedIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
@@ -30,8 +31,8 @@ public class JUnit4CustomParameterizedIntegrationTest extends AbstractTestFramew
   public static Collection<Object[]> data() {
     return Arrays.asList(createParams("com.tngtech.junit.dataprovider:junit4-dataprovider:2.6", "dataProvider", "[1: 1]"),
                          createParams("com.carrotsearch.randomizedtesting:randomizedtesting-runner:2.7.8", "randomizedtesting", "[value=1]"),
-                         createParams("com.google.testparameterinjector:test-parameter-injector:1.3", "testparameterinjector", "[1]"),
-                         createParams("com.google.testparameterinjector:test-parameter-injector:1.3", "testparameterinjectorfield", "[a=1]")
+                         createParams("com.google.testparameterinjector:test-parameter-injector:1.19", "testparameterinjector", "[1]"),
+                         createParams("com.google.testparameterinjector:test-parameter-injector:1.19", "testparameterinjectorfield", "[a=1]")
     );
   }
 
@@ -51,6 +52,7 @@ public class JUnit4CustomParameterizedIntegrationTest extends AbstractTestFramew
   @Override
   protected void setupModule() throws Exception {
     super.setupModule();
+    addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("com.google.guava:guava:33.5.0-jre"), getRepoManager());
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor(myMavenId), getRepoManager());
     addMavenLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit:junit:4.12"), getRepoManager());
   }
@@ -59,7 +61,7 @@ public class JUnit4CustomParameterizedIntegrationTest extends AbstractTestFramew
   public void executeOneParameter() throws ExecutionException {
     ProcessOutput processOutput = doStartProcess(myParamString);
     String testOutput = processOutput.out.toString();
-    assertEmpty(processOutput.err);
+    emptyError(processOutput);
     assertTrue(testOutput, testOutput.contains("Test1"));
     assertFalse(testOutput, testOutput.contains("Test2"));
   }
@@ -68,7 +70,7 @@ public class JUnit4CustomParameterizedIntegrationTest extends AbstractTestFramew
   public void executeNoParameters() throws ExecutionException {
     ProcessOutput processOutput = doStartProcess(null);
     String testOutput = processOutput.out.toString();
-    assertEmpty(processOutput.err);
+    emptyError(processOutput);
     assertTrue(testOutput, testOutput.contains("Test1"));
     assertTrue(testOutput, testOutput.contains("Test2"));
   }
@@ -80,5 +82,10 @@ public class JUnit4CustomParameterizedIntegrationTest extends AbstractTestFramew
     JUnitConfiguration configuration = createConfiguration(testMethod);
     configuration.setProgramParameters(paramString);
     return doStartTestsProcess(configuration);
+  }
+  
+  private static void emptyError(ProcessOutput out) {
+    List<String> errors = out.err.stream().filter(s -> !s.startsWith("WARNING: ")).toList();
+    assertEmpty(errors);
   }
 }
