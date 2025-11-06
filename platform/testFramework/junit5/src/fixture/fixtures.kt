@@ -74,8 +74,8 @@ fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path
           fileLogger().warn("Can't delete $realTempDir", e)
           Thread.sleep(100)
         }
-        realTempDir.delete()
       }
+      realTempDir.delete(recursively = true)
     }
   }
 }
