@@ -65,17 +65,17 @@
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.10.0-alpha03/lifecycle-runtime-desktop-2.10.0-alpha03.jar">
               <sha256sum>70634adb54f9268685e45226e386a9f3856a2568dfc3de2db49b6b4c75c831fe</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/arch/core/core-common/2.2.0/core-common-2.2.0.jar">
-              <sha256sum>65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.1.0/annotation-1.1.0.jar">
-              <sha256sum>d38d63edb30f1467818d50aaf05f8a692dea8b31392a049bfa991b159ad5b692</sha256sum>
-            </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.10.0-alpha03/lifecycle-common-jvm-2.10.0-alpha03.jar">
               <sha256sum>ee37d7927dba6cffd167c6244fc33e483f2b6d407def89395c8a2986bc2504c5</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar">
               <sha256sum>1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/arch/core/core-common/2.2.0/core-common-2.2.0.jar">
+              <sha256sum>65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.1.0/annotation-1.1.0.jar">
+              <sha256sum>d38d63edb30f1467818d50aaf05f8a692dea8b31392a049bfa991b159ad5b692</sha256sum>
             </artifact>
           </verification>
           <exclude>
