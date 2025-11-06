@@ -4449,8 +4449,8 @@ jvm_import(
 
 jvm_import(
   name = "kotlinx-coroutines-core",
-  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_1-intellij-6_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_1-intellij-6-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -4463,29 +4463,29 @@ java_library(
 
 jvm_import(
   name = "kotlinx-coroutines-debug",
-  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_1-intellij-6_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_1-intellij-6-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-coroutines-guava",
-  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_1-intellij-6_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_1-intellij-6-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-coroutines-slf4j",
-  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_1-intellij-6_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_1-intellij-6-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "kotlinx-coroutines-test",
-  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_1-intellij-6_http//file",
-  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_1-intellij-6-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-1_http//file",
+  source_jar = "@org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-1-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

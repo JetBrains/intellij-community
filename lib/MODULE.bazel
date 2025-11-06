@@ -6762,73 +6762,73 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_1-intellij-6_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.10.1-intellij-6/kotlinx-coroutines-core-jvm-1.10.1-intellij-6.jar",
-  sha256 = "f0c5dd90a0d1b5555a39a3151ef943bba54521d0b77caa06282c4584dbf94a68",
-  downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.1-intellij-6.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.10.2-intellij-1/kotlinx-coroutines-core-jvm-1.10.2-intellij-1.jar",
+  sha256 = "1e9b4b60644ca8dd5e9687ad096aee0028bd9d3a24afed3e38565b22ca726ee0",
+  downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.2-intellij-1.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_1-intellij-6-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.10.1-intellij-6/kotlinx-coroutines-core-jvm-1.10.1-intellij-6-sources.jar",
-  sha256 = "c3eb90d9d641807f87f1b3e4780c25b408a2a18285f03737cc1b6909142ee339",
-  downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.1-intellij-6-sources.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-core-jvm-1_10_2-intellij-1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-core-jvm/1.10.2-intellij-1/kotlinx-coroutines-core-jvm-1.10.2-intellij-1-sources.jar",
+  sha256 = "8f06a61109aff4d83c71bc29fa1659ef8477360b34d1379cab4d20e1c83bb488",
+  downloaded_file_path = "kotlinx-coroutines-core-jvm-1.10.2-intellij-1-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_1-intellij-6_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-debug/1.10.1-intellij-6/kotlinx-coroutines-debug-1.10.1-intellij-6.jar",
-  sha256 = "2c758b1d2fc710ce7bb9d83b66e10322cea522a10a7883babeb5469930d884c5",
-  downloaded_file_path = "kotlinx-coroutines-debug-1.10.1-intellij-6.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-debug/1.10.2-intellij-1/kotlinx-coroutines-debug-1.10.2-intellij-1.jar",
+  sha256 = "9d22a3c12d2e9446ed6582dae3a6a76428d118edf14c42098aa46dd6d880fa4d",
+  downloaded_file_path = "kotlinx-coroutines-debug-1.10.2-intellij-1.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_1-intellij-6-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-debug/1.10.1-intellij-6/kotlinx-coroutines-debug-1.10.1-intellij-6-sources.jar",
-  sha256 = "c1c3c00eba34a9c16411e9960053c7a9dff5e95befa40a2dbbe9647750f03980",
-  downloaded_file_path = "kotlinx-coroutines-debug-1.10.1-intellij-6-sources.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-debug-1_10_2-intellij-1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-debug/1.10.2-intellij-1/kotlinx-coroutines-debug-1.10.2-intellij-1-sources.jar",
+  sha256 = "230e7749b4bb7df528f998555b553936c26a159efa6419fc225cf96beec82546",
+  downloaded_file_path = "kotlinx-coroutines-debug-1.10.2-intellij-1-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_1-intellij-6_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.10.1-intellij-6/kotlinx-coroutines-guava-1.10.1-intellij-6.jar",
-  sha256 = "19aee8eb1611f2b3a2fc53a98288537b24892c1e2d1ab666bf87ebc0680036a0",
-  downloaded_file_path = "kotlinx-coroutines-guava-1.10.1-intellij-6.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.10.2-intellij-1/kotlinx-coroutines-guava-1.10.2-intellij-1.jar",
+  sha256 = "8763dd35bcad9dc38e6b628d4b294d820868df7a9c3bd62c5c7bc38edd5e4a13",
+  downloaded_file_path = "kotlinx-coroutines-guava-1.10.2-intellij-1.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_1-intellij-6-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.10.1-intellij-6/kotlinx-coroutines-guava-1.10.1-intellij-6-sources.jar",
-  sha256 = "fd63e2ee6d726b0c8886a223beba3d8504f9c846688c91104b4c5cd5cb89a4b1",
-  downloaded_file_path = "kotlinx-coroutines-guava-1.10.1-intellij-6-sources.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-guava-1_10_2-intellij-1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-guava/1.10.2-intellij-1/kotlinx-coroutines-guava-1.10.2-intellij-1-sources.jar",
+  sha256 = "3c6b983de3d3fea39c2d30187869a680d235367e8060bb06adaca96f28e3610e",
+  downloaded_file_path = "kotlinx-coroutines-guava-1.10.2-intellij-1-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_1-intellij-6_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.1-intellij-6/kotlinx-coroutines-slf4j-1.10.1-intellij-6.jar",
-  sha256 = "5da8f9755dd622e7b2cf06e545cc33d2453a4fb44e5e31a8a957b97eaf44f386",
-  downloaded_file_path = "kotlinx-coroutines-slf4j-1.10.1-intellij-6.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.2-intellij-1/kotlinx-coroutines-slf4j-1.10.2-intellij-1.jar",
+  sha256 = "b717a07b48c38f6ef8c844143c7ca76f7a6ed0276a2333f9499bc12e008d0c61",
+  downloaded_file_path = "kotlinx-coroutines-slf4j-1.10.2-intellij-1.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_1-intellij-6-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.1-intellij-6/kotlinx-coroutines-slf4j-1.10.1-intellij-6-sources.jar",
-  sha256 = "b78a1d3ee68bbcbe586af07ddf115acfcaa5140b151b096cb46ed0ab03e2e873",
-  downloaded_file_path = "kotlinx-coroutines-slf4j-1.10.1-intellij-6-sources.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-slf4j-1_10_2-intellij-1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-slf4j/1.10.2-intellij-1/kotlinx-coroutines-slf4j-1.10.2-intellij-1-sources.jar",
+  sha256 = "dda069c41f04c0ebe5377a0d6200d8c0e20b5406e4823a723b1fae0af31873c8",
+  downloaded_file_path = "kotlinx-coroutines-slf4j-1.10.2-intellij-1-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_1-intellij-6_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-test-jvm/1.10.1-intellij-6/kotlinx-coroutines-test-jvm-1.10.1-intellij-6.jar",
-  sha256 = "9f9ade080368414b52d7e66b2cc48f65a2e369f98b2de2d56a6664428dd58131",
-  downloaded_file_path = "kotlinx-coroutines-test-jvm-1.10.1-intellij-6.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-1_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-test-jvm/1.10.2-intellij-1/kotlinx-coroutines-test-jvm-1.10.2-intellij-1.jar",
+  sha256 = "9eacaf068b49da9648134b42b08d071b66fd8fc70bed344dbc162f6c21beb555",
+  downloaded_file_path = "kotlinx-coroutines-test-jvm-1.10.2-intellij-1.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_1-intellij-6-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-test-jvm/1.10.1-intellij-6/kotlinx-coroutines-test-jvm-1.10.1-intellij-6-sources.jar",
-  sha256 = "89847b3d36bcbb75f3f4dedc674937dae5f0d5c59f9e6fef0313cbe15a8f3617",
-  downloaded_file_path = "kotlinx-coroutines-test-jvm-1.10.1-intellij-6-sources.jar"
+  name = "org_jetbrains_intellij_deps_kotlinx-kotlinx-coroutines-test-jvm-1_10_2-intellij-1-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/kotlinx/kotlinx-coroutines-test-jvm/1.10.2-intellij-1/kotlinx-coroutines-test-jvm-1.10.2-intellij-1-sources.jar",
+  sha256 = "03c2bbc551541ef7b7fdcda0c3be67a51e4ddb0e553fdb9df0493acdaebf7ba7",
+  downloaded_file_path = "kotlinx-coroutines-test-jvm-1.10.2-intellij-1-sources.jar"
 )
 
 http_file(
