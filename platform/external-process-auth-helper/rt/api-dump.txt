@@ -1,14 +1,4 @@
 externalApp.ExternalApp
-externalApp.ExternalAppEntry
-- s:fromMain(java.lang.String[]):externalApp.ExternalAppEntry
-- s:fromMain(java.lang.String[],java.lang.Class):externalApp.ExternalAppEntry
-- a:getArgs():java.lang.String[]
-- a:getEnvironment():java.util.Map
-- a:getExecutablePath():java.nio.file.Path
-- a:getStderr():java.io.PrintStream
-- a:getStdin():java.io.InputStream
-- a:getStdout():java.io.PrintStream
-- a:getWorkingDirectory():java.lang.String
 externalApp.ExternalAppHandler
 - sf:HANDLER_ID_PARAMETER:java.lang.String
 f:externalApp.ExternalAppUtil
@@ -27,8 +17,6 @@ c:externalApp.ExternalAppUtil$Result
 - s:error(I,java.lang.String):externalApp.ExternalAppUtil$Result
 - getPresentableError():java.lang.String
 - s:success(I,java.lang.String):externalApp.ExternalAppUtil$Result
-externalApp.ExternalCli
-- a:entryPoint(externalApp.ExternalAppEntry):I
 c:externalApp.nativessh.NativeSshAskPassApp
 - externalApp.ExternalApp
 - externalApp.ExternalCli
