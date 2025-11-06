@@ -5,13 +5,14 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.eel.provider.EelProvider
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
 class TcpEelProvider : EelProvider {
-  override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String) {
-    val endpoint = path.extractTcpEndpoint() ?: return
-    TcpEelRegistry.getInstance().register(endpoint)
+  override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String): EelMachine? {
+    val endpoint = path.extractTcpEndpoint() ?: return null
+    return TcpEelRegistry.getInstance().register(endpoint).getResolvedEelMachine()
   }
 
   override fun getEelDescriptor(path: @MultiRoutingFileSystemPath Path): EelDescriptor? {
@@ -21,16 +22,5 @@ class TcpEelProvider : EelProvider {
 
   override fun getCustomRoots(eelDescriptor: EelDescriptor): Collection<@MultiRoutingFileSystemPath String>? {
     return if (eelDescriptor is TcpEelDescriptor) listOf(eelDescriptor.rootPathString) else null
-  }
-
-  override fun getInternalName(eelMachine: EelMachine): String? {
-    if (eelMachine !is TcpEelMachine) return null
-    return "tcp-${eelMachine.tcpEndpoint.toPath()}"
-  }
-
-  override fun getEelMachineByInternalName(internalName: String): EelMachine? {
-    if (!internalName.startsWith("tcp-")) return null
-    val tcpDescriptor = internalName.extractTcpEndpoint() ?: return null
-    return TcpEelMachine(tcpDescriptor)
   }
 }

@@ -14,15 +14,15 @@ internal class TcpEelRegistry {
     private val LOG = logger<TcpEelRegistry>()
   }
   private val registry = ConcurrentHashMap<TcpEndpoint, TcpEelDescriptor>()
-  fun register(endpoint: TcpEndpoint) {
-    registry.compute(endpoint) { _, oldValue ->
+  fun register(endpoint: TcpEndpoint): TcpEelDescriptor {
+    return registry.compute(endpoint) { _, oldValue ->
       if (oldValue == null) {
           LOG.info("Creating TCP descriptor for $endpoint")
         TcpEelDescriptor(endpoint)
       } else {
         oldValue
       }
-    }
+    }!!
   }
   fun get(endpoint: TcpEndpoint): TcpEelDescriptor? {
     return registry[endpoint]

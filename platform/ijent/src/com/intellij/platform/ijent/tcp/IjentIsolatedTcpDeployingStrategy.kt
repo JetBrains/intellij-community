@@ -18,9 +18,8 @@ abstract class IjentIsolatedTcpDeployingStrategy : IjentDeployingStrategy {
    * @return [IjentSessionMediator] with the scope of running IJent
    */
   protected abstract suspend fun deployEnvironment(): IjentSessionMediator
-  override suspend fun getConnectionStrategy(): IjentConnectionStrategy.Tcp {
-    TODO("Should be implemented by the subclass")
-  }
+  abstract override suspend fun getConnectionStrategy(): IjentConnectionStrategy.Tcp
+
   protected abstract fun closeConnection()
 
   override suspend fun <T : IjentApi> createIjentSession(): IjentSession<T> =
