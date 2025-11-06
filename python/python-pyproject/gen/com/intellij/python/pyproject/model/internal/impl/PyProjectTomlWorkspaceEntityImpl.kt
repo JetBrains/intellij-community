@@ -3,7 +3,15 @@ package com.intellij.python.pyproject.model.internal.impl
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.jps.entities.ModuleId
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.ConnectionId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntityBuilder
+import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -14,6 +22,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntity
 import com.intellij.python.pyproject.model.internal.PyProjectTomlWorkspaceEntityBuilder
@@ -40,6 +49,12 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       readField("participatedTools")
       return dataSource.participatedTools
     }
+  override val dirWithToml: VirtualFileUrl
+    get() {
+      readField("dirWithToml")
+      return dataSource.dirWithToml
+    }
+
   override val module: ModuleEntity
     get() = snapshot.extractOneToOneParent(MODULE_CONNECTION_ID, this)!!
 
@@ -76,6 +91,7 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
+      index(this, "dirWithToml", this.dirWithToml)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -88,6 +104,9 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       }
       if (!getEntityData().isParticipatedToolsInitialized()) {
         error("Field PyProjectTomlWorkspaceEntity#participatedTools should be initialized")
+      }
+      if (!getEntityData().isDirWithTomlInitialized()) {
+        error("Field PyProjectTomlWorkspaceEntity#dirWithToml should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
@@ -110,6 +129,7 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       dataSource as PyProjectTomlWorkspaceEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.participatedTools != dataSource.participatedTools) this.participatedTools = dataSource.participatedTools.toMutableMap()
+      if (this.dirWithToml != dataSource.dirWithToml) this.dirWithToml = dataSource.dirWithToml
       updateChildToParentReferences(parents)
     }
 
@@ -129,6 +149,16 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
         checkModificationAllowed()
         getEntityData(true).participatedTools = value
         changedProperty.add("participatedTools")
+      }
+
+    override var dirWithToml: VirtualFileUrl
+      get() = getEntityData().dirWithToml
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).dirWithToml = value
+        changedProperty.add("dirWithToml")
+        val _diff = diff
+        if (_diff != null) index(this, "dirWithToml", value)
       }
 
     override var module: ModuleEntityBuilder
@@ -174,8 +204,10 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectTomlWorkspaceEntity>() {
   lateinit var participatedTools: Map<ToolId, ModuleId?>
+  lateinit var dirWithToml: VirtualFileUrl
 
   internal fun isParticipatedToolsInitialized(): Boolean = ::participatedTools.isInitialized
+  internal fun isDirWithTomlInitialized(): Boolean = ::dirWithToml.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntityBuilder<PyProjectTomlWorkspaceEntity> {
     val modifiable = PyProjectTomlWorkspaceEntityImpl.Builder(null)
@@ -205,7 +237,7 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return PyProjectTomlWorkspaceEntity(participatedTools, entitySource) {
+    return PyProjectTomlWorkspaceEntity(participatedTools, dirWithToml, entitySource) {
       parents.filterIsInstance<ModuleEntityBuilder>().singleOrNull()?.let { this.module = it }
     }
   }
@@ -224,6 +256,7 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
 
     if (this.entitySource != other.entitySource) return false
     if (this.participatedTools != other.participatedTools) return false
+    if (this.dirWithToml != other.dirWithToml) return false
     return true
   }
 
@@ -234,18 +267,21 @@ internal class PyProjectTomlWorkspaceEntityData : WorkspaceEntityData<PyProjectT
     other as PyProjectTomlWorkspaceEntityData
 
     if (this.participatedTools != other.participatedTools) return false
+    if (this.dirWithToml != other.dirWithToml) return false
     return true
   }
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     result = 31 * result + participatedTools.hashCode()
+    result = 31 * result + dirWithToml.hashCode()
     return result
   }
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + participatedTools.hashCode()
+    result = 31 * result + dirWithToml.hashCode()
     return result
   }
 }

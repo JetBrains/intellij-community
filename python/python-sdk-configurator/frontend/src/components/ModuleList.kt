@@ -6,15 +6,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.intellij.icons.AllIcons
 import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
 import com.intellij.python.sdkConfigurator.common.impl.ToolIdDTO
 import com.intellij.python.sdkConfigurator.frontend.ModulesViewModel
-import com.intellij.python.sdkConfigurator.frontend.PySdkConfiguratorFrontendBundle
+import com.intellij.python.sdkConfigurator.frontend.PySdkConfiguratorFrontendBundle.message
 import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.coroutines.FlowPreview
-import org.jetbrains.annotations.Nls
+import org.jetbrains.jewel.bridge.icon.fromPlatformIcon
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -22,30 +24,37 @@ import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.*
 import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.IntelliJIconKey
 
 /**
- * List of modules from [viewModel]
+ * List of modules from [viewModel]. Screen sizes are in physical pixels
  */
-@OptIn(FlowPreview::class)
 @Composable
 internal fun ModuleList(
+  screenWidthPx: Int,
+  screenHeightPx: Int,
   viewModel: ModulesViewModel,
-  // UI labels
-  topLabel: @Nls String,
-  projectStructureLabel: @Nls String,
-  environmentLabel: @Nls String,
 ) {
   LaunchedEffect(viewModel) {
     viewModel.processFilterUpdates()
   }
-  val space = 5.dp
-  VerticallyScrollableContainer {
-    val checkboxArrangement = Arrangement.spacedBy(space)
-    Column(Modifier.width(IntrinsicSize.Max), verticalArrangement = checkboxArrangement) {
-      Text(text = topLabel, Modifier.padding(end = space, bottom = space))
+  val topLabel = remember { message("python.sdk.configurator.frontend.choose.modules.text") }
+  val projectStructureLabel = remember { message("python.sdk.configurator.frontend.choose.modules.project.structure") }
+  val environmentLabel = remember { message("python.sdk.configurator.frontend.choose.modules.environment") }
 
-      Column(Modifier.padding(space).border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal).padding(space).fillMaxWidth(), verticalArrangement = checkboxArrangement) {
-        Row(Modifier.height(IntrinsicSize.Min).padding(start = space, bottom = space, end = space), horizontalArrangement = checkboxArrangement) {
+  val (width, height) = with(LocalDensity.current) {
+    // width: 50% of screen, height: 65% of the screen (according to Lena)
+    Pair(screenWidthPx.toDp() * 0.5f, screenHeightPx.toDp() * 0.65f)
+  }
+  val border = Modifier.border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal)
+  val space = 5.dp
+  VerticallyScrollableContainer(Modifier.padding(space).then(border).size(width = width, height = height)) {
+    val checkboxArrangement = Arrangement.spacedBy(space)
+    Column(Modifier.fillMaxSize(), verticalArrangement = checkboxArrangement) {
+      Text(text = topLabel, Modifier.padding(space))
+
+      Column(Modifier.fillMaxSize(), verticalArrangement = checkboxArrangement) {
+        Row(Modifier.fillMaxSize().then(border).padding(space), horizontalArrangement = checkboxArrangement) {
           ModuleRow(
             left = { modifier ->
               Row(modifier) {
@@ -56,7 +65,7 @@ internal fun ModuleList(
             },
             right = { modifier ->
               Text(environmentLabel, modifier = modifier)
-            }
+            },
           )
         }
         for (module in viewModel.filteredModules) {
@@ -81,9 +90,10 @@ private fun Module(
   checkBoxArrangement: Arrangement.HorizontalOrVertical,
 ) {
   var subModuleOpened by remember { mutableStateOf(false) }
-  val newText = remember { PySdkConfiguratorFrontendBundle.message("python.sdk.configurator.frontend.choose.modules.new") }
+  val newText = remember { message("python.sdk.configurator.frontend.choose.modules.new") }
   val moduleName = module.name
   val checkBoxWidth = Modifier.padding(start = LocalCheckboxStyle.current.metrics.checkboxSize.width)
+  val moduleIcon = remember { IntelliJIconKey.fromPlatformIcon(AllIcons.Nodes.Module) }
 
   Row(verticalAlignment = Alignment.Top, horizontalArrangement = checkBoxArrangement) {
     ModuleRow(
@@ -97,13 +107,19 @@ private fun Module(
                     else Modifier)
           Column(verticalArrangement = checkBoxArrangement) {
             CheckboxRow(
-              moduleName,
-              softWrap = false,
-              maxLines = 1,
               checked = checked,
               onCheckedChange = {
                 onCheck(moduleName)
               },
+              content = {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                  Icon(moduleIcon, module.path)
+                  Text(moduleName, softWrap = false, maxLines = 1)
+                  module.path?.let { path ->
+                    InfoText(path, softWrap = false, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                  }
+                }
+              }
             )
             if (subModuleOpened) {
               for (childModule in module.childModules) {
@@ -124,8 +140,8 @@ private fun Module(
         }
       },
       right = { modifier ->
-        Row(modifier) {
-          val text = module.existingPyVersion?.let { PySdkConfiguratorFrontendBundle.message("python.sdk.configurator.frontend.choose.modules.workspace.existing", it) }
+        Row(modifier, horizontalArrangement = checkBoxArrangement) {
+          val text = module.existingPyVersion?.let { message("python.sdk.configurator.frontend.choose.modules.workspace.existing", it) }
                      ?: newText
           val icon = icons[module.createdByTool]
           if (icon != null) {
