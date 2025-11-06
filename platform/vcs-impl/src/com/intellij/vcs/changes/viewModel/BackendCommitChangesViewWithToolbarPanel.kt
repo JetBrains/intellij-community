@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes.viewModel
 
-import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
@@ -75,7 +75,7 @@ private class OnProblemsUpdate(private val scope: CoroutineScope, private val pa
   }
 
   private fun refreshChangesViewNodeAsync(scope: CoroutineScope, file: VirtualFile, changesView: ChangesListView) {
-    scope.launch(Dispatchers.UI) {
+    scope.launch(Dispatchers.UiWithModelAccess) {
       findNodeForFile(file, changesView)?.let { node ->
         changesView.model.nodeChanged(node)
       }
