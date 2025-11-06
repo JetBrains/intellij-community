@@ -5,7 +5,8 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleRedundantKotlinStdLibInspection
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -16,6 +17,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
     projectFixture: GradleTestFixtureBuilder,
     test: () -> Unit,
   ) {
+    assumeThatGradleIsAtLeast(gradleVersion, "9.0.0") { "Best practice added in Gradle 9.0.0" }
     test(gradleVersion, projectFixture) {
       codeInsightFixture.enableInspections(GradleRedundantKotlinStdLibInspection::class.java)
       test()
@@ -23,7 +25,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testSameVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -38,7 +40,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDifferentVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -53,7 +55,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyNoVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -68,7 +70,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyNamedArguments(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -83,7 +85,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyNamedArgumentsNoVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -98,7 +100,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDifferentConfiguration(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -113,7 +115,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testCustomConfiguration(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -129,7 +131,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
 
   // should not warn as the overriding kotlin-stdlib dependency is a bit different
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyWithExtraArgumentsInClosure(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -147,7 +149,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
 
   // should not warn as the overriding kotlin-stdlib dependency is a bit different
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyWithExtraArgumentsInMap(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -162,7 +164,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyListSingleStrings(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -177,7 +179,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyListSingleStringsInBrackets(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -192,7 +194,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyListMaps(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -212,7 +214,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyListMapsExtraArguments(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -230,7 +232,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDisabledDefaultStdLib(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DISABLED_DEFAULT_STDLIB_FIXTURE) {
       testHighlighting(
@@ -247,7 +249,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   // VERSION CATALOG RESOLVING TESTS
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyFromVersionCatalog(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -262,7 +264,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogNoVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -277,7 +279,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogModuleAndVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -292,7 +294,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogFull(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -307,7 +309,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogFullVersionReference(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -322,7 +324,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogMultilineString(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -337,7 +339,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyFromVersionCatalogCustomConfiguration(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -352,7 +354,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyListVersionCatalog(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -367,7 +369,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDependencyListVersionCatalogInBrackets(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -384,7 +386,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   // PLUGIN DETECTION
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testNoPlugin(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -398,7 +400,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testDifferentPlugin(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -413,7 +415,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testPluginIdNoVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -428,7 +430,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testPluginFromVersionCatalog(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -443,7 +445,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testPluginFromVersionCatalogFull(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -458,7 +460,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testPluginFromVersionCatalogFullWithVersionReference(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -473,7 +475,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testPluginIdNotApplied(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -490,7 +492,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testPluginFromVersionCatalogNotApplied(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testHighlighting(
@@ -509,7 +511,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   // QUICK FIX TESTS
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testQuickFixRemove(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testIntention(
@@ -530,7 +532,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testQuickFixRemoveSingleStringFromList(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testIntention(
@@ -552,7 +554,7 @@ class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testQuickFixRemoveMapFromList(gradleVersion: GradleVersion) {
     runTest(gradleVersion, DEFAULT_FIXTURE) {
       testIntention(

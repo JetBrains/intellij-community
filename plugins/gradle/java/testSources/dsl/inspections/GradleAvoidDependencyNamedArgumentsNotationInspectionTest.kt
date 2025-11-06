@@ -5,7 +5,8 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -15,6 +16,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
     gradleVersion: GradleVersion,
     test: () -> Unit,
   ) {
+    assumeThatGradleIsAtLeast(gradleVersion, "8.14") { "Best practice added in Gradle 8.14" }
     test(gradleVersion, CUSTOM_PROJECT) {
       codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
       test()
@@ -22,7 +24,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testSingleString(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -36,7 +38,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testArgumentListWithSpaces(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -63,7 +65,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testArgumentListWithParentheses(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -90,7 +92,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testArgumentsWithDoubleQuotes(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -117,7 +119,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testVariableArgument(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -147,7 +149,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testFunctionArgument(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -177,7 +179,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testCustomConfiguration(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -204,7 +206,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testArgumentWithDollarInterpolation(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -234,7 +236,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testTripleQuoteArguments(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -261,7 +263,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testTripleQuoteArgumentsWithInterpolation(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -291,7 +293,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testExtraArgument(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -305,7 +307,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testNoVersionArgument(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -332,7 +334,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testNoVersionButAnotherArgument(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -346,7 +348,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testWithBlock(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -379,7 +381,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testUnusualArgumentOrder(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -406,7 +408,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testListOfMaps(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -445,7 +447,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testListOfMapsUnusualOrder(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -481,7 +483,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testListOfMapsMissingVersion(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -517,7 +519,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testListOfMapsExtraArgument(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -534,7 +536,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testListOfMapsWithVariableArguments(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -576,7 +578,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testListOfMapsWithFunctionArguments(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -618,7 +620,7 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
   }
 
   @ParameterizedTest
-  @BaseGradleVersionSource
+  @AllGradleVersionsSource
   fun testListOfMapsWithDollarInterpolation(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(

@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -15,14 +17,16 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
         gradleVersion: GradleVersion,
         test: () -> Unit,
     ) {
+        assumeThatGradleIsAtLeast(gradleVersion, "8.14") { "Best practice added in Gradle 8.14" }
         test(gradleVersion, CUSTOM_PROJECT) {
             codeInsightFixture.enableInspections(GradleAvoidDependencyNamedArgumentsNotationInspection::class.java)
+            (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
             test()
         }
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testSingleString(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -36,7 +40,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRegular(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -63,7 +67,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNonLiteralArgument(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -93,7 +97,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNonLiteralArguments(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -132,7 +136,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNonLiteralArgumentsRequiringBraces(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -165,7 +169,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testCustomConfiguration(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -195,7 +199,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testCustomConfigurationString(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -222,7 +226,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testCustomSourceSet(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -249,7 +253,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testArgumentWithDollarInterpolation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -279,7 +283,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testExtraArgument(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -293,7 +297,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoVersionArgument(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -320,7 +324,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoVersionButAnotherArgument(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -334,7 +338,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testWithBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -367,7 +371,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testUnusualArgumentOrder(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -394,7 +398,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRawStringArguments(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -421,8 +425,9 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMultiDollarInterpolation(gradleVersion: GradleVersion) {
+        assumeThatGradleIsAtLeast(gradleVersion, "9.0.0") { "\"multi dollar interpolation\" is only available since language version 2.2" }
         runTest(gradleVersion) {
             testHighlighting(
                 $$$"""
@@ -451,7 +456,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testPositionalArguments(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -478,7 +483,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMixPositionalAndNamedArguments(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -505,7 +510,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMultipleDependenciesBlocks(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -542,7 +547,7 @@ class KotlinAvoidDependencyNamedArgumentsNotationInspectionTest : K2GradleCodeIn
 
     // conversion to a single string does not look nice, so don't offer a QF
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMultilineRawStringArguments(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(

@@ -25,7 +25,6 @@ abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBase
         testIntention("build.gradle.kts", before, after, intentionPrefix)
     }
 
-    @Suppress("MemberVisibilityCanBePrivate")
     fun testIntention(fileName: String, before: String, after: String, intentionPrefix: String) {
         checkCaret(before)
         writeTextAndCommit(fileName, before)
@@ -46,7 +45,7 @@ abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBase
         checkCaret(before)
         writeTextAndCommit(fileName, before)
         runInEdtAndWait {
-            codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle.kts"))
+            codeInsightFixture.configureFromExistingVirtualFile(getFile(fileName))
             val intentions = codeInsightFixture.filterAvailableIntentions(intentionPrefix)
             assertThat(intentions).isEmpty()
         }
@@ -54,9 +53,9 @@ abstract class K2GradleCodeInsightTestCase : AbstractKotlinGradleCodeInsightBase
 
     fun testHighlighting(expression: String) = testHighlighting("build.gradle.kts", expression)
     fun testHighlighting(relativePath: String, expression: String) {
-        val virtualFile = writeTextAndCommit(relativePath, expression)
+        writeTextAndCommit(relativePath, expression)
         runInEdtAndWait {
-            codeInsightFixture.openFileInEditor(virtualFile)
+            codeInsightFixture.openFileInEditor(getFile(relativePath))
             checkNotNull(codeInsightFixture.editor) { "Fixture is not configured. Call something like configureByFile() or configureByText()" }
             val data = ExpectedHighlightingData(
                 codeInsightFixture.editor.getDocument(), true, true, false, false
