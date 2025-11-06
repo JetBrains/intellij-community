@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 import argparse
+import os
 import platform
 import re
 import shlex
@@ -25,10 +26,8 @@ def main():
     args.intellij_dir = workspace.joinpath('tools/idea')
     args.kotlinc_dir = workspace.joinpath('external/jetbrains/kotlin')
     args.gradlew = args.kotlinc_dir.joinpath('gradlew')
-    args.cmd_env = {
-        'PATH': '/bin:/usr/bin',
-        'JAVA_HOME': str(compute_java_home(workspace)),
-    }
+    args.cmd_env = os.environ.copy()
+    args.cmd_env['JAVA_HOME'] = str(compute_java_home(workspace))
 
     build_kotlin_compiler(args)
     update_ide_project_model(args)
