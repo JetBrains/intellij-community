@@ -138,8 +138,9 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
     override fun getExecutablePath(): Path = process.executableName.asNioPath()
 
     override fun close() {
-      stderr.close()
-      stdout.close()
+      stderr.use {
+        stdout.close()
+      }
     }
   }
 
