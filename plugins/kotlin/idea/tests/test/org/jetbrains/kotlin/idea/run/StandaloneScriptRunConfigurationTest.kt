@@ -3,31 +3,48 @@
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringFactory
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.util.ActionRunner
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.testFramework.fixtures.JavaTestFixtureFactory
 import org.jdom.Element
-import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfiguration
-import org.jetbrains.kotlin.idea.stubindex.KotlinScriptFqnIndex
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinCodeInsightTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import kotlin.test.assertNotEquals
 
+@TestRoot("idea/tests")
+@TestMetadata("testData/run/StandaloneScript")
 @RunWith(JUnit38ClassRunner::class)
-class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
+class StandaloneScriptRunConfigurationTest : KotlinLightCodeInsightFixtureTestCase() {
+    override fun getProjectDescriptor(): LightProjectDescriptor {
+        return object : KotlinWithJdkAndRuntimeLightProjectDescriptor() {
+            override fun getSdk(): Sdk = IdeaTestUtil.getMockJdk18()
+        }
+    }
+
+    override fun setUp() = setUpWithKotlinPlugin {
+        val fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(projectDescriptor, name).fixture
+        myFixture = JavaTestFixtureFactory.getFixtureFactory()
+            .createCodeInsightFixture(fixture).apply {
+                setTestDataPath(testDataDirectory.path)
+                setUp()
+            }
+    }
 
     private fun assertEqualPaths(expected: String?, actual: String?) {
         assertEquals(
@@ -45,8 +62,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
     }
 
     fun testConfigurationForScript() {
-        configureByFile("run/simpleScript.kts")
-        val script = KotlinScriptFqnIndex["foo.SimpleScript", project, project.allScope()].single()
+        val script = myFixture.configureByFile("run/simpleScript.kts")
         val runConfiguration = createConfigurationFromElement(script) as KotlinStandaloneScriptRunConfiguration
 
         assertEqualPaths(script.containingFile.virtualFile.canonicalPath, runConfiguration.filePath)
@@ -66,12 +82,11 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         programParametersList.checkParameter("-kotlin-home") { it == KotlinPluginLayout.kotlinc.absolutePath }
 
         Assert.assertTrue(!programParametersList.contains("-cp"))
-
     }
 
+
     fun testOnFileRename() {
-        configureByFile("renameFile/simpleScript.kts")
-        val script = KotlinScriptFqnIndex["foo.SimpleScript", project, project.allScope()].single()
+        val script = myFixture.configureByFile("renameFile/simpleScript.kts")
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("simpleScript.kts", runConfiguration.name)
@@ -94,11 +109,9 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
     }
 
     fun testOnFileMoveWithDefaultWorkingDir() {
-        configureByFile("move/script.kts")
+        val script = myFixture.configureByFile("move/script.kts")
+        ScriptConfigurationManager.updateScriptDependenciesSynchronously(script)
 
-        ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFile)
-
-        val script = KotlinScriptFqnIndex["foo.Script", project, project.allScope()].single()
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("script.kts", runConfiguration.name)
@@ -121,11 +134,10 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
     }
 
     fun testOnFileMoveWithNonDefaultWorkingDir() {
-        configureByFile("move/script.kts")
+        val script = myFixture.configureByFile("move/script.kts")
 
-        ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFile)
+        ScriptConfigurationManager.updateScriptDependenciesSynchronously(script)
 
-        val script = KotlinScriptFqnIndex["foo.Script", project, project.allScope()].single()
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("script.kts", runConfiguration.name)
@@ -137,7 +149,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         assertEqualPaths(originalPath, runConfiguration.filePath)
         assertEqualPaths(originalWorkingDirectory, runConfiguration.workingDirectory)
 
-        moveScriptFile(script.containingFile)
+        moveScriptFile(script)
 
         Assert.assertEquals("script.kts", runConfiguration.name)
         val scriptVirtualFileAfter = script.containingFile.virtualFile
@@ -155,14 +167,12 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         Assert.assertTrue("Check for $name parameter fails: actual value = $paramValue", condition(paramValue))
     }
 
-    fun moveScriptFile(scriptFile: PsiFile) {
-        ActionRunner.runInsideWriteAction { VfsUtil.createDirectoryIfMissing(scriptFile.virtualFile.parent, "dest") }
-        IndexingTestUtil.waitUntilIndexesAreReady(project)
 
+    fun moveScriptFile(scriptFile: PsiFile) {
         MoveFilesOrDirectoriesProcessor(
             project,
             arrayOf(scriptFile),
-            JavaPsiFacade.getInstance(project).findPackage("dest")!!.directories[0],
+            myFixture.getPsiManager().findDirectory(myFixture.getTempDirFixture().findOrCreateDir("dest"))!!,
             false, true, null, null
         ).run()
     }
@@ -172,7 +182,4 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
         writeExternal(element)
         return JDOMUtil.writeElement(element)
     }
-
-    override fun getTestDataDirectory() = IDEA_TEST_DATA_DIR.resolve("run/StandaloneScript")
-    override fun getTestProjectJdk() = IdeaTestUtil.getMockJdk18()
 }

@@ -24,9 +24,8 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.valueOrNull
-import kotlin.script.experimental.api.with
+import kotlin.script.experimental.api.*
+import kotlin.script.experimental.api.ScriptDiagnostic.Companion.unspecifiedError
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
@@ -66,7 +65,18 @@ open class DefaultScriptConfigurationHandler(
         val scriptSource = VirtualFileScriptSource(virtualFile)
 
         val result = smartReadAction(project) {
-            refineScriptCompilationConfiguration(scriptSource, definition, project, configuration)
+            try {
+                refineScriptCompilationConfiguration(scriptSource, definition, project, configuration)
+            } catch (e: Throwable) {
+                ResultWithDiagnostics.Failure(
+                    ScriptDiagnostic(
+                        code = unspecifiedError,
+                        exception = e,
+                        message = "Failed to refine script",
+                        sourcePath = scriptSource.locationId
+                    )
+                )
+            }
         }
 
         project.service<ScriptReportSink>().attachReports(virtualFile, result.reports)

@@ -40,5 +40,7 @@
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.shared" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
   </component>
 </module>
