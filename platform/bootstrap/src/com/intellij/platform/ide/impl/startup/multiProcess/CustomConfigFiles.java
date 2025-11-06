@@ -4,7 +4,6 @@ package com.intellij.platform.ide.impl.startup.multiProcess;
 import com.intellij.ide.plugins.DisabledPluginsState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.impl.P3SupportKt;
-import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -19,7 +18,6 @@ import java.util.List;
  */
 public final class CustomConfigFiles {
   private static final List<String> FILE_NAMES = List.of(
-    EarlyAccessRegistryManager.fileName,
     DisabledPluginsState.DISABLED_PLUGINS_FILENAME,
     // Without this, building the `ultimate` project will fail with a `cannot find jdk` message in P3 mode.
     // This is a temporary hack until it is fixed properly to be able to work in P3 mode with the ultimate repository.
