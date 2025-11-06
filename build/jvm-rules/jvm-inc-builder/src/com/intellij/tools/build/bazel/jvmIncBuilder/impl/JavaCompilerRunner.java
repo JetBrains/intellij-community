@@ -274,7 +274,7 @@ public class JavaCompilerRunner implements CompilerRunner {
       if (source != null) {
         msgBuilder.append("\n\t").append(source.getName());
         if (diagnostic.getPosition() != Diagnostic.NOPOS) {
-          msgBuilder.append(" (").append(diagnostic.getLineNumber()).append(":").append(diagnostic.getColumnNumber()).append(")");
+          msgBuilder.append(":").append(diagnostic.getLineNumber()).append(":").append(diagnostic.getColumnNumber());
           try {
             int start = (int)(diagnostic.getStartPosition());
             int end = (int)(diagnostic.getEndPosition());
