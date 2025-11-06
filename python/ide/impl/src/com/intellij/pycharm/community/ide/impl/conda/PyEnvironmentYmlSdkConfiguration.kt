@@ -8,7 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector
@@ -19,6 +21,7 @@ import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnv
 import com.intellij.pycharm.community.ide.impl.findEnvOrNull
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.BinOnEel
+import com.intellij.util.FileName
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
@@ -50,6 +53,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemDependent
 import java.nio.file.Path
+import kotlin.io.path.name
 
 
 /**
@@ -71,10 +75,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   private suspend fun checkManageableEnv(module: Module, checkExistence: CheckExistence): EnvCheckerResult = withBackgroundProgress(module.project, PyBundle.message("python.sdk.validating.environment")) {
     val condaPath = withContext(Dispatchers.IO) {
-      if (getEnvironmentYml(module) != null) {
-        suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
-      }
-      else null
+      suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
     }
     val canManage = condaPath != null
     val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
@@ -87,7 +88,7 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
           CondaExecutor.getPythonInfo(binaryToExec, env).findEnvOrNull(intentionName)
         } ?: envNotFound
       }
-      canManage -> envNotFound
+      canManage -> if (getEnvironmentYml(module) != null) envNotFound else EnvCheckerResult.CannotConfigure
       else -> EnvCheckerResult.CannotConfigure
     }
   }
@@ -104,22 +105,22 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
       return PyResult.localizedError(PyCharmCommunityCustomizationBundle.message("sdk.remote.target.are.not.supported.for.conda.environment"))
     }
 
-    val (condaExecutable, environmentYml) = askForEnvData(module, source, envExists) ?: return PyResult.success(null)
-    return createAndAddCondaEnv(module, condaExecutable, environmentYml, envExists).onSuccess { sdk ->
-      sdk.let { PythonSdkUpdater.scheduleUpdate(it, module.project) }
-    }
-  }
-
-  private suspend fun askForEnvData(module: Module, source: Source, envExists: Boolean) = withContext(Dispatchers.Default) {
-    val environmentYml = getEnvironmentYml(module) ?: return@withContext null
     // Again: only local conda is supported for now
     val condaExecutable = suggestCondaPath()?.let { LocalFileSystem.getInstance().findFileByPath(it) }
-
-    if ((envExists || source == Source.INSPECTION) && validateCondaPath(condaExecutable?.path, PlatformAndRoot.local) == null) {
+    val sdk = if ((envExists || source == Source.INSPECTION) && validateCondaPath(condaExecutable?.path, PlatformAndRoot.local) == null) {
       PySdkConfigurationCollector.logCondaEnvDialogSkipped(module.project, source, executableToEventField(condaExecutable?.path))
-      return@withContext PyAddNewCondaEnvFromFilePanel.Data(condaExecutable!!.path, environmentYml.path)
+      createAndAddCondaEnv(module, condaExecutable!!.path, null)
+    }
+    else {
+      val envData = askForEnvData(module, source, condaExecutable) ?: return PyResult.success(null)
+      createAndAddCondaEnv(module, envData.condaPath, envData.environmentYmlPath)
     }
 
+    return sdk.onSuccess { sdk -> sdk.let { PythonSdkUpdater.scheduleUpdate(it, module.project) } }
+  }
+
+  private suspend fun askForEnvData(module: Module, source: Source, condaExecutable: VirtualFile?) = withContext(Dispatchers.Default) {
+    val environmentYml = getEnvironmentYml(module) ?: return@withContext null
     var permitted = false
     var envData: PyAddNewCondaEnvFromFilePanel.Data? = null
 
@@ -136,12 +137,10 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
     if (permitted) envData else null
   }
 
-  private suspend fun createAndAddCondaEnv(
-    module: Module, condaExecutable: String, environmentYml: String, envExists: Boolean,
-  ): PyResult<Sdk> {
+  private suspend fun createAndAddCondaEnv(module: Module, condaExecutable: String, environmentYml: String?): PyResult<Sdk> {
     thisLogger().debug("Creating conda environment")
 
-    val sdk = if (envExists) {
+    val sdk = if (environmentYml == null) {
       useExistingCondaEnv(module, condaExecutable)
     }
     else {
@@ -180,15 +179,21 @@ class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
   }
 
   private suspend fun getCondaEnvIdentity(module: Module, condaExecutable: String): PyCondaEnvIdentity? {
-    val environmentYml = getEnvironmentYml(module) ?: return null
-    val envName = CondaEnvironmentYmlParser.readNameFromFile(environmentYml)
-    val envPrefix = CondaEnvironmentYmlParser.readPrefixFromFile(environmentYml)
+    val environmentYml = getEnvironmentYml(module)
+    val envName = environmentYml?.let { CondaEnvironmentYmlParser.readNameFromFile(it) }
+    val envPrefix = environmentYml?.let { CondaEnvironmentYmlParser.readPrefixFromFile(it) }
+    val shouldGuessEnvPrefix = envName == null && envPrefix == null
     val binaryToExec = BinOnEel(Path.of(condaExecutable))
     return PyCondaEnv.getEnvs(binaryToExec).getOr { return null }.firstOrNull {
       val envIdentity = it.envIdentity
       when (envIdentity) {
         is PyCondaEnvIdentity.NamedEnv -> envIdentity.envName == envName
-        is PyCondaEnvIdentity.UnnamedEnv -> envIdentity.envPath == envPrefix
+        is PyCondaEnvIdentity.UnnamedEnv -> if (shouldGuessEnvPrefix) {
+          val envPath = Path.of(envIdentity.envPath)
+          val sameModule = module.basePath?.toNioPathOrNull() == envPath.parent
+          !envIdentity.isBase && sameModule && module.findAmongRoots(FileName(Path.of(envIdentity.envPath).name)) != null
+        }
+        else envIdentity.envPath == envPrefix
       }
     }?.envIdentity
   }
