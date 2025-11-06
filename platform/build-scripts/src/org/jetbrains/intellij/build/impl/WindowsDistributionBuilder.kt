@@ -67,9 +67,9 @@ import kotlin.io.path.readText
 private val CompareDistributionsSemaphore = Semaphore(Integer.getInteger("intellij.build.win.compare.concurrency", 1))
 
 internal class WindowsDistributionBuilder(
-  override val context: BuildContext,
   private val customizer: WindowsDistributionCustomizer,
   private val ideaProperties: CharSequence?,
+  override val context: BuildContext,
 ) : OsSpecificDistributionBuilder {
   override val targetOs: OsFamily
     get() = OsFamily.WINDOWS

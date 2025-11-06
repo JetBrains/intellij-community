@@ -123,7 +123,9 @@ class BazelCompilationContext(
 
   override suspend fun prepareForBuild(): Unit = delegate.prepareForBuild()
 
-  override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?): Unit = delegate.compileModules(moduleNames, includingTestsInModules)
+  override suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
+    delegate.compileModules(moduleNames, includingTestsInModules)
+  }
 
   override suspend fun withCompilationLock(block: suspend () -> Unit): Unit = delegate.withCompilationLock(block)
 

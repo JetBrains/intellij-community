@@ -65,9 +65,6 @@ interface CompilationContext : ModuleOutputProvider {
 
   fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean = false): Path?
 
-  @Internal
-  override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray?
-
   fun notifyArtifactBuilt(artifactPath: Path)
 
   @Internal
@@ -78,6 +75,10 @@ interface CompilationContext : ModuleOutputProvider {
 
   suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 
+  suspend fun compileProductionModules() {
+    compileModules(moduleNames = null, includingTestsInModules = emptyList())
+  }
+
   @Internal
   suspend fun withCompilationLock(block: suspend () -> Unit)
 }
@@ -87,15 +88,7 @@ interface CompilationTasks {
     fun create(context: CompilationContext): CompilationTasks = CompilationTasksImpl(context)
   }
 
-  /**
-   * See [compileModules]
-   */
   suspend fun compileAllModulesAndTests()
-
-  /**
-   * [resolveProjectDependencies] is guaranteed to be called
-   */
-  suspend fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 
   suspend fun resolveProjectDependencies()
 }

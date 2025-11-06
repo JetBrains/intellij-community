@@ -120,7 +120,12 @@ internal fun keepCompilationState(options: BuildOptions): Boolean {
           options.incrementalCompilation)
 }
 
-internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Collection<String>?, includingTestsInModules: List<String>?, span: Span) {
+internal suspend fun reuseOrCompile(
+  moduleNames: Collection<String>?,
+  includingTestsInModules: List<String>?,
+  span: Span,
+  context: CompilationContext,
+) {
   if (context.compilationData.outputForAllModulesIsAvailable) {
     span.addEvent("Output for all modules was already provided in this compilation session, skipping compilation")
     return

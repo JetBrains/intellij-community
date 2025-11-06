@@ -48,18 +48,16 @@ import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 
 private const val EXECUTABLE_TEMPLATE_NAME = "executable-template.sh"
+private const val NO_RUNTIME_SUFFIX = "-no-jbr"
 
 private val BuildSnapSemaphore = Semaphore(Integer.getInteger("intellij.build.unix.snaps.concurrency", 1))
 
 class LinuxDistributionBuilder(
-  override val context: BuildContext,
   private val customizer: LinuxDistributionCustomizer,
   private val ideaProperties: CharSequence?,
   override val targetLibcImpl: LinuxLibcImpl,
+  override val context: BuildContext,
 ) : OsSpecificDistributionBuilder {
-  companion object {
-    private const val NO_RUNTIME_SUFFIX = "-no-jbr"
-  }
   private val iconPngPath: Path?
 
   init {
@@ -127,7 +125,7 @@ class LinuxDistributionBuilder(
               span.addEvent("skip")
             }
             else {
-              buildTarGz(arch, runtimeDir = null, osAndArchSpecificDistPath, NO_RUNTIME_SUFFIX + suffix(arch, targetLibcImpl))
+              buildTarGz(arch = arch, runtimeDir = null, unixDistPath = osAndArchSpecificDistPath, suffix = NO_RUNTIME_SUFFIX + suffix(arch, targetLibcImpl))
             }
           }
         }

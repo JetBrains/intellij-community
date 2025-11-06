@@ -26,7 +26,6 @@ import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.OsFamily
@@ -191,28 +190,27 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
     try {
-      val compilationTasks = CompilationTasks.create(context)
-
       if (runConfigurations.any { it.buildProject }) {
         context.messages.info(
           "Building the entire project as requested by run configurations: " +
           runConfigurations.filter { it.buildProject }.map { it.name }
         )
-        compilationTasks.compileAllModulesAndTests()
+        context.compileModules(moduleNames = null, includingTestsInModules = null)
       }
       else if (runConfigurations.any()) {
-        compilationTasks.compileModules(
-          listOf("intellij.tools.testsBootstrap"),
-          listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
+        context.compileModules(
+          moduleNames = listOf("intellij.tools.testsBootstrap"),
+          includingTestsInModules = listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName },
+        )
       }
       else {
-        compilationTasks.compileModules(
-          listOf("intellij.tools.testsBootstrap"),
-          listOfNotNull(mainModule, "intellij.platform.buildScripts")
+        context.compileModules(
+          moduleNames = listOf("intellij.tools.testsBootstrap"),
+          includingTestsInModules = listOfNotNull(mainModule, "intellij.platform.buildScripts"),
         )
       }
       val runtimeModuleRepository = context.getOriginalModuleRepository()
-      systemProperties["intellij.platform.runtime.repository.path"] = runtimeModuleRepository.repositoryPath.pathString
+      systemProperties.put("intellij.platform.runtime.repository.path", runtimeModuleRepository.repositoryPath.pathString)
     }
     catch (e: Exception) {
       if (options.isCancelBuildOnTestPreparationFailure) {
@@ -403,7 +401,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     options.testDiscoveryIncludePatterns?.let { systemProperties["test.discovery.include.class.patterns"] = it }
     options.testDiscoveryExcludePatterns?.let { systemProperties["test.discovery.exclude.class.patterns"] = it }
 
-    systemProperties["test.discovery.excluded.roots"] = excludeRoots.joinToString(separator = ";")
+    systemProperties.put("test.discovery.excluded.roots", excludeRoots.joinToString(separator = ";"))
   }
 
   private val testDiscoveryTraceFilePath: String
@@ -768,7 +766,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   override suspend fun runTestsSkippedInHeadlessEnvironment() {
-    CompilationTasks.create(context).compileAllModulesAndTests()
+    context.compileModules(moduleNames = null, includingTestsInModules = null)
     val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").use { loadTestsSkippedInHeadlessEnvironment() }
     for (it in tests) {
       options.batchTestIncludes = it.getFirst()
@@ -812,7 +810,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }.flatMap { it.getCompleted() }
   }
 
-  private suspend fun getTestClassesForModule(mainModule: String, filteringPattern: Pattern = Pattern.compile(".*\\.class")): List<String> {
+  private fun getTestClassesForModule(mainModule: String, filteringPattern: Pattern = Pattern.compile(".*\\.class")): List<String> {
     val testClasses: List<String> = context.getModuleOutputRoots(context.findRequiredModule(mainModule), forTests = true).flatMap { root ->
       if (root.isRegularFile() && root.extension == "jar") {
         val classes = ArrayList<String>()

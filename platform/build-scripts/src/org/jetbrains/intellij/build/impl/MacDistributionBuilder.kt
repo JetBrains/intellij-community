@@ -66,9 +66,9 @@ import kotlin.io.path.writeText
 private const val NO_RUNTIME_SUFFIX = "-no-jdk"
 
 class MacDistributionBuilder(
-  override val context: BuildContext,
   private val customizer: MacDistributionCustomizer,
-  private val ideaProperties: CharSequence?
+  private val ideaProperties: CharSequence?,
+  override val context: BuildContext
 ) : OsSpecificDistributionBuilder {
   override val targetOs: OsFamily
     get() = OsFamily.MACOS

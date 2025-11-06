@@ -289,7 +289,7 @@ class CompilationContextImpl private constructor(
     spanBuilder("resolve dependencies and compile modules").use { span ->
       compileMutex.withReentrantLock {
         resolveProjectDependencies(this@CompilationContextImpl)
-        reuseOrCompile(context = this@CompilationContextImpl, moduleNames, includingTestsInModules, span)
+        reuseOrCompile(moduleNames = moduleNames, includingTestsInModules = includingTestsInModules, span = span, context = this@CompilationContextImpl)
       }
     }
   }
