@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.pico;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -197,10 +198,11 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
     }
 
     if (greediestConstructor == null && !unsatisfiableDependencyTypes.isEmpty()) {
-      throw new PicoIntrospectionException(componentImplementation.getName() + " has unsatisfied dependency: " + unsatisfiedDependencyType
-                                           + " among unsatisfiable dependencies: " +
-                                           unsatisfiableDependencyTypes + " where " + container
-                                           + " was the leaf container being asked for dependencies.");
+      throw new PicoIntrospectionException(
+        componentImplementation.getName() + " has unsatisfied dependency: " + unsatisfiedDependencyType
+        + " among unsatisfiable dependencies: ("
+        + StringUtil.join(unsatisfiableDependencyTypes, a->Arrays.toString(a),", ")
+        + ") where " + container + " was the leaf container being asked for dependencies.");
     }
     if (greediestConstructor == null) {
       // be nice to the user, show all constructors that were filtered out
