@@ -48,23 +48,12 @@ public final class ThreadingAssertions {
   @VisibleForTesting
   public static final String WRITE_INTENT_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN =
     "This thread requested write-intent access, but it does not have permission to use locks.";
-  private static final String MUST_EXECUTE_IN_READ_ACTION_EXPLICIT =
-    "Access is allowed with explicit read lock.\n" +
-    "Now each coroutine scheduled on EDT wrapped in implicit write intent lock (which implies read lock too). This implicit lock will be removed in future releases.\n" +
-    "Please, use explicit lock API like ReadAction.run(), WriteIntentReadAction.run(), readAction() or writeIntentReadAction() to wrap code which needs lock to access model or PSI.\n" +
-    "Please note, that read action API can re-schedule your code to background threads, if you are sure that your code need to be executed on EDT, you need to use write intent read action.\n" +
-    "Also, consult with " + DOCUMENTATION_URL;
   @Internal
   @VisibleForTesting
   public static final String MUST_NOT_EXECUTE_IN_READ_ACTION =
     "Must not execute inside read action";
   private static final String MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION =
     "Access is allowed from write thread only";
-  private static final String MUST_EXECUTE_IN_WRITE_INTENT_READ_ACTION_EXPLICIT =
-    "Access is allowed from EDT with explicit write intent lock.\n" +
-    "Now each coroutine scheduled on EDT wrapped in implicit write intent lock. This implicit lock will be removed in future releases.\n" +
-    "Please, use explicit lock API like WriteIntentReadAction.run() or writeIntentReadAction() to wrap code which needs lock to modify model or PSI.\n" +
-    "Also, consult with " + DOCUMENTATION_URL;
   @Internal
   @VisibleForTesting
   public static final String MUST_EXECUTE_IN_WRITE_ACTION =
@@ -149,14 +138,6 @@ public final class ThreadingAssertions {
     if (advice != null) {
       getLogger().error(createLockingForbiddenException(READ_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN + "\n" + advice));
     }
-  }
-
-  /**
-   * Reports message about implicit read to logger at error level
-   */
-  @Internal
-  public static void reportImplicitRead() {
-    getLogger().error(new RuntimeExceptionWithAttachments(MUST_EXECUTE_IN_READ_ACTION_EXPLICIT));
   }
 
   /**
