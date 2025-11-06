@@ -32,7 +32,6 @@ import com.jetbrains.python.black.BlackFormatterUtil
 import com.jetbrains.python.black.BlackFormatterVersionService
 import com.jetbrains.python.black.BlackFormatterVersionService.Companion.UNKNOWN_VERSION
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration.BlackFormatterOption.Companion.toCliOptionFlags
-import com.jetbrains.python.externaltools.configuration.createPythonSdkComboBox
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPackageBackground
 import com.jetbrains.python.sdk.pythonSdk
@@ -73,8 +72,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
       .withTitle(@Suppress("DialogTitleCapitalization") PyBundle.message("black.select.path.to.executable")))
   }
 
-  // TODO: initial should be project default
-  private val sdkSelectionComboBox = createPythonSdkComboBox(project, null)
+  private val sdkSelectionComboBox = createPythonSdkComboBox(project.modules.mapNotNull { it.pythonSdk }, null)
 
   private val cliArgumentsTextField = BlackTextFieldWithAutoCompletion(project, object :
     TextFieldWithAutoCompletionListProvider<BlackFormatterConfiguration.CliOptionFlag>(
@@ -181,6 +179,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     executionModeComboBox.addActionListener { updateUiState() }
 
     sdkSelectionComboBox.addActionListener {
+      selectedSdk = sdkSelectionComboBox.item
       updateSdkInfo()
       updateUiState()
     }
@@ -191,6 +190,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
     enableOnSaveCheckBox.isSelected = storedState.enabledOnSave
     executionModeComboBox.item = storedState.executionMode
     cliArgumentsTextField.text = storedState.cmdArguments
+    sdkSelectionComboBox.item = selectedSdk
 
     blackExecutablePathField.emptyText.text = getBlackExecPathPlaceholderMessage()
     storedState.pathToExecutable?.let {
