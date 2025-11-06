@@ -111,7 +111,7 @@ internal fun BuildFile.generateMavenLib(
       option("name", targetName)
       option("jar", "@${fileToHttpRuleFile(jar.mavenCoordinates)}")
       if (sourceJar != null) {
-        option("source_jar", "@${fileToHttpRuleFile(jar.mavenCoordinates)}")
+        option("source_jar", "@${fileToHttpRuleFile(sourceJar.mavenCoordinates)}")
       }
       if (targetName == "kotlinx-serialization-core") {
         option("exported_compiler_plugins", listOf("@lib//:kotlin-serialization-plugin"))
@@ -146,7 +146,7 @@ internal fun BuildFile.generateMavenLib(
         option("name", label)
         option("jar", "@$bazelLabel//file")
         if (sourceJar != null) {
-          option("source_jar", "@${fileToHttpRuleFile(jar.mavenCoordinates)}")
+          option("source_jar", "@${fileToHttpRuleFile(sourceJar.mavenCoordinates)}")
         }
       }
     }
