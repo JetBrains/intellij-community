@@ -55,9 +55,12 @@ internal class K2MoveFilesOrDirectoriesRefactoringProcessor(private val descript
         }
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun performRefactoring(_usages: Array<out UsageInfo?>) {
-        withForcedPackageIfNeeded {
-            super.performRefactoring(_usages)
+        allowAnalysisOnEdt {
+            withForcedPackageIfNeeded {
+                super.performRefactoring(_usages)
+            }
         }
     }
 
