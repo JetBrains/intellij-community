@@ -43,7 +43,7 @@ class KotlinJ2KOnboardingImportListener(private val project: Project) : ProjectD
 object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 3)
+    val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 4)
 
     internal val pluginVersion = getPluginInfoById(KotlinIdePlugin.id).version
     internal val buildSystemField = EventFields.Enum<KotlinJ2KOnboardingBuildSystem>("build_system")
@@ -52,6 +52,7 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     internal val canAutoConfigureField = EventFields.Boolean("can_auto_configure")
     internal val isAutoConfigurationField = EventFields.Boolean("is_auto_configuration")
     internal val failureReasonField = EventFields.Enum<KotlinJ2KOnboardingConfigurationError>("failure_reason")
+    internal val chosenKotlinVersionField = EventFields.StringValidatedByInlineRegexp("chosen_kotlin_version", "\\d+\\.\\d+\\.\\d+")
 
     private val commonFields = arrayOf(
         sessionIdField, buildSystemField, buildSystemVersionField, isAutoConfigurationField, EventFields.Version
@@ -59,6 +60,7 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     private val autoConfigFields = commonFields.toList() + canAutoConfigureField
     private val startProjectSyncFields = commonFields.toList() + isAutoConfigurationField
     private val configurationFailedFields = commonFields.toList() + failureReasonField
+    private val kotlinVersionChosenFields = commonFields.toList() + chosenKotlinVersionField
 
     private val openFirstKtFileDialog = GROUP.registerVarargEvent("first_kt_file.dialog_opened", *commonFields)
     private val createFirstKtFile = GROUP.registerVarargEvent("first_kt_file.created", *commonFields)
@@ -74,6 +76,8 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     private val failedProjectSync = GROUP.registerVarargEvent("project_sync.failed", *commonFields)
     private val completeProjectSync = GROUP.registerVarargEvent("project_sync.completed", *commonFields)
     private val undoConfigureKotlin = GROUP.registerVarargEvent("configure_kt.undone", *commonFields)
+    private val chooseKotlinVersionFromDialog =
+        GROUP.registerVarargEvent("configure_kt.kotlin_version_chosen", *kotlinVersionChosenFields.toTypedArray())
 
     private fun KotlinOnboardingSession.log(project: Project, eventId: VarargEventId, vararg pairs: EventPair<*>) {
         eventId.log(project, getPairs() + pairs)
@@ -193,6 +197,11 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     fun logConfigureKtFailed(project: Project, failureReason: KotlinJ2KOnboardingConfigurationError): Unit = project.runEventLogger {
         val session = openSession ?: return@runEventLogger
         session.log(project, failedConfigureKt, failureReasonField.with(failureReason))
+    }
+
+    fun logChosenKotlinVersion(project: Project, kotlinVersion: String): Unit = project.runEventLogger {
+        val session = openSession ?: return@runEventLogger
+        session.log(project, chooseKotlinVersionFromDialog, chosenKotlinVersionField.with(kotlinVersion))
     }
 }
 

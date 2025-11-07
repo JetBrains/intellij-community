@@ -125,6 +125,7 @@ abstract class KotlinMavenConfigurator protected constructor(
         dialog.show()
         if (!dialog.isOK) return emptySet()
         val kotlinVersion = dialog.kotlinVersion ?: return emptySet()
+        KotlinJ2KOnboardingFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
 
         KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
 
