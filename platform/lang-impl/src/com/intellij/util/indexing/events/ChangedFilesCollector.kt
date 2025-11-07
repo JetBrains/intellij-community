@@ -30,6 +30,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.*
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Lock
 import kotlin.concurrent.withLock
@@ -44,6 +45,7 @@ private const val MIN_CHANGES_TO_PROCESS_ASYNC = 20
  */
 @ApiStatus.Internal
 class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope) : IndexedFilesListener() {
+  /** The projects for the file are taken from fileBasedIndex.indexableFilesFilterHolder */
   val dirtyFiles: DirtyFiles = DirtyFiles()
 
   private val processedEventIndex = AtomicInteger()
@@ -99,9 +101,9 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
       return
     }
 
-    val id = fileOrDir.getId()
-    val projects = fileBasedIndex.indexableFilesFilterHolder.findProjectsForFile(FileBasedIndex.getFileId(fileOrDir))
-    dirtyFiles.addFile(projects, id)
+    val fileId = fileOrDir.getId()
+    val projects = fileBasedIndex.indexableFilesFilterHolder.findProjectsForFile(fileId)
+    dirtyFiles.addFile(projects, fileId)
   }
 
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier {
@@ -156,13 +158,12 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
       try {
         processFilesInReadActionWithYieldingToWriteAction()
 
-        @Suppress("IncorrectCancellationExceptionHandling")
         if (Registry.`is`("try.starting.dumb.mode.where.many.files.changed")) {
           for (project in ProjectManager.getInstance().getOpenProjects()) {
             try {
               FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project)
             }
-            catch (_: ProcessCanceledException) {
+            catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
             }
             catch (e: Exception) {
               LOG.error(e)
@@ -328,7 +329,7 @@ private fun awaitWithCheckCancelled(phaser: Phaser, phase: Int) {
   while (true) {
     ProgressManager.checkCanceled()
     try {
-      phaser.awaitAdvanceInterruptibly(phase, 100, TimeUnit.MILLISECONDS)
+      phaser.awaitAdvanceInterruptibly(phase, 100, MILLISECONDS)
       break
     }
     catch (_: TimeoutException) {
