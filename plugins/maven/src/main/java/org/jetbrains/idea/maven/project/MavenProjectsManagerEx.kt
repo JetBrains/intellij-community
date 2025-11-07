@@ -5,7 +5,6 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
@@ -683,8 +682,6 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         doDownloadArtifacts(projects, artifacts, sources, docs, reporter)
       }
     }
-
-    withContext(Dispatchers.EDT) { getVirtualFileManager().asyncRefresh() }
 
     return result
   }
