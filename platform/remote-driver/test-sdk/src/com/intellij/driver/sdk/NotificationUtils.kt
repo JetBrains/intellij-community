@@ -9,7 +9,7 @@ fun Driver.disableAllBalloonNotifications() {
 
 fun Driver.closeAndDisableAllBalloonNotifications() {
   disableAllBalloonNotifications()
-  invokeAction("CloseAllNotifications", now = false)
+  runCatching { invokeAction("CloseAllNotifications") }
 }
 
 @Remote("com.jetbrains.performancePlugin.utils.NotificationUtils")
