@@ -5,5 +5,10 @@
   <extensions defaultExtensionNs="com.intellij">
     <multiRoutingFileSystemBackend implementation="com.intellij.platform.eel.tcp.TcpEelMrfsBackend"/>
     <eelProvider implementation="com.intellij.platform.eel.tcp.TcpEelProvider"/>
+    <eelTcpPathParser implementation="com.intellij.platform.eel.tcp.raw.RawTcpPathParser"/>
   </extensions>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.eelTcpPathParser" interface="com.intellij.platform.eel.tcp.TcpEelPathParser"
+                    dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>

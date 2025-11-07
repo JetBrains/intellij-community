@@ -14,19 +14,17 @@ import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.io.path.absolutePathString
 
 enum class TcpEelDeployingMode {
   Greedy,
   Lazy,
 }
 
-class TcpEelMachine(
-  val host: String, /* FIXME: Use only resolved hosts? */
+abstract class TcpEelMachine(
+  override val internalName: String,
   val coroutineScope: CoroutineScope,
   val deployingMode: TcpEelDeployingMode = TcpEelDeployingMode.Greedy,
 ) : EelMachine {
-  override val internalName: String = "tcp-$host"
   private val deferredEelSession = CompletableDeferred<IjentSession<IjentApi>>()
   private val deployingState = AtomicBoolean(false)
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
@@ -42,20 +40,20 @@ class TcpEelMachine(
    * That means that there could be possible an indefinite (as persistance is implemented and enabled) number of running Ijent instances to the different remote machines.
    */
   @ApiStatus.Internal
-  fun deploy(strategy: IjentIsolatedTcpDeployingStrategy) {
+  fun deploy(strategyFactory: () -> IjentIsolatedTcpDeployingStrategy) {
     val coroutineStart = when (deployingMode) {
       TcpEelDeployingMode.Greedy -> CoroutineStart.DEFAULT
       TcpEelDeployingMode.Lazy -> CoroutineStart.LAZY
     }
     if (deployingState.compareAndSet(false, true)) {
       coroutineScope.async(start = coroutineStart) {
-        deferredEelSession.complete(strategy.createIjentSession())
+        deferredEelSession.complete(strategyFactory().createIjentSession())
       }
     }
   }
 
   override fun ownsPath(path: Path): Boolean {
-    val extractedEndpoint = path.absolutePathString().extractTcpEndpoint() ?: return false
-    return extractedEndpoint.host == host
+    val internalName = TcpEelPathParser.extractInternalMachineId(path) ?: return false
+    return internalName == this.internalName
   }
 }
