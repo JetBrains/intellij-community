@@ -53,7 +53,7 @@ internal class RpcChangesViewProxy(private val project: Project, scope: Coroutin
 
   override fun initPanel() {
     val id = storeValueGlobally(scope, Unit, BackendChangesViewValueIdType)
-    ChangesViewSplitComponentBinding.createComponent(project, scope, id)
+    _panel = ChangesViewSplitComponentBinding.createComponent(project, scope, id)
   }
 
   override fun setToolbarHorizontal(horizontal: Boolean) {
