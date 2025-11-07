@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.absolutePathString
 
 enum class TcpEelDeployingMode {
@@ -27,6 +28,7 @@ class TcpEelMachine(
 ) : EelMachine {
   override val internalName: String = "tcp-$host"
   private val deferredEelSession = CompletableDeferred<IjentSession<IjentApi>>()
+  private val deployingState = AtomicBoolean(false)
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
     val session = deferredEelSession.await()
     /** Do not need additional cache, since the current implementation of [IjentSession.getIjentInstance] doing caching */
@@ -45,9 +47,10 @@ class TcpEelMachine(
       TcpEelDeployingMode.Greedy -> CoroutineStart.DEFAULT
       TcpEelDeployingMode.Lazy -> CoroutineStart.LAZY
     }
-
-    coroutineScope.async(start = coroutineStart) {
-      deferredEelSession.complete(strategy.createIjentSession())
+    if (deployingState.compareAndSet(false, true)) {
+      coroutineScope.async(start = coroutineStart) {
+        deferredEelSession.complete(strategy.createIjentSession())
+      }
     }
   }
 

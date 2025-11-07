@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.tcp
 
+import java.net.InetAddress
+
 /**
  * A specification for the IJent deployment specification. Used for the session setup.
  *
@@ -16,8 +18,9 @@ sealed interface TcpDeployInfo {
   data class RandomPort(override val host: String) : TcpDeployInfo
   data class FixedPort(override val host: String, val port: Int) : TcpDeployInfo
   companion object {
-    fun localRandom(): RandomPort = RandomPort("127.0.0.1")
-    fun localFixedPort(port: Int): FixedPort = FixedPort("127.0.0.1", port)
+    private val loopbackAddress = InetAddress.getLoopbackAddress().hostAddress
+    fun localRandom(): RandomPort = RandomPort(loopbackAddress)
+    fun localFixedPort(port: Int): FixedPort = FixedPort(loopbackAddress, port)
     fun listeningFixedPort(port: Int): FixedPort = FixedPort("0.0.0.0", port)
   }
  }

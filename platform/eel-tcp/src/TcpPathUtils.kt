@@ -7,7 +7,7 @@ import com.intellij.platform.ijent.tcp.TcpEndpoint
 
 object TcpEelConstants {
   const val TCP_PREFIX: String = "/tcp"
-
+  const val TCP_SCHEME: String = "tcp"
 }
 
 private val LOG = fileLogger()
@@ -19,7 +19,4 @@ internal fun String.extractTcpEndpoint(): TcpEndpoint? {
   return TcpEndpoint(host).also { LOG.trace { "Extracting TCP endpoint from $this. Got $it" } }
 }
 
-internal fun String.matchesTcpPrefix(): Boolean {
-  return startsWith(TcpEelConstants.TCP_PREFIX)
-}
 internal fun TcpEndpoint.toPath(): String = host
