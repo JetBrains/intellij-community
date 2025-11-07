@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -84,7 +85,7 @@ public class JBScrollPane extends JScrollPane {
    */
   private boolean paintBorderAllowed;
 
-  protected JComponent statusComponent;
+  private @Nullable JComponent statusComponent;
 
   public JBScrollPane(int viewportWidth) {
     init(false);
@@ -206,7 +207,7 @@ public class JBScrollPane extends JScrollPane {
    * Adds status component which is anchored to the top right corner above the right scrollbar.
    * This component obeys the {@link Flip}.
    */
-  public void setStatusComponent(JComponent statusComponent) {
+  public void setStatusComponent(@Nullable JComponent statusComponent) {
     JComponent old = getStatusComponent();
     this.statusComponent = statusComponent;
     if (statusComponent != null) {
@@ -221,7 +222,7 @@ public class JBScrollPane extends JScrollPane {
     repaint();
   }
 
-  public JComponent getStatusComponent() {
+  public @Nullable JComponent getStatusComponent() {
     return statusComponent;
   }
 
@@ -349,7 +350,7 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
-  public static ViewportBorder createIndentBorder() {
+  public static @NotNull ViewportBorder createIndentBorder() {
     return new ViewportBorder(2);
   }
 
@@ -492,7 +493,7 @@ public class JBScrollPane extends JScrollPane {
   public static class Layout extends ScrollPaneLayout {
     private static final Insets EMPTY_INSETS = JBInsets.emptyInsets();
 
-    protected Component statusComponent;
+    private @Nullable Component statusComponent;
 
     @Override
     public void syncWithScrollPane(JScrollPane sp) {
@@ -1022,6 +1023,7 @@ public class JBScrollPane extends JScrollPane {
    * @param event a mouse wheel event to check for validity
    * @return {@code true} if the specified event is valid, {@code false} otherwise
    */
+  @ApiStatus.Internal
   public static boolean isScrollEvent(@NotNull MouseWheelEvent event) {
     // event should not be consumed yet
     if (event.isConsumed()) return false;

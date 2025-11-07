@@ -924,7 +924,6 @@ c:com.intellij.ui.components.JBScrollPane
 - javax.swing.JScrollPane
 - sf:IGNORE_SCROLLBAR_IN_INSETS:com.intellij.openapi.util.Key
 - sf:IGNORE_SCROLL_LATCHING:com.intellij.openapi.util.Key
-- p:statusComponent:javax.swing.JComponent
 - <init>():V
 - <init>(I):V
 - <init>(I,I):V
@@ -939,7 +938,6 @@ c:com.intellij.ui.components.JBScrollPane
 - getStatusComponent():javax.swing.JComponent
 - isOptimizedDrawingEnabled():Z
 - isOverlappingScrollBar():Z
-- s:isScrollEvent(java.awt.event.MouseWheelEvent):Z
 - paint(java.awt.Graphics):V
 - p:paintBorder(java.awt.Graphics):V
 - p:paintChildren(java.awt.Graphics):V
@@ -967,7 +965,6 @@ e:com.intellij.ui.components.JBScrollPane$Flip
 - s:values():com.intellij.ui.components.JBScrollPane$Flip[]
 c:com.intellij.ui.components.JBScrollPane$Layout
 - javax.swing.ScrollPaneLayout
-- p:statusComponent:java.awt.Component
 - <init>():V
 - addLayoutComponent(java.lang.String,java.awt.Component):V
 - layoutContainer(java.awt.Container):V
