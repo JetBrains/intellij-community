@@ -66,7 +66,7 @@ private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener 
     val syncDisabledPluginsRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     asyncScope.launch(Dispatchers.IO) {
       syncDisabledPluginsRequests.debounce(100).collectLatest {
-        syncCustomConfigFile(path, DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
+        syncDisabledPluginsFile(path)
       }
     }
     DisabledPluginsState.addDisablePluginListener {
@@ -74,10 +74,9 @@ private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener 
     }
   }
 
-  private fun syncCustomConfigFile(originalConfigDir: Path, fileName: String) {
-    val sourceFile = PathManager.getConfigDir().resolve(fileName)
-    val targetFileName = fileName.takeIf { it != DisabledPluginsState.DISABLED_PLUGINS_FILENAME }
-                         ?: processPerProjectSupport().disabledPluginsFileName
+  private fun syncDisabledPluginsFile(originalConfigDir: Path) {
+    val sourceFile = PathManager.getConfigDir().resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
+    val targetFileName = processPerProjectSupport().disabledPluginsFileName
     val targetFile = originalConfigDir.resolve(targetFileName)
     if (sourceFile.exists()) {
       SharedConfigFolderUtil.writeToSharedFile(targetFile, sourceFile.readBytes())
