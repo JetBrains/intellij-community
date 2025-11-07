@@ -24,8 +24,28 @@ public final class ForkedDebuggerHelper {
   public static final String PARAMETERS_SEPARATOR = ";";
 
   public static final String FINISH_PARAMS = "FINISH_PARAMS";
+
+  /**
+   * The port on the IDEA side that should be used to communicate between the debugger-related tooling and IDEA.
+   * On this port an instance of Forked Debugger will wait for the tooling to establish the connection.
+   * This port is not used for the debugging itself.
+   * See com.intellij.openapi.externalSystem.service.execution.ForkedDebuggerThread.run for more details.
+   */
   public static final String DISPATCH_PORT_SYS_PROP = "idea.debugger.dispatch.port";
+
+  /**
+   * The address of the IDEA instance that initiated the debugging session and is waiting for a callback.
+   * On a local environment it could be different from `127.0.0.1` because the address is chosen based on a NIC address.
+   */
   public static final String DISPATCH_ADDR_SYS_PROP = "idea.debugger.dispatch.addr";
+
+  /**
+   * The port on which the IDEA instance will expect a session with the debugger itself,
+   * tooling should configure the debugger to use this port for data-transfer.
+   * The value should be sent back onto IDEA's side and then processed by ForkedDebuggerThread#attachRemoteDebugger.
+   * It can be used when the set of available ports differs on the host running IDEA and on the machine running the application (e.g. Proxy).
+   * If no value is specified, the port must be allocated automatically by the debugger tooling.
+   */
   public static final String DEBUGGER_AGENT_SINK_PORT_SYS_PROP = "idea.debugger.agent.sink.port";
 
   // returns port at which debugger is supposed to communicate with debuggee process
