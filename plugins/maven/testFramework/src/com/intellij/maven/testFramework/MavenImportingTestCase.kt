@@ -504,8 +504,8 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     projectsManager.updateAllMavenProjects(MavenSyncSpec.full("MavenImportingTestCase full sync"))
   }
 
-  protected suspend fun downloadArtifacts() {
-    projectsManager.downloadArtifacts(projectsManager.getProjects(), null, true, true)
+  protected suspend fun downloadArtifacts(): ArtifactDownloadResult {
+    return projectsManager.downloadArtifacts(projectsManager.projects, null, true, true)
   }
 
   @Throws(Exception::class)
