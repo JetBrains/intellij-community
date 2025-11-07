@@ -19,6 +19,7 @@ import com.intellij.ui.tabs.impl.themes.DefaultTabTheme
 import com.intellij.ui.tabs.impl.themes.TabTheme
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import java.awt.*
 import kotlin.math.floor
 
@@ -62,17 +63,18 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
    * label.preferredSize doesn't work for squeeze mode
    */
   private fun calcTabLabelWidth(label: TabLabel): Int {
-    var rect : Rectangle? = null
+    var rect: Rectangle? = null
 
     for (component in label.components) {
       if (rect == null) {
         rect = component.bounds
-      } else {
+      }
+      else {
         rect = rect.union(component.bounds)
       }
     }
 
-    val contentWidth = if (rect == null) 0 else  rect.x + rect.width
+    val contentWidth = if (rect == null) 0 else rect.x + rect.width
     return contentWidth + label.insets.right
   }
 }
@@ -142,9 +144,17 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
 
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {
     if (myFillBackground) {
-      g.color = getBackgroundColor()
-      RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())
+      fillBackground(g, rect, getBackgroundColor())
     }
+  }
+
+  override fun fillBackground(component: Component, g: Graphics2D, rect: Rectangle) {
+    fillBackground(g, rect, if (myFillBackground) getBackgroundColor() else UIUtil.getBgFillColor(component))
+  }
+
+  private fun fillBackground(g: Graphics2D, rect: Rectangle, color: Color) {
+    g.color = color
+    RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())
   }
 
   open fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
