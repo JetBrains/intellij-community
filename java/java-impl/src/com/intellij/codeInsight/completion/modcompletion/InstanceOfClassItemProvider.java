@@ -52,21 +52,23 @@ final class InstanceOfClassItemProvider implements CompletionItemProvider {
       });
   }
 
-  private static ClassReferenceCompletionItem createInstanceofLookupElement(PsiClass psiClass, Set<? extends PsiClass> toWildcardInheritors) {
+  private static CompletionItem createInstanceofLookupElement(PsiClass psiClass, Set<? extends PsiClass> toWildcardInheritors) {
     final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+    PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     if (typeParameters.length > 0) {
       for (final PsiClass parameterizedType : toWildcardInheritors) {
         if (psiClass.isInheritor(parameterizedType, true)) {
-          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
           final PsiWildcardType wildcard = PsiWildcardType.createUnbounded(psiClass.getManager());
           for (final PsiTypeParameter typeParameter : typeParameters) {
             substitutor = substitutor.put(typeParameter, wildcard);
           }
-          return new ClassReferenceCompletionItem(psiClass).withSubstitutor(substitutor);
+          break;
         }
       }
     }
 
-    return new ClassReferenceCompletionItem(psiClass);
+    PsiClassType type = factory.createType(psiClass, substitutor);
+    return PsiTypeCompletionItem.create(type).showPackage();
   }
 }
