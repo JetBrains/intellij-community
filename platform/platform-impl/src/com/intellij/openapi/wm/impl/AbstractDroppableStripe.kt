@@ -2,11 +2,13 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonManager
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.drag.DragButton
 import com.intellij.ui.paint.RectanglePainter
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.*
@@ -553,11 +555,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
       if (!rectangle.isEmpty) {
         var round: Int? = null
         if (isNewStripes) {
-          val size = JBUI.scale(30)
-          rectangle.x += (rectangle.width - size) / 2
-          rectangle.y += (rectangle.height - size) / 2
-          rectangle.width = size
-          rectangle.height = size
+          JBInsets.removeFrom(rectangle, JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(isOnTheLeftStripe(), ResizeStripeManager.isShowNames()))
           round = JBUI.scale(8)
         }
         g.color = if (isNewStripes) JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_DROP_BACKGROUND else JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
