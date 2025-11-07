@@ -31,7 +31,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
@@ -147,7 +146,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var documentationUrl: LinkPanel? = null
   private var sourceCodeUrl: LinkPanel? = null
   private var suggestedFeatures: SuggestedComponent? = null
-  private var bottomScrollPane: JBScrollPane? = null
+  private lateinit var bottomScrollPane: JBScrollPane
   private val scrollPanes = ArrayList<JBScrollPane>()
   private var descriptionComponent: JEditorPane? = null
   private var description: String? = null
@@ -516,8 +515,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private fun createHtmlImageViewHandler(): Consumer<View> {
     return Consumer { view: View ->
       val width = view.getPreferredSpan(View.X_AXIS)
-      if (width < 0 || width > bottomScrollPane!!.width) {
-        bottomScrollPane!!.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
+      if (width < 0 || width > bottomScrollPane.width) {
+        bottomScrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS
       }
     }
   }
@@ -642,7 +641,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       pane.addTab(IdeBundle.message("plugins.configurable.overview.tab.name"),
                   createScrollPane(parent).also { bottomScrollPane = it })
     }
-    myImagesComponent!!.setParent(bottomScrollPane!!.viewport)
+    myImagesComponent!!.setParent(bottomScrollPane.viewport)
   }
 
   private fun createChangeNotesTab(pane: JBTabbedPane) {
