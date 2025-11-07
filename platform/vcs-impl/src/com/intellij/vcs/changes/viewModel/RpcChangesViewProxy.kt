@@ -2,6 +2,7 @@
 package com.intellij.vcs.changes.viewModel
 
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
@@ -152,5 +153,7 @@ private class BackendRemoteCommitChangesViewModelRefresher(
     lastAppliedRefresh.update { maxOf(it, counter) }
   }
 }
+
+internal suspend fun Project.getRpcChangesView() = (serviceAsync<ChangesViewI>() as ChangesViewManager).changesView as RpcChangesViewProxy
 
 private object BackendChangesViewValueIdType : BackendValueIdType<ChangesViewId, Unit>(::ChangesViewId)
