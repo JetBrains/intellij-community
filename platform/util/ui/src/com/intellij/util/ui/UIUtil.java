@@ -2290,6 +2290,7 @@ public final class UIUtil {
     private float myLineSpacing;
     private Font myFont;
     private Color myColor;
+    private Color myShortcutColor;
 
     public TextPainter() {
       myDrawShadow = StartupUiUtil.isUnderDarcula();
@@ -2310,6 +2311,11 @@ public final class UIUtil {
 
     public @NotNull TextPainter withColor(Color color) {
       myColor = color;
+      return this;
+    }
+
+    public @NotNull TextPainter withShortcutColor(Color color) {
+      myShortcutColor = color;
       return this;
     }
 
@@ -2378,7 +2384,9 @@ public final class UIUtil {
           g.drawString(text, x, yOffset[0]);
           if (!Strings.isEmpty(shortcut)) {
             Color oldColor1 = g.getColor();
-            g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
+            g.setColor(myShortcutColor == null
+                       ? JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246)))
+                       : myShortcutColor);
             g.drawString(shortcut, x + fm.stringWidth(text + (StartupUiUtil.isUnderDarcula() ? " " : "")), yOffset[0]);
             g.setColor(oldColor1);
           }
