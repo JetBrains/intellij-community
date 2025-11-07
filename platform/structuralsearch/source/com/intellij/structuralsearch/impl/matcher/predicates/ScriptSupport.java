@@ -94,7 +94,7 @@ public class ScriptSupport {
 
       return myScript.run();
     }
-    catch (ThreadDeath | ProcessCanceledException t) {
+    catch (ProcessCanceledException t) {
       throw t;
     }
     catch (Throwable t) {
