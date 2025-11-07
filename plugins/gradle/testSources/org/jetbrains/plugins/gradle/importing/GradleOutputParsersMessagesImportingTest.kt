@@ -135,7 +135,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could not resolve junit:junit:4.12 for project:test")
+        assertNode("Could Not Resolve junit:junit:4.12 for project:test")
       }
     }
     val projectQualifier = when {
@@ -143,7 +143,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       isGradleAtLeast("8.10") -> "root project :"
       else -> "project :"
     }
-    assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 for project:test",
+    assertSyncViewSelectedNode("Could Not Resolve junit:junit:4.12 for project:test",
                                "project:test: Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
                                "Required by:\n" +
                                "    $projectQualifier\n" +
@@ -179,10 +179,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could not resolve junit:junit:99.99 for project:test")
+        assertNode("Could Not Resolve junit:junit:99.99 for project:test")
       }
     }
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project:test",
+    assertSyncViewSelectedNode("Could Not Resolve junit:junit:99.99 for project:test",
                                "project:test: No cached version of junit:junit:99.99 available for offline mode.\n" +
                                "\n" +
                                "Possible solution:\n" +
@@ -203,10 +203,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could not resolve junit:junit:99.99 for project")
+        assertNode("Could Not Resolve junit:junit:99.99 for project")
       }
     }
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project",
+    assertSyncViewSelectedNode("Could Not Resolve junit:junit:99.99 for project",
                                "project: Could not resolve junit:junit:99.99.\n" +
                                "\n" +
                                "Possible solution:\n" +
@@ -228,10 +228,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewTree {
       assertNode("finished") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could not resolve junit:junit:99.99 for project:test")
+        assertNode("Could Not Resolve junit:junit:99.99 for project:test")
       }
     }
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99 for project:test",
+    assertSyncViewSelectedNode("Could Not Resolve junit:junit:99.99 for project:test",
                                "project:test: Could not find junit:junit:99.99.\n" +
                                "Searched in the following locations:\n" +
                                "  $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
@@ -263,7 +263,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewTree {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could not resolve junit:junit:4.12 because no repositories are defined")
+        assertNode("Could Not Resolve junit:junit:4.12 because no repositories are defined")
       }
     }
     val projectQualifier = when {
@@ -271,7 +271,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       isGradleAtLeast("8.10") -> "root project :"
       else -> "project :"
     }
-    assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined", """
+    assertSyncViewSelectedNode("Could Not Resolve junit:junit:4.12 because no repositories are defined", """
       |A problem occurred configuring root project 'project'.
       |> Could not resolve all $artifacts for configuration '$configurationName'.
       |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
@@ -308,10 +308,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewTree {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could not resolve junit:junit:99.99")
+        assertNode("Could Not Resolve junit:junit:99.99")
       }
     }
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99", """
+    assertSyncViewSelectedNode("Could Not Resolve junit:junit:99.99", """
       |A problem occurred configuring root project 'project'.
       |> Could not resolve all $artifacts for configuration '$configurationName'.
       |   > Could not resolve junit:junit:99.99.
@@ -338,10 +338,10 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewTree {
       assertNode("failed") {
         assertNodeWithDeprecatedGradleWarning()
-        assertNode("Could not resolve junit:junit:99.99")
+        assertNode("Could Not Resolve junit:junit:99.99")
       }
     }
-    assertSyncViewSelectedNode("Could not resolve junit:junit:99.99",
+    assertSyncViewSelectedNode("Could Not Resolve junit:junit:99.99",
                                "A problem occurred configuring root project 'project'.\n" +
                                "> Could not resolve all $artifacts for configuration '$configurationName'.\n" +
                                "   > Could not find junit:junit:99.99.\n" +
