@@ -64,34 +64,65 @@ abstract class KotlinMavenConfigurator protected constructor(
             return ConfigureKotlinStatus.NON_APPLICABLE
 
         val psi = runReadAction { findModulePomFile(module) }
-        if (psi == null
-            || !psi.isValid
-            || psi !is XmlFile
-            || psi.virtualFile == null
-        ) {
-            return ConfigureKotlinStatus.BROKEN
-        }
+        when {
+            psi == null -> {
+                return logErrorAndReturnBrokenStatus(
+                    module.project,
+                    KotlinJ2KOnboardingConfigurationError.NO_POM_FILE
+                )
+            }
 
-        if (isKotlinModule(module)) {
-            return runReadAction { checkPluginConfiguration(module) }
+            !psi.isValid -> {
+                return logErrorAndReturnBrokenStatus(
+                    module.project,
+                    KotlinJ2KOnboardingConfigurationError.PSI_FOR_POM_IS_NOT_VALID
+                )
+            }
+
+            psi !is XmlFile -> {
+                return logErrorAndReturnBrokenStatus(
+                    module.project,
+                    KotlinJ2KOnboardingConfigurationError.POM_IS_NOT_XML
+                )
+            }
+
+            psi.virtualFile == null -> {
+                return logErrorAndReturnBrokenStatus(
+                    module.project,
+                    KotlinJ2KOnboardingConfigurationError.VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE
+                )
+            }
+
+            isKotlinModule(module) -> {
+                return runReadAction { checkPluginConfiguration(module, psi) }
+            }
+
+            else -> return ConfigureKotlinStatus.CAN_BE_CONFIGURED
         }
-        return ConfigureKotlinStatus.CAN_BE_CONFIGURED
+    }
+
+    private fun logErrorAndReturnBrokenStatus(project: Project, error: KotlinJ2KOnboardingConfigurationError): ConfigureKotlinStatus {
+        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, error)
+        return ConfigureKotlinStatus.BROKEN
     }
 
     override fun isApplicable(module: Module): Boolean {
         return module.buildSystemType == BuildSystemType.Maven
     }
 
-    protected open fun checkPluginConfiguration(module: Module): ConfigureKotlinStatus {
-        val psi = findModulePomFile(module) as? XmlFile ?: return ConfigureKotlinStatus.BROKEN
+    protected open fun checkPluginConfiguration(module: Module, psi: XmlFile): ConfigureKotlinStatus {
         val pom = PomFile.forFileOrNull(psi) ?: return ConfigureKotlinStatus.NON_APPLICABLE
 
         if (hasKotlinPlugin(pom)) {
             return ConfigureKotlinStatus.CONFIGURED
         }
 
-        val mavenProjectsManager = MavenProjectsManager.getInstance(module.project)
-        val mavenProject = mavenProjectsManager.findProject(module) ?: return ConfigureKotlinStatus.BROKEN
+        val project = module.project
+        val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+        val mavenProject = mavenProjectsManager.findProject(module) ?: return logErrorAndReturnBrokenStatus(
+            project,
+            KotlinJ2KOnboardingConfigurationError.MAVEN_PROJECT_FOR_MODULE_NOT_FOUND
+        )
 
         val kotlinPluginId = kotlinPluginId()
         val kotlinPlugin = mavenProject.plugins.find { it.mavenId.equals(kotlinPluginId.groupId, kotlinPluginId.artifactId) }

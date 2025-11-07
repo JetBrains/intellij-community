@@ -43,7 +43,7 @@ class KotlinJ2KOnboardingImportListener(private val project: Project) : ProjectD
 object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 4)
+    val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 5)
 
     internal val pluginVersion = getPluginInfoById(KotlinIdePlugin.id).version
     internal val buildSystemField = EventFields.Enum<KotlinJ2KOnboardingBuildSystem>("build_system")
@@ -377,6 +377,10 @@ enum class KotlinJ2KOnboardingConfigurationError {
     VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE,
     DOM_MODEL_DOESNT_EXIST,
     WASNT_ABLE_TO_TRANSFORM_XML_TO_POM,
+    NO_POM_FILE,
+    PSI_FOR_POM_IS_NOT_VALID,
+    POM_IS_NOT_XML,
+    MAVEN_PROJECT_FOR_MODULE_NOT_FOUND,
     // Other
     OTHER
 }
