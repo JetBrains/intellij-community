@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.util.containers.orNull
 import org.junit.platform.engine.EngineExecutionListener
 import org.junit.platform.engine.TestDescriptor
 import org.junit.platform.engine.TestExecutionResult
@@ -14,7 +15,6 @@ import org.junit.platform.engine.support.descriptor.ClassSource
 class TranslatingExecutionListener(
   private val delegate: EngineExecutionListener,
   private val modeContainer: ModeContainerDescriptor,
-  private val targetMode: IdeRunMode,
 ) : EngineExecutionListener {
 
   private val descriptorMap = mutableMapOf<UniqueId, TestDescriptor>()
@@ -43,8 +43,8 @@ class TranslatingExecutionListener(
   override fun executionStarted(testDescriptor: TestDescriptor) {
     // Skip engine and class containers from Jupiter
     if (testDescriptor.type == TestDescriptor.Type.CONTAINER &&
-        (testDescriptor.uniqueId.engineId.orElse(null) == JUPITER_ENGINE_ID ||
-         testDescriptor.source.orElse(null) is ClassSource)) {
+        (testDescriptor.uniqueId.engineId.orNull() == JUPITER_ENGINE_ID ||
+         testDescriptor.source.orNull() is ClassSource)) {
       return
     }
 
@@ -52,14 +52,15 @@ class TranslatingExecutionListener(
 
     val synthetic = getOrCreateSyntheticDescriptor(testDescriptor)
     startedDescriptors.add(synthetic.uniqueId)
+    startIde()
     delegate.executionStarted(synthetic)
   }
 
   override fun executionFinished(testDescriptor: TestDescriptor, testExecutionResult: TestExecutionResult) {
     // Skip engine and class containers from Jupiter
     if (testDescriptor.type == TestDescriptor.Type.CONTAINER &&
-        (testDescriptor.uniqueId.engineId.orElse(null) == JUPITER_ENGINE_ID ||
-         testDescriptor.source.orElse(null) is ClassSource)) {
+        (testDescriptor.uniqueId.engineId.orNull() == JUPITER_ENGINE_ID ||
+         testDescriptor.source.orNull() is ClassSource)) {
       return
     }
 
@@ -81,7 +82,7 @@ class TranslatingExecutionListener(
 
     val displayName = descriptor.displayName
     return when {
-      displayName.contains(targetMode.name) -> true
+      displayName.contains(modeContainer.mode.name) -> true
       IdeRunMode.entries.map { it.name }.any { displayName.contains(it) } -> false
       else -> true
     }
@@ -116,5 +117,9 @@ class TranslatingExecutionListener(
 
     modeContainer.addChild(synthetic)
     return synthetic
+  }
+
+  private fun startIde() {
+    IdeInstance.startIde(modeContainer.mode)
   }
 }

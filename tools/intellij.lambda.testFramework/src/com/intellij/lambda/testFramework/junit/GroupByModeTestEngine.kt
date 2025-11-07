@@ -12,6 +12,8 @@ import java.util.*
 
 internal const val JUPITER_ENGINE_ID = "junit-jupiter"
 
+private val jupiterUniqueId = UniqueId.forEngine(JUPITER_ENGINE_ID)
+
 /**
  * Custom TestEngine that wraps JUnit Jupiter and enables grouped by [IdeRunMode] test execution.
  *
@@ -151,6 +153,8 @@ class GroupByModeTestEngine : TestEngine {
       }
 
       for (mode in modes) {
+        val results = mutableListOf<ModeDescriptorResult>()
+
         // For each mode, execute ALL classes
         for (classDescriptor in rootDescriptor.children) {
           try {
@@ -159,7 +163,7 @@ class GroupByModeTestEngine : TestEngine {
             } as? ModeContainerDescriptor
 
             if (modeDescriptor != null) {
-              executeMode(modeDescriptor, classSelectors, executionRequest, listener, isLastMode = mode == modes.last())
+              results.add(executeMode(modeDescriptor, classSelectors, executionRequest, listener))
             }
           }
           catch (e: Exception) {
@@ -168,6 +172,9 @@ class GroupByModeTestEngine : TestEngine {
             e.printStackTrace()
           }
         }
+
+        // Only allow cleanup after the last mode to keep application alive between modes
+        results.forEach { listener.executionFinished(it.descriptor, it.result) }
       }
 
       // Finish all class descriptors once at the end
@@ -187,8 +194,7 @@ class GroupByModeTestEngine : TestEngine {
     classSelectors: List<ClassSelector>,
     originalExecutionRequest: ExecutionRequest,
     listener: EngineExecutionListener,
-    isLastMode: Boolean,
-  ) {
+  ): ModeDescriptorResult {
     println("=== Executing tests in ${modeDescriptor.mode} mode for ${modeDescriptor.className} ===")
 
     listener.executionStarted(modeDescriptor)
@@ -198,14 +204,11 @@ class GroupByModeTestEngine : TestEngine {
       val postDiscoveryFilters = rootDescriptor.postDiscoveryFilters
       val configParams = originalExecutionRequest.configurationParameters
 
-      // Find the selector for this class
       val classSelector = classSelectors.find { it.className == modeDescriptor.className }
       if (classSelector == null) {
-        listener.executionFinished(modeDescriptor, TestExecutionResult.successful())
-        return
+        return ModeDescriptorResult(modeDescriptor, TestExecutionResult.successful())
       }
 
-      // Convert configuration parameters to Map and ADD the current mode as a filter
       val configMap = mutableMapOf<String, String>()
       configParams.keySet().forEach { key ->
         configParams.get(key).ifPresent { value ->
@@ -224,8 +227,6 @@ class GroupByModeTestEngine : TestEngine {
         .configurationParameters(configMap)
         .build()
 
-      // Discover tests - now Jupiter will only discover tests for the target mode
-      val jupiterUniqueId = UniqueId.forEngine(JUPITER_ENGINE_ID)
       val freshJupiterDescriptor = jupiterEngine.discover(freshRequest, jupiterUniqueId)
 
       log("Found ${freshJupiterDescriptor.descendants.size} descendants for ${modeDescriptor.mode}")
@@ -233,8 +234,7 @@ class GroupByModeTestEngine : TestEngine {
       // Create translating listener that reports under our mode descriptor
       val translatingListener = TranslatingExecutionListener(
         listener,
-        modeDescriptor,
-        modeDescriptor.mode
+        modeDescriptor
       )
 
       // Wrap with filtering listener that applies post-discovery filters
@@ -253,18 +253,10 @@ class GroupByModeTestEngine : TestEngine {
       )
 
       jupiterEngine.execute(executionRequest)
-
-      // Only allow cleanup on the last mode to keep application alive between modes
-      if (!isLastMode) {
-        log("Skipping cleanup between modes")
-      }
-      else {
-        listener.executionFinished(modeDescriptor, TestExecutionResult.successful())
-      }
+      return ModeDescriptorResult(modeDescriptor, TestExecutionResult.successful())
     }
     catch (e: Exception) {
-      e.printStackTrace()
-      listener.executionFinished(modeDescriptor, TestExecutionResult.failed(e))
+      return ModeDescriptorResult(modeDescriptor, TestExecutionResult.failed(e))
     }
   }
 }
@@ -289,3 +281,6 @@ private fun findFieldInHierarchy(obj: Any, fieldName: String): Field? {
 
   return null
 }
+
+
+data class ModeDescriptorResult(val descriptor: ModeContainerDescriptor, val result: TestExecutionResult)

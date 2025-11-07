@@ -1,7 +1,8 @@
 package com.intellij.lambda.testFramework.junit
 
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
-import com.intellij.openapi.diagnostic.currentClassLogger
+import com.intellij.tools.ide.util.common.logOutput
+import com.intellij.util.containers.orNull
 import org.junit.jupiter.api.extension.*
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
@@ -16,42 +17,27 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
   override fun supportsTestTemplate(context: ExtensionContext): Boolean = getModesToRun(context).isNotEmpty()
 
   private fun getModesToRun(context: ExtensionContext): List<IdeRunMode> {
+    val annotation = AnnotationUtils.findAnnotation(context.testMethod, ExecuteInMonolithAndSplitMode::class.java).orElse(
+      AnnotationUtils.findAnnotation(context.testClass, ExecuteInMonolithAndSplitMode::class.java).orNull()
+    )
+
+    if (annotation == null) throw IllegalStateException("The test is expected to have ${ExecuteInMonolithAndSplitMode::javaClass.name} annotation")
+
     // Check if we're running under GroupByModeTestEngine with a mode filter
-    val modeFilter = context.getConfigurationParameter("ide.run.mode.filter").orElse(null)
+    val modeFilter = context.getConfigurationParameter("ide.run.mode.filter").orNull()
 
-    val methodAnnotation = AnnotationUtils.findAnnotation(context.testMethod, ExecuteInMonolithAndSplitMode::class.java)
-    if (methodAnnotation.isPresent) {
-      val allModes = methodAnnotation.get().mode.toList()
-      // If mode filter is set, only return that mode
-      return if (modeFilter != null) {
-        val filterMode = IdeRunMode.valueOf(modeFilter)
-        allModes.filter { it == filterMode }
-      }
-      else {
-        allModes
-      }
+    // If mode filter is set, only return that mode
+    return if (modeFilter != null) {
+      listOf(IdeRunMode.valueOf(modeFilter))
     }
-
-    val classAnnotation = AnnotationUtils.findAnnotation(context.testClass, ExecuteInMonolithAndSplitMode::class.java)
-    if (classAnnotation.isPresent) {
-      val allModes = classAnnotation.get().mode.toList()
-      // If mode filter is set, only return that mode
-      return if (modeFilter != null) {
-        val filterMode = IdeRunMode.valueOf(modeFilter)
-        allModes.filter { it == filterMode }
-      }
-      else {
-        allModes
-      }
+    else {
+      annotation.mode.toList()
     }
-
-    throw IllegalStateException("The test is expected to have ${ExecuteInMonolithAndSplitMode::javaClass.name} annotation")
   }
 
   override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
     val modesToRun = getModesToRun(context)
-
-    currentClassLogger().info("Test will be run in modes: $modesToRun")
+    logOutput("Test will be run in modes: $modesToRun")
 
     // Test with parameters in the method signature
     val parametrizedRuns = getArgumentsProvider(context).map(Function { provider: ArgumentsProvider ->
@@ -74,8 +60,6 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
   private fun createInvocationContext(mode: IdeRunMode, args: Array<Any>, context: ExtensionContext): TestTemplateInvocationContext {
     return object : TestTemplateInvocationContext {
       override fun getDisplayName(invocationIndex: Int): String {
-        IdeInstance.startIde(mode, context)
-
         val params = if (args.isNotEmpty()) " with params: " + listOf(*args) else ""
         return if (params.isNotEmpty()) "[$mode] $params" else "[$mode]"
       }
@@ -93,7 +77,7 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
             return when {
               paramCtx.parameter.type.isAssignableFrom(mode::class.java) -> mode
               paramCtx.parameter.type.isAssignableFrom(BackgroundRunWithLambda::class.java) -> {
-                IdeInstance.startIde(mode, context)
+                IdeInstance.ideBackgroundRun
               }
               else -> {
                 // The first parameter is the IdeRunMode, so offset argument index by 1

@@ -8,21 +8,19 @@ import com.intellij.lambda.testFramework.starter.newContextWithLambda
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
-import org.junit.jupiter.api.extension.ExtensionContext
-import org.junit.platform.launcher.TestExecutionListener
-import org.junit.platform.launcher.TestPlan
+import com.intellij.tools.ide.util.common.logOutput
 
-object IdeInstance : TestExecutionListener {
+object IdeInstance {
   internal lateinit var ideBackgroundRun: BackgroundRunWithLambda
     private set
   lateinit var currentIdeMode: IdeRunMode
     private set
 
-  fun startIde(runMode: IdeRunMode, context: ExtensionContext): BackgroundRunWithLambda = synchronized(this) {
-    println("Starting IDE in mode: $runMode")
+  fun startIde(runMode: IdeRunMode): BackgroundRunWithLambda = synchronized(this) {
+    logOutput("Starting IDE in mode: $runMode")
 
     if (this::ideBackgroundRun.isInitialized && currentIdeMode == runMode) {
-      println("IDE is already running in mode: $runMode. Reusing the current instance of IDE.")
+      logOutput("IDE is already running in mode: $runMode. Reusing the current instance of IDE.")
       return ideBackgroundRun
     }
 
@@ -30,7 +28,7 @@ object IdeInstance : TestExecutionListener {
     currentIdeMode = runMode
     ConfigurationStorage.splitMode(currentIdeMode == IdeRunMode.SPLIT)
 
-    val testContext = Starter.newContextWithLambda(context.testClass.get().simpleName,
+    val testContext = Starter.newContextWithLambda(runMode.name,
                                                    UltimateTestCases.JpsEmptyProject,
                                                    additionalPluginModule = IdeLambdaStarter.ADDITIONAL_LAMBDA_TEST_PLUGIN)
     ideBackgroundRun = testContext.runIdeWithLambda()
@@ -38,14 +36,10 @@ object IdeInstance : TestExecutionListener {
     return ideBackgroundRun
   }
 
-  private fun stopIde(): Unit = synchronized(this) {
+  fun stopIde(): Unit = synchronized(this) {
     if (!this::ideBackgroundRun.isInitialized) return
 
-    println("Stopping IDE that is running in mode: $currentIdeMode")
+    logOutput("Stopping IDE that is running in mode: $currentIdeMode")
     catchAll { ideBackgroundRun.forceKill() }
-  }
-
-  override fun testPlanExecutionFinished(testPlan: TestPlan) {
-    stopIde()
   }
 }
