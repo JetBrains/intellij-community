@@ -23,6 +23,7 @@ import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.api.specs.Spec;
 import org.gradle.internal.resolve.ModuleVersionResolveException;
+import org.gradle.internal.component.resolution.failure.exception.VariantSelectionByAttributesException;
 import org.gradle.util.Path;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -392,6 +393,7 @@ public final class GradleDependencyResolver {
       }
       MyModuleVersionSelector moduleVersionSelector = null;
       Throwable problem = unresolvedDependency.getProblem();
+      StringBuilder failureMessage = new StringBuilder(problem.getMessage());
       if (problem.getCause() != null) {
         problem = problem.getCause();
       }
@@ -406,12 +408,13 @@ public final class GradleDependencyResolver {
               moduleComponentSelector.getVersion()
             );
           }
+        } else if (problem instanceof VariantSelectionByAttributesException) {
+          failureMessage.append("\n\nPossible cause:\n - ").append(problem.getMessage());
         }
       }
       catch (Throwable ignore) {
       }
       if (moduleVersionSelector == null) {
-        problem = unresolvedDependency.getProblem();
         ModuleVersionSelector selector = unresolvedDependency.getSelector();
         moduleVersionSelector = new MyModuleVersionSelector(selector.getName(), selector.getGroup(), selector.getVersion());
       }
@@ -419,7 +422,7 @@ public final class GradleDependencyResolver {
       dependency.setName(moduleVersionSelector.name);
       dependency.setGroup(moduleVersionSelector.group);
       dependency.setVersion(moduleVersionSelector.version);
-      dependency.setFailureMessage(problem.getMessage());
+      dependency.setFailureMessage(failureMessage.toString());
       result.add(dependency);
     }
     return result;
