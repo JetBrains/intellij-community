@@ -498,7 +498,7 @@ public final class JavaPsiModuleUtil {
         Iterator<PsiJavaModule> directReaders = myGraph.getOut(destination);
         while (directReaders.hasNext()) {
           PsiJavaModule next = directReaders.next();
-          if (source.equals(next) || myTransitiveEdges.contains(key(destination, next)) && reads(source, next)) {
+          if (source.equals(next) || myTransitiveEdges.contains(key(destination, next)) && !next.equals(destination) && reads(source, next)) {
             return true;
           }
         }
