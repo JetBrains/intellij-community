@@ -68,6 +68,9 @@
                  key="gitlab.viewed.state.stale.timeout"/>
     <registryKey defaultValue="0" description="The number of merge requests at the top of the list to pre-emptively load and cache"
                  key="gitlab.merge.requests.cached.from.list"/>
+
+    <registryKey defaultValue="true" description="Enable file uploading action for review notes"
+                 key="gitlab.merge.requests.file.upload.enabled"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.statistics">
