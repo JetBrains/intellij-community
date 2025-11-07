@@ -33,14 +33,14 @@ import org.junit.Test
 public class Coil3ImageRendererExtensionImplTest {
     @get:Rule public val composeTestRule: ComposeContentTestRule = createComposeRule()
 
-    private val platformContext: PlatformContext = PlatformContext.Companion.INSTANCE
+    private val platformContext: PlatformContext = PlatformContext.INSTANCE
     private val imageUrl = "https://example.com/image.png"
 
     @Test
     public fun `image renders with correct size on success`() {
         val fakeImageWidth = 150
         val fakeImageHeight = 100
-        val fakeImage = ColorImage(Color.Companion.Red.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
+        val fakeImage = ColorImage(Color.Red.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
 
         val engine = FakeImageLoaderEngine.Builder().intercept({ it == imageUrl }, fakeImage).build()
 
@@ -76,11 +76,7 @@ public class Coil3ImageRendererExtensionImplTest {
 
         setContent(extension, imageMarkdown)
 
-        composeTestRule
-            .onNodeWithContentDescription("Failed to load image")
-            .assertExists()
-            .assertWidthIsEqualTo(0.dp)
-            .assertHeightIsEqualTo(1.dp)
+        composeTestRule.onNodeWithContentDescription("Failed to load image").assertDoesNotExist()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -90,7 +86,7 @@ public class Coil3ImageRendererExtensionImplTest {
 
         val fakeImageWidth = 150
         val fakeImageHeight = 150
-        val fakeImage = ColorImage(Color.Companion.Red.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
+        val fakeImage = ColorImage(Color.Red.toArgb(), width = fakeImageWidth, height = fakeImageHeight)
         val engine =
             FakeImageLoaderEngine.Builder()
                 .intercept(
@@ -129,7 +125,7 @@ public class Coil3ImageRendererExtensionImplTest {
 
     private fun setContent(extension: Coil3ImageRendererExtensionImpl, image: InlineMarkdown.Image) {
         composeTestRule.setContent {
-            val inlineContent = mapOf("inlineTextContent" to extension.renderImageContent(image))
+            val inlineContent = buildMap { extension.renderImageContent(image)?.let { put("inlineTextContent", it) } }
             val annotatedString = buildAnnotatedString {
                 append("Rendered inline text image: ")
                 appendInlineContent("inlineTextContent", "[rendered image]")
