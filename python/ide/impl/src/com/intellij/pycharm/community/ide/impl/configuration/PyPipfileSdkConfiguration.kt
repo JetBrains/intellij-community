@@ -52,7 +52,7 @@ private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 @ApiStatus.Internal
 class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override val toolId: ToolId = ToolId("pipenv")
+  override val toolId: ToolId = PIPENV_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
     { checkManageableEnv(module, it) }

@@ -26,7 +26,7 @@ class PyVenvSdkConfiguration : PyProjectSdkConfigurationExtension {
   private val existingSdks by lazy { PythonSdkUtil.getAllSdks() }
   private val context = UserDataHolderBase()
 
-  override val toolId: ToolId = ToolId("Venv")
+  override val toolId: ToolId = VENV_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
     { checkManageableEnv(module) }

@@ -9,6 +9,9 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindItem
@@ -29,7 +32,11 @@ import com.jetbrains.python.sdk.add.v2.uv.EnvironmentCreatorUv
 import com.jetbrains.python.sdk.add.v2.uv.UvExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.venv.EnvironmentCreatorVenv
 import com.jetbrains.python.sdk.add.v2.venv.PythonExistingEnvironmentSelector
+import com.jetbrains.python.sdk.configuration.CreateSdkInfo
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 
 class ValidationInfoError(val validationInfo: ValidationInfo) : MessageError(validationInfo.message)
@@ -162,6 +169,32 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
   fun onShown(scope: CoroutineScope) {
     newInterpreterCreators.values.forEach { it.onShown(scope) }
     existingInterpreterSelectors.values.forEach { it.onShown(scope) }
+
+    scope.launch(Dispatchers.Default) {
+      val createSdkInfoWithTool = withModalProgress(ModalTaskOwner.guess(), message("sdk.create.check.environments"), TaskCancellation.cancellable()) {
+        module?.let { PyProjectSdkConfigurationExtension.findAllSortedForModule(it) }?.firstOrNull()
+      } ?: return@launch
+
+      val (manager, configurators) = when (createSdkInfoWithTool.createSdkInfo) {
+        is CreateSdkInfo.WillCreateEnv -> {
+          selectionMethod.set(PythonInterpreterSelectionMethod.CREATE_NEW)
+          newInterpreterManager to newInterpreterCreators
+        }
+        is CreateSdkInfo.ExistingEnv -> {
+          selectionMethod.set(PythonInterpreterSelectionMethod.SELECT_EXISTING)
+          existingInterpreterManager to existingInterpreterSelectors
+        }
+      }
+
+      val tool = PythonSupportedEnvironmentManagers.entries.singleOrNull { it.toolId == createSdkInfoWithTool.toolId } ?: return@launch
+      if (tool in configurators) {
+        manager.set(tool)
+      }
+      else {
+        selectionMethod.set(PythonInterpreterSelectionMethod.CREATE_NEW)
+        newInterpreterManager.set(tool)
+      }
+    }
   }
 
   fun createStatisticsInfo(): InterpreterStatisticsInfo {
