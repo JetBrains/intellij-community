@@ -36,7 +36,9 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.K2OptimizeImportsFacility
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtClassOrFile
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
+import org.jetbrains.kotlin.idea.quickfix.ChangeModifiersFix
+import org.jetbrains.kotlin.idea.quickfix.ChangeModifiersFix.Companion.removeModifierFix
+import org.jetbrains.kotlin.idea.quickfix.ChangeObjectToClassFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.util.findAnnotation
@@ -88,7 +90,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         val action = if (shouldBePresent) {
             AddModifierFix(kModifierOwner, KtTokens.OVERRIDE_KEYWORD)
         } else {
-            RemoveModifierFixBase(kModifierOwner, KtTokens.OVERRIDE_KEYWORD, isRedundant = false)
+            removeModifierFix(kModifierOwner, KtTokens.OVERRIDE_KEYWORD)
         }
 
         return listOfNotNull(action.asIntention())
@@ -253,6 +255,18 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
             else -> javaPsiModifiersMapping[modifier] to shouldPresent
         }
         if (kToken == null) return emptyList()
+        if (kToken == KtTokens.OPEN_KEYWORD && kModifierOwner is KtClassOrObject) {
+            if (kModifierOwner is KtObjectDeclaration) {
+                val fix = ChangeObjectToClassFix(kModifierOwner, kToken)
+                return listOf(fix.asIntention())
+            }
+            for (token in arrayOf(KtTokens.DATA_KEYWORD, KtTokens.ENUM_KEYWORD)) {
+                if (kModifierOwner.hasModifier(token)) {
+                    val fix = ChangeModifiersFix(kModifierOwner, removeModifier = token, addModifier = kToken)
+                    return listOf(fix.asIntention())
+                }
+            }
+        }
         return createChangeModifierActions(kModifierOwner, kToken, shouldPresentMapped)
     }
 
@@ -264,7 +278,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
         val action = if (shouldBePresent) {
             AddModifierFixMpp.createIfApplicable(modifierListOwners, token)
         } else {
-            RemoveModifierFixBase(modifierListOwners, token, false)
+            removeModifierFix(modifierListOwners, token)
         }
         return listOfNotNull(action?.asIntention())
     }

@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
-import org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
+import org.jetbrains.kotlin.idea.quickfix.ChangeModifiersFix.Companion.removeModifierFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -50,7 +50,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
                 holder.registerProblem(
                     suspendModifier,
                     KotlinBundle.message("redundant.suspend.modifier"),
-                    RemoveModifierFixBase(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true).asQuickFix(),
+                    removeModifierFix(function, KtTokens.SUSPEND_KEYWORD, isRedundant = true).asQuickFix(),
                 )
             }
         })

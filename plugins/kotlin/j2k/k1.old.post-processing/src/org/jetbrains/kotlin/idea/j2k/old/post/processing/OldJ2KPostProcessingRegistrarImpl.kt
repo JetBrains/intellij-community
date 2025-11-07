@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ObjectLiteralToLambdaIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade
 import org.jetbrains.kotlin.idea.core.setVisibility
 import org.jetbrains.kotlin.idea.inspections.*
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection
@@ -111,7 +110,7 @@ internal class OldJ2KPostProcessingRegistrarImpl : OldJ2KPostProcessingRegistrar
             val projection = diagnostic.psiElement as KtTypeProjection
             val elementType = projection.projectionToken?.node?.elementType as? KtModifierKeywordToken
                 ?: return@registerDiagnosticBasedProcessing
-            RemoveModifierFixBase.invokeImpl(projection, elementType)
+            RemoveModifierFixBase.removeModifier(projection, elementType)
         }
 
         registerDiagnosticBasedProcessingFactory(
