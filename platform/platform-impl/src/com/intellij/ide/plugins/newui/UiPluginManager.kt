@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.frontend.FrontendApplicationInfo
 import com.intellij.frontend.FrontendType
 import com.intellij.ide.plugins.marketplace.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
@@ -237,6 +239,9 @@ class UiPluginManager {
 
     @JvmStatic
     fun isCombinedPluginManagerEnabled(): Boolean {
+      if (!LoadingState.APP_READY.isOccurred || ApplicationManager.getApplication() == null) {
+        return false
+      }
       val frontendType = FrontendApplicationInfo.getFrontendType()
       return frontendType is FrontendType.Remote && frontendType.isController() && Registry.`is`("reworked.plugin.manager.enabled", false)
     }
