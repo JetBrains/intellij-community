@@ -3,6 +3,7 @@
 package com.intellij.mcpserver
 
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.testFramework.junit5.TestApplication
@@ -15,11 +16,11 @@ import io.modelcontextprotocol.kotlin.sdk.Implementation
 import io.modelcontextprotocol.kotlin.sdk.TextContent
 import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.SseClientTransport
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeAll
 import org.junit.platform.commons.annotation.Testable
 import kotlin.io.path.Path
+import kotlin.test.DefaultAsserter.assertEquals
 import kotlin.test.fail
 
 @Testable
@@ -42,7 +43,6 @@ abstract class McpToolsetTestBase {
   protected val classJavaFileFixture = sourceRootFixture.virtualFileFixture("Class.java", "Class.java content")
   protected val testJavaFileFixture = sourceRootFixture.virtualFileFixture("Test.java", "Test.java content")
   protected val mainJavaFile by mainJavaFileFixture
-  protected val classJavaFile by classJavaFileFixture
   protected val testJavaFile by testJavaFileFixture
 
 
@@ -51,6 +51,9 @@ abstract class McpToolsetTestBase {
     McpServerService.getInstance().start()
     // Get the port from McpServerService
     val port = McpServerService.getInstance().port
+    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull()
+    val transportUrl = addressProvider?.httpUrl("/sse", portOverride = port)
+      ?: "http://localhost:$port/sse"
 
     // Create HttpClient with SSE support
     val httpClient = HttpClient {
@@ -58,8 +61,8 @@ abstract class McpToolsetTestBase {
     }
 
     // Create SseClientTransport
-    val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/sse", requestBuilder = {
-      header(IJ_MCP_SERVER_PROJECT_PATH, project.basePath)
+    val sseClientTransport = SseClientTransport(httpClient, transportUrl, requestBuilder = {
+      project.basePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
     })
 
     // Create client

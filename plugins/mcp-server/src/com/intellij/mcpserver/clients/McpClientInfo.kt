@@ -16,7 +16,8 @@ data class McpClientInfo(
     CLAUDE_APP("Claude App"),
     WINDSURF("Windsurf"),
     CURSOR("Cursor"),
-    CLAUDE_CODE("Claude Code");
+    CLAUDE_CODE("Claude Code"),
+    CODEX("Codex");
   }
 
   enum class Scope {

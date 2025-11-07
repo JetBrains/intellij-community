@@ -22,6 +22,9 @@ class VSCodeSSEConfig(val url: String, val type: String) : ServerConfig()
 class ClaudeCodeSSEConfig(val url: String, val type: String) : ServerConfig()
 
 @Serializable
+class CodexStreamableHttpConfig(val url: String) : ServerConfig()
+
+@Serializable
 class STDIOServerConfig(
   val command: String? = null,
   val args: List<String>? = null,

@@ -3,6 +3,7 @@
 package com.intellij.mcpserver
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.impl.util.network.findFirstFreePort
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PORT
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
@@ -89,12 +90,37 @@ fun createStdioServerJsonEntry(cmd: GeneralCommandLine): JsonObject {
  * ```
  */
 fun createSseServerJsonEntry(port: Int, projectBasePath: String?, authToken: Pair<String, String>? = null): JsonObject {
+  val provider = McpServerConnectionAddressProvider.getInstanceOrNull()
+  val url = provider?.httpUrl("/sse", portOverride = port) ?: "http://localhost:$port/sse"
+  return buildTransportJson(
+    type = "sse",
+    url = url,
+    projectBasePath = projectBasePath,
+    authToken = authToken,
+  )
+}
+fun createStreamableServerJsonEntry(port: Int, projectBasePath: String?, authToken: Pair<String, String>? = null): JsonObject {
+  val provider = McpServerConnectionAddressProvider.getInstanceOrNull()
+  val url = provider?.httpUrl("/stream", portOverride = port) ?: "http://localhost:$port/stream"
+  return buildTransportJson(
+    type = "streamable-http",
+    url = url,
+    projectBasePath = projectBasePath,
+    authToken = authToken,
+  )
+}
+
+private fun buildTransportJson(type: String, url: String, projectBasePath: String?, authToken: Pair<String, String>?): JsonObject {
   return buildJsonObject {
-    put("type", "sse")
-    put("url", "http://localhost:$port/sse")
+    put("type", type)
+    put("url", url)
     put("headers", buildJsonObject {
-      put(IJ_MCP_SERVER_PROJECT_PATH, projectBasePath)
-      if (authToken != null) put(authToken.first, authToken.second)
+      if (projectBasePath != null) {
+        put(IJ_MCP_SERVER_PROJECT_PATH, projectBasePath)
+      }
+      if (authToken != null) {
+        put(authToken.first, authToken.second)
+      }
     })
   }
 }

@@ -3,12 +3,17 @@ package com.intellij.mcpserver.impl
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.mcpserver.*
 import com.intellij.mcpserver.impl.util.network.*
+import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.impl.util.projectPathParameterName
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.util.findMostRelevantProject
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -63,6 +68,11 @@ private val IJ_MCP_AUTH_TOKEN: String = ::IJ_MCP_AUTH_TOKEN.name
 
 @Service(Service.Level.APP)
 class McpServerService(val cs: CoroutineScope) {
+  companion object {
+    fun getInstance(): McpServerService = service()
+    suspend fun getInstanceAsync(): McpServerService = serviceAsync()
+  }
+
   enum class AskCommandExecutionMode {
     ASK,
     DONT_ASK,
@@ -72,12 +82,8 @@ class McpServerService(val cs: CoroutineScope) {
      */
     RESPECT_GLOBAL_SETTINGS,
   }
-  class McpSessionOptions(val commandExecutionMode: AskCommandExecutionMode)
 
-  companion object {
-    fun getInstance(): McpServerService = service()
-    suspend fun getInstanceAsync(): McpServerService = serviceAsync()
-  }
+  class McpSessionOptions(val commandExecutionMode: AskCommandExecutionMode)
 
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
   @OptIn(ExperimentalAtomicApi::class)
@@ -88,8 +94,14 @@ class McpServerService(val cs: CoroutineScope) {
   val isRunning: Boolean
     get() = server.value != null
 
+  private val connectionAddressProvider: McpServerConnectionAddressProvider
+    get() = service()
+
   val serverSseUrl: String
-    get() = "http://127.0.0.1:${port}/sse"
+    get() = connectionAddressProvider.serverSseUrl
+
+  val serverStreamUrl: String
+    get() = connectionAddressProvider.serverStreamUrl
 
   fun start() {
     McpServerSettings.getInstance().state.enableMcpServer = true
@@ -143,16 +155,19 @@ class McpServerService(val cs: CoroutineScope) {
     }
   }
 
-  private fun isKnownToken(token: String): Boolean {
-    return activeAuthorizedSessions.containsKey(token)
-  }
+  private fun isKnownToken(token: String): Boolean = activeAuthorizedSessions.containsKey(token)
 
   private fun getSessionOptions(token: String?): McpSessionOptions {
-    return token?.let { activeAuthorizedSessions[token] } ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
+    return token?.let { activeAuthorizedSessions[it] } ?: McpSessionOptions(commandExecutionMode = AskCommandExecutionMode.RESPECT_GLOBAL_SETTINGS)
   }
 
   val port: Int
     get() = (server.value ?: error("MCP Server is not enabled")).engineConfig.connectors.first().port
+
+  internal fun resolvedConnectorHost(): String? {
+    val currentServer = server.value ?: return null
+    return currentServer.engineConfig.connectors.firstOrNull()?.host?.takeUnless { it.isBlank() }
+  }
 
   internal fun settingsChanged(enabled: Boolean) {
     server.update { currentServer ->
@@ -222,9 +237,9 @@ class McpServerService(val cs: CoroutineScope) {
             finish()
           }
         }
-      }) {
-        // this is added because now Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
-        val projectPath = call.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
+      }) { applicationCall ->
+        // this is added because now a Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
+        val projectPath = applicationCall.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
         val mcpServer = Server(
           Implementation(
             name = "${ApplicationNamesInfo.getInstance().fullProductName} MCP Server",
@@ -238,7 +253,7 @@ class McpServerService(val cs: CoroutineScope) {
             )
           )
         )
-        mcpServer.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { request, extra ->
+        mcpServer.setRequestHandler<LoggingMessageNotification.SetLevelRequest>(Method.Defined.LoggingSetLevel) { _, _ ->
           // Workaround inspector failure
           return@setRequestHandler EmptyRequestResult()
         }

@@ -83,7 +83,7 @@ fun noSuitableProjectError(messagePrefix: String): McpExpectedError {
               | If you're aware of the current working directory you may pass it as `$projectPathParameterName`. 
               | In the case when it's unobvious which project to use you have to ASK the USER about a project providing him a numbered list of the projects.
               | Currently open projects: ${Json.encodeToString(projects)}""".trimMargin(),
-                         mcpErrorStructureContent = Json.encodeToJsonElement(projects).jsonObject)
+                          mcpErrorStructureContent = Json.encodeToJsonElement(projects).jsonObject)
 }
 
 @Serializable

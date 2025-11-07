@@ -4,6 +4,7 @@ import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.impl.ClaudeClient
 import com.intellij.mcpserver.clients.impl.ClaudeCodeClient
+import com.intellij.mcpserver.clients.impl.CodexClient
 import com.intellij.mcpserver.clients.impl.CursorClient
 import com.intellij.mcpserver.clients.impl.VSCodeClient
 import com.intellij.mcpserver.clients.impl.WindsurfClient
@@ -47,6 +48,9 @@ object McpClientDetector {
     runCatching {
       globalClients.addIfNotNull(detectWindsurf())
     }
+    runCatching {
+      globalClients.addIfNotNull(detectCodex())
+    }
 
     return globalClients
   }
@@ -62,6 +66,9 @@ object McpClientDetector {
     }
     runCatching {
       projectClients.addIfNotNull(detectClaudeCode(project))
+    }
+    runCatching {
+      projectClients.addIfNotNull(detectCodex(project))
     }
 
     return projectClients
@@ -139,6 +146,11 @@ object McpClientDetector {
     return null
   }
 
+  private fun detectCodex(): McpClient? {
+    val path = resolveCodexConfigPath() ?: return null
+    return CodexClient(McpClientInfo.Scope.GLOBAL, path)
+  }
+
   private fun detectVSCode(project: Project): McpClient? {
     val configDirName = ".vscode"
     val projectBasePath = project.basePath ?: return null
@@ -168,5 +180,42 @@ object McpClientDetector {
       return ClaudeCodeClient(McpClientInfo.Scope.PROJECT, claudeCodeConfigPath)
     }
     return null
+  }
+
+  private fun detectCodex(project: Project): McpClient? {
+    val projectBasePath = project.basePath ?: return null
+    val configPath = Paths.get(projectBasePath, ".codex", "config.toml")
+    val parent = configPath.parent
+    if (configPath.exists() && configPath.isRegularFile() || parent != null && parent.exists() && parent.toFile().isDirectory()) {
+      return CodexClient(McpClientInfo.Scope.PROJECT, configPath)
+    }
+    if (parent != null && !parent.exists()) {
+      return CodexClient(McpClientInfo.Scope.PROJECT, configPath)
+    }
+    return null
+  }
+
+  private fun resolveCodexConfigPath(): Path? {
+    val candidates = buildList<Path> {
+      add(Paths.get(OSAgnosticPathUtil.expandUserHome("~/.codex/config.toml")))
+      if (SystemInfo.isMac) {
+        add(Paths.get(OSAgnosticPathUtil.expandUserHome("~/Library/Application Support/Codex/config.toml")))
+      }
+      if (SystemInfo.isLinux) {
+        add(Paths.get(OSAgnosticPathUtil.expandUserHome("~/.config/codex/config.toml")))
+      }
+      if (SystemInfo.isWindows) {
+        System.getenv("APPDATA")?.let { add(Paths.get(it, "Codex", "config.toml")) }
+      }
+    }
+
+    if (candidates.isEmpty()) return null
+
+    candidates.firstOrNull { it.exists() && it.isRegularFile() }?.let { return it }
+    candidates.firstOrNull { path ->
+      val parent = path.parent
+      parent != null && parent.exists() && parent.toFile().isDirectory()
+    }?.let { return it }
+    return candidates.first()
   }
 }

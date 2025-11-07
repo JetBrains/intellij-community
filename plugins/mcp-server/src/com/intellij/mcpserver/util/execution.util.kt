@@ -18,9 +18,10 @@ import javax.swing.Action
 import javax.swing.JComponent
 
 suspend fun checkUserConfirmationIfNeeded(@NlsContexts.Label notificationText: String, command: String?, project: Project) {
+
   fun rejected(): McpExpectedError = McpExpectedError("User rejected command execution")
 
-  val commandExecutionMode = currentCoroutineContext().mcpCallInfo.mcpSessionOptions.commandExecutionMode
+  val commandExecutionMode = currentCoroutineContext().mcpCallInfo.mcpSessionOptions?.commandExecutionMode
   when (commandExecutionMode) {
     McpServerService.AskCommandExecutionMode.ASK -> {
       if (!askConfirmation(project, notificationText, command)) throw rejected()
@@ -30,7 +31,7 @@ suspend fun checkUserConfirmationIfNeeded(@NlsContexts.Label notificationText: S
         throw rejected()
       }
     }
-    McpServerService.AskCommandExecutionMode.DONT_ASK -> {
+    else -> {
       // do nothing
     }
   }

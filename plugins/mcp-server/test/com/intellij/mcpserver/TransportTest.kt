@@ -3,6 +3,7 @@ package com.intellij.mcpserver
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.asTool
+import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -130,10 +131,13 @@ class StdioTransportHolder(project: Project) : TransportHolder() {
 
 class SseTransportHolder(project: Project) : TransportHolder() {
   override val transport: AbstractTransport by lazy {
+    val port = McpServerService.getInstance().port
+    val addressProvider = McpServerConnectionAddressProvider.getInstanceOrNull()
+    val transportUrl = addressProvider?.httpUrl("/sse", portOverride = port) ?: "http://localhost:$port/sse"
     SseClientTransport(HttpClient {
       install(SSE)
-    }, "http://localhost:${McpServerService.getInstance().port}/sse") {
-      header(IJ_MCP_SERVER_PROJECT_PATH, project.basePath)
+    }, transportUrl) {
+      project.basePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
     }
   }
 
