@@ -45,6 +45,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
       CaretUpdate(pos1, width, caret, isRtl)
     }
   }
+
   private val lastPosMap: MutableMap<Caret, Point2D> = ConcurrentHashMap()
 
   /**
@@ -90,7 +91,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
 
   private suspend fun processRequest(editor: EditorImpl) {
     val refreshRate = clamp(
-      editor.component.graphicsConfiguration.device.displayMode.refreshRate,
+      editor.component.graphicsConfiguration?.device?.displayMode?.refreshRate ?: 120,
       60, 360)
 
     val step = MILLIS_SECOND / (2 * refreshRate)
