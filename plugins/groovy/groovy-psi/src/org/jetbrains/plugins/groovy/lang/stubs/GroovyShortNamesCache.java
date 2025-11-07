@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.stubs;
 
 import com.intellij.openapi.application.ReadAction;
@@ -50,7 +50,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
 
   public static GroovyShortNamesCache getGroovyShortNamesCache(Project project) {
     return Objects
-      .requireNonNull(ContainerUtil.findInstance(PsiShortNamesCache.EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
+      .requireNonNull(ContainerUtil.findInstance(EP_NAME.getExtensionList(project), GroovyShortNamesCache.class));
   }
 
   private @Nullable TopLevelFQNames getTopLevelNames() {
