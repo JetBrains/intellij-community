@@ -18,27 +18,23 @@ public class PluginPsiClassConverter extends PsiClassConverter {
     if (s == null) return null;
     final String fqn = s.trim();
     if (fqn.isEmpty()) return null;
-
     final DomElement element = context.getInvocationElement();
     final XmlFile file = context.getFile();
     final Module module = context.getModule();
-    if (element instanceof GenericDomValue) {
-      final Project project = context.getProject();
-      // IJPL-212813
-      // try to find in project sources:
-      PsiClass cls = DomJavaUtil.findClass(fqn, file, module, GlobalSearchScope.projectScope(project));
-      if (cls != null) {
-        return cls;
-      }
-      // fallback to all, if not found:
-      cls = DomJavaUtil.findClass(fqn, file, module, GlobalSearchScope.allScope(project));
-      if (cls != null) {
-        return cls;
-      }
+    if (!(element instanceof GenericDomValue)) {
+      return DomJavaUtil.findClass(fqn, file, module, null);
     }
-    // default behavior from super class:
-    final GlobalSearchScope scope = element instanceof GenericDomValue ? getScope(context) : null;
-    return DomJavaUtil.findClass(fqn, file, module, scope);
+    final Project project = context.getProject();
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
+        // (IJPL-212813) try to find in project sources:
+        PsiClass cls = DomJavaUtil.findClass(fqn, file, module, GlobalSearchScope.projectScope(project));
+        if (cls != null) {
+          return cls;
+        }
+        // fallback to all, if not found:
+        return DomJavaUtil.findClass(fqn, file, module, GlobalSearchScope.allScope(project));
+    }
+    return DomJavaUtil.findClass(fqn, file, module, super.getScope(context));
   }
 
   @Override
