@@ -11,13 +11,18 @@ import com.intellij.testFramework.TestDataProvider
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
+import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import com.intellij.testFramework.junit5.fixture.TestContext
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
+
+private const val COMMUNITY_PATH_PREFIX = "community"
 
 /**
  * Use for JUnit5 tests to set the path to the test data on the method level.
@@ -47,7 +52,14 @@ annotation class TestSubPath(val value: String)
 fun codeInsightFixture(
   projectFixture: TestFixture<Project>,
   tempDirFixture: TestFixture<Path>,
-): TestFixture<CodeInsightTestFixture> = testFixture { context ->
+): TestFixture<CodeInsightTestFixture> = codeInsightFixture(projectFixture, tempDirFixture) { project, tempDir -> CodeInsightTestFixtureImpl(project, tempDir) }
+
+@TestOnly
+fun <T: CodeInsightTestFixture> codeInsightFixture(
+  projectFixture: TestFixture<Project>,
+  tempDirFixture: TestFixture<Path>,
+  fixtureConstructor: (IdeaProjectTestFixture, TempDirTestFixture) -> T,
+): TestFixture<T> = testFixture { context ->
   val project = projectFixture.init()
   val tempDir = tempDirFixture.init()
 
@@ -77,18 +89,31 @@ fun codeInsightFixture(
     override fun deleteOnTearDown(): Boolean = false
   }
 
-  val codeInsightFixture = CodeInsightTestFixtureImpl(projectFixture, tempDirFixture)
+  val codeInsightFixture = fixtureConstructor(projectFixture, tempDirFixture)
+
+  codeInsightFixture.testDataPath = getTestDataPathString(context)
+
+  codeInsightFixture.setUp()
+  initialized(codeInsightFixture) {
+    codeInsightFixture.tearDown()
+  }
+}
+
+private fun getTestDataPathString(context: TestContext): String {
   val rootPath = context.findAnnotation(TestDataPath::class.java)?.value?.removePrefix($$"$PROJECT_ROOT/") ?: ""
   val subPath = context.findAnnotation(TestSubPath::class.java)?.value ?: ""
   val homeDir = IdeaTestExecutionPolicy.getHomePathWithPolicy().toNioPathOrNull()
   check(homeDir != null) {
     "Couldn't create nio.Path from ${IdeaTestExecutionPolicy.getHomePathWithPolicy()}"
   }
-
-  codeInsightFixture.testDataPath = homeDir.resolve(rootPath).resolve(subPath).pathString
-
-  codeInsightFixture.setUp()
-  initialized(codeInsightFixture) {
-    codeInsightFixture.tearDown()
+  val resolvedPath = homeDir.resolve(rootPath).resolve(subPath)
+  if (resolvedPath.exists()) {
+   return resolvedPath.pathString
   }
+  // If the project opened as IJ community, then the test path for community will be duplicated, e.g. it is $HOME/community/community/...
+  // We need to handle this scenario
+  check(rootPath.startsWith(COMMUNITY_PATH_PREFIX)) {
+    "The test data path is not located in community folder, but it doesn't exist in the ultimate."
+  }
+  return homeDir.resolve("../").resolve(rootPath).resolve(subPath).pathString
 }

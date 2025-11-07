@@ -130,5 +130,6 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.scripts" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="byte-buddy" level="project" />
     <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" scope="TEST" />
   </component>
 </module>

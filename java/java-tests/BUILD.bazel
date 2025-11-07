@@ -158,6 +158,7 @@ jvm_library(
     "//platform/syntax/syntax-scripts:scripts",
     "@lib//:byte-buddy",
     "//plugins/grazie/src:core",
+    "//platform/testFramework/junit5/codeInsight",
   ],
   exports = [
     "//plugins/java-i18n",
