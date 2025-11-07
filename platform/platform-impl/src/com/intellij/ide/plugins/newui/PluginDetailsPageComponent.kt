@@ -642,6 +642,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
                   createScrollPane(parent).also { bottomScrollPane = it })
     }
     myImagesComponent!!.setParent(bottomScrollPane.viewport)
+    if (bottomScrollPane.verticalScrollBarNeedsSpace()) {
+      bottomScrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS
+    }
   }
 
   private fun createChangeNotesTab(pane: JBTabbedPane) {
