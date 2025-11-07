@@ -2663,8 +2663,8 @@ jvm_import(
 
 jvm_import(
   name = "intellij-test-discovery",
-  jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_763_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_763-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_771_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_771-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
@@ -8775,8 +8775,8 @@ java_library(
 
 jvm_import(
   name = "platform-coverage-agent-intellij-coverage",
-  jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_766_http//file",
-  source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_766-sources_http//file",
+  jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_771_http//file",
+  source_jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_771-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
