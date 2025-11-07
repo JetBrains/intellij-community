@@ -26,7 +26,7 @@
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.ReplaceManualRangeWithIndicesCallsInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="false"
+                     enabledByDefault="true"
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.manual.range.with.indices.calls.display.name" bundle="messages.KotlinBundle"/>

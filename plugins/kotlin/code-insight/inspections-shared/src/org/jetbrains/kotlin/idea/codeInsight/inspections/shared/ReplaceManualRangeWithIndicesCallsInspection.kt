@@ -7,6 +7,7 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
@@ -16,6 +17,10 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.ImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeinsight.utils.LoopToCollectionTransformUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.getImplicitReceiverInfo
 import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.DOWN_TO
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.RANGE_TO
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.RANGE_UNTIL
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.UNTIL
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
@@ -46,18 +51,22 @@ class ReplaceManualRangeWithIndicesCallsInspection : AbstractRangeInspection<Rep
 
     override fun isApplicableByPsi(range: RangeExpression): Boolean {
         // Only ascending ranges are candidates for indices replacement
-        return when (range.type) {
-            RangeKtExpressionType.UNTIL, RangeKtExpressionType.RANGE_UNTIL, RangeKtExpressionType.RANGE_TO -> true
-            RangeKtExpressionType.DOWN_TO -> false
-        }
+        if (range.type == DOWN_TO) return false
+        
+        val (left, right) = range.arguments
+        
+        // Must start with 0 to be a candidate for indices replacement
+        if (left == null || !left.isIntConstantExpression(0)) return false
+        
+        // Must have a valid target expression that can be extracted
+        if (right == null) return false
+        
+        return extractTargetExpression(range.type, right) != null
     }
 
     override fun KaSession.prepareContext(range: RangeExpression): Context? {
-        val (left, right) = range.arguments
-
-        // Must start with 0 to be a candidate for indices replacement
-        if (left?.text != "0") return null
-
+        val (_, right) = range.arguments
+        
         // Must end with a size/length call
         val sizeCall = right?.let { sizeOrLengthCall(range.type, it) } ?: return null
         val explicitReceiver = (sizeCall as? KtQualifiedExpression)?.receiverExpression
@@ -74,48 +83,47 @@ class ReplaceManualRangeWithIndicesCallsInspection : AbstractRangeInspection<Rep
     private fun isSimpleReceiver(receiver: KtExpression): Boolean =
         receiver is KtSimpleNameExpression || receiver is KtThisExpression
 
-    /**
-     * Checks if the expression is a size or length call suitable for indices replacement.
-     * Handles range types: `0..<size`, `0..size-1`, `0 until size`
-     */
     private fun KaSession.sizeOrLengthCall(type: RangeKtExpressionType, expression: KtExpression): KtExpression? {
-        val target = extractSizeExpression(type, expression) ?: return null
-
-        if (!isSizeOrLengthSelector(target)) return null
-        if (isMapReceiver(target)) return null
-
-        return target
+        val target = extractTargetExpression(type, expression) ?: return null
+        val selector = (target as? KtDotQualifiedExpression)?.selectorExpression ?: target
+        val receiverType = resolveReceiverType(target) ?: return null
+        
+        return when (selector.text) {
+            "size" -> if (receiverType.isArrayOrPrimitiveArray || receiverType.isSubtypeOf(StandardClassIds.Collection)) target else null
+            "length" -> if (receiverType.isSubtypeOf(StandardClassIds.CharSequence)) target else null
+            else -> null
+        }
     }
-
-    private fun extractSizeExpression(type: RangeKtExpressionType, expression: KtExpression): KtExpression? {
+    
+    private fun extractTargetExpression(type: RangeKtExpressionType, expression: KtExpression): KtExpression? {
         return when (type) {
-            RangeKtExpressionType.UNTIL, RangeKtExpressionType.RANGE_UNTIL -> expression
-            RangeKtExpressionType.RANGE_TO -> (expression as? KtBinaryExpression)
-                ?.takeIf { it.operationToken == KtTokens.MINUS && it.right?.text == "1" }
-                ?.left
-            RangeKtExpressionType.DOWN_TO -> null
+            UNTIL, RANGE_UNTIL -> expression
+            RANGE_TO -> extractFromRangeToExpression(expression)
+            DOWN_TO -> null
         }
     }
 
-    private fun isSizeOrLengthSelector(target: KtExpression): Boolean {
-        val selector = (target as? KtDotQualifiedExpression)?.selectorExpression ?: target
-        return selector.text in setOf("size", "length")
+    private fun extractFromRangeToExpression(expression: KtExpression): KtExpression? {
+        if (expression !is KtBinaryExpression) return null
+        if (expression.operationToken != KtTokens.MINUS) return null
+        
+        val leftOperand = expression.left ?: return null
+        val rightOperand = expression.right ?: return null
+
+        return if (rightOperand.isIntConstantExpression(1)) leftOperand else null
     }
 
-    private fun KaSession.isMapReceiver(target: KtExpression): Boolean {
-        val explicitReceiver = (target as? KtDotQualifiedExpression)?.receiverExpression ?: return false
-        val receiverType = explicitReceiver.expressionType ?: return false
-        return isMapType(receiverType)
+    private fun KtExpression.isIntConstantExpression(value: Int): Boolean {
+        return (this as? KtConstantExpression)?.text?.toIntOrNull() == value
     }
 
-    /**
-     * Checks if the given type is a Map type. Maps are excluded because indices
-     * doesn't make semantic sense for key-value collections.
-     */
-    private fun KaSession.isMapType(type: KaType): Boolean {
-        val symbol = type.expandedSymbol ?: return false
-        val mapSymbol = findClass(StandardClassIds.Map) ?: return false
-        return symbol == mapSymbol || symbol.isSubClassOf(mapSymbol)
+    private fun KaSession.resolveReceiverType(expression: KtExpression): KaType? {
+        val resolvedCall = expression.resolveToCall()
+
+        // 1. We're only interested in properties and not in function calls, hence "successfulVariableAccessCall"
+        // 2. We're only interested in member properties, hence "dispatchReceiver" that gets the owning type
+        
+        return resolvedCall?.successfulVariableAccessCall()?.partiallyAppliedSymbol?.dispatchReceiver?.type
     }
 
     /**
@@ -190,7 +198,7 @@ class ReplaceManualRangeWithIndicesCallsInspection : AbstractRangeInspection<Rep
                 else -> null
             }
             val newReceiver = when {
-                receiver is KtThisExpression -> null
+                receiver is KtThisExpression && receiver.labelQualifier == null -> null
                 receiver != null -> receiver
                 else -> context.implicitReceiverInfo?.takeUnless { it.isUnambiguousLabel }?.let { createImplicitThis(project, it) }
             }

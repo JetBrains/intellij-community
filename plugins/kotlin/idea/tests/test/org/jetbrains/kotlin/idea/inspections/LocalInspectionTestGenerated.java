@@ -14164,6 +14164,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
         }
 
+        @TestMetadata("lengthLiteralConstant.kt")
+        public void testLengthLiteralConstant() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lengthLiteralConstant.kt");
+        }
+
+        @TestMetadata("lengthVariable.kt")
+        public void testLengthVariable() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lengthVariable.kt");
+        }
+
         @TestMetadata("map.kt")
         public void testMap() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/map.kt");
@@ -14217,6 +14227,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("simpleFor.kt")
         public void testSimpleFor() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleFor.kt");
+        }
+
+        @TestMetadata("sizeLabeled.kt")
+        public void testSizeLabeled() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/sizeLabeled.kt");
+        }
+
+        @TestMetadata("sizeLiteralConstant.kt")
+        public void testSizeLiteralConstant() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/sizeLiteralConstant.kt");
+        }
+
+        @TestMetadata("sizeVariable.kt")
+        public void testSizeVariable() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/sizeVariable.kt");
         }
 
         @TestMetadata("thisReceiver.kt")

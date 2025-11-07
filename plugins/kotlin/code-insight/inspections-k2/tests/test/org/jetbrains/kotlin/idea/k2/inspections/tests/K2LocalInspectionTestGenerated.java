@@ -9330,6 +9330,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
         }
 
+        @TestMetadata("lengthLiteralConstant.kt")
+        public void testLengthLiteralConstant() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lengthLiteralConstant.kt");
+        }
+
+        @TestMetadata("lengthVariable.kt")
+        public void testLengthVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/lengthVariable.kt");
+        }
+
         @TestMetadata("map.kt")
         public void testMap() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/map.kt");
@@ -9383,6 +9393,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("simpleFor.kt")
         public void testSimpleFor() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/simpleFor.kt");
+        }
+
+        @TestMetadata("sizeLabeled.kt")
+        public void testSizeLabeled() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/sizeLabeled.kt");
+        }
+
+        @TestMetadata("sizeLiteralConstant.kt")
+        public void testSizeLiteralConstant() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/sizeLiteralConstant.kt");
+        }
+
+        @TestMetadata("sizeVariable.kt")
+        public void testSizeVariable() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/sizeVariable.kt");
         }
 
         @TestMetadata("thisReceiver.kt")
