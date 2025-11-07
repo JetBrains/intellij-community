@@ -11,7 +11,7 @@ import java.nio.file.Path
 
 @ApiStatus.Internal
 interface MavenVersionAwareSupportExtension {
-  fun isSupportedByExtension(mavenHome: File): Boolean
+  fun isSupportedByExtension(mavenHome: Path): Boolean
 
   fun getMavenHomeFile(mavenHomeType: StaticResolvedMavenHomeType): Path?
 

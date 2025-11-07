@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.maven3;
 
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.maven.server.telemetry.MavenServerTelemetryClasspathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.NioFiles;
@@ -22,7 +21,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -35,8 +33,8 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
   private static final @NonNls String MAIN_CLASS36 = "org.jetbrains.idea.maven.server.RemoteMavenServer36";
 
   @Override
-  public boolean isSupportedByExtension(@Nullable File mavenHome) {
-    String version = MavenUtil.getMavenVersion(mavenHome.toPath());
+  public boolean isSupportedByExtension(@NotNull Path mavenHome) {
+    String version = MavenUtil.getMavenVersion(mavenHome);
     return StringUtil.compareVersionNumbers(version, "3.1") >= 0 && StringUtil.compareVersionNumbers(version, "4") < 0;
   }
 
@@ -136,9 +134,9 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
   public String getMainClass(MavenDistribution distribution) {
     if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3.6") >= 0) {
       return MAIN_CLASS36;
-    } else {
+    }
+    else {
       return DEFAULT_MAIN_CLASS;
     }
-
   }
 }
