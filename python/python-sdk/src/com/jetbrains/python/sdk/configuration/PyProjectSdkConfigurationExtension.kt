@@ -75,3 +75,12 @@ interface PyProjectSdkConfigurationExtension {
  * [createSdkInfo] with [toolId] that created it
  */
 data class CreateSdkInfoWithTool(val createSdkInfo: CreateSdkInfo, val toolId: ToolId)
+
+@ApiStatus.Internal
+val VENV_TOOL_ID: ToolId = ToolId("Venv")
+
+@ApiStatus.Internal
+val CONDA_TOOL_ID: ToolId = ToolId("Conda")
+
+@ApiStatus.Internal
+val PIPENV_TOOL_ID: ToolId = ToolId("pipenv")

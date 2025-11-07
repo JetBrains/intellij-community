@@ -8,10 +8,16 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.isFile
+import com.intellij.openapi.vfs.refreshAndFindVirtualFileOrDirectory
 import com.intellij.platform.eel.provider.localEel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.conda.loadLocalPythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
+import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlSdkUtils
+import com.jetbrains.python.packaging.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.sdk.add.v2.*
 import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.conda.suggestCondaPath
@@ -20,14 +26,17 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 
 private val LOG: Logger = fileLogger()
 
 class CondaViewModel<P : PathHolder>(
   val fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
+  val projectPathFlows: ProjectPathFlows,
 ) : PythonToolViewModel {
   val condaExecutable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(null)
   val condaEnvironmentsResult: MutableStateFlow<PyResult<List<PyCondaEnv>>?> = MutableStateFlow(null)
@@ -94,9 +103,36 @@ class CondaViewModel<P : PathHolder>(
     }
   }
 
-  /**
-   * Returns error or `null` if no error
-   */
+  suspend fun updateSelection(environments: List<PyCondaEnv>): Unit =
+    selectedCondaEnv.set(getBestCondaEnv(environments) ?: environments.firstOrNull())
+
+  private suspend fun getBestCondaEnv(environments: List<PyCondaEnv>): PyCondaEnv? = withContext(Dispatchers.IO) {
+    val projectPath = projectPathFlows.projectPathWithDefault.first()
+    val environmentYml = if (fileSystem.isLocal) getEnvironmentYml(projectPath) else null
+    val envName = environmentYml?.let { CondaEnvironmentYmlParser.readNameFromFile(it) }
+    val envPrefix = environmentYml?.let { CondaEnvironmentYmlParser.readPrefixFromFile(it) }
+    val shouldGuessEnvPrefix = envName == null && envPrefix == null
+    environments.firstOrNull {
+      val envIdentity = it.envIdentity
+      when (envIdentity) {
+        is PyCondaEnvIdentity.NamedEnv -> envIdentity.envName == envName
+        is PyCondaEnvIdentity.UnnamedEnv -> if (shouldGuessEnvPrefix) {
+          val envPath = envIdentity.envPath.toNioPathOrNull()
+          !envIdentity.isBase && projectPath == envPath?.parent
+        }
+        else envIdentity.envPath == envPrefix
+      }
+    }
+  }
+
+  private fun getEnvironmentYml(projectPath: Path) = listOf(
+    CondaEnvironmentYmlSdkUtils.ENV_YAML_FILE_NAME,
+    CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME,
+  ).firstNotNullOfOrNull {
+    val path = projectPath.resolve(it)
+    path.refreshAndFindVirtualFileOrDirectory()?.takeIf { virtualFile -> virtualFile.isFile }
+  }
+
   private suspend fun updateCondaEnvironments(): PyResult<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
     val executable = condaExecutable.get()
     if (executable == null) return@withContext PyResult.localizedError(message("python.sdk.conda.no.exec"))
@@ -108,8 +144,8 @@ class CondaViewModel<P : PathHolder>(
 
     withContext(Dispatchers.UI) {
       baseCondaEnv.set(baseConda)
-      selectedCondaEnv.set(environments.firstOrNull())
     }
+
     return@withContext PyResult.success(environments)
   }
 }

@@ -63,7 +63,7 @@ import kotlin.io.path.name
 @ApiStatus.Internal
 class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExtension {
 
-  override val toolId: ToolId = ToolId("Conda")
+  override val toolId: ToolId = CONDA_TOOL_ID
 
   override suspend fun checkEnvironmentAndPrepareSdkCreator(module: Module): CreateSdkInfo? = prepareSdkCreator(
     { checkManageableEnv(module, it) }

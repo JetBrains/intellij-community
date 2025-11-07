@@ -109,7 +109,9 @@ internal class CondaExistingEnvironmentSelector<P : PathHolder>(model: PythonAdd
     scope.launch(Dispatchers.EDT) {
       model.condaViewModel.condaEnvironmentsResult.collectLatest { environmentsResult ->
         envComboBox.removeAllItems()
-        environmentsResult?.successOrNull?.forEach(envComboBox::addItem)
+        val environments = environmentsResult?.successOrNull ?: return@collectLatest
+        environments.forEach(envComboBox::addItem)
+        model.condaViewModel.updateSelection(environments)
       }
     }
 

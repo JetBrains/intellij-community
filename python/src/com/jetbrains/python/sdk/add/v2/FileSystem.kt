@@ -57,6 +57,7 @@ internal class VenvAlreadyExistsError<P : PathHolder>(
 sealed interface FileSystem<P : PathHolder> {
   val isReadOnly: Boolean
   val isBrowseable: Boolean
+  val isLocal: Boolean
 
   fun parsePath(raw: String): PyResult<P>
   fun validateExecutable(path: P): PyResult<Unit>
@@ -78,6 +79,7 @@ sealed interface FileSystem<P : PathHolder> {
   ) : FileSystem<PathHolder.Eel> {
     override val isBrowseable: Boolean = true
     override val isReadOnly: Boolean = false
+    override val isLocal: Boolean = eelApi == localEel
     override fun getBinaryToExec(path: PathHolder.Eel): BinaryToExec {
       return BinOnEel(path.path)
     }
@@ -197,6 +199,7 @@ sealed interface FileSystem<P : PathHolder> {
       get() = !PythonInterpreterTargetEnvironmentFactory.isMutable(targetEnvironmentConfiguration)
     override val isBrowseable: Boolean
       get() = targetEnvironmentConfiguration.getTargetType() is BrowsableTargetEnvironmentType
+    override val isLocal: Boolean = false
 
     private val systemPythonCache = ArrayList<DetectedSelectableInterpreter<PathHolder.Target>>()
 

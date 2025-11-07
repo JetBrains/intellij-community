@@ -25,13 +25,17 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
+import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
+import com.intellij.python.community.impl.uv.common.UV_TOOL_ID
 import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.intellij.python.hatch.icons.PythonHatchIcons
+import com.intellij.python.hatch.impl.HATCH_TOOL_ID
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
@@ -44,6 +48,9 @@ import com.jetbrains.python.parser.icons.PythonParserIcons
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.configuration.CONDA_TOOL_ID
+import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
+import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -137,17 +144,18 @@ abstract class PythonExistingEnvironmentConfigurator<P : PathHolder>(model: Pyth
 
 
 enum class PythonSupportedEnvironmentManagers(
+  val toolId: ToolId,
   val nameKey: String,
   val icon: Icon,
   val isFSSupported: (FileSystem<*>) -> Boolean = { (it as? FileSystem.Eel)?.eelApi == localEel },
 ) {
-  VIRTUALENV("sdk.create.custom.virtualenv", PythonIcons.Python.Virtualenv, { true }),
-  CONDA("sdk.create.custom.conda", PythonIcons.Python.Anaconda, { true }),
-  POETRY("sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
-  PIPENV("sdk.create.custom.pipenv", PIPENV_ICON),
-  UV("sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV),
-  HATCH("sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
-  PYTHON("sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
+  VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonIcons.Python.Virtualenv, { true }),
+  CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonIcons.Python.Anaconda, { true }),
+  POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry),
+  PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PIPENV_ICON),
+  UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonCommunityImplUVCommonIcons.UV),
+  HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchIcons.Logo, { it is FileSystem.Eel }),
+  PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, { true })
 }
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {
