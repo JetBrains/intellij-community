@@ -1177,7 +1177,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
               return null;
             })
             .addPostfix("artifacts { tests testJar }")
-            .addPostfix("tasks.named(\"assemble\") { dependsOn(testJar) }")
+            .addPostfix("assemble.dependsOn(testJar)")
             .addTestImplementationDependency("junit:junit:4.11");
         })
         .project(":project2", it -> {
