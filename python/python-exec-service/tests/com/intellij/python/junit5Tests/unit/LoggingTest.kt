@@ -23,6 +23,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 
 private class LoggingTest {
@@ -64,7 +65,7 @@ private class LoggingTest {
   @Nested
   inner class LoggingProcessTest {
     @Test
-    fun `logged process gets created correctly`() = timeoutRunBlocking {
+    fun `logged process gets created correctly`() = timeoutRunBlocking(timeout = 1.minutes) {
       val traceContext = TraceContext("some trace")
       val loggingProcess = fakeLoggingProcess(
         stdout = "stdout text",
@@ -97,7 +98,7 @@ private class LoggingTest {
     }
 
     @Test
-    fun `lines get properly collected from out and err`() = timeoutRunBlocking {
+    fun `lines get properly collected from out and err`() = timeoutRunBlocking(timeout = 1.minutes) {
       val loggingProcess = fakeLoggingProcess(
         "outline1\noutline2\noutline3",
         "errline1\nerrline2\nerrline3"
@@ -125,7 +126,7 @@ private class LoggingTest {
     }
 
     @Test
-    fun `exit info gets properly populated`() = timeoutRunBlocking {
+    fun `exit info gets properly populated`() = timeoutRunBlocking(timeout = 1.minutes) {
       val now = Clock.System.now()
       val loggingProcess = fakeLoggingProcess(
         exitValue = 30
@@ -142,7 +143,7 @@ private class LoggingTest {
 
     @Disabled
     @Test
-    fun `old lines are evicted when the line limit is reached`() = timeoutRunBlocking {
+    fun `old lines are evicted when the line limit is reached`() = timeoutRunBlocking(timeout = 1.minutes) {
       val loggingProcess = fakeLoggingProcess(
         stdout = buildString {
           repeat(LoggingLimits.MAX_LINES + 2) {
