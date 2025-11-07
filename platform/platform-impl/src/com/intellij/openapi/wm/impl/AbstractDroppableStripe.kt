@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonManager
@@ -556,7 +557,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
         var round: Int? = null
         if (isNewStripes) {
           JBInsets.removeFrom(rectangle, JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(isOnTheLeftStripe(), ResizeStripeManager.isShowNames()))
-          round = JBUI.scale(8)
+          round = JBUI.CurrentTheme.Toolbar.stripeButtonArc(UISettings.getInstance().compactMode).get()
         }
         g.color = if (isNewStripes) JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_DROP_BACKGROUND else JBUI.CurrentTheme.DragAndDrop.Area.BACKGROUND
         RectanglePainter.FILL.paint(g as Graphics2D, rectangle.x, rectangle.y, rectangle.width, rectangle.height, round)

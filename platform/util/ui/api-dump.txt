@@ -4724,6 +4724,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:mainToolbarButtonInsetsKey():java.lang.String
 - s:recentProjectAvatarIconSize():I
 - s:recentProjectAvatarIconSizeKey():java.lang.String
+- s:stripeButtonArc(Z):com.intellij.util.ui.JBValue
 - s:stripeToolbarButtonIconPadding(Z,Z):java.awt.Insets
 - s:stripeToolbarButtonIconSize():I
 - s:stripeToolbarButtonIconSizeKey():java.lang.String

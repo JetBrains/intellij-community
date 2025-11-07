@@ -1344,6 +1344,10 @@ public final class JBUI {
       private static @NotNull String stripeToolbarTextOffsetKey(boolean left) {
         return "StripeToolbar.Button." + (left ? "left" : "right") + "StripeTextOffset";
       }
+
+      public static @NotNull JBValue stripeButtonArc(boolean compact) {
+        return new JBValue.UIInteger("Button.ToolWindow.arc", compact ? 8 : 12);
+      }
     }
 
     public static final class FloatingToolbar {
