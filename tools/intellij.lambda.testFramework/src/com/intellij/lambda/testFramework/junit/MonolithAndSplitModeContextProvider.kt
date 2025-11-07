@@ -17,7 +17,7 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
 
   private fun getModesToRun(context: ExtensionContext): List<IdeRunMode> {
     // Check if we're running under GroupByModeTestEngine with a mode filter
-    val modeFilter = context.getConfigurationParameter("test.mode.filter").orElse(null)
+    val modeFilter = context.getConfigurationParameter("ide.run.mode.filter").orElse(null)
 
     val methodAnnotation = AnnotationUtils.findAnnotation(context.testMethod, ExecuteInMonolithAndSplitMode::class.java)
     if (methodAnnotation.isPresent) {

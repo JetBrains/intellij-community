@@ -3,10 +3,14 @@ package com.intellij.lambda.testFramework.junit
 import com.intellij.tools.ide.util.common.logOutput
 import org.junit.platform.engine.*
 import org.junit.platform.engine.discovery.ClassSelector
-import org.junit.platform.engine.reporting.ReportEntry
 import org.junit.platform.engine.support.descriptor.ClassSource
 import org.junit.platform.engine.support.descriptor.EngineDescriptor
+import org.junit.platform.launcher.PostDiscoveryFilter
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
+import java.lang.reflect.Field
+import java.util.*
+
+internal const val JUPITER_ENGINE_ID = "junit-jupiter"
 
 /**
  * Custom TestEngine that wraps JUnit Jupiter and enables grouped by [IdeRunMode] test execution.
@@ -21,16 +25,13 @@ class GroupByModeTestEngine : TestEngine {
     const val ENGINE_ID = "group-by-mode"
     val engineClassName = GroupByModeTestEngine::class.simpleName
 
-    private const val JUPITER_ENGINE_ID = "junit-jupiter"
-
     private val annotationName = ExecuteInMonolithAndSplitMode::class.simpleName
 
     private fun log(message: String) = logOutput("[$engineClassName]: $message")
   }
 
   private val jupiterEngine: TestEngine by lazy {
-    java.util.ServiceLoader.load(TestEngine::class.java)
-      .find { it.id == JUPITER_ENGINE_ID }
+    ServiceLoader.load(TestEngine::class.java).find { it.id == JUPITER_ENGINE_ID }
     ?: error("JUnit Jupiter engine not found")
   }
 
@@ -39,10 +40,27 @@ class GroupByModeTestEngine : TestEngine {
   override fun discover(discoveryRequest: EngineDiscoveryRequest, uniqueId: UniqueId): TestDescriptor {
     if (!isGroupedExecutionEnabled) {
       log("$engineClassName will not be used because grouped execution is disabled")
-      return GroupedModeEngineDescriptor(uniqueId, listOf(), discoveryRequest.configurationParameters)
+      return GroupedModeEngineDescriptor(uniqueId, listOf(), discoveryRequest.configurationParameters, emptyList())
     }
 
     log("Starting discovery with request: ${discoveryRequest.getSelectorsByType(ClassSelector::class.java).map { it.className }}")
+
+    val postDiscoveryFilters = try {
+      val requestField = findFieldInHierarchy(discoveryRequest, "request")
+      val launcherRequest = requestField?.get(discoveryRequest)
+      log("LauncherRequest type: ${launcherRequest?.javaClass?.name}")
+      val postDiscoveryFiltersField = launcherRequest?.let { findFieldInHierarchy(it, "postDiscoveryFilters") }
+      log("PostDiscoveryFiltersField found: ${postDiscoveryFiltersField != null}")
+      @Suppress("UNCHECKED_CAST")
+      val filters = (postDiscoveryFiltersField?.get(launcherRequest) as? List<PostDiscoveryFilter>) ?: emptyList()
+      log("Extracted ${filters.size} post-discovery filters: ${filters.map { it.javaClass.simpleName }}")
+      filters
+    }
+    catch (e: Exception) {
+      log("Could not reflectively access postDiscoveryFilters: ${e.message}")
+      e.printStackTrace()
+      emptyList<PostDiscoveryFilter>()
+    }
 
     // Filter to only get classes with @ExecuteInMonolithAndSplitMode
     val groupedClassSelectors = discoveryRequest.getSelectorsByType(ClassSelector::class.java)
@@ -69,7 +87,8 @@ class GroupByModeTestEngine : TestEngine {
     val engineDescriptor = GroupedModeEngineDescriptor(
       uniqueId,
       groupedClassSelectors,
-      discoveryRequest.configurationParameters
+      discoveryRequest.configurationParameters,
+      postDiscoveryFilters
     )
 
     // For each class, create a synthetic test structure that reflects the grouped execution
@@ -90,19 +109,11 @@ class GroupByModeTestEngine : TestEngine {
       engineDescriptor.addChild(classDescriptor)
 
       // Add mode containers
-      val monolithDescriptor = ModeContainerDescriptor(
-        classDescriptor.uniqueId.append("mode", IdeRunMode.MONOLITH.name),
-        IdeRunMode.MONOLITH,
-        selector.className
-      )
-      classDescriptor.addChild(monolithDescriptor)
-
-      val splitDescriptor = ModeContainerDescriptor(
-        classDescriptor.uniqueId.append("mode", IdeRunMode.SPLIT.name),
-        IdeRunMode.SPLIT,
-        selector.className
-      )
-      classDescriptor.addChild(splitDescriptor)
+      IdeRunMode.entries.forEach { mode ->
+        classDescriptor.addChild(
+          ModeContainerDescriptor(classDescriptor.uniqueId.append("mode", mode.name), mode, selector.className)
+        )
+      }
     }
 
     return engineDescriptor
@@ -132,7 +143,7 @@ class GroupByModeTestEngine : TestEngine {
 
       // IMPORTANT: Execute by MODE first, not by class
       // This ensures all MONOLITH tests run, then all SPLIT tests
-      val modes = listOf(IdeRunMode.MONOLITH, IdeRunMode.SPLIT)
+      val modes = IdeRunMode.entries.sorted()
 
       // Start all class descriptors once at the beginning
       for (classDescriptor in rootDescriptor.children) {
@@ -183,6 +194,8 @@ class GroupByModeTestEngine : TestEngine {
     listener.executionStarted(modeDescriptor)
 
     try {
+      val rootDescriptor = originalExecutionRequest.rootTestDescriptor as GroupedModeEngineDescriptor
+      val postDiscoveryFilters = rootDescriptor.postDiscoveryFilters
       val configParams = originalExecutionRequest.configurationParameters
 
       // Find the selector for this class
@@ -202,9 +215,10 @@ class GroupByModeTestEngine : TestEngine {
 
       // Add mode filter configuration - this tells MonolithAndSplitModeContextProvider
       // to only generate tests for this specific mode
-      configMap["test.mode.filter"] = modeDescriptor.mode.name
+      configMap["ide.run.mode.filter"] = modeDescriptor.mode.name
 
       // Create discovery request
+      log("Creating fresh discovery request with ${postDiscoveryFilters.size} filters")
       val freshRequest = LauncherDiscoveryRequestBuilder.request()
         .selectors(listOf(classSelector))
         .configurationParameters(configMap)
@@ -223,10 +237,16 @@ class GroupByModeTestEngine : TestEngine {
         modeDescriptor.mode
       )
 
+      // Wrap with filtering listener that applies post-discovery filters
+      val filteringListener = FilteringExecutionListener(
+        translatingListener,
+        postDiscoveryFilters
+      )
+
       // Reuse the original request's store to share application state
       val executionRequest = ExecutionRequest.create(
         freshJupiterDescriptor,
-        translatingListener,
+        filteringListener,
         configParams,
         originalExecutionRequest.outputDirectoryProvider,
         originalExecutionRequest.store
@@ -249,156 +269,23 @@ class GroupByModeTestEngine : TestEngine {
   }
 }
 
-/**
- * Custom engine descriptor that stores configuration for grouped execution
- */
-class GroupedModeEngineDescriptor(
-  uniqueId: UniqueId,
-  val classSelectors: List<ClassSelector>,
-  val configurationParameters: ConfigurationParameters,
-) : EngineDescriptor(uniqueId, "Group by Mode")
-
 
 /**
- * Descriptor for a class that will be executed in grouped mode
+ * Finds a field in an object's class hierarchy, including superclasses.
  */
-class GroupedClassDescriptor(
-  uniqueId: UniqueId,
-  private val className: String,
-  classSource: TestSource?,
-) : org.junit.platform.engine.support.descriptor.AbstractTestDescriptor(
-  uniqueId,
-  className,
-  classSource ?: ClassSource.from(className)
-) {
-
-  override fun getType(): TestDescriptor.Type = TestDescriptor.Type.CONTAINER
-
-  override fun mayRegisterTests(): Boolean = true
-}
-
-/**
- * Descriptor for a mode container (MONOLITH or SPLIT)
- */
-class ModeContainerDescriptor(
-  uniqueId: UniqueId,
-  val mode: IdeRunMode,
-  val className: String,
-) : org.junit.platform.engine.support.descriptor.AbstractTestDescriptor(uniqueId, "[$mode]") {
-
-  override fun getType(): TestDescriptor.Type = TestDescriptor.Type.CONTAINER
-
-  override fun mayRegisterTests(): Boolean = true
-}
-
-/**
- * Listener that translates Jupiter execution events to our custom descriptors
- */
-class TranslatingExecutionListener(
-  private val delegate: EngineExecutionListener,
-  private val modeContainer: ModeContainerDescriptor,
-  private val targetMode: IdeRunMode,
-) : EngineExecutionListener {
-
-  private val descriptorMap = mutableMapOf<UniqueId, TestDescriptor>()
-  private val startedDescriptors = mutableSetOf<UniqueId>()
-
-  override fun dynamicTestRegistered(testDescriptor: TestDescriptor) {
-    if (!shouldInclude(testDescriptor)) return
-
-    val synthetic = createSyntheticDescriptor(testDescriptor)
-    descriptorMap[testDescriptor.uniqueId] = synthetic
-    delegate.dynamicTestRegistered(synthetic)
-  }
-
-  override fun executionSkipped(testDescriptor: TestDescriptor, reason: String) {
-    if (!shouldInclude(testDescriptor)) return
-
-    // Only report skipped if the descriptor was already registered via dynamicTestRegistered or executionStarted
-    val synthetic = descriptorMap[testDescriptor.uniqueId]
-    if (synthetic != null && synthetic.parent.isPresent) {
-      delegate.executionSkipped(synthetic, reason)
+private fun findFieldInHierarchy(obj: Any, fieldName: String): Field? {
+  var currentClass: Class<*>? = obj.javaClass
+  while (currentClass != null) {
+    try {
+      val field = currentClass.getDeclaredField(fieldName)
+      field.isAccessible = true
+      return field
     }
-    // If the descriptor doesn't exist in our map or has no parent,
-    // it means it was filtered out and never registered - silently ignore it
-  }
-
-  override fun executionStarted(testDescriptor: TestDescriptor) {
-    // Skip engine and class containers from Jupiter
-    if (testDescriptor.type == TestDescriptor.Type.CONTAINER &&
-        (testDescriptor.uniqueId.engineId.orElse(null) == "junit-jupiter" ||
-         testDescriptor.source.orElse(null) is ClassSource)) {
-      return
-    }
-
-    if (!shouldInclude(testDescriptor)) return
-
-    val synthetic = getOrCreateSyntheticDescriptor(testDescriptor)
-    startedDescriptors.add(synthetic.uniqueId)
-    delegate.executionStarted(synthetic)
-  }
-
-  override fun executionFinished(testDescriptor: TestDescriptor, testExecutionResult: TestExecutionResult) {
-    // Skip engine and class containers from Jupiter
-    if (testDescriptor.type == TestDescriptor.Type.CONTAINER &&
-        (testDescriptor.uniqueId.engineId.orElse(null) == "junit-jupiter" ||
-         testDescriptor.source.orElse(null) is ClassSource)) {
-      return
-    }
-
-    val synthetic = descriptorMap[testDescriptor.uniqueId]
-    if (synthetic != null && startedDescriptors.contains(synthetic.uniqueId)) {
-      delegate.executionFinished(synthetic, testExecutionResult)
+    catch (e: NoSuchFieldException) {
+      // Field not in this class, check its superclass
+      currentClass = currentClass.superclass
     }
   }
 
-  override fun reportingEntryPublished(testDescriptor: TestDescriptor, entry: ReportEntry) {
-    val synthetic = descriptorMap[testDescriptor.uniqueId]
-    if (synthetic != null) {
-      delegate.reportingEntryPublished(synthetic, entry)
-    }
-  }
-
-  private fun shouldInclude(descriptor: TestDescriptor): Boolean {
-    if (!descriptor.isTest) return true
-
-    val displayName = descriptor.displayName
-    return when {
-      displayName.contains("[$targetMode]") -> true
-      displayName.contains("[${IdeRunMode.MONOLITH}]") ||
-      displayName.contains("[${IdeRunMode.SPLIT}]") -> false
-      else -> true
-    }
-  }
-
-  private fun getOrCreateSyntheticDescriptor(jupiterDescriptor: TestDescriptor): TestDescriptor {
-    return descriptorMap.getOrPut(jupiterDescriptor.uniqueId) {
-      createSyntheticDescriptor(jupiterDescriptor)
-    }
-  }
-
-  private fun createSyntheticDescriptor(jupiterDescriptor: TestDescriptor): TestDescriptor {
-    // Extract just the method name from the chain of execution
-    val testMethodName = jupiterDescriptor.uniqueId.segments[2].value
-    val cleanedDisplayName = when {
-      // If it already has the mode prefix, keep it
-      testMethodName.startsWith("[") -> testMethodName
-      // Otherwise, extract the method name (remove parameters if present)
-      else -> testMethodName.substringBefore("(").takeIf { it.isNotEmpty() } ?: testMethodName
-    }
-
-    val syntheticId = modeContainer.uniqueId.append("test", jupiterDescriptor.uniqueId.toString())
-
-    val synthetic = object : org.junit.platform.engine.support.descriptor.AbstractTestDescriptor(
-      syntheticId,
-      cleanedDisplayName,  // Use the cleaned display name
-      jupiterDescriptor.source.orElse(null)
-    ) {
-      override fun getType(): TestDescriptor.Type = jupiterDescriptor.type
-      override fun mayRegisterTests(): Boolean = jupiterDescriptor.mayRegisterTests()
-    }
-
-    modeContainer.addChild(synthetic)
-    return synthetic
-  }
+  return null
 }
