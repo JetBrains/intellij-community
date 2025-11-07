@@ -15,7 +15,6 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class UpdateableZipTest extends TestCase {
   protected File zipFile;
@@ -129,10 +128,10 @@ public class UpdateableZipTest extends TestCase {
       newEntry.setData("third".getBytes(StandardCharsets.UTF_8));
     }
 
-    try (ZipFile utilZip = new ZipFile(zipFile)) {
-      ZipEntry thirdEntry = utilZip.getEntry("/third");
+    try (JBZipFile jbZip = createZip()) {
+      JBZipEntry thirdEntry = jbZip.getEntry("/third");
       assertNotNull(thirdEntry);
-      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(thirdEntry), StandardCharsets.UTF_8));
+      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(thirdEntry.getInputStream(), StandardCharsets.UTF_8));
       assertEquals("third", thirdText);
     }
   }
@@ -147,10 +146,10 @@ public class UpdateableZipTest extends TestCase {
       newEntry.setData("Content Replaced".getBytes(StandardCharsets.UTF_8));
     }
 
-    try (ZipFile utilZip = new ZipFile(zipFile)) {
-      ZipEntry updatedEntry = utilZip.getEntry("/second");
+    try (JBZipFile jbZip = createZip()) {
+      JBZipEntry updatedEntry = jbZip.getEntry("/second");
       assertNotNull(updatedEntry);
-      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(utilZip.getInputStream(updatedEntry), StandardCharsets.UTF_8));
+      String thirdText = FileUtil.loadTextAndClose(new InputStreamReader(updatedEntry.getInputStream(), StandardCharsets.UTF_8));
       assertEquals("Content Replaced", thirdText);
     }
   }
@@ -164,10 +163,10 @@ public class UpdateableZipTest extends TestCase {
       jbZip.getEntry("/second").erase();
     }
 
-    try (ZipFile utilZip = new ZipFile(zipFile)) {
-      ZipEntry presentEntry = utilZip.getEntry("/first");
+    try (JBZipFile jbZip = createZip()) {
+      JBZipEntry presentEntry = jbZip.getEntry("/first");
       assertNotNull(presentEntry);
-      ZipEntry removedEntry = utilZip.getEntry("/second");
+      JBZipEntry removedEntry = jbZip.getEntry("/second");
       assertNull(removedEntry);
     }
   }
@@ -186,10 +185,10 @@ public class UpdateableZipTest extends TestCase {
       assertEntryWithContentExists(jbZip, "/first", "first");
     }
 
-    try (ZipFile utilZip = new ZipFile(zipFile)) {
-      ZipEntry presentEntry = utilZip.getEntry("/first");
+    try (JBZipFile jbZip = createZip()) {
+      JBZipEntry presentEntry = jbZip.getEntry("/first");
       assertNotNull(presentEntry);
-      ZipEntry removedEntry = utilZip.getEntry("/second");
+      JBZipEntry removedEntry = jbZip.getEntry("/second");
       assertNull(removedEntry);
     }
 
