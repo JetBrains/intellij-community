@@ -49,10 +49,15 @@ abstract class UnresolvedDependencyIssue(
     return issueDescription.toString()
   }
 
-  fun configureQuickFix(failureMessage: String?, isOfflineMode: Boolean, @Nls offlineModeQuickFixText: String) {
+  fun configureQuickFix(projectPath: String?, failureMessage: String?, isOfflineMode: Boolean, @Nls offlineModeQuickFixText: String) {
     val noRepositoriesDefined = failureMessage?.contains("no repositories are defined") ?: false
+    val requiredGradleJVM = if (projectPath != null) JVM_VERSION_ISSUE_PATTERN.find(failureMessage ?: "") else null
 
     when {
+      requiredGradleJVM != null -> {
+        val javaVersion = JavaVersion.compose(requiredGradleJVM.groupValues[1].toInt(), 0, 0)
+        addGradleJvmOrNewerQuickFix(projectPath!!, javaVersion)
+      }
       isOfflineMode && !noRepositoriesDefined -> addQuickFixPrompt(offlineModeQuickFixText)
       else -> addQuickFixPrompt(
         GradleBundle.message("gradle.build.quick.fix.artifact.declare.repository", declaringRepositoriesLink)
@@ -60,9 +65,23 @@ abstract class UnresolvedDependencyIssue(
     }
   }
 
+  private fun addGradleJvmOrNewerQuickFix(projectPath: String, javaVersion: JavaVersion) {
+    // Android Studio doesn't have Gradle JVM setting
+    if ("AndroidStudio" == PlatformUtils.getPlatformPrefix()) return
+
+    val quickFix = GradleSettingsQuickFix(
+      projectPath, true,
+      GradleSettingsQuickFix.GradleJvmChangeDetector,
+      GradleBundle.message("gradle.settings.text.jvm.path")
+    )
+    val hyperlinkReference = addQuickFix(quickFix)
+    addQuickFixPrompt(GradleBundle.message("gradle.build.quick.fix.gradle.jvm.or.newer", hyperlinkReference, javaVersion))
+  }
+
   companion object {
     internal const val offlineQuickFixId = "disable_offline_mode"
     private const val declaringRepositoriesLink = "https://docs.gradle.org/current/userguide/declaring_repositories.html"
+    private val JVM_VERSION_ISSUE_PATTERN = Regex("is only compatible with JVM runtime version (\\d+) or newer\\.")
   }
 }
 
@@ -78,6 +97,7 @@ data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
   init {
     addDescription(buildDescription(failureMessage))
     configureQuickFix(
+      projectPath,
       failureMessage,
       isOfflineMode,
       GradleBundle.message("gradle.build.quick.fix.disable.offline.mode.reload", offlineQuickFixId)
@@ -101,6 +121,7 @@ class UnresolvedDependencyBuildIssue(dependencyName: String,
   init {
     addDescription(buildDescription(failureMessage))
     configureQuickFix(
+      null,
       failureMessage,
       isOfflineMode,
       GradleBundle.message("gradle.build.quick.fix.disable.offline.mode.rebuild", offlineQuickFixId)
