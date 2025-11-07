@@ -249,7 +249,7 @@ public final class GroovyShortNamesCache extends PsiShortNamesCache {
     for (GroovyFile file : StubIndex.getElements(GrScriptClassNameIndex.KEY, name, myProject, new GrSourceFilterScope(scope), filter,
                                                  GroovyFile.class)) {
       PsiClass aClass = file.getScriptClass();
-      if (aClass != null && !processor.process(aClass)) return true;
+      if (aClass != null && !processor.process(aClass)) return false;
     }
     return true;
   }
