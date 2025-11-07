@@ -1934,6 +1934,11 @@ public abstract class InlineScopesAndK1IdeK2CodeEvaluateExpressionTestGenerated 
                 runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
             }
 
+            @TestMetadata("inlineTypeVariables.kt")
+            public void testInlineTypeVariables() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineTypeVariables.kt");
+            }
+
             @TestMetadata("inlineWithAnonymousObject.kt")
             public void testInlineWithAnonymousObject() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/inlineWithAnonymousObject.kt");
