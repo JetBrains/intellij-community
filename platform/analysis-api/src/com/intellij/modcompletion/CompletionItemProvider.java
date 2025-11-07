@@ -1,15 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcompletion;
 
+import com.intellij.codeInsight.completion.BaseCompletionParameters;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.modcommand.ActionContext;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -37,18 +38,29 @@ public interface CompletionItemProvider {
 
   /**
    * Completion context
-   * 
-   * @param context an action context to use
-   * @param prefix current completion prefix
+   *
+   * @param originalFile original file
+   * @param file current file (copy for completion)
+   * @param offset current offset in the file
+   * @param element current element in the file
+   * @param matcher prefix matcher
    * @param invocationCount invocation count (0 = auto-popup)
    * @param type completion type
    */
-  record CompletionContext(ActionContext context, String prefix, int invocationCount, CompletionType type) {
+  record CompletionContext(
+    PsiFile originalFile,
+    int offset,
+    PsiElement element,
+    PrefixMatcher matcher,
+    int invocationCount,
+    CompletionType type
+  )
+    implements BaseCompletionParameters {
     /**
-     * @return a context PSI element
+     * @return matcher prefix
      */
-    public PsiElement element() {
-      return Objects.requireNonNull(context.element());
+    public String prefix() {
+      return matcher.getPrefix();
     }
 
     /**
@@ -65,11 +77,19 @@ public interface CompletionItemProvider {
       return type == CompletionType.BASIC;
     }
 
-    /**
-     * @return caret offset
-     */
-    public int offset() {
-      return context.offset();
+    @Override
+    public PsiFile getOriginalFile() {
+      return originalFile;
+    }
+
+    @Override
+    public int getOffset() {
+      return offset;
+    }
+
+    @Override
+    public PsiElement getPosition() {
+      return element;
     }
   }
 }

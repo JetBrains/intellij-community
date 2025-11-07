@@ -3,6 +3,7 @@ package com.intellij.modcompletion;
 
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.Set;
@@ -15,13 +16,21 @@ public interface CompletionItem {
   /**
    * @return the string searched for
    */
+  @NlsSafe
   String mainLookupString();
 
   /**
    * @return set of additional lookup strings, if necessary
    */
-  default Set<String> additionalLookupStrings() {
+  default Set<@NlsSafe String> additionalLookupStrings() {
     return Set.of();
+  }
+
+  /**
+   * @return true if the element is still valid (e.g., all the PsiElement's it refers to are still valid)
+   */
+  default boolean isValid() {
+    return true;
   }
 
   /**

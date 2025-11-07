@@ -108,6 +108,11 @@ public final class CompletionItemLookupElement extends LookupElement {
   }
 
   @Override
+  public boolean isValid() {
+    return item.isValid();
+  }
+
+  @Override
   public String getLookupString() {
     return item.mainLookupString();
   }
@@ -137,8 +142,9 @@ public final class CompletionItemLookupElement extends LookupElement {
         case EMPHASIZED -> presentation.setItemTextItalic(true);
       }
     }
+    presentation.setIcon(itemPresentation.mainIcon());
     presentation.setTailText(" (MC)");
-    presentation.setTypeText(itemPresentation.detailText().toText());
+    presentation.setTypeText(itemPresentation.detailText().toText(), itemPresentation.detailIcon());
   }
 
   @Override
@@ -153,6 +159,16 @@ public final class CompletionItemLookupElement extends LookupElement {
   @Override
   public void handleInsert(InsertionContext context) {
     throw new UnsupportedOperationException("Should not be called: unwrap the element via item() method and process it as a ModCommand");
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    return o instanceof CompletionItemLookupElement element && item.equals(element.item);
+  }
+
+  @Override
+  public int hashCode() {
+    return item.hashCode();
   }
 
   @Override

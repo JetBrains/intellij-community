@@ -8,6 +8,9 @@ import com.intellij.modcompletion.CompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /**
@@ -17,10 +20,16 @@ import org.jetbrains.annotations.NotNullByDefault;
 final class KeywordCompletionItem extends PsiUpdateCompletionItem {
   private final @NlsSafe String myKeyword;
   private final ModNavigatorTailType myTail;
+  private final boolean myAdjustLineOffset;
 
   KeywordCompletionItem(@NlsSafe String keyword, ModNavigatorTailType tail) {
+    this(keyword, tail, false);
+  }
+
+  KeywordCompletionItem(@NlsSafe String keyword, ModNavigatorTailType tail, boolean adjustLineOffset) {
     myKeyword = keyword;
     myTail = tail;
+    myAdjustLineOffset = adjustLineOffset;
   }
 
   @Override
@@ -39,15 +48,14 @@ final class KeywordCompletionItem extends PsiUpdateCompletionItem {
   }
 
   @Override
-  public void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater) {
+  public void update(ActionContext actionContext, InsertionContext insertionContext, PsiFile file, ModPsiUpdater updater) {
     myTail.processTail(actionContext.project(), updater, actionContext.offset());
+    if (myAdjustLineOffset) {
+      PsiDocumentManager.getInstance(actionContext.project()).commitDocument(file.getFileDocument());
+      CodeStyleManager.getInstance(actionContext.project()).adjustLineIndent(file, actionContext.selection().getStartOffset());
+    }
   }
 
   public record KeywordInfo(String keyword) {
-  }
-
-  @Override
-  public String toString() {
-    return myKeyword;
   }
 }

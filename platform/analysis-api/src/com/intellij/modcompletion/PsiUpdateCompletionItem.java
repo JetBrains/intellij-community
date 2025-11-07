@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /**
@@ -26,11 +27,15 @@ public abstract class PsiUpdateCompletionItem implements CompletionItem {
       doc.deleteString(completionStart, prefixEnd);
     }, updater -> {
       Document document = updater.getDocument();
+      PsiFile writableFile = updater.getWritable(finalActionContext.file());
       document.replaceString(completionStart,
                              insertionContext.mode() == InsertionMode.OVERWRITE ?
                              calculateEndOffsetForOverwrite(document, completionStart) : completionStart, lookupString);
       updater.moveCaretTo(updatedCaretPos);
-      update(actionContext.withOffset(updatedCaretPos), insertionContext, updater);
+      update(actionContext.withOffset(updatedCaretPos)
+               .withSelection(TextRange.create(completionStart, updatedCaretPos)), insertionContext, writableFile, updater);
+      int offset = updater.getCaretOffset();
+      updater.select(TextRange.create(offset, offset));
     });
   }
 
@@ -54,7 +59,13 @@ public abstract class PsiUpdateCompletionItem implements CompletionItem {
    * 
    * @param actionContext context of the action
    * @param insertionContext context of the insertion (like which character was used to finish the completion)
+   * @param file a file copy to update
    * @param updater an updater to use
    */
-  public abstract void update(ActionContext actionContext, InsertionContext insertionContext, ModPsiUpdater updater);
+  public abstract void update(ActionContext actionContext, InsertionContext insertionContext, PsiFile file, ModPsiUpdater updater);
+
+  @Override
+  public String toString() {
+    return mainLookupString();
+  }
 }

@@ -7,6 +7,8 @@ import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -122,12 +124,19 @@ public final class JavaTailTypes {
     }
   };
   private static final String ARROW = " -> ";
-  public static final TailType CASE_ARROW = new TailType() {
+  public static final ModNavigatorTailType CASE_ARROW = new ModNavigatorTailType() {
     @Override
     public int processTail(@NotNull Editor editor, int tailOffset) {
       Document document = editor.getDocument();
       document.insertString(tailOffset, ARROW);
       return moveCaret(editor, tailOffset, ARROW.length());
+    }
+
+    @Override
+    public int processTail(@NotNull Project project, @NotNull ModNavigator navigator, int tailOffset) {
+      Document document = navigator.getDocument();
+      document.insertString(tailOffset, ARROW);
+      return moveCaret(navigator, tailOffset, ARROW.length());
     }
 
     @Override
@@ -154,7 +163,7 @@ public final class JavaTailTypes {
   public static final ModNavigatorTailType TRY_LBRACE = BRACES;
   public static final ModNavigatorTailType DO_LBRACE = BRACES;
 
-  public static TailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
+  public static ModNavigatorTailType forSwitchLabel(@NotNull PsiSwitchBlock block) {
     boolean ruleFormatSwitch = SwitchUtils.isRuleFormatSwitch(block);
     if (ruleFormatSwitch) {
       //for not completed code with `:`
@@ -163,12 +172,12 @@ public final class JavaTailTypes {
         for (var child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
           if (child instanceof PsiErrorElement &&
               ContainerUtil.exists(child.getChildren(), t -> t instanceof PsiJavaToken && ((PsiJavaToken)t).getTokenType() == COLON)) {
-            return TailTypes.caseColonType();
+            return (ModNavigatorTailType)TailTypes.caseColonType();
           }
         }
       }
     }
-    return ruleFormatSwitch ? CASE_ARROW : TailTypes.caseColonType();
+    return ruleFormatSwitch ? CASE_ARROW : (ModNavigatorTailType)TailTypes.caseColonType();
   }
 
 

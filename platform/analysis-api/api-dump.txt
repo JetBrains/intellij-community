@@ -10,6 +10,10 @@ a:com.intellij.codeInsight.TailType
 - s:insertChar(com.intellij.openapi.editor.ModNavigator,I,C):I
 - s:insertChar(com.intellij.openapi.editor.ModNavigator,I,C,Z):I
 - ps:moveCaret(com.intellij.openapi.editor.ModNavigator,I,I):I
+com.intellij.codeInsight.completion.BaseCompletionParameters
+- a:getOffset():I
+- a:getOriginalFile():com.intellij.psi.PsiFile
+- a:getPosition():com.intellij.psi.PsiElement
 com.intellij.codeInsight.completion.BatchConsumer
 - com.intellij.util.Consumer
 - endBatch():V
@@ -18,6 +22,7 @@ f:com.intellij.codeInsight.completion.CompletionConfidenceEP
 - com.intellij.lang.LanguageExtensionPoint
 - <init>():V
 f:com.intellij.codeInsight.completion.CompletionParameters
+- com.intellij.codeInsight.completion.BaseCompletionParameters
 - getCompletionType():com.intellij.codeInsight.completion.CompletionType
 - getEditor():com.intellij.openapi.editor.Editor
 - getInvocationCount():I

@@ -4,19 +4,32 @@ package com.intellij.codeInsight.completion.modcompletion;
 import com.intellij.codeInsight.JavaTailTypes;
 import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.completion.AllClassesGetter;
+import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.CompletionItem;
 import com.intellij.modcompletion.CompletionItemProvider;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SealedUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiAnnotation;
@@ -39,6 +52,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
         }
       }
     }
+    addEnhancedCases(element, sink);
   }
 
   private static void addStatementKeywords(CompletionContext context, Consumer<CompletionItem> sink) {
@@ -85,6 +99,192 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
         //elseKeyword = PrioritizedLookupElement.withPriority(elseKeyword, -1);
       }
       sink.accept(elseKeyword);
+    }
+  }
+
+  void addEnhancedCases(PsiElement position, Consumer<CompletionItem> sink) {
+    if (!canAddKeywords(position)) return;
+
+    boolean statementPosition = isStatementPosition(position);
+    if (statementPosition) {
+      addCaseDefault(position, sink);
+
+      addPatternMatchingInSwitchCases(position, sink);
+    }
+    PsiElement parent = position.getParent();
+    if (parent != null && parent.getParent() instanceof PsiCaseLabelElementList) {
+      addCaseAfterNullDefault(position, sink);
+    }
+  }
+
+  private static void addCaseAfterNullDefault(PsiElement position, Consumer<CompletionItem> sink) {
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, position)) return;
+    PsiCaseLabelElementList labels = PsiTreeUtil.getParentOfType(position, PsiCaseLabelElementList.class);
+    if (labels == null || labels.getElementCount() != 2 ||
+        !(labels.getElements()[0] instanceof PsiLiteralExpression literalExpression &&
+          ExpressionUtils.isNullLiteral(literalExpression))) {
+      return;
+    }
+
+    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(labels, PsiSwitchBlock.class);
+    if (switchBlock == null) return;
+    List<PsiSwitchLabelStatementBase> allBranches =
+      PsiTreeUtil.getChildrenOfTypeAsList(switchBlock.getBody(), PsiSwitchLabelStatementBase.class);
+    if (allBranches.isEmpty() || allBranches.getLast().getCaseLabelElementList() != labels) {
+      return;
+    }
+    if (JavaPsiSwitchUtil.findDefaultElement(switchBlock) != null) {
+      return;
+    }
+
+    CompletionItem defaultCaseRule = new KeywordCompletionItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock), true);
+    //TODO: priority
+    // prioritizeForRule(defaultCaseRule, switchBlock)
+    sink.accept(defaultCaseRule);
+  }
+
+  private static void addCaseDefault(PsiElement position, Consumer<CompletionItem> sink) {
+    PsiSwitchBlock switchBlock = getSwitchFromLabelPosition(position);
+    if (switchBlock == null) return;
+    PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(switchBlock);
+    if (defaultElement != null && defaultElement.getTextRange().getStartOffset() < position.getTextRange().getStartOffset()) return;
+    sink.accept(new KeywordCompletionItem(JavaKeywords.CASE, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+    if (defaultElement != null) {
+      return;
+    }
+    CompletionItem defaultCaseRule = new KeywordCompletionItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock), true);
+    //TODO: priority
+    // prioritizeForRule(defaultCaseRule, switchBlock)
+    sink.accept(defaultCaseRule);
+  }
+
+  private static void addPatternMatchingInSwitchCases(PsiElement position, Consumer<CompletionItem> sink) {
+    if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, position)) return;
+
+    PsiSwitchBlock switchBlock = getSwitchFromLabelPosition(position);
+    if (switchBlock == null) return;
+
+    final PsiType selectorType = getSelectorType(switchBlock);
+    if (selectorType == null || selectorType instanceof PsiPrimitiveType) return;
+
+    PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(switchBlock);
+    if (defaultElement != null && defaultElement.getTextRange().getStartOffset() < position.getTextRange().getStartOffset()) return;
+
+    final ModNavigatorTailType caseRuleTail = JavaTailTypes.forSwitchLabel(switchBlock);
+    Set<String> containedLabels = getSwitchCoveredLabels(switchBlock, position);
+    if (!containedLabels.contains(JavaKeywords.NULL)) {
+      sink.accept(createCaseRule(JavaKeywords.NULL, caseRuleTail, switchBlock));
+      if (!containedLabels.contains(JavaKeywords.DEFAULT)) {
+        sink.accept(createCaseRule(JavaKeywords.NULL + ", " + JavaKeywords.DEFAULT, caseRuleTail, switchBlock));
+      }
+    }
+    addSealedHierarchyCases(position, selectorType, containedLabels, sink);
+  }
+
+  private static CompletionItem createCaseRule(@NlsSafe String caseRuleName,
+                                               ModNavigatorTailType tailType,
+                                               @Nullable PsiSwitchBlock switchBlock) {
+    @NlsSafe String prefix = "case ";
+
+    CommonCompletionItem item = new CommonCompletionItem(prefix + caseRuleName)
+      .withPresentation(MarkupText.builder()
+                          .append(prefix, MarkupText.Kind.STRONG)
+                          .append(caseRuleName).build())
+      .withTail(tailType)
+      .addLookupString(caseRuleName)
+      .adjustIndent();
+
+    //TODO: priority 
+    //return prioritizeForRule(decorator, switchBlock);
+    return item;
+  }
+
+  private static Set<String> getSwitchCoveredLabels(@Nullable PsiSwitchBlock block, PsiElement position) {
+    HashSet<String> labels = new HashSet<>();
+    if (block == null) {
+      return labels;
+    }
+    PsiCodeBlock body = block.getBody();
+    if (body == null) {
+      return labels;
+    }
+    int offset = position.getTextRange().getStartOffset();
+    for (PsiStatement statement : body.getStatements()) {
+      if (!(statement instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
+      if (labelStatement.isDefaultCase()) {
+        labels.add(JavaKeywords.DEFAULT);
+        continue;
+      }
+      if (labelStatement.getGuardExpression() != null) {
+        continue;
+      }
+      PsiCaseLabelElementList list = labelStatement.getCaseLabelElementList();
+      if (list == null) {
+        continue;
+      }
+      for (PsiCaseLabelElement element : list.getElements()) {
+        if (element instanceof PsiExpression expr &&
+            ExpressionUtils.isNullLiteral(expr)) {
+          labels.add(JavaKeywords.NULL);
+          continue;
+        }
+        if (element instanceof PsiDefaultCaseLabelElement) {
+          labels.add(JavaKeywords.DEFAULT);
+        }
+        if (element.getTextRange().getStartOffset() >= offset) {
+          break;
+        }
+        PsiType patternType = JavaPsiPatternUtil.getPatternType(element);
+        if (patternType != null && JavaPsiPatternUtil.isUnconditionalForType(element, patternType)) {
+          PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(patternType);
+          if (psiClass == null) continue;
+          String qualifiedName = psiClass.getQualifiedName();
+          if (qualifiedName == null) continue;
+          labels.add(qualifiedName);
+        }
+      }
+    }
+    return labels;
+  }
+
+  @Contract(pure = true)
+  private static @Nullable PsiType getSelectorType(PsiSwitchBlock switchBlock) {
+
+    final PsiExpression selector = switchBlock.getExpression();
+    if (selector == null) return null;
+
+    return selector.getType();
+  }
+
+  private static @Nullable PsiSwitchBlock getSwitchFromLabelPosition(PsiElement position) {
+    PsiStatement statement = PsiTreeUtil.getParentOfType(position, PsiStatement.class, false, PsiMember.class);
+    if (statement == null || statement.getTextRange().getStartOffset() != position.getTextRange().getStartOffset()) {
+      return null;
+    }
+
+    if (!(statement instanceof PsiSwitchLabelStatementBase) && statement.getParent() instanceof PsiCodeBlock) {
+      return ObjectUtils.tryCast(statement.getParent().getParent(), PsiSwitchBlock.class);
+    }
+    return null;
+  }
+
+  private static void addSealedHierarchyCases(PsiElement position, PsiType type, Set<String> containedLabels, Consumer<CompletionItem> sink) {
+    final PsiResolveHelper resolver = JavaPsiFacade.getInstance(position.getProject()).getResolveHelper();
+    PsiClass aClass = resolver.resolveReferencedClass(type.getCanonicalText(), null);
+    if (aClass == null) {
+      aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    }
+    if (aClass == null || aClass.isEnum() || !aClass.hasModifierProperty(PsiModifier.SEALED)) return;
+
+    for (PsiClass inheritor : SealedUtils.findSameFileInheritorsClasses(aClass)) {
+      //we don't check hierarchy here, because it is time-consuming
+      if (containedLabels.contains(inheritor.getQualifiedName())) {
+        continue;
+      }
+
+      final JavaPsiClassReferenceElement item = AllClassesGetter.createLookupItem(inheritor, AllClassesGetter.TRY_SHORTENING);
+      item.setForcedPresentableName("case " + inheritor.getName());
+      sink.accept(new ClassReferenceCompletionItem(inheritor).withPresentableName("case " + inheritor.getName()));
     }
   }
 

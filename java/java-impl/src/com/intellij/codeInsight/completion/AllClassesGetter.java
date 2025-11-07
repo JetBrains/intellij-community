@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -110,6 +111,67 @@ public final class AllClassesGetter {
       LOG.assertTrue(context.getTailOffset() >= 0);
     }
   };
+  
+  public static void tryShorten(@NotNull PsiFile file, @NotNull ModNavigator navigator, @NotNull PsiClass psiClass) {
+    if (!psiClass.isValid()) return;
+
+    int endOffset = navigator.getCaretOffset();
+    final String qname = psiClass.getQualifiedName();
+    if (qname == null) return;
+
+    if (endOffset == 0) return;
+
+    final Document document = navigator.getDocument();
+    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(psiClass.getProject());
+    if (file.findElementAt(endOffset - 1) == null) return;
+
+    PostprocessReformattingAspect.getInstance(file.getProject()).doPostponedFormatting();
+
+    endOffset = navigator.getCaretOffset();
+
+    final RangeMarker toDelete = JavaCompletionUtil.insertTemporary(endOffset, document, " ");
+    psiDocumentManager.commitDocument(document);
+    PsiReference psiReference = file.findReferenceAt(endOffset - 1);
+
+    boolean insertFqn = true;
+    if (psiReference != null) {
+      final PsiManager psiManager = file.getManager();
+      if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(psiReference))) {
+        insertFqn = false;
+      }
+      else if (psiClass.isValid()) {
+        try {
+          final PsiElement newUnderlying = psiReference.bindToElement(psiClass);
+          if (newUnderlying != null) {
+            final PsiElement psiElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(newUnderlying);
+            if (psiElement != null) {
+              for (final PsiReference reference : psiElement.getReferences()) {
+                if (psiManager.areElementsEquivalent(psiClass, JavaCompletionUtil.resolveReference(reference))) {
+                  insertFqn = false;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        catch (IncorrectOperationException e) {
+          //if it's empty we just insert fqn below
+        }
+      }
+    }
+    if (toDelete != null && toDelete.isValid()) {
+      document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
+    }
+
+    if (insertFqn) {
+      final String qName = psiClass.getQualifiedName();
+      if (qName != null) {
+        int end = navigator.getCaretOffset();
+        int start = JavaCompletionUtil.findQualifiedNameStart(end, document);
+        document.replaceString(start, end, qName);
+      }
+    }
+  }
 
   public static void processJavaClasses(final @NotNull CompletionParameters parameters,
                                         final @NotNull PrefixMatcher prefixMatcher,

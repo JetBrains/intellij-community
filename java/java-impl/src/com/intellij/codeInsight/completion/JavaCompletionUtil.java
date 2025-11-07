@@ -933,9 +933,13 @@ public final class JavaCompletionUtil {
   }
 
   static int findQualifiedNameStart(@NotNull InsertionContext context) {
-    int start = context.getTailOffset() - 1;
+    return findQualifiedNameStart(context.getTailOffset(), context.getDocument());
+  }
+
+  public static int findQualifiedNameStart(int end, Document document) {
+    int start = end - 1;
     while (start >= 0) {
-      char ch = context.getDocument().getCharsSequence().charAt(start);
+      char ch = document.getCharsSequence().charAt(start);
       if (!Character.isJavaIdentifierPart(ch) && ch != '.') break;
       start--;
     }

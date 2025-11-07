@@ -3,6 +3,9 @@ package com.intellij.modcompletion;
 
 import com.intellij.openapi.util.text.MarkupText;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * Visual representation of {@link CompletionItem}.
@@ -13,7 +16,9 @@ import org.jetbrains.annotations.NotNullByDefault;
 @NotNullByDefault
 public record CompletionItemPresentation(
   MarkupText mainText,
-  MarkupText detailText
+  @Nullable Icon mainIcon,
+  MarkupText detailText,
+  @Nullable Icon detailIcon
 ) {
   /**
    * Creates a presentation with the given main text and an empty detail text.
@@ -21,7 +26,7 @@ public record CompletionItemPresentation(
    * @param mainText main text to use
    */
   public CompletionItemPresentation(MarkupText mainText) {
-    this(mainText, MarkupText.empty());
+    this(mainText, null, MarkupText.empty(), null);
   }
 
   /**
@@ -29,7 +34,11 @@ public record CompletionItemPresentation(
    * @return a new presentation with the given main text and the same detail text
    */
   public CompletionItemPresentation withMainText(MarkupText mainText) {
-    return new CompletionItemPresentation(mainText, detailText);
+    return new CompletionItemPresentation(mainText, mainIcon, detailText, detailIcon);
+  }
+  
+  public CompletionItemPresentation withMainIcon(@Nullable Icon icon) {
+    return new CompletionItemPresentation(mainText, icon, detailText, detailIcon);
   }
 
   /**
@@ -37,6 +46,10 @@ public record CompletionItemPresentation(
    * @return a new presentation with the same main text and the given detail text
    */
   public CompletionItemPresentation withDetailText(MarkupText detailText) {
-    return new CompletionItemPresentation(mainText, detailText);
+    return new CompletionItemPresentation(mainText, mainIcon, detailText, detailIcon);
+  }
+  
+  public CompletionItemPresentation withDetailIcon(@Nullable Icon icon) {
+    return new CompletionItemPresentation(mainText, mainIcon, detailText, icon);
   }
 }
