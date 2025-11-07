@@ -32,7 +32,7 @@ val JSON_FILE: IFileElementType = object : IFileElementType(JsonLanguage.INSTANC
       getSyntaxParserRuntimeFactory(language).buildParserRuntime(syntaxBuilder.getSyntaxTreeBuilder())
     val convertedElement = getConverter(language).convert(elementType)
     assert(convertedElement != null) { "Failed convert element type: $elementType" }
-    JsonSyntaxParser().parse(convertedElement!!, runtimeParserRuntime)
+    JsonSyntaxParser.parse(convertedElement!!, runtimeParserRuntime)
     return syntaxBuilder.getTreeBuilt().getFirstChildNode()
   }
 }
@@ -55,7 +55,7 @@ val JSON5_FILE: IFileElementType = object : IFileElementType(Json5Language.INSTA
       getSyntaxParserRuntimeFactory(Json5Language.INSTANCE).buildParserRuntime(syntaxBuilder.getSyntaxTreeBuilder())
     val convertedElement = getConverter(language).convert(elementType)
     assert(convertedElement != null) { "Failed convert element type: $elementType" }
-    JsonSyntaxParser().parse(convertedElement!!, runtimeParserRuntime)
+    JsonSyntaxParser.parse(convertedElement!!, runtimeParserRuntime)
 
     return syntaxBuilder.getTreeBuilt().getFirstChildNode()
   }
@@ -77,7 +77,7 @@ val JSON_LINES_FILE: IFileElementType = object : IFileElementType(JsonLinesLangu
     val runtimeParserRuntime =
       getSyntaxParserRuntimeFactory(Json5Language.INSTANCE).buildParserRuntime(syntaxBuilder.getSyntaxTreeBuilder())
 
-    JsonSyntaxParser().parse(ElementTypeConverters.getConverter(language).convert(elementType)!!, runtimeParserRuntime)
+    JsonSyntaxParser.parse(ElementTypeConverters.getConverter(language).convert(elementType)!!, runtimeParserRuntime)
     return syntaxBuilder.getTreeBuilt().getFirstChildNode()
   }
 }

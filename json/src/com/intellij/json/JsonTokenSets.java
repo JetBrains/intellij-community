@@ -12,7 +12,7 @@ public final class JsonTokenSets {
   public static final TokenSet STRING_LITERALS = TokenSet.create(SINGLE_QUOTED_STRING, DOUBLE_QUOTED_STRING);
 
   public static final TokenSet JSON_CONTAINERS = TokenSet.create(OBJECT, ARRAY);
-  public static final SyntaxElementTypeSet JSON_KEYWORDS = syntaxElementTypeSetOf(JsonSyntaxElementTypes.TRUE, JsonSyntaxElementTypes.FALSE, JsonSyntaxElementTypes.NULL);
+  public static final SyntaxElementTypeSet JSON_KEYWORDS = syntaxElementTypeSetOf(JsonSyntaxElementTypes.INSTANCE.getTRUE(), JsonSyntaxElementTypes.INSTANCE.getFALSE(), JsonSyntaxElementTypes.INSTANCE.getNULL());
   public static final TokenSet JSON_LITERALS = TokenSet.create(STRING_LITERAL, NUMBER_LITERAL, NULL_LITERAL, TRUE, FALSE);
   public static final TokenSet JSON_COMMENTARIES = TokenSet.create(BLOCK_COMMENT, LINE_COMMENT);
 }
