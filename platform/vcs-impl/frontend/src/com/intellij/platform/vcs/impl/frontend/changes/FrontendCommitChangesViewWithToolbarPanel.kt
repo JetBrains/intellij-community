@@ -12,9 +12,11 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
+import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi
 import fleet.rpc.client.durable
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -29,6 +31,9 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     ChangeListsViewModel.getInstance(project).changeListsState.onEach { scheduleRefresh() }.launchIn(cs)
     cs.launch {
       subscribeToBackendEvents()
+    }
+    cs.launch {
+      forwardDiffActionsToBackend()
     }
   }
 
@@ -49,6 +54,12 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
       ChangesViewApi.getInstance().getBackendChangesViewEvents(project.projectId()).collect { event ->
         handleBackendEvent(event)
       }
+    }
+  }
+
+  private suspend fun forwardDiffActionsToBackend() {
+    diffRequests.collectLatest { action ->
+      ChangesViewDiffApi.getInstance().performDiffAction(project.projectId(), action)
     }
   }
 

@@ -25,6 +25,8 @@ import javax.swing.JComponent
 internal abstract class ChangesViewProxy(val project: Project, protected val scope: CoroutineScope) : Disposable {
   abstract val inclusionChanged: SharedFlow<Unit>
 
+  abstract val diffRequests: SharedFlow<ChangesViewDiffAction>
+
   /**
    * [initPanel] should be called before [panel] is accessed
    */

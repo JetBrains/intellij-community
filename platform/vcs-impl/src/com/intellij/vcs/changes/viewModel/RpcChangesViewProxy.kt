@@ -47,6 +47,8 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
 
   override val inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
+  override val diffRequests = MutableSharedFlow<ChangesViewDiffAction>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   override fun setInclusionModel(model: InclusionModel?) {
     inclusionModel.value = model
   }

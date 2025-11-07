@@ -6,7 +6,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -31,15 +30,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys;
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
-import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -352,46 +348,13 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       JPanel mainPanel = simplePanel(myMainPanelContent)
         .addToBottom(myProgressLabel);
 
-      ChangesListView tree = myChangesView.getTree();
       myEditorDiffPreview = new ChangesViewEditorDiffPreview(changesView, myContentPanel);
       Disposer.register(this, myEditorDiffPreview);
-
-      tree.setDoubleClickHandler(e -> {
-        if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return false;
-        if (performHoverAction()) return true;
-        if (myEditorDiffPreview.isPreviewOnDoubleClickOrEnter()) {
-          myEditorDiffPreview.performDiffAction();
-        } else {
-          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(tree), true);
-        }
-        return true;
-      });
-      tree.setEnterKeyHandler(e -> {
-        if (performHoverAction()) return true;
-        if (myEditorDiffPreview.isPreviewOnDoubleClickOrEnter()) {
-          myEditorDiffPreview.performDiffAction();
-        } else {
-          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(tree), false);
-        }
-        return true;
-      });
-      tree.addSelectionListener(() -> myEditorDiffPreview.handleSingleClick());
-      tree.putClientProperty(ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true);
 
       setContent(mainPanel);
 
       subscribeOnVcsToolWindowLayoutChanges(busConnection, this::updatePanelLayout);
       updatePanelLayout();
-    }
-
-    private boolean performHoverAction() {
-      ChangesBrowserNode<?> selected = VcsTreeModelData.selected(myChangesView.getTree()).iterateNodes().single();
-      if (selected == null) return false;
-
-      for (ChangesViewNodeAction extension : ChangesViewNodeAction.EP_NAME.getExtensions(myProject)) {
-        if (extension.handleDoubleClick(selected)) return true;
-      }
-      return false;
     }
 
     @Override

@@ -9,18 +9,21 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider
 import com.intellij.openapi.vcs.changes.actions.diff.WrapperCombinedBlockProducer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isToolWindowTabVertical
 import com.intellij.openapi.vcs.changes.ui.CommitToolWindowUtil
+import com.intellij.util.cancelOnDispose
+import com.intellij.vcs.VcsDisposable
 import com.intellij.vcs.changes.viewModel.ChangesViewProxy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CalledInAny
 import javax.swing.JComponent
 
@@ -30,13 +33,20 @@ internal class ChangesViewEditorDiffPreview(
 ) : EditorTabDiffPreview(changesView.project) {
   init {
     PreviewOnNextDiffAction().registerCustomShortcutSet(targetComponent, this)
-  }
 
-  fun handleSingleClick() {
-    if (!isOpenPreviewWithSingleClick()) return
-
-    val opened = openPreview(false)
-    if (!opened) closePreview()
+    VcsDisposable.getInstance(project).coroutineScope.launch(Dispatchers.EDT) {
+      changesView.diffRequests.collectLatest { diffAction ->
+        when (diffAction) {
+          ChangesViewDiffAction.TRY_SHOW_PREVIEW -> {
+            if (!isSplitterPreviewPresent() && !changesView.isModelUpdateInProgress()) {
+              val opened = openPreview(false)
+              if (!opened) closePreview()
+            }
+          }
+          ChangesViewDiffAction.PERFORM_DIFF -> performDiffAction();
+        }
+      }
+    }.cancelOnDispose(this)
   }
 
   override fun hasContent(): Boolean = ChangesViewDiffPreviewHandler.hasContent(changesView.getTree())
@@ -50,19 +60,6 @@ internal class ChangesViewEditorDiffPreview(
     closePreview()
     returnFocusToComponent()
   }
-
-  fun isPreviewOnDoubleClickOrEnter(): Boolean =
-    if (ChangesViewContentManager.isCommitToolWindowShown(project))
-      VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
-    else
-      VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK
-
-  private fun isOpenPreviewWithSingleClick(): Boolean =
-    !isSplitterPreviewPresent() &&
-    Registry.get("show.diff.preview.as.editor.tab.with.single.click").asBoolean() &&
-    !changesView.isModelUpdateInProgress() &&
-    VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN
-
 
   private fun returnFocusToComponent() {
     ChangesViewContentManager.getToolWindowFor(project, ChangesViewContentManager.LOCAL_CHANGES)?.activate(null)
