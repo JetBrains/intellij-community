@@ -193,25 +193,6 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     return null;
   }
 
-  private static boolean kmTypeProjectionEquals(KmTypeProjection p1, KmTypeProjection p2) {
-    if (p1 == null) {
-      return p2 == null;
-    }
-    return p2 != null && Objects.equals(p1.getVariance(), p2.getVariance()) && kmTypesEqual(p1.getType(), p2.getType());
-  }
-
-  private static boolean kmTypesEqual(KmType t1, KmType t2) {
-    // todo: can be removed when KmType properly defines equals() and hashCode()
-    if (t1 == null) { 
-      return t2 == null;
-    }
-    return t2 != null
-      && Attributes.isNullable(t1) == Attributes.isNullable(t2)
-      && Objects.equals(t1.getClassifier(), t2.getClassifier())
-      && kmTypesEqual(t1.getOuterType(), t2.getOuterType())
-      && Iterators.equals(t1.getArguments(), t2.getArguments(), KotlinMeta::kmTypeProjectionEquals);
-  }
-
   public final class Diff implements Difference {
 
     private final KotlinMeta myPast;
@@ -364,7 +345,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     public boolean receiverParameterChanged() {
       // for example 'fun foo(param: Bar): Any'  => 'fun Bar.foo(): Any'
       // both declarations will have the same JvmSignature in bytecode so functions will be considered the same by this criterion
-      return !kmTypesEqual(past.getReceiverParameterType(), now.getReceiverParameterType());
+      return !Objects.equals(past.getReceiverParameterType(), now.getReceiverParameterType());
     }
 
     public boolean hasDefaultDeclarationChanges() {
@@ -377,7 +358,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean parameterArgumentsChanged() {
-      return !Iterators.equals(getParameterTypes(past), getParameterTypes(now), (pastType, nowType) -> Iterators.equals(pastType.getArguments(), nowType.getArguments(), KotlinMeta::kmTypeProjectionEquals));
+      return !Iterators.equals(getParameterTypes(past), getParameterTypes(now), (pastType, nowType) -> Iterators.equals(pastType.getArguments(), nowType.getArguments()));
     }
 
     private static Iterable<KmType> getParameterTypes(KmFunction f) {
@@ -410,7 +391,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean underlyingTypeChanged() {
-      return !kmTypesEqual(past.getUnderlyingType(), now.getUnderlyingType());
+      return !Objects.equals(past.getUnderlyingType(), now.getUnderlyingType());
     }
   }
 
@@ -481,7 +462,7 @@ public final class KotlinMeta implements JvmMetadata<KotlinMeta, KotlinMeta.Diff
     }
 
     public boolean typeChanged() {
-      return !kmTypesEqual(past.getReturnType(), now.getReturnType());
+      return !Objects.equals(past.getReturnType(), now.getReturnType());
     }
 
     public boolean becameNullable() {

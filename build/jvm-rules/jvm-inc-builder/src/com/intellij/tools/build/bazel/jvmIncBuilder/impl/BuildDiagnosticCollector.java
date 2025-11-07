@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
@@ -116,8 +117,8 @@ public class BuildDiagnosticCollector {
 
         var digestRenderer = new Object() {
           void formatDigest(String label, ConfigurationState past, ConfigurationState present, Function<? super ConfigurationState, Long> dataAccessor) {
-            long pastValue = dataAccessor.fun(past);
-            long presentValue = dataAccessor.fun(present);
+            long pastValue = dataAccessor.apply(past);
+            long presentValue = dataAccessor.apply(present);
             readme.format("%n%-20s digest %s => %s %s", label, Long.toHexString(pastValue), Long.toHexString(presentValue), (pastValue == presentValue ? "(unchanged)" : "(modified)"));
           }
         };

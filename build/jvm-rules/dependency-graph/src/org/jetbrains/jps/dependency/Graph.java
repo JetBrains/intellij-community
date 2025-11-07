@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.Iterators;
 
+import java.util.Objects;
+
 public interface Graph {
   Iterable<BackDependencyIndex> getIndices();
 
@@ -47,6 +49,6 @@ public interface Graph {
   }
 
   static <T extends Node<T, ?>> Iterable<T> getNodesOfType(Iterable<? extends Node<?, ?>> nodes, Class<T> nodeSelector) {
-    return Iterators.filter(Iterators.map(nodes, n -> nodeSelector.isInstance(n)? nodeSelector.cast(n) : null), Iterators.notNullFilter());
+    return Iterators.filter(Iterators.map(nodes, n -> nodeSelector.isInstance(n)? nodeSelector.cast(n) : null), Objects::nonNull);
   }
 }

@@ -12,8 +12,6 @@ import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.incremental.LineOutputWriter;
 import org.jetbrains.jps.util.Iterators;
-import org.jetbrains.jps.util.Iterators.BooleanFunction;
-import org.jetbrains.jps.util.Iterators.Function;
 
 import javax.annotation.processing.Processor;
 import javax.tools.*;
@@ -22,6 +20,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public final class JavacMain {
@@ -199,12 +198,7 @@ public final class JavacMain {
             getLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH") == null &&
             fileManager.getLocation(StandardLocation.ANNOTATION_PROCESSOR_PATH) == null) {
             // default annotation processing discovery path to module path if not explicitly set
-            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", Iterators.filter(modulePath.getPath(), new BooleanFunction<File>() {
-              @Override
-              public boolean fun(File file) {
-                return !outputDirToRoots.containsKey(file);
-              }
-            }));
+            setLocation(fileManager, "ANNOTATION_PROCESSOR_MODULE_PATH", Iterators.filter(modulePath.getPath(), file -> !outputDirToRoots.containsKey(file)));
           }
         }
         catch (IOException e) {
@@ -343,17 +337,7 @@ public final class JavacMain {
           procContext.getFileManager(), StandardLocation.locationFor("ANNOTATION_PROCESSOR_MODULE_PATH"), Processor.class
         );
         if (processorNames != null) {
-          processors = Iterators.filterWithOrder(processors, Iterators.map(processorNames, new Function<String, BooleanFunction<? super Processor>>() {
-            @Override
-            public BooleanFunction<? super Processor> fun(final String procName) {
-              return new BooleanFunction<Processor>() {
-                @Override
-                public boolean fun(Processor processor) {
-                  return procName.equals(processor.getClass().getName());
-                }
-              };
-            }
-          }));
+          processors = Iterators.filterWithOrder(processors, Iterators.map(processorNames, procName -> proc -> procName.equals(proc.getClass().getName())));
         }
       }
       else {
@@ -428,13 +412,8 @@ public final class JavacMain {
   private static JavaCompiler.CompilationTask tryInstallClientCodeWrapperCallDispatcher(JavaCompiler.CompilationTask task, StandardJavaFileManager delegateTo) {
     try {
       final Class<? extends JavaCompiler.CompilationTask> taskClass = task.getClass();
-      final Field contextField = findField(taskClass, new BooleanFunction<Field>() {
-        private final Class<?> contextClass = Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader());
-        @Override
-        public boolean fun(Field field) {
-          return contextClass.equals(field.getType());
-        }
-      });
+      final Class<?> contextClass = Class.forName("com.sun.tools.javac.util.Context", true, taskClass.getClassLoader());
+      final Field contextField = findField(taskClass, field -> contextClass.equals(field.getType()));
       if (contextField != null) {
         final Object contextObject = contextField.get(task);
         final Method getMethod = contextObject.getClass().getMethod("get", Class.class);
@@ -456,65 +435,56 @@ public final class JavacMain {
 
   private static void installCallDispatcherRecursively(final Object obj, final StandardJavaFileManager delegateTo, final Set<Object> visited) {
     if (obj instanceof JavaFileManager && visited.add(obj)) {
-      forEachField(obj.getClass(), new BooleanFunction<Field>() {
-        @Override
-        public boolean fun(Field field) {
-          try {
-            if (JavaFileManager.class.isAssignableFrom(field.getType())) {
-              final Object value = field.get(obj);
-              if (isClientCodeWrapper(value, delegateTo)) {
-                field.set(obj, APIWrappers.wrap(StandardJavaFileManager.class, value, Object.class, delegateTo));
-              }
-              else {
-                installCallDispatcherRecursively(value, delegateTo, visited);
-              }
+      forEachField(obj.getClass(), field -> {
+        try {
+          if (JavaFileManager.class.isAssignableFrom(field.getType())) {
+            final Object value = field.get(obj);
+            if (isClientCodeWrapper(value, delegateTo)) {
+              field.set(obj, APIWrappers.wrap(StandardJavaFileManager.class, value, Object.class, delegateTo));
+            }
+            else {
+              installCallDispatcherRecursively(value, delegateTo, visited);
             }
           }
-          catch (Throwable ignored) {
-          }
-          return true;
         }
+        catch (Throwable ignored) {
+        }
+        return true;
       });
     }
   }
 
   private static boolean isClientCodeWrapper(final Object obj, final StandardJavaFileManager delegateTo) {
-    return obj instanceof StandardJavaFileManager && findField(obj.getClass(), new BooleanFunction<Field>() {
-      @Override
-      public boolean fun(Field f) {
-        try {
-          return f.get(obj) == delegateTo;
-        }
-        catch (Throwable ignored) {
-          return false;
-        }
+    return obj instanceof StandardJavaFileManager && findField(obj.getClass(), f -> {
+      try {
+        return f.get(obj) == delegateTo;
+      }
+      catch (Throwable ignored) {
+        return false;
       }
     }) != null;
   }
 
-  private static Field findField(final Class<?> aClass, final BooleanFunction<? super Field> cond) {
+  private static Field findField(final Class<?> aClass, final Predicate<? super Field> cond) {
     final Field[] res = new Field[]{null};
-    forEachField(aClass, new BooleanFunction<Field>() {
-      @Override
-      public boolean fun(Field field) {
-        if (!cond.fun(field)) {
-          return true; // continue
-        }
-        res[0] = field;
-        return false; // stop
+    forEachField(aClass, field -> {
+      if (!cond.test(field)) {
+        return true; // continue
       }
+      res[0] = field;
+      return false; // stop
     });
     return res[0];
   }
 
-  private static void forEachField(final Class<?> aClass, final BooleanFunction<? super Field> func) {
+  private static void forEachField(final Class<?> aClass, final Predicate<? super Field> func) {
     for (Class<?> from = aClass; from != null && !Object.class.equals(from); from = from.getSuperclass()) {
       for (Field field : from.getDeclaredFields()) {
         try {
           if (!field.isAccessible()) {
             field.setAccessible(true);
           }
-          if (!func.fun(field)) {
+          if (!func.test(field)) {
             return;
           }
         }

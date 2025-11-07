@@ -5,11 +5,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.util.Iterators;
-import org.jetbrains.jps.util.Iterators.Function;
 
-import javax.tools.*;
+import javax.tools.JavaFileManager;
 import java.io.*;
 import java.net.URI;
+import java.util.Objects;
 
 public final class OutputFileObject extends JpsFileObject {
   @Nullable
@@ -73,12 +73,7 @@ public final class OutputFileObject extends JpsFileObject {
 
   @NotNull
   public Iterable<File> getSourceFiles() {
-    return Iterators.filter(Iterators.map(getSourceUris(), new Function<URI, File>() {
-      @Override
-      public File fun(URI uri) {
-        return "file".equalsIgnoreCase(uri.getScheme())? new File(uri) : null;
-      }
-    }), Iterators.notNullFilter());
+    return Iterators.filter(Iterators.map(getSourceUris(), uri -> "file".equalsIgnoreCase(uri.getScheme())? new File(uri) : null), Objects::nonNull);
   }
 
   @NotNull

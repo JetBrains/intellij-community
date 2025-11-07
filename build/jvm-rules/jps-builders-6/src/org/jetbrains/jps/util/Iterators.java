@@ -4,15 +4,12 @@ package org.jetbrains.jps.util;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public final class Iterators {
-  @SuppressWarnings("rawtypes")
-  private static final BooleanFunction NOT_NULL_FILTER = new BooleanFunction() {
-    @Override
-    public boolean fun(Object s) {
-      return s != null;
-    }
-  };
 
   public static boolean isEmpty(Iterable<?> iterable) {
     return isEmptyCollection(iterable) || !iterable.iterator().hasNext();
@@ -47,10 +44,10 @@ public final class Iterators {
     return count;
   }
 
-  public static <T> T find(Iterable<? extends T> iterable, BooleanFunction<? super T> cond) {
+  public static <T> T find(Iterable<? extends T> iterable, Predicate<? super T> cond) {
     if (iterable != null) {
       for (T o : iterable) {
-        if (cond.fun(o)) {
+        if (cond.test(o)) {
           return o;
         }
       }
@@ -71,37 +68,22 @@ public final class Iterators {
     return acc;
   }
 
-  public interface Provider<T> {
-    T get();
-  }
-  
-  public interface Function<S, T> {
-    T fun(S s);
+  public static <T> Iterable<T> lazyIterable(final Supplier<? extends Iterable<T>> provider) {
+    final Supplier<? extends Iterable<T>> delegate = cachedValue(provider);
+    return () -> delegate.get().iterator();
   }
 
-  public interface BiFunction<S1, S2, T> {
-    T fun(S1 s1, S2 s2);
-  }
-
-  public interface BooleanFunction<T> {
-    boolean fun(T t);
-  }
-  
-  public static <T> Iterable<T> lazy(final Provider<? extends Iterable<T>> provider) {
-    return new Iterable<T>() {
-      private Iterable<T> myDelegate = null;
-      @NotNull
+  public static <T> Iterator<T> lazyIterator(final Supplier<? extends Iterator<T>> provider) {
+    return new Iterator<T>() {
+      private final Supplier<? extends Iterator<T>> delegate = cachedValue(provider);
       @Override
-      public Iterator<T> iterator() {
-        return getDelegate().iterator();
+      public boolean hasNext() {
+        return delegate.get().hasNext();
       }
 
-      private Iterable<T> getDelegate() {
-        Iterable<T> delegate = myDelegate;
-        if (delegate == null) {
-          myDelegate = delegate = provider.get();
-        }
-        return delegate;
+      @Override
+      public T next() {
+        return delegate.get().next();
       }
     };
   }
@@ -114,17 +96,11 @@ public final class Iterators {
     if (isEmptyCollection(second)) {
       return (Iterable<T>)first;
     }
-    return new Iterable<T>() {
-      @Override
-      @NotNull
-      public Iterator<T> iterator() {
-        return flat(first.iterator(), second.iterator());
-      }
-    };
+    return () -> flat(first.iterator(), second.iterator());
   }
 
   public static <T> Iterator<T> flat(final Iterator<? extends T> first, final Iterator<? extends T> second) {
-    return new BaseIterator<T>() {
+    return new Iterator<T>() {
       @Override
       public boolean hasNext() {
         return first.hasNext() || second.hasNext();
@@ -149,22 +125,11 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> flat(final Iterable<? extends Iterable<? extends T>> parts) {
-    return isEmptyCollection(parts) ? Collections.emptyList() : new Iterable<T>() {
-      @NotNull
-      @Override
-      public Iterator<T> iterator() {
-        return flat(map(parts.iterator(), new Function<Iterable<? extends T>, Iterator<T>>() {
-          @Override
-          public Iterator<T> fun(Iterable<? extends T> itr) {
-            return asIterator(itr);
-          }
-        }));
-      }
-    };
+    return isEmptyCollection(parts) ? Collections.emptyList() : () -> flat(map(parts.iterator(), Iterators::asIterator));
   }
 
   public static <T> Iterator<T> flat(final Iterator<? extends Iterator<T>> groupsIterator) {
-    return new BaseIterator<T>() {
+    return new Iterator<T>() {
       private Iterator<T> currentGroup;
 
       @Override
@@ -199,13 +164,7 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> asIterable(final T elem) {
-    return new Iterable<T>() {
-      @NotNull
-      @Override
-      public Iterator<T> iterator() {
-        return asIterator(elem);
-      }
-    };
+    return () -> asIterator(elem);
   }
 
   public static <T> Iterable<T> asIterable(final T[] elem) {
@@ -218,7 +177,7 @@ public final class Iterators {
       @Override
       public Iterator<T> iterator() {
         final ListIterator<T> li = list.listIterator(list.size());
-        return new BaseIterator<T>() {
+        return new Iterator<T>() {
           @Override
           public boolean hasNext() {
             return li.hasPrevious();
@@ -234,7 +193,7 @@ public final class Iterators {
   }
 
   public static <T> Iterator<T> asIterator(final T elem) {
-    return new BaseIterator<T>() {
+    return new Iterator<T>() {
       private boolean available = true;
 
       @Override
@@ -254,17 +213,11 @@ public final class Iterators {
   }
 
   public static <I,O> Iterable<O> map(final Iterable<? extends I> from, final Function<? super I, ? extends O> mapper) {
-    return isEmptyCollection(from) ? Collections.emptyList() : new Iterable<O>() {
-      @NotNull
-      @Override
-      public Iterator<O> iterator() {
-        return map(from.iterator(), mapper);
-      }
-    };
+    return isEmptyCollection(from) ? Collections.emptyList() : () -> map(from.iterator(), mapper);
   }
 
   public static <I,O> Iterator<O> map(final Iterator<? extends I> it, final Function<? super I, ? extends O> mapper) {
-    return new BaseIterator<O>() {
+    return new Iterator<O>() {
       @Override
       public boolean hasNext() {
         return it.hasNext();
@@ -272,23 +225,17 @@ public final class Iterators {
 
       @Override
       public O next() {
-        return mapper.fun(it.next());
+        return mapper.apply(it.next());
       }
     };
   }
 
-  public static <T> Iterable<T> filter(final Iterable<? extends T> it, final BooleanFunction<? super T> predicate) {
-    return isEmptyCollection(it) ? Collections.emptyList() : new Iterable<T>() {
-      @NotNull
-      @Override
-      public Iterator<T> iterator() {
-        return filter(it.iterator(), predicate);
-      }
-    };
+  public static <T> Iterable<T> filter(final Iterable<? extends T> it, final Predicate<? super T> predicate) {
+    return isEmptyCollection(it) ? Collections.emptyList() : () -> filter(it.iterator(), predicate);
   }
 
-  public static <T> Iterator<T> filter(final Iterator<? extends T> it, final BooleanFunction<? super T> predicate) {
-    return new BaseIterator<T>() {
+  public static <T> Iterator<T> filter(final Iterator<? extends T> it, final Predicate<? super T> predicate) {
+    return new Iterator<T>() {
       private T current = null;
       private boolean isPending = false;
 
@@ -322,7 +269,7 @@ public final class Iterators {
         current = null;
         while (it.hasNext()) {
           final T next = it.next();
-          if (predicate.fun(next)) {
+          if (predicate.test(next)) {
             isPending = true;
             current = next;
             break;
@@ -332,25 +279,19 @@ public final class Iterators {
     };
   }
 
-  public static <T> Iterable<T> filterWithOrder(final Iterable<? extends T> from, final Iterable<? extends BooleanFunction<? super T>> predicates) {
-    return isEmptyCollection(predicates) || isEmptyCollection(from) ? Collections.emptyList() : new Iterable<T>() {
-      @NotNull
-      @Override
-      public Iterator<T> iterator() {
-        return filterWithOrder(from.iterator(), predicates.iterator());
-      }
-    };
+  public static <T> Iterable<T> filterWithOrder(final Iterable<? extends T> from, final Iterable<? extends Predicate<? super T>> predicates) {
+    return isEmptyCollection(predicates) || isEmptyCollection(from)? Collections.emptyList() : () -> filterWithOrder(from.iterator(), predicates.iterator());
   }
 
-  public static <T> Iterator<T> filterWithOrder(final Iterator<? extends T> from, final Iterator<? extends BooleanFunction<? super T>> predicates) {
-    return flat(map(predicates, new Function<BooleanFunction<? super T>, Iterator<T>>() {
+  public static <T> Iterator<T> filterWithOrder(final Iterator<? extends T> from, final Iterator<? extends Predicate<? super T>> predicates) {
+    return flat(map(predicates, new Function<Predicate<? super T>, Iterator<T>>() {
       final List<T> buffer = new LinkedList<>();
       @Override
-      public Iterator<T> fun(BooleanFunction<? super T> pred) {
+      public Iterator<T> apply(Predicate<? super T> pred) {
         if (!buffer.isEmpty()) {
           for (Iterator<T> it = buffer.iterator(); it.hasNext(); ) {
             final T elem = it.next();
-            if (pred.fun(elem)) {
+            if (pred.test(elem)) {
               it.remove();
               return asIterator(elem);
             }
@@ -358,7 +299,7 @@ public final class Iterators {
         }
         while(from.hasNext()) {
           final T elem = from.next();
-          if (pred.fun(elem)) {
+          if (pred.test(elem)) {
             return asIterator(elem);
           }
           buffer.add(elem);
@@ -370,50 +311,20 @@ public final class Iterators {
   }
 
   public static <T> Iterable<T> unique(final Iterable<? extends T> it) {
-    return isEmptyCollection(it) ? Collections.emptyList() : new Iterable<T>() {
-      @NotNull
-      @Override
-      public Iterator<T> iterator() {
-        return unique(it.iterator());
-      }
-    };
+    return isEmptyCollection(it) ? Collections.emptyList() : () -> unique(it.iterator());
   }
 
   public static <T> Iterator<T> unique(final Iterator<? extends T> it) {
-    return filter(it, new BooleanFunction<T>() {
-      private Set<T> processed;
-      @Override
-      public boolean fun(T t) {
-        if (processed == null) {
-          processed = new HashSet<>();
-        }
-        return processed.add(t);
-      }
-    });
+    Supplier<Set<Object>> processed = cachedValue(HashSet::new);
+    return filter(it, e -> processed.get().add(e));
   }
 
-  public static <T> Iterable<T> uniqueBy(final Iterable<? extends T> it, final Provider<? extends BooleanFunction<T>> predicateFactory) {
-    return isEmptyCollection(it) ? Collections.emptyList() : new Iterable<T>() {
-      @NotNull
-      @Override
-      public Iterator<T> iterator() {
-        return filter(it.iterator(), predicateFactory.get());
-      }
-    };
-  }
-
-  @SuppressWarnings("unchecked")
-  public static <T> BooleanFunction<? super T> notNullFilter() {
-    return (BooleanFunction<T>)NOT_NULL_FILTER;
+  public static <T> Iterable<T> uniqueBy(final Iterable<? extends T> it, final Supplier<? extends Predicate<T>> predicateFactory) {
+    return isEmptyCollection(it) ? Collections.emptyList() : () -> filter(it.iterator(), predicateFactory.get());
   }
 
   public static <T> boolean equals(Iterable<? extends T> s1, Iterable<? extends T> s2) {
-    return equals(s1, s2, new BiFunction<T, T, Boolean>() {
-      @Override
-      public Boolean fun(T t1, T t2) {
-        return t1.equals(t2);
-      }
-    });
+    return equals(s1, s2, Object::equals);
   }
 
   public static <T> boolean equals(Iterable<? extends T> s1, Iterable<? extends T> s2, BiFunction<? super T, ? super T, Boolean> comparator) {
@@ -422,7 +333,7 @@ public final class Iterators {
       if (!it2.hasNext()) {
         return false;
       }
-      if (!comparator.fun(elem, it2.next())) {
+      if (!comparator.apply(elem, it2.next())) {
         return false;
       }
     }
@@ -454,28 +365,13 @@ public final class Iterators {
               return tailOf(elem);
             }
 
-            return flat(asIterator(elem), new LazyIterator<T>() {
-              @Override
-              protected Iterator<? extends T> create() {
-                return tailOf(elem);
-              }
-            });
+            return flat(asIterator(elem), lazyIterator(() -> tailOf(elem)));
           }
 
           @NotNull
           private Iterator<T> tailOf(final T elem) {
-            final Iterable<? extends T> tail = filter(step.fun(elem), new BooleanFunction<T>() {
-              @Override
-              public boolean fun(T e) {
-                return !traversed.contains(e);
-              }
-            });
-            return flat(tail.iterator(), flat(map(tail.iterator(), new Function<T, Iterator<T>>() {
-              @Override
-              public Iterator<T> fun(T obj) {
-                return recurse(obj, false);
-              }
-            })));
+            final Iterable<? extends T> tail = filter(step.apply(elem), e -> !traversed.contains(e));
+            return flat(tail.iterator(), flat(map(tail.iterator(), e -> recurse(e, false))));
           }
 
         }.recurse(item, includeHead);
@@ -497,26 +393,11 @@ public final class Iterators {
             }
 
             if (!includeHead) {
-              return flat(map(step.fun(elem).iterator(), new Function<T, Iterator<T>>() {
-                @Override
-                public Iterator<T> fun(T obj) {
-                  return recurse(obj, true);
-                }
-              }));
+              return flat(map(step.apply(elem).iterator(), e -> recurse(e, true)));
             }
 
-            Iterator<? extends T> tail = new LazyIterator<T>() {
-              @Override
-              protected Iterator<? extends T> create() {
-                return step.fun(elem).iterator();
-              }
-            };
-            return flat(asIterator(elem), flat(map(tail, new Function<T, Iterator<T>>() {
-              @Override
-              public Iterator<T> fun(T obj) {
-                return recurse(obj, true);
-              }
-            })));
+            Iterator<? extends T> tail = lazyIterator(() -> step.apply(elem).iterator());
+            return flat(asIterator(elem), flat(map(tail, e -> recurse(e, true))));
           }
 
         }.recurse(item, includeHead);
@@ -524,39 +405,15 @@ public final class Iterators {
     };
   }
 
-  private abstract static class BaseIterator<T> implements Iterator<T> {
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException();
-    }
-  }
+  private static <V> Supplier<V> cachedValue(Supplier<V> valueFactory) {
+    return new Supplier<V>() {
+      private Object[] computed;
 
-  private abstract static class LazyIterator<T> implements Iterator<T> {
-    private Iterator<? extends T> myDelegate;
-
-    protected abstract Iterator<? extends T> create();
-
-    @Override
-    public boolean hasNext() {
-      return getDelegate().hasNext();
-    }
-
-    @Override
-    public T next() {
-      return getDelegate().next();
-    }
-
-    @Override
-    public void remove() {
-      getDelegate().remove();
-    }
-
-    private Iterator<? extends T> getDelegate() {
-      Iterator<? extends T> delegate = myDelegate;
-      if (delegate == null) {
-        myDelegate = delegate = create();
+      @Override
+      public V get() {
+        //noinspection unchecked
+        return computed == null? (V)(computed = new Object[] {valueFactory.get()})[0] : (V)computed[0];
       }
-      return delegate;
-    }
+    };
   }
 }

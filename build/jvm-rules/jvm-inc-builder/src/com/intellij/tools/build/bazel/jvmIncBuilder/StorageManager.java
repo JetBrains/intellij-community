@@ -20,7 +20,9 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static org.jetbrains.jps.util.Iterators.*;
@@ -56,13 +58,15 @@ public class StorageManager implements CloseableExt {
     BuildProcessLogger logger = myContext.getBuildLogger();
     if (logger.isEnabled() && !myContext.isRebuild()) {
       // need this for tests
-      Set<String> deleted = new HashSet<>();
       Path outBackup = DataPaths.getJarBackupStoreFile(myContext, output);
-      try (var out = new ZipOutputBuilderImpl(Files.exists(outBackup)? outBackup : output)) {
-        collect(out.getEntryNames(), deleted);
+      try (var is = new BufferedInputStream(Files.newInputStream(Files.exists(outBackup)? outBackup : output))) {
+        List<String> paths = collect(filter(map(new ZipEntryIterator(is), ze -> ze.getEntry().getName()), n -> !n.endsWith("/")), new ArrayList<>());
+        if (!paths.isEmpty()) {
+          logger.logDeletedPaths(paths);
+        }
       }
-      if (!isEmpty(deleted)) {
-        logger.logDeletedPaths(deleted);
+      catch (IOException ignored) {
+        // ignore corrupted or non-existing zips
       }
     }
 
@@ -206,7 +210,7 @@ public class StorageManager implements CloseableExt {
     GraphConfiguration config = myGraphConfig;
     if (config != null) {
       myGraphConfig = null;
-      writeKotlinCriData(config.getGraph(), saveChanges);
+        writeKotlinCriData(config.getGraph(), saveChanges);
       safeClose(config.getGraph(), saveChanges);
     }
 

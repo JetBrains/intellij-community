@@ -233,7 +233,7 @@ public class Mappings {
       Iterators.map(
         Iterators.flat(Iterators.map(myClassToRelativeSourceFilePath.get(qName), src -> myRelativeSourceFilePathToClasses.get(src))),
         repr -> repr.name == qName && selector.isInstance(repr)? selector.cast(repr) : null
-      ), Iterators.notNullFilter()
+      ), Objects::nonNull
     ));
   }
 
@@ -573,13 +573,13 @@ public class Mappings {
       Function<ClassRepr, Iterable<OverloadDescriptor>> converter = c -> Iterators.filter(Iterators.map(c.getMethods(), m -> {
         Integer accessScope = correspondenceFinder.apply(m);
         return accessScope != null? new OverloadDescriptor(accessScope, m, c) : null;
-      }), Iterators.notNullFilter());
+      }), Objects::nonNull);
 
       return Iterators.flat(Iterators.flat(
         collectRecursively(cls, converter),
         Iterators.map(
           Iterators.flat(Iterators.map(getAllSubclasses(cls.name), subName -> subName != cls.name? reprsByName(subName, ClassRepr.class) : Collections.emptyList())),
-          repr -> converter.apply(repr)
+          converter
         )
       ));
     }
@@ -2348,7 +2348,7 @@ public class Mappings {
             }
           }
           return null;
-        }), Iterators.notNullFilter());
+        }), Objects::nonNull);
 
         for (Pair<ClassFileRepr, File> pair : dependentReprs) {
           if (!dependentReprProcessor.apply(pair.getFirst(), pair.getSecond())) {

@@ -131,12 +131,12 @@ f:org.jetbrains.jps.util.Iterators
 - s:contains(java.lang.Iterable,java.lang.Object):Z
 - s:count(java.lang.Iterable):I
 - s:equals(java.lang.Iterable,java.lang.Iterable):Z
-- s:equals(java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.util.Iterators$BiFunction):Z
-- s:filter(java.lang.Iterable,org.jetbrains.jps.util.Iterators$BooleanFunction):java.lang.Iterable
-- s:filter(java.util.Iterator,org.jetbrains.jps.util.Iterators$BooleanFunction):java.util.Iterator
+- s:equals(java.lang.Iterable,java.lang.Iterable,java.util.function.BiFunction):Z
+- s:filter(java.lang.Iterable,java.util.function.Predicate):java.lang.Iterable
+- s:filter(java.util.Iterator,java.util.function.Predicate):java.util.Iterator
 - s:filterWithOrder(java.lang.Iterable,java.lang.Iterable):java.lang.Iterable
 - s:filterWithOrder(java.util.Iterator,java.util.Iterator):java.util.Iterator
-- s:find(java.lang.Iterable,org.jetbrains.jps.util.Iterators$BooleanFunction):java.lang.Object
+- s:find(java.lang.Iterable,java.util.function.Predicate):java.lang.Object
 - s:flat(java.lang.Iterable):java.lang.Iterable
 - s:flat(java.lang.Iterable,java.lang.Iterable):java.lang.Iterable
 - s:flat(java.util.Collection):java.lang.Iterable
@@ -145,24 +145,16 @@ f:org.jetbrains.jps.util.Iterators
 - s:hashCode(java.lang.Iterable):I
 - s:isEmpty(java.lang.Iterable):Z
 - s:isEmptyCollection(java.lang.Iterable):Z
-- s:lazy(org.jetbrains.jps.util.Iterators$Provider):java.lang.Iterable
-- s:map(java.lang.Iterable,org.jetbrains.jps.util.Iterators$Function):java.lang.Iterable
-- s:map(java.util.Iterator,org.jetbrains.jps.util.Iterators$Function):java.util.Iterator
-- s:notNullFilter():org.jetbrains.jps.util.Iterators$BooleanFunction
-- s:recurse(java.lang.Object,org.jetbrains.jps.util.Iterators$Function,Z):java.lang.Iterable
-- s:recurseDepth(java.lang.Object,org.jetbrains.jps.util.Iterators$Function,Z):java.lang.Iterable
+- s:lazyIterable(java.util.function.Supplier):java.lang.Iterable
+- s:lazyIterator(java.util.function.Supplier):java.util.Iterator
+- s:map(java.lang.Iterable,java.util.function.Function):java.lang.Iterable
+- s:map(java.util.Iterator,java.util.function.Function):java.util.Iterator
+- s:recurse(java.lang.Object,java.util.function.Function,Z):java.lang.Iterable
+- s:recurseDepth(java.lang.Object,java.util.function.Function,Z):java.lang.Iterable
 - s:reverse(java.util.List):java.lang.Iterable
 - s:unique(java.lang.Iterable):java.lang.Iterable
 - s:unique(java.util.Iterator):java.util.Iterator
-- s:uniqueBy(java.lang.Iterable,org.jetbrains.jps.util.Iterators$Provider):java.lang.Iterable
-org.jetbrains.jps.util.Iterators$BiFunction
-- a:fun(java.lang.Object,java.lang.Object):java.lang.Object
-org.jetbrains.jps.util.Iterators$BooleanFunction
-- a:fun(java.lang.Object):Z
-org.jetbrains.jps.util.Iterators$Function
-- a:fun(java.lang.Object):java.lang.Object
-org.jetbrains.jps.util.Iterators$Provider
-- a:get():java.lang.Object
+- s:uniqueBy(java.lang.Iterable,java.util.function.Supplier):java.lang.Iterable
 c:org.jetbrains.jps.util.Pair
 - f:first:java.lang.Object
 - f:second:java.lang.Object

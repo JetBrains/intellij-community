@@ -13,6 +13,7 @@ import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.util.Iterators;
 
 import java.util.Collections;
+import java.util.function.Function;
 
 public final class TypealiasesIndex extends BackDependencyIndexImpl {
   public static final String NAME = "type-aliases";
@@ -29,7 +30,7 @@ public final class TypealiasesIndex extends BackDependencyIndexImpl {
     }
 
     String pkgName = ((JvmClass)node).getPackageName();
-    Iterators.Function<KmTypeAlias, ReferenceID> mapper =
+    Function<KmTypeAlias, ReferenceID> mapper =
             pkgName.isBlank()?
             alias -> new JvmNodeReferenceID(alias.getName()) :
             alias -> new JvmNodeReferenceID(pkgName + "." + alias.getName());

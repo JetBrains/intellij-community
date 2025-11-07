@@ -8,11 +8,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.Node;
 import org.jetbrains.jps.dependency.ReferenceID;
 import org.jetbrains.jps.dependency.java.*;
-import org.jetbrains.jps.util.Iterators;
 
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Objects;
+import java.util.function.Function;
 
 import static org.jetbrains.jps.util.Iterators.*;
 
@@ -117,7 +117,7 @@ final class KJvmUtils {
   }
 
   static Iterable<ReferenceID> withAllSubclassesIfSealed(Utils utils, ReferenceID sealedClassId) {
-    Iterators.Function<ReferenceID, Iterable<? extends ReferenceID>> withSubclassesIfSealed =
+    Function<ReferenceID, Iterable<? extends ReferenceID>> withSubclassesIfSealed =
       id -> flat(map(utils.getNodes(id, JvmClass.class), n -> isSealed(n)? utils.directSubclasses(n.getReferenceID()) : Collections.emptyList()));
     return recurse(sealedClassId, withSubclassesIfSealed, true);
   }

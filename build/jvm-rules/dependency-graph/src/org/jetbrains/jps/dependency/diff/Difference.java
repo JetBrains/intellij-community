@@ -3,7 +3,6 @@ package org.jetbrains.jps.dependency.diff;
 
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.impl.Containers;
-import org.jetbrains.jps.util.Iterators;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -101,8 +100,8 @@ public interface Difference {
     Set<T> pastSet = past instanceof Set? (Set<T>)past : collect(past, new HashSet<>());
     Set<T> nowSet = now instanceof Set? (Set<T>)now : collect(now, new HashSet<>());
 
-    Iterable<T> added = lazy(() -> collect(filter(nowSet, elem -> !pastSet.contains(elem)), new ArrayList<>()));
-    Iterable<T> removed = lazy(() -> collect(filter(pastSet, elem -> !nowSet.contains(elem)), new ArrayList<>()));
+    Iterable<T> added = lazyIterable(() -> collect(filter(nowSet, elem -> !pastSet.contains(elem)), new ArrayList<>()));
+    Iterable<T> removed = lazyIterable(() -> collect(filter(pastSet, elem -> !nowSet.contains(elem)), new ArrayList<>()));
 
     return new Specifier<>() {
       private Boolean isUnchanged;
@@ -124,7 +123,7 @@ public interface Difference {
   }
 
   static <T, D extends Difference> Specifier<T, D> deepDiff(@Nullable Iterable<T> past, @Nullable Iterable<T> now, BiPredicate<? super T, ? super T> isSameImpl, Function<? super T, Integer> diffHashImpl, BiFunction<? super T, ? super T, ? extends D> diffImpl) {
-    Iterators.Function<T, DiffCapable.Adapter<T, D>> mapper = obj -> DiffCapable.wrap(obj, isSameImpl, diffHashImpl, diffImpl);
+    Function<T, DiffCapable.Adapter<T, D>> mapper = obj -> DiffCapable.wrap(obj, isSameImpl, diffHashImpl, diffImpl);
     Specifier<DiffCapable.Adapter<T, D>, D> adapterDiff = deepDiff(map(past, mapper), map(now, mapper));
     return new Specifier<>() {
       @Override
@@ -203,10 +202,10 @@ public interface Difference {
     Set<T> pastSet = collect(past, Containers.createCustomPolicySet(T::isSame, T::diffHashCode));
     Set<T> nowSet = collect(now, Containers.createCustomPolicySet(T::isSame, T::diffHashCode));
 
-    Iterable<T> added = lazy(() -> collect(filter(nowSet, obj -> !pastSet.contains(obj)), new ArrayList<>()));
-    Iterable<T> removed = lazy(() -> collect(filter(pastSet, obj -> !nowSet.contains(obj)), new ArrayList<>()));
+    Iterable<T> added = lazyIterable(() -> collect(filter(nowSet, obj -> !pastSet.contains(obj)), new ArrayList<>()));
+    Iterable<T> removed = lazyIterable(() -> collect(filter(pastSet, obj -> !nowSet.contains(obj)), new ArrayList<>()));
 
-    Iterable<Change<T, D>> changed = lazy(() -> {
+    Iterable<Change<T, D>> changed = lazyIterable(() -> {
       final Map<T, T> nowMap = Containers.createCustomPolicyMap(T::isSame, T::diffHashCode);
       for (T s : nowSet) {
         if (pastSet.contains(s)) {

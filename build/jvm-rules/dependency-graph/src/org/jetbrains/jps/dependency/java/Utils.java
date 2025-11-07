@@ -74,7 +74,7 @@ public final class Utils {
       Set<NodeSource> deleted = myDelta.getDeletedSources();
       return flat(deltaSources, filter(myGraph.getSources(nodeId), src -> !contains(deltaSources, src) && !deleted.contains(src) && mySourcesFilter.test(src)));
     }
-    return filter(myGraph.getSources(nodeId), mySourcesFilter::test);
+    return filter(myGraph.getSources(nodeId), mySourcesFilter);
   }
 
   public Iterable<JvmClass> getClassesByName(@NotNull String name) {
@@ -168,17 +168,17 @@ public final class Utils {
       }
     }
     else {
-      allNodes = fromDeltaOnly? Collections.emptyList() : flat(map(filter(myGraph.getSources(id), mySourcesFilter::test), src -> myGraph.getNodes(src, selector)));
+      allNodes = fromDeltaOnly? Collections.emptyList() : flat(map(filter(myGraph.getSources(id), mySourcesFilter), src -> myGraph.getNodes(src, selector)));
     }
     return filter(allNodes, n -> id.equals(n.getReferenceID()));
   }
 
   public static <T> @NotNull Iterable<T> uniqueBy(Iterable<? extends T> it, final BiFunction<? super T, ? super T, Boolean> equalsImpl, final Function<? super T, Integer> hashCodeImpl) {
-    return Iterators.uniqueBy(it, () -> new BooleanFunction<>() {
+    return Iterators.uniqueBy(it, () -> new Predicate<>() {
       Set<T> visited;
 
       @Override
-      public boolean fun(T t) {
+      public boolean test(T t) {
         if (visited == null) {
           visited = Containers.createCustomPolicySet(equalsImpl, hashCodeImpl);
         }
@@ -216,7 +216,7 @@ public final class Utils {
 
   public @NotNull Iterable<ReferenceID> directSubclasses(ReferenceID from) {
     if (myDeltaDirectSubclasses != null) {
-      BooleanFunction<ReferenceID> subClassFilter = sub -> {
+      Predicate<ReferenceID> subClassFilter = sub -> {
         if (myIsNodeDeleted.test(sub)) {
           return false;
         }
@@ -240,7 +240,7 @@ public final class Utils {
 
   // propagateMemberAccess
   private <T extends ProtoMember> Set<JvmNodeReferenceID> collectSubclassesWithoutMember(JvmNodeReferenceID classId, Predicate<? super T> isSame, Function<JvmClass, Iterable<T>> membersGetter) {
-    Predicate<ReferenceID> containsMember = id -> find(getJvmClassNodes(id), cls -> find(membersGetter.apply(cls), isSame::test) == null) == null;
+    Predicate<ReferenceID> containsMember = id -> find(getJvmClassNodes(id), cls -> find(membersGetter.apply(cls), isSame) == null) == null;
     //stop further traversal, if nodes corresponding to the subclassName contain matching member
     Iterable<JvmNodeReferenceID> result = getNodesData(
       classId,
@@ -249,7 +249,7 @@ public final class Utils {
       Objects::nonNull,
       false
     );
-    return collect(filter(result, notNullFilter()), new HashSet<>());
+    return collect(filter(result, Objects::nonNull), new HashSet<>());
   }
 
   public Iterable<Pair<JvmClass, JvmField>> getOverriddenFields(JvmClass fromCls, JvmField field) {
@@ -276,7 +276,7 @@ public final class Utils {
     Function<JvmClass, Iterable<JvmMethod>> matchingMethodsGetter = cachingFunction(
       cl -> fromCls.isSame(cl)?
             List.of() :
-            collect(filter(cl.getMethods(), searchCond::test), new ArrayList<>())
+            collect(filter(cl.getMethods(), searchCond), new ArrayList<>())
     );
     
     Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cls -> isVisibleInHierarchy(fromCls, method, cls)? collect(
@@ -309,11 +309,11 @@ public final class Utils {
     Function<JvmClass, Iterable<OverloadDescriptor>> mapper = c -> filter(map(c.getMethods(), m -> {
       JVMFlags accessScope = correspondenceFinder.apply(m);
       return accessScope != null? new OverloadDescriptor(accessScope, m, c) : null;
-    }), notNullFilter());
+    }), Objects::nonNull);
 
     return flat(
-      flat(map(recurse(cls, cl -> flat(map(cl.getSuperTypes(), this::getClassesByName)), true), mapper::apply)),
-      flat(map(allSubclasses(cls.getReferenceID()), id -> flat(map(getJvmClassNodes(id), mapper::apply))))
+      flat(map(recurse(cls, cl -> flat(map(cl.getSuperTypes(), this::getClassesByName)), true), mapper)),
+      flat(map(allSubclasses(cls.getReferenceID()), id -> flat(map(getJvmClassNodes(id), mapper))))
     );
   }
 
@@ -326,7 +326,7 @@ public final class Utils {
     N fromNode, Function<? super N, ? extends Iterable<? extends N>> step, Function<N, V> dataGetter, Predicate<V> continuationCond, boolean includeHead
   ) {
     Function<N, V> mapper = cachingFunction(dataGetter);
-    return map(recurseDepth(fromNode, node -> fromNode.equals(node) || continuationCond.test(mapper.apply(node))? step.apply(node): Collections.emptyList(), includeHead), mapper::apply);
+    return map(recurseDepth(fromNode, node -> fromNode.equals(node) || continuationCond.test(mapper.apply(node))? step.apply(node): Collections.emptyList(), includeHead), mapper);
   }
 
   public boolean hasOverriddenMethods(JvmClass cls, JvmMethod method) {

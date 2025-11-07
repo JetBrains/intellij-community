@@ -1,42 +1,33 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.javac;
 
-import org.jetbrains.jps.util.Iterators.BooleanFunction;
-import org.jetbrains.jps.util.Iterators.Function;
-
 import javax.tools.JavaFileObject;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 final class FileObjectKindFilter<T> {
   private final Function<? super T, String> myToNameConverter;
-  private final Map<JavaFileObject.Kind, BooleanFunction<T>> myFilterMap;
+  private final Map<JavaFileObject.Kind, Predicate<T>> myFilterMap;
 
   FileObjectKindFilter(Function<? super T, String> toNameConverter) {
     myToNameConverter = toNameConverter;
-    final Map<JavaFileObject.Kind, BooleanFunction<T>> filterMap = new EnumMap<>(JavaFileObject.Kind.class);
+    final Map<JavaFileObject.Kind, Predicate<T>> filterMap = new EnumMap<>(JavaFileObject.Kind.class);
     for (final JavaFileObject.Kind kind : JavaFileObject.Kind.values()) {
       if (kind == JavaFileObject.Kind.OTHER) {
-        filterMap.put(kind, new BooleanFunction<T>() {
-          @Override
-          public boolean fun(T data) {
-            return JpsFileObject.findKind(myToNameConverter.fun(data)) == JavaFileObject.Kind.OTHER;
-          }
-        });
+        filterMap.put(kind, data -> JpsFileObject.findKind(myToNameConverter.apply(data)) == JavaFileObject.Kind.OTHER);
       }
       else {
-        filterMap.put(kind, new BooleanFunction<T>() {
-          @Override
-          public boolean fun(T data) {
-            final String name = myToNameConverter.fun(data);
-            return name.regionMatches(true, name.length() - kind.extension.length(), kind.extension, 0, kind.extension.length());
-          }
+        filterMap.put(kind, data -> {
+          final String name = myToNameConverter.apply(data);
+          return name.regionMatches(true, name.length() - kind.extension.length(), kind.extension, 0, kind.extension.length());
         });
       }
     }
     myFilterMap = Collections.unmodifiableMap(filterMap);
   }
 
-  public BooleanFunction<T> getFor(final Set<JavaFileObject.Kind> kinds) {
+  public Predicate<T> getFor(final Set<JavaFileObject.Kind> kinds) {
     // optimization for a single-element collection
     final Iterator<JavaFileObject.Kind> it = kinds.iterator();
     if (it.hasNext()) {
@@ -46,16 +37,13 @@ final class FileObjectKindFilter<T> {
       }
     }
     // OR-filter, quite rare case
-    return new BooleanFunction<T>() {
-      @Override
-      public boolean fun(T data) {
-        for (JavaFileObject.Kind kind : kinds) {
-          if (myFilterMap.get(kind).fun(data)) {
-            return true;
-          }
+    return data -> {
+      for (JavaFileObject.Kind kind : kinds) {
+        if (myFilterMap.get(kind).test(data)) {
+          return true;
         }
-        return false;
       }
+      return false;
     };
   }
 

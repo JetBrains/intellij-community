@@ -10,6 +10,7 @@ import org.jetbrains.jps.dependency.java.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -64,7 +65,7 @@ public final class KotlinSourceOnlyDifferentiateStrategy implements Differentiat
 
     Set<NodeSource> affectedSources = new HashSet<>();
     if (!affectedUsages.isEmpty()) {
-      BooleanFunction<NodeSource> unmodifiedKtSources = s -> !baseSources.contains(s) && !isEmpty(filter(graph.getNodes(s, JvmClass.class), KJvmUtils::isKotlinNode));
+      Predicate<NodeSource> unmodifiedKtSources = s -> !baseSources.contains(s) && !isEmpty(filter(graph.getNodes(s, JvmClass.class), KJvmUtils::isKotlinNode));
 
       Iterable<NodeSource> supertypeSources = unique(flat(map(unique(filter(flat(map(baseNodes, present::allSupertypes)), id -> !baseNodes.contains(id))), present::getNodeSources)));
 

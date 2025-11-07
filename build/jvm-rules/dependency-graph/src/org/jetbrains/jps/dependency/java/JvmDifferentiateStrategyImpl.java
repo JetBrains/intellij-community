@@ -22,7 +22,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
   protected final <T extends AnnotationInstance, D extends AnnotationInstance.Diff<T>> boolean isAffectedByAnnotations(
     Proto element, Difference.Specifier<T, D> annotationsDiff, Set<AnnotationGroup.AffectionKind> affectionKinds, Predicate<? super TypeRepr.ClassType> annotationSelector
   ) {
-    return !element.isPrivate() && find(getAffectedAnnotations(annotationsDiff, affectionKinds), annotationSelector::test) != null;
+    return !element.isPrivate() && find(getAffectedAnnotations(annotationsDiff, affectionKinds), annotationSelector) != null;
   }
 
   protected final <T extends AnnotationInstance, D extends AnnotationInstance.Diff<T>> Iterable<TypeRepr.ClassType> getAffectedAnnotations(
@@ -268,7 +268,7 @@ public abstract class JvmDifferentiateStrategyImpl implements JvmDifferentiateSt
   protected void affectSources(DifferentiateContext context, Iterable<NodeSource> sources, String affectReason, boolean forceAffect) {
     Set<NodeSource> deletedSources = context.getDelta().getDeletedSources();
     Predicate<? super NodeSource> affectionFilter = context.getParams().affectionFilter();
-    for (NodeSource source : filter(sources, affectionFilter::test)) {
+    for (NodeSource source : filter(sources, affectionFilter)) {
       if ((forceAffect || !context.isCompiled(source)) && !deletedSources.contains(source)) {
         context.affectNodeSource(source);
         debug(context, affectReason, source);
