@@ -77,6 +77,7 @@
       order="last"
       implementation="org.jetbrains.idea.devkit.dom.ide.PluginDescriptorDomFileSearchScopeProvider"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.PluginModuleReferencesQueryExecutor"/>
+    <referencesSearch implementation="org.jetbrains.idea.devkit.references.PluginAliasReferencesQueryExecutor"/>
     <usageTypeProvider implementation="org.jetbrains.idea.devkit.findUsages.PluginModuleUsageTypeProvider" order="first"/>
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.productModules.ProductModulesDomFileDescription"

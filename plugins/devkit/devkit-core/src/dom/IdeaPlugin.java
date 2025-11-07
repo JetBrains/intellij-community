@@ -9,6 +9,7 @@ import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.dom.impl.IdeaPluginConverter;
 import org.jetbrains.idea.devkit.dom.impl.IdeaPluginPackageConverter;
 
 import java.util.List;
@@ -122,8 +123,9 @@ public interface IdeaPlugin extends DomElement {
   @SubTagList("depends")
   Dependency addDependency();
 
+  @Convert(IdeaPluginConverter.class)
   @SubTagList("incompatible-with")
-  @NotNull List<GenericDomValue<String>> getIncompatibilities();
+  @NotNull List<GenericDomValue<IdeaPlugin>> getIncompatibilities();
 
   @Stubbed
   @SubTagList("module")
