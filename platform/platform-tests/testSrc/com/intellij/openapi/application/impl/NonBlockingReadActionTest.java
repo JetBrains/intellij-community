@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,7 +21,6 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.*;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -541,7 +539,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     }
   }
 
-  public void test_submit_doesNot_fail_without_readAction_when_parent_isDisposed() throws Exception {
+  public void test_submit_doesNot_fail_without_readAction_when_parent_isDisposed() {
     ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
 
     for (int i = 0; i < 50; i++) {
@@ -559,36 +557,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
       }
       parents.forEach(Disposer::dispose);
 
-      ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
-    }
-  }
-
-  public void testSubmitDoesNotFailWhenParentsAreDisposedConcurrently() throws Exception {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
-
-    for (int i = 0; i < 50; i++) {
-      List<CheckedDisposable> parents = new ArrayList<>(200);
-      List<Future<?>> futures = new ArrayList<>();
-      for (int j = 0; j < 100; j++) {
-        CheckedDisposable parent = Disposer.newCheckedDisposable();
-        CheckedDisposable parent2 = Disposer.newCheckedDisposable();
-        parents.add(parent);
-        parents.add(parent2);
-        futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).submit(executor).get()));
-        futures.add(executor.submit(() -> {
-          try {
-            ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).executeSynchronously();
-          }
-          catch (ProcessCanceledException ignore) {
-          }
-        }));
-      }
-      parents.forEach(Disposer::dispose);
-
-      ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
-      for (CheckedDisposable parent : parents) {
-        assertTrue(parent.isDisposed());
-      }
+      futures.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
     }
   }
 

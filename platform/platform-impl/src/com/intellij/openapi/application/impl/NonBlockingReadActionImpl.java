@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,7 +53,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
@@ -74,7 +74,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   private final Consumer<? super T> myUiThreadAction;
   private final ContextConstraint @NotNull [] myConstraints;
   private final BooleanSupplier @NotNull [] myCancellationConditions;
-  private final @Unmodifiable Disposable[] myDisposables;
+  private final Set<? extends Disposable> myDisposables;
   private final @Nullable @Unmodifiable ListWithFixedHashCode myCoalesceEquality;
   private final @Nullable ProgressIndicator myProgressIndicator;
   /** Original computation passed in */
@@ -131,17 +131,16 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   private static final ContextConstraint[] EMPTY_CONSTRAINTS = new ContextConstraint[0];
   private static final BooleanSupplier[] EMPTY_CONDITIONS = new BooleanSupplier[0];
-  private static final Disposable[] EMPTY_DISPOSABLE_ARRAY = new Disposable[0];
   NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation) {
-    this(computation, null, null, EMPTY_CONSTRAINTS, EMPTY_CONDITIONS, EMPTY_DISPOSABLE_ARRAY, null, null);
+    this(computation, null, null, EMPTY_CONSTRAINTS, EMPTY_CONDITIONS, Collections.emptySet(), null, null);
   }
 
-  private NonBlockingReadActionImpl(Callable<? extends T> computation,
+  private NonBlockingReadActionImpl(@NotNull Callable<? extends T> computation,
                                     @Nullable ModalityState modalityState,
-                                    Consumer<? super T> uiThreadAction,
+                                    @Nullable Consumer<? super T> uiThreadAction,
                                     ContextConstraint @NotNull [] constraints,
                                     BooleanSupplier @NotNull [] cancellationConditions,
-                                    Disposable @UnknownNullability [] disposables,
+                                    @NotNull Set<? extends Disposable> disposables,
                                     @Unmodifiable @Nullable ListWithFixedHashCode coalesceEquality,
                                     @Nullable ProgressIndicator progressIndicator) {
     myOriginalComputation = computation;
@@ -196,9 +195,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @Override
   public @NotNull NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable) {
-    Disposable[] newDisposables = ArrayUtil.indexOf(myDisposables, parentDisposable) == -1 ? ArrayUtil.append(myDisposables, parentDisposable) : myDisposables;
+    Set<Disposable> disposables = new HashSet<>(myDisposables);
+    disposables.add(parentDisposable);
     return new NonBlockingReadActionImpl<>(myOriginalComputation, myModalityState, myUiThreadAction, myConstraints, myCancellationConditions,
-                                           newDisposables,
+                                           disposables,
                                            myCoalesceEquality, myProgressIndicator);
   }
 
@@ -306,8 +306,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
     }
 
-    private final @NotNull AtomicReferenceArray<@Nullable Disposable> myExpirationDisposables;
-    private static final @NotNull AtomicReferenceArray<@Nullable Disposable> EMPTY_ARRAY = new AtomicReferenceArray<>(0);
+    private final List<Disposable> myExpirationDisposables = new ArrayList<>();
 
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
                @NotNull Executor backgroundThreadExecutor,
@@ -329,28 +328,27 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (shouldTrackInTests()) {
         ourTasksForTestMode.add(this);
       }
-      Disposable[] disposables = this.builder.myDisposables;
-      if (disposables.length == 0) {
-        myExpirationDisposables = EMPTY_ARRAY;
-      }
-      else {
-        myExpirationDisposables = new AtomicReferenceArray<>(disposables.length);
-        ReadAction.run(() -> expireWithDisposables(disposables));
+      if (!builder.myDisposables.isEmpty()) {
+        ApplicationManager.getApplication().runReadAction(() -> expireWithDisposables(this.builder.myDisposables));
       }
     }
 
-    private void expireWithDisposables(Disposable @NotNull [] disposables) {
-      for (int i = 0; i < disposables.length; i++) {
-        Disposable parent = disposables[i];
+    private void expireWithDisposables(@NotNull Set<? extends Disposable> disposables) {
+      for (Disposable parent : disposables) {
         if (parent instanceof Project ? ((Project)parent).isDisposed() : Disposer.isDisposed(parent)) {
           cancel();
           break;
         }
-        // need separate child instance for each parent, to be able to register in Disposer for them all
-        //noinspection Anonymous2MethodRef,Convert2Lambda
-        Disposable child = new Disposable() {
+        Disposable child = new CheckedDisposable() {
+          private volatile boolean disposed;
+          @Override
+          public boolean isDisposed() {
+            return disposed;
+          }
+
           @Override
           public void dispose() {
+            disposed = true;
             // NB: We call here `super.cancel()` directly instead of `cancel()`
             // The reason is that `Job` is needed to cover the scheduling of `myUiThreadAction`,
             // so its lifetime is bigger than the lifetime of computation in NBRA, hence `Job` should not be cancelled in `dispose`.
@@ -364,7 +362,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           cancel();
           break;
         }
-        myExpirationDisposables.set(i, child);
+        myExpirationDisposables.add(child);
       }
     }
 
@@ -415,7 +413,6 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (cleanedHandle.compareAndSet(this, false, true)) {
         cleanup();
       }
-      disposeExpirationDisposables();
     }
 
     private void cleanup() {
@@ -429,20 +426,14 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (builder.myCoalesceEquality != null) {
         release();
       }
+      for (Disposable disposable : myExpirationDisposables) {
+        Disposer.dispose(disposable);
+      }
       if (hasUnboundedExecutor()) {
         ourUnboundedSubmissionTracker.unregisterSubmission(myStartTrace);
       }
       if (shouldTrackInTests()) {
         ourTasksForTestMode.remove(this);
-      }
-    }
-
-    private void disposeExpirationDisposables() {
-      for (int i = 0; i < myExpirationDisposables.length(); i++) {
-        Disposable disposable = myExpirationDisposables.getAndSet(i, null);
-        if (disposable != null) {
-          Disposer.dispose(disposable);
-        }
       }
     }
 
