@@ -357,10 +357,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
         String message =
           "Inconsistent " + fileElement.getElementType() + " tree in " + this + "; nodeLength=" + nodeLength + "; fileLength=" + fileLength;
 
-        if (ApplicationManager.getApplication().isUnitTestMode()
-            && !ApplicationManagerEx.isInStressTest() &&
-            CodeInsightContexts.isSharedSourceSupportEnabled(getManager().getProject())
-        ) {
+        if (CodeInsightContexts.isSharedSourceSupportEnabled(getManager().getProject())) {
           message += "; context: " + CodeInsightContextUtil.getCodeInsightContext(this);
 
           FileManager fileManager = PsiManagerEx.getInstanceEx(getManager().getProject()).getFileManager();
