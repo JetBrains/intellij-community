@@ -28,8 +28,8 @@ import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.StandardKotlinNames
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -382,10 +382,11 @@ private fun KtLambdaExpression.executedInPlaceByCallable(): LambdaCheckResult {
     val fqName = call.symbol.callableId?.asSingleFqName() ?: return@analyze
 
     // TODO Optimize
-    for (knownRethrowingFunctions in CallChainConversions.conversionsList) {
-      if (fqName == knownRethrowingFunctions.firstFqName || fqName == knownRethrowingFunctions.secondFqName) {
-        return LambdaCheckResult.RethrowsInPlace
-      }
+    if (
+      fqName in StandardKotlinNames.Collections.transformations ||
+      fqName in StandardKotlinNames.Collections.terminations
+    ) {
+      return LambdaCheckResult.RethrowsInPlace
     }
   }
 
