@@ -22,7 +22,7 @@ import javax.swing.JComponent
  * In split mode it contains a placeholder produced via [ChangesViewSplitComponentBinding].
  */
 // TODO IJPL-173924 cleanup methods returning tree/component
-internal abstract class ChangesViewProxy(protected val scope: CoroutineScope) : Disposable {
+internal abstract class ChangesViewProxy(val project: Project, protected val scope: CoroutineScope) : Disposable {
   abstract val inclusionChanged: SharedFlow<Unit>
 
   /**
@@ -57,6 +57,9 @@ internal abstract class ChangesViewProxy(protected val scope: CoroutineScope) : 
 
   @ApiStatus.Obsolete
   abstract fun getTree(): ChangesListView
+
+  fun createDiffPreviewProcessor(isInEditor: Boolean): ChangesViewDiffPreviewProcessor =
+    ChangesViewDiffPreviewProcessor(getTree(), isInEditor).also { it.subscribeOnAllowExcludeFromCommit() }
 
   fun getPreferredFocusedComponent(): JComponent {
     val p = panel

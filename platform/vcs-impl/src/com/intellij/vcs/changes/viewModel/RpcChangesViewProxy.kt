@@ -29,7 +29,7 @@ import kotlin.time.Duration.Companion.minutes
  *
  * @see [com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi.getBackendChangesViewEvents]
  */
-internal class RpcChangesViewProxy(private val project: Project, scope: CoroutineScope) : ChangesViewProxy(scope) {
+internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : ChangesViewProxy(project, scope) {
   private val treeView: ChangesListView by lazy { LocalChangesListView(project) }
 
   private val _eventsForFrontend =

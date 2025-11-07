@@ -16,18 +16,18 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider
 import com.intellij.openapi.vcs.changes.actions.diff.WrapperCombinedBlockProducer
-import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isToolWindowTabVertical
 import com.intellij.openapi.vcs.changes.ui.CommitToolWindowUtil
+import com.intellij.vcs.changes.viewModel.ChangesViewProxy
 import org.jetbrains.annotations.CalledInAny
 import javax.swing.JComponent
 
 internal class ChangesViewEditorDiffPreview(
-  val tree: ChangesTree,
+  val changesView: ChangesViewProxy,
   targetComponent: JComponent,
-  private val diffViewerFactory: () -> DiffEditorViewer,
-  private val isSplitterPreviewPresent: () -> Boolean,
-) : EditorTabDiffPreview(tree.project) {
+) : EditorTabDiffPreview(changesView.project) {
   init {
     PreviewOnNextDiffAction().registerCustomShortcutSet(targetComponent, this)
   }
@@ -39,12 +39,12 @@ internal class ChangesViewEditorDiffPreview(
     if (!opened) closePreview()
   }
 
-  override fun hasContent(): Boolean = ChangesViewDiffPreviewHandler.hasContent(tree)
+  override fun hasContent(): Boolean = ChangesViewDiffPreviewHandler.hasContent(changesView.getTree())
 
-  override fun createViewer(): DiffEditorViewer = diffViewerFactory()
+  override fun createViewer(): DiffEditorViewer = changesView.createDiffPreviewProcessor(true)
 
   override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer> =
-    ChangesViewDiffPreviewHandler.collectDiffProducers(tree, selectedOnly)
+    ChangesViewDiffPreviewHandler.collectDiffProducers(changesView.getTree(), selectedOnly)
 
   override fun handleEscapeKey() {
     closePreview()
@@ -60,7 +60,7 @@ internal class ChangesViewEditorDiffPreview(
   private fun isOpenPreviewWithSingleClick(): Boolean =
     !isSplitterPreviewPresent() &&
     Registry.get("show.diff.preview.as.editor.tab.with.single.click").asBoolean() &&
-    !tree.isModelUpdateInProgress &&
+    !changesView.isModelUpdateInProgress() &&
     VcsConfiguration.getInstance(project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN
 
 
@@ -85,6 +85,9 @@ internal class ChangesViewEditorDiffPreview(
     return if (wrapper != null) message("commit.editor.diff.preview.title", wrapper.presentableName)
     else message("commit.editor.diff.preview.empty.title")
   }
+
+  private fun isSplitterPreviewPresent() =
+    ChangesViewContentManager.shouldHaveSplitterDiffPreview(project, isToolWindowTabVertical(project, LOCAL_CHANGES))
 
   private inner class PreviewOnNextDiffAction : DumbAwareAction() {
     init {

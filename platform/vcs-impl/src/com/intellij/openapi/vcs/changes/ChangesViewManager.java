@@ -353,12 +353,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
         .addToBottom(myProgressLabel);
 
       ChangesListView tree = myChangesView.getTree();
-      myEditorDiffPreview = new ChangesViewEditorDiffPreview(
-        tree,
-        myContentPanel,
-        () -> createDiffPreviewProcessor(true),
-        () -> mySplitterDiffPreview != null
-      );
+      myEditorDiffPreview = new ChangesViewEditorDiffPreview(changesView, myContentPanel);
       Disposer.register(this, myEditorDiffPreview);
 
       tree.setDoubleClickHandler(e -> {
@@ -434,7 +429,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       private final PreviewDiffSplitterComponent mySplitterComponent;
 
       private ChangesViewSplitterDiffPreview() {
-        myProcessor = createDiffPreviewProcessor(false);
+        myProcessor = myChangesView.createDiffPreviewProcessor(false);
         mySplitterComponent = new PreviewDiffSplitterComponent(myProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION);
 
         mySplitterComponent.setFirstComponent(myContentPanel);
@@ -459,12 +454,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       public void closePreview() {
         mySplitterComponent.closePreview();
       }
-    }
-
-    private ChangesViewDiffPreviewProcessor createDiffPreviewProcessor(boolean isInEditor) {
-      ChangesViewDiffPreviewProcessor processor = new ChangesViewDiffPreviewProcessor(myChangesView.getTree(), isInEditor);
-      processor.subscribeOnAllowExcludeFromCommit();
-      return processor;
     }
 
     private void closeEditorPreview(boolean onlyIfEmpty) {
