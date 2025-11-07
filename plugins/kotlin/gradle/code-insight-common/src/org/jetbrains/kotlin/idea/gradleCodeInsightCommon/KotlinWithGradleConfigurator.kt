@@ -275,7 +275,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                         queueSyncIfNeeded(project)
                     }
                     val notificationHolder = KotlinGradleAutoConfigurationNotificationHolder.getInstance(project)
-                    addUndoAutoconfigurationListener(project, modules, isAutoConfig, notificationHolder)
+                    addUndoConfigurationListener(project, modules, isAutoConfig, notificationHolder)
                     configurationResult to collector
                 }
             }

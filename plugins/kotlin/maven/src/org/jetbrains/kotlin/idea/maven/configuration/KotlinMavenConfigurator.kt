@@ -8,8 +8,6 @@ import com.intellij.ide.actions.OpenFileAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.command.undo.BasicUndoableAction
-import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -151,23 +149,14 @@ abstract class KotlinMavenConfigurator protected constructor(
                     showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
                 }
             }
-            KotlinMavenAutoConfigurationNotificationHolder.getInstance(project).onManualConfigurationCompleted()
+            val notificationHolder = KotlinMavenAutoConfigurationNotificationHolder.getInstance(project)
+            notificationHolder.onManualConfigurationCompleted()
             collector.showNotification()
 
-            collectInformationAboutUndoableAction(project)
+            addUndoConfigurationListener(project, modules = null, isAutoConfig = false, notificationHolder)
             ConfigureKotlinNotificationManager.expireOldNotifications(project)
         }
         return configuredModules
-    }
-
-    private fun collectInformationAboutUndoableAction(project: Project) {
-        UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
-            override fun undo() {
-                KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
-            }
-
-            override fun redo() {}
-        })
     }
 
     override fun queueSyncIfNeeded(project: Project) {
@@ -222,7 +211,7 @@ abstract class KotlinMavenConfigurator protected constructor(
                         if (configured) {
                             queueSyncIfNeeded(project)
                             val notificationHolder = KotlinMavenAutoConfigurationNotificationHolder.getInstance(project)
-                            addUndoAutoconfigurationListener(project, listOf(module), isAutoConfig = true, notificationHolder)
+                            addUndoConfigurationListener(project, listOf(module), isAutoConfig = true, notificationHolder)
                             notificationHolder
                                 .showAutoConfiguredNotification(module.name, changedBuildFiles.calculateChanges())
 

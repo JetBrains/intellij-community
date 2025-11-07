@@ -172,26 +172,26 @@ interface KotlinProjectConfigurator {
 
     fun isAutoConfigurationEnabled(): Boolean = false
 
-    fun addUndoAutoconfigurationListener(
+    fun addUndoConfigurationListener(
         project: Project,
-        modules: List<Module>,
+        modules: List<Module>?,
         isAutoConfig: Boolean,
         notificationHolder: KotlinAutoConfigurationNotificationHolder
     ) {
         // Auto-config only ever works on a single module
-        val firstModule = modules.firstOrNull()
+        val firstModule = modules?.firstOrNull()
         UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
             override fun undo() {
+                queueSyncIfNeeded(project)
                 if (isAutoConfig && firstModule != null) {
-                    queueSyncIfNeeded(project)
                     notificationHolder.showAutoConfigurationUndoneNotification(firstModule)
                 }
                 KotlinJ2KOnboardingFUSCollector.logConfigureKtUndone(project)
             }
 
             override fun redo() {
+                queueSyncIfNeeded(project)
                 if (isAutoConfig && firstModule != null) {
-                    queueSyncIfNeeded(project)
                     notificationHolder.reshowAutoConfiguredNotification(firstModule)
                 }
             }
