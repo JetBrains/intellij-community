@@ -2260,7 +2260,7 @@ open class JBTabsImpl internal constructor(
       }
       return
     }
-    tabPainter.fillBackground((g as Graphics2D), Rectangle(0, 0, width, height))
+    tabPainter.fillBackground(this, (g as Graphics2D), Rectangle(0, 0, width, height))
     drawBorder(g)
     drawToolbarSeparator(g)
   }

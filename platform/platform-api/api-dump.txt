@@ -1162,6 +1162,7 @@ com.intellij.ui.tabs.JBEditorTabsBase
 - com.intellij.ui.tabs.JBTabs
 com.intellij.ui.tabs.JBTabPainter
 - sf:Companion:com.intellij.ui.tabs.JBTabPainter$Companion
+- fillBackground(java.awt.Component,java.awt.Graphics2D,java.awt.Rectangle):V
 - a:fillBackground(java.awt.Graphics2D,java.awt.Rectangle):V
 - a:getBackgroundColor():java.awt.Color
 - getCustomBackground(java.awt.Color,Z,Z,Z):java.awt.Color

@@ -6,10 +6,7 @@ import com.intellij.ui.tabs.impl.JBEditorTabPainter
 import com.intellij.ui.tabs.impl.ToolWindowTabPainter
 import com.intellij.ui.tabs.impl.themes.DebuggerTabTheme
 import com.intellij.ui.tabs.impl.themes.TabTheme
-import java.awt.Color
-import java.awt.Graphics2D
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 
 interface JBTabPainter {
   companion object {
@@ -35,6 +32,10 @@ interface JBTabPainter {
   fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point)
 
   fun fillBackground(g: Graphics2D, rect: Rectangle)
+
+  fun fillBackground(component: Component, g: Graphics2D, rect: Rectangle) {
+    fillBackground(g, rect)
+  }
 
   fun paintTab(position: JBTabsPosition,
                g: Graphics2D,
