@@ -946,6 +946,7 @@ c:com.intellij.ui.components.JBScrollPane
 - setStatusComponent(javax.swing.JComponent):V
 - setUI(javax.swing.plaf.ScrollPaneUI):V
 - p:setupCorners():V
+- verticalScrollBarNeedsSpace():Z
 e:com.intellij.ui.components.JBScrollPane$Alignment
 - java.lang.Enum
 - sf:BOTTOM:com.intellij.ui.components.JBScrollPane$Alignment

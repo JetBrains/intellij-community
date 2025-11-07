@@ -146,6 +146,37 @@ public class JBScrollPane extends JScrollPane {
     }
   }
 
+  private static boolean isOverlappingScrollBar(JScrollPane scrollPane) {
+    return (scrollPane instanceof JBScrollPane) && ((JBScrollPane)scrollPane).isOverlappingScrollBar();
+  }
+
+  /**
+   * Determines whether the presence of the vertical scrollbar changes the viewport's width.
+   * <p>
+   * Can be used by client code to decide on the vertical scrollbar's visibility policy.
+   * If the scrollbar affects the viewport's width, it might be desirable to use
+   * {@link ScrollPaneConstants#VERTICAL_SCROLLBAR_ALWAYS} to avoid width changes caused by height changes,
+   * or, worse, infinite resize loops.
+   * </p>
+   * @return true iff the presence of the vertical scrollbar changes the viewport's width
+   */
+  public boolean verticalScrollBarNeedsSpace() {
+    return verticalScrollBarNeedsSpace(this);
+  }
+
+  private static boolean verticalScrollBarNeedsSpace(@NotNull JScrollPane pane) {
+    var vsb = pane.getVerticalScrollBar();
+    var viewPort = pane.getViewport();
+    var view = viewPort == null ? null : viewPort.getView();
+    // Our layout forces the scrollbar to be opaque if the view is always-opaque.
+    var isViewAlwaysOpaque = isAlwaysOpaque(view);
+    return vsb != null && (isViewAlwaysOpaque || vsb.isOpaque()) && !isOverlappingScrollBar(pane);
+  }
+
+  private static boolean isAlwaysOpaque(@Nullable Component view) {
+    return !SystemInfo.isMac && ScrollSettings.isNotSupportedYet(view);
+  }
+
   static Color getViewBackground(JScrollPane pane) {
     if (pane == null) return null;
     JViewport viewport = pane.getViewport();
@@ -595,7 +626,7 @@ public class JBScrollPane extends JScrollPane {
       Rectangle vsbBounds = new Rectangle(0, viewportBounds.y - insets.top, 0, 0);
       if (vsb != null) {
         if (isAlwaysOpaque(view)) vsb.setOpaque(true);
-        vsbRequiresSpace = vsb.isOpaque() && !isOverlappingScrollBar;
+        vsbRequiresSpace = verticalScrollBarNeedsSpace(pane);
         if (vsbNeeded) {
           adjustForVSB(viewportBounds, insets, vsbBounds, vsbRequiresSpace, vsbOnLeft, isOverlappingScrollBar, wholePaneBounds);
           if (vsbRequiresSpace && viewport != null) {
@@ -913,14 +944,6 @@ public class JBScrollPane extends JScrollPane {
         }
       }
       return preferredSize;
-    }
-
-    private static boolean isOverlappingScrollBar(JScrollPane scrollPane) {
-      return (scrollPane instanceof JBScrollPane) && ((JBScrollPane)scrollPane).isOverlappingScrollBar();
-    }
-
-    private static boolean isAlwaysOpaque(Component view) {
-      return !SystemInfo.isMac && ScrollSettings.isNotSupportedYet(view);
     }
 
     private static void updateCornerBounds(Rectangle bounds, int x, int y) {
