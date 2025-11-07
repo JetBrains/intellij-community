@@ -70,7 +70,6 @@ import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
-import org.slf4j.LoggerFactory;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -90,7 +89,6 @@ import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
-  private static final org.slf4j.Logger log = LoggerFactory.getLogger(LookupImpl.class);
 
   private final LookupOffsets myOffsets;
   private final Editor editor;
@@ -1549,7 +1547,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     public void setSelectionInterval(int index0, int index1) {
       // If either endpoint is a separator, do not select
       if (isSeparator(index0)) {
-        int next = findNextSelectable(index0, 1);
+        int next = findNextSelectable(index0);
         if (next != -1) {
           super.setSelectionInterval(next, next);
         }
@@ -1568,13 +1566,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
 
-    private int findNextSelectable(int start, int direction) {
+    private int findNextSelectable(int start) {
       ListModel<?> model = list.getModel();
       int size = model.getSize();
-      int i = start + direction;
-      while (i >= 0 && i < size) {
+      for (int i = start + 1; i >= 0 && i < size; i++) {
         if (!isSeparator(i)) return i;
-        i += direction;
       }
       return -1;
     }
