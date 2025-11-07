@@ -5,17 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.functionTypeKind
-import org.jetbrains.kotlin.analysis.api.components.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.analysis.api.components.isDoubleType
-import org.jetbrains.kotlin.analysis.api.components.isIntType
-import org.jetbrains.kotlin.analysis.api.components.isLongType
-import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
-import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
-import org.jetbrains.kotlin.analysis.api.components.isUIntType
-import org.jetbrains.kotlin.analysis.api.components.isULongType
-import org.jetbrains.kotlin.analysis.api.components.resolveToCall
+import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -29,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
@@ -45,10 +34,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
-class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, CallChainConversion>() {
-    override fun getProblemDescription(element: KtQualifiedExpression, context: CallChainConversion): String {
-        return KotlinBundle.message("call.chain.on.collection.type.may.be.simplified")
-    }
+internal abstract class AbstractSimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, CallChainConversion>() {
+    abstract override fun getProblemDescription(element: KtQualifiedExpression, context: CallChainConversion): String
+
+    protected abstract val potentialConversions: Map<ConversionId, List<CallChainConversion>>
 
     override fun createQuickFix(
       element: KtQualifiedExpression,
@@ -108,7 +97,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
 
     private fun getPotentialConversions(expression: KtQualifiedExpression, conversionId: ConversionId): List<CallChainConversion> {
         val apiVersion by lazy { expression.languageVersionSettings.apiVersion }
-        return CallChainConversions.conversionGroups[conversionId]?.filter { conversion ->
+        return potentialConversions[conversionId]?.filter { conversion ->
             val replaceableApiVersion = conversion.replaceableApiVersion
             replaceableApiVersion == null || apiVersion >= replaceableApiVersion
         }?.sortedByDescending { it.removeNotNullAssertion }.orEmpty()
