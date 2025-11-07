@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -12,6 +13,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,9 @@ public class PsiConsistencyAssertions {
     message += "\nlanguage=" + psiFile.getLanguage();
     message += "\ndoc.length=" + docLength;
     message += "\npsiFile.length=" + psiLength;
+    message += "\ncached.psiFiles=" + PsiManagerEx.getInstanceEx(psiFile.getProject()).getFileManagerEx().findCachedViewProviders(viewProvider.getVirtualFile()).size();
+    message += "\ncode.insight.contexts=" + CodeInsightContextManager.getInstance(psiFile.getProject()).getCodeInsightContexts(viewProvider.getVirtualFile()).size();
+
     String psiFileTextLength;
     try {
       if (psiFileText == null) {
