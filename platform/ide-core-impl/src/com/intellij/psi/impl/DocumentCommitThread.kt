@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl
 
+import com.intellij.codeInsight.multiverse.isEventSystemEnabled
+import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.diagnostic.PluginException
 import com.intellij.lang.FileASTNode
 import com.intellij.openapi.Disposable
@@ -20,6 +22,7 @@ import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.text.BlockSupport
 import com.intellij.util.SmartList
@@ -41,7 +44,6 @@ import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG = logger<DocumentCommitThread>()
 
@@ -201,23 +203,22 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
     val psiManager = PsiManagerEx.getInstanceEx(project)
     val virtualFile = FileDocumentManager.getInstance().getFile(document)
-    val viewProvider = if (virtualFile == null) null else psiManager.findViewProvider(virtualFile)
-    if (viewProvider == null) {
+    val viewProviders = findViewProvidersForCommit(psiManager, virtualFile)
+    if (viewProviders.isEmpty()) {
       finishProcessors.add(handleCommitWithoutPsi(task, documentManager))
     }
     else {
-      // While we were messing around transferring things to background thread, the ViewProvider can become obsolete
+      // While we were messing around transferring things to background thread, the ViewProviders can become obsolete
       // when, e.g., a virtual file was renamed.
-      // Store new provider to retain it from GC
-      task.cachedViewProvider = viewProvider
+      // Store new providers to retain them from GC
+      task.cachedViewProviders = viewProviders
 
-      // todo IJPL-339 check if this is correct
-      for (psiFile in viewProvider.getAllFiles()) {
+      for (psiFile in viewProviders.flatMap { it.getAllFiles() }) {
         val oldFileNode = psiFile.getNode()
             ?: throw AssertionError("No node for " + psiFile.javaClass + " in " + psiFile.getViewProvider().javaClass +
                                     " of size " + StringUtil.formatFileSize(document.textLength.toLong()) +
                                     " (is too large = " + SingleRootFileViewProvider
-                                      .isTooLargeForIntelligence(viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
+                                      .isTooLargeForIntelligence(psiFile.viewProvider.getVirtualFile(), document.textLength.toLong()) + ")")
         val changedPsiRange = ChangedPsiRangeUtil.getChangedPsiRange(
           psiFile,
           document,
@@ -246,11 +247,31 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       if (synchronously || success) {
         assert(!documentManager.isInUncommittedSet(document))
       }
-      if (!success && viewProvider?.isEventSystemEnabled() == true) {
+      if (!success && viewProviders.isEventSystemEnabled()) {
         // add a document back to the queue
         commitAsynchronously(project, documentManager, document, "Re-added back", task.myCreationModality)
       }
     }
+  }
+
+  private fun findViewProvidersForCommit(
+    psiManager: PsiManagerEx,
+    virtualFile: VirtualFile?,
+  ): List<FileViewProvider> {
+    if (virtualFile == null) {
+      return emptyList()
+    }
+
+    if (isSharedSourceSupportEnabled(psiManager.project)) {
+      val providers = psiManager.fileManagerEx.findCachedViewProviders(virtualFile)
+      if (providers.isNotEmpty()) {
+        return providers
+      }
+      // no providers mean that they might be collected.
+      // so let's try and find at least one with the help of the following line.
+    }
+
+    return listOfNotNull(psiManager.findViewProvider(virtualFile))
   }
 
   override fun toString(): String = "Document commit thread; application: ${ApplicationManager.getApplication()}; isDisposed: $isDisposed"
@@ -298,7 +319,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val myLastCommittedText: CharSequence
     // store initial document modification sequence here to check if it changed later before commit in EDT
     private val myModificationSequence: Int
-    @Volatile var cachedViewProvider: FileViewProvider? = null
+    @Volatile var cachedViewProviders: List<FileViewProvider>? = null
 
     constructor(
       project: Project,
@@ -404,7 +425,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
     return BooleanRunnable {
       val document = task.myDocumentRef.get() ?: return@BooleanRunnable false
-      val viewProvider = psiFile.getViewProvider() //todo IJPL-339 figure out correct check here
+      val viewProvider = psiFile.getViewProvider()
       if (task.stillValidDocument() == null || viewProvider !in documentManager.getCachedViewProviders(document)) { // optimistic locking failed
         return@BooleanRunnable false
       }
@@ -417,7 +438,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       diffLog.doActualPsiChange(psiFile)
 
       assertAfterCommit(document, psiFile, oldFileNode) // just to make an impression the field is used
-      Reference.reachabilityFence(task.cachedViewProvider)
+      Reference.reachabilityFence(task.cachedViewProviders)
       true
     }
   }
