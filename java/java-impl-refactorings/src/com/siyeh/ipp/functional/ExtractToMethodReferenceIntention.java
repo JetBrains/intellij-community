@@ -73,6 +73,14 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
         return false;
       }
 
+      //not directly inside an implicitly declared class
+      PsiClass targetClass = PsiUtil.getContainingClass(lambdaExpression);
+      PsiMethod method = PsiTreeUtil.getParentOfType(lambdaExpression, PsiMethod.class, true);
+      if (targetClass == null ||
+          (targetClass instanceof PsiImplicitClass && method != null && method.hasModifierProperty(PsiModifier.STATIC))) {
+        return false;
+      }
+
       PsiExpression asMethodReference = LambdaCanBeMethodReferenceInspection
         .canBeMethodReferenceProblem(body, lambdaExpression.getParameterList().getParameters(), functionalInterfaceType, null);
       if (asMethodReference != null) return false;
@@ -82,8 +90,7 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
         wrapper.prepareAndCheckExitStatements(toExtract, body);
         PsiVariable[] outputVariables = wrapper.getOutputVariables();
         List<PsiVariable> inputVariables = wrapper.getInputVariables(body, toExtract, outputVariables);
-        return inputVariables.stream()
-          .allMatch(variable -> variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == lambdaExpression);
+        return ContainerUtil.and(inputVariables, variable -> variable instanceof PsiParameter && ((PsiParameter)variable).getDeclarationScope() == lambdaExpression);
       }
       catch (PrepareFailedException | ControlFlowWrapper.ExitStatementsNotSameException ignored) {
       }
@@ -102,7 +109,8 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
       PsiElement[] elements = body.getStatements();
 
       HashSet<PsiField> usedFields = new HashSet<>();
-      boolean canBeStatic = CommonJavaRefactoringUtil.canBeStatic(targetClass, lambdaExpression, elements, usedFields) && usedFields.isEmpty();
+      boolean canBeStatic = CommonJavaRefactoringUtil.canBeStatic(targetClass, lambdaExpression, elements, usedFields) &&
+                            usedFields.isEmpty() && !(targetClass instanceof PsiImplicitClass);
       PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(targetClass.getProject());
       PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
 
@@ -144,7 +152,7 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
     PsiIdentifier nameIdentifier = method.getNameIdentifier();
     if (nameIdentifier == null) return;
     nameIdentifier = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(nameIdentifier);
-
+    if (nameIdentifier == null) return;
     //try to navigate to reference name
     editor.getCaretModel().moveToOffset(ObjectUtils.notNull(methodReference.getReferenceNameElement(), nameIdentifier).getTextOffset());
 
