@@ -82,6 +82,8 @@ internal class DocumentationUI(
     scrollPane = DocumentationScrollPane()
     editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane)) {
       imageResolver?.resolveImage(it)
+    }.apply {
+      isOpaque = false
     }
     Disposer.register(this, editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
@@ -111,8 +113,6 @@ internal class DocumentationUI(
       @Suppress("UseJBColor")
       val color = Color(it.rgb)
       editorPane.parent.background = color
-      scrollPane.viewport.background = color
-      locationLabel.background = color
       switcherToolbarComponent.background = color
     }
 

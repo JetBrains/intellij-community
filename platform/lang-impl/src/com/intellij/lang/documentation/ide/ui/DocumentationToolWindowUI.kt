@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -26,9 +27,25 @@ internal class DocumentationToolWindowUI(
 
   val browser: DocumentationBrowser get() = ui.browser
 
-  val contentComponent: JComponent = JPanel(BorderLayout()).also { panel: JPanel ->
-    panel.add(ui.scrollPane, BorderLayout.CENTER)
-    panel.add(ui.switcherToolbarComponent, BorderLayout.NORTH)
+  val contentComponent: JComponent = object : JPanel(BorderLayout()) {
+
+    init {
+      val documentUI = this@DocumentationToolWindowUI.ui
+      documentUI.switcherToolbarComponent.isOpaque = false
+      add(documentUI.scrollPane, BorderLayout.CENTER)
+      add(documentUI.switcherToolbarComponent, BorderLayout.NORTH)
+    }
+
+    override fun updateUI() {
+      super.updateUI()
+
+      val color = JBUI.CurrentTheme.ToolWindow.background()
+      val documentUI = this@DocumentationToolWindowUI.ui
+      background = color
+      for (component in documentUI.scrollPane.viewport.components) {
+        component.background = color
+      }
+    }
   }
 
   val editorPane: DocumentationEditorPane get() = ui.editorPane
