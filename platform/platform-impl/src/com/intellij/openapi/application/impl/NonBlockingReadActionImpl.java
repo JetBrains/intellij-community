@@ -335,7 +335,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       }
       else {
         myExpirationDisposables = new AtomicReferenceArray<>(disposables.length);
-        expireWithDisposables(disposables);
+        ReadAction.run(() -> expireWithDisposables(disposables));
       }
     }
 

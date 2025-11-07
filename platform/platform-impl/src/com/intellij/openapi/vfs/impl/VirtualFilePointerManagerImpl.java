@@ -50,10 +50,6 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * maintains {@link VirtualFilePointer}s in a trie with nodes being the containing directory names.
- * invariant: do not try to obtain read action lock from inside "this" lock
- */
 @ApiStatus.Internal
 public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable, BulkFileListener {
   private static final Logger LOG = Logger.getInstance(VirtualFilePointerManagerImpl.class);

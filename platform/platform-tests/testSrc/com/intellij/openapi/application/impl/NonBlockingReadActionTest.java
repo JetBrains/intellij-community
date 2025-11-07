@@ -640,26 +640,4 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     f1.get();
     LeakHunter.checkLeak(NonBlockingReadActionImpl.getTasksByEquality(), MyHorribleEquality.class);
   }
-
-  public void testNonBlockingReadActionDoesNotRunSynchronousReadActionOnCreationToAvoidDeadlock() {
-    AtomicReference<CancellablePromise<Integer>> promise = new AtomicReference<>();
-    AtomicReference<Future<?>> future = new AtomicReference<>();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      future.set(ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        promise.set(ReadAction.nonBlocking(() -> 1)
-                      .expireWith(getTestRootDisposable())
-                      .submit(AppExecutorUtil.getAppExecutorService()));
-      }));
-      // must be able to schedule NBRA even when EDT is blocked
-      try {
-        future.get().get();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-    while (!promise.get().isDone()) {
-      UIUtil.dispatchAllInvocationEvents(); // NBRA invokeLaters when sensed there's pending write action
-    }
-  }
 }
