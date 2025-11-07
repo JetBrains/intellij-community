@@ -23,6 +23,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestSetRevi
 import org.jetbrains.plugins.gitlab.upload.markdownUploadFile
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabRegistry
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -165,6 +166,7 @@ class GitLabLazyProject(
         api.rest.markdownUploadFile(projectCoordinates, path).body()
       }
     }
+    GitLabStatistics.logFileUploadActionExecuted(project)
     return uploadRestDTO.markdown
   }
 

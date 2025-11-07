@@ -102,7 +102,7 @@ object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 25)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 26)
 
   /**
    * Server metadata was fetched
@@ -287,6 +287,16 @@ object GitLabStatistics {
   private val MR_CREATION_BRANCHES_CHANGED_EVENT = COUNTERS_GROUP.registerEvent("mergerequests.creation.branches.changed")
 
   fun logMrCreationBranchesChanged(project: Project): Unit = MR_CREATION_BRANCHES_CHANGED_EVENT.log(project)
+
+  /**
+   * A file was uploaded via Markdown uploads API
+   */
+  private val PROJECT_FILE_UPLOAD = COUNTERS_GROUP.registerEvent("project.markdown.file.uploaded",
+                                                                 "Triggered when a file was uploaded to the project to be used in Markdown text"
+  )
+
+  fun logFileUploadActionExecuted(project: Project): Unit = PROJECT_FILE_UPLOAD.log(project)
+
 
   /**
    * GitLab tool window tab <type> was opened from <place>
