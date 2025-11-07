@@ -20,8 +20,11 @@ import org.jetbrains.plugins.gitlab.api.request.*
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestSetReviewers
+import org.jetbrains.plugins.gitlab.upload.markdownUploadFile
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabRegistry
+import java.nio.file.Files
+import java.nio.file.Path
 
 
 private val LOG = logger<GitLabProject>()
@@ -52,6 +55,9 @@ interface GitLabProject {
   suspend fun adjustReviewers(mrIid: String, reviewers: List<GitLabUserDTO>): GitLabMergeRequestDTO
 
   fun reloadData()
+
+  suspend fun uploadFile(path: Path): String
+  fun canUploadFile(): Boolean
 }
 
 @CodeReviewDomainEntity
@@ -151,6 +157,19 @@ class GitLabLazyProject(
     labelsLoader.cancel()
     membersLoader.cancel()
     _dataReloadSignal.tryEmit(Unit)
+  }
+
+  override suspend fun uploadFile(path: Path): String {
+    val uploadRestDTO = withContext(cs.coroutineContext + Dispatchers.IO) {
+      Files.newInputStream(path).use {
+        api.rest.markdownUploadFile(projectCoordinates, path).body()
+      }
+    }
+    return uploadRestDTO.markdown
+  }
+
+  override fun canUploadFile(): Boolean {
+    return glMetadata != null && glMetadata.version >= GitLabVersion(15, 10)
   }
 
   private suspend fun getAllowsMultipleAssigneesPropertyFromNamespacePlan() = try {

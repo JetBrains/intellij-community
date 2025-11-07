@@ -59,7 +59,7 @@ class GitLabNoteViewModelImpl(
   override val serverUrl: URL = projectData.projectMapping.repository.serverPath.toURL()
 
   override val actionsVm: GitLabNoteAdminActionsViewModel? =
-    if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
+    if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null
   override val reactionsVm: GitLabReactionsViewModel? =
     if (note is GitLabMergeRequestNote && note.canReact) GitLabReactionsViewModelImpl(cs, projectData, note, currentUser) else null
 

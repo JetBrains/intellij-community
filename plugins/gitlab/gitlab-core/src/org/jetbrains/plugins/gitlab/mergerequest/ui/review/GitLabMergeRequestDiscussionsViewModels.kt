@@ -72,7 +72,7 @@ fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(
 internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   private val project: Project,
   parentCs: CoroutineScope,
-  projectData: GitLabProject,
+  private val projectData: GitLabProject,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
   htmlConverter: GitLabMarkdownToHtmlConverter,
@@ -93,7 +93,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     .transformConsecutiveSuccesses {
       mapFiltered { it.discussionId == null }
         .mapStatefulToStateful {
-          GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest, htmlConverter)
+          GitLabMergeRequestStandaloneDraftNoteViewModelBase(project, this, it, mergeRequest, projectData, htmlConverter)
         }
     }
     .stateInNow(cs, ComputedResult.loading())
@@ -149,7 +149,7 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   override fun requestNewDiscussion(position: GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition, focus: Boolean) {
     _newDiscussions.updateAndGet { currentNewDiscussions ->
       if (!currentNewDiscussions.containsKey(position) && mergeRequest.canAddNotes) {
-        val vm = GitLabNoteEditingViewModel.forNewDiffNote(cs, project, mergeRequest, currentUser, position.position).apply {
+        val vm = GitLabNoteEditingViewModel.forNewDiffNote(cs, project, projectData, mergeRequest, currentUser, position.position).apply {
           onDoneIn(cs) {
             cancelNewDiscussion(position)
           }

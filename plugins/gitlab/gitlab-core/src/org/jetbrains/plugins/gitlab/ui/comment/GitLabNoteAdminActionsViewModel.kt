@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 
 interface GitLabNoteAdminActionsViewModel {
@@ -41,7 +42,8 @@ private val LOG = logger<GitLabNoteAdminActionsViewModel>()
 class GitLabNoteAdminActionsViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
-  private val note: MutableGitLabNote
+  projectData: GitLabProject,
+  private val note: MutableGitLabNote,
 ) : GitLabNoteAdminActionsViewModel {
 
   private val cs = parentCs.childScope()
@@ -53,7 +55,7 @@ class GitLabNoteAdminActionsViewModelImpl(
     if (editing) {
       coroutineScope {
         val cs = this@coroutineScope
-        val editVm = GitLabNoteEditingViewModel.forExistingNote(cs, project, note) {
+        val editVm = GitLabNoteEditingViewModel.forExistingNote(cs, project, projectData, note) {
           stopEditing()
         }
         editVm.requestFocus()

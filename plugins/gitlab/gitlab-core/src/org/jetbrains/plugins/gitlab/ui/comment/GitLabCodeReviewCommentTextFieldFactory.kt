@@ -3,8 +3,6 @@ package org.jetbrains.plugins.gitlab.ui.comment
 
 import com.intellij.collaboration.ui.EditableComponentFactory
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentTextFieldFactory
-import com.intellij.collaboration.ui.codereview.comment.CodeReviewSubmittableTextViewModel
-import com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.comment.createEditActionsConfig
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
@@ -30,15 +28,17 @@ object GitLabCodeReviewCommentTextFieldFactory {
     icon: CommentTextFieldFactory.IconConfig? = null,
   ): JComponent {
 
+    val canUploadFile = Registry.`is`("gitlab.merge.requests.file.upload.enabled") && vm.canUploadFile()
+
     val uploadFileAction = object : AnAction(GitLabBundle.message("action.GitLab.Review.Upload.File.text"),
                                              GitLabBundle.message("action.GitLab.Review.Upload.File.description"),
                                              AllIcons.Actions.Upload) {
       override fun actionPerformed(e: AnActionEvent) {
-        TODO("Not yet implemented")
+        vm.uploadFile(null)
       }
 
       override fun update(e: AnActionEvent) {
-        e.presentation.isEnabledAndVisible = Registry.`is`("gitlab.merge.requests.file.upload.enabled")
+        e.presentation.isEnabledAndVisible = canUploadFile
       }
 
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

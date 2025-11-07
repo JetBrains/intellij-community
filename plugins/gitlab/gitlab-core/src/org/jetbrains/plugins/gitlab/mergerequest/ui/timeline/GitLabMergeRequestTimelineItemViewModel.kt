@@ -107,6 +107,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     project: Project,
     parentCs: CoroutineScope,
     mr: GitLabMergeRequest,
+    projectData: GitLabProject,
     note: GitLabMergeRequestNote,
     htmlConverter: GitLabMarkdownToHtmlConverter
   ) : GitLabMergeRequestTimelineItemViewModel, GitLabNoteViewModel {
@@ -119,7 +120,7 @@ sealed interface GitLabMergeRequestTimelineItemViewModel {
     override val serverUrl: URL = mr.glProject.serverPath.toURL()
 
     override val actionsVm: GitLabNoteAdminActionsViewModel? =
-      if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, note) else null
+      if (note is MutableGitLabNote && note.canAdmin) GitLabNoteAdminActionsViewModelImpl(cs, project, projectData, note) else null
     override val reactionsVm: GitLabReactionsViewModel? = null
 
     override val body: StateFlow<String> = note.body

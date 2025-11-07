@@ -549,6 +549,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - getProject():com.intellij.openapi.project.Project
 - f:getState():kotlinx.coroutines.flow.StateFlow
 - f:getText():kotlinx.coroutines.flow.MutableStateFlow
+- pf:launchTask(kotlin.jvm.functions.Function1):V
 - f:requestFocus():V
 - pf:submit(kotlin.jvm.functions.Function2):V
 *:com.intellij.collaboration.ui.codereview.comment.CodeReviewTextEditingViewModel

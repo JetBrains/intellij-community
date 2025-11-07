@@ -100,7 +100,7 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val canCreateReplies: StateFlow<Boolean> = discussion.canAddNotes.stateIn(cs, SharingStarted.Eagerly, false)
   override val replyVm: StateFlow<NewGitLabNoteViewModel?> =
     discussion.canAddNotes.mapScoped { canAddNotes ->
-      if (canAddNotes) GitLabNoteEditingViewModel.forReplyNote(this, project, discussion, currentUser) else null
+      if (canAddNotes) GitLabNoteEditingViewModel.forReplyNote(this, project, projectData, discussion, currentUser) else null
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
   override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
