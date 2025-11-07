@@ -12,6 +12,7 @@ import org.junit.platform.engine.TestExecutionResult
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestIdentifier
 import org.junit.platform.launcher.TestPlan
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The listener do the following:
@@ -40,11 +41,20 @@ open class TestCleanupListener : TestExecutionListener {
 
   private fun cancelSupervisorScope(scope: CoroutineScope, message: String) {
     logOutput("Canceling children of '${scope.coroutineContext[CoroutineName]?.name}': $message")
+    val timeout = 3.seconds
+
     @Suppress("SSBasedInspection")
     runBlocking {
       catchAll {
         scope.coroutineContext.cancelChildren(CancellationException((message)))
-        scope.coroutineContext.job.children.forEach { it.join() }
+        // Wait with timeout - don't hang indefinitely
+        val joinResult = withTimeoutOrNull(timeout) {
+          scope.coroutineContext.job.children.forEach { it.join() }
+        }
+
+        if (joinResult == null) {
+          logError("Some child coroutines of ${scope.coroutineContext[CoroutineName]?.name} didn't complete in $timeout cancellation timeout. Proceeding anyway.")
+        }
       }
     }
   }
