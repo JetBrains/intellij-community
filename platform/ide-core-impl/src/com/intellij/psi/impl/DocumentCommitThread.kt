@@ -10,6 +10,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.text.BlockSupport
 import com.intellij.util.SmartList
@@ -199,12 +199,12 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val finishProcessors = SmartList<BooleanRunnable>()
     val reparseInjectedProcessors = SmartList<BooleanRunnable>()
 
+    LOG.trace { "commitUnderProgress: ${task.myReason}, $document, synchronously: $synchronously " }
 
-    val psiManager = PsiManagerEx.getInstanceEx(project)
-    val virtualFile = FileDocumentManager.getInstance().getFile(document)
-    val viewProviders = findViewProvidersForCommit(psiManager, virtualFile)
+    val viewProviders = findViewProvidersForCommit(document, project)
     if (viewProviders.isEmpty()) {
       finishProcessors.add(handleCommitWithoutPsi(task, documentManager))
+      task.cachedViewProviders = emptyList()
     }
     else {
       // While we were messing around transferring things to background thread, the ViewProviders can become obsolete
@@ -239,6 +239,13 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       // this document was not referenced by anyone, hence we don't need to perform a write action
       val document = task.myDocumentRef.get() ?: return@task
 
+
+      if (!synchronously && newViewProvidersWereConcurrentlyAdded(document, task.cachedViewProviders, project)) {
+        // add a document back to the queue
+        commitAsynchronously(project, documentManager, document, "Re-added back because of new view providers", task.myCreationModality)
+        return@task
+      }
+
       val success = documentManager.finishCommit(document, finishProcessors, reparseInjectedProcessors, synchronously, task.myReason)
       if (synchronously) {
         assert(success)
@@ -246,31 +253,55 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       if (synchronously || success) {
         assert(!documentManager.isInUncommittedSet(document))
       }
-      if (!success && viewProviders.isEventSystemEnabled()) {
+      if (!success && task.cachedViewProviders.isEventSystemEnabled()) {
         // add a document back to the queue
         commitAsynchronously(project, documentManager, document, "Re-added back", task.myCreationModality)
       }
     }
   }
 
-  private fun findViewProvidersForCommit(
-    psiManager: PsiManagerEx,
-    virtualFile: VirtualFile?,
-  ): List<FileViewProvider> {
-    if (virtualFile == null) {
-      return emptyList()
-    }
+  private fun findViewProvidersForCommit(document: Document, project: Project): List<FileViewProvider> {
+    val psiManager = PsiManagerEx.getInstanceEx(project)
+    val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return emptyList()
 
     if (isSharedSourceSupportEnabled(psiManager.project)) {
-      val providers = psiManager.fileManagerEx.findCachedViewProviders(virtualFile)
-      if (providers.isNotEmpty()) {
-        return providers
+      val cached = psiManager.fileManagerEx.findCachedViewProviders(virtualFile)
+      if (cached.isNotEmpty()) {
+        return cached
       }
-      // no providers mean that they might be collected.
-      // so let's try and find at least one with the help of the following line.
+    }
+    return listOfNotNull(psiManager.findViewProvider(virtualFile))
+  }
+
+  private fun newViewProvidersWereConcurrentlyAdded(
+    document: Document,
+    committedViewProviders: List<FileViewProvider>,
+    project: Project,
+  ): Boolean {
+    val currentProviders = findViewProvidersForCommit(document, project)
+
+    if (committedViewProviders.size != currentProviders.size) {
+      LOG.trace { "Concurrent view provider modification detected. Was: ${committedViewProviders.size}, Now: ${currentProviders.size}. Adding document back to the queue. $document" }
+      return true
     }
 
-    return listOfNotNull(psiManager.findViewProvider(virtualFile))
+    if (committedViewProviders.size == 1) {
+      if (committedViewProviders.first() == currentProviders.first()) {
+        return false
+      }
+      else {
+        LOG.trace { "Concurrent view provider modification detected: view provider was changed to another one. Adding document back to the queue. $document" }
+        return true
+      }
+    }
+
+    if (committedViewProviders.toSet().containsAll(currentProviders)) {
+      return false
+    }
+    else {
+      LOG.trace { "Concurrent view provider modification detected. Adding document back to the queue. $document" }
+      return true
+    }
   }
 
   override fun toString(): String = "Document commit thread; application: ${ApplicationManager.getApplication()}; isDisposed: $isDisposed"
@@ -312,7 +343,9 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val myLastCommittedText: CharSequence
     // store initial document modification sequence here to check if it changed later before commit in EDT
     private val myModificationSequence: Int
-    @Volatile var cachedViewProviders: List<FileViewProvider>? = null
+
+    /** initialized under read-action in commitUnderProgress */
+    @Volatile lateinit var cachedViewProviders: List<FileViewProvider>
 
     constructor(
       project: Project,
