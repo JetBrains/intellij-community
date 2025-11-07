@@ -69,8 +69,10 @@ internal fun ModuleList(
           )
         }
         for (module in viewModel.filteredModules) {
-          Row(verticalAlignment = Alignment.Top, horizontalArrangement = checkboxArrangement, modifier = Modifier.padding(horizontal = space)) {
-            Module(module.name in viewModel.checkedModules, viewModel::clicked, module, viewModel.icons, checkboxArrangement)
+          key(module.name) {
+            Row(verticalAlignment = Alignment.Top, horizontalArrangement = checkboxArrangement, modifier = Modifier.padding(horizontal = space)) {
+              Module(module.name in viewModel.checkedModules, viewModel::clicked, module, viewModel.icons, checkboxArrangement)
+            }
           }
         }
       }
