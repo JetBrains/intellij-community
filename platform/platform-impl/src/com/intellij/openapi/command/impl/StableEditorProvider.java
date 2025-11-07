@@ -3,6 +3,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +23,9 @@ final class StableEditorProvider implements CurrentEditorProvider {
     if (isInitialized) {
       return editor;
     }
-    editor = provider.getCurrentEditor(project);
+    editor = ProgressManager.getInstance().computeInNonCancelableSection(
+      () -> provider.getCurrentEditor(project)
+    );
     isInitialized = true;
     return editor;
   }

@@ -205,8 +205,11 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   public @NotNull CurrentEditorProvider getEditorProvider() {
-    CurrentEditorProvider provider = myOverriddenEditorProvider;
-    return new StableEditorProvider(provider != null ? provider : CurrentEditorProvider.getInstance());
+    CurrentEditorProvider overriddenProvider = myOverriddenEditorProvider;
+    CurrentEditorProvider editorProvider = overriddenProvider != null
+        ? overriddenProvider
+        : ProgressManager.getInstance().computeInNonCancelableSection(CurrentEditorProvider::getInstance);
+    return new StableEditorProvider(editorProvider);
   }
 
   public @Nullable Project getProject() {
@@ -531,9 +534,11 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private @NotNull List<UndoProvider> getUndoProviders() {
-    return myProject == null
-           ? UndoProvider.EP_NAME.getExtensionList()
-           : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject);
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+      return myProject == null
+      ? UndoProvider.EP_NAME.getExtensionList()
+      : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject);
+    });
   }
 
   private @NotNull ComponentManager getComponentManager() {

@@ -61,7 +61,7 @@ final class CommandBuilder {
   }
 
   void commandStarted(@NotNull CmdEvent cmdEvent, @NotNull CurrentEditorProvider editorProvider) {
-    assertOutsideCommand();
+    assertOutsideCommand(cmdEvent);
     if (LOG.isTraceEnabled() || ApplicationManager.getApplication().isUnitTestMode()) {
       this.tracedStartCommand = new Throwable();
     }
@@ -113,7 +113,7 @@ final class CommandBuilder {
   }
 
   @NotNull PerformedCommand commandFinished(@NotNull CmdEvent cmdEvent) {
-    assertInsideCommand();
+    assertInsideCommand(cmdEvent);
     if (isGroupIdChangeSupported) {
       this.cmdEvent = cmdEvent;
     }
@@ -124,16 +124,27 @@ final class CommandBuilder {
     return buildAndReset();
   }
 
+  void assertOutsideCommand() {
+    assertOutsideCommand(null);
+  }
 
-  void assertInsideCommand() {
-    if (!isInsideCommand) {
-      throw new UndoIllegalStateException("Must be called inside a command");
+  private void assertInsideCommand() {
+    assertInsideCommand(null);
+  }
+
+  private void assertOutsideCommand(@Nullable CmdEvent cmdEvent) {
+    if (isInsideCommand) {
+      String startEvent = cmdEvent == null ? "" : (", startEvent: " + cmdEvent);
+      throw new UndoIllegalStateException(
+        "Nested command detected, please report the stacktrace" + startEvent, tracedStartCommand
+      );
     }
   }
 
-  void assertOutsideCommand() {
-    if (isInsideCommand) {
-      throw new UndoIllegalStateException("Nested command detected, please report the stacktrace", tracedStartCommand);
+  private void assertInsideCommand(@Nullable CmdEvent cmdEvent) {
+    if (!isInsideCommand) {
+      String finishEvent = cmdEvent == null ? "" : (", finishEvent: " + cmdEvent);
+      throw new UndoIllegalStateException("Must be called inside a command" + finishEvent);
     }
   }
 

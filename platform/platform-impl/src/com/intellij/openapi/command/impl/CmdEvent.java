@@ -21,6 +21,9 @@ public interface CmdEvent {
   boolean isTransparent();
 
   default @NotNull CmdEvent withProject(@Nullable Project project) {
+    if (project == project()) {
+      return this;
+    }
     return create(
       id(),
       project,
@@ -33,6 +36,9 @@ public interface CmdEvent {
   }
 
   default @NotNull CmdEvent withRecordOriginalDocument(boolean recordOriginalDocument) {
+    if (recordOriginalDocument == recordOriginalDocument()) {
+      return this;
+    }
     return create(
       id(),
       project(),

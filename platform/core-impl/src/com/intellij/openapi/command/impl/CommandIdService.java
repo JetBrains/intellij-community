@@ -3,6 +3,7 @@ package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,9 @@ public interface CommandIdService {
   static @Nullable CommandIdService getInstance() {
     Application application = ApplicationManager.getApplication();
     if (application != null) {
-      CommandIdService service = application.getService(CommandIdService.class);
+      CommandIdService service = ProgressManager.getInstance().computeInNonCancelableSection(
+        () -> application.getService(CommandIdService.class)
+      );
       return service;
     }
     return null;
