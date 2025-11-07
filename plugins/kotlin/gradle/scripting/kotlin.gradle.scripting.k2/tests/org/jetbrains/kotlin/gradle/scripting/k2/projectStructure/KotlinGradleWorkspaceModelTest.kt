@@ -35,6 +35,9 @@ class KotlinGradleWorkspaceModelTest : KotlinGradleProjectTestCase() {
         assumeThatGradleIsAtLeast(gradleVersion, "6.0") {
             "Script definitions were introduced in Gradle 6.0"
         }
+        assumeThatGradleIsOlderThan(gradleVersion, "9.1.0") {
+            "Script definitions classes were changed in Gradle 9.1.0"
+        }
         test(gradleVersion, KOTLIN_PROJECT) {
             assertEqualsUnordered(
                 listOf(

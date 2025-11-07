@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.module
@@ -121,7 +122,9 @@ private fun doesCustomizeTask(functionCall: KaCallableMemberCall<*, *>): Boolean
 private fun getReceiverClassFqName(functionCall: KaCallableMemberCall<*, *>): FqName? {
     val type = functionCall.partiallyAppliedSymbol.extensionReceiver?.type
         ?: functionCall.partiallyAppliedSymbol.dispatchReceiver?.type
-    return type?.symbol?.classId?.asSingleFqName()
+    val unwrappedType = if (type is KaFlexibleType) type.lowerBound else type
+
+    return unwrappedType?.symbol?.classId?.asSingleFqName()
 }
 
 private val taskContainerMethods = setOf("register", "create", "named", "registering", "creating")
