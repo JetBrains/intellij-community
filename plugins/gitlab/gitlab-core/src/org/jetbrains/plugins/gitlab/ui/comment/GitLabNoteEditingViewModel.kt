@@ -27,7 +27,9 @@ import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.*
 import javax.swing.Action
 
-interface GitLabNoteEditingViewModel : CodeReviewSubmittableTextViewModel {
+interface GitLabCodeReviewSubmittableTextViewModel: CodeReviewSubmittableTextViewModel
+
+interface GitLabNoteEditingViewModel : GitLabCodeReviewSubmittableTextViewModel {
   suspend fun destroy()
 
   companion object {
@@ -36,7 +38,7 @@ interface GitLabNoteEditingViewModel : CodeReviewSubmittableTextViewModel {
       project: Project,
       note: MutableGitLabNote,
       onStopEditing: () -> Unit
-    ): CodeReviewTextEditingViewModel =
+    ): GitLabCodeReviewTextEditingViewModel =
       GitLabNoteEditingViewModelImpl(project, parentCs, note, onStopEditing)
 
     internal fun forNewNote(
@@ -74,10 +76,13 @@ abstract class AbstractGitLabNoteEditingViewModel(
   override suspend fun destroy() = cs.cancelAndJoinSilently()
 }
 
-private class GitLabNoteEditingViewModelImpl(project: Project, parentCs: CoroutineScope,
-                                             private val note: MutableGitLabNote,
-                                             private val onStopEditing: () -> Unit)
-  : AbstractGitLabNoteEditingViewModel(project, parentCs, note.body.value), CodeReviewTextEditingViewModel {
+interface GitLabCodeReviewTextEditingViewModel : GitLabCodeReviewSubmittableTextViewModel, CodeReviewTextEditingViewModel
+
+private class GitLabNoteEditingViewModelImpl(
+  project: Project, parentCs: CoroutineScope,
+  private val note: MutableGitLabNote,
+  private val onStopEditing: () -> Unit,
+) : AbstractGitLabNoteEditingViewModel(project, parentCs, note.body.value), GitLabCodeReviewTextEditingViewModel {
   override fun save() {
     submit {
       note.setBody(it)

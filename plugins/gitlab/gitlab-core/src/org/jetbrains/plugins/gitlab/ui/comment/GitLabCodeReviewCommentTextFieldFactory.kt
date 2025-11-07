@@ -25,7 +25,7 @@ object GitLabCodeReviewCommentTextFieldFactory {
 
   fun createIn(
     cs: CoroutineScope,
-    vm: CodeReviewSubmittableTextViewModel,
+    vm: GitLabCodeReviewSubmittableTextViewModel,
     actions: CommentInputActionsComponentFactory.Config,
     icon: CommentTextFieldFactory.IconConfig? = null,
   ): JComponent {
@@ -57,9 +57,11 @@ object GitLabCodeReviewCommentTextFieldFactory {
 }
 
 object GitLabEditableComponentFactory {
-  fun wrapTextComponent(cs: CoroutineScope, component: JComponent, editVmFlow: Flow<CodeReviewTextEditingViewModel?>,
-                        afterSave: () -> Unit = {}): JComponent =
-    EditableComponentFactory.create(cs, component, editVmFlow) { editVm ->
+  fun wrapTextComponent(
+    cs: CoroutineScope, component: JComponent, editVmFlow: Flow<GitLabCodeReviewTextEditingViewModel?>,
+    afterSave: () -> Unit = {},
+  ): JComponent =
+    EditableComponentFactory.create(cs, component, editVmFlow) { editVm: GitLabCodeReviewTextEditingViewModel ->
       val actions = createEditActionsConfig(editVm, afterSave)
       GitLabCodeReviewCommentTextFieldFactory.createIn(cs, editVm, actions)
     }
