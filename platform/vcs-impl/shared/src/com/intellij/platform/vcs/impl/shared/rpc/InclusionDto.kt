@@ -8,7 +8,9 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 @ApiStatus.Internal
 sealed interface InclusionDto {
+  @Serializable
   data class Change(val changeId: ChangeId) : InclusionDto
+  @Serializable
   data class File(val path: FilePathDto) : InclusionDto
 
   companion object {

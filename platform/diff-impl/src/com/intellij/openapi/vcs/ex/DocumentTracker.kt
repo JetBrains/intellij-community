@@ -1255,11 +1255,13 @@ sealed class RangeExclusionState {
   abstract val hasExcluded: Boolean
   abstract val hasIncluded: Boolean
 
+  @Serializable
   object Included : RangeExclusionState() {
     override val hasExcluded: Boolean = false
     override val hasIncluded: Boolean = true
   }
 
+  @Serializable
   object Excluded : RangeExclusionState() {
     override val hasExcluded: Boolean = true
     override val hasIncluded: Boolean = false
