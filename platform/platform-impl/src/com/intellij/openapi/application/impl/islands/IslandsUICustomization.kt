@@ -712,12 +712,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
           paintBeforeEditorEmptyText(component, frameBG, editorTabPainterAdapter)
 
           val editorEmptyTextPainter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
-          val glassPane = IdeGlassPaneUtil.find(component) as JComponent
-          val shift = SwingUtilities.convertPoint(component, 0, 0, glassPane)
-
-          frameBG.translate(-shift.x, -shift.y)
-          editorEmptyTextPainter.doPaintEmptyText(glassPane, frameBG)
-          frameBG.translate(shift.x, shift.y)
+          editorEmptyTextPainter.doPaintEmptyText(component, frameBG)
         }
 
         paintIslandBorder(component, editorBG, true)

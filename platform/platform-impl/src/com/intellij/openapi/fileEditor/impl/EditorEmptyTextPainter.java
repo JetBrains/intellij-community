@@ -29,7 +29,22 @@ import java.awt.*;
 public class EditorEmptyTextPainter {
   public void paintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
     if (JBUI.getInt("Islands", 0) != 1) {
-      doPaintEmptyText(splitters, g);
+      JRootPane rootPane = splitters.getRootPane();
+      if (rootPane.getGlassPane() == splitters) {
+        EditorsSplitters editorArea = UIUtil.findComponentOfType((JComponent)rootPane.getContentPane(), EditorsSplitters.class);
+        if (editorArea != null) {
+          Point shift = SwingUtilities.convertPoint(editorArea, 0, 0, splitters);
+          g.translate(shift.x, shift.y);
+          doPaintEmptyText(editorArea, g);
+          g.translate(-shift.x, -shift.y);
+        }
+        else {
+          doPaintEmptyText(splitters, g);
+        }
+      }
+      else {
+        doPaintEmptyText(splitters, g);
+      }
     }
   }
 
@@ -41,7 +56,9 @@ public class EditorEmptyTextPainter {
 
     UISettings.setupAntialiasing(g);
 
-    UIUtil.TextPainter painter = createTextPainter();
+    UIUtil.TextPainter painter = createTextPainter().withColor(JBColor.namedColor("Label.infoForeground", new JBColor(Gray._80, Gray._160)))
+      .withShortcutColor(JBColor.namedColor("Shortcut.foreground", new JBColor(0x0, 0xDFE1E5)));
+
     advertiseActions(splitters, painter);
     painter.draw(g, (width, height) -> {
       Dimension s = splitters.getSize();
