@@ -245,7 +245,56 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
 /**
  * JVM on all OSes report IO error as `error=(code), (text)`. See `ProcessImpl_md.c` for Unix and Windows.
  */
-private val errorPattern = Regex(".*error=(-?[0-9]{1,9}),.*")
+// Year 2025 comes to the end. We keep parsing error messages.
+//
+// Error message in Java 21: "java.io.IOException: Cannot run program "sdfgfdhsdfdgdf": error=2, No such file or directory"
+//
+//  src/java.base/unix/native/libjava/ProcessImpl_md.c:
+//
+//    #define IOE_FORMAT "error=%d, %s"
+//
+//    snprintf(errmsg, fmtsize, IOE_FORMAT, errnum, detail);
+//    s = JNU_NewStringPlatform(env, errmsg);
+//    if (s != NULL) {
+//        jobject x = JNU_NewObjectByName(env, "java/io/IOException",
+//                                       "(Ljava/lang/String;)V", s);
+//
+//  src/java.base/windows/native/libjava/ProcessImpl_md.c
+//    size_t n = os_error_message(errnum, utf16_OSErrorMsg, ARRAY_SIZE(utf16_OSErrorMsg));
+//    n = (n > 0)
+//        ? swprintf(utf16_javaMessage, MESSAGE_LENGTH, L"%s error=%d, %s", functionName, errnum, utf16_OSErrorMsg)
+//        : swprintf(utf16_javaMessage, MESSAGE_LENGTH, L"%s failed, error=%d", functionName, errnum);
+//
+//
+// Error message in Java 25: "java.io.IOException: Cannot run program "sdfgfdhsdfdgdf": Exec failed, error: 2 (No such file or directory)"
+//
+//  src/java.base/unix/native/libjava/ProcessImpl_md.c changed in https://github.com/JetBrains/JetBrainsRuntime/commit/5c73dfc28cbd6801ac85c6685fb8c77aad3ab0b7
+//
+//    #define IOE_FORMAT "%s, error: %d (%s) %s"
+//
+//  src/java.base/windows/native/libjava/ProcessImpl_md.c remained unchanged:
+//
+//    size_t n = os_error_message(errnum, utf16_OSErrorMsg, ARRAY_SIZE(utf16_OSErrorMsg));
+//    n = (n > 0)
+//        ? swprintf(utf16_javaMessage, MESSAGE_LENGTH, L"%s error=%d, %s", functionName, errnum, utf16_OSErrorMsg)
+//        : swprintf(utf16_javaMessage, MESSAGE_LENGTH, L"%s failed, error=%d", functionName, errnum);
+@Suppress("RegExpRepeatedSpace", "RegExpSimplifiable", "RegExpRedundantEscape")  // This inspection doesn't understand the verbose regex format.
+private val errorPattern = Regex("""
+  .*
+error
+(?:
+  =  # Java 21 on any os, Java 25 on Windows
+  |
+  :\   # Java 25 on Unix
+)
+(-?[0-9]{1,9})
+(?:
+  ,  # Java 21 on any os, Java 25 on Windows
+  |
+  \  # Java 25 on Unix
+)
+.*
+""", RegexOption.COMMENTS)
 
 private fun executeImpl(builder: EelExecApi.ExecuteProcessOptions): Process {
   val pty = builder.run {
