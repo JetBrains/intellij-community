@@ -34,9 +34,11 @@ internal class VcsUserRegistryImpl internal constructor(project: Project) : Disp
     initEnumerator()
   }
 
-  private fun initEnumerator(): Boolean {
+  private fun initEnumerator() {
+    if (persistentEnumerator != null) return
+
     synchronized(initLock) {
-      if (persistentEnumerator != null) return false
+      if (persistentEnumerator != null) return
 
       try {
         val enumerator = IOUtil.openCleanOrResetBroken({
@@ -48,12 +50,12 @@ internal class VcsUserRegistryImpl internal constructor(project: Project) : Disp
           LOG.error("Could not assign newly opened enumerator")
           enumerator?.close()
         }
-        return wasSet
+        return
       }
       catch (e: IOException) {
         LOG.warn(e)
       }
-      return false
+      return
     }
   }
 
