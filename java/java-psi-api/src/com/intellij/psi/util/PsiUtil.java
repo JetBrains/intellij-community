@@ -38,7 +38,10 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -543,7 +546,7 @@ public final class PsiUtil extends PsiUtilCore {
       return ((PsiClassType) type).resolve();
     }
     if (type instanceof PsiArrayType) {
-      return resolveClassInType(((PsiArrayType) type).getComponentType());
+      return resolveClassInType(type.getDeepComponentType());
     }
     if (type instanceof PsiDisjunctionType) {
       PsiType lub = ((PsiDisjunctionType)type).getLeastUpperBound();
