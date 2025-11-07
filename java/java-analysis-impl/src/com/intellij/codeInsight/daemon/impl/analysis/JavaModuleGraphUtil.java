@@ -132,7 +132,7 @@ public final class JavaModuleGraphUtil {
     if (to.getName().equals(JAVA_BASE)) return false;
     if (!PsiUtil.isAvailable(JavaFeature.MODULES, from)) return false;
     if (from instanceof LightJavaModule) return false;
-    if (from == to) return false;
+    if (from == to || from.getName().equals(to.getName())) return false;
     if (!PsiNameHelper.isValidModuleName(to.getName(), to)) return false;
     if (contains(from.getRequires(), to.getName())) return false;
     if (JavaPsiModuleUtil.reads(from, to)) return false;
