@@ -16,6 +16,12 @@ resourcegroup(
   strip_prefix = "resources"
 )
 
+resourcegroup(
+  name = "whatsNew_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "whatsNew",
   module_name = "intellij.platform.whatsNew",
@@ -48,6 +54,7 @@ jvm_library(
   name = "whatsNew_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
+  resources = [":whatsNew_test_resources"],
   kotlinc_opts = ":custom_whatsNew",
   associates = [":whatsNew"],
   deps = [
