@@ -133,9 +133,9 @@ class ResourceContentSource(private val classLoader: ClassLoader, private val re
   constructor(classLoader: ClassLoader, resourceName: String) : this(classLoader, listOf(resourceName))
 
   override suspend fun openStream(): InputStream? = withContext(Dispatchers.IO) {
-    resourceNames.asSequence().map {
+    resourceNames.firstNotNullOfOrNull {
       classLoader.getResourceAsStream(it)
-    }.firstOrNull()
+    }
   }
   override suspend fun checkAvailability(): Boolean = withContext(Dispatchers.IO) {
     resourceNames.any { classLoader.getResource(it) != null }
