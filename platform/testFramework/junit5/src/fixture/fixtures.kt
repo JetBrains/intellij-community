@@ -115,6 +115,17 @@ fun TestFixture<Project>.moduleInProjectFixture(name: String): TestFixture<Modul
   initialized(module) {}
 }
 
+/**
+ * Creates [Project] fixture. If the fixture is stored in a static variable, the [Project] will be created
+ * only once. On the contrary, storing a fixture in the instance variable will create a new [Project] for each test.
+ *
+ * <p>
+ *
+ * NOTE: the behavior of disposal is different from JUnit3, e.g., it is not possible to share [Project] instance when running
+ * different test classes.
+ * See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5ProjectFixtureTest
+ */
 @JvmOverloads
 @TestOnly
 fun projectFixture(
@@ -156,9 +167,11 @@ fun TestFixture<Project>.moduleFixture(
 }
 
 /**
- * Create module on [pathFixture].
+ * Creates module on [pathFixture].
  * If [addPathToSourceRoot], we add [pathFixture] to the module sources,
- * which is convenient for the scripting languages where module root is also source root
+ * which is convenient for the scripting languages where module root is also source root.
+ * See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5ModuleFixtureTest
  */
 @JvmOverloads
 @TestOnly
@@ -193,6 +206,11 @@ fun TestFixture<Project>.moduleFixture(
   }
 }
 
+/**
+ * Creates [Disposable] fixture. See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5DisposableFixture
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5DisposableFixtureTest
+ */
 @TestOnly
 fun disposableFixture(): TestFixture<Disposable> = testFixture { context ->
   val disposable = Disposer.newCheckedDisposable(context.uniqueId)
@@ -243,6 +261,10 @@ fun TestFixture<Module>.sourceRootFixture(
     }
   }
 
+/**
+ * Creates [PsiFile] fixture. See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5PsiFileFixtureTest
+ */
 @TestOnly
 fun TestFixture<PsiDirectory>.psiFileFixture(
   name: String,
@@ -275,6 +297,10 @@ fun TestFixture<PsiDirectory>.virtualFileFixture(
   }
 }
 
+/**
+ * Creates [Editor] fixture. See the showcase for usage examples.
+ * @see com.intellij.testFramework.junit5.showcase.JUnit5EditorFixtureTest
+ */
 @TestOnly
 fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ ->
   val psiFile = this@editorFixture.init()
