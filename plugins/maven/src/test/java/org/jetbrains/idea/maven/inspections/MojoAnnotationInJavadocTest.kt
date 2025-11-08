@@ -13,31 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.maven.inspections;
+package org.jetbrains.idea.maven.inspections
 
-import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection
+import com.intellij.openapi.application.PluginPathManager
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-public class MojoAnnotationInJavadocTest extends LightJavaCodeInsightFixtureTestCase {
-
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("maven") + "/src/test/data/inspections/javadocMojoValidTags";
+class MojoAnnotationInJavadocTest : LightJavaCodeInsightFixtureTestCase() {
+  override fun getTestDataPath(): String {
+    return PluginPathManager.getPluginHomePath("maven") + "/src/test/data/inspections/javadocMojoValidTags"
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.enableInspections(new JavadocDeclarationInspection());
+  override fun setUp() {
+    super.setUp()
+    myFixture.enableInspections(JavadocDeclarationInspection())
   }
 
-  public void testTestMojo() {
-    doTest();
+  fun testTestMojo() {
+    doTest()
   }
 
-  private void doTest() {
-    myFixture.configureByFile(getTestName(false) + ".java");
-    myFixture.checkHighlighting();
+  private fun doTest() {
+    myFixture.configureByFile(getTestName(false) + ".java")
+    myFixture.checkHighlighting()
   }
 }
