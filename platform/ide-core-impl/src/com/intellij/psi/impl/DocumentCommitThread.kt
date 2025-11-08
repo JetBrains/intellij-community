@@ -93,6 +93,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       return
     }
 
+    @Suppress("SuspiciousPackagePrivateAccess")
     require(documentManager.myProject === project) { "Wrong project: $project; expected: ${documentManager.myProject}" }
 
     TransactionGuard.getInstance().assertWriteSafeContext(modality)
