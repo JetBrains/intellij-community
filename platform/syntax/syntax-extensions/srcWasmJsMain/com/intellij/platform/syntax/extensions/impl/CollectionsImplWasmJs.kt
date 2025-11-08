@@ -29,4 +29,11 @@ private class SyntaxConcurrentMapWasmJs<K : Any, V : Any>() : MultiplatformConcu
     map[key] = value
     return prevValue
   }
+  override fun hashCode(): Int = map.hashCode()
+  override fun toString(): String = map.toString()
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SyntaxConcurrentMapWasmJs<*, *>) return false
+    return map == other.map
+  }
 }
