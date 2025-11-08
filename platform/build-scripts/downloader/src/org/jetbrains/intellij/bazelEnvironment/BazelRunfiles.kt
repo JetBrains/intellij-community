@@ -65,6 +65,10 @@ object BazelRunfiles {
    */
   @JvmStatic
   fun findRunfilesDirectoryUnderCommunityOrUltimate(relativePath: String): Path {
+    // Android Studio (b/458767289): our test data is always in the main runfiles tree,
+    // and we tolerate missing platform test data in many cases (e.g. missing mock JDK).
+    return Path.of(relativePath)
+
     val (root1, root2) = if (runfilesManifestOnly) {
       val root1key = "community+/${relativePath}"
       val root2key = "_main/${relativePath}"
