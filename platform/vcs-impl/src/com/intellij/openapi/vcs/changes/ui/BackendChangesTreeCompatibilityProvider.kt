@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.*
@@ -41,10 +40,6 @@ internal class BackendChangesTreeCompatibilityProvider : ChangesTreeCompatibilit
 
   override fun getSwitchedBranch(project: Project, file: VirtualFile): @NlsSafe String? =
     ChangeListManager.getInstance(project).getSwitchedBranch(file)
-
-  override fun showResolveConflictsDialog(project: Project, changes: List<Change>) {
-    AbstractVcsHelper.getInstance(project).showMergeDialog(ChangesUtil.iterateFiles(changes).toList())
-  }
 
   override fun showIgnoredViewDialog(project: Project) {
     if (!project.isDisposed) IgnoredViewDialog(project).show()

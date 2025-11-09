@@ -26,6 +26,8 @@ interface ChangesViewApi : RemoteApi<Unit> {
    */
   suspend fun notifyRefreshPerformed(projectId: ProjectId, refreshCounter: Int)
 
+  suspend fun showResolveConflictsDialog(projectId: ProjectId, changeIds: List<ChangeId>)
+
   companion object {
     suspend fun getInstance(): ChangesViewApi = RemoteApiProviderService.resolve(remoteApiDescriptor<ChangesViewApi>())
   }

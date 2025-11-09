@@ -32,8 +32,6 @@ interface ChangesTreeCompatibilityProvider {
 
   fun getSwitchedBranch(project: Project, file: VirtualFile): @NlsSafe String?
 
-  fun showResolveConflictsDialog(project: Project, changes: List<Change>)
-
   fun acceptIgnoredFilesDrop(project: Project, dragOwner: ChangeListOwner, dragBean: ChangeListDragBean)
 
   fun showIgnoredViewDialog(project: Project)
