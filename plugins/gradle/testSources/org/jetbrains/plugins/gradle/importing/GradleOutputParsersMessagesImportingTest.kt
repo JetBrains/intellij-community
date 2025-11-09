@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.idea.TestFor
+import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.util.io.FileUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
@@ -8,6 +10,7 @@ import org.gradle.util.GradleVersion.version
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
@@ -549,5 +552,110 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
                   "Message with level WARN",
                   "Message with level QUIET")
     }
+  }
+
+  @Test
+  @TargetVersions("6.0+", "<9.0.0")
+  @TargetJavaVersion(value = "<17", reason = "JUnit 6 requires Java 17 or newer")
+  @TestFor(issues = ["IDEA-380461"])
+  fun `test unresolved dependencies errors on Sync due to outdated Gradle JVM`() {
+    val javaSdkVersion = JavaSdkVersion.fromJavaVersion(gradleJvmInfo.version)!!.description
+
+    importProject {
+      withJavaPlugin()
+      withRepository {
+        mavenRepository(MAVEN_REPOSITORY, isGradleAtLeast("6.0"))
+      }
+      addTestImplementationDependency("org.junit.jupiter:junit-jupiter:6.0.0")
+    }
+    assertSyncViewTree {
+      assertNode("finished") {
+        assertNode("Could Not Resolve org.junit.jupiter:junit-jupiter:6.0.0 for project:test")
+        if (isGradleAtLeast("8.10"))
+          assertNode("Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0")
+      }
+    }
+
+    val expectedCauseDescription = when {
+      isGradleAtLeast("8.8") -> "Dependency resolution is looking for a library compatible with JVM runtime version $javaSdkVersion, but 'org.junit.jupiter:junit-jupiter:6.0.0' is only compatible with JVM runtime version 17 or newer."
+
+      isGradleAtLeast("8.7") -> """
+        No matching variant of org.junit.jupiter:junit-jupiter:6.0.0 was found. The consumer was configured to find a library for use during compile-time, compatible with Java $javaSdkVersion, preferably in the form of class files, preferably optimized for standard JVMs, and its dependencies declared externally but:
+          - Variant 'apiElements' declares a library for use during compile-time, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component, compatible with Java 17 and the consumer needed a component, compatible with Java $javaSdkVersion
+          - Variant 'javadocElements' declares a component for use during runtime, and its dependencies declared externally:
+              - Incompatible because this component declares documentation and the consumer needed a library
+          - Variant 'runtimeElements' declares a library for use during runtime, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component, compatible with Java 17 and the consumer needed a component, compatible with Java $javaSdkVersion
+          - Variant 'sourcesElements' declares a component for use during runtime, and its dependencies declared externally:
+              - Incompatible because this component declares documentation and the consumer needed a library
+      """.trimIndent()
+
+      isGradleAtLeast("8.0") -> """
+        No matching variant of org.junit.jupiter:junit-jupiter:6.0.0 was found. The consumer was configured to find a library for use during compile-time, compatible with Java $javaSdkVersion, preferably in the form of class files, preferably optimized for standard JVMs, and its dependencies declared externally but:
+          - Variant 'apiElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a library for use during compile-time, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component, compatible with Java 17 and the consumer needed a component, compatible with Java $javaSdkVersion
+          - Variant 'javadocElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a component for use during runtime, and its dependencies declared externally:
+              - Incompatible because this component declares documentation and the consumer needed a library
+          - Variant 'runtimeElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a library for use during runtime, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component, compatible with Java 17 and the consumer needed a component, compatible with Java $javaSdkVersion
+          - Variant 'sourcesElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a component for use during runtime, and its dependencies declared externally:
+              - Incompatible because this component declares documentation and the consumer needed a library
+        """.trimIndent()
+
+      isGradleAtLeast("7.0") -> """
+        No matching variant of org.junit.jupiter:junit-jupiter:6.0.0 was found. The consumer was configured to find an API of a library compatible with Java $javaSdkVersion, preferably in the form of class files, preferably optimized for standard JVMs, and its dependencies declared externally but:
+          - Variant 'apiElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares an API of a library, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component compatible with Java 17 and the consumer needed a component compatible with Java $javaSdkVersion
+          - Variant 'javadocElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a runtime of a component, and its dependencies declared externally:
+              - Incompatible because this component declares documentation and the consumer needed a library
+          - Variant 'runtimeElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a runtime of a library, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component compatible with Java 17 and the consumer needed a component compatible with Java $javaSdkVersion
+          - Variant 'sourcesElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a runtime of a component, and its dependencies declared externally:
+              - Incompatible because this component declares documentation and the consumer needed a library
+      """.trimIndent()
+
+      isGradleAtLeast("6.4") -> """
+        No matching variant of org.junit.jupiter:junit-jupiter:6.0.0 was found. The consumer was configured to find an API of a library compatible with Java $javaSdkVersion, preferably in the form of class files, and its dependencies declared externally but:
+          - Variant 'apiElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares an API of a library, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component compatible with Java 17 and the consumer needed a component compatible with Java $javaSdkVersion
+          - Variant 'javadocElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a runtime of a component, and its dependencies declared externally:
+              - Incompatible because this component declares documentation and the consumer needed a library
+          - Variant 'runtimeElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a runtime of a library, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component compatible with Java 17 and the consumer needed a component compatible with Java $javaSdkVersion
+          - Variant 'sourcesElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a runtime of a component, and its dependencies declared externally:
+              - Incompatible because this component declares documentation and the consumer needed a library
+        """.trimIndent()
+
+      isGradleAtLeast("6.2") -> """
+        Unable to find a matching variant of org.junit.jupiter:junit-jupiter:6.0.0:
+          - Variant 'apiElements' capability org.junit.jupiter:junit-jupiter:6.0.0:
+              - Incompatible attribute:
+                  - Required org.gradle.jvm.version '$javaSdkVersion' and found incompatible value '17'.
+          - Variant 'javadocElements' capability org.junit.jupiter:junit-jupiter:6.0.0:
+              - Incompatible attribute:
+                  - Required org.gradle.category 'library' and found incompatible value 'documentation'.
+          - Variant 'runtimeElements' capability org.junit.jupiter:junit-jupiter:6.0.0:
+              - Incompatible attribute:
+                  - Required org.gradle.jvm.version '$javaSdkVersion' and found incompatible value '17'.
+          - Variant 'sourcesElements' capability org.junit.jupiter:junit-jupiter:6.0.0:
+              - Incompatible attribute:
+                  - Required org.gradle.category 'library' and found incompatible value 'documentation'.
+      """.trimIndent()
+
+      else -> "Dependency resolution is looking for a library compatible with JVM runtime version $javaSdkVersion, but JUnit 6 is only compatible with JVM runtime version 17 or newer."
+    }
+
+    assertSyncViewSelectedNode(
+      "Could Not Resolve org.junit.jupiter:junit-jupiter:6.0.0 for project:test",
+      """
+      project:test: ${expectedCauseDescription.lines().joinToString("\n      ")}
+      
+      Possible solution:
+       - Use Java 17 or newer as Gradle JVM: Open Gradle settings
+      
+      
+      """.trimIndent()
+    )
   }
 }
