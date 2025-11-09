@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -43,7 +43,7 @@ class ProductInfoData private constructor(
   val flavors: List<ProductFlavorData> = emptyList(),
   
   // not used by the launcher; must be at the end
-  @Internal
+  @ApiStatus.Internal
   val layout: List<ProductInfoLayoutItem> = emptyList(),
 ) {
   companion object {
@@ -52,7 +52,7 @@ class ProductInfoData private constructor(
      * Some properties that are nullable in the primary constructor are deliberately marked as not-null in this function to state that they
      * are required in the current version, and internal clients may rely on their presence.
      */
-    @Internal
+    @ApiStatus.Internal
     @JvmStatic
     fun create(
       name: String,
@@ -72,32 +72,15 @@ class ProductInfoData private constructor(
       fileExtensions: List<String>,
       flavors: List<ProductFlavorData>,
       layout: List<ProductInfoLayoutItem>,
-    ): ProductInfoData {
-      return ProductInfoData(
-        name = name,
-        version = version,
-        versionSuffix = versionSuffix,
-        buildNumber = buildNumber,
-        productCode = productCode,
-        envVarBaseName = envVarBaseName,
-        dataDirectoryName = dataDirectoryName,
-        svgIconPath = svgIconPath,
-        productVendor = productVendor,
-        majorVersionReleaseDate = majorVersionReleaseDate,
-        launch = launch,
-        customProperties = customProperties,
-        bundledPlugins = bundledPlugins,
-        modules = modules,
-        fileExtensions = fileExtensions,
-        flavors = flavors,
-        layout = layout
-      )
-    }
+    ): ProductInfoData = ProductInfoData(
+      name, version, versionSuffix, buildNumber, productCode, envVarBaseName, dataDirectoryName, svgIconPath, productVendor,
+      majorVersionReleaseDate, launch, customProperties, bundledPlugins, modules, fileExtensions, flavors, layout
+    )
   }
 }
 
 @Serializable
-class ProductFlavorData @Internal constructor(@JvmField val id: String)
+class ProductFlavorData @ApiStatus.Internal constructor(@JvmField val id: String)
 
 /**
  * Describes 'launch' section in [product-info.json][ProductInfoData] file.
@@ -121,7 +104,7 @@ class ProductInfoLaunchData private constructor(
      * Some properties that are nullable in the primary constructor are deliberately marked as not-null in this function to state that they
      * are required in the current version, and internal clients may rely on their presence.
      */
-    @Internal
+    @ApiStatus.Internal
     @JvmStatic
     fun create(
       os: String,
@@ -134,25 +117,16 @@ class ProductInfoLaunchData private constructor(
       mainClass: String,
       startupWmClass: String? = null,
       customCommands: List<CustomCommandLaunchData> = emptyList(),
-    ): ProductInfoLaunchData {
-      return ProductInfoLaunchData(
-        os = os,
-        arch = arch,
-        launcherPath = launcherPath,
-        javaExecutablePath = javaExecutablePath,
-        vmOptionsFilePath = vmOptionsFilePath,
-        startupWmClass = startupWmClass,
-        bootClassPathJarNames = bootClassPathJarNames,
-        additionalJvmArguments = additionalJvmArguments,
-        mainClass = mainClass,
-        customCommands = customCommands
-      )
-    }
+    ): ProductInfoLaunchData = ProductInfoLaunchData(
+      os, arch, launcherPath, javaExecutablePath, vmOptionsFilePath, startupWmClass, bootClassPathJarNames, additionalJvmArguments,
+      mainClass, customCommands
+    )
   }
 }
 
 @Serializable
-class CustomCommandLaunchData @Internal constructor(
+@Suppress("unused")
+class CustomCommandLaunchData @ApiStatus.Internal constructor(
   val commands: List<String>,
   val vmOptionsFilePath: String? = null,
   val bootClassPathJarNames: List<String> = emptyList(),
@@ -163,20 +137,18 @@ class CustomCommandLaunchData @Internal constructor(
 )
 
 @Serializable
-class CustomProperty @Internal constructor(
+class CustomProperty @ApiStatus.Internal constructor(
   val key: String,
   val value: String,
 )
 
 @Serializer(forClass = LocalDate::class)
 private object LocalDateSerializer : KSerializer<LocalDate> {
-  private val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+  private val formatter = DateTimeFormatter.ofPattern(@Suppress("SpellCheckingInspection") "yyyyMMdd")
 
   override fun serialize(encoder: Encoder, value: LocalDate) {
     encoder.encodeString(value.format(formatter))
   }
 
-  override fun deserialize(decoder: Decoder): LocalDate {
-    return LocalDate.parse(decoder.decodeString(), formatter)
-  }
+  override fun deserialize(decoder: Decoder): LocalDate = LocalDate.parse(decoder.decodeString(), formatter)
 }

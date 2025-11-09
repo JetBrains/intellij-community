@@ -120,18 +120,16 @@ internal suspend fun generateEmbeddedFrontendLaunchData(
   os: OsFamily,
   ideContext: BuildContext,
   vmOptionsFilePath: (BuildContext) -> String
-): CustomCommandLaunchData? {
-  return createFrontendContextForLaunchers(ideContext)?.let { clientContext ->
-    CustomCommandLaunchData(
-      commands = listOf("thinClient", "thinClient-headless", "installFrontendPlugins"),
-      vmOptionsFilePath = vmOptionsFilePath(clientContext),
-      bootClassPathJarNames = clientContext.bootClassPathJarNames,
-      additionalJvmArguments = clientContext.getAdditionalJvmArguments(os, arch) + ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
-      mainClass = clientContext.ideMainClassName,
-      envVarBaseName = "JETBRAINS_CLIENT",
-      dataDirectoryName = clientContext.systemSelector,
-    )
-  }
+): CustomCommandLaunchData? = createFrontendContextForLaunchers(ideContext)?.let { clientContext ->
+  CustomCommandLaunchData(
+    commands = listOf("thinClient", "thinClient-headless", "installFrontendPlugins"),
+    vmOptionsFilePath = vmOptionsFilePath(clientContext),
+    bootClassPathJarNames = clientContext.bootClassPathJarNames,
+    additionalJvmArguments = clientContext.getAdditionalJvmArguments(os, arch) + ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS,
+    mainClass = clientContext.ideMainClassName,
+    envVarBaseName = "JETBRAINS_CLIENT",
+    dataDirectoryName = clientContext.systemSelector,
+  )
 }
 
 /**
@@ -139,6 +137,4 @@ internal suspend fun generateEmbeddedFrontendLaunchData(
  *
  * E.g., if [this] is `installer.tag.gz`, returned Path will be `installer.tag.gz.product-info.json`.
  */
-internal fun Path.resolveProductInfoJsonSibling(): Path {
-  return resolveSibling("${this.fileName}.$PRODUCT_INFO_FILE_NAME")
-}
+internal fun Path.resolveProductInfoJsonSibling(): Path = resolveSibling("${this.fileName}.$PRODUCT_INFO_FILE_NAME")
