@@ -1,0 +1,10 @@
+// PROBLEM: Implicit 'toString()' called on array
+// FIX: Replace with 'contentToString()'
+// IGNORE_K1
+// WITH_STDLIB
+
+fun main() {
+    val arr = arrayOf(1, 2, 3)
+    val sb = StringBuilder()
+    sb.<caret>append(arr)
+}

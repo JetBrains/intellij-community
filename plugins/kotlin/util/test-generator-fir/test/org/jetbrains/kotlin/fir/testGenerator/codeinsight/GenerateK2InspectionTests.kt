@@ -60,6 +60,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/redundantRequireNotNullCall")
             model("${idea}/inspectionsLocal/suspiciousCallOnCollectionToAddOrRemovePath")
             model("${idea}/inspectionsLocal/arrayHashCode")
+            model("${idea}/inspectionsLocal/arrayToString")
             model("${idea}/inspectionsLocal/stringReferentialEquality")
             model("${idea}/inspectionsLocal/suspiciousCascadingIf")
             model("${idea}/inspectionsLocal/equalsOrHashCode")
