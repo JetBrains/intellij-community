@@ -328,8 +328,8 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 tasks.register("someTask") {
-                    group = "example group"
-                    description = "example description"
+                    group = ""
+                    description = ""
                 }
                 """.trimIndent(),
                 "Add a group and description"
@@ -347,8 +347,8 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 val task by tasks.registering {
-                    group = "example group"
-                    description = "example description"
+                    group = ""
+                    description = ""
                 }
                 """.trimIndent(),
                 "Add a group and description"
@@ -368,7 +368,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 tasks.register("someTask") {
-                    group = "example group"
+                    group = ""
                     description = "existing description"
                 }
                 """.trimIndent(),
@@ -389,7 +389,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 val task by tasks.registering {
-                    group = "example group"
+                    group = ""
                     description = "existing description"
                 }
                 """.trimIndent(),
@@ -410,7 +410,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 tasks.register("someTask") {
-                    description = "example description"
+                    description = ""
                     group = "existing group"
                 }
                 """.trimIndent(),
@@ -431,7 +431,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 val task by tasks.registering {
-                    description = "example description"
+                    description = ""
                     group = "existing group"
                 }
                 """.trimIndent(),
@@ -450,8 +450,8 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 tasks.register("someTask") {
-                    group = "example group"
-                    description = "example description"
+                    group = ""
+                    description = ""
                 }
                 """.trimIndent(),
                 "Add a group and description"
@@ -469,8 +469,8 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
                 """.trimIndent(),
                 """
                 val task by tasks.registering {
-                    group = "example group"
-                    description = "example description"
+                    group = ""
+                    description = ""
                 }
                 """.trimIndent(),
                 "Add a group and description"
