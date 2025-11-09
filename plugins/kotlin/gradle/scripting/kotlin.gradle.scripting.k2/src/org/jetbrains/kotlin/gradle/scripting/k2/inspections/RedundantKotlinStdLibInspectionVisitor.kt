@@ -69,8 +69,9 @@ class RedundantKotlinStdLibInspectionVisitor(private val holder: ProblemsHolder)
 
     private fun extractVersionFromNamedArguments(argList: KtValueArgumentList): String? {
         val args = argList.arguments
+        if (args.size != 3) return null
         val argNames = args.mapNotNull { it.getArgumentName()?.asName?.identifier }.toSet()
-        if (REQUIRED_NAMED_ARGS != argNames) return null
+        if (!REQUIRED_NAMED_ARGS.containsAll(argNames)) return null
 
         val group = findNamedOrPositionalArgument(argList, "group", 0)?.evaluateString()
             ?: return null
