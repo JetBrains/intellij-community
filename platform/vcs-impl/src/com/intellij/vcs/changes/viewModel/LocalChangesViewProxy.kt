@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes.viewModel
 
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
@@ -35,8 +33,6 @@ internal class LocalChangesViewProxy(override val panel: CommitChangesViewWithTo
   override fun setToolbarHorizontal(horizontal: Boolean) {
     panel.isToolbarHorizontal = horizontal
   }
-
-  override fun getActions(): List<AnAction> = panel.toolbarActionGroup.getChildren(ActionManager.getInstance()).toList()
 
   override fun isModelUpdateInProgress(): Boolean = panel.changesView.isModelUpdateInProgress
 

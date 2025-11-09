@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EventListener;
 import java.util.List;
 import java.util.function.Predicate;
@@ -570,7 +571,9 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
 
     @Override
     public @NotNull List<AnAction> getActions(boolean originalProvider) {
-      return myChangesView.getActions();
+      ActionManager actionManager = ActionManager.getInstance();
+      DefaultActionGroup toolbarActionGroup = (DefaultActionGroup)actionManager.getAction("ChangesViewToolbar.Shared");
+      return Arrays.asList(toolbarActionGroup.getChildren(actionManager));
     }
 
     @Override

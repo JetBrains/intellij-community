@@ -1,9 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.ide.CommonActionsManager
-import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.progress.checkCanceled
@@ -21,7 +20,6 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
 import com.intellij.platform.vcs.impl.shared.telemetry.ChangesView
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
-import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.util.application
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -78,8 +76,6 @@ abstract class CommitChangesViewWithToolbarPanel(
                                        settings::groupingKeys,
                                        { settings.groupingKeys = it },
                                        Runnable { scheduleRefresh() })
-
-    toolbarActionGroup.addAll(createChangesToolbarActions(changesView))
 
     ChangesViewModifier.KEY.addChangeListener(project, { resetViewImmediatelyAndRefreshLater() }, cs.asDisposable())
     project.messageBus.connect(cs).subscribe(ChangesViewModifier.TOPIC, ChangesViewModifierListener { scheduleRefresh() })
@@ -161,25 +157,6 @@ abstract class CommitChangesViewWithToolbarPanel(
   private companion object {
     private val TRACER
       get() = TelemetryManager.getInstance().getTracer(VcsScope)
-
-    private fun createChangesToolbarActions(clView: ChangesListView): List<AnAction> {
-      val actions = mutableListOf<AnAction?>()
-      actions.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR))
-
-      if (!isNewUI()) {
-        actions.add(Separator.getInstance())
-      }
-
-      actions.add(ActionManager.getInstance().getAction("ChangesView.ViewOptions"))
-      actions.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(clView.treeExpander, clView))
-      actions.add(CommonActionsManager.getInstance().createCollapseAllAction(clView.treeExpander, clView))
-      actions.add(Separator.getInstance())
-      actions.add(ActionManager.getInstance().getAction("ChangesView.SingleClickPreview"))
-      actions.add(ActionManager.getInstance().getAction("Vcs.GroupedDiffToolbarAction"))
-      actions.add(Separator.getInstance())
-
-      return actions.filterNotNull()
-    }
   }
 
   class ModelData(

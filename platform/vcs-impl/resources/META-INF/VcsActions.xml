@@ -78,7 +78,9 @@
       <override-text place="GoToAction" use-text-of-place="MainMenu"/>
     </action>
 
-    <action id="ChangesView.SingleClickPreview" class="com.intellij.openapi.vcs.changes.ToggleDetailsAction"/>
+    <action id="ChangesView.SingleClickPreview" class="com.intellij.openapi.vcs.changes.ToggleDetailsAction">
+      <add-to-group group-id="ChangesViewToolbar.Shared.Other"/>
+    </action>
 
     <!-- Main menu | Version Control -->
     <group id="VcsGroups" class="com.intellij.openapi.vcs.actions.VcsGroupsActionGroup" popup="true">
@@ -154,6 +156,7 @@
               icon="AllIcons.Vcs.ShelveSilent">
         <keyboard-shortcut first-keystroke="shift control H" keymap="$default"/>
       </action>
+      <add-to-group group-id="ChangesViewToolbar.Shared" anchor="first"/>
     </group>
     <action id="ChangesView.SaveToShelve" class="com.intellij.openapi.vcs.changes.actions.SaveToShelveAction"/>
 

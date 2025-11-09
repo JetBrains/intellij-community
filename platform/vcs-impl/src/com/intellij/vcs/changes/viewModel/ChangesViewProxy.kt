@@ -2,7 +2,6 @@
 package com.intellij.vcs.changes.viewModel
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
@@ -34,7 +33,6 @@ internal abstract class ChangesViewProxy(protected val scope: CoroutineScope) : 
   abstract fun initPanel()
 
   abstract fun setToolbarHorizontal(horizontal: Boolean)
-  abstract fun getActions(): List<AnAction>
   abstract fun isModelUpdateInProgress(): Boolean
 
   abstract fun scheduleRefreshNow(callback: Runnable?)

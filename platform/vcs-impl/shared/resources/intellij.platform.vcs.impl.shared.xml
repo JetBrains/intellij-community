@@ -65,12 +65,20 @@
   </actions>
 
   <actions resource-bundle="messages.VcsBundle">
-    <group id="ChangesView.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
-      <reference ref="ChangesView.GroupBy"/>
-      <separator key="action.vcs.log.show.separator"/>
-      <action id="ChangesView.ShowIgnored"
-              class="com.intellij.platform.vcs.impl.shared.changes.ToggleShowIgnoredAction"
-              icon="AllIcons.Actions.ToggleVisibility"/>
+    <group id="ChangesViewToolbar.Shared">
+      <group id="ChangesView.ViewOptions" icon="AllIcons.Actions.Show" popup="true">
+        <reference ref="ChangesView.GroupBy"/>
+        <separator key="action.vcs.log.show.separator"/>
+        <action id="ChangesView.ShowIgnored"
+                class="com.intellij.platform.vcs.impl.shared.changes.ToggleShowIgnoredAction"
+                icon="AllIcons.Actions.ToggleVisibility"/>
+      </group>
+      <separator/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+      <separator/>
+      <group id="ChangesViewToolbar.Shared.Other"/>
+      <separator/>
     </group>
   </actions>
 </idea-plugin>
