@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
+import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.util.asSafely
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -12,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.lang.BinaryOperationPrecedence
@@ -19,7 +23,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
-import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK
+import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_TASK_CONTAINER
 
 private enum class TaskProperty(val propertyName: String, val setterName: String) {
@@ -47,7 +51,9 @@ class KotlinTaskMissingGroupAndDescriptionInspectionVisitor(private val holder: 
                 "registering", "creating" -> {
                     val tasksClassId = expression.receiverExpression.resolveExpression()
                         .asSafely<KaCallableSymbol>()?.callableId?.classId?.asSingleFqName() ?: return
-                    if (tasksClassId != GRADLE_KOTLIN_PROJECT_DELEGATE) return
+                    if (tasksClassId != GRADLE_KOTLIN_PROJECT_DELEGATE &&
+                        !tasksClassId.toString().startsWith(GRADLE_API_COMMON_PACKAGE)
+                    ) return
                 }
 
                 else -> return
@@ -117,7 +123,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionVisitor(private val holder: 
         .filter {
             analyze(it) {
                 val parentPackage = it.left?.resolveExpression()?.getFqNameIfPackageOrNonLocal()?.parentOrNull()
-                parentPackage == FqName(GRADLE_API_TASK) || parentPackage == GRADLE_KOTLIN_PROJECT_DELEGATE
+                parentPackage.toString().startsWith(GRADLE_API_COMMON_PACKAGE) || parentPackage == GRADLE_KOTLIN_PROJECT_DELEGATE
             }
         }.mapNotNull {
             when (it.left?.text) {
@@ -135,7 +141,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionVisitor(private val holder: 
             analyze(it) {
                 val classId = it.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId?.classId?.asSingleFqName()
                     ?: return@analyze false
-                classId == FqName(GRADLE_API_TASK) || classId == GRADLE_KOTLIN_PROJECT_DELEGATE
+                classId.toString().startsWith(GRADLE_API_COMMON_PACKAGE) || classId == GRADLE_KOTLIN_PROJECT_DELEGATE
             }
         }.mapNotNull {
             when (it.calleeExpression?.text) {
@@ -146,6 +152,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionVisitor(private val holder: 
         }.toSet()
 
     companion object {
+        private const val GRADLE_API_COMMON_PACKAGE = "org.gradle.api"
         private val GRADLE_KOTLIN_PROJECT_DELEGATE = FqName("org.gradle.kotlin.dsl.support.delegates.ProjectDelegate")
     }
 }
@@ -175,23 +182,32 @@ private class AddGroupDescriptionFix(
         val templateBuilder = updater.templateBuilder()
 
         if (addGroup) {
-            val assignment = psiFactory.createExpression("${TaskProperty.GROUP.propertyName} = \"example group\"")
+            val assignment = psiFactory.createExpression("${TaskProperty.GROUP.propertyName} = \"\"")
             val templateElement = block.addAfter(assignment, null)
                 .apply { block.addAfter(psiFactory.createNewLine(), this) }
                 .asSafely<KtBinaryExpression>()!!.right!!
-                .asSafely<KtStringTemplateExpression>()!!.entries[0]
-            templateBuilder.field(templateElement, "example group")
+
+            templateBuilder.field(
+                templateElement,
+                TextRange(1, 1),
+                "groupField",
+                ChooseStringExpression(getTaskGroups(project), "")
+            )
         }
         if (addDescription) {
-            val assignment = psiFactory.createExpression("${TaskProperty.DESCRIPTION.propertyName} = \"example description\"")
+            val assignment = psiFactory.createExpression("${TaskProperty.DESCRIPTION.propertyName} = \"\"")
             val anchor = if (addGroup) block.firstChild else null
             val templateElement = block.addAfter(assignment, anchor)
                 .apply {
                     if (addGroup) block.addBefore(psiFactory.createNewLine(), this)
                     else block.addAfter(psiFactory.createNewLine(), this)
                 }.asSafely<KtBinaryExpression>()!!.right!!
-                .asSafely<KtStringTemplateExpression>()!!.entries[0]
-            templateBuilder.field(templateElement, "example description")
+            templateBuilder.field(
+                templateElement,
+                TextRange(1, 1),
+                "descriptionField",
+                ConstantNode("")
+            )
         }
     }
 }
@@ -214,16 +230,31 @@ private class AddConfigBlockWithGroupDescriptionFix() : KotlinModCommandQuickFix
         val replacement = psiFactory.createExpression(
             """
             $selectorName {
-                ${TaskProperty.GROUP.propertyName} = "example group"
-                ${TaskProperty.DESCRIPTION.propertyName} = "example description"
+                ${TaskProperty.GROUP.propertyName} = ""
+                ${TaskProperty.DESCRIPTION.propertyName} = ""
             }
             """.trimIndent()
         ) as KtCallExpression
         val replaced = element.replace(replacement) as KtCallExpression
         val (templateGroupElement, templateDescriptionElement) = replaced.getBlock()!!.children.map {
-            it.asSafely<KtBinaryExpression>()!!.right!!.asSafely<KtStringTemplateExpression>()!!.entries[0]
+            it.asSafely<KtBinaryExpression>()!!.right!!
         }
-        templateBuilder.field(templateGroupElement, "example group")
-        templateBuilder.field(templateDescriptionElement, "example description")
+
+        templateBuilder.field(
+            templateGroupElement,
+            TextRange(1, 1),
+            "groupField",
+            ChooseStringExpression(getTaskGroups(project), "")
+        )
+        templateBuilder.field(
+            templateDescriptionElement,
+            TextRange(1, 1),
+            "descriptionField",
+            ConstantNode("")
+        )
     }
 }
+
+private fun getTaskGroups(project: Project) = GradleTasksIndices.getInstance(project)
+    .findTasks(project.guessProjectDir()!!.path)
+    .mapNotNull { it.group }.toSet().map { it.lowercase() }.sorted()
