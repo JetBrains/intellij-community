@@ -56,7 +56,7 @@ internal fun findDependencyType(expression: KtCallExpression): DependencyType? {
 internal fun findNamedOrPositionalArgument(element: KtValueArgumentList, parameterName: String, expectedIndex: Int): KtExpression? {
     val argument = element.arguments.find {
         it.getArgumentName()?.asName?.identifier == parameterName
-    } ?: element.arguments.getOrNull(expectedIndex)
+    } ?: element.arguments.getOrNull(expectedIndex).takeIf { it?.isNamed() == false }
     return argument?.getArgumentExpression()
 }
 
