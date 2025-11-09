@@ -62,6 +62,30 @@
               class="com.intellij.openapi.vcs.changes.actions.SetDirectoryChangesGroupingAction"/>
       <add-to-group group-id="Vcs.KeymapGroup"/>
     </group>
+
+    <group id="CommitView.GearActions">
+      <group id="CommitView.ShowOnDoubleClick" popup="true" searchable="false">
+        <action id="CommitView.ShowOnDoubleClick.EditorPreview"
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$EditorPreview">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+        <action id="CommitView.ShowOnDoubleClick.Source"
+                class="com.intellij.openapi.vcs.changes.actions.ShowOnDoubleClickToggleAction$Source">
+          <override-text place="ToolwindowPopup"/>
+        </action>
+      </group>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
+
+    <group id="LocalChangesView.GearActions">
+      <group id="LocalChangesView.ShowOnDoubleClick" popup="true" searchable="false" class="com.intellij.ide.actions.NonEmptyActionGroup">
+        <reference ref="CommitView.ShowOnDoubleClick.EditorPreview"/>
+        <reference ref="CommitView.ShowOnDoubleClick.Source"/>
+      </group>
+
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </group>
   </actions>
 
   <actions resource-bundle="messages.VcsBundle">

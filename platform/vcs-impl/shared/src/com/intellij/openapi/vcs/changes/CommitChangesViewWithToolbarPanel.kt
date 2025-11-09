@@ -6,11 +6,11 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsConfiguration.getInstance
 import com.intellij.openapi.vcs.changes.ChangesViewModifier.ChangesViewModifierListener
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
@@ -21,12 +21,11 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
-import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
-import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
+import com.intellij.platform.vcs.impl.shared.commit.CommitToolWindowViewModel
 import com.intellij.platform.vcs.impl.shared.telemetry.ChangesView
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.ui.ExpandableItemsHandler
@@ -36,10 +35,11 @@ import com.intellij.util.application
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import fleet.rpc.client.durable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.event.MouseEvent
@@ -190,12 +190,6 @@ private class ChangesViewInputHandler(private val cs: CoroutineScope, private va
   val diffRequests: MutableSharedFlow<ChangesViewDiffAction> =
     MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  val commitTwEnabled = flow {
-    durable {
-      emitAll(ChangesViewApi.getInstance().isCommitToolWindowEnabled(changesView.project.projectId()))
-    }
-  }.stateIn(cs, SharingStarted.Eagerly, true)
-
   init {
     changesView.doubleClickHandler = Processor { e: MouseEvent ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(changesView, e)) return@Processor false
@@ -214,7 +208,10 @@ private class ChangesViewInputHandler(private val cs: CoroutineScope, private va
 
   private fun handleEnterOrDoubleClick(requestFocus: Boolean): Boolean {
     if (!performHoverAction()) {
-      if (isDiffPreviewOnDoubleClickOrEnter()) diffRequests.tryEmit(ChangesViewDiffAction.PERFORM_DIFF)
+      val diffPreviewOnDoubleClickOrEnter = changesView.project.service<CommitToolWindowViewModel>().diffPreviewOnDoubleClickOrEnter
+      if (diffPreviewOnDoubleClickOrEnter) {
+        diffRequests.tryEmit(ChangesViewDiffAction.PERFORM_DIFF)
+      }
       else {
         val dataContext = DataManager.getInstance().getDataContext(changesView)
         cs.launch {
@@ -225,10 +222,6 @@ private class ChangesViewInputHandler(private val cs: CoroutineScope, private va
     }
     return true
   }
-
-  private fun isDiffPreviewOnDoubleClickOrEnter(): Boolean =
-    if (commitTwEnabled.value) VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
-    else VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK
 
   private fun performHoverAction(): Boolean {
     val selected = VcsTreeModelData.selected(changesView).iterateNodes().single()

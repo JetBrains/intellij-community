@@ -1,13 +1,20 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsApplicationSettings
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isCommitToolWindowShown
+import com.intellij.platform.vcs.impl.shared.commit.CommitToolWindowViewModel
+import com.intellij.util.application
 
-internal sealed class ShowOnDoubleClickToggleAction(private val isEditorPreview: Boolean) : DumbAwareToggleAction() {
+internal sealed class ShowOnDoubleClickToggleAction(private val isEditorPreview: Boolean) :
+  DumbAwareToggleAction(),
+  ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   override fun isSelected(e: AnActionEvent): Boolean {
     val isCommitToolwindowShown = e.project?.let(::isCommitToolWindowShown) == true
     if (isCommitToolwindowShown) {
@@ -29,7 +36,11 @@ internal sealed class ShowOnDoubleClickToggleAction(private val isEditorPreview:
     else {
       VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK = newState
     }
+    saveSettingsForRemoteDevelopment(application)
   }
+
+  private fun isCommitToolWindowShown(project: Project): Boolean =
+    project.service<CommitToolWindowViewModel>().commitTwEnabled.value
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
