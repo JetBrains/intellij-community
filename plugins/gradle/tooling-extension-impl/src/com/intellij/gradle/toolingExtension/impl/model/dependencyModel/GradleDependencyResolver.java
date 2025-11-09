@@ -23,7 +23,6 @@ import org.gradle.api.artifacts.result.ResolvedComponentResult;
 import org.gradle.api.artifacts.result.ResolvedDependencyResult;
 import org.gradle.api.specs.Spec;
 import org.gradle.internal.resolve.ModuleVersionResolveException;
-import org.gradle.internal.component.resolution.failure.exception.VariantSelectionByAttributesException;
 import org.gradle.util.Path;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +33,8 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 /**
  * @author Vladislav.Soroka
@@ -41,6 +42,21 @@ import java.util.*;
 public final class GradleDependencyResolver {
 
   private static final boolean IS_83_OR_BETTER = GradleVersionUtil.isCurrentGradleAtLeast("8.3");
+
+  // Gradle 8.8+
+  private static final Predicate<String> UNRESOLVED_DEPENDENCY_JVM_8_8_PREDICATE = Pattern.compile(
+    "Dependency resolution is looking for a library compatible with JVM runtime version (\\d+), but '(.+?)' is only compatible with JVM runtime version (\\d+) or newer\\."
+  ).asPredicate();
+
+  // Gradle 6.4-8.7
+  private static final Predicate<String> UNRESOLVED_DEPENDENCY_JVM_6_4_PREDICATE = Pattern.compile(
+    "No matching variant of (.+?) was found\\. The consumer was configured to find (?:a library for use during (?:compile-time|runtime),|an API of a library) compatible with Java"
+  ).asPredicate();
+
+  // Gradle 6.0-8.3
+  private static final Predicate<String> UNRESOLVED_DEPENDENCY_JVM_6_0_PREDICATE = Pattern.compile(
+    "Required org.gradle.jvm.version '(\\d+)' (?:but no value provided|and found incompatible value '(\\d+)')\\."
+  ).asPredicate();
 
   private final @NotNull Project myProject;
   private final @NotNull GradleDependencyDownloadPolicy myDownloadPolicy;
@@ -393,7 +409,6 @@ public final class GradleDependencyResolver {
       }
       MyModuleVersionSelector moduleVersionSelector = null;
       Throwable problem = unresolvedDependency.getProblem();
-      StringBuilder failureMessage = new StringBuilder(problem.getMessage());
       if (problem.getCause() != null) {
         problem = problem.getCause();
       }
@@ -408,13 +423,23 @@ public final class GradleDependencyResolver {
               moduleComponentSelector.getVersion()
             );
           }
-        } else if (problem instanceof VariantSelectionByAttributesException) {
-          failureMessage.append("\n\nPossible cause:\n - ").append(problem.getMessage());
+        }
+        else if (UNRESOLVED_DEPENDENCY_JVM_8_8_PREDICATE.test(problem.getMessage()) ||
+                 UNRESOLVED_DEPENDENCY_JVM_6_4_PREDICATE.test(problem.getMessage())) {
+          ModuleVersionSelector selector = unresolvedDependency.getSelector();
+          moduleVersionSelector = new MyModuleVersionSelector(selector.getName(), selector.getGroup(), selector.getVersion());
+        }
+        else if ((problem.getMessage().startsWith("Cannot choose between the following variants of") ||
+                  problem.getMessage().startsWith("Unable to find a matching variant of")) &&
+                 UNRESOLVED_DEPENDENCY_JVM_6_0_PREDICATE.test(problem.getMessage())) {
+          ModuleVersionSelector selector = unresolvedDependency.getSelector();
+          moduleVersionSelector = new MyModuleVersionSelector(selector.getName(), selector.getGroup(), selector.getVersion());
         }
       }
       catch (Throwable ignore) {
       }
       if (moduleVersionSelector == null) {
+        problem = unresolvedDependency.getProblem();
         ModuleVersionSelector selector = unresolvedDependency.getSelector();
         moduleVersionSelector = new MyModuleVersionSelector(selector.getName(), selector.getGroup(), selector.getVersion());
       }
@@ -422,7 +447,7 @@ public final class GradleDependencyResolver {
       dependency.setName(moduleVersionSelector.name);
       dependency.setGroup(moduleVersionSelector.group);
       dependency.setVersion(moduleVersionSelector.version);
-      dependency.setFailureMessage(failureMessage.toString());
+      dependency.setFailureMessage(problem.getMessage());
       result.add(dependency);
     }
     return result;
