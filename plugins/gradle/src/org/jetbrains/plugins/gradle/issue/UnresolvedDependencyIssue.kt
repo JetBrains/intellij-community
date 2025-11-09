@@ -45,17 +45,39 @@ abstract class UnresolvedDependencyIssue(
       issueDescription.append(": ")
     }
 
-    issueDescription.append(failureMessage?.trim())
+    val cleanedFailureMessage = when {
+      JVM_VERSION_ISSUE_PATTERN_6_4.find(failureMessage ?: "") != null ->
+        failureMessage?.replace(JVM_VERSION_ISSUE_PATTERN_6_4_CLEANER, "")?.trim()
+
+      JVM_VERSION_ISSUE_PATTERN_6_2.find(failureMessage ?: "") != null ->
+        failureMessage?.replace(JVM_VERSION_ISSUE_PATTERN_6_2_CLEANER, "")?.trim()
+
+      // Gradle 6.0-6.1 JUnit 6 specific fix
+      failureMessage?.startsWith(JVM_VERSION_ISSUE_JUNIT6_START) == true -> {
+        val currentGradleJVM = JVM_VERSION_ISSUE_PATTERN_6_0.find(failureMessage)?.groupValues[1]?.toInt()
+        GradleBundle.message("gradle.build.issue.unresolved.dependency.junit6.gradle6.description", currentGradleJVM)
+      }
+
+      else -> failureMessage?.trim()
+    }
+
+    issueDescription.append(cleanedFailureMessage)
     return issueDescription.toString()
   }
 
   fun configureQuickFix(projectPath: String?, failureMessage: String?, isOfflineMode: Boolean, @Nls offlineModeQuickFixText: String) {
     val noRepositoriesDefined = failureMessage?.contains("no repositories are defined") ?: false
-    val requiredGradleJVM = if (projectPath != null) JVM_VERSION_ISSUE_PATTERN.find(failureMessage ?: "") else null
+    val requiredGradleJVM = if (projectPath != null && failureMessage != null) {
+      JVM_VERSION_ISSUE_PATTERN_8_8.find(failureMessage)?.groupValues[1]?.toInt()
+      ?: JVM_VERSION_ISSUE_PATTERN_6_4.find(failureMessage)?.groupValues[2]?.toInt()
+      ?: JVM_VERSION_ISSUE_PATTERN_6_2.find(failureMessage)?.groupValues[2]?.toInt()
+      ?: failureMessage.startsWith(JVM_VERSION_ISSUE_JUNIT6_START).let { if (it) 17 else null }
+    }
+    else null
 
     when {
       requiredGradleJVM != null -> {
-        val javaVersion = JavaVersion.compose(requiredGradleJVM.groupValues[1].toInt(), 0, 0)
+        val javaVersion = JavaVersion.compose(requiredGradleJVM, 0, 0)
         addGradleJvmOrNewerQuickFix(projectPath!!, javaVersion)
       }
       isOfflineMode && !noRepositoriesDefined -> addQuickFixPrompt(offlineModeQuickFixText)
@@ -81,7 +103,22 @@ abstract class UnresolvedDependencyIssue(
   companion object {
     internal const val offlineQuickFixId = "disable_offline_mode"
     private const val declaringRepositoriesLink = "https://docs.gradle.org/current/userguide/declaring_repositories.html"
-    private val JVM_VERSION_ISSUE_PATTERN = Regex("is only compatible with JVM runtime version (\\d+) or newer\\.")
+    private val JVM_VERSION_ISSUE_PATTERN_8_8 = Regex("""is only compatible with JVM runtime version (\d+) or newer\.""")
+    private val JVM_VERSION_ISSUE_PATTERN_6_4 = Regex(
+      """Incompatible because this component declares a component( for use during compile-time)?,? compatible with Java (\d+) """ +
+      """and the consumer needed a component( for use during runtime)?,? compatible with Java (\d+)"""
+    )
+    private val JVM_VERSION_ISSUE_PATTERN_6_4_CLEANER = Regex(
+      """\n {6}- Other compatible attributes?:[^\n]*(\n {10}[^\n]*)*"""
+    )
+    private val JVM_VERSION_ISSUE_PATTERN_6_2 = Regex(
+      """Required org\.gradle\.jvm\.version '(\d+)' and found incompatible value '(\d+)'\."""
+    )
+    private val JVM_VERSION_ISSUE_PATTERN_6_2_CLEANER = Regex(
+      """\n {6}- Other attributes?:[^\n]*(\n {10}[^\n]*)*"""
+    )
+    private val JVM_VERSION_ISSUE_PATTERN_6_0 = Regex("""Required org\.gradle\.jvm\.version '(\d+)' but no value provided\.""")
+    private const val JVM_VERSION_ISSUE_JUNIT6_START = "Cannot choose between the following variants of org.junit.jupiter:junit-jupiter:6"
   }
 }
 
