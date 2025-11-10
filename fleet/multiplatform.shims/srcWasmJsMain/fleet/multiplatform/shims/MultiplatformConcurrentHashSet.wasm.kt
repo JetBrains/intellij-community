@@ -4,7 +4,7 @@ package fleet.multiplatform.shims
 import fleet.util.multiplatform.Actual
 
 @Actual
-internal fun <K> MultiplatformConcurrentHashSetWasmJs(): MultiplatformConcurrentHashSet<K> = MultiplatformConcurrentHashSetWasmJs()
+internal fun <K> MultiplatformConcurrentHashSetWasmJs(): MultiplatformConcurrentHashSet<K> = MultiplatformConcurrentHashSetWasmJsImpl()
 
 private class MultiplatformConcurrentHashSetWasmJsImpl<T> : MultiplatformConcurrentHashSet<T> {
   private val set = mutableSetOf<T>()
