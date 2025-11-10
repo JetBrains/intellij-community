@@ -667,6 +667,11 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                             typeMetadata = FinalClassMetadata.KnownClass(
                                                                                                               fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
                                                         withDefault = false),
+                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "projects",
+                                                        valueType = ValueTypeMetadata.EntityReference(
+                                                          connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
+                                                          entityFqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity",
+                                                          isChild = true, isNullable = false), withDefault = false),
                                     OwnPropertyMetadata(isComputable = true, isKey = false, isOpen = false, name = "symbolicId",
                                                         valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
                                                                                                             typeMetadata = FinalClassMetadata.ClassMetadata(
@@ -865,6 +870,11 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                             typeMetadata = FinalClassMetadata.KnownClass(
                                                                                                               fqName = "com.intellij.platform.workspace.storage.EntitySource")),
                                                         withDefault = false),
+                                    OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "build",
+                                                        valueType = ValueTypeMetadata.EntityReference(
+                                                          connectionType = ConnectionId.ConnectionType.ONE_TO_MANY,
+                                                          entityFqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity",
+                                                          isChild = false, isNullable = false), withDefault = false),
                                     OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "buildId",
                                                         valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
                                                                                                             typeMetadata = FinalClassMetadata.ClassMetadata(
@@ -1081,9 +1091,9 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity", metadataHash = 1322744333)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity", metadataHash = 261393341)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity", metadataHash = 657314474)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity", metadataHash = 1811017647)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity", metadataHash = 547852071)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity", metadataHash = 1998822139)
     addMetadataHash(typeFqn = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId", metadataHash = -535054241)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId", metadataHash = -1846600137)

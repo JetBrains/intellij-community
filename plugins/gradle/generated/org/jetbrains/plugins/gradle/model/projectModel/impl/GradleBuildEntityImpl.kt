@@ -11,8 +11,10 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.extractOneToManyChildren
 import com.intellij.platform.workspace.storage.impl.extractOneToManyParent
 import com.intellij.platform.workspace.storage.impl.indices.WorkspaceMutableIndex
+import com.intellij.platform.workspace.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.platform.workspace.storage.impl.updateOneToManyParentOfChild
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
@@ -23,6 +25,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityBuilder
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
+import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity
+import org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityBuilder
 
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
@@ -33,9 +37,12 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
     internal val EXTERNALPROJECT_CONNECTION_ID: ConnectionId = ConnectionId.create(ExternalProjectEntity::class.java,
                                                                                    GradleBuildEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val PROJECTS_CONNECTION_ID: ConnectionId = ConnectionId.create(GradleBuildEntity::class.java, GradleProjectEntity::class.java,
+                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       EXTERNALPROJECT_CONNECTION_ID,
+      PROJECTS_CONNECTION_ID,
     )
 
   }
@@ -62,6 +69,9 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
       readField("url")
       return dataSource.url
     }
+
+  override val projects: List<GradleProjectEntity>
+    get() = snapshot.extractOneToManyChildren<GradleProjectEntity>(PROJECTS_CONNECTION_ID, this)!!.toList()
 
   override val entitySource: EntitySource
     get() {
@@ -125,6 +135,17 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
       }
       if (!getEntityData().isUrlInitialized()) {
         error("Field GradleBuildEntity#url should be initialized")
+      }
+      // Check initialization for list with ref type
+      if (_diff != null) {
+        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(PROJECTS_CONNECTION_ID, this) == null) {
+          error("Field GradleBuildEntity#projects should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(true, PROJECTS_CONNECTION_ID)] == null) {
+          error("Field GradleBuildEntity#projects should be initialized")
+        }
       }
     }
 
@@ -218,6 +239,53 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
         changedProperty.add("url")
         val _diff = diff
         if (_diff != null) index(this, "url", value)
+      }
+
+    // List of non-abstract referenced types
+    var _projects: List<GradleProjectEntity>? = emptyList()
+    override var projects: List<GradleProjectEntityBuilder>
+      get() {
+        // Getter of the list of non-abstract referenced types
+        val _diff = diff
+        return if (_diff != null) {
+          @OptIn(EntityStorageInstrumentationApi::class)
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(PROJECTS_CONNECTION_ID,
+                                                                                  this)!!.toList() as List<GradleProjectEntityBuilder>) +
+          (this.entityLinks[EntityLink(true, PROJECTS_CONNECTION_ID)] as? List<GradleProjectEntityBuilder> ?: emptyList())
+        }
+        else {
+          this.entityLinks[EntityLink(true, PROJECTS_CONNECTION_ID)] as? List<GradleProjectEntityBuilder> ?: emptyList()
+        }
+      }
+      set(value) {
+        // Setter of the list of non-abstract referenced types
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null) {
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
+                item_value.entityLinks[EntityLink(false, PROJECTS_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
+              _diff.addEntity(item_value as ModifiableWorkspaceEntityBase<WorkspaceEntity, *>)
+            }
+          }
+          _diff.updateOneToManyChildrenOfParent(PROJECTS_CONNECTION_ID, this, value)
+        }
+        else {
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
+              item_value.entityLinks[EntityLink(false, PROJECTS_CONNECTION_ID)] = this
+            }
+            // else you're attaching a new entity to an existing entity that is not modifiable
+          }
+
+          this.entityLinks[EntityLink(true, PROJECTS_CONNECTION_ID)] = value
+        }
+        changedProperty.add("projects")
       }
 
     override fun getEntityClass(): Class<GradleBuildEntity> = GradleBuildEntity::class.java

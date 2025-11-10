@@ -2,14 +2,14 @@
 package org.jetbrains.plugins.gradle.model.projectModel
 
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface GradleProjectEntity : WorkspaceEntityWithSymbolicId {
-  // TODO Once IJPL-204027 is fixed, add a relation with GradleBuildEntity
-  // Currently, it's needed to use `buildId` to find a build for a project. It would be easier to have a relation with GradleBuildEntity,
-  // but saving entities with this relation causes "Key 10 is missing in the map" error. Also, IJPL-193757 might be related.
+  @Parent
+  val build: GradleBuildEntity
   val buildId: GradleBuildEntityId
 
   val name: String

@@ -18,6 +18,7 @@ interface GradleBuildEntityBuilder : WorkspaceEntityBuilder<GradleBuildEntity> {
   var externalProjectId: ExternalProjectEntityId
   var name: String
   var url: VirtualFileUrl
+  var projects: List<GradleProjectEntityBuilder>
 }
 
 internal object GradleBuildEntityType : EntityType<GradleBuildEntity, GradleBuildEntityBuilder>() {
