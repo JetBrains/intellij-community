@@ -487,7 +487,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     // plugins and artifacts can be resolved in parallel with import
     return coroutineScope {
       val pluginResolutionJob = launchTracked(CoroutineName("pluginResolutionJob")) {
-        val pluginResolver = MavenPluginResolver()
+        val pluginResolver = project.service<MavenPluginResolver>()
         withBackgroundProgressTraced(myProject, "resolveMavenPlugins", MavenProjectBundle.message("maven.downloading.plugins"), true) {
           reportRawProgress { reporter ->
             project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).pluginResolutionStarted()

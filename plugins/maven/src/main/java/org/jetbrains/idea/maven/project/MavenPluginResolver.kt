@@ -17,8 +17,17 @@ import java.nio.file.Path
 data class PluginResolutionResult(val unresolvedPluginIds: Set<MavenId>)
 
 @ApiStatus.Internal
-class MavenPluginResolver() {
+interface MavenPluginResolver {
   suspend fun resolvePlugins(
+    mavenProjects: Collection<MavenProject>,
+    forceUpdateSnapshots: Boolean,
+    mavenEmbedderWrappers: MavenEmbedderWrappers,
+    process: RawProgressReporter,
+    eventHandler: MavenEventHandler): PluginResolutionResult
+}
+
+private class MavenPluginResolverImpl : MavenPluginResolver {
+  override suspend fun resolvePlugins(
     mavenProjects: Collection<MavenProject>,
     forceUpdateSnapshots: Boolean,
     mavenEmbedderWrappers: MavenEmbedderWrappers,
