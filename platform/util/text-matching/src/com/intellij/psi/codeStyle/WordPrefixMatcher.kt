@@ -1,35 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.codeStyle;
+package com.intellij.psi.codeStyle
 
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.text.Matcher;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.codeStyle.FixingLayoutMatcher.Companion.fixLayout
+import com.intellij.util.text.Matcher
+import com.intellij.util.text.NameUtilCore
 
-import java.util.Arrays;
-
-public final class WordPrefixMatcher implements Matcher {
-  private final String[] myPatternWords;
-  private final String[] myFallbackPatternWords;
-
-  public WordPrefixMatcher(String pattern) {
-    myPatternWords = splitToWords(pattern);
-    String fixedLayout = FixingLayoutMatcher.fixLayout(pattern);
-    myFallbackPatternWords = fixedLayout != null && !fixedLayout.equals(pattern) ? NameUtil.nameToWords(fixedLayout) : null;
+class WordPrefixMatcher(pattern: String) : Matcher {
+  private val myPatternWords = splitToWords(pattern)
+  private val myFallbackPatternWords = run {
+    val fixedLayout = fixLayout(pattern)
+    if (fixedLayout != null && fixedLayout != pattern) NameUtilCore.nameToWordList(fixedLayout) else null
   }
 
-  @Override
-  public boolean matches(@NotNull String name) {
-    String[] nameWords = splitToWords(name);
-    return matches(myPatternWords, nameWords) || myFallbackPatternWords != null && matches(myFallbackPatternWords, nameWords);
+  override fun matches(name: String): Boolean {
+    val nameWords = splitToWords(name)
+    return matches(myPatternWords, nameWords) || myFallbackPatternWords != null && matches(myFallbackPatternWords, nameWords)
   }
 
-  private static @NotNull String[] splitToWords(@NotNull String string) {
-    return string.split("[\\s-/]");
-  }
+  private companion object {
+    private val wordRegex = "[\\s-/]".toRegex()
 
-  private static boolean matches(String[] patternWords, String[] nameWords) {
-    return Arrays.stream(patternWords).allMatch(
-      pw -> Arrays.stream(nameWords).anyMatch(nw -> StringUtilRt.startsWithIgnoreCase(nw, pw))
-    );
+    private fun splitToWords(string: String): List<String> {
+      return string.split(wordRegex)
+    }
+
+    private fun matches(patternWords: List<String>, nameWords: List<String>): Boolean {
+      return patternWords.all { pw ->
+        nameWords.any { nw ->
+          nw.startsWith(pw, ignoreCase = true)
+        }
+      }
+    }
   }
 }

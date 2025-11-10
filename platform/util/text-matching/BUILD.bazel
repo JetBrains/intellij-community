@@ -10,6 +10,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "//platform/util/base",
     "//platform/util-rt",
+    "@lib//:kotlin-stdlib",
   ]
 )
 
@@ -23,6 +24,7 @@ jvm_library(
     "//platform/util/base",
     "//platform/util-rt",
     "//platform/util-rt:util-rt_test_lib",
+    "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
     "@lib//:kotlin-test-junit",
     "@lib//:junit5",

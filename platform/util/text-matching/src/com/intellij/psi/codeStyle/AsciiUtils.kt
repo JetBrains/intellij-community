@@ -1,120 +1,130 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.codeStyle;
+package com.intellij.psi.codeStyle
 
-import org.jetbrains.annotations.NotNull;
+import kotlin.jvm.JvmStatic
 
 /**
- * String utility methods that assume that the string contents is ASCII-only (all codepoints are <= 127).
+ * String utility methods that assume that the string content is ASCII-only (all codepoints are <= 127).
  * These methods may work faster but work incorrectly on other characters
  */
-final class AsciiUtils {
+internal object AsciiUtils {
   /**
-   * Implementation of {@link com.intellij.util.text.NameUtilCore#nextWord(String, int)} for ASCII-only strings
+   * Implementation of [com.intellij.util.text.NameUtilCore.nextWord] for ASCII-only strings
    * 
-   * @param text text to find next word in
+   * @param text text to find the next word in
    * @param start starting position within the text
    * @return position of the next word; may point to the end of the string
    */
-  static int nextWordAscii(@NotNull String text, int start) {
-    if (!isLetterOrDigitAscii(text.charAt(start))) {
-      return start + 1;
+  @JvmStatic
+  fun nextWordAscii(text: String, start: Int): Int {
+    if (!isLetterOrDigitAscii(text[start])) {
+      return start + 1
     }
 
-    int i = start;
-    while (i < text.length() && isDigitAscii(text.charAt(i))) {
-      i++;
+    var i = start
+    while (i < text.length && isDigitAscii(text[i])) {
+      i++
     }
     if (i > start) {
       // digits form a separate hump
-      return i;
+      return i
     }
 
-    while (i < text.length() && isUpperAscii(text.charAt(i))) {
-      i++;
+    while (i < text.length && isUpperAscii(text[i])) {
+      i++
     }
 
     if (i > start + 1) {
-      // several consecutive uppercase letter form a hump
-      if (i == text.length() || !isLetterAscii(text.charAt(i))) {
-        return i;
+      // several consecutive uppercase letters form a hump
+      if (i == text.length || !isLetterAscii(text[i])) {
+        return i
       }
-      return i - 1;
+      return i - 1
     }
 
-    if (i == start) i += 1;
-    while (i < text.length() && isLetterAscii(text.charAt(i)) && !isWordStartAscii(text, i)) {
-      i++;
+    if (i == start) i += 1
+    while (i < text.length && isLetterAscii(text[i]) && !isWordStartAscii(text, i)) {
+      i++
     }
-    return i;
+    return i
   }
 
-  private static boolean isWordStartAscii(String text, int i) {
-    char cur = text.charAt(i);
-    char prev = i > 0 ? text.charAt(i - 1) : 0;
+  private fun isWordStartAscii(text: String, i: Int): Boolean {
+    val cur = text[i]
+    val prev = if (i > 0) text[i - 1] else null
     if (isUpperAscii(cur)) {
-      if (isUpperAscii(prev)) {
+      if (prev != null && isUpperAscii(prev)) {
         // check that we're not in the middle of an all-caps word
-        int nextPos = i + 1;
-        if (nextPos >= text.length()) return false;
-        return isLowerAscii(text.charAt(nextPos));
+        val nextPos = i + 1
+        if (nextPos >= text.length) return false
+        return isLowerAscii(text[nextPos])
       }
-      return true;
+      return true
     }
     if (isDigitAscii(cur)) {
-      return true;
+      return true
     }
     if (!isLetterAscii(cur)) {
-      return false;
+      return false
     }
-    return i == 0 || !isLetterOrDigitAscii(text.charAt(i - 1));
+    return i == 0 || !isLetterOrDigitAscii(text[i - 1])
   }
 
-  private static boolean isLetterAscii(char cur) {
-    return cur >= 'a' && cur <= 'z' || cur >= 'A' && cur <= 'Z';
+  private fun isLetterAscii(cur: Char): Boolean {
+    return cur in 'a'..'z' || cur in 'A'..'Z'
   }
 
-  private static boolean isLetterOrDigitAscii(char cur) {
-    return isLetterAscii(cur) || isDigitAscii(cur);
+  private fun isLetterOrDigitAscii(cur: Char): Boolean {
+    return isLetterAscii(cur) || isDigitAscii(cur)
   }
 
-  private static boolean isDigitAscii(char cur) {
-    return cur >= '0' && cur <= '9';
+  private fun isDigitAscii(cur: Char): Boolean {
+    return cur in '0'..'9'
   }
 
-  static char toUpperAscii(char c) {
-    if (c >= 'a' && c <= 'z') {
-      return (char)(c + ('A' - 'a'));
+  @JvmStatic
+  fun toUpperAscii(c: Char): Char {
+    return if (isLowerAscii(c)) {
+      // 0x20. It's 'A'.code - 'a'.code, kotlin doesn't fold the constant during compilation
+      c - 0x20
     }
-    return c;
-  }
-
-  static char toLowerAscii(char c) {
-    if (c >= 'A' && c <= 'Z') {
-      return (char)(c - ('A' - 'a'));
+    else {
+      c
     }
-    return c;
   }
 
-  static boolean isUpperAscii(char c) {
-    return 'A' <= c && c <= 'Z';
+  @JvmStatic
+  fun toLowerAscii(c: Char): Char {
+    return if (isUpperAscii(c)) {
+      // 0x20. It's 'A'.code - 'a'.code, kotlin doesn't fold the constant during compilation
+      c + 0x20
+    }
+    else {
+      c
+    }
   }
 
-  static boolean isLowerAscii(char c) {
-    return 'a' <= c && c <= 'z';
+  @JvmStatic
+  fun isUpperAscii(c: Char): Boolean {
+    return c in 'A'..'Z'
+  }
+
+  @JvmStatic
+  fun isLowerAscii(c: Char): Boolean {
+    return c in 'a'..'z'
   }
 
   /**
    * @param string string to check
    * @return true if a given string contains ASCII-only characters, so it can be processed with other methods in this class
    */
-  static boolean isAscii(@NotNull String string) {
-    int length = string.length();
-    for (int i = 0; i < length; ++i) {
-      char c = string.charAt(i);
-      if (c >= 128) {
-        return false;
+  @JvmStatic
+  fun isAscii(string: String): Boolean {
+    for (c in string) {
+      if (c.code >= 128) {
+        return false
       }
     }
-    return true;
+    return true
   }
 }

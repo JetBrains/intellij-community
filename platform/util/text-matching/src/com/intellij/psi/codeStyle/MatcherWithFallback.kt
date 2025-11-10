@@ -1,65 +1,57 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.codeStyle;
+package com.intellij.psi.codeStyle
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.util.containers.FList;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.TextRange
+import com.intellij.util.containers.FList
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public class MatcherWithFallback extends MinusculeMatcher {
-  private final @NotNull MinusculeMatcher myMainMatcher;
+open class MatcherWithFallback internal constructor(
+  private val myMainMatcher: MinusculeMatcher,
+  private val myFallbackMatcher: MinusculeMatcher?,
+) : MinusculeMatcher() {
+  override val pattern: String
+    get() = myMainMatcher.pattern
 
-  private final @Nullable MinusculeMatcher myFallbackMatcher;
-
-  MatcherWithFallback(@NotNull MinusculeMatcher mainMatcher,
-                      @Nullable MinusculeMatcher fallbackMatcher) {
-    myMainMatcher = mainMatcher;
-    myFallbackMatcher = fallbackMatcher;
-  }
-
-  @Override
-  public @NotNull String getPattern() {
-    return myMainMatcher.getPattern();
-  }
-
-  @Override
-  public boolean matches(@NotNull String name) {
+  override fun matches(name: String): Boolean {
     return myMainMatcher.matches(name) ||
-           myFallbackMatcher != null && myFallbackMatcher.matches(name);
+           myFallbackMatcher != null && myFallbackMatcher.matches(name)
   }
 
-  @Override
-  public @Nullable FList<TextRange> matchingFragments(@NotNull String name) {
-    FList<TextRange> mainRanges = myMainMatcher.matchingFragments(name);
-    boolean useMainRanges = mainRanges != null && !mainRanges.isEmpty() || myFallbackMatcher == null;
-    return useMainRanges ? mainRanges : myFallbackMatcher.matchingFragments(name);
+  override fun matchingFragments(name: String): FList<TextRange>? {
+    val mainRanges = myMainMatcher.matchingFragments(name)
+    val useMainRanges = !mainRanges.isNullOrEmpty() || myFallbackMatcher == null
+    return if (useMainRanges) mainRanges else myFallbackMatcher.matchingFragments(name)
   }
 
-  @Override
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch) {
-    FList<TextRange> mainRanges = myMainMatcher.matchingFragments(name);
-    boolean useMainRanges = mainRanges != null && !mainRanges.isEmpty() || myFallbackMatcher == null;
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean): Int {
+    val mainRanges = myMainMatcher.matchingFragments(name)
+    val useMainRanges = !mainRanges.isNullOrEmpty() || myFallbackMatcher == null
 
-    return useMainRanges ? myMainMatcher.matchingDegree(name, valueStartCaseMatch, mainRanges)
-                         : myFallbackMatcher.matchingDegree(name, valueStartCaseMatch);
+    return if (useMainRanges) {
+      myMainMatcher.matchingDegree(name, valueStartCaseMatch, mainRanges)
+    }
+    else {
+      myFallbackMatcher.matchingDegree(name, valueStartCaseMatch)
+    }
   }
 
-  @Override
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<? extends TextRange> fragments) {
-    FList<TextRange> mainRanges = myMainMatcher.matchingFragments(name);
-    boolean useMainRanges = mainRanges != null && !mainRanges.isEmpty() || myFallbackMatcher == null;
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
+    val mainRanges = myMainMatcher.matchingFragments(name)
+    val useMainRanges = !mainRanges.isNullOrEmpty() || myFallbackMatcher == null
 
-    return useMainRanges ? myMainMatcher.matchingDegree(name, valueStartCaseMatch, fragments)
-                         : myFallbackMatcher.matchingDegree(name, valueStartCaseMatch, fragments);
+    return if (useMainRanges) {
+      myMainMatcher.matchingDegree(name, valueStartCaseMatch, fragments)
+    }
+    else {
+      myFallbackMatcher.matchingDegree(name, valueStartCaseMatch, fragments)
+    }
   }
 
-  @Override
-  public String toString() {
+  override fun toString(): String {
     return "MatcherWithFallback{" +
            "myMainMatcher=" + myMainMatcher +
            ", myFallbackMatcher=" + myFallbackMatcher +
-           '}';
+           '}'
   }
 }
