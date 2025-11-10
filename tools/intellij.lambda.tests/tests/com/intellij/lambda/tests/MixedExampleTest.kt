@@ -6,14 +6,13 @@ import com.intellij.lambda.tests.SampleTests.Companion.HelloBackendOnlyLambda
 import com.intellij.lambda.tests.SampleTests.Companion.HelloFrontendOnlyLambda
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.TestTemplate
 import java.time.Instant
 import java.util.*
 
 @ExecuteInMonolithAndSplitMode
-class FrontAndBackExampleTest {
+class MixedExampleTest {
 
   private var testName: String = ""
 
@@ -22,7 +21,6 @@ class FrontAndBackExampleTest {
     testName = info.displayName
   }
 
-  @Disabled
   @TestTemplate
   fun testTemplateTest(ide: BackgroundRunWithLambda) = runBlocking {
     ide.runLambdaInBackend(HelloBackendOnlyLambda::class)
