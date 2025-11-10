@@ -8,9 +8,8 @@ import com.intellij.platform.vcs.impl.shared.rpc.*
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 internal class ChangeListsApiImpl : ChangeListsApi {
   override suspend fun areChangeListsEnabled(projectId: ProjectId): Flow<Boolean> =
@@ -33,11 +32,11 @@ internal class ChangeListsApiImpl : ChangeListsApi {
       val changeListManager = ChangeListManager.getInstance(project)
       messageBusConnection.subscribe(ChangeListListener.TOPIC, object : ChangeListAdapter() {
         override fun changeListsChanged() {
-          trySend(changeListManager.changeLists.map { changeList -> changeList.toDto() })
+          launch { send(changeListManager.changeLists.map { ChangeListEqualityWrapper(it) }) }
         }
       })
-      send(changeListManager.changeLists.map { changeList -> changeList.toDto() })
-    }.buffer(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+      send(changeListManager.changeLists.map { ChangeListEqualityWrapper(it) })
+    }.distinctUntilChanged().map { wrappers -> wrappers.map { it.changeList.toDto() } }
 
   private fun LocalChangeList.toDto(): ChangeListDto = ChangeListDto(
     name = name,
@@ -60,4 +59,28 @@ internal class ChangeListsApiImpl : ChangeListsApi {
     filePath = FilePathDto.toDto(file),
     localValue = this,
   )
+}
+
+/**
+ * [LocalChangeListImpl.equals] compares only names, but the new state should be sent only if
+ * the actuals changes set was updated.
+ */
+private class ChangeListEqualityWrapper(val changeList: LocalChangeList) {
+  override fun equals(other: Any?): Boolean {
+    if (changeList != (other as? ChangeListEqualityWrapper)?.changeList) return false
+    if (changeList.changes.size != (other.changeList.changes.size)) return false
+
+    val otherChangesIterator = other.changeList.changes.iterator()
+    val thisChangesIterator = changeList.changes.iterator()
+    while (thisChangesIterator.hasNext()) {
+      val thisChange = thisChangesIterator.next()
+      val otherChange = otherChangesIterator.next()
+      if (thisChange != otherChange || thisChange.beforeRevision != otherChange.beforeRevision) return false
+    }
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return changeList.hashCode()
+  }
 }
