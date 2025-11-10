@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.LocalChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.platform.project.projectId
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
 import fleet.rpc.client.durable
@@ -25,15 +26,19 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
 ) : CommitChangesViewWithToolbarPanel(changesView, cs) {
   init {
     changesView.setInclusionModel(inclusionModel)
-    ChangeListsViewModel.getInstance(project).changeLists.onEach { scheduleRefresh() }.launchIn(cs)
+    ChangeListsViewModel.getInstance(project).changeListsState.onEach { scheduleRefresh() }.launchIn(cs)
     cs.launch {
       subscribeToBackendEvents()
     }
   }
 
   override fun getModelData(): ModelData {
-    val changeLists = ChangeListsViewModel.getInstance(project).changeLists.value
-    return ModelData(changeLists.lists, emptyList(), emptyList()) { true }
+    val changeListsState = ChangeListsViewModel.getInstance(project).changeListsState.value
+    return ModelData(
+      changeLists = changeListsState.changeLists,
+      unversionedFiles = changeListsState.unversionedFiles,
+      ignoredFiles = changeListsState.ignoredFiles.takeIf { ChangesViewSettings.getInstance(project).showIgnored }.orEmpty(),
+    ) { true }
   }
 
   override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {

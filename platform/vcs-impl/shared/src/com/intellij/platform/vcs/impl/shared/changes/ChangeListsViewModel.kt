@@ -4,6 +4,7 @@ package com.intellij.platform.vcs.impl.shared.changes
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.platform.project.ProjectId
@@ -32,17 +33,25 @@ class ChangeListsViewModel(
   }.stateIn(cs, SharingStarted.Eagerly,
             ChangeListManagerState.Updating(ChangeListManagerState.FileHoldersState(true, true)))
 
-  val changeLists: StateFlow<ChangeLists> = changeListsApiFlow { api, projectId ->
-    emitAll(api.getChangeLists(projectId).map { dtos ->
-      val changeLists = dtos.map { it.getChangeList(project) }
-      ChangeLists(
-        changeLists,
-        changeLists.flatMap { it.changes }.associateBy { ChangeId.getId(it) }
-      )
-    })
+  val changeListsState: StateFlow<ChangeLists> = changeListsApiFlow { api, projectId ->
+    emitAll(
+      combine(
+        api.getChangeLists(projectId),
+        api.getUnversionedFiles(projectId),
+        api.getIgnoredFiles(projectId)
+      ) { changeListDtos, unversionedDtos, ignoredDtos ->
+        val changeLists = changeListDtos.map { it.getChangeList(project) }
+        ChangeLists(
+          changeLists = changeLists,
+          changesIdMapping = changeLists.flatMap { it.changes }.associateBy { ChangeId.getId(it) },
+          unversionedFiles = unversionedDtos.map { it.filePath },
+          ignoredFiles = ignoredDtos.map { it.filePath }
+        )
+      }
+    )
   }.stateIn(cs, SharingStarted.Eagerly, ChangeLists.EMPTY)
 
-  fun resolveChange(changeId: ChangeId): Change? = changeLists.value.changes[changeId]
+  fun resolveChange(changeId: ChangeId): Change? = changeListsState.value.changesIdMapping[changeId]
 
   private fun <T> changeListsApiFlow(checkRegistry: Boolean = true, flowProducer: suspend FlowCollector<T>.(ChangeListsApi, ProjectId) -> Unit): Flow<T> =
     if (checkRegistry && !RdLocalChanges.isEnabled()) emptyFlow()
@@ -60,11 +69,13 @@ class ChangeListsViewModel(
   }
 
   class ChangeLists(
-    val lists: List<LocalChangeList>,
-    val changes: Map<ChangeId, Change>
+    val changeLists: List<LocalChangeList>,
+    val changesIdMapping: Map<ChangeId, Change>,
+    val unversionedFiles: List<FilePath>,
+    val ignoredFiles: List<FilePath>,
   ) {
     companion object {
-      val EMPTY = ChangeLists(emptyList(), emptyMap())
+      val EMPTY = ChangeLists(emptyList(), emptyMap(), emptyList(), emptyList())
     }
   }
 }

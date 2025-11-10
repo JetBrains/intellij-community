@@ -1,10 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.changes
 
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.vcs.changes.ChangeListManagerState
 import com.intellij.platform.vcs.impl.shared.rpc.*
+import com.intellij.util.asDisposable
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.getProjectScoped
 import com.intellij.vcs.rpc.ProjectScopeRpcHelper.projectScopedCallbackFlow
 import kotlinx.coroutines.channels.BufferOverflow
@@ -37,6 +39,27 @@ internal class ChangeListsApiImpl : ChangeListsApi {
       })
       send(changeListManager.changeLists.map { ChangeListEqualityWrapper(it) })
     }.distinctUntilChanged().map { wrappers -> wrappers.map { it.changeList.toDto() } }
+
+  override suspend fun getUnversionedFiles(projectId: ProjectId): Flow<List<FilePathDto>> =
+    observeUnchangedFiles(projectId) { it.unversionedFilesPaths }
+
+  override suspend fun getIgnoredFiles(projectId: ProjectId): Flow<List<FilePathDto>> =
+    observeUnchangedFiles(projectId) { it.ignoredFilePaths }
+
+  private suspend fun observeUnchangedFiles(projectId: ProjectId, onUpdate: (ChangeListManager) -> List<FilePath>): Flow<List<FilePathDto>> =
+    projectScopedCallbackFlow(projectId) { project, _ ->
+      val changeListManager = ChangeListManager.getInstance(project)
+      changeListManager.addChangeListListener(object : ChangeListAdapter() {
+        override fun unchangedFileStatusChanged(upToDate: Boolean) {
+          if (upToDate) {
+            launch {
+              send(onUpdate(changeListManager))
+            }
+          }
+        }
+      }, this@projectScopedCallbackFlow.asDisposable())
+      send(onUpdate(changeListManager))
+    }.distinctUntilChanged().map { filePaths -> filePaths.map { FilePathDto.toDto(it) } }
 
   private fun LocalChangeList.toDto(): ChangeListDto = ChangeListDto(
     name = name,
