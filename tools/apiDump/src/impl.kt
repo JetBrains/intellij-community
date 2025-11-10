@@ -10,6 +10,7 @@ import kotlinx.validation.api.*
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AnnotationNode
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import kotlin.io.path.*
 import kotlin.metadata.jvm.JvmFieldSignature
@@ -56,7 +57,8 @@ class ApiIndex private constructor(
     for ((packageName, packageAnnotations) in packages) {
       val existingAnnotations = this.packages[packageName]
       if (existingAnnotations != null && existingAnnotations != packageAnnotations) {
-        error("$packageName has different annotations in different modules. The current root = $root")
+        error("$packageName has different annotations in different modules. The current root = $root (${root.fileSystem}). " +
+              "The existing annotations = $existingAnnotations, the new one = $packageAnnotations")
       }
       builder[packageName] = packageAnnotations
     }
@@ -108,28 +110,29 @@ class API internal constructor(
 fun api(index: ApiIndex, root: Path): API {
   @Suppress("NAME_SHADOWING")
   var index = index
-  val classFilePaths: Sequence<Path> = classFilePaths(root)
 
-  val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
-  index = index.discoverPackages(packages, root)
+  return withClassRootEntries(root) { classFilePaths ->
+    val packages: Map<String, ApiAnnotations> = classFilePaths.packages()
+    index = index.discoverPackages(packages, root)
 
-  val signatures: List<ClassBinarySignature> = classFilePaths
-    .map { it.inputStream() }
-    .loadApiFromJvmClasses()
-    .filter { !it.isComposableSingleton() }
-    .map { it.removeSyntheticBridges() }
-    .map { it.removeToString() }
-    .map { signature ->
-      signature.handleAnnotationsAndVisibility(index).also {
-        /**
-         * Class has to be saved to the [ApiIndex.classes] map in the same iteration
-         * because the next [handleAnnotationsAndVisibility] call relies on it
-         * to resolve the outer class name.
-         */
-        index = index.discoverClass(it, root)
+    val signatures: List<ClassBinarySignature> = classFilePaths
+      .map { it.inputStream() }
+      .loadApiFromJvmClasses()
+      .filter { !it.isComposableSingleton() }
+      .map { it.removeSyntheticBridges() }
+      .map { it.removeToString() }
+      .map { signature ->
+        signature.handleAnnotationsAndVisibility(index).also {
+          /**
+           * Class has to be saved to the [ApiIndex.classes] map in the same iteration
+           * because the next [handleAnnotationsAndVisibility] call relies on it
+           * to resolve the outer class name.
+           */
+          index = index.discoverClass(it, root)
+        }
       }
-    }
-  return API(index, signatures)
+    API(index, signatures)
+  }
 }
 
 /**
@@ -304,13 +307,27 @@ private fun stableAndExperimentalApi(classSignatures: List<ApiClass>): Pair<List
 }
 
 @OptIn(ExperimentalPathApi::class)
-private fun classFilePaths(classRoot: Path): Sequence<Path> {
-  return classRoot
-    .walk()
-    .filter { path ->
-      path.extension == "class" &&
-      !classRoot.relativize(path).startsWith("META-INF/")
+private fun <R> withClassRootEntries(classRoot: Path, block: (entries: Sequence<Path>) -> R): R {
+  return withClassRoot(classRoot) { nioRoot ->
+    val sequence = nioRoot
+      .walk()
+      .filter { path ->
+        path.extension == "class" && !classRoot.relativize(path).startsWith("META-INF/")
+      }
+    block(sequence)
+  }
+}
+
+private fun <R> withClassRoot(classRoot: Path, block: (root: Path) -> R): R {
+  return when {
+    classRoot.isDirectory() -> block(classRoot)
+    classRoot.isRegularFile() && classRoot.extension == "jar" -> {
+      FileSystems.newFileSystem(classRoot).use {
+        block(it.rootDirectories.single())
+      }
     }
+    else -> error("Unsupported classes output root: $classRoot")
+  }
 }
 
 internal data class ApiAnnotations(val isInternal: Boolean, val isExperimental: Boolean) {
