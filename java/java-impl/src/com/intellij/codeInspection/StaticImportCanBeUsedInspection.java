@@ -15,31 +15,32 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    JavaProjectCodeInsightSettings settings = JavaProjectCodeInsightSettings.getSettings(holder.getProject());
+    Project project = holder.getProject();
+    JavaProjectCodeInsightSettings settings = JavaProjectCodeInsightSettings.getSettings(project);
     JavaProjectCodeInsightSettings.AutoStaticNameContainer autoStaticNames = settings.getAllIncludedAutoStaticNames();
     if (autoStaticNames.includedNames().isEmpty()) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
-    Set<String> shortNames = autoStaticNames.includedNames().stream()
-      .map(name -> StringUtil.getShortName(name))
-      .collect(Collectors.toSet());
 
-    Set<String> classShortNames = autoStaticNames.includedNames().stream()
-      .map(name -> StringUtil.getShortName(StringUtil.getPackageName(name)))
-      .filter(name -> !name.isBlank())
-      .collect(Collectors.toSet());
-    shortNames.addAll(classShortNames);
+    Set<String> shortNames = StreamEx.of(autoStaticNames.includedNames())
+      .map(name -> StringUtil.getShortName(name))
+      .append(autoStaticNames.includedNames().stream()
+                .map(name -> StringUtil.getShortName(StringUtil.getPackageName(name)))
+                .filter(name -> !name.isBlank()))
+      .toSet();
 
     return new JavaElementVisitor() {
       @Override
@@ -53,34 +54,50 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
         if (qualifierReference == null || name == null || !shortNames.contains(name)) return;
         StaticImportContext context = findOnDemandImportContext(expression);
         if (context == null) return;
+        List<LocalQuickFix> fixes = new ArrayList<>();
+        fixes.add(new StaticImportFix());
+        fixes.add(new DeleteSettingsFromAutoImportTable(context.fqn, project));
+
+        JavaProjectCodeInsightSettings projectSettings = JavaProjectCodeInsightSettings.getSettings(project);
+        JavaIdeCodeInsightSettings ideSettings = JavaIdeCodeInsightSettings.getInstance();
+        String packageName = StringUtil.getPackageName(context.fqn);
+        if (!projectSettings.includedAutoStaticNames.contains(context.fqn) &&
+            projectSettings.includedAutoStaticNames.contains(packageName) ||
+            !ideSettings.includedAutoStaticNames.contains(context.fqn) &&
+            ideSettings.includedAutoStaticNames.contains(packageName)) {
+          fixes.add(new AddExclusionFromAutoImportTable(context.fqn, project));
+        }
         holder.registerProblem(qualifierReference,
                                JavaBundle.message("inspection.static.import.can.be.used.display.name"),
-                               new StaticImportFix(),
-                               new DeleteSettingsFromAutoImportTable(context.fqn),
-                               new AddExclusionFromAutoImportTable(context.fqn));
+                               fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     };
   }
 
   private static class AddExclusionFromAutoImportTable extends ModCommandQuickFix {
-    private final String myFqn;
+    private final @NotNull String myFqn;
+    private final boolean myIsProjectSettings;
 
-    private AddExclusionFromAutoImportTable(String fqn) { myFqn = fqn; }
+    private AddExclusionFromAutoImportTable(@NotNull String fqn, @NotNull Project project) {
+      myFqn = fqn;
+      JavaProjectCodeInsightSettings settings = JavaProjectCodeInsightSettings.getSettings(project);
+      myIsProjectSettings = settings.includedAutoStaticNames.contains(myFqn) ||
+                            settings.includedAutoStaticNames.contains(StringUtil.getPackageName(myFqn));
+    }
 
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element == null) return ModCommand.nop();
-      JavaIdeCodeInsightSettings settings = JavaIdeCodeInsightSettings.getInstance();
-      if (settings.includedAutoStaticNames.contains(myFqn) || settings.includedAutoStaticNames.contains(StringUtil.getPackageName(myFqn))) {
+      if (myIsProjectSettings) {
         return ModCommand.updateOptionList(element,
-                                           "JavaIdeCodeInsightSettings.includedAutoStaticNames",
+                                           "JavaProjectCodeInsightSettings.includedAutoStaticNames",
                                            strings -> {
                                              strings.add("-" + myFqn);
                                            });
       }
       return ModCommand.updateOptionList(element,
-                                         "JavaProjectCodeInsightSettings.includedAutoStaticNames",
+                                         "JavaIdeCodeInsightSettings.includedAutoStaticNames",
                                          strings -> {
                                            strings.add("-" + myFqn);
                                          });
@@ -88,7 +105,8 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
 
     @Override
     public @NotNull String getName() {
-      return JavaBundle.message("inspection.static.import.can.be.used.exclude.from.auto.import.name", myFqn);
+      return JavaBundle.message("inspection.static.import.can.be.used.exclude.from.auto.import.name", myFqn,
+                                myIsProjectSettings ? 0 : 1);
     }
 
     @Override
@@ -98,38 +116,46 @@ public final class StaticImportCanBeUsedInspection extends AbstractBaseJavaLocal
   }
 
   private static class DeleteSettingsFromAutoImportTable extends ModCommandQuickFix {
-    private final String myFqn;
+    private final @NotNull String myFqn;
+    private final boolean myIsProjectSettings;
 
-    private DeleteSettingsFromAutoImportTable(String fqn) { myFqn = fqn; }
+    private DeleteSettingsFromAutoImportTable(@NotNull String fqn, @NotNull Project project) {
+      myFqn = fqn;
+      JavaProjectCodeInsightSettings settings = JavaProjectCodeInsightSettings.getSettings(project);
+      myIsProjectSettings = settings.includedAutoStaticNames.contains(myFqn) ||
+                            settings.includedAutoStaticNames.contains(StringUtil.getPackageName(myFqn));
+    }
 
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       if (element == null) return ModCommand.nop();
-      JavaIdeCodeInsightSettings settings = JavaIdeCodeInsightSettings.getInstance();
-      if (settings.includedAutoStaticNames.contains(myFqn) || settings.includedAutoStaticNames.contains(StringUtil.getPackageName(myFqn))) {
+      String packageName = StringUtil.getPackageName(myFqn);
+      if (myIsProjectSettings) {
         return ModCommand.updateOptionList(element,
-                                           "JavaIdeCodeInsightSettings.includedAutoStaticNames",
+                                           "JavaProjectCodeInsightSettings.includedAutoStaticNames",
                                            strings -> {
                                              strings.removeIf(t ->
-                                                                t.startsWith(StringUtil.getPackageName(myFqn)) ||
-                                                                t.startsWith("-" + StringUtil.getPackageName(myFqn))
+                                                                t.equals(myFqn) ||
+                                                                t.equals(packageName) ||
+                                                                t.equals("-" + packageName)
                                              );
                                            });
       }
       return ModCommand.updateOptionList(element,
-                                         "JavaProjectCodeInsightSettings.includedAutoStaticNames",
+                                         "JavaIdeCodeInsightSettings.includedAutoStaticNames",
                                          strings -> {
-                                           strings.removeIf(t->
-                                                              t.startsWith(StringUtil.getPackageName(myFqn)) ||
-                                                              t.startsWith("-" + StringUtil.getPackageName(myFqn))
-                                             );
+                                           strings.removeIf(t ->
+                                                              t.equals(myFqn) ||
+                                                              t.equals(packageName) ||
+                                                              t.equals("-" + packageName)
+                                           );
                                          });
     }
 
     @Override
     public @NotNull String getName() {
-      return JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", myFqn);
+      return JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", myFqn, myIsProjectSettings ? 0 : 1);
     }
 
     @Override
