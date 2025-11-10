@@ -1,11 +1,11 @@
-from typing import Any
+from typing import ClassVar
 
 from django.http.request import HttpRequest
-from django.http.response import HttpResponseBase, HttpResponsePermanentRedirect
+from django.http.response import HttpResponseBase, HttpResponsePermanentRedirect, HttpResponseRedirectBase
 from django.utils.deprecation import MiddlewareMixin
 
 class CommonMiddleware(MiddlewareMixin):
-    response_redirect_class: Any
+    response_redirect_class: ClassVar[type[HttpResponseRedirectBase]]
     def process_request(self, request: HttpRequest) -> HttpResponsePermanentRedirect | None: ...
     def should_redirect_with_slash(self, request: HttpRequest) -> bool: ...
     def get_full_path_with_slash(self, request: HttpRequest) -> str: ...

@@ -15,6 +15,7 @@ __all__ = [
     "HORIZONTAL",
     "VERTICAL",
     "AdminSite",
+    "GISModelAdmin",
     "ModelAdmin",
     "StackedInline",
     "TabularInline",
@@ -23,5 +24,4 @@ __all__ = [
     "display",
     "register",
     "site",
-    "GISModelAdmin",
 ]

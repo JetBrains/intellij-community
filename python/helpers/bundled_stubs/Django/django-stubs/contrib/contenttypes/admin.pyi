@@ -2,6 +2,7 @@ from typing import Any
 
 from django.contrib.admin.checks import InlineModelAdminChecks
 from django.contrib.admin.options import InlineModelAdmin
+from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.db.models.base import Model
 
 class GenericInlineModelAdminChecks(InlineModelAdminChecks):
@@ -10,6 +11,7 @@ class GenericInlineModelAdminChecks(InlineModelAdminChecks):
 
 class GenericInlineModelAdmin(InlineModelAdmin):
     template: str
+    formset: type[BaseGenericInlineFormSet]  # type: ignore[assignment]
 
 class GenericStackedInline(GenericInlineModelAdmin): ...
 class GenericTabularInline(GenericInlineModelAdmin): ...

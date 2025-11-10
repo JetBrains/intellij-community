@@ -29,16 +29,16 @@ class RegrSXY(StatAggregate): ...
 class RegrSYY(StatAggregate): ...
 
 __all__ = [
-    "CovarPop",
     "Corr",
+    "CovarPop",
     "RegrAvgX",
     "RegrAvgY",
     "RegrCount",
     "RegrIntercept",
     "RegrR2",
-    "RegrSlope",
     "RegrSXX",
     "RegrSXY",
     "RegrSYY",
+    "RegrSlope",
     "StatAggregate",
 ]
