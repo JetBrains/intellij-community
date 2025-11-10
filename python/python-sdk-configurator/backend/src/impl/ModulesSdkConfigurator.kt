@@ -19,7 +19,7 @@ import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.C
 import com.intellij.python.sdkConfigurator.backend.impl.ModulesSdkConfigurator.Companion.popModulesSDKConfigurator
 import com.intellij.python.sdkConfigurator.common.impl.ModuleDTO
 import com.intellij.python.sdkConfigurator.common.impl.ModuleName
-import com.jetbrains.python.PathShorter
+import com.jetbrains.python.PathShortener
 import com.jetbrains.python.Result
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
@@ -47,7 +47,7 @@ import kotlinx.coroutines.withContext
 internal class ModulesSdkConfigurator private constructor(
   private val project: Project,
   private val modules: Map<ModuleName, ModuleCreateInfo>,
-  private val pathShorter: PathShorter,
+  private val pathShorter: PathShortener,
 ) {
 
   val modulesDTO: List<ModuleDTO>
@@ -90,7 +90,7 @@ internal class ModulesSdkConfigurator private constructor(
     /**
      * Create instance and save in [project]
      */
-    suspend fun create(project: Project): ModulesSdkConfigurator = ModulesSdkConfigurator(project, getModulesWithoutSDKCreateInfo(project), PathShorter.create(project)).also {
+    suspend fun create(project: Project): ModulesSdkConfigurator = ModulesSdkConfigurator(project, getModulesWithoutSDKCreateInfo(project), PathShortener.create(project)).also {
       project.putUserData(key, it)
     }
 

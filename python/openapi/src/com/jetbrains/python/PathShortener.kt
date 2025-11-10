@@ -11,7 +11,7 @@ import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.jetbrains.python.PathShorter.Companion.create
+import com.jetbrains.python.PathShortener.Companion.create
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -21,10 +21,10 @@ import java.nio.file.Path
  * 2. Convert paths *on the same eel* using [toString]
  */
 @ApiStatus.Internal
-class PathShorter private constructor(private val map: List<Pair<EelPath, String>>) {
+class PathShortener private constructor(private val map: List<Pair<EelPath, String>>) {
   companion object {
-    suspend fun create(project: Project): PathShorter = create(project.getEelDescriptor().toEelApi())
-    suspend fun create(eelApi: EelApi): PathShorter {
+    suspend fun create(project: Project): PathShortener = create(project.getEelDescriptor().toEelApi())
+    suspend fun create(eelApi: EelApi): PathShortener {
       val eelDescriptor = eelApi.descriptor
       val map = buildList {
         if (eelDescriptor.osFamily.isWindows) {
@@ -44,7 +44,7 @@ class PathShorter private constructor(private val map: List<Pair<EelPath, String
         // Valid both for Windows and **nix
         add(Pair(eelApi.fs.user.home, "~"))
       }
-      return PathShorter(map)
+      return PathShortener(map)
     }
 
     private val logger = fileLogger()
