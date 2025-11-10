@@ -49,6 +49,8 @@ class StructuredIdeActivity internal constructor(
 
   private val innerActivities: MutableSet<StructuredIdeActivity> = Collections.synchronizedSet(SmartHashSet())
 
+  fun isFinished(): Boolean = state == IdeActivityState.FINISHED
+
   @JvmOverloads
   fun started(dataSupplier: (() -> List<EventPair<*>>)? = null): StructuredIdeActivity {
     if (parentNotStarted(parentActivity)) return this
