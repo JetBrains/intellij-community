@@ -5,6 +5,7 @@ import com.intellij.openapi.util.JDOMUtil
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jdom.Element
+import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile

@@ -139,7 +139,6 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   private val xmlIncludes = mutableListOf<DeprecatedXmlInclude>()
   private val moduleSets = mutableListOf<ModuleSetWithOverrides>()
   private val additionalModules = mutableListOf<ContentModule>()
-  private val excludedModules = mutableSetOf<String>()
 
   // Composition tracking
   private val compositionGraph = mutableListOf<SpecComposition>()
@@ -298,16 +297,9 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
     compositionGraph.add(SpecComposition(
       type = CompositionType.DIRECT_MODULE,
       reference = name,
-      path = pathStack.toList(),
-      sourceLocation = null
+      path = java.util.List.copyOf(pathStack),
+      sourceLocation = null,
     ))
-  }
-
-  /**
-   * Exclude a module from the final set.
-   */
-  fun exclude(moduleName: String) {
-    excludedModules.add(moduleName)
   }
 
   @PublishedApi

@@ -110,6 +110,35 @@ internal fun visitAllModules(moduleSet: ModuleSet, visitor: (ContentModule) -> U
 }
 
 /**
+ * Recursively collects all module names from a module set and its nested sets.
+ * Helper function for module distribution and usage analysis.
+ *
+ * @param moduleSets List of all module sets to search in
+ * @param setName Name of the module set to start collecting from
+ * @param visited Set of already visited module set names to prevent infinite recursion
+ * @return Set of all module names found in the module set hierarchy
+ */
+fun collectAllModuleNamesFromSet(
+  moduleSets: List<ModuleSet>,
+  setName: String,
+  visited: MutableSet<String> = mutableSetOf()
+): Set<String> {
+  if (setName in visited) return emptySet()
+  visited.add(setName)
+
+  val moduleSet = moduleSets.firstOrNull { it.name == setName } ?: return emptySet()
+
+  val allModules = moduleSet.modules.map { it.name }.toMutableSet()
+
+  // Recursively collect from nested sets
+  for (nestedSet in moduleSet.nestedSets) {
+    allModules.addAll(collectAllModuleNamesFromSet(moduleSets, nestedSet.name, visited))
+  }
+
+  return allModules
+}
+
+/**
  * Checks if a module set contains (directly or transitively) any nested set whose name is in the given set.
  * Used to detect when a parent module set contains overridden nested sets.
  */

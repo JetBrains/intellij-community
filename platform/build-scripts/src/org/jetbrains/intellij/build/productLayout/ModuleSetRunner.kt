@@ -4,6 +4,13 @@ package org.jetbrains.intellij.build.productLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
+import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.impl.jpsModuleOutputProvider
+import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
+import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
+import org.jetbrains.jps.model.serialization.JpsMavenSettings
+import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Path
 
 /**
@@ -53,45 +60,99 @@ fun runModuleSetMain(
   communitySourceFile: String,
   ultimateSourceFile: String?,
   projectRoot: Path,
-  generateXmlImpl: suspend () -> Unit,
+  generateXmlImpl: suspend (moduleOutputProvider: ModuleOutputProvider) -> Unit,
 ): Unit = runBlocking(Dispatchers.Default) {
   // Parse `--json` arg with optional filter
   val jsonArg = args.firstOrNull { it.startsWith("--json") }
-
+  val moduleOutputProvider = createModuleOutputProvider(projectRoot)
   when {
     jsonArg != null -> {
-      // Prepare all module sets with metadata
-      val communityModuleSetsWithMeta = communityModuleSets.map {
-        ModuleSetMetadata(it, "community", communitySourceFile)
-      }
-      val ultimateModuleSetsWithMeta = if (ultimateSourceFile == null) {
-        emptyList()
-      }
-      else {
-        ultimateModuleSets.map {
-          ModuleSetMetadata(it, "ultimate", ultimateSourceFile)
-        }
-      }
-      val allModuleSets = communityModuleSetsWithMeta + ultimateModuleSetsWithMeta
-
-      // Discover regular products and add passed test products
-      val regularProducts = discoverAllProductsForJson(projectRoot)
-      val testProductSpecs = testProducts.asSequence().map { (name, spec) ->
-        ProductSpec(
-          name = name,
-          className = "test-product",
-          sourceFile = "test-product",
-          pluginXmlPath = "ultimate/platform-ultimate/testResources/META-INF/${name}Plugin.xml",
-          contentSpec = spec,
-          buildModules = emptyList()
-        )
-      }
-
-      streamModuleAnalysisJson(allModuleSets = allModuleSets, products = (regularProducts + testProductSpecs).toList(), projectRoot = projectRoot, filter = parseJsonArgument(jsonArg))
+      jsonResponse(
+        communityModuleSets = communityModuleSets,
+        communitySourceFile = communitySourceFile,
+        ultimateSourceFile = ultimateSourceFile,
+        ultimateModuleSets = ultimateModuleSets,
+        projectRoot = projectRoot,
+        testProducts = testProducts,
+        jsonArg = jsonArg,
+        moduleOutputProvider = moduleOutputProvider,
+      )
     }
     else -> {
       // Default mode: Generate XML files
-      generateXmlImpl()
+      generateXmlImpl(moduleOutputProvider)
     }
   }
+}
+
+private suspend fun jsonResponse(
+  communityModuleSets: List<ModuleSet>,
+  communitySourceFile: String,
+  ultimateSourceFile: String?,
+  ultimateModuleSets: List<ModuleSet>,
+  projectRoot: Path,
+  testProducts: List<Pair<String, ProductModulesContentSpec>>,
+  jsonArg: String,
+  moduleOutputProvider: ModuleOutputProvider,
+) {
+  // Prepare all module sets with metadata
+  val communityModuleSetsWithMeta = communityModuleSets.map {
+    ModuleSetMetadata(it, "community", communitySourceFile)
+  }
+  val ultimateModuleSetsWithMeta = if (ultimateSourceFile == null) {
+    emptyList()
+  }
+  else {
+    ultimateModuleSets.map {
+      ModuleSetMetadata(moduleSet = it, location = "ultimate", sourceFile = ultimateSourceFile)
+    }
+  }
+  val allModuleSets = communityModuleSetsWithMeta + ultimateModuleSetsWithMeta
+
+  // Discover regular products and add passed test products
+  val regularProducts = discoverAllProducts(projectRoot, moduleOutputProvider).asSequence().map {
+    // For test products (properties = null), use "test-product" as source file
+    val sourceFile = if (it.properties == null) {
+      "test-product"
+    }
+    else {
+      // Use JPS-based lookup to find actual source file in module source roots
+      findProductPropertiesSourceFile(
+        buildModules = it.config.modules,
+        productPropertiesClass = it.properties.javaClass,
+        moduleOutputProvider = moduleOutputProvider,
+        projectRoot = projectRoot
+      )
+    }
+    ProductSpec(
+      name = it.name,
+      className = it.config.className,
+      sourceFile = sourceFile,
+      pluginXmlPath = it.pluginXmlPath,
+      contentSpec = it.spec,  // Pass full ProductModulesContentSpec for complete DSL serialization
+      buildModules = it.config.modules,
+    )
+  }
+  val testProductSpecs = testProducts.asSequence().map { (name, spec) ->
+    ProductSpec(
+      name = name,
+      className = "test-product",
+      sourceFile = "test-product",
+      pluginXmlPath = "ultimate/platform-ultimate/testResources/META-INF/${name}Plugin.xml",
+      contentSpec = spec,
+      buildModules = emptyList()
+    )
+  }
+
+  streamModuleAnalysisJson(allModuleSets = allModuleSets, products = (regularProducts + testProductSpecs).toList(), projectRoot = projectRoot, filter = parseJsonArgument(jsonArg))
+}
+
+internal fun createModuleOutputProvider(projectRoot: Path): ModuleOutputProvider {
+  val project = JpsSerializationManager.getInstance().loadProject(
+    projectRoot.toString(),
+    mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),
+    false
+  )
+  val moduleOutputProvider = jpsModuleOutputProvider(project.modules)
+  return moduleOutputProvider
 }

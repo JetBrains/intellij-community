@@ -183,40 +183,6 @@ class ProductModulesContentSpecTest {
   }
 
   @Test
-  fun `test overrides respect excluded modules`() {
-    val moduleSet = ModuleSet(
-      name = "testSet",
-      modules = listOf(
-        ContentModule("module.a"),
-        ContentModule("module.b")
-      )
-    )
-
-    val spec = productModules {
-      moduleSet(moduleSet) {
-        overrideAsEmbedded("module.b") // module.b is excluded, so this override is invalid
-      }
-      exclude("module.b")
-    }
-
-    // This should throw because module.b is excluded
-    assertThatThrownBy {
-      buildProductContentXml(
-        spec = spec,
-        moduleOutputProvider = MockModuleOutputProvider(),
-        inlineXmlIncludes = false,
-        inlineModuleSets = true,
-        productPropertiesClass = "TestProperties",
-        generatorCommand = "test",
-        isUltimateBuild = false
-      )
-    }
-      .isInstanceOf(IllegalStateException::class.java)
-      .hasMessageContaining("Invalid loading overrides")
-      .hasMessageContaining("module.b")
-  }
-
-  @Test
   fun `test selective inlining with overrides generates correct XML`() {
     val nestedSet = ModuleSet(
       name = "nested",
