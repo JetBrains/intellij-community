@@ -113,7 +113,7 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
                                                      int row,
                                                      int column) {
         final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setBackground(UIUtil.getTableBackground(isSelected, myTable.hasFocus()));
+        setBackground(isSelected ? UIUtil.getTableBackground(isSelected, myTable.hasFocus()) : null);
         return component;
       }
     });

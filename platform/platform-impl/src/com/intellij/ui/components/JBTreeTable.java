@@ -307,7 +307,7 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
           return super.getWidth() + 1;
         }
       };
-      myTreeTableHeader.setTable(ref); // <- we steal table header and need to provide any JTable to handle right ui painting
+      ref.setTableHeader(myTreeTableHeader); // <- we steal table header and need to provide any JTable to handle right ui painting
       myTreeTableHeader.setColumnModel(new TreeColumnModel());
       myTreeTableHeader.setReorderingAllowed(false);
       myTreeTableHeader.setResizingAllowed(false);
