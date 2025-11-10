@@ -12,6 +12,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
@@ -19,8 +21,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.*
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.ParameterizedCachedValue
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.allowCreationTargetOfThisType
@@ -29,8 +33,14 @@ import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
+import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import com.jetbrains.python.util.ShowingMessageErrorSync
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
@@ -56,7 +66,7 @@ fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated:
   }
   return mutableListOf<DialogAction>().apply {
     if (targetModuleSitsOn == null) {
-      add(AddLocalInterpreterAction(moduleOrProject, onSdkCreated::accept))
+      add(createAddLocalInterpreterAction(moduleOrProject, onSdkCreated::accept))
     }
     addAll(collectNewInterpreterOnTargetActions(moduleOrProject.project, targetModuleSitsOn, onSdkCreated::accept))
   }
@@ -65,7 +75,7 @@ fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated:
 private fun collectNewInterpreterOnTargetActions(
   project: Project,
   targetTypeModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
-  onSdkCreated: Consumer<Sdk>,
+  onSdkCreated: (Sdk) -> Unit,
 ): List<DialogAction> =
   PythonInterpreterTargetEnvironmentFactory.EP_NAME.extensionList
     .filter { it.getTargetType().isSystemCompatible() }
@@ -76,7 +86,8 @@ private fun collectNewInterpreterOnTargetActions(
 
 internal class AddLocalInterpreterAction(
   private val moduleOrProject: ModuleOrProject,
-  private val onSdkCreated: Consumer<Sdk>,
+  private val onSdkCreated: (Sdk) -> Unit,
+  private val bestGuessCreateSdkInfo: Deferred<CreateSdkInfoWithTool?>,
 ) : DialogAction(
   dynamicText = PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"),
   icon = AllIcons.Nodes.HomeFolder,
@@ -90,7 +101,9 @@ internal class AddLocalInterpreterAction(
   }
 
   override fun createDialog(): PythonAddLocalInterpreterDialog {
-    val dialogPresenter = PythonAddLocalInterpreterPresenter(moduleOrProject, errorSink = ShowingMessageErrorSync).apply {
+    val dialogPresenter = PythonAddLocalInterpreterPresenter(
+      moduleOrProject, errorSink = ShowingMessageErrorSync, bestGuessCreateSdkInfo = bestGuessCreateSdkInfo
+    ).apply {
       // Model provides flow, but we need to call Consumer
       sdkCreatedFlow.oneShotConsumer(onSdkCreated)
     }
@@ -99,14 +112,13 @@ internal class AddLocalInterpreterAction(
 }
 
 @ApiStatus.Internal
-fun addLocalInterpreter(moduleOrProject: ModuleOrProject, onSdkCreated: Consumer<Sdk>) {
-  AddLocalInterpreterAction(moduleOrProject, onSdkCreated).createDialog().show()
-}
+fun addLocalInterpreter(moduleOrProject: ModuleOrProject, onSdkCreated: (Sdk) -> Unit): Unit =
+  createAddLocalInterpreterAction(moduleOrProject, onSdkCreated).createDialog().show()
 
 private class AddInterpreterOnTargetAction(
   private val project: Project,
   private val targetType: TargetEnvironmentType<*>,
-  private val onSdkCreated: Consumer<Sdk>,
+  private val onSdkCreated: (Sdk) -> Unit,
 ) : DialogAction(
   dynamicText = PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName),
   icon = targetType.icon,
@@ -133,7 +145,7 @@ private class AddInterpreterOnTargetAction(
     val sdk = (dialogWrapper.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk ?: return
 
     PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = true)
-    onSdkCreated.accept(sdk)
+    onSdkCreated(sdk)
   }
 }
 
@@ -152,4 +164,49 @@ fun switchToSdk(module: Module, sdk: Sdk, currentSdk: Sdk?) {
   transferRoots(module, sdk)
 
   module.excludeInnerVirtualEnv(sdk)
+}
+
+@Service(Service.Level.PROJECT)
+@ApiStatus.Internal
+private class ToolDetectionService(project: Project, val coroutineScope: CoroutineScope) {
+  private val cacheManager = CachedValuesManager.getManager(project)
+
+  private fun tryDetectTool(module: Module): Deferred<CreateSdkInfoWithTool?> = cache(module)
+
+  private fun cache(module: Module): Deferred<CreateSdkInfoWithTool?> = cacheManager.getParameterizedCachedValue(
+    module,
+    CACHE_KEY,
+    ::detectBestToolAsync,
+    false,
+    module
+  )
+
+  private fun detectBestToolAsync(module: Module): CachedValueProvider.Result<Deferred<CreateSdkInfoWithTool?>> {
+    val result = coroutineScope.async { PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull() }
+    result.invokeOnCompletion { getOrCreateModificationTracker(module).incModificationCount() }
+    return CachedValueProvider.Result.create(result, getOrCreateModificationTracker(module))
+  }
+
+  private fun getOrCreateModificationTracker(module: Module): SimpleModificationTracker {
+    val existing = module.getUserData(MODIFICATION_TRACKER_KEY)
+    if (existing != null) return existing
+
+    return synchronized(this) {
+      module.getOrCreateUserDataUnsafe(MODIFICATION_TRACKER_KEY) { SimpleModificationTracker() }
+    }
+  }
+
+  companion object {
+    fun forModule(module: Module): Deferred<CreateSdkInfoWithTool?> = module.project.service<ToolDetectionService>().tryDetectTool(module)
+
+    private val MODIFICATION_TRACKER_KEY = Key.create<SimpleModificationTracker>("PyAddInterpreterModificationTracker")
+    private val CACHE_KEY = Key.create<ParameterizedCachedValue<Deferred<CreateSdkInfoWithTool?>, Module>>("PyAddInterpreterCache")
+  }
+}
+
+private fun createAddLocalInterpreterAction(moduleOrProject: ModuleOrProject, onSdkCreated: (Sdk) -> Unit): AddLocalInterpreterAction {
+  val bestGuessCreateSdkInfo = moduleOrProject.moduleIfExists?.let {
+    ToolDetectionService.forModule(it)
+  } ?: CompletableDeferred(value = null)
+  return AddLocalInterpreterAction(moduleOrProject, onSdkCreated, bestGuessCreateSdkInfo)
 }

@@ -8,9 +8,11 @@ import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
+import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -22,7 +24,12 @@ import java.nio.file.Path
  *
  * @see PythonAddLocalInterpreterDialog
  */
-class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, val envReader: VirtualEnvReader = VirtualEnvReader.Instance, val errorSink: ErrorSink) {
+class PythonAddLocalInterpreterPresenter(
+  val moduleOrProject: ModuleOrProject,
+  val envReader: VirtualEnvReader = VirtualEnvReader.Instance,
+  val errorSink: ErrorSink,
+  val bestGuessCreateSdkInfo: Deferred<CreateSdkInfoWithTool?>,
+) {
 
   /**
    * Default path to create virtualenv it
