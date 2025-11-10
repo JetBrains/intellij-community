@@ -2,8 +2,6 @@ package com.intellij.lambda.tests
 
 import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
-import com.intellij.lambda.tests.SampleTests.Companion.HelloBackendOnlyLambda
-import com.intellij.lambda.tests.SampleTests.Companion.HelloFrontendOnlyLambda
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo

@@ -18,7 +18,7 @@ import org.junit.jupiter.api.TestTemplate
 import kotlin.time.Duration.Companion.seconds
 
 @ExecuteInMonolithAndSplitMode
-class SampleTests {
+class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {
     //works in both modes if
@@ -46,21 +46,19 @@ class SampleTests {
     ide.runLambdaInBackend(HelloBackendOnlyLambda::class)
     ide.runLambda(HelloFrontendOnlyLambda::class)
   }
+}
 
-  companion object {
-    class HelloFrontendOnlyLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginModuleDescriptor)
-      : NamedLambda<LambdaFrontendContext>(frontendIdeContext, plugin) {
-      override suspend fun LambdaFrontendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
-        return currentClassLogger().warn("Hi there Frontend")
-      }
-    }
+class HelloFrontendOnlyLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginModuleDescriptor)
+  : NamedLambda<LambdaFrontendContext>(frontendIdeContext, plugin) {
+  override suspend fun LambdaFrontendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
+    return currentClassLogger().warn("Hi there Frontend")
+  }
+}
 
-    class HelloBackendOnlyLambda(backendIdeContext: LambdaBackendContext, plugin: PluginModuleDescriptor)
-      : NamedLambda<LambdaBackendContext>(backendIdeContext, plugin) {
-      override suspend fun LambdaBackendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
-        return currentClassLogger().warn("Hi there Backend")
-      }
-    }
+class HelloBackendOnlyLambda(backendIdeContext: LambdaBackendContext, plugin: PluginModuleDescriptor)
+  : NamedLambda<LambdaBackendContext>(backendIdeContext, plugin) {
+  override suspend fun LambdaBackendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
+    return currentClassLogger().warn("Hi there Backend")
   }
 }
 
