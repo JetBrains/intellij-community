@@ -1154,6 +1154,10 @@
       implementation="com.jetbrains.python.packaging.PyPackagesDictionary$PyPackagesDictionaryProvider"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <iconProvider implementation="com.jetbrains.python.packaging.requirementsTxt.RequirementsTxtIconProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.jetbrains.python.console">
     <executeCustomizer implementation="com.jetbrains.python.console.PyExecuteConsoleCustomizerDefault"/>
     <pyConsoleOutputCustomizer implementation="com.jetbrains.python.console.PyConsoleOutputCustomizerDefault"/>
