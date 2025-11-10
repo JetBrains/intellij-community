@@ -47,10 +47,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
-import com.intellij.util.EventDispatcher
-import com.intellij.util.SmartList
-import com.intellij.util.ThrowableRunnable
-import com.intellij.util.asDisposable
+import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.*
@@ -469,6 +466,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   /**
    * TODO When we move to RD-first approach, @RequiresEdt requirements in [XDebuggerManager] can be removed
    */
+  @OptIn(AwaitCancellationAndInvoke::class)
   private fun initSessionTab(contentToReuse: RunContentDescriptor?, shouldShowTab: Boolean) {
     val forceNewDebuggerUi = debugProcess.forceShowNewDebuggerUi()
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
@@ -512,17 +510,19 @@ class XDebugSessionImpl @JvmOverloads constructor(
           override fun isHiddenContent(): Boolean = true
         }
         Disposer.register(mockDescriptor, runTab)
+        localTabScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
+          Disposer.dispose(mockDescriptor)
+        }
         val descriptorId = mockDescriptor.storeGlobally(localTabScope)
         runContentDescriptorId.complete(descriptorId)
         mockDescriptor.id = descriptorId
-        debuggerManager.coroutineScope.launch(Dispatchers.EDT, CoroutineStart.ATOMIC) {
+        debuggerManager.coroutineScope.launch(start = CoroutineStart.ATOMIC) {
           try {
             tabClosedChannel.receiveCatching()
           }
           finally {
             tabClosedChannel.close()
             tabCoroutineScope.cancel()
-            Disposer.dispose(mockDescriptor)
           }
         }
         myMockRunContentDescriptor = mockDescriptor
