@@ -194,7 +194,10 @@
       }
     },
 
-    "SearchEverywhere.Header.insets": "2,4,0,9",
+    "SearchEverywhere": {
+      "Header.insets": "2,4,0,9",
+      "List.settingsBackground": "PopupBackground"
+    },
 
     "HelpBrowser.UserMessage.background": "#EDEEF2",
 
