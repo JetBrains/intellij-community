@@ -4,14 +4,11 @@ package org.jetbrains.kotlin.idea.stubs
 
 import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
-import org.jetbrains.kotlin.psi.stubs.KotlinFunctionStub
-import org.jetbrains.kotlin.psi.stubs.KotlinObjectStub
-import org.jetbrains.kotlin.psi.stubs.KotlinPlaceHolderStub
 import org.jetbrains.kotlin.psi.stubs.elements.KtFileStubBuilder
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementType
-import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -20,41 +17,44 @@ import org.junit.runner.RunWith
 class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
     private fun createFileAndStubTree(text: String): Pair<KtFile, StubElement<*>> {
         val file = myFixture.configureByText("test.kt", text) as KtFile
-        val stub = KtFileStubBuilder().buildStubTree(file)!!
+        val stub = KtFileStubBuilder().buildStubTree(file)
         return Pair(file, stub)
     }
 
     private fun createStubTree(text: String) = createFileAndStubTree(text).second
 
+    private inline fun <reified E : KtElement> StubElement<*>.asKtElement(): E = psi as E
+
     fun packageDirective(text: String) {
         val (file, tree) = createFileAndStubTree(text)
-        val packageDirective = tree.findChildStubByType(KtStubElementTypes.PACKAGE_DIRECTIVE)
-        val psi = KtPackageDirective(packageDirective as KotlinPlaceHolderStub<KtPackageDirective>)
+        val packageDirective = tree.findChildStubByElementType(KtNodeTypes.PACKAGE_DIRECTIVE)!!
+        val psi = packageDirective.asKtElement<KtPackageDirective>()
         Assert.assertEquals(file.packageDirective!!.text, psi.getDebugText())
     }
 
     fun function(text: String) {
         val (file, tree) = createFileAndStubTree(text)
-        val function = tree.findChildStubByType(KtStubElementTypes.FUNCTION)
-        val psi = KtNamedFunction(function as KotlinFunctionStub)
+        val function = tree.findChildStubByElementType(KtNodeTypes.FUN)!!
+        val psi = function.asKtElement<KtNamedFunction>()
         Assert.assertEquals("STUB: " + file.findChildByClass(KtNamedFunction::class.java)!!.text, psi.getDebugText())
     }
 
     fun typeReference(text: String) {
         val (file, tree) = createFileAndStubTree("fun foo(i: $text)")
-        val function = tree.findChildStubByType(KtStubElementTypes.FUNCTION)!!
-        val parameterList = function.findChildStubByType(KtStubElementTypes.VALUE_PARAMETER_LIST)!!
-        val valueParameter = parameterList.findChildStubByType(KtStubElementTypes.VALUE_PARAMETER)!!
-        val typeReferenceStub = valueParameter.findChildStubByType(KtStubElementTypes.TYPE_REFERENCE)
-        val psiFromStub = KtTypeReference(typeReferenceStub as KotlinPlaceHolderStub<KtTypeReference>)
+        val typeReferenceStub = tree.findChildStubByElementType(KtNodeTypes.FUN)!!
+            .findChildStubByElementType(KtNodeTypes.VALUE_PARAMETER_LIST)!!
+            .findChildStubByElementType(KtNodeTypes.VALUE_PARAMETER)!!
+            .findChildStubByElementType(KtNodeTypes.TYPE_REFERENCE)!!
+
+        val psiFromStub = typeReferenceStub.asKtElement<KtTypeReference>()
         val typeReferenceByPsi = file.findChildByClass(KtNamedFunction::class.java)!!.valueParameters[0].typeReference
         Assert.assertEquals(typeReferenceByPsi!!.text, psiFromStub.getDebugText())
     }
 
     fun clazz(text: String, expectedText: String? = null) {
         val (file, tree) = createFileAndStubTree(text)
-        val clazz = tree.findChildStubByType(KtStubElementTypes.CLASS)!!
-        val psiFromStub = KtClass(clazz)
+        val clazz = tree.findChildStubByElementType(KtNodeTypes.CLASS)!!
+        val psiFromStub = clazz.asKtElement<KtClass>()
         val classByPsi = file.findChildByClass(KtClass::class.java)
         val toCheckAgainst = "STUB: " + (expectedText ?: classByPsi!!.text)
         Assert.assertEquals(toCheckAgainst, psiFromStub.getDebugText())
@@ -65,8 +65,8 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
 
     fun obj(text: String, expectedText: String? = null) {
         val (file, tree) = createFileAndStubTree(text)
-        val obj = tree.findChildStubByType(KtStubElementTypes.OBJECT_DECLARATION)!!
-        val psiFromStub = KtObjectDeclaration(obj)
+        val obj = tree.findChildStubByElementType(KtNodeTypes.OBJECT_DECLARATION)!!
+        val psiFromStub = obj.asKtElement<KtObjectDeclaration>()
         val objectByPsi = file.findChildByClass(KtObjectDeclaration::class.java)
         val toCheckAgainst = "STUB: " + (expectedText ?: objectByPsi!!.text)
         Assert.assertEquals(toCheckAgainst, psiFromStub.getDebugText())
@@ -74,8 +74,8 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
 
     fun property(text: String, expectedText: String? = null) {
         val (file, tree) = createFileAndStubTree(text)
-        val property = tree.findChildStubByType(KtStubElementTypes.PROPERTY)!!
-        val psiFromStub = KtProperty(property)
+        val property = tree.findChildStubByElementType(KtNodeTypes.PROPERTY)!!
+        val psiFromStub = property.asKtElement<KtProperty>()
         val propertyByPsi = file.findChildByClass(KtProperty::class.java)
         val toCheckAgainst = "STUB: " + (expectedText ?: propertyByPsi!!.text)
         Assert.assertEquals(toCheckAgainst, psiFromStub.getDebugText())
@@ -83,8 +83,8 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
 
     fun importList(text: String) {
         val (file, tree) = createFileAndStubTree(text)
-        val importList = tree.findChildStubByType(KtStubElementTypes.IMPORT_LIST)
-        val psi = KtImportList(importList as KotlinPlaceHolderStub<KtImportList>)
+        val importList = tree.findChildStubByElementType(KtNodeTypes.IMPORT_LIST)!!
+        val psi = importList.asKtElement<KtImportList>()
         Assert.assertEquals(file.importList!!.text, psi.getDebugText())
     }
 
@@ -165,44 +165,53 @@ class DebugTextByStubTest : LightJavaCodeInsightFixtureTestCase() {
 
     fun testClassBody() {
         val tree = createStubTree("class A {\n {} fun f(): Int val c: Int}")
-        val classBody = tree.findChildStubByType(KtStubElementTypes.CLASS)!!.findChildStubByType(KtStubElementTypes.CLASS_BODY)
-        assertEquals("class body for STUB: class A", KtClassBody(classBody as KotlinPlaceHolderStub<KtClassBody>).getDebugText())
+        val classBody = tree.findChildStubByElementType(KtNodeTypes.CLASS)!!
+            .findChildStubByElementType(KtNodeTypes.CLASS_BODY)!!
+
+        assertEquals("class body for STUB: class A", classBody.asKtElement<KtClassBody>().getDebugText())
     }
 
     fun testClassInitializer() {
         val tree = createStubTree("class A {\n init {} }")
-        val initializer =
-            tree.findChildStubByType(KtStubElementTypes.CLASS)!!.findChildStubByType(KtStubElementTypes.CLASS_BODY)!!.findChildStubByType(
-                KtStubElementTypes.CLASS_INITIALIZER
-            )
-        assertEquals("initializer in STUB: class A", KtClassInitializer(initializer as KotlinPlaceHolderStub<KtClassInitializer>).getDebugText())
+        val initializer = tree.findChildStubByElementType(KtNodeTypes.CLASS)!!
+            .findChildStubByElementType(KtNodeTypes.CLASS_BODY)!!
+            .findChildStubByElementType(KtNodeTypes.CLASS_INITIALIZER)!!
+
+        assertEquals(
+            "initializer in STUB: class A",
+            initializer.asKtElement<KtClassInitializer>().getDebugText()
+        )
     }
 
     fun testClassObject() {
         val tree = createStubTree("class A { companion object Def {} }")
-        val companionObject =
-            tree.findChildStubByType(KtStubElementTypes.CLASS)!!.findChildStubByType(KtStubElementTypes.CLASS_BODY)!!.findChildStubByType(
-                KtStubElementTypes.OBJECT_DECLARATION
-            )
-        assertEquals("STUB: companion object Def", KtObjectDeclaration(companionObject as KotlinObjectStub).getDebugText())
+        val companionObject = tree.findChildStubByElementType(KtNodeTypes.CLASS)!!
+            .findChildStubByElementType(KtNodeTypes.CLASS_BODY)!!
+            .findChildStubByElementType(KtNodeTypes.OBJECT_DECLARATION)!!
+
+        assertEquals("STUB: companion object Def", companionObject.asKtElement<KtObjectDeclaration>().getDebugText())
     }
 
     fun testPropertyAccessors() {
         val tree = createStubTree("var c: Int\nget() = 3\nset(i: Int) {}")
-        val propertyStub = tree.findChildStubByType(KtStubElementTypes.PROPERTY)!!
-        val accessors =
-            propertyStub.getChildrenByType(KtStubElementTypes.PROPERTY_ACCESSOR, KtStubElementTypes.PROPERTY_ACCESSOR.arrayFactory)
+        val accessors = tree.findChildStubByElementType(KtNodeTypes.PROPERTY)!!
+            .getChildrenByType(
+                KtNodeTypes.PROPERTY_ACCESSOR,
+                (KtNodeTypes.PROPERTY_ACCESSOR as KtStubElementType<*, *>).arrayFactory,
+            )
+
         assertEquals("getter for STUB: var c: Int", accessors[0].getDebugText())
         assertEquals("setter for STUB: var c: Int", accessors[1].getDebugText())
     }
 
     fun testEnumEntry() {
         val tree = createStubTree("enum class Enum { E1, E2(), E3(1, 2)}")
-        val enumClass = tree.findChildStubByType(KtStubElementTypes.CLASS)!!.findChildStubByType(KtStubElementTypes.CLASS_BODY)!!
-        val entries = enumClass.getChildrenByType(
-            KtStubElementTypes.ENUM_ENTRY,
-            (KtStubElementTypes.ENUM_ENTRY as KtStubElementType<*, *>).arrayFactory,
-        )
+        val entries = tree.findChildStubByElementType(KtNodeTypes.CLASS)!!
+            .findChildStubByElementType(KtNodeTypes.CLASS_BODY)!!
+            .getChildrenByType(
+                KtNodeTypes.ENUM_ENTRY,
+                (KtNodeTypes.ENUM_ENTRY as KtStubElementType<*, *>).arrayFactory,
+            )
 
         assertEquals("STUB: enum entry E1", entries[0].getDebugText())
         assertEquals("STUB: enum entry E2 : Enum", entries[1].getDebugText())

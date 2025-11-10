@@ -131,11 +131,13 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
      ExperimentalUnsignedTypes
+     ExperimentalVersionOverloading
      ExposedCopyVisibility
      ExtensionFunctionType
      Function
      IgnorableReturnValue
      InitializedLazyImpl
+     IntroducedAt
      kotlin.kotlin_builtins
      KotlinNothingValueException
      KotlinNullPointerException
