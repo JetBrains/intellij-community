@@ -40,7 +40,6 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.useOrLogError
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
@@ -54,6 +53,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
+import com.intellij.util.system.OS
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -315,7 +315,7 @@ private suspend fun preloadNonHeadlessServices(app: ApplicationImpl, initLafJob:
     }
 
     // https://youtrack.jetbrains.com/issue/IDEA-341318
-    if (SystemInfoRt.isLinux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
+    if (OS.CURRENT == OS.Linux && System.getProperty("idea.linux.scale.workaround", "false").toBoolean()) {
       // ActionManager can use UISettings (KeymapManager doesn't use it but just to be sure)
       initLafJob.join()
     }

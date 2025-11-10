@@ -16,7 +16,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.VerticalLayout
@@ -24,6 +23,7 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.SystemProperties
+import com.intellij.util.system.OS
 import com.intellij.util.text.DateTimeFormatManager
 import com.intellij.util.ui.*
 import com.sun.jna.platform.win32.Advapi32Util
@@ -224,7 +224,7 @@ internal fun getLanguageAndRegionDialogIfNeeded(): (suspend () -> Boolean)? {
   val locale = Locale.getDefault()
   val matchingLocale = languageMapping.keys.find { language -> languageMapping[language]?.any { locale.toLanguageTag().contains(it) } == true } ?: Locale.ENGLISH
   var matchingRegion = Region.NOT_SET
-  if (SystemInfoRt.isWindows) {
+  if (OS.CURRENT == OS.Windows) {
     try {
       val region = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, "Control Panel\\International\\Geo", "Name")
       matchingRegion = regionMapping.keys.find { region == regionMapping[it] } ?: Region.NOT_SET
@@ -233,7 +233,7 @@ internal fun getLanguageAndRegionDialogIfNeeded(): (suspend () -> Boolean)? {
       logger<LanguageAndRegionDialog>().warn("Unable to resolve region from registry", e)
     }
   }
-  else if (SystemInfoRt.isMac) {
+  else if (OS.CURRENT == OS.macOS) {
     matchingRegion = regionMapping.keys.find { locale.country == regionMapping[it] }
                      ?: getLocaleFromGeneralPrefMacOs(SystemProperties.getUserHome())
                      ?: getLocaleFromGeneralPrefMacOs("")
