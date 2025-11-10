@@ -74,7 +74,6 @@ internal fun WelcomeScreenCustomListComboBox(
             //labelText = items[index]
             onSelectedItemChange(index, items[index])
             scope.launch { listState.lazyListState.scrollToIndex(index) }
-            popupManager.setPopupVisible(false)
         } else {
             JewelLogger.getInstance("ListComboBox").trace("Ignoring item index $index as it's invalid")
         }
