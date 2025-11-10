@@ -108,6 +108,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -126,6 +127,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   public static final Topic<PreviewListener> PREVIEW_EVENTS = Topic.create("Search everywhere preview events", PreviewListener.class);
 
   public static final String SEARCH_EVERYWHERE_SEARCH_FILED_KEY = "search-everywhere-textfield"; //only for testing purposes
+
+  private static final Pattern TOP_HIT_PATTERN = Pattern.compile("^" + SearchTopHitProvider.getTopHitAccelerator() + "\\S+\\s*");
 
   @ApiStatus.Internal public static final DataKey<SearchEverywhereFoundElementInfo> SELECTED_ITEM_INFO = DataKey.create("selectedItemInfo");
 
@@ -1737,7 +1740,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     @Override
     public void searchFinished(@NotNull Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors) {
       String pattern = getSearchPattern();
-      pattern = pattern.replaceAll("^" + SearchTopHitProvider.getTopHitAccelerator() + "\\S+\\s*", "");
+      pattern = TOP_HIT_PATTERN.matcher(pattern).replaceAll("");
       if (myResultsList.isEmpty() || myListModel.isResultsExpired()) {
         if (myHeader.canSetEverywhere() && !myHeader.isEverywhere() && !pattern.isEmpty()) {
           myHeader.autoSetEverywhere(true);

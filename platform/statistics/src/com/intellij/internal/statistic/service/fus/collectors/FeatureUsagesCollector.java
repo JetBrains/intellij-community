@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  */
 @ApiStatus.Internal
 public abstract class FeatureUsagesCollector {
-  private static final @NonNls String GROUP_ID_PATTERN = "([a-zA-Z]*\\.)*[a-zA-Z]*";
+  private static final @NonNls Pattern GROUP_ID_PATTERN = Pattern.compile("([a-zA-Z]*\\.)*[a-zA-Z]*");
   private @Nullable String fileName = null;
 
   /**
@@ -42,7 +42,7 @@ public abstract class FeatureUsagesCollector {
   }
 
   public final boolean isValid() {
-    return Pattern.compile(GROUP_ID_PATTERN).matcher(getGroupId()).matches();
+    return GROUP_ID_PATTERN.matcher(getGroupId()).matches();
   }
 
   public @Nullable String getFileName() {

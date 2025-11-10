@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Various utility methods for working with {@link VirtualFile}.
@@ -40,6 +41,7 @@ public class VfsUtilCore {
   public static final String VFS_SEPARATOR = "/";
 
   private static final String PROTOCOL_DELIMITER = ":";
+  private static final Pattern VFS_URL_SPLIT = Pattern.compile("://");
 
   /**
    * @param strict if {@code false} then this method returns {@code true} if {@code ancestor} and {@code file} are equal
@@ -578,7 +580,7 @@ public class VfsUtilCore {
       }
     }
 
-    String[] split = vfsUrl.split("://");
+    String[] split = VFS_URL_SPLIT.split(vfsUrl);
 
     if (split.length != 2) {
       LOG.debug("Malformed VFS URL: " + vfsUrl);
@@ -789,7 +791,7 @@ public class VfsUtilCore {
     }
     return 0;
   }
-  
+
   public static boolean hasInvalidFiles(@NotNull Iterable<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {

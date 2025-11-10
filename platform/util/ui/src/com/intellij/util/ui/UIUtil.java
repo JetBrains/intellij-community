@@ -73,6 +73,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
@@ -218,6 +219,9 @@ public final class UIUtil {
   public static final @NonNls String ENABLE_IME_FORWARDING_IN_POPUP = "EnableIMEForwardingInPopup";
 
   private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
+  private static final Pattern NEWLINE_PATTERN = Pattern.compile("\n");
+  private static final Pattern FONT_OPEN_PATTERN = Pattern.compile("<font(.*?)>");
+  private static final Pattern FONT_CLOSE_PATTERN = Pattern.compile("</font>");
 
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
 
@@ -347,7 +351,7 @@ public final class UIUtil {
   public static @NotNull String getHtmlBody(@NotNull String text) {
     int htmlIndex = 6 + text.indexOf("<html>");
     if (htmlIndex < 6) {
-      return text.replaceAll("\n", "<br>");
+      return NEWLINE_PATTERN.matcher(text).replaceAll(Matcher.quoteReplacement("<br>"));
     }
     int htmlCloseIndex = text.indexOf("</html>", htmlIndex);
     if (htmlCloseIndex < 0) {
@@ -367,7 +371,9 @@ public final class UIUtil {
   @SuppressWarnings("HardCodedStringLiteral")
   public static @NotNull @Nls String getHtmlBody(@NotNull Html html) {
     String result = getHtmlBody(html.getText());
-    return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
+    return html.isKeepFont()
+           ? result
+           : FONT_CLOSE_PATTERN.matcher(FONT_OPEN_PATTERN.matcher(result).replaceAll("")).replaceAll("");
   }
 
   public static void drawLinePickedOut(@NotNull Graphics graphics, int x, int y, int x1, int y1) {

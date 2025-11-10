@@ -40,6 +40,8 @@ import java.util.regex.Pattern;
  * @see EditorCustomElementRenderer#calcGutterIconRenderer(Inlay)
  */
 public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAware, SimpleAccessible {
+  private static final Pattern PATH_SPLIT_PATTERN = Pattern.compile(Pattern.quote("/") + "|" + Pattern.quote("\\"));
+  private static final Pattern DOT_SPLIT = Pattern.compile(Pattern.quote("."));
   /**
    * Returns the action group actions that are used to fill the icon's context menu.
    *
@@ -142,9 +144,9 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
     if (icon instanceof CachedImageIcon) {
       String path = ((CachedImageIcon)icon).getOriginalPath();
       if (path != null) {
-        String[] split = path.split(Pattern.quote("/") + "|" + Pattern.quote("\\"));
+        String[] split = PATH_SPLIT_PATTERN.split(path);
         String name = split[split.length - 1];
-        return prefix + name.split(Pattern.quote("."))[0];
+        return prefix + DOT_SPLIT.split(name)[0];
       }
     }
     return prefix + "unknown";
