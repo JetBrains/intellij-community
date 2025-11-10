@@ -2056,7 +2056,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-51329
   public void testBitwiseOrOperatorOverloadUnion() {
-    doTest("UnionType",
+    doTest("UnionType | Self",
            """
              class MyMeta(type):
                  def __or__(self, other):
