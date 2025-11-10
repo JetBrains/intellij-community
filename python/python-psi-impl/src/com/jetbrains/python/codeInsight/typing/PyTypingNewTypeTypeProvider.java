@@ -18,9 +18,19 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
                                            @NotNull TypeEvalContext context) {
     PyClass aClass = PyUtil.turnConstructorIntoClass(function);
     PyQualifiedNameOwner qualifiedNameOwner = aClass != null ? aClass : function;
-    return callSite instanceof PyCallExpression && PyTypingTypeProvider.NEW_TYPE.equals(qualifiedNameOwner.getQualifiedName())
-           ? PyTypeUtil.notNullToRef(getNewTypeFromAST((PyCallExpression)callSite, context))
-           : null;
+    if (callSite instanceof PyCallExpression callExpression &&
+        PyTypingTypeProvider.NEW_TYPE.equals(qualifiedNameOwner.getQualifiedName())) {
+      if (context.maySwitchToAST(callSite)) {
+        final PyTypingNewTypeStub stub = PyTypingNewTypeStubImpl.Companion.create(callExpression);
+        if (stub != null) {
+          final PyClassType type = getClassType(stub, context, callSite);
+          if (type != null) {
+            return Ref.create(new PyTypingNewType(type, stub.getName(), getDeclaration(callExpression)));
+          }
+        }
+      }
+    }
+    return null;
   }
 
   @Override
@@ -46,19 +56,6 @@ public final class PyTypingNewTypeTypeProvider extends PyTypeProviderBase {
     if (stub == null) return null;
     final PyClassType type = getClassType(stub, context, target);
     return type != null ? new PyTypingNewType(type, stub.getName(), target) : null;
-  }
-
-  private static @Nullable PyTypingNewType getNewTypeFromStub(@NotNull PyCallExpression call,
-                                                              @Nullable PyTypingNewTypeStub stub,
-                                                              @NotNull TypeEvalContext context) {
-    if (stub == null) return null;
-    final PyClassType type = getClassType(stub, context, call);
-    return type != null ? new PyTypingNewType(type, stub.getName(), getDeclaration(call)) : null;
-  }
-
-  private static @Nullable PyTypingNewType getNewTypeFromAST(@NotNull PyCallExpression call, @NotNull TypeEvalContext context) {
-    if (!context.maySwitchToAST(call)) return null;
-    return getNewTypeFromStub(call, PyTypingNewTypeStubImpl.Companion.create(call), context);
   }
 
   private static @Nullable PyClassType getClassType(@NotNull PyTypingNewTypeStub stub,
