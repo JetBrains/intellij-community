@@ -10,6 +10,7 @@ import com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -189,9 +190,9 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     PsiType type = deepestChild.getType();
     for (int i = depth - 1; i >= 0; i--) {
       if (i == 0 && isVarArgs()) {
-        type = new PsiEllipsisType(type).withContainerNullability(PsiTypeElementPointer.constant(deepestChild));
+        type = new PsiEllipsisType(type).withContainerNullability(PsiTypeElementImpl.findContainerNullabilityContext(deepestChild));
       } else {
-        type = type.createArrayType().withContainerNullability(PsiTypeElementPointer.constant(deepestChild));
+        type = type.createArrayType().withContainerNullability(PsiTypeElementImpl.findContainerNullabilityContext(deepestChild));
       }
       type = type.annotate(containers.get(i).getProvider(this));
     }

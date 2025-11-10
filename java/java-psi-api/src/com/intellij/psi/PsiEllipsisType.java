@@ -25,8 +25,8 @@ public class PsiEllipsisType extends PsiArrayType {
   private PsiEllipsisType(@NotNull PsiType componentType,
                           @NotNull TypeAnnotationProvider provider,
                           @Nullable TypeNullability nullability,
-                          @Nullable PsiTypeElementPointer typeElementPointer) {
-    super(componentType, provider, nullability, typeElementPointer);
+                          @Nullable PsiModifierListOwner containerNullabilityOwner) {
+    super(componentType, provider, nullability, containerNullabilityOwner);
   }
 
   @Override
@@ -52,23 +52,23 @@ public class PsiEllipsisType extends PsiArrayType {
 
   @NotNull
   @Override
-  public PsiType withContainerNullability(@Nullable PsiTypeElementPointer elementPointer) {
-    if (elementPointer == null) return this;
-    if (elementPointer == myElementPointer) return this;
-    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), myNullability, elementPointer);
+  public PsiType withContainerNullability(@Nullable PsiModifierListOwner containerNullabilityContext) {
+    if (containerNullabilityContext == myContainerNullabilityContext) return this;
+    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), myNullability, containerNullabilityContext);
   }
 
   @NotNull
   @Override
   public PsiType withContainerNullability(@Nullable PsiArrayType arrayType) {
-    if (arrayType == null) return this;
-    if (arrayType.myElementPointer == myElementPointer) return this;
-    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), myNullability, arrayType.myElementPointer);
+    if (arrayType == null && myContainerNullabilityContext == null) return this;
+    if (arrayType != null && arrayType.myContainerNullabilityContext == myContainerNullabilityContext) return this;
+    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), myNullability,
+                              arrayType != null ? arrayType.myContainerNullabilityContext : null);
   }
 
   @Override
   public @NotNull PsiEllipsisType withNullability(@NotNull TypeNullability nullability) {
-    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), nullability, this.myElementPointer);
+    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), nullability, this.myContainerNullabilityContext);
   }
 
   /**

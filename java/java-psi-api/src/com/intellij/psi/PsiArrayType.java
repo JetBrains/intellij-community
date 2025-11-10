@@ -22,7 +22,7 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   private final PsiType myComponentType;
   TypeNullability myNullability;
   @Nullable
-  final PsiTypeElementPointer myElementPointer;
+  final PsiModifierListOwner myContainerNullabilityContext;
 
   public PsiArrayType(@NotNull PsiType componentType) {
     this(componentType, TypeAnnotationProvider.EMPTY);
@@ -39,11 +39,11 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   PsiArrayType(@NotNull PsiType componentType,
                @NotNull TypeAnnotationProvider provider,
                @Nullable TypeNullability nullability,
-               @Nullable PsiTypeElementPointer elememtPointer) {
+               @Nullable PsiModifierListOwner containerNullabilityContext) {
     super(provider);
     myComponentType = componentType;
     myNullability = nullability;
-    myElementPointer = elememtPointer;
+    myContainerNullabilityContext = containerNullabilityContext;
   }
 
   @Override
@@ -131,20 +131,19 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   /**
    * Creates a new array type instance with the specified nullable container nullability.
    *
-   * @param elementPointer the PSI element pointer representing the context, or null if no specific context is required.
+   * @param containerNullabilityContext the PSI element pointer representing the context, or null if no specific context is required.
    * @return a new instance of {@link PsiType} with the specified nullable container nullability.
    */
   @ApiStatus.Experimental
   @NotNull
-  public PsiType withContainerNullability(@Nullable PsiTypeElementPointer elementPointer) {
-    if (elementPointer == null) return this;
-    if (elementPointer == myElementPointer) return this;
-    return new PsiArrayType(myComponentType, getAnnotationProvider(), myNullability, elementPointer);
+  public PsiType withContainerNullability(@Nullable PsiModifierListOwner containerNullabilityContext) {
+    if (containerNullabilityContext == myContainerNullabilityContext) return this;
+    return new PsiArrayType(myComponentType, getAnnotationProvider(), myNullability, containerNullabilityContext);
   }
 
   @ApiStatus.Experimental
   @Nullable
-  static TypeNullability getContainerNullability(@NotNull PsiTypeElement psiContext) {
+  static TypeNullability getContainerNullability(@NotNull PsiElement psiContext) {
     Project project = psiContext.getProject();
     if (project.isDefault()) return null;
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
@@ -163,22 +162,20 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
   @ApiStatus.Experimental
   @NotNull
   public PsiType withContainerNullability(@Nullable PsiArrayType arrayType) {
-    if (arrayType == null) return this;
-    if (arrayType.myElementPointer == myElementPointer) return this;
-    return new PsiArrayType(myComponentType, getAnnotationProvider(), myNullability, arrayType.myElementPointer);
+    if (arrayType == null && myContainerNullabilityContext == null) return this;
+    if (arrayType != null && arrayType.myContainerNullabilityContext == myContainerNullabilityContext) return this;
+    return new PsiArrayType(myComponentType, getAnnotationProvider(), myNullability,
+                            arrayType != null ? arrayType.myContainerNullabilityContext : null);
   }
 
   @Override
   public @NotNull TypeNullability getNullability() {
     if (myNullability == null) {
       TypeNullability nullability = JavaTypeNullabilityUtil.getNullabilityFromAnnotations(getAnnotations());
-      if (nullability == TypeNullability.UNKNOWN && myElementPointer != null) {
-        PsiTypeElement element = myElementPointer.retrieveElement();
-        if (element != null) {
-          TypeNullability containerNullability = getContainerNullability(element);
-          if (containerNullability != null) {
-            nullability = containerNullability;
-          }
+      if (nullability == TypeNullability.UNKNOWN && myContainerNullabilityContext != null) {
+        TypeNullability containerNullability = getContainerNullability(myContainerNullabilityContext);
+        if (containerNullability != null) {
+          nullability = containerNullability;
         }
       }
       myNullability = nullability;
@@ -193,7 +190,7 @@ public class PsiArrayType extends PsiType.Stub implements JvmArrayType {
    */
   @Override
   public @NotNull PsiArrayType withNullability(@NotNull TypeNullability nullability) {
-    return new PsiArrayType(getComponentType(), getAnnotationProvider(), nullability, myElementPointer);
+    return new PsiArrayType(getComponentType(), getAnnotationProvider(), nullability, myContainerNullabilityContext);
   }
 
   @Override
