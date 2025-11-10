@@ -69,6 +69,40 @@ class MavenNewModelVersionInOldSchemaInspectionTest: MavenDomTestCase()  {
     checkHighlighting()
   }
 
+
+  @Test
+  fun testCheckNotHighlightingModel4_1_manySpaces() = runBlocking{
+    assumeModel_4_1_0("testing only for model 4.1.0")
+    setRawPomFile("""<?xml version="1.0"?>
+      <project xmlns="http://maven.apache.org/POM/4.1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0      http://maven.apache.org/xsd/maven-4.1.0.xsd">
+        <modelVersion>4.1.0</modelVersion>
+        <groupId>my.group</groupId>
+        <artifactId>artifact</artifactId>
+        <version>1.0</version>
+        </project>
+    """.trimIndent())
+    checkHighlighting()
+  }
+
+  @Test
+  fun testCheckNotHighlightingModel4_1_newLine() = runBlocking{
+    assumeModel_4_1_0("testing only for model 4.1.0")
+    setRawPomFile("""<?xml version="1.0"?>
+      <project xmlns="http://maven.apache.org/POM/4.1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0
+         http://maven.apache.org/xsd/maven-4.1.0.xsd">
+        <modelVersion>4.1.0</modelVersion>
+        <groupId>my.group</groupId>
+        <artifactId>artifact</artifactId>
+        <version>1.0</version>
+        </project>
+    """.trimIndent())
+    checkHighlighting()
+  }
+
   @Test
   fun testCheckNotHighlightingModel4_1_underscore() = runBlocking{
     assumeModel_4_1_0("testing only for model 4.1.0")

@@ -99,4 +99,17 @@ public class MavenUtilTest extends MavenTestCase {
     Files.writeString(file.toNioPath(), str, StandardCharsets.ISO_8859_1);
     assertEquals("mytestpath", MavenUtil.getRepositoryFromSettings(file.toNioPath()));
   }
+
+  public void testIsMaven41() throws IOException {
+    assertFalse(MavenUtil.INSTANCE.isMaven410(null, null));
+    assertFalse(MavenUtil.INSTANCE.isMaven410(null, "http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd"));
+    assertFalse(MavenUtil.INSTANCE.isMaven410("http://maven.apache.org/POM/4.1.0", null));
+    assertFalse(MavenUtil.INSTANCE.isMaven410("http://maven.apache.org/POM/4.1.0", "http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"));
+    assertFalse(MavenUtil.INSTANCE.isMaven410("http://maven.apache.org/POM/4.0.0", "http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd"));
+    assertTrue(MavenUtil.INSTANCE.isMaven410("http://maven.apache.org/POM/4.1.0", "http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd"));
+    assertTrue(MavenUtil.INSTANCE.isMaven410("https://maven.apache.org/POM/4.1.0", "https://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd"));
+    assertTrue(MavenUtil.INSTANCE.isMaven410("https://maven.apache.org/POM/4.1.0", "https://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd"));
+    assertTrue(MavenUtil.INSTANCE.isMaven410("https://maven.apache.org/POM/4.1.0", "https://maven.apache.org/POM/4.1.0 https://maven.apache.org/xsd/maven-4.1.0.xsd https://maven.apache.org/maven-v4_1_0.xsd"));
+    assertTrue(MavenUtil.INSTANCE.isMaven410("https://maven.apache.org/POM/4.1.0", "https://maven.apache.org/POM/4.1.0\nhttps://maven.apache.org/xsd/maven-4.1.0.xsd\n https://maven.apache.org/maven-v4_1_0.xsd"));
+  }
 }

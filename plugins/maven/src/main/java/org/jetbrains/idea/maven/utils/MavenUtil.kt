@@ -1982,7 +1982,7 @@ object MavenUtil {
 
   fun isMaven410(xmlns: String?, schemaLocation: String?): Boolean {
     if (xmlns == null || schemaLocation == null) return false
-    val schemaLocations = schemaLocation.split(' ')
+    val schemaLocations = schemaLocation.split(' ', '\n')
     return (xmlns == MAVEN_4_XMLNS || xmlns == MAVEN_4_XMLNS_HTTPS)
            && schemaLocations.all {
       it.isNullOrBlank() ||
