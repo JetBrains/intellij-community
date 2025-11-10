@@ -9,13 +9,20 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorDropHandler
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
+import java.io.File
 import javax.swing.JComponent
 
 
@@ -44,7 +51,22 @@ object GitLabCodeReviewCommentTextFieldFactory {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
     }
 
-    return CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon) { editor: Editor ->
+    val dropHandler = object: EditorDropHandler {
+      override fun canHandleDrop(transferFlavors: Array<out DataFlavor>): Boolean {
+        return canUploadFile && transferFlavors.contains(DataFlavor.javaFileListFlavor)
+      }
+
+      override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
+        val list = t.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
+        list.filterIsInstance<File>().firstOrNull()?.let { file ->
+          vm.uploadFile(file.toPath())
+        }
+      }
+    }
+
+    val editorComponent = CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon) { editor: Editor ->
+
+      (editor as EditorImpl).setDropHandler(dropHandler)
 
       (editor as EditorEx).installPopupHandler(object : ContextMenuPopupHandler() {
         override fun getActionGroup(event: EditorMouseEvent): ActionGroup {
@@ -53,6 +75,7 @@ object GitLabCodeReviewCommentTextFieldFactory {
         }
       })
     }
+    return editorComponent
   }
 }
 

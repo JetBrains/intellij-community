@@ -70,6 +70,7 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
+    "//platform/code-style-api:codeStyle",
   ]
 )
 
@@ -138,6 +139,7 @@ jvm_library(
     "//platform/dvcs-impl/shared",
     "//platform/ide-core-impl",
     "//platform/vcs-impl/shared",
+    "//platform/code-style-api:codeStyle",
   ]
 )
 ### auto-generated section `build intellij.vcs.gitlab` end
