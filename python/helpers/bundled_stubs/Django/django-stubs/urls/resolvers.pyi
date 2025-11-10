@@ -45,8 +45,6 @@ def get_ns_resolver(ns_pattern: str, resolver: URLResolver, converters: tuple) -
 _Pattern: TypeAlias = RegexPattern | RoutePattern | LocalePrefixPattern
 
 class LocaleRegexDescriptor:
-    attr: str
-    def __init__(self, attr: Any) -> None: ...
     @overload
     def __get__(self, instance: None, cls: type[_Pattern] = ...) -> LocaleRegexDescriptor: ...
     @overload

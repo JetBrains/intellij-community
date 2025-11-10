@@ -48,14 +48,14 @@ def error(
 ) -> None: ...
 
 __all__ = (
+    "MessageFailure",
     "add_message",
-    "get_messages",
-    "get_level",
-    "set_level",
     "debug",
+    "error",
+    "get_level",
+    "get_messages",
     "info",
+    "set_level",
     "success",
     "warning",
-    "error",
-    "MessageFailure",
 )

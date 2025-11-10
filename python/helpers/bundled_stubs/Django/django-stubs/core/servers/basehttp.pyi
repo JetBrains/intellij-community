@@ -46,4 +46,4 @@ def run(
     server_cls: type[WSGIServer] = ...,
 ) -> None: ...
 
-__all__ = ("WSGIServer", "WSGIRequestHandler")
+__all__ = ("WSGIRequestHandler", "WSGIServer")

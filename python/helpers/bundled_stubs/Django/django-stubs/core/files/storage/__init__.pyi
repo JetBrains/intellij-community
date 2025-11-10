@@ -6,13 +6,13 @@ from .handler import InvalidStorageError, StorageHandler
 from .memory import InMemoryStorage
 
 __all__ = (
+    "DefaultStorage",
     "FileSystemStorage",
     "InMemoryStorage",
-    "Storage",
-    "DefaultStorage",
-    "default_storage",
     "InvalidStorageError",
+    "Storage",
     "StorageHandler",
+    "default_storage",
     "storages",
 )
 
