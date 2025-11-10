@@ -7,7 +7,10 @@ import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsCompo
 import com.intellij.collaboration.ui.codereview.comment.createEditActionsConfig
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.icons.AllIcons
+import com.intellij.ide.PasteProvider
+import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.DataKey.Companion.create
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorDropHandler
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -15,6 +18,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +29,8 @@ import java.awt.datatransfer.Transferable
 import java.io.File
 import javax.swing.JComponent
 
+
+private val COMMIT_FILE_PASTE_PROVIDER: DataKey<PasteProvider> = create("GitLab.Comment.PasteProvider")
 
 object GitLabCodeReviewCommentTextFieldFactory {
 
@@ -75,7 +81,27 @@ object GitLabCodeReviewCommentTextFieldFactory {
         }
       })
     }
-    return editorComponent
+
+    // Paste Action support
+    return UiDataProvider.wrapComponent(editorComponent) { sink ->
+      sink[COMMIT_FILE_PASTE_PROVIDER] = object : PasteProvider {
+        override fun performPaste(dataContext: DataContext) {
+          val contents = CopyPasteManager.getInstance().getContents() ?: return
+          FileCopyPasteUtil.getFileList(contents)?.firstOrNull()?.let {
+            vm.uploadFile(it.toPath())
+          }
+        }
+        override fun isPastePossible(dataContext: DataContext): Boolean {
+          return true
+        }
+        override fun isPasteEnabled(dataContext: DataContext): Boolean {
+          if (!canUploadFile) return false
+          val contents = CopyPasteManager.getInstance().getContents() ?: return false
+          return !FileCopyPasteUtil.getFileList(contents).isNullOrEmpty()
+        }
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+      }
+    }
   }
 }
 
@@ -88,5 +114,25 @@ object GitLabEditableComponentFactory {
       val actions = createEditActionsConfig(editVm, afterSave)
       GitLabCodeReviewCommentTextFieldFactory.createIn(cs, editVm, actions)
     }
+}
+
+private class CommitFilePasteProvider : PasteProvider {
+  override fun performPaste(dataContext: DataContext) {
+    dataContext.getData(COMMIT_FILE_PASTE_PROVIDER)?.performPaste(dataContext)
+  }
+
+  override fun isPasteEnabled(dataContext: DataContext): Boolean {
+    dataContext.getData(COMMIT_FILE_PASTE_PROVIDER)?.let { return it.isPasteEnabled(dataContext) }
+    return false
+  }
+
+  override fun isPastePossible(dataContext: DataContext): Boolean {
+    dataContext.getData(COMMIT_FILE_PASTE_PROVIDER)?.let { return it.isPastePossible(dataContext) }
+    return false
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
