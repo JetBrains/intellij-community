@@ -67,6 +67,7 @@ fun migrateCommunityToSingleProductIfNeeded(args: List<String>) {
     return
   }
 
+  if (System.getenv()["TOOLBOX_VERSION"] != null) return
   if (!(OS.CURRENT == OS.macOS && currentDirName.endsWith(".app"))) return
 
   val newDir = currentDir.resolveSibling(newDirName)
