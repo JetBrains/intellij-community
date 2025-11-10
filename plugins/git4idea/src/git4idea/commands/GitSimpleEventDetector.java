@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.util.Key;
@@ -19,7 +19,7 @@ public class GitSimpleEventDetector implements GitLineEventDetector {
   private boolean myHappened;
 
   public enum Event {
-    CHERRY_PICK_CONFLICT("after resolving the conflicts"), // also applies to revert
+    CHERRY_PICK_CONFLICT("after resolving the conflicts", "CONFLICT (content): Merge conflict"), // also applies to revert
     /**
      * @deprecated replaced with {@link git4idea.cherrypick.GitLocalChangesConflictDetector}
      */

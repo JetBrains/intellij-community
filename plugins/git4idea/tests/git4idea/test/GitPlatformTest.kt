@@ -222,9 +222,7 @@ abstract class GitPlatformTest : VcsPlatformTest() {
     }
   }
 
-  protected fun readDetails(hashes: List<String>): List<VcsFullCommitDetails> = VcsLogUtil.getDetails(logProvider, projectRoot, hashes)
-
-  protected fun readDetails(hash: String) = readDetails(listOf(hash)).first()
+  protected fun readDetails(vararg hashes: String): List<VcsFullCommitDetails> = VcsLogUtil.getDetails(logProvider, projectRoot, hashes.asList())
 
   protected fun commit(changes: Collection<Change>, commitMessage: String = "comment") {
     val exceptions = tryCommit(changes, commitMessage)

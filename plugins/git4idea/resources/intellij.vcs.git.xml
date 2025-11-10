@@ -160,6 +160,7 @@
       <reference ref="Vcs.QuickListPopupAction"/>
       <separator/>
       <action id="Git.Revert.Abort" class="git4idea.actions.GitAbortOperationAction$Revert"/>
+      <action id="Git.CherryPick.Continue" class="git4idea.actions.GitCherryPickContinueAction"/>
       <action id="Git.CherryPick.Abort" class="git4idea.actions.GitAbortOperationAction$CherryPick"/>
 
       <add-to-group group-id="VcsGroups" relative-to-action="Vcs.MainMenu" anchor="after"/>
@@ -188,6 +189,7 @@
       <separator/>
       <reference ref="Git.Revert.Abort"/>
       <reference ref="Git.CherryPick.Abort"/>
+      <reference ref="Git.CherryPick.Continue"/>
     </group>
 
     <action id="git.update.force.pushed.branch" class="git4idea.actions.branch.GitForcePushedBranchUpdateAction" internal="true"/>
@@ -198,6 +200,7 @@
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
       <reference ref="Git.CherryPick.Abort"/>
+      <reference ref="Git.CherryPick.Continue"/>
       <reference ref="Git.Revert.Abort"/>
       <reference ref="Git.Rebase.Continue"/>
       <reference ref="Git.Rebase.Skip"/>
@@ -497,6 +500,7 @@
       <reference ref="Git.Rebase.Continue"/>
       <reference ref="Git.Rebase.Abort"/>
       <reference ref="Git.Merge.Abort"/>
+      <reference ref="Git.CherryPick.Continue"/>
       <reference ref="Git.CherryPick.Abort"/>
       <reference ref="Git.Revert.Abort"/>
     </group>
@@ -638,6 +642,8 @@
                  description="Starts in-memory variants of interactive rebase operations in suitable scenarios, leading to better performance"/>
     <registryKey key="git.in.memory.interactive.rebase.notify.errors" defaultValue="false"
                  description="Show notification when in-memory interactive rebase fails and fallbacks to the regular one"/>
+    <registryKey key="git.cherry.pick.use.git.sequencer" defaultValue="false"
+                 description="If enabled, Git will use a sequencer to cherry-pick multiple commits as a range (e.g., 'git cherry-pick A^..C') instead of applying each commit individually."/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

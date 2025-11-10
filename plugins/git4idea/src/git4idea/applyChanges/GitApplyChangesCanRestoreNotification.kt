@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.applyChanges
 
 import com.intellij.notification.NotificationAction
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import git4idea.GitApplyChangesNotification
 import git4idea.GitDisposable
 import git4idea.GitRestoreSavedChangesNotificationAction
 import git4idea.i18n.GitBundle

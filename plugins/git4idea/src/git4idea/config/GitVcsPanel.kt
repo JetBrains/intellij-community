@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_TEXT_CHANGED
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
@@ -49,6 +50,8 @@ import com.intellij.vcs.log.ui.filter.FileFilterModel
 import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
+import git4idea.cherrypick.EmptyCherryPickResolutionStrategy
+import git4idea.cherrypick.settingsMessage
 import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
 import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.fetch.GitFetchTagsMode
@@ -258,7 +261,7 @@ internal class GitVcsPanel(private val project: Project) :
       }.bind({ projectSettings.updateMethod }, { projectSettings.updateMethod = it })
       buttonsGroup {
         row(message("settings.clean.working.tree")) {
-          GitSaveChangesPolicy.values().forEach { saveSetting ->
+          GitSaveChangesPolicy.entries.forEach { saveSetting ->
             radioButton(saveSetting.text, saveSetting)
           }
         }.layout(RowLayout.INDEPENDENT)
@@ -300,6 +303,18 @@ internal class GitVcsPanel(private val project: Project) :
         }.bind({ applicationSettings.isCompareWithLocalInStashesEnabled }, { applicationSettings.isCompareWithLocalInStashesEnabled = it })
       }
     }
+
+    if (Registry.`is`("git.cherry.pick.use.git.sequencer"))
+      group(message("settings.cherry.pick")) {
+        buttonsGroup(message("settings.cherry.pick.empty.commit.group")) {
+          EmptyCherryPickResolutionStrategy.entries.forEach { strategy ->
+            row {
+              radioButton(text = strategy.settingsMessage, value = strategy)
+            }
+          }
+        }.bind({ applicationSettings.emptyCherryPickResolutionStrategy }, { applicationSettings.emptyCherryPickResolutionStrategy = it })
+      }
+
     for (configurable in configurables) {
       appendDslConfigurable(configurable)
     }

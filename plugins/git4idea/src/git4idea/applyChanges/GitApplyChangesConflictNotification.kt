@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.applyChanges
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -11,7 +11,7 @@ import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.util.VcsUserUtil
-import git4idea.GitApplyChangesProcess.ConflictResolver
+import git4idea.GitNotificationIdsHolder
 import git4idea.actions.GitAbortOperationAction
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -57,7 +57,7 @@ internal class GitApplyChangesConflictNotification(
       val hash = commit.id.toShortString()
       val commitAuthor = VcsUserUtil.getShortPresentation(commit.author)
       val commitMessage = commit.subject
-      ConflictResolver(repository.project, repository.root, hash, commitAuthor, commitMessage, operationName).mergeNoProceedInBackground()
+      GitApplyChangesConflictResolver(repository.project, repository.root, hash, commitAuthor, commitMessage, operationName).mergeNoProceedInBackground()
     })
 
     addAction(NotificationAction.create(GitBundle.message("apply.changes.unresolved.conflicts.notification.abort.action.text",

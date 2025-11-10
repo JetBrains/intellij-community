@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.idea.IgnoreJUnit3
@@ -60,9 +60,9 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     }
 
     val commits = indexAll()
-    TestCase.assertTrue(index.isIndexed(repo.root))
+    assertTrue(index.isIndexed(repo.root))
     for (commit in commits) {
-      TestCase.assertTrue(index.isIndexed(commit))
+      assertTrue(index.isIndexed(commit))
     }
   }
 
@@ -117,7 +117,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(keyword)))
 
-    TestCase.assertEquals(expected, actual)
+    assertEquals(expected, actual)
   }
 
   fun `test regexp text filter`() {
@@ -144,7 +144,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromPattern(pattern, isRegexpAllowed = true)))
 
-    TestCase.assertEquals(expected, actual)
+    assertEquals(expected, actual)
   }
 
   private fun `test text filter with multiple patterns`(keyword1: String, keyword2: String) {
@@ -197,7 +197,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
 
     val actual = dataGetter.filter(listOf(VcsLogFilterObject.fromUser(author, setOf(author, defaultUser))))
 
-    TestCase.assertEquals(expected, actual)
+    assertEquals(expected, actual)
   }
 
   fun `test author filter with different committer`() {
@@ -219,7 +219,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
       }
       master {
         //cherry-pick with default user
-        GitCherryPicker(project).cherryPick(readDetails(listOf(hashToPick)))
+        GitCherryPicker(project).cherryPick(readDetails(hashToPick))
       }
     }
 
@@ -281,8 +281,8 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     val newHistory = dataGetter.filter(listOf(createPathFilter(newFile)))
     val oldHistory = dataGetter.filter(listOf(createPathFilter(oldFile)))
 
-    TestCase.assertEquals(expectedHistory, newHistory)
-    TestCase.assertEquals(expectedHistory, oldHistory)
+    assertEquals(expectedHistory, newHistory)
+    assertEquals(expectedHistory, oldHistory)
   }
 
   fun `test directory history`() {
@@ -315,7 +315,7 @@ abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
     indexAll()
 
     val actualHistory = dataGetter.filter(listOf(createPathFilter(dir)))
-    TestCase.assertEquals(expectedHistory, actualHistory)
+    assertEquals(expectedHistory, actualHistory)
   }
 
   private fun createPathFilter(relativePath: String) = VcsLogFilterObject.fromPaths(setOf(VcsUtil.getFilePath(child(relativePath))))

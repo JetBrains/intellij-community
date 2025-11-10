@@ -1,33 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.cherrypick
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.impl.HashImpl
+import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
 import git4idea.test.*
 
 abstract class GitCherryPickTest : GitSingleRepoTest() {
   protected lateinit var vcsAppSettings: VcsApplicationSettings
+  protected lateinit var gitVcsSettings: GitVcsApplicationSettings
 
   override fun setUp() {
     super.setUp()
     vcsAppSettings = VcsApplicationSettings.getInstance()
+    gitVcsSettings = GitVcsApplicationSettings.getInstance()
   }
 
   protected fun `check dirty tree conflicting with commit`() {
@@ -98,14 +87,9 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
   protected fun cherryPick(vararg hashes: String, expectSuccess: Boolean = true) {
     updateChangeListManager()
-    val details = readDetails(hashes.asList())
-    val gitCherryPicker = GitCherryPicker(this.project)
-    val cherryPickSuccess = gitCherryPicker.cherryPick(details)
-    if (expectSuccess) {
-      assertTrue(cherryPickSuccess)
-    } else {
-      assertFalse(cherryPickSuccess)
-    }
+    val details = readDetails(*hashes)
+    val cherryPickResult = GitCherryPicker(project).cherryPick(details)
+    assertEquals(expectSuccess, cherryPickResult)
   }
 
   protected fun shortHash(hash: String) = HashImpl.build(hash).toShortString()

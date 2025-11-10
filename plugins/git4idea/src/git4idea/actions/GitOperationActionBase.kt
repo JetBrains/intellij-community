@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import git4idea.GitUtil
@@ -38,12 +39,7 @@ abstract class GitOperationActionBase (
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
-
-    val affectedRepositories = getAffectedRepositories(project)
-    if (affectedRepositories.isEmpty()) return
-
-    val defaultRepo = GitBranchUtil.guessRepositoryForOperation(project, e.dataContext)
-    val repository = chooseRepository(project, affectedRepositories, defaultRepo)
+    val repository = getChosenRepository(project, e.dataContext)
 
     if (repository != null) {
       performInBackground(repository)
@@ -51,6 +47,13 @@ abstract class GitOperationActionBase (
   }
 
   abstract fun performInBackground(repository: GitRepository)
+
+  private fun getChosenRepository(project: Project, dataContext: DataContext): GitRepository? {
+    val affectedRepositories = getAffectedRepositories(project)
+    if (affectedRepositories.isEmpty()) return null
+    val defaultRepo = GitBranchUtil.guessRepositoryForOperation(project, dataContext)
+    return chooseRepository(project, affectedRepositories, defaultRepo)
+  }
 
   private fun getAffectedRepositories(project: Project?): Collection<GitRepository> {
     if (project == null) return emptyList()
