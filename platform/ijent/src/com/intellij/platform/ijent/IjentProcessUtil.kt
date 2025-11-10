@@ -14,6 +14,7 @@ fun getIjentGrpcArgv(
   remotePathToIjent: String,
   additionalEnv: Map<String, String> = mapOf(),
   selfDeleteOnExit: Boolean = false,
+  noShutdownOnDisconnect: Boolean = false,
   usrBinEnv: String = "/usr/bin/env",
   deployInfo: TcpDeployInfo? = null,
 ): List<String> {
@@ -26,6 +27,7 @@ fun getIjentGrpcArgv(
     if (deployInfo != null) "--address=${deployInfo.host}" else null,
     if (deployInfo != null && deployInfo is TcpDeployInfo.FixedPort) "--port=${deployInfo.port}" else null,
     if (selfDeleteOnExit) "--self-delete-on-exit" else null,
+    if (noShutdownOnDisconnect) "--no-shutdown-on-disconnect" else null,
   )
 }
 
