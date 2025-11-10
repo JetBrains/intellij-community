@@ -55,7 +55,10 @@ final class ProcessPopup {
     }
 
     myTasksFinishedDecorator = new TasksFinishedDecorator(myIndicatorPanel);
-    myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> revalidateAll());
+    myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> {
+      SeparatorDecorator.placeSeparators(myIndicatorPanel);
+      revalidateAll();
+    });
     mySeparatorDecorator = new SeparatorDecorator(myIndicatorPanel);
 
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);

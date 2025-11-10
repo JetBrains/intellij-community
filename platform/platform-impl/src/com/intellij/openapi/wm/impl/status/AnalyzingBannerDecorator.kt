@@ -15,13 +15,13 @@ import java.awt.Component
 import javax.swing.JPanel
 
 // Places analyzing progress indicator on top, adds a banner under it
-internal class AnalyzingBannerDecorator(private val panel: JPanel, revalidatePanel: Runnable) {
+internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose: Runnable) {
 
   // component of analyzing progress,
   // placed above banner
   private var analyzingComponent: Component? = null
 
-  private val banner: Component = createBanner(revalidatePanel)
+  private val banner: Component = createBanner(onBannerClose)
 
 
   fun indicatorAdded(indicator: ProgressComponent) {
