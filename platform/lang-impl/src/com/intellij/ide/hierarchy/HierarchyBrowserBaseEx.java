@@ -20,6 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.fileEditor.PsiElementNavigatable;
@@ -281,7 +282,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
               @Override
               public List<File> asFileList() {
-                return PsiCopyPasteManager.asFileList(getPsiElements());
+                return ReadAction.compute(() -> PsiCopyPasteManager.asFileList(getPsiElements()));
               }
             });
           }
