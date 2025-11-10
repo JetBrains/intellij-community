@@ -266,7 +266,8 @@
 
     "SearchEverywhere": {
       "Header.insets": "2,4,0,9",
-      "Advertiser.foreground": "#868a91"
+      "Advertiser.foreground": "#868a91",
+      "List.settingsBackground": "PopupBackground"
     },
 
     "Button": {
