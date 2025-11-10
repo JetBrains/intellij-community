@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.ImportPath
 
 /**
  * Finds a single (implicitly or explicitly) returned expression from [lambdaExpression].
@@ -53,16 +52,6 @@ internal fun KaSession.isLambdaWithSingleReturnedCallOnSingleParameter(
 
     return methodCall.symbol.callableId == callableId &&
             explicitReceiverAccessCall.symbol == singleLambdaParameterSymbol
-}
-
-/**
- * Checks if a package is already imported via star import.
- */
-// TODO Use Import insertion API after KTIJ-28838 is fixed
-internal fun isPackageImportedByStarImport(file: KtFile, packageFqName: FqName): Boolean {
-    return file.importDirectives.any {
-        it.importPath == ImportPath(packageFqName, isAllUnder = true)
-    }
 }
 
 internal fun KaSession.isIterableForEachFunctionCall(element: KtCallExpression): Boolean {
