@@ -19,6 +19,14 @@ private fun isPackageImportedByStarImport(file: KtFile, packageFqName: FqName): 
 // TODO Use Import insertion API after KTIJ-28838 is fixed
 @ApiStatus.Internal
 fun KtFile.addImportFor(fqName: FqName) {
+    val importPath = ImportPath(fqName, isAllUnder = false)
+
+    val defaultImportProvider = KotlinIdeDefaultImportProvider.getInstance()
+    if (
+        defaultImportProvider.isImportedWithDefault(importPath, this) ||
+        defaultImportProvider.isImportedWithLowPriorityDefaultImport(importPath, this)
+    ) return
+
     if (isPackageImportedByStarImport(this, fqName.parent())) return
 
     addImport(fqName)

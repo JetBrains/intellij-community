@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
+import org.jetbrains.kotlin.idea.imports.addImportFor
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -93,8 +94,12 @@ class SimplifyCallChainFix(
         }
 
         result.containingKtFile.commitAndUnblockDocument()
-        @OptIn(KaIdeApi::class)
-        if (result.isValid) shortenReferences(result.reformatted() as KtElement)
+
+        if (result.isValid) {
+            result.containingKtFile.addImportFor(conversion.replacementFqName)
+
+            shortenReferences(result.reformatted() as KtElement)
+        }
     }
 
     override fun applyFix(project: Project, element: KtQualifiedExpression, updater: ModPsiUpdater) {
