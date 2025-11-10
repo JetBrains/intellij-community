@@ -12,6 +12,7 @@ import com.intellij.platform.vcs.changes.ChangeListManagerState
 import com.intellij.platform.vcs.impl.shared.RdLocalChanges
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -48,7 +49,9 @@ class ChangeListsViewModel(
     else flow {
       val projectId = project.projectIdOrNull() ?: return@flow
       val api = ChangeListsApi.getInstance()
-      flowProducer(api, projectId)
+      durable {
+        flowProducer(api, projectId)
+      }
     }
 
   companion object {
