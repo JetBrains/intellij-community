@@ -40,7 +40,6 @@ public interface CompletionItemProvider {
    * Completion context
    *
    * @param originalFile original file
-   * @param file current file (copy for completion)
    * @param offset current offset in the file
    * @param element current element in the file
    * @param matcher prefix matcher
