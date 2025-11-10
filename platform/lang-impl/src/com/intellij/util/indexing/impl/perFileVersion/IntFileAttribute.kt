@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor
+import com.intellij.util.io.Unmappable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.Closeable
 import java.nio.file.Path
@@ -18,7 +19,7 @@ import java.nio.file.Path
  * @see AutoRefreshingOnVfsCloseRef
  */
 @Internal
-sealed interface IntFileAttribute : Closeable {
+sealed interface IntFileAttribute : Closeable, Unmappable {
   companion object {
     @JvmStatic
     fun shouldUseFastAttributes(): Boolean {
@@ -78,5 +79,9 @@ private class IntFileAttributeImpl(
 
   override fun close() {
     attributeAccessor.close()
+  }
+
+  override fun closeAndUnsafelyUnmap() {
+    attributeAccessor.closeAndUnsafelyUnmap()
   }
 }

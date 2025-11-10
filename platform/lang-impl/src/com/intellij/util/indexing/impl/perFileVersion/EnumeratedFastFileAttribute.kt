@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion
 
 import com.google.common.io.Closer
@@ -7,13 +7,16 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.util.containers.hash.EqualityPolicy
-import com.intellij.util.io.*
+import com.intellij.util.io.CachingEnumerator
+import com.intellij.util.io.DataEnumerator
+import com.intellij.util.io.DurableDataEnumerator
+import com.intellij.util.io.Unmappable
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.Closeable
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.isRegularFile
 
 /**
  * A class that allows associating enumerable objects and virtual files.
@@ -34,20 +37,24 @@ import kotlin.io.path.*
  * constructor completes normally).
  */
 @Internal
-class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val exclusiveDir: Path,
-                                                                    fileAttribute: FileAttribute,
-                                                                    descriptorForCache: EqualityPolicy<T>?,
-                                                                    expectedVfsCreationTimestamp: Long,
-                                                                    createEnumerator: (enumeratorPath: Path) -> DurableDataEnumerator<T>) : Closeable {
+class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(
+  private val exclusiveDir: Path,
+  fileAttribute: FileAttribute,
+  descriptorForCache: EqualityPolicy<T>?,
+  expectedVfsCreationTimestamp: Long,
+  createEnumerator: (enumeratorPath: Path) -> DurableDataEnumerator<T>,
+) : Closeable, Unmappable {
 
   private val baseEnumerator: DataEnumerator<T>
   private val baseAttribute: IntFileAttribute
-  private val closer: Closer = Closer.create()
+  private val toClose: List<Closeable>
 
-  constructor(exclusiveDir: Path,
-              fileAttribute: FileAttribute,
-              descriptorForCache: EqualityPolicy<T>?,
-              createEnumerator: (enumeratorPath: Path) -> DurableDataEnumerator<T>) :
+  constructor(
+    exclusiveDir: Path,
+    fileAttribute: FileAttribute,
+    descriptorForCache: EqualityPolicy<T>?,
+    createEnumerator: (enumeratorPath: Path) -> DurableDataEnumerator<T>,
+  ) :
     this(exclusiveDir, fileAttribute, descriptorForCache, FSRecords.getCreationTimestamp(), createEnumerator)
 
   init {
@@ -66,8 +73,7 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
       tryOpenStorages(fileAttribute, createEnumerator)
     }
 
-    closer.register(enumerator)
-    closer.register(attribute)
+    toClose = listOf(enumerator, attribute)
 
     //TODO RC: CachingEnumerator seems to be quite an overkill on top of DurableEnumerator!
     baseEnumerator = if (descriptorForCache == null) enumerator else CachingEnumerator(enumerator, descriptorForCache)
@@ -123,6 +129,19 @@ class EnumeratedFastFileAttribute<T> @VisibleForTesting constructor(private val 
 
   @Throws(IOException::class)
   override fun close() {
-    closer.close()
+    for (closeable in toClose) {
+      closeable.close()
+    }
+  }
+
+  override fun closeAndUnsafelyUnmap() {
+    for (closeable in toClose) {
+      if (closeable is Unmappable) {
+        closeable.closeAndUnsafelyUnmap()
+      }
+      else {
+        closeable.close()
+      }
+    }
   }
 }
