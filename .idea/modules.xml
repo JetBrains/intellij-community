@@ -289,8 +289,6 @@
       <module fileurl="file://$PROJECT_DIR$/android/rendering/intellij.android.rendering.tests.iml" filepath="$PROJECT_DIR$/android/rendering/intellij.android.rendering.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/room/intellij.android.room.iml" filepath="$PROJECT_DIR$/android/room/intellij.android.room.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/room/intellij.android.room.tests.iml" filepath="$PROJECT_DIR$/android/room/intellij.android.room.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/safemode/intellij.android.safemode.iml" filepath="$PROJECT_DIR$/android/safemode/intellij.android.safemode.iml" />
-      <module fileurl="file://$PROJECT_DIR$/android/safemode/intellij.android.safemode.integration.tests.iml" filepath="$PROJECT_DIR$/android/safemode/intellij.android.safemode.integration.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/screenshot-testing/intellij.android.screenshot-test.iml" filepath="$PROJECT_DIR$/android/screenshot-testing/intellij.android.screenshot-test.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/screenshot-testing/gradle/intellij.android.screenshot-test.gradle.iml" filepath="$PROJECT_DIR$/android/screenshot-testing/gradle/intellij.android.screenshot-test.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/screenshot-testing/intellij.android.screenshot-test.tests.iml" filepath="$PROJECT_DIR$/android/screenshot-testing/intellij.android.screenshot-test.tests.iml" />

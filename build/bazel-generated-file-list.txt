@@ -183,7 +183,6 @@ android/project-system-integration-tests
 android/render-resources
 android/rendering
 android/room
-android/safemode
 android/screenshot-testing
 android/screenshot-testing/gradle
 android/sdk-updates
