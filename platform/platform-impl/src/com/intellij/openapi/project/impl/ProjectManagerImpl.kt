@@ -38,6 +38,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -955,7 +956,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private suspend fun acquireTemplateProject(): Project {
     val project = defaultProject
     withContext(CoroutineName("save default project") + Dispatchers.IO) {
-      saveSettings(project, forceSavingAllSettings = true)
+      saveSettings(componentManager = project, forceSavingAllSettings = true)
     }
     return project
   }
@@ -1016,7 +1017,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         projectFile = projectStoreBaseDir,
         project = project,
         newProject = options.isProjectCreatedWithWizard,
-        createModule = options.createModule
+        createModule = options.createModule,
       )
       if (module != null) {
         options.preparedToOpen?.invoke(module)
@@ -1035,7 +1036,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val processor = ProjectAttachProcessor.getProcessor(projectToClose, projectDir, options.project)
     if (processor != null &&
         !isDataSpell() &&
-        (!isValidProject || GeneralSettings.getInstance().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
+        (!isValidProject || serviceAsync<GeneralSettings>().confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK)) {
       while (true) {
         val result = tryToOpen(projectToClose, processor, options, projectDir)
         if (result != null) {
@@ -1044,7 +1045,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
     else {
-      val mode = GeneralSettings.getInstance().confirmOpenNewProject
+      val mode = serviceAsync<GeneralSettings>().confirmOpenNewProject
       if (mode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH &&
           attachToProjectAsync(projectToClose = projectToClose, projectDir = projectDir, callback = options.callback)) {
         return true
@@ -1104,14 +1105,19 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
       GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH -> {
         processor.beforeAttach(options.project)
-        if (attachToProjectAsync(projectToClose = projectToClose,
-                                 projectDir = projectDir,
-                                 processor = processor,
-                                 callback = options.callback,
-                                 beforeOpen = options.beforeOpen)) {
+        if (attachToProjectAsync(
+            projectToClose = projectToClose,
+            projectDir = projectDir,
+            processor = processor,
+            callback = options.callback,
+            beforeOpen = options.beforeOpen,
+          )) {
           return true
         }
-        else return null // cannot attach, retry
+        else {
+          // cannot attach, retry
+          return null
+        }
       }
     }
     return false
@@ -1120,9 +1126,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private suspend fun closeAndDisposeKeepingFrame(project: Project): Boolean {
     return withContext(Dispatchers.EDT) {
       try {
+        val windowManager = serviceAsync<WindowManager>() as WindowManagerEx
         writeIntentReadAction {
-          (WindowManager.getInstance() as WindowManagerEx).withFrameReuseEnabled().use {
-            closeProject(project, checkCanClose = true)
+          windowManager.withFrameReuseEnabled().use {
+            closeProject(project = project, checkCanClose = true)
           }
         }
       }
@@ -1133,8 +1140,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         LOG.error(ce)
         true
       }
-      catch (t: Throwable) {
-        LOG.error(t)
+      catch (e: Throwable) {
+        LOG.error(e)
         true
       }
     }
@@ -1143,12 +1150,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
 @NlsSafe
 private fun message(e: Throwable): String {
-  var message = e.message ?: e.localizedMessage
-  if (message != null) {
-    return message
+  e.message ?: e.localizedMessage?.let {
+    return it
   }
 
-  message = e.toString()
+  val message = e.toString()
   return "$message (cause: ${message(e.cause ?: return message)})"
 }
 
@@ -1187,8 +1193,7 @@ private val LOG = logger<ProjectManagerImpl>()
 private val LISTENERS_IN_PROJECT_KEY = Key.create<MutableList<ProjectManagerListener>>("LISTENERS_IN_PROJECT_KEY")
 private val CLOSE_HANDLER_EP = ExtensionPointName<ProjectCloseHandler>("com.intellij.projectCloseHandler")
 
-private fun getListeners(project: Project): List<ProjectManagerListener> =
-  project.getUserData(LISTENERS_IN_PROJECT_KEY) ?: emptyList()
+private fun getListeners(project: Project): List<ProjectManagerListener> = project.getUserData(LISTENERS_IN_PROJECT_KEY) ?: emptyList()
 
 private val publisher: ProjectManagerListener
   get() = ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC)
