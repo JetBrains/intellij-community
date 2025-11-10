@@ -77,7 +77,7 @@ public class UndoManagerImpl extends UndoManager {
   @NonInjectable
   protected UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project project ? project : null;
-    myUndoSharedState = new UndoSharedState(isPerClientSupported());
+    myUndoSharedState = new UndoSharedState(this::isPerClientSupported);
   }
 
   @Override
@@ -292,8 +292,9 @@ public class UndoManagerImpl extends UndoManager {
       } finally {
         Disposer.dispose(disposable);
       }
-      if (myProject != null) {
-        getUndoSpy().undoRedoPerformed(myProject, editor, isUndo);
+      UndoSpy undoSpy = UndoSpy.getInstance();
+      if (undoSpy != null) {
+        undoSpy.undoRedoPerformed(myProject, editor, isUndo);
       }
     }
   }
@@ -304,11 +305,6 @@ public class UndoManagerImpl extends UndoManager {
       .getMessageBus()
       .syncPublisher(UndoRedoListener.Companion.getTOPIC())
       .undoRedoStarted(myProject, this, editor, isUndo, disposable);
-  }
-
-  @ApiStatus.Internal
-  protected @NotNull UndoSpy getUndoSpy() {
-    return UndoSpy.BLIND;
   }
 
   @ApiStatus.Internal
@@ -534,11 +530,11 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private @NotNull List<UndoProvider> getUndoProviders() {
-    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-      return myProject == null
-      ? UndoProvider.EP_NAME.getExtensionList()
-      : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject);
-    });
+    return ProgressManager.getInstance().computeInNonCancelableSection(
+      () -> myProject == null
+            ? UndoProvider.EP_NAME.getExtensionList()
+            : UndoProvider.PROJECT_EP_NAME.getExtensionList(myProject)
+    );
   }
 
   private @NotNull ComponentManager getComponentManager() {

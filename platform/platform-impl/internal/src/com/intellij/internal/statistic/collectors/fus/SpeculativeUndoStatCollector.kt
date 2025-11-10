@@ -29,7 +29,7 @@ object SpeculativeUndoStatCollector : CounterUsagesCollector() {
   /**
    * Collects project id, file type and number of successful undo/redo requests before the corruption
    */
-  fun logUndoCorruption(project: Project, fileEditor: FileEditor?, undoCount: Int) {
+  fun logUndoCorruption(project: Project?, fileEditor: FileEditor?, undoCount: Int) {
     UNDO_CORRUPTION.log(project) {
       val fileType = fileEditor?.file?.fileType
       add(EventFields.FileType with fileType)

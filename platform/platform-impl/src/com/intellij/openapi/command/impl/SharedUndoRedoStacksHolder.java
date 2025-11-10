@@ -7,13 +7,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<ImmutableActionChangeRange> {
   private final SharedAdjustableUndoableActionsHolder myAdjustableUndoableActionsHolder;
-  private final boolean myIsPerClientSupported;
+  private final Supplier<Boolean> myIsPerClientSupported;
 
-  SharedUndoRedoStacksHolder(SharedAdjustableUndoableActionsHolder undoableActionsHolder, boolean isPerClientSupported, boolean isUndo) {
+  SharedUndoRedoStacksHolder(
+    @NotNull SharedAdjustableUndoableActionsHolder undoableActionsHolder,
+    @NotNull Supplier<Boolean> isPerClientSupported,
+    boolean isUndo
+  ) {
     super(isUndo);
     myAdjustableUndoableActionsHolder = undoableActionsHolder;
     myIsPerClientSupported = isPerClientSupported;
@@ -60,7 +65,7 @@ final class SharedUndoRedoStacksHolder extends UndoRedoStacksHolderBase<Immutabl
   }
 
   @NotNull MovementAvailability canMoveToStackTop(@NotNull DocumentReference reference, @NotNull Map<Integer, MutableActionChangeRange> rangesToMove) {
-    if (!myIsPerClientSupported) {
+    if (!myIsPerClientSupported.get()) {
       return MovementAvailability.ALREADY_MOVED;
     }
     UndoRedoList<ImmutableActionChangeRange> stack = getStack(reference);

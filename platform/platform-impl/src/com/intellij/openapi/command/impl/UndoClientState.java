@@ -41,7 +41,6 @@ final class UndoClientState implements Disposable {
   private final @NotNull UndoRedoStacksHolder undoStacksHolder;
   private final @NotNull UndoRedoStacksHolder redoStacksHolder;
 
-  private final @NotNull UndoSpy undoSpy;
   private final boolean isConfirmationSupported;
   private final boolean isCompactSupported;
   private final boolean isGlobalSplitSupported;
@@ -65,7 +64,6 @@ final class UndoClientState implements Disposable {
   private UndoClientState(@NotNull UndoManagerImpl undoManager, @NotNull ClientId clientId) {
     this.clientId = clientId;
     this.project = undoManager.getProject();
-    this.undoSpy = undoManager.getUndoSpy();
     this.isConfirmationSupported = undoManager.isConfirmationSupported();
     this.isCompactSupported = undoManager.isCompactSupported();
     this.isGlobalSplitSupported = undoManager.isGlobalSplitSupported();
@@ -162,13 +160,12 @@ final class UndoClientState implements Disposable {
 
   void commandStarted(@NotNull CmdEvent cmdEvent, @NotNull CurrentEditorProvider editorProvider) {
     commandBuilder.commandStarted(cmdEvent, editorProvider);
-    undoSpy.commandStarted(cmdEvent);
   }
 
   void commandFinished(@NotNull CmdEvent cmdEvent) {
     PerformedCommand performedCommand = commandBuilder.commandFinished(cmdEvent);
     commitCommand(performedCommand);
-    notifyUndoSpy(cmdEvent, performedCommand);
+    notifyUndoSpy(performedCommand);
   }
 
   private void commitCommand(@NotNull PerformedCommand performedCommand) {
@@ -183,14 +180,14 @@ final class UndoClientState implements Disposable {
     commandMerger.mergeWithPerformedCommand(performedCommand);
   }
 
-  private void notifyUndoSpy(@NotNull CmdEvent cmdEvent, @NotNull PerformedCommand performedCommand) {
+  private void notifyUndoSpy(@NotNull PerformedCommand performedCommand) {
     for (UndoableAction action : performedCommand.undoableActions()) {
       sharedState.addAction(action);
-      if (cmdEvent.project() != null) {
-        undoSpy.undoableActionAdded(cmdEvent.project(), action, UndoableActionType.forAction(action));
+      UndoSpy undoSpy = UndoSpy.getInstance();
+      if (undoSpy != null) {
+        undoSpy.undoableActionAdded(project, action, UndoableActionType.forAction(action));
       }
     }
-    undoSpy.commandFinished(cmdEvent);
   }
 
   void flushCommandMerger(@NotNull UndoCommandFlushReason flushReason) {
@@ -369,7 +366,10 @@ final class UndoClientState implements Disposable {
 
   private void flushCommandMerger(@NotNull UndoCommandFlushReason flushReason, @Nullable PerformedCommand performedCommand) {
     if (performedCommand != null && !performedCommand.hasActions() && commandMerger.hasActions() && !isUndoOrRedoInProgress()) {
-      undoSpy.commandMergerFlushed(project);
+      UndoSpy undoSpy = UndoSpy.getInstance();
+      if (undoSpy != null) {
+        undoSpy.commandMergerFlushed(project);
+      }
     }
     UndoableGroup group = commandMerger.formGroup(flushReason, nextCommandTimestamp());
     if (group != null) {
@@ -384,7 +384,7 @@ final class UndoClientState implements Disposable {
       docsOnStacks.removeIf(doc -> UndoDocumentUtil.isDocumentOpened(project, doc));
       if (docsOnStacks.size() > FREE_QUEUES_LIMIT) {
         DocumentReference[] docsBackSorted = docsOnStacks.toArray(DocumentReference.EMPTY_ARRAY);
-        Arrays.sort(docsBackSorted, Comparator.comparingInt(doc -> getLastCommandTimestamp(doc)));
+        Arrays.sort(docsBackSorted, Comparator.comparingInt(this::getLastCommandTimestamp));
         for (int i = 0; i < docsBackSorted.length - FREE_QUEUES_LIMIT; i++) {
           DocumentReference doc = docsBackSorted[i];
           if (getLastCommandTimestamp(doc) + COMMANDS_TO_KEEP_LIVE_QUEUES > commandTimestamp) {
