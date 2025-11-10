@@ -353,6 +353,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     return majorReleaseBuildDate == null ? getBuildDate() : GregorianCalendar.from(majorReleaseBuildDate);
   }
 
+  public @Nullable ZonedDateTime getMajorReleaseBuildDateTime() {
+    return majorReleaseBuildDate;
+  }
+
   @Override
   public @NotNull BuildNumber getBuild() {
     return Objects.requireNonNull(BuildNumber.fromString(myBuildNumber));
@@ -404,6 +408,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public String getPatchVersion() {
     return myPatchVersion;
+  }
+
+  public @Nullable String getVersionSuffix() {
+    return myVersionSuffix;
   }
 
   @Override
