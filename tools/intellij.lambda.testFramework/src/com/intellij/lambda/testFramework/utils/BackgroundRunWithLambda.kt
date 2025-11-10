@@ -8,6 +8,7 @@ import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.remoteDev.tests.impl.LambdaTestHost
 import com.intellij.remoteDev.tests.impl.utils.SerializedLambda
+import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdSerializedLambda
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestActionParameters
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
@@ -19,6 +20,7 @@ class BackgroundRunWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTe
     runLambda.startSuspending(rdSession.protocol!!.lifetime,
                               LambdaRdTestActionParameters(namedLambdaClass.java.canonicalName, params.toLambdaParams()))
   }
+
   @Deprecated("Use runSerializedLambda instead")
   suspend fun runLambda(namedLambdaClass: KClass<out LambdaTestHost.Companion.NamedLambda<*>>, params: Map<String, String> = emptyMap()) {
     return rdSession.runLambda(namedLambdaClass, params)
@@ -30,18 +32,20 @@ class BackgroundRunWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTe
   }
 
 
-  suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.runSerializedLambda(crossinline lambda: suspend T.() -> Unit) {
-    val exec = SerializedLambda.Companion.fromLambdaWithCoroutineScope(lambda)
-    runSerializedLambda.startSuspending(rdSession.protocol!!.lifetime,
-                                        LambdaRdSerializedLambda(exec.clazzName, exec.methodName, exec.serializedDataBase64,
-                                                                 exec.classPath.map { it.canonicalPath }))
+  suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.runSerializedLambda(name: String? = null, crossinline lambda: suspend T.() -> Unit) {
+    val exec = SerializedLambda.fromLambdaWithCoroutineScope(lambda)
+    runLogged(name ?: ("Step-" + System.currentTimeMillis())) {
+      runSerializedLambda.startSuspending(rdSession.protocol!!.lifetime,
+                                          LambdaRdSerializedLambda(exec.clazzName, exec.methodName, exec.serializedDataBase64,
+                                                                   exec.classPath.map { it.canonicalPath }))
+    }
   }
 
-  suspend inline fun runSerializedLambda(crossinline lambda: suspend LambdaFrontendContext.() -> Unit) {
-    return rdSession.runSerializedLambda(lambda)
+  suspend inline fun runSerializedLambda(name: String? = null, crossinline lambda: suspend LambdaFrontendContext.() -> Unit) {
+    return rdSession.runSerializedLambda(name, lambda)
   }
 
-  suspend inline fun runSerializedLambdaInBackend(crossinline lambda: suspend LambdaBackendContext.() -> Unit) {
-    return (backendRdSession ?: rdSession).runSerializedLambda(lambda)
+  suspend inline fun runSerializedLambdaInBackend(name: String? = null, crossinline lambda: suspend LambdaBackendContext.() -> Unit) {
+    return (backendRdSession ?: rdSession).runSerializedLambda(name, lambda)
   }
 }
