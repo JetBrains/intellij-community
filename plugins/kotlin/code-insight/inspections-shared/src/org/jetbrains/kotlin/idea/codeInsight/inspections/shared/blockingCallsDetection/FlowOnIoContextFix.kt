@@ -9,14 +9,12 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
-import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.findFlowOnCall
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.addImportFor
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 
@@ -48,7 +46,7 @@ internal class FlowOnIoContextFix : PsiUpdateModCommandQuickFix() {
                         dotQualifiedParent.replaced(flowOnExpression)
                     }
 
-                addImportExplicitly(refactoredElement.containingKtFile, CoroutineBlockingCallInspectionUtils.FLOW_ON_FQN)
+                refactoredElement.containingKtFile.addImportFor(CoroutineBlockingCallInspectionUtils.FLOW_ON_FQN)
                 CoroutineBlockingCallInspectionUtils.postProcessQuickFix(refactoredElement, project)
             } else {
                 val replacedArgument = flowOnCallOrNull.getFirstArgumentExpression()
@@ -58,8 +56,4 @@ internal class FlowOnIoContextFix : PsiUpdateModCommandQuickFix() {
         }
     }
 
-    private fun addImportExplicitly(file: KtFile, fqnToImport: FqName) {
-        // TODO Use Import insertion API after KTIJ-28838 is fixed
-        file.addImport(fqnToImport)
-    }
 }

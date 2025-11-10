@@ -16,10 +16,10 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.BUNDLE
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.RunBlockingInSuspendFunctionInspection.Context
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils.addImportFor
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.getCallExpressionSymbol
@@ -121,7 +121,7 @@ internal class RunBlockingInSuspendFunctionInspection : KotlinApplicableInspecti
 
             val replacement = when (context.fixType) {
                 FixType.WITH_CONTEXT -> {
-                    element.containingKtFile.addImport(WITH_CONTEXT_FQ_NAME)
+                    element.containingKtFile.addImportFor(WITH_CONTEXT_FQ_NAME)
                     WITH_CONTEXT_FQ_NAME.shortName().asString()
                 }
 
