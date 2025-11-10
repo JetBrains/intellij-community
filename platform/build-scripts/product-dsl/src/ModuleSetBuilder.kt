@@ -70,15 +70,14 @@ class ModuleSetBuilder {
   }
 
   /**
-   * Include all modules from another ModuleSet.
+   * Include another ModuleSet.
    */
   fun moduleSet(set: ModuleSet) {
-    modules.addAll(set.modules)
     nestedSets.add(set)
   }
 
   @PublishedApi
-  internal fun build(): Pair<List<ContentModule>, List<ModuleSet>> = Pair(modules, nestedSets)
+  internal fun build(): Pair<List<ContentModule>, List<ModuleSet>> = Pair(java.util.List.copyOf(modules), java.util.List.copyOf(nestedSets))
 }
 
 /**
@@ -124,7 +123,7 @@ private fun appendModuleXml(sb: StringBuilder, module: ContentModule) {
  */
 private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, indent: String = "    ", breadcrumb: String = "") {
   // Get direct modules (not from nested sets)
-  val directModules = getDirectModules(moduleSet)
+  val directModules = moduleSet.modules
 
   // Recursively append nested sets first
   for (nestedSet in moduleSet.nestedSets) {
@@ -167,9 +166,6 @@ private fun appendModuleSetContent(sb: StringBuilder, moduleSet: ModuleSet, inde
  * @return ModuleSetBuildResult containing XML and direct module count
  */
 internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): ModuleSetBuildResult {
-  // Count direct modules (excluding nested) - do this once upfront
-  val directModuleCount = getDirectModules(moduleSet).size
-
   val xml = buildString {
     // Add generated file header
     val mainClass = if (label == "community") "CommunityModuleSets" else "UltimateModuleSets"
@@ -203,7 +199,7 @@ internal fun buildModuleSetXml(moduleSet: ModuleSet, label: String): ModuleSetBu
     append("</idea-plugin>")
   }
 
-  return ModuleSetBuildResult(xml, directModuleCount)
+  return ModuleSetBuildResult(xml, moduleSet.modules.size)
 }
 
 /**

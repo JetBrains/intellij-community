@@ -311,7 +311,7 @@ def foo(x: Incomplete | None) -> list[Incomplete]: ...
 ### What to do when a project's documentation and implementation disagree
 
 Type stubs are meant to be external type annotations for a given
-library.  While they are useful documentation in its own merit, they
+library.  While they are useful documentation in their own right, they
 augment the project's concrete implementation, not the project's
 documentation.  Whenever you find them disagreeing, model the type
 information after the actual implementation and file an issue on the
@@ -436,28 +436,24 @@ following criteria is met:
 * the upstream package was declared or appears to be unmaintained, and
   retaining the stubs causes maintenance issues in typeshed.
 
-If a package ships its own `py.typed` file, please follow these steps:
+Case 1: If a package ships its own `py.typed` file, please follow these steps:
 
-1. Open an issue with the earliest month of removal in the subject.
-2. A maintainer will add the
-   ["stubs: removal" label](https://github.com/python/typeshed/labels/%22stubs%3A%20removal%22).
-3. Open a PR that sets the `obsolete_since` field in the `METADATA.toml`
-   file to the first version of the package that shipped `py.typed`.
-4. After at least six months, open a PR to remove the stubs.
+1. Make sure **stubsabot** open a PR that sets the `obsolete_since` field in the
+   `METADATA.toml` file to the first version of the package that shipped `py.typed`.
+2. After at least six months, make sure **stubsabot** open a PR to remove the stubs.
 
-If third-party stubs should be removed for other reasons, please follow these
-steps:
+Case 2: If third-party stubs should be removed for other reasons, please follow
+these steps:
 
 1. Open an issue explaining why the stubs should be removed.
 2. A maintainer will add the
    ["stubs: removal" label](https://github.com/python/typeshed/labels/%22stubs%3A%20removal%22).
 3. Open a PR that sets the `no_longer_updated` field in the `METADATA.toml`
    file to `true`.
-4. When a new version of the package was automatically uploaded to PyPI
-   (which can take up to a day), open a PR to remove the stubs.
+4. When a new version of the package was automatically uploaded to PyPI (which
+   can take up to a day), make sure **stubsabot** open a PR to remove the stubs.
 
-Don't forget to make sure the library is not in the [`pyrightconfig.stricter.json`](./pyrightconfig.stricter.json)
-exclusion list. If feeling kindly, please update [mypy](https://github.com/python/mypy/blob/master/mypy/stubinfo.py)
+If feeling kindly, please update [mypy](https://github.com/python/mypy/blob/master/mypy/stubinfo.py)
 for any stub obsoletions or removals.
 
 ### Marking PRs as "deferred"

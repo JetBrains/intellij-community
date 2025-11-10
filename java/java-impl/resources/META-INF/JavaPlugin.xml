@@ -1513,6 +1513,7 @@
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaSurroundWithCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaSafeDeleteCompletionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.command.commands.ViewStructureCompletionCommandProvider" order="last"/>
+    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaParameterInfoCompletionCommand" order="last"/>
 
     <weigher implementationClass="com.intellij.codeInsight.completion.LoggerWeigher" key="completion" id="logger"/>
 

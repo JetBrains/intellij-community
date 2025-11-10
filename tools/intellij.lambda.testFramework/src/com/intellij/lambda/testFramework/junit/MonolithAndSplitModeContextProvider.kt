@@ -60,6 +60,8 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
   private fun createInvocationContext(mode: IdeRunMode, args: Array<Any>, context: ExtensionContext): TestTemplateInvocationContext {
     return object : TestTemplateInvocationContext {
       override fun getDisplayName(invocationIndex: Int): String {
+        startIdeWhenDefaultJUnitEngineIsUsed(mode)
+
         val params = if (args.isNotEmpty()) " with params: " + listOf(*args) else ""
         return if (params.isNotEmpty()) "[$mode] $params" else "[$mode]"
       }
@@ -77,6 +79,7 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
             return when {
               paramCtx.parameter.type.isAssignableFrom(mode::class.java) -> mode
               paramCtx.parameter.type.isAssignableFrom(BackgroundRunWithLambda::class.java) -> {
+                startIdeWhenDefaultJUnitEngineIsUsed(mode)
                 IdeInstance.ideBackgroundRun
               }
               else -> {
@@ -103,5 +106,10 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
     catch (e: Exception) {
       throw RuntimeException("Could not instantiate ArgumentsProvider: " + clazz.getName(), e)
     }
+  }
+
+  private fun startIdeWhenDefaultJUnitEngineIsUsed(mode: IdeRunMode) {
+    // support default JUnit Jupiter engine execution
+    if (!isGroupedExecutionEnabled) IdeInstance.startIde(mode)
   }
 }

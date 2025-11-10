@@ -18,10 +18,10 @@ import com.intellij.searchEverywhereMl.ranking.core.features.statistician.Search
 internal class SearchEverywhereSymbolFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(SymbolSearchEverywhereContributor::class.java) {
   object Fields {
-    val PARENT_STAT_USE_COUNT_DATA_KEY = EventFields.Int("parentStatUseCount")
-    val PARENT_STAT_IS_MOST_POPULAR_DATA_KEY = EventFields.Boolean("parentStatIsMostPopular")
-    val PARENT_STAT_RECENCY_DATA_KEY = EventFields.Int("parentStatRecency")
-    val PARENT_STAT_IS_MOST_RECENT_DATA_KEY = EventFields.Boolean("parentStatIsMostRecent")
+    val PARENT_STAT_USE_COUNT_DATA_KEY = EventFields.Int("parent_stat_use_count")
+    val PARENT_STAT_IS_MOST_POPULAR_DATA_KEY = EventFields.Boolean("parent_stat_is_most_popular")
+    val PARENT_STAT_RECENCY_DATA_KEY = EventFields.Int("parent_stat_recency")
+    val PARENT_STAT_IS_MOST_RECENT_DATA_KEY = EventFields.Boolean("parent_stat_is_most_recent")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

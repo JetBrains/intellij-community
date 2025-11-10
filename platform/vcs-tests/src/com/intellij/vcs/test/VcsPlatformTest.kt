@@ -220,11 +220,5 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     }
   }
 
-  protected fun <V> setValueForTest(property: KMutableProperty0<V>, value: V) {
-    val oldValue = property.get()
-    property.set(value)
-    Disposer.register(testRootDisposable) { property.set(oldValue) }
-  }
-
   data class AsyncTask(val name: String, val indicator: ProgressIndicator, val future: Future<*>)
 }

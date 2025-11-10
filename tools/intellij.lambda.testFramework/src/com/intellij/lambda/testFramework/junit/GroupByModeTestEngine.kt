@@ -3,6 +3,8 @@ package com.intellij.lambda.testFramework.junit
 import com.intellij.tools.ide.util.common.logOutput
 import org.junit.platform.engine.*
 import org.junit.platform.engine.discovery.ClassSelector
+import org.junit.platform.engine.discovery.ClasspathRootSelector
+import org.junit.platform.engine.discovery.PackageSelector
 import org.junit.platform.engine.support.descriptor.ClassSource
 import org.junit.platform.engine.support.descriptor.EngineDescriptor
 import org.junit.platform.launcher.PostDiscoveryFilter
@@ -45,7 +47,11 @@ class GroupByModeTestEngine : TestEngine {
       return GroupedModeEngineDescriptor(uniqueId, listOf(), discoveryRequest.configurationParameters, emptyList())
     }
 
-    log("Starting discovery with request: ${discoveryRequest.getSelectorsByType(ClassSelector::class.java).map { it.className }}")
+    // Log ALL selector types to debug
+    log("Starting discovery - all selectors:")
+    log("  ClassSelectors: ${discoveryRequest.getSelectorsByType(ClassSelector::class.java).map { it.className }}")
+    log("  PackageSelectors: ${discoveryRequest.getSelectorsByType(PackageSelector::class.java).map { it.packageName }}")
+    log("  ClasspathRootSelectors: ${discoveryRequest.getSelectorsByType(ClasspathRootSelector::class.java).map { it.classpathRoot }}")
 
     val postDiscoveryFilters = try {
       val requestField = findFieldInHierarchy(discoveryRequest, "request")
@@ -64,18 +70,37 @@ class GroupByModeTestEngine : TestEngine {
       emptyList<PostDiscoveryFilter>()
     }
 
+    // IMPORTANT: Delegate to Jupiter for full discovery
+    // This handles ClasspathRootSelector, PackageSelector, ClassSelector, etc.
+    log("Delegating to Jupiter for full discovery...")
+    val jupiterDescriptor = jupiterEngine.discover(discoveryRequest, jupiterUniqueId)
+    log("Jupiter found ${jupiterDescriptor.descendants.size} total test descriptors")
+
+    // Extract all unique class names from Jupiter's discovery
+    val discoveredClasses = jupiterDescriptor.descendants
+      .mapNotNull { descriptor ->
+        (descriptor.source.orElse(null) as? ClassSource)?.className
+      }
+      .distinct()
+
+    log("Extracted ${discoveredClasses.size} unique classes from Jupiter discovery: $discoveredClasses")
+
     // Filter to only get classes with @ExecuteInMonolithAndSplitMode
-    val groupedClassSelectors = discoveryRequest.getSelectorsByType(ClassSelector::class.java)
-      .filter { selector ->
+    val groupedClassSelectors = discoveredClasses
+      .filter { className ->
         try {
-          val clazz = Class.forName(selector.className)
+          val clazz = Class.forName(className)
           val hasAnnotation = clazz.isAnnotationPresent(ExecuteInMonolithAndSplitMode::class.java)
-          log("Class ${selector.className} has @$annotationName: $hasAnnotation")
+          log("Class $className has @$annotationName: $hasAnnotation")
           hasAnnotation
         }
-        catch (e: ClassNotFoundException) {
+        catch (e: Exception) {
+          log("Could not check class $className: ${e.message}")
           false
         }
+      }
+      .map { className ->
+        org.junit.platform.engine.discovery.DiscoverySelectors.selectClass(className)
       }
 
     if (groupedClassSelectors.isEmpty()) {

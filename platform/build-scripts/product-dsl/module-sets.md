@@ -12,16 +12,24 @@ Each module set is defined as a Kotlin function returning a `ModuleSet` object. 
 
 ### Generating XML Files
 
-To regenerate XML files from Kotlin code, run:
-```bash
-# For all products (community + ultimate)
-UltimateModuleSets.main()
+To regenerate XML files from Kotlin code:
 
-# For community products only
-CommunityModuleSets.main()
+**Using JetBrains MCP (Recommended):**
+```kotlin
+mcp__jetbrains__execute_run_configuration(configurationName="Generate Product Layouts")
 ```
 
-Or use the IDE's "Generate Product Layouts" run configuration.
+**Using Gradle:**
+```bash
+# For all products (community + ultimate)
+./gradlew :platform.buildScripts:runIde -PmainClass=com.intellij.platform.commercial.buildScripts.productLayout.UltimateModuleSets
+
+# For community products only
+./gradlew :intellij.platform.buildScripts:runIde -PmainClass=org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+```
+
+**From IDE:**
+Run the "Generate Product Layouts" run configuration.
 
 ### Querying Module Sets
 

@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -17,6 +18,8 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRig
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabVirtualFile
 import com.intellij.util.application
 import com.intellij.util.asSafely
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private class WelcomeScreenProjectActivity : ProjectActivity {
   init {
@@ -32,7 +35,9 @@ private class WelcomeScreenProjectActivity : ProjectActivity {
       dropModalWelcomeScreenOnClose(project)
       subscribeToWelcomeScreenTabClose(project)
       WelcomeScreenRightTab.show(project)
-      ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
+      withContext(Dispatchers.EDT) {
+        ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
+      }
     }
   }
 

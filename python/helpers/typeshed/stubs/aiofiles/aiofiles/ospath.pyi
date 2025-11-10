@@ -1,13 +1,24 @@
 from _typeshed import FileDescriptorOrPath
 from asyncio.events import AbstractEventLoop
-from collections.abc import Awaitable, Callable
 from concurrent.futures import Executor
 from os import PathLike
-from typing import AnyStr, TypeVar
+from typing import AnyStr
 
-_R = TypeVar("_R")
+__all__ = [
+    "abspath",
+    "getatime",
+    "getctime",
+    "getmtime",
+    "getsize",
+    "exists",
+    "isdir",
+    "isfile",
+    "islink",
+    "ismount",
+    "samefile",
+    "sameopenfile",
+]
 
-def wrap(func: Callable[..., _R]) -> Callable[..., Awaitable[_R]]: ...
 async def exists(
     path: FileDescriptorOrPath, *, loop: AbstractEventLoop | None = ..., executor: Executor | None = ...
 ) -> bool: ...

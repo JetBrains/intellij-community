@@ -46,7 +46,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
 
   public void testSimple() {
     try {
-      addStaticAutoImport("java.util.Arrays");
+      addStaticAutoImportToProject("java.util.Arrays");
       doTest();
       cleanupTest();
     }
@@ -57,8 +57,8 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
 
   public void testSimpleWithExclusion() {
     try {
-      addStaticAutoImport("java.util.Arrays");
-      addStaticAutoImport("-java.util.Arrays.sort");
+      addStaticAutoImportToProject("java.util.Arrays");
+      addStaticAutoImportToProject("-java.util.Arrays.sort");
       doTest();
     }
     finally {
@@ -68,11 +68,11 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
 
   public void testRemoveAutoImportProject() {
     try {
-      addStaticAutoImport("java.util.Arrays");
-      addStaticAutoImport("-java.util.Arrays.binarySearch");
+      addStaticAutoImportToProject("java.util.Arrays");
+      addStaticAutoImportToProject("-java.util.Arrays.binarySearch");
       doTest();
       IntentionAction intention = myFixture.getAvailableIntention(
-        JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", "java.util.Arrays.sort"));
+        JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", "java.util.Arrays.sort", 0));
       myFixture.launchAction(intention);
       checkAutoImportDoesntContain("java.util.Arrays");
     }
@@ -81,13 +81,33 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
     }
   }
 
-  public void testExcludeAutoImportProject() {
+  public void testRemoveAutoImportProjectAdditionalImports() {
     try {
-      addStaticAutoImport("java.util.Arrays");
-      addStaticAutoImport("-java.util.Arrays.binarySearch");
+      addStaticAutoImportToProject("java.util.Arrays");
+      addStaticAutoImportToProject("java.util.Arrays2");
+      addStaticAutoImportToProject("java.util.A");
+      addStaticAutoImportToProject("java.util");
       doNamedTest("RemoveAutoImportProject");
       IntentionAction intention = myFixture.getAvailableIntention(
-        JavaBundle.message("inspection.static.import.can.be.used.exclude.from.auto.import.name", "java.util.Arrays.sort"));
+        JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", "java.util.Arrays.sort", 0));
+      myFixture.launchAction(intention);
+      checkAutoImportDoesntContain("java.util.Arrays.sort");
+      checkAutoImportContains("java.util.Arrays2");
+      checkAutoImportContains("java.util.A");
+      checkAutoImportContains("java.util");
+    }
+    finally {
+      cleanTable();
+    }
+  }
+
+  public void testExcludeAutoImportProject() {
+    try {
+      addStaticAutoImportToProject("java.util.Arrays");
+      addStaticAutoImportToProject("-java.util.Arrays.binarySearch");
+      doNamedTest("RemoveAutoImportProject");
+      IntentionAction intention = myFixture.getAvailableIntention(
+        JavaBundle.message("inspection.static.import.can.be.used.exclude.from.auto.import.name", "java.util.Arrays.sort", 0));
       myFixture.launchAction(intention);
       checkAutoImportContains("java.util.Arrays");
       checkAutoImportDoesntContain("java.util.Arrays.sort");
@@ -104,7 +124,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
       addStaticAutoImportToIde("-java.util.Arrays.binarySearch");
       doTest();
       IntentionAction intention = myFixture.getAvailableIntention(
-        JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", "java.util.Arrays.sort"));
+        JavaBundle.message("inspection.static.import.can.be.used.remove.from.auto.import.name", "java.util.Arrays.sort", 1));
       myFixture.launchAction(intention);
       checkAutoImportDoesntContain("java.util.Arrays");
     }
@@ -119,11 +139,23 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
       addStaticAutoImportToIde("-java.util.Arrays.binarySearch");
       doNamedTest("RemoveAutoImportIde");
       IntentionAction intention = myFixture.getAvailableIntention(
-        JavaBundle.message("inspection.static.import.can.be.used.exclude.from.auto.import.name", "java.util.Arrays.sort"));
+        JavaBundle.message("inspection.static.import.can.be.used.exclude.from.auto.import.name", "java.util.Arrays.sort", 1));
       myFixture.launchAction(intention);
       checkAutoImportContains("java.util.Arrays");
       checkAutoImportDoesntContain("java.util.Arrays.sort");
       checkAutoImportDoesntContain("java.util.Arrays.binarySearch");
+    }
+    finally {
+      cleanTable();
+    }
+  }
+
+  public void testExcludeAutoImportIdeMethodAdded() {
+    try {
+      addStaticAutoImportToIde("java.util.Arrays.sort");
+      doNamedTest("RemoveAutoImportIde");
+      String message = JavaBundle.message("inspection.static.import.can.be.used.exclude.from.auto.import.name", "java.util.Arrays.sort", 1);
+      assertNull(myFixture.getAvailableIntention(message));
     }
     finally {
       cleanTable();
@@ -139,7 +171,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
   }
 
   public void testSimpleWithOnDemand() {
-    addStaticAutoImport("java.util.Arrays");
+    addStaticAutoImportToProject("java.util.Arrays");
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     PackageEntry entry = new PackageEntry(true, "java.util.Arrays", false);
     PackageEntryTable onDemand = javaSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
@@ -157,7 +189,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
 
   public void testSimpleMethod() {
     try {
-      addStaticAutoImport("java.util.Arrays.sort");
+      addStaticAutoImportToProject("java.util.Arrays.sort");
       doTest();
       cleanupTest();
     }
@@ -167,7 +199,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
   }
 
   public void testSimpleMethodOnDemand() {
-    addStaticAutoImport("java.util.Arrays.sort");
+    addStaticAutoImportToProject("java.util.Arrays.sort");
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     PackageEntry entry = new PackageEntry(true, "java.util.Arrays", false);
     PackageEntryTable onDemand = javaSettings.PACKAGES_TO_USE_IMPORT_ON_DEMAND;
@@ -185,7 +217,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
 
   public void testWithConflicts() {
     try {
-      addStaticAutoImport("java.util.Arrays");
+      addStaticAutoImportToProject("java.util.Arrays");
       doTest();
     }
     finally {
@@ -195,7 +227,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
 
   public void testWithConflicts2() {
     try {
-      addStaticAutoImport("java.util.Arrays");
+      addStaticAutoImportToProject("java.util.Arrays");
       myFixture.addClass("""
                              package org;
                            
@@ -212,7 +244,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
 
   public void testWithConflictsWithField() {
     try {
-      addStaticAutoImport("org.Foo2");
+      addStaticAutoImportToProject("org.Foo2");
       myFixture.addClass("""
                              package org;
                            
@@ -237,7 +269,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
 
   public void testWithConflictsWithClass() {
     try {
-      addStaticAutoImport("org.Foo2");
+      addStaticAutoImportToProject("org.Foo2");
       myFixture.addClass("""
                              package org;
                            
@@ -262,7 +294,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
 
   public void testAlreadyImported() {
     try {
-      addStaticAutoImport("java.util.Arrays");
+      addStaticAutoImportToProject("java.util.Arrays");
       doTest();
       cleanupTest();
     }
@@ -283,7 +315,7 @@ public class StaticImportCanBeUsedInspectionTest extends LightJavaInspectionTest
   }
 
   @SuppressWarnings("SameParameterValue")
-  private void addStaticAutoImport(@NotNull String name) {
+  private void addStaticAutoImportToProject(@NotNull String name) {
     JavaProjectCodeInsightSettings.getSettings(getProject()).includedAutoStaticNames.add(name);
   }
 

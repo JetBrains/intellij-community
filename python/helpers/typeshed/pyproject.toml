@@ -175,8 +175,6 @@ ignore = [
     "TD003", # Missing issue link for this TODO
     # Mostly from scripts and tests, it's ok to have messages passed directly to exceptions
     "TRY003", # Avoid specifying long messages outside the exception class
-    # Slower and more verbose https://github.com/astral-sh/ruff/issues/7871
-    "UP038", # Use `X | Y` in `isinstance` call instead of `(X, Y)`
     "PLC0205", # Sometimes __slots__ really is a string at runtime
     ###
     # False-positives, but already checked by type-checkers

@@ -158,7 +158,6 @@ class LocalIDEProcess : IDEProcess {
             }
             testContext.collectJBRDiagnosticFiles(ideProcessId)
 
-            deleteJVMCrashes()
             val link = FailureDetailsOnCI.instance.getLinkToCIArtifacts(this)
             TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.LINK, flowId = null, name = "Link to Logs and artifacts", value = link.toString())
             (CIServer.instance as? TeamCityCIServer)?.buildId?.let {

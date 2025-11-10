@@ -238,6 +238,11 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-84484
+  public void testRecursiveTypeInDict() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+  }
+
   // PY-13394
   public void testContainsArguments() {
     doTest();

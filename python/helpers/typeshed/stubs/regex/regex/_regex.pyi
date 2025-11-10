@@ -6,7 +6,7 @@
 from typing import Any, AnyStr, Generic, final
 from typing_extensions import Self
 
-from .regex import Match, Pattern
+from ._main import Match, Pattern
 
 @final
 class Splitter(Generic[AnyStr]):

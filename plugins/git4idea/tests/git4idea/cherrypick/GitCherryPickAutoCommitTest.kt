@@ -1,24 +1,44 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.cherrypick
 
+import com.intellij.dvcs.repo.Repository
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.util.registry.Registry
+import git4idea.GitUtil
+import git4idea.cherrypick.GitCherryPickContinueProcess.launchCherryPick
+import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.test.*
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boolean) : GitCherryPickTest() {
+internal class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boolean, private val useGitSequencer: Boolean, private val emptyCherryPickResolutionStrategy: EmptyCherryPickResolutionStrategy) : GitCherryPickTest() {
   companion object {
     @JvmStatic
-    @Parameterized.Parameters(name = "{0}")
-    fun getModulesCount() = listOf(true, false)
+    @Parameterized.Parameters(name = "createChangelist={0}, useGitSequencer={1}, emptyCommitStrategy={2}")
+    fun getModulesCount(): List<Array<Any>> {
+      val booleanValues = listOf(true, false)
+      val strategyValues = EmptyCherryPickResolutionStrategy.entries
+
+      return booleanValues.flatMap { createChangelist ->
+        booleanValues.flatMap { useGitSequencer ->
+          strategyValues.map { strategy ->
+            arrayOf(createChangelist, useGitSequencer, strategy)
+          }
+        }
+      }
+    }
   }
 
   override fun setUp() {
     super.setUp()
-    setValueForTest(vcsAppSettings::CREATE_CHANGELISTS_AUTOMATICALLY, createChangelistAutomatically)
+    vcsAppSettings.CREATE_CHANGELISTS_AUTOMATICALLY = createChangelistAutomatically
+    gitVcsSettings.emptyCherryPickResolutionStrategy = emptyCherryPickResolutionStrategy
+    vcsNotifier.cleanup()
+    Registry.get("git.cherry.pick.use.git.sequencer").setValue(useGitSequencer)
   }
 
   @Test
@@ -127,22 +147,26 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
 
   @Test
   fun `test cherry-picked 3 commits where 2nd conflicts with local changes`() {
-    val common = file("common.txt")
-    common.create("initial content\n").addCommit("common")
+    // TODO: Investigate why it's super flaky for this case
+    // In practice git will check all the sequence before starting, see that there are local changes
+    // and stop directly at the first commit
+    if (useGitSequencer) return
+    val commonFile = file("common.txt")
+    commonFile.create("initial content\n").addCommit("common")
     branch("feature")
-    val commit1 = file("one.txt").create().addCommit("fix #1").hash()
-    val commit2 = common.append("on master\n").addCommit("appended common").hash()
-    val commit3 = file("two.txt").create().addCommit("fix #2").hash()
+    val fix1 = file("one.txt").create().addCommit("fix #1").hash()
+    val common = commonFile.append("on master\n").addCommit("appended common").hash()
+    val fix3 = file("two.txt").create().addCommit("fix #2").hash()
     checkout("feature")
-    common.append("on feature\n")
+    commonFile.append("on feature\n")
 
-    cherryPick(commit1, commit2, commit3, expectSuccess = false)
+    cherryPick(fix1, common, fix3, expectSuccess = false)
 
     assertErrorNotification("Cherry-pick failed", """
-      ${shortHash(commit2)} appended common
+      ${shortHash(common)} appended common
       """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "cherry-pick", "shelve") + """
       """ + GitBundle.message("apply.changes.operation.successful.for.commits", "cherry-pick", 1) + """
-      ${shortHash(commit1)} fix #1""")
+      ${shortHash(fix1)} fix #1""")
 
   }
 
@@ -189,11 +213,23 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
 
     cherryPick(commit1, emptyCommit, commit3)
 
-    assertLogMessages("fix #2", "fix #1")
-    assertSuccessfulNotification("Applied 2 commits from 3", """
+    if (useGitSequencer) {
+      // When using the git sequencer it will stop at the empty commit, waiting for a continue
+      assertLogMessages("fix #1")
+      assertSuccessfulNotification("Applied 1 commit from 2", """
+      ${shortHash(commit1)} fix #1
+      ${shortHash(emptyCommit)} was skipped, because all changes have already been applied.""")
+    }
+    else {
+      when (emptyCherryPickResolutionStrategy) {
+        EmptyCherryPickResolutionStrategy.SKIP -> assertLogMessages("fix #2", "fix #1")
+        EmptyCherryPickResolutionStrategy.CREATE_EMPTY -> assertLogMessages("fix #2", "to common", "fix #1")
+      }
+      assertSuccessfulNotification("Applied 2 commits from 3", """
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2
       ${shortHash(emptyCommit)} was skipped, because all changes have already been applied.""")
+    }
   }
 
   @Test
@@ -208,5 +244,146 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
                             listOf(IdeBundle.message("action.show.files"),
                                    GitBundle.message("apply.changes.save.and.retry.operation", "Shelve"))
     )
+  }
+
+  // IJPL-84826
+  @Test
+  fun `test cherry-pick continue`(): Unit = runBlocking {
+    // Setup: create conflicting commits
+    val file = file("file.txt")
+    file.create("line 1\n").addCommit("initial")
+
+    git("checkout -b feature")
+    val featureCommit = file.append("line 2 from feature\n").addCommit("feature change").hash()
+
+    git("checkout master")
+    file.write("line 1\nline 2 from master\n")
+    addCommit("master change")
+
+    // Start cherry-pick that will conflict
+    `do nothing on merge`()
+    cherryPick(featureCommit, expectSuccess = false)
+
+    `assert merge dialog was shown`()
+    assertEquals(Repository.State.GRAFTING, repo.state)
+
+    // Resolve conflicts
+    val resolved = file.write("line 1\nline 2 resolved\n")
+    git("add file.txt")
+
+    // Test: continue cherry-pick
+    launchCherryPick(repo).join()
+
+    // Verify
+    assertEquals(Repository.State.NORMAL, repo.state)
+    assertTrue(file.read().contains("line 2 resolved"))
+    assertSuccessfulNotification(title = "Cherry-pick continue successful", message = "${shortHash(resolved.hash())} feature change")
+  }
+
+  // Conflict on the last commit — after resolving, --continue finishes the sequence
+  @Test
+  fun `test cherry-pick continue on last commit finishes sequence`(): Unit = runBlocking {
+    val common = file("common_last.txt")
+    common.create("base\n").addCommit("base")
+
+    // Create two commits; the second will conflict with master
+    branch("feature")
+    val c1 = file("a_last.txt").create().addCommit("last-c1").hash()
+    val c2 = common.append("on master\n").addCommit("last-c2 common").hash()
+
+    // On feature, diverge to make c2 conflict when cherry-picked onto master
+    checkout("feature")
+    common.append("on feature\n").addCommit("feature-touch").hash()
+
+    // Start cherry-pick: c1 applies cleanly, c2 conflicts and stops
+    `do nothing on merge`()
+    cherryPick(c1, c2, expectSuccess = false)
+    `assert merge dialog was shown`()
+    assertEquals(Repository.State.GRAFTING, repo.state)
+
+    // Resolve conflict and stage
+    val resolved = common.write("base\non master\non feature\n")
+    git("add common_last.txt")
+
+    // Continue — regardless of sequencer setting, nothing else left to apply
+    launchCherryPick(repo).join()
+
+    // Assert finished and the last commit applied
+    assertEquals(Repository.State.NORMAL, repo.state)
+    repo.assertLatestSubjects("last-c2 common")
+    assertSuccessfulNotification(title = "Cherry-pick continue successful", message = "${shortHash(resolved.hash())} last-c2 common")
+  }
+
+  // Conflict in the middle — behavior depends on registry
+  // - Disabled (sequencer off): continue applies only the conflicted commit, does NOT proceed with the rest
+  // - Enabled (sequencer on): continue proceeds with the remaining commits in the sequence
+  @Test
+  fun `test cherry-pick continue on middle conflict honors sequencer setting`(): Unit = runBlocking {
+    val common = file("common_mid.txt")
+    common.create("base\n").addCommit("base")
+
+    branch("feature")
+    val c1 = file("one_mid.txt").create().addCommit("mid-c1").hash()
+    val c2 = common.append("on master\n").addCommit("mid-c2 common").hash()
+    val c3 = file("two_mid.txt").create().addCommit("mid-c3").hash()
+
+    // Make c2 conflict by changing the same file on feature
+    checkout("feature")
+    common.append("on feature\n").addCommit("feature-side").hash()
+
+    // Start: pick c1,c2,c3 – we expect stop at c2
+    `do nothing on merge`()
+    cherryPick(c1, c2, c3, expectSuccess = false)
+    `assert merge dialog was shown`()
+    assertEquals(Repository.State.GRAFTING, repo.state)
+
+    // Resolve conflict and stage
+    common.write("base\non master\non feature\n")
+    git("add common_mid.txt")
+
+    // Act: continue
+    launchCherryPick(repo).join()
+    // Assert based on sequencer setting
+    if (useGitSequencer) {
+      // Sequencer enabled: continue applies remaining commits (c3)
+      assertEquals(Repository.State.NORMAL, repo.state)
+      repo.assertLatestSubjects("mid-c3", "mid-c2 common")
+      val commits = GitLogUtil.collectMetadata(project, repo.root).commits
+      val head = commits[0].id.toShortString()
+      val head1 = commits[1].id.toShortString()
+      assertSuccessfulNotification(title = "Cherry-pick continue successful", message = "$head mid-c3<br/>$head1 mid-c2 common")
+    }
+    else {
+      // Sequencer disabled: continue commits only the conflicted commit (c2); c3 is NOT auto-applied
+      assertEquals(Repository.State.NORMAL, repo.state)
+      repo.assertLatestSubjects("mid-c2 common")
+      val head = GitUtil.getHead(repo)!!.toShortString()
+      assertSuccessfulNotification(title = "Cherry-pick continue successful", message = "$head mid-c2 common")
+    }
+  }
+
+  @Test
+  fun `test cherry-pick continue fails when conflicts unresolved`() = runBlocking {
+    // Arrange: set up a conflict and leave it unresolved
+    val f = file("conflict_unresolved.txt")
+    f.create("base\n").addCommit("base")
+
+    branch("feature")
+    val featureCommit = f.append("feature change\n").addCommit("feature change").hash()
+
+    checkout("master")
+    f.append("master change\n").addCommit("master change").hash()
+
+    // Start cherry-pick to cause a conflict and leave it unresolved
+    `do nothing on merge`()
+    cherryPick(featureCommit, expectSuccess = false)
+    `assert merge dialog was shown`()
+    assertEquals(Repository.State.GRAFTING, repo.state)
+
+    // Act: try to continue with unresolved conflicts
+    launchCherryPick(repo).join()
+
+    // Assert: still grafting, operation didn't finish
+    assertEquals(Repository.State.GRAFTING, repo.state)
   }
 }

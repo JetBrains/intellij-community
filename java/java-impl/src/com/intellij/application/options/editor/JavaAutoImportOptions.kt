@@ -53,12 +53,8 @@ public class JavaAutoImportOptions(public val project: Project) : UiDslUnnamedCo
                                                            JavaBundle.message("auto.static.import.scope")) {
 
     override fun validate(value: Any?, component: JComponent?): ValidationInfo? {
-      val info = super.validate(value, component)
-      if (info != null && value is String && value.startsWith("-")) {
-        val cutInfo = super.validate(value.substring(1), component)
-        if (cutInfo == null) return null
-      }
-      return info
+      if (value !is String) return null
+      return super.validate(value.substring(if (value.startsWith("-")) 1 else 0), component)
     }
 
     override fun getIdeRows(): Array<out String> {

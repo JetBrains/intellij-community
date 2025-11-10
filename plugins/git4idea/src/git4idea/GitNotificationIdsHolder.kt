@@ -29,6 +29,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       CHECKOUT_SUCCESS,
       CHERRY_PICK_ABORT_FAILED,
       CHERRY_PICK_ABORT_SUCCESS,
+      CHERRY_PICK_CONTINUE_FAILED,
+      CHERRY_PICK_CONTINUE_SUCCESS,
       CLONE_FAILED,
       CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR,
       COLLECT_UPDATED_CHANGES_ERROR,
@@ -154,6 +156,8 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val CHECKOUT_SUCCESS = "git.checkout.success"
     const val CHERRY_PICK_ABORT_FAILED = "git.cherry.pick.abort.failed"
     const val CHERRY_PICK_ABORT_SUCCESS = "git.cherry.pick.abort.success"
+    const val CHERRY_PICK_CONTINUE_FAILED = "git.cherry.pick.continue.failed"
+    const val CHERRY_PICK_CONTINUE_SUCCESS = "git.cherry.pick.continue.success"
     const val CLONE_FAILED = "git.clone.failed"
     const val CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR = "git.clone.unable.to.create.destination.dir"
     const val CLONE_ERROR_UNABLE_TO_FIND_DESTINATION_DIR = "git.clone.unable.to.find.destination.dir"

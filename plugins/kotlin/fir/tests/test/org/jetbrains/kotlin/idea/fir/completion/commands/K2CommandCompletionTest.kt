@@ -766,6 +766,23 @@ class K2CommandCompletionTest : KotlinLightCodeInsightFixtureTestCase() {
         val elements = myFixture.completeBasic()
         assertTrue(elements.any { element -> element.lookupString.contains("Optimize im", ignoreCase = true) })
     }
+
+    fun testParameterInfo() {
+        Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+        myFixture.configureByText(
+            "x.kt", """"
+          class A{
+            fun call(a: String){}
+            
+            fun test(){
+              call(.<caret>)
+            }
+          }
+          """.trimIndent()
+        )
+        val elements = myFixture.completeBasic()
+        assertTrue(elements.any { element -> element.lookupString.contains("Parameter info", ignoreCase = true) })
+    }
 }
 
 internal fun selectItem(fixture: JavaCodeInsightTestFixture,

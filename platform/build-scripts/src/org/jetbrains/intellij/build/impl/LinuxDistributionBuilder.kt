@@ -29,6 +29,7 @@ import org.jetbrains.intellij.build.impl.productInfo.resolveProductInfoJsonSibli
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
 import org.jetbrains.intellij.build.impl.productInfo.writeProductInfoJson
 import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
+import org.jetbrains.intellij.build.impl.stdioMcpRunner.generateStdioMcpRunnerLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.copyFileToDir
@@ -362,6 +363,7 @@ class LinuxDistributionBuilder(
       "bin/${it.productProperties.baseFileName}64.vmoptions"
     }
     val qodanaCustomLaunchData = generateQodanaLaunchData(context, arch, OsFamily.LINUX)
+    val stdioMcpRunnerLaunchData = generateStdioMcpRunnerLaunchData(context)
     val json = generateProductInfoJson(
       relativePathToBin = "bin",
       builtinModules = context.builtinModule,
@@ -376,7 +378,7 @@ class LinuxDistributionBuilder(
           additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX, arch),
           mainClass = context.ideMainClassName,
           startupWmClass = getLinuxFrameClass(context),
-          customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData)
+          customCommands = listOfNotNull(embeddedFrontendLaunchData, qodanaCustomLaunchData, stdioMcpRunnerLaunchData)
         )
       ),
       context

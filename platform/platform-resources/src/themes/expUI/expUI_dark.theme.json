@@ -558,7 +558,7 @@
     },
 
     "SearchEverywhere": {
-      "List.settingsBackground": "Gray8",
+      "List.settingsBackground": "Gray3",
       "Tab": {
         "selectedBackground": "Blue2",
         "selectedForeground": "Gray14"

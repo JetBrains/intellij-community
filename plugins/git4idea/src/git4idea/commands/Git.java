@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -193,12 +194,38 @@ public interface Git {
   @NotNull
   GitCommandResult show(@NotNull GitRepository repository, String @NotNull ... params);
 
+  /**
+   * @deprecated Use {@link #cherryPick(GitRepository, List, boolean, boolean, GitLineHandlerListener...)}
+   */
+  @Deprecated(forRemoval = true)
   @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository,
                               @NotNull String hash,
                               boolean autoCommit,
                               boolean addCherryPickedFromSuffix,
                               GitLineHandlerListener @NotNull ... listeners);
+
+  // Default implementation added to keep binary compatibility
+  // Remove it when the single commit cherryPick function is removed
+  @NotNull
+  default GitCommandResult cherryPick(@NotNull GitRepository repository,
+                                      @NotNull List<String> hashes,
+                                      boolean autoCommit,
+                                      boolean addCherryPickedFromSuffix,
+                                      GitLineHandlerListener @NotNull ... listeners) {
+    final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHERRY_PICK);
+    if (addCherryPickedFromSuffix) {
+      handler.addParameters("-x");
+    }
+    if (!autoCommit) {
+      handler.addParameters("-n");
+    }
+    handler.addParameters(hashes);
+    Arrays.stream(listeners).forEach(handler::addLineListener);
+    handler.setSilent(false);
+    handler.setStdoutSuppressed(false);
+    return runCommand(handler);
+  }
 
   @NotNull
   GitCommandResult getUnmergedFiles(@NotNull GitRepository repository);

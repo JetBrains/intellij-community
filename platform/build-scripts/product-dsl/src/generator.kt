@@ -117,8 +117,7 @@ fun buildProductContentXml(
   isUltimateBuild: Boolean,
 ): ProductContentBuildResult {
   // Build content blocks, chain mapping, and collect module set aliases in single traversal
-  val (contentBlocks, moduleToSetChainMapping, moduleSetAliases) =
-    buildContentBlocksAndChainMapping(spec, collectModuleSetAliases = inlineModuleSets)
+  val (contentBlocks, moduleToSetChainMapping, moduleSetAliases) = buildContentBlocksAndChainMapping(spec, collectModuleSetAliases = inlineModuleSets)
 
   val xml = buildString {
     appendXmlHeader(generatorCommand, productPropertiesClass)

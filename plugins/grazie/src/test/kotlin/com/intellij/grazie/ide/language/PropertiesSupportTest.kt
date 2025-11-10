@@ -50,7 +50,7 @@ class PropertiesSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
-  fun `test properties typos spellcheck performance`() {
+  fun `_test properties typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
       runHighlightTestForFile("ide/language/properties/i18n.properties")
     }.setup {

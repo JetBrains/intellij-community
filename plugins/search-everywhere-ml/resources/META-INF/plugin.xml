@@ -78,24 +78,15 @@
                      service="com.intellij.searchEverywhereMl.SearchEverywhereMlSettingsService"
                      property="enableAllTabMlRanking"/>
 
-    <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.SearchEverywhereMlServiceImpl"/>
     <statistic.eventLog.eventLoggerProvider
       implementation="com.intellij.searchEverywhereMl.SearchEverywhereEventLoggerProvider"
       order="first"/>
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.searchEverywhereSessionPropertyProvider"
-                    interface="com.intellij.searchEverywhereMl.SearchEverywhereSessionPropertyProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.rankingService"
-                    interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService"
-                    dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.itemSelectedListener"
-                    interface="com.intellij.searchEverywhereMl.SearchEverywhereItemSelectedListener"
-                    dynamic="true"/>
-
+    <extensionPoint
+      interface="com.intellij.searchEverywhereMl.features.SearchEverywhereStateFeaturesProvider"
+      dynamic="true" name="searchEverywhereStateFeaturesProvider"/>
     <extensionPoint qualifiedName="com.intellij.searchEverywhereMl.textEmbeddingProvider"
                     interface="com.intellij.searchEverywhereMl.TextEmbeddingProvider"
                     dynamic="true"/>

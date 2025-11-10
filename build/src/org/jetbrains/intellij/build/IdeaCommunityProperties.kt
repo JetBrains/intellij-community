@@ -65,10 +65,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
       CommunityRepositoryModules.groovyPlugin(),
     )
 
-    productLayout.addPlatformSpec { layout, _ ->
-      layout.withModule("intellij.platform.structuralSearch")
-    }
-
     productLayout.skipUnresolvedContentModules = true
 
     mavenArtifacts.forIdeModules = true

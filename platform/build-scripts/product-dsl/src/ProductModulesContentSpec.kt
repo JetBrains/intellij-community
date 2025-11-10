@@ -115,11 +115,6 @@ class ProductModulesContentSpec(
    */
   @JvmField val additionalModules: List<ContentModule>,
 
-  /**
-   * Module names to exclude from the final set (after resolving all module sets and additions).
-   * This is useful to remove specific modules from included module sets.
-   */
-  @JvmField val excludedModules: Set<String>,
 
   /**
    * Composition graph tracking how this spec was assembled.
@@ -198,7 +193,6 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
     xmlIncludes.addAll(spec.deprecatedXmlIncludes)
     moduleSets.addAll(spec.moduleSets)
     additionalModules.addAll(spec.additionalModules)
-    excludedModules.addAll(spec.excludedModules)
 
     // Also preserve the nested spec's composition graph for deep analysis
     compositionGraph.addAll(spec.compositionGraph)
@@ -323,7 +317,6 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
       deprecatedXmlIncludes = java.util.List.copyOf(xmlIncludes),
       moduleSets = java.util.List.copyOf(moduleSets),
       additionalModules = java.util.List.copyOf(additionalModules),
-      excludedModules = java.util.Set.copyOf(excludedModules),
       compositionGraph = java.util.List.copyOf(compositionGraph),
       metadata = metadata,
     )

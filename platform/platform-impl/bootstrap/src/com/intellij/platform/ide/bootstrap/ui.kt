@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -72,8 +74,8 @@ internal suspend fun configureCssUiDefaults() {
     span("html style patching") {
       // create a separate copy for each case
       val globalStyleSheet = createGlobalStyleSheet()
-      uiDefaults["javax.swing.JLabel.userStyleSheet"] = globalStyleSheet
-      uiDefaults["HTMLEditorKit.jbStyleSheet"] = globalStyleSheet
+      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
     }
   }
 }
@@ -238,8 +240,8 @@ internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
               .invoke(AppUIUtil.getFrameClass())
           }
         }
-        catch (t: Throwable) {
-          logger<AppStarter>().warn("Failed to set WM frame class in XToolkit: $t")
+        catch (e: Throwable) {
+          logger<AppStarter>().warn("Failed to set WM frame class in XToolkit: $e")
         }
       }
     }

@@ -26,8 +26,8 @@ jobs:
     name: Check typeshed structure
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - uses: astral-sh/setup-uv@v6
@@ -45,8 +45,8 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           allow-prereleases: true
@@ -72,8 +72,8 @@ jobs:
     name: "mypy: Run test cases"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           # Use py311 for now, as py312 seems to be around 30s slower in CI
           # TODO: figure out why that is (#11590)
@@ -93,8 +93,8 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - uses: astral-sh/setup-uv@v6
@@ -152,15 +152,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout typeshed
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: typeshed
       - name: Checkout stub_uploader
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: typeshed-internal/stub_uploader
           path: stub_uploader
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           # Keep in sync with stub_uploader's check_scripts.yml workflow.
           python-version: "3.13"

@@ -1,7 +1,7 @@
-from _typeshed import Incomplete
+import logging
 from typing import Any
 
-log: Incomplete
+log: logging.Logger
 
 class ImageApiMixin:
     def get_image(self, image: str, chunk_size: int | None = 2097152): ...

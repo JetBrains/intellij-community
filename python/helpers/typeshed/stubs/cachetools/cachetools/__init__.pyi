@@ -2,7 +2,7 @@ from _typeshed import IdentityFunction, Unused
 from collections.abc import Callable, Iterator, MutableMapping, Sequence
 from contextlib import AbstractContextManager
 from threading import Condition
-from typing import Any, TypeVar, overload
+from typing import Any, Generic, Literal, NamedTuple, TypeVar, overload
 from typing_extensions import Self, deprecated
 
 __all__ = ("Cache", "FIFOCache", "LFUCache", "LRUCache", "RRCache", "TLRUCache", "TTLCache", "cached", "cachedmethod")
@@ -11,6 +11,7 @@ __version__: str
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
 _T = TypeVar("_T")
+_R = TypeVar("_R")
 
 class Cache(MutableMapping[_KT, _VT]):
     @overload
@@ -99,22 +100,52 @@ class TLRUCache(_TimedCache[_KT, _VT]):
     def ttu(self) -> Callable[[_KT, _VT, float], float]: ...
     def expire(self, time: float | None = None) -> list[tuple[_KT, _VT]]: ...
 
+class _CacheInfo(NamedTuple):
+    hits: int
+    misses: int
+    maxsize: int | None
+    currsize: int
+
+class _cached_wrapper(Generic[_R]):
+    __wrapped__: Callable[..., _R]
+    def __call__(self, /, *args: Any, **kwargs: Any) -> _R: ...
+
+class _cached_wrapper_info(_cached_wrapper[_R]):
+    def cache_info(self) -> _CacheInfo: ...
+    def cache_clear(self) -> None: ...
+
 @overload
 def cached(
     cache: MutableMapping[_KT, Any] | None,
     key: Callable[..., _KT] = ...,
     lock: AbstractContextManager[Any] | None = None,
     condition: Condition | None = None,
-    info: bool = False,
-) -> IdentityFunction: ...
+    info: Literal[True] = ...,
+) -> Callable[[Callable[..., _R]], _cached_wrapper_info[_R]]: ...
+@overload
+def cached(
+    cache: MutableMapping[_KT, Any] | None,
+    key: Callable[..., _KT] = ...,
+    lock: AbstractContextManager[Any] | None = None,
+    condition: Condition | None = None,
+    info: Literal[False] = ...,
+) -> Callable[[Callable[..., _R]], _cached_wrapper[_R]]: ...
 @overload
 @deprecated("Passing `info` as positional parameter is deprecated.")
 def cached(
     cache: MutableMapping[_KT, Any] | None,
     key: Callable[..., _KT] = ...,
     lock: AbstractContextManager[Any] | None = None,
-    condition: bool | None = None,
-) -> IdentityFunction: ...
+    condition: Literal[True] = ...,
+) -> Callable[[Callable[..., _R]], _cached_wrapper_info[_R]]: ...
+@overload
+@deprecated("Passing `info` as positional parameter is deprecated.")
+def cached(
+    cache: MutableMapping[_KT, Any] | None,
+    key: Callable[..., _KT] = ...,
+    lock: AbstractContextManager[Any] | None = None,
+    condition: Literal[False] | None = ...,
+) -> Callable[[Callable[..., _R]], _cached_wrapper[_R]]: ...
 def cachedmethod(
     cache: Callable[[Any], MutableMapping[_KT, Any] | None],
     key: Callable[..., _KT] = ...,

@@ -133,7 +133,7 @@ fun startApplication(
 
   val initAwtToolkitJob = scheduleInitAwtToolkit(scope, lockSystemDirsJob, busyThread)
   val initBaseLafJob = scope.launch {
-    initUi(initAwtToolkitJob, isHeadless, scope)
+    initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless, asyncScope = scope)
   }
 
   var initUiScale: Job? = null
@@ -151,9 +151,9 @@ fun startApplication(
       }
     }
 
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope, initAwtToolkitJob, initUiScale, appInfoDeferred)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope = scope, initAwtToolkitJob = initAwtToolkitJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
 
-    scheduleShowSplashIfNeeded(scope, lockSystemDirsJob, initUiScale, appInfoDeferred, args)
+    scheduleShowSplashIfNeeded(scope = scope, lockSystemDirsJob = lockSystemDirsJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
   }
 
   val initLafJob = scope.launch {
@@ -206,14 +206,30 @@ fun startApplication(
     }
   }
 
-  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
+  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
+    scope = scope,
+    logDeferred = logDeferred,
+    appInfoDeferred = appInfoDeferred,
+    initUiDeferred = initLafJob,
+    args = args,
+    mainScope = mainScope,
+  )
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 
   val configImportDeferred: Deferred<Job?> = scope.async {
     importConfigIfNeeded(
-      scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args, customTargetDirectoryToImportConfig,
-      appStarterDeferred, euaDocumentDeferred, initLafJob)
+      scope = scope,
+      isHeadless = isHeadless,
+      configImportNeededDeferred = configImportNeededDeferred,
+      lockSystemDirsJob = lockSystemDirsJob,
+      logDeferred = logDeferred,
+      args = args,
+      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
+      appStarterDeferred = appStarterDeferred,
+      euaDocumentDeferred = euaDocumentDeferred,
+      initLafJob = initLafJob,
+    )
   }
 
   configImportDeferred.invokeOnCompletion {
@@ -235,7 +251,12 @@ fun startApplication(
       }
     }
 
-    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this, zipPoolDeferred, mainClassLoaderDeferred, logDeferred)
+    PluginManagerCore.scheduleDescriptorLoading(
+      coroutineScope = this,
+      zipPoolDeferred = zipPoolDeferred,
+      mainClassLoaderDeferred = mainClassLoaderDeferred,
+      logDeferred = logDeferred,
+    )
   }
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
@@ -281,7 +302,18 @@ fun startApplication(
     }
 
     val args = args.filterNot { CommandLineArgs.isKnownArgument(it) }
-    loadApp(app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, scope, initLafJob, logDeferred, appRegisteredJob, args, initEventQueueJob)
+    loadApp(
+      app = app,
+      pluginSetDeferred = pluginSetDeferred,
+      appInfoDeferred = appInfoDeferred,
+      euaDocumentDeferred = euaDocumentDeferred,
+      asyncScope = scope,
+      initLafJob = initLafJob,
+      logDeferred = logDeferred,
+      appRegisteredJob = appRegisteredJob,
+      args = args,
+      initAwtToolkitAndEventQueueJob = initEventQueueJob,
+    )
   }
 
   scope.launch {
@@ -447,33 +479,33 @@ private suspend fun checkDirectories(homePath: String, configPath: Path, systemP
     val logPath = Path.of(PathManager.getLogPath()).normalize()
     val tempPath = Path.of(PathManager.getTempPath()).normalize()
     // directories might be nested, hence should be checked sequentially
-    checkDirectory(configPath, kind = 0, property = PathManager.PROPERTY_CONFIG_PATH) &&
-    checkDirectory(systemPath, kind = 1, property = PathManager.PROPERTY_SYSTEM_PATH) &&
-    checkDirectory(logPath, kind = 2, property = PathManager.PROPERTY_LOG_PATH) &&
-    checkDirectory(tempPath, kind = 3, property = PathManager.PROPERTY_SYSTEM_PATH)
+    checkDirectory(dir = configPath, kind = 0, property = PathManager.PROPERTY_CONFIG_PATH) &&
+    checkDirectory(dir = systemPath, kind = 1, property = PathManager.PROPERTY_SYSTEM_PATH) &&
+    checkDirectory(dir = logPath, kind = 2, property = PathManager.PROPERTY_LOG_PATH) &&
+    checkDirectory(dir = tempPath, kind = 3, property = PathManager.PROPERTY_SYSTEM_PATH)
   }
 }
 
-private fun checkDirectory(directory: Path, kind: Int, property: String): Boolean {
+private fun checkDirectory(dir: Path, kind: Int, property: String): Boolean {
   try {
-    Files.createDirectories(directory)
+    Files.createDirectories(dir)
   }
   catch (e: Exception) {
     val title = BootstrapBundle.message("bootstrap.error.title.invalid.directory", kind)
     val problem = BootstrapBundle.message("bootstrap.error.problem.dir")
-    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, directory, e.javaClass.name, e.message)
+    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, dir, e.javaClass.name, e.message)
     StartupErrorReporter.showError(title, message)
     return false
   }
 
-  val tempFile = directory.resolve("ij${Random().nextInt(Int.MAX_VALUE)}.tmp")
+  val tempFile = dir.resolve("ij${Random().nextInt(Int.MAX_VALUE)}.tmp")
   try {
     Files.writeString(tempFile, "-", StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
   }
   catch (e: Exception) {
     val title = BootstrapBundle.message("bootstrap.error.title.invalid.directory", kind)
     val problem = BootstrapBundle.message("bootstrap.error.problem.file")
-    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, directory, e.javaClass.name, e.message)
+    val message = BootstrapBundle.message("bootstrap.error.message.dir.problem", problem, property, dir, e.javaClass.name, e.message)
     StartupErrorReporter.showError(title, message)
     return false
   }

@@ -241,7 +241,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
       runnable.run();
       return true;
     }
-    return annotatorRunner.runAnnotatorsAsync(elements1, elements2, runnable, resultSink);
+    return annotatorRunner.runAnnotatorsAsync(getDocument(), elements1, elements2, runnable, resultSink);
   }
 
   @ApiStatus.Internal

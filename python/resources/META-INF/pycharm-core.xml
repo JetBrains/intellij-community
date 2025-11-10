@@ -5,9 +5,7 @@
   <module value="com.intellij.modules.pycharm"/>
 
   <xi:include href="/META-INF/PlatformLangPlugin.xml"/>
-  <xi:include href="/META-INF/structuralsearch.xml">
-    <xi:fallback/>
-  </xi:include>
+
   <xi:include href="intellij.platform.remoteServers.impl.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">

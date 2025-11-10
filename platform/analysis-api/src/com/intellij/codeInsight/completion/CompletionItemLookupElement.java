@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModUpdateFileText;
 import com.intellij.modcompletion.CompletionItem;
 import com.intellij.modcompletion.CompletionItemPresentation;
+import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
  */
 @NotNullByDefault
 @ApiStatus.Internal
-public final class CompletionItemLookupElement extends LookupElement {
+public final class CompletionItemLookupElement extends LookupElement implements ReportingClassSubstitutor {
   private final CompletionItem item;
   private volatile @Nullable ModCommand myCachedCommand;
 
@@ -87,6 +88,11 @@ public final class CompletionItemLookupElement extends LookupElement {
       return command;
     }
     return null;
+  }
+
+  @Override
+  public Class<?> getSubstitutedClass() {
+    return item.getClass();
   }
 
   private static boolean isApplicableToContext(ModCommand command, ActionContext context) {

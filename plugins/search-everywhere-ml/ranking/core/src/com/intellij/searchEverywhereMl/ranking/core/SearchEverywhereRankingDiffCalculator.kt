@@ -35,6 +35,7 @@ object SearchEverywhereRankingDiffCalculator {
       if (it is SearchEverywhereFoundElementInfoBeforeDiff) {
         SearchEverywhereFoundElementInfoAfterDiff(
           element = it.element,
+          elementId = it.elementId,
           heuristicPriority = it.heuristicPriority,
           contributor = it.contributor,
           mlWeight = it.mlWeight,

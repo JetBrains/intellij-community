@@ -45,8 +45,6 @@ class AioRpcError(RpcError):
 
 # Create Client:
 
-class ClientInterceptor(metaclass=abc.ABCMeta): ...
-
 def insecure_channel(
     target: str,
     options: _Options | None = None,
@@ -288,7 +286,7 @@ class InterceptedUnaryUnaryCall(_InterceptedCall[_TRequest, _TResponse], metacla
     def __await__(self) -> Generator[Incomplete, None, _TResponse]: ...
     def __init__(
         self,
-        interceptors: Sequence[UnaryUnaryClientInterceptor[_TRequest, _TResponse]],
+        interceptors: Sequence[UnaryUnaryClientInterceptor],
         request: _TRequest,
         timeout: float | None,
         metadata: Metadata,
@@ -304,7 +302,7 @@ class InterceptedUnaryUnaryCall(_InterceptedCall[_TRequest, _TResponse], metacla
     # pylint: disable=too-many-arguments
     async def _invoke(
         self,
-        interceptors: Sequence[UnaryUnaryClientInterceptor[_TRequest, _TResponse]],
+        interceptors: Sequence[UnaryUnaryClientInterceptor],
         method: bytes,
         timeout: float | None,
         metadata: Metadata | None,
@@ -316,47 +314,67 @@ class InterceptedUnaryUnaryCall(_InterceptedCall[_TRequest, _TResponse], metacla
     ) -> UnaryUnaryCall[_TRequest, _TResponse]: ...
     def time_remaining(self) -> float | None: ...
 
-class UnaryUnaryClientInterceptor(Generic[_TRequest, _TResponse], metaclass=abc.ABCMeta):
+class ClientInterceptor(metaclass=abc.ABCMeta): ...
+
+class UnaryUnaryClientInterceptor(ClientInterceptor, metaclass=abc.ABCMeta):
+    # This method (not the class) is generic over _TRequest and _TResponse
+    # and the types must satisfy the no-op implementation of
+    # `return await continuation(client_call_details, request)`.
     @abc.abstractmethod
     async def intercept_unary_unary(
         self,
-        # XXX: See equivalent function in grpc types for notes about continuation:
-        continuation: Callable[[ClientCallDetails, _TRequest], UnaryUnaryCall[_TRequest, _TResponse]],
+        continuation: Callable[[ClientCallDetails, _TRequest], Awaitable[UnaryUnaryCall[_TRequest, _TResponse]]],
         client_call_details: ClientCallDetails,
         request: _TRequest,
-    ) -> _TResponse: ...
+    ) -> _TResponse | UnaryUnaryCall[_TRequest, _TResponse]: ...
 
-class UnaryStreamClientInterceptor(Generic[_TRequest, _TResponse], metaclass=abc.ABCMeta):
+class UnaryStreamClientInterceptor(ClientInterceptor, metaclass=abc.ABCMeta):
+    # This method (not the class) is generic over _TRequest and _TResponse
+    # and the types must satisfy the no-op implementation of
+    # `return await continuation(client_call_details, request)`.
     @abc.abstractmethod
     async def intercept_unary_stream(
         self,
-        continuation: Callable[[ClientCallDetails, _TRequest], UnaryStreamCall[_TRequest, _TResponse]],
+        continuation: Callable[[ClientCallDetails, _TRequest], Awaitable[UnaryStreamCall[_TRequest, _TResponse]]],
         client_call_details: ClientCallDetails,
         request: _TRequest,
-    ) -> AsyncIterable[_TResponse] | UnaryStreamCall[_TRequest, _TResponse]: ...
+    ) -> AsyncIterator[_TResponse] | UnaryStreamCall[_TRequest, _TResponse]: ...
 
-class StreamUnaryClientInterceptor(Generic[_TRequest, _TResponse], metaclass=abc.ABCMeta):
+class StreamUnaryClientInterceptor(ClientInterceptor, metaclass=abc.ABCMeta):
+    # This method (not the class) is generic over _TRequest and _TResponse
+    # and the types must satisfy the no-op implementation of
+    # `return await continuation(client_call_details, request_iterator)`.
     @abc.abstractmethod
     async def intercept_stream_unary(
         self,
-        continuation: Callable[[ClientCallDetails, _TRequest], StreamUnaryCall[_TRequest, _TResponse]],
+        continuation: Callable[
+            [ClientCallDetails, AsyncIterable[_TRequest] | Iterable[_TRequest]], Awaitable[StreamUnaryCall[_TRequest, _TResponse]]
+        ],
         client_call_details: ClientCallDetails,
         request_iterator: AsyncIterable[_TRequest] | Iterable[_TRequest],
-    ) -> AsyncIterable[_TResponse] | UnaryStreamCall[_TRequest, _TResponse]: ...
+    ) -> _TResponse | StreamUnaryCall[_TRequest, _TResponse]: ...
 
-class StreamStreamClientInterceptor(Generic[_TRequest, _TResponse], metaclass=abc.ABCMeta):
+class StreamStreamClientInterceptor(ClientInterceptor, metaclass=abc.ABCMeta):
+    # This method (not the class) is generic over _TRequest and _TResponse
+    # and the types must satisfy the no-op implementation of
+    # `return await continuation(client_call_details, request_iterator)`.
     @abc.abstractmethod
     async def intercept_stream_stream(
         self,
-        continuation: Callable[[ClientCallDetails, _TRequest], StreamStreamCall[_TRequest, _TResponse]],
+        continuation: Callable[
+            [ClientCallDetails, AsyncIterable[_TRequest] | Iterable[_TRequest]],
+            Awaitable[StreamStreamCall[_TRequest, _TResponse]],
+        ],
         client_call_details: ClientCallDetails,
         request_iterator: AsyncIterable[_TRequest] | Iterable[_TRequest],
-    ) -> AsyncIterable[_TResponse] | StreamStreamCall[_TRequest, _TResponse]: ...
+    ) -> AsyncIterator[_TResponse] | StreamStreamCall[_TRequest, _TResponse]: ...
 
 # Server-Side Interceptor:
 
 class ServerInterceptor(metaclass=abc.ABCMeta):
-    # This method (not the class) is generic over _TRequest and _TResponse.
+    # This method (not the class) is generic over _TRequest and _TResponse
+    # and the types must satisfy the no-op implementation of
+    # `return await continuation(handler_call_details)`.
     @abc.abstractmethod
     async def intercept_service(
         self,

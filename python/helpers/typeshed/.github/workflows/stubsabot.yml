@@ -19,12 +19,12 @@ jobs:
     if: github.repository == 'python/typeshed'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # use an ssh key so that checks automatically run on stubsabot PRs
           ssh-key: ${{ secrets.STUBSABOT_SSH_PRIVATE_KEY }}
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
       - uses: astral-sh/setup-uv@v6
@@ -46,7 +46,7 @@ jobs:
     needs: [stubsabot]
     if: ${{ github.repository == 'python/typeshed' && always() && (needs.stubsabot.result == 'failure') }}
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

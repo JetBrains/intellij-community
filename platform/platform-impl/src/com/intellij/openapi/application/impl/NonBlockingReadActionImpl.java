@@ -329,7 +329,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         ourTasksForTestMode.add(this);
       }
       if (!builder.myDisposables.isEmpty()) {
-        ApplicationManager.getApplication().runReadAction(() -> expireWithDisposables(this.builder.myDisposables));
+        expireWithDisposables(this.builder.myDisposables);
       }
     }
 

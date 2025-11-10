@@ -8,6 +8,14 @@ fcntl.F_OFD_SETLK
 fcntl.F_OFD_SETLKW
 
 
+# =======
+# <= 3.12
+# =======
+
+# Added in Python 3.12.11 (parameter `escapable`)
+html.parser.HTMLParser.set_cdata_mode
+
+
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; <= 3.12
 # =============================================================

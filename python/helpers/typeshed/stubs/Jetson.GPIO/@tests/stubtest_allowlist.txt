@@ -1,10 +1,9 @@
-# The high level module can only be imported on a Jetson SBC
-
+# stubtest produces false positives for Jetson.GPIO-related modules in CI
+# The high-level Jetson.GPIO library can only be imported on Jetson SBC,
+# and requires specific system permissions (/dev/gpiochip0 access).
 Jetson.GPIO
-# error: Jetson.GPIO failed to import. RuntimeError: The current user does not have permissions set to access the library functionalites. Please configure permissions or use the root user to run this. It is also possible that /dev/gpiochip0 does not exist. Please check if that file is present.
-
 Jetson.GPIO.gpio
-# error: Jetson.GPIO.gpio failed to import. RuntimeError: The current user does not have permissions set to access the library functionalites. Please configure permissions or use the root user to run this. It is also possible that /dev/gpiochip0 does not exist. Please check if that file is present.
+Jetson.GPIO.gpio_pinmux_lookup
 
 # This builtin error doesn't need to be re-exported
 Jetson.GPIO.gpio_event.InterruptedError

@@ -17,11 +17,11 @@ import java.nio.file.Path
  * Test products have properties = null (they don't have ProductProperties classes).
  */
 internal data class DiscoveredProduct(
-  val name: String,
-  val config: ProductConfiguration,
-  val properties: ProductProperties?,
-  val spec: ProductModulesContentSpec?,
-  val pluginXmlPath: String?
+  @JvmField val name: String,
+  @JvmField val config: ProductConfiguration,
+  @JvmField val properties: ProductProperties?,
+  @JvmField val spec: ProductModulesContentSpec?,
+  @JvmField val pluginXmlPath: String?,
 )
 
 /**
@@ -31,10 +31,11 @@ internal data class DiscoveredProduct(
  */
 internal fun DiscoveredProduct.toProductSpec(projectRoot: Path): ProductSpec {
   // For test products (properties = null), use "test-product" as source file
-  val sourceFile = if (properties != null) {
-    getProductPropertiesSourceFile(properties.javaClass, projectRoot)
-  } else {
+  val sourceFile = if (properties == null) {
     "test-product"
+  }
+  else {
+    getProductPropertiesSourceFile(properties.javaClass, projectRoot)
   }
 
   return ProductSpec(
@@ -74,7 +75,7 @@ private suspend fun discoverAllProductsInternal(projectRoot: Path): List<Discove
       platformPrefix = null
     )
     val spec = productProperties.getProductContentDescriptor()
-    
+
     products.add(
       DiscoveredProduct(
         name = productName,
@@ -85,74 +86,22 @@ private suspend fun discoverAllProductsInternal(projectRoot: Path): List<Discove
       )
     )
   }
-  
+
   return products
 }
 
-/**
- * Discovers test products from known locations.
- * These are products used for testing that shouldn't be in dev-build.json.
- * Retrieves contentSpec from module set registries (UltimateModuleSets).
- *
- * @param projectRoot The project root path
- * @return List of test products as DiscoveredProduct with contentSpec
- */
-private fun discoverTestProducts(projectRoot: Path): List<DiscoveredProduct> {
-  // Build a registry of test product name -> (xmlPath, contentSpec)
-  val testProductRegistry = mutableMapOf<String, Pair<String, ProductModulesContentSpec>>()
-
-  // Get ultimate test product specs (only if ultimate directory exists)
-  if (Files.exists(projectRoot.resolve("ultimate"))) {
-    try {
-      // Load UltimateModuleSets via reflection to avoid hard dependency
-      val ultimateModuleSetsClass = Class.forName("com.intellij.platform.commercial.buildScripts.productLayout.UltimateModuleSets")
-      val instanceField = ultimateModuleSetsClass.getDeclaredField("INSTANCE")
-      val ultimateModuleSetsInstance = instanceField.get(null)
-      val getTestProductSpecsMethod = ultimateModuleSetsClass.getDeclaredMethod("getTestProductSpecs")
-      @Suppress("UNCHECKED_CAST")
-      val ultimateSpecs = getTestProductSpecsMethod.invoke(ultimateModuleSetsInstance) as List<Pair<String, ProductModulesContentSpec>>
-
-      for ((name, spec) in ultimateSpecs) {
-        val xmlPath = "ultimate/platform-ultimate/testResources/META-INF/${name}Plugin.xml"
-        testProductRegistry[name] = xmlPath to spec
-      }
-    } catch (e: ClassNotFoundException) {
-      // Ultimate module not available, skip ultimate test products
-    }
-  }
-
-  // Build DiscoveredProduct instances for test products that exist on disk
-  return testProductRegistry.mapNotNull { (name, pair) ->
-    val (xmlPath, spec) = pair
-    val xmlFile = projectRoot.resolve(xmlPath)
-    if (!Files.exists(xmlFile)) return@mapNotNull null
-
-    DiscoveredProduct(
-      name = name,
-      config = ProductConfiguration(
-        className = "test-product",  // test products don't have Properties class
-        modules = emptyList(),
-        pluginXmlPath = xmlPath
-      ),
-      properties = null,  // test products don't have ProductProperties
-      spec = spec,
-      pluginXmlPath = xmlPath
-    )
-  }
-}
 
 /**
  * Discovers all products from dev-build.json registry and converts to ProductSpec for JSON output.
  * Public function that can be called from other modules (like ultimate buildScripts).
+ * Test products should be passed separately via runModuleSetMain's testProducts parameter.
  *
  * @param projectRoot The project root path
  * @return List of products as ProductSpec (simple data class with no internal dependencies)
  */
-suspend fun discoverAllProductsForJson(projectRoot: Path): List<ProductSpec> {
+suspend fun discoverAllProductsForJson(projectRoot: Path): Sequence<ProductSpec> {
   val regularProducts = discoverAllProductsInternal(projectRoot)
-  val testProducts = discoverTestProducts(projectRoot)
-  val allProducts = regularProducts + testProducts
-  return allProducts.map { it.toProductSpec(projectRoot) }
+  return regularProducts.asSequence().map { it.toProductSpec(projectRoot) }
 }
 
 /**
@@ -169,14 +118,37 @@ suspend fun discoverAllProductsForValidation(projectRoot: Path): List<Pair<Strin
 
 /**
  * Generates product XMLs for all products using programmatic content.
- * Discovers products from dev-build.json and test products, then generates complete plugin.xml files.
+ * Discovers products from dev-build.json and accepts test products as parameter, then generates complete plugin.xml files.
  *
  * @param projectRoot The project root path
+ * @param testProductSpecs Test product specifications (name to ProductModulesContentSpec pairs)
  * @return Result containing generation statistics
  */
-suspend fun generateAllProductXmlFiles(projectRoot: Path): ProductGenerationResult {
+suspend fun generateAllProductXmlFiles(
+  projectRoot: Path,
+  testProductSpecs: List<Pair<String, ProductModulesContentSpec>> = emptyList(),
+): ProductGenerationResult {
   val regularProducts = discoverAllProductsInternal(projectRoot)
-  val testProducts = discoverTestProducts(projectRoot)
+
+  // Convert test product specs to DiscoveredProduct instances
+  val testProducts = testProductSpecs.mapNotNull { (name, spec) ->
+    val xmlPath = "ultimate/platform-ultimate/testResources/META-INF/${name}Plugin.xml"
+    val xmlFile = projectRoot.resolve(xmlPath)
+    if (!Files.exists(xmlFile)) return@mapNotNull null
+
+    DiscoveredProduct(
+      name = name,
+      config = ProductConfiguration(
+        className = "test-product",
+        modules = emptyList(),
+        pluginXmlPath = xmlPath
+      ),
+      properties = null,
+      spec = spec,
+      pluginXmlPath = xmlPath
+    )
+  }
+
   val products = regularProducts + testProducts
 
   // Detect if this is an Ultimate build (projectRoot != communityRoot)
@@ -193,7 +165,7 @@ suspend fun generateAllProductXmlFiles(projectRoot: Path): ProductGenerationResu
         .loadProject(projectRoot.toString(), mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()), false)
         .modules
     )
-    
+
     generateProductXml(
       pluginXmlPath = pluginXmlPath,
       spec = spec,
