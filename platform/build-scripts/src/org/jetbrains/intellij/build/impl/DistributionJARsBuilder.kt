@@ -281,7 +281,7 @@ private suspend fun buildBundledPluginsForAllPlatforms(
   common + specific.values.flatten()
 }
 
-private suspend fun writePluginInfo(
+private fun writePluginInfo(
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
   common: List<PluginBuildDescriptor>,
   specific: Map<SupportedDistribution, List<PluginBuildDescriptor>>,
