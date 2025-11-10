@@ -25,6 +25,8 @@ import kotlin.io.path.readText
  *  this goals create first.txt and second.txt files in outputDieк
  */
 class MavenLifecyclePluginImportingTest : MavenCompilingTestCase() {
+  override fun skipPluginResolution() = false
+
   private lateinit var myFixture: MavenProjectJDKTestFixture
 
   public override fun setUp() {

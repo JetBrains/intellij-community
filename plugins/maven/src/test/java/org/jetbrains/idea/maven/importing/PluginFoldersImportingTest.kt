@@ -11,6 +11,7 @@ import java.util.function.Consumer
 import kotlin.io.path.exists
 
 class PluginFoldersImportingTest : FoldersImportingTestCase() {
+  override fun skipPluginResolution() = false
 
   @Test
   fun testSourceFolderPointsToProjectRootParent() = runBlocking {

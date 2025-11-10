@@ -10,6 +10,8 @@ import java.nio.file.Path
 import java.util.stream.Collectors
 
 class MavenPluginIndexTest : MavenDomWithIndicesTestCase() {
+  override fun skipPluginResolution() = false
+
   @Test
   fun testDefaultPluginsDownloadedAndIndexed() = runBlocking {
     runAndExpectPluginIndexEvents(DEFAULT_PLUGIN_ARTIFACT_IDS) {

@@ -6,6 +6,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPluginResolutionTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
+
   @Test
   fun `test resolve bundle packaging plugin versions`() = runBlocking {
     importProjectAsync("""

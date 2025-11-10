@@ -24,7 +24,8 @@ import org.junit.Test
 import kotlin.io.path.exists
 
 class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
-    
+  override fun skipPluginResolution() = false
+
   @Test
   fun JavadocsAndSources() = runBlocking {
     importProjectAsync("""

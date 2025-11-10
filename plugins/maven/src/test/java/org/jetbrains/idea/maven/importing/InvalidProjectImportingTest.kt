@@ -18,10 +18,8 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildIssueEvent
-import com.intellij.build.events.MessageEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
@@ -31,7 +29,7 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.Test
 
 class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
-
+  override fun skipPluginResolution() = false
 
   @Test
   fun testSubprojectsWithOldModel() = runBlocking {
