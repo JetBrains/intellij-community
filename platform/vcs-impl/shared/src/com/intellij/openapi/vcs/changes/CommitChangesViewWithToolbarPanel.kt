@@ -5,6 +5,8 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
@@ -13,7 +15,7 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsConfiguration.getInstance
+import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangesViewModifier.ChangesViewModifierListener
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
@@ -25,6 +27,7 @@ import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.vcs.impl.shared.SingleTaskRunner
 import com.intellij.platform.vcs.impl.shared.changes.ChangeListsViewModel
+import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys
 import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.changes.PartialChangesHolder
 import com.intellij.platform.vcs.impl.shared.commit.CommitToolWindowViewModel
@@ -54,7 +57,7 @@ private val REFRESH_DELAY = 100.milliseconds
 abstract class CommitChangesViewWithToolbarPanel(
   changesView: ChangesListView,
   protected val cs: CoroutineScope,
-) : ChangesViewPanel(changesView) {
+) : ChangesViewPanel(changesView), UiDataProvider {
   val project: Project get() = changesView.project
   private val settings get() = ChangesViewSettings.getInstance(project)
 
@@ -181,6 +184,11 @@ abstract class CommitChangesViewWithToolbarPanel(
     scheduleRefreshNow()
   }
 
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[ChangesViewDataKeys.SETTINGS] = ChangesViewSettings.getInstance(project)
+    sink[ChangesViewDataKeys.REFRESHER] = Runnable { scheduleRefreshNow() }
+  }
+
   private companion object {
     private val TRACER
       get() = TelemetryManager.getInstance().getTracer(VcsScope)
@@ -208,7 +216,7 @@ private class ChangesViewInputHandler(private val cs: CoroutineScope, private va
     }
     changesView.addSelectionListener {
       if (Registry.get("show.diff.preview.as.editor.tab.with.single.click").asBoolean() &&
-          getInstance(changesView.project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
+          VcsConfiguration.getInstance(changesView.project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
         diffRequests.tryEmit(ChangesViewDiffAction.TRY_SHOW_PREVIEW to ClientId.current)
       }
     }

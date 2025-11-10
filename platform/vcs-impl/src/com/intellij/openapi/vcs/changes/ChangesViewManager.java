@@ -27,8 +27,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.vcs.impl.shared.changes.ChangesViewDataKeys;
-import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings;
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
@@ -290,7 +288,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
       Registry.get("show.diff.preview.as.editor.tab.with.single.click");
 
     private final @NotNull Project myProject;
-    private final @NotNull ChangesViewSettings myChangesViewSettings;
     private final @NotNull VcsConfiguration myVcsConfiguration;
 
     private final @NotNull Wrapper myMainPanelContent;
@@ -313,7 +310,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
                                        @NotNull ChangesViewProxy changesView) {
       super(false, true);
       myProject = project;
-      myChangesViewSettings = ChangesViewSettings.getInstance(project);
       myChangesView = changesView;
       myChangesView.initPanel();
 
@@ -458,8 +454,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
       sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
-      sink.set(ChangesViewDataKeys.SETTINGS, myChangesViewSettings);
-      sink.set(ChangesViewDataKeys.REFRESHER, () -> myChangesView.scheduleRefreshNow(null));
 
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       DataSink.uiDataSnapshot(sink, myCommitPanel);
