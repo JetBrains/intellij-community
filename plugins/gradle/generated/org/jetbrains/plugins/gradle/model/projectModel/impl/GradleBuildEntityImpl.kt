@@ -5,6 +5,7 @@ import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectE
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityBuilder
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -18,6 +19,7 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInst
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityBuilder
 import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId
