@@ -5,6 +5,4 @@ public class TopLevelFunction {
 }
 
 // REF: (suspendFunctions).suspendLambdaParam0(suspend () -> Unit)
-
-// no suspend due to KT-81710
-// CLS_REF: (suspendFunctions).suspendLambdaParam0(() -> Unit)
+// CLS_REF: (suspendFunctions).suspendLambdaParam0(suspend () -> Unit)
