@@ -180,11 +180,6 @@ private fun enrichProductsWithMetrics(
         allModules.add(module.name)
       }
 
-      // Remove excluded modules
-      for (excludedModule in contentSpec.excludedModules) {
-        allModules.remove(excludedModule)
-      }
-
       val totalModuleCount = allModules.size
       val directModuleCount = contentSpec.additionalModules.size
       val moduleSetCount = contentSpec.moduleSets.size
@@ -518,7 +513,7 @@ private fun writeDuplicateAnalysis(
   for ((moduleSet, _, _) in allModuleSets) {
     val allModules = collectAllModuleNames(moduleSet)
     for (moduleName in allModules) {
-      moduleToSets.getOrPut(moduleName) { mutableListOf() }.add(moduleSet.name)
+      moduleToSets.computeIfAbsent(moduleName) { mutableListOf() }.add(moduleSet.name)
     }
   }
 
@@ -674,10 +669,10 @@ private fun writeModuleDistribution(
   // Build module → {inModuleSets: [], inProducts: []} mapping
   val moduleMap = mutableMapOf<String, ModuleDistributionInfo>()
 
-  // Collect modules from module sets
+  // Collect modules from module sets (recursively including nested sets)
   for ((moduleSet, _, _) in allModuleSets) {
-    for (module in moduleSet.modules) {
-      val info = moduleMap.getOrPut(module.name) { ModuleDistributionInfo() }
+    visitAllModules(moduleSet) { module ->
+      val info = moduleMap.computeIfAbsent(module.name) { ModuleDistributionInfo() }
       info.inModuleSets.add(moduleSet.name)
     }
   }
@@ -702,7 +697,7 @@ private fun writeModuleDistribution(
     
     // Add to module map
     for (moduleName in allModulesInProduct) {
-      val info = moduleMap.getOrPut(moduleName) { ModuleDistributionInfo() }
+      val info = moduleMap.computeIfAbsent(moduleName) { ModuleDistributionInfo() }
       if (product.name !in info.inProducts) {
         info.inProducts.add(product.name)
       }
@@ -827,10 +822,10 @@ private fun writeModuleUsageIndex(
   // Build comprehensive usage index
   val usageIndex = mutableMapOf<String, ModuleUsageInfo>()
 
-  // Collect from module sets
+  // Collect from module sets (recursively including nested sets)
   for ((moduleSet, location, sourceFile) in allModuleSets) {
-    for (module in moduleSet.modules) {
-      val info = usageIndex.getOrPut(module.name) { ModuleUsageInfo() }
+    visitAllModules(moduleSet) { module ->
+      val info = usageIndex.computeIfAbsent(module.name) { ModuleUsageInfo() }
       info.moduleSets.add(ModuleSetReference(moduleSet.name, location, sourceFile))
     }
   }
@@ -855,7 +850,7 @@ private fun writeModuleUsageIndex(
     
     // Add to index
     for (moduleName in allModulesInProduct) {
-      val info = usageIndex.getOrPut(moduleName) { ModuleUsageInfo() }
+      val info = usageIndex.computeIfAbsent(moduleName) { ModuleUsageInfo() }
       info.products.add(ProductReference(product.name, product.sourceFile))
     }
   }
@@ -1402,7 +1397,9 @@ private fun suggestModuleSetUnification(
         p.contentSpec?.moduleSets?.any { it.moduleSet.name == msEntry.moduleSet.name } == true
       }
       
-      if (usedByProducts.size <= 1 && msEntry.moduleSet.modules.size <= 5) {
+      // Use total module count (including nested sets) for inline candidate detection
+      val totalModuleCount = collectAllModuleNames(msEntry.moduleSet).size
+      if (usedByProducts.size <= 1 && totalModuleCount <= 5) {
         suggestions.add(UnificationSuggestion(
           priority = "low",
           strategy = "inline",
@@ -1412,10 +1409,10 @@ private fun suggestModuleSetUnification(
           moduleSet2 = null,
           products = null,
           sharedModuleSets = null,
-          reason = "Used by only ${usedByProducts.size} product(s) and contains only ${msEntry.moduleSet.modules.size} modules. Consider inlining into the product directly.",
+          reason = "Used by only ${usedByProducts.size} product(s) and contains only $totalModuleCount modules. Consider inlining into the product directly.",
           impact = mapOf(
             "moduleSetsSaved" to 1,
-            "moduleCount" to msEntry.moduleSet.modules.size,
+            "moduleCount" to totalModuleCount,
             "affectedProducts" to usedByProducts.map { it.name }
           )
         ))
@@ -1449,7 +1446,9 @@ private fun suggestModuleSetUnification(
   // Strategy 4: Split large module sets
   if (strategy == "split" || strategy == "all") {
     for (msEntry in allModuleSets) {
-      if (msEntry.moduleSet.modules.size > 200) {
+      // Use total module count (including nested sets) for split suggestions
+      val totalModuleCount = collectAllModuleNames(msEntry.moduleSet).size
+      if (totalModuleCount > 200) {
         suggestions.add(UnificationSuggestion(
           priority = "low",
           strategy = "split",
@@ -1459,8 +1458,8 @@ private fun suggestModuleSetUnification(
           moduleSet2 = null,
           products = null,
           sharedModuleSets = null,
-          reason = "Module set contains ${msEntry.moduleSet.modules.size} modules. Consider splitting into smaller, more focused sets for better maintainability.",
-          impact = mapOf("moduleCount" to msEntry.moduleSet.modules.size)
+          reason = "Module set contains $totalModuleCount modules. Consider splitting into smaller, more focused sets for better maintainability.",
+          impact = mapOf("moduleCount" to totalModuleCount)
         ))
       }
     }

@@ -35,7 +35,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Essential platform modules required by most IDE products.
-   * Corresponds to intellij.moduleSets.essential.xml and includes libraries.
    */
   fun essential(): ModuleSet = moduleSet("essential") {
     // Include libraries first (they are xi:included in essential.xml)
@@ -130,7 +129,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * All library module sets combined (meta-set that includes core, ktor, misc, temporaryBundled).
-   * Corresponds to intellij.moduleSets.libraries.xml
    */
   fun libraries(): ModuleSet = moduleSet("libraries") {
     moduleSet(librariesCore())
@@ -141,7 +139,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Core library modules.
-   * Corresponds to intellij.moduleSets.libraries.core.xml
    */
   fun librariesCore(): ModuleSet = moduleSet("libraries.core") {
     embeddedModule("intellij.libraries.kotlin.reflect")
@@ -229,7 +226,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Ktor library modules.
-   * Corresponds to intellij.moduleSets.libraries.ktor.xml
    */
   fun librariesKtor(): ModuleSet = moduleSet("libraries.ktor") {
     embeddedModule("intellij.libraries.ktor.io")
@@ -241,7 +237,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Miscellaneous library modules.
-   * Corresponds to intellij.moduleSets.libraries.misc.xml
    */
   fun librariesMisc(): ModuleSet = moduleSet("libraries.misc") {
     // all libs here must not be embedded, if it is embedded, it should be moved to libs-core.xml
@@ -253,7 +248,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Temporarily bundled library modules (planned to be removed).
-   * Corresponds to intellij.moduleSets.libraries.temporaryBundled.xml
    */
   fun librariesTemporaryBundled(): ModuleSet = moduleSet("libraries.temporaryBundled") {
     // Currently used only by DBE (see https://youtrack.jetbrains.com/issue/IJPL-211789/CNFE-org.codehaus.jettison.mapped.Configuration).
@@ -268,7 +262,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * VCS (Version Control System) modules including shared and frontend parts.
-   * Corresponds to intellij.moduleSets.vcs.xml
    */
   fun vcs(): ModuleSet = moduleSet("vcs") {
     module("intellij.platform.vcs.impl")
@@ -290,7 +283,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * VCS shared modules (used by both frontend and backend).
-   * Corresponds to intellij.moduleSets.vcs.shared.xml
    */
   fun vcsShared(): ModuleSet = moduleSet("vcs.shared") {
     embeddedModule("intellij.platform.vcs.core")
@@ -301,7 +293,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * VCS frontend modules.
-   * Corresponds to intellij.moduleSets.vcs.frontend.xml
    */
   fun vcsFrontend(): ModuleSet = moduleSet("vcs.frontend") {
     module("intellij.platform.vcs.impl.frontend")
@@ -309,7 +300,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * XML support modules.
-   * Corresponds to intellij.moduleSets.xml.xml
    */
   fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
     embeddedModule("intellij.xml.dom")
@@ -334,7 +324,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Duplicates analysis modules.
-   * Corresponds to intellij.moduleSets.duplicates.xml
    */
   fun duplicates(): ModuleSet = moduleSet("duplicates") {
     embeddedModule("intellij.platform.duplicates.analysis")
@@ -342,7 +331,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Stream debugger modules.
-   * Corresponds to intellij.moduleSets.debugger.streams.xml
    */
   fun debuggerStreams(): ModuleSet = moduleSet("debugger.streams") {
     module("intellij.debugger.streams.core")
@@ -352,7 +340,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Process elevation support (for operations requiring elevated privileges).
-   * Corresponds to intellij.moduleSets.elevation.xml
    */
   fun elevation(): ModuleSet = moduleSet("elevation") {
     module("intellij.execution.process.elevation")
@@ -363,7 +350,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Compose UI modules.
-   * Corresponds to intellij.moduleSets.compose.xml
    */
   fun compose(): ModuleSet = moduleSet("compose") {
     module("intellij.libraries.skiko")
@@ -386,7 +372,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Grid/data viewer core modules.
-   * Corresponds to intellij.moduleSets.grid.core.xml
    */
   fun gridCore(): ModuleSet = moduleSet("grid.core") {
     module("intellij.grid")
@@ -398,7 +383,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Remote development common modules.
-   * Corresponds to intellij.moduleSets.rd.common.xml
    */
   fun rdCommon(): ModuleSet = moduleSet("rd.common") {
     module("intellij.rd.ide.model.generated")
@@ -408,7 +392,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * IDE common modules (includes essential, compose, grid.core, vcs, xml, duplicates).
-   * Corresponds to intellij.moduleSets.ide.common.xml
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes libraries)
@@ -454,10 +437,10 @@ object CommunityModuleSets : ModuleSetProvider {
     moduleSet(vcs())
     moduleSet(xml())
     moduleSet(duplicates())
+    module("intellij.platform.structuralSearch")
 
     // Note: rd.common is intentionally NOT included in ide.common
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.
     // Products that need rd.common include it explicitly in their product files.
   }
-
 }

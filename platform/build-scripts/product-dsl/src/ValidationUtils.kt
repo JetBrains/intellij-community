@@ -30,15 +30,13 @@ internal fun formatValidationError(
  * Throws an error if invalid overrides are found.
  *
  * @param moduleSetWithOverrides The module set with overrides to validate
- * @param spec The product modules specification (for excluded modules)
  */
 internal fun validateModuleSetOverrides(
-  moduleSetWithOverrides: ModuleSetWithOverrides,
-  spec: ProductModulesContentSpec
+  moduleSetWithOverrides: ModuleSetWithOverrides
 ) {
   if (moduleSetWithOverrides.loadingOverrides.isEmpty()) return
   
-  val directModules = getDirectModules(moduleSetWithOverrides.moduleSet, spec.excludedModules).map { it.name }.toSet()
+  val directModules = moduleSetWithOverrides.moduleSet.modules.mapTo(LinkedHashSet()) { it.name }
   val invalidOverrides = moduleSetWithOverrides.loadingOverrides.keys.filter { it !in directModules }
   
   if (invalidOverrides.isNotEmpty()) {
@@ -135,7 +133,7 @@ internal fun validateAndRecordAlias(
 
 /**
  * Validates that products don't reference redundant module sets.
- * A module set is redundant if it's already nested inside another module set the product uses
+ * A module set is redundant if it's already nested inside another module set the product uses,
  * and the product doesn't apply any overrides to it.
  * 
  * This validation ensures product specifications are correct and maintainable.

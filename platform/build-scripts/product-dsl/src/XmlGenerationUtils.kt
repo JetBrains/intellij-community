@@ -94,39 +94,19 @@ internal fun collectAllModuleNames(moduleSet: ModuleSet, excludedModules: Set<St
 }
 
 /**
- * Gets direct modules from a module set (excluding modules from nested sets and excluded modules).
+ * Visits all modules recursively (including nested sets), applying the visitor function to each.
+ * More efficient than collecting when you only need iteration (avoids intermediate collection).
  *
- * @param moduleSet The module set to get direct modules from
- * @param excludedModules Set of module names to exclude
- * @return List of direct modules
+ * @param moduleSet The module set to visit
+ * @param visitor Function to apply to each module
  */
-internal fun getDirectModules(moduleSet: ModuleSet, excludedModules: Set<String> = emptySet()): List<ContentModule> {
-  // Fast path: no filtering needed (very common for leaf nodes)
-  if (moduleSet.nestedSets.isEmpty() && excludedModules.isEmpty()) {
-    return moduleSet.modules
-  }
-
-  // Fast path: only check exclusions (no nested sets)
-  if (moduleSet.nestedSets.isEmpty()) {
-    return moduleSet.modules.filter { it.name !in excludedModules }
-  }
-
-  // Build set of module names from nested sets
-  val nestedModuleNames = HashSet<String>()
-  for (nestedSet in moduleSet.nestedSets) {
-    for (module in nestedSet.modules) {
-      nestedModuleNames.add(module.name)
-    }
-  }
-
-  // Full filtering: check both nested modules and exclusions
-  val directModules = mutableListOf<ContentModule>()
+internal fun visitAllModules(moduleSet: ModuleSet, visitor: (ContentModule) -> Unit) {
   for (module in moduleSet.modules) {
-    if (module.name !in nestedModuleNames && module.name !in excludedModules) {
-      directModules.add(module)
-    }
+    visitor(module)
   }
-  return directModules
+  for (nestedSet in moduleSet.nestedSets) {
+    visitAllModules(nestedSet, visitor)
+  }
 }
 
 /**

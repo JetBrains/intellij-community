@@ -11,7 +11,7 @@ import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
  *
  * @param spec The product modules specification
  * @param collectModuleSetAliases Whether to collect module set aliases during traversal (for inlineModuleSets mode)
- * @return Triple of (content blocks, module-to-set chain mapping, module set alias to source mapping)
+ * @return Triple of (content blocks, module-to-set chain mapping, module set alias-to-source mapping)
  */
 internal fun buildContentBlocksAndChainMapping(
   spec: ProductModulesContentSpec,
@@ -22,7 +22,7 @@ internal fun buildContentBlocksAndChainMapping(
   val moduleToSets = mutableMapOf<String, MutableList<String>>()
   val aliasToSource = if (collectModuleSetAliases) mutableMapOf<String, String>() else null
   val processedSets = HashSet<String>()
-  val contentBlockByName = mutableMapOf<String, ContentBlock>()
+  val contentBlockByName = HashMap<String, ContentBlock>()
 
   fun traverse(moduleSet: ModuleSet, chain: List<String>, overrides: Map<String, ModuleLoadingRule>) {
     val setName = "$MODULE_SET_PREFIX${moduleSet.name}"
@@ -30,7 +30,7 @@ internal fun buildContentBlocksAndChainMapping(
     // Check if already processed
     val alreadyProcessed = !processedSets.add(setName)
     if (alreadyProcessed) {
-      // If already processed but now we have overrides, update the existing content block
+      // If already processed, but now we have overrides, update the existing content block
       if (overrides.isNotEmpty()) {
         val existingBlock = contentBlockByName[moduleSet.name]
         if (existingBlock != null) {
@@ -69,13 +69,9 @@ internal fun buildContentBlocksAndChainMapping(
     }
     
     val currentChain = chain + setName
-
-    // Get direct modules for this set
-    val directModules = getDirectModules(moduleSet, spec.excludedModules)
-
     // Build content block and track chains/duplicates in single pass
     val modulesWithLoading = mutableListOf<ModuleWithLoading>()
-    for (module in directModules) {
+    for (module in moduleSet.modules) {
       // Track for duplicate detection
       moduleToSets.computeIfAbsent(module.name) { mutableListOf() }.add(moduleSet.name)
       // Track chain
@@ -104,7 +100,7 @@ internal fun buildContentBlocksAndChainMapping(
 
   // Validate that all overridden modules exist as direct modules in their respective module sets
   for (moduleSetWithOverrides in spec.moduleSets) {
-    validateModuleSetOverrides(moduleSetWithOverrides, spec)
+    validateModuleSetOverrides(moduleSetWithOverrides)
   }
 
   // Check for duplicates and FAIL if found
@@ -113,9 +109,7 @@ internal fun buildContentBlocksAndChainMapping(
   // Add additional modules if any
   val additionalModulesWithLoading = mutableListOf<ModuleWithLoading>()
   for (module in spec.additionalModules) {
-    if (module.name !in spec.excludedModules) {
-      additionalModulesWithLoading.add(ModuleWithLoading(module.name, module.loading))
-    }
+    additionalModulesWithLoading.add(ModuleWithLoading(module.name, module.loading))
   }
 
   if (additionalModulesWithLoading.isNotEmpty()) {
@@ -137,7 +131,7 @@ internal fun collectAndValidateAliases(
   spec: ProductModulesContentSpec,
   moduleSetAliases: Map<String, String>
 ): List<String> {
-  val allAliases = moduleSetAliases.toMutableMap()
+  val allAliases = HashMap(moduleSetAliases)
 
   // Collect product-level aliases and check for conflicts with module set aliases
   for (alias in spec.productModuleAliases) {
