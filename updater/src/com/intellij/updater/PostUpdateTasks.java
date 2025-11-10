@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
+import com.sun.jna.win32.StdCallLibrary;
 import mslinks.ShellLink;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,14 +110,18 @@ final class PostUpdateTasks {
     try {
       LOG.info("updateContextMenuEntries for: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
+      var updated = false;
       for (var rootKey : rootKeys) {
         // file association target
-        processContextMenuKey(rootKey, "Software\\Classes", true, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes", true, targetPath);
         // "edit with" context menu
-        processContextMenuKey(rootKey, "Software\\Classes\\*\\shell", false, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes\\*\\shell", false, targetPath);
         // folder context menu
-        processContextMenuKey(rootKey, "Software\\Classes\\Directory\\shell", false, targetPath);
-        processContextMenuKey(rootKey, "Software\\Classes\\Directory\\Background\\shell", false, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes\\Directory\\shell", false, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes\\Directory\\Background\\shell", false, targetPath);
+      }
+      if (updated) {
+        notifyShellAboutChangedAssociations();
       }
     }
     catch (Throwable t) {
@@ -123,7 +129,8 @@ final class PostUpdateTasks {
     }
   }
 
-  private static void processContextMenuKey(WinReg.HKEY rootKey, String baseKey, boolean fileAssociation, String targetPath) {
+  private static boolean processContextMenuKey(WinReg.HKEY rootKey, String baseKey, boolean fileAssociation, String targetPath) {
+    var updated = false;
     for (var subKey : getRegistryGetKeys(rootKey, baseKey)) {
       if (fileAssociation && (baseKey.startsWith(".") || baseKey.startsWith("ms-") || baseKey.startsWith("microsoft"))) continue;
       try {
@@ -137,6 +144,7 @@ final class PostUpdateTasks {
           if (!name.equals(newName)) {
             LOG.info("key: " + formatKey(rootKey, baseKey, subKey));
             Advapi32Util.registrySetStringValue(rootKey, key, "", newName);
+            updated = true;
           }
         }
       }
@@ -144,6 +152,7 @@ final class PostUpdateTasks {
         LOG.log(Level.FINE, e, () -> "processContextMenuKey: " + formatKey(rootKey, baseKey, subKey));
       }
     }
+    return updated;
   }
 
   private static String[] getRegistryGetKeys(WinReg.HKEY rootKey, String key) {
@@ -164,6 +173,24 @@ final class PostUpdateTasks {
     );
     for (var subKey : subKeys) sb.append('\\').append(subKey);
     return sb.toString();
+  }
+
+  private static void notifyShellAboutChangedAssociations() {
+    try {
+      var shell32 = Native.load("shell32", Shell32.class);
+      shell32.SHChangeNotify(new WinDef.LONG(Shell32.SHCNE_ASSOCCHANGED), new WinDef.UINT(Shell32.SHCNF_IDLIST), null, null);
+    }
+    catch (Throwable t) {
+      LOG.log(Level.WARNING, "notifyShellAboutChangedAssociations failed", t);
+    }
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private interface Shell32 extends StdCallLibrary {
+    long SHCNE_ASSOCCHANGED = 0x08000000L;
+    int SHCNF_IDLIST = 0;
+
+    void SHChangeNotify(WinDef.LONG wEventId, WinDef.UINT uFlags, Pointer dwItem1, Pointer dwItem2);
   }
 
   static void updateWindowsShortcuts(Path targetDir, String nameAndVersion) {
@@ -213,7 +240,7 @@ final class PostUpdateTasks {
   private static Path getFolderPath(int folder, Supplier<Path> fallback) {
     try {
       var path = new char[WinDef.MAX_PATH];
-      var res = Shell32.INSTANCE.SHGetFolderPath(null, folder, null, ShlObj.SHGFP_TYPE_CURRENT, path);
+      var res = com.sun.jna.platform.win32.Shell32.INSTANCE.SHGetFolderPath(null, folder, null, ShlObj.SHGFP_TYPE_CURRENT, path);
       if (WinError.S_OK.equals(res)) {
         var len = 0;
         while (len < path.length && path[len] != 0) len++;
