@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.codeInspection.groovy
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.OriginInfoAwareElement
-import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleDependencyNamedArgumentsFix
 import org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor
@@ -22,33 +21,29 @@ class GroovyAvoidDependencyNamedArgumentsNotationInspectionVisitor(private val h
     if (arguments.isEmpty()) {
       if (hasUnexpectedNamedArguments(call.namedArguments.asList())) return
 
-      registerProblem(call.argumentList)
+      holder.problem(
+        call,
+        GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
+      ).range(call.argumentList.textRangeInParent)
+        .maybeFix(GradleDependencyNamedArgumentsFix.createPotentialFix(call.argumentList))
+        .register()
     }
     else {
       for (argument in arguments) {
         if (argument !is GrListOrMap || !argument.isMap) continue
         if (hasUnexpectedNamedArguments(argument.namedArguments.asList())) continue
 
-        registerProblem(argument)
+        holder.problem(
+          argument,
+          GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
+        ).maybeFix(GradleDependencyNamedArgumentsFix.createPotentialFix(argument))
+          .register()
       }
     }
   }
 
-  private fun registerProblem(element: PsiElement) {
-    holder.registerProblem(
-      element,
-      GradleInspectionBundle.message("inspection.message.avoid.dependency.named.arguments.notation.descriptor"),
-      GradleDependencyNamedArgumentsFix()
-    )
-  }
-
   private fun hasUnexpectedNamedArguments(namedArguments: List<GrNamedArgument>): Boolean {
     val namedArgumentsNames = namedArguments.map { it.labelName }.toSet()
-    when (namedArgumentsNames.size) {
-      2 -> if (namedArgumentsNames == setOf("group", "name")) return false
-      3 -> if (namedArgumentsNames == setOf("group", "name", "version")) return false
-      else -> return true
-    }
-    return true
+    return !namedArgumentsNames.containsAll(setOf("group", "name"))
   }
 }

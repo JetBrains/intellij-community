@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.inspections
 
+import com.intellij.testFramework.runInEdtAndWait
+import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidDependencyNamedArgumentsNotationInspection
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
@@ -294,20 +296,6 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun testExtraArgument(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        dependencies { 
-            implementation group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'someConf'
-        }
-        """.trimIndent()
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
   fun testNoVersionArgument(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
@@ -329,20 +317,6 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         }
         """.trimIndent(),
         "Simplify"
-      )
-    }
-  }
-
-  @ParameterizedTest
-  @AllGradleVersionsSource
-  fun testNoVersionButAnotherArgument(gradleVersion: GradleVersion) {
-    runTest(gradleVersion) {
-      testHighlighting(
-        """
-        dependencies { 
-            implementation group: 'org.gradle', name: 'gradle-core', configuration: 'someConf'
-        }
-        """.trimIndent()
       )
     }
   }
@@ -520,14 +494,22 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  fun testListOfMapsExtraArgument(gradleVersion: GradleVersion) {
+  fun testListOfMapsWithTargetConfiguration(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
         """
         dependencies { 
             implementation(
-                    [group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'someConf'],
-                    [group: 'com.google.guava', name: 'guava', configuration: 'someConf']
+                    $WARNING_START[group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'someConf']$WARNING_END
+            )
+        }
+        """.trimIndent()
+      )
+      testNoIntentions(
+        """
+        dependencies { 
+            implementation(
+                    [group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'someConf']<caret>
             )
         }
         """.trimIndent()
@@ -537,10 +519,43 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
 
   @ParameterizedTest
   @AllGradleVersionsSource
+  fun testListOfMapsWithClassifierExt(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies { 
+            implementation(
+                    $WARNING_START[group: 'org.gradle', name: 'gradle-core', version: '1.0', classifier: 'resources', ext: 'jar']$WARNING_END
+            )
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies { 
+            implementation(
+                    [group: 'org.gradle', name: 'gradle-core', version: '1.0', classifier: 'resources', ext: 'jar']<caret>
+            )
+        }
+        """.trimIndent(),
+        """
+        dependencies { 
+            implementation(
+                    "org.gradle:gradle-core:1.0:resources@jar"
+            )
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
   fun testListOfMapsWithVariableArguments(gradleVersion: GradleVersion) {
     runTest(gradleVersion) {
       testHighlighting(
-        $"""
+        """
         def ver = '1.0'
         def name = 'guava'
         dependencies {
@@ -658,6 +673,310 @@ class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsi
         """.trimIndent(),
         "Simplify"
       )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithClassifier(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation ${WARNING_START}group: 'org.gradle', name: 'gradle-core', version: '1.0', classifier: 'resources'$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            implementation group: 'org.gradle', name: 'gradle-core', version: '1.0', classifier: 'resources'<caret>
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            implementation "org.gradle:gradle-core:1.0:resources"
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithClassifierNoVersion(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation ${WARNING_START}group: 'org.gradle', name: 'gradle-core', classifier: 'resources'$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testNoIntentions(
+        """
+        dependencies {
+            implementation group: 'org.gradle', name: 'gradle-core', classifier: 'resources'<caret>
+        }
+        """.trimIndent()
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithExtension(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation$WARNING_START(group: 'org.gradle', name: 'gradle-core', version: '1.0', ext: 'zip')$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            implementation(group: 'org.gradle', name: 'gradle-core', version: '1.0', ext: 'zip')<caret>
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            implementation("org.gradle:gradle-core:1.0@zip")
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithExtensionNoVersion(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation$WARNING_START(group: 'org.gradle', name: 'gradle-core', ext: 'zip')$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testNoIntentions(
+        """
+        dependencies {
+            implementation(group: 'org.gradle', name: 'gradle-core', ext: 'zip')<caret>
+        }
+        """.trimIndent()
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithClassifierAndExtension(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation$WARNING_START(group: 'org.gradle', name: 'gradle-core', version: '1.0', classifier: 'resources', ext: 'zip')$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            implementation(group: 'org.gradle', name: 'gradle-core', version: '1.0', classifier: 'resources', ext: 'zip')<caret>
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            implementation("org.gradle:gradle-core:1.0:resources@zip")
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithClassifierAndExtensionNoVersion(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation$WARNING_START(group: 'org.gradle', name: 'gradle-core', classifier: 'resources', ext: 'zip')$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testNoIntentions(
+        """
+        dependencies {
+            implementation(group: 'org.gradle', name: 'gradle-core', classifier: 'resources', ext: 'zip')<caret>
+        }
+        """.trimIndent()
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithTargetConfiguration(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation$WARNING_START(group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'configTarget')$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            implementation(group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'configTarget')<caret>
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            implementation("org.gradle:gradle-core:1.0") {
+                targetConfiguration = 'configTarget'
+            }
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithTargetConfigurationExistingBlock(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation$WARNING_START(group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'configTarget')$WARNING_END {
+                because('why not')
+            }
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            implementation(group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'configTarget')<caret> {
+                because('why not')
+            }
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            implementation("org.gradle:gradle-core:1.0") {
+                targetConfiguration = 'configTarget'
+                because('why not')
+            }
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithTargetConfigurationExistingEmptyBlock(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation$WARNING_START(group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'configTarget')$WARNING_END {}
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            implementation(group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'configTarget')<caret> {}
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            implementation("org.gradle:gradle-core:1.0") {
+                targetConfiguration = 'configTarget'
+            }
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithAllArguments(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies {
+            implementation ${WARNING_START}group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'configTarget', classifier: 'resources', ext: 'zip'$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            implementation group: 'org.gradle', name: 'gradle-core', version: '1.0', configuration: 'configTarget', classifier: 'resources', ext: 'zip'<caret>
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            implementation("org.gradle:gradle-core:1.0:resources@zip") {
+                targetConfiguration = 'configTarget'
+            }
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun testWithTargetConfigurationNoVersion(gradleVersion: GradleVersion) {
+    runTest(gradleVersion) {
+      testHighlighting(
+        """
+        dependencies { 
+            implementation ${WARNING_START}group: 'org.gradle', name: 'gradle-core', configuration: 'configTarget'$WARNING_END
+        }
+        """.trimIndent()
+      )
+      testIntention(
+        """
+        dependencies {
+            implementation group: 'org.gradle', name: 'gradle-core', configuration: 'configTarget'<caret>
+        }
+        """.trimIndent(),
+        """
+        dependencies {
+            implementation("org.gradle:gradle-core") {
+                targetConfiguration = 'configTarget'
+            }
+        }
+        """.trimIndent(),
+        "Simplify"
+      )
+    }
+  }
+
+  private fun testNoIntentions(before: String) {
+    checkCaret(before)
+    writeTextAndCommit("build.gradle", before)
+    runInEdtAndWait {
+      codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle"))
+      val intentions = codeInsightFixture.filterAvailableIntentions("Simplify")
+      assertThat(intentions).isEmpty()
     }
   }
 
