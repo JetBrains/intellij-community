@@ -3,10 +3,7 @@ package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.find.FindManager;
-import com.intellij.find.findUsages.FindUsagesHandler;
-import com.intellij.find.findUsages.FindUsagesHandlerFactory;
-import com.intellij.find.findUsages.JavaFindUsagesHandler;
-import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
+import com.intellij.find.findUsages.*;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.java.JavaLanguage;
@@ -21,6 +18,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
@@ -36,6 +34,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
@@ -120,6 +119,21 @@ public class FindUsagesTest extends JavaPsiTestCase {
       ((PsiCompiledElement)myJavaFacade.findClass("javax.swing.JLabel", GlobalSearchScope.allScope(myProject))).getMirror();
     assertEquals(2, ReferencesSearch.search(decompiled, GlobalSearchScope.projectScope(myProject)).findAll().size());
   }
+  
+  public void testFindConstructorUsagesFromClass() {
+    PsiClass aClass = myJavaFacade.findClass("HeadlessHorsewoman", GlobalSearchScope.allScope(myProject));
+    JavaClassFindUsagesOptions options = new JavaClassFindUsagesOptions(getProject());
+    options.isUsages = false;
+    options.isConstructorUsages = true;
+    CommonProcessors.CollectProcessor<UsageInfo> processor = new CommonProcessors.CollectProcessor<>();
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager();
+    FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(aClass, false);
+    assertNotNull(handler);
+    handler.processElementUsages(aClass, processor, options);
+    Collection<UsageInfo> usages = processor.getResults();
+    assertEquals(1, usages.size());
+    assertEquals("new HeadlessHorsewoman()", StringUtil.join(usages, u -> u.getElement().getParent().getText() , ", "));
+  } 
   
   public void testDefaultConstructor() {
     PsiClass aClass = myJavaFacade.findClass("Animal", GlobalSearchScope.allScope(myProject));
