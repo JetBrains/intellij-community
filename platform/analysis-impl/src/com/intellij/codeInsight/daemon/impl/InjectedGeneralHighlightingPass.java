@@ -220,7 +220,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
         runnable.run();
       }
       else {
-        annotatorRunner.runAnnotatorsAsync(inside, List.of(), runnable, resultSink);
+        annotatorRunner.runAnnotatorsAsync(documentWindow, inside, List.of(), runnable, resultSink);
       }
       return true;
     });

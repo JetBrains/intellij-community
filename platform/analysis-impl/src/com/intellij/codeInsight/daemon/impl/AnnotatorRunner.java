@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -56,7 +57,8 @@ final class AnnotatorRunner {
 
   // run annotators on PSI elements inside/outside while running `runnable` in parallel
   @ApiStatus.Internal
-  boolean runAnnotatorsAsync(@NotNull List<? extends PsiElement> inside,
+  boolean runAnnotatorsAsync(@NotNull Document document,
+                             @NotNull List<? extends PsiElement> inside,
                              @NotNull List<? extends PsiElement> outside,
                              @NotNull Runnable runnable,
                              @NotNull ResultSink resultSink) {
@@ -67,13 +69,13 @@ final class AnnotatorRunner {
     List<PsiElement> insideThenOutside = ContainerUtil.concat(inside, outside);
     Map<Annotator, Set<Language>> supportedLanguages = calcSupportedLanguages(insideThenOutside);
     Processor<? super Annotator> processor = annotator ->
-      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(annotator, insideThenOutside, supportedLanguages, resultSink));
+      ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> runAnnotator(document, annotator, insideThenOutside, supportedLanguages, resultSink));
     boolean result = JobLauncher.getInstance().processConcurrentlyAsync(indicator, new ArrayList<>(supportedLanguages.keySet()), processor, runnable);
     myAnnotatorStatisticsCollector.reportAnalysisFinished(myProject, myAnnotationSession, myPsiFile);
     return result;
   }
 
-  private static @NotNull Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements) {
+  private static @NotNull @Unmodifiable Map<Annotator, Set<Language>> calcSupportedLanguages(@NotNull List<? extends PsiElement> elements) {
     Map<Annotator, Set<Language>> map = CollectionFactory.createCustomHashingStrategyMap(new HashingStrategy<>() {
       @Override
       public int hashCode(Annotator object) {
@@ -110,9 +112,10 @@ final class AnnotatorRunner {
     }
   }
 
-  private void runAnnotator(@NotNull Annotator annotator,
+  private void runAnnotator(@NotNull Document document,
+                            @NotNull Annotator annotator,
                             @NotNull List<? extends PsiElement> insideThenOutside,
-                            @NotNull Map<Annotator, Set<Language>> supportedLanguages,
+                            @NotNull @Unmodifiable Map<Annotator, Set<Language>> supportedLanguages,
                             @NotNull ResultSink result) {
     Set<Language> supported = supportedLanguages.get(annotator);
     if (supported.isEmpty()) {
@@ -140,24 +143,21 @@ final class AnnotatorRunner {
         else {
           newInfos = new ArrayList<>(sizeAfter - sizeBefore);
           // first compute quick fixes using injected document offsets, then convert them to the host offsets in addConvertedToHostInfo below
-          Document document = myPsiFile.getViewProvider().getDocument();
-          if (document != null) { // VF could suddenly become invalid
-            boolean isFromInjection = myPsiFile.getViewProvider() instanceof InjectedFileViewProvider;
-            for (int i = sizeBefore; i < sizeAfter; i++) {
-              Annotation annotation = annotationHolder.get(i);
-              HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode, document);
-              if (isFromInjection) {
-                info.markFromInjection();
-              }
-              int sizeNewBefore = newInfos.size();
-              addConvertedToHostInfo(info, newInfos);
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("runAnnotator "+annotator+"; annotation="+annotation+" -> "+newInfos.subList(sizeNewBefore, newInfos.size()));
-              }
-              myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
+          boolean isFromInjection = myPsiFile.getViewProvider() instanceof InjectedFileViewProvider;
+          for (int i = sizeBefore; i < sizeAfter; i++) {
+            Annotation annotation = annotationHolder.get(i);
+            HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode, document);
+            if (isFromInjection) {
+              info.markFromInjection();
             }
-            results.addAll(newInfos);
+            int sizeNewBefore = newInfos.size();
+            addConvertedToHostInfo(info, newInfos);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("runAnnotator "+annotator+"; annotation="+annotation+" -> "+newInfos.subList(sizeNewBefore, newInfos.size()));
+            }
+            myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
           }
+          results.addAll(newInfos);
         }
         result.accept(annotator.getClass(), psiElement, newInfos);
       }
