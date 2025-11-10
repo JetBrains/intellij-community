@@ -692,7 +692,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
             if (Registry.`is`("ide.create.project.root.entity") && options.projectRootDir != null) {
               val root = options.projectRootDir!!.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
-              project.serviceAsync<ProjectRootPersistentStateComponent>().projectRootUrls += root.url
+              project.serviceAsync<ProjectRootPersistentStateComponent>().addProjectRoot(root.url)
 
               // We also register the project root here, so project view will have "files" node immediately.
               // Otherwise, it might appear too late causing issues like AMPER-4695
@@ -741,7 +741,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       result?.let { project ->
         try {
           withContext(Dispatchers.EDT) {
-            closeProject(project, saveProject = false, checkCanClose = false)
+            closeProject(project = project, saveProject = false, checkCanClose = false)
           }
         }
         catch (secondException: Throwable) {
@@ -784,16 +784,18 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   protected open fun createFrameAllocator(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectFrameAllocator {
     val app = ApplicationManager.getApplication()
-    return if (app.isHeadlessEnvironment || app.isUnitTestMode) {
-      HeadlessProjectFrameAllocator()
+    if (app.isHeadlessEnvironment || app.isUnitTestMode) {
+      return HeadlessProjectFrameAllocator()
     }
     else {
-      IdeProjectFrameAllocator(options, projectStoreBaseDir)
+      return IdeProjectFrameAllocator(options, projectStoreBaseDir)
     }
   }
 
   private suspend fun cancelProjectOpening(project: Project?, e: CancellationException? = null) {
-    if (project == null) return
+    if (project == null) {
+      return
+    }
 
     try {
       try {
@@ -806,7 +808,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
       withContext(Dispatchers.EDT) {
         writeIntentReadAction {
-          closeProject(project, saveProject = false, checkCanClose = false)
+          closeProject(project = project, saveProject = false, checkCanClose = false)
         }
       }
     }
@@ -847,30 +849,30 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun newProject(file: Path, options: OpenProjectTask): Project? {
-    return try {
+    try {
       @Suppress("DEPRECATION")
-      runUnderModalProgressIfIsEdt {
+      return runUnderModalProgressIfIsEdt {
         newProjectAsync(file, options)
       }
     }
-    catch (t: Throwable) {
-      handleErrorOnNewProject(t)
-      null
+    catch (e: Throwable) {
+      handleErrorOnNewProject(e)
+      return null
     }
   }
 
   final override suspend fun newProjectAsync(file: Path, options: OpenProjectTask): Project {
-    TrustedProjects.setProjectTrusted(file, true)
+    TrustedProjects.setProjectTrusted(path = file, isTrusted = true)
     return prepareNewProject(
-      file,
-      options.projectName,
-      options.beforeInit,
-      options.useDefaultProjectAsTemplate,
-      options.preloadServices,
-      options.isProjectCreatedWithWizard,
-      markAsNew = false
+      identityFle = file,
+      projectName = options.projectName,
+      beforeInit = options.beforeInit,
+      useDefaultProjectAsTemplate = options.useDefaultProjectAsTemplate,
+      preloadServices = options.preloadServices,
+      markAsNewlyCreated = options.isProjectCreatedWithWizard,
+      markAsNew = false,
     ).also { project ->
-      TrustedProjects.setProjectTrusted(project, true)
+      TrustedProjects.setProjectTrusted(project = project, isTrusted = true)
     }
   }
 
