@@ -1674,6 +1674,21 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     assertEquals(TextRange(0, 82), completionLookupElement.highlighting?.range)
   }
 
+  fun testParameterInfo() {
+    Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      public class B<T> {
+        static void main() {
+            call("A".<caret>);
+        }
+    
+        private static void call(String number) {}
+    }""".trimIndent())
+    val elements = myFixture.completeBasic()
+    assertTrue(elements.any { element ->
+      element.lookupString.contains("Parameter info", ignoreCase = true) })
+  }
+
   private class TestHintManager : HintManagerImpl() {
     var called: Boolean = false
     override fun showInformationHint(editor: Editor, component: JComponent, position: Short, onHintHidden: Runnable?) {
