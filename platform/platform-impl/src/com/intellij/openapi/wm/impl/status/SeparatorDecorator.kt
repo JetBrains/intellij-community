@@ -14,28 +14,31 @@ import javax.swing.JPanel
  */
 internal class SeparatorDecorator(private val panel: JPanel) {
   fun indicatorAdded() {
-    placeSeparators()
+    placeSeparators(panel)
   }
 
   fun indicatorRemoved() {
-    placeSeparators()
+    placeSeparators(panel)
   }
 
   fun handlePopupClose() {
-    placeSeparators()
+    placeSeparators(panel)
   }
 
 
-  private fun placeSeparators() {
-    var previousComponentIsIndicator = false
+  companion object {
+    @JvmStatic
+    fun placeSeparators(panel: JPanel) {
+      var previousComponentIsIndicator = false
 
-    for (component in panel.components) {
-      if (isProgressIndicator(component)) {
-        component.updateSeparator(isShown = previousComponentIsIndicator)
-        previousComponentIsIndicator = true
-      }
-      else {
-        previousComponentIsIndicator = false
+      for (component in panel.components) {
+        if (isProgressIndicator(component)) {
+          component.updateSeparator(isShown = previousComponentIsIndicator)
+          previousComponentIsIndicator = true
+        }
+        else {
+          previousComponentIsIndicator = false
+        }
       }
     }
   }
