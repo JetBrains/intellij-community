@@ -34,8 +34,7 @@ abstract class KotlinRuntimeTypeEvaluatorBase<T>(
             type = evaluate()
         } catch (ignored: ProcessCanceledException) {
             throw ignored
-        } catch (ignored: EvaluateException) {
-            throw ignored
+        } catch (_: EvaluateException) {
         } finally {
             typeCalculationFinished(type)
         }
