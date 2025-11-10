@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.utils
+package org.jetbrains.kotlin.idea.imports
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
@@ -16,7 +17,8 @@ private fun isPackageImportedByStarImport(file: KtFile, packageFqName: FqName): 
 }
 
 // TODO Use Import insertion API after KTIJ-28838 is fixed
-internal fun KtFile.addImportFor(fqName: FqName) {
+@ApiStatus.Internal
+fun KtFile.addImportFor(fqName: FqName) {
     if (isPackageImportedByStarImport(this, fqName.parent())) return
 
     addImport(fqName)
