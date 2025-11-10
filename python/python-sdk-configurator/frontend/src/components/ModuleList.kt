@@ -6,7 +6,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.intellij.icons.AllIcons
@@ -31,8 +30,6 @@ import org.jetbrains.jewel.ui.icon.IntelliJIconKey
  */
 @Composable
 internal fun ModuleList(
-  screenWidthPx: Int,
-  screenHeightPx: Int,
   viewModel: ModulesViewModel,
 ) {
   LaunchedEffect(viewModel) {
@@ -42,13 +39,9 @@ internal fun ModuleList(
   val projectStructureLabel = remember { message("python.sdk.configurator.frontend.choose.modules.project.structure") }
   val environmentLabel = remember { message("python.sdk.configurator.frontend.choose.modules.environment") }
 
-  val (width, height) = with(LocalDensity.current) {
-    // width: 50% of screen, height: 65% of the screen (according to Lena)
-    Pair(screenWidthPx.toDp() * 0.5f, screenHeightPx.toDp() * 0.65f)
-  }
   val border = Modifier.border(Stroke.Alignment.Outside, 1.dp, JewelTheme.globalColors.borders.normal)
   val space = 5.dp
-  VerticallyScrollableContainer(Modifier.padding(space).then(border).size(width = width, height = height)) {
+  VerticallyScrollableContainer(Modifier.padding(space).then(border).fillMaxSize()) {
     val checkboxArrangement = Arrangement.spacedBy(space)
     Column(Modifier.fillMaxSize(), verticalArrangement = checkboxArrangement) {
       Text(text = topLabel, Modifier.padding(space))
