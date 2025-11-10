@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
@@ -12,10 +12,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.components.breadcrumbs.StickyLineInfo
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -168,14 +166,6 @@ class StickyLinesCollector(private val project: Project, private val document: D
   private fun fileName(vFile: VirtualFile): String {
     val psiFile: PsiFile? = PsiDocumentManager.getInstance(project).getPsiFile(document)
     return psiFile?.let { debugPsiFile(it) } ?: vFile.name
-  }
-
-  private fun debugText(element: PsiElement): String? {
-    return if (Registry.`is`("editor.show.sticky.lines.debug")) {
-      element.toString()
-    } else {
-      null
-    }
   }
 
   companion object {
