@@ -27,7 +27,6 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
         completionChars: String,
         afterFilePath: String,
         actions: List<String>? = emptyList(),
-        useExpensiveRenderer: Boolean = false,
         typeAfterCompletion: String? = null,
         afterTypingBlock: () -> Unit = {}
     ) {
@@ -50,7 +49,7 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
             }
 
             if (lookupString != null || itemText != null || tailText != null) {
-                val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText, useExpensiveRenderer)
+                val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText)
                 if (item != null) {
                     selectItem(item, completionChars.last())
                 }
@@ -82,7 +81,6 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
             lookupString: String?,
             itemText: String?,
             tailText: String?,
-            useExpensiveRenderer: Boolean
         ): LookupElement? {
             val lookup = LookupManager.getInstance(project)?.activeLookup as LookupImpl? ?: return null
             val items = lookup.items
@@ -101,12 +99,10 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                 if (lookupOk) {
                     lookupElement.renderElement(presentation)
 
-                    if (useExpensiveRenderer) {
-                        timeoutRunBlocking {
-                            @Suppress("UNCHECKED_CAST")
-                            (lookupElement.expensiveRenderer as? LookupElementRenderer<LookupElement>)
-                                ?.renderElement(lookupElement, presentation)
-                        }
+                    timeoutRunBlocking {
+                        @Suppress("UNCHECKED_CAST")
+                        (lookupElement.expensiveRenderer as? LookupElementRenderer<LookupElement>)
+                            ?.renderElement(lookupElement, presentation)
                     }
 
                     val textOk = if (itemText != null) {

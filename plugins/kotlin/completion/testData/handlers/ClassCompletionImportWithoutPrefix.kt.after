@@ -5,4 +5,3 @@
 val test : Int
 
 // ELEMENT: Int
-// USE_EXPENSIVE_RENDERER
