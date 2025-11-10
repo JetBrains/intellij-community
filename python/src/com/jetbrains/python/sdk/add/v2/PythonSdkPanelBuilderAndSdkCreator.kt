@@ -102,7 +102,8 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
       model = model,
       module = module,
       errorSink = ShowingMessageErrorSync,
-      limitExistingEnvironments = limitExistingEnvironments
+      limitExistingEnvironments = limitExistingEnvironments,
+      bestGuessCreateSdkInfo = CompletableDeferred(value = null)
     )
 
     val validationRequestor = WHEN_PROPERTY_CHANGED(selectedMode)
