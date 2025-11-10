@@ -105,6 +105,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/intellij.android.compose-common/intellij.android.compose-common.tests.iml" filepath="$PROJECT_DIR$/android/intellij.android.compose-common/intellij.android.compose-common.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/compose-designer/intellij.android.compose-designer.iml" filepath="$PROJECT_DIR$/android/compose-designer/intellij.android.compose-designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/compose-designer/intellij.android.compose-designer.integration.iml" filepath="$PROJECT_DIR$/android/compose-designer/intellij.android.compose-designer.integration.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/compose-designer/intellij.android.compose-designer.testFramework.iml" filepath="$PROJECT_DIR$/android/compose-designer/intellij.android.compose-designer.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/compose-designer/intellij.android.compose-designer.tests.iml" filepath="$PROJECT_DIR$/android/compose-designer/intellij.android.compose-designer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/compose-ide-plugin/intellij.android.compose-ide-plugin.iml" filepath="$PROJECT_DIR$/android/compose-ide-plugin/intellij.android.compose-ide-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/compose-ide-plugin/intellij.android.compose-ide-plugin.tests.iml" filepath="$PROJECT_DIR$/android/compose-ide-plugin/intellij.android.compose-ide-plugin.tests.iml" />
