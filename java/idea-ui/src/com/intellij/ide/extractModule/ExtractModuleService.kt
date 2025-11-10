@@ -6,7 +6,6 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -27,6 +26,7 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil
+import com.intellij.task.ProjectTaskManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -36,10 +36,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.FileSystems
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.extension
-import kotlin.io.path.walk
+import kotlin.io.path.*
 
 private val LOG = logger<ExtractModuleService>()
 
@@ -55,18 +54,26 @@ internal class DependentModule(
   val oldModuleDependencyScope: ModuleDependencyScope,
 )
 
-internal suspend fun compilerOutputPath(module: Module): Path? = readAction {
-  CompilerModuleExtension.getInstance(module)?.compilerOutputPath?.toNioPath()
+private fun compilerOutputs(module: Module, includeTests: Boolean): List<Path> {
+  return CompilerModuleExtension.getInstance(module)
+    ?.getOutputRoots(/* includeTests = */ includeTests)
+    ?.map { it.toNioPath() } ?: emptyList()
 }
 
-internal suspend fun compilerOutputPathForTests(module: Module): Path? = readAction {
-  CompilerModuleExtension.getInstance(module)?.compilerOutputPathForTests?.toNioPath()
+internal suspend fun compilerOutputPath(module: Module): List<Path> = readAction {
+  compilerOutputs(module, includeTests = false)
 }
 
-internal suspend fun Path.forEachClassfile(action: suspend (Path) -> Unit) {
-  walk().filter { it.extension == "class" }.forEach { path ->
-    action(path)
-  }
+internal suspend fun compilerOutputPathForTests(module: Module): List<Path> = readAction {
+  /**
+   * Temporary use this workaround due to delegating build to Bazel overrides only
+   * [CompilerModuleExtension.getOutputRoots] and [CompilerModuleExtension.getOutputRootUrls]
+   *
+   * After switching monorepo compilation fully to Bazel without JPS model, this
+   * code can be reverted to origin state of calling [CompilerModuleExtension.getCompilerOutputPathForTests]
+   */
+  @Suppress("ConvertArgumentToSet")
+  compilerOutputs(module, includeTests = true) - compilerOutputs(module, includeTests = false)
 }
 
 @Service(Service.Level.PROJECT)
@@ -81,10 +88,11 @@ class ExtractModuleService(
     moduleName: @NlsSafe String,
     targetSourceRootPath: String?,
   ) {
-    CompilerManager.getInstance(project).make { aborted, errors, _, _ ->
-      if (aborted || errors > 0) {
-        return@make
+    ProjectTaskManager.getInstance(project).buildAllModules().onSuccess {
+      if (it.isAborted || it.hasErrors()) {
+        return@onSuccess
       }
+
       coroutineScope.launch {
         withBackgroundProgress(project, JavaUiBundle.message("progress.title.extract.module.from.package", directory.name)) {
           analyzeDependenciesAndCreateModule(directory, module, moduleName, targetSourceRootPath)
@@ -103,22 +111,29 @@ class ExtractModuleService(
     reportSequentialProgress(6) { progressReporter ->
       val usedModules = LinkedHashSet<Module>()
       val usedLibraries = LinkedHashSet<Library>()
-      val compilerOutputPath = compilerOutputPath(module) ?: return@reportSequentialProgress
+      val compilerOutputPaths = compilerOutputPath(module)
+      if (compilerOutputPaths.isEmpty()) return@reportSequentialProgress
 
       val packageName = readAction {
         JavaDirectoryService.getInstance().getPackage(directory)?.qualifiedName
       } ?: return@reportSequentialProgress
-      val compiledPackagePath = packageName.replace('.', '/').let { compilerOutputPath.resolve(it) }
+      val packageRelativePathPrefix = packageName.replace('.', '/') + "/"
 
       progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.collecting.used.classes", directory.name))
+
       val packageFileProcessor = ExtractModuleFileProcessor()
-      compiledPackagePath.forEachClassfile { path ->
-        packageFileProcessor.processFile(path)
-      }
       val moduleFileProcessor = ExtractModuleFileProcessor()
-      compilerOutputPath.forEachClassfile { path ->
-        if (!path.startsWith(compiledPackagePath)) {
-          moduleFileProcessor.processFile(path)
+
+      for (outputPath in compilerOutputPaths) {
+        withClassRootEntries(outputPath) { entries ->
+          for (entry in entries) {
+            if (entry.entryName.startsWith(packageRelativePathPrefix)) {
+              packageFileProcessor.processFile(entry.path)
+            }
+            else {
+              moduleFileProcessor.processFile(entry.path)
+            }
+          }
         }
       }
 
@@ -178,7 +193,7 @@ class ExtractModuleService(
     dependentModules.mapWithProgress { dependentModule ->
       val compilerOutputPath = compilerOutputPath(dependentModule)
       val compilerOutputPathForTests = compilerOutputPathForTests(dependentModule)
-      if (compilerOutputPath == null && compilerOutputPathForTests == null) return@mapWithProgress null
+      if (compilerOutputPath.isEmpty() && compilerOutputPathForTests.isEmpty()) return@mapWithProgress null
 
       val (prodDependsOnPackage, prodDependsOnModule) = rootDependsOnPackageAndModule(compilerOutputPath, packageClasses, moduleClasses)
       if (prodDependsOnPackage && prodDependsOnModule) { // no need to check tests
@@ -204,13 +219,17 @@ class ExtractModuleService(
     }.filterNotNull()
 
   private suspend fun rootDependsOnPackageAndModule(
-    path: Path?, packageClasses: Set<String>, moduleClasses: Set<String>,
+    paths: List<Path>, packageClasses: Set<String>, moduleClasses: Set<String>,
   ): Pair<Boolean, Boolean> {
     val fileProcessor = ExtractModuleFileProcessor()
 
-    path?.forEachClassfile { path ->
-      withContext(Dispatchers.IO) {
-        fileProcessor.processFile(path)
+    withContext(Dispatchers.IO) {
+      for (outputPath in paths) {
+        withClassRootEntries(outputPath) { entries ->
+          for (entry in entries) {
+            fileProcessor.processFile(entry.path)
+          }
+        }
       }
     }
 
@@ -307,5 +326,32 @@ class ExtractModuleService(
   @TestOnly
   suspend fun extractModuleFromDirectory(directory: PsiDirectory, module: Module, moduleName: @NlsSafe String, targetSourceRoot: String?) {
     analyzeDependenciesAndCreateModule(directory, module, moduleName, targetSourceRoot)
+  }
+}
+
+private data class ClassFileEntry(val entryName: String, val path: Path)
+
+@OptIn(ExperimentalPathApi::class)
+private fun <R> withClassRootEntries(classRoot: Path, block: (entries: Sequence<ClassFileEntry>) -> R): R {
+  return withClassRoot(classRoot) { nioRoot ->
+    val sequence = nioRoot
+      .walk()
+      .filter { path ->
+        path.extension == "class" && !classRoot.relativize(path).startsWith("META-INF/")
+      }
+      .map { ClassFileEntry(it.relativeTo(nioRoot).invariantSeparatorsPathString, it) }
+    block(sequence)
+  }
+}
+
+private fun <R> withClassRoot(classRoot: Path, block: (root: Path) -> R): R {
+  return when {
+    classRoot.isDirectory() -> block(classRoot)
+    classRoot.isRegularFile() && classRoot.extension == "jar" -> {
+      FileSystems.newFileSystem(classRoot).use {
+        block(it.rootDirectories.single())
+      }
+    }
+    else -> error("Unsupported classes output root: $classRoot")
   }
 }
