@@ -30,7 +30,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -142,21 +141,23 @@ final class AnnotatorRunner {
           newInfos = new ArrayList<>(sizeAfter - sizeBefore);
           // first compute quick fixes using injected document offsets, then convert them to the host offsets in addConvertedToHostInfo below
           Document document = myPsiFile.getViewProvider().getDocument();
-          boolean isFromInjection = myPsiFile.getViewProvider() instanceof InjectedFileViewProvider;
-          for (int i = sizeBefore; i < sizeAfter; i++) {
-            Annotation annotation = annotationHolder.get(i);
-            HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode, document);
-            if (isFromInjection) {
-              info.markFromInjection();
+          if (document != null) { // VF could suddenly become invalid
+            boolean isFromInjection = myPsiFile.getViewProvider() instanceof InjectedFileViewProvider;
+            for (int i = sizeBefore; i < sizeAfter; i++) {
+              Annotation annotation = annotationHolder.get(i);
+              HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode, document);
+              if (isFromInjection) {
+                info.markFromInjection();
+              }
+              int sizeNewBefore = newInfos.size();
+              addConvertedToHostInfo(info, newInfos);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("runAnnotator "+annotator+"; annotation="+annotation+" -> "+newInfos.subList(sizeNewBefore, newInfos.size()));
+              }
+              myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
             }
-            int sizeNewBefore = newInfos.size();
-            addConvertedToHostInfo(info, newInfos);
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("runAnnotator "+annotator+"; annotation="+annotation+" -> "+newInfos.subList(sizeNewBefore, newInfos.size()));
-            }
-            myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
+            results.addAll(newInfos);
           }
-          results.addAll(newInfos);
         }
         result.accept(annotator.getClass(), psiElement, newInfos);
       }
