@@ -3,10 +3,13 @@
 
 package org.jetbrains.plugins.gradle.model.projectModel
 
+import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityBuilder
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import org.jetbrains.annotations.ApiStatus
 
 @GeneratedCodeApiVersion(3)
 interface GradleBuildEntityBuilder : WorkspaceEntityBuilder<GradleBuildEntity> {

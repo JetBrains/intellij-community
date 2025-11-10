@@ -3,8 +3,10 @@
 
 package org.jetbrains.plugins.gradle.model.projectModel
 
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 @GeneratedCodeApiVersion(3)
 interface GradleModuleEntityBuilder : WorkspaceEntityBuilder<GradleModuleEntity> {
