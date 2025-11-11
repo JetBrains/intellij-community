@@ -5,7 +5,9 @@ import com.intellij.codeInsight.JavaTailTypes;
 import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.AllClassesGetter;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcompletion.CompletionItem;
@@ -52,6 +54,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
         }
       }
     }
+    addEnumCases(element, sink);
     addEnhancedCases(element, sink);
   }
 
@@ -105,6 +108,32 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
     return new CommonCompletionItem(keyword).withObject(new KeywordInfo(keyword)).withTail(tailType);
   }
 
+  void addEnumCases(PsiElement position, Consumer<CompletionItem> sink) {
+    PsiSwitchBlock switchBlock = getSwitchFromLabelPosition(position);
+    PsiExpression expression = switchBlock == null ? null : switchBlock.getExpression();
+    PsiClass switchType = expression == null ? null : PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+    if (switchType == null || !switchType.isEnum()) return;
+
+    Set<PsiField> used = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(switchBlock);
+    ModNavigatorTailType tailType = JavaTailTypes.forSwitchLabel(switchBlock);
+    for (PsiField field : switchType.getAllFields()) {
+      String name = field.getName();
+      if (!(field instanceof PsiEnumConstant) || used.contains(CompletionUtil.getOriginalOrSelf(field))) {
+        continue;
+      }
+      @NlsSafe String prefix = "case ";
+      CommonCompletionItem caseConst =
+        new CommonCompletionItem(prefix + name)
+          .addLookupString(name)
+          .adjustIndent()
+          .withTail(tailType)
+          .withObject(field)
+          .withPresentation(MarkupText.builder().append(prefix, MarkupText.Kind.STRONG).append(name).build())
+          .withPriority(prioritizeForRule(switchBlock));
+      sink.accept(caseConst);
+    }
+  }
+  
   void addEnhancedCases(PsiElement position, Consumer<CompletionItem> sink) {
     if (!canAddKeywords(position)) return;
 
@@ -140,8 +169,9 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       return;
     }
 
-    CompletionItem defaultCaseRule =
-      prioritizeForRule(createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock)).adjustIndent(), switchBlock);
+    CompletionItem defaultCaseRule = createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock))
+      .adjustIndent()
+      .withPriority(prioritizeForRule(switchBlock));
     sink.accept(defaultCaseRule);
   }
 
@@ -154,8 +184,9 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
     if (defaultElement != null) {
       return;
     }
-    CompletionItem defaultCaseRule = 
-      prioritizeForRule(createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock)).adjustIndent(), switchBlock);
+    CompletionItem defaultCaseRule = createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock))
+      .adjustIndent()
+      .withPriority(prioritizeForRule(switchBlock));
     sink.accept(defaultCaseRule);
   }
 
@@ -187,32 +218,32 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
                                                @Nullable PsiSwitchBlock switchBlock) {
     @NlsSafe String prefix = "case ";
 
-    CommonCompletionItem item = new CommonCompletionItem(prefix + caseRuleName)
+    return new CommonCompletionItem(prefix + caseRuleName)
       .withPresentation(MarkupText.builder()
                           .append(prefix, MarkupText.Kind.STRONG)
                           .append(caseRuleName).build())
       .withTail(tailType)
       .addLookupString(caseRuleName)
-      .adjustIndent();
-    return prioritizeForRule(item, switchBlock);
+      .adjustIndent()
+      .withPriority(prioritizeForRule(switchBlock));
   }
 
-  private static CommonCompletionItem prioritizeForRule(CommonCompletionItem item, @Nullable PsiSwitchBlock switchBlock) {
+  private static double prioritizeForRule(@Nullable PsiSwitchBlock switchBlock) {
     if (switchBlock == null) {
-      return item;
+      return 0;
     }
     PsiCodeBlock body = switchBlock.getBody();
     if (body == null) {
-      return item;
+      return 0;
     }
     PsiStatement[] statements = body.getStatements();
     if (statements.length == 0) {
-      return item;
+      return 0;
     }
     if (statements[0] instanceof PsiSwitchLabeledRuleStatement) {
-      return item.withPriority(-1);
+      return -1;
     }
-    return item;
+    return 0;
   }
 
   private static Set<String> getSwitchCoveredLabels(@Nullable PsiSwitchBlock block, PsiElement position) {
