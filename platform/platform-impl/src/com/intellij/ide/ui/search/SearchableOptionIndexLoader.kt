@@ -177,17 +177,17 @@ private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: 
   }
 
   return if (message.contains(parameterPlaceholder)) {
-    LOG.debug("Resolved message contains a placeholder: key=$s, message=$message")
+    LOG.debug { "Resolved message contains a placeholder: key=$s, message=$message" }
     null
   }
   else if (forceLetters && message.none { it.isLetter() }) {
-    LOG.debug("Resolved message doesn't contain any letter: key=$s, message=$message")
+    LOG.debug { "Resolved message doesn't contain any letter: key=$s, message=$message" }
     null
   }
   else message
 }
 
-private fun String.removeSubstringAndExtraSpaces(substring: String): String = split(substring).joinToString(separator = " ") { it.trim() }
+private fun String.removeSubstringAndExtraSpaces(substring: String): String = splitToSequence(substring).joinToString(separator = " ") { it.trim() }
 
 private fun findBundle(classLoader: ClassLoader, locale: Locale, bundlePath: String): ResourceBundle? {
   try {
