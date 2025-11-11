@@ -32,7 +32,7 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     }
 
     val modulesWithExcludedModuleLibraries = layout?.modulesWithExcludedModuleLibraries ?: emptySet()
-    return module.name !in modulesWithExcludedModuleLibraries &&
+    return !modulesWithExcludedModuleLibraries.contains(module.name) &&
            getLibraryDependencies(module = module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
   }
 

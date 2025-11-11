@@ -3,11 +3,9 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import com.intellij.util.io.Compressor
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
@@ -35,7 +33,6 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.PluginDistribution
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.antToRegex
 import org.jetbrains.intellij.build.buildSearchableOptions
 import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
@@ -44,7 +41,6 @@ import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuil
 import org.jetbrains.intellij.build.classPath.writePluginClassPathHeader
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.hasModuleOutputPath
 import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.plugins.doBuildNonBundledPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
