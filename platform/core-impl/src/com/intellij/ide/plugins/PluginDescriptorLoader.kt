@@ -677,7 +677,7 @@ private fun CoroutineScope.loadFromPluginClasspathDescriptor(
         throw e
       }
       catch (e: Throwable) {
-        PluginManagerCore.logger.warn("Cannot load plugin descriptor, files:\n  ${fileItems.joinToString(separator = "\n  ")}", e)
+        PluginManagerCore.logger.warn("Cannot load plugin '$pluginDir' descriptor, files:\n  ${fileItems.joinToString(separator = "\n  ")}", e)
         null
       }
     })
