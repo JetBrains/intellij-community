@@ -62,6 +62,8 @@
     "MainToolbar": {
       "background": "BackgroundDark",
       "borderColor": "BorderTransparent",
+      "Icon.hoverBackground": "Gray11",
+      "Dropdown.hoverBackground": "Gray11",
       "Button.arc.compact": 8
     },
 
