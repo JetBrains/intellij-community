@@ -180,7 +180,6 @@ class ServiceContainerTest {
   }
 
   @Test
-  @Ignore("Broken: demonstration of an issue")
   fun `initializer overwrites caller context - preload 3`() {
     val componentManager = TestComponentManager(additionalContext = ContextElement(MARKER_1))
     val componentManager2 = TestComponentManager(parentScope = CoroutineScope(EmptyCoroutineContext),
@@ -199,7 +198,6 @@ class ServiceContainerTest {
   }
 
   @Test
-  @Ignore("Broken: demonstration of an issue")
   fun `initializer overwrites caller context - preload 4`() {
     val componentManager = TestComponentManager(additionalContext = ContextElement(MARKER_1))
     val componentManager2 = TestComponentManager(parentScope = CoroutineScope(ContextElement(MARKER_3)),
@@ -218,7 +216,6 @@ class ServiceContainerTest {
   }
 
   @Test
-  @Ignore("Broken: demonstration of an issue")
   fun `initializer overwrites caller context - preload 5`() {
     val componentManager = TestComponentManager(additionalContext = ContextElement(MARKER_1))
     val componentManager2 = TestComponentManager(parentScope = CoroutineScope(ContextElement(MARKER_3)),

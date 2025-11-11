@@ -1105,7 +1105,7 @@ abstract class ComponentManagerImpl(
   ) {
   }
 
-  protected open suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
+  protected suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
     serviceContainer.getInstanceHolder(keyClassName = serviceInterface)
       ?.takeIf(InstanceHolder::isStatic)
       ?.getInstanceInCallerContext(keyClass = null)
