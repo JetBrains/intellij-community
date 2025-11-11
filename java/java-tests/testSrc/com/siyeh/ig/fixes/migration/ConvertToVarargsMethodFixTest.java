@@ -14,6 +14,7 @@ public class ConvertToVarargsMethodFixTest extends IGQuickFixesTestCase {
   public void testComment() { doTest(); }
   public void testFinal() { doTest(); }
   public void testCStyle() { doTest(); }
+  public void testJavadocLink() { doTest(); }
 
   @Override
   public void setUp() throws Exception {
