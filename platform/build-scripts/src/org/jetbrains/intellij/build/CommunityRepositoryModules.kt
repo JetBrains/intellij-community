@@ -454,8 +454,6 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.execution.common", "android.jar")
       spec.withModule("intellij.android.avd", "android.jar")
 
-      spec.withModule("intellij.android.safemode", "android.jar")
-
       spec.withModule("intellij.android.preview-fast-compile", "android.jar")
       spec.withModule("intellij.android.completion", "android.jar")
 

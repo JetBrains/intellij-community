@@ -112,6 +112,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.20/kotlin-metadata-jvm-2.2.20.jar",
+  sha256 = "8524eac90f7e8e0f1366883f2c6c820c93bfa61df3d76857c8d3e803cf67315d",
+  downloaded_file_path = "kotlin-metadata-jvm-2.2.20.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-metadata-jvm-2_2_20-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-metadata-jvm/2.2.20/kotlin-metadata-jvm-2.2.20-sources.jar",
+  sha256 = "c55bd0d04e6d796d7d2cf0711281989d5e06b7def07100f80640b98ae1ebb788",
+  downloaded_file_path = "kotlin-metadata-jvm-2.2.20-sources.jar"
+)
+
+http_file(
   name = "org_eclipse_elk-org_eclipse_elk_alg_layered-0_3_0_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/elk/org.eclipse.elk.alg.layered/0.3.0/org.eclipse.elk.alg.layered-0.3.0.jar",
   sha256 = "08267d824581f81af8a196d4551decae1256a454e618409a363e3e1574b06520",
@@ -7098,10 +7112,10 @@ http_file(
 )
 
 http_file(
-  name = "com_android_tools_layoutlib-layoutlib-15_2_3_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib/15.2.3/layoutlib-15.2.3.jar",
-  sha256 = "e826a88e448a0c1d42abc30c9d047131badbac6fc3922b8e93ac3ea27bb0eb2c",
-  downloaded_file_path = "layoutlib-15.2.3.jar"
+  name = "com_android_tools_layoutlib-layoutlib-16_0_1_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib/16.0.1/layoutlib-16.0.1.jar",
+  sha256 = "8460773e25756838521ccfe06cd13eee11bf55a0a272785890988b9d45eca937",
+  downloaded_file_path = "layoutlib-16.0.1.jar"
 )
 
 http_file(
@@ -7494,6 +7508,34 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel-desktop/2.9.4/lifecycle-viewmodel-desktop-2.9.4.jar",
   sha256 = "98f816be6869407c87d46058756f97780fa6c6cf61acdba97216f413731af15d",
   downloaded_file_path = "lifecycle-viewmodel-desktop-2.9.4.jar"
+)
+
+http_file(
+  name = "androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common-jvm/2.10.0-alpha03/lifecycle-common-jvm-2.10.0-alpha03.jar",
+  sha256 = "ee37d7927dba6cffd167c6244fc33e483f2b6d407def89395c8a2986bc2504c5",
+  downloaded_file_path = "lifecycle-common-jvm-2.10.0-alpha03.jar"
+)
+
+http_file(
+  name = "androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime-desktop/2.10.0-alpha03/lifecycle-runtime-desktop-2.10.0-alpha03.jar",
+  sha256 = "70634adb54f9268685e45226e386a9f3856a2568dfc3de2db49b6b4c75c831fe",
+  downloaded_file_path = "lifecycle-runtime-desktop-2.10.0-alpha03.jar"
+)
+
+http_file(
+  name = "androidx_arch_core-core-common-2_2_0_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.2.0/core-common-2.2.0.jar",
+  sha256 = "65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41",
+  downloaded_file_path = "core-common-2.2.0.jar"
+)
+
+http_file(
+  name = "androidx_annotation-annotation-1_1_0_http",
+  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.1.0/annotation-1.1.0.jar",
+  sha256 = "d38d63edb30f1467818d50aaf05f8a692dea8b31392a049bfa991b159ad5b692",
+  downloaded_file_path = "annotation-1.1.0.jar"
 )
 
 http_file(
@@ -14483,31 +14525,31 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-studio-platform-2025_1_2-287_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2025.1.2-287/studio-platform-2025.1.2-287.jar",
-  sha256 = "21a748abc565fd6d97d90f2547d0fd1da36810171050b2a337cbc02799cfe482",
-  downloaded_file_path = "studio-platform-2025.1.2-287.jar"
+  name = "org_jetbrains_intellij_deps-studio-platform-2025_2_1-alpha01-290_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2025.2.1-alpha01-290/studio-platform-2025.2.1-alpha01-290.jar",
+  sha256 = "b819e0b26651bf09b35beab8d9b065a42ed372812cd014e0090371ccf12ad101",
+  downloaded_file_path = "studio-platform-2025.2.1-alpha01-290.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-studio-platform-2025_1_2-287-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2025.1.2-287/studio-platform-2025.1.2-287-sources.jar",
-  sha256 = "a011deb5ca9df7e80751b586c78440af4dce7117cb567f1f8fc144ac770e44c5",
-  downloaded_file_path = "studio-platform-2025.1.2-287-sources.jar"
+  name = "org_jetbrains_intellij_deps-studio-platform-2025_2_1-alpha01-290-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-platform/2025.2.1-alpha01-290/studio-platform-2025.2.1-alpha01-290-sources.jar",
+  sha256 = "66581e6d97dc509793f6fe773bb78bf5041efaa954fc6e7f0cfc6be3ad1ba259",
+  downloaded_file_path = "studio-platform-2025.2.1-alpha01-290-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-studio-test-platform-2025_1_2-287_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2025.1.2-287/studio-test-platform-2025.1.2-287.jar",
-  sha256 = "146d8ebb454cccee149a81cc47026b6a576953aeb811f2ef6979bb44a5e4b50f",
-  downloaded_file_path = "studio-test-platform-2025.1.2-287.jar"
+  name = "org_jetbrains_intellij_deps-studio-test-platform-2025_2_1-alpha01-290_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2025.2.1-alpha01-290/studio-test-platform-2025.2.1-alpha01-290.jar",
+  sha256 = "e8f31da8511285d66cc6956156722f160dc55772cc5466d71b4d3ff73f10080c",
+  downloaded_file_path = "studio-test-platform-2025.2.1-alpha01-290.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_deps-studio-test-platform-2025_1_2-287-sources_http",
-  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2025.1.2-287/studio-test-platform-2025.1.2-287-sources.jar",
-  sha256 = "63c1bfcdd15fc0363a401b5a90bdde985256056c7b78ef39c9262ed83705d0ce",
-  downloaded_file_path = "studio-test-platform-2025.1.2-287-sources.jar"
+  name = "org_jetbrains_intellij_deps-studio-test-platform-2025_2_1-alpha01-290-sources_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/studio-test-platform/2025.2.1-alpha01-290/studio-test-platform-2025.2.1-alpha01-290-sources.jar",
+  sha256 = "9f9b015d92a283a49ea49d574b436b0ed4c8010d1a2e2d818540e6ac2ec6e211",
+  downloaded_file_path = "studio-test-platform-2025.2.1-alpha01-290-sources.jar"
 )
 
 http_file(
