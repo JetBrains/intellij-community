@@ -1295,6 +1295,7 @@ class InfoAndProgressPanel internal constructor(
         if (statusBar != null) {
           val bounds = bounds
           bounds.setLocation(0, 0)
+          bounds.width -= counterComponent.getWidthAdditionForAlignmemt()
           IdeStatusBarImpl.paintHover(g, this, bounds, JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND, statusBar)
         }
       }
@@ -1336,7 +1337,7 @@ private class CounterLabel : JPanel(), UISettingsListener {
     this.isPopupShowing = isPopupShowing
 
     refreshTextForMinimumSizeIfNeeded()
-    refreshPanelText()
+    refreshPanelText(textPanel)
   }
 
   private fun getNumberToShow(): Int {
@@ -1348,7 +1349,7 @@ private class CounterLabel : JPanel(), UISettingsListener {
     }
   }
 
-  private fun refreshPanelText() {
+  private fun refreshPanelText(panel: TextPanel) {
     val numberToShow = getNumberToShow()
     val text = when {
       isPopupShowing -> ""
@@ -1357,7 +1358,7 @@ private class CounterLabel : JPanel(), UISettingsListener {
       isProgressVisible -> "+${numberToShow}"
       else -> "${numberToShow}"
     }
-    textPanel.text = text
+    panel.text = text
   }
 
   private fun refreshTextForMinimumSizeIfNeeded() {
@@ -1404,6 +1405,14 @@ private class CounterLabel : JPanel(), UISettingsListener {
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     minimumSize = null
+  }
+
+  fun getWidthAdditionForAlignmemt(): Int {
+    if (!isVisible) return 0
+    val minWidth = getPreferredSize().width
+    val panel = createTextPanel()
+    refreshPanelText(panel)
+    return minWidth - panel.preferredSize.width
   }
 }
 
