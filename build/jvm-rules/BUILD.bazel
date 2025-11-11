@@ -97,8 +97,9 @@ jvm_import(
 )
 
 jvm_import(
-    name = "kotlin-compiler-for-wasmjs_import",
-    jar = "@kotlin-compiler-for-wasmjs_http//file",
+    name = "kotlin-compiler_import",
+    jar = "@kotlin-compiler_http//file",
+    source_jar = "@kotlin-compiler_http//file",
     visibility = ["//visibility:public"],
 )
 

@@ -4,3 +4,4 @@
 /jps-bootstrap-work/
 kotlin-plugin*.zip
 dependencies/buildSrc/build
+/jvm-rules/.claude/settings.local.json

@@ -163,13 +163,6 @@ http_file(
 )
 
 http_file(
-    name = "kotlin-compiler-for-wasmjs_http",
-    downloaded_file_path = "kotlin-compiler-%s.jar" % kotlin_compiler_version,
-    sha256 = "77933116836e43dd7e7486cc3aaf801774dd04d22426a0c8d9d51837ec4c4f73",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-compiler/%s/kotlin-compiler-%s.jar" % (kotlin_compiler_version, kotlin_compiler_version),
-)
-
-http_file(
     name = "kotlin-compose-compiler-plugin_http",
     downloaded_file_path = "kotlin-compose-compiler-plugin-2.2.20.jar",
     sha256 = "d99052e257681e496590c5c724e1324eb511e4205f5fd413b5f503d8e932b698",

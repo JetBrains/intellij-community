@@ -23,7 +23,7 @@ kt_jvm_library(
         "//:kotlinx-coroutines-core_import",
     ],
     deps = [
-        "//:kotlin-compiler-for-wasmjs_import",
+        "//:kotlin-compiler_import",
         "//:kotlin-stdlib_import",
     ],
 )
