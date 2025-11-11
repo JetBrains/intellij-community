@@ -15,7 +15,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
@@ -457,16 +456,16 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertTrue("Auto-reload is disabled in this test", isAutoReloadEnabled)
   }
 
-  protected fun assertHasPendingProjectForReload() {
+  protected suspend fun assertHasPendingProjectForReload() {
     assertAutoReloadIsEnabled()
-    blockTillCinfigurationReady()
+    awaitConfiguration()
     assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
     assertNotEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
-  protected fun assertNoPendingProjectForReload() {
+  protected suspend fun assertNoPendingProjectForReload() {
     assertAutoReloadIsEnabled()
-    blockTillCinfigurationReady()
+    awaitConfiguration()
     assertFalse(myNotificationAware!!.isNotificationVisible())
     assertEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
@@ -496,12 +495,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertFalse("Call awaitConfiguration() from background thread", isEdt)
     Observation.awaitConfiguration(project) { message ->
       logConfigurationMessage(message)
-    }
-  }
-
-  protected fun blockTillCinfigurationReady() {
-    runBlockingCancellable {
-      awaitConfiguration()
     }
   }
 

@@ -43,7 +43,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     connection.setRequestMethod("GET")
     connection.connect()
     val response = getResponse(connection)
-    MavenLog.LOG.warn("Response $response")
+    MavenLog.LOG.warn("Response ${response.take(50)}")
     val responseCode = connection.responseCode
     connection.disconnect()
 
