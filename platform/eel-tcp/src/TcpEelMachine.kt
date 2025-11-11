@@ -33,6 +33,10 @@ abstract class TcpEelMachine(
     return session.getIjentInstance(descriptor)
   }
 
+  internal suspend fun waitForDeployment() {
+    deferredEelSession.await()
+  }
+
   /**
    * Start deployment of the Ijent instance to the remote host. The deployment is start immediately on the background to speed up the process.
    * Unfortunately, if the session is deployed, but no usages are made to the underlying file system, the deployment will not be stopped
