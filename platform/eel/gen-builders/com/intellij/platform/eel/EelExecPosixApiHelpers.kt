@@ -163,7 +163,11 @@ object EelExecPosixApiHelpers {
     }
 
     /**
-     * Works like [LOGIN_NON_INTERACTIVE], but in case of an error it returns [MINIMAL] instead of throwing an exception.
+     * * On remote Eel it works like [LOGIN_NON_INTERACTIVE], but in case of an error it returns [MINIMAL] instead of throwing an exception.
+     * * On local Windows and Linux it always works like [MINIMAL]
+     *   because historically the IDE haven't called the shell for environment variables in most cases.
+     * * On local macOS it works like [LOGIN_NON_INTERACTIVE] + [MINIMAL], but it returns values cached at start
+     *   with no effect from the [onlyActual] option. This is the historical behaviour too.
      *
      * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
      */

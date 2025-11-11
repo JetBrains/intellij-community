@@ -117,15 +117,13 @@ sealed interface EelExecApi {
   suspend fun fetchLoginShellEnvVariables(): Map<String, String> {
     return when (this) {
       is EelExecPosixApi -> {
+        if (this is LocalEelExecApi) {
+          @Suppress("checkedExceptions")
+          return environmentVariables().default().eelIt().await()
+        }
+
         var now = 0L
-        val cacheDuration =
-          if (this is LocalEelExecApi) {
-            // The previous implementation of fetchLoginShellEnvVariables for the local Eel had an infinite cache.
-            Long.MAX_VALUE
-          }
-          else {
-            fetchLoginShellEnvVariablesCacheExpirationTime.inWholeNanoseconds
-          }
+        val cacheDuration = fetchLoginShellEnvVariablesCacheExpirationTime.inWholeNanoseconds
 
         // The previous implementation used the same timeout, and in the previous implementation it was chosen as a wild guess.
         val (expireAt, completedSuccessfullyLastTime) = cacheForObsoleteEnvVarExpireAt.compute(descriptor) { _, expireAtAndSucceeded ->
@@ -378,7 +376,11 @@ interface EelExecPosixApi : EelExecApi {
 
     enum class Mode {
       /**
-       * Works like [LOGIN_NON_INTERACTIVE], but in case of an error it returns [MINIMAL] instead of throwing an exception.
+       * * On remote Eel it works like [LOGIN_NON_INTERACTIVE], but in case of an error it returns [MINIMAL] instead of throwing an exception.
+       * * On local Windows and Linux it always works like [MINIMAL]
+       *   because historically the IDE haven't called the shell for environment variables in most cases.
+       * * On local macOS it works like [LOGIN_NON_INTERACTIVE] + [MINIMAL], but it returns values cached at start
+       *   with no effect from the [onlyActual] option. This is the historical behaviour too.
        *
        * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
        */
