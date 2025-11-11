@@ -275,7 +275,7 @@ private fun TreeRow(
                     modifier = Modifier.weight(1f),
                 ) {
                     Row(
-                        modifier = Modifier.padding(start = 3.dp)
+                        modifier = Modifier.padding(start = 21.dp)
                             .semantics {
                                 processIsError = isError
                                 processIsBackground = isBackground
