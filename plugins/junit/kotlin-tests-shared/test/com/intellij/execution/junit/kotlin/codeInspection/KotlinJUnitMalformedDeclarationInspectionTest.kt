@@ -31,6 +31,19 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
     """.trimIndent())
   }
 
+  fun `test malformed extension anonymous object type`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      class A {
+        @org.junit.jupiter.api.extension.RegisterExtension
+        private val myRule5 = object: Rule5(), B {}
+        
+        open class Rule5 {}
+        interface B : org.junit.jupiter.api.extension.Extension
+      }
+    """.trimIndent())
+  }
+
   /* Malformed nested class */
   fun `test malformed nested no highlighting`() {
     myFixture.testHighlighting(

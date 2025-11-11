@@ -2,6 +2,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtElement
@@ -24,7 +25,15 @@ open class KotlinUField(
     override val psi = javaPsi
 
     override fun getType(): PsiType {
-        return delegateExpression?.getExpressionType() ?: javaPsi.type
+        val type = delegateExpression?.getExpressionType()
+        if (type != null) return type
+
+        val initializer = uastInitializer
+        if (initializer != null && initializer is UObjectLiteralExpression) { // anonymous type for object expression
+            return PsiTypesUtil.getClassType(initializer.declaration.javaPsi)
+        }
+
+        return javaPsi.type
     }
 
     override fun getInitializer(): PsiExpression? {

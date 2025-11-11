@@ -1,14 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.kotlin
 
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase.assertInstanceOf
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.junit.Test
 
@@ -177,6 +175,30 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
                 }, public static final fun foo() : void {
                 }
             """.trimIndent(), alternatives.joinToString(transform = UElement::asRenderString).replace("\r", ""))
+        }
+    }
+
+    @Test
+    fun testObjectExpressionMultipleInterfaces() {
+        fun <E : KtElement, T: UElement> getUElement(name: String, file: UFile, type: Class<E>, result: Class<T>): T {
+            val index = file.findIndexOfElement(name)
+            val ktElement = PsiTreeUtil.getParentOfType(file.sourcePsi.findElementAt(index), type)!!
+            val plugin = UastLanguagePlugin.byLanguage(ktElement.language)!!
+            return plugin.convertToAlternatives<UElement>(ktElement, arrayOf(result)).single() as T
+        }
+
+        doTest("ObjectExpressionMultipleInterfaces") { _, file ->
+            val field = getUElement("field", file, KtProperty::class.java, UField::class.java)
+            val type = field.type as PsiClassType
+            val resolvedType = type.resolve()!!
+
+            val i1 = getUElement("I1", file, KtClass::class.java, UClass::class.java)
+            val i2 = getUElement("I2", file, KtClass::class.java, UClass::class.java)
+            val aClass = getUElement("AClass", file, KtClass::class.java, UClass::class.java)
+
+            assertTrue(resolvedType.isInheritor(i1.javaPsi, false))
+            assertTrue(resolvedType.isInheritor(i2.javaPsi, false))
+            assertTrue(resolvedType.isInheritor(aClass.javaPsi, false))
         }
     }
 }
