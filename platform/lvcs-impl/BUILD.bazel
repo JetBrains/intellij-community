@@ -70,6 +70,7 @@ jvm_library(
     "//libraries/fastutil",
     "//platform/core-ui",
     "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
     "//platform/util/coroutines",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",

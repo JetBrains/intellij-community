@@ -205,6 +205,7 @@ jvm_library(
     "//platform/collaboration-tools:collaboration-tools_test_lib",
     "//platform/ide-core-impl",
     "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
     "//plugins/performanceTesting/core:performanceTesting",
     "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "//platform/backend/observation",

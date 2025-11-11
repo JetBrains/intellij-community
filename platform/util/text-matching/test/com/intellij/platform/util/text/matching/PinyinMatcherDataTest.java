@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.codeStyle;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.util.text.matching;
 
+import com.intellij.psi.codeStyle.PinyinMatcher;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Ignore;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -23,7 +24,7 @@ import java.util.zip.ZipInputStream;
  * Generates data arrays for {@link PinyinMatcher} using Unihan_Readings.txt file from unicode.org
  * Requires Internet connection.
  */
-@Ignore
+@Disabled("It's a generator, not a real test")
 public class PinyinMatcherDataTest {
   private static final int LINE_LENGTH = 100;
   private static final String DATA_SOURCE = "https://unicode.org/Public/UNIDATA/Unihan.zip";
@@ -41,8 +42,8 @@ public class PinyinMatcherDataTest {
       toJavaStringLiteral("ENCODING", encodingStr) + "\n" +
       toJavaStringLiteral("DATA", data) + "\n";
 
-    Assertions.assertEquals(encodingStr, PinyinMatcher.ENCODING, message);
-    Assertions.assertEquals(data, PinyinMatcher.DATA, message);
+    Assertions.assertEquals(PinyinMatcher.ENCODING, encodingStr, message);
+    Assertions.assertEquals(PinyinMatcher.DATA, data, message);
   }
 
   private static String toJavaStringLiteral(String varName, String input) {

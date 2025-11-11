@@ -279,6 +279,7 @@ jvm_library(
     "//libraries/hdr-histogram",
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
     "//platform/platform-impl/rpc",
     "//libraries/hash4j",
     "//platform/util-ex",

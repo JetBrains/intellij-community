@@ -1,14 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.codeStyle;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.util.text.matching;
 
-import com.intellij.util.containers.ContainerUtil;
-import org.junit.Test;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.TypoTolerantMatcher;
+import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.SplittableRandom;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TypoTolerantMatcherTest {
   @Test
@@ -25,7 +28,7 @@ public class TypoTolerantMatcherTest {
         return sb.toString();
       }).limit(20000).toArray(String[]::new);
     TypoTolerantMatcher matcher = new TypoTolerantMatcher("asd", NameUtil.MatchingCaseSensitivity.FIRST_LETTER, "");
-    List<String> matched = ContainerUtil.filter(data, matcher::matches);
+    List<String> matched = Arrays.stream(data).filter(matcher::matches).toList();
     List<String> expected =
       List.of("aqvQpSfmT", "arvIeSdS", "agofjgjwovuUiSmdalto", "jasridvantDr", "asvioqecqrkujxuLoiDo", "ssHDdcogvKq", "asQDqhkej",
               "gastDtHdqgG", "ahSDaks", "abKluwAdwxJoUyibvgeoh", "aDbsnmlGlJuBJsDi", "aamaoRrghlcD", "aadnjwforytcqwa", "adovoaqvSximVAdD",
@@ -38,7 +41,7 @@ public class TypoTolerantMatcherTest {
   public void testEmptyPattern() {
     TypoTolerantMatcher matcher = new TypoTolerantMatcher("*", NameUtil.MatchingCaseSensitivity.NONE, "");
     String[] data = new String[]{"foo", "bar", "buzz"};
-    List<String> matched = ContainerUtil.filter(data, matcher::matches);
+    List<String> matched = Arrays.stream(data).filter(matcher::matches).toList();
     List<String> expected = List.of("foo", "bar", "buzz");
     assertEquals(expected, matched);
   }
