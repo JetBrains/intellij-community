@@ -1,4 +1,4 @@
-package com.intellij.lambda.tests
+package com.intellij.lambda.sampleTests
 
 import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
@@ -21,8 +21,8 @@ class MixedExampleTest {
 
   @TestTemplate
   fun testTemplateTest(ide: BackgroundRunWithLambda) = runBlocking {
-    ide.runLambdaInBackend(HelloBackendOnlyLambda::class)
-    ide.runLambda(HelloFrontendOnlyLambda::class)
+    ide.runLambdaInBackend(SampleTest.HelloBackendOnlyLambda::class)
+    ide.runLambda(SampleTest.HelloFrontendOnlyLambda::class)
   }
 
   @TestTemplate

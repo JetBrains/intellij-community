@@ -25,10 +25,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 object IdeLambdaStarter {
-  const val LAMBDA_TEST_MODULE: String = "intellij.lambda.tests._test"
-  const val ADDITIONAL_LAMBDA_TEST_PLUGIN: String = "intellij.additional.lambda.tests.plugin"
-  private const val ADDITIONAL_LAMBDA_DIR_NAME = "additional-lambda-tests-plugin"
-
   internal fun Map<String, String>.toLambdaParams(): List<LambdaRdKeyValueEntry> = map { LambdaRdKeyValueEntry(it.key, it.value) }
 
   fun IDETestContext.runIdeWithLambda(
@@ -41,8 +37,7 @@ object IdeLambdaStarter {
   ): BackgroundRunWithLambda {
     if (this is IDERemDevTestContext) {
       val driverRunner = RemDevDriverRunner()
-      addCustomFrontendPlugin(ADDITIONAL_LAMBDA_DIR_NAME)
-
+      LambdaTestPluginHolder.additionalPluginDirNames().forEach { addCustomFrontendPlugin(it) }
       val backendRdSession = setUpRdTestSession(BACKEND)
       val frontendRdSession = frontendIDEContext.setUpRdTestSession(FRONTEND)
 
@@ -74,7 +69,7 @@ object IdeLambdaStarter {
 
     applyVMOptionsPatch {
       addSystemProperty(LambdaTestsConstants.protocolPortPropertyName, testProtocolPort)
-      addSystemProperty(TEST_MODULE_ID_PROPERTY_NAME, LAMBDA_TEST_MODULE)
+      addSystemProperty(TEST_MODULE_ID_PROPERTY_NAME, LambdaTestPluginHolder.testModuleId())
     }
 
     val rdSession = LambdaRdTestSession(lambdaRdIdeType)
@@ -84,6 +79,7 @@ object IdeLambdaStarter {
     return rdSession
   }
 
+  //todo
   private fun IDERemDevTestContext.addCustomFrontendPlugin(additionalFrontendPluginModuleName: String) {
     val frontendCustomPluginsDir = frontendIDEContext.paths.pluginsDir
     if (!frontendCustomPluginsDir.exists()) {

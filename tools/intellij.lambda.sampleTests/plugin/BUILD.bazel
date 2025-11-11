@@ -1,0 +1,17 @@
+### auto-generated section `build intellij.lambda.sampleTests.plugin` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "plugin_test_resources",
+  srcs = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
+jvm_library(
+  name = "plugin_test_lib",
+  module_name = "intellij.lambda.sampleTests.plugin",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True),
+  resources = [":plugin_test_resources"]
+)
+### auto-generated section `build intellij.lambda.sampleTests.plugin` end

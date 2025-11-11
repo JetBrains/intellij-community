@@ -1,7 +1,9 @@
-package com.intellij.lambda.tests
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lambda.sampleTests
 
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
+import com.intellij.lambda.testFramework.junit.UltimateTestCases.JpsEmptyProject
 import com.intellij.lambda.testFramework.testApi.editor.openFile
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.lambda.testFramework.testApi.getProjects
@@ -13,8 +15,11 @@ import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.impl.LambdaTestHost.Companion.NamedLambda
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdKeyValueEntry
+import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.TestTemplate
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
 @ExecuteInMonolithAndSplitMode
@@ -22,8 +27,14 @@ class SampleTest {
   @TestTemplate
   fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {
     //works in both modes if
-    // TestCases.IU.JavaTestProject is used and
-    // headless is turned off for monolith
+    // headless is turned off for monolith in com.intellij.lambda.testFramework.starter.NewContextWithLambdaKt.newContextWithLambda
+    // as ProjectManager returns empty projects list in headless
+    JpsEmptyProject.projectInfo.projectDir.resolve("src").resolve("FormattingExamplesExpected.java").let {
+      if (!it.exists()) {
+        it.parent.createDirectories()
+        it.createFile()
+      }
+    }
     ide.apply {
       runSerializedLambdaInBackend {
         waitForProject(20.seconds)
@@ -35,7 +46,7 @@ class SampleTest {
 
       runSerializedLambdaInBackend {
         Logger.getInstance("test").warn("backend Projects: " + getProject())
-        openFile("src/FormattingExamplesExpected.java", waitForReadyState = false)
+        openFile("src/FormattingExamplesExpected.java", waitForReadyState = false, requireFocus = false)
       }
     }
     Unit
@@ -46,19 +57,20 @@ class SampleTest {
     ide.runLambdaInBackend(HelloBackendOnlyLambda::class)
     ide.runLambda(HelloFrontendOnlyLambda::class)
   }
-}
 
-class HelloFrontendOnlyLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginModuleDescriptor)
-  : NamedLambda<LambdaFrontendContext>(frontendIdeContext, plugin) {
-  override suspend fun LambdaFrontendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
-    return currentClassLogger().warn("Hi there Frontend")
+
+  class HelloFrontendOnlyLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginModuleDescriptor)
+    : NamedLambda<LambdaFrontendContext>(frontendIdeContext, plugin) {
+    override suspend fun LambdaFrontendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
+      return currentClassLogger().warn("Hi there Frontend")
+    }
   }
-}
 
-class HelloBackendOnlyLambda(backendIdeContext: LambdaBackendContext, plugin: PluginModuleDescriptor)
-  : NamedLambda<LambdaBackendContext>(backendIdeContext, plugin) {
-  override suspend fun LambdaBackendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
-    return currentClassLogger().warn("Hi there Backend")
+  class HelloBackendOnlyLambda(backendIdeContext: LambdaBackendContext, plugin: PluginModuleDescriptor)
+    : NamedLambda<LambdaBackendContext>(backendIdeContext, plugin) {
+    override suspend fun LambdaBackendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
+      return currentClassLogger().warn("Hi there Backend")
+    }
   }
 }
 

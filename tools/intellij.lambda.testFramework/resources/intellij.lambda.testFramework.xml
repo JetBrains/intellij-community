@@ -1,2 +1,7 @@
 <idea-plugin>
+  <dependencies>
+    <plugin id="intellij.lambda.test.plugin"/>
+    <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.tools.ide.util.common"/>
+  </dependencies>
 </idea-plugin>

@@ -6,9 +6,9 @@ import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.runner.Starter
 
-fun Starter.newContextWithLambda(testName: String, testCase: TestCase<*>, additionalPluginModule: String): IDETestContext {
+fun Starter.newContextWithLambda(testName: String, testCase: TestCase<*>, vararg additionalPluginModules: String): IDETestContext {
   try {
-    AdditionalModulesForDevBuildServer.addAdditionalModules(additionalPluginModule)
+    AdditionalModulesForDevBuildServer.addAdditionalModules(*additionalPluginModules)
 
     return newTestContainer().newContext(testName = testName, testCase = testCase, preserveSystemDir = false).apply {
       val contextToApplyHeadless = if (this is IDERemDevTestContext) frontendIDEContext else this
@@ -19,6 +19,6 @@ fun Starter.newContextWithLambda(testName: String, testCase: TestCase<*>, additi
     }
   }
   finally {
-    AdditionalModulesForDevBuildServer.removeAdditionalModules(additionalPluginModule)
+    AdditionalModulesForDevBuildServer.removeAdditionalModules(*additionalPluginModules)
   }
 }
