@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
@@ -66,6 +67,11 @@ class GitUpdateInfoAsLog(private val project: Project,
     }
 
     val rangeFilter = createRangeFilter()
+
+    if (!AdvancedSettings.getBoolean("git.update.info.auto.open.enabled")) {
+      return NotificationData(commitsAndFiles.updatedFilesCount, commitsAndFiles.receivedCommitsCount, null,
+                              getViewCommitsAction(rangeFilter), ranges)
+    }
 
     if (isPathFilterSet()) {
       val commitCount = waitForLogRefreshAndCalculate() ?: return null
