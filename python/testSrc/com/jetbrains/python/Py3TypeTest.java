@@ -4328,6 +4328,15 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-85526
+  public void testNewType() {
+    doTest("(int) -> UserId", """
+      from typing import NewType
+      UserId = NewType('UserId', int)
+      expr = UserId
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

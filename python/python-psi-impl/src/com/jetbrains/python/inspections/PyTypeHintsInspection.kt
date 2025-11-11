@@ -667,7 +667,7 @@ class PyTypeHintsInspection : PyInspection() {
                         PyPsiBundle.message("INSP.type.hints.typed.dict.type.cannot.be.used.in.isinstance.tests"),
                         ProblemHighlightType.GENERIC_ERROR)
       }
-      if (type is PyTypingNewType) {
+      if (Ref.deref(PyTypingTypeProvider.getType(base, myTypeEvalContext)) is PyTypingNewType) {
         registerProblem(base,
                         PyPsiBundle.message("INSP.type.hints.new.type.type.cannot.be.used.in.isinstance.tests"),
                         ProblemHighlightType.GENERIC_ERROR)
