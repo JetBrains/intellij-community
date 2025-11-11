@@ -172,6 +172,7 @@ jvm_library(
     "//libraries/guava",
     "//platform/eel",
     "//platform/eel-provider",
+    "@lib//:junit5Pioneer",
   ],
   exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = ["//platform/execution.dashboard"]
