@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
@@ -22,11 +23,9 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.icons.EMPTY_ICON
-import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.net.NetUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -158,26 +157,29 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
         eel.tunnels.getAcceptorForRemotePort().port((localPortBinding.target ?: 0).toUShort()).eelIt()
       }
 
-      val socket = Socket()
+      @OptIn(DelicateCoroutinesApi::class, IntellijInternalApi::class)
+      forwardingScope.launch(blockingDispatcher) {
+        try {
+          for (connection in acceptor.incomingConnections) {
+            launch {
+              Socket().use { socket ->
+                socket.connect(InetSocketAddress(InetAddress.getLoopbackAddress(), localPortBinding.local))
 
-      socket.connect(InetSocketAddress(InetAddress.getLoopbackAddress(),localPortBinding.local))
+                coroutineScope {
+                  launch {
+                    copy(socket.consumeAsEelChannel(), connection.sendChannel)
+                  }
 
-      forwardingScope.launch {
-        launch {
-          val connection = acceptor.incomingConnections.receive()
-
-          launch {
-            copy(socket.consumeAsEelChannel(), connection.sendChannel)  // TODO: Process error
-          }
-          launch {
-            copy(connection.receiveChannel, socket.asEelChannel()) // TODO: PRocess error
+                  launch {
+                    copy(connection.receiveChannel, socket.asEelChannel())
+                  }
+                }
+              }
+            }
           }
         }
-
-        @Suppress("OPT_IN_USAGE")
-        awaitCancellationAndInvoke {
+        finally {
           acceptor.close()
-          socket.close()
         }
       }
 
@@ -281,7 +283,8 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     return runBlockingCancellable {
       try {
         builder.eelIt().convertToJavaProcess()
-      }catch (e: ExecuteProcessException) {
+      }
+      catch (e: ExecuteProcessException) {
         throw ExecutionException(e)
       }
     }
