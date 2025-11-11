@@ -4,25 +4,11 @@ package com.intellij.openapi.vcs.vfs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VcsVirtualFolder extends AbstractVcsVirtualFile {
   private final @Nullable VirtualFile myChild;
-
-  /**
-   * @deprecated {@link VcsFileSystem} cannot be overwritten
-   */
-  @Deprecated(forRemoval = true)
-  public VcsVirtualFolder(@NotNull String name, @Nullable VirtualFile child, @NotNull VirtualFileSystem ignored) {
-    this(name, child);
-  }
-
-  public VcsVirtualFolder(@NotNull String name, @Nullable VirtualFile child) {
-    super(name);
-    myChild = child;
-  }
 
   public VcsVirtualFolder(@NotNull FilePath path, @Nullable VirtualFile child) {
     super(path);
