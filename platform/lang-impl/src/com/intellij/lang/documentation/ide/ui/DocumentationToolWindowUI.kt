@@ -8,9 +8,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.EDT
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -27,25 +27,9 @@ internal class DocumentationToolWindowUI(
 
   val browser: DocumentationBrowser get() = ui.browser
 
-  val contentComponent: JComponent = object : JPanel(BorderLayout()) {
-
-    init {
-      val documentUI = this@DocumentationToolWindowUI.ui
-      documentUI.switcherToolbarComponent.isOpaque = false
-      add(documentUI.scrollPane, BorderLayout.CENTER)
-      add(documentUI.switcherToolbarComponent, BorderLayout.NORTH)
-    }
-
-    override fun updateUI() {
-      super.updateUI()
-
-      val color = JBUI.CurrentTheme.ToolWindow.background()
-      val documentUI = this@DocumentationToolWindowUI.ui
-      background = color
-      for (component in documentUI.scrollPane.viewport.components) {
-        component.background = color
-      }
-    }
+  val contentComponent: JComponent = NonOpaquePanel(BorderLayout()).also { panel: JPanel ->
+    panel.add(ui.scrollPane, BorderLayout.CENTER)
+    panel.add(ui.switcherToolbarComponent, BorderLayout.NORTH)
   }
 
   val editorPane: DocumentationEditorPane get() = ui.editorPane
@@ -80,6 +64,7 @@ internal class DocumentationToolWindowUI(
   // - > search handler
   init {
     content.putUserData(TW_UI_KEY, this)
+    ui.useToolwindowBackground = true
     Disposer.register(content, this)
     Disposer.register(this, ui)
     reusable = cs.updateContentTab(browser, content, asterisk = true).also {
