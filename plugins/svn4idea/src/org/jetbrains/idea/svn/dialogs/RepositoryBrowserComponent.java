@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
@@ -18,6 +19,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.StatusText;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -237,7 +239,8 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Ui
       SvnFileRevision revision =
         new SvnFileRevision(myVCS, Revision.UNDEFINED, Revision.HEAD, url, entry.getAuthor(), entry.getDate(), null, null);
 
-      return new VcsVirtualFile(node.getSVNDirEntry().getName(), revision);
+      FilePath filePath = VcsUtil.getFilePath(node.getSVNDirEntry().getName(), entry.isDirectory());
+      return new VcsVirtualFile(filePath, revision);
     }
     else {
       return null;
