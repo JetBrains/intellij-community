@@ -202,6 +202,10 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         val testModuleDescriptor = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
                                    ?: error("Test plugin with test module '$testModuleId' is not found")
 
+        assert(testModuleDescriptor.pluginClassLoader != null) { "Test plugin with test module '$testModuleId' is not loaded." +
+                                                                 "Probably due to missing dependencies, see `com.intellij.ide.plugins.ClassLoaderConfigurator#configureContentModule`." }
+
+
         LOG.info("All test code will be loaded using '${testModuleDescriptor.pluginClassLoader}'")
 
         // Advice for processing events
