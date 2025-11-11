@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -174,7 +175,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle> implemen
     resourceBundleManager.dissociateResourceBundle(resourceBundle);
     final ResourceBundle updatedBundle = resourceBundleManager.combineToResourceBundleAndGet(toAddInResourceBundle, baseName);
     FileEditorManager.getInstance(myProject).openFile(new ResourceBundleAsVirtualFile(updatedBundle), true);
-    ProjectView.getInstance(myProject).refresh();
+    ProjectView.getInstance(myProject).refresh(ProjectViewUpdateCause.PLUGIN_PROPERTIES);
   }
 
   @Override
