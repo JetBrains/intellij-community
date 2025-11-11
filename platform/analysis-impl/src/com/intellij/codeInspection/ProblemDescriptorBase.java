@@ -54,18 +54,21 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     PsiFile endContainingFile = startElement == endElement ? startContainingFile : endElement.getContainingFile();
     LOG.assertTrue(startElement == endElement || endContainingFile != null && endContainingFile.isValid() || endElement.isValid(), endElement);
     assertPhysical(startElement);
-    if (startElement != endElement) assertPhysical(endElement);
+    if (startElement != endElement) {
+      assertPhysical(endElement);
+    }
 
     TextRange startElementRange = getAnnotationRange(startElement);
     LOG.assertTrue(startElement instanceof ExternallyAnnotated || startElement instanceof PsiBinaryFile || startElementRange != null, startElement);
     TextRange endElementRange = startElement == endElement ? startElementRange : getAnnotationRange(endElement);
     LOG.assertTrue(endElement instanceof ExternallyAnnotated || endElement instanceof PsiBinaryFile || endElementRange != null, endElement);
-    if (startElementRange != null
-        && endElementRange != null
-        && startElementRange.getStartOffset() >= endElementRange.getEndOffset()) {
-      if (!(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
-        LOG.error("Empty PSI elements must not be passed to createDescriptor. Start: " + startElement + ", end: " + endElement + ", startContainingFile: " + startContainingFile);
-      }
+    if (startElementRange != null &&
+        endElementRange != null &&
+        startElementRange.getStartOffset() >= endElementRange.getEndOffset() &&
+        !(startElement instanceof PsiFile && endElement instanceof PsiFile)) {
+      LOG.error("Empty PSI elements must not be passed to createDescriptor(). Start psi element: " + startElement + "(" + startElement.getClass() + "), range:" + startElementRange +
+                "; end psi element: " + endElement + "(" + endElement.getClass() + "), range:" + endElementRange +
+                "; startContainingFile: " + startContainingFile + "(" + (startContainingFile == null ? null : startContainingFile.getClass()) + ")");
     }
     if (rangeInElement != null && startElementRange != null && endElementRange != null) {
       TextRange.assertProperRange(rangeInElement);
