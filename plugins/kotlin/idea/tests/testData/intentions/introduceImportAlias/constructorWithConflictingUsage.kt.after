@@ -1,0 +1,8 @@
+package imprtAlias
+import p1.u.Utils as Utils1
+import p2.u.Utils as Utils2
+
+class ImportAlias {
+    val u1 = Utils1("p1")
+    val u2 = Ut<caret>ils2("p2")
+}
