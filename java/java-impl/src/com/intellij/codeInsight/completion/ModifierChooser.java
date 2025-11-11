@@ -62,7 +62,11 @@ public final class ModifierChooser {
     new ArrayOfModifiers(new String[]{JavaKeywords.SEALED, JavaKeywords.NON_SEALED}, JavaFeature.SEALED_CLASSES)
   };
 
-  static String[] getKeywords(@NotNull PsiElement position) {
+  /**
+   * @param position position to complete modifiers
+   * @return array of possible modifiers at a given position
+   */
+  public static @NotNull String @NotNull [] getKeywords(@NotNull PsiElement position) {
     final PsiModifierList list = findModifierList(position);
     if (list == null && !shouldSuggestModifiers(position)) {
       return ArrayUtilRt.EMPTY_STRING_ARRAY;
