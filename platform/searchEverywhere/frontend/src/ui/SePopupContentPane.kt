@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
@@ -121,6 +122,8 @@ class SePopupContentPane(
   var isCompactViewMode: Boolean = true
     private set
   var popupExtendedSize: Dimension? = initPopupExtendedSize
+
+  private val semanticWarning = MutableStateFlow(false)
 
   init {
     layout = GridLayout()
@@ -265,6 +268,7 @@ class SePopupContentPane(
                 updateEmptyStatus()
               }
 
+              semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
               updateViewMode()
               autoSelectIndex(searchContext.searchPattern, true)
             }
@@ -345,15 +349,27 @@ class SePopupContentPane(
     }
 
     launch {
-      vm.searchFieldHint.collect { hint ->
+      combine(vm.searchFieldHint, semanticWarning) { searchFieldHint, semanticWarning ->
+        searchFieldHint to semanticWarning
+      }.collect { (searchFieldHint, semanticWarning) ->
         withContext(Dispatchers.EDT) {
-          hint.let { (text, tooltip, isWarning) ->
+          if (searchFieldHint != null) {
+            val (text, tooltip, isWarning) = searchFieldHint
             if (isWarning) {
               hintHelper.setLoadingText(text, tooltip)
             }
             else {
               hintHelper.setHint(text)
             }
+          }
+          else if (semanticWarning) {
+            val noExactMatchesText = SemanticBundleProvider.getSemanticBundle()?.getMessage("search.everywhere.no.exact.matches")?.let {
+              StringUtil.trimTrailing(it, ':')
+            }
+            hintHelper.setHint(noExactMatchesText)
+          }
+          else {
+            hintHelper.setHint(null)
           }
         }
       }

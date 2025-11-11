@@ -66,8 +66,8 @@ class SePopupVm(
 
   data class SearchFieldHint(val text: String?, val tooltip: String?, val isWarning: Boolean)
 
-  private val _searchFieldHint = MutableStateFlow(SearchFieldHint("", null, false))
-  val searchFieldHint: StateFlow<SearchFieldHint> = _searchFieldHint
+  private val _searchFieldHint = MutableStateFlow<SearchFieldHint?>(null)
+  val searchFieldHint: StateFlow<SearchFieldHint?> = _searchFieldHint
 
   private var historyIterator: HistoryIterator = historyList.getIterator(currentTab.tabId)
     get() {
@@ -151,11 +151,10 @@ class SePopupVm(
           SearchFieldHint(IdeBundle.message("incomplete.mode.results.might.be.incomplete"), null, true)
         }
         else {
-          val text = if (currentTab.isCommandsSupported()) {
-            IdeBundle.message("searcheverywhere.textfield.hint", getTopHitAccelerator())
+          if (currentTab.isCommandsSupported()) {
+            SearchFieldHint(IdeBundle.message("searcheverywhere.textfield.hint", getTopHitAccelerator()), null, false)
           }
           else null
-          SearchFieldHint(text, null, false)
         }
       }.distinctUntilChanged().collect {
         _searchFieldHint.value = it
