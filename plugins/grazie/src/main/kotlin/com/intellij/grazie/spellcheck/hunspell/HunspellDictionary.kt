@@ -5,8 +5,8 @@ import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.langs.LanguageISO
 import ai.grazie.nlp.langs.alphabet.Alphabet
 import ai.grazie.spell.dictionary.RuleDictionary
-import ai.grazie.spell.dictionary.rule.ReplacingRuleDictionary
 import ai.grazie.spell.lists.hunspell.HunspellWordList
+import ai.grazie.spell.utils.DictionaryResources.parseReplacingRules
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.spellchecker.dictionary.Dictionary
@@ -105,18 +105,4 @@ class HunspellDictionary : Dictionary {
       }
     }
   }
-
-  // todo: Use DictionaryResources#parseReplacingRules when grazie-platform is updated to 0.8.25+
-  fun parseReplacingRules(datRule: String): RuleDictionary {
-    val rules = HashSet<ReplacingRuleDictionary.Descriptor>()
-
-    for (line in datRule.lines().filter { it.isNotBlank() }) {
-      val (incorrect, correct) = line.splitByDelimiter("->")
-      rules.add(ReplacingRuleDictionary.Descriptor(incorrect.splitByDelimiter(), correct.splitByDelimiter()))
-    }
-
-    return ReplacingRuleDictionary(rules)
-  }
-
-  private fun String.splitByDelimiter(delimiter: String = ",") = this.split(delimiter).map { it.trim() }.toTypedArray()
 }
