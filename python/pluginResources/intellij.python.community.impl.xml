@@ -1141,6 +1141,7 @@
               icon="com.intellij.icons.AllIcons.Actions.Install"/>
       <separator/>
 
+      <add-to-group group-id="EditorContextBarMenu" anchor="first"/>
       <add-to-group group-id="ExternalSystemView.ProjectMenu" anchor="last"/>
       <add-to-group group-id="RunContextGroup"/>
     </group>

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.jetbrains.python.errorProcessing.ErrorSink
@@ -106,3 +107,9 @@ internal fun PythonPackageManager.isRunLocked(): Boolean {
   return CancellableJobSerialRunner.isRunLocked(this.sdk)
 }
 
+internal suspend fun <V> PythonPackageManager.runSynchronized(
+  title: @NlsContexts.ProgressTitle String,
+  runnable: suspend () -> PyResult<V>,
+): PyResult<V> {
+  return CancellableJobSerialRunner.run(this.project, this.sdk, title, runnable)
+}
