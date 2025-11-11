@@ -13,19 +13,22 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.*;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.messages.MessageBusConnection;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
+import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 
 public abstract class ProjectFileNodeUpdater {
   private static final Logger LOG = Logger.getInstance(ProjectFileNodeUpdater.class);
@@ -34,6 +37,7 @@ public abstract class ProjectFileNodeUpdater {
   private volatile boolean root;
   private volatile long time;
   private volatile int size;
+  private final Set<ProjectViewUpdateCause> updateFromRootCauses = ConcurrentHashMap.newKeySet();
 
   public ProjectFileNodeUpdater(@NotNull Project project, @NotNull Invoker invoker) {
     this(project, new ProjectFileNodeUpdaterLegacyInvoker(invoker));
@@ -49,10 +53,14 @@ public abstract class ProjectFileNodeUpdater {
     connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        updateFromRoot();
+        updateFromRoot(ProjectViewUpdateCause.ROOTS_MODULE);
       }
     });
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> updateFromRoot());
+    connection.subscribe(
+      AdditionalLibraryRootsListener.TOPIC,
+      (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) ->
+        updateFromRoot(ProjectViewUpdateCause.ROOTS_LIBRARY)
+    );
     connection.subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -111,7 +119,7 @@ public abstract class ProjectFileNodeUpdater {
         updateFromElement(event.getNewParent());
       }
     }, invoker);
-    RootType.ROOT_EP.addChangeListener(this::updateFromRoot, project);
+    RootType.ROOT_EP.addChangeListener(() -> updateFromRoot(ProjectViewUpdateCause.ROOTS_EP), project);
     connection.subscribe(VirtualFileAppearanceListener.TOPIC, new VirtualFileAppearanceListener() {
       @Override
       public void virtualFileAppearanceChanged(@NotNull VirtualFile virtualFile) {
@@ -128,6 +136,13 @@ public abstract class ProjectFileNodeUpdater {
    * @see #getUpdatingDelay
    */
   public void updateFromRoot() {
+    updateFromRootCauses.add(guessProjectViewUpdateCauseByCaller(ProjectFileNodeUpdater.class));
+    updateLater(null);
+  }
+
+  @ApiStatus.Internal
+  public void updateFromRoot(@NotNull ProjectViewUpdateCause cause) {
+    updateFromRootCauses.add(cause);
     updateLater(null);
   }
 
@@ -229,6 +244,21 @@ public abstract class ProjectFileNodeUpdater {
       LOG.debug("spent ", System.currentTimeMillis() - startedAt, "ms to collect ", size, " files to update @ ", invoker);
       invoker.invoke(() -> updateStructure(fromRoot, files));
     }
+  }
+
+  @ApiStatus.Internal
+  protected Collection<ProjectViewUpdateCause> getAndClearUpdateFromRootCauses() {
+    var result = new HashSet<ProjectViewUpdateCause>();
+    // We're not very interested in consistency here, as it's for statistics only.
+    // But it's still nice not to miss a value in the case it's added a moment after this call.
+    // So instead of copy-then-clear, we copy and remove values one-by-one,
+    // ensuring that only the values we have read are removed.
+    for (Iterator<ProjectViewUpdateCause> iterator = updateFromRootCauses.iterator(); iterator.hasNext(); ) {
+      ProjectViewUpdateCause cause = iterator.next();
+      result.add(cause);
+      iterator.remove();
+    }
+    return result;
   }
 
   /**

@@ -22,6 +22,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
@@ -57,8 +59,8 @@ public abstract class ProjectViewPaneSupport {
       }
 
       @Override
-      protected void addSubtreeToUpdateByRoot() {
-        myNodeUpdater.updateFromRoot();
+      protected void addSubtreeToUpdateByRoot(@NotNull ProjectViewUpdateCause cause) {
+        myNodeUpdater.updateFromRoot(cause);
       }
 
       @Override
@@ -120,7 +122,7 @@ public abstract class ProjectViewPaneSupport {
     myMultiSelectionEnabled = enabled;
   }
 
-  public abstract void updateAll(Runnable onDone);
+  public abstract void updateAll(@Nullable Runnable onDone, @NotNull Collection<ProjectViewUpdateCause> causes);
 
   public void update(@NotNull List<? extends TreePath> list, boolean structure) {
     for (TreePath path : list) update(path, structure);

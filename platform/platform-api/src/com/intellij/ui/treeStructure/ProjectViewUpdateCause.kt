@@ -1,0 +1,44 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.treeStructure
+
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
+enum class ProjectViewUpdateCause {
+  UNKNOWN,
+  LEGACY,
+  PLUGIN,
+  SETTINGS,
+  ACTION,
+  EXTENSIONS_CHANGED,
+  PSI_FLATTEN_PACKAGES,
+  PSI_SCRATCH,
+  PSI_PROPERTY,
+  ROOTS_LIBRARY,
+  ROOTS_MODULE,
+  ROOTS_EP,
+  SCOPE_CHOOSER,
+  SCRATCHES,
+  REFACTORING,
+  ANDROID,
+  PLUGIN_BAZEL,
+  PLUGIN_COVERAGE,
+  PLUGIN_DART,
+  PLUGIN_DBE,
+  PLUGIN_DTS,
+  PLUGIN_JAVAEE,
+  PLUGIN_JUPYTER,
+  PLUGIN_PROJECT_FRAGMENTS,
+  PLUGIN_PHP,
+  PLUGIN_PROPERTIES,
+  PLUGIN_PUPPET,
+  PLUGIN_PYTHON,
+  PLUGIN_REACT_BUDDY,
+  PLUGIN_RUBY,
+  PLUGIN_SPRING,
+  PLUGIN_WORKSPACE,
+  PLUGIN_XPATH,
+  DEBUG_VFS_INFO,
+  DEBUG_INDEXABILITY,
+  ;
+}

@@ -39,6 +39,7 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.ui.treeStructure.BgtAwareTreeModel;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.ui.treeStructure.TreeStateListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -105,6 +106,8 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   private DnDTarget myDropTarget;
   private DnDSource myDragSource;
 
+  @Nullable ProjectViewUpdateCause updateFromRootCause;
+
   protected AbstractProjectViewPane(@NotNull Project project) {
     myProject = project;
     Disposer.register(project, this);
@@ -134,7 +137,7 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   }
 
   private void rebuildCompletely(boolean wait) {
-    ActionCallback callback = updateFromRoot(true);
+    ActionCallback callback = updateFromRoot(true, ProjectViewUpdateCause.EXTENSIONS_CHANGED);
     if (wait) {
       callback.waitFor(5000);
     }
@@ -218,6 +221,17 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
     }
     myTree = null;
     myTreeStructure = null;
+  }
+
+  @ApiStatus.Internal
+  public @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths, @NotNull ProjectViewUpdateCause cause) {
+    updateFromRootCause = cause;
+    try {
+      return updateFromRoot(restoreExpandedPaths);
+    }
+    finally {
+      updateFromRootCause = null;
+    }
   }
 
   public abstract @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths);
