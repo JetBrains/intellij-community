@@ -24,9 +24,9 @@ class PyTypeMember @JvmOverloads constructor(
 ) : RatedResolveResult(0, mainElement) {
 
   constructor(property: Property, type: PyType?) : this(
-    property.getter.value(),
+    property.getter.valueOrNull(),
     type,
-    getter = property.getter.value(),
+    getter = property.getter.valueOrNull(),
     setter = property.setter.valueOrNull(),
     deleter = property.deleter.valueOrNull(),
   )
