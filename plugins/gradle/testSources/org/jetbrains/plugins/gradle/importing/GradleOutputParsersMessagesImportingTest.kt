@@ -601,7 +601,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
               - Incompatible because this component declares a component, compatible with Java 17 and the consumer needed a component, compatible with Java $javaSdkVersion
           - Variant 'sourcesElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a component for use during runtime, and its dependencies declared externally:
               - Incompatible because this component declares documentation and the consumer needed a library
-        """.trimIndent()
+      """.trimIndent()
 
       isGradleAtLeast("7.0") -> """
         No matching variant of org.junit.jupiter:junit-jupiter:6.0.0 was found. The consumer was configured to find an API of a library compatible with Java $javaSdkVersion, preferably in the form of class files, preferably optimized for standard JVMs, and its dependencies declared externally but:
@@ -625,7 +625,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
               - Incompatible because this component declares a component compatible with Java 17 and the consumer needed a component compatible with Java $javaSdkVersion
           - Variant 'sourcesElements' capability org.junit.jupiter:junit-jupiter:6.0.0 declares a runtime of a component, and its dependencies declared externally:
               - Incompatible because this component declares documentation and the consumer needed a library
-        """.trimIndent()
+      """.trimIndent()
 
       isGradleAtLeast("6.2") -> """
         Unable to find a matching variant of org.junit.jupiter:junit-jupiter:6.0.0:

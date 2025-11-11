@@ -180,6 +180,7 @@ jvm_library(
     "//platform/testFramework/eelJava",
     "//platform/forms_rt:java-guiForms-rt",
     "//java/testFramework/backend",
+    "@lib//:junit5Pioneer",
   ],
   exports = ["//platform/external-system-api/testFramework"],
   runtime_deps = ["//platform/execution.dashboard"]
