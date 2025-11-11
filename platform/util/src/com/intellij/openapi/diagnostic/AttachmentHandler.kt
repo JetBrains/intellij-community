@@ -11,6 +11,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.logging.Handler
 import java.util.logging.LogRecord
+import kotlin.io.path.name
 
 /**
  * Handler for logging attachments of [ExceptionWithAttachments] to log folder.
@@ -71,10 +72,18 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
   }
 
   private fun prepareDir(logPath: Path, record: LogRecord): Path? {
+    val baseDir = logPath.parent.resolve("attachments")
     val dirName = prepareDirName(record)
-    val attachmentsDir = logPath.parent.resolve("attachments").resolve(dirName)
+    val attachmentsDir = baseDir.resolve(dirName)
 
     try {
+      // Ensure base directory exists
+      Files.createDirectories(baseDir)
+
+      // Prune oldest groups to keep room for a new one
+      pruneOldAttachmentGroups(baseDir, MAX_ATTACHMENT_GROUPS)
+
+      // Create new group directory
       Files.createDirectories(attachmentsDir)
     }
     catch (_: IOException) {
@@ -137,6 +146,54 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
   }
 
   /**
+   * Keep at most [maxGroups] attachment groups under [baseDir]. If the number of existing groups
+   * is >= [maxGroups], delete the oldest ones to make room for a new group.
+   */
+  private fun pruneOldAttachmentGroups(baseDir: Path, maxGroups: Int) {
+    val entries = try {
+      val directoryStream = Files.newDirectoryStream(baseDir) { path ->
+        Files.isDirectory(path) && path.name.startsWith("attachments-")
+      }
+
+      directoryStream.use { ds ->
+        ds.toMutableList()
+      }
+    }
+    catch (_: IOException) {
+      return
+    }
+
+    val toDeleteCount = entries.size - maxGroups + 1 // make room for the incoming group
+    if (toDeleteCount <= 0) return
+
+    // Sort by directory name which begins with timestamp in yy-MM-dd-HH-mm-ss format -> lexicographical order matches time order
+    entries.sortBy { it.fileName.toString() }
+
+    for (i in 0 until toDeleteCount) {
+      deleteRecursively(entries[i])
+    }
+  }
+
+  private fun deleteRecursively(path: Path) {
+    try {
+      // Delete files first, then directories
+      Files.walk(path)
+        .sorted(Comparator.reverseOrder())
+        .forEach { p ->
+          try {
+            Files.deleteIfExists(p)
+          }
+          catch (_: IOException) {
+            // ignore deletion errors
+          }
+        }
+    }
+    catch (_: IOException) {
+      // ignore traversal errors
+    }
+  }
+
+  /**
    * Produce a short, filesystem-safe abbreviation for an error/exception class.
    * Examples:
    *  - NullPointerException -> NPE
@@ -178,6 +235,7 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
   }
 }
 
+private const val MAX_ATTACHMENT_GROUPS: Int = 100
 private val dateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yy-MM-dd-HH-mm-ss")
 private val uppercaseMatcher = Regex("(?=[A-Z])")
 
