@@ -462,9 +462,15 @@ class ProcessOutputControllerService(
                 }
             }
 
-            processTree.value = buildTree {
+            val newTree = buildTree {
                 buildNodeTree(root)
             }
+
+            if (newTree.isEmpty()) {
+                selectProcess(null)
+            }
+
+            processTree.value = newTree
         }.launchIn(coroutineScope)
     }
 
