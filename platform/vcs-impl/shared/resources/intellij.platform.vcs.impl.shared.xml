@@ -12,6 +12,8 @@
     <registryKey key="vcs.shelves.rhizome.enabled" defaultValue="false" restartRequired="true"
                  description="New vcs shelves split to frontend and backend using Rhizome and rpc"/>
 
+    <projectCustomDataSynchronizer implementation="com.intellij.platform.vcs.impl.shared.ProjectBasePathSynchronizer"/>
+
     <registryKey key="vcs.rd.local.changes.enabled" defaultValue="false" restartRequired="true"
                  description="RD-friendly local changes view"/>
 
