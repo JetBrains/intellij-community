@@ -44,7 +44,7 @@ internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
 internal object ITNProxy {
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
-  private const val DIOGEM_VIEW_URL = "https://diogen.labs.jb.gg/report/"
+  private const val DIOGEN_VIEW_URL = "https://diogen.labs.jb.gg/report/"
 
   internal val DEVICE_ID: String = DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
 
@@ -94,7 +94,7 @@ internal object ITNProxy {
   )
 
   fun getBrowseUrl(threadId: Long): String? = when {
-    isInternalUser() -> DIOGEM_VIEW_URL + threadId
+    isInternalUser() -> DIOGEN_VIEW_URL + threadId
     else -> null
   }
 
