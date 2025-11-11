@@ -1,13 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.k2.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.codeInspection.AvoidRepositoriesInBuildGradleInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -20,14 +22,16 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         projectFixture: GradleTestFixtureBuilder,
         test: () -> Unit
     ) {
+        assumeThatGradleIsAtLeast(gradleVersion, "9.0.0") { "Best practice added in Gradle 9.0.0" }
         test(gradleVersion, projectFixture) {
             codeInsightFixture.enableInspections(AvoidRepositoriesInBuildGradleInspection::class.java)
+            (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
             test()
         }
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesInBuildGradleHighlighted(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testHighlighting(
@@ -41,7 +45,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesInBuildscriptHighlighted(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testHighlighting(
@@ -57,7 +61,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMoveToSettingsFile(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -88,7 +92,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMoveFromBuildscriptToSettingsFile(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -123,7 +127,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingDependencyResolutionManagement(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -160,7 +164,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingPluginManagement(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -200,7 +204,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingDependencyResolutionManagement(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -235,7 +239,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingDependencyResolutionManagementOverlap(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -272,7 +276,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingPluginManagement(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -310,7 +314,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingEmptyDependencyResolutionManagement(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -338,7 +342,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingDependencyResolutionManagementEmptyRepositories(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -368,7 +372,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingEmptyPluginManagement(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -401,7 +405,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingPluginManagementEmptyRepositories(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -436,7 +440,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testRepositoriesWithMultipleStatements(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testHighlighting(
@@ -454,7 +458,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMultipleRepositoriesWithComplexContent(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -489,7 +493,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNestedRepositoriesNotHighlighted(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testHighlighting(
@@ -507,7 +511,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMultipleRepositoriesBlocks(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testHighlighting(
@@ -529,7 +533,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testDependencyResolutionManagementAfterPluginManagement(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -570,7 +574,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testDependencyResolutionManagementAfterPluginsBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -611,7 +615,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testDependencyResolutionManagementAfterBothPluginManagementAndPlugins(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -676,7 +680,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testPluginManagementOrderingWithBuildscriptRepositories(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -723,7 +727,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testCorrectOrderingWithAllTopLevelBlocks(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -778,7 +782,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testEmptySettingsFile(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -805,7 +809,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testBuildCacheDoesNotAffectOrdering(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             testMyIntention(
@@ -847,7 +851,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
 
     // A project without a settings file does not need to centralize its repositories
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoInspectionWithoutSettingsFile(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_ONLY_BUILD_FILE) {
             testHighlighting("repositories { mavenCentral() }")
@@ -859,7 +863,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoQuickFixWithGroovySettingsFile(gradleVersion: GradleVersion) {
         runTest(gradleVersion, EMPTY_PROJECT_WITH_GROOVY_BUILD_FILE) {
             testHighlighting("<weak_warning>repositories</weak_warning> { mavenCentral() }")

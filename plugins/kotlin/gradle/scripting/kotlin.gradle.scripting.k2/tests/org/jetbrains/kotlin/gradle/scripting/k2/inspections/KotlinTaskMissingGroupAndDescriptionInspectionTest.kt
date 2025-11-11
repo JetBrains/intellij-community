@@ -1,11 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.GradleTaskMissingGroupAndDescriptionInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
@@ -16,14 +18,16 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
         gradleVersion: GradleVersion,
         test: () -> Unit
     ) {
+        assumeThatGradleIsAtLeast(gradleVersion, "9.0.0") { "Best practice added in Gradle 9.0.0" }
         test(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             codeInsightFixture.enableInspections(GradleTaskMissingGroupAndDescriptionInspection::class.java)
+            (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
             test()
         }
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMissingBoth(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -33,7 +37,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMissingBothNoConfigBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -43,7 +47,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMissingBothDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -53,7 +57,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMissingBothDelegationNoConfigBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -63,7 +67,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMissingOnlyGroup(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -77,7 +81,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMissingOnlyGroupDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -91,7 +95,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMissingOnlyDescription(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -105,7 +109,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testMissingOnlyDescriptionDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -119,7 +123,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNotMissing(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -134,7 +138,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNotMissingDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -149,7 +153,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testWithSetGroup(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -163,7 +167,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testWithSetGroupDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -177,7 +181,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testWithSetDescription(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -191,7 +195,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testWithSetDescriptionDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -205,7 +209,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testWithSetBoth(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -220,7 +224,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testWithSetBothDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -235,7 +239,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNestedGroupAndDescriptionAssignment(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -256,7 +260,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNestedGroupAndDescriptionAssignmentDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -277,7 +281,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNestedGroupAndDescriptionSetters(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -298,7 +302,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNestedGroupAndDescriptionSettersDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -319,7 +323,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testAddingBoth(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -338,7 +342,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testAddingBothDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -357,7 +361,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testAddingGroupOnly(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -378,7 +382,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testAddingGroupOnlyDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -399,7 +403,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testAddingDescriptionOnly(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -420,7 +424,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testAddingDescriptionOnlyDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -441,7 +445,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testAddingConfigBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -460,7 +464,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testAddingConfigBlockDelegation(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
