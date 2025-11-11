@@ -207,11 +207,10 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         // Advice for processing events
         session.runLambda.setSuspend(sessionBgtDispatcher) { _, parameters ->
           LOG.info("'${parameters.reference}': received lambda execution request")
-
-          val lambdaReference = parameters.reference
-          val namedLambdas = findLambdaClasses(lambdaReference = lambdaReference, testPlugin = testPlugin, ideContext = ideContext)
-
           try {
+            val lambdaReference = parameters.reference
+            val namedLambdas = findLambdaClasses(lambdaReference = lambdaReference, testPlugin = testPlugin, ideContext = ideContext)
+
             val ideAction = namedLambdas.singleOrNull { it.name() == lambdaReference } ?: run {
               val text = "There is no Action with reference '${lambdaReference}', something went terribly wrong, " +
                          "all referenced actions: ${namedLambdas.map { it.name() }}"
