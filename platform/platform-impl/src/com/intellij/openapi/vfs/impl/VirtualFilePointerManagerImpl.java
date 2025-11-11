@@ -37,7 +37,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.UriUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -296,23 +295,27 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   // convert // -> / (except // at the beginning of a UNC path)
   // convert /. ->
   // trim trailing /
-  private static @NotNull String cleanupPath(@NotNull String path) {
+  @VisibleForTesting
+  public static @NotNull String cleanupPath(@NotNull String path) {
     path = FileUtilRt.toSystemIndependentName(path);
     path = trimTrailingSeparators(path);
-    for (int i = 0; i < path.length(); ) {
-      int slash = path.indexOf('/', i);
-      if (slash == -1 || slash == path.length()-1) {
-        break;
-      }
-      char next = path.charAt(slash + 1);
+    int pathLength = path.length();
+    for (int i = 0; i < pathLength; ) {
+      int nextSlashIndex = path.indexOf('/', i);
 
-      if (next == '/' && i != 0 ||
-          next == '/' && !SystemInfo.isWindows ||// additional condition for Windows UNC
-          next == '/' && slash == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path) || // Z://foo -> Z:/foo
-          next == '.' && (slash == path.length()-2 || path.charAt(slash+2) == '/')) {
-        return cleanupTail(path, slash);
+      if (nextSlashIndex == -1 || nextSlashIndex == pathLength - 1) {
+        return path;
       }
-      i = slash + 1;
+
+      char charAfterSlash = path.charAt(nextSlashIndex + 1);
+
+      if (charAfterSlash == '/' && i != 0 ||
+          charAfterSlash == '/' && !SystemInfo.isWindows ||// additional condition for Windows UNC
+          charAfterSlash == '/' && nextSlashIndex == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path) || // Z://foo -> Z:/foo
+          charAfterSlash == '.' && (nextSlashIndex == pathLength - 2 || path.charAt(nextSlashIndex + 2) == '/')) {
+        return cleanupTail(path, nextSlashIndex);
+      }
+      i = nextSlashIndex + 1;
     }
     return path;
   }
@@ -348,10 +351,24 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return s.toString();
   }
 
+  /**
+   * <pre>
+   * /a/b/c.jar!/ -> /a/b/c.jar
+   *
+   * /a/b/        -> /a/b
+   * /a/b//       -> /a/b
+   *
+   * /            -> /
+   * //           -> /
+   * ///          -> /
+   * </pre>
+   */
   private static @NotNull String trimTrailingSeparators(@NotNull String path) {
     path = StringUtil.trimEnd(path, JarFileSystem.JAR_SEPARATOR);
-    path = UriUtil.trimTrailingSlashes(path);
-    return path;
+    //remove trailing slashes, but if the path is just N slashes, it must be reduced to '/', not to '':
+    int index = path.length() - 1;
+    while (index > 0 && path.charAt(index) == '/') index--;
+    return path.substring(0, index + 1);
   }
 
   private synchronized @NotNull VirtualFilePointerImpl getOrCreate(VirtualFileSystemEntry file,
