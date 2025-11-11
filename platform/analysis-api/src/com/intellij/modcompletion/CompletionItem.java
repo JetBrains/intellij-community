@@ -44,6 +44,13 @@ public interface CompletionItem {
   CompletionItemPresentation presentation();
 
   /**
+   * @return explicit item priority; can be positive or negative. Default is 0.
+   */
+  default double priority() {
+    return 0;
+  }
+
+  /**
    * @param actionContext action context where the completion is performed. 
    *                      The selection range denotes the prefix text inserted during the current completion session.
    *                      The command must ignore it, as at the time it will be applied, the selection range will be deleted. 

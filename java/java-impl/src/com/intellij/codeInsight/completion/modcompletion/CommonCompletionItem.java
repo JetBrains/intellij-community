@@ -28,6 +28,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   private final MarkupText myPresentation;
   private final ModNavigatorTailType myTail;
   private final boolean myAdjustIndent;
+  private final double myPriority;
 
   public CommonCompletionItem(@NlsSafe String text) { 
     myText = text; 
@@ -36,16 +37,18 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
     myAdditionalStrings = Set.of();
     myTail = (ModNavigatorTailType)TailTypes.noneType();
     myAdjustIndent = false;
+    myPriority = 0;
   }
   
   private CommonCompletionItem(@NlsSafe String text, Set<String> additionalStrings, Object object, MarkupText presentation,
-                               ModNavigatorTailType tail, boolean indent) {
+                               ModNavigatorTailType tail, boolean indent, double priority) {
     myText = text;
     myAdditionalStrings = additionalStrings;
     myObject = object;
     myPresentation = presentation;
     myTail = tail;
     myAdjustIndent = indent;
+    myPriority = priority;
   }
 
   /**
@@ -53,7 +56,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return new CommonCompletionItem with the given tail type
    */
   public CommonCompletionItem withTail(ModNavigatorTailType tail) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, tail, myAdjustIndent);
+    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, tail, myAdjustIndent, myPriority);
   }
 
   /**
@@ -61,7 +64,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return new CommonCompletionItem with the given presentation
    */
   public CommonCompletionItem withPresentation(MarkupText presentation) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, presentation, myTail, myAdjustIndent);
+    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, presentation, myTail, myAdjustIndent, myPriority);
   }
 
   /**
@@ -69,7 +72,15 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return a new completion item with the given context object
    */
   public CommonCompletionItem withObject(Object object) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, object, myPresentation, myTail, myAdjustIndent);
+    return new CommonCompletionItem(myText, myAdditionalStrings, object, myPresentation, myTail, myAdjustIndent, myPriority);
+  }
+
+  /**
+   * @param priority priority of the item. Can be positive or negative. Default is 0.
+   * @return a new completion item with the given priority
+   */
+  public CommonCompletionItem withPriority(double priority) {
+    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, myAdjustIndent, priority);
   }
 
   /**
@@ -78,14 +89,14 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    */
   public CommonCompletionItem addLookupString(String string) {
     return new CommonCompletionItem(myText, StreamEx.of(myAdditionalStrings).append(string).toSet(), myObject, myPresentation, myTail,
-                                    myAdjustIndent);
+                                    myAdjustIndent, myPriority);
   }
 
   /**
    * @return a CommonCompletionItem, which will automatically adjust the indentation of current line
    */
   public CommonCompletionItem adjustIndent() {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, true);
+    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, true, myPriority);
   }
 
   @Override
@@ -96,6 +107,11 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   @Override
   public Object contextObject() {
     return myObject;
+  }
+
+  @Override
+  public double priority() {
+    return myPriority;
   }
 
   @Override

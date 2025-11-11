@@ -86,7 +86,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
     }
     if (psiElement().withText(";").withSuperParent(2, PsiIfStatement.class).accepts(prevLeaf) ||
         psiElement().withText("}").withSuperParent(3, PsiIfStatement.class).accepts(prevLeaf)) {
-      CompletionItem elseKeyword = createItem(JavaKeywords.ELSE, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType());
+      CommonCompletionItem elseKeyword = createItem(JavaKeywords.ELSE, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType());
       CharSequence text = element.getContainingFile().getFileDocument().getCharsSequence();
       int offset = context.offset();
       while (text.length() > offset && Character.isWhitespace(text.charAt(offset))) {
@@ -95,8 +95,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       if (text.length() > offset + JavaKeywords.ELSE.length() &&
           text.subSequence(offset, offset + JavaKeywords.ELSE.length()).toString().equals(JavaKeywords.ELSE) &&
           Character.isWhitespace(text.charAt(offset + JavaKeywords.ELSE.length()))) {
-        //TODO: priority
-        //elseKeyword = PrioritizedLookupElement.withPriority(elseKeyword, -1);
+        elseKeyword = elseKeyword.withPriority(-1);
       }
       sink.accept(elseKeyword);
     }
@@ -141,9 +140,8 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       return;
     }
 
-    CompletionItem defaultCaseRule = createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock)).adjustIndent();
-    //TODO: priority
-    // prioritizeForRule(defaultCaseRule, switchBlock)
+    CompletionItem defaultCaseRule =
+      prioritizeForRule(createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock)).adjustIndent(), switchBlock);
     sink.accept(defaultCaseRule);
   }
 
@@ -156,9 +154,8 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
     if (defaultElement != null) {
       return;
     }
-    CompletionItem defaultCaseRule = createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock)).adjustIndent();
-    //TODO: priority
-    // prioritizeForRule(defaultCaseRule, switchBlock)
+    CompletionItem defaultCaseRule = 
+      prioritizeForRule(createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock)).adjustIndent(), switchBlock);
     sink.accept(defaultCaseRule);
   }
 
@@ -197,9 +194,24 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       .withTail(tailType)
       .addLookupString(caseRuleName)
       .adjustIndent();
+    return prioritizeForRule(item, switchBlock);
+  }
 
-    //TODO: priority 
-    //return prioritizeForRule(decorator, switchBlock);
+  private static CommonCompletionItem prioritizeForRule(CommonCompletionItem item, @Nullable PsiSwitchBlock switchBlock) {
+    if (switchBlock == null) {
+      return item;
+    }
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body == null) {
+      return item;
+    }
+    PsiStatement[] statements = body.getStatements();
+    if (statements.length == 0) {
+      return item;
+    }
+    if (statements[0] instanceof PsiSwitchLabeledRuleStatement) {
+      return item.withPriority(-1);
+    }
     return item;
   }
 
