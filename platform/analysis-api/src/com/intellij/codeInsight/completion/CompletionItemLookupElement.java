@@ -11,6 +11,7 @@ import com.intellij.modcompletion.CompletionItemPresentation;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -140,16 +142,25 @@ public final class CompletionItemLookupElement extends LookupElement implements 
     CompletionItemPresentation itemPresentation = item.presentation();
     // TODO: apply styles when possible
     MarkupText mainText = itemPresentation.mainText();
-    presentation.setItemText(mainText.toText());
-    MarkupText.Fragment onlyFragment = ContainerUtil.getOnlyItem(mainText.fragments());
-    if (onlyFragment != null) {
-      switch (onlyFragment.kind()) {
-        case STRONG -> presentation.setItemTextBold(true);
-        case EMPHASIZED -> presentation.setItemTextItalic(true);
+    List<MarkupText.Fragment> fragments = mainText.fragments();
+    String tailText = "";
+    if (!fragments.isEmpty()) {
+      MarkupText.Fragment last = fragments.getLast();
+      if (last.kind() == MarkupText.Kind.GRAYED) {
+        tailText = last.text();
+        fragments = fragments.subList(0, fragments.size() - 1);
+      }
+      presentation.setItemText(StringUtil.join(fragments, MarkupText.Fragment::text, ""));
+      MarkupText.Fragment onlyFragment = ContainerUtil.getOnlyItem(fragments);
+      if (onlyFragment != null) {
+        switch (onlyFragment.kind()) {
+          case STRONG -> presentation.setItemTextBold(true);
+          case EMPHASIZED -> presentation.setItemTextItalic(true);
+        }
       }
     }
     presentation.setIcon(itemPresentation.mainIcon());
-    presentation.setTailText(" (MC)");
+    presentation.setTailText(tailText + " (MC)", true);
     presentation.setTypeText(itemPresentation.detailText().toText(), itemPresentation.detailIcon());
   }
 

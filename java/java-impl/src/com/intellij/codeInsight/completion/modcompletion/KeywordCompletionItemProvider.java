@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.util.text.MarkupText.Kind.GRAYED;
+import static com.intellij.openapi.util.text.MarkupText.Kind.STRONG;
 import static com.intellij.patterns.PsiJavaPatterns.psiAnnotation;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
@@ -105,7 +107,9 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
   }
 
   private static CommonCompletionItem createItem(@NlsSafe String keyword, ModNavigatorTailType tailType) {
-    return new CommonCompletionItem(keyword).withObject(new KeywordInfo(keyword)).withTail(tailType);
+    return new CommonCompletionItem(keyword).withObject(new KeywordInfo(keyword))
+      .withPresentation(MarkupText.builder().append(keyword, STRONG).build())
+      .withTail(tailType);
   }
 
   void addEnumCases(PsiElement position, Consumer<CompletionItem> sink) {
@@ -128,7 +132,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
           .adjustIndent()
           .withTail(tailType)
           .withObject(field)
-          .withPresentation(MarkupText.builder().append(prefix, MarkupText.Kind.STRONG).append(name).build())
+          .withPresentation(MarkupText.builder().append(prefix, STRONG).append(name, GRAYED).build())
           .withPriority(prioritizeForRule(switchBlock));
       sink.accept(caseConst);
     }
@@ -220,7 +224,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
 
     return new CommonCompletionItem(prefix + caseRuleName)
       .withPresentation(MarkupText.builder()
-                          .append(prefix, MarkupText.Kind.STRONG)
+                          .append(prefix, STRONG)
                           .append(caseRuleName).build())
       .withTail(tailType)
       .addLookupString(caseRuleName)
