@@ -71,11 +71,8 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
   }
 
   private fun prepareDir(logPath: Path, record: LogRecord): Path? {
-    val logDir = logPath.parent
-    val now = ZonedDateTime.now()
-    val errorAbbr = inferErrorAbbreviation(record.thrown)
-    val dirName = "attachments-" + dateFormat.format(now) + "-" + errorAbbr
-    val attachmentsDir = logDir.resolve(dirName)
+    val dirName = prepareDirName(record)
+    val attachmentsDir = logPath.parent.resolve("attachments").resolve(dirName)
 
     try {
       Files.createDirectories(attachmentsDir)
@@ -85,6 +82,12 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
     }
 
     return attachmentsDir
+  }
+
+  private fun prepareDirName(record: LogRecord): String {
+    val now = ZonedDateTime.now()
+    val errorAbbr = inferErrorAbbreviation(record.thrown)
+    return "attachments-" + dateFormat.format(now) + "-" + errorAbbr
   }
 
   private fun writeStacktrace(dir: Path, t: Throwable) {
