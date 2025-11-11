@@ -1,8 +1,7 @@
-from _typeshed import Incomplete
-
 from braintree.add_on_gateway import AddOnGateway
 from braintree.address_gateway import AddressGateway
 from braintree.apple_pay_gateway import ApplePayGateway
+from braintree.bank_account_instant_verification_gateway import BankAccountInstantVerificationGateway
 from braintree.client_token_gateway import ClientTokenGateway
 from braintree.configuration import Configuration
 from braintree.credit_card_gateway import CreditCardGateway
@@ -28,6 +27,7 @@ from braintree.transaction_gateway import TransactionGateway
 from braintree.transaction_line_item_gateway import TransactionLineItemGateway
 from braintree.us_bank_account_gateway import UsBankAccountGateway
 from braintree.us_bank_account_verification_gateway import UsBankAccountVerificationGateway
+from braintree.util.graphql_client import GraphQLClient
 from braintree.webhook_notification_gateway import WebhookNotificationGateway
 from braintree.webhook_testing_gateway import WebhookTestingGateway
 
@@ -36,6 +36,7 @@ class BraintreeGateway:
     add_on: AddOnGateway
     address: AddressGateway
     apple_pay: ApplePayGateway
+    bank_account_instant_verification: BankAccountInstantVerificationGateway
     client_token: ClientTokenGateway
     credit_card: CreditCardGateway
     customer: CustomerGateway
@@ -43,7 +44,7 @@ class BraintreeGateway:
     dispute: DisputeGateway
     document_upload: DocumentUploadGateway
     exchange_rate_quote: ExchangeRateQuoteGateway
-    graphql_client: Incomplete
+    graphql_client: GraphQLClient
     merchant: MerchantGateway
     merchant_account: MerchantAccountGateway
     oauth: OAuthGateway

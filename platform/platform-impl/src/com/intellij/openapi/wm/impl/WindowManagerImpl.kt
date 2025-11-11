@@ -43,10 +43,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.JDialog
-import javax.swing.JFrame
-import javax.swing.JOptionPane
-import javax.swing.JWindow
+import javax.swing.*
 
 private val LOG = logger<WindowManagerImpl>()
 @JvmField
@@ -309,7 +306,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
         releasedFrameHelper.storeStateForReuse()
         val frame = releasedFrameHelper.frame
         frameToReuse.set(frame)
-        frame.doSetRootPane(null)
+        frame.doSetRootPane(JRootPane())
         frame.setFrameHelper(null)
         if (JOptionPane.getRootFrame() === frame) {
           JOptionPane.setRootFrame(null)

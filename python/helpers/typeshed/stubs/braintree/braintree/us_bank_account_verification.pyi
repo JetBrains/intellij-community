@@ -18,6 +18,7 @@ class UsBankAccountVerification(AttributeGetter):
     class VerificationMethod:
         NetworkCheck: Final = "network_check"
         IndependentCheck: Final = "independent_check"
+        InstantVerificationAccountValidation: Final = "instant_verification_account_validation"
         TokenizedCheck: Final = "tokenized_check"
         MicroTransfers: Final = "micro_transfers"
 

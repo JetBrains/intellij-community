@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.codeVision
 
 import com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider
@@ -89,6 +89,25 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
       
         void bar(E... e) {} /*<# [1 usage] #>*/
       }
+    """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
+
+  fun testEnumConstructor() = doTest("""
+    enum LocationType {/*<# [no usages] #>*/
+        FOREST("Forest"),/*<# [no usages] #>*/
+        PLAIN("Plain"),/*<# [no usages] #>*/
+        DESERT("Desert"),/*<# [no usages] #>*/
+        HILLS("hills");/*<# [no usages] #>*/
+    
+        private final String typeName;/*<# [2 usages] #>*/
+    
+        LocationType(String typeName) {/*<# [4 usages] #>*/
+            this.typeName = typeName;
+        }
+    
+        public String getTypeName() {/*<# [no usages] #>*/
+            return typeName;
+        }
+    }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
   fun testClassAtZeroOffset() = doTest("""      

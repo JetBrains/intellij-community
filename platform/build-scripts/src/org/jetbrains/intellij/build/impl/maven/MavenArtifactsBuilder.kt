@@ -18,13 +18,13 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
-import org.jetbrains.intellij.build.JetBrainsProductProperties
 import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.impl.commonModuleExcludes
 import org.jetbrains.intellij.build.impl.createModuleSourcesNamesFilter
 import org.jetbrains.intellij.build.impl.getLibraryFilename
 import org.jetbrains.intellij.build.impl.libraries.isLibraryModule
+import org.jetbrains.intellij.build.isCommunityModule
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -436,7 +436,7 @@ private fun generatePomXmlData(artifactData: MavenArtifactData, file: Path, cont
     organization = "JetBrains"
     organizationUrl = "https://www.jetbrains.com"
   })
-  if (JetBrainsProductProperties.isCommunityModule(artifactData.module, context)) {
+  if (isCommunityModule(artifactData.module, context)) {
     pomModel.url = "https://github.com/JetBrains/intellij-community"
     pomModel.scm = Scm().apply {
       connection = "scm:git:https://github.com/JetBrains/intellij-community.git"

@@ -65,6 +65,7 @@ public final class CommandMerger {
   }
 
   @Nullable UndoCommandFlushReason shouldFlush(@NotNull PerformedCommand performedCommand) {
+    //noinspection ConstantValue
     if (!isCompatible(performedCommand.commandId())) {
       return createFlushReason("INCOMPATIBLE_COMMAND", performedCommand);
     }
@@ -101,15 +102,14 @@ public final class CommandMerger {
 
   void mergeWithPerformedCommand(@NotNull PerformedCommand performedCommand) {
     mergeState(performedCommand);
-    if (performedCommand.isTransparent() || !hasActions()) {
-      return;
-    }
-    Object groupId = performedCommand.groupId();
-    if (groupId != SoftReference.dereference(lastGroupId)) {
-      lastGroupId = groupId == null ? null : new WeakReference<>(groupId);
-    }
-    if (commandName == null) {
-      commandName = performedCommand.commandName();
+    if (!performedCommand.isTransparent() && hasActions()) {
+      Object groupId = performedCommand.groupId();
+      if (groupId != SoftReference.dereference(lastGroupId)) {
+        lastGroupId = groupId == null ? null : new WeakReference<>(groupId);
+      }
+      if (commandName == null) {
+        commandName = performedCommand.commandName();
+      }
     }
   }
 
@@ -376,6 +376,10 @@ public final class CommandMerger {
   }
 
   private boolean isCompatible(@NotNull CommandId commandId) {
+    //noinspection ConstantValue
+    if (true) { // TODO: transparent commands from the BE ruin the stack
+      return true;
+    }
     if (commandIds.isEmpty()) {
       return true;
     }

@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
+import static org.jetbrains.jps.incremental.messages.CompilerMessage.getTextFromThrowable;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -119,7 +121,7 @@ public final class MavenResourcesBuilder extends TargetBuilder<MavenResourceRoot
         }
         catch (IOException e) {
           context.processMessage(new CompilerMessage(MavenJpsBundle.message("maven.resources.compiler"), BuildMessage.Kind.ERROR,
-                                                     MavenJpsBundle.message("failed.to.copy.0.to.1.2", sourcePath, outputFile.getAbsolutePath(), e.getMessage())));
+                                                     MavenJpsBundle.message("failed.to.copy.0.to.1.2", sourcePath, outputFile.getAbsolutePath(), getTextFromThrowable(e))));
           LOG.info(e);
         }
 

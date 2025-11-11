@@ -84,7 +84,7 @@ public final class PluginManagerMain {
                                         @NotNull com.intellij.ide.plugins.PluginEnabler pluginEnabler,
                                         final @NotNull ModalityState modalityState,
                                         @Nullable Consumer<Boolean> function) throws IOException {
-    return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, true);
+    return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState, false);
   }
 
   public static boolean downloadPluginsModal(@NotNull List<PluginNode> plugins,
@@ -95,7 +95,7 @@ public final class PluginManagerMain {
                                              @NotNull ModalityState modalityState,
                                              @Nullable Consumer<Boolean> function) throws IOException {
     return downloadPluginsImpl(plugins, customPlugins, allowInstallWithoutRestart, onSuccess, pluginEnabler, function, modalityState,
-                               false);
+                               true);
   }
 
   private static boolean downloadPluginsImpl(List<PluginNode> plugins,
@@ -105,40 +105,42 @@ public final class PluginManagerMain {
                                              com.intellij.ide.plugins.PluginEnabler pluginEnabler,
                                              @Nullable Consumer<Boolean> function,
                                              ModalityState modalityState,
-                                             boolean inBackground) throws IOException {
+                                             boolean inModal) throws IOException {
     try {
       boolean[] result = new boolean[1];
+      Task.Backgroundable downloading = new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          try {
+            //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
+            PluginInstallOperation operation = new PluginInstallOperation(plugins, customPlugins, pluginEnabler, indicator);
+            operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
+            operation.run();
 
-      Consumer<ProgressIndicator> downloading = (ProgressIndicator indicator) -> {
-        try {
-          //TODO: `PluginInstallOperation` expects only `customPlugins`, but it can take `allPlugins` too
-          PluginInstallOperation operation = new PluginInstallOperation(plugins, customPlugins, pluginEnabler, indicator);
-          operation.setAllowInstallWithoutRestart(allowInstallWithoutRestart);
-          operation.run();
-
-          boolean success = operation.isSuccess();
-          result[0] = success;
-          if (success) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              if (allowInstallWithoutRestart) {
-                for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
-                  result[0] &= PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), install.getPluginDescriptor());
+            boolean success = operation.isSuccess();
+            result[0] = success;
+            if (success) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                if (allowInstallWithoutRestart) {
+                  for (PendingDynamicPluginInstall install : operation.getPendingDynamicPluginInstalls()) {
+                    result[0] &= PluginInstaller.installAndLoadDynamicPlugin(install.getFile(), install.getPluginDescriptor());
+                  }
                 }
-              }
-              if (onSuccess != null) {
-                onSuccess.run();
-              }
-            }, modalityState);
+                if (onSuccess != null) {
+                  onSuccess.run();
+                }
+              }, modalityState);
+            }
           }
-        }
-        finally {
-          if (function != null) {
-            ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]), ModalityState.any());
+          finally {
+            if (function != null) {
+              ApplicationManager.getApplication().invokeLater(() -> function.accept(result[0]), ModalityState.any());
+            }
           }
         }
       };
 
-      ProgressManager.getInstance().run(createTask(downloading, inBackground));
+      ProgressManager.getInstance().run(downloading.toModalIfNeeded(inModal));
       return result[0];
     }
     catch (RuntimeException e) {
@@ -149,26 +151,6 @@ public final class PluginManagerMain {
       else {
         throw e;
       }
-    }
-  }
-
-  private static Task createTask(Consumer<ProgressIndicator> f, boolean inBackground) {
-    if (inBackground) {
-      //noinspection DialogTitleCapitalization
-      return new Task.Backgroundable(null, IdeBundle.message("progress.download.plugins"), true, PluginManagerUISettings.getInstance()) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          f.accept(indicator);
-        }
-      };
-    }
-    else {
-      return new Task.Modal(null, IdeBundle.message("progress.download.plugins"), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          f.accept(indicator);
-        }
-      };
     }
   }
 

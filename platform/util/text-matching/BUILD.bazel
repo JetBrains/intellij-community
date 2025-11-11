@@ -12,4 +12,29 @@ jvm_library(
     "//platform/util-rt",
   ]
 )
+
+jvm_library(
+  name = "text-matching_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  associates = [":text-matching"],
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "//platform/util/base",
+    "//platform/util-rt",
+    "//platform/util-rt:util-rt_test_lib",
+    "@lib//:kotlin-test",
+    "@lib//:kotlin-test-junit",
+    "@lib//:junit5",
+  ]
+)
 ### auto-generated section `build intellij.platform.util.text.matching` end
+
+### auto-generated section `test intellij.platform.util.text.matching` start
+load("@community//build:tests-options.bzl", "jps_test")
+
+jps_test(
+  name = "text-matching_test",
+  runtime_deps = [":text-matching_test_lib"]
+)
+### auto-generated section `test intellij.platform.util.text.matching` end

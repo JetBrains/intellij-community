@@ -1,8 +1,9 @@
 from _typeshed import Incomplete
 
 class JsonWebSignature:
-    REGISTERED_HEADER_PARAMETER_NAMES: Incomplete
-    ALGORITHMS_REGISTRY: Incomplete
+    REGISTERED_HEADER_PARAMETER_NAMES: frozenset[str]
+    MAX_CONTENT_LENGTH: int
+    ALGORITHMS_REGISTRY: dict[str, Incomplete]
     def __init__(self, algorithms=None, private_headers=None) -> None: ...
     @classmethod
     def register_algorithm(cls, algorithm) -> None: ...

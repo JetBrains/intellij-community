@@ -1,6 +1,6 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.structuralsearch">
   <dependencies>
-    <plugin id="com.intellij.modules.structuralsearch"/>
+    <module name="intellij.platform.structuralSearch"/>
     <module name="kotlin.code-insight.live-templates.shared"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">

@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 internal object SearchingProcessStatisticsCollector : CounterUsagesCollector() {
-  private val group = EventLogGroup("search.everywhere.process", 4)
+  private val group = EventLogGroup("search.everywhere.process", 5)
 
   private val searchStartedEvent = group.registerEvent("contributor.search.started",
                                                        SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD)

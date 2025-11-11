@@ -4,7 +4,10 @@ package com.intellij.openapi.diagnostic;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.Level;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
@@ -486,17 +489,6 @@ public abstract class Logger {
 
   public void setLevel(@NotNull LogLevel level) {
     error(getClass() + " should override '#setLevel(LogLevel)'");
-  }
-
-  @ApiStatus.Internal
-  public LogLevel getLevel() {
-    if (isTraceEnabled()) {
-      return LogLevel.TRACE;
-    }
-    if (isDebugEnabled()) {
-      return LogLevel.DEBUG;
-    }
-    return LogLevel.INFO;
   }
 
   private static final boolean ourRethrowCE = "true".equals(System.getProperty("idea.log.rethrow.ce", "true"));

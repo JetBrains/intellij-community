@@ -1,0 +1,2 @@
+a:com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService
+- *:<init>(java.lang.String,java.lang.Class,externalApp.ExternalCli,java.util.List,kotlinx.coroutines.CoroutineScope):V

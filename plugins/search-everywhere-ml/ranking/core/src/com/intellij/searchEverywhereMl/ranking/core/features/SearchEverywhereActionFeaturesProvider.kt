@@ -53,38 +53,38 @@ import com.intellij.util.Time
 internal class SearchEverywhereActionFeaturesProvider :
   SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
   object Fields {
-    internal val IS_ACTION_DATA_KEY = EventFields.Boolean("isAction")
-    internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("isToggleAction")
-    internal val IS_EDITOR_ACTION = EventFields.Boolean("isEditorAction")
-    internal val IS_SEARCH_ACTION = EventFields.Boolean("isSearchAction")
+    internal val IS_ACTION_DATA_KEY = EventFields.Boolean("is_action")
+    internal val IS_TOGGLE_ACTION_DATA_KEY = EventFields.Boolean("is_toggle_action")
+    internal val IS_EDITOR_ACTION = EventFields.Boolean("is_editor_action")
+    internal val IS_SEARCH_ACTION = EventFields.Boolean("is_search_action")
 
-    internal val MATCH_MODE_KEY = EventFields.Enum<MatchMode>("matchMode")
-    internal val TEXT_LENGTH_KEY = EventFields.Int("textLength")
-    internal val IS_GROUP_KEY = EventFields.Boolean("isGroup")
-    internal val GROUP_LENGTH_KEY = EventFields.Int("groupLength")
-    internal val HAS_ICON_KEY = EventFields.Boolean("withIcon")
-    internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("pluginType", "plugin_type")
-    internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", PluginIdRuleValidator::class.java)
+    internal val MATCH_MODE_KEY = EventFields.Enum<MatchMode>("match_mode")
+    internal val TEXT_LENGTH_KEY = EventFields.Int("text_length")
+    internal val IS_GROUP_KEY = EventFields.Boolean("is_group")
+    internal val GROUP_LENGTH_KEY = EventFields.Int("group_length")
+    internal val HAS_ICON_KEY = EventFields.Boolean("with_icon")
+    internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("plugin_type", "plugin_type")
+    internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("plugin_id", PluginIdRuleValidator::class.java)
 
     internal val GLOBAL_STATISTICS_DEFAULT = ActionsGlobalStatisticsFields(ActionsGlobalSummaryManager.STATISTICS_VERSION)
     internal val GLOBAL_STATISTICS_UPDATED = ActionsGlobalStatisticsFields(ActionsGlobalSummaryManager.UPDATED_STATISTICS_VERSION)
 
 
     internal val USAGE = EventFields.Int("usage")
-    internal val USAGE_SE = EventFields.Int("usageSe")
-    internal val USAGE_TO_MAX = EventFields.Double("usageToMax")
-    internal val USAGE_TO_MAX_SE = EventFields.Double("usageToMaxSe")
+    internal val USAGE_SE = EventFields.Int("usage_se")
+    internal val USAGE_TO_MAX = EventFields.Double("usage_to_max")
+    internal val USAGE_TO_MAX_SE = EventFields.Double("usage_to_max_se")
 
-    internal val TIME_SINCE_LAST_USAGE = EventFields.Long("timeSinceLastUsage")
-    internal val TIME_SINCE_LAST_USAGE_SE = EventFields.Long("timeSinceLastUsageSe")
-    internal val WAS_USED_IN_LAST_MINUTE = EventFields.Boolean("wasUsedInLastMinute")
-    internal val WAS_USED_IN_LAST_MINUTE_SE = EventFields.Boolean("wasUsedInLastMinuteSe")
-    internal val WAS_USED_IN_LAST_HOUR = EventFields.Boolean("wasUsedInLastHour")
-    internal val WAS_USED_IN_LAST_HOUR_SE = EventFields.Boolean("wasUsedInLastHourSe")
-    internal val WAS_USED_IN_LAST_DAY = EventFields.Boolean("wasUsedInLastDay")
-    internal val WAS_USED_IN_LAST_DAY_SE = EventFields.Boolean("wasUsedInLastDaySe")
-    internal val WAS_USED_IN_LAST_MONTH = EventFields.Boolean("wasUsedInLastMonth")
-    internal val WAS_USED_IN_LAST_MONTH_SE = EventFields.Boolean("wasUsedInLastMonthSe")
+    internal val TIME_SINCE_LAST_USAGE = EventFields.Long("time_since_last_usage")
+    internal val TIME_SINCE_LAST_USAGE_SE = EventFields.Long("time_since_last_usage_se")
+    internal val WAS_USED_IN_LAST_MINUTE = EventFields.Boolean("was_used_in_last_minute")
+    internal val WAS_USED_IN_LAST_MINUTE_SE = EventFields.Boolean("was_used_in_last_minute_se")
+    internal val WAS_USED_IN_LAST_HOUR = EventFields.Boolean("was_used_in_last_hour")
+    internal val WAS_USED_IN_LAST_HOUR_SE = EventFields.Boolean("was_used_in_last_hour_se")
+    internal val WAS_USED_IN_LAST_DAY = EventFields.Boolean("was_used_in_last_day")
+    internal val WAS_USED_IN_LAST_DAY_SE = EventFields.Boolean("was_used_in_last_day_se")
+    internal val WAS_USED_IN_LAST_MONTH = EventFields.Boolean("was_used_in_last_month")
+    internal val WAS_USED_IN_LAST_MONTH_SE = EventFields.Boolean("was_used_in_last_month_se")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

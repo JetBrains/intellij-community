@@ -12,6 +12,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
 
 /*  private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String

@@ -264,7 +264,7 @@ internal class SearchEverywhereMlSettingsServiceTest {
     mockkObject(SearchEverywhereMlRegistry)
     every { SearchEverywhereMlRegistry.isExperimentDisabled(any()) } returns false
 
-    SearchEverywhereTab.allTabs
+    SearchEverywhereTab.tabsWithLogging
       .filterIsInstance<SearchEverywhereTab.TabWithMlRanking>()
       .forEach {
         mockkObject(it)
@@ -281,7 +281,7 @@ internal class SearchEverywhereMlSettingsServiceTest {
   companion object {
     @JvmStatic
     fun allTabs(): List<Arguments> {
-      return SearchEverywhereTab.allTabs
+      return SearchEverywhereTab.tabsWithLogging
         .filterIsInstance<SearchEverywhereTab.TabWithMlRanking>()
         .map { tab ->
           Arguments.of(TabTestCase(tab))

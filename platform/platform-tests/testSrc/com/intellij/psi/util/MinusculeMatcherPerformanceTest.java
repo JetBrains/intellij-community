@@ -12,8 +12,7 @@ import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.psi.util.NameUtilMatchingTest.*;
+import java.util.function.ToIntFunction;
 
 public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testPerformance() {
@@ -107,4 +106,23 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
     }).runAsStressTest().start();
   }
 
+  private static void assertMatches(@NonNls String pattern, @NonNls String name) {
+    assertTrue(pattern + " doesn't match " + name + "!!!", caseInsensitiveMatcher(pattern).matches(name));
+  }
+
+  private static void assertDoesntMatch(@NonNls String pattern, @NonNls String name) {
+    assertFalse(pattern + " matches " + name + "!!!", caseInsensitiveMatcher(pattern).matches(name));
+  }
+
+  private static MinusculeMatcher caseInsensitiveMatcher(String pattern) {
+    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  static void assertPreference(@NonNls String pattern, @NonNls String less, @NonNls String more) {
+    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
+    ToIntFunction<String> matchingDegree = matcher::matchingDegree;
+    int iLess = matchingDegree.applyAsInt(less);
+    int iMore = matchingDegree.applyAsInt(more);
+    assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
+  }
 }

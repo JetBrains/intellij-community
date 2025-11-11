@@ -7,10 +7,12 @@
 - name: lib/modules/intellij.toml.frontend.split.jar
   contentModules:
   - name: intellij.toml.frontend.split
+- name: lib/modules/intellij.toml.json.jar
+  contentModules:
+  - name: intellij.toml.json
 - name: lib/toml.jar
   modules:
   - name: intellij.toml
   contentModules:
   - name: intellij.toml.core
-  - name: intellij.toml.json
   - name: intellij.toml.grazie

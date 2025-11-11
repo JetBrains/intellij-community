@@ -29,6 +29,7 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
@@ -44,7 +45,6 @@ import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.asArchived

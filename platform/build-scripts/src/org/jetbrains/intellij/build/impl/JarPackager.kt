@@ -373,7 +373,7 @@ class JarPackager private constructor(
       result
     }
 
-    moduleOutputRoots.forEach { moduleOutDir ->
+    for (moduleOutDir in moduleOutputRoots) {
       val source = createModuleSource(module, moduleOutDir, excludes)
       if (source != null) {
         moduleSources.add(source)
@@ -385,14 +385,7 @@ class JarPackager private constructor(
     }
 
     if (layout != null && (layout !is PluginLayout || !layout.modulesWithExcludedModuleLibraries.contains(moduleName))) {
-      computeSourcesForModuleLibs(
-        item = item,
-        layout = layout,
-        module = module,
-        copiedFiles = copiedFiles,
-        asset = jarAsset,
-        withTests = useTestModuleOutput,
-      )
+      computeSourcesForModuleLibs(item = item, layout = layout, module = module, copiedFiles = copiedFiles, asset = jarAsset, withTests = useTestModuleOutput)
     }
   }
 
@@ -418,7 +411,7 @@ class JarPackager private constructor(
     }
   }
 
-  private suspend fun addSearchableOptionSources(
+  private fun addSearchableOptionSources(
     layout: BaseLayout?,
     moduleName: String,
     module: JpsModule,
@@ -861,7 +854,7 @@ internal val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().
   )
 }
 
-suspend fun moduleOutputAsSource(context: CompilationContext, module: JpsModule, excludes: List<PathMatcher> = commonModuleExcludes): Source {
+fun moduleOutputAsSource(context: CompilationContext, module: JpsModule, excludes: List<PathMatcher> = commonModuleExcludes): Source {
   val moduleOutput = context.getModuleOutputDir(module)
   check(Files.exists(moduleOutput)) {
     "${module.name} module output directory doesn't exist: $moduleOutput"

@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 public class GitScriptGenerator extends ScriptGeneratorImpl {
+  @Nullable
   private final WSLDistribution myWSLDistribution;
 
 

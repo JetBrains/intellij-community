@@ -92,9 +92,9 @@ class KotlinK2CodeFragmentFactory : KotlinCodeFragmentFactoryBase() {
                         withTimeout(timeout) {
                             runtimeType.await()
                         }
-                    } catch (e: TimeoutCancellationException) {
+                    } catch (_: TimeoutCancellationException) {
                         job.cancel()
-                        LOG.error("Timeout while waiting for runtime type evaluation of ${expression.text}", e)
+                        LOG.error("Timeout while waiting for runtime type evaluation of ${expression.text}")
                         null
                     }
                 }

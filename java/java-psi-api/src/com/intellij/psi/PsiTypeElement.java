@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
@@ -7,12 +7,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents the occurrence of a type in Java source code, for example, as a return
- * type of the method or the type of a method parameter.
+ * Represents the occurrence of a type in Java source code, for example, a return
+ * type of a method or the type of a method parameter.
  */
 public interface PsiTypeElement extends PsiElement, PsiAnnotationOwner {
   /**
-   * The empty array of PSI directories which can be reused to avoid unnecessary allocations.
+   * The empty array of PSI type elements which can be reused to avoid unnecessary allocations.
    */
   PsiTypeElement[] EMPTY_ARRAY = new PsiTypeElement[0];
 

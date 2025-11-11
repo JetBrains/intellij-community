@@ -106,6 +106,11 @@ class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(Blocki
   }
 
   fun isRemembered(element: IntelliJContextElement): Boolean = rememberedElements.containsKey(element)
+
+  internal fun getRememberedCheckpoint(): ThreadScopeCheckpoint =
+    checkNotNull(rememberedElements.keys.find { it is ThreadScopeCheckpoint }) {
+      "BlockingJob should always remember a checkpoint"
+    } as ThreadScopeCheckpoint
 }
 
 /**
@@ -121,17 +126,15 @@ class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(Blocki
 class ThreadScopeCheckpoint(val context: CoroutineContext) : AbstractCoroutineContextElement(ThreadScopeCheckpoint), IntelliJContextElement {
   companion object : CoroutineContext.Key<ThreadScopeCheckpoint>
 
-  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement? {
-    return if (parentContext[BlockingJob] != null) {
-      this
-    }
-    else {
-      null
-    }
-  }
-
   override fun toString(): String {
     return "ThreadScopeCheckpoint"
+  }
+
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement? {
+    if (isStructured) return this
+    val blockingJob = parentContext[BlockingJob]
+    if (blockingJob == null) return null
+    return blockingJob.getRememberedCheckpoint()
   }
 
   fun startWaitingForChildren(): Job {

@@ -14,7 +14,7 @@ internal object MavenVersionSupportUtil {
 
   fun getExtensionFor(distribution: MavenDistribution): MavenVersionAwareSupportExtension? {
     return MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT
-      .findFirstSafe { e -> e.isSupportedByExtension(distribution.mavenHome.toFile()) }
+      .findFirstSafe { e -> e.isSupportedByExtension(distribution.mavenHome) }
   }
 
   @JvmStatic

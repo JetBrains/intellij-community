@@ -1,0 +1,6 @@
+- name: dist.all/lib/fleet.util.codepoints.jar
+  modules:
+  - name: fleet.util.codepoints
+  library: de.cketti.unicode.kotlin.codepoints.jvm
+  files:
+  - name: $MAVEN_REPOSITORY$/de/cketti/unicode/kotlin-codepoints-jvm/0/kotlin-codepoints-jvm-0.jar

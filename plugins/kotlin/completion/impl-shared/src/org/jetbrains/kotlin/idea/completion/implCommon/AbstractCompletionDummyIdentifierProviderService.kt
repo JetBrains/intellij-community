@@ -207,8 +207,9 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
     private fun specialExtensionReceiverDummyIdentifierSuffix(tokenBefore: PsiElement): String? {
         if (tokenBefore.parentOfType<KtTypeReference>() != null) return null // already parsed as type reference
-        // If we just type `val a: <caret>`, then there is no `KtTypeReference` in the PSI tree,
-        // but we do not want to capture these cases here.
+        // If we just type `val a: <caret>`, then there is no `KtTypeReference` in the PSI tree.
+        // These cases work correctly without the special treatment of this function and would break when adding `.f`.
+        // See: KTIJ-36297
         val potentialColonBefore = tokenBefore.getPrevSiblingIgnoringWhitespaceAndComments()
         if (potentialColonBefore.elementType == KtTokens.COLON) return null
 

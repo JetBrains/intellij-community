@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.community.execService.impl.ExecLoggerService
@@ -38,6 +39,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
@@ -214,10 +216,17 @@ class ProcessOutputControllerService(
         processTreeFilters.toggle(filter)
 
         when (filter) {
-            TreeFilter.ShowBackgroundProcesses ->
+            TreeFilter.ShowBackgroundProcesses -> {
                 ProcessOutputUsageCollector.treeFilterBackgroundProcessesToggled(
-                    processTreeFilters.contains(TreeFilter.ShowBackgroundProcesses),
+                    processTreeFilters.contains(
+                        TreeFilter.ShowBackgroundProcesses,
+                    ),
                 )
+
+                coroutineScope.launch(Dispatchers.EDT) {
+                    processTreeUiState.selectableLazyListState.lazyListState.scrollToItem(0)
+                }
+            }
             TreeFilter.ShowTime ->
                 ProcessOutputUsageCollector.treeFilterTimeToggled(
                     processTreeFilters.contains(TreeFilter.ShowTime),
@@ -453,9 +462,15 @@ class ProcessOutputControllerService(
                 }
             }
 
-            processTree.value = buildTree {
+            val newTree = buildTree {
                 buildNodeTree(root)
             }
+
+            if (newTree.isEmpty()) {
+                selectProcess(null)
+            }
+
+            processTree.value = newTree
         }.launchIn(coroutineScope)
     }
 

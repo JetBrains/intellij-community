@@ -4,7 +4,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.toByteArray
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
 import kotlinx.serialization.Serializable
@@ -18,8 +17,6 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JpsCompilationData
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.impl.moduleBased.buildOriginalModuleRepository
-import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
-import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
@@ -35,10 +32,9 @@ import kotlin.io.path.pathString
 class BazelCompilationContext(
   private val delegate: CompilationContext,
 ) : CompilationContext {
-  private data class ModuleOutputRoots(val productionJars: List<Path>, val testJars: List<Path>)
 
-  private val modulesToOutputRoots: Map<String, ModuleOutputRoots> by lazy {
-    BazelTargetsInfo.loadModulesOutputRootsFromBazelTargetsJson(delegate.paths.projectHome)
+  private val moduleOutputProvider by lazy {
+    BazelModuleOutputProvider(delegate.project.modules, delegate.paths.projectHome)
   }
 
   override val options: BuildOptions
@@ -76,8 +72,7 @@ class BazelCompilationContext(
   override fun findModule(name: String): JpsModule? = delegate.findModule(name)
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    val moduleOutputRoots = modulesToOutputRoots.get(module.name) ?: error("No output roots for module '${module.name}'")
-    return if (forTests) moduleOutputRoots.testJars else moduleOutputRoots.productionJars
+    return moduleOutputProvider.getModuleOutputRoots(module, forTests)
   }
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
@@ -96,23 +91,7 @@ class BazelCompilationContext(
   override fun findFileInModuleSources(module: JpsModule, relativePath: String, forTests: Boolean): Path? = delegate.findFileInModuleSources(module, relativePath, forTests)
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    val result = getModuleOutputRoots(module, forTests).mapNotNull { moduleOutput ->
-      var fileContent: ByteArray? = null
-      readZipFile(moduleOutput) { name, data ->
-        if (name == relativePath) {
-          fileContent = data().toByteArray()
-          ZipEntryProcessorResult.STOP
-        }
-        else {
-          ZipEntryProcessorResult.CONTINUE
-        }
-      }
-      return@mapNotNull fileContent
-    }
-    check(result.size < 2) {
-      "More than one '$relativePath' file for module '${module.name}' in output roots"
-    }
-    return result.singleOrNull()
+    return moduleOutputProvider.readFileContentFromModuleOutput(module, relativePath, forTests)
   }
 
   override fun notifyArtifactBuilt(artifactPath: Path): Unit = delegate.notifyArtifactBuilt(artifactPath)
@@ -137,20 +116,22 @@ class BazelCompilationContext(
         out.add(file)
         continue
       }
-      val roots = modulesToOutputRoots[path.name]
-      if (roots == null) {
+
+      val module = findModule(path.name)
+      if (module == null) {
         out.add(file)
         continue
       }
-      val jars =
-        if (path.parent.name == "test") roots.testJars
-        else roots.productionJars
-      jars.mapTo(out, Path::toFile)
+
+      val roots = moduleOutputProvider.getModuleOutputRoots(module, path.parent.name == "test")
+      roots.mapTo(out, Path::toFile)
     }
     return out
   }
 
-  private class BazelTargetsInfo {
+  class BazelTargetsInfo {
+    data class ModuleOutputRoots(val productionJars: List<Path>, val testJars: List<Path>)
+
     companion object {
       fun loadModulesOutputRootsFromBazelTargetsJson(projectRoot: Path): Map<String, ModuleOutputRoots> {
         val bazelTargetsJsonFile = projectRoot.resolve("build").resolve("bazel-targets.json")

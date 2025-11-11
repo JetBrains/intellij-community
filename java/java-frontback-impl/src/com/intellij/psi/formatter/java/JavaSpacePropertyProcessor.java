@@ -151,7 +151,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       return PsiTreeUtil.getParentOfType(parent, PsiDocMethodOrFieldRef.class) != null;
     }
 
-    return type == JavaDocElementType.DOC_COMMENT || type == JavaDocElementType.DOC_TAG || type == JavaDocElementType.DOC_INLINE_TAG;
+    return JavaDocElementType.DOC_COMMENT_TOKENS.contains(type) || type == JavaDocElementType.DOC_TAG || type == JavaDocElementType.DOC_INLINE_TAG;
   }
 
   private void init(ASTNode child) {
@@ -214,7 +214,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitClass(@NotNull PsiClass aClass) {
-    if (myType1 == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(myType1)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       return;
     }
@@ -1126,7 +1126,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitField(@NotNull PsiField field) {
-    if (myType1 == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(myType1)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       return;
     }
@@ -1203,7 +1203,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitMethod(@NotNull PsiMethod method) {
-    if (myType1 == JavaDocElementType.DOC_COMMENT) {
+    if (JavaDocElementType.DOC_COMMENT_TOKENS.contains(myType1)) {
       myResult = Spacing.createSpacing(0, 0, 1, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_DECLARATIONS);
       return;
     }

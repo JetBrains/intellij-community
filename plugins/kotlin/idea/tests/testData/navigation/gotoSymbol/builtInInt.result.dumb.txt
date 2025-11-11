@@ -368,6 +368,15 @@ TargetElement: // IntelliJ API Decompiler stub source generated from a class fil
 QualifiedName: kotlin.coroutines.intrinsics.IntrinsicsKt
 
 NavigationItem:
+    name: IntroducedAt
+ItemPresentation:
+    presentableText: IntroducedAt
+    locationString: (kotlin)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/annotationKotlin.svg, Public])
+TargetElement: @kotlin.annotation.Target @kotlin.annotation.MustBeDocumented @kotlin.SinceKotlin @kotlin.ExperimentalVersionOverloading public final annotation class IntroducedAt public constructor(version: kotlin.String) : kotlin.Annotation {
+QualifiedName: kotlin.IntroducedAt
+
+NavigationItem:
     name: null
 ItemPresentation:
     presentableText: IntrinsicsKt

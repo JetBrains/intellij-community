@@ -4,12 +4,13 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
@@ -181,7 +182,6 @@ public class Py3CompletionTest extends PyTestCase {
   }
 
   public void testAsync() {
-    PyModuleNameCompletionContributor.ENABLED = false;
     doTest();
   }
 
@@ -569,32 +569,37 @@ public class Py3CompletionTest extends PyTestCase {
     
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
-    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+    doTestVariantTypeText("ordinaryPackage/sample.py", "logging", "");
   }
 
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
-    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+    doTestVariantTypeText("plainDirectory/sample.py", "logging1", "plainDirectory");
   }
 
   // PY-46056
   public void testFromImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
-    doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
+    doTestVariantTypeText("ordinaryPackage/sample.py", "logging", "");
   }
 
   // PY-46056
   public void testFromImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
-    doTestVariantTailText("plainDirectory/sample.py", "logging", " (plainDirectory)");
+    doTestVariantTypeText("plainDirectory/sample.py", "logging1", "plainDirectory");
   }
 
-  private void doTestVariantTailText(@NotNull String entryFilePath, @NotNull String variantName, @Nullable String tailText) {
+  private void doTestVariantTypeText(@NotNull String entryFilePath, @NotNull String variantName, @Nullable String typeText) {
     myFixture.copyDirectoryToProject(getTestName(true), "");
     myFixture.configureByFile(entryFilePath);
     LookupElement[] variants = myFixture.completeBasic();
     assertNotNull(variants);
     LookupElement lookupElement = ContainerUtil.find(variants, v -> v.getLookupString().equals(variantName));
     assertNotNull(lookupElement);
-    assertEquals(tailText, TestLookupElementPresentation.renderElement(lookupElement).getTailText());
+    LookupElementPresentation presentation = TestLookupElementPresentation.renderElement(lookupElement);
+    LookupElementRenderer<LookupElement> expensiveRenderer = (LookupElementRenderer<LookupElement>)lookupElement.getExpensiveRenderer();
+    if (expensiveRenderer != null) {
+      expensiveRenderer.renderElement(lookupElement, presentation);
+    }
+    assertEquals(typeText, presentation.getTypeText());
   }
 
   // PY-46054

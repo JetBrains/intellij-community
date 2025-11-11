@@ -43,12 +43,7 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     };
 
     try {
-      all.init();
-      //second rebuild, e.g. switching scope in scope based t.o.d.o panel
-      CompletableFuture<?> rebuildCache = all.rebuildCacheTestAccessor();
-      while (!rebuildCache.isDone()) {
-        IdeEventQueue.getInstance().flushQueue();
-      }
+      waitForBuiltCache(all);
 
       Assert.assertEquals(1, rebuildCacheCount.get());
 
@@ -72,12 +67,33 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     }
  }
 
+ public void testToDoMarkdownDocComment() {
+   AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), myProject);
+   try {
+     waitForBuiltCache(all);
+
+     AbstractTreeStructure structure = all.getTodoTreeStructure();
+     ProjectViewTestUtil.assertStructureEqual(structure,
+                                              """
+                                                Root
+                                                 Summary
+                                                  package2 toDoFileCount=1,toDoItemCount=1
+                                                   JavaClass.java
+                                                    Item: (36,51)
+                                                """, myPrintInfo);
+
+     checkOccurrences(all, new String[]{"Item: (36,51)"});
+   }
+   finally {
+     Disposer.dispose(all);
+   }
+ }
+
   //todo kirillk
   public void testToDo() {
     AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), myProject);
     try {
-      all.init();
-      IdeEventQueue.getInstance().flushQueue();
+      waitForBuiltCache(all);
 
       AbstractTreeStructure structure = all.getTodoTreeStructure();
       ProjectViewTestUtil.assertStructureEqual(structure,
@@ -128,6 +144,15 @@ public class ToDoTreeStructureTest extends BaseProjectViewTestCase {
     }
     finally {
       Disposer.dispose(builder);
+    }
+  }
+
+  /// Initialize and wait for the cache associated with `builder` to be built
+  private static void waitForBuiltCache(TodoTreeBuilder builder) {
+    builder.init();
+    CompletableFuture<?> rebuildCache = builder.rebuildCacheTestAccessor();
+    while (!rebuildCache.isDone()) {
+      IdeEventQueue.getInstance().flushQueue();
     }
   }
 

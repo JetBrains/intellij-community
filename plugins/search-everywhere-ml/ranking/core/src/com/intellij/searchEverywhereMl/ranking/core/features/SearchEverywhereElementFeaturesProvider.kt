@@ -31,44 +31,46 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       }
     }
 
-    internal val NAME_LENGTH = EventFields.RoundedInt("nameLength")
-    internal val ML_SCORE_KEY = EventFields.Double("mlScore")
-    internal val SIMILARITY_SCORE = EventFields.Double("similarityScore")
-    internal val IS_SEMANTIC_ONLY = EventFields.Boolean("isSemanticOnly")
-    internal val BUFFERED_TIMESTAMP = EventFields.Long("bufferedTimestamp")
+    internal val NAME_LENGTH = EventFields.RoundedInt("name_length")
+    internal val ML_SCORE_KEY = EventFields.Double("ml_score")
+    internal val SIMILARITY_SCORE = EventFields.Double("similarity_score")
+    internal val IS_SEMANTIC_ONLY = EventFields.Boolean("is_semantic_only")
+    internal val BUFFERED_TIMESTAMP = EventFields.Long("buffered_timestamp")
 
+    internal val PREFIX_SAME_START_COUNT = EventFields.Int("prefix_same_start_count")
+    internal val PREFIX_GREEDY_SCORE = EventFields.Double("prefix_greedy_score")
+    internal val PREFIX_GREEDY_WITH_CASE_SCORE = EventFields.Double("prefix_greedy_with_case_score")
+    internal val PREFIX_MATCHED_WORDS_SCORE = EventFields.Double("prefix_matched_words_score")
+    internal val PREFIX_MATCHED_WORDS_RELATIVE = EventFields.Double("prefix_matched_words_relative")
+    internal val PREFIX_MATCHED_WORDS_WITH_CASE_SCORE = EventFields.Double("prefix_matched_words_with_case_score")
+    internal val PREFIX_MATCHED_WORDS_WITH_CASE_RELATIVE = EventFields.Double("prefix_matched_words_with_case_relative")
+    internal val PREFIX_SKIPPED_WORDS = EventFields.Int("prefix_skipped_words")
+    internal val PREFIX_MATCHING_TYPE = EventFields.String(
+      "prefix_matching_type", PrefixMatchingType.entries.map { it.name }
+    )
+    internal val PREFIX_EXACT = EventFields.Boolean("prefix_exact")
+    internal val PREFIX_MATCHED_LAST_WORD = EventFields.Boolean("prefix_matched_last_word")
 
-    internal val prefixMatchingNameFeatureToField = hashMapOf<String, EventField<*>>(
-      "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),
-      "prefix_greedy_score" to EventFields.Double("${PrefixMatchingUtil.baseName}GreedyScore"),
-      "prefix_greedy_with_case_score" to EventFields.Double("${PrefixMatchingUtil.baseName}GreedyWithCaseScore"),
-      "prefix_matched_words_score" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsScore"),
-      "prefix_matched_words_relative" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsRelative"),
-      "prefix_matched_words_with_case_score" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsWithCaseScore"),
-      "prefix_matched_words_with_case_relative" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsWithCaseRelative"),
-      "prefix_skipped_words" to EventFields.Int("${PrefixMatchingUtil.baseName}SkippedWords"),
-      "prefix_matching_type" to EventFields.String(
-        "${PrefixMatchingUtil.baseName}MatchingType", PrefixMatchingType.entries.map { it.name }
-      ),
-      "prefix_exact" to EventFields.Boolean("${PrefixMatchingUtil.baseName}Exact"),
-      "prefix_matched_last_word" to EventFields.Boolean("${PrefixMatchingUtil.baseName}MatchedLastWord"),
-    )
-    internal val wholeMatchingNameFeatureToField = hashMapOf<String, EventField<*>>(
-      "levenshtein_distance" to EventFields.Double("${WholeTextMatchUtil.baseName}LevenshteinDistance",
-                                                   "Levenshtein distance normalized by query lengths"),
-      "levenshtein_distance_case_insensitive" to
-        EventFields.Double("${WholeTextMatchUtil.baseName}LevenshteinDistanceCaseInsensitive",
-                           "Levenshtein distance with case insensitive matching, normalized by query length"),
-      "words_in_query" to EventFields.Int("${WholeTextMatchUtil.baseName}WordsInQuery", "Number of words in the query"),
-      "words_in_element" to EventFields.Int("${WholeTextMatchUtil.baseName}WordsInElement", "Number of words in the element text"),
-      "exactly_matched_words" to EventFields.Int("${WholeTextMatchUtil.baseName}ExactlyMatchedWords")
-    )
+    internal val WHOLE_LEVENSHTEIN_DISTANCE = EventFields.Double("levenshtein_distance",
+                                                                 "Levenshtein distance normalized by query lengths")
+    internal val WHOLE_LEVENSHTEIN_DISTANCE_CASE_INSENSITIVE =
+      EventFields.Double("levenshtein_distance_case_insensitive",
+                         "Levenshtein distance with case insensitive matching, normalized by query length")
+    internal val WHOLE_WORDS_IN_QUERY = EventFields.Int("words_in_query", "Number of words in the query")
+    internal val WHOLE_WORDS_IN_ELEMENT = EventFields.Int("words_in_element", "Number of words in the element text")
+    internal val WHOLE_EXACTLY_MATCHED_WORDS = EventFields.Int("exactly_matched_words")
 
     fun getDefaultFields(): List<EventField<*>> {
-      return listOf(NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY, BUFFERED_TIMESTAMP) +
-             prefixMatchingNameFeatureToField.values + wholeMatchingNameFeatureToField.values
+      return listOf(
+        NAME_LENGTH, ML_SCORE_KEY, SIMILARITY_SCORE, IS_SEMANTIC_ONLY, BUFFERED_TIMESTAMP,
+        PREFIX_SAME_START_COUNT, PREFIX_GREEDY_SCORE, PREFIX_GREEDY_WITH_CASE_SCORE,
+        PREFIX_MATCHED_WORDS_SCORE, PREFIX_MATCHED_WORDS_RELATIVE, PREFIX_MATCHED_WORDS_WITH_CASE_SCORE,
+        PREFIX_MATCHED_WORDS_WITH_CASE_RELATIVE, PREFIX_SKIPPED_WORDS, PREFIX_MATCHING_TYPE, PREFIX_EXACT,
+        PREFIX_MATCHED_LAST_WORD,
+        WHOLE_LEVENSHTEIN_DISTANCE, WHOLE_LEVENSHTEIN_DISTANCE_CASE_INSENSITIVE,
+        WHOLE_WORDS_IN_QUERY, WHOLE_WORDS_IN_ELEMENT, WHOLE_EXACTLY_MATCHED_WORDS
+      )
     }
-
 
 
     internal fun roundDouble(value: Double): Double {
@@ -88,12 +90,14 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
 
   abstract fun getFeaturesDeclarations(): List<EventField<*>>
 
-  abstract fun getElementFeatures(element: Any,
-                                  currentTime: Long,
-                                  searchQuery: String,
-                                  elementPriority: Int,
-                                  cache: FeaturesProviderCache?,
-                                  correction: SearchEverywhereSpellCheckResult): List<EventPair<*>>
+  abstract fun getElementFeatures(
+    element: Any,
+    currentTime: Long,
+    searchQuery: String,
+    elementPriority: Int,
+    cache: FeaturesProviderCache?,
+    correction: SearchEverywhereSpellCheckResult,
+  ): List<EventPair<*>>
 
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101
@@ -101,23 +105,26 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
   }
 
   protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Collection<EventPair<*>> {
+    // For a quicker lookup
+    val nameToFeature = getDefaultFields()
+      .associateBy { it.name }
+
     return buildList {
       buildMap {
         PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, this)
+
+        putAll(
+          WholeTextMatchUtil.calculateFeatures(nameOfFoundElement, searchQuery)
+        )
       }.map { (featureName, value) ->
-        val field = prefixMatchingNameFeatureToField[featureName]
-        setMatchValueToField(value, field)
-      }.filterNotNull()
-        .forEach {
+        val field = nameToFeature.getValue(featureName)
+        field.tryWith(value)
+      }.forEach {
         add(it)
       }
 
 
       add(NAME_LENGTH.with(nameOfFoundElement.length))
-
-      addAll(WholeTextMatchUtil.calculateFeatures(nameOfFoundElement, searchQuery).map { (key, value) ->
-        setMatchValueToField(value, wholeMatchingNameFeatureToField[key])
-      }.filterNotNull())
     }
   }
 
@@ -125,21 +132,14 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     return searchEverywhereMlRankingService?.getCurrentSession()?.getSearchQueryEmbedding(queryText, split)
   }
 
-  internal fun setMatchValueToField(matchValue: Any,
-                                    field: EventField<*>?): EventPair<*>? {
-    if (matchValue is Boolean && field is BooleanEventField) {
-      return field.with(matchValue)
+  fun EventField<*>.tryWith(value: Any): EventPair<*> {
+    return when (this) {
+      is BooleanEventField -> this.with(value as Boolean)
+      is DoubleEventField -> this.with(value as Double)
+      is IntEventField -> this.with(value as Int)
+      is StringEventField -> this.with(value.toString())
+      else -> throw IllegalArgumentException("Could not associate a value with unsupported field type: ${this::class.java}")
     }
-    else if (matchValue is Double && field is DoubleEventField) {
-      return field.with(roundDouble(matchValue))
-    }
-    else if (matchValue is Int && field is IntEventField) {
-      return field.with(matchValue)
-    }
-    else if (matchValue is Enum<*> && field is StringEventField) {
-      return field.with(matchValue.toString())
-    }
-    return null
   }
 }
 

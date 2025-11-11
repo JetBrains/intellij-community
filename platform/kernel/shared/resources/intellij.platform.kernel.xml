@@ -1,5 +1,8 @@
-<!-- todo: register this as a content module (IJPL-210868); currently it's included via 'xi:include' tag -->
-<idea-plugin>
+<idea-plugin visibility="public">
+  <dependencies>
+    <module name="intellij.platform.rpc"/>
+    <module name="fleet.kernel"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.entityTypes" dynamic="true"
                     interface="com.intellij.platform.kernel.EntityTypeProvider"/>

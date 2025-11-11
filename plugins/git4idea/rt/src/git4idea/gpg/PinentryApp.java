@@ -31,7 +31,7 @@ public final class PinentryApp implements ExternalApp, ExternalCli {
   }
 
   public static final String PREFIX = "IJ_PINENTRY=";
-  public static final String ENTRYPOINT_PREFIX = "IJ_PINENTRY_ENTRYPOINT=";
+  public static final String EEL_ENTRYPOINT_PREFIX = "IJ_PINENTRY_ENTRYPOINT=";
 
   public int entryPointInternal(ExternalAppEntry entry) throws IOException, URISyntaxException {
     boolean shouldLog = isLogEnabled(entry.getArgs());
@@ -70,8 +70,8 @@ public final class PinentryApp implements ExternalApp, ExternalCli {
               if (pinentryUserData == null) {
                 parsedPinentryData = Collections.emptyList();
               }
-              else if (pinentryUserData.startsWith(ENTRYPOINT_PREFIX)) {
-                String withoutPrefix = pinentryUserData.replace(ENTRYPOINT_PREFIX, "");
+              else if (pinentryUserData.startsWith(EEL_ENTRYPOINT_PREFIX)) {
+                String withoutPrefix = pinentryUserData.replace(EEL_ENTRYPOINT_PREFIX, "");
                 parsedPinentryData = Arrays.asList(withoutPrefix.split(":")).subList(1, 4);
               }
               else {

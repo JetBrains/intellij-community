@@ -7,8 +7,6 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">
-    <rankingService implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlRankingService"/>
-
     <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.ActionKeyProvider"/>
     <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.PsiElementKeyProvider"/>
     <searchEverywhereElementKeyProvider implementation="com.intellij.searchEverywhereMl.ranking.core.id.RunConfigurationsKeyProvider"/>
@@ -51,13 +49,13 @@
 
     <statistics.validation.customValidationRule
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationTypeValidator"/>
-    <statistics.validation.customValidationRule
-      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereMlElementFeatureValidationRule"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector"/>
 
     <searchEverywhereEssentialContributorsMarker
       implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker"/>
+
+    <searchEverywhereMlService implementation="com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMlRankingService"/>
   </extensions>
 
   <extensionPoints>
@@ -104,6 +102,9 @@
       implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereClassesRankingModelLoader"/>
     <rankingModelLoader
       implementation="com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereAllRankingModelLoader"/>
+
+    <searchEverywhereStateFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.core.features.CoreStateFeaturesProvider"/>
   </extensions>
 
   <applicationListeners>

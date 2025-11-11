@@ -131,7 +131,7 @@ val INDEX_ENTRY_REGEXP: Regex = Regex("""\|b\|([^|]+)\|k\|([^|]+)\|""")
 
 private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("com.intellij.search.additionalOptionsLocation")
 
-private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: Locale): String {
+private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: Locale, forceLetters: Boolean = true): String? {
   val matches = INDEX_ENTRY_REGEXP.findAll(s)
 
   var result: MutableList<String>? = null
@@ -160,16 +160,34 @@ private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: 
     }
   }
 
-  if (result == null) {
-    return first ?: s
+  val parameterPlaceholder = "{0}"
+
+  val message = if (result == null) {
+    first ?: s
+  }
+  else if (result.size == 2 && result[0].contains(parameterPlaceholder)) {
+    result[0].replace(parameterPlaceholder, result[1])
+  }
+  else if (result.isNotEmpty() && result.last().contains(parameterPlaceholder)) {
+    val lastResult = result.last().removeSubstringAndExtraSpaces(parameterPlaceholder)
+    result.dropLast(1).joinToString(separator = "") + lastResult
+  }
+  else {
+    result.joinToString(separator = "")
   }
 
-  if (result.size == 2 && result[0].contains("{0}")) {
-    return result[0].replace("{0}", result[1])
+  return if (message.contains(parameterPlaceholder)) {
+    LOG.debug { "Resolved message contains a placeholder: key=$s, message=$message" }
+    null
   }
-
-  return result.joinToString(separator = "")
+  else if (forceLetters && message.none { it.isLetter() }) {
+    LOG.debug { "Resolved message doesn't contain any letter: key=$s, message=$message" }
+    null
+  }
+  else message
 }
+
+private fun String.removeSubstringAndExtraSpaces(substring: String): String = splitToSequence(substring).joinToString(separator = " ") { it.trim() }
 
 private fun findBundle(classLoader: ClassLoader, locale: Locale, bundlePath: String): ResourceBundle? {
   try {
@@ -287,25 +305,26 @@ private fun doRegisterIndex(
   processor: MySearchableOptionProcessor,
   localeSpecificLoader: ClassLoader?,
 ) {
-  val groupName = getMessageByCoordinate(s = item.name, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT)
-  val id = getMessageByCoordinate(s = item.id, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT)
+  val groupName = getMessageByCoordinate(s = item.name, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT) ?: return
+  val id = getMessageByCoordinate(s = item.id, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT) ?: return
+
   for (entry in item.entries) {
     processor.putOptionWithHelpId(
       words = Iterable {
-        val h1 = getMessageByCoordinate(entry.hit, classLoader, Locale.ROOT).lowercase(Locale.ROOT)
+        val h1 = getMessageByCoordinate(entry.hit, classLoader, Locale.ROOT)?.lowercase(Locale.ROOT) ?: return@Iterable emptyIterator()
         val s1 = splitToWordsWithoutStemmingAndStopWords(h1)
         if (locale == null) {
           s1.iterator()
         }
         else {
-          val h2 = getMessageByCoordinate(entry.hit, localeSpecificLoader!!, locale).lowercase(locale)
+          val h2 = getMessageByCoordinate(entry.hit, localeSpecificLoader!!, locale)?.lowercase(locale) ?: return@Iterable emptyIterator()
           val s2 = splitToWordsWithoutStemmingAndStopWords(h2)
           Stream.concat(s2, s1).iterator()
         }
       },
       id = id,
       groupName = groupName,
-      hit = getMessageByCoordinate(s = entry.hit, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT),
+      hit = getMessageByCoordinate(s = entry.hit, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT) ?: return,
       path = entry.path?.let {
         getMessageByCoordinate(s = it, classLoader = localeSpecificLoader ?: classLoader, locale = locale ?: Locale.ROOT)
       },
@@ -314,6 +333,7 @@ private fun doRegisterIndex(
 }
 
 private val json = Json { ignoreUnknownKeys = true }
+private fun emptyIterator() = emptySequence<String>().iterator()
 
 @Internal
 @VisibleForTesting

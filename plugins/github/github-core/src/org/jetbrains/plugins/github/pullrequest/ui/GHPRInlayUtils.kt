@@ -13,6 +13,7 @@ import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
@@ -27,6 +28,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
+import com.intellij.util.asSafely
 import com.intellij.util.ui.FocusUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,7 +46,6 @@ import javax.swing.JLabel
 import javax.swing.JLayer
 import javax.swing.SwingUtilities
 import javax.swing.plaf.LayerUI
-import kotlin.math.abs
 
 internal object GHPRInlayUtils {
   internal fun installInlayHoverOutline(
@@ -128,7 +129,6 @@ internal object GHPRInlayUtils {
         field = value
       }
 
-    private var dragStart: Int = 0
     private var edge: Edge? = Edge.TOP
     private var oldRange: LineRange? = null
 
@@ -156,13 +156,6 @@ internal object GHPRInlayUtils {
     override fun mouseDragged(e: EditorMouseEvent) {
       if (!isDraggingFrame || edge == null || oldRange == null) return
       e.consume() // to prevent selecting text while dragging
-      val mouseY = e.mouseEvent.y.toFloat()
-      val dragDelta = mouseY - dragStart
-      val direction = if (dragDelta > 0) 1 else -1
-
-      val startVisual = editor.yToVisualLine(dragStart)
-      val currentVisual = editor.yToVisualLine(mouseY.toInt())
-      val stepCount = abs(currentVisual - startVisual)
 
       val range = vm.range.value ?: return
       var newStart = range.second.first
@@ -170,13 +163,11 @@ internal object GHPRInlayUtils {
 
       when (edge) {
         Edge.TOP -> {
-          val start = oldRange?.start ?: return
-          newStart = (start + direction * stepCount)
+          newStart = editor.xyToLogicalPosition(e.mouseEvent.point).line
             .coerceIn(0, newEnd)
         }
         Edge.BOTTOM -> {
-          val end = oldRange?.end ?: return
-          newEnd = (end + direction * stepCount)
+          newEnd = editor.xyToLogicalPosition(e.mouseEvent.point).line
             .coerceIn(newStart, editor.document.lineCount - 1)
         }
         else -> Unit
@@ -203,12 +194,6 @@ internal object GHPRInlayUtils {
       edge = point.getEdge(yBordersPositions) ?: return
       val range = vm.range.value?.second ?: return
       oldRange = LineRange(range.first, range.last)
-      dragStart = when (edge) {
-        Edge.TOP -> yBordersPositions.first
-        Edge.BOTTOM -> yBordersPositions.second - 1
-        else -> return
-      }.toInt()
-
       isDraggingFrame = true
     }
 
@@ -262,15 +247,11 @@ internal object GHPRInlayUtils {
 
     private fun getYAxisBorders(): Pair<Float, Float>? {
       val range = vm.range.value?.second ?: return null
-      val doc = editor.document
-
-      val topOffset = doc.getLineStartOffset(range.first)
-      val bottomOffset = doc.getLineEndOffset(range.last)
-
-      val topY = editor.visualLineToY(editor.offsetToVisualPosition(topOffset).line).toFloat()
-      val bottomY = editor.visualLineToY(editor.offsetToVisualPosition(bottomOffset).line).toFloat() + editor.lineHeight
-
-      return topY to bottomY
+      val startLine = range.first
+      val endLine = range.last
+      return editor.yRangeForLogicalLineRange(startLine, endLine).let {
+        it.first.toFloat() to it.last.toFloat()
+      }
     }
 
     private fun showTooltip(component: Component, point: Point) {
@@ -367,6 +348,19 @@ internal object GHPRInlayUtils {
     val shouldShowOutline: Boolean,
     val range: Pair<Side, IntRange>?,
   )
+}
+
+internal fun Editor.yRangeForLogicalLineRange(startLine: Int, endLine: Int): IntRange {
+  val startOffset = document.getLineStartOffset(startLine.coerceAtLeast(0))
+  val endOffset = document.getLineEndOffset(endLine.coerceAtMost(document.lineCount - 1))
+
+  val startY = offsetToXY(startOffset).y
+
+  val foldRegion = foldingModel.getCollapsedRegionAtOffset(endOffset - 1).asSafely<CustomFoldRegion>()
+  val endY = foldRegion?.location?.let { it.y + foldRegion.heightInPixels }
+             ?: (offsetToXY(endOffset).y + lineHeight)
+
+  return startY..endY
 }
 
 internal class FadeLayerUI : LayerUI<JComponent>() {

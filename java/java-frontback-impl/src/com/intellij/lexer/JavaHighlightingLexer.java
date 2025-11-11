@@ -21,6 +21,6 @@ public class JavaHighlightingLexer extends AbstractBasicJavaHighlightingLexer {
     HtmlLexer htmlLexer = new HtmlLexer(true);
     htmlLexer.setHasNoEmbeddments(true);
     docLexer.registerLayer(htmlLexer, JavaDocTokenType.DOC_COMMENT_DATA);
-    registerSelfStoppingLayer(docLexer, new IElementType[]{JavaDocElementType.DOC_COMMENT}, IElementType.EMPTY_ARRAY);
+    registerSelfStoppingLayer(docLexer, new IElementType[]{JavaDocElementType.DOC_COMMENT, JavaDocElementType.DOC_MARKDOWN_COMMENT}, IElementType.EMPTY_ARRAY);
   }
 }

@@ -35,7 +35,7 @@ test.java.file
       CODE_BLOCK
         LBRACE
         WHITE_SPACE
-        DOC_COMMENT
+        DOC_MARKDOWN_COMMENT
           DOC_COMMENT_LEADING_ASTERISKS
           DOC_COMMENT_DATA
         WHITE_SPACE

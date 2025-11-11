@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.settingsSync.jba" allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true">
   <name>Backup and Sync</name>
   <id>com.intellij.settingsSync</id>
   <category>IDE Settings</category>

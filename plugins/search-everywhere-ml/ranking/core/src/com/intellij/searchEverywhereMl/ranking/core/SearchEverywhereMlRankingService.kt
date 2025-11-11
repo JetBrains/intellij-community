@@ -6,7 +6,6 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.searchEverywhereMl.RANKING_EP_NAME
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.isTabWithMlRanking
@@ -18,7 +17,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.ListCellRenderer
 
 internal val searchEverywhereMlRankingService: SearchEverywhereMlRankingService?
-  get() = RANKING_EP_NAME.findExtensionOrFail(SearchEverywhereMlRankingService::class.java).takeIf { it.isEnabled() }
+  get() = SearchEverywhereMlService.EP_NAME.findExtensionOrFail(SearchEverywhereMlRankingService::class.java).takeIf { it.isEnabled() }
 
 @ApiStatus.Internal
 class SearchEverywhereMlRankingService : SearchEverywhereMlService {
@@ -26,7 +25,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 
   override fun isEnabled(): Boolean {
-    return SearchEverywhereTab.allTabs.any { it.isTabWithMlRanking() && it.isMlRankingEnabled }
+    return SearchEverywhereTab.tabsWithLogging.any { it.isTabWithMlRanking() && it.isMlRankingEnabled }
            || SearchEverywhereMlExperiment.isAllowed
   }
 
@@ -38,11 +37,11 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     return null
   }
 
-  override fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo) {
+  override fun onSessionStarted(project: Project?, tabId: String, mixedListInfo: SearchEverywhereMixedListInfo) {
     if (isEnabled()) {
       activeSession.updateAndGet {
         SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet())
-      }
+      }!!.onSessionStarted(tabId)
     }
   }
 
@@ -56,25 +55,24 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     val session = getCurrentSession() ?: return foundElementInfoWithoutMl
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
 
-    val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
-    val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.cachedContextInfo, correction)
+    val contributorFeatures = state.getContributorFeatures(contributor)
+    val elementFeatures = state.getElementFeatures(element, contributor, contributorFeatures, priority, session.cachedContextInfo, correction)
 
-    val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) {
-      contributor.getEffectiveContributor()
-    } else {
-      contributor
-    }
+    val effectiveContributor = if (contributor is SearchEverywhereContributorWrapper) contributor.getEffectiveContributor() else contributor
+
     val mlWeight = if (shouldCalculateMlWeight(effectiveContributor, state, element)) {
-      state.getMLWeight(session.cachedContextInfo, mlElementInfo)
+      state.getMLWeight(session.cachedContextInfo, elementFeatures, contributorFeatures)
     } else {
       null
     }
 
+    val elementId = ReadAction.compute<Int?, Nothing> { session.itemIdProvider.getId(element) }
+
     return if (isShowDiff()) {
-      SearchEverywhereFoundElementInfoBeforeDiff(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
+      SearchEverywhereFoundElementInfoBeforeDiff(element, elementId, priority, contributor, mlWeight, elementFeatures, correction)
     }
     else {
-      SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features, correction)
+      SearchEverywhereFoundElementInfoWithMl(element, elementId, priority, contributor, mlWeight, elementFeatures, correction)
     }
   }
 
@@ -82,7 +80,7 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
                                       searchState: SearchEverywhereMlSearchState,
                                       element: Any): Boolean {
     // If we're showing recently used actions (empty query) then we don't want to apply ML sorting either
-    if (searchState.tab == SearchEverywhereTab.Actions && searchState.searchQuery.isEmpty()) return false
+    if (searchState.tab == SearchEverywhereTab.Actions && searchState.query.isEmpty()) return false
 
     // The element may be an ItemWithPresentation pair - we will unwrap it
     val actualElement = when (element) {
@@ -98,47 +96,30 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     return searchState.orderByMl
   }
 
-  override fun onSearchRestart(project: Project?,
-                               tabId: String,
+  override fun onSearchRestart(tabId: String,
                                reason: SearchRestartReason,
                                keysTyped: Int,
                                backspacesTyped: Int,
                                searchQuery: String,
-                               previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                               searchResults: List<SearchEverywhereFoundElementInfo>,
                                searchScope: ScopeDescriptor?,
                                isSearchEverywhere: Boolean) {
     if (!isEnabled()) return
 
-    val orderByMl = shouldOrderByMlInTab(tabId, searchQuery)
     getCurrentSession()?.onSearchRestart(
-      project, reason, tabId, orderByMl, keysTyped, backspacesTyped, searchQuery, mapElementsProvider(previousElementsProvider),
+      reason, tabId, keysTyped, backspacesTyped, searchQuery, searchResults.toInternalType(),
       searchScope, isSearchEverywhere
     )
   }
 
-  private fun shouldOrderByMlInTab(tabId: String, searchQuery: String): Boolean {
-    val tab = SearchEverywhereTab.findById(tabId) ?: return false // Tab does not support ML ordering
-
-    if (!tab.isTabWithMlRanking()) {
-      return false
-    }
-
-    if (tab == SearchEverywhereTab.All && searchQuery.isEmpty()) {
-      return false
-    }
-
-    return tab.isMlRankingEnabled
-  }
-
-  override fun onItemSelected(project: Project?, tabId: String, indexes: IntArray, selectedItems: List<Any>,
-                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                              closePopup: Boolean,
+  override fun onItemSelected(tabId: String, indexes: IntArray, selectedItems: List<Any>,
+                              searchResults: List<SearchEverywhereFoundElementInfo>,
                               query: String) {
-    getCurrentSession()?.onItemSelected(project, indexes, selectedItems, closePopup, mapElementsProvider(elementsProvider))
+    getCurrentSession()?.onItemSelected(indexes, selectedItems, searchResults.toInternalType())
   }
 
-  override fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onSearchFinished(project, mapElementsProvider(elementsProvider))
+  override fun onSearchFinished(searchResults: List<SearchEverywhereFoundElementInfo>) {
+    getCurrentSession()?.onSearchFinished(searchResults.toInternalType())
   }
 
   override fun notifySearchResultsUpdated() {
@@ -186,11 +167,9 @@ class SearchEverywhereMlRankingService : SearchEverywhereMlService {
     }
   }
 
-  private fun mapElementsProvider(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>): () -> List<SearchEverywhereFoundElementInfoWithMl> {
-    return { ->
-      elementsProvider.invoke()
-        .map {
-          SearchEverywhereFoundElementInfoWithMl.from(it) }
+  private fun List<SearchEverywhereFoundElementInfo>.toInternalType(): List<SearchEverywhereFoundElementInfoWithMl> {
+    return this.map {
+      SearchEverywhereFoundElementInfoWithMl.from(it)
     }
   }
 }

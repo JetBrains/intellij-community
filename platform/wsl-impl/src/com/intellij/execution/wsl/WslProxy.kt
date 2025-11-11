@@ -20,6 +20,9 @@ import java.nio.ByteOrder
 import kotlin.coroutines.coroutineContext
 
 /**
+ * *Warning*: This class is *deprecated*. Use Eel API.
+ *
+ *
  * The problem is covered here: PY-50689.
  *
  * Intellij debuggers opens port and waits debugee to connect to it.
@@ -34,6 +37,7 @@ import kotlin.coroutines.coroutineContext
  *
  */
 @ApiStatus.Internal
+@Deprecated("Please use Eel API instead")
 class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: InetSocketAddress) : Disposable {
   @Deprecated("Use the construction with the application address." +
               " This constructor can lead to sporadic 'connection refused' errors in case of IPv4/IPv6 confusion.")
@@ -80,19 +84,21 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationAddress: 
       try {
         outputStream.close() // Closing stream should stop process
       }
-      catch (e: Exception) {
+      catch (e: IOException) {
         Logger.getInstance(WslProxy::class.java).warn(e)
       }
-      GlobalScope.launch(Dispatchers.IO) {
-        // Wait for process to die. If not -- kill it
-        delay(1000)
-        if (isAlive) {
-          Logger.getInstance(WslProxy::class.java).warn("Process still alive, destroying")
-          destroy()
-        }
-        val exitCode = exitValue()
-        if (exitCode != 0) {
-          Logger.getInstance(WslProxy::class.java).warn("Exit code was $exitCode")
+      finally {
+        GlobalScope.launch(Dispatchers.IO) {
+          // Wait for process to die. If not -- kill it
+          delay(1000)
+          if (isAlive) {
+            Logger.getInstance(WslProxy::class.java).warn("Process still alive, destroying")
+            destroy()
+          }
+          val exitCode = exitValue()
+          if (exitCode != 0) {
+            Logger.getInstance(WslProxy::class.java).warn("Exit code was $exitCode")
+          }
         }
       }
     }

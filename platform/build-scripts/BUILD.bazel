@@ -88,6 +88,12 @@ jvm_library(
     "@lib//:platform-build_scripts-jetbrains-intellij-deps-coverage-reporter",
     "//libraries/ktor/client",
     "//platform/plugins/parser/impl",
+    "//platform/build-scripts/api",
+    "//platform/build-scripts/product-dsl",
+  ],
+  exports = [
+    "//platform/build-scripts/api",
+    "//platform/build-scripts/product-dsl",
   ],
   runtime_deps = [
     "//libraries/commons/cli",

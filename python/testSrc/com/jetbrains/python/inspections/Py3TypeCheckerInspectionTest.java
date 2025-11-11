@@ -874,7 +874,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    from typing import Type
                    def foo(x: Type[int | str]):
                        pass
-                   foo(<warning descr="Expected type 'type[int | str]', got 'UnionType' instead">int | str</warning>)""");
+                   foo(<warning descr="Expected type 'type[int | str]', got 'UnionType | type[int] | type[str]' instead">int | str</warning>)""");
   }
 
   // PY-44974

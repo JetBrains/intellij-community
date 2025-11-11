@@ -19,13 +19,16 @@ class ServicesToolWindowUi(data: ComponentData): ToolWindowUiComponent(data) {
   }.apply(block)
 
   class RunnerTabsUiComponent(data: ComponentData) : UiComponent(data) {
-    val serverTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Server")) }
-    val threadsAndVariablesTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Threads & Variables")) }
+    val serverTab = tabLabel("Server")
+    val consoleTab = tabLabel("Console")
+    val threadsAndVariablesTab = tabLabel("Threads & Variables")
     val stopButton = x { contains(byAccessibleName("Stop")) }
     val runButton = x { byAccessibleName("Run") }
-    val beansTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Beans")) }
-    val healthTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Health")) }
-    val mappingsTab = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName("Mappings")) }
+    val beansTab = tabLabel("Beans")
+    val healthTab = tabLabel("Health")
+    val mappingsTab = tabLabel("Mappings")
     val stepOverButton get() = button { byAccessibleName("Step Over") }
+
+    private fun tabLabel(name: String) = x { and(byType("com.intellij.ui.tabs.impl.TabLabel"), byAccessibleName(name)) }
   }
 }

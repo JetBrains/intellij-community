@@ -645,6 +645,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SuperTypeWithBoundKotlinCollection.kt"));
         }
 
+        @TestMetadata("SuspendFunctionTypeAsAnnotationArgument.kt")
+        public void testSuspendFunctionTypeAsAnnotationArgument() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/SuspendFunctionTypeAsAnnotationArgument.kt"));
+        }
+
         @TestMetadata("Throws.kt")
         public void testThrows() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/Throws.kt"));

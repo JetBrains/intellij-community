@@ -3,14 +3,12 @@ package com.intellij.diagnostic
 
 import com.intellij.errorreport.error.InternalEAPException
 import com.intellij.errorreport.error.UpdateAvailableException
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -44,12 +42,9 @@ internal class ITNProxyCoroutineScopeHolder(coroutineScope: CoroutineScope) {
 }
 
 internal object ITNProxy {
-  internal const val EA_PLUGIN_ID = "com.intellij.sisyphus"
-
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
-  private const val EA_NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
-  private const val DIOGEM_VIEW_URL = "https://diogen.labs.jb.gg/report/"
+  private const val DIOGEN_VIEW_URL = "https://diogen.labs.jb.gg/report/"
 
   internal val DEVICE_ID: String = DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
 
@@ -98,14 +93,10 @@ internal object ITNProxy {
     val lastActionId: String?,
   )
 
-  fun getBrowseUrl(threadId: Long): String? =
-    when {
-      PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID)) -> when {
-        isInternalUser() -> DIOGEM_VIEW_URL + threadId
-        else -> EA_NEW_THREAD_VIEW_URL + threadId
-      }
-      else -> null
-    }
+  fun getBrowseUrl(threadId: Long): String? = when {
+    isInternalUser() -> DIOGEN_VIEW_URL + threadId
+    else -> null
+  }
 
   private fun isInternalUser(): Boolean {
     val isJetBrainsEmail = JBAccountInfoService.getInstance()?.userData?.email?.endsWith("@jetbrains.com") == true

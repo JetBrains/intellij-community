@@ -17,6 +17,7 @@ interface GradleBuildEntity : WorkspaceEntityWithSymbolicId {
   val name: String
   // URL of the directory containing the settings.gradle(.kts)
   val url: VirtualFileUrl
+  val projects: List<GradleProjectEntity>
 
   override val symbolicId: GradleBuildEntityId
     get() = GradleBuildEntityId(externalProjectId, url)

@@ -18,14 +18,19 @@
 package com.intellij.compose.ide.plugin.shared
 
 import com.intellij.openapi.application.Application
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.util.application
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.name.FqName
 
 abstract class ComposableAnnotationToExtractedFunctionAdderTest : KotlinLightCodeInsightFixtureTestCase() {
   override fun runInDispatchThread(): Boolean = false
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+  }
 
   /** Copied from AOSP. Regression test for https://issuetracker.google.com/issues/301481575 */
   fun testConstantInComposableFunction() {

@@ -8375,7 +8375,6 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - getSelectionIdentity():java.lang.Object
 - registerHint(com.intellij.openapi.ui.popup.JBPopup):V
 - removeSearchListener(com.intellij.ide.actions.searcheverywhere.SearchListener):V
-- sendStatisticsAndClose():V
 - setSearchText(java.lang.String):V
 - switchToTab(java.lang.String):V
 - toggleEverywhereFilter():V

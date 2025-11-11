@@ -35,12 +35,13 @@ annotation class TestSubPath(val value: String)
  *
  * The fixture will be tied to the [Project] provided by [projectFixture] and for the [Path] provided by [tempDirFixture].
  *
- * Test data is resolved via [TestDataPath] and [TestSubPath] annotations where the first one is used on the class level (and designates
- * the root of the data), while the second one is used on the method level (and designates the test data for the exact test).
- * Please, use `$PROJECT_ROOT` instead of `$CONTENT_ROOT`.
+ * Test data is resolved via [TestDataPath] and [TestSubPath] annotations.
+ * [TestDataPath] is used on the class level and designates the root of the data.
+ * It can use the `$PROJECT_ROOT` variable (note that `$CONTENT_ROOT` isn't supported).
+ * [TestSubPath] is used on the method level and designates the test data for the exact test.
  *
- * If [TestSubPath] is not set, the test name will be used as a subpath similar to the classic IntelliJ tests approach
- * (with `test` prefix removed and the first letter in lowercase).
+ * If [TestSubPath] is not set, the subpath will be empty, but you can then construct it manually, e.g., from the test method name,
+ * using [com.intellij.testFramework.junit5.fixture.testNameFixture].
  */
 @TestOnly
 fun codeInsightFixture(

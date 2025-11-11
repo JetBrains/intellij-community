@@ -103,12 +103,38 @@
 
     <!-- </editor-fold> -->
 
+    <!-- <editor-fold desc="nested: rpc"> -->
+    <!-- <editor-fold desc="nested: rpc > libraries.fleet"> -->
+    <module name="fleet.andel" loading="embedded"/>
+    <module name="fleet.bifurcan" loading="embedded"/>
+    <module name="fleet.fastutil" loading="embedded"/>
+    <module name="fleet.kernel" loading="embedded"/>
+    <module name="fleet.multiplatform.shims" loading="embedded"/>
+    <module name="fleet.reporting.api" loading="embedded"/>
+    <module name="fleet.reporting.shared" loading="embedded"/>
+    <module name="fleet.rhizomedb" loading="embedded"/>
+    <module name="fleet.rpc" loading="embedded"/>
+    <module name="fleet.util.codepoints" loading="embedded"/>
+    <module name="fleet.util.core" loading="embedded"/>
+    <module name="fleet.util.logging.api" loading="embedded"/>
+    <module name="fleet.util.serialization" loading="embedded"/>
+    <!-- </editor-fold> -->
+
     <!-- <editor-fold desc="direct modules"> -->
-    <module name="intellij.platform.settings.local"/>
-    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.rpc" loading="embedded"/>
+    <module name="intellij.platform.kernel" loading="embedded"/>
     <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.kernel.impl"/>
     <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.rpc.topics" loading="embedded"/>
+    <module name="intellij.platform.rpc.topics.backend"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+    <!-- </editor-fold> -->
+    <!-- </editor-fold> -->
+
+    <!-- <editor-fold desc="direct modules"> -->
+    <module name="intellij.platform.settings.local"/>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.project.backend"/>
     <module name="intellij.platform.progress.backend"/>
     <module name="intellij.platform.lang.impl.backend"/>
@@ -159,9 +185,6 @@
     <module name="intellij.platform.completion.backend"/>
     <module name="intellij.platform.analysis" loading="embedded"/>
     <module name="intellij.platform.polySymbols" loading="embedded"/>
-    <module name="intellij.platform.rpc.topics" loading="embedded"/>
-    <module name="intellij.platform.rpc.topics.backend"/>
-    <module name="intellij.platform.rpc.topics.frontend"/>
     <!-- </editor-fold> -->
   </content>
 </idea-plugin>

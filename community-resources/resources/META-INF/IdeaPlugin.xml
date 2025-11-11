@@ -11,15 +11,15 @@
 
   <xi:include href="/META-INF/JavaIdePlugin.xml"/>
   <xi:include href="/META-INF/tips-intellij-idea-community.xml"/>
+  <xi:include href="/META-INF/community-customization.xml"/>
   <xi:include href="/META-INF/community-extensions.xml">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/community-customization.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.debugger.streams.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
+  <!-- <editor-fold desc="additional"> -->
   <content namespace="jetbrains">
-    <!-- <editor-fold desc="additional"> -->
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>
@@ -30,6 +30,6 @@
     <module name="intellij.idea.customization.base"/>
     <module name="intellij.idea.customization.backend"/>
     <module name="intellij.platform.tips"/>
-    <!-- </editor-fold> -->
   </content>
+  <!-- </editor-fold> -->
 </idea-plugin>

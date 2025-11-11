@@ -33,7 +33,7 @@ open class LinuxDistributionCustomizer {
    */
   var extraExecutables: PersistentList<String> = persistentListOf()
 
-  open fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture, targetLibcImpl: LibcImpl): Sequence<String> {
+  open fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, targetLibcImpl: LibcImpl, context: BuildContext): Sequence<String> {
     val basePatterns = sequenceOf(
       "bin/*.sh",
       "plugins/**/*.sh",
@@ -77,13 +77,14 @@ open class LinuxDistributionCustomizer {
   /**
    * Name of the root directory inside the .tar.gz archive.
    */
-  open fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${appInfo.fullProductName}-${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+  open fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "${appInfo.fullProductName}-${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+  }
 
   /**
    * Override this method to copy additional files to the Linux distribution of the product.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+  open suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
     RepairUtilityBuilder.bundle(context, OsFamily.LINUX, arch, targetDir)
   }
 }

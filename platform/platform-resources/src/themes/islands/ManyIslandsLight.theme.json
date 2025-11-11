@@ -62,6 +62,8 @@
     "MainToolbar": {
       "background": "BackgroundDark",
       "borderColor": "BorderTransparent",
+      "Icon.hoverBackground": "Gray11",
+      "Dropdown.hoverBackground": "Gray11",
       "Button.arc.compact": 8
     },
 
@@ -194,7 +196,10 @@
       }
     },
 
-    "SearchEverywhere.Header.insets": "2,4,0,9",
+    "SearchEverywhere": {
+      "Header.insets": "2,4,0,9",
+      "List.settingsBackground": "PopupBackground"
+    },
 
     "HelpBrowser.UserMessage.background": "#EDEEF2",
 

@@ -31,7 +31,7 @@ class ProjectRootEntityTest {
       projectFile.createDirectories()
       val options = createTestOpenProjectOptions().copy(projectName = name, projectRootDir = projectFile)
       ProjectUtil.openOrImportAsync(projectFile, options)!!.useProjectAsync { project ->
-        ProjectRootsSynchronizer().execute(project) // background startup activities are not executed in unit tests on project open
+        ProjectRootsSynchronizer.doRegister(project) // background startup activities are not executed in unit tests on project open
         val roots = project.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()
         assertThat(roots.map { it.root }).isEqualTo(listOf(projectFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())))
       }

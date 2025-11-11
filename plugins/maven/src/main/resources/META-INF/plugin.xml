@@ -115,6 +115,9 @@
       serviceInterface="org.jetbrains.idea.maven.project.MavenProjectModelReadHelper"
       serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectModelServerModelReadHelper"/>
     <projectService
+      serviceInterface="org.jetbrains.idea.maven.project.MavenPluginResolver"
+      serviceImplementation="org.jetbrains.idea.maven.project.MavenPluginResolverImpl"/>
+    <projectService
       serviceInterface="org.jetbrains.idea.maven.server.MavenServerResultTransformer"
       serviceImplementation="org.jetbrains.idea.maven.server.MavenServerResultTransformerImpl"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"

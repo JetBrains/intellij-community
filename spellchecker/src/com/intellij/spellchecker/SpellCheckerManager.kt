@@ -64,7 +64,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   @get:Internal
   val appDictionaryPath: String by lazy {
-    PathManager.getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE
+    PathManager.getOptionsPath() + '/' + CACHED_DICTIONARY_FILE
   }
 
   private val userDictionaryListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener::class.java)
@@ -318,8 +318,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
   }
 
   fun openDictionaryInEditor(dictPath: String) {
-    val file = if (dictPath.isEmpty()) null
-    else LocalFileSystem.getInstance().refreshAndFindFileByPath(dictPath)
+    val file = if (dictPath.isEmpty()) null else LocalFileSystem.getInstance().refreshAndFindFileByPath(dictPath)
     if (file == null) {
       val title = SpellCheckerBundle.message("dictionary.not.found.title")
       val message = SpellCheckerBundle.message("dictionary.not.found", dictPath)
@@ -474,7 +473,7 @@ private class StreamLoader(private val name: String, private val loaderClass: Cl
 }
 
 private fun getProjectDictionaryPath(): String {
-  return "dictionaries${File.separator}${getProjectDictionaryName().replace('.', '_')}.xml"
+  return "dictionaries/${getProjectDictionaryName().replace('.', '_')}.xml"
 }
 
 internal fun getProjectDictionaryName(): String {

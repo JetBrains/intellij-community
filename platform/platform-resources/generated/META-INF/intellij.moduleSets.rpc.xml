@@ -1,0 +1,34 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: CommunityModuleSets.main() -->
+<!-- Source: see moduleSet("rpc") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <!-- <editor-fold desc="nested: libraries.fleet"> -->
+    <module name="fleet.andel" loading="embedded"/>
+    <module name="fleet.bifurcan" loading="embedded"/>
+    <module name="fleet.fastutil" loading="embedded"/>
+    <module name="fleet.kernel" loading="embedded"/>
+    <module name="fleet.multiplatform.shims" loading="embedded"/>
+    <module name="fleet.reporting.api" loading="embedded"/>
+    <module name="fleet.reporting.shared" loading="embedded"/>
+    <module name="fleet.rhizomedb" loading="embedded"/>
+    <module name="fleet.rpc" loading="embedded"/>
+    <module name="fleet.util.codepoints" loading="embedded"/>
+    <module name="fleet.util.core" loading="embedded"/>
+    <module name="fleet.util.logging.api" loading="embedded"/>
+    <module name="fleet.util.serialization" loading="embedded"/>
+    <!-- </editor-fold> -->
+
+    <!-- <editor-fold desc="direct modules"> -->
+    <module name="intellij.platform.rpc" loading="embedded"/>
+    <module name="intellij.platform.kernel" loading="embedded"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.kernel.impl"/>
+    <module name="intellij.platform.kernel.backend"/>
+    <module name="intellij.platform.rpc.topics" loading="embedded"/>
+    <module name="intellij.platform.rpc.topics.backend"/>
+    <module name="intellij.platform.rpc.topics.frontend"/>
+    <!-- </editor-fold> -->
+  </content>
+</idea-plugin>

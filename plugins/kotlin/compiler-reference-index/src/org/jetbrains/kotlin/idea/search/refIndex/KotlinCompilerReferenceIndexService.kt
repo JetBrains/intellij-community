@@ -219,7 +219,9 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     }
 
     private fun closeStorage() {
-        KotlinCompilerReferenceIndexStorage.close(storage)
+        storage?.close().let {
+            LOG.info("KCRI storage is closed" + if (it == null) " (didn't exist)" else "")
+        }
         storage = null
     }
 

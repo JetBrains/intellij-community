@@ -8,9 +8,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -33,6 +35,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
+import kotlin.io.path.isDirectory
 
 class MavenProject(val file: VirtualFile) {
   enum class ConfigFileKind(val myRelativeFilePath: String, val myValueIfMissing: String) {
@@ -92,7 +95,7 @@ class MavenProject(val file: VirtualFile) {
       keepPreviousArtifacts,
       false,
       keepPreviousPlugins,
-      directory,
+      directoryPath,
       file.extension,
       null
     )
@@ -125,7 +128,7 @@ class MavenProject(val file: VirtualFile) {
       keepPreviousArtifacts,
       true,
       false,
-      directory,
+      directoryPath,
       file.extension,
       dependencyHash
     )
@@ -199,11 +202,18 @@ class MavenProject(val file: VirtualFile) {
   val path: @NonNls String
     get() = file.path
 
+  /**
+   * use directoryPath instead
+   */
+  @get:ApiStatus.Obsolete(since = "2026.1")
   val directory: @NonNls String
     get() = file.parent.path
 
   val directoryFile: VirtualFile
     get() = file.parent
+
+  val directoryPath: Path
+    get() = file.parent.toNioPath()
 
   val profilesXmlFile: VirtualFile?
     get() = MavenUtil.findProfilesXmlFile(file)
@@ -853,7 +863,7 @@ class MavenProject(val file: VirtualFile) {
       keepPreviousArtifacts: Boolean,
       keepPreviousProfiles: Boolean,
       keepPreviousPlugins: Boolean,
-      directory: String,
+      directory: Path,
       fileExtension: String?,
       dependencyHash: String?,
     ): MavenProjectState {
@@ -949,20 +959,20 @@ class MavenProject(val file: VirtualFile) {
       )
     }
 
-    private fun collectModulePathsAndNames(mavenModel: MavenModel, baseDir: String, fileExtension: String?): Map<String, String> {
-      val basePath = "$baseDir/"
+    private fun collectModulePathsAndNames(mavenModel: MavenModel, baseDir: Path, fileExtension: String?): Map<String, String> {
       val result: MutableMap<String, String> = LinkedHashMap()
-      for ((key, value) in collectModulesRelativePathsAndNames(mavenModel, basePath, fileExtension)) {
-        result[MavenPathWrapper(basePath + key).path] = value
+      for ((relativePath, value) in collectModulesRelativePathsAndNames(mavenModel, baseDir, fileExtension)) {
+        val absolutePath = baseDir.resolve(relativePath)
+        val canonicalPath = absolutePath.toCanonicalPath()
+        result[PathUtil.toSystemDependentName(canonicalPath)] = value
       }
       return result
     }
 
-    private fun collectModulesRelativePathsAndNames(mavenModel: MavenModel, basePath: String, fileExtension: String?): Map<String, String> {
+    private fun collectModulesRelativePathsAndNames(mavenModel: MavenModel, basePath: Path, fileExtension: String?): Map<String, String> {
       val extension = fileExtension ?: ""
       val result = LinkedHashMap<String, String>()
       val modules = mavenModel.modules
-      if (null == modules) return result
       for (module in modules) {
         var name = module
         name = name.trim { it <= ' ' }
@@ -972,7 +982,7 @@ class MavenProject(val file: VirtualFile) {
         val originalName = name
 
         // module name can be relative and contain either / of \\ separators
-        name = FileUtil.toSystemIndependentName(name)
+        name = PathUtil.toSystemIndependentName(name)
 
         val finalName = name
         val fullPathInModuleName = MavenConstants.POM_EXTENSIONS.any { finalName.endsWith(".$it") }
@@ -981,8 +991,8 @@ class MavenProject(val file: VirtualFile) {
           name += MavenConstants.POM_EXTENSION + '.' + extension
         }
         else {
-          val systemDependentName = FileUtil.toSystemDependentName(basePath + name)
-          if (File(systemDependentName).isDirectory) {
+          val moduleFile = basePath.resolve(name)
+          if (moduleFile.isDirectory()) {
             name += "/" + MavenConstants.POM_XML
           }
         }

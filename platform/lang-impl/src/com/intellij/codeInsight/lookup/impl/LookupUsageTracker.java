@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -9,8 +9,8 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeSchemaValidator;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
@@ -42,7 +42,7 @@ import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATI
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 36);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 37);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -52,7 +52,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
   private static final IntEventField SELECTION_CHANGED = EventFields.Int("selection_changed");
   private static final IntEventField TYPING = EventFields.Int("typing");
   private static final IntEventField BACKSPACES = EventFields.Int("backspaces");
-  private static final EnumEventField<CompletionChar> COMPLETION_CHAR = EventFields.Enum("completion_char", CompletionChar.class);
+  private static final StringEventField COMPLETION_CHAR = EventFields.StringValidatedByInlineRegexp("completion_char", "Enter|Tab|AutoInsert|CompleteStatement|.");
   private static final IntEventField TOKEN_LENGTH = EventFields.Int("token_length");
   private static final IntEventField QUERY_LENGTH = EventFields.Int("query_length");
   private static final ClassEventField CONTRIBUTOR = EventFields.Class("contributor");
@@ -274,7 +274,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       data.add(SELECTION_CHANGED.with(mySelectionChangedCount));
       data.add(TYPING.with(myTypingTracker.typing));
       data.add(BACKSPACES.with(myTypingTracker.backspaces));
-      data.add(COMPLETION_CHAR.with(CompletionChar.of(completionChar)));
+      data.add(COMPLETION_CHAR.with(completionCharToText(completionChar)));
 
       // Details
       if (currentItem != null) {
@@ -346,18 +346,14 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     TYPED, EXPLICIT, CANCELED_EXPLICITLY, CANCELED_BY_TYPING
   }
 
-  private enum CompletionChar {
-    ENTER, TAB, COMPLETE_STATEMENT, AUTO_INSERT, OTHER;
-
-    static CompletionChar of(char completionChar) {
-      return switch (completionChar) {
-        case Lookup.NORMAL_SELECT_CHAR -> ENTER;
-        case Lookup.REPLACE_SELECT_CHAR -> TAB;
-        case Lookup.AUTO_INSERT_SELECT_CHAR -> AUTO_INSERT;
-        case Lookup.COMPLETE_STATEMENT_SELECT_CHAR -> COMPLETE_STATEMENT;
-        default -> OTHER;
-      };
-    }
+  private static @NotNull String completionCharToText(char completionChar) {
+    return switch (completionChar) {
+      case Lookup.NORMAL_SELECT_CHAR -> "Enter";
+      case Lookup.REPLACE_SELECT_CHAR -> "Tab";
+      case Lookup.AUTO_INSERT_SELECT_CHAR -> "AutoInsert";
+      case Lookup.COMPLETE_STATEMENT_SELECT_CHAR -> "CompleteStatement";
+      default -> String.valueOf(completionChar);
+    };
   }
 
   private static final class MyLookupResultDescriptor implements LookupResultDescriptor {

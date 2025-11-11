@@ -209,7 +209,7 @@ private suspend fun layoutShared(context: BuildContext) {
         Files.createDirectories(to.parent)
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING)
       }
-      context.productProperties.copyAdditionalFiles(context, context.paths.distAllDir)
+      context.productProperties.copyAdditionalFiles(context.paths.distAllDir, context)
     }
   }
   checkClassFiles(root = context.paths.distAllDir, isDistAll = true, context)

@@ -82,16 +82,6 @@ data class IDERunContext(
     return createDirectories()
   }
 
-  internal fun deleteJVMCrashes() {
-    println("Cleaning JVM crashes ...")
-    listOf(heapDumpOnOomDirectory, jvmCrashLogDirectory)
-      .filter { dir -> dir.exists() && dir.listDirectoryEntries().isNotEmpty() }
-      .forEach {
-        println("Deleting $it")
-        NioFiles.deleteRecursively(it)
-      }
-  }
-
   private fun formatArtifactName(artifactName: String): String {
     return if (testContext.testCase.ideInfo.isFrontend) {
       formatArtifactName(artifactName + "-frontend", testContext.testName)

@@ -2515,11 +2515,13 @@ f:com.intellij.openapi.vcs.ex.RangeExclusionState$Excluded
 - sf:INSTANCE:com.intellij.openapi.vcs.ex.RangeExclusionState$Excluded
 - getHasExcluded():Z
 - getHasIncluded():Z
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.openapi.vcs.ex.RangeExclusionState$Included
 - com.intellij.openapi.vcs.ex.RangeExclusionState
 - sf:INSTANCE:com.intellij.openapi.vcs.ex.RangeExclusionState$Included
 - getHasExcluded():Z
 - getHasIncluded():Z
+- f:serializer():kotlinx.serialization.KSerializer
 f:com.intellij.openapi.vcs.ex.RangesBuilder
 - sf:compareLines(com.intellij.diff.util.Range,java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,com.intellij.diff.tools.util.text.LineOffsets):com.intellij.diff.comparison.iterables.FairDiffIterable
 - sf:compareLines(java.lang.CharSequence,java.lang.CharSequence,com.intellij.diff.tools.util.text.LineOffsets,com.intellij.diff.tools.util.text.LineOffsets):com.intellij.diff.comparison.iterables.FairDiffIterable

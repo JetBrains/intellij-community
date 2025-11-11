@@ -1,4 +1,12 @@
 # =======
+# <= 3.12
+# =======
+
+# Added in Python 3.9.23 (parameter `escapable`)
+html.parser.HTMLParser.set_cdata_mode
+
+
+# =======
 # <= 3.11
 # =======
 

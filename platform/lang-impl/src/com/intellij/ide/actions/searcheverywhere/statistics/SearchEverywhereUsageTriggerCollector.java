@@ -18,14 +18,15 @@ import java.util.List;
 @ApiStatus.Internal
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 20);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 21);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
   @ApiStatus.Internal
   public static final String NOT_REPORTABLE_ID = "third.party";
 
-  public static final StringEventField CONTRIBUTOR_ID_FIELD = EventFields.String("contributorID", Arrays.asList(
+  @ApiStatus.Internal
+  public static final List<String> ALLOWED_CONTRIBUTOR_ID_LIST = Arrays.asList(
     "FileSearchEverywhereContributor",
     "SearchEverywhereContributor.All",
     "ClassSearchEverywhereContributor",
@@ -42,8 +43,11 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
     "UrlSearchEverywhereContributor",
     "Vcs.Git", "GitSearchEverywhereContributor",
     "RiderOnboardingSearchEverywhereContributor",
-    "CalculatorSEContributor"
-  ));
+    "CalculatorSEContributor",
+    "DbObjectsSEContributor"
+  );
+
+  public static final StringEventField CONTRIBUTOR_ID_FIELD = EventFields.String("contributorID", ALLOWED_CONTRIBUTOR_ID_LIST);
 
   private static final List<String> ourTabs = Arrays.asList("FileSearchEverywhereContributor",
                                                             "SearchEverywhereContributor.All",

@@ -569,18 +569,7 @@ public class GitImpl extends GitImplBase {
                                               boolean autoCommit,
                                               boolean addCherryPickedFromSuffix,
                                               GitLineHandlerListener @NotNull ... listeners) {
-    final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHERRY_PICK);
-    if (addCherryPickedFromSuffix) {
-      handler.addParameters("-x");
-    }
-    if (!autoCommit) {
-      handler.addParameters("-n");
-    }
-    handler.addParameters(hash);
-    addListeners(handler, listeners);
-    handler.setSilent(false);
-    handler.setStdoutSuppressed(false);
-    return runCommand(handler);
+    return cherryPick(repository, singletonList(hash), autoCommit, addCherryPickedFromSuffix, listeners);
   }
 
   @Override

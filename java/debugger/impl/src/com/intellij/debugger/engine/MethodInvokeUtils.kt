@@ -79,7 +79,10 @@ object MethodInvokeUtils {
   }
 }
 
-private val ORIGINS_FOR_USE_WITH_HELPER = EnumSet.of(XEvaluationOrigin.DIALOG, XEvaluationOrigin.INLINE, XEvaluationOrigin.EDITOR)
+private val ORIGINS_FOR_USE_WITH_HELPER = EnumSet.of(XEvaluationOrigin.DIALOG,
+                                                     XEvaluationOrigin.INLINE,
+                                                     XEvaluationOrigin.EDITOR,
+                                                     XEvaluationOrigin.BREAKPOINT_LOG)
 
 private fun EvaluationContextImpl.shouldUseHelper(): Boolean {
   return when (Registry.get("debugger.evaluate.method.helper").selectedOption) {

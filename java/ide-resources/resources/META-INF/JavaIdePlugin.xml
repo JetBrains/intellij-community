@@ -25,9 +25,7 @@
     <xi:fallback/>
   </xi:include>
 
-  <xi:include href="/META-INF/structuralsearch.xml">
-    <xi:fallback/>
-  </xi:include>
+
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.application.IdeUrlTrackingParametersProvider"

@@ -1,7 +1,7 @@
 # Type checkers that we test our stubs against. These should always
 # be pinned to a specific version to make failure reproducible.
-mypy==1.18.1
-pyright==1.1.405
+mypy==1.18.2
+pyright==1.1.406
 
 # Libraries used by our various scripts.
 aiohttp==3.12.15
@@ -13,13 +13,13 @@ packaging==25.0
 pathspec>=0.11.1
 pre-commit
 # Required by create_baseline_stubs.py. Must match .pre-commit-config.yaml.
-ruff==0.12.2
+ruff==0.13.2
 stubdefaulter==0.1.0
 termcolor>=2.3
 tomli==2.2.1; python_version < "3.11"
 tomlkit==0.13.3
 typing_extensions>=4.15.0rc1
-uv==0.8.6
+uv==0.9.5
 
 # Utilities for typeshed infrastructure scripts.
 ts_utils @ file:lib

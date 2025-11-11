@@ -15,7 +15,7 @@ class SearchEverywhereFileGroupFeatureProvider : SearchEverywhereElementFeatures
   RecentFilesSEContributor::class.java) {
 
   object Fields {
-    val FILE_GROUP = EventFields.Enum("fileGroup", FileGroup::class.java)
+    val FILE_GROUP = EventFields.Enum("file_group", FileGroup::class.java)
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> = listOf(FILE_GROUP)

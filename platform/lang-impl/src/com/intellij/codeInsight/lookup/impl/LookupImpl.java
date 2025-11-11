@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.PowerSaveMode;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
@@ -1167,7 +1168,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         listener.currentItemChanged(event);
       }
     }
-    if (currentItem instanceof CompletionItemLookupElement wrapper) {
+    if (currentItem instanceof CompletionItemLookupElement wrapper && !PowerSaveMode.isEnabled()) {
       PsiFile file = getPsiFile();
       if (file != null) {
         ActionContext actionContext = ActionContext.from(editor, file);

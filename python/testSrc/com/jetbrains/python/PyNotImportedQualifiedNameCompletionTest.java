@@ -181,9 +181,7 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
 
   // PY-47962
   public void testNonImportedModulesSuggestedLast() {
-    doBasicCompletion();
-    myFixture.assertPreferredCompletionItems(0, "configuration=");
-    assertContainsElements(myFixture.getLookupElementStrings(), "config", "contrib");
+    assertNull(doBasicCompletion());
   }
 
   // PY-47962

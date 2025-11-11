@@ -11771,6 +11771,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/introduceImportAlias/conflictPackage.kt");
         }
 
+        @TestMetadata("constructorWithConflictingUsage.kt")
+        public void testConstructorWithConflictingUsage() throws Exception {
+            runTest("testData/intentions/introduceImportAlias/constructorWithConflictingUsage.kt");
+        }
+
         @TestMetadata("function.kt")
         public void testFunction() throws Exception {
             runTest("testData/intentions/introduceImportAlias/function.kt");

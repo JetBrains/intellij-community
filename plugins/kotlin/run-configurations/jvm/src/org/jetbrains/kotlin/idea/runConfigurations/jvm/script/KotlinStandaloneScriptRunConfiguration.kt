@@ -35,6 +35,8 @@ import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.runConfigurations.jvm.script.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import java.io.File
 
 class KotlinStandaloneScriptRunConfiguration(
@@ -155,7 +157,10 @@ class KotlinStandaloneScriptRunConfiguration(
 private class ScriptCommandLineState(
     environment: ExecutionEnvironment,
     configuration: KotlinStandaloneScriptRunConfiguration
-) : com.intellij.execution.application.BaseJavaApplicationCommandLineState<KotlinStandaloneScriptRunConfiguration>(environment, configuration) {
+) : com.intellij.execution.application.BaseJavaApplicationCommandLineState<KotlinStandaloneScriptRunConfiguration>(
+    environment,
+    configuration
+) {
 
     override fun createJavaParameters(): JavaParameters {
         val params = commonParameters()
@@ -163,41 +168,38 @@ private class ScriptCommandLineState(
         val filePath = configuration.filePath
             ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.specified"))
 
-        val scriptVFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
+        val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
             ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
         params.classPath.add(KotlinArtifacts.kotlinCompiler)
+        params.mainClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
 
-        val scriptClasspath = ScriptDependencyAware.getInstance(environment.project).getScriptDependenciesClassFiles(scriptVFile)
-        scriptClasspath.forEach {
-            params.classPath.add(it.presentableUrl)
+        ScriptDefinitionProvider.getInstance(environment.project)?.findDefinition(VirtualFileScriptSource(virtualFile))?.let {
+            params.programParametersList.prepend("plugin:kotlin.scripting:script-definitions=${it.baseClassType.typeName}")
+            params.programParametersList.prepend("-P")
         }
 
-        params.mainClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
         params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(filePath))
         params.programParametersList.prepend("-script")
         params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(KotlinPluginLayout.kotlinc.absolutePath))
         params.programParametersList.prepend("-kotlin-home")
 
-        val module = scriptVFile.module(environment.project)
-        if (module != null) {
-            val orderEnumerator = OrderEnumerator.orderEntries(module).withoutSdk().recursively().let {
-                if (!ProjectRootsUtil.isInTestSource(scriptVFile, environment.project)) it.productionOnly() else it
-            }
-
-            val moduleDependencies = orderEnumerator.classes().pathsList
-            if (!moduleDependencies.isEmpty) {
-                val classpath = CompositeParameterTargetedValue()
-                for ((index, path) in moduleDependencies.pathList.withIndex()) {
-                    if (index > 0) {
-                        classpath.addPathSeparator()
-                    }
-                    classpath.addPathPart(path)
+        val classpath = buildSet {
+            addAll(
+                ScriptDependencyAware.getInstance(environment.project).getScriptDependenciesClassFiles(virtualFile)
+                    .map { it.presentableUrl })
+            val module = virtualFile.module(environment.project)
+            if (module != null) {
+                val orderEnumerator = OrderEnumerator.orderEntries(module).withoutSdk().recursively().let {
+                    if (!ProjectRootsUtil.isInTestSource(virtualFile, environment.project)) it.productionOnly() else it
                 }
 
-                params.programParametersList.prepend(classpath)
-                params.programParametersList.prepend("-cp")
+                addAll(orderEnumerator.classes().pathsList.pathList)
             }
+        }
+
+        if (classpath.isNotEmpty()) {
+            params.programParametersList.prepend(classpath.joinToString(separator = File.pathSeparator, prefix = "-cp") { it })
         }
 
         return params

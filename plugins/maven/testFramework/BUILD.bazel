@@ -35,6 +35,7 @@ jvm_library(
     "//libraries/bouncy-castle-provider",
     "//platform/testFramework/eelJava",
     "//platform/eel-provider",
+    "//platform/util/progress",
   ]
 )
 ### auto-generated section `build intellij.maven.testFramework` end

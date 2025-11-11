@@ -2,10 +2,10 @@
 package org.jetbrains.idea.devkit.kotlin.driver
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.ide.IconProvider
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import org.jetbrains.idea.devkit.DevKitIcons
 import org.jetbrains.idea.devkit.driver.REMOTE_ANNOTATION_FQN
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -18,14 +18,14 @@ internal class RemoteIconProvider : IconProvider() {
     if (element is PsiClass
         && element.isInterface
         && AnnotationUtil.isAnnotated(element, REMOTE_ANNOTATION_FQN, 0)) {
-      return DevKitIcons.RemoteMapping
+      return DevkitCoreIcons.RemoteMapping
     }
 
     if (element is KtClassOrObject && element.isInterfaceClass()) {
       val uCLass = element.toUElementOfType<UClass>()
       val javaPsi = uCLass?.javaPsi
       if (javaPsi != null && AnnotationUtil.isAnnotated(javaPsi, REMOTE_ANNOTATION_FQN, 0)) {
-        return DevKitIcons.RemoteMapping
+        return DevkitCoreIcons.RemoteMapping
       }
     }
 

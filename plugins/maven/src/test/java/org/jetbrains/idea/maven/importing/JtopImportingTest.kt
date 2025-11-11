@@ -6,6 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class JtopImportingTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
 
   @Test
   fun testJtop() = runBlocking {

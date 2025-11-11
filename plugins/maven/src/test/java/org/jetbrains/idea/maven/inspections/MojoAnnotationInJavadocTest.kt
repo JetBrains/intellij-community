@@ -17,9 +17,13 @@ package org.jetbrains.idea.maven.inspections
 
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import kotlinx.coroutines.runBlocking
 
 class MojoAnnotationInJavadocTest : LightJavaCodeInsightFixtureTestCase() {
+  override fun runInDispatchThread() = false
+
   override fun getTestDataPath(): String {
     return PluginPathManager.getPluginHomePath("maven") + "/src/test/data/inspections/javadocMojoValidTags"
   }
@@ -29,12 +33,13 @@ class MojoAnnotationInJavadocTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.enableInspections(JavadocDeclarationInspection())
   }
 
-  fun testTestMojo() {
+  fun testTestMojo() = runBlocking {
     doTest()
   }
 
-  private fun doTest() {
+  private suspend fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.checkHighlighting()
+    TestObservation.awaitConfiguration(project)
   }
 }

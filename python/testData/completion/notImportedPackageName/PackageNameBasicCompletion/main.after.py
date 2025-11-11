@@ -1,1 +1,3 @@
+import foobar
+
 foobar

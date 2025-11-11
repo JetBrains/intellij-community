@@ -25,6 +25,7 @@ import kotlin.io.path.writeText
 
 
 class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
+  override fun skipPluginResolution() = false
 
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String

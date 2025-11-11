@@ -330,7 +330,7 @@ abstract class ProductProperties {
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) { }
+  open suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) { }
 
   /**
    * Override this method if the product has several editions to ensure that their artifacts won't be mixed up.
@@ -408,7 +408,7 @@ abstract class ProductProperties {
    * Copies additional localization resources to the plugin-generated localization resources directory.
    */
   @ApiStatus.Internal
-  open suspend fun copyAdditionalLocalizationResourcesToPlugin(context: BuildContext, lang: String, targetDir: Path) {}
+  open suspend fun copyAdditionalLocalizationResourcesToPlugin(lang: String, targetDir: Path, context: BuildContext) {}
 
   /**
    * Build steps which are always skipped for this product.

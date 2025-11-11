@@ -13,6 +13,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.ide.impl.ProjectUtil.focusProjectWindow
+import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -182,10 +184,18 @@ object ProjectUtil {
       }
     }
 
-    if (isValidProjectPath(file)) {
+    val storePathManager = serviceAsync<ProjectStorePathManager>()
+    val descriptor = withContext(Dispatchers.IO) {
+      storePathManager.getStoreDescriptor(file)
+    }
+    if (descriptor.testStoreDirectoryExistsForProjectRoot()) {
       LOG.info("Opening existing project with .idea at $file")
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
-      return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options.copy(runConfigurators = true, projectRootDir = file))
+      val options = options.copy(
+        runConfigurators = true,
+        projectRootDir = descriptor.historicalProjectBasePath,
+      )
+      return (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
 
     if (!options.preventIprLookup && Files.isDirectory(file)) {
@@ -613,65 +623,6 @@ object ProjectUtil {
     }
   }
 
-  private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
-    val storePathManager = serviceAsync<ProjectStorePathManager>()
-    val existingFile = if (storePathManager.testStoreDirectoryExistsForProjectRoot(file)) file else null
-    val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
-    if (existingFile != null) {
-      for (p in projectManager.openProjects) {
-        if (isSameProject(existingFile, p)) {
-          focusProjectWindow(project = p, stealFocusIfAppInactive = false)
-          return p
-        }
-      }
-      return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
-    }
-
-    val created = try {
-      withContext(Dispatchers.IO) {
-        !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
-      }
-    }
-    catch (_: IOException) {
-      false
-    }
-
-    if (!created) {
-      return null
-    }
-
-    val newProject = projectManager.newProjectAsync(file = file, options = OpenProjectTask {
-      isNewProject = true
-      isProjectCreatedWithWizard = true
-      runConfigurators = false //not used inside
-      projectName = name
-    })
-
-    try {
-      runInAutoSaveDisabledMode {
-        saveSettings(componentManager = newProject, forceSavingAllSettings = true)
-      }
-      PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
-        projectFile = file,
-        project = newProject,
-        newProject = true,
-        createModule = true,
-      )
-
-      return projectManager.openProjectAsync(projectIdentityFile = file, options = OpenProjectTask {
-        runConfigurators = false //not used when passing project
-        isProjectCreatedWithWizard = true
-        project = newProject
-      })
-    }
-    catch (th: Throwable) {
-      edtWriteAction {
-        Disposer.dispose(newProject)
-      }
-      throw th
-    }
-  }
-
   @JvmStatic
   fun getRootFrameForWindow(window: Window?): IdeFrame? {
     var w = window ?: return null
@@ -746,6 +697,65 @@ object ProjectUtil {
     return withContext(Dispatchers.IO) {
       storePathManager.getStoreDescriptor(file).testStoreDirectoryExistsForProjectRoot()
     }
+  }
+}
+
+private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
+  val storePathManager = serviceAsync<ProjectStorePathManager>()
+  val existingFile = if (storePathManager.testStoreDirectoryExistsForProjectRoot(file)) file else null
+  val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
+  if (existingFile != null) {
+    for (p in projectManager.openProjects) {
+      if (isSameProject(existingFile, p)) {
+        focusProjectWindow(project = p, stealFocusIfAppInactive = false)
+        return p
+      }
+    }
+    return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
+  }
+
+  val created = try {
+    withContext(Dispatchers.IO) {
+      Files.notExists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
+    }
+  }
+  catch (_: IOException) {
+    false
+  }
+
+  if (!created) {
+    return null
+  }
+
+  val newProject = projectManager.newProjectAsync(file = file, options = OpenProjectTask {
+    isNewProject = true
+    isProjectCreatedWithWizard = true
+    runConfigurators = false //not used inside
+    projectName = name
+  })
+
+  try {
+    runInAutoSaveDisabledMode {
+      saveSettings(componentManager = newProject, forceSavingAllSettings = true)
+    }
+    PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
+      projectFile = file,
+      project = newProject,
+      newProject = true,
+      createModule = true,
+    )
+
+    return projectManager.openProjectAsync(projectIdentityFile = file, options = OpenProjectTask {
+      runConfigurators = false //not used when passing project
+      isProjectCreatedWithWizard = true
+      project = newProject
+    })
+  }
+  catch (e: Throwable) {
+    edtWriteAction {
+      Disposer.dispose(newProject)
+    }
+    throw e
   }
 }
 

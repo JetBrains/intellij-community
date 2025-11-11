@@ -261,6 +261,9 @@ public final class JUnit5TeamCityRunnerForTestAllSuite {
         else if (status == TestExecutionResult.Status.ABORTED) {
           testFailure(testIdentifier, ServiceMessageTypes.TEST_IGNORED, throwableOptional, duration, reason);
         }
+
+        TestLocationStorage.recordTestLocation(testIdentifier, status, getName(testIdentifier));
+
         testFinished(testIdentifier, duration);
         myFinishCount++;
       }

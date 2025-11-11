@@ -572,6 +572,8 @@ class ErrorCodes:
         TransactionIsNotEligibleForAdjustment: Final = "915219"
         TransactionMustBeInStateAuthorized: Final = "915218"
         TransactionSourceIsInvalid: Final = "915133"
+        TransferTypeIsInvalid: Final = "97501"
+        TransferDetailsAreRequired: Final = "97510"
         TypeIsInvalid: Final = "91523"
         TypeIsRequired: Final = "91524"
         UnsupportedVoiceAuthorization: Final = "91539"

@@ -5,8 +5,8 @@ import com.amazon.ion.IonReader;
 import com.amazon.ion.IonType;
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonReaderBuilder;
-import org.gradle.api.JavaVersion;
 import gnu.trove.TObjectHashingStrategy;
+import org.gradle.api.JavaVersion;
 import org.gradle.tooling.internal.adapter.ProtocolToModelAdapter;
 import org.gradle.tooling.internal.consumer.converters.BackwardsCompatibleIdeaModuleDependency;
 import org.gradle.tooling.model.*;
@@ -335,6 +335,9 @@ public final class IdeaProjectSerializationService implements SerializationServi
           writeProjectIdentifier(writer, context, gradleProject.getProjectIdentifier());
           writeFile(writer, "buildDirectory", gradleProject.getBuildDirectory());
           writeGradleProject(writer, "parent", context, gradleProject.getParent());
+          if (context.myGradleVersionComparator.isOrGreaterThan("8.2")) {
+            writeString(writer, "buildTreePath", gradleProject.getBuildTreePath());
+          }
 
           writer.setFieldName("children");
           writer.stepIn(IonType.LIST);
@@ -651,6 +654,9 @@ public final class IdeaProjectSerializationService implements SerializationServi
           gradleProject.setProjectIdentifier(readProjectIdentifier(reader, context));
           gradleProject.setBuildDirectory(readFile(reader, "buildDirectory"));
           gradleProject.setParent(readGradleProject(reader, context, "parent"));
+          if (context.myGradleVersionComparator.isOrGreaterThan("8.2")) {
+            gradleProject.setBuildTreePath(readString(reader, "buildTreePath"));
+          }
 
           reader.next();
           assertFieldName(reader, "children");

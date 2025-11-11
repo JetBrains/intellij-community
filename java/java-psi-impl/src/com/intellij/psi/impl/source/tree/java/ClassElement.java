@@ -49,7 +49,7 @@ public class ClassElement extends CompositeElement implements Constants {
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
     PsiClass psiClass = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(this);
     if (anchor == null) {
-      if (first.getElementType() != JavaDocElementType.DOC_COMMENT) {
+      if (!DOC_COMMENT_TOKENS.contains(first.getElementType())) {
         if (before == null) {
           if (first == last) {
             PsiElement firstPsi = SourceTreeToPsiMap.treeElementToPsi(first);
@@ -356,7 +356,7 @@ public class ClassElement extends CompositeElement implements Constants {
     else if (i == TYPE_PARAMETER_LIST) {
       return ChildRole.TYPE_PARAMETER_LIST;
     }
-    else if (i == JavaDocElementType.DOC_COMMENT) {
+    else if (DOC_COMMENT_TOKENS.contains(i)) {
       return getChildRole(child, ChildRole.DOC_COMMENT);
     }
     else if (ElementType.JAVA_PLAIN_COMMENT_BIT_SET.contains(i)) {

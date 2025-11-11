@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.maven4;
 
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.maven.server.telemetry.MavenServerTelemetryClasspathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.NioFiles;
@@ -22,7 +21,6 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -36,8 +34,8 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
   private static final @NonNls String MAIN_CLASS40 = "com.intellij.maven.server.m40.RemoteMavenServer40";
 
   @Override
-  public boolean isSupportedByExtension(@Nullable File mavenHome) {
-    String version = mavenHome == null ? null : MavenUtil.getMavenVersion(mavenHome.toPath());
+  public boolean isSupportedByExtension(@NotNull Path mavenHome) {
+    String version = MavenUtil.getMavenVersion(mavenHome);
     return StringUtil.compareVersionNumbers(version, "4") >= 0;
   }
 
@@ -93,7 +91,7 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<Path> classpath) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
     BundledMavenDownloader.INSTANCE.downloadMaven4LibsSync(communityRoot);
-    
+
     classpath.add(PathManager.getJarForClass(MavenId.class));
     classpath.add(locateModuleOutput("intellij.maven.server"));
 

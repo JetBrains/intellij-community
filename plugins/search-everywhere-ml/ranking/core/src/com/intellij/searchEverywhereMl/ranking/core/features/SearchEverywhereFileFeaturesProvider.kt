@@ -34,20 +34,20 @@ class SearchEverywhereFileFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(FileSearchEverywhereContributor::class.java, RecentFilesSEContributor::class.java) {
 
   object Fields {
-    val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("fileType", FileTypeUsagesCollector.ValidationRule::class.java)
-    val IS_BOOKMARK_DATA_KEY = EventFields.Boolean("isBookmark")
+    val FILETYPE_DATA_KEY = EventFields.StringValidatedByCustomRule("file_type", FileTypeUsagesCollector.ValidationRule::class.java)
+    val IS_BOOKMARK_DATA_KEY = EventFields.Boolean("is_bookmark")
 
-    val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("isDirectory")
-    val IS_EXACT_MATCH_DATA_KEY = EventFields.Boolean("isExactMatch")
-    val FILETYPE_MATCHES_QUERY_DATA_KEY = EventFields.Boolean("fileTypeMatchesQuery")
-    val IS_TOP_LEVEL_DATA_KEY = EventFields.Boolean("isTopLevel")
-    val IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY = EventFields.Boolean("isExactRelativePath")
+    val IS_DIRECTORY_DATA_KEY = EventFields.Boolean("is_directory")
+    val IS_EXACT_MATCH_DATA_KEY = EventFields.Boolean("is_exact_match")
+    val FILETYPE_MATCHES_QUERY_DATA_KEY = EventFields.Boolean("file_type_matches_query")
+    val IS_TOP_LEVEL_DATA_KEY = EventFields.Boolean("is_top_level")
+    val IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY = EventFields.Boolean("is_exact_relative_path")
 
     val REL_PATH_NAME_FEATURE_TO_FIELD = hashMapOf<String, EventField<*>>(
-      "prefix_same_start_count" to EventFields.Int("relPathPrefixSameStartCount"),
-      "prefix_greedy_score" to EventFields.Double("relPathPrefixGreedyScore"),
-      "prefix_matched_words_score" to EventFields.Double("relPathPrefixMatchedWordsScore"),
-      "prefix_matched_words_relative" to EventFields.Double("relPathPrefixMatchedWordsRelative")
+      "prefix_same_start_count" to EventFields.Int("rel_path_prefix_same_start_count"),
+      "prefix_greedy_score" to EventFields.Double("rel_path_prefix_greedy_score"),
+      "prefix_matched_words_score" to EventFields.Double("rel_path_prefix_matched_words_score"),
+      "prefix_matched_words_relative" to EventFields.Double("rel_path_prefix_matched_words_relative")
     )
   }
 
@@ -156,15 +156,11 @@ class SearchEverywhereFileFeaturesProvider
 
 
     return buildList {
-      val prefixMatchingFeatures = buildMap {
+      buildMap {
         PrefixMatchingUtil.calculateFeatures(relativePath.toString(), searchQuery, this)
-      }
-
-      REL_PATH_NAME_FEATURE_TO_FIELD.forEach { (key, field) ->
-        val matchValue = prefixMatchingFeatures[key] ?: return@forEach
-        setMatchValueToField(matchValue, field)?.let {
-          add(it)
-        }
+      }.mapNotNullTo(this@buildList) { (featureName, value) ->
+        val field = REL_PATH_NAME_FEATURE_TO_FIELD[featureName] ?: return@mapNotNullTo null
+        field.tryWith(value)
       }
     }
   }

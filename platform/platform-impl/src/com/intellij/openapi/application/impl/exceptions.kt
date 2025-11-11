@@ -33,8 +33,13 @@ internal fun processUnhandledException(
         logExceptionSafely(message, exception, interactive = true)
         val defaultMessage = LogMessage(exception, message, emptyList())
         // "clear" button doesn't play well with interactive message. Once cleared, windows becomes empty.
+        val application = ApplicationManager.getApplication()
+
         val showError = Registry.get("ide.exceptions.show.interactive").asBoolean()
-                        && !ApplicationManager.getApplication().isHeadlessEnvironment
+                        && !application.isHeadlessEnvironment
+                        // Sunsetting app might produce lots of errors due to races.
+                        // While all of them needs to be fixed, no need to bother user with them,
+                        && !application.isExitInProgress
         if (showError) {
           IdeErrorsDialog(MessagePool.getInstance(), null, false, defaultMessage, isModal = true, actionLeadToError = interactiveMode.action, hideClearButton = true).show()
         }

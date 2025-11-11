@@ -133,11 +133,13 @@ Navigation item file #1: kotlin-stdlib.jar!/kotlin/collections/ArraysKt__ArraysJ
      ExperimentalStdlibApi
      ExperimentalSubclassOptIn
      ExperimentalUnsignedTypes
+     ExperimentalVersionOverloading
      ExposedCopyVisibility
      ExtensionFunctionType
      Function
      IgnorableReturnValue
      InitializedLazyImpl
+     IntroducedAt
      kotlin.kotlin_builtins
      KotlinNothingValueException
      KotlinNullPointerException

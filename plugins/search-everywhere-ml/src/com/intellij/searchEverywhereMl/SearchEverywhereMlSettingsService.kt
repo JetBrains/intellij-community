@@ -195,7 +195,7 @@ class SearchEverywhereMlSettingsService : SerializablePersistentStateComponent<S
    * It updates the state for all tabs that support ML ranking.
    */
   private fun sync() {
-    SearchEverywhereTab.allTabs
+    SearchEverywhereTab.tabsWithLogging
       .filterIsInstance<SearchEverywhereTab.TabWithMlRanking>()
       .onEach { syncTabState(it) }
   }
@@ -247,7 +247,7 @@ class SearchEverywhereMlSettingsService : SerializablePersistentStateComponent<S
   }
 
   private fun setRegistryListeners() {
-    SearchEverywhereTab.allTabs
+    SearchEverywhereTab.tabsWithLogging
       .filterIsInstance<SearchEverywhereTab.TabWithMlRanking>()
       .onEach { registerRegistryValueListenerForTab(it) }
   }

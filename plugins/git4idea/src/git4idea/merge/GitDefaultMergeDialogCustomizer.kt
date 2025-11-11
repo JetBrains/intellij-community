@@ -287,7 +287,7 @@ private fun tryResolveRef(repository: GitRepository, @NlsSafe ref: String): Hash
     val revision = GitRevisionNumber.resolve(repository.project, repository.root, ref)
     return HashImpl.build(revision.asString())
   }
-  catch (e: VcsException) {
+  catch (_: VcsException) {
     return null
   }
 }

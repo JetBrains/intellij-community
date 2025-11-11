@@ -32,7 +32,6 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -47,10 +46,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
 import com.intellij.ui.AppUIUtil.invokeOnEdt
-import com.intellij.util.EventDispatcher
-import com.intellij.util.SmartList
-import com.intellij.util.ThrowableRunnable
-import com.intellij.util.asDisposable
+import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.breakpoints.*
@@ -469,6 +465,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   /**
    * TODO When we move to RD-first approach, @RequiresEdt requirements in [XDebuggerManager] can be removed
    */
+  @OptIn(AwaitCancellationAndInvoke::class)
   private fun initSessionTab(contentToReuse: RunContentDescriptor?, shouldShowTab: Boolean) {
     val forceNewDebuggerUi = debugProcess.forceShowNewDebuggerUi()
     val withFramesCustomization = debugProcess.allowFramesViewCustomization()
@@ -505,24 +502,25 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
           val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
-        addAdditionalConsolesToManager(runTab.consoleManger, localTabScope.asDisposable())
+        val disposable = localTabScope.asDisposable()
+        addAdditionalConsolesToManager(runTab.consoleManger, disposable)
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
           override fun isHiddenContent(): Boolean = true
         }
-        Disposer.register(mockDescriptor, runTab)
+        Disposer.register(disposable, runTab)
+        Disposer.register(disposable, mockDescriptor)
         val descriptorId = mockDescriptor.storeGlobally(localTabScope)
         runContentDescriptorId.complete(descriptorId)
         mockDescriptor.id = descriptorId
-        debuggerManager.coroutineScope.launch(Dispatchers.EDT, CoroutineStart.ATOMIC) {
+        debuggerManager.coroutineScope.launch(start = CoroutineStart.ATOMIC) {
           try {
             tabClosedChannel.receiveCatching()
           }
           finally {
             tabClosedChannel.close()
             tabCoroutineScope.cancel()
-            Disposer.dispose(mockDescriptor)
           }
         }
         myMockRunContentDescriptor = mockDescriptor

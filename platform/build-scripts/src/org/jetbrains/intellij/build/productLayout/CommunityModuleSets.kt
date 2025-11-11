@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
 import org.jetbrains.intellij.build.BuildPaths
 import java.nio.file.Path
 
@@ -36,18 +35,16 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Essential platform modules required by most IDE products.
-   * Corresponds to intellij.moduleSets.essential.xml and includes libraries.
    */
   fun essential(): ModuleSet = moduleSet("essential") {
     // Include libraries first (they are xi:included in essential.xml)
     moduleSet(libraries())
+    // RPC is used by core IDE functionality, so it is essential
+    moduleSet(rpc())
 
     // Core essential modules
     module("intellij.platform.settings.local")
     module("intellij.platform.backend")
-    module("intellij.platform.rpc.backend")
-    module("intellij.platform.kernel.impl")
-    module("intellij.platform.kernel.backend")
     module("intellij.platform.project.backend")
     module("intellij.platform.progress.backend")
     module("intellij.platform.lang.impl.backend")
@@ -124,6 +121,23 @@ object CommunityModuleSets : ModuleSetProvider {
 
     embeddedModule("intellij.platform.analysis")
     embeddedModule("intellij.platform.polySymbols")
+  }
+
+  /**
+   * Provides RPC functionality.
+   * Corresponds to intellij.moduleSets.rpc.xml
+   */
+  fun rpc(): ModuleSet = moduleSet("rpc") {
+    // Fleet libraries are required for RPC
+    moduleSet(fleet())
+
+    embeddedModule("intellij.platform.rpc")
+    embeddedModule("intellij.platform.kernel")
+    module("intellij.platform.rpc.backend")
+
+    module("intellij.platform.kernel.impl")
+    module("intellij.platform.kernel.backend")
+
     embeddedModule("intellij.platform.rpc.topics")
     module("intellij.platform.rpc.topics.backend")
     module("intellij.platform.rpc.topics.frontend")
@@ -131,7 +145,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * All library module sets combined (meta-set that includes core, ktor, misc, temporaryBundled).
-   * Corresponds to intellij.moduleSets.libraries.xml
    */
   fun libraries(): ModuleSet = moduleSet("libraries") {
     moduleSet(librariesCore())
@@ -142,7 +155,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Core library modules.
-   * Corresponds to intellij.moduleSets.libraries.core.xml
    */
   fun librariesCore(): ModuleSet = moduleSet("libraries.core") {
     embeddedModule("intellij.libraries.kotlin.reflect")
@@ -230,7 +242,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Ktor library modules.
-   * Corresponds to intellij.moduleSets.libraries.ktor.xml
    */
   fun librariesKtor(): ModuleSet = moduleSet("libraries.ktor") {
     embeddedModule("intellij.libraries.ktor.io")
@@ -242,7 +253,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Miscellaneous library modules.
-   * Corresponds to intellij.moduleSets.libraries.misc.xml
    */
   fun librariesMisc(): ModuleSet = moduleSet("libraries.misc") {
     // all libs here must not be embedded, if it is embedded, it should be moved to libs-core.xml
@@ -254,7 +264,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Temporarily bundled library modules (planned to be removed).
-   * Corresponds to intellij.moduleSets.libraries.temporaryBundled.xml
    */
   fun librariesTemporaryBundled(): ModuleSet = moduleSet("libraries.temporaryBundled") {
     // Currently used only by DBE (see https://youtrack.jetbrains.com/issue/IJPL-211789/CNFE-org.codehaus.jettison.mapped.Configuration).
@@ -269,7 +278,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * VCS (Version Control System) modules including shared and frontend parts.
-   * Corresponds to intellij.moduleSets.vcs.xml
    */
   fun vcs(): ModuleSet = moduleSet("vcs") {
     module("intellij.platform.vcs.impl")
@@ -291,7 +299,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * VCS shared modules (used by both frontend and backend).
-   * Corresponds to intellij.moduleSets.vcs.shared.xml
    */
   fun vcsShared(): ModuleSet = moduleSet("vcs.shared") {
     embeddedModule("intellij.platform.vcs.core")
@@ -302,7 +309,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * VCS frontend modules.
-   * Corresponds to intellij.moduleSets.vcs.frontend.xml
    */
   fun vcsFrontend(): ModuleSet = moduleSet("vcs.frontend") {
     module("intellij.platform.vcs.impl.frontend")
@@ -310,7 +316,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * XML support modules.
-   * Corresponds to intellij.moduleSets.xml.xml
    */
   fun xml(): ModuleSet = moduleSet("xml", alias = "com.intellij.modules.xml") {
     embeddedModule("intellij.xml.dom")
@@ -335,7 +340,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Duplicates analysis modules.
-   * Corresponds to intellij.moduleSets.duplicates.xml
    */
   fun duplicates(): ModuleSet = moduleSet("duplicates") {
     embeddedModule("intellij.platform.duplicates.analysis")
@@ -343,7 +347,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Stream debugger modules.
-   * Corresponds to intellij.moduleSets.debugger.streams.xml
    */
   fun debuggerStreams(): ModuleSet = moduleSet("debugger.streams") {
     module("intellij.debugger.streams.core")
@@ -353,7 +356,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Process elevation support (for operations requiring elevated privileges).
-   * Corresponds to intellij.moduleSets.elevation.xml
    */
   fun elevation(): ModuleSet = moduleSet("elevation") {
     module("intellij.execution.process.elevation")
@@ -364,7 +366,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Compose UI modules.
-   * Corresponds to intellij.moduleSets.compose.xml
    */
   fun compose(): ModuleSet = moduleSet("compose") {
     module("intellij.libraries.skiko")
@@ -387,7 +388,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Grid/data viewer core modules.
-   * Corresponds to intellij.moduleSets.grid.core.xml
    */
   fun gridCore(): ModuleSet = moduleSet("grid.core") {
     module("intellij.grid")
@@ -399,7 +399,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
   /**
    * Remote development common modules.
-   * Corresponds to intellij.moduleSets.rd.common.xml
    */
   fun rdCommon(): ModuleSet = moduleSet("rd.common") {
     module("intellij.rd.ide.model.generated")
@@ -408,8 +407,28 @@ object CommunityModuleSets : ModuleSetProvider {
   }
 
   /**
+   * Fleet libraries used in IntelliJ Platform. They are built from sources and put in the distribution.
+   * Corresponds to intellij.moduleSets.fleet.xml
+   */
+  fun fleet(): ModuleSet = moduleSet("libraries.fleet") {
+    // These modules are embedded because some of them are used by V1 platform modules
+    embeddedModule("fleet.andel")
+    embeddedModule("fleet.bifurcan")
+    embeddedModule("fleet.fastutil")
+    embeddedModule("fleet.kernel")
+    embeddedModule("fleet.multiplatform.shims")
+    embeddedModule("fleet.reporting.api")
+    embeddedModule("fleet.reporting.shared")
+    embeddedModule("fleet.rhizomedb")
+    embeddedModule("fleet.rpc")
+    embeddedModule("fleet.util.codepoints")
+    embeddedModule("fleet.util.core")
+    embeddedModule("fleet.util.logging.api")
+    embeddedModule("fleet.util.serialization")
+  }
+
+  /**
    * IDE common modules (includes essential, compose, grid.core, vcs, xml, duplicates).
-   * Corresponds to intellij.moduleSets.ide.common.xml
    */
   fun ideCommon(): ModuleSet = moduleSet("ide.common") {
     // Include essential first (which includes libraries)
@@ -455,20 +474,10 @@ object CommunityModuleSets : ModuleSetProvider {
     moduleSet(vcs())
     moduleSet(xml())
     moduleSet(duplicates())
+    module("intellij.platform.structuralSearch")
 
     // Note: rd.common is intentionally NOT included in ide.common
     // Reason: Rider uses custom module loading mode due to early backend startup requirements.
     // Products that need rd.common include it explicitly in their product files.
   }
 }
-
-/**
- * Represents a content module with optional loading attribute.
- *
- * @param name Module name
- * @param loading Optional loading mode (e.g., ModuleLoadingRule.EMBEDDED)
- */
-data class ContentModule(
-  @JvmField val name: String,
-  @JvmField val loading: ModuleLoadingRule? = null,
-)

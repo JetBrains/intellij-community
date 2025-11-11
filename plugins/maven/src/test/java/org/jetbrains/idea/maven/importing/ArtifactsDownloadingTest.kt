@@ -24,7 +24,8 @@ import org.junit.Test
 import kotlin.io.path.exists
 
 class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
-    
+  override fun skipPluginResolution() = false
+
   @Test
   fun JavadocsAndSources() = runBlocking {
     importProjectAsync("""
@@ -45,6 +46,8 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
 
     assertFalse(sources.exists())
     assertFalse(javadoc.exists())
+
+    mavenGeneralSettings.isWorkOffline = false
 
     downloadArtifacts()
 
@@ -73,30 +76,18 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
     assertFalse("Sources folder should not exist at test start", sources.exists())
     assertFalse("Javadoc folder should not exist at test start", javadoc.exists())
 
-    mavenGeneralSettings.isWorkOffline = false
-    downloadArtifacts()
-
-    assertTrue("Sources folder should exist after first download", sources.exists())
-    assertTrue("Javadoc folder should exist after first download", javadoc.exists())
-
-    FileUtilRt.deleteRecursively(sources)
-    FileUtilRt.deleteRecursively(javadoc)
-
-    assertFalse("Sources folder should not exist after deletion", sources.exists())
-    assertFalse("Javadoc folder should not exist after deletion", javadoc.exists())
-
     mavenGeneralSettings.isWorkOffline = true
 
     val downloadResult = downloadArtifacts()
 
     val expectedResult = setOf(MavenId("junit", "junit", "4.0"))
-    assertEquals("Unexpected resolved sources", expectedResult, downloadResult.resolvedSources)
-    assertEquals("Unexpected resolved javadocs", expectedResult, downloadResult.resolvedDocs)
-    assertEquals("Unexpected unresolved sources", emptySet<MavenId>(), downloadResult.unresolvedSources)
-    assertEquals("Unexpected unresolved javadocs", emptySet<MavenId>(), downloadResult.unresolvedDocs)
+    assertEquals("Resolved sources", expectedResult, downloadResult.resolvedSources)
+    assertEquals("Resolved javadocs", expectedResult, downloadResult.resolvedDocs)
+    assertEquals("Unresolved sources", emptySet<MavenId>(), downloadResult.unresolvedSources)
+    assertEquals("Unresolved javadocs", emptySet<MavenId>(), downloadResult.unresolvedDocs)
 
-    assertTrue("Sources folder should exist after second download",sources.exists())
-    assertTrue("Javadoc folder should exist after second download",javadoc.exists())
+    assertTrue("Sources folder should exist",sources.exists())
+    assertTrue("Javadoc folder should exist",javadoc.exists())
   }
 
   @Test

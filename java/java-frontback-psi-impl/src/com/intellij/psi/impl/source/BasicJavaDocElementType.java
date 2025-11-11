@@ -154,8 +154,8 @@ public interface BasicJavaDocElementType {
 
     private static final Set<IElementType> myParentElementTypes = Collections.singleton(BASIC_DOC_COMMENT);
 
-    public DocCommentElementType() {
-      super("DOC_COMMENT", JavaLanguage.INSTANCE);
+    public DocCommentElementType(String debugName) {
+      super(debugName, JavaLanguage.INSTANCE);
       myParser = (builder, languageLevel) -> new JavaDocParser(builder, languageLevel).parseDocCommentText();
     }
 

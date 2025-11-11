@@ -75,7 +75,7 @@ open class WindowsDistributionCustomizer {
   /**
    * Override this method to copy additional files to the Windows distribution of the product.
    */
-  open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+  open suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
     RepairUtilityBuilder.bundle(context, OsFamily.WINDOWS, arch, targetDir)
   }
 

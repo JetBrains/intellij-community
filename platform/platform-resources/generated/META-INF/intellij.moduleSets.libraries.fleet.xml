@@ -1,0 +1,21 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run: CommunityModuleSets.main() -->
+<!-- Source: see moduleSet("libraries.fleet") function in CommunityModuleSets.kt -->
+<!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
+<idea-plugin>
+  <content namespace="jetbrains">
+    <module name="fleet.andel" loading="embedded"/>
+    <module name="fleet.bifurcan" loading="embedded"/>
+    <module name="fleet.fastutil" loading="embedded"/>
+    <module name="fleet.kernel" loading="embedded"/>
+    <module name="fleet.multiplatform.shims" loading="embedded"/>
+    <module name="fleet.reporting.api" loading="embedded"/>
+    <module name="fleet.reporting.shared" loading="embedded"/>
+    <module name="fleet.rhizomedb" loading="embedded"/>
+    <module name="fleet.rpc" loading="embedded"/>
+    <module name="fleet.util.codepoints" loading="embedded"/>
+    <module name="fleet.util.core" loading="embedded"/>
+    <module name="fleet.util.logging.api" loading="embedded"/>
+    <module name="fleet.util.serialization" loading="embedded"/>
+  </content>
+</idea-plugin>

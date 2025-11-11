@@ -13,11 +13,14 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Serializable
 sealed class BackendChangesViewEvent {
+  @Serializable
   data class InclusionChanged(val inclusionState: List<InclusionDto>) : BackendChangesViewEvent() {
     override fun toString(): String = "InclusionChanged(items=${inclusionState.size})"
   }
 
+  @Serializable
   data class RefreshRequested(val withDelay: Boolean, val refreshCounter: Int) : BackendChangesViewEvent()
 
+  @Serializable
   data class ToggleCheckboxes(val showCheckboxes: Boolean) : BackendChangesViewEvent()
 }

@@ -3,11 +3,9 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.LanguageLevel;
-import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
-import org.intellij.lang.regexp.RegExpLanguageHost;
-import org.intellij.lang.regexp.RegExpTT;
-import org.intellij.lang.regexp.UnicodeCharacterNames;
+import org.intellij.lang.regexp.*;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,5 +114,31 @@ public final class PythonRegExpHost implements RegExpLanguageHost {
   @Override
   public boolean isValidNamedCharacter(RegExpNamedCharacter namedCharacter) {
     return UnicodeCharacterNames.getCodePoint(namedCharacter.getName()) >= 0;
+  }
+
+  @Override
+  public boolean isValidGroupName(String name, @NotNull RegExpGroup group) {
+    // non-ascii characters are allowed as group names in Python 3
+    // the specification is `<XID_Start> <XID_Continue>*`
+    int offset = 0;
+    int codePoint = name.codePointAt(offset);
+    
+    // First character must be XID_Start
+    if (!Character.isUnicodeIdentifierStart(codePoint)) {
+      return false;
+    }
+    
+    offset += Character.charCount(codePoint);
+    
+    // Remaining characters must be XID_Continue
+    while (offset < name.length()) {
+      codePoint = name.codePointAt(offset);
+      if (!Character.isUnicodeIdentifierPart(codePoint)) {
+        return false;
+      }
+      offset += Character.charCount(codePoint);
+    }
+    
+    return true;
   }
 }

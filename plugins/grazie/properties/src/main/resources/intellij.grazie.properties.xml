@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.grazie.ide.language.properties">
+<idea-plugin>
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <module name="intellij.properties.backend"/>

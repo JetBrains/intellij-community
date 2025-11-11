@@ -9083,6 +9083,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/introduceImportAlias/conflictPackage.kt");
         }
 
+        @TestMetadata("constructorWithConflictingUsage.kt")
+        public void testConstructorWithConflictingUsage() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceImportAlias/constructorWithConflictingUsage.kt");
+        }
+
         @TestMetadata("function.kt")
         public void testFunction() throws Exception {
             runTest("../../../idea/tests/testData/intentions/introduceImportAlias/function.kt");

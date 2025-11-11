@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.impl.wsl.ijent.nio
 
 import com.intellij.execution.ijent.nio.getCachedFileAttributesAndWrapToDosAttributesAdapter
+import com.intellij.execution.ijent.nio.getFileAttributeViewUsingDosAttributesAdapter
 import com.intellij.execution.ijent.nio.readAttributesUsingDosAttributesAdapter
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
@@ -302,8 +303,8 @@ class IjentWslNioFileSystemProvider(
   override fun getFileStore(path: Path): FileStore =
     ijentFsProvider.getFileStore(path.toIjentPath())
 
-  override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V =
-    ijentFsProvider.getFileAttributeView(path.toIjentPath(), type, *options)
+  override fun <V : FileAttributeView> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V =
+    ijentFsProvider.getFileAttributeViewUsingDosAttributesAdapter(path.toIjentPath(), type, *options)
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     return ijentFsProvider.readAttributesUsingDosAttributesAdapter(path, path.toIjentPath(), type, *options)

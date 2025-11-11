@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
+import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.*;
+import com.sun.jna.win32.StdCallLibrary;
 import mslinks.ShellLink;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +23,8 @@ import static com.intellij.updater.Runner.LOG;
 import static java.util.Objects.requireNonNullElse;
 
 final class PostUpdateTasks {
+  private static final String[] EMPTY_ARRAY = {};
+
   static void refreshAppBundleIcon(Path targetDir) {
     try {
       var applicationPath = "Contents".equals(targetDir.getFileName().toString()) ? targetDir.getParent() : targetDir;
@@ -45,19 +49,21 @@ final class PostUpdateTasks {
     try {
       LOG.info("updateUninstallerSection for: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
-      var keyPath = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+      var baseKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
       for (var rootKey : rootKeys) {
-        for (var key : Advapi32Util.registryGetKeys(rootKey, keyPath)) {
+        for (var key : getRegistryGetKeys(rootKey, baseKey)) {
           try {
-            var location = Advapi32Util.registryGetStringValue(rootKey, keyPath + '\\' + key, "InstallLocation");
+            var location = Advapi32Util.registryGetStringValue(rootKey, baseKey + '\\' + key, "InstallLocation");
             if (targetPath.equalsIgnoreCase(location)) {
-              LOG.info("key: " + rootKeyName(rootKey) + '\\' + keyPath + '\\' + key);
-              Advapi32Util.registrySetStringValue(rootKey, keyPath + '\\' + key, "DisplayName", nameAndVersion);
-              Advapi32Util.registrySetStringValue(rootKey, keyPath + '\\' + key, "DisplayVersion", buildNumber);
+              LOG.info("key: " + formatKey(rootKey, baseKey, key));
+              Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayName", nameAndVersion);
+              Advapi32Util.registrySetStringValue(rootKey, baseKey + '\\' + key, "DisplayVersion", buildNumber);
               return;
             }
           }
-          catch (Win32Exception ignored) { }
+          catch (Win32Exception e) {
+            LOG.log(Level.FINE, e, () -> "updateUninstallerSection: " + formatKey(rootKey, baseKey, key));
+          }
         }
       }
     }
@@ -72,13 +78,13 @@ final class PostUpdateTasks {
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
       var baseKey = "Software\\JetBrains";
       for (var rootKey : rootKeys) {
-        for (var productKey : Advapi32Util.registryGetKeys(rootKey, baseKey)) {
-          for (var buildKey : Advapi32Util.registryGetKeys(rootKey, baseKey + '\\' + productKey)) {
+        for (var productKey : getRegistryGetKeys(rootKey, baseKey)) {
+          for (var buildKey : getRegistryGetKeys(rootKey, baseKey + '\\' + productKey)) {
             try {
               var oldKey = baseKey + '\\' + productKey + '\\' + buildKey;
               var location = Advapi32Util.registryGetStringValue(rootKey, oldKey, "");
               if (targetPath.equalsIgnoreCase(location)) {
-                LOG.info("key: " + rootKeyName(rootKey) + '\\' + oldKey);
+                LOG.info("key: " + formatKey(rootKey, oldKey));
                 var newKey = baseKey + '\\' + (united ? stripCeSuffixes(productKey) : productKey) + '\\' + buildNumber;
                 Advapi32Util.registryCreateKey(rootKey, newKey);
                 for (var entry : Advapi32Util.registryGetValues(rootKey, oldKey).entrySet()) {
@@ -88,7 +94,9 @@ final class PostUpdateTasks {
                 return;
               }
             }
-            catch (Win32Exception ignored) { }
+            catch (Win32Exception e) {
+              LOG.log(Level.FINE, e, () -> "updateManufacturerSection: " + formatKey(rootKey, baseKey, productKey, buildKey));
+            }
           }
         }
       }
@@ -102,14 +110,18 @@ final class PostUpdateTasks {
     try {
       LOG.info("updateContextMenuEntries for: " + targetPath);
       var rootKeys = List.of(WinReg.HKEY_CURRENT_USER, WinReg.HKEY_LOCAL_MACHINE);
+      var updated = false;
       for (var rootKey : rootKeys) {
         // file association target
-        processContextMenuKey(rootKey, "Software\\Classes", true, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes", true, targetPath);
         // "edit with" context menu
-        processContextMenuKey(rootKey, "Software\\Classes\\*\\shell", false, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes\\*\\shell", false, targetPath);
         // folder context menu
-        processContextMenuKey(rootKey, "Software\\Classes\\Directory\\shell", false, targetPath);
-        processContextMenuKey(rootKey, "Software\\Classes\\Directory\\Background\\shell", false, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes\\Directory\\shell", false, targetPath);
+        updated |= processContextMenuKey(rootKey, "Software\\Classes\\Directory\\Background\\shell", false, targetPath);
+      }
+      if (updated) {
+        notifyShellAboutChangedAssociations();
       }
     }
     catch (Throwable t) {
@@ -117,8 +129,9 @@ final class PostUpdateTasks {
     }
   }
 
-  private static void processContextMenuKey(WinReg.HKEY rootKey, String baseKey, boolean fileAssociation, String targetPath) {
-    for (var subKey : Advapi32Util.registryGetKeys(rootKey, baseKey)) {
+  private static boolean processContextMenuKey(WinReg.HKEY rootKey, String baseKey, boolean fileAssociation, String targetPath) {
+    var updated = false;
+    for (var subKey : getRegistryGetKeys(rootKey, baseKey)) {
       if (fileAssociation && (baseKey.startsWith(".") || baseKey.startsWith("ms-") || baseKey.startsWith("microsoft"))) continue;
       try {
         var key = baseKey + '\\' + subKey;
@@ -129,19 +142,55 @@ final class PostUpdateTasks {
           var name = Advapi32Util.registryGetStringValue(rootKey, key, "");
           var newName = stripCeSuffixes(name);
           if (!name.equals(newName)) {
-            LOG.info("key: " + rootKeyName(rootKey) + '\\' + baseKey + '\\' + subKey);
+            LOG.info("key: " + formatKey(rootKey, baseKey, subKey));
             Advapi32Util.registrySetStringValue(rootKey, key, "", newName);
+            updated = true;
           }
         }
       }
-      catch (Win32Exception ignored) { }
+      catch (Win32Exception e) {
+        LOG.log(Level.FINE, e, () -> "processContextMenuKey: " + formatKey(rootKey, baseKey, subKey));
+      }
+    }
+    return updated;
+  }
+
+  private static String[] getRegistryGetKeys(WinReg.HKEY rootKey, String key) {
+    try {
+      return Advapi32Util.registryGetKeys(rootKey, key);
+    }
+    catch (Win32Exception e) {
+      LOG.log(Level.FINE, e, () -> "registryGetKeys(" + formatKey(rootKey, key) + ')');
+      return EMPTY_ARRAY;
     }
   }
 
-  private static String rootKeyName(WinReg.HKEY key) {
-    return key == WinReg.HKEY_CURRENT_USER ? "HKCU" :
-           key == WinReg.HKEY_LOCAL_MACHINE ? "HKLM" :
-           "0x" + Long.toHexString(Pointer.nativeValue(key.getPointer()));
+  private static String formatKey(WinReg.HKEY rootKey, String... subKeys) {
+    var sb = new StringBuilder().append(
+      rootKey == WinReg.HKEY_CURRENT_USER ? "HKCU" :
+      rootKey == WinReg.HKEY_LOCAL_MACHINE ? "HKLM" :
+      "0x" + Long.toHexString(Pointer.nativeValue(rootKey.getPointer()))
+    );
+    for (var subKey : subKeys) sb.append('\\').append(subKey);
+    return sb.toString();
+  }
+
+  private static void notifyShellAboutChangedAssociations() {
+    try {
+      var shell32 = Native.load("shell32", Shell32.class);
+      shell32.SHChangeNotify(new WinDef.LONG(Shell32.SHCNE_ASSOCCHANGED), new WinDef.UINT(Shell32.SHCNF_IDLIST), null, null);
+    }
+    catch (Throwable t) {
+      LOG.log(Level.WARNING, "notifyShellAboutChangedAssociations failed", t);
+    }
+  }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  private interface Shell32 extends StdCallLibrary {
+    long SHCNE_ASSOCCHANGED = 0x08000000L;
+    int SHCNF_IDLIST = 0;
+
+    void SHChangeNotify(WinDef.LONG wEventId, WinDef.UINT uFlags, Pointer dwItem1, Pointer dwItem2);
   }
 
   static void updateWindowsShortcuts(Path targetDir, String nameAndVersion) {
@@ -191,7 +240,7 @@ final class PostUpdateTasks {
   private static Path getFolderPath(int folder, Supplier<Path> fallback) {
     try {
       var path = new char[WinDef.MAX_PATH];
-      var res = Shell32.INSTANCE.SHGetFolderPath(null, folder, null, ShlObj.SHGFP_TYPE_CURRENT, path);
+      var res = com.sun.jna.platform.win32.Shell32.INSTANCE.SHGetFolderPath(null, folder, null, ShlObj.SHGFP_TYPE_CURRENT, path);
       if (WinError.S_OK.equals(res)) {
         var len = 0;
         while (len < path.length && path[len] != 0) len++;

@@ -119,6 +119,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "//libraries/miglayout-swing",
     "//platform/util/text-matching",
+    "//platform/util/text-matching:text-matching_test_lib",
     "//platform/util/coroutines",
     "//platform/ide-core-impl",
     "//platform/platform-impl/rpc",

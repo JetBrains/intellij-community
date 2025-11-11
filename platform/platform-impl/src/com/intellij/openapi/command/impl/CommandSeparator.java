@@ -97,19 +97,35 @@ public final class CommandSeparator implements CommandListener {
   }
 
   private void notifyCommandStarted(@NotNull CommandEvent event) {
-    publisher.onCommandStarted(createCmdEvent(event));
+    notifyCommandStarted(createCmdEvent(event));
   }
 
   private void notifyCommandFinished(@NotNull CommandEvent event) {
-    publisher.onCommandFinished(createCmdEvent(event));
+    notifyCommandFinished(createCmdEvent(event));
   }
 
   private void notifyTransparentStarted() {
-    publisher.onCommandStarted(createTransparentCmdEvent());
+    notifyCommandStarted(createTransparentCmdEvent());
   }
 
   private void notifyTransparentFinished() {
-    publisher.onCommandFinished(createTransparentCmdEvent());
+    notifyCommandFinished(createTransparentCmdEvent());
+  }
+
+  private void notifyCommandStarted(@NotNull CmdEvent cmdEvent) {
+    publisher.onCommandStarted(cmdEvent);
+    UndoSpy undoSpy = UndoSpy.getInstance();
+    if (undoSpy != null) {
+      undoSpy.commandStarted(cmdEvent);
+    }
+  }
+
+  private void notifyCommandFinished(@NotNull CmdEvent cmdEvent) {
+    publisher.onCommandFinished(cmdEvent);
+    UndoSpy undoSpy = UndoSpy.getInstance();
+    if (undoSpy != null) {
+      undoSpy.commandFinished(cmdEvent);
+    }
   }
 
   private void assertInsideCommand() {

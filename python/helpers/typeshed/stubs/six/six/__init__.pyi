@@ -61,7 +61,7 @@ unichr = chr
 
 def int2byte(i: int) -> bytes: ...
 
-# Should be `byte2int: operator.itemgetter[int]`. But a bug in mypy prevents using TypeVar in itemgetter.__call__
+# Should be `byte2int: operator.itemgetter[int]`. But `itemgetter.__call__` returns `Any`
 def byte2int(obj: SupportsGetItem[int, _T]) -> _T: ...
 
 indexbytes = operator.getitem

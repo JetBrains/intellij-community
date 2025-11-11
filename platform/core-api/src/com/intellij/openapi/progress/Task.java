@@ -249,6 +249,70 @@ public abstract class Task implements TaskInfo, Progressive {
     public boolean isConditionalModal() {
       return false;
     }
+
+    /**
+     * When you need either modal or backgroundable task, depending on some dynamic flag,
+     * you can create {@link Backgroundable} instance and call this method.
+     * If {@code modal}==true, this method will create new {@link Task.Modal}, and delegate all methods to the old instance.
+     */
+    @ApiStatus.Internal
+    public Task toModalIfNeeded(boolean isModal) {
+      if (!isModal) {
+        return this;
+      }
+      return new Modal(getProject(), getTitle(), isCancellable()) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          Backgroundable.this.run(indicator);
+        }
+
+        @Override
+        public void onCancel() {
+          Backgroundable.this.onCancel();
+        }
+
+        @Override
+        public void onSuccess() {
+          Backgroundable.this.onSuccess();
+        }
+
+        @Override
+        public void onThrowable(@NotNull Throwable error) {
+          Backgroundable.this.onThrowable(error);
+        }
+
+        @Override
+        public void onFinished() {
+          Backgroundable.this.onFinished();
+        }
+
+        @Override
+        public @NotNull EdtReplacementThread whereToRunCallbacks() {
+          return Backgroundable.this.whereToRunCallbacks();
+        }
+
+        @Override
+        public @Nullable Object getId() {
+          return Backgroundable.this.getId();
+        }
+
+        @Override
+        public @Nullable NotificationInfo getNotificationInfo() {
+          return Backgroundable.this.getNotificationInfo();
+        }
+
+        @Override
+        public @Nullable NotificationInfo notifyFinished() {
+          return Backgroundable.this.notifyFinished();
+        }
+
+        @Override
+        public boolean isHeadless() {
+          return Backgroundable.this.isHeadless();
+        }
+      };
+    }
+
  }
 
   /**

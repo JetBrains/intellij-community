@@ -217,7 +217,7 @@ private val userHomePath = lazy {
 
 /**
  * Replaces [userHomePath] in  [sdkHomePath] to `~`
- * Use [com.jetbrains.python.PathShorter] instead
+ * Use [com.jetbrains.python.PathShortener] instead
  */
 @ApiStatus.Internal
 @Deprecated("Use PathShorter")

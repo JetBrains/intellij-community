@@ -11,73 +11,100 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.logging.Handler
 import java.util.logging.LogRecord
+import kotlin.io.path.name
 
 /**
  * Handler for logging attachments of [ExceptionWithAttachments] to log folder.
  */
-internal class AttachmentHandler(private val logPath: Path) : Handler() {
+internal class AttachmentHandler(private val logPath: Path ) : Handler() {
   override fun publish(record: LogRecord) {
     if (!isLoggable(record)) return
 
     val t = record.thrown ?: return
     val ewas = ExceptionUtil.findCauseAndSuppressed(t, ExceptionWithAttachments::class.java).ifEmpty { return }
 
-    val hasAnyAttachments = ewas.any { it.attachments.isNotEmpty() }
-    if (!hasAnyAttachments) return
-
-    val attachmentsDir = prepareDir(logPath, record) ?: return
-
-    log.info("Saving attachments of [${record.loggerName}] ${t.javaClass.name} to $attachmentsDir")
-
-    writeStacktrace(attachmentsDir, t)
-
-    if (ewas.singleOrNull() == t) {
-      // Single EWA: write files directly into the main folder (no nested folder)
-      writeAttachments(attachmentsDir, ewas.single().attachments)
+    val dirWithLoggedAttachments = if (ewas.singleOrNull() == t) {
+      writeSingleEwa(ewas.single(), t)
     }
     else {
-      // Multiple EWAs: create a separate subfolder for each
-      for ((index, ewa) in ewas.withIndex()) {
-        if (ewa.attachments.isEmpty()) continue
-        val subDir = prepareEwaDir(ewa, attachmentsDir, index) ?: continue
-        writeEwaStacktrace(subDir, ewa)
-        writeAttachments(subDir, ewa.attachments)
-      }
+      writeEwas(ewas, t)
+    }
+
+    if (dirWithLoggedAttachments != null) {
+      log.info("Saving attachments of [${record.loggerName}] ${t.javaClass.name} to $dirWithLoggedAttachments")
     }
   }
 
-  private fun prepareEwaDir(ewa: ExceptionWithAttachments, attachmentsDir: Path, index: Int): Path? {
-    val subDir = attachmentsDir.resolve("ewa-" + (index + 1) + "-" + inferErrorAbbreviation(ewa))
-    try {
-      Files.createDirectories(subDir)
-      return subDir
+  private fun writeEwas(ewas: MutableList<ExceptionWithAttachments>, t: Throwable): Path? {
+    val attachmentsDir = prepareDir(logPath, t) ?: return null
+
+    // store all EWAs directly in the main folder, prefixing files with the EWA index
+    var index = 1
+    for (ewa in ewas) {
+      val attachments = ewa.attachments.ifEmpty { continue }
+      writeEwa(attachmentsDir, ewa, "$index-", attachments)
+      index++
     }
-    catch (_: IOException) {
+
+    if (index == 1) {
+      // no attachments saved => delete the empty directory
+      try {
+        Files.deleteIfExists(attachmentsDir)
+      }
+      catch (_: IOException) {}
       return null
     }
+
+    // Keep the overall throwable stacktrace for context
+    writeStacktrace(attachmentsDir.resolve("stacktrace.txt"), t)
+
+    return attachmentsDir
   }
 
-  private fun writeEwaStacktrace(subDir: Path, ewa: ExceptionWithAttachments) {
+  private fun writeSingleEwa(ewa: ExceptionWithAttachments, t: Throwable): Path? {
+    val attachments = ewa.attachments.ifEmpty { return null }
+    val attachmentsDir = prepareDir(logPath, t) ?: return null
+    writeEwa(attachmentsDir, ewa, "", attachments)
+    return attachmentsDir
+  }
+
+  private fun writeEwa(
+    attachmentsDir: Path,
+    ewa: ExceptionWithAttachments,
+    prefix: String,
+    attachments: Array<Attachment>,
+  ) {
+    writeIndexedEwaStacktrace(attachmentsDir, ewa, prefix)
+    writeAttachments(attachmentsDir, attachments, prefix)
+  }
+
+  private fun writeIndexedEwaStacktrace(dir: Path, ewa: ExceptionWithAttachments, prefix: String) {
     if (ewa is Throwable) {
-      writeStacktrace(subDir, ewa)
+      val stacktraceFile = dir.resolve("${prefix}stacktrace.txt")
+      writeStacktrace(stacktraceFile, ewa)
     }
     else {
       try {
-        Files.write(subDir.resolve("ewa.txt"), ewa.toString().toByteArray())
+        Files.write(dir.resolve("${prefix}ewa.txt"), ewa.toString().toByteArray())
       }
       catch (_: IOException) {
       }
     }
   }
 
-  private fun prepareDir(logPath: Path, record: LogRecord): Path? {
-    val logDir = logPath.parent
-    val now = ZonedDateTime.now()
-    val errorAbbr = inferErrorAbbreviation(record.thrown)
-    val dirName = "attachments-" + dateFormat.format(now) + "-" + errorAbbr
-    val attachmentsDir = logDir.resolve(dirName)
+  private fun prepareDir(logPath: Path, t: Throwable): Path? {
+    val baseDir = logPath.parent.resolve("attachments")
+    val dirName = prepareDirName(t)
+    val attachmentsDir = baseDir.resolve(dirName)
 
     try {
+      // Ensure base directory exists
+      Files.createDirectories(baseDir)
+
+      // Prune oldest groups to keep room for a new one
+      pruneOldAttachmentGroups(baseDir, MAX_ATTACHMENT_GROUPS)
+
+      // Create new group directory
       Files.createDirectories(attachmentsDir)
     }
     catch (_: IOException) {
@@ -87,9 +114,14 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
     return attachmentsDir
   }
 
-  private fun writeStacktrace(dir: Path, t: Throwable) {
+  private fun prepareDirName(t: Throwable): String {
+    val now = ZonedDateTime.now()
+    val errorAbbr = inferErrorAbbreviation(t)
+    return "attachments-" + dateFormat.format(now) + "-" + errorAbbr
+  }
+
+  private fun writeStacktrace(stacktraceFile: Path, t: Throwable) {
     try {
-      val stacktraceFile = dir.resolve("stacktrace.txt")
       PrintWriter(Files.newBufferedWriter(stacktraceFile)).use {
         t.printStackTrace(it)
       }
@@ -118,11 +150,11 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
     }
   }
 
-  private fun writeAttachments(dir: Path, attachments: Array<Attachment>) {
+  private fun writeAttachments(dir: Path, attachments: Array<Attachment>, prefix: String) {
     val usedNames = HashSet<String>()
     for (attachment in attachments) {
       val base = sanitizeFileName(attachment.name.ifEmpty { "attachment" })
-      val fileName = uniqueName(base, usedNames)
+      val fileName = uniqueName(prefix + base, usedNames)
       val file = dir.resolve(fileName)
       try {
         Files.write(file, attachment.bytes)
@@ -130,6 +162,55 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
       catch (_: IOException) {
         // ignore errors for individual files
       }
+    }
+  }
+
+  /**
+   * Keep at most [maxGroups] attachment groups under [baseDir]. If the number of existing groups
+   * is >= [maxGroups], delete the oldest ones to make room for a new group.
+   */
+  @Suppress("SameParameterValue")
+  private fun pruneOldAttachmentGroups(baseDir: Path, maxGroups: Int) {
+    val entries = try {
+      val directoryStream = Files.newDirectoryStream(baseDir) { path ->
+        Files.isDirectory(path) && path.name.startsWith("attachments-")
+      }
+
+      directoryStream.use { ds ->
+        ds.toMutableList()
+      }
+    }
+    catch (_: IOException) {
+      return
+    }
+
+    val toDeleteCount = entries.size - maxGroups + 1 // make room for the incoming group
+    if (toDeleteCount <= 0) return
+
+    // Sort by directory name which begins with timestamp in yy-MM-dd-HH-mm-ss format -> lexicographical order matches time order
+    entries.sortBy { it.fileName.toString() }
+
+    for (i in 0 until toDeleteCount) {
+      deleteRecursively(entries[i])
+    }
+  }
+
+  private fun deleteRecursively(path: Path) {
+    try {
+      // Delete files first, then directories
+      Files.walk(path)
+        .sorted(Comparator.reverseOrder())
+        .forEach { p ->
+          try {
+            Files.deleteIfExists(p)
+          }
+          catch (_: IOException) {
+            // ignore deletion errors
+          }
+        }
+    }
+    catch (_: IOException) {
+      // ignore traversal errors
     }
   }
 
@@ -175,6 +256,7 @@ internal class AttachmentHandler(private val logPath: Path) : Handler() {
   }
 }
 
+private const val MAX_ATTACHMENT_GROUPS: Int = 100
 private val dateFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yy-MM-dd-HH-mm-ss")
 private val uppercaseMatcher = Regex("(?=[A-Z])")
 

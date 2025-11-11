@@ -69,7 +69,11 @@ sealed interface TestContext {
   val uniqueId: String
 
   /**
-   * Display name for the current test or container, for example [org.junit.jupiter.api.extension.ExtensionContext.getDisplayName]
+   * Display name for the current test or container.
+   *
+   * It's based on [org.junit.jupiter.api.extension.ExtensionContext.getDisplayName], but:
+   * - if it starts with the "test" prefix, the prefix is removed
+   * - if it ends with the "()" suffix, the suffix is removed
    */
   val testName: String
 

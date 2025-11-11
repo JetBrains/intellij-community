@@ -6,8 +6,7 @@ import com.intellij.codeInsight.completion.AutoCompletionContext
 import com.intellij.codeInsight.completion.AutoCompletionDecision
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.lookup.TailTypeDecorator
+import com.intellij.codeInsight.lookup.*
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
@@ -22,10 +21,11 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import one.util.streamex.StreamEx
 
@@ -101,14 +101,17 @@ fun createLookupElementBuilder(file: PsiFile, element: PsiFileSystemItem): Looku
   val name = FileUtil.getNameWithoutExtension(element.name)
   if (!PyNames.isIdentifier(name)) return null
 
-  val importPath = QualifiedNameFinder.findCanonicalImportPath(element, file)?.removeLastComponent()
-  val tailText = if (importPath != null && importPath.componentCount > 0) " ($importPath)" else null
-
   return LookupElementBuilder.create(element, name)
-    .withTailText(tailText, true)
-    .withIcon(element.getIcon(0))
+    .withExpensiveRenderer(object : LookupElementRenderer<LookupElement>() {
+      override fun renderElement(lookupElement: LookupElement, presentation: LookupElementPresentation) {
+        val importPath = QualifiedNameFinder.findCanonicalImportPath(element, file)?.removeLastComponent()
+        presentation.setItemText(lookupElement.getLookupString())
+        presentation.setIcon(element.getIcon(0))
+        if (importPath == null) return
+        presentation.typeText = importPath.toString()
+      }
+    })
 }
-
 
 private const val ELEMENT_TYPE = 10
 private const val LOCATION = 100
@@ -164,7 +167,7 @@ fun computeCompletionWeight(element: PsiElement, elementName: String?, path: Qua
     }
   }
 
-  weight -= when(element) {
+  weight -= when(PyUtil.turnInitIntoDir(element)) {
     is PsiDirectory -> ELEMENT_TYPE * 2
     is PyFile -> ELEMENT_TYPE
     else -> 0

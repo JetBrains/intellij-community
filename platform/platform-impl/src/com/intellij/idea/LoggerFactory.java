@@ -5,6 +5,7 @@ import com.intellij.diagnostic.DialogAppender;
 import com.intellij.diagnostic.JsonLogHandler;
 import com.intellij.diagnostic.logs.LogLevelConfigurationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,9 @@ public final class LoggerFactory implements Logger.Factory {
 
     var enableConsoleLogger = !logToJsonStdout && Boolean.parseBoolean(System.getProperty("idea.log.console", "true"));
     var append = Boolean.parseBoolean(System.getProperty("idea.log.append", "true"));
-    var persistAttachments = Boolean.parseBoolean(System.getProperty("idea.log.persist.attachments", "true"));
+
+    boolean isInternal = Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY);
+    var persistAttachments = Boolean.parseBoolean(System.getProperty("idea.log.persist.attachments", Boolean.toString(isInternal)));
 
     JulLogger.configureLogFileAndConsole(getLogFilePath(), append, enableConsoleLogger, true, persistAttachments,
                                          () -> IdeaLogger.dropFrequentExceptionsCaches(), null, null);

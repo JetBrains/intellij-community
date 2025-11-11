@@ -11,20 +11,20 @@ import com.intellij.searchEverywhereMl.ranking.core.features.addIfTrue
 internal class ContributorsLocalStatisticsFields {
 
   companion object {
-    val SELECTION_ALL = EventFields.Int("selectionAll")
-    val SELECTION_OTHER = EventFields.Int("selectionOther")
-    val SELECTION_TO_MAX_ALL = EventFields.Double("selectionToMaxAll")
-    val SELECTION_TO_MAX_OTHER = EventFields.Double("selectionToMaxOther")
-    val TIME_SINCE_LAST_SELECTION_ALL = EventFields.Long("timeSinceLastSelectionAll")
-    val TIME_SINCE_LAST_SELECTION_OTHER = EventFields.Long("timeSinceLastSelectionOther")
-    val WAS_SELECTED_IN_LAST_MINUTE_ALL = EventFields.Boolean("wasSelectedInLastMinuteAll")
-    val WAS_SELECTED_IN_LAST_MINUTE_OTHER = EventFields.Boolean("wasSelectedInLastMinuteOther")
-    val WAS_SELECTED_IN_LAST_HOUR_ALL = EventFields.Boolean("wasSelectedInLastHourAll")
-    val WAS_SELECTED_IN_LAST_HOUR_OTHER = EventFields.Boolean("wasSelectedInLastHourOther")
-    val WAS_SELECTED_IN_LAST_DAY_ALL = EventFields.Boolean("wasSelectedInLastDayAll")
-    val WAS_SELECTED_IN_LAST_DAY_OTHER = EventFields.Boolean("wasSelectedInLastDayOther")
-    val WAS_SELECTED_IN_LAST_MONTH_ALL = EventFields.Boolean("wasSelectedInLastMonthAll")
-    val WAS_SELECTED_IN_LAST_MONTH_OTHER = EventFields.Boolean("wasSelectedInLastMonthOther")
+    val SELECTION_ALL = EventFields.Int("selection_all")
+    val SELECTION_OTHER = EventFields.Int("selection_other")
+    val SELECTION_TO_MAX_ALL = EventFields.Double("selection_to_max_all")
+    val SELECTION_TO_MAX_OTHER = EventFields.Double("selection_to_max_other")
+    val TIME_SINCE_LAST_SELECTION_ALL = EventFields.Long("time_since_last_selection_all")
+    val TIME_SINCE_LAST_SELECTION_OTHER = EventFields.Long("time_since_last_selection_other")
+    val WAS_SELECTED_IN_LAST_MINUTE_ALL = EventFields.Boolean("was_selected_in_last_minute_all")
+    val WAS_SELECTED_IN_LAST_MINUTE_OTHER = EventFields.Boolean("was_selected_in_last_minute_other")
+    val WAS_SELECTED_IN_LAST_HOUR_ALL = EventFields.Boolean("was_selected_in_last_hour_all")
+    val WAS_SELECTED_IN_LAST_HOUR_OTHER = EventFields.Boolean("was_selected_in_last_hour_other")
+    val WAS_SELECTED_IN_LAST_DAY_ALL = EventFields.Boolean("was_selected_in_last_day_all")
+    val WAS_SELECTED_IN_LAST_DAY_OTHER = EventFields.Boolean("was_selected_in_last_day_other")
+    val WAS_SELECTED_IN_LAST_MONTH_ALL = EventFields.Boolean("was_selected_in_last_month_all")
+    val WAS_SELECTED_IN_LAST_MONTH_OTHER = EventFields.Boolean("was_selected_in_last_month_other")
   }
 
   fun getFieldsDeclaration(): List<EventField<*>> = listOf(
@@ -102,10 +102,10 @@ internal class ContributorsLocalStatisticsFields {
 internal class ContributorsLocalStatisticsContextFields {
 
   companion object {
-    val MAX_SELECTION_ALL = EventFields.Int("maxSelectionAll")
-    val MIN_SELECTION_ALL = EventFields.Int("minSelectionAll")
-    val MAX_SELECTION_OTHER = EventFields.Int("maxSelectionOther")
-    val MIN_SELECTION_OTHER = EventFields.Int("minSelectionOther")
+    val MAX_SELECTION_ALL = EventFields.Int("max_selection_all")
+    val MIN_SELECTION_ALL = EventFields.Int("min_selection_all")
+    val MAX_SELECTION_OTHER = EventFields.Int("max_selection_other")
+    val MIN_SELECTION_OTHER = EventFields.Int("min_selection_other")
   }
 
   fun getFieldsDeclaration(): List<EventField<*>> = listOf(MAX_SELECTION_ALL, MIN_SELECTION_ALL, MAX_SELECTION_OTHER,

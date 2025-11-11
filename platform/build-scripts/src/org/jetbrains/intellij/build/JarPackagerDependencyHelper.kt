@@ -5,11 +5,8 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
-import org.jetbrains.intellij.build.classPath.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsDependencyElement
@@ -17,10 +14,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
-import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-
-internal val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "true").toBoolean()
 
 // production-only - JpsJavaClasspathKind.PRODUCTION_RUNTIME
 internal class JarPackagerDependencyHelper(private val context: CompilationContext) {
@@ -74,7 +68,7 @@ internal class JarPackagerDependencyHelper(private val context: CompilationConte
     return moduleName.endsWith("._test")
   }
 
-  suspend fun getPluginIdByModule(pluginModule: JpsModule): String {
+  fun getPluginIdByModule(pluginModule: JpsModule): String {
     // it is ok to read the plugin descriptor with unresolved x-include as the ID should be specified at the root
     val root = readXmlAsModel(getUnprocessedPluginXmlContent(module = pluginModule, context = context))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")

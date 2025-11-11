@@ -29,7 +29,8 @@ object JavaDocSyntaxElementType {
 
   @JvmField val DOC_TYPE_HOLDER: SyntaxElementType = SyntaxElementType("DOC_TYPE_HOLDER", lazyParser = JavaDocTypeParser())
 
-  @JvmField val DOC_COMMENT: SyntaxElementType = SyntaxElementType("DOC_COMMENT", lazyParser = JavaDocCommentParser())
+  @JvmField val DOC_COMMENT: SyntaxElementType = SyntaxElementType("DOC_COMMENT", lazyParser = JavaDocCommentParser(false))
+  @JvmField val DOC_MARKDOWN_COMMENT: SyntaxElementType = SyntaxElementType("DOC_MARKDOWN_COMMENT", lazyParser = JavaDocCommentParser(true))
   @JvmField val DOC_MARKDOWN_CODE_BLOCK: SyntaxElementType = SyntaxElementType("DOC_CODE_BLOCK")
   @JvmField val DOC_MARKDOWN_REFERENCE_LINK: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_LINK")
   @JvmField val DOC_MARKDOWN_REFERENCE_LABEL: SyntaxElementType = SyntaxElementType("DOC_REFERENCE_LABEL")

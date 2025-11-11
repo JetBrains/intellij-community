@@ -285,6 +285,13 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - p:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
 - a:isImportList(com.intellij.psi.PsiFile,I):Z
 - supportNewLineCompletion():Z
+*a:com.intellij.codeInsight.completion.command.commands.AbstractParameterInfoCompletionCommand
+- com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
+- <init>():V
+- a:inParameterList(I,com.intellij.psi.PsiFile):Z
+- pf:isApplicable(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):Z
+- f:supportsInjected():Z
+- f:supportsReadOnly():Z
 *a:com.intellij.codeInsight.completion.command.commands.AbstractQuickDocumentationCompletionCommand
 - com.intellij.codeInsight.completion.command.commands.ActionCommandProvider
 - <init>():V

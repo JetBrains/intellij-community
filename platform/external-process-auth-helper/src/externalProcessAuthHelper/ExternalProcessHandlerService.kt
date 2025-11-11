@@ -56,7 +56,7 @@ import kotlin.io.path.pathString
  * - If the operation requests user interaction, the registered handler is called via [ExternalApp] and IDE Rest protocol.
  * - Do the task (ex: show GUI dialog) and return the answer to the external application via [ExternalApp].
  */
-abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
+abstract class ExternalProcessHandlerService<T : ExternalAppHandler> @ApiStatus.Experimental constructor(
   private val scriptNamePrefix: @NonNls String,
   private val scriptMainClass: Class<out ExternalApp>,
   private val scriptBody: ExternalCli?,
@@ -138,8 +138,9 @@ abstract class ExternalProcessHandlerService<T : ExternalAppHandler>(
     override fun getExecutablePath(): Path = process.executableName.asNioPath()
 
     override fun close() {
-      stderr.close()
-      stdout.close()
+      stderr.use {
+        stdout.close()
+      }
     }
   }
 

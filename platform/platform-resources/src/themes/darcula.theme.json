@@ -559,7 +559,8 @@
       "SearchField.borderColor": "#646464",
       "SearchField.infoForeground": "#808080",
       "Tab.selectedBackground": "#555a5e",
-      "Tab.selectedForeground": "#bbbbbb"
+      "Tab.selectedForeground": "#bbbbbb",
+      "List.settingsBackground": "#424548"
     },
 
     "Separator": {

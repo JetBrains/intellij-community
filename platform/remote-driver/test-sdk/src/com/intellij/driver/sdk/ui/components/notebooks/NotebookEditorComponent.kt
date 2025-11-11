@@ -17,6 +17,7 @@ import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.common.ideFrame
+import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.projectView
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
@@ -398,6 +399,17 @@ fun Driver.closeRightToolWindow(stripeButtonName: String) {
     val varsButton = rightToolbar.stripeButton(stripeButtonName)
     if (varsButton.present()) {
       varsButton.close()
+    }
+  }
+}
+
+fun Driver.openLeftToolWindow(stripeButtonName: String) {
+  ideFrame {
+    val leftToolbar = xx(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }.list().firstOrNull()
+                       ?: return@ideFrame
+    val varsButton = leftToolbar.stripeButton(stripeButtonName)
+    if (varsButton.notPresent()) {
+      varsButton.open()
     }
   }
 }
