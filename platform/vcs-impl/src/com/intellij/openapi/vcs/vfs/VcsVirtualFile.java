@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,30 +29,6 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   private volatile Charset myCharset;
   private final Object LOCK = new Object();
 
-  /**
-   * @deprecated {@link VcsFileSystem} cannot be overwritten
-   */
-  @Deprecated(forRemoval = true)
-  public VcsVirtualFile(@NotNull String path,
-                        @Nullable VcsFileRevision revision,
-                        @NotNull VirtualFileSystem ignored) {
-    this(path, revision);
-  }
-
-  public VcsVirtualFile(@NotNull String path,
-                        @Nullable VcsFileRevision revision) {
-    super(path);
-    myFileRevision = revision;
-  }
-
-  /**
-   * @deprecated {@link VcsFileSystem} cannot be overwritten
-   */
-  @Deprecated(forRemoval = true)
-  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision, VirtualFileSystem ignored) {
-    this(parent, name, revision);
-  }
-
   public VcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision) {
     super(parent, name);
     myFileRevision = revision;
@@ -67,25 +42,6 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
   public VcsVirtualFile(@NotNull FilePath path, @Nullable VcsFileRevision revision) {
     super(path);
     myFileRevision = revision;
-  }
-
-  /**
-   * @deprecated {@link VcsFileSystem} cannot be overwritten
-   */
-  @Deprecated(forRemoval = true)
-  public VcsVirtualFile(@NotNull String path,
-                        byte @NotNull [] content,
-                        @Nullable String revision,
-                        @NotNull VirtualFileSystem ignored) {
-    this(path, content, revision);
-  }
-
-  public VcsVirtualFile(@NotNull String path,
-                        byte @NotNull [] content,
-                        @Nullable String revision) {
-    this(path, null);
-    setContent(content);
-    setRevision(revision);
   }
 
   @Override
