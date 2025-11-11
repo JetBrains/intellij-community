@@ -122,29 +122,30 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private record EventDescriptor(@NotNull VirtualFilePointerListener myListener, VirtualFilePointer @NotNull [] myPointers) {
-      private EventDescriptor {
-        if (myPointers.length == 0) {
-          throw new IllegalArgumentException();
-        }
-      }
-
-      private void fireBefore() {
-        myListener.beforeValidityChanged(myPointers);
-      }
-
-      private void fireAfter() {
-        myListener.validityChanged(myPointers);
-      }
-
-      @Override
-      @NotNull
-      public String toString() {
-        return myListener + " -> " + Arrays.toString(myPointers);
+    private EventDescriptor {
+      if (myPointers.length == 0) {
+        throw new IllegalArgumentException();
       }
     }
 
+    private void fireBefore() {
+      myListener.beforeValidityChanged(myPointers);
+    }
+
+    private void fireAfter() {
+      myListener.validityChanged(myPointers);
+    }
+
+    @Override
+    @NotNull
+    public String toString() {
+      return myListener + " -> " + Arrays.toString(myPointers);
+    }
+  }
+
   @TestOnly
-  public synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent, @NotNull String childName) {
+  public synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent,
+                                                                                         @NotNull String childName) {
     assert !StringUtil.isEmptyOrSpaces(childName);
     @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> nodes = MultiMap.create();
     addRelevantPointers(null, parent, toNameId(childName), nodes, new ArrayList<>(), true, parent.getFileSystem(), new VFileDeleteEvent(this, parent));
@@ -181,12 +182,16 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   @Override
-  public @NotNull VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
+  public @NotNull VirtualFilePointer create(@NotNull String url,
+                                            @NotNull Disposable parent,
+                                            @Nullable VirtualFilePointerListener listener) {
     return create(null, url, parent, listener, false);
   }
 
   @Override
-  public @NotNull VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
+  public @NotNull VirtualFilePointer create(@NotNull VirtualFile file,
+                                            @NotNull Disposable parent,
+                                            @Nullable VirtualFilePointerListener listener) {
     return create(file, null, parent, listener, false);
   }
 
@@ -212,7 +217,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
       }
       if (fileSystem == null) {
         if (IS_UNDER_UNIT_TEST || IS_INTERNAL) {
-          throw new IllegalArgumentException("Unknown filesystem: '" + protocol + "' in url: '" + url+"'");
+          throw new IllegalArgumentException("Unknown filesystem: '" + protocol + "' in url: '" + url + "'");
         }
         // will always be null
         return new LightFilePointer(url);
@@ -273,7 +278,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return getOrCreate((VirtualFileSystemEntry)file, path, url, recursive, parentDisposable, listener, (NewVirtualFileSystem)fileSystem);
   }
 
-  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = CollectionFactory.createSmallMemoryFootprintMap(); // guarded by this
+  /** GuardedBy(this) */
+  private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = CollectionFactory.createSmallMemoryFootprintMap();
 
   private synchronized @NotNull IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url,
                                                                                @Nullable VirtualFile found,
@@ -327,7 +333,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     for (int i = slashIndex; i < path.length(); i++) {
       char c = path.charAt(i);
       if (c == '/') {
-        char nextC = i == path.length()-1 ? 0 : path.charAt(i + 1);
+        char nextC = i == path.length() - 1 ? 0 : path.charAt(i + 1);
         if (nextC == '.') {
           if (i == path.length() - 2) {
             // ends with "/.", ignore
@@ -392,7 +398,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         do {
           index = path.indexOf(JarFileSystem.JAR_SEPARATOR, index + 1);
         }
-        while (index > 0 && path.charAt(index-1) == '/');
+        while (index > 0 && path.charAt(index - 1) == '/');
         if (index == -1 && !isArchiveInTheWindowsDiskRoot(path)) {
           // treat url "jar://xx/x.jar" as "jar://xx/x.jar!/"
           normPath = path + JarFileSystem.JAR_SEPARATOR;
@@ -525,11 +531,13 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   @Override
-  public synchronized @NotNull VirtualFilePointerContainer createContainer(@NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
+  public synchronized @NotNull VirtualFilePointerContainer createContainer(@NotNull Disposable parent,
+                                                                           @Nullable VirtualFilePointerListener listener) {
     return registerContainer(parent, new VirtualFilePointerContainerImpl(this, parent, listener));
   }
 
-  private @NotNull VirtualFilePointerContainer registerContainer(@NotNull Disposable parent, @NotNull VirtualFilePointerContainerImpl container) {
+  private @NotNull VirtualFilePointerContainer registerContainer(@NotNull Disposable parent,
+                                                                 @NotNull VirtualFilePointerContainerImpl container) {
     synchronized (myContainers) {
       myContainers.add(container);
     }
@@ -827,9 +835,9 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     @Override
     public void dispose() {
       ourInstances.remove(myParent);
-      synchronized (VirtualFilePointerManager.getInstance()) {
-        for (Iterator<Reference2IntMap.Entry<VirtualFilePointerImpl>> iterator = myCounts.reference2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
-          Reference2IntMap.Entry<VirtualFilePointerImpl> entry = iterator.next();
+      synchronized (getInstance()) {
+        for (Iterator<Reference2IntMap.Entry<VirtualFilePointerImpl>> it = myCounts.reference2IntEntrySet().fastIterator(); it.hasNext(); ) {
+          Reference2IntMap.Entry<VirtualFilePointerImpl> entry = it.next();
           VirtualFilePointerImpl pointer = entry.getKey();
           int disposeCount = entry.getIntValue();
           boolean isDisposed = !(pointer instanceof IdentityVirtualFilePointer) && pointer.myNode == null;
