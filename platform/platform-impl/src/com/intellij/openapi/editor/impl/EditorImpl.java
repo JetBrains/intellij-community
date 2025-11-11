@@ -127,6 +127,7 @@ import java.text.AttributedString;
 import java.text.CharacterIterator;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -3176,6 +3177,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myCaretCursor.repaint();
     }
   }
+
+  @ApiStatus.Internal
+  final ConcurrentHashMap<Caret, Point2D> lastPosMap = new ConcurrentHashMap<>();
 
   private final @NotNull EditorCaretMoveService caretMoveService = EditorCaretMoveService.getInstance();
 

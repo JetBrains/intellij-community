@@ -46,8 +46,6 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     }
   }
 
-  private val lastPosMap: MutableMap<Caret, Point2D> = ConcurrentHashMap()
-
   /**
    * Set the cursor position immediately without animation. This does not go through the
    * coroutine-based logic which can delay the cursor position update. This is required for
@@ -56,7 +54,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
   fun setCursorPositionImmediately(editor: EditorImpl) {
     val animationStates = calculateUpdates(editor)
     for (state in animationStates) {
-      lastPosMap[state.caret] = state.finalPos
+      editor.lastPosMap[state.caret] = state.finalPos
     }
     editor.myCaretCursor.setPositions(animationStates.map { state ->
       EditorImpl.CaretRectangle(state.finalPos, state.width, state.caret, state.isRtl)
@@ -97,7 +95,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
     val step = MILLIS_SECOND / (2 * refreshRate)
 
     val animationStates = calculateUpdates(editor).map {
-      val lastPos = lastPosMap.getOrPut(it.caret) { it.finalPos }
+      val lastPos = editor.lastPosMap.getOrPut(it.caret) { it.finalPos }
       AnimationState(lastPos, it)
     }
 
@@ -132,7 +130,7 @@ internal class EditorCaretMoveService(coroutineScope: CoroutineScope) {
         val y = startPos.y + (finalPos.y - startPos.y) * t
 
         val interpolated = Point2D.Double(if (t >= 1) finalPos.x else x, if (t >= 1) finalPos.y else y)
-        lastPosMap[update.caret] = interpolated
+        editor.lastPosMap[update.caret] = interpolated
         EditorImpl.CaretRectangle(interpolated, update.width, update.caret, update.isRtl)
       }.toTypedArray()
 
