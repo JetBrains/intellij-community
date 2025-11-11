@@ -1,12 +1,11 @@
 <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
 <!-- To regenerate, run: CommunityModuleSets.main() -->
-<!-- Source: see moduleSet("essential") function in CommunityModuleSets.kt -->
+<!-- Source: see moduleSet("essential.minimal") function in CommunityModuleSets.kt -->
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
-    <!-- <editor-fold desc="nested: essential.minimal"> -->
-    <!-- <editor-fold desc="nested: essential.minimal > libraries"> -->
-    <!-- <editor-fold desc="nested: essential.minimal > libraries > libraries.core"> -->
+    <!-- <editor-fold desc="nested: libraries"> -->
+    <!-- <editor-fold desc="nested: libraries > libraries.core"> -->
     <module name="intellij.libraries.kotlin.reflect" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.io" loading="embedded"/>
     <module name="intellij.libraries.kotlinx.serialization.core" loading="embedded"/>
@@ -81,7 +80,7 @@
     <module name="intellij.libraries.xz" loading="embedded"/>
     <!-- </editor-fold> -->
 
-    <!-- <editor-fold desc="nested: essential.minimal > libraries > libraries.ktor"> -->
+    <!-- <editor-fold desc="nested: libraries > libraries.ktor"> -->
     <module name="intellij.libraries.ktor.io" loading="embedded"/>
     <module name="intellij.libraries.ktor.utils" loading="embedded"/>
     <module name="intellij.libraries.ktor.network.tls" loading="embedded"/>
@@ -89,14 +88,14 @@
     <module name="intellij.libraries.ktor.client.cio" loading="embedded"/>
     <!-- </editor-fold> -->
 
-    <!-- <editor-fold desc="nested: essential.minimal > libraries > libraries.misc"> -->
+    <!-- <editor-fold desc="nested: libraries > libraries.misc"> -->
     <module name="intellij.libraries.javax.activation"/>
     <module name="intellij.libraries.xml.rpc"/>
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
     <module name="intellij.libraries.opencsv"/>
     <!-- </editor-fold> -->
 
-    <!-- <editor-fold desc="nested: essential.minimal > libraries > libraries.temporaryBundled"> -->
+    <!-- <editor-fold desc="nested: libraries > libraries.temporaryBundled"> -->
     <module name="intellij.libraries.jettison" loading="embedded"/>
     <module name="intellij.libraries.xstream" loading="embedded"/>
     <module name="intellij.libraries.commons.text"/>
@@ -104,8 +103,8 @@
 
     <!-- </editor-fold> -->
 
-    <!-- <editor-fold desc="nested: essential.minimal > rpc"> -->
-    <!-- <editor-fold desc="nested: essential.minimal > rpc > libraries.fleet"> -->
+    <!-- <editor-fold desc="nested: rpc"> -->
+    <!-- <editor-fold desc="nested: rpc > libraries.fleet"> -->
     <module name="fleet.andel" loading="embedded"/>
     <module name="fleet.bifurcan" loading="embedded"/>
     <module name="fleet.fastutil" loading="embedded"/>
@@ -148,48 +147,6 @@
     <module name="intellij.platform.searchEverywhere.frontend"/>
     <module name="intellij.platform.inline.completion"/>
     <module name="intellij.platform.eel.impl" loading="embedded"/>
-    <!-- </editor-fold> -->
-    <!-- </editor-fold> -->
-
-    <!-- <editor-fold desc="direct modules"> -->
-    <module name="intellij.platform.scopes" loading="embedded"/>
-    <module name="intellij.platform.scopes.backend"/>
-    <module name="intellij.platform.navbar"/>
-    <module name="intellij.platform.navbar.backend"/>
-    <module name="intellij.platform.navbar.frontend"/>
-    <module name="intellij.platform.navbar.monolith"/>
-    <module name="intellij.platform.clouds"/>
-    <module name="intellij.platform.execution.serviceView"/>
-    <module name="intellij.platform.execution.serviceView.frontend"/>
-    <module name="intellij.platform.execution.serviceView.backend"/>
-    <module name="intellij.platform.execution.dashboard"/>
-    <module name="intellij.platform.execution.dashboard.frontend"/>
-    <module name="intellij.platform.execution.dashboard.backend"/>
-    <module name="intellij.platform.find" loading="embedded"/>
-    <module name="intellij.platform.find.backend"/>
-    <module name="intellij.platform.editor.frontend"/>
-    <module name="intellij.platform.managed.cache" loading="embedded"/>
-    <module name="intellij.platform.managed.cache.backend"/>
-    <module name="intellij.platform.debugger.impl.frontend"/>
-    <module name="intellij.platform.debugger.impl.backend"/>
-    <module name="intellij.platform.debugger.impl.shared" loading="embedded"/>
-    <module name="intellij.platform.debugger.impl.rpc" loading="embedded"/>
-    <module name="intellij.platform.bookmarks.backend"/>
-    <module name="intellij.platform.bookmarks.frontend"/>
-    <module name="intellij.platform.recentFiles"/>
-    <module name="intellij.platform.recentFiles.frontend"/>
-    <module name="intellij.platform.recentFiles.backend"/>
-    <module name="intellij.platform.pluginManager.shared"/>
-    <module name="intellij.platform.pluginManager.backend"/>
-    <module name="intellij.platform.pluginManager.frontend"/>
-    <module name="intellij.platform.execution.impl.frontend"/>
-    <module name="intellij.platform.execution.impl.backend"/>
-    <module name="intellij.platform.eel.tcp"/>
-    <module name="intellij.platform.completion.common"/>
-    <module name="intellij.platform.completion.frontend"/>
-    <module name="intellij.platform.completion.backend"/>
-    <module name="intellij.platform.analysis" loading="embedded"/>
-    <module name="intellij.platform.polySymbols" loading="embedded"/>
     <!-- </editor-fold> -->
   </content>
 </idea-plugin>

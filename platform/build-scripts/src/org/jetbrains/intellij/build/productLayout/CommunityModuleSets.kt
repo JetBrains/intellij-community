@@ -34,20 +34,49 @@ object CommunityModuleSets : ModuleSetProvider {
   }
 
   /**
-   * Essential platform modules required by most IDE products.
+   * Minimal essential platform modules required by lightweight IDE products like GitClient.
+   * Contains only core backend/frontend split, editor, search, and basic infrastructure.
+   * Nested by essential() to avoid duplication.
    */
-  fun essential(): ModuleSet = moduleSet("essential") {
-    // Include libraries first (they are xi:included in essential.xml)
+  fun essentialMinimal(): ModuleSet = moduleSet("essential.minimal") {
+    // Include libraries first (they are xi:included in essential.minimal.xml)
     moduleSet(libraries())
-    // RPC is used by core IDE functionality, so it is essential
+    // RPC is used by core IDE functionality
     moduleSet(rpc())
 
-    // Core essential modules
+    // Core platform backend/frontend split
     module("intellij.platform.settings.local")
     module("intellij.platform.backend")
     module("intellij.platform.project.backend")
     module("intellij.platform.progress.backend")
     module("intellij.platform.lang.impl.backend")
+
+    // Frontend/monolith
+    module("intellij.platform.frontend")
+    module("intellij.platform.monolith")
+
+    // Editor
+    module("intellij.platform.editor")
+    module("intellij.platform.editor.backend")
+
+    // Search
+    module("intellij.platform.searchEverywhere")
+    module("intellij.platform.searchEverywhere.backend")
+    module("intellij.platform.searchEverywhere.frontend")
+
+    // Completion
+    module("intellij.platform.inline.completion")
+
+    // EEL (execution environment layer) - referenced from core classloader
+    embeddedModule("intellij.platform.eel.impl")
+  }
+
+  /**
+   * Essential platform modules required by most IDE products.
+   */
+  fun essential(): ModuleSet = moduleSet("essential") {
+    // Include minimal essential modules (core backend/frontend, editor, search)
+    moduleSet(essentialMinimal())
 
     // The loading="embedded" attribute is required here because the intellij.platform.find module (which is loaded
     // in embedded mode) has a compile dependency on intellij.platform.scopes. Without marking scopes as embedded,
@@ -71,18 +100,12 @@ object CommunityModuleSets : ModuleSetProvider {
     module("intellij.platform.execution.dashboard.frontend")
     module("intellij.platform.execution.dashboard.backend")
 
-    module("intellij.platform.searchEverywhere")
-    module("intellij.platform.searchEverywhere.backend")
-    module("intellij.platform.searchEverywhere.frontend")
-
     // The loading="embedded" attribute is required here for module synchronization with CWM's ThinClientFindAndReplaceExecutor.
     // Since intellij.platform.frontend.split module loads in embedded mode, and it needs to override the default FindAndReplaceExecutor,
     // the find module must also be marked as embedded to maintain proper dependency loading order.
     // This attribute can be removed once ThinClientFindAndReplaceExecutor is removed.
     embeddedModule("intellij.platform.find")
     module("intellij.platform.find.backend")
-    module("intellij.platform.editor")
-    module("intellij.platform.editor.backend")
     module("intellij.platform.editor.frontend")
     embeddedModule("intellij.platform.managed.cache")
     module("intellij.platform.managed.cache.backend")
@@ -95,11 +118,6 @@ object CommunityModuleSets : ModuleSetProvider {
     module("intellij.platform.bookmarks.backend")
     module("intellij.platform.bookmarks.frontend")
 
-    module("intellij.platform.frontend")
-    module("intellij.platform.monolith")
-
-    module("intellij.platform.inline.completion")
-
     module("intellij.platform.recentFiles")
     module("intellij.platform.recentFiles.frontend")
     module("intellij.platform.recentFiles.backend")
@@ -110,8 +128,6 @@ object CommunityModuleSets : ModuleSetProvider {
 
     module("intellij.platform.execution.impl.frontend")
     module("intellij.platform.execution.impl.backend")
-    // referenced from 'intellij.platform.ijent.community.impl' loaded by the core classloader
-    embeddedModule("intellij.platform.eel.impl")
     module("intellij.platform.eel.tcp")
 
 
