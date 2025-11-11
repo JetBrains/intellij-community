@@ -23,7 +23,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
+import kotlin.io.path.name
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -90,17 +92,19 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
         append("\tat $it\n")
       }
       screenshotPath?.let {
-        if (!Path(screenshotPath).isRegularFile()) {
+        val path = Path(screenshotPath)
+        if (!path.isRegularFile()) {
           logError("screenshot should be a regular file, but it is not: $screenshotPath")
         }
         else if (!CIServer.instance.isBuildRunningOnCI) {
-          append("Screenshot: file://$screenshotPath\n".color(LogColor.BLUE))
+          append("Screenshot: file://${path.invariantSeparatorsPathString}\n".color(LogColor.BLUE))
         }
         else {
           runContext?.let { context ->
-            logOutput("Adding screenshot to metadata")
-            TeamCityClient.publishTeamCityArtifacts(Path(screenshotPath), context.contextName.replaceSpecialCharactersWithHyphens(), "driverError.png", false)
-            TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.IMAGE, flowId = null, name = null, value = context.contextName.replaceSpecialCharactersWithHyphens() + "/driverError.png")
+            val fileName = path.name
+            logOutput("Adding screenshot to metadata: $fileName")
+            TeamCityClient.publishTeamCityArtifacts(path, context.contextName.replaceSpecialCharactersWithHyphens(), fileName, false)
+            TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.IMAGE, flowId = null, name = null, value = context.contextName.replaceSpecialCharactersWithHyphens() + "/$fileName")
           }
         }
       }
