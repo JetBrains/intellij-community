@@ -6,11 +6,14 @@ import com.intellij.codeInspection.naming.NamingConventionBean;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Bas Leijdekkers
  */
 public final class JUnit3MethodNamingConvention extends NamingConvention<PsiMethod> {
+
+  private static final @NonNls NamingConventionBean DEFAULT_BEAN = new NamingConventionBean("test[A-Za-z_\\d]*", 8, 64);
 
   @Override
   public String getElementDescription() {
@@ -19,7 +22,7 @@ public final class JUnit3MethodNamingConvention extends NamingConvention<PsiMeth
 
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("test[A-Za-z_\\d]*", 8, 64);
+    return DEFAULT_BEAN;
   }
 
   @Override

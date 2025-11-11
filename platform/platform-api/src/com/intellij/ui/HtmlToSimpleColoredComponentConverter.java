@@ -19,6 +19,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.List;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.ui.SimpleTextAttributes.*;
@@ -51,6 +52,8 @@ public class HtmlToSimpleColoredComponentConverter {
   private static final Logger LOG = Logger.getInstance(HtmlToSimpleColoredComponentConverter.class);
 
   public static final StyleTagHandler DEFAULT_TAG_HANDLER = new DefaultStyleTagHandler();
+  private static final Pattern STYLE_SPLIT = Pattern.compile("\\s*;\\s*");
+  private static final Pattern KEY_VALUE_SPLIT = Pattern.compile("\\s*:\\s*");
 
   private final StyleTagHandler myStyleTagHandler;
 
@@ -226,8 +229,8 @@ public class HtmlToSimpleColoredComponentConverter {
       Object attribute = attr.getAttribute(STYLE);
       if (attribute == null) return null;
       String styleStr = attribute.toString();
-      Map<String, String> styles = Arrays.stream(styleStr.split("\\s*;\\s*"))
-        .map(s -> s.split("\\s*:\\s*"))
+      Map<String, String> styles = Arrays.stream(STYLE_SPLIT.split(styleStr))
+        .map(s -> KEY_VALUE_SPLIT.split(s))
         .collect(Collectors.toMap(s -> s[0], s -> s[1]));
 
       String colorString = styles.get("color");

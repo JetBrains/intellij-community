@@ -327,7 +327,7 @@ object MavenImportUtil {
   }
 
   private fun isReleaseCompilerProp(mavenProject: MavenProject): Boolean {
-    return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") >= 0
+    return VersionComparatorUtil.compare(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") >= 0
   }
 
   internal fun isMainOrTestModule(module: Module): Boolean {

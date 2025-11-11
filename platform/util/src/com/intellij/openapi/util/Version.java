@@ -7,11 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.util.regex.Pattern;
 
 public final class Version implements Comparable<Version>, Serializable {
   public final int major;
   public final int minor;
   public final int bugfix;
+  private static final Pattern LEADING_NUMBER = Pattern.compile("(\\d+).*");
 
   public Version(int major, int minor) {
     this(major, minor, 0);
@@ -52,7 +54,7 @@ public final class Version implements Comparable<Version>, Serializable {
   }
 
   private static int parseNumber(String num, @SuppressWarnings("SameParameterValue") int def) {
-    return StringUtil.parseInt(num.replaceFirst("(\\d+).*", "$1"), def);
+    return StringUtil.parseInt(LEADING_NUMBER.matcher(num).replaceFirst("$1"), def);
   }
 
   public boolean is(@Nullable Integer major) {

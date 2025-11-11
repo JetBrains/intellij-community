@@ -11,6 +11,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.SOURCES
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX
@@ -313,7 +314,7 @@ internal class MavenProjectImportContextProvider(
   }
 
   private fun isCompilerTestSupport(mavenProject: MavenProject): Boolean {
-    return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
+    return VersionComparatorUtil.compare(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
   }
 
   private fun hasTestCompilerArgs(project: MavenProject): Boolean {

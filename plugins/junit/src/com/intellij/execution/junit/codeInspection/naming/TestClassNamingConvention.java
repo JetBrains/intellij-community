@@ -31,10 +31,10 @@ public final class TestClassNamingConvention extends NamingConvention<PsiClass> 
   private static final int DEFAULT_MIN_LENGTH = 5;
   private static final int DEFAULT_MAX_LENGTH = 255;
   public static final @NonNls String TEST_CLASS_NAMING_CONVENTION_SHORT_NAME = "JUnitTestClassNamingConvention";
-
+  private static final @NonNls NamingConventionBean DEFAULT_BEAN = new NamingConventionBean("[A-Z][A-Za-z\\d]*Test(s|Case)?|Test[A-Z][A-Za-z\\d]*|IT(.*)|(.*)IT(Case)?", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
   @Override
   public NamingConventionBean createDefaultBean() {
-    return new NamingConventionBean("[A-Z][A-Za-z\\d]*Test(s|Case)?|Test[A-Z][A-Za-z\\d]*|IT(.*)|(.*)IT(Case)?", DEFAULT_MIN_LENGTH, DEFAULT_MAX_LENGTH);
+    return DEFAULT_BEAN;
   }
 
   @Override

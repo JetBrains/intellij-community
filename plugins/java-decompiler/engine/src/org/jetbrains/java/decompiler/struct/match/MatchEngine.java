@@ -11,6 +11,7 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable.MatchProperties;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static java.util.Map.entry;
 
@@ -81,6 +82,7 @@ public class MatchEngine {
 
   private final MatchNode rootNode;
   private final Map<String, Object> variables = new HashMap<>();
+  private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
 
   public MatchEngine(String description) {
     // each line is a separate statement/expression
@@ -90,7 +92,7 @@ public class MatchEngine {
     LinkedList<MatchNode> stack = new LinkedList<>();
 
     for (String line : lines) {
-      List<String> properties = new ArrayList<>(Arrays.asList(line.split("\\s+"))); // split on any number of whitespaces
+      List<String> properties = new ArrayList<>(Arrays.asList(WHITESPACE_PATTERN.split(line)));
       if (properties.get(0).isEmpty()) {
         properties.remove(0);
       }

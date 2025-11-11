@@ -23,9 +23,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, Comparable<IntentionAction> {
   private final IntentionActionBean extension;
+  private static final Pattern DOLLAR_PATTERN = Pattern.compile("\\$");
   private IntentionAction instance;
   private String fullFamilyName;
 
@@ -41,7 +43,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
 
   @ApiStatus.Internal
   public static @NotNull String getDescriptionDirectoryName(@NotNull String fqn) {
-    return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
+    return DOLLAR_PATTERN.matcher(fqn.substring(fqn.lastIndexOf('.') + 1)).replaceAll("");
   }
 
   @Override

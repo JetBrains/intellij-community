@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
   @Override
   public boolean isSupportedByExtension(@Nullable File mavenHome) {
     String version = MavenUtil.getMavenVersion(mavenHome.toPath());
-    return StringUtil.compareVersionNumbers(version, "3.1") >= 0 && StringUtil.compareVersionNumbers(version, "4") < 0;
+    return VersionComparatorUtil.compare(version, "3.1") >= 0 && VersionComparatorUtil.compare(version, "4") < 0;
   }
 
   @Override
@@ -89,7 +90,7 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     addDir(classpath, rootPath.resolve("maven3-server-lib"), f -> true);
 
     classpath.add(rootPath.resolve("maven3-server.jar"));
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+    if (VersionComparatorUtil.compare(mavenVersion, "3.6") >= 0) {
       classpath.add(rootPath.resolve("maven36-server.jar"));
     }
   }
@@ -109,7 +110,7 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
     addDir(classpath, parentFile.resolve("maven3-server-common/lib"), f -> true);
 
     classpath.add(locateModuleOutput("intellij.maven.server.m3.impl"));
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.6") >= 0) {
+    if (VersionComparatorUtil.compare(mavenVersion, "3.6") >= 0) {
       classpath.add(locateModuleOutput("intellij.maven.server.m36.impl"));
     }
   }
@@ -134,7 +135,7 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
 
   @Override
   public String getMainClass(MavenDistribution distribution) {
-    if (StringUtil.compareVersionNumbers(distribution.getVersion(), "3.6") >= 0) {
+    if (VersionComparatorUtil.compare(distribution.getVersion(), "3.6") >= 0) {
       return MAIN_CLASS36;
     } else {
       return DEFAULT_MAIN_CLASS;
