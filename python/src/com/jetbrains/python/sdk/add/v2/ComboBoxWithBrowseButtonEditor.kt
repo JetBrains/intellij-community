@@ -122,7 +122,7 @@ internal class ComboBoxWithBrowseButtonEditor<T, P : PathHolder>(
                   is FileSystem.Target -> {
                     val targetType = fileSystem.targetEnvironmentConfiguration.getTargetType()
                     if (targetType is BrowsableTargetEnvironmentType) {
-                      val descriptor = FileChooserDescriptorFactory.singleDir().withTitle(browseTitle)
+                      val descriptor = FileChooserDescriptorFactory.singleFile().withTitle(browseTitle)
                       val hints = TargetBrowserHints(showLocalFsInBrowser = true, descriptor)
 
                       val actionListener = targetType.createBrowser(
