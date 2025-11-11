@@ -16,7 +16,6 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -1447,8 +1446,7 @@ public final class ListPluginComponent extends JPanel {
         int lastX = width - insets.right;
 
         if (calcNameWidth > width20) {
-          for (int i = myButtonComponents.size() - 1; i >= 0; i--) {
-            Component component = myButtonComponents.get(i);
+          for (Component component : myButtonComponents.reversed()) {
             if (!component.isVisible()) {
               continue;
             }

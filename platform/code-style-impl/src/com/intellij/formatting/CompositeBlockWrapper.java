@@ -2,6 +2,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,12 +101,6 @@ public final class CompositeBlockWrapper extends AbstractBlockWrapper{
     }
 
     final List<AbstractBlockWrapper> leftBlocks = myPrevBlockCalculator.getLeftSubList(current);
-    for (int i = leftBlocks.size() - 1; i >= 0; i--) {
-      final AbstractBlockWrapper child = leftBlocks.get(i);
-      if (child.getWhiteSpace().containsLineFeeds()) {
-        return child;
-      }
-    }
-    return null;
+    return ContainerUtil.findLast(leftBlocks, child -> child.getWhiteSpace().containsLineFeeds());
   }
 }
