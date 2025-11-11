@@ -53,6 +53,7 @@
       <mouse-shortcut keystroke="button1 doubleClick" keymap="$default"/>
       <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
     </action>
+    <group id="Git.Log.Branches.Toolbar.Actions"/>
     <action id="Git.Log.Branches.Navigate.Log.To.Selected.Branch"
             icon="AllIcons.General.Locate"
             use-shortcut-of="SelectIn"
@@ -98,6 +99,15 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="Vcs.ShowHistoryForBlock"/>
     </group>
+
+    <!-- Branches cleanup action -->
+    <action id="Git.Cleanup.Branches"
+            class="git4idea.ui.branch.cleanup.CleanupBranchesAction"
+            icon="AllIcons.Actions.ClearCash"
+            internal="true">
+      <add-to-group group-id="Git.Branch.Placeholder"/>
+      <add-to-group group-id="Git.Log.Branches.Toolbar.Actions"/>
+    </action>
 
     <group id="Git.MainMenu.FileActions" class="git4idea.actions.GitFileActionGroup" popup="true">
       <reference ref="Git.FileActions"/>

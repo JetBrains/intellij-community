@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
@@ -166,6 +166,7 @@ object BranchesDashboardTreeComponent {
     val settings = actionManager.getAction("Git.Log.Branches.Settings")
 
     val group = DefaultActionGroup()
+    group.add(actionManager.getAction("Git.Log.Branches.Toolbar.Actions"))
     group.add(newBranchAction)
     group.add(updateSelectedAction)
     group.add(deleteAction)
