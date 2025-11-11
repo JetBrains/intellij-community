@@ -153,8 +153,14 @@ class StickyLinesCollector(private val project: Project, private val document: D
   ): List<StickyLine> {
     val outdatedLines: MutableList<StickyLine> = mutableListOf()
     stickyModel.processStickyLines(StickyLinesModel.SourceID.IJ) { existingLine: StickyLine ->
-      val existing = StickyLineInfo(existingLine.textRange())
-      val keepExisting = linesToAdd.remove(existing)
+      val existingRange = existingLine.textRange()
+      val keepExisting = if (existingRange.length > 0) {
+        linesToAdd.remove(StickyLineInfo(existingRange))
+      } else {
+        // typing can reduce the range from non-zero length to zero,
+        //  remove sticky line as invalid IJPL-217619
+        false
+      }
       if (!keepExisting) {
         outdatedLines.add(existingLine)
       }
