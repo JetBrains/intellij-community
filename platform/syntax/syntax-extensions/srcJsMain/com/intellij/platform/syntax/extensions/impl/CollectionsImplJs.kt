@@ -21,14 +21,10 @@ private class SyntaxConcurrentMapJs<K : Any, V : Any>() : MultiplatformConcurren
   override val keys: Set<K>
     get() = map.keys
 
-  override fun computeIfAbsent(key: K, f: (K) -> V): V = map[key] ?: f(key).also { map[key] = it }
+  override fun computeIfAbsent(key: K, f: (K) -> V): V = map.getOrPut(key) { f(key) }
   override fun get(key: K): V? = map[key]
   override fun remove(key: K): V? = map.remove(key)
-  override fun put(key: K, value: V): V? {
-    val prevValue = map[key]
-    map[key] = value
-    return prevValue
-  }
+  override fun put(key: K, value: V): V? = map.put(key, value)
   override fun hashCode(): Int = map.hashCode()
   override fun toString(): String = map.toString()
   override fun equals(other: Any?): Boolean {
