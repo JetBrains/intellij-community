@@ -148,7 +148,7 @@ interface BuildContext : CompilationContext {
   fun findApplicationInfoModule(): JpsModule
 
   suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
-    proprietaryBuildTools.signTool.signFiles(files, context = this, options)
+    proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
   fun getFrontendModuleFilter(): FrontendModuleFilter

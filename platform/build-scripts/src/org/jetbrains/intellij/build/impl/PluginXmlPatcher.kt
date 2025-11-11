@@ -101,11 +101,11 @@ internal suspend fun patchPluginXml(
         moduleElement = moduleElement,
         pluginDescriptorContainer = pluginDescriptorCache,
         xIncludeResolver = xIncludeResolver,
-        context = context,
         moduleName = moduleName,
         dependencyHelper = dependencyHelper,
         pluginLayout = pluginLayout,
-        frontendModuleFilter = frontendModuleFilter
+        frontendModuleFilter = frontendModuleFilter,
+        context = context
       )
     }
     pluginLayout.pluginXmlPatcher(JDOMUtil.write(element), context)

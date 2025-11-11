@@ -232,7 +232,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
-      buildPlugins(
+      buildPluginsForDevMode(
         request = request,
         context = context,
         runDir = runDir,

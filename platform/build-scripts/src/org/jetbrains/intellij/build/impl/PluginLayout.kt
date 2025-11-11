@@ -30,6 +30,8 @@ import java.nio.file.attribute.BasicFileAttributes
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
 
+typealias DeprecatedPostScrambleProcessor = (String, ByteArray, PluginLayout, PlatformLayout, ScopedCachedDescriptorContainer, BuildContext) -> ByteArray?
+
 /**
  * Describes layout of a plugin in the product distribution
  */
@@ -108,6 +110,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     get() = platformResourceGenerators.isNotEmpty() || customAssets.any { it.platformSpecific != null }
 
   fun getMainJarName(): String = mainJarName
+
+  internal var deprecatedPostProcessor: PersistentList<DeprecatedPostScrambleProcessor> = persistentListOf()
+
+  fun getDeprecatedPostScrambleProcessor(): List<DeprecatedPostScrambleProcessor> = deprecatedPostProcessor
 
   companion object {
     /**
@@ -276,8 +282,14 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       layout.rawPluginXmlPatcher = pluginXmlPatcher
     }
 
-    fun withDeprecatedPostPatch(patcher: LayoutPatcher) {
-      layout.withPatch(patcher)
+    fun withDeprecatedPostProcessor(layoutPatcher: LayoutPatcher, pluginXmlPatcher: DeprecatedPostScrambleProcessor) {
+      // if scrambling is not performed, we need to execute layout patcher (no idea why as we cannot investigate and fix Gateway error)
+      layout.withPatch { moduleOutputPatcher, platformLayout, context ->
+        if (context.proprietaryBuildTools.scrambleTool == null) {
+          layoutPatcher(moduleOutputPatcher, platformLayout, context)
+        }
+      }
+      layout.deprecatedPostProcessor += persistentListOf(pluginXmlPatcher)
     }
   }
 
