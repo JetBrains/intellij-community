@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.service.task.debugger
+package org.jetbrains.plugins.gradle.service.execution.eel
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -12,82 +12,64 @@ import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.forwardLocalServer
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * A project-level service that could provide a proxy, that will be available during execution of an [ExternalSystemTaskId].
+ * A project-level service that could provide a proxy, that will be available during execution of an
+ * [com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId].
  * When the task is complete, the proxy server will be stopped.
  */
 @Service(Service.Level.PROJECT)
-internal class GradleDebuggerProxyManager(
+internal class GradleEelProxyManager(
   private val project: Project,
   private val cs: CoroutineScope,
 ) {
 
-  private class Mapping {
-
-    private data class Entry(val localPort: Int, val remotePort: Int)
-
-    private val entries: MutableList<Entry> = mutableListOf()
-
-    fun add(localPort: Int, remotePort: Int) {
-      entries.add(Entry(localPort, remotePort))
-    }
-
-    fun getLocalToRemote(remotePort: Int): Int? = entries.find { it.remotePort == remotePort }?.localPort
+  companion object {
+    fun getInstance(project: Project): GradleEelProxyManager = project.getService(GradleEelProxyManager::class.java)
   }
 
   private val scopes: ConcurrentHashMap<Long, CoroutineScope> = ConcurrentHashMap()
   private val mappings: ConcurrentHashMap<Long, Mapping> = ConcurrentHashMap()
 
   /**
-   * This proxy pipe will be used to establish the management connection between IDEA and our debugging-related tooling.
+   * Set up a proxy between %localhost%:[localPort] and %remote_localhost%:[@result].
    *
    * @param taskId the corresponding task ID.
-   * @param dispatchLocalPort the port provided by `ExternalSystemRunnableState.getForkSocket()`. On this port an instance of
-   * `ForkedDebuggerThread` will wait for the connection from the daemon.
-   * @return an opened port on the remote side.
-   */
-  fun launchProxy(taskId: ExternalSystemTaskId, dispatchLocalPort: Int): Int {
-    val eelDescriptor = project.getEelDescriptor()
-    return eelDescriptor.openSink(taskId, dispatchLocalPort)
-  }
-
-  /**
-   * This proxy pipe will be used to establish the connection between IDEA and the debugger itself.
-   * When a connection between our init script and IDEA will be established, the init script will modify an execution-related task and
-   * start a debugger on this port.
-   * After IDEA receive a heartbeat from the daemon, we could establish a connection with the remote debugger
-   * on 127.0.0.1:[getReverseProxyLocalSink]
-   * There is no need to explicitly receive/return the local port, because it could be looked up later based on the REMOTE port via
-   * [getReverseProxyLocalSink].
-   *
-   * @param taskId the corresponding task ID.
+   * @param localPort a local port that should be used to forward traffic to.
    * @return an opened port on the **remote** side.
    */
-  fun setupReverseProxy(taskId: ExternalSystemTaskId): Int {
-    val localSink = NetUtils.findAvailableSocketPort()
-    val eelDescriptor = project.getEelDescriptor()
-    return eelDescriptor.openSink(taskId, localSink)
+  fun launchReverseProxy(taskId: ExternalSystemTaskId, localPort: Int): Int = project.getEelDescriptor()
+    .openLocalSink(taskId, localPort)
+
+  /**
+   * Get mapping between remote and local port.
+   *
+   * @param remotePort a remote port
+   * @return a local port that could be used to forward traffic to %remoteHost%:[remotePort]
+   */
+  fun getLocalToRemotePort(remotePort: Int): Int {
+    return mappings.values
+             .firstNotNullOfOrNull { it.getLocalToRemote(remotePort) }
+           ?: throw IllegalArgumentException("No local sink found for the remote port $remotePort")
   }
 
   /**
-   * Get a local port that corresponds to the remote port.
+   * Get mapping between local and remote port.
    *
-   * @param reverseProxyRemoteSink a remote port
-   * @return a local port that could be used to access [reverseProxyRemoteSink]
+   * @param localPort a local port
+   * @return a remote port that could be used to access %127.0.0.1%:[localPort]
    */
-  fun getReverseProxyLocalSink(reverseProxyRemoteSink: Int): Int {
+  fun getRemoteToLocalPort(localPort: Int): Int {
     return mappings.values
-             .firstNotNullOfOrNull { it.getLocalToRemote(reverseProxyRemoteSink) }
-           ?: throw IllegalArgumentException("No local sink found for remote port $reverseProxyRemoteSink")
+             .firstNotNullOfOrNull { it.getRemoteToLocal(localPort) }
+           ?: throw IllegalArgumentException("No remote sink found for the local port $localPort")
   }
 
-  private fun EelDescriptor.openSink(taskId: ExternalSystemTaskId, localPort: Int): Int {
+  private fun EelDescriptor.openLocalSink(taskId: ExternalSystemTaskId, localPort: Int): Int {
     val remoteHostAddress = EelTunnelsApi.HostAddress.Builder()
       .connectionTimeout(90.seconds)
       .build()
@@ -126,5 +108,20 @@ internal class GradleDebuggerProxyManager(
         onTaskFinish.invoke(id)
       }
     })
+  }
+
+  private class Mapping {
+
+    private data class Entry(val localPort: Int, val remotePort: Int)
+
+    private val entries: MutableList<Entry> = mutableListOf()
+
+    fun add(localPort: Int, remotePort: Int) {
+      entries.add(Entry(localPort, remotePort))
+    }
+
+    fun getLocalToRemote(remotePort: Int): Int? = entries.find { it.remotePort == remotePort }?.localPort
+
+    fun getRemoteToLocal(localPort: Int): Int? = entries.find { it.localPort == localPort }?.remotePort
   }
 }
