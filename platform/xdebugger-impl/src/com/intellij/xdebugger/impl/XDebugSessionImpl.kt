@@ -32,7 +32,6 @@ import com.intellij.notification.NotificationListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -503,16 +502,15 @@ class XDebugSessionImpl @JvmOverloads constructor(
 
           val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
-        addAdditionalConsolesToManager(runTab.consoleManger, localTabScope.asDisposable())
+        val disposable = localTabScope.asDisposable()
+        addAdditionalConsolesToManager(runTab.consoleManger, disposable)
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
           override fun isHiddenContent(): Boolean = true
         }
-        Disposer.register(mockDescriptor, runTab)
-        localTabScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
-          Disposer.dispose(mockDescriptor)
-        }
+        Disposer.register(disposable, runTab)
+        Disposer.register(disposable, mockDescriptor)
         val descriptorId = mockDescriptor.storeGlobally(localTabScope)
         runContentDescriptorId.complete(descriptorId)
         mockDescriptor.id = descriptorId
