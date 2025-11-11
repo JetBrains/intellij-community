@@ -11,66 +11,46 @@ import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
 import org.jetbrains.jps.dependency.java.SubclassesIndex
 import org.jetbrains.jps.dependency.kotlin.LookupsIndex
 
-const val VERSION = 1
+const val VERSION = 2
 
-internal fun prepareSerializedData(graph: DependencyGraph): Map<String, ByteArray> {
-  val serializedDataResult = mutableMapOf<String, ByteArray>()
+internal fun prepareSerializedData(graph: DependencyGraph): ByteArray {
+  val serializedDataResult = ByteArrayOutputStream().use { byteStream ->
+    DataOutputStream(byteStream).use { dataOut ->
+      dataOut.writeVersion()
 
-  // process subtypes
-  val subclassesIndex: BackDependencyIndex? = graph.getIndex(SubclassesIndex.NAME)
-  val subclassesCount = subclassesIndex?.keys?.count() ?: 0
-  if (subclassesCount > 0) {
-    ByteArrayOutputStream().use { byteStream ->
-      DataOutputStream(byteStream).use { dataOut ->
-        dataOut.writeVersion()
-        dataOut.writeInt(subclassesCount)
-        subclassesIndex?.keys?.forEach { key ->
-          val dependencies = subclassesIndex.getDependencies(key).map { it.toFqName() }
-          dataOut.writeUTF(key.toFqName())
-          dataOut.writeInt(dependencies.size)
-          dependencies.forEach { dataOut.writeUTF(it) }
-        }
+      // process subtypes
+      val subclassesIndex: BackDependencyIndex? = graph.getIndex(SubclassesIndex.NAME)
+      val subclassesCount = subclassesIndex?.keys?.count() ?: 0
+      dataOut.writeInt(subclassesCount)
+      subclassesIndex?.keys?.forEach { key ->
+        val dependencies = subclassesIndex.getDependencies(key).map { it.toFqName() }
+        dataOut.writeUTF(key.toFqName())
+        dataOut.writeInt(dependencies.size)
+        dependencies.forEach { dataOut.writeUTF(it) }
       }
-      byteStream.toByteArray()
-    }.also { serializedDataResult["subtypes"] = it }
-  }
 
-  // process lookups
-  val lookupsIndex: BackDependencyIndex? = graph.getIndex(LookupsIndex.NAME)
-  val lookupsCount = lookupsIndex?.keys?.count() ?: 0
-  val lookupsAccumulator = mutableMapOf<String, Int>()
-  if (lookupsCount > 0) {
-    ByteArrayOutputStream().use { byteStream ->
-      DataOutputStream(byteStream).use { dataOut ->
-        dataOut.writeVersion()
-        dataOut.writeInt(lookupsCount)
-        lookupsIndex?.keys?.forEach { key ->
-          val dependencies = lookupsIndex.getDependencies(key)
-            .mapNotNull { (it as? JvmNodeReferenceID)?.nodeName }
-          dataOut.writeUTF(key.toFqName())
-          dataOut.writeInt(dependencies.count())
-          dependencies.forEach {
-            dataOut.writeInt(it.addFilePathIfNeeded(lookupsAccumulator)) }
-        }
+      // process lookups
+      val lookupsIndex: BackDependencyIndex? = graph.getIndex(LookupsIndex.NAME)
+      val lookupsCount = lookupsIndex?.keys?.count() ?: 0
+      val lookupsAccumulator = mutableMapOf<String, Int>()
+      dataOut.writeInt(lookupsCount)
+      lookupsIndex?.keys?.forEach { key ->
+        val dependencies = lookupsIndex.getDependencies(key)
+          .mapNotNull { (it as? JvmNodeReferenceID)?.nodeName }
+        dataOut.writeUTF(key.toFqName())
+        dataOut.writeInt(dependencies.count())
+        dependencies.forEach {
+          dataOut.writeInt(it.addFilePathIfNeeded(lookupsAccumulator)) }
       }
-      byteStream.toByteArray()
-    }.also { serializedDataResult["lookups"] = it }
 
-    if (lookupsAccumulator.isNotEmpty()) {
-      ByteArrayOutputStream().use { byteStream ->
-        DataOutputStream(byteStream).use { dataOut ->
-          dataOut.writeVersion()
-          dataOut.writeInt(lookupsAccumulator.size)
-          lookupsAccumulator.forEach { (path, fileId) ->
-            dataOut.writeInt(fileId)
-            dataOut.writeUTF(path)
-          }
-        }
-        byteStream.toByteArray()
-      }.also { serializedDataResult["fileIdToPath"] = it }
+      dataOut.writeInt(lookupsAccumulator.size)
+      lookupsAccumulator.forEach { (path, fileId) ->
+        dataOut.writeInt(fileId)
+        dataOut.writeUTF(path)
+      }
     }
+    byteStream.toByteArray()
   }
-
   return serializedDataResult
 }
 
