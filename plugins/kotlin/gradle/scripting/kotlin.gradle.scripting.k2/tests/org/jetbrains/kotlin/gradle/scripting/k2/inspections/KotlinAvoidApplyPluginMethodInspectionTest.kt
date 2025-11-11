@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.inspections
 
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.k2.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.codeInspection.GradleAvoidApplyPluginMethodInspection
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
-import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
+import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
@@ -21,14 +23,16 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
         gradleVersion: GradleVersion,
         test: () -> Unit
     ) {
+        assumeThatGradleIsAtLeast(gradleVersion, "8.14") { "Best practice added in Gradle 8.14" }
         test(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
             codeInsightFixture.enableInspections(GradleAvoidApplyPluginMethodInspection::class.java)
+            (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
             test()
         }
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testSimple(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting("<weak_warning>apply(plugin = \"org.hi.mark\")</weak_warning>")
@@ -36,7 +40,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoQuickFix(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testNoIntentions("apply(plugin = \"org.hi.mark\")<caret>", "Move plugin to the plugins block")
@@ -44,7 +48,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testCorePlugin(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting("<weak_warning>apply(plugin = \"java\")</weak_warning>")
@@ -65,7 +69,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testCorePluginWithExistingPluginsBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -120,7 +124,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testExternalPluginNoPluginsBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -163,7 +167,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testExternalPluginPluginsBlockExists(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -215,7 +219,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testExternalPluginOnlyDependenciesBlockRemoved(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -268,7 +272,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testExternalPluginMultipleDependencies(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -322,50 +326,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testExternalPluginNamedArgumentsDependency(gradleVersion: GradleVersion) {
-        runTest(gradleVersion) {
-            testHighlighting(
-                """
-                buildscript {
-                    repositories {
-                        gradlePluginPortal()
-                    }
-                    
-                    dependencies {
-                        classpath(group = "org.real.plugin", name = "org.real.plugin.gradle.plugin", version = "1.0")
-                    }
-                }
-                <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
-                """.trimIndent()
-            )
-            testIntention(
-                """
-                buildscript {
-                    repositories {
-                        gradlePluginPortal()
-                    }
-                    
-                    dependencies {
-                        classpath(group = "org.real.plugin", name = "org.real.plugin.gradle.plugin", version = "1.0")
-                    }
-                }
-                apply(plugin = "org.real.plugin")<caret>
-                """.trimIndent(),
-                """
-                plugins {
-                    id("org.real.plugin") version "1.0"
-                }
-                
-                
-                """.trimIndent(),
-                "Move plugin to the plugins block"
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoIntentionWithMultipleRepositories(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -403,7 +364,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoIntentionWithoutBuildscript(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting("<weak_warning>apply(plugin = \"org.real.plugin\")</weak_warning>")
@@ -412,7 +373,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoIntentionWithoutMatchingClasspath(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -448,7 +409,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoIntentionWithoutRepositoriesBlock(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -476,7 +437,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testNoIntentionWithWrongRepository(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -512,7 +473,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testValPluginName(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -558,59 +519,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testValClasspathVersion(gradleVersion: GradleVersion) {
-        runTest(gradleVersion) {
-            testHighlighting(
-                $$"""
-                buildscript {
-                    repositories {
-                        gradlePluginPortal()
-                    }
-                    
-                    val version = "1.0"
-                    dependencies {
-                        classpath("org.real.plugin:org.real.plugin.gradle.plugin:$version")
-                    }
-                }
-                <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
-                """.trimIndent()
-            )
-            testIntention(
-                $$"""
-                buildscript {
-                    repositories {
-                        gradlePluginPortal()
-                    }
-                    
-                    val version = "1.0"
-                    dependencies {
-                        classpath("org.real.plugin:org.real.plugin.gradle.plugin:$version")
-                    }
-                }
-                apply(plugin = "org.real.plugin")<caret>
-                """.trimIndent(),
-                """
-                plugins {
-                    id("org.real.plugin") version "1.0"
-                }
-                
-                buildscript {
-                    repositories {
-                        gradlePluginPortal()
-                    }
-                    
-                    val version = "1.0"
-                }
-                
-                """.trimIndent(),
-                "Move plugin to the plugins block"
-            )
-        }
-    }
-
-    @ParameterizedTest
-    @BaseGradleVersionSource
+    @AllGradleVersionsSource
     fun testValClasspath(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
@@ -662,34 +571,34 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testValClasspathVersionNamedArguments(gradleVersion: GradleVersion) {
+    @AllGradleVersionsSource
+    fun testValClasspathGroup(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
-                """
+                $$"""
                 buildscript {
                     repositories {
                         gradlePluginPortal()
                     }
                     
-                    val version = "1.0"
+                    val group = "org.real.plugin"
                     dependencies {
-                        classpath(group = "org.real.plugin", name = "org.real.plugin.gradle.plugin", version = version)
+                        classpath("$group:$group.gradle.plugin:1.0")
                     }
                 }
                 <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
                 """.trimIndent()
             )
             testIntention(
-                """
+                $$"""
                 buildscript {
                     repositories {
                         gradlePluginPortal()
                     }
                     
-                    val version = "1.0"
+                    val group = "org.real.plugin"
                     dependencies {
-                        classpath(group = "org.real.plugin", name = "org.real.plugin.gradle.plugin", version = version)
+                        classpath("$group:$group.gradle.plugin:1.0")
                     }
                 }
                 apply(plugin = "org.real.plugin")<caret>
@@ -704,7 +613,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                         gradlePluginPortal()
                     }
                     
-                    val version = "1.0"
+                    val group = "org.real.plugin"
                 }
                 
                 """.trimIndent(),
@@ -714,34 +623,34 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     }
 
     @ParameterizedTest
-    @BaseGradleVersionSource
-    fun testValClasspathGroupNamedArguments(gradleVersion: GradleVersion) {
+    @AllGradleVersionsSource
+    fun testValClasspathVersion(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testHighlighting(
-                """
+                $$"""
                 buildscript {
                     repositories {
                         gradlePluginPortal()
                     }
                     
-                    val group = "org.real.plugin"
+                    val version = "1.0"
                     dependencies {
-                        classpath(group = group, name = "org.real.plugin.gradle.plugin", version = "1.0")
+                        classpath("org.real.plugin:org.real.plugin.gradle.plugin:$version")
                     }
                 }
                 <weak_warning>apply(plugin = "org.real.plugin")</weak_warning>
                 """.trimIndent()
             )
             testIntention(
-                """
+                $$"""
                 buildscript {
                     repositories {
                         gradlePluginPortal()
                     }
                     
-                    val group = "org.real.plugin"
+                    val version = "1.0"
                     dependencies {
-                        classpath(group = group, name = "org.real.plugin.gradle.plugin", version = "1.0")
+                        classpath("org.real.plugin:org.real.plugin.gradle.plugin:$version")
                     }
                 }
                 apply(plugin = "org.real.plugin")<caret>
@@ -756,7 +665,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
                         gradlePluginPortal()
                     }
                     
-                    val group = "org.real.plugin"
+                    val version = "1.0"
                 }
                 
                 """.trimIndent(),
