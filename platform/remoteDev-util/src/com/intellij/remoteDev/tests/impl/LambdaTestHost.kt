@@ -202,7 +202,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
         val testPlugin = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
                          ?: error("Test plugin with test module '$testModuleId' is not found")
 
-        LOG.info("Test class will be loaded from '${testPlugin.pluginId}' plugin")
+        LOG.info("All test code will be loaded using '${testPlugin.pluginClassLoader}'")
 
         // Advice for processing events
         session.runLambda.setSuspend(sessionBgtDispatcher) { _, parameters ->
