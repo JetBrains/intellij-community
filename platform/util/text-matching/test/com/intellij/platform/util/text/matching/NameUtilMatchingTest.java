@@ -706,13 +706,6 @@ public class NameUtilMatchingTest {
   }
 
   @Test
-  public void testPrintln() {
-    assertMatches("pl", "println");
-    assertMatches("pl", "printlnFoo");
-    assertDoesntMatch("pl", "printlnx");
-  }
-
-  @Test
   public void testLowerCaseAfterCamels() {
     assertMatches("LSTMa", "LineStatusTrackerManager");
   }

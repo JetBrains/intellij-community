@@ -102,7 +102,7 @@ public final class NameUtilCore {
       // Consider every ideograph as a separate word
       return true;
     }
-    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) || isHardCodedWordStart(text, i) ||
+    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) ||
            isKanaBreak(cur, prev);
   }
   
@@ -119,12 +119,6 @@ public final class NameUtilCore {
     return (curScript == Character.UnicodeScript.KATAKANA || curScript == Character.UnicodeScript.HIRAGANA ||
             prevScript == Character.UnicodeScript.KATAKANA || prevScript == Character.UnicodeScript.HIRAGANA) &&
            prevScript != Character.UnicodeScript.COMMON && curScript != Character.UnicodeScript.COMMON;
-  }
-
-  private static boolean isHardCodedWordStart(String text, int i) {
-    return text.charAt(i) == 'l' &&
-           i < text.length() - 1 && text.charAt(i + 1) == 'n' &&
-           (text.length() == i + 2 || isWordStart(text, i + 2));
   }
 
   public static String @NotNull [] nameToWords(@NotNull String name) {
