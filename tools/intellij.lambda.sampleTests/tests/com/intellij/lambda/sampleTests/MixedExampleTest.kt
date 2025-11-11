@@ -21,8 +21,8 @@ class MixedExampleTest {
 
   @TestTemplate
   fun testTemplateTest(ide: BackgroundRunWithLambda) = runBlocking {
-    ide.runLambdaInBackend(SampleTest.HelloBackendOnlyLambda::class)
-    ide.runLambda(SampleTest.HelloFrontendOnlyLambda::class)
+    ide.runLambdaInBackend(SampleTest.Companion.HelloBackendOnlyLambda::class)
+    ide.runLambda(SampleTest.Companion.HelloFrontendOnlyLambda::class)
   }
 
   @TestTemplate

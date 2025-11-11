@@ -58,18 +58,19 @@ class SampleTest {
     ide.runLambda(HelloFrontendOnlyLambda::class)
   }
 
-
-  class HelloFrontendOnlyLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginModuleDescriptor)
-    : NamedLambda<LambdaFrontendContext>(frontendIdeContext, plugin) {
-    override suspend fun LambdaFrontendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
-      return currentClassLogger().warn("Hi there Frontend")
+  companion object {
+    class HelloFrontendOnlyLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginModuleDescriptor)
+      : NamedLambda<LambdaFrontendContext>(frontendIdeContext, plugin) {
+      override suspend fun LambdaFrontendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
+        return currentClassLogger().warn("Hi there Frontend")
+      }
     }
-  }
 
-  class HelloBackendOnlyLambda(backendIdeContext: LambdaBackendContext, plugin: PluginModuleDescriptor)
-    : NamedLambda<LambdaBackendContext>(backendIdeContext, plugin) {
-    override suspend fun LambdaBackendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
-      return currentClassLogger().warn("Hi there Backend")
+    class HelloBackendOnlyLambda(backendIdeContext: LambdaBackendContext, plugin: PluginModuleDescriptor)
+      : NamedLambda<LambdaBackendContext>(backendIdeContext, plugin) {
+      override suspend fun LambdaBackendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
+        return currentClassLogger().warn("Hi there Backend")
+      }
     }
   }
 }
