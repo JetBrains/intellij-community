@@ -1075,13 +1075,6 @@ jvm_import(
 )
 
 jvm_import(
-  name = "de-cketti-unicode-kotlin-codepoints-jvm",
-  jar = "@de_cketti_unicode-kotlin-codepoints-jvm-0_9_0_http//file",
-  source_jar = "@de_cketti_unicode-kotlin-codepoints-jvm-0_9_0-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-jvm_import(
   name = "download-pgp-verifier",
   jar = "@com_jetbrains_infra-download-pgp-verifier-1_1_4_http//file",
   source_jar = "@com_jetbrains_infra-download-pgp-verifier-1_1_4-sources_http//file",

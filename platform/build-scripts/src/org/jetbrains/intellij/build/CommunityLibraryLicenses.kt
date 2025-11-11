@@ -792,9 +792,6 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-    LibraryLicense("kotlin-codepoints", libraryName = "de.cketti.unicode.kotlin.codepoints.jvm", url = "https://github.com/cketti/kotlin-codepoints")
-      .mit("https://github.com/cketti/kotlin-codepoints/blob/main/LICENSE"),
-
     LibraryLicense("kotlin-metadata", libraryName = "kotlin-metadata", url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),

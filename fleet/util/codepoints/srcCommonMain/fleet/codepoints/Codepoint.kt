@@ -1,14 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package fleet.codepoints
 
-import de.cketti.codepoints.CodePoints
 import kotlin.jvm.JvmInline
 
 @JvmInline
 value class Codepoint(val codepoint: Int) {
-  val charCount: Int get() = CodePoints.charCount(codepoint)
+  val charCount: Int
+    get() = if (codepoint < MIN_SUPPLEMENTARY_CODE_POINT) 1 else 2
+
+  fun asString(): String = toString(codepoint)
+
+  internal fun isBmpCodePoint(): Boolean = codepoint ushr 16 == 0
 
   companion object {
+    fun fromChars(highSurrogate: Char, lowSurrogate: Char ): Codepoint = codepointOfPlatformSpecific(highSurrogate, lowSurrogate)
     fun isUnicodeIdentifierStart(codepoint: Int): Boolean = isCodepointInRanges(codepoint, unicodeIdStartRanges)
     fun isUnicodeIdentifierPart(codepoint: Int): Boolean = isCodepointInRanges(codepoint, unicodeIdContinueRanges)
     fun isIdentifierIgnorable(codepoint: Int): Boolean = isCodepointInRanges(codepoint, identifierIgnorableRanges)
@@ -39,51 +44,7 @@ value class Codepoint(val codepoint: Int) {
     }
 
     fun toString(codepoint: Int): String {
-      return CodePoints.toString(codepoint)
+      return codePointsToStringPlatformSpecific(codepoint)
     }
   }
-}
-
-fun CharSequence.codepoints(offset: Int, direction: Direction = Direction.FORWARD): Iterator<Codepoint> =
-  when (direction) {
-    Direction.FORWARD -> iterator {
-      var i = offset
-      val len = length
-      while (i < len) {
-        val c1 = get(i++)
-        if (c1.isHighSurrogate()) {
-          if (i < len) {
-            val c2 = get(i++)
-            if (c2.isLowSurrogate()) {
-              yield(Codepoint(CodePoints.toCodePoint(c1, c2)))
-            }
-          }
-        }
-        else {
-          yield(Codepoint(c1.code))
-        }
-      }
-    }
-    Direction.BACKWARD -> iterator {
-      var i = offset - 1
-      while (i >= 0) {
-        val c2 = get(i--)
-        if (c2.isLowSurrogate()) {
-          if (i >= 0) {
-            val c1 = get(i--)
-            if (c1.isHighSurrogate()) {
-              yield(Codepoint(CodePoints.toCodePoint(c1, c2)))
-            }
-          }
-        }
-        else {
-          yield(Codepoint(c2.code))
-        }
-      }
-    }
-  }
-
-enum class Direction {
-  FORWARD,
-  BACKWARD,
 }

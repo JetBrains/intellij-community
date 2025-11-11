@@ -12,6 +12,7 @@ plugins {
   alias(libs.plugins.dokka)
   // GRADLE_PLUGINS__MARKER_START
   id("fleet-module")
+  alias(jps.plugins.expects)
   // GRADLE_PLUGINS__MARKER_END
 }
 
@@ -57,10 +58,13 @@ kotlin {
     implementation(jps.org.jetbrains.kotlin.kotlin.stdlib1993400674.get().let { "${it.group}:${it.name}:${it.version}" }) {
       exclude(group = "org.jetbrains", module = "annotations")
     }
-    implementation(jps.de.cketti.unicode.kotlin.codepoints.jvm1960123061.get().let { "${it.group}:kotlin-codepoints:${it.version}" }) {
-      isTransitive = false
-    }
     implementation(project(":fleet.util.core"))
+  }
+  sourceSets.jvmMain.dependencies {
+    compileOnly(project(":fleet.util.multiplatform"))
+  }
+  sourceSets.wasmJsMain.dependencies {
+    implementation(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
 }

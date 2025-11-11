@@ -1323,20 +1323,6 @@ http_file(
 )
 
 http_file(
-  name = "de_cketti_unicode-kotlin-codepoints-jvm-0_9_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/de/cketti/unicode/kotlin-codepoints-jvm/0.9.0/kotlin-codepoints-jvm-0.9.0.jar",
-  sha256 = "d642f145f6123739e779d4156145cc5fe7c2173bb58d437b813961a31c337ff9",
-  downloaded_file_path = "kotlin-codepoints-jvm-0.9.0.jar"
-)
-
-http_file(
-  name = "de_cketti_unicode-kotlin-codepoints-jvm-0_9_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/de/cketti/unicode/kotlin-codepoints-jvm/0.9.0/kotlin-codepoints-jvm-0.9.0-sources.jar",
-  sha256 = "713ed1a4bf439eda3a304bce8a713380fc60221dbd34c49bcda0999f4cdf6937",
-  downloaded_file_path = "kotlin-codepoints-jvm-0.9.0-sources.jar"
-)
-
-http_file(
   name = "com_jetbrains_infra-download-pgp-verifier-1_1_4_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/infra/download-pgp-verifier/1.1.4/download-pgp-verifier-1.1.4.jar",
   sha256 = "2bbfa931b2864c4f5e1fd22046d001df8d9a8592a20255baab0d396ed71c854c",
