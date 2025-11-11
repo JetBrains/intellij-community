@@ -41,15 +41,18 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   }
 
   fun withProjectLibrary(libraryName: String, outPath: String) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, outPath = outPath, reason = "withProjectLibrary"))
+    // TODO: owner shouldn't be null in case of PluginLayoutSpec?
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, outPath = outPath, reason = "withProjectLibrary", owner = null))
   }
 
   fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, reason = "withProjectLibrary"))
+    // TODO: owner shouldn't be null in case of PluginLayoutSpec?
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, reason = "withProjectLibrary", owner = null))
   }
 
   fun withProjectLibrary(libraryName: String, outPath: String, packMode: LibraryPackMode) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, outPath = outPath, reason = "withProjectLibrary"))
+    // TODO: owner shouldn't be null in case of PluginLayoutSpec?
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, outPath = outPath, reason = "withProjectLibrary", owner = null))
   }
 
   /**

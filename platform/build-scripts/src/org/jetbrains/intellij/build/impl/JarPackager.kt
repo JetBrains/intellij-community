@@ -469,7 +469,7 @@ class JarPackager private constructor(
             projectLibraryData = ProjectLibraryData(libraryName = libName, owner = item, reason = null)
           }
           else {
-            projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName")
+            projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName", owner = item)
           }
         }
         else if (platformLayout != null && platformLayout.isLibraryAlwaysPackedIntoPlugin(libName)) {
@@ -481,7 +481,7 @@ class JarPackager private constructor(
             continue
           }
 
-          projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName (always packed into plugin)")
+          projectLibraryData = ProjectLibraryData(libraryName = libName, reason = "<- $moduleName (always packed into plugin)", owner = item)
         }
         else {
           continue

@@ -320,6 +320,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
           libraryName = libName,
           packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED),
           reason = "<- ${module.name}",
+          owner = null,
         )
       )
       .dependentModules.computeIfAbsent("core") { mutableListOf() }.add(module.name)
@@ -424,7 +425,8 @@ internal fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, 
         }
 
         val packMode = PLATFORM_CUSTOM_PACK_MODE.getOrDefault(libName, LibraryPackMode.MERGED)
-        result.addOrGet(ProjectLibraryData(libraryName = libName, packMode = packMode, reason = "<- $moduleName"))
+        // TODO: owner is null in this case? Since it is loaded by platform
+        result.addOrGet(ProjectLibraryData(libraryName = libName, packMode = packMode, reason = "<- $moduleName", owner = null))
           .dependentModules
           .computeIfAbsent(plugin.directoryName) { mutableListOf() }
           .add(moduleName)
