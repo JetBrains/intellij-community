@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip.actions
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.PythonPackageManagerAction
 import com.jetbrains.python.packaging.management.getPythonPackageManager
@@ -60,6 +62,12 @@ internal class PipUpdateEnvAction() : PipPackageManagerAction() {
     val manager = e.getPythonPackageManager<PipPythonPackageManager>() ?: return
     if (manager.sdk.isReadOnly) {
       e.presentation.isEnabledAndVisible = false
+    }
+  if (e.place == ActionPlaces.CONTEXT_TOOLBAR) {
+      e.presentation.text = PyBundle.message("action.PipUpdateEnvAction.FloatingToolbar.text")
+    } else {
+      val currentFile = e.getData(PlatformDataKeys.VIRTUAL_FILE)
+      e.presentation.text = PyBundle.message("action.PipUpdateEnvAction.text", currentFile?.name ?: "requirements.txt")
     }
   }
 }
