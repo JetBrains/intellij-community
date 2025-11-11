@@ -1011,11 +1011,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     }
     Runnable retryRunnable = () -> codeCleanup(scope, profile, commandName, postRunnable, modal, shouldApplyFix);
 
-    class TaskDelegate {
-      CleanupProblems problems;
-      @NlsContexts.NotificationContent String noProblemsMessage;
-
-      void run(@NotNull ProgressIndicator indicator) {
+    Task.Backgroundable task = new Task.Backgroundable(getProject(), title, true) {
+      private CleanupProblems problems;
+      private @NlsContexts.NotificationContent String noProblemsMessage;
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
         problems = findProblems(scope, profile, indicator, shouldApplyFix);
         if (problems.files().isEmpty()) {
           noProblemsMessage =
@@ -1024,7 +1024,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         }
       }
 
-      void onSuccess() {
+      @Override
+      public void onSuccess() {
         boolean isFinished;
         if (problems.files().isEmpty()) {
           isFinished = reportNoProblemsFound(scope, noProblemsMessage, retryRunnable);
@@ -1035,53 +1036,6 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         if (isFinished && postRunnable != null) {
           postRunnable.run();
         }
-      }
-    }
-
-    TaskDelegate delegate = new TaskDelegate();
-    Task task = modal ? new Task.Modal(getProject(), title, true) {
-
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        delegate.run(indicator);
-      }
-
-      @Override
-      public void onSuccess() {
-        delegate.onSuccess();
-      }
-
-      @Override
-      public void onThrowable(@NotNull Throwable error) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Code cleanup: an exception during findProblems");
-        }
-        super.onThrowable(error);
-      }
-
-      @Override
-      public void onCancel() {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Code cleanup: cancelled");
-        }
-      }
-
-      @Override
-      public void onFinished() {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Code cleanup: finished searching for problems");
-        }
-      }
-    } : new Task.Backgroundable(getProject(), title, true) {
-
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        delegate.run(indicator);
-      }
-
-      @Override
-      public void onSuccess() {
-        delegate.onSuccess();
       }
 
       @Override
@@ -1106,7 +1060,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         }
       }
     };
-    ProgressManager.getInstance().run(task);
+    ProgressManager.getInstance().run(task.toModalIfNeeded(modal));
   }
 
   public @NotNull CleanupProblems findProblems(@NotNull AnalysisScope scope,

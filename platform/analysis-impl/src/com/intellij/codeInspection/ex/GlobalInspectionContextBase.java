@@ -220,44 +220,24 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                    : AnalysisBundle.message("inspection.progress.single.inspection.title", profile.getName());
     boolean modalProgress =
       Registry.is("batch.inspections.modal.progress.when.building.global.reference.graph") && needsGlobalReferenceGraph();
-    if (modalProgress) {
-      ProgressManager.getInstance().run(new Task.Modal(getProject(), title, true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          performInspectionsWithProgress(scope, false, false);
-        }
+    Task.Backgroundable task = new Task.Backgroundable(getProject(), title, true, createOption()) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        performInspectionsWithProgress(scope, false, false);
+      }
 
-        @Override
-        public void onSuccess() {
-          notifyInspectionsFinished(scope);
-        }
+      @Override
+      public void onSuccess() {
+        notifyInspectionsFinished(scope);
+      }
 
-        @Override
-        public void onCancel() {
-          // execute cleanup in EDT because of myTools
-          cleanup();
-        }
-      });
-    }
-    else {
-      ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), title, true, createOption()) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          performInspectionsWithProgress(scope, false, false);
-        }
-
-        @Override
-        public void onSuccess() {
-          notifyInspectionsFinished(scope);
-        }
-
-        @Override
-        public void onCancel() {
-          // execute cleanup in EDT because of myTools
-          cleanup();
-        }
-      });
-    }
+      @Override
+      public void onCancel() {
+        // execute cleanup in EDT because of myTools
+        cleanup();
+      }
+    };
+    ProgressManager.getInstance().run(task.toModalIfNeeded(modalProgress));
   }
 
   private boolean needsGlobalReferenceGraph() {

@@ -592,22 +592,13 @@ public final class PyUtil {
    */
   public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
                                      boolean modal, boolean canBeCancelled, final @NotNull Consumer<? super ProgressIndicator> function) {
-    if (modal) {
-      ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          function.consume(indicator);
-        }
-      });
-    }
-    else {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, title, canBeCancelled) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          function.consume(indicator);
-        }
-      });
-    }
+    Task.Backgroundable task = new Task.Backgroundable(project, title, canBeCancelled) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        function.consume(indicator);
+      }
+    };
+    ProgressManager.getInstance().run(task.toModalIfNeeded(modal));
   }
 
   /**

@@ -320,22 +320,14 @@ public abstract class AbstractLayoutCodeProcessor {
         }
     };
 
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      ProgressManager.getInstance().run(new Task.Modal(myProject, getProgressTitle(), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          runnable.accept(indicator);
-        }
-      });
-    }
-    else {
-      ProgressManager.getInstance().run(new Task.Backgroundable(myProject, getProgressTitle(), true) {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          runnable.accept(indicator);
-        }
-      });
-    }
+    boolean isModal = ApplicationManager.getApplication().isHeadlessEnvironment();
+    Task.Backgroundable modal = new Task.Backgroundable(myProject, getProgressTitle(), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        runnable.accept(indicator);
+      }
+    };
+    ProgressManager.getInstance().run(modal.toModalIfNeeded(isModal));
   }
 
   private @NotNull @NlsContexts.ProgressTitle String getProgressTitle() {
