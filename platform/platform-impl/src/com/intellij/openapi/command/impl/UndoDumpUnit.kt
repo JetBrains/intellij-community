@@ -68,8 +68,8 @@ internal class UndoDumpUnit(
 
     private fun command(commandName: String?): String {
       return when {
-        commandName == null -> "NULL"
-        commandName.isEmpty() -> "EMPTY"
+        commandName == null -> "NULL_NAME"
+        commandName.isEmpty() -> "''"
         else -> "'$commandName'"
       }
     }

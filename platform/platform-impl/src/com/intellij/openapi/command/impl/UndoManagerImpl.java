@@ -333,7 +333,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected boolean isGroupIdChangeSupported() {
+  public boolean isGroupIdChangeSupported() {
     return true;
   }
 
