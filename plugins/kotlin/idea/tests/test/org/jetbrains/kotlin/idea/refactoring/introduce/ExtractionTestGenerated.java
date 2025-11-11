@@ -5033,6 +5033,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             runTest("testData/refactoring/introduceTypeAlias/protectedInFile.kt");
         }
 
+        @TestMetadata("singleTypeParameters.kt")
+        public void testSingleTypeParameters() throws Exception {
+            runTest("testData/refactoring/introduceTypeAlias/singleTypeParameters.kt");
+        }
+
         @TestMetadata("skipQualifiers.kt")
         public void testSkipQualifiers() throws Exception {
             runTest("testData/refactoring/introduceTypeAlias/skipQualifiers.kt");
@@ -5051,6 +5056,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         @TestMetadata("typeConstructor.kt")
         public void testTypeConstructor() throws Exception {
             runTest("testData/refactoring/introduceTypeAlias/typeConstructor.kt");
+        }
+
+        @TestMetadata("typeParameters.kt")
+        public void testTypeParameters() throws Exception {
+            runTest("testData/refactoring/introduceTypeAlias/typeParameters.kt");
         }
 
         @TestMetadata("typesExtractedWithFunctionalType.kt")

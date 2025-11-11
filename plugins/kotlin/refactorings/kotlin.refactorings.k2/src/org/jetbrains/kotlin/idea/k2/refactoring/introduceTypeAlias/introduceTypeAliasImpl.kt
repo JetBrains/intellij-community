@@ -96,7 +96,7 @@ private fun findReferencesToReplaceWithTypeParameters(
         if (newReference !in forcedCandidates) { //skip for resolved references
             val originalSymbol = (originalReference.type as? KaClassType)?.symbol
             val newSymbol = (newReference.type as? KaClassType)?.symbol
-            if (originalSymbol == newSymbol) continue
+            if (originalSymbol == newSymbol && originalSymbol != null) continue
         }
 
         with(K2SemanticMatcher) {
