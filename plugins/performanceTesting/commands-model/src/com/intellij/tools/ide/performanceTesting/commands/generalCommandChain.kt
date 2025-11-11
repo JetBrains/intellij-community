@@ -1036,6 +1036,10 @@ fun <T : CommandChain> T.waitForCodeAnalysisFinished(): T = apply {
   addCommand("${CMD_PREFIX}waitForFinishedCodeAnalysis")
 }
 
+fun <T : CommandChain> T.waitForCodeVision(timeoutSeconds: Int = 30): T = apply {
+  addCommand("${CMD_PREFIX}waitForCodeVision $timeoutSeconds")
+}
+
 @Suppress("unused")
 fun <T : CommandChain> T.checkChatBotResponse(textToCheck: String): T = apply {
   addCommand("${CMD_PREFIX}checkResponseContains ${textToCheck}")
