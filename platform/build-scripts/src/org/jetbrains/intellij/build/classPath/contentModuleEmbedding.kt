@@ -387,8 +387,6 @@ internal class XIncludeElementResolverImpl(
 }
 
 private val badIncludesForPluginCollector = hashSetOf(
-  // if we for some reason failed to detect that this plugin.xml is a product
-  "META-INF/ultimate.xml",
   // rider includes some CWM files
   "META-INF/designer-gradle.xml",
   "META-INF/cwmBackendConnection.xml",
