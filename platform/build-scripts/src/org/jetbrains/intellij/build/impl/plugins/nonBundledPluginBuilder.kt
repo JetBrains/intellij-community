@@ -37,7 +37,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginRepositorySpec
 import org.jetbrains.intellij.build.impl.buildHelpPlugin
 import org.jetbrains.intellij.build.impl.buildKeymapPlugin
-import org.jetbrains.intellij.build.impl.buildPlugins
 import org.jetbrains.intellij.build.impl.dir
 import org.jetbrains.intellij.build.impl.executableFileUnixMode
 import org.jetbrains.intellij.build.impl.generatePluginRepositoryMetaFile

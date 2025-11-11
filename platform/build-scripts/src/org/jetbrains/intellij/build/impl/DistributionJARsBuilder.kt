@@ -45,6 +45,7 @@ import org.jetbrains.intellij.build.classPath.writePluginClassPathHeader
 import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.hasModuleOutputPath
+import org.jetbrains.intellij.build.impl.plugins.buildPlugins
 import org.jetbrains.intellij.build.impl.plugins.doBuildNonBundledPlugins
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ContentReport
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -500,119 +501,6 @@ fun nonBundledPluginsStageDir(context: BuildContext): Path {
   return context.paths.tempDir.resolve("non-bundled-plugins-${context.applicationInfo.productCode}")
 }
 
-private class ScrambleTask(@JvmField val plugin: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)
-
-internal suspend fun buildPlugins(
-  moduleOutputPatcher: ModuleOutputPatcher,
-  plugins: Collection<PluginLayout>,
-  os: OsFamily?,
-  targetDir: Path,
-  state: DistributionBuilderState,
-  context: BuildContext,
-  buildPlatformJob: Job?,
-  searchableOptionSet: SearchableOptionSetDescriptor?,
-  descriptorCacheContainer: DescriptorCacheContainer,
-  pluginBuilt: (suspend (PluginLayout, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
-): List<PluginBuildDescriptor> {
-  val scrambleTool = context.proprietaryBuildTools.scrambleTool
-  val isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
-
-  val scrambleTasks = mutableListOf<ScrambleTask>()
-
-  val entries = coroutineScope {
-    plugins.map { pluginLayout ->
-      val directoryName = pluginLayout.directoryName
-      val pluginDir = targetDir.resolve(directoryName)
-
-      if (pluginLayout.mainModule != BUILT_IN_HELP_MODULE_NAME) {
-        launch {
-          checkOutputOfPluginModules(
-            mainPluginModule = pluginLayout.mainModule,
-            includedModules = pluginLayout.includedModules,
-            moduleExcludes = pluginLayout.moduleExcludes,
-            context = context,
-          )
-        }
-
-        patchPluginXml(
-          moduleOutputPatcher = moduleOutputPatcher,
-          pluginLayout = pluginLayout,
-          releaseDate = context.applicationInfo.majorReleaseDate,
-          releaseVersion = context.applicationInfo.releaseVersionForLicensing,
-          pluginsToPublish = state.pluginsToPublish,
-          platformDescriptorCache = descriptorCacheContainer.forPlatform(state.platformLayout),
-          pluginDescriptorCache = descriptorCacheContainer.forPlugin(pluginDir),
-          platformLayout = state.platformLayout,
-          context = context,
-        )
-      }
-
-      val task = async(CoroutineName("Build plugin (module=${pluginLayout.mainModule})")) {
-        spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).use {
-          val (entries, file) = layoutDistribution(
-            layout = pluginLayout,
-            platformLayout = state.platformLayout,
-            targetDir = pluginDir,
-            copyFiles = true,
-            moduleOutputPatcher = moduleOutputPatcher,
-            includedModules = pluginLayout.includedModules,
-            searchableOptionSet = searchableOptionSet,
-            cachedDescriptorWriterProvider = descriptorCacheContainer.forPlugin(pluginDir),
-            context = context,
-          )
-
-          if (pluginBuilt == null) {
-            entries
-          }
-          else {
-            entries + pluginBuilt(pluginLayout, file)
-          }
-        }
-      }
-
-      if (!pluginLayout.pathsToScramble.isEmpty()) {
-        val attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
-        if (scrambleTool == null) {
-          Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled", attributes)
-        }
-        else if (isScramblingSkipped) {
-          Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
-        }
-        else {
-          // we cannot start executing right now because the plugin can use other plugins in a scramble classpath
-          scrambleTasks.add(ScrambleTask(plugin = pluginLayout, pluginDir = pluginDir, targetDir = targetDir))
-        }
-      }
-
-      PluginBuildDescriptor(dir = pluginDir, os = os, layout = pluginLayout, distribution = task.await())
-    }
-  }
-
-  if (scrambleTasks.isNotEmpty()) {
-    checkNotNull(scrambleTool)
-
-    // scrambling can require classes from the platform
-    buildPlatformJob?.let { task ->
-      spanBuilder("wait for platform lib for scrambling").use { task.join() }
-    }
-    coroutineScope {
-      for (scrambleTask in scrambleTasks) {
-        launch(CoroutineName("scramble plugin ${scrambleTask.plugin.directoryName}")) {
-          scrambleTool.scramblePlugin(
-            pluginLayout = scrambleTask.plugin,
-            platformLayout = state.platformLayout,
-            targetDir = scrambleTask.pluginDir,
-            additionalPluginDir = scrambleTask.targetDir,
-            layouts = plugins,
-            context = context,
-          )
-        }
-      }
-    }
-  }
-  return entries
-}
-
 internal const val PLUGINS_DIRECTORY = "plugins"
 internal const val LIB_DIRECTORY = "lib"
 
@@ -747,41 +635,6 @@ fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArchitecture,
   )
 }
 
-private fun checkOutputOfPluginModules(
-  mainPluginModule: String,
-  includedModules: Collection<ModuleItem>,
-  moduleExcludes: Map<String, List<String>>,
-  context: BuildContext,
-) {
-  for (module in includedModules.asSequence().map { it.moduleName }.distinct()) {
-    if (module != "intellij.java.guiForms.rt" ||
-        !containsFileInOutput(module, "com/intellij/uiDesigner/core/GridLayoutManager.class", moduleExcludes.get(module) ?: emptyList(), context)) {
-      continue
-    }
-
-    error(
-      "Runtime classes of GUI designer must not be packaged to '$module' module in '$mainPluginModule' plugin, " +
-      "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
-      "to the output directory' is disabled in Settings | Editor | GUI Designer."
-    )
-  }
-}
-
-private fun containsFileInOutput(moduleName: String, @Suppress("SameParameterValue") filePath: String, excludes: Collection<String>, context: BuildContext): Boolean {
-  val exists = hasModuleOutputPath(module = context.findRequiredModule(moduleName), relativePath = filePath, context = context)
-  if (!exists) {
-    return false
-  }
-
-  for (exclude in excludes) {
-    if (antToRegex(exclude).matches(FileUtilRt.toSystemIndependentName(filePath))) {
-      return false
-    }
-  }
-
-  return true
-}
-
 private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext): Job {
   val buildString = context.fullBuildNumber
   return createSkippableJob(
@@ -860,7 +713,7 @@ internal fun satisfiesBundlingRequirements(plugin: PluginLayout, osFamily: OsFam
   }
 }
 
-private suspend fun layoutDistribution(
+internal suspend fun layoutDistribution(
   layout: BaseLayout,
   platformLayout: PlatformLayout,
   targetDir: Path,

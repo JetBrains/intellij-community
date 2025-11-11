@@ -84,7 +84,7 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withProjectLibrary(libraryName, jarName)
   }
 
-  fun withPatch(patcher: LayoutPatcher) {
+  fun withDeprecatedPostPatch(patcher: LayoutPatcher) {
     layout.withPatch(patcher)
   }
 

@@ -119,16 +119,14 @@ fun deprecatedResolveDescriptor(
   relativePath: String,
   additionalSearchModules: Collection<String> = emptyList(),
 ) {
-  spec.withPatch { moduleOutputPatcher, platformLayout, context ->
+  spec.withDeprecatedPostPatch { moduleOutputPatcher, platformLayout, context ->
     context.findFileInModuleSources(clientModuleName, relativePath)?.let { file ->
       val xml = JDOMUtil.load(file)
 
-      // Create temporary descriptor cache containers for this operation
       val descriptorCacheContainer = DescriptorCacheContainer()
       val clientDescriptorCache = descriptorCacheContainer.forPlugin(context.paths.tempDir.resolve("temp-client-cache"))
       val platformDescriptorCache = descriptorCacheContainer.forPlatform(platformLayout)
 
-      // Create XInclude resolver with proper search scopes using new API
       val xIncludeResolver = XIncludeElementResolverImpl(
         searchPath = listOf(
           DescriptorSearchScope(listOf(clientModuleName), clientDescriptorCache),
@@ -141,25 +139,24 @@ fun deprecatedResolveDescriptor(
         context = context
       )
 
-      // Resolve xi:includes using the new resolver
       resolveIncludes(element = xml, elementResolver = xIncludeResolver)
 
       // Embed content modules using new API
-      for (contentElement in xml.getChildren("content")) {
-        for (moduleElement in contentElement.getChildren("module")) {
-          val moduleName = moduleElement.getAttributeValue("name") ?: continue
-          embedContentModule(
-            moduleElement = moduleElement,
-            pluginDescriptorContainer = clientDescriptorCache,
-            xIncludeResolver = xIncludeResolver,
-            context = context,
-            moduleName = moduleName,
-            dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
-            pluginLayout = PluginLayout.pluginAuto(clientModuleName) {},
-            frontendModuleFilter = context.getFrontendModuleFilter()
-          )
-        }
-      }
+      //for (contentElement in xml.getChildren("content")) {
+      //  for (moduleElement in contentElement.getChildren("module")) {
+      //    val moduleName = moduleElement.getAttributeValue("name") ?: continue
+      //    embedContentModule(
+      //      moduleElement = moduleElement,
+      //      pluginDescriptorContainer = clientDescriptorCache,
+      //      xIncludeResolver = xIncludeResolver,
+      //      context = context,
+      //      moduleName = moduleName,
+      //      dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
+      //      pluginLayout = PluginLayout.pluginAuto(clientModuleName) {},
+      //      frontendModuleFilter = context.getFrontendModuleFilter()
+      //    )
+      //  }
+      //}
 
       moduleOutputPatcher.patchModuleOutput(moduleName = clientModuleName, path = relativePath, content = JDOMUtil.write(xml))
     }

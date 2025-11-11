@@ -91,7 +91,7 @@ private fun isPluginApplicable(bundledMainModuleNames: Set<String>, plugin: Plug
          satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = JvmArchitecture.currentJvmArch, context = context)
 }
 
-private suspend fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
+private fun getBundledMainModuleNames(context: BuildContext, additionalModules: List<String>): Set<String> {
   val bundledPluginModules = context.getBundledPluginModules()
   val result = LinkedHashSet<String>(bundledPluginModules.size + additionalModules.size)
   result.addAll(bundledPluginModules)
