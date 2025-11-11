@@ -263,8 +263,8 @@ class SePopupContentPane(
                 updateEmptyStatus()
               }
 
-              autoSelectIndex(searchContext.searchPattern, true)
               updateViewMode()
+              autoSelectIndex(searchContext.searchPattern, true)
             }
           }.collect { event ->
             withContext(Dispatchers.EDT) {
@@ -277,8 +277,8 @@ class SePopupContentPane(
               if (wasFrozen) resultListModel.freezer.enable()
               updateFrozenCount()
 
-              autoSelectIndex(searchContext.searchPattern, false)
               updateViewMode()
+              autoSelectIndex(searchContext.searchPattern, false)
             }
           }
         }
