@@ -5,7 +5,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.impl.jpsModuleOutputProvider
+import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
+import org.jetbrains.intellij.build.impl.JpsModuleOutputProvider
+import org.jetbrains.intellij.build.impl.isRunningFromBazelOut
 import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
@@ -21,19 +23,20 @@ import java.nio.file.Path
  * @return JsonFilter if filter is specified, null for full JSON output
  */
 fun parseJsonArgument(arg: String): JsonFilter? {
-  return if (arg.contains("=")) {
+  if (arg.contains("=")) {
     val filterJson = arg.substringAfter("=")
     try {
-      Json.decodeFromString<JsonFilter>(filterJson)
+      return Json.decodeFromString<JsonFilter>(filterJson)
     }
     catch (e: Exception) {
       System.err.println("Failed to parse JSON filter: $filterJson")
       System.err.println("Error: ${e.message}")
-      null
+      return null
     }
   }
   else {
-    null // Full JSON output
+    // Full JSON output
+    return null
   }
 }
 
@@ -153,6 +156,10 @@ internal fun createModuleOutputProvider(projectRoot: Path): ModuleOutputProvider
     mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),
     false
   )
-  val moduleOutputProvider = jpsModuleOutputProvider(project.modules)
-  return moduleOutputProvider
+  return if (isRunningFromBazelOut()) {
+    BazelModuleOutputProvider(project.modules, projectRoot)
+  }
+  else {
+    JpsModuleOutputProvider(project.modules)
+  }
 }

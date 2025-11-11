@@ -6,11 +6,8 @@ import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.dev.createProductProperties
-import org.jetbrains.intellij.build.impl.jpsModuleOutputProvider
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.serialization.JpsMavenSettings
-import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -52,7 +49,7 @@ fun findProductPropertiesSourceFile(
   projectRoot: Path
 ): String {
   val className = productPropertiesClass.name
-  
+
   // Handle special cases where class name != file name
   val fileName = CLASS_TO_FILE_NAME_OVERRIDES[className] ?: "${className.substringAfterLast('.')}.kt"
   val packagePath = className.substringBeforeLast('.').replace('.', '/')
@@ -163,12 +160,6 @@ suspend fun generateAllProductXmlFiles(
 
   // Detect if this is an Ultimate build (projectRoot != communityRoot)
   val isUltimateBuild = projectRoot != BuildPaths.COMMUNITY_ROOT.communityRoot
-
-  val moduleOutputProvider = jpsModuleOutputProvider(
-    JpsSerializationManager.getInstance()
-      .loadProject(projectRoot.toString(), mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()), false)
-      .modules
-  )
 
   val productResults = products.mapNotNull { discovered ->
     // Skip products without pluginXmlPath or spec configured
