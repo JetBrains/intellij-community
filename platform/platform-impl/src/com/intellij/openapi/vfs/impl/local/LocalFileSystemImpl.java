@@ -23,7 +23,10 @@ import com.intellij.util.io.PlatformNioHelper;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
@@ -413,7 +416,8 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
       FileAttributes attributes = readAttributesUsingEel(nioFile);
       return amendAttributes(nioFile, attributes);
     }
-    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
+    catch (NoSuchFileException e) { LOG.debug("File doesn't exist: " + e.getMessage()); }
+    catch (AccessDeniedException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return null;
   }
