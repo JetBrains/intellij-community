@@ -5,13 +5,11 @@ import com.intellij.execution.Executor
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 
 
 /**
@@ -45,11 +43,6 @@ abstract class CustomGradleApplicationEnvironmentProvider<T : ApplicationConfigu
                                              environment: ExecutionEnvironment): ExecutionEnvironment
 
   abstract fun getRunConfiguration(task: ExecuteRunConfigurationTask): T?
-
-  override fun customiseTaskExecutionsSettings(taskSettings: ExternalSystemTaskExecutionSettings, module: Module) {
-    GradleRunnerUtil.addExplicitSettingsFileParameter(module, taskSettings)
-    super.customiseTaskExecutionsSettings(taskSettings, module)
-  }
 
   override fun generateInitScript(params: GradleInitScriptParameters): String? {
     val generator = findGenerator(params.module) ?: return super.generateInitScript(params)

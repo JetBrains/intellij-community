@@ -68,7 +68,7 @@ object GradleLibrarySourcesDownloader {
     }
     val module = findAssociatedGradleModule(orderEntries) ?: return null
     val gradleModuleData = CachedModuleDataFinder.getGradleModuleData(module) ?: return null
-    val externalProjectPath = gradleModuleData.directoryToRunTask
+    val externalProjectPath = gradleModuleData.moduleData.linkedExternalProjectPath ?: return null
     val libraryOrderEntry = orderEntries.first()
     val sourceArtifactNotation = libraryOrderEntry.getArtifactCoordinates()?.let { "$it:sources" } ?: return null
     val cachedSourcesPath = lookupSourcesPathFromCache(libraryOrderEntry, sourceArtifactNotation, project, externalProjectPath)

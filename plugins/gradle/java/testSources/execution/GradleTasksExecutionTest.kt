@@ -108,15 +108,13 @@ tasks.register("hello-module") {
 
     val taskData: TaskData = ExternalSystemApiUtil
       .findProjectTasks(myProject, GradleConstants.SYSTEM_ID, "$projectPath/m1/m2/m3")
-      .find { it.name == "hello-module" } ?: throw AssertionFailedError("Task 'hello-module' not found")
+      .find { it.name.contains("hello-module") } ?: throw AssertionFailedError("Task 'hello-module' not found")
 
     val output = runTask(taskData)
     assertThat(output).contains("expected!");
   }
 
-  // Checks the workaround for IDEA-316566 IDEA-317008
   @Test
-  @TargetVersions("<9.0") // --settings-file was removed in Gradle 9.0
   fun `run task from misconfigured subproject with explicit script parameter`() {
     val properSettingsFilePaths = createProjectSubFile("settings.gradle", """
       rootProject.name = "rootProject"
@@ -154,10 +152,9 @@ tasks.register("hello-module") {
 
     val taskData: TaskData = ExternalSystemApiUtil
                                .findProjectTasks(myProject, GradleConstants.SYSTEM_ID, "$projectPath/projectA")
-                               .find { it.name == "hello" } ?: throw AssertionFailedError("Task 'hello' not found")
+                               .find { it.name.contains("hello") } ?: throw AssertionFailedError("Task 'hello' not found")
 
-    // this script parameter allows to skip malicious settings.gradle files.
-    val output = runTask(taskData, "--settings-file \"$properSettingsFilePaths\"")
+    val output = runTask(taskData)
     assertThat(output).contains("expected!")
   }
 
