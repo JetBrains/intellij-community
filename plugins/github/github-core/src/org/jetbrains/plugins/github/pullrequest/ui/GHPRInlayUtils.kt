@@ -179,11 +179,11 @@ internal object GHPRInlayUtils {
     }
 
     override fun mouseReleased(e: EditorMouseEvent) {
-      isDraggingFrame = false
-
-      if (oldRange != null) {
+      if (oldRange != null && isDraggingFrame) {
+        isDraggingFrame = false
         val range = vm.range.value?.second ?: return
         model?.updateCommentLines(oldRange!!, LineRange(range.first, range.last)) ?: return
+        vm.vm.requestFocus()
         editorEx.setCustomCursor(this, null)
       }
     }
