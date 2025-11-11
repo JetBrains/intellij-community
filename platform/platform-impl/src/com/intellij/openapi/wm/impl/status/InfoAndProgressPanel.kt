@@ -772,8 +772,6 @@ class InfoAndProgressPanel internal constructor(
     override fun createCompactTextAndProgress(component: JPanel) {
       textPanel.setTextAlignment(Component.RIGHT_ALIGNMENT)
       textPanel.recomputeSize()
-      UIUtil.setCursor(textPanel, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
-      UIUtil.setCursor(progress, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
       super.createCompactTextAndProgress(component)
       (progress.parent as JComponent).setBorder(JBUI.Borders.empty(0, 8, 0, 4))
     }
@@ -1010,7 +1008,6 @@ class InfoAndProgressPanel internal constructor(
           host.handle(e)
         }
       })
-      progressIcon.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
       updateProgressIconBorder()
       val listener = object : RegistryValueListener {
         override fun afterValueChanged(value: RegistryValue) {
@@ -1025,7 +1022,6 @@ class InfoAndProgressPanel internal constructor(
           host.triggerPopupShowing()
         }
       })
-      UIUtil.setCursor(counterComponent, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
       addMouseHoverListener(host.lifecycleDisposable, object : HoverListener() {
         override fun mouseEntered(component: Component, x: Int, y: Int) {
           setHovered(true)
