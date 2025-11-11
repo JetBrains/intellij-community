@@ -62,31 +62,31 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       .withText("}")
       .withParent(psiElement(PsiCodeBlock.class).withParent(or(psiElement(PsiTryStatement.class), psiElement(PsiCatchSection.class))))
       .accepts(prevLeaf)) {
-      sink.accept(new KeywordCompletionItem(JavaKeywords.CATCH, JavaTailTypes.CATCH_LPARENTH));
-      sink.accept(new KeywordCompletionItem(JavaKeywords.FINALLY, JavaTailTypes.FINALLY_LBRACE));
+      sink.accept(createItem(JavaKeywords.CATCH, JavaTailTypes.CATCH_LPARENTH));
+      sink.accept(createItem(JavaKeywords.FINALLY, JavaTailTypes.FINALLY_LBRACE));
       if (prevLeaf != null && prevLeaf.getParent().getNextSibling() instanceof PsiErrorElement) {
         return;
       }
     }
-    sink.accept(new KeywordCompletionItem(JavaKeywords.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
-    sink.accept(new KeywordCompletionItem(JavaKeywords.WHILE, JavaTailTypes.WHILE_LPARENTH));
-    sink.accept(new KeywordCompletionItem(JavaKeywords.DO, JavaTailTypes.DO_LBRACE));
-    sink.accept(new KeywordCompletionItem(JavaKeywords.FOR, JavaTailTypes.FOR_LPARENTH));
-    sink.accept(new KeywordCompletionItem(JavaKeywords.IF, JavaTailTypes.IF_LPARENTH));
-    sink.accept(new KeywordCompletionItem(JavaKeywords.TRY, JavaTailTypes.TRY_LBRACE));
-    sink.accept(new KeywordCompletionItem(JavaKeywords.SYNCHRONIZED, JavaTailTypes.SYNCHRONIZED_LPARENTH));
-    sink.accept(new KeywordCompletionItem(JavaKeywords.THROW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
-    sink.accept(new KeywordCompletionItem(JavaKeywords.NEW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+    sink.accept(createItem(JavaKeywords.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
+    sink.accept(createItem(JavaKeywords.WHILE, JavaTailTypes.WHILE_LPARENTH));
+    sink.accept(createItem(JavaKeywords.DO, JavaTailTypes.DO_LBRACE));
+    sink.accept(createItem(JavaKeywords.FOR, JavaTailTypes.FOR_LPARENTH));
+    sink.accept(createItem(JavaKeywords.IF, JavaTailTypes.IF_LPARENTH));
+    sink.accept(createItem(JavaKeywords.TRY, JavaTailTypes.TRY_LBRACE));
+    sink.accept(createItem(JavaKeywords.SYNCHRONIZED, JavaTailTypes.SYNCHRONIZED_LPARENTH));
+    sink.accept(createItem(JavaKeywords.THROW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+    sink.accept(createItem(JavaKeywords.NEW, (ModNavigatorTailType)TailTypes.insertSpaceType()));
     if (PsiUtil.isAvailable(JavaFeature.ASSERTIONS, element)) {
-      sink.accept(new KeywordCompletionItem(JavaKeywords.ASSERT, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+      sink.accept(createItem(JavaKeywords.ASSERT, (ModNavigatorTailType)TailTypes.insertSpaceType()));
     }
     if (!(PsiTreeUtil.getParentOfType(element, PsiSwitchExpression.class, PsiLambdaExpression.class) 
             instanceof PsiSwitchExpression)) {
-      sink.accept(new KeywordCompletionItem(JavaKeywords.RETURN, getReturnTail(element)));
+      sink.accept(createItem(JavaKeywords.RETURN, getReturnTail(element)));
     }
     if (psiElement().withText(";").withSuperParent(2, PsiIfStatement.class).accepts(prevLeaf) ||
         psiElement().withText("}").withSuperParent(3, PsiIfStatement.class).accepts(prevLeaf)) {
-      CompletionItem elseKeyword = new KeywordCompletionItem(JavaKeywords.ELSE, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType());
+      CompletionItem elseKeyword = createItem(JavaKeywords.ELSE, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType());
       CharSequence text = element.getContainingFile().getFileDocument().getCharsSequence();
       int offset = context.offset();
       while (text.length() > offset && Character.isWhitespace(text.charAt(offset))) {
@@ -100,6 +100,10 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       }
       sink.accept(elseKeyword);
     }
+  }
+
+  private static CommonCompletionItem createItem(@NlsSafe String keyword, ModNavigatorTailType tailType) {
+    return new CommonCompletionItem(keyword).withObject(new KeywordInfo(keyword)).withTail(tailType);
   }
 
   void addEnhancedCases(PsiElement position, Consumer<CompletionItem> sink) {
@@ -137,7 +141,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       return;
     }
 
-    CompletionItem defaultCaseRule = new KeywordCompletionItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock), true);
+    CompletionItem defaultCaseRule = createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock)).adjustIndent();
     //TODO: priority
     // prioritizeForRule(defaultCaseRule, switchBlock)
     sink.accept(defaultCaseRule);
@@ -148,11 +152,11 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
     if (switchBlock == null) return;
     PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(switchBlock);
     if (defaultElement != null && defaultElement.getTextRange().getStartOffset() < position.getTextRange().getStartOffset()) return;
-    sink.accept(new KeywordCompletionItem(JavaKeywords.CASE, (ModNavigatorTailType)TailTypes.insertSpaceType()));
+    sink.accept(createItem(JavaKeywords.CASE, (ModNavigatorTailType)TailTypes.insertSpaceType()));
     if (defaultElement != null) {
       return;
     }
-    CompletionItem defaultCaseRule = new KeywordCompletionItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock), true);
+    CompletionItem defaultCaseRule = createItem(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock)).adjustIndent();
     //TODO: priority
     // prioritizeForRule(defaultCaseRule, switchBlock)
     sink.accept(defaultCaseRule);
@@ -388,5 +392,8 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
 
     return statement instanceof PsiForStatement ||
            statement.getParent() instanceof PsiForStatement && statement != ((PsiForStatement)statement.getParent()).getBody();
+  }
+
+  public record KeywordInfo(String keyword) {
   }
 }

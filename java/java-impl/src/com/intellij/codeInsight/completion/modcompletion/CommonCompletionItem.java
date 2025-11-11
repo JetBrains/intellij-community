@@ -65,6 +65,14 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   }
 
   /**
+   * @param object context object to use
+   * @return a new completion item with the given context object
+   */
+  public CommonCompletionItem withObject(Object object) {
+    return new CommonCompletionItem(myText, myAdditionalStrings, object, myPresentation, myTail, myAdjustIndent);
+  }
+
+  /**
    * @param string an additional lookup string to match
    * @return new CommonCompletionItem with the given additional lookup string (previously added strings are not removed)
    */
