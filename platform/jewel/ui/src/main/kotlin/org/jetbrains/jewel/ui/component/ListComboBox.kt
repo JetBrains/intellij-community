@@ -62,6 +62,10 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
  * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
  * control.
  *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
  * **Usage example:**
@@ -140,6 +144,10 @@ public fun <T : Any> ListComboBox(
  * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
  * control.
  *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
  * **Usage example:**
@@ -211,6 +219,10 @@ public fun <T : Any> ListComboBox(
  * Provides a selectable list of items in a dropdown format. When clicked, displays a popup with the list of items.
  * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
  * control.
+ *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
@@ -291,6 +303,10 @@ public fun ListComboBox(
  * Supports keyboard navigation, item selection, and custom item rendering. The selected item is displayed in the main
  * control.
  *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
  * **Usage example:**
@@ -360,6 +376,10 @@ public fun ListComboBox(
  * Provides a text field with a dropdown list of suggestions. Users can either select from the list or type their own
  * value. Supports keyboard navigation, item selection, and custom item rendering. The selected or entered text is
  * displayed in the editable text field.
+ *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
  *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
@@ -523,6 +543,10 @@ public fun EditableListComboBox(
  * value. Supports keyboard navigation, item selection, and custom item rendering. The selected or entered text is
  * displayed in the editable text field.
  *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
+ *
  * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/drop-down.html)
  *
  * **Usage example:**
@@ -659,6 +683,7 @@ internal fun <T : Any> ListComboBoxImpl(
 
     val density = LocalDensity.current
     var comboBoxWidth by remember { mutableStateOf(Dp.Unspecified) }
+    var currentComboBoxWidth by remember { mutableStateOf(Dp.Unspecified) }
 
     val currentSelectedIndex by rememberUpdatedState(selectedIndex)
     var hoveredItemIndex by remember { mutableIntStateOf(selectedIndex) }
@@ -747,8 +772,9 @@ internal fun <T : Any> ListComboBoxImpl(
     }
 
     fun handlePopupKeyDown(event: androidx.compose.ui.input.key.KeyEvent): Boolean =
-        if (!popupManager.isPopupVisible.value) false
-        else
+        if (!popupManager.isPopupVisible.value) {
+            false
+        } else {
             when (event.key) {
                 Key.MoveHome,
                 Key.Home -> selectHome()
@@ -769,11 +795,19 @@ internal fun <T : Any> ListComboBoxImpl(
                 }
                 else -> false
             }
+        }
+
+    // This logic ensures that the popup size does not change based on the combo box size if the popup is visible
+    LaunchedEffect(currentComboBoxWidth, popupManager.isPopupVisible.value) {
+        if (!popupManager.isPopupVisible.value) {
+            comboBoxWidth = currentComboBoxWidth
+        }
+    }
 
     ComboBoxImpl(
         modifier =
             modifier
-                .onSizeChanged { comboBoxWidth = with(density) { it.width.toDp() } }
+                .onSizeChanged { currentComboBoxWidth = with(density) { it.width.toDp() } }
                 .onPreviewKeyEvent {
                     if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                     return@onPreviewKeyEvent handlePopupKeyDown(it)

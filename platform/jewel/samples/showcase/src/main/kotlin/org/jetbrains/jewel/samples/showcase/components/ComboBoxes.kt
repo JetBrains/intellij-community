@@ -110,7 +110,7 @@ private fun ListComboBoxes() {
                 items = stringItems,
                 selectedIndex = selectedIndex,
                 onSelectedItemChange = { index -> selectedIndex = index },
-                modifier = Modifier.widthIn(max = 200.dp),
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
                 itemKeys = { _, item -> item },
             )
         }
@@ -124,7 +124,7 @@ private fun ListComboBoxes() {
             ListComboBox(
                 items = languageOptions,
                 selectedIndex = selectedIndex,
-                modifier = Modifier.widthIn(max = 200.dp),
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
                 onSelectedItemChange = { index -> selectedIndex = index },
                 itemKeys = { index, _ -> index },
                 itemContent = { item, isSelected, isActive ->
@@ -151,6 +151,7 @@ private fun ListComboBoxes() {
                     items = stringItems,
                     selectedIndex = selectedIndex,
                     onSelectedItemChange = { index -> selectedIndex = index },
+                    modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
                 )
             }
         }
@@ -164,7 +165,7 @@ private fun ListComboBoxes() {
             ListComboBox(
                 items = languageOptions,
                 selectedIndex = selectedIndex,
-                modifier = Modifier.widthIn(max = 200.dp),
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
                 enabled = false,
                 onSelectedItemChange = { index -> selectedIndex = index },
                 itemKeys = { index, _ -> index },
@@ -196,7 +197,7 @@ private fun EditableListComboBoxes() {
                 items = stringItems,
                 selectedIndex = selectedIndex,
                 onSelectedItemChange = { index -> selectedIndex = index },
-                modifier = Modifier.widthIn(max = 200.dp),
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
             )
         }
         Column(Modifier.weight(1f).widthIn(min = 125.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -210,7 +211,7 @@ private fun EditableListComboBoxes() {
                 selectedIndex = selectedIndex,
                 maxPopupWidth = 275.dp,
                 onSelectedItemChange = { index -> selectedIndex = index },
-                modifier = Modifier.widthIn(max = 200.dp),
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
             )
         }
 
@@ -224,7 +225,7 @@ private fun EditableListComboBoxes() {
                 items = stringItems,
                 selectedIndex = selectedIndex,
                 onSelectedItemChange = { index -> selectedIndex = index },
-                modifier = Modifier.widthIn(max = 200.dp),
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
                 enabled = false,
             )
         }
@@ -243,7 +244,7 @@ private fun CustomComboBoxes() {
 
             ComboBox(
                 labelText = selectedItemText,
-                modifier = Modifier.widthIn(max = 200.dp),
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
                 popupManager = popupManager,
                 popupContent = {
                     CustomPopupContent {
@@ -261,7 +262,7 @@ private fun CustomComboBoxes() {
             var selectedIndex by remember { mutableIntStateOf(2) }
 
             ComboBox(
-                modifier = Modifier.widthIn(max = 200.dp),
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
                 popupManager = popupManager,
                 popupContent = {
                     CustomPopupContent {
@@ -288,7 +289,7 @@ private fun CustomComboBoxes() {
 
             EditableComboBox(
                 textFieldState = state,
-                modifier = Modifier.widthIn(max = 200.dp),
+                modifier = Modifier.widthIn(max = 200.dp).fillMaxWidth(),
                 popupManager = popupManager,
                 popupContent = {
                     CustomPopupContent {
