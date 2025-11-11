@@ -117,7 +117,7 @@ def kt_jvm_produce_jar_actions(ctx, isTest = False):
     _collect_runtime_jars(perTargetPlugins, transitiveInputs)
     _collect_runtime_jars(ctx.attr.deps, transitiveInputs)
 
-    compile_jar = _run_jvm_builder(
+    builder_result = _run_jvm_builder(
         ctx = ctx,
         output_jar = output_jar,
         srcs = srcs,
@@ -127,6 +127,9 @@ def kt_jvm_produce_jar_actions(ctx, isTest = False):
         transitiveInputs = transitiveInputs,
         plugins = plugins,
     )
+
+    compile_jar = builder_result.abi_jar
+    kotlin_cri_storage_file = builder_result.kotlin_cri_storage_file
 
     source_jar = java_common.pack_sources(
         ctx.actions,
@@ -160,6 +163,7 @@ def kt_jvm_produce_jar_actions(ctx, isTest = False):
                     ijar = compile_jar,
                     source_jars = [source_jar],
                 )],
+                kotlin_cri_storage_file = kotlin_cri_storage_file,
             ),
             transitive_compile_time_jars = java_info.transitive_compile_time_jars,
             transitive_source_jars = java_info.transitive_source_jars,
@@ -179,8 +183,12 @@ def _run_jvm_builder(
     """Runs the necessary JvmBuilder actions to compile a jar
 
     Returns:
-        ABI jar
+        Struct with fields:
+          abi_jar: ABI jar
+          kotlin_cri_storage_file: (optional) the generated kotlin cri storage file or None
     """
+
+    kotlin_cri_storage_file = None
 
     kotlin_inc_threshold = ctx.attr._kotlin_inc_threshold[BuildSettingInfo].value
     if kotlin_inc_threshold == -1:
@@ -243,7 +251,7 @@ def _run_jvm_builder(
         progress_message = "compile %%{label} (kt: %d, java: %d%s}" % (len(srcs.kt), javaCount, "" if isIncremental else ", non-incremental"),
     )
 
-    return abi_jar
+    return struct(abi_jar = abi_jar, kotlin_cri_storage_file = kotlin_cri_storage_file)
 
 def _collect_runtime_jars(targets, transitive):
     for t in targets:
