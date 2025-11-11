@@ -24,7 +24,6 @@ import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.RadioButtonChip
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.typography
@@ -71,9 +70,6 @@ internal fun WelcomeView() {
                 text = "Swing compatibility",
                 checked = MainViewModel.swingCompat,
                 onCheckedChange = { MainViewModel.swingCompat = it },
-                colors = LocalCheckboxStyle.current.colors,
-                metrics = LocalCheckboxStyle.current.metrics,
-                icons = LocalCheckboxStyle.current.icons,
             )
 
             CheckboxRow(
@@ -83,9 +79,12 @@ internal fun WelcomeView() {
                     MainViewModel.useCustomPopupRenderer = it
                     JewelFlags.useCustomPopupRenderer = it
                 },
-                colors = LocalCheckboxStyle.current.colors,
-                metrics = LocalCheckboxStyle.current.metrics,
-                icons = LocalCheckboxStyle.current.icons,
+            )
+
+            CheckboxRow(
+                text = "Show FPS Count",
+                checked = MainViewModel.showFPSCount,
+                onCheckedChange = { MainViewModel.showFPSCount = it },
             )
         }
     }

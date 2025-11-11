@@ -15,6 +15,7 @@ import java.net.URI
 import org.jetbrains.jewel.samples.showcase.ShowcaseIcons
 import org.jetbrains.jewel.samples.showcase.views.forCurrentOs
 import org.jetbrains.jewel.samples.standalone.IntUiThemes
+import org.jetbrains.jewel.samples.standalone.components.FpsCounter
 import org.jetbrains.jewel.samples.standalone.viewmodel.MainViewModel
 import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.Icon
@@ -69,6 +70,10 @@ internal fun DecoratedWindowScope.TitleBarView() {
         Text(title)
 
         Row(Modifier.align(Alignment.End)) {
+            if (MainViewModel.showFPSCount) {
+                FpsCounter(modifier = Modifier.align(Alignment.CenterVertically))
+            }
+
             Tooltip({ Text("Open Jewel Github repository") }) {
                 val jewelGithubLink = "https://github.com/JetBrains/intellij-community/tree/master/platform/jewel"
                 IconButton(

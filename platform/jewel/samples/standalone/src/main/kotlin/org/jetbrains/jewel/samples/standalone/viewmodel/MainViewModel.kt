@@ -45,6 +45,8 @@ public object MainViewModel {
 
     public var theme: IntUiThemes by mutableStateOf(IntUiThemes.Light)
 
+    public var showFPSCount: Boolean by mutableStateOf(false)
+
     public var swingCompat: Boolean by mutableStateOf(false)
 
     public var useCustomPopupRenderer: Boolean by mutableStateOf(JewelFlags.useCustomPopupRenderer)
