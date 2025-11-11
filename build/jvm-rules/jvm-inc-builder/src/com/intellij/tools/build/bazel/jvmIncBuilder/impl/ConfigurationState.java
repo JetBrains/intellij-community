@@ -47,6 +47,7 @@ public class ConfigurationState {
     CLFlags.CP, // processed separately
     CLFlags.OUT,
     CLFlags.ABI_OUT,
+    CLFlags.KOTLIN_CRI_OUT,
 
     CLFlags.WARN,
     CLFlags.X_WASM_ATTACH_JS_EXCEPTION,

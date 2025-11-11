@@ -197,6 +197,11 @@ def _run_jvm_builder(
     outputs.append(abi_jar)
     args.add("--abi-out", abi_jar)
 
+    if len(srcs.kt) > 0:
+        kotlin_cri_storage_file = ctx.actions.declare_file(ctx.label.name + ".kotlinCriStorage")
+        outputs.append(kotlin_cri_storage_file)
+        args.add("--kotlin-cri-out", kotlin_cri_storage_file)
+
     javac_opts = ctx.attr.javac_opts[JavacOptions] if ctx.attr.javac_opts else None
     if javac_opts and javac_opts.add_exports:
         args.add_all("--add-export", javac_opts.add_exports)
