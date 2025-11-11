@@ -11,12 +11,7 @@ private class DefaultTrustedProjectsLocator : TrustedProjectsLocator {
     if (project !is ProjectStoreOwner) {
       return emptyList()
     }
-    val projectStoreDescriptor = project.componentStore
-      .storeDescriptor
-    return listOf(
-      projectStoreDescriptor.projectIdentityFile,
-      //projectStoreDescriptor.historicalProjectBasePath,
-    )
+    return listOf(project.componentStore.storeDescriptor.projectIdentityFile)
   }
 
   override fun getProjectRoots(projectRoot: Path, project: Project?): List<Path> = listOf(projectRoot)
