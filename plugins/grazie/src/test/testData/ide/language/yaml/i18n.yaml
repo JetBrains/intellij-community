@@ -410,7 +410,7 @@ prompt.uninstall.several.plugins: "<TYPO descr="Typo: In word 'Sind'">Sind</TYPO
 title.plugin.uninstall: "Plugin{0, choice, 0#|1# Update} <TYPO descr="Typo: In word 'deinstallieren'">deinstallieren</TYPO>?"
 progress.downloading.list.of.plugins: Plugin-<TYPO descr="Typo: In word 'Liste'">Liste</TYPO> von {0} <TYPO descr="Typo: In word 'wird'">wird</TYPO> <TYPO descr="Typo: In word 'heruntergeladen'">heruntergeladen</TYPO>
 progress.downloading.plugins.meta: <TYPO descr="Typo: In word 'Daten'">Daten</TYPO> für Plugin {0} <TYPO descr="Typo: In word 'werden'">werden</TYPO> <TYPO descr="Typo: In word 'heruntergeladen'">heruntergeladen</TYPO>
-progress.downloading.available.plugins: <TYPO descr="Typo: In word 'Liste'">Liste</TYPO> <TYPO descr="Typo: In word 'verfügbarer'">verfügbarer</TYPO> Plugins <TYPO descr="Typo: In word 'wird'">wird</TYPO> <TYPO descr="Typo: In word 'heruntergeladen'">heruntergeladen</TYPO>
+progress.downloading.available.plugins: Liste verfügbarer Plugins wird heruntergeladen
 progress.download.plugins: Plugins werden heruntergeladen
 button.http.proxy.settings: &HTTP Proxy-Einstellungen…
 group.vendor: Anbieter
