@@ -1059,12 +1059,12 @@ class InfoAndProgressPanel internal constructor(
           if (indicator != null) {
             addVisibleToPreferred(indicator!!.component, withGap = false)
           }
+          addVisibleToPreferred(multiProcessLink, withGap = true)
 
           if (showCounterInsteadOfMultiProcessLink) {
             addVisibleToPreferred(counterComponent, withGap = false)
             addVisibleToPreferred(progressIcon, withGap = false)
           }
-          addVisibleToPreferred(multiProcessLink, withGap = true)
 
           if (progressIcon.isVisible) {
             result.height = max(result.height, progressIcon.getPreferredSize().height)
