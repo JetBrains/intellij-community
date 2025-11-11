@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -63,7 +64,7 @@ abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
 
   protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
     if (parent instanceof PsiDirectory && isFlattenPackages()){
-      addSubtreeToUpdateByRoot();
+      addSubtreeToUpdateByRoot(ProjectViewUpdateCause.PSI_FLATTEN_PACKAGES);
       return;
     }
 
@@ -85,7 +86,7 @@ abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
       }
       else if (parent instanceof PsiDirectory &&
                ScratchUtil.isScratch(((PsiDirectory)parent).getVirtualFile())) {
-        addSubtreeToUpdateByRoot();
+        addSubtreeToUpdateByRoot(ProjectViewUpdateCause.PSI_SCRATCH);
         break;
       }
 
@@ -104,7 +105,7 @@ abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
     PsiElement element = event.getElement();
     switch (propertyName) {
       case PsiTreeChangeEvent.PROP_ROOTS, PsiTreeChangeEvent.PROP_FILE_TYPES, PsiTreeChangeEvent.PROP_UNLOADED_PSI -> 
-        addSubtreeToUpdateByRoot();
+        addSubtreeToUpdateByRoot(ProjectViewUpdateCause.PSI_PROPERTY);
       case PsiTreeChangeEvent.PROP_WRITABLE -> {
         if (!addSubtreeToUpdateByElementFile(element) && element instanceof PsiFile) {
           addSubtreeToUpdateByElementFile(((PsiFile)element).getContainingDirectory());
@@ -112,7 +113,7 @@ abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
       }
       case PsiTreeChangeEvent.PROP_FILE_NAME, PsiTreeChangeEvent.PROP_DIRECTORY_NAME -> {
         if (element instanceof PsiDirectory && isFlattenPackages()) {
-          addSubtreeToUpdateByRoot();
+          addSubtreeToUpdateByRoot(ProjectViewUpdateCause.PSI_FLATTEN_PACKAGES);
           return;
         }
         final PsiElement parent = element.getParent();
@@ -123,7 +124,7 @@ abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
     }
   }
 
-  protected void addSubtreeToUpdateByRoot() {
+  protected void addSubtreeToUpdateByRoot(@NotNull ProjectViewUpdateCause cause) {
   }
 
   protected boolean addSubtreeToUpdateByElement(@NotNull PsiElement element) {

@@ -24,10 +24,7 @@ import com.intellij.ui.tree.TreeStructureDomainModelAdapter
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.tree.project.ProjectFileNode.findArea
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater
-import com.intellij.ui.treeStructure.TreeNodeViewModel
-import com.intellij.ui.treeStructure.TreeSwingModel
-import com.intellij.ui.treeStructure.TreeViewModel
-import com.intellij.ui.treeStructure.TreeViewModelVisitor
+import com.intellij.ui.treeStructure.*
 import com.intellij.util.SmartList
 import com.intellij.util.ui.tree.LegacyCompatibilityTreeNode
 import kotlinx.coroutines.*
@@ -72,7 +69,8 @@ internal class CoroutineProjectViewSupport(
     domainModel.comparator = comparator
   }
 
-  override fun updateAll(afterUpdate: Runnable?) {
+  override fun updateAll(afterUpdate: Runnable?, causes: Collection<ProjectViewUpdateCause>) {
+    ProjectViewPerformanceMonitor.getInstance(project).reportUpdateAll(causes)
     updateImpl(null, true, afterUpdate)
   }
 
@@ -215,7 +213,7 @@ internal class CoroutineProjectViewSupport(
   private inner class Updater(project: Project, coroutineScope: CoroutineScope) : ProjectFileNodeUpdater(project, coroutineScope) {
     override fun updateStructure(fromRoot: Boolean, updatedFiles: Set<VirtualFile>) {
       if (fromRoot) {
-        updateAll(null)
+        updateAll(null, emptyList())
         return
       }
       coroutineScope.launch(CoroutineName("Updating ${updatedFiles.size} files")) {

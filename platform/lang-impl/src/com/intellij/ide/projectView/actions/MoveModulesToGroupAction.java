@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +72,7 @@ public class MoveModulesToGroupAction extends AnAction {
 
     AbstractProjectViewPane pane = ProjectView.getInstance(project).getCurrentProjectViewPane();
     if (pane != null) {
-      pane.updateFromRoot(true);
+      pane.updateFromRoot(true, ProjectViewUpdateCause.REFACTORING);
     }
 
     String targetGroupName = group == null ? null : group.toString();

@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.project.ProjectFileNode
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 
@@ -98,7 +99,7 @@ internal class ProjectViewIndexableInfoListener : RegistryValueListener {
   override fun afterValueChanged(value: RegistryValue) {
     if (value.key == "project.view.show.file.indexability") {
       for (project in ProjectManager.getInstance().openProjects) {
-        ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true)
+        ProjectView.getInstance(project)?.currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.DEBUG_INDEXABILITY)
       }
     }
   }

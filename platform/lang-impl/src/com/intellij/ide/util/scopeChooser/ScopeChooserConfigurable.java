@@ -30,6 +30,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -134,7 +135,7 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
       fileEditorManager.updateFilePresentation(openVirtualFile);
     }
 
-    ProjectView.getInstance(myProject).refresh();
+    ProjectView.getInstance(myProject).refresh(ProjectViewUpdateCause.SCOPE_CHOOSER);
   }
 
   private void checkForPredefinedNames() throws ConfigurationException {

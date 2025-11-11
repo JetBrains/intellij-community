@@ -41,6 +41,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.layout.selected
 import com.intellij.ui.table.JBTable
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.RegionPaintIcon
@@ -103,7 +104,7 @@ private class FileColorsConfigurable(private val project: Project) : BoundSearch
   override fun apply() {
     super.apply()
     UISettings.getInstance().fireUISettingsChanged()
-    ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true)
+    ProjectView.getInstance(project).currentProjectViewPane?.updateFromRoot(true, ProjectViewUpdateCause.SETTINGS)
   }
 }
 
