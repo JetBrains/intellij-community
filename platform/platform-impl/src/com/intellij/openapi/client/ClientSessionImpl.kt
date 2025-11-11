@@ -84,12 +84,6 @@ abstract class ClientSessionImpl(
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
-  final override suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
-    return withContext(clientId.asContextElement()) {
-      super.preloadService(service, serviceInterface)
-    }
-  }
-
   final override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
     return descriptor.client?.let { type.matches(it) } ?: false
   }

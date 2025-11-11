@@ -136,7 +136,7 @@ internal abstract class LazyInstanceHolder(
     return suspendCancellableCoroutine { waiter ->
       tryAwait(newState, waiter)
       // publish waiter before `initialize()` because it's undispatched
-      initialize(state.parentScope, callerCtx, initializer, instanceClass)
+      initialize(state.parentScope, callerCtx + additionalContext, initializer, instanceClass)
     }
   }
 
