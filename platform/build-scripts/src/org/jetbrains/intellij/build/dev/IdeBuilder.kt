@@ -36,7 +36,6 @@ import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.intellij.build.classPath.PluginBuildDescriptor
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
 import org.jetbrains.intellij.build.classPath.generatePluginClassPath
 import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuiltPluginFiles
@@ -180,7 +179,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
     val searchableOptionSet = getSearchableOptionSet(context)
 
-    val platformDistributionEntriesDeferred = async(CoroutineName("platform distribution entries")) {
+    val platformLayoutResultDeferred = async(CoroutineName("platform distribution entries")) {
       val generateFilesInBinDirJob = launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         val binDir = Files.createDirectories(runDir.resolve("bin"))
@@ -208,7 +207,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
 
       val platformLayoutAwaited = platformLayout.await()
-      val (platformDistributionEntries, classPath) = spanBuilder("layout platform").use {
+      val platformLayoutResult = spanBuilder("layout platform").use {
         layoutPlatform(
           runDir = runDir,
           platformLayout = platformLayoutAwaited,
@@ -220,15 +219,15 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
 
       if (request.writeCoreClasspath) {
-        val classPathString = classPath.joinToString(separator = "\n")
+        val classPathString = platformLayoutResult.coreClassPath.joinToString(separator = "\n")
         launch(Dispatchers.IO) {
           Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
         }
       }
 
       generateFilesInBinDirJob.join()
-      request.platformClassPathConsumer?.invoke(context.ideMainClassName, classPath, runDir)
-      platformDistributionEntries
+      request.platformClassPathConsumer?.invoke(context.ideMainClassName, platformLayoutResult.coreClassPath, runDir)
+      platformLayoutResult
     }
 
     val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
@@ -238,15 +237,15 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         runDir = runDir,
         platformLayout = platformLayout,
         searchableOptionSet = searchableOptionSet,
-        buildPlatformJob = platformDistributionEntriesDeferred,
+        buildPlatformJob = platformLayoutResultDeferred,
         moduleOutputPatcher = moduleOutputPatcher,
       )
     }
 
     if (context.generateRuntimeModuleRepository) {
       launch {
-        val allDistributionEntries = platformDistributionEntriesDeferred.await().asSequence() +
-                                     pluginDistributionEntriesDeferred.await().first.asSequence().flatMap { it.distribution }
+        val allDistributionEntries = platformLayoutResultDeferred.await().distributionEntries.asSequence() +
+                                     pluginDistributionEntriesDeferred.await().pluginEntries.asSequence().flatMap { it.distribution }
         spanBuilder("generate runtime repository").use(Dispatchers.IO) {
           generateRuntimeModuleRepositoryForDevBuild(entries = allDistributionEntries, targetDirectory = runDir, context = context)
         }
@@ -255,7 +254,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
     launch {
       computeIdeFingerprint(
-        platformDistributionEntriesDeferred = platformDistributionEntriesDeferred,
+        platformDistributionEntriesDeferred = platformLayoutResultDeferred,
         pluginDistributionEntriesDeferred = pluginDistributionEntriesDeferred,
         runDir = runDir,
         homePath = request.projectDir,
@@ -264,7 +263,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
     launch {
       // ensure platform dist files added to the list
-      val platformFileEntries = platformDistributionEntriesDeferred.await()
+      val platformFileEntries = platformLayoutResultDeferred.await().distributionEntries
       // ensure plugin dist files added to the list
       val pluginDistributionEntries = pluginDistributionEntriesDeferred.await()
       val platformLayout = platformLayout.await()
@@ -289,7 +288,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
           val byteOut = ByteArrayOutputStream()
           val out = DataOutputStream(byteOut)
           val pluginCount = pluginEntries.size + (additionalEntries?.size ?: 0)
-          platformDistributionEntriesDeferred.join()
+          platformLayoutResultDeferred.join()
           writePluginClassPathHeader(
             out = out,
             isJarOnly = !request.isUnpackedDist,
@@ -334,15 +333,15 @@ private suspend fun getSearchableOptionSet(context: BuildContext): SearchableOpt
 }
 
 private suspend fun computeIdeFingerprint(
-  platformDistributionEntriesDeferred: Deferred<List<DistributionFileEntry>>,
-  pluginDistributionEntriesDeferred: Deferred<Pair<List<PluginBuildDescriptor>, List<Pair<Path, List<Path>>>?>>,
+  platformDistributionEntriesDeferred: Deferred<PlatformLayoutResult>,
+  pluginDistributionEntriesDeferred: Deferred<PluginsLayoutResult>,
   runDir: Path,
   homePath: Path,
 ) {
   val hasher = Hashing.xxh3_64().hashStream()
   val debug = StringBuilder()
 
-  val distributionFileEntries = platformDistributionEntriesDeferred.await()
+  val distributionFileEntries = platformDistributionEntriesDeferred.await().distributionEntries
   hasher.putInt(distributionFileEntries.size)
   debug.append(distributionFileEntries.size).append('\n')
   for (entry in distributionFileEntries) {
@@ -355,7 +354,7 @@ private suspend fun computeIdeFingerprint(
     debug.append(java.lang.Long.toUnsignedString(entry.hash, Character.MAX_RADIX)).append(" ").append(path).append('\n')
   }
 
-  val (pluginDistributionEntries, _) = pluginDistributionEntriesDeferred.await()
+  val pluginDistributionEntries = pluginDistributionEntriesDeferred.await().pluginEntries
   hasher.putInt(pluginDistributionEntries.size)
   for (plugin in pluginDistributionEntries) {
     hasher.putInt(plugin.distribution.size)
@@ -547,6 +546,11 @@ internal suspend fun createProductProperties(
 
 private fun getBuildModules(productConfiguration: ProductConfiguration): Sequence<String> = sequenceOf("intellij.idea.community.build") + productConfiguration.modules.asSequence()
 
+private data class PlatformLayoutResult(
+  val distributionEntries: List<DistributionFileEntry>,
+  val coreClassPath: Set<Path>,
+)
+
 private suspend fun layoutPlatform(
   runDir: Path,
   platformLayout: PlatformLayout,
@@ -554,7 +558,7 @@ private suspend fun layoutPlatform(
   context: BuildContext,
   moduleOutputPatcher: ModuleOutputPatcher,
   request: BuildRequest,
-): Pair<List<DistributionFileEntry>, Set<Path>> {
+): PlatformLayoutResult {
   // cannot be in parallel
   val entries = layoutPlatformDistribution(
     moduleOutputPatcher = moduleOutputPatcher,
@@ -564,7 +568,7 @@ private suspend fun layoutPlatform(
     copyFiles = true,
     context = context,
   )
-  return entries to coroutineScope {
+  val coreClassPath = coroutineScope {
     launch(Dispatchers.IO) {
       Files.writeString(runDir.resolve("build.txt"), context.fullBuildNumber)
     }
@@ -576,6 +580,8 @@ private suspend fun layoutPlatform(
       skipNioFs = if (request.isBootClassPathCorrect) isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix) else false,
     )
   }
+
+  return PlatformLayoutResult(entries, coreClassPath)
 }
 
 private fun computeAdditionalModulesFingerprint(additionalModules: List<String>): String {
