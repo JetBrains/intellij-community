@@ -37,7 +37,7 @@ class CommentedCodeFrameRenderer(
   }
 
   override fun paint(editor: Editor, g: Graphics, r: Rectangle) { // gutter part
-    val x = 1f
+    val x = OUTER_GUTTER_FRAME_PADDING
     val width = (editor as? EditorEx)?.gutterComponentEx?.width?.toFloat() ?: 0f
     val (y, height) = editor.getYAxisValues()
     val path = createLeftOutlinePath(x, y, width, height)
@@ -86,6 +86,7 @@ class CommentedCodeFrameRenderer(
   }
 
   companion object {
+    private const val OUTER_GUTTER_FRAME_PADDING = 2f
     private val color: Color = CodeReviewColorUtil.Review.LineFrame.border
     private val stroke: Stroke = BasicStroke(JBUIScale.scale(1f))
     private val radius: Int get() = JBUIScale.scale(4)
