@@ -264,7 +264,7 @@ internal class K2VariableOrParameterNameWithTypeCompletionContributor : K2Simple
      */
     private fun getMatchersWithUserPrefixes(context: K2CompletionSectionContext<KotlinRawPositionContext>): List<Pair<PrefixMatcher, String>> {
         val prefix = context.prefixMatcher.prefix
-        val prefixWords = if (StringUtil.isCapitalized(prefix)) emptyArray() else NameUtil.splitNameIntoWords(prefix)
+        val prefixWords = if (StringUtil.isCapitalized(prefix)) emptyList() else NameUtil.splitNameIntoWordList(prefix)
 
         return prefixWords.indices.map { index ->
             val userPrefix = prefixWords.take(index).joinToString("")

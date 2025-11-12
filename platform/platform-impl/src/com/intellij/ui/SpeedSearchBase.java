@@ -56,6 +56,7 @@ import java.awt.im.InputMethodRequests;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.text.CharacterIterator;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -190,9 +191,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       public void actionPerformed(@NotNull AnActionEvent e) {
         String prefix = getEnteredPrefix();
         if (prefix == null) return;
-        String[] strings = NameUtilCore.splitNameIntoWords(prefix);
-        if (strings.length == 0) return; // "__" has no words
-        String last = strings[strings.length - 1];
+        List<@NotNull String> strings = NameUtilCore.splitNameIntoWordList(prefix);
+        if (strings.isEmpty()) return; // "__" has no words
+        String last = strings.getLast();
         int i = prefix.lastIndexOf(last);
         mySearchPopup.mySearchField.setText(prefix.substring(0, i).trim());
       }

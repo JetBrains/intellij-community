@@ -19,12 +19,7 @@ public final class NameUtil {
   private NameUtil() {}
 
   public static @NotNull List<String> nameToWordsLowerCase(@NotNull String name){
-    String[] words = NameUtilCore.nameToWords(name);
-    List<String> list = new ArrayList<>(words.length);
-    for (String word : words) {
-      list.add(Strings.toLowerCase(word));
-    }
-    return list;
+    return NameUtilCore.nameToWordList(name).stream().map(Strings::toLowerCase).toList();
   }
 
   public static @NotNull String buildRegexp(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
@@ -179,12 +174,12 @@ public final class NameUtil {
                                                            boolean preferLongerNames,
                                                            boolean isArray) {
     ArrayList<String> answer = new ArrayList<>();
-    String[] words = NameUtilCore.nameToWords(name);
+    List<@NotNull String> words = NameUtilCore.nameToWordList(name);
 
-    for (int step = 0; step < words.length; step++) {
-      int wordCount = preferLongerNames ? words.length - step : step + 1;
+    for (int step = 0; step < words.size(); step++) {
+      int wordCount = preferLongerNames ? words.size() - step : step + 1;
 
-      String startWord = words[words.length - wordCount];
+      String startWord = words.get(words.size() - wordCount);
       char c = startWord.charAt(0);
       if( c == '_' || !Character.isJavaIdentifierStart( c ) )
       {
@@ -199,7 +194,7 @@ public final class NameUtil {
 
   private static @NotNull String compoundSuggestion(@NotNull String prefix,
                                                     boolean upperCaseStyle,
-                                                    String @NotNull [] words,
+                                                    List<@NotNull String> words,
                                                     int wordCount,
                                                     @NotNull String startWord,
                                                     char c,
@@ -222,9 +217,9 @@ public final class NameUtil {
     }
     buffer.append(startWord);
 
-    for (int i = words.length - wordCount + 1; i < words.length; i++) {
-      String word = words[i];
-      String prevWord = words[i - 1];
+    for (int i = words.size() - wordCount + 1; i < words.size(); i++) {
+      String word = words.get(i);
+      String prevWord = words.get(i - 1);
       if (upperCaseStyle) {
         word = Strings.toUpperCase(word);
         if (prevWord.charAt(prevWord.length() - 1) != '_' && word.charAt(0) != '_') {
@@ -256,12 +251,30 @@ public final class NameUtil {
     return suggestion;
   }
 
+  /**
+   * @deprecated use {@link NameUtil#splitNameIntoWordList} (String)} to avoid redundant allocations
+   */
+  @Deprecated
   public static String @NotNull [] splitNameIntoWords(@NotNull String name) {
     return NameUtilCore.splitNameIntoWords(name);
   }
 
+  @NotNull
+  public static List<@NotNull String> splitNameIntoWordList(@NotNull String name) {
+    return NameUtilCore.splitNameIntoWordList(name);
+  }
+
+  /**
+   * @deprecated use {@link NameUtilCore#nameToWordList(String)} to avoid redundant allocations
+   */
+  @Deprecated
   public static String @NotNull [] nameToWords(@NotNull String name) {
     return NameUtilCore.nameToWords(name);
+  }
+
+  @NotNull
+  public static List<@NotNull String> nameToWordList(@NotNull String name) {
+    return NameUtilCore.nameToWordList(name);
   }
 
   public static Matcher buildMatcher(@NotNull String pattern,
@@ -344,7 +357,7 @@ public final class NameUtil {
   }
 
   public static @NotNull String splitWords(@NotNull String text, char separator, @NotNull Function<? super String, String> transformWord) {
-    final String[] words = NameUtilCore.nameToWords(text);
+    final List<@NotNull String> words = NameUtilCore.nameToWordList(text);
     boolean insertSeparator = false;
     final StringBuilder buf = new StringBuilder();
     for (String word : words) {

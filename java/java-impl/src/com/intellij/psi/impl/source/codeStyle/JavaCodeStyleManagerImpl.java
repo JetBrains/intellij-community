@@ -34,6 +34,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -709,16 +710,16 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
           }
         }
 
-        String[] words = NameUtilCore.nameToWords(methodName);
-        if (words.length > 0) {
-          final String firstWord = words[0];
+        List<@NotNull String> words = NameUtilCore.nameToWordList(methodName);
+        if (!words.isEmpty()) {
+          final String firstWord = words.getFirst();
           if (GET_PREFIX.equals(firstWord)
               || IS_PREFIX.equals(firstWord)
               || FIND_PREFIX.equals(firstWord)
               || CREATE_PREFIX.equals(firstWord)
               || AS_PREFIX.equals(firstWord)
               || TO_PREFIX.equals(firstWord)) {
-            if (words.length > 1) {
+            if (words.size() > 1) {
               final String propertyName = methodName.substring(firstWord.length());
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
               if (qualifierExpression instanceof PsiReferenceExpression &&
@@ -729,10 +730,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               return new NamesByExprInfo(propertyName);
             }
           }
-          else if (words.length == 1 || useAllMethodNames) {
+          else if (words.size() == 1 || useAllMethodNames) {
             if (Registry.is("add.past.participle.to.suggested.names") && !"equals".equals(firstWord) && !"valueOf".equals(methodName)) {
-              words[0] = PastParticiple.pastParticiple(firstWord);
-              return new NamesByExprInfo(methodName, words[0], StringUtil.join(words));
+              String pastParticiple = PastParticiple.pastParticiple(firstWord);
+              String name = StreamEx.of(words).mapFirst(__ -> pastParticiple).joining();
+              return new NamesByExprInfo(methodName, pastParticiple, name);
             }
             else {
               return new NamesByExprInfo(methodName);
@@ -897,9 +899,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             name = variableNameToPropertyName(name, VariableKind.PARAMETER);
             if (list.getExpressionCount() == 1) {
               final String methodName = method.getName();
-              String[] words = NameUtilCore.nameToWords(methodName);
-              if (words.length > 0) {
-                final String firstWord = words[0];
+              List<@NotNull String> words = NameUtilCore.nameToWordList(methodName);
+              if (!words.isEmpty()) {
+                final String firstWord = words.getFirst();
                 if (SET_PREFIX.equals(firstWord)) {
                   final String propertyName = methodName.substring(firstWord.length());
                   return new NamesByExprInfo(name, propertyName);
@@ -987,7 +989,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @Override
   public @NotNull String propertyNameToVariableName(@NotNull String propertyName, @NotNull VariableKind variableKind) {
     if (variableKind == VariableKind.STATIC_FINAL_FIELD) {
-      String[] words = NameUtilCore.nameToWords(propertyName);
+      List<@NotNull String> words = NameUtilCore.nameToWordList(propertyName);
       return StringUtil.join(words, StringUtil::toUpperCase, "_");
     }
 
@@ -1042,11 +1044,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private static String getWordByPreposition(@NotNull String name, String prefix, String suffix, boolean upperCaseStyle) {
-    String[] words = NameUtil.splitNameIntoWords(name);
-    for (int i = 1; i < words.length; i++) {
+    List<@NotNull String> words = NameUtil.splitNameIntoWordList(name);
+    for (int i = 1; i < words.size(); i++) {
       for (String preposition : ourPrepositions) {
-        if (preposition.equalsIgnoreCase(words[i])) {
-          String mainWord = words[i - 1];
+        if (preposition.equalsIgnoreCase(words.get(i))) {
+          String mainWord = words.get(i - 1);
           if (upperCaseStyle) {
             mainWord = StringUtil.toUpperCase(mainWord);
           }

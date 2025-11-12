@@ -20,15 +20,30 @@ public final class NameUtilCore {
    * (camel-case).
    *
    * @param name the identifier to split.
-   * @return the array of strings into which the identifier has been split.
+   * @return the list of strings into which the identifier has been split.
    */
-  public static String @NotNull [] splitNameIntoWords(@NotNull String name) {
+  @NotNull
+  public static List<@NotNull String> splitNameIntoWordList(@NotNull String name) {
     final String[] underlineDelimited = name.split("_");
     List<String> result = new ArrayList<>();
     for (String word : underlineDelimited) {
       addAllWords(word, result);
     }
-    return ArrayUtilRt.toStringArray(result);
+    return result;
+  }
+
+  /**
+   * @deprecated use {@link #splitNameIntoWordList(String)} to avoid redundant allocations
+   * <p>
+   * Splits an identifier into words, separated with underscores or upper-case characters
+   * (camel-case).
+   *
+   * @param name the identifier to split.
+   * @return the array of strings into which the identifier has been split.
+   */
+  @Deprecated
+  public static String @NotNull [] splitNameIntoWords(@NotNull String name) {
+    return ArrayUtilRt.toStringArray(splitNameIntoWordList(name));
   }
 
   private static void addAllWords(@NotNull String text, @NotNull List<? super String> result) {
@@ -65,7 +80,7 @@ public final class NameUtilCore {
     }
 
     if (i > start + chLen) {
-      // several consecutive uppercase letter form a hump
+      // several consecutive uppercase letters form a hump
       if (i == text.length() || !Character.isLetter(text.codePointAt(i))) {
         return i;
       }
@@ -121,7 +136,16 @@ public final class NameUtilCore {
            prevScript != Character.UnicodeScript.COMMON && curScript != Character.UnicodeScript.COMMON;
   }
 
+  /**
+   * @deprecated use {@link #nameToWordList(String)} to avoid redundant allocations
+   */
+  @Deprecated
   public static String @NotNull [] nameToWords(@NotNull String name) {
+    return ArrayUtilRt.toStringArray(nameToWordList(name));
+  }
+
+  @NotNull
+  public static List<@NotNull String> nameToWordList(@NotNull String name) {
     List<String> array = new ArrayList<>();
     int index = 0;
 
@@ -160,6 +184,6 @@ public final class NameUtilCore {
         array.add(word);
       }
     }
-    return ArrayUtilRt.toStringArray(array);
+    return array;
   }
 }

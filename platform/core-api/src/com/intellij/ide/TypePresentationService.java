@@ -34,6 +34,6 @@ public abstract class TypePresentationService {
     if (i >= 0) {
       simpleName = simpleName.substring(i + 1);
     }
-    return StringUtil.capitalizeWords(StringUtil.join(NameUtilCore.nameToWords(simpleName), " "), true);
+    return StringUtil.capitalizeWords(StringUtil.join(NameUtilCore.nameToWordList(simpleName), " "), true);
   }
 }

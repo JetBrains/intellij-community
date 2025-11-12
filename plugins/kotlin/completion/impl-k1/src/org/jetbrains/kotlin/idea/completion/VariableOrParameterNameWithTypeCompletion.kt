@@ -43,7 +43,7 @@ class VariableOrParameterNameWithTypeCompletion(
 
     init {
         val prefix = prefixMatcher.prefix
-        val prefixWords = NameUtil.splitNameIntoWords(prefix)
+        val prefixWords = NameUtil.splitNameIntoWordList(prefix)
 
         // prefixes to use to generate parameter names from class names
         val nameSuggestionPrefixes = if (prefix.isEmpty() || prefix[0].isUpperCase())

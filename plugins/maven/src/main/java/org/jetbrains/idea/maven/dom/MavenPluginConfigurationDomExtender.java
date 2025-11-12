@@ -206,9 +206,9 @@ public final class MavenPluginConfigurationDomExtender extends DomExtender<Maven
     if (singularName == null) singularName = parameterName;
 
     List<String> result = new ArrayList<>();
-    String[] parts = NameUtil.splitNameIntoWords(singularName);
-    for (int i = 0; i < parts.length; i++) {
-      result.add(StringUtil.decapitalize(StringUtil.join(parts, i, parts.length, "")));
+    List<@NotNull String> parts = NameUtil.splitNameIntoWordList(singularName);
+    for (int i = 0; i < parts.size(); i++) {
+      result.add(StringUtil.decapitalize(StringUtil.join(parts.subList(i, parts.size()), "")));
     }
     return result;
   }

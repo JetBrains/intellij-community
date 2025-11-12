@@ -496,7 +496,7 @@ private fun createArtifactDependencyByLibrary(descriptor: JpsMavenRepositoryLibr
 }
 
 private fun splitByCamelHumpsMergingNumbers(s: String): List<String> {
-  val words = NameUtilCore.splitNameIntoWords(s)
+  val words = NameUtilCore.splitNameIntoWordList(s)
   val result = ArrayList<String>()
   var i = 0
   while (i < words.size) {

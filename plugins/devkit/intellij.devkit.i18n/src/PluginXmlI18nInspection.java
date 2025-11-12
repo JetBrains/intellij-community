@@ -36,7 +36,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
@@ -401,7 +400,7 @@ public final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase
       xml.setAttribute(attributeName, null);
       String shortName = getName(xml);
       if (shortName == null) return;
-      String[] items = ArrayUtil.mergeArrays(NameUtilCore.splitNameIntoWords(shortName), NameUtilCore.splitNameIntoWords(attributeName));
+      List<String> items = ContainerUtil.concat(NameUtilCore.splitNameIntoWordList(shortName), NameUtilCore.splitNameIntoWordList(attributeName));
       @NonNls String key = prefix + "." + StringUtil.join(items, s -> StringUtil.decapitalize(s), ".");
       xml.setAttribute("key", key);
 
@@ -654,7 +653,7 @@ public final class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase
       Separator separator = (Separator)domElement;
 
       String text = StringUtil.defaultIfEmpty(separator.getText().getStringValue(), "noText");
-      @NonNls String key = "separator." + StringUtil.join(NameUtilCore.splitNameIntoWords(text),
+      @NonNls String key = "separator." + StringUtil.join(NameUtilCore.splitNameIntoWordList(text),
                                                           s -> StringUtil.trim(StringUtil.decapitalize(s)), ".");
 
       JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,

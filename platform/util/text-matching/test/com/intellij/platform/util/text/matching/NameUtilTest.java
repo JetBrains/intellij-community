@@ -3,9 +3,11 @@ package com.intellij.platform.util.text.matching;
 
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.NameUtilCore;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -69,7 +71,7 @@ public class NameUtilTest {
   }
 
   private static void assertSplitEquals(String[] expected, String name) {
-    final String[] result = NameUtil.splitNameIntoWords(name);
-    assertEquals(Arrays.asList(expected).toString(), Arrays.asList(result).toString());
+    final List<@NotNull String> result = NameUtil.splitNameIntoWordList(name);
+    assertEquals(Arrays.asList(expected), result);
   }
 }

@@ -324,11 +324,11 @@ public final class JavaCompletionSorting {
   private static int calcMatch(final String expectedName, final List<String> words, int max) {
     if (expectedName == null) return max;
 
-    String[] expectedWords = NameUtil.nameToWords(expectedName);
-    int limit = Math.min(words.size(), expectedWords.length);
+    List<@NotNull String> expectedWords = NameUtil.nameToWordList(expectedName);
+    int limit = Math.min(words.size(), expectedWords.size());
     for (int i = 0; i < limit; i++) {
       String word = words.get(words.size() - i - 1);
-      String expectedWord = expectedWords[expectedWords.length - i - 1];
+      String expectedWord = expectedWords.get(expectedWords.size() - i - 1);
       if ( word.equalsIgnoreCase(expectedWord) ||
            StringUtil.endsWithIgnoreCase(word, expectedWord) ||
            StringUtil.endsWithIgnoreCase(expectedWord, word)) {
@@ -701,7 +701,7 @@ public final class JavaCompletionSorting {
       final String name = getLookupObjectName(object);
 
       if (name != null && getNameEndMatchingDegree(name, myExpectedTypes) != 0) {
-        return NameUtil.nameToWords(name).length - 1000;
+        return NameUtil.nameToWordList(name).size() - 1000;
       }
       return 0;
     }

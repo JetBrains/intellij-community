@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.ElementPresentationManager;
@@ -331,14 +332,10 @@ public final class PluginDescriptorStructureUtil {
   private static @NotNull @NlsSafe String toDisplayName(@NotNull @NonNls String tagName) {
     String result = tagName.replaceAll("-", " ").replaceAll("\\.", "|");
 
-    String[] words = NameUtil.nameToWords(result);
-    for (int i = 0; i < words.length; i++) {
-      @NonNls String word = words[i];
+    List<@NotNull String> words = ContainerUtil.map(NameUtil.nameToWordList(result), word -> {
       String replacement = TAG_DISPLAY_NAME_REPLACEMENTS.get(StringUtil.toLowerCase(word));
-      if (replacement != null) {
-        words[i] = replacement;
-      }
-    }
+      return replacement != null ? replacement : word;
+    });
 
     result = StringUtil.join(words, " ");
     result = StringUtil.capitalizeWords(result, true);

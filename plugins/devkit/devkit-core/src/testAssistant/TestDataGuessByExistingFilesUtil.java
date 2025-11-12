@@ -298,15 +298,15 @@ public final class TestDataGuessByExistingFilesUtil {
     }
 
     // By class name words and their position. More words + greater position = better.
-    String[] words = NameUtil.nameToWords(simpleName);
+    List<@NotNull String> words = NameUtil.nameToWordList(simpleName);
     int candidateWordsMatched = 0;
     int currentWordsMatched = 0;
     int candidateMatchPosition = -1;
     int currentMatchPosition = -1;
 
     StringBuilder currentNameSubstringSb = new StringBuilder();
-    for (int i = 0; i < words.length; i++) {
-      currentNameSubstringSb.append(words[i]);
+    for (int i = 0; i < words.size(); i++) {
+      currentNameSubstringSb.append(words.get(i));
       String currentNameLcSubstring = StringUtil.toLowerCase(currentNameSubstringSb.toString());
 
       int candidateWordsIndex = candidateLcDir.lastIndexOf(currentNameLcSubstring);

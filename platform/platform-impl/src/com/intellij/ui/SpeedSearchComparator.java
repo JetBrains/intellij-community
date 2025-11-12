@@ -49,7 +49,7 @@ public class SpeedSearchComparator {
     if (myRecentSearchText == null || !myRecentSearchText.equals(pattern)) {
       myRecentSearchText = pattern;
       if (myShouldMatchCamelCase) {
-        pattern = StringUtil.join(NameUtilCore.nameToWords(pattern), "*");
+        pattern = StringUtil.join(NameUtilCore.nameToWordList(pattern), "*");
       }
       if (!myShouldMatchFromTheBeginning && !pattern.startsWith("*")) {
         pattern = "*" + pattern;

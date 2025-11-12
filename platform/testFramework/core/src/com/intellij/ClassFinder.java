@@ -68,7 +68,7 @@ public class ClassFinder {
       if (!Character.isUpperCase(name.charAt(0))) return false;
 
       // A test may be named Test*, *Test, *Tests*, *TestCase, *TestSuite, *Suite, etc
-      List<String> words = Arrays.asList(NameUtilCore.nameToWords(name));
+      List<String> words = NameUtilCore.nameToWordList(name);
 
       if (words.contains("Test") || words.contains("Tests") || words.contains("Suite")) {
         return true;

@@ -577,8 +577,10 @@ com.intellij.util.text.Matcher
 f:com.intellij.util.text.NameUtilCore
 - <init>():V
 - s:isWordStart(java.lang.String,I):Z
+- s:nameToWordList(java.lang.String):java.util.List
 - s:nameToWords(java.lang.String):java.lang.String[]
 - s:nextWord(java.lang.String,I):I
+- s:splitNameIntoWordList(java.lang.String):java.util.List
 - s:splitNameIntoWords(java.lang.String):java.lang.String[]
 f:com.intellij.util.text.SemVer
 - java.lang.Comparable
