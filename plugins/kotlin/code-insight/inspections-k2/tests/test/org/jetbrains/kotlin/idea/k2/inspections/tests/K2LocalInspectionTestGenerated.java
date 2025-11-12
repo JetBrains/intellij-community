@@ -7923,6 +7923,40 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCallChain")
+    public static class SimplifiableFlowCallChain extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("filterCount.kt")
+        public void testFilterCount() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCallChain/filterCount.kt");
+        }
+
+        @TestMetadata("filterFirst.kt")
+        public void testFilterFirst() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCallChain/filterFirst.kt");
+        }
+
+        @TestMetadata("filterFirstOrNull.kt")
+        public void testFilterFirstOrNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCallChain/filterFirstOrNull.kt");
+        }
+
+        @TestMetadata("mapFilterNotNull.kt")
+        public void testMapFilterNotNull() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/coroutines/simplifiableFlowCallChain/mapFilterNotNull.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/coroutines/unusedFlow")
     public static class UnusedFlow extends AbstractK2LocalInspectionTest {
         @java.lang.Override

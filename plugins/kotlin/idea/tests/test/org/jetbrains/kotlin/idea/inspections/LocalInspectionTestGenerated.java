@@ -4358,6 +4358,40 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/coroutines/simplifiableFlowCallChain")
+        public static class SimplifiableFlowCallChain extends AbstractLocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("filterCount.kt")
+            public void testFilterCount() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/simplifiableFlowCallChain/filterCount.kt");
+            }
+
+            @TestMetadata("filterFirst.kt")
+            public void testFilterFirst() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/simplifiableFlowCallChain/filterFirst.kt");
+            }
+
+            @TestMetadata("filterFirstOrNull.kt")
+            public void testFilterFirstOrNull() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/simplifiableFlowCallChain/filterFirstOrNull.kt");
+            }
+
+            @TestMetadata("mapFilterNotNull.kt")
+            public void testMapFilterNotNull() throws Exception {
+                runTest("testData/inspectionsLocal/coroutines/simplifiableFlowCallChain/mapFilterNotNull.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/coroutines/suspendFunctionOnCoroutineScope")
         public static class SuspendFunctionOnCoroutineScope extends AbstractLocalInspectionTest {
             @java.lang.Override
