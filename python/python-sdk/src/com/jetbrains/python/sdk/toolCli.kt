@@ -36,7 +36,7 @@ import kotlin.io.path.pathString
  *
  * @param toolName Name of the tool to locate (without an extension).
  * @param eel Eel environment to search in; defaults to the local Eel.
- * @param additionalSearchPaths Extra directories to probe, must be on the same descriptor as [eel].
+ * @param additionalSearchPaths Extra directories to probe, **must** be on the same descriptor as [eel].
  * @return [PyResult] containing the resolved executable [Path] on success; otherwise a localized error
  *   explaining that the executable could not be found on the target machine.
  */
@@ -54,16 +54,16 @@ suspend fun detectTool(
   val binaryName = if (eel.platform.isWindows) "$toolName.exe" else toolName
   val paths = buildList {
     if (eel.platform.isWindows) addWindowsPaths(eel, binaryName) else addUnixPaths(eel, binaryName)
-    additionalSearchPaths.forEach {
-      if (it.getEelDescriptor() != eel.descriptor) {
-        fileLogger().warn("Additional search paths should be on the same descriptor as Eel API, skipping ${it.pathString}")
+    for(path in additionalSearchPaths) {
+      assert(path.getEelDescriptor() == eel.descriptor) {
+        "Additional search paths should be on the same descriptor as Eel API, but $path isn't on $eel"
       }
-      else add(it.resolve(binaryName))
+      add(path.resolve(binaryName))
     }
   }
 
   paths.firstOrNull { it.isExecutable() }?.let { PyResult.success(it) }
-  ?: PyResult.localizedError(PySdkBundle.message("cannot.find.executable", toolName, localEel.descriptor.machine.name))
+  ?: PyResult.localizedError(PySdkBundle.message("cannot.find.executable", binaryName, localEel.descriptor.machine.name))
 }
 
 private fun MutableList<Path>.addUnixPaths(eel: EelApi, binaryName: String) {
