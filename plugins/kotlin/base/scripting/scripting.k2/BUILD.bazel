@@ -63,6 +63,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "//platform/lang-core",
+    "//platform/backend/observation",
   ]
 )
 
@@ -130,6 +131,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//platform/backend/observation",
+    "//platform/backend/observation:observation_test_lib",
   ]
 )
 ### auto-generated section `build intellij.kotlin.base.scripting` end

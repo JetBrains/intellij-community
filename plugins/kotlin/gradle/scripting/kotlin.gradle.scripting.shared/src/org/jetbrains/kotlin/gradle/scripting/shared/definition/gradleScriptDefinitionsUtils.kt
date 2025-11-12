@@ -1,22 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.gradle.scripting.shared
+package org.jetbrains.kotlin.gradle.scripting.shared.definition
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast
-import com.intellij.platform.workspace.storage.EntitySource
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
-import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleScriptDefinition
-import org.jetbrains.kotlin.gradle.scripting.shared.definition.LegacyGradleScriptDefinition
+import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.shared.definition.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
-import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
 import java.io.File
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.name
 import kotlin.script.experimental.api.ScriptCompilationConfigurationKeys
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
@@ -39,7 +39,28 @@ fun loadGradleDefinitions(params: GradleDefinitionsParams): List<GradleScriptDef
     val kotlinLibsClassPath = kotlinStdlibAndCompiler(gradleLibDir)
     val languageVersionCompilerOptions = findStdLibLanguageVersion(kotlinLibsClassPath)
 
-    val templateClasses = if (params.gradleVersion != null && isGradleAtLeast(params.gradleVersion, GRADLE_WITH_NEW_SCRIPTING_TEMPLATES)) {
+    val templateClasses = getGradleTemplatesNames(params.gradleVersion?.let { GradleVersion.version(it) })
+
+    val hostConfiguration = params.toHostConfiguration()
+    return loadDefinitionsFromTemplates(
+        templateClassNames = templateClasses,
+        templateClasspath = templateClasspath,
+        additionalResolverClasspath = kotlinLibsClassPath,
+        baseHostConfiguration = hostConfiguration,
+        defaultCompilerOptions = languageVersionCompilerOptions
+    ).map {
+        it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let { legacyDefinition ->
+            LegacyGradleScriptDefinition(
+                legacyDefinition, it.hostConfiguration, it.evaluationConfiguration, it.defaultCompilerOptions, params.workingDir
+            )
+        } ?: GradleScriptDefinition(
+            it.compilationConfiguration, it.hostConfiguration, it.evaluationConfiguration, it.defaultCompilerOptions, params.workingDir
+        )
+    }.ifEmpty { sequenceOf(ErrorGradleScriptDefinition()) }.toList()
+}
+
+fun getGradleTemplatesNames(gradleVersion: GradleVersion?): List<String> {
+    val templateClasses = if (gradleVersion != null && isGradleAtLeast(gradleVersion, GRADLE_WITH_NEW_SCRIPTING_TEMPLATES)) {
         listOf(
             "org.gradle.kotlin.dsl.KotlinGradleScriptTemplate",
             "org.gradle.kotlin.dsl.KotlinSettingsScriptTemplate",
@@ -52,33 +73,7 @@ fun loadGradleDefinitions(params: GradleDefinitionsParams): List<GradleScriptDef
             "org.gradle.kotlin.dsl.KotlinBuildScript",
         )
     }
-
-    val hostConfiguration = params.toHostConfiguration()
-    return loadDefinitionsFromTemplates(
-        templateClassNames = templateClasses,
-        templateClasspath = templateClasspath,
-        additionalResolverClasspath = kotlinLibsClassPath,
-        baseHostConfiguration = hostConfiguration,
-        defaultCompilerOptions = languageVersionCompilerOptions
-    ).map {
-        it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let { legacyDefinition ->
-            LegacyGradleScriptDefinition(
-                legacyDefinition,
-                it.hostConfiguration,
-                it.evaluationConfiguration,
-                it.defaultCompilerOptions,
-                params.workingDir
-            )
-        } ?: GradleScriptDefinition(
-            it.compilationConfiguration,
-            it.hostConfiguration,
-            it.evaluationConfiguration,
-            it.defaultCompilerOptions,
-            params.workingDir
-        )
-    }.ifEmpty {
-        sequenceOf(ErrorGradleScriptDefinition())
-    }.toList()
+    return templateClasses
 }
 
 private fun findStdLibLanguageVersion(kotlinLibsClassPath: List<Path>): List<String> {
@@ -89,8 +84,7 @@ private fun findStdLibLanguageVersion(kotlinLibsClassPath: List<Path>): List<Str
 
     if (result.groupValues.size < 3) return emptyList()
     val version = result.groupValues[2]
-    return LanguageVersion.fromVersionString(version)?.let { listOf("-language-version", it.versionString) }
-        ?: emptyList()
+    return LanguageVersion.fromVersionString(version)?.let { listOf("-language-version", it.versionString) } ?: emptyList()
 }
 
 private fun GradleDefinitionsParams.toHostConfiguration(): ScriptingHostConfiguration =
@@ -107,12 +101,16 @@ private fun GradleDefinitionsParams.toHostConfiguration(): ScriptingHostConfigur
         }
     }
 
-private fun String.toGradleHomePath(): Path = Path(this, "lib").let {
-    it.takeIf { it.exists() && it.isDirectory() }
-        ?: error(KotlinGradleScriptingBundle.message("error.text.invalid.gradle.libraries.directory", it))
+fun String?.toGradleHomePath(): Path {
+    if (this == null) error(KotlinGradleScriptingBundle.message("error.text.unable.to.get.gradle.home.directory"))
+
+    return Path(this, "lib").let {
+        it.takeIf { it.exists() && it.isDirectory() }
+            ?: error(KotlinGradleScriptingBundle.message("error.text.invalid.gradle.libraries.directory", it))
+    }
 }
 
-private fun getFullDefinitionsClasspath(gradleLibDir: Path): List<Path> {
+fun getFullDefinitionsClasspath(gradleLibDir: Path): List<Path> {
     val templateClasspath = Files.newDirectoryStream(gradleLibDir) { kotlinDslDependencySelector.matches(it.name) }
         .use(DirectoryStream<Path>::toList)
         .ifEmpty { error(KotlinGradleScriptingBundle.message("error.text.missing.jars.in.gradle.directory")) }
@@ -123,8 +121,7 @@ private fun getFullDefinitionsClasspath(gradleLibDir: Path): List<Path> {
 }
 
 private fun kotlinStdlibAndCompiler(gradleLibDir: Path): List<Path> {
-    val stdlibPath = gradleLibDir.findFirst("kotlin-stdlib-[1-9]*")
-    // additionally need compiler jar to load gradle resolver
+    val stdlibPath = gradleLibDir.findFirst("kotlin-stdlib-[1-9]*") // additionally need compiler jar to load gradle resolver
     val compilerPath = gradleLibDir.findFirst("kotlin-compiler-embeddable*")
     return listOfNotNull(stdlibPath, compilerPath)
 }
@@ -133,25 +130,14 @@ private fun Path.findFirst(pattern: String): Path? = Files.newDirectoryStream(th
 
 private val kotlinDslDependencySelector = Regex("^gradle-(?:kotlin-dsl|core|base-services).*\\.jar\$")
 
-fun getDefinitionsTemplateClasspath(gradleHome: String): List<String> = try {
-    getFullDefinitionsClasspath(gradleHome.toGradleHomePath()).map { it.invariantSeparatorsPathString }
-} catch (e: Throwable) {
-    scriptingInfoLog("cannot get classpath for Gradle Kotlin DSL scripts: ${e.message}")
-
-    emptyList()
-}
-
 interface GradleScriptCompilationConfigurationKeys
 
-open class GradleScriptCompilationConfigurationBuilder : PropertiesCollection.Builder(),
-                                                         GradleScriptCompilationConfigurationKeys {
+open class GradleScriptCompilationConfigurationBuilder : PropertiesCollection.Builder(), GradleScriptCompilationConfigurationKeys {
     companion object : GradleScriptCompilationConfigurationKeys
 }
 
+@Suppress("UnusedReceiverParameter")
 val ScriptCompilationConfigurationKeys.gradle: GradleScriptCompilationConfigurationBuilder
     get() = GradleScriptCompilationConfigurationBuilder()
 
 val GradleScriptCompilationConfigurationKeys.externalProjectPath: PropertiesCollection.Key<String?> by PropertiesCollection.key()
-
-
-object KotlinGradleScriptEntitySource : EntitySource

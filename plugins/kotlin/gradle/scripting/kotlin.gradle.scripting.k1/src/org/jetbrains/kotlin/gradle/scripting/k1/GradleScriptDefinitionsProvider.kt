@@ -6,9 +6,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleBuildRootsLocatorImpl
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleDefinitionsParams
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
 import org.jetbrains.kotlin.gradle.scripting.shared.definition.ErrorGradleScriptDefinition
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.GradleDefinitionsParams
+import org.jetbrains.kotlin.gradle.scripting.shared.definition.loadGradleDefinitions
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.Imported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.WithoutScriptModels
@@ -124,7 +125,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
             return emptyList()
         }
 
-        return org.jetbrains.kotlin.gradle.scripting.shared.loadGradleDefinitions(
+        return loadGradleDefinitions(
             GradleDefinitionsParams(
                 workingDir = root.workingDir,
                 gradleHome = root.gradleHome,

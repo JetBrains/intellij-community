@@ -16,6 +16,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <syncExtension implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncExtension"/>
+    <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslBaseScriptSyncContributor"/>
     <syncContributor implementation="org.jetbrains.kotlin.gradle.scripting.k2.importing.KotlinDslScriptSyncContributor"/>
   </extensions>
 

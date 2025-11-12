@@ -20,3 +20,5 @@ interface GradleScriptDefinitionEntity : WorkspaceEntityWithSymbolicId {
     override val symbolicId: GradleScriptDefinitionEntityId
         get() = GradleScriptDefinitionEntityId(definitionId)
 }
+
+object KotlinGradleScriptEntitySource : EntitySource

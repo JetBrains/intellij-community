@@ -10,13 +10,9 @@ import java.io.DataInput
 import java.io.DataOutput
 
 class GradleBuildRootDataSerializer : AbstractGradleBuildRootDataSerializer() {
-    override val externalizer: DataExternalizer<GradleBuildRootData>
-        get() = object : DataExternalizer<GradleBuildRootData> {
-        override fun save(out: DataOutput, value: GradleBuildRootData) =
-            writeKotlinDslScriptModels(out, value)
-
-        override fun read(`in`: DataInput): GradleBuildRootData =
-            readKotlinDslScriptModels(`in`)
+    override fun getExternalizer(): DataExternalizer<GradleBuildRootData> = object : DataExternalizer<GradleBuildRootData> {
+        override fun save(out: DataOutput, value: GradleBuildRootData) = writeKotlinDslScriptModels(out, value)
+        override fun read(`in`: DataInput): GradleBuildRootData = readKotlinDslScriptModels(`in`, currentBuildRoot.get().path)
     }
 
     companion object {
@@ -31,18 +27,7 @@ class GradleBuildRootDataSerializer : AbstractGradleBuildRootDataSerializer() {
             strings.writeStringIds(data.projectRoots)
             strings.writeStringId(data.gradleHome)
             strings.writeStringId(data.javaHome)
-        }
-
-        @IntellijInternalApi
-        fun readKotlinDslScriptModels(input: DataInput): GradleBuildRootData {
-            val strings = StringsPool.reader(input)
-
-            val importTs = input.readLong()
-            val projectRoots = strings.readStrings()
-            val gradleHome = strings.readString()
-            val javaHome = strings.readNullableString()
-
-            return GradleBuildRootData(importTs, projectRoots, gradleHome, javaHome, listOf())
+            output.writeInt(0)
         }
     }
 }

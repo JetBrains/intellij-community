@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.gradle.scripting.shared.definition
 
 import org.jetbrains.kotlin.gradle.scripting.shared.KotlinGradleScriptingBundle
-import org.jetbrains.kotlin.gradle.scripting.shared.externalProjectPath
-import org.jetbrains.kotlin.gradle.scripting.shared.gradle
 import org.jetbrains.kotlin.scripting.definitions.ScriptCompilationConfigurationFromDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
@@ -13,7 +11,7 @@ import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
 open class GradleScriptDefinition(
-    compilationConfiguration: ScriptCompilationConfiguration,
+    private val initialConfiguration: ScriptCompilationConfiguration,
     override val hostConfiguration: ScriptingHostConfiguration,
     override val evaluationConfiguration: ScriptEvaluationConfiguration?,
     override val defaultCompilerOptions: Iterable<String> = emptyList(),
@@ -27,15 +25,16 @@ open class GradleScriptDefinition(
     override val canDefinitionBeSwitchedOff: Boolean = false
 
     override val compilationConfiguration: ScriptCompilationConfiguration by lazy {
-        compilationConfiguration.with {
-            mutator()
-            gradle {
-                externalProjectPath(_externalProjectPath)
+        initialConfiguration
+            .with(configurationBody)
+            .with {
+                gradle {
+                    externalProjectPath(_externalProjectPath)
+                }
+                ide {
+                    acceptedLocations.put(listOf(ScriptAcceptedLocation.Project))
+                }
             }
-            ide {
-                acceptedLocations.put(listOf(ScriptAcceptedLocation.Project))
-            }
-        }
     }
 
     fun with(body: ScriptCompilationConfiguration.Builder.() -> Unit): GradleScriptDefinition {
@@ -45,7 +44,20 @@ open class GradleScriptDefinition(
         )
     }
 
-    open val mutator: ScriptCompilationConfiguration.Builder.() -> Unit = {}
+    protected open val configurationBody: ScriptCompilationConfiguration.Builder.() -> Unit = {}
+}
+
+class BaseScriptDefinition(private val definition: ScriptDefinition) : GradleScriptDefinition(
+    definition.compilationConfiguration,
+    definition.hostConfiguration,
+    definition.evaluationConfiguration,
+    definition.defaultCompilerOptions,
+) {
+    override val configurationBody: ScriptCompilationConfiguration.Builder.() -> Unit = {
+        displayName("${definition.name} (Base)")
+    }
+
+    override val definitionId: String = "${super.definitionId}_base"
 }
 
 class LegacyGradleScriptDefinition(
@@ -59,7 +71,7 @@ class LegacyGradleScriptDefinition(
         hostConfiguration, _legacyDefinition
     ), hostConfiguration, evaluationConfiguration, defaultCompilerOptions, externalProjectPath
 ) {
-    override val mutator: ScriptCompilationConfiguration.Builder.() -> Unit = {
+    override val configurationBody: ScriptCompilationConfiguration.Builder.() -> Unit = {
         @Suppress("DEPRECATION_ERROR") fileNamePattern.put(_legacyDefinition.scriptFilePattern.pattern)
     }
 }
@@ -71,7 +83,7 @@ class ErrorGradleScriptDefinition : GradleScriptDefinition(
         hostConfiguration(ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration))
     }) {
 
-    override val mutator: ScriptCompilationConfiguration.Builder.() -> Unit = {
+    override val configurationBody: ScriptCompilationConfiguration.Builder.() -> Unit = {
         fileExtension("gradle.kts")
         baseClass(KotlinType(ScriptTemplateWithArgs::class))
         displayName(KotlinGradleScriptingBundle.message("text.default.kotlin.gradle.script"))

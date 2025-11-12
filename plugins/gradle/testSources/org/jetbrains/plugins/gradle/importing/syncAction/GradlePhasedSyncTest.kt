@@ -174,6 +174,7 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         val syncPhaseCompletionAssertions = ListenerAssertion()
 
         val allPhases = DEFAULT_SYNC_PHASES
+        val allStaticPhases = allPhases.filterIsInstance<GradleSyncPhase.Static>()
         val allDynamicPhases = allPhases.filterIsInstance<GradleSyncPhase.Dynamic>()
         val completedPhases = CopyOnWriteArrayList<GradleSyncPhase>()
 
@@ -192,11 +193,16 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
           whenSyncPhaseCompleted(phase, disposable) { _ ->
             syncPhaseCompletionAssertions.trace {
               val completedStaticPhases = completedPhases.filterIsInstance<GradleSyncPhase.Static>()
+              val completedBaseScriptPhases = completedPhases.filterIsInstance<GradleSyncPhase.BaseScript>()
               val completedDynamicPhases = completedPhases.filterIsInstance<GradleSyncPhase.Dynamic>()
               val expectedEntities = when (phase) {
                 is GradleSyncPhase.Static -> when (isSecondarySync) {
                   true -> completedStaticPhases + allDynamicPhases
                   else -> completedStaticPhases
+                }
+                is GradleSyncPhase.BaseScript -> when (isSecondarySync) {
+                  true -> allStaticPhases + completedBaseScriptPhases + allDynamicPhases
+                  else -> completedBaseScriptPhases
                 }
                 is GradleSyncPhase.Dynamic -> when (isSecondarySync) {
                   true -> allDynamicPhases
@@ -259,9 +265,11 @@ class GradlePhasedSyncTest : GradlePhasedSyncTestCase() {
         whenSyncPhaseCompleted(phase, disposable) { _ ->
           syncPhaseCompletionAssertions.trace {
             val completedStaticPhases = completedPhases.filterIsInstance<GradleSyncPhase.Static>()
+            val completedBaseScriptPhases = completedPhases.filterIsInstance<GradleSyncPhase.BaseScript>()
             val completedDynamicPhases = completedPhases.filterIsInstance<GradleSyncPhase.Dynamic>()
             val expectedEntities = when (phase) {
               is GradleSyncPhase.Static -> completedStaticPhases
+              is GradleSyncPhase.BaseScript -> completedBaseScriptPhases
               is GradleSyncPhase.Dynamic -> completedDynamicPhases
             }
             WorkspaceAssertions.assertEntities(myProject, expectedEntities.map { GradleTestEntityId(it) }) {

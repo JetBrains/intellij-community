@@ -30,6 +30,9 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
     }
   }
 
+  @ApiStatus.Internal
+  sealed interface BaseScript: GradleSyncPhase
+
   /**
    * In these phases, Gradle sync contributors are executed when models for [modelFetchPhase] are collected on the Gradle daemon side.
    */
@@ -62,6 +65,13 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
     val DECLARATIVE_PHASE: GradleSyncPhase = Static(1000, "DECLARATIVE_PHASE")
 
     /**
+     *
+     */
+    @JvmField
+    @ApiStatus.Internal
+    val BASE_SCRIPT_MODEL_PHASE: GradleSyncPhase = GradleBaseScriptSyncPhase
+
+    /**
      * In this phase, Gradle sync contributors,
      * contribute to the IDE module and content root structure for each Gradle project.
      */
@@ -81,6 +91,12 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
      */
     @JvmField
     val DEPENDENCY_MODEL_PHASE: GradleSyncPhase = GradleModelFetchPhase.PROJECT_SOURCE_SET_DEPENDENCY_PHASE.asSyncPhase()
+
+    /**
+     *
+     */
+    @JvmField
+    val SCRIPT_MODEL_PHASE: GradleSyncPhase = GradleModelFetchPhase.SCRIPT_MODEL_PHASE.asSyncPhase()
 
     /**
      * In this phase, Gradle sync contributors,
@@ -105,6 +121,7 @@ private class GradleStaticSyncPhase(
   override fun compareTo(other: GradleSyncPhase): Int {
     return when (other) {
       is GradleStaticSyncPhase -> order.compareTo(other.order)
+      is GradleBaseScriptSyncPhase -> -1
       is GradleDynamicSyncPhase -> -1
     }
   }
@@ -134,6 +151,7 @@ private class GradleDynamicSyncPhase(
   override fun compareTo(other: GradleSyncPhase): Int {
     return when (other) {
       is GradleStaticSyncPhase -> 1
+      is GradleBaseScriptSyncPhase -> 1
       is GradleDynamicSyncPhase -> modelFetchPhase.compareTo(other.modelFetchPhase)
     }
   }
@@ -149,5 +167,18 @@ private class GradleDynamicSyncPhase(
 
   override fun hashCode(): Int {
     return modelFetchPhase.hashCode()
+  }
+}
+
+private data object GradleBaseScriptSyncPhase: GradleSyncPhase.BaseScript {
+
+  override val name: String = "BASE_SCRIPT_MODEL"
+
+  override fun compareTo(other: GradleSyncPhase): Int {
+    return when (other) {
+      is GradleStaticSyncPhase -> 1
+      is GradleBaseScriptSyncPhase -> 0
+      is GradleDynamicSyncPhase -> -1
+    }
   }
 }

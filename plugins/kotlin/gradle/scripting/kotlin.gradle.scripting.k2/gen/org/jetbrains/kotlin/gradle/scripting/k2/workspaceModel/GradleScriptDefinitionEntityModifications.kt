@@ -3,6 +3,7 @@
 
 package org.jetbrains.kotlin.gradle.scripting.k2.workspaceModel
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity

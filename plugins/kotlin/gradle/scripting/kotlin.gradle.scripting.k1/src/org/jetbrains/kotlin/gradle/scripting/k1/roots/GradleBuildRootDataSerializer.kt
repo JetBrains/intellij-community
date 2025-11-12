@@ -3,26 +3,21 @@ package org.jetbrains.kotlin.gradle.scripting.k1.roots
 
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.io.DataExternalizer
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleKotlinScriptConfigurationInputs
-import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
-import org.jetbrains.kotlin.idea.core.script.v1.readString
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.AbstractGradleBuildRootDataSerializer
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootData
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.StringsPool
+import org.jetbrains.kotlin.gradle.scripting.shared.roots.writeList
 import org.jetbrains.kotlin.idea.core.script.v1.writeString
 import java.io.DataInput
 import java.io.DataOutput
 
 class GradleBuildRootDataSerializer : AbstractGradleBuildRootDataSerializer() {
-    override val externalizer: DataExternalizer<GradleBuildRootData>
-        get() = object : DataExternalizer<GradleBuildRootData> {
-        override fun save(out: DataOutput, value: GradleBuildRootData) =
-            writeKotlinDslScriptModels(out, value)
-
-        override fun read(`in`: DataInput): GradleBuildRootData =
-            readKotlinDslScriptModels(`in`, currentBuildRoot.get().path)
+    override fun getExternalizer(): DataExternalizer<GradleBuildRootData> = object : DataExternalizer<GradleBuildRootData> {
+        override fun save(out: DataOutput, value: GradleBuildRootData) = writeKotlinDslScriptModels(out, value)
+        override fun read(`in`: DataInput): GradleBuildRootData = readKotlinDslScriptModels(`in`, currentBuildRoot.get().path)
     }
 
     companion object {
-
         @IntellijInternalApi
         fun writeKotlinDslScriptModels(output: DataOutput, data: GradleBuildRootData) {
             val strings = StringsPool.writer(output)
@@ -48,28 +43,6 @@ class GradleBuildRootDataSerializer : AbstractGradleBuildRootDataSerializer() {
                 strings.writeStringIds(it.sourcePath)
                 strings.writeStringIds(it.imports)
             }
-        }
-
-        @IntellijInternalApi
-        fun readKotlinDslScriptModels(input: DataInput, buildRoot: String): GradleBuildRootData {
-            val strings = StringsPool.reader(input)
-
-            val importTs = input.readLong()
-            val projectRoots = strings.readStrings()
-            val gradleHome = strings.readString()
-            val javaHome = strings.readNullableString()
-            val models = input.readList {
-                KotlinDslScriptModel(
-                    strings.readString(),
-                    GradleKotlinScriptConfigurationInputs(input.readString(), input.readLong(), buildRoot),
-                    strings.readStrings(),
-                    strings.readStrings(),
-                    strings.readStrings(),
-                    listOf()
-                )
-            }
-
-            return GradleBuildRootData(importTs, projectRoots, gradleHome, javaHome, models)
         }
     }
 

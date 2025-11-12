@@ -8,17 +8,19 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getWorkspaceModelManager
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService.Companion.dropKotlinScriptCaches
+import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService.Companion.dropKotlinScriptCachesUnderWriteAction
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.v1.awaitExternalSystemInitialization
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -56,7 +58,8 @@ class KotlinScriptResolutionService(
      * @param ktFile the Kotlin script to be processed.
      */
     fun launchProcessing(ktFile: KtFile) {
-        coroutineScope.launch {
+        coroutineScope.launchTracked {
+            project.awaitExternalSystemInitialization()
             process(listOf(ktFile))
         }
     }
@@ -112,7 +115,7 @@ class KotlinScriptResolutionService(
      * - Tries to get an existing configuration for the file; if absent, creates it.
      * - Accumulates configurations and applies them to the workspace model in a single batch update.
      *
-     * After updating the model, Kotlin script-related caches are dropped via [dropKotlinScriptCaches].
+     * After updating the model, Kotlin script-related caches are dropped via [dropKotlinScriptCachesUnderWriteAction].
      *
      * @param definitionByFile mapping of script files to their resolved [ScriptDefinition].
      */
@@ -128,23 +131,29 @@ class KotlinScriptResolutionService(
         }
 
         assert(!application.isWriteAccessAllowed)
-        projectModelUpdater.updateWorkspaceModel(configurationPerVirtualFile)
 
-        dropKotlinScriptCaches(project)
+        dropKotlinScriptCachesUnderWriteAction(project)
+        projectModelUpdater.updateWorkspaceModel(configurationPerVirtualFile)
     }
 
     companion object {
         @JvmStatic
         fun getInstance(project: Project): KotlinScriptResolutionService = project.service()
 
-        suspend fun dropKotlinScriptCaches(project: Project) {
+        suspend fun dropKotlinScriptCachesUnderWriteAction(project: Project) {
+            edtWriteAction {
+                dropKotlinScriptCaches(project)
+            }
+        }
+
+        fun dropKotlinScriptCaches(project: Project) {
+            ThreadingAssertions.assertWriteAccess()
+
             ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
             HighlightingSettingsPerFile.getInstance(project).incModificationCount()
 
-            edtWriteAction {
-                project.publishGlobalModuleStateModificationEvent()
-                project.publishGlobalScriptModuleStateModificationEvent()
-            }
+            project.publishGlobalModuleStateModificationEvent()
+            project.publishGlobalScriptModuleStateModificationEvent()
         }
     }
 }

@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.gradle.scripting.shared
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
