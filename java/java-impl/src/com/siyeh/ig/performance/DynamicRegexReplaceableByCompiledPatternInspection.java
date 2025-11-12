@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -22,10 +22,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 
+/**
+ * @author Bas Leijdekkers
+ */
 public final class DynamicRegexReplaceableByCompiledPatternInspection extends BaseInspection {
-  private static final @NonNls Collection<String> regexMethodNames = Set.of(
-    "matches", "replace", "replaceFirst", "replaceAll", "split"
-  );
+  private static final @NonNls Collection<String> regexMethodNames = Set.of("matches", "replace", "replaceFirst", "replaceAll", "split");
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
@@ -34,8 +35,7 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
 
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "dynamic.regex.replaceable.by.compiled.pattern.problem.descriptor");
+    return InspectionGadgetsBundle.message("dynamic.regex.replaceable.by.compiled.pattern.problem.descriptor");
   }
 
   @Override
@@ -47,8 +47,7 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
 
     @Override
     public @NotNull String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "dynamic.regex.replaceable.by.compiled.pattern.quickfix");
+      return InspectionGadgetsBundle.message("dynamic.regex.replaceable.by.compiled.pattern.quickfix");
     }
 
     @Override
@@ -78,9 +77,8 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
       List<String> names = new VariableNameGenerator(aClass, VariableKind.STATIC_FINAL_FIELD)
         .byExpression(factory.createExpressionFromText("__(" + regexpText + ")", null))
         .byName("PATTERN", "REGEX", "REGEXP").generateAll(true);
-      String name = names.get(0);
+      String name = names.getFirst();
       String fieldText = "private static final java.util.regex.Pattern " + name + " = "+ initializer + ";";
-      final int expressionsLength = expressions.length;
       PsiField fieldTemplate = factory.createFieldFromText(fieldText, element);
       for (PsiField classField : aClass.getFields()) {
         if (classField.hasModifierProperty(PsiModifier.STATIC) && classField.hasModifierProperty(PsiModifier.FINAL) &&
@@ -93,13 +91,12 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
         }
       }
 
-      final @NonNls StringBuilder expressionText = new StringBuilder(name + ".");
+      final @NonNls StringBuilder expressionText = new StringBuilder(name).append(".");
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       final @NonNls String qualifierText = (qualifier == null) ? "this" : commentTracker.text(qualifier);
+      final int expressionsLength = expressions.length;
       if ("split".equals(methodName)) {
-        expressionText.append(methodName);
-        expressionText.append('(');
-        expressionText.append(qualifierText);
+        expressionText.append(methodName).append('(').append(qualifierText);
         for (int i = 1; i < expressionsLength; i++) {
           expressionText.append(',').append(commentTracker.text(expressions[i]));
         }
@@ -107,12 +104,7 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
       }
       else {
         expressionText.append("matcher(").append(qualifierText).append(").");
-        if (literalReplacement) {
-          expressionText.append("replaceAll");
-        }
-        else {
-          expressionText.append(methodName);
-        }
+        expressionText.append(literalReplacement ? "replaceAll" : methodName);
         expressionText.append('(');
         boolean quote = false;
         if (literalReplacement) {
@@ -145,8 +137,7 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
 
     private static boolean needsQuote(PsiExpression expr) {
       Object constExprValue = ExpressionUtils.computeConstantExpression(expr);
-      return !(constExprValue instanceof String value) ||
-             Matcher.quoteReplacement(value) != constExprValue;
+      return !(constExprValue instanceof String value) || Matcher.quoteReplacement(value) != constExprValue;
     }
   }
 
@@ -162,13 +153,11 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
     }
 
     private static boolean isCallToRegexMethod(PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final @NonNls String name = methodExpression.getReferenceName();
+      final @NonNls String name = expression.getMethodExpression().getReferenceName();
       if (!regexMethodNames.contains(name)) {
         return false;
       }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
+      final PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       if (arguments.length == 0) {
         return false;
       }
@@ -185,11 +174,7 @@ public final class DynamicRegexReplaceableByCompiledPatternInspection extends Ba
         return false;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return false;
-      }
-      final String className = containingClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
+      if (containingClass == null || !CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName())) {
         return false;
       }
       return AllowedApiFilterExtension.isClassAllowed("java.util.regex.Pattern", expression);
