@@ -18,8 +18,10 @@ object NotebookDataContext {
 
   val DataContext.notebookEditor: EditorImpl?
     get() {
-      val component = getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
       val editor = getData(PlatformCoreDataKeys.EDITOR)
+      if (editor is EditorImpl && NotebookCellLines.hasSupport(editor))
+        return editor
+      val component = getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
       val noteEditor = NotebookDataContextUtils.getCurrentEditor(editor, component) ?: return null
       if (NotebookDataContextUtils.hasFocusedSearchReplaceComponent(noteEditor, component))
         return null
