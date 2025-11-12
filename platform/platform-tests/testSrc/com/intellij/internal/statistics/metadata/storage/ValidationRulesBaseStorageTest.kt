@@ -3,7 +3,9 @@ package com.intellij.internal.statistics.metadata.storage
 
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventsSchemePathSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.io.IOException
@@ -35,6 +37,10 @@ internal abstract class ValidationRulesBaseStorageTest : BasePlatformTestCase() 
         catch (e: IOException) {
           LOG.error(e)
         }
+        EventLogMetadataSettingsPersistence.getInstance().setPathSettings(
+          recorder,
+          EventsSchemePathSettings("", false)
+        )
       }
     }
     catch (e: Throwable) {
