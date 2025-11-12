@@ -22,7 +22,7 @@ import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrLogException
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
@@ -342,7 +342,7 @@ internal suspend fun <P : PathHolder> FileSystem<P>.getExistingSelectableInterpr
       val languageLevel = sdk.versionString?.let {
         PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe(it)
       } ?: run {
-        ExecService().validatePythonAndGetInfo(sdk.asBinToExecute()).getOrLogException(LOG)?.languageLevel
+        ExecService().validatePythonAndGetInfo(sdk.asBinToExecute()).orLogException(LOG)?.languageLevel
       }
 
       languageLevel?.let {

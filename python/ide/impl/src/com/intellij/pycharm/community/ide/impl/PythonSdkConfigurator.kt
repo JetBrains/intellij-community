@@ -33,7 +33,7 @@ import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.getOrLogException
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
@@ -241,7 +241,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdkCreator == null) {
       return false
     }
-    sdkCreator(true).getOrLogException(thisLogger())
+    sdkCreator(true).orLogException(thisLogger())
     return true
   }
 
