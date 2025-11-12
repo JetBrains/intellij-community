@@ -8,6 +8,7 @@ import com.intellij.codeInsight.inline.completion.listeners.typing.InlineComplet
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
 import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
+import com.intellij.codeInsight.inline.completion.tooltip.InlineCompletionTooltipProvokerMouseListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -68,6 +69,7 @@ object InlineCompletion {
     editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
     editor.selectionModel.addSelectionListener(InlineCompletionSelectionListener(), disposable)
     editor.caretModel.addCaretListener(InlineCompletionTypingSessionTracker.TypingSessionCaretListener(), disposable)
+    editor.addEditorMouseListener(InlineCompletionTooltipProvokerMouseListener(), disposable)
 
     application.messageBus.syncPublisher(InlineCompletionInstallListener.TOPIC).handlerInstalled(editor, handler)
 
