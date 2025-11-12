@@ -60,6 +60,9 @@ internal suspend fun createProcessLauncherOnTarget(binOnTarget: BinOnTarget, lau
     fileLogger().warn("Failed to start $target", e) // TODO: i18n
     return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError("Failed to start environment due to ${e.localizedMessage}")))
   }
+  targetEnv.uploadVolumes.forEach { _, volume ->
+    volume.upload(".", TargetProgressIndicator.EMPTY)
+  }
   val args = launchRequest.args.getArgs { localFile ->
     targetEnv.getTargetPaths(localFile.pathString).first()
   }

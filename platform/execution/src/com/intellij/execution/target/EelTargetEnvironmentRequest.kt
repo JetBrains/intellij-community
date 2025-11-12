@@ -3,6 +3,7 @@ package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
+import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -20,6 +21,8 @@ import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.icons.EMPTY_ICON
@@ -36,11 +39,12 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
+import kotlin.io.path.Path
 import kotlin.io.path.isSameFileAs
 
-private fun EelPlatform.toTargetPlatform(): TargetPlatform = when (this) {
-  is EelPlatform.Posix -> TargetPlatform(Platform.UNIX)
-  is EelPlatform.Windows -> TargetPlatform(Platform.WINDOWS)
+private fun EelOsFamily.toTargetPlatform(): TargetPlatform = when (this) {
+  EelOsFamily.Posix -> TargetPlatform(Platform.UNIX)
+  EelOsFamily.Windows -> TargetPlatform(Platform.WINDOWS)
 }
 
 private fun LocalHostPort(port: Int) = HostPort("localhost", port)
@@ -75,30 +79,68 @@ class EelTargetType : TargetEnvironmentType<EelTargetEnvironmentRequest.Configur
   }
 
   override fun createSerializer(config: EelTargetEnvironmentRequest.Configuration): PersistentStateComponent<*> {
-    throw UnsupportedOperationException()
+    return config
   }
 
   override fun createDefaultConfig(): EelTargetEnvironmentRequest.Configuration {
-    throw UnsupportedOperationException()
+    return EelTargetEnvironmentRequest.Configuration()
   }
 
   override fun duplicateConfig(config: EelTargetEnvironmentRequest.Configuration): EelTargetEnvironmentRequest.Configuration {
-    return EelTargetEnvironmentRequest.Configuration(config.eel)
+    return EelTargetEnvironmentRequest.Configuration.create(config.descriptor).also {
+      it.projectRootOnTarget = config.projectRootOnTarget
+    }
   }
 }
 
 @ApiStatus.Internal
-class EelTargetEnvironmentRequest(override val configuration: Configuration) : BaseTargetEnvironmentRequest(), VolumeCopyingRequest {
-  class Configuration(val eel: EelApi) : TargetEnvironmentConfiguration(TARGET_TYPE_NAME), TargetConfigurationWithLocalFsAccess {
+class EelTargetEnvironmentRequest(
+  override val configuration: Configuration,
+) : BaseTargetEnvironmentRequest(), VolumeCopyingRequest {
+  class Configuration private constructor(
+    eelDescriptor: EelDescriptor?,
+  ) : TargetEnvironmentConfiguration(TARGET_TYPE_NAME), TargetConfigurationWithLocalFsAccess, PersistentStateComponent<Configuration.PersistentState> {
+    internal constructor() : this(null)
+
+    constructor(eelApi: EelApi) : this(eelApi.descriptor)
+
+    private var myDescriptor = eelDescriptor
+
+    val descriptor: EelDescriptor get() = myDescriptor ?: error("EEL descriptor is not set")
+
+    companion object {
+      @JvmStatic
+      fun create(eelDescriptor: EelDescriptor): Configuration = Configuration(
+        eelDescriptor = eelDescriptor
+      )
+    }
+
     override var projectRootOnTarget: String = ""
     override val asTargetConfig: TargetEnvironmentConfiguration = this
 
     override fun getTargetPathIfLocalPathIsOnTarget(probablyPathOnTarget: Path): FullPathOnTarget? {
-      return probablyPathOnTarget.asEelPath().takeIf { it.descriptor == eel.descriptor }?.toString()
+      return probablyPathOnTarget.asEelPath().takeIf { it.descriptor == descriptor }?.toString()
+    }
+
+    override fun getState(): PersistentState {
+      return PersistentState().also {
+        it.projectRootOnTarget = projectRootOnTarget
+        it.eelRootPath = (descriptor as? EelPathBoundDescriptor)?.rootPath.toString()
+      }
+    }
+
+    override fun loadState(state: PersistentState) {
+      projectRootOnTarget = state.projectRootOnTarget ?: ""
+      myDescriptor = state.eelRootPath?.let(::Path)?.getEelDescriptor() ?: descriptor
+    }
+
+    class PersistentState : BaseState() {
+      var projectRootOnTarget: String? by string()
+      var eelRootPath: String? by string()
     }
   }
 
-  override val targetPlatform: TargetPlatform = configuration.eel.platform.toTargetPlatform()
+  override val targetPlatform: TargetPlatform = configuration.descriptor.osFamily.toTargetPlatform()
 
   override fun prepareEnvironment(progressIndicator: TargetProgressIndicator): TargetEnvironment {
     val env = EelTargetEnvironment(this)
@@ -116,9 +158,9 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
   private val myTargetPortBindings: MutableMap<TargetPortBinding, ResolvedPortBinding> = HashMap()
   private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = ConcurrentHashMap()
 
-  private val eel = request.configuration.eel
+  private val eel = request.configuration.descriptor.toEelApiBlocking()
 
-  private val forwardingScope by lazy { service<EelTargetScope>().scope.childScope("Eel target forwarding scope: ${request.configuration.eel}") }
+  private val forwardingScope by lazy { service<EelTargetScope>().scope.childScope("Eel target forwarding scope: ${request.configuration.descriptor}") }
 
   override val uploadVolumes: Map<UploadRoot, UploadableVolume>
     get() = Collections.unmodifiableMap(myUploadVolumes)
