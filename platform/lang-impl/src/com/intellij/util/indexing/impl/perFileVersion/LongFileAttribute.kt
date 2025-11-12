@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
 import com.intellij.util.io.Unmappable
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
+import java.io.IOException
 import java.nio.file.Path
 
 /**
@@ -51,7 +52,9 @@ sealed interface LongFileAttribute : Closeable, Unmappable {
     }
   }
 
+  @Throws(IOException::class)
   fun readLong(fileId: Int): Long
+  @Throws(IOException::class)
   fun writeLong(fileId: Int, value: Long)
 }
 

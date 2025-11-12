@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntF
 import com.intellij.util.io.Unmappable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.Closeable
+import java.io.IOException
 import java.nio.file.Path
 
 /**
@@ -52,7 +53,9 @@ sealed interface IntFileAttribute : Closeable, Unmappable {
     }
   }
 
+  @Throws(IOException::class)
   fun readInt(fileId: Int): Int
+  @Throws(IOException::class)
   fun writeInt(fileId: Int, value: Int)
 }
 
