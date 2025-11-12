@@ -1284,6 +1284,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public final @Nullable PsiManager getPsiManagerOrNull() {
+    return myPsiManager;
+  }
+
+  @Override
   public LookupElement[] complete(@NotNull CompletionType type) {
     return myEditorTestFixture.complete(type);
   }

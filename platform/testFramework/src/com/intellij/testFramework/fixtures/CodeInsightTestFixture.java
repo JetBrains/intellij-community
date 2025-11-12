@@ -630,6 +630,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @NotNull
   PsiManager getPsiManager();
 
+  @Nullable
+  PsiManager getPsiManagerOrNull();
+
   /**
    * @return {@code null} if the only item was auto-completed.
    * @see #completeBasicAllCarets(Character)
