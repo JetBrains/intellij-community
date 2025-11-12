@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
@@ -56,6 +57,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -868,7 +870,7 @@ class SePopupContentPane(
   }
 
   private fun updateViewMode() {
-    if (textField.text.isEmpty() && resultList.isEmpty) {
+    if (textField.text.isEmpty() && resultList.isEmpty && !(ScreenReader.isActive() && SystemInfoRt.isMac)) {
       updateViewMode(true)
     }
     else {
