@@ -37,15 +37,15 @@ class SampleTest {
       }
     }
     ide.apply {
-      runSerializedLambdaInBackend {
+      runInBackend {
         waitForProject(20.seconds)
       }
 
-      runSerializedLambda {
+      run {
         Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
       }
 
-      runSerializedLambdaInBackend {
+      runInBackend {
         Logger.getInstance("test").warn("backend Projects: " + getProject())
         openFile("src/FormattingExamplesExpected.java", waitForReadyState = false, requireFocus = false)
       }
@@ -55,8 +55,8 @@ class SampleTest {
 
   @TestTemplate
   fun `named lambda test`(ide: BackgroundRunWithLambda) = runBlocking {
-    ide.runLambdaInBackend(HelloBackendOnlyLambda::class)
-    ide.runLambda(HelloFrontendOnlyLambda::class)
+    ide.runNamedLambdaInBackend(HelloBackendOnlyLambda::class)
+    ide.runNamedLambda(HelloFrontendOnlyLambda::class)
   }
 
   companion object {

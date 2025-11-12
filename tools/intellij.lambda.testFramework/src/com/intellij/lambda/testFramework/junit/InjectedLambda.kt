@@ -110,7 +110,7 @@ class InjectedLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginMo
     
     try {
       val classBytes = classLoader.getResourceAsStream(classFileName)?.use { it.readBytes() }
-                       ?: run {
+                       ?: this@InjectedLambda.run {
                          logger.warn("Cannot find class file: $classFileName")
                          return null
                        }

@@ -69,8 +69,8 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
     runBlocking {
       println("Executing test method $fullMethodName inside IDE in mode ${IdeInstance.currentIdeMode}")
 
-      IdeInstance.ideBackgroundRun.runLambda(InjectedLambda::class,
-                                             params = mapOf(
+      IdeInstance.ideBackgroundRun.runNamedLambda(InjectedLambda::class,
+                                                  params = mapOf(
                                                "testClass" to (invocationContext.targetClass.name ?: ""),
                                                "testMethod" to (invocationContext.executable?.name ?: ""),
                                                "methodArguments" to argumentsToString(invocationContext.arguments)
