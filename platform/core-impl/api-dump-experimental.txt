@@ -102,7 +102,9 @@ f:com.intellij.psi.impl.PsiModificationTrackerImpl
 f:com.intellij.psi.impl.file.PsiFileImplUtil
 - *s:setNonPhysicalFileDeleteHandler(com.intellij.psi.PsiFile,java.util.function.Consumer):V
 com.intellij.psi.impl.file.impl.FileManager
+- *a:changeViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.FileViewProvider):V
 - *a:createFileViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext,Z):com.intellij.psi.FileViewProvider
+- *a:dropViewProviders(com.intellij.openapi.vfs.VirtualFile):V
 - *a:findCachedViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
 - *a:findCachedViewProviders(com.intellij.openapi.vfs.VirtualFile):java.util.List
 - *a:findFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile

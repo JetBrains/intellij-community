@@ -111,6 +111,16 @@ public final class MockFileManager implements FileManager {
   }
 
   @Override
+  public void changeViewProvider(@NotNull VirtualFile vFile, @NotNull FileViewProvider viewProvider) {
+    myViewProviders.put(vFile, viewProvider);
+  }
+
+  @Override
+  public void dropViewProviders(@NotNull VirtualFile vFile) {
+    myViewProviders.remove(vFile);
+  }
+
+  @Override
   public @NotNull List<PsiFile> getAllCachedFiles() {
     throw new UnsupportedOperationException("Method getAllCachedFiles is not yet implemented in " + getClass().getName());
   }

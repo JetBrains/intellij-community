@@ -254,6 +254,6 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (prev != psiFile && prev instanceof PsiFileEx) {
       DebugUtil.performPsiModification(getClass().getName() + " PSI change", () -> ((PsiFileEx)prev).markInvalidated());
     }
-    getManager().getFileManager().setViewProvider(getVirtualFile(), this);
+    getManager().getFileManager().changeViewProvider(getVirtualFile(), this);
   }
 }

@@ -145,7 +145,7 @@ public final class FileManagerImpl implements FileManagerEx {
       return;
     }
     if (!CodeInsightContextUtil.isEventSystemEnabled(viewProviders)) {
-      setViewProvider(vFile, null);
+      dropViewProviders(vFile);
       return;
     }
 
@@ -159,13 +159,13 @@ public final class FileManagerImpl implements FileManagerEx {
       event.setPropertyName(PsiTreeChangeEvent.PROP_UNLOADED_PSI);
 
       myManager.beforePropertyChange(event);
-      setViewProvider(vFile, null);
+      dropViewProviders(vFile);
       myManager.propertyChanged(event);
     } else {
       event.setParent(parentDir);
 
       myManager.beforeChildrenChange(event);
-      setViewProvider(vFile, null);
+      dropViewProviders(vFile);
       myManager.childrenChanged(event);
     }
   }
@@ -316,21 +316,16 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void setViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider) {
-    // todo IJPL-339 investigate if we need a context here
     if (viewProvider == null) {
-      // Let's drop all providers.
-      // Please add a new method if you need to drop only a single provider. But this seems to be a suspicious idea,
-      // because shouldn't you drop other providers as well?
-      dropAllProviders(vFile);
+      dropViewProviders(vFile);
     }
     else {
-      changeFileProvider(vFile, viewProvider);
+      changeViewProvider(vFile, viewProvider);
     }
   }
 
-  private void changeFileProvider(@NotNull VirtualFile vFile,
-                                  @NotNull FileViewProvider viewProvider) {
-
+  @Override
+  public void changeViewProvider(@NotNull VirtualFile vFile, @NotNull FileViewProvider viewProvider) {
     if (vFile instanceof LightVirtualFile) {
       FileViewProvider prev = getRawCachedViewProvider(vFile, CodeInsightContexts.anyContext());
       if (prev == viewProvider) return;
@@ -359,7 +354,8 @@ public final class FileManagerImpl implements FileManagerEx {
     }
   }
 
-  private void dropAllProviders(@NotNull VirtualFile vFile) {
+  @Override
+  public void dropViewProviders(@NotNull VirtualFile vFile) {
     if (vFile instanceof LightVirtualFile) {
       FileViewProvider oldProvider = vFile.getUserData(myPsiHardRefKey);
       if (oldProvider != null) {
