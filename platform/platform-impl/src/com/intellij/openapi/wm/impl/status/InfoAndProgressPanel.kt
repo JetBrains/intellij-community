@@ -36,7 +36,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -47,7 +46,6 @@ import com.intellij.reference.SoftReference
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.hover.HoverListener
@@ -986,14 +984,7 @@ class InfoAndProgressPanel internal constructor(
 
     val progressIcon: AsyncProcessIcon = AsyncProcessIcon(host.coroutineScope)
     var indicator: MyProgressComponent? = null
-    private val multiProcessLink: ActionLink = object : ActionLink("", ActionListener { host.triggerPopupShowing() }) {
-      override fun updateUI() {
-        super.updateUI()
-        if (!ExperimentalUI.isNewUI()) {
-          setFont(if (SystemInfo.isMac) JBUI.Fonts.label(11f) else JBFont.label())
-        }
-      }
-    }
+    private val multiProcessLink = TextPanel()
     private val counterComponent: CounterLabel
     private var isHovered = false
     init {
@@ -1015,6 +1006,11 @@ class InfoAndProgressPanel internal constructor(
         }
       }
       Registry.get(SHOW_COUNTER_REGISTRY_KEY).addListener(listener, host.coroutineScope)
+      multiProcessLink.addMouseListener(object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          host.triggerPopupShowing()
+        }
+      })
 
       counterComponent = CounterLabel()
       counterComponent.addMouseListener(object : MouseAdapter() {
@@ -1266,7 +1262,7 @@ class InfoAndProgressPanel internal constructor(
         counterComponent.setNumber(size, isIndicatorVisible, showPopup)
         counterComponent.isVisible = true
         progressIcon.isVisible = !showPopup && !isIndicatorVisible
-        multiProcessLink.setText(IdeBundle.message("link.hide.processes", size))
+        multiProcessLink.text = IdeBundle.message("link.hide.processes", size)
         multiProcessLink.isVisible = showPopup
       }
       else {
@@ -1274,10 +1270,10 @@ class InfoAndProgressPanel internal constructor(
         progressIcon.isVisible = false
         multiProcessLink.isVisible = showPopup || size > 1
         if (showPopup) {
-          multiProcessLink.setText(IdeBundle.message("link.hide.processes", size))
+          multiProcessLink.text = IdeBundle.message("link.hide.processes", size)
         }
         else if (size > 1) {
-          multiProcessLink.setText(IdeBundle.message("link.show.all.processes", size))
+          multiProcessLink.text = IdeBundle.message("link.show.all.processes", size)
         }
       }
 
