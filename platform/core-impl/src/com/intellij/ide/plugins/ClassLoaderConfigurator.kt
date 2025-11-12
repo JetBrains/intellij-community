@@ -103,7 +103,7 @@ class ClassLoaderConfigurator(
     // if the module depends on an unavailable plugin, it will not be loaded
     val missingDependency = dependencies.find { it.pluginClassLoader == null }
     if (missingDependency != null) {
-      LOG.debug { "content module $module is missing dependency $missingDependency" }
+      LOG.info("content module $module is missing dependency $missingDependency")
       return false
     }
 
