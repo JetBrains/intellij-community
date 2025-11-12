@@ -79,13 +79,16 @@ abstract class IntelliJThemeGeneratorTask : DefaultTask() {
         // Examples:
         //  * 253.1234.567
         //  * 241.SNAPSHOT
+        //  * 253.28294.SNAPSHOT
         if (buildNumber.isBlank()) return false
         if (buildNumber.length < 5) return false
         if (buildNumber.take(3).toIntOrNull()?.takeIf { it > 240 } == null) return false
         if (buildNumber[3] != '.') return false
 
         val afterDot = buildNumber.drop(4)
-        return afterDot == "SNAPSHOT" || afterDot.all { it.isDigit() || it == '.' }
+        return afterDot == "SNAPSHOT" ||
+            afterDot.all { it.isDigit() || it == '.' } ||
+            (afterDot.endsWith(".SNAPSHOT") && afterDot.removeSuffix(".SNAPSHOT").all { it.isDigit() || it == '.' })
     }
 }
 
