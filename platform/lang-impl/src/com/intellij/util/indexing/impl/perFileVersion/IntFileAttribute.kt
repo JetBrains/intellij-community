@@ -15,7 +15,8 @@ import java.nio.file.Path
 /**
  * This is a simple wrapper around [SpecializedFileAttributes], either fast or a regular one.
  * The main function of this wrapper is to make the attribute auto-reopenable, with help of [AutoRefreshingOnVfsCloseRef]:
- * which means that the storage will be automatically reset if VFS is rebuilt, and also automatically reopened, if [close]-ed
+ * which means that the storage will be automatically reset if VFS is rebuilt, and also automatically reopened, if
+ * used after [close]-ed
  *
  * @see AutoRefreshingOnVfsCloseRef
  */
@@ -27,6 +28,7 @@ sealed interface IntFileAttribute : Closeable, Unmappable {
       return true
     }
 
+    /** One should create a single instance per id -- an attempt to create >1 instance for the same id leads to an exception */
     @JvmStatic
     fun create(id: String, version: Int): IntFileAttribute {
       val fast = shouldUseFastAttributes()
