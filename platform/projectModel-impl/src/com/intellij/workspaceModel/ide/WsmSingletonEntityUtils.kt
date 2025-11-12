@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
+import com.intellij.java.workspace.entities.JavaProjectSettingsEntity
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -15,9 +17,16 @@ object WsmSingletonEntityUtils {
   fun <E : WorkspaceEntity> getSingleEntity(storage: EntityStorage, entityClass: Class<E>): E? {
     val entities = storage.entities(entityClass).toList()
     if (entities.size > 1) {
+      val entList = entities.map {
+        when (it) {
+          is ProjectSettingsEntity -> "${it.projectSdk},source=${it.entitySource}"
+          is JavaProjectSettingsEntity -> "${it.languageLevelId},${it.languageLevelDefault},${it.compilerOutput},source=${it.entitySource}"
+          else -> "${it},source=${it.entitySource}"
+        }
+      }
       LOG.error(
         "There were several entities of type $entityClass while only one was expected. " +
-        "Entities: ${entities}"
+        "Entities: $entList"
       )
     }
     return entities.firstOrNull()
