@@ -1089,16 +1089,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public @NotNull String getUsageViewTreeTextRepresentation(@NotNull @Unmodifiable List<? extends UsageTarget> usageTargets,
                                                             @NotNull Collection<? extends Usage> usages) {
-    final Ref<UsageViewImpl> usageViewRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      UsageView usageView = UsageViewManager.getInstance(getProject())
-        .createUsageView(usageTargets.toArray(UsageTarget.EMPTY_ARRAY), usages.toArray(Usage.EMPTY_ARRAY), new UsageViewPresentation(),
-                         null);
+    UsageViewImpl usageView = (UsageViewImpl)UsageViewManager.getInstance(getProject())
+      .createUsageView(usageTargets.toArray(UsageTarget.EMPTY_ARRAY), usages.toArray(Usage.EMPTY_ARRAY), new UsageViewPresentation(), null);
 
-      usageViewRef.set((UsageViewImpl)usageView);
-    });
-
-    return getUsageViewTreeTextRepresentation(usageViewRef.get());
+    return getUsageViewTreeTextRepresentation(usageView);
   }
 
   @Override
