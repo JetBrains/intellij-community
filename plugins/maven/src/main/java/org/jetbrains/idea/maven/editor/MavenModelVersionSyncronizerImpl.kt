@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -80,12 +81,6 @@ class MavenModelVersionSyncronizerImpl(
     val fragment = event.newFragment
     val newLen = event.newLength
 
-
-    for (i in 0 until newLen) {
-      if (!isValidModelSymbols(fragment[i])) {
-        return
-      }
-    }
     val caret = editor.caretModel.currentCaret
 
     var markers = getMarkers(caret)
@@ -95,6 +90,13 @@ class MavenModelVersionSyncronizerImpl(
       if (!fitsInLeader(it.first(), offset, oldLen)) {
         markers = null
         clearMarkers(caret)
+      }
+    }
+
+
+    for (i in 0 until newLen) {
+      if (!isValidModelSymbols(fragment[i])) {
+        return
       }
     }
 
@@ -197,20 +199,32 @@ class MavenModelVersionSyncronizerImpl(
     return result.nullize()
   }
 
-  private fun findRangeAfter(schemaElement: XmlAttributeValue, needle: String, end: String = " "): TextRange? {
+  private fun findRangeAfter(schemaElement: XmlAttributeValue, prefix: String, end: String = " "): TextRange? {
     val value = schemaElement.value
     val schemaTextRange = schemaElement.valueTextRange
 
-    val foundIndex = value.indexOf(needle)
+    val foundIndex = value.indexOf(prefix)
 
     if (foundIndex != -1) {
-      val endIndex = value.indexOf(end, foundIndex + needle.length)
-      val endIdx = if (endIndex != -1) endIndex else value.length
-      val start = schemaTextRange.startOffset + foundIndex + needle.length
+      val endIdx = getEndIndex(value, foundIndex + prefix.length, end)
+      val start = schemaTextRange.startOffset + foundIndex + prefix.length
       val end = schemaTextRange.startOffset + endIdx
       if (start <= end) return TextRange(start, end)
     }
     return null
+  }
+
+  private fun getEndIndex(
+    value: @NlsSafe String,
+    startIndex: Int,
+    end: String,
+  ): Int {
+    val possibleSuffixes = listOf(end, " ", "\n", "\r\n", "\t", ":", "file:", "http:", "https:", ":", "/")
+    return possibleSuffixes.map {
+      value.indexOf(it, startIndex, true)
+    }.map {
+      if (it == -1) value.length else it
+    }.min()
   }
 
   private fun isValidModelSymbols(ch: Char): Boolean {
@@ -270,14 +284,14 @@ class MavenModelVersionSyncronizerImpl(
 }
 
 private fun RangeMarker.synchronizedUnderscore(): SynchronizationData {
-  return SynchronizationData(this){
-    it.replace('.', '_')
+  return SynchronizationData(this) {
+    it.replace('.', '_').trim()
   }
 }
 
 private fun RangeMarker.synchronizedDots(): SynchronizationData {
-  return SynchronizationData(this){
-    it.replace('_', '.')
+  return SynchronizationData(this) {
+    it.replace('_', '.').trim()
   }
 }
 
