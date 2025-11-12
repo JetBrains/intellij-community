@@ -294,12 +294,16 @@ class SePopupContentPane(
     launch {
       vm.currentTabFlow.collectLatest { tabVm ->
         val filterEditor = tabVm.filterEditor.getValue()
-        filterEditor?.let { filterEditor ->
-          withContext(Dispatchers.EDT) {
-            if (!isActive) return@withContext
+        withContext(Dispatchers.EDT) {
+          if (!isActive) return@withContext
 
+          hintHelper.removeRightExtensions()
+
+          if (filterEditor == null) {
+            headerPane.setFilterActions(emptyList(), vm.ShowInFindToolWindowAction())
+          }
+          else {
             headerPane.setFilterActions(filterEditor.getHeaderActions(), vm.ShowInFindToolWindowAction())
-            hintHelper.removeRightExtensions()
             val rightActions = filterEditor.getSearchFieldActions()
             if (rightActions.isNotEmpty()) {
               hintHelper.setRightExtensions(rightActions)
