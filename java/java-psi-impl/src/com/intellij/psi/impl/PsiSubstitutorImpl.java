@@ -221,7 +221,10 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
       while (true) {
         final PsiTypeParameter[] params = resolve.getTypeParameters();
         for (final PsiTypeParameter param : params) {
-          final PsiType original = originalSubstitutor.substitute(param);
+          PsiType original = originalSubstitutor.substitute(param);
+          if (original != null && original.getNullability().equals(TypeNullability.UNKNOWN)) {
+            original = original.withNullability(TypeNullability.ofTypeParameter(param));
+          }
           PsiType mapping = original == null ? null : original.accept(this);
           substMap = substMap.with(param, mapping);
         }
