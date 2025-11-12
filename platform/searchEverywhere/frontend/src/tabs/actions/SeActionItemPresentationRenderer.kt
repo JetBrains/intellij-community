@@ -111,7 +111,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
 
       is SeOptionActionItemPresentation -> {
         if (!presentation.isBooleanOption && switcherState == null) {
-          background = JBUI.CurrentTheme.BigPopup.LIST_SETTINGS_BACKGROUND
+          background = JBUI.CurrentTheme.BigPopup.getListSettingsBackground()
         }
 
         if (showIcon) {
