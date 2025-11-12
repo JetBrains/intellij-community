@@ -191,14 +191,10 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
 
   @Override
   protected FileIndexingStateWithExplanation isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
-    if (myCompositeBinaryBuilderMap == null) return FileIndexingStateWithExplanation.upToDate();
-    try {
-      return myCompositeBinaryBuilderMap.isUpToDateState(fileId, file.getFile());
+    if (myCompositeBinaryBuilderMap == null) {
+      return FileIndexingStateWithExplanation.upToDate();
     }
-    catch (IOException e) {
-      LOG.error(e);
-      return FileIndexingStateWithExplanation.outdated("IOException");
-    }
+    return myCompositeBinaryBuilderMap.isUpToDateState(fileId, file.getFile());
   }
 
   @Override
@@ -208,34 +204,19 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
 
   private void setBinaryBuilderConfiguration(int fileId, @NotNull IndexedFile file) {
     if (myCompositeBinaryBuilderMap != null) {
-      try {
-        myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
     }
   }
 
   private void setBinaryBuilderConfiguration(int fileId, @NotNull Data fileData) {
     if (myCompositeBinaryBuilderMap != null) {
-      try {
-        myCompositeBinaryBuilderMap.persistState(fileId, fileData.myFileType);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      myCompositeBinaryBuilderMap.persistState(fileId, fileData.myFileType);
     }
   }
 
   private void resetBinaryBuilderConfiguration(int fileId) {
     if (myCompositeBinaryBuilderMap != null) {
-      try {
-        myCompositeBinaryBuilderMap.resetPersistedState(fileId);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      myCompositeBinaryBuilderMap.resetPersistedState(fileId);
     }
   }
 

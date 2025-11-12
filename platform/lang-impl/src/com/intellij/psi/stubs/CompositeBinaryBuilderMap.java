@@ -52,35 +52,57 @@ final class CompositeBinaryBuilderMap {
     }
   }
 
-  void persistState(int fileId, @NotNull VirtualFile file) throws IOException {
+  void persistState(int fileId, @NotNull VirtualFile file) {
     int version = getBuilderCumulativeVersion(file);
     persistVersion(version, fileId);
   }
 
-  private static void persistVersion(int version, int fileId) throws IOException {
+  private static void persistVersion(int version, int fileId) {
     if (version == 0) return;
-    VERSION_STAMP.writeInt(fileId, version);
+    try {
+      VERSION_STAMP.writeInt(fileId, version);
+    }
+    catch (IOException e) {
+      LOG.error("Can't persistVersion(#" + fileId + " = " + version + ")", e);
+    }
   }
 
-  void persistState(int fileId, @NotNull FileType fileType) throws IOException {
+  void persistState(int fileId, @NotNull FileType fileType) {
     int version = myCumulativeVersionMap.getInt(fileType);
     persistVersion(version, fileId);
   }
 
-  void resetPersistedState(int fileId) throws IOException {
-    VERSION_STAMP.writeInt(fileId, 0);
+  void resetPersistedState(int fileId) {
+    try {
+      VERSION_STAMP.writeInt(fileId, 0);
+    }
+    catch (IOException e) {
+      LOG.error("Can't resetPersistedState(#" + fileId + ")", e);
+    }
   }
 
-  FileIndexingStateWithExplanation isUpToDateState(int fileId, @NotNull VirtualFile file) throws IOException {
-    int indexedVersion = VERSION_STAMP.readInt(fileId);
+  FileIndexingStateWithExplanation isUpToDateState(int fileId, @NotNull VirtualFile file) {
+    int indexedVersion;
+    try {
+      indexedVersion = VERSION_STAMP.readInt(fileId);
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return FileIndexingStateWithExplanation.outdated("IOException: " + e.getMessage());
+    }
 
     if (indexedVersion == 0) {
       return FileIndexingStateWithExplanation.notIndexed();
     }
 
     int actualVersion = getBuilderCumulativeVersion(file);
-    return actualVersion == indexedVersion ? FileIndexingStateWithExplanation.upToDate() : FileIndexingStateWithExplanation.outdated(
-      () -> "actual version (" + actualVersion + ") != indexedVersion (" + indexedVersion + ")");
+    if (actualVersion == indexedVersion) {
+      return FileIndexingStateWithExplanation.upToDate();
+    }
+
+    return FileIndexingStateWithExplanation.outdated(
+      () -> "actual version (" + actualVersion + ") != indexedVersion (" + indexedVersion + ")"
+    );
   }
 
   private int getBuilderCumulativeVersion(@NotNull VirtualFile file) {
