@@ -1041,7 +1041,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
   }
 
   private static boolean isEndOfBlock(PsiElement element) {
-    PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
+    PsiElement prev = PsiTreeUtil.prevCodeLeaf(element);
     if (prev == null) {
       PsiFile file = element.getContainingFile();
       return !(file instanceof PsiCodeFragment) || isStatementCodeFragment(file);
