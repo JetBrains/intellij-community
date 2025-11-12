@@ -42,7 +42,8 @@ class ChangesViewCommitTabTitleUpdater(private val project: Project, val tabName
   }
 
   private fun updateTitle() {
-    val contentManager = getToolWindow()?.contentManager ?: return
+    val toolWindow = getToolWindow()?.takeIf { it.isAvailable } ?: return
+    val contentManager = toolWindow.contentManager
     val tabContent = contentManager.contents.find { it.tabName == tabName } ?: return
 
     tabContent.displayName = when {
