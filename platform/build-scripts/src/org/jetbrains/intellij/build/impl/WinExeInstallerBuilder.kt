@@ -75,8 +75,7 @@ internal suspend fun buildNsisInstaller(
     generator.generateUninstallerFile(nsiConfDir.resolve("un_idea_win.nsh"))
 
     prepareConfigurationFiles(nsiConfDir, uninstallerFileName, customizer, context, arch)
-    for (it in customizer.customNsiConfigurationFiles) {
-      val file = Path.of(it)
+    for (file in customizer.customNsiConfigurationFiles) {
       val copy = nsiConfDir.resolve(file.fileName)
       Files.copy(file, copy, StandardCopyOption.REPLACE_EXISTING)
       copy.setLastModifiedTime(FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS))

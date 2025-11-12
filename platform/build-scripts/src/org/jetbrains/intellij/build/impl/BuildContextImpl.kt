@@ -210,7 +210,7 @@ class BuildContextImpl internal constructor(
       return BuildContextImpl(
         compilationContext = compilationContext.asArchivedIfNeeded,
         productProperties = productProperties,
-        windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeAsString),
+        windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome),
         linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeAsString),
         macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeAsString),
         proprietaryBuildTools = proprietaryBuildTools,
@@ -331,23 +331,25 @@ class BuildContextImpl internal constructor(
     options.targetArch = sourceOptions.targetArch
     options.targetOs = sourceOptions.targetOs
 
-    val newAppInfo = ApplicationInfoPropertiesImpl(project, productProperties, options)
+    val newAppInfo = ApplicationInfoPropertiesImpl(project = project, productProperties = productProperties, buildOptions = options)
 
     val buildOut = options.outRootDir ?: createBuildOutputRootEvaluator(paths.projectHome, productProperties, options)(project)
     @Suppress("DEPRECATION")
     val artifactDir = if (prepareForBuild) paths.artifactDir.resolve(productProperties.productCode ?: newAppInfo.productCode) else null
     val compilationContextCopy = compilationContext.createCopy(
-      messages, options, computeBuildPaths(options = options, buildOut = buildOut, projectHome = paths.projectHome, artifactDir = artifactDir)
+      messages = messages,
+      options = options,
+      paths = computeBuildPaths(options = options, buildOut = buildOut, projectHome = paths.projectHome, artifactDir = artifactDir)
     )
     val copy = BuildContextImpl(
       compilationContext = compilationContextCopy,
       productProperties = productProperties,
-      windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizersAsString),
+      windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHomeForCustomizers),
       linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizersAsString),
       macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
       proprietaryBuildTools = proprietaryBuildTools,
       applicationInfo = newAppInfo,
-      jarCacheManager = jarCacheManager
+      jarCacheManager = jarCacheManager,
     )
     if (prepareForBuild) {
       copy.compilationContext.prepareForBuild()

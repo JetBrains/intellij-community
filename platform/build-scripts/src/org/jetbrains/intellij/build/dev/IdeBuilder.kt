@@ -479,7 +479,7 @@ private suspend fun createBuildContext(
     BuildContextImpl(
       compilationContext = compilationContext,
       productProperties = productProperties.await(),
-      windowsDistributionCustomizer = WindowsDistributionCustomizer(),
+      windowsDistributionCustomizer = object : WindowsDistributionCustomizer() {},
       linuxDistributionCustomizer = LinuxDistributionCustomizer(),
       macDistributionCustomizer = MacDistributionCustomizer(),
       proprietaryBuildTools = if (request.scrambleTool == null) {

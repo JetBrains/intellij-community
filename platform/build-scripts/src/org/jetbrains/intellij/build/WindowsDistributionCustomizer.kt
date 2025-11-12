@@ -1,12 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
-open class WindowsDistributionCustomizer {
+abstract class WindowsDistributionCustomizer {
   /**
    * Path to 256x256 *.ico file for Windows distribution.
    */
@@ -38,7 +36,8 @@ open class WindowsDistributionCustomizer {
   /**
    * If `true`, Windows Installer will associate *.ipr files with the IDE in Registry.
    */
-  var associateIpr: Boolean = true
+  open val associateIpr: Boolean
+    get() = true
 
   /**
    * Path to a directory containing images for installer: `logo.bmp`, `headerlogo.bmp`, `install.ico`, `uninstall.ico`.
@@ -53,12 +52,14 @@ open class WindowsDistributionCustomizer {
   /**
    * List of file extensions (without a leading dot) which the installer will suggest to associate with the product.
    */
-  var fileAssociations: List<String> = emptyList()
+  open val fileAssociations: List<String>
+    get() = emptyList()
 
   /**
    * Paths to files which will be used to overwrite the standard *.nsi files.
    */
-  var customNsiConfigurationFiles: PersistentList<String> = persistentListOf()
+  open val customNsiConfigurationFiles: List<Path>
+    get() = emptyList()
 
   /**
    * Name of the root directory in Windows .zip archive
@@ -69,8 +70,9 @@ open class WindowsDistributionCustomizer {
   /**
    * Name of the Windows installation directory and Desktop shortcut.
    */
-  open fun getNameForInstallDirAndDesktopShortcut(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "${getFullNameIncludingEdition(appInfo)} ${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+  open fun getNameForInstallDirAndDesktopShortcut(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return "${getFullNameIncludingEdition(appInfo)} ${if (appInfo.isEAP) buildNumber else appInfo.fullVersion}"
+  }
 
   /**
    * Override this method to copy additional files to the Windows distribution of the product.
@@ -92,8 +94,9 @@ open class WindowsDistributionCustomizer {
   /**
    * The returned name will be used to create links on Desktop.
    */
-  open fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String =
-    appInfo.shortCompanyName + ' ' + getFullNameIncludingEdition(appInfo)
+  open fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String {
+    return appInfo.shortCompanyName + ' ' + getFullNameIncludingEdition(appInfo)
+  }
 
   open fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String? = null
 

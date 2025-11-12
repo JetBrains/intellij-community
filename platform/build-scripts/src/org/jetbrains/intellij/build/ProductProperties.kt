@@ -282,7 +282,7 @@ abstract class ProductProperties {
    * @return an instance of the class containing properties specific for Windows distribution,
    * or `null` if the product doesn't have Windows distribution.
    */
-  abstract fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer?
+  abstract fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer?
 
   /**
    * @return an instance of the class containing properties specific for Linux distribution,

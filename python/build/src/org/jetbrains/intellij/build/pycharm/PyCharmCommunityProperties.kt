@@ -88,13 +88,15 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
 
   override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "pycharmPC-$buildNumber"
 
-  override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer = object : WindowsDistributionCustomizer() {
+  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = object : WindowsDistributionCustomizer() {
     init {
       icoPath = "${communityHome}/python/build/resources/PyCharmCore.ico"
       icoPathForEAP = "${communityHome}/python/build/resources/PyCharmCore_EAP.ico"
       installerImagesPath = "${communityHome}/python/build/resources"
-      fileAssociations = listOf("py")
     }
+
+    override val fileAssociations: List<String>
+      get() = listOf("py")
 
     override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties) = "PyCharm Community Edition"
 

@@ -152,12 +152,14 @@ open class MacDistributionCustomizer {
       "MacOS/*"
     )
 
-    val rtPatterns =
-      if (includeRuntime) context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)
-      else emptySequence()
+    val rtPatterns = if (includeRuntime) {
+      context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)
+    }
+    else {
+      emptySequence()
+    }
 
     val utilPatters = RepairUtilityBuilder.executableFilesPatterns(context)
-
     return basePatterns + rtPatterns + utilPatters + extraExecutables + context.getExtraExecutablePattern(OsFamily.MACOS)
   }
 
@@ -173,6 +175,7 @@ open class MacDistributionCustomizer {
    * > For example, the network subsystem might apply constraints for one of your apps to the other app.
    */
   @ApiStatus.Internal
-  open fun getDistributionUUID(context: BuildContext, currentUuid: UUID?): UUID =
-    UUID.nameUUIDFromBytes("${context.fullBuildNumber}-${context.options.buildDateInSeconds}".toByteArray())
+  open fun getDistributionUUID(context: BuildContext, currentUuid: UUID?): UUID {
+    return UUID.nameUUIDFromBytes("${context.fullBuildNumber}-${context.options.buildDateInSeconds}".toByteArray())
+  }
 }

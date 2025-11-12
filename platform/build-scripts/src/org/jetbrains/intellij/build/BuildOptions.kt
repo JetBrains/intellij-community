@@ -63,7 +63,9 @@ data class BuildOptions(
   /**
    * Pass comma-separated names of build steps (see below) to [BUILD_STEPS_TO_SKIP_PROPERTY] system property to skip them when building locally.
    */
-  @JvmField var buildStepsToSkip: Set<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "").split(',').dropLastWhile { it.isEmpty() }
+  @JvmField var buildStepsToSkip: Set<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
+    .split(',')
+    .dropLastWhile { it.isEmpty() }
     .filterNot { it.isBlank() }
     .toMutableSet()
     .apply {
