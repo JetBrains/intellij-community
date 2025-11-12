@@ -28,6 +28,7 @@ import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.serialization.Serializable
@@ -358,7 +359,7 @@ class ProjectSettingsTracker(
 
     private fun getOrCollectSettingsFiles(): Set<String> {
       return settingsFilesCache.getOrCreateValueBlocking(modificationTracker.modificationCount) {
-        projectAware.settingsFiles
+        projectAware.settingsFiles.map { toSystemIndependentName(it) }.toSet()
       }
     }
 
