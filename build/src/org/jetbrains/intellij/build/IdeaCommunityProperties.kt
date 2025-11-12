@@ -10,10 +10,7 @@ import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
-import org.jetbrains.intellij.build.productLayout.ModuleSetProvider
-import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
-import org.jetbrains.intellij.build.productLayout.productModules
+import org.jetbrains.intellij.build.productLayout.*
 import java.nio.file.Path
 
 val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListOf(
@@ -232,6 +229,7 @@ fun intellijCommunityBaseFragment(): ProductModulesContentSpec = productModules 
   alias("com.intellij.modules.python-in-non-pycharm-ide-capable")
   alias("com.intellij.platform.ide.provisioner")
 
+  include(CommunityProductFragments.platformLangBaseFragment())
   deprecatedInclude("intellij.java.ide.resources", "META-INF/JavaIdePlugin.xml")
   deprecatedInclude("intellij.idea.community.customization", "META-INF/tips-intellij-idea-community.xml")
 
