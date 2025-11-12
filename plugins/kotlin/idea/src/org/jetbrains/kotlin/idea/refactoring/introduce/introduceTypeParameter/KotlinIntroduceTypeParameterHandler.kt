@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeElement
 import org.jetbrains.kotlin.psi.KtTypeParameterListOwner
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -73,7 +74,7 @@ object KotlinIntroduceTypeParameterHandler : RefactoringActionHandler {
     fun doInvoke(project: Project, editor: Editor, elements: List<PsiElement>, targetParent: PsiElement) {
         val targetOwner = targetParent as KtTypeParameterListOwner
         val typeElementToExtract =
-            elements.singleOrNull() as? KtTypeElement ?: return showErrorHint(
+            (elements.singleOrNull() as? KtTypeReference)?.typeElement ?: return showErrorHint(
                 project,
                 editor,
                 KotlinBundle.message("error.text.no.type.to.refactor"),

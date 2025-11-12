@@ -5048,6 +5048,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             runTest("testData/refactoring/introduceTypeAlias/suggestedName.kt");
         }
 
+        @TestMetadata("suspendFunctionType.kt")
+        public void testSuspendFunctionType() throws Exception {
+            runTest("testData/refactoring/introduceTypeAlias/suspendFunctionType.kt");
+        }
+
         @TestMetadata("topLevelTypeAlias.kt")
         public void testTopLevelTypeAlias() throws Exception {
             runTest("testData/refactoring/introduceTypeAlias/topLevelTypeAlias.kt");

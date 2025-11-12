@@ -25,7 +25,7 @@ enum class ElementKind {
         override val elementClass = KtExpression::class.java
     },
     TYPE_ELEMENT {
-        override val elementClass = KtTypeElement::class.java
+        override val elementClass = KtTypeReference::class.java
     },
     TYPE_CONSTRUCTOR {
         override val elementClass = KtSimpleNameExpression::class.java
@@ -147,7 +147,7 @@ private fun PsiElement.matchesKindOrCanBeSkipped(kind: ElementKind): Boolean =
 
 private fun PsiElement.matchesKind(kind: ElementKind): Boolean =
     kind === ElementKind.EXPRESSION && this is KtExpression ||
-            kind === ElementKind.TYPE_ELEMENT && this is KtTypeElement ||
+            kind === ElementKind.TYPE_ELEMENT && this is KtTypeReference ||
             kind === ElementKind.TYPE_CONSTRUCTOR && isTypeConstructorReference(this)
 
 private fun getTopmostParentInside(element: PsiElement, parent: PsiElement): PsiElement {

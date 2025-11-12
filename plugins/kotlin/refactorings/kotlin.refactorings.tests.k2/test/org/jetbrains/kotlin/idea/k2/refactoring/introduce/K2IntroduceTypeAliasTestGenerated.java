@@ -150,6 +150,11 @@ public class K2IntroduceTypeAliasTestGenerated extends AbstractK2IntroduceTypeAl
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/suggestedName.kt");
     }
 
+    @TestMetadata("suspendFunctionType.kt")
+    public void testSuspendFunctionType() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/suspendFunctionType.kt");
+    }
+
     @TestMetadata("topLevelTypeAlias.kt")
     public void testTopLevelTypeAlias() throws Exception {
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/topLevelTypeAlias.kt");
