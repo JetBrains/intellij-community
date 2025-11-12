@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
 @ApiStatus.Internal
-interface KotlinScriptingSettingsStorage {
+interface KotlinScriptingSettings {
     fun autoReloadConfigurations(scriptDefinition: ScriptDefinition): Boolean = true
     fun setAutoReloadConfigurations(scriptDefinition: ScriptDefinition, autoReloadScriptDependencies: Boolean) {}
     fun setOrder(scriptDefinition: ScriptDefinition, order: Int) {}
@@ -15,6 +15,7 @@ interface KotlinScriptingSettingsStorage {
     fun getScriptDefinitionOrder(scriptDefinition: ScriptDefinition): Int
 
     companion object {
-        fun getInstance(project: Project): KotlinScriptingSettingsStorage = project.service()
+        @JvmStatic
+        fun getInstance(project: Project): KotlinScriptingSettings = project.service()
     }
 }

@@ -47,7 +47,7 @@
     <registryKey defaultValue="false" key="kotlin.scripting.show.widget"
                  description="Enable displaying Kotlin Script definition name in status bar" restartRequired="false"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage"
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"

@@ -25,9 +25,9 @@ import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.script.k1.configuration.ScriptingSupport
-import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -242,7 +242,7 @@ class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineSco
     private fun autoReloadScriptConfigurations(project: Project, file: VirtualFile): Boolean {
         val definition = file.findScriptDefinition(project) ?: return false
 
-        return KotlinScriptingSettingsImpl.getInstance(project).autoReloadConfigurations(definition)
+        return KotlinScriptingSettings.getInstance(project).autoReloadConfigurations(definition)
     }
 
     private fun loadStandaloneScriptConfigurations(files: MutableSet<String>) {

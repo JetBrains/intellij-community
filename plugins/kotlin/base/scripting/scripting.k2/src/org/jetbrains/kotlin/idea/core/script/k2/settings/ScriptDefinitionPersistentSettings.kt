@@ -1,20 +1,23 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.settings
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.SerializablePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
-import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettingsStorage
+import org.jetbrains.kotlin.idea.core.script.v1.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
 @State(
     name = "ScriptDefinitionSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
 class ScriptDefinitionPersistentSettings(val project: Project) :
-    SerializablePersistentStateComponent<ScriptDefinitionPersistentSettings.State>(State()), KotlinScriptingSettingsStorage {
+  SerializablePersistentStateComponent<ScriptDefinitionPersistentSettings.State>(State()), KotlinScriptingSettings {
 
     fun setSettings(settings: List<ScriptDefinitionSetting>) {
         updateState {
@@ -34,7 +37,7 @@ class ScriptDefinitionPersistentSettings(val project: Project) :
 
     companion object {
         fun getInstance(project: Project): ScriptDefinitionPersistentSettings =
-            project.service<KotlinScriptingSettingsStorage>() as ScriptDefinitionPersistentSettings
+            KotlinScriptingSettings.getInstance(project) as ScriptDefinitionPersistentSettings
     }
 
     data class State(
