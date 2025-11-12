@@ -3,10 +3,7 @@ package com.intellij.driver.sdk.ui.components.common.dialogs
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
-import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
-import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
-import com.intellij.driver.sdk.ui.components.elements.popup
-import com.intellij.driver.sdk.ui.components.elements.textField
+import com.intellij.driver.sdk.ui.components.elements.*
 import com.intellij.driver.sdk.ui.xQuery
 import javax.swing.JDialog
 import javax.swing.JWindow
@@ -29,7 +26,16 @@ class EditRunConfigurationsDialogUiComponent(data: ComponentData) : DialogUiComp
       typeText(type, 0)
       enter()
     }
-
     textField { and(byClass("JTextField"), byVisibleText("Unnamed")) }.waitFound(10.seconds).text = name
+  }
+
+  fun addOptions(vararg option: String) {
+    val modifyOptionsButtons = x { byAccessibleName("Modify options") }
+    if (!isRemDevMode) modifyOptionsButtons.click()
+    for (s in option) {
+      if (isRemDevMode) modifyOptionsButtons.click()
+      popup().list().clickItem(s, false)
+    }
+    click()
   }
 }
