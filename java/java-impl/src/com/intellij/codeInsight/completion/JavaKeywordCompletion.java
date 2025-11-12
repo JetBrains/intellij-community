@@ -1284,7 +1284,7 @@ public class JavaKeywordCompletion {
    * @param position the PsiElement to check
    * @return true if the position occurs after a case keyword for a specific type, false otherwise
    */
-  private static boolean afterCaseForType(@Nullable PsiElement position) {
+  public static boolean afterCaseForType(@Nullable PsiElement position) {
     if (position == null) return false;
     return psiElement().afterLeaf(JavaKeywords.CASE).accepts(position) &&
            ((position.getParent() instanceof PsiReferenceExpression referenceExpression &&
@@ -1305,7 +1305,7 @@ public class JavaKeywordCompletion {
    * @param position the PsiElement to check
    * @return true if the position occurs after an instanceof keyword for a specific type, false otherwise
    */
-  private static boolean afterInstanceofForType(@Nullable PsiElement position) {
+  public static boolean afterInstanceofForType(@Nullable PsiElement position) {
     if (position == null) return false;
     return (InstanceofTypeProvider.AFTER_INSTANCEOF.accepts(position)) &&
            position.getParent() instanceof PsiJavaCodeReferenceElement referenceElement &&

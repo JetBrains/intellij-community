@@ -12,21 +12,21 @@ import com.intellij.modcompletion.CompletionItem;
 import com.intellij.modcompletion.CompletionItemPresentation;
 import com.intellij.modcompletion.CompletionItemProvider;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -38,9 +38,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Conditions.notInstanceOf;
 import static com.intellij.openapi.util.text.MarkupText.Kind.*;
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.PsiJavaPatterns.*;
 import static com.intellij.patterns.StandardPatterns.not;
 import static com.intellij.psi.SyntaxTraverser.psiApi;
@@ -71,6 +73,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
           )
         )
       ));
+  private static final ElementPattern<PsiElement> AFTER_NEW = psiElement().afterLeaf(psiElement().withText(JavaKeywords.NEW));
   private static final ElementPattern<PsiElement> START_SWITCH =
     psiElement().afterLeaf(psiElement().withText("{").withParents(PsiCodeBlock.class, PsiSwitchBlock.class));
 
@@ -153,10 +156,8 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       addFileHeaderKeywords();
       addInstanceof();
       addClassKeywords();
-      //
-      //addMethodHeaderKeywords();
-      //
-      //addPrimitiveTypes(mySink, myPosition, mySession);
+      addMethodHeaderKeywords();
+      addPrimitiveTypes();
       //
       //addVar();
       //
@@ -167,13 +168,137 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       //addCaseNullToSwitch();
     }
 
+    private void addPrimitiveTypes() {
+      if (AFTER_DOT.accepts(myPosition) ||
+          psiElement().inside(psiAnnotation()).accepts(myPosition) && !expectsClassLiteral(myPosition)) {
+        return;
+      }
+
+      if (JavaPatternCompletionUtil.insideDeconstructionList(myPosition)) {
+        suggestPrimitivesInsideDeconstructionListPattern();
+        return;
+      }
+
+      if (JavaKeywordCompletion.afterInstanceofForType(myPosition)) {
+        PsiInstanceOfExpression instanceOfExpression = PsiTreeUtil.getParentOfType(myPosition, PsiInstanceOfExpression.class);
+        if (instanceOfExpression != null) {
+          suggestPrimitiveTypesForPattern(instanceOfExpression.getOperand().getType());
+        }
+        return;
+      }
+
+      if (JavaKeywordCompletion.afterCaseForType(myPosition)) {
+        PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(myPosition, PsiSwitchBlock.class);
+        if (switchBlock != null && switchBlock.getExpression() != null) {
+          suggestPrimitiveTypesForPattern(switchBlock.getExpression().getType());
+        }
+        if (switchBlock != null && switchBlock.getExpression() != null) {
+          PsiType type = switchBlock.getExpression().getType();
+          if (PsiTypes.booleanType().equals(PsiPrimitiveType.getOptionallyUnboxedType(type))) {
+            Set<String> branches = JavaPsiSwitchUtil.getSwitchBranches(switchBlock).stream()
+              .map(branch -> branch instanceof PsiExpression expression ? ExpressionUtils.computeConstantExpression(expression) : null)
+              .filter(constant -> constant instanceof Boolean)
+              .map(branch -> branch.toString())
+              .collect(Collectors.toSet());
+            ModNavigatorTailType tailType = JavaTailTypes.forSwitchLabel(switchBlock);
+            for (String keyword : List.of(JavaKeywords.TRUE, JavaKeywords.FALSE)) {
+              if(branches.contains(keyword)) continue;
+              mySink.accept(createKeyword(keyword, tailType));
+            }
+          }
+        }
+        return;
+      }
+
+      boolean afterNew = AFTER_NEW.accepts(myPosition) &&
+                         !psiElement().afterLeaf(psiElement().afterLeaf(".")).accepts(myPosition);
+      if (afterNew) {
+        Set<PsiType> expected = ContainerUtil.map2Set(JavaSmartCompletionContributor.getExpectedTypes(myPosition, false),
+                                                      ExpectedTypeInfo::getDefaultType);
+        boolean addAll = expected.isEmpty() || ContainerUtil.exists(expected, t ->
+          t.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || t.equalsToText(CommonClassNames.JAVA_IO_SERIALIZABLE));
+        for (String primitiveType : PsiTypes.primitiveTypeNames()) {
+          PsiType array = Objects.requireNonNull(PsiTypes.primitiveTypeByName(primitiveType)).createArrayType();
+          if (addAll || expected.contains(array)) {
+            mySink.accept(PsiTypeCompletionItem.create(array));
+          }
+        }
+        return;
+      }
+
+      boolean inCast = psiElement()
+        .afterLeaf(psiElement().withText("(").withParent(PsiJavaPatterns.psiElement(PsiParenthesizedExpression.class, PsiTypeCastExpression.class)))
+        .accepts(myPosition);
+
+      boolean typeFragment = myPosition.getContainingFile() instanceof PsiTypeCodeFragment && PsiTreeUtil.prevVisibleLeaf(myPosition) == null;
+      boolean declaration = isDeclarationStart(myPosition);
+      boolean expressionPosition = isExpressionPosition(myPosition);
+      boolean inGenerics = PsiTreeUtil.getParentOfType(myPosition, PsiReferenceParameterList.class) != null;
+      if ((isVariableTypePosition(myPosition) ||
+           inGenerics ||
+           inCast ||
+           declaration ||
+           typeFragment ||
+           expressionPosition) && primitivesAreExpected(myPosition)) {
+        for (String primitiveType : PsiTypes.primitiveTypeNames()) {
+          mySink.accept(createKeyword(primitiveType).withObject(Objects.requireNonNull(PsiTypes.primitiveTypeByName(primitiveType))));
+        }
+        if (expressionPosition) {
+          mySink.accept(createKeyword(JavaKeywords.VOID).withObject(PsiTypes.voidType()));
+        }
+      }
+      if (declaration) {
+        mySink.accept(
+          createKeyword(JavaKeywords.VOID, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType()).withObject(PsiTypes.voidType()));
+      }
+      else if (typeFragment && ((PsiTypeCodeFragment)myPosition.getContainingFile()).isVoidValid()) {
+        mySink.accept(createKeyword(JavaKeywords.VOID).withObject(PsiTypes.voidType()));
+      }
+    }
+
+    private void addMethodHeaderKeywords() {
+      if (psiElement().withText(")").withParents(PsiParameterList.class, PsiMethod.class).accepts(myPrevLeaf)) {
+        assert myPrevLeaf != null;
+        if (myPrevLeaf.getParent().getParent() instanceof PsiAnnotationMethod) {
+          mySink.accept(createKeyword(JavaKeywords.DEFAULT, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType()));
+        }
+        else {
+          mySink.accept(createKeyword(JavaKeywords.THROWS, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType()));
+        }
+      }
+    }
+
+    void suggestPrimitivesInsideDeconstructionListPattern() {
+      PsiRecordComponent component = JavaPatternCompletionUtil.getRecordComponentForDeconstructionComponent(myPosition);
+      if (component == null) return;
+      PsiType type = component.getType();
+      if (PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, myPosition)) {
+        suggestPrimitiveTypesForPattern(type);
+        return;
+      }
+      if (type instanceof PsiPrimitiveType) {
+        mySink.accept(createKeyword(type.getPresentableText(), (ModNavigatorTailType)TailTypes.spaceType()).withObject(type));
+      }
+    }
+
+    void suggestPrimitiveTypesForPattern(@Nullable PsiType fromType) {
+      if (fromType == null) return;
+      if (!PsiUtil.isAvailable(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, myPosition)) return;
+      for (PsiType primitiveType : PsiTypes.primitiveTypes()) {
+        if (TypeConversionUtil.areTypesConvertible(fromType, primitiveType)) {
+          mySink.accept(createKeyword(primitiveType.getPresentableText(), (ModNavigatorTailType)TailTypes.spaceType())
+                          .withObject(primitiveType));
+        }
+      }
+    }
+
     private void addClassKeywords() {
       if (isSuitableForClass(myPosition)) {
         for (String s : ModifierChooser.getKeywords(myPosition)) {
           mySink.accept(createKeyword(s, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType()));
         }
 
-        if (psiElement().insideStarting(psiElement(PsiLocalVariable.class, PsiExpressionStatement.class)).accepts(myPosition)) {
+        if (psiElement().insideStarting(PsiJavaPatterns.psiElement(PsiLocalVariable.class, PsiExpressionStatement.class)).accepts(myPosition)) {
           mySink.accept(createKeyword(JavaKeywords.CLASS, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType()));
           @NlsSafe String abstractClass = "abstract class";
           mySink.accept(new CommonCompletionItem(abstractClass)
@@ -1017,22 +1142,22 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
     }
   }
 
-  private static boolean isStatementPosition(PsiElement myPosition) {
+  private static boolean isStatementPosition(PsiElement position) {
     if (psiElement()
       .withSuperParent(2, PsiConditionalExpression.class)
       .andNot(psiElement().insideStarting(psiElement(PsiConditionalExpression.class)))
-      .accepts(myPosition)) {
+      .accepts(position)) {
       return false;
     }
 
-    if (isEndOfBlock(myPosition) &&
-        PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class) != null) {
-      return !isForLoopMachinery(myPosition);
+    if (isEndOfBlock(position) &&
+        PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, true, PsiMember.class) != null) {
+      return !isForLoopMachinery(position);
     }
 
     if (psiElement().withParents(PsiReferenceExpression.class, PsiExpressionStatement.class, PsiIfStatement.class).andNot(
-      psiElement().afterLeaf(".")).accepts(myPosition)) {
-      PsiElement stmt = myPosition.getParent().getParent();
+      psiElement().afterLeaf(".")).accepts(position)) {
+      PsiElement stmt = position.getParent().getParent();
       PsiIfStatement ifStatement = (PsiIfStatement)stmt.getParent();
       return ifStatement.getElseBranch() == stmt || ifStatement.getThenBranch() == stmt;
     }
@@ -1156,4 +1281,54 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
     }
 
     return isEndOfBlock(position);
-  }}
+  }
+
+  private static boolean expectsClassLiteral(PsiElement position) {
+    return ContainerUtil.find(JavaSmartCompletionContributor.getExpectedTypes(position, false),
+                              info -> InheritanceUtil.isInheritor(info.getType(), CommonClassNames.JAVA_LANG_CLASS)) != null;
+  }
+
+  private static boolean isDeclarationStart(PsiElement position) {
+    if (PsiJavaPatterns.psiElement().afterLeaf("@", ".").accepts(position)) return false;
+
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiTypeElement) {
+      PsiElement typeHolder = psiApi().parents(parent.getParent()).skipWhile(Conditions.instanceOf(PsiTypeElement.class)).first();
+      return typeHolder instanceof PsiMember || typeHolder instanceof PsiClassLevelDeclarationStatement ||
+             (typeHolder instanceof PsiJavaFile javaFile &&
+              PsiUtil.isAvailable(JavaFeature.IMPLICIT_CLASSES, position) &&
+              javaFile.getPackageStatement() == null);
+    }
+
+    return false;
+  }
+
+  private static boolean isVariableTypePosition(PsiElement position) {
+    PsiElement parent = position.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiTypeElement &&
+        parent.getParent().getParent() instanceof PsiDeclarationStatement) {
+      return true;
+    }
+    return START_FOR.accepts(position) ||
+           JavaKeywordCompletion.isInsideParameterList(position) ||
+           INSIDE_RECORD_HEADER.accepts(position) ||
+           VARIABLE_AFTER_FINAL.accepts(position) ||
+           isStatementPosition(position);
+  }
+
+  private static boolean primitivesAreExpected(@Nullable PsiElement position) {
+    if (position == null) return false;
+    PsiElement parent = position.getParent();
+    //example: stream.map(i-> i <caret>)
+    if (parent.getParent() instanceof PsiExpressionList) {
+      PsiElement previous = PsiTreeUtil.prevVisibleLeaf(parent);
+      if (previous != null) {
+        PsiExpression expression = PsiTreeUtil.getParentOfType(previous, PsiExpression.class, true);
+        if (expression != null && !PsiTreeUtil.isAncestor(expression, parent, true)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+}
