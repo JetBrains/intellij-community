@@ -153,10 +153,10 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         assertNode(":processResources")
         assertNode(":classes")
         assertNode(":compileTestJava")
-        assertNode("Could not resolve junit:junit:4.12 because no repositories are defined")
+        assertNode("Could Not Resolve junit:junit:4.12 because no repositories are defined")
       }
     }
-    assertBuildViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined",
+    assertBuildViewSelectedNode("Could Not Resolve junit:junit:4.12 because no repositories are defined",
                                 """
                                 |Could not resolve all files for configuration ':testCompileClasspath'.
                                 |> Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
@@ -187,7 +187,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         assertNode(":processResources")
         assertNode(":classes")
         assertNode(":compileTestJava") {
-          assertNode("Could not resolve junit:junit:4.12 because no repositories are defined")
+          assertNode("Could Not Resolve junit:junit:4.12 because no repositories are defined")
         }
       }
     }
@@ -196,7 +196,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       isGradleAtLeast("8.10") -> "root project :"
       else -> "project :"
     }
-    assertBuildViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined",
+    assertBuildViewSelectedNode("Could Not Resolve junit:junit:4.12 because no repositories are defined",
                                 """
                                 |Execution failed for task ':compileTestJava'.
                                 |> Could not resolve all files for configuration ':testCompileClasspath'.
@@ -232,10 +232,10 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         assertNode(":processResources")
         assertNode(":classes")
         assertNode(":compileTestJava")
-        assertNode("Could not resolve junit:junit:99.99")
+        assertNode("Could Not Resolve junit:junit:99.99")
       }
     }
-    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
+    assertBuildViewSelectedNode("Could Not Resolve junit:junit:99.99",
                                 """|Could not resolve all files for configuration ':testCompileClasspath'.
                                    |> Could not resolve junit:junit:99.99.
                                    |  Required by:
@@ -273,7 +273,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         assertNode(":processResources")
         assertNode(":classes")
         assertNode(":compileTestJava") {
-          assertNode("Could not resolve junit:junit:99.99")
+          assertNode("Could Not Resolve junit:junit:99.99")
         }
       }
     }
@@ -282,7 +282,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       isGradleAtLeast("8.10") -> "root project :"
       else -> "project :"
     }
-    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99", """
+    assertBuildViewSelectedNode("Could Not Resolve junit:junit:99.99", """
       |Execution failed for task ':compileTestJava'.
       |> Could not resolve all files for configuration ':testCompileClasspath'.
       |   > Could not resolve junit:junit:99.99.
@@ -317,11 +317,11 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         assertNode(":processResources")
         assertNode(":classes")
         assertNode(":compileTestJava")
-        assertNode("Could not resolve junit:junit:99.99")
+        assertNode("Could Not Resolve junit:junit:99.99")
       }
     }
     val repositoryPrefix = if (isGradleOlderThan("4.8")) " " else "-"
-    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
+    assertBuildViewSelectedNode("Could Not Resolve junit:junit:99.99",
                                 """Could not resolve all files for configuration ':testCompileClasspath'.
                                 |> Could not find junit:junit:99.99.
                                 |  Searched in the following locations:
@@ -363,7 +363,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         assertNode(":processResources")
         assertNode(":classes")
         assertNode(":compileTestJava") {
-          assertNode("Could not resolve junit:junit:99.99")
+          assertNode("Could Not Resolve junit:junit:99.99")
         }
       }
     }
@@ -372,7 +372,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       isGradleAtLeast("8.10") -> "root project :"
       else -> "project :"
     }
-    assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
+    assertBuildViewSelectedNode("Could Not Resolve junit:junit:99.99",
                                 """Execution failed for task ':compileTestJava'.
                                 |> Could not resolve all files for configuration ':testCompileClasspath'.
                                 |   > Could not find junit:junit:99.99.
