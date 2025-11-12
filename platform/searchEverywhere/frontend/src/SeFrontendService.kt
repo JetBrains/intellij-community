@@ -14,10 +14,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.asRef
+import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTab
@@ -53,7 +53,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
-import kotlin.String
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT, Service.Level.APP)
@@ -122,7 +121,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                     initEvent,
                                     popupScope,
                                     session,
-                                    providersHolder.legacyAllTabContributors)
+                                    providersHolder)
 
           val showPopupEndTime = System.currentTimeMillis()
           SeLog.log { "Search Everywhere popup opened in ${showPopupEndTime - showPopupStartTime} ms" }
@@ -160,7 +159,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     initEvent: AnActionEvent,
     popupScope: CoroutineScope,
     session: SeSession,
-    availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+    providersHolder: SeProvidersHolder,
   ) {
     val tabInitializationTimeoutMillis: Long = 50
     val customizedTabFactories = SeTabsCustomizer.getInstance().customize(tabFactories)
@@ -192,6 +191,14 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
     }.awaitAll()
 
+    val orphanedLegacySeparateTabContributors =
+      providersHolder.legacySeparateTabContributors.filter { !orderedTabFactoryIds.contains(it.key.value) }.values.sortedBy { it.sortWeight }
+    val adaptedTabs = orphanedLegacySeparateTabContributors.map { legacyContributor->
+      val name = legacyContributor.groupName
+      val adaptedTab = SeAdaptedTab.create(legacyContributor.searchProviderId, name, popupScope, project, session, initEvent)
+      adaptedTab
+    }
+
     val tabs = tabsOrDeferredTabs.filterIsInstance<SeTab>().sortedWith { tab1, tab2 ->
       val order1 = orderedTabFactoryIds.indexOf(tab1.id).let { if (it == -1) orderedTabFactoryIds.size + 1 else it }
       val order2 = orderedTabFactoryIds.indexOf(tab2.id).let { if (it == -1) orderedTabFactoryIds.size + 1 else it }
@@ -200,7 +207,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     }
     val deferredTabs = tabsOrDeferredTabs.filterIsInstance<SuspendLazyProperty<SeTab?>>()
 
-    val popupVm = SePopupVm(popupScope, session, project, tabs, deferredTabs, searchText, tabId, historyList, availableLegacyContributors, onShowFindToolWindow = {
+    val popupVm = SePopupVm(popupScope, session, project, tabs + adaptedTabs, deferredTabs, searchText, tabId, historyList, providersHolder.legacyAllTabContributors, onShowFindToolWindow = {
       popupScope.launch(NonCancellable) {
         removeSessionRef.set(false)
         try {

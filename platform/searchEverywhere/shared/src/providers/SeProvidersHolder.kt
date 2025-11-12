@@ -26,7 +26,7 @@ class SeProvidersHolder(
   private val allTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   private val separateTabProviders: Map<SeProviderId, SeLocalItemDataProvider>,
   val legacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
-  private val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
+  val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
 ) : Disposable {
   val adaptedAllTabProviders: Set<SeProviderId> =
     allTabProviders.values.mapNotNull { it.takeIf { it.isAdapted }?.id }.toSet()
