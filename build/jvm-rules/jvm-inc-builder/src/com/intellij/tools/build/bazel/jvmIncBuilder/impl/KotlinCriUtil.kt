@@ -11,7 +11,7 @@ import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
 import org.jetbrains.jps.dependency.java.SubclassesIndex
 import org.jetbrains.jps.dependency.kotlin.LookupsIndex
 
-const val VERSION = 2
+const val VERSION = 3
 
 internal fun prepareSerializedData(graph: DependencyGraph): ByteArray {
   val serializedDataResult = ByteArrayOutputStream().use { byteStream ->
@@ -22,29 +22,37 @@ internal fun prepareSerializedData(graph: DependencyGraph): ByteArray {
       val subclassesIndex: BackDependencyIndex? = graph.getIndex(SubclassesIndex.NAME)
       val subclassesCount = subclassesIndex?.keys?.count() ?: 0
       dataOut.writeInt(subclassesCount)
-      subclassesIndex?.keys?.forEach { key ->
-        val dependencies = subclassesIndex.getDependencies(key).map { it.toFqName() }
-        dataOut.writeUTF(key.toFqName())
-        dataOut.writeInt(dependencies.size)
-        dependencies.forEach { dataOut.writeUTF(it) }
-      }
+      subclassesIndex?.keys
+        ?.sortedBy { it.toFqName() }
+        ?.forEach { key ->
+          val dependencies = subclassesIndex.getDependencies(key).map { it.toFqName() }.sorted()
+          dataOut.writeUTF(key.toFqName())
+          dataOut.writeInt(dependencies.size)
+          dependencies.forEach { dataOut.writeUTF(it) }
+        }
 
       // process lookups
       val lookupsIndex: BackDependencyIndex? = graph.getIndex(LookupsIndex.NAME)
       val lookupsCount = lookupsIndex?.keys?.count() ?: 0
-      val lookupsAccumulator = mutableMapOf<String, Int>()
+      val fileIdToPathEntryAccumulator = mutableMapOf<String, Int>()
       dataOut.writeInt(lookupsCount)
-      lookupsIndex?.keys?.forEach { key ->
-        val dependencies = lookupsIndex.getDependencies(key)
-          .mapNotNull { (it as? JvmNodeReferenceID)?.nodeName }
-        dataOut.writeUTF(key.toFqName())
-        dataOut.writeInt(dependencies.count())
-        dependencies.forEach {
-          dataOut.writeInt(it.addFilePathIfNeeded(lookupsAccumulator)) }
-      }
+      lookupsIndex?.keys
+        ?.sortedBy { it.toFqName() }
+        ?.forEach { key ->
+          val dependencies = lookupsIndex.getDependencies(key)
+            .mapNotNull { (it as? JvmNodeReferenceID)?.nodeName }
+            .sorted()
+          dataOut.writeUTF(key.toFqName())
+          dataOut.writeInt(dependencies.count())
+          dependencies
+            .map { dependency -> dependency.addFilePathIfNeeded(fileIdToPathEntryAccumulator) }
+            .forEach { indexedDependency ->
+              dataOut.writeInt(indexedDependency)
+            }
+        }
 
-      dataOut.writeInt(lookupsAccumulator.size)
-      lookupsAccumulator.forEach { (path, fileId) ->
+      dataOut.writeInt(fileIdToPathEntryAccumulator.size)
+      fileIdToPathEntryAccumulator.toSortedMap().forEach { (path, fileId) ->
         dataOut.writeInt(fileId)
         dataOut.writeUTF(path)
       }
