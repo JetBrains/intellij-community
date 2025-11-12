@@ -44,7 +44,8 @@ fun analyzeResult(aliasData: IntroduceTypeAliasData): IntroduceTypeAliasAnalysis
         (psiFactory.createBlockCodeFragment("val a: Int", aliasData.targetSibling.parent).getContentElement().children[0] as KtProperty).apply {
             WriteCommandAction.writeCommandAction(project).run<Throwable> {
                 typeReference!!.replace(
-                    aliasData.originalTypeElement.parent as? KtTypeReference
+                    aliasData.originalTypeElement as? KtTypeReference
+                        ?: aliasData.originalTypeElement.parent as? KtTypeReference
                         ?: if (aliasData.originalTypeElement is KtTypeElement) psiFactory.createType(
                             aliasData.originalTypeElement
                         ) else psiFactory.createType(aliasData.originalTypeElement.text)

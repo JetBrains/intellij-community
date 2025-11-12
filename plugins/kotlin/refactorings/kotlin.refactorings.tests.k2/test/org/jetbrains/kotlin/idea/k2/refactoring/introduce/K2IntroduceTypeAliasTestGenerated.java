@@ -85,6 +85,11 @@ public class K2IntroduceTypeAliasTestGenerated extends AbstractK2IntroduceTypeAl
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionTypeDuplicatesWithTypeParameters.kt");
     }
 
+    @TestMetadata("functionTypeWithTypeParameters.kt")
+    public void testFunctionTypeWithTypeParameters() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionTypeWithTypeParameters.kt");
+    }
+
     @TestMetadata("functionalType.kt")
     public void testFunctionalType() throws Exception {
         runTest("../../idea/tests/testData/refactoring/introduceTypeAlias/functionalType.kt");

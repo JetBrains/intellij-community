@@ -285,23 +285,23 @@ object K2SemanticMatcher {
 
             if (targetType.semanticallyEquals(patternType)) return true
 
-            if (targetType is KaTypeParameterType && patternType is KaTypeParameterType)
-                return symbols[targetType.symbol] == patternType.symbol
-
             fun typeParameterSubstitution(targetType: KaTypeParameterType, patternType: KaType, typeReference: KtTypeReference?): Boolean {
                 val typeParameter = targetType.symbol.psi as KtNamedDeclaration
                 val subst = parameterSubstitution[typeParameter]
                 return when {
-                  subst != null -> {
-                    subst is KtTypeReference && subst.type.semanticallyEquals(patternType)
-                  }
-                  parameterSubstitution.containsKey(typeParameter) -> {
-                    parameterSubstitution[typeParameter] = typeReference
-                    true
-                  }
-                  else -> false
+                    subst != null -> {
+                        subst is KtTypeReference && subst.type.semanticallyEquals(patternType)
+                    }
+                    parameterSubstitution.containsKey(typeParameter) -> {
+                        parameterSubstitution[typeParameter] = typeReference
+                        true
+                    }
+                    else -> false
                 }
             }
+
+            if (targetType is KaTypeParameterType && patternType is KaTypeParameterType)
+                return symbols[targetType.symbol] == patternType.symbol || typeParameterSubstitution(patternType, targetType, targetTypeReference)
 
             if (targetType is KaTypeParameterType) {
                 return typeParameterSubstitution(targetType, patternType, patternTypeReference)

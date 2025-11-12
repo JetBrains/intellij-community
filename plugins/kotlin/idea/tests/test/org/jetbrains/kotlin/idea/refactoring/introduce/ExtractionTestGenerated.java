@@ -4983,6 +4983,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             runTest("testData/refactoring/introduceTypeAlias/functionTypeDuplicatesWithTypeParameters.kt");
         }
 
+        @TestMetadata("functionTypeWithTypeParameters.kt")
+        public void testFunctionTypeWithTypeParameters() throws Exception {
+            runTest("testData/refactoring/introduceTypeAlias/functionTypeWithTypeParameters.kt");
+        }
+
         @TestMetadata("functionalType.kt")
         public void testFunctionalType() throws Exception {
             runTest("testData/refactoring/introduceTypeAlias/functionalType.kt");

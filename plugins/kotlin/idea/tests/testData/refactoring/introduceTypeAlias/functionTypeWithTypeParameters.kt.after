@@ -1,0 +1,12 @@
+// NAME: Mapper
+
+typealias Mapper<T> = (T) -> T
+
+// SIBLING:
+fun <T> mapOnce(v: T, t: Mapper<T>): T {
+    return t(v)
+}
+
+
+
+// IGNORE_K1
