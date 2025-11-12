@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr.localConsents
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.gdpr.*
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -29,6 +31,15 @@ object LocalConsentOptions {
 
       override fun readDefaultConsents(): String {
         throw UnsupportedOperationException("There are no default local consents")
+      }
+
+      override fun writeConfirmedConsents(data: String) {
+        super.writeConfirmedConsents(data)
+        if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+          ApplicationManager.getApplication().messageBus
+            .syncPublisher(DataSharingLocalSettingsChangeListener.TOPIC)
+            .consentWritten()
+        }
       }
     }
   }
