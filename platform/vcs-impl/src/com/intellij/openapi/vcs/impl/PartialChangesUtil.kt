@@ -221,6 +221,11 @@ object PartialChangesUtil {
   }
 
   @JvmStatic
+  fun isPartialChange(change: Change): Boolean {
+    return change.afterRevision is PartialContentRevision
+  }
+
+  @JvmStatic
   fun wrapPartialChanges(project: Project, changes: List<Change>): List<Change> {
     return changes.map { change -> wrapPartialChangeIfNeeded(project, change) ?: change }
   }
