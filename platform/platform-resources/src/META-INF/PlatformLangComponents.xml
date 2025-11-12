@@ -48,6 +48,12 @@
     <applicationService serviceInterface="com.intellij.openapi.command.impl.UndoSpy"
                         serviceImplementation="com.intellij.openapi.command.impl.UndoSpyImpl" preload="notHeadless"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.command.impl.UndoForeignCommandService"
+                        serviceImplementation="com.intellij.openapi.command.impl.UndoForeignCommandServiceImpl" preload="notHeadless"/>
+
+    <projectService serviceInterface="com.intellij.openapi.command.impl.UndoForeignCommandService"
+                    serviceImplementation="com.intellij.openapi.command.impl.UndoForeignCommandServiceImpl" preload="notHeadless"/>
+
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
                         headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl"/>
