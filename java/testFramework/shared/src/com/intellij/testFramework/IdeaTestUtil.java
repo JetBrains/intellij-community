@@ -107,6 +107,13 @@ public final class IdeaTestUtil {
     });
   }
 
+  /**
+   * Returns a mock JDK for the specified language level.
+   */
+  public static @NotNull Sdk getMockJdk(@NotNull LanguageLevel level) {
+    return getMockJdk(level.toJavaVersion());
+  }
+
   public static @NotNull Sdk getMockJdk(@NotNull JavaVersion version) {
     int mockJdk = version.feature >= 25 ? 25 :
                   version.feature >= 21 ? 21 :
