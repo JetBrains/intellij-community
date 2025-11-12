@@ -681,6 +681,16 @@ com.intellij.modcommand.ModPsiUpdater
 - a:select(com.intellij.psi.PsiElement):V
 - a:showConflicts(java.util.Map):V
 - a:templateBuilder():com.intellij.modcommand.ModTemplateBuilder
+f:com.intellij.modcommand.ModRegisterTabOut
+- java.lang.Record
+- com.intellij.modcommand.ModCommand
+- <init>(com.intellij.openapi.vfs.VirtualFile,I,I,I):V
+- f:equals(java.lang.Object):Z
+- file():com.intellij.openapi.vfs.VirtualFile
+- f:hashCode():I
+- rangeEnd():I
+- rangeStart():I
+- target():I
 com.intellij.modcommand.ModTemplateBuilder
 - a:field(com.intellij.psi.PsiElement,com.intellij.codeInsight.template.Expression):com.intellij.modcommand.ModTemplateBuilder
 - a:field(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String,com.intellij.codeInsight.template.Expression):com.intellij.modcommand.ModTemplateBuilder
