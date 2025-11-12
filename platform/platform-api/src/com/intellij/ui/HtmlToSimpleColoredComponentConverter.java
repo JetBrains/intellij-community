@@ -209,7 +209,7 @@ public class HtmlToSimpleColoredComponentConverter {
       if (tag == DIV || tag == SPAN) return styleAttributes;
 
       SimpleTextAttributes tagAttributes = null;
-      if (tag == B) tagAttributes = REGULAR_ATTRIBUTES;
+      if (tag == B) tagAttributes = REGULAR_BOLD_ATTRIBUTES;
       if (tag == I) tagAttributes = REGULAR_ITALIC_ATTRIBUTES;
       if (tag == U) tagAttributes = new SimpleTextAttributes(STYLE_UNDERLINE, null);
       if (tag == S) tagAttributes = new SimpleTextAttributes(STYLE_STRIKEOUT, null);
