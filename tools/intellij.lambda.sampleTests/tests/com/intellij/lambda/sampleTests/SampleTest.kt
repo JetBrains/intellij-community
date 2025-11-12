@@ -7,6 +7,7 @@ import com.intellij.lambda.testFramework.junit.UltimateTestCases.JpsEmptyProject
 import com.intellij.lambda.testFramework.testApi.editor.openFile
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.lambda.testFramework.testApi.getProjects
+import com.intellij.lambda.testFramework.testApi.utils.tryTimes
 import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.openapi.diagnostic.Logger
@@ -62,14 +63,15 @@ class SampleTest {
     class HelloFrontendOnlyLambda(frontendIdeContext: LambdaFrontendContext, plugin: PluginModuleDescriptor)
       : NamedLambda<LambdaFrontendContext>(frontendIdeContext, plugin) {
       override suspend fun LambdaFrontendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
-        return currentClassLogger().warn("Hi there Frontend")
+        return tryTimes(2, "Log") { currentClassLogger().warn("Hi there Frontend") }
       }
     }
 
     class HelloBackendOnlyLambda(backendIdeContext: LambdaBackendContext, plugin: PluginModuleDescriptor)
       : NamedLambda<LambdaBackendContext>(backendIdeContext, plugin) {
       override suspend fun LambdaBackendContext.lambda(args: List<LambdaRdKeyValueEntry>): Any {
-        return currentClassLogger().warn("Hi there Backend")
+        return tryTimes(2, "Log") { currentClassLogger().warn("Hi there Backend") }
+
       }
     }
   }
