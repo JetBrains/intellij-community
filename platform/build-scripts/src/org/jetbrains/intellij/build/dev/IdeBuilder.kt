@@ -37,6 +37,7 @@ import org.jetbrains.intellij.build.ScrambleTool
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 import org.jetbrains.intellij.build.classPath.generateClassPathByLayoutReport
+import org.jetbrains.intellij.build.classPath.generateCoreClasspathFromPlugins
 import org.jetbrains.intellij.build.classPath.generatePluginClassPath
 import org.jetbrains.intellij.build.classPath.generatePluginClassPathFromPrebuiltPluginFiles
 import org.jetbrains.intellij.build.classPath.writePluginClassPathHeader
@@ -178,9 +179,8 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     }
 
     val searchableOptionSet = getSearchableOptionSet(context)
-
     val platformLayoutResultDeferred = async(CoroutineName("platform distribution entries")) {
-      val generateFilesInBinDirJob = launch(Dispatchers.IO) {
+      launch(Dispatchers.IO) {
         // PathManager.getBinPath() is used as a working dir for maven
         val binDir = Files.createDirectories(runDir.resolve("bin"))
         val oldFiles = Files.newDirectoryStream(binDir).use { it.toCollection(HashSet()) }
@@ -207,7 +207,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
       }
 
       val platformLayoutAwaited = platformLayout.await()
-      val platformLayoutResult = spanBuilder("layout platform").use {
+      spanBuilder("layout platform").use {
         layoutPlatform(
           runDir = runDir,
           platformLayout = platformLayoutAwaited,
@@ -217,17 +217,6 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
           request = request,
         )
       }
-
-      if (request.writeCoreClasspath) {
-        val classPathString = platformLayoutResult.coreClassPath.joinToString(separator = "\n")
-        launch(Dispatchers.IO) {
-          Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
-        }
-      }
-
-      generateFilesInBinDirJob.join()
-      request.platformClassPathConsumer?.invoke(context.ideMainClassName, platformLayoutResult.coreClassPath, runDir)
-      platformLayoutResult
     }
 
     val pluginDistributionEntriesDeferred = async(CoroutineName("build plugins")) {
@@ -240,6 +229,23 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         buildPlatformJob = platformLayoutResultDeferred,
         moduleOutputPatcher = moduleOutputPatcher,
       )
+    }
+
+    // write and update core classpath from platform and plugins distribution
+    launch {
+      val platformClasspath = platformLayoutResultDeferred.await().coreClassPath
+      val pluginDistributionEntities = pluginDistributionEntriesDeferred.await().pluginEntries
+      val coreClasspathFromPlugins = generateCoreClasspathFromPlugins(context, pluginDistributionEntities)
+      val classPath = platformClasspath + coreClasspathFromPlugins
+
+      if (request.writeCoreClasspath) {
+        val classPathString = classPath.joinToString(separator = "\n")
+        launch(Dispatchers.IO) {
+          Files.writeString(runDir.resolve("core-classpath.txt"), classPathString)
+        }
+      }
+
+      request.platformClassPathConsumer?.invoke(context.ideMainClassName, classPath, runDir)
     }
 
     if (context.generateRuntimeModuleRepository) {

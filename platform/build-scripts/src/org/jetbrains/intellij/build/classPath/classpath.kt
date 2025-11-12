@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
+import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 import org.jetbrains.intellij.build.impl.DescriptorCacheContainer
 import org.jetbrains.intellij.build.impl.ModuleIncludeReasons
 import org.jetbrains.intellij.build.impl.PRODUCT_DESCRIPTOR_META_PATH
@@ -25,6 +26,7 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ScopedCachedDescriptorContainer
+import org.jetbrains.intellij.build.impl.filterAndProcessContentModules
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
@@ -89,6 +91,51 @@ internal fun generateClassPathByLayoutReport(libDir: Path, entries: List<Distrib
   // sorted to ensure stable performance results
   result.addAll(if (isWindows) classPath.sortedBy(Path::toString) else classPath.sorted())
   return result
+}
+
+/**
+ * Provides a set of paths that should be included in the core classpath.
+ * This generation is based on the plugins distribution,
+ * so we would like to include all distribution entities of **embedded** modules (and their libraries) from plugins marked with `use-idea-classloader`.
+ */
+internal fun generateCoreClasspathFromPlugins(
+  context: BuildContext,
+  pluginEntities: List<PluginBuildDescriptor>,
+): Set<Path> {
+  val classPathResult = mutableSetOf<Path>()
+  for (pluginEntity in pluginEntities) {
+    val pluginLayout = pluginEntity.layout
+    val classPathModules = extractPlatformPluginsModules(context, pluginLayout.mainModule)
+    for (distributionEntry in pluginEntity.distribution) {
+      if (distributionEntry is ModuleOwnedFileEntry && distributionEntry.owner?.moduleName in classPathModules) {
+        classPathResult.add(distributionEntry.path)
+      }
+    }
+  }
+  return classPathResult
+}
+
+/**
+ * Provides a set of content modules ("embedded" ones) and the module of the plugin itself, if it uses `use-idea-classloader`.
+ * These modules should be included in the core classpath, also their libraries should be treated as platform libraries.
+ */
+internal fun extractPlatformPluginsModules(
+  context: BuildContext,
+  pluginMainModule: String,
+): Set<String> {
+  val pluginModule = context.findRequiredModule(pluginMainModule)
+  val pluginXmlContent = getUnprocessedPluginXmlContent(pluginModule, context).decodeToString()
+  val rootElement = JDOMUtil.load(pluginXmlContent)
+  if (rootElement.getAttribute("use-idea-classloader")?.value?.toBoolean() != true) {
+    return emptySet()
+  }
+  val embeddedModules = mutableSetOf(pluginMainModule)
+  filterAndProcessContentModules(rootElement, pluginMainModule, context) { _, moduleName, loadingRule ->
+    if (loadingRule == "embedded") {
+      embeddedModules.add(moduleName)
+    }
+  }
+  return embeddedModules
 }
 
 internal data class PluginBuildDescriptor(
