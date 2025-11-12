@@ -137,7 +137,13 @@ public final class JUnit5TestRunnerUtil {
   private static boolean loadMethodByReflection(MethodSelector selector) {
     try {
       Class<?> aClass = Class.forName(selector.getClassName());
-      return ReflectionSupport.findMethod(aClass, selector.getMethodName(), selector.getMethodParameterTypes()).isPresent();
+      String parameterTypeNames;
+      if (ReflectionSupport.findMethod(MethodSelector.class, "getParameterTypeNames").isPresent()) {
+        parameterTypeNames = selector.getParameterTypeNames();
+      } else {
+        parameterTypeNames = selector.getMethodParameterTypes(); // this method is removed in JUnit 6.0.0 and higher
+      }
+      return ReflectionSupport.findMethod(aClass, selector.getMethodName(), parameterTypeNames).isPresent();
     }
     catch (ClassNotFoundException e) {
       return false;

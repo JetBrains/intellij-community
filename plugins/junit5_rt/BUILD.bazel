@@ -12,6 +12,10 @@ jvm_library(
     "//java/java-runtime:rt",
     "@lib//:junit5Launcher-provided",
     "@lib//:junit5-provided",
+  ],
+  exports = [
+    "//plugins/junit_rt:junit-rt",
+    "//java/java-runtime:rt",
   ]
 )
 ### auto-generated section `build intellij.junit.v5.rt` end
