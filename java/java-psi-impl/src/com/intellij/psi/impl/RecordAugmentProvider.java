@@ -80,7 +80,8 @@ public final class RecordAugmentProvider extends PsiAugmentProvider implements D
     PsiMethod nonPhysical;
     try {
       nonPhysical = factory.createMethodFromText(sb, recordHeader.getContainingClass());
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       return null;
     }
     PsiModifierList classModifierList = aClass.getModifierList();
@@ -104,12 +105,11 @@ public final class RecordAugmentProvider extends PsiAugmentProvider implements D
     else {
       //it is necessary to check with alternative resolver
       //because it is necessary to find its super class (in dumb mode)
-      dumbService.runWithAlternativeResolveEnabled(()->{
+      dumbService.runWithAlternativeResolveEnabled(() -> {
         hasConstructor.set(hasConstructorFinder.get());
       });
     }
-    if(hasConstructor.get()) return true;
-    return false;
+    return hasConstructor.get();
   }
 
   private static boolean shouldGenerateMethod(PsiRecordComponent component, List<PsiMethod> ownMethods) {
