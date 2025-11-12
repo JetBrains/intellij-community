@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionApi
@@ -18,14 +19,25 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.awt.event.HierarchyEvent
 import javax.swing.JPanel
 
+@OptIn(FlowPreview::class)
 @ApiStatus.Internal
 class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView() {
+
+  private val rebuildRequests = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private var wasShowing = false
 
   @ApiStatus.Obsolete
   constructor(project: Project, session: XDebugSession) : this(project, session.asProxy())
@@ -52,16 +64,36 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
       }
     }.install(tree)
 
+    panel.addHierarchyListener { e ->
+      if ((e.changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) > 0) {
+        val isCurrentlyShowing = panel.isShowing
+        if (!wasShowing && isCurrentlyShowing) {
+          requestRebuild()
+        }
+        wasShowing = isCurrentlyShowing
+      }
+    }
+
     subscribeToThreadRefreshEvents(session)
+
+    session.coroutineScope.launch {
+      rebuildRequests
+        .debounce(200)
+        .collectLatest {
+          withContext(Dispatchers.EDT) {
+            if (panel.isShowing) {
+              tree.setRoot(XThreadsRootNode(tree, session), false)
+            }
+          }
+        }
+    }
   }
 
   private fun subscribeToThreadRefreshEvents(session: XDebugSessionProxy) {
     session.coroutineScope.launch {
       XDebugSessionApi.getInstance().getUiUpdateEventsFlow(session.id)
         .collectLatest {
-          DebuggerUIUtil.invokeLater {
-            tree.setRoot(XThreadsRootNode(tree, session), false)
-          }
+          requestRebuild()
         }
     }
   }
@@ -73,6 +105,10 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
   override fun getMainComponent(): JPanel = panel
 
   fun getDefaultFocusedComponent(): XDebuggerTree = tree
+
+  private fun requestRebuild() {
+    rebuildRequests.tryEmit(Unit)
+  }
 
   override fun clear() {
     DebuggerUIUtil.invokeLater {
@@ -98,9 +134,7 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
       cancelClear()
       clear()
     }
-    DebuggerUIUtil.invokeLater {
-      tree.setRoot(XThreadsRootNode(tree, session), false)
-    }
+    requestRebuild()
   }
 
   override fun dispose() {
