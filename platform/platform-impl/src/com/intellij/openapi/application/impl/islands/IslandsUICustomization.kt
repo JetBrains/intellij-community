@@ -264,6 +264,11 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       val background = EditorColorsManager.getInstance().globalScheme.defaultBackground
 
+      if (getMainBackgroundColor() == background) {
+        val hsb = Color.RGBtoHSB(background.red, background.green, background.blue, null)
+        uiDefaults["MainWindow.background"] = Color.getHSBColor(hsb[0], hsb[1], (hsb[2] + .03f).coerceAtMost(1f))
+      }
+
       uiDefaults["ToolWindow.background"] = background
       uiDefaults["ToolWindow.Header.background"] = background
       uiDefaults["ToolWindow.Header.inactiveBackground"] = background
