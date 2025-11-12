@@ -348,12 +348,53 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Modi
     <T> T get(@NotNull Class<T> type, @Nullable Rectangle screen) {
       Point location = apply(Point::new, myLocation);
       Dimension size = apply(Dimension::new, mySize);
-      // convert location and size according to the given screen
-      if (myScreen != null && !myScreen.isEmpty() && screen != null && !screen.isEmpty()) {
-        if (location != null) ScreenUtil.moveAndScale(location, myScreen, screen);
-        if (size != null) ScreenUtil.moveAndScale(size, myScreen, screen);
-        if (!isVisible(location, size)) return null; // adjusted state is not visible
+      // convert location and size according to the given screen and normalize to fit
+      if (location != null || size != null) {
+        if (myScreen != null && !myScreen.isEmpty() && screen != null && !screen.isEmpty()) {
+          if (location != null) ScreenUtil.moveAndScale(location, myScreen, screen);
+          if (size != null) ScreenUtil.moveAndScale(size, myScreen, screen);
+
+          if (location != null && size != null) {
+            Rectangle r = new Rectangle(location, size);
+            Rectangle original = new Rectangle(r);
+            ScreenUtil.moveToFit(r, screen.getBounds(), null, true);
+            if (!r.equals(original)) {
+              LOG.warn("Window state forced to fit screen: " + original + " -> " + r + " (screen: " + screen + ")");
+            }
+            location = r.getLocation();
+            size = r.getSize();
+          }
+          else if (location != null) {
+            Point original = new Point(location);
+            if (location.x < screen.x || location.x >= screen.x + screen.width) {
+              location.x = screen.x + screen.width / 2;
+            }
+            if (location.y < screen.y || location.y >= screen.y + screen.height) {
+              location.y = screen.y + screen.height / 2;
+            }
+            if (!location.equals(original)) {
+              LOG.warn("Window location forced to fit screen: " + original + " -> " + location + " (screen: " + screen + ")");
+            }
+          }
+          else {
+            location = new Point(screen.x + screen.width / 2, screen.y + screen.height / 2);
+            Rectangle r = new Rectangle(location, size);
+            Dimension original = new Dimension(size);
+            ScreenUtil.moveToFit(r, screen.getBounds(), null, true);
+            if (!size.equals(original)) {
+              LOG.warn("Window size forced to fit screen: " + original + " -> " + size + " (screen: " + screen + ")");
+            }
+            location = r.getLocation();
+            size = r.getSize();
+          }
+
+          if (!isVisible(location, size)) {
+            LOG.warn("Adjusted window state is not visible: location=" + location + ", size=" + size + " (screen: " + screen + ")");
+            return null; // adjusted state is not visible
+          }
+        }
       }
+
       if (type == Point.class) return (T)location;
       if (type == Dimension.class) return (T)size;
       if (type == Rectangle.class) return location == null || size == null ? null : (T)new Rectangle(location, size);
