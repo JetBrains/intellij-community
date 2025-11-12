@@ -69,6 +69,9 @@ object CommunityModuleSets : ModuleSetProvider {
 
     // EEL (execution environment layer) - referenced from core classloader
     embeddedModule("intellij.platform.eel.impl")
+    
+    // Concurrency utilities - referenced from core classloader
+    embeddedModule("intellij.platform.ide.concurrency")
   }
 
   /**

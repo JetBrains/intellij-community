@@ -7,18 +7,15 @@ package org.jetbrains.intellij.build.productLayout
  */
 object CommunityProductFragments {
   /**
-   * Platform Lang base fragment: includes PlatformLangPlugin.xml and its transitively required modules.
+   * Platform Lang base fragment: includes PlatformLangPlugin.xml.
    * 
    * PlatformLangPlugin.xml provides core platform language support including:
    * - Platform language components and extensions
    * - Core actions, refactoring, and editor support
-   * - Concurrency infrastructure (intellij.platform.ide.concurrency)
    * 
-   * Use this fragment instead of manually calling deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
-   * to ensure all required modules are properly included.
+   * Use this fragment instead of manually calling deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml").
    */
   fun platformLangBaseFragment(): ProductModulesContentSpec = productModules {
     deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
-    embeddedModule("intellij.platform.ide.concurrency")
   }
 }

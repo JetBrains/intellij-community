@@ -21,7 +21,6 @@
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
   <!-- <editor-fold desc="additional"> -->
   <content namespace="jetbrains">
-    <module name="intellij.platform.ide.concurrency" loading="embedded"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>

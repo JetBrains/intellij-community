@@ -147,6 +147,7 @@
     <module name="intellij.platform.searchEverywhere.frontend"/>
     <module name="intellij.platform.inline.completion"/>
     <module name="intellij.platform.eel.impl" loading="embedded"/>
+    <module name="intellij.platform.ide.concurrency" loading="embedded"/>
     <!-- </editor-fold> -->
   </content>
 </idea-plugin>
