@@ -757,7 +757,7 @@ class JarPackager private constructor(
                 size = size,
                 hash = hash,
                 relativeOutputFile = relativeOutputFile,
-                owner = null,
+                owner = ModuleItem(moduleName, relativeOutputFile = targetFile.fileName.toString(), reason = null),
               )
             }
           },
