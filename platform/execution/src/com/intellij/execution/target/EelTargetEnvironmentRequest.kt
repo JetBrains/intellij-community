@@ -291,7 +291,9 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
   override val targetPlatform: TargetPlatform = request.targetPlatform
 
   override fun shutdown() {
-    forwardingScope.cancel()
+    runBlockingMaybeCancellable {
+      forwardingScope.coroutineContext.job.cancelAndJoin()
+    }
   }
 }
 
