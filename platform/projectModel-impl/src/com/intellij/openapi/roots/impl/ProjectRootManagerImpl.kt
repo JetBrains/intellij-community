@@ -56,10 +56,11 @@ open class ProjectRootManagerImpl(
       override fun jdkNameChanged(jdk: Sdk, previousName: String) {
         val currentName = projectSdkName
         if (previousName == currentName) {
+          val sdkId = SdkId(jdk.getName(), jdk.getSdkType().getName())
           // if already had jdk name and that name was the name of the jdk just changed
-          project.workspaceModel.updateProjectModel("jdkNameChanged") { mutableStorage ->
+          project.workspaceModel.updateProjectModel("jdkNameChanged: $sdkId") { mutableStorage ->
             WsmProjectSettingsEntityUtils.addOrModifyProjectSettingsEntity(project, mutableStorage) { entity ->
-              entity.projectSdk = SdkId(jdk.getName(), jdk.getSdkType().getName())
+              entity.projectSdk = sdkId
             }
           }
         }
@@ -335,7 +336,7 @@ open class ProjectRootManagerImpl(
   private fun setOrClearProjectSdkName(name: String?, sdkTypeName: String?) {
     ThreadingAssertions.assertWriteAccess()
     val newSdk = if (name != null && sdkTypeName != null) SdkId(name, sdkTypeName) else null
-    project.workspaceModel.updateProjectModel("setOrClearProjectSdkName") { mutableStorage ->
+    project.workspaceModel.updateProjectModel("setOrClearProjectSdkName: $newSdk") { mutableStorage ->
       WsmProjectSettingsEntityUtils.addOrModifyProjectSettingsEntity(project, mutableStorage) { entity ->
         entity.projectSdk = newSdk
       }
