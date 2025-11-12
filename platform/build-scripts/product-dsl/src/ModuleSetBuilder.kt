@@ -103,7 +103,6 @@ inline fun moduleSet(name: String, alias: String? = null, block: ModuleSetBuilde
   return ModuleSet(name, modules, nestedSets, alias)
 }
 
-
 /**
  * Appends a single module XML element to the StringBuilder.
  */
@@ -115,7 +114,6 @@ private fun appendModuleXml(sb: StringBuilder, module: ContentModule) {
   sb.append("/>")
   sb.append("\n")
 }
-
 
 /**
  * Recursively appends modules from a module set, including nested sets.

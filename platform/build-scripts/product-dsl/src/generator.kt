@@ -18,6 +18,11 @@ import java.nio.file.Path
 /**
  * Generates an XML file for a module set.
  * Used to maintain backward compatibility with XML-based module set loading.
+ * 
+ * Module set XML files ALWAYS contain inlined module definitions - all direct modules
+ * and nested module sets are expanded into `<module>` elements. The `inlineModuleSets`
+ * parameter (used in product XML generation) only affects whether PRODUCT XMLs reference
+ * these files via xi:include or inline them directly.
  *
  * @param moduleSet The module set to generate XML for
  * @param outputDir The directory where the XML file will be written
@@ -65,6 +70,8 @@ fun generateProductXml(
   val generatorCommand = (if (pluginXmlPath.toString().contains("/community/")) "CommunityModuleSets" else "UltimateModuleSets") + GENERATOR_SUFFIX
 
   // Build complete plugin.xml file
+  // inlineModuleSets = false means: use xi:include to reference module set XML files in product XML
+  // Note: Module set XML files themselves always contain inlined module definitions
   val buildResult = buildProductContentXml(
     spec = spec,
     moduleOutputProvider = moduleOutputProvider,
@@ -106,6 +113,20 @@ fun generateProductXml(
 /**
  * Builds XML content for programmatic product modules.
  * Generates module alias, xi:include directives (or inlined content), and `<content>` blocks for each module set.
+ * 
+ * @param spec The product modules specification
+ * @param moduleOutputProvider Provider for module output paths
+ * @param inlineXmlIncludes Whether to inline legacy XML includes (vs. using xi:include)
+ * @param inlineModuleSets Controls how module sets are rendered in PRODUCT XML files only.
+ *                         - false (default): Use xi:include directives to reference module set XML files
+ *                         - true: Inline all module set content directly into product XML
+ *                         NOTE: Module set XML files (intellij.moduleSets.*.xml) always contain
+ *                         inlined modules regardless of this flag. This parameter only affects
+ *                         whether product XMLs reference those files via xi:include or inline them.
+ * @param productPropertiesClass The product properties class name for header comment
+ * @param generatorCommand The generator command name for header comment
+ * @param isUltimateBuild Whether this is an Ultimate build
+ * @return Build result containing generated XML and metadata
  */
 fun buildProductContentXml(
   spec: ProductModulesContentSpec,
