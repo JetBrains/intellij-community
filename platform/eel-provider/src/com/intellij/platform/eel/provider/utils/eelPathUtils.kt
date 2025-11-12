@@ -1489,10 +1489,12 @@ object EelPathUtils {
     if (from is PosixFileAttributes) {
       // TODO It's ineffective for IjentNioFS, because there are 6 consequential system calls.
       to.setPermissions(from.permissions() + requirePermissions)
-      runCatching<UnsupportedOperationException>(
-        { to.owner = from.owner() },
-        { to.setGroup(from.group()) }
-      )
+      if (to is PosixFileAttributes) {
+        runCatching<UnsupportedOperationException>(
+          { to.owner = from.owner() },
+          { to.setGroup(from.group()) }
+        )
+      }
     }
     else {
       if (requirePermissions.isNotEmpty()) {
