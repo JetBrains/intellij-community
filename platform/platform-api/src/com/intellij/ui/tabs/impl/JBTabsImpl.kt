@@ -101,6 +101,7 @@ data class TabListOptions(
 
   @JvmField val tabPosition: JBTabsPosition = JBTabsPosition.top,
   @JvmField val hideTabs: Boolean = false,
+  @JvmField val showBorder: Boolean = true,
 )
 
 @DirtyUI
@@ -2332,7 +2333,7 @@ open class JBTabsImpl internal constructor(
   }
 
   protected fun drawBorder(g: Graphics?) {
-    if (!isHideTabs) {
+    if (!isHideTabs && tabListOptions.showBorder) {
       tabBorder.paintBorder(this, g, 0, 0, width, height)
     }
   }
@@ -2821,6 +2822,17 @@ open class JBTabsImpl internal constructor(
       }
 
       tabListOptions = tabListOptions.copy(hideTabs = value)
+      relayout(forced = true, layoutNow = false)
+    }
+
+  final override var showBorder: Boolean
+    get() = tabListOptions.showBorder
+    set(value) {
+      if (tabListOptions.showBorder == value) {
+        return
+      }
+
+      tabListOptions = tabListOptions.copy(showBorder = value)
       relayout(forced = true, layoutNow = false)
     }
 

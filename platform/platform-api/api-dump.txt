@@ -1223,6 +1223,7 @@ com.intellij.ui.tabs.JBTabsEx
 - a:sortTabs(java.util.Comparator):V
 - a:updateTabActions(Z):V
 com.intellij.ui.tabs.JBTabsPresentation
+- a:getShowBorder():Z
 - a:getTabsPosition():com.intellij.ui.tabs.JBTabsPosition
 - a:isHideTabs():Z
 - a:setAlphabeticalMode(Z):com.intellij.ui.tabs.JBTabsPresentation
@@ -1233,6 +1234,7 @@ com.intellij.ui.tabs.JBTabsPresentation
 - a:setInnerInsets(java.awt.Insets):com.intellij.ui.tabs.JBTabsPresentation
 - a:setPaintBlocked(Z,Z):V
 - a:setPaintFocus(Z):com.intellij.ui.tabs.JBTabsPresentation
+- a:setShowBorder(Z):V
 - a:setSideComponentBefore(Z):com.intellij.ui.tabs.JBTabsPresentation
 - a:setSideComponentOnTabs(Z):com.intellij.ui.tabs.JBTabsPresentation
 - a:setSideComponentVertical(Z):com.intellij.ui.tabs.JBTabsPresentation
