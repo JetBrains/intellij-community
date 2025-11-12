@@ -398,7 +398,7 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
     return moduleBuilder.getDependencyStateInternal(frameworkVersion, libraryInfo as WebStarterDependency)
   }
 
-  private fun loadLibrariesList() {
+  protected fun loadLibrariesList() {
     val librariesRoot = CheckedTreeNode()
     val search = currentSearchString.trim()
 
@@ -409,6 +409,7 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
       val categoryNode = DefaultMutableTreeNode(category, true)
 
       for (dependency in category.dependencies) {
+        if (!passesFilter(dependency)) continue
         if (search.isBlank() || isDependencyMatched(dependency, search)) {
           val libraryNode = CheckedTreeNode(dependency)
           if (dependency.isDefault) {
@@ -444,6 +445,8 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
       selectFirstDependency(librariesRoot)
     }
   }
+
+  protected open fun passesFilter(dependency: WebStarterDependency): Boolean = true
 
   private fun selectFirstDependency(librariesRoot: CheckedTreeNode) {
     if (librariesRoot.childCount > 0) {
