@@ -3,9 +3,7 @@ package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.openapi.util.JDOMUtil
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import org.jdom.Element
-import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
@@ -201,7 +199,6 @@ object DuplicateIncludeDetector {
     return fileName.endsWith("-customization.xml") ||
            fileName == "ultimate.xml" ||
            fileName == "PlatformLangPlugin.xml" ||
-           fileName == "JavaIdePlugin.xml" ||
            fileName == "structuralsearch.xml" ||
            fileName.endsWith("Plugin.xml")
   }
@@ -210,31 +207,9 @@ object DuplicateIncludeDetector {
    * Represents a single xi:include element.
    */
   private data class XiInclude(
-    val href: String,
-    val lineNumber: Int?
+    @JvmField val href: String,
+    @JvmField val lineNumber: Int?
   )
-}
-
-/**
- * Detects and prints duplicate xi:include elements in product plugin.xml files.
- * This is a convenience function that takes discovered products and outputs JSON report.
- *
- * @param products List of discovered products with their plugin XML paths
- * @param projectRoot Project root directory for resolving relative paths
- */
-fun detectAndPrintDuplicateIncludes(products: List<ProductSpec>, projectRoot: Path) {
-  // Convert ProductSpec plugin paths to actual file paths
-  val productFiles = products
-    .mapNotNull { it.pluginXmlPath }
-    .map { projectRoot.resolve(it) }
-    .filter { it.exists() && it.isRegularFile() }
-
-  // Run detection
-  val report = DuplicateIncludeDetector.detectDuplicates(productFiles, projectRoot)
-
-  // Output JSON
-  val json = Json { prettyPrint = true }
-  println(json.encodeToString(report))
 }
 
 /**

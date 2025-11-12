@@ -113,7 +113,7 @@ fun streamModuleAnalysisJson(
       }
       filter.filter == "duplicates" -> {
         gen.writeObjectFieldStart("duplicateAnalysis")
-        writeDuplicateAnalysis(gen, allModuleSets)
+        writeDuplicateAnalysis(gen, allModuleSets, enrichedProducts, projectRoot)
         gen.writeEndObject()
       }
       filter.filter == "product" && filter.value != null -> {
@@ -219,7 +219,7 @@ private fun writeAllSections(
 
   // Write duplicate analysis
   gen.writeObjectFieldStart("duplicateAnalysis")
-  writeDuplicateAnalysis(gen, allModuleSets)
+  writeDuplicateAnalysis(gen, allModuleSets, products, projectRoot)
   gen.writeEndObject()
 
   // Write product composition analysis

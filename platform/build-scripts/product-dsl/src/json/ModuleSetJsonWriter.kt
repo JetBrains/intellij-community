@@ -2,10 +2,15 @@
 package org.jetbrains.intellij.build.productLayout.json
 
 import com.fasterxml.jackson.core.JsonGenerator
+import org.jetbrains.intellij.build.productLayout.DuplicateIncludeDetector
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
 import org.jetbrains.intellij.build.productLayout.collectAllModuleNames
 import org.jetbrains.intellij.build.productLayout.collectAllModuleNamesFromSet
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 
 /**
  * Writes a single module set to JSON.
@@ -43,11 +48,13 @@ fun writeModuleSet(
 }
 
 /**
- * Writes duplicate analysis section.
+ * Writes duplicate analysis section including both module duplicates and xi:include duplicates.
  */
 fun writeDuplicateAnalysis(
   gen: JsonGenerator,
-  allModuleSets: List<ModuleSetMetadata>
+  allModuleSets: List<ModuleSetMetadata>,
+  products: List<ProductSpec>,
+  projectRoot: Path
 ) {
   // Find modules that appear in multiple module sets
   val moduleToSets = mutableMapOf<String, MutableList<String>>()
@@ -121,4 +128,17 @@ fun writeDuplicateAnalysis(
     }
   }
   gen.writeEndArray()
+  
+  // xi:include duplicate detection
+  val productFiles = products
+    .mapNotNull { it.pluginXmlPath }
+    .map { projectRoot.resolve(it) }
+    .filter { it.exists() && it.isRegularFile() }
+  
+  val report = DuplicateIncludeDetector.detectDuplicates(productFiles, projectRoot)
+  
+  // Serialize using kotlinx.serialization and write raw JSON (consistent with ModuleSet pattern)
+  val reportJson = kotlinxJson.encodeToString(report)
+  gen.writeFieldName("xiIncludeDuplicates")
+  gen.writeRawValue(reportJson)
 }

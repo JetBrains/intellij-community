@@ -29,8 +29,8 @@ internal fun StringBuilder.appendOpeningTag(
   // Determine if xi:include namespace is needed
   val hasXmlIncludes = !inlineXmlIncludes && spec.deprecatedXmlIncludes.isNotEmpty()
   val hasModuleSetIncludes = !inlineModuleSets && spec.moduleSets.isNotEmpty()
-  val needsXiNamespace = hasXmlIncludes || hasModuleSetIncludes
-  
+  // when we inline another some xi-include file, it can in turn have own xi-includes
+  val needsXiNamespace = inlineXmlIncludes || hasXmlIncludes || hasModuleSetIncludes
   if (needsXiNamespace) {
     append("<idea-plugin xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n")
   }
@@ -62,7 +62,7 @@ internal fun generateXIncludes(
   isUltimateBuild: Boolean,
 ) {
   for (include in spec.deprecatedXmlIncludes) {
-    // When inlining: skip ultimate-only xi-includes in Community builds
+    // When inlining: skip ultimate-only `xi-includes` in Community builds
     if (inlineXmlIncludes && include.ultimateOnly && !isUltimateBuild) {
       continue
     }
@@ -111,7 +111,7 @@ internal fun generateXIncludes(
 }
 
 /**
- * Converts a resource path to an xi:include href path.
+ * Converts a resource path to an `xi:include` href path.
  */
 internal fun resourcePathToXIncludePath(resourcePath: String): String {
   return if (isModuleNameLikeFilename(resourcePath)) resourcePath else "/$resourcePath"

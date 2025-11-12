@@ -230,7 +230,7 @@ fun intellijCommunityBaseFragment(): ProductModulesContentSpec = productModules 
   alias("com.intellij.platform.ide.provisioner")
 
   include(CommunityProductFragments.platformLangBaseFragment())
-  deprecatedInclude("intellij.java.ide.resources", "META-INF/JavaIdePlugin.xml")
+  include(CommunityProductFragments.javaIdeBaseFragment())
   deprecatedInclude("intellij.idea.community.customization", "META-INF/tips-intellij-idea-community.xml")
 
   moduleSet(CommunityModuleSets.debuggerStreams())

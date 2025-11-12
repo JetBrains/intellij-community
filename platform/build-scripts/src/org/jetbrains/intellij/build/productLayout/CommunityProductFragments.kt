@@ -18,4 +18,28 @@ object CommunityProductFragments {
   fun platformLangBaseFragment(): ProductModulesContentSpec = productModules {
     deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
   }
+
+  /**
+   * Java IDE base fragment: provides Java IDE module aliases and optional plugin includes.
+   *
+   * Includes:
+   * - Module aliases for Java IDE capability detection
+   * - Optional remote servers support
+   * - Optional UI Designer support
+   * - Extensions for IDEA-specific customization (UTM tracking, new UI onboarding)
+   *
+   * Use this fragment for products that include Java IDE functionality.
+   */
+  fun javaIdeBaseFragment(): ProductModulesContentSpec = productModules {
+    // Module capability aliases
+    alias("com.intellij.modules.all")
+    alias("com.intellij.modules.jsp.base")
+
+    // Optional plugin support (with fallback)
+    deprecatedInclude("intellij.platform.remoteServers.impl", "intellij.platform.remoteServers.impl.xml", optional = true)
+    deprecatedInclude("intellij.uiDesigner", "META-INF/DesignerCorePlugin.xml", optional = true)
+
+    // Extensions block (UTM tracking, new UI onboarding)
+    deprecatedInclude("intellij.java.ide.resources", "META-INF/JavaIdePlugin.xml")
+  }
 }
