@@ -51,10 +51,14 @@ sealed interface IntFileAttribute : Closeable, Unmappable {
       thisLogger().assertTrue(attribute.isFixedSize, "Should be fixed size: $attribute")
       return IntFileAttributeImpl(attribute, path)
     }
+
+    @JvmStatic
+    fun dummyAttribute() : IntFileAttribute = DummyIntAttribute
   }
 
   @Throws(IOException::class)
   fun readInt(fileId: Int): Int
+
   @Throws(IOException::class)
   fun writeInt(fileId: Int, value: Int)
 }
@@ -87,4 +91,14 @@ private class IntFileAttributeImpl(
   override fun closeAndUnsafelyUnmap() {
     attributeAccessor.closeAndUnsafelyUnmap()
   }
+}
+
+private object DummyIntAttribute : IntFileAttribute {
+  override fun readInt(fileId: Int): Int = 0
+
+  override fun writeInt(fileId: Int, value: Int) = Unit
+
+  override fun close() = Unit
+
+  override fun closeAndUnsafelyUnmap() = Unit
 }
