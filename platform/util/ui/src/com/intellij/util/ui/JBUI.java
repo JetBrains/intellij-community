@@ -1773,6 +1773,7 @@ public final class JBUI {
 
       @ApiStatus.Internal
       public static @NotNull Color getListSettingsBackground() {
+        // For custom UI themes we need to keep the old behavior
         if (StartupUiUtil.isUnderDarcula() && UIManager.get("SearchEverywhere.List.settingsBackground") == null) {
           return ColorUtil.brighter(UIUtil.getListBackground(), 1);
         }
