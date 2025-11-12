@@ -897,7 +897,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
   private fun awaitTermination(request: Runnable, delayMillis: Long) {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode) {
-      app.invokeLater(request, ModalityState.any())
+      app.invokeLater(request, if (SwingUtilities.isEventDispatchThread()) ModalityState.current() else ModalityState.any())
     }
     else {
       awaitingTerminationAlarm.addRequest(request, delayMillis)
