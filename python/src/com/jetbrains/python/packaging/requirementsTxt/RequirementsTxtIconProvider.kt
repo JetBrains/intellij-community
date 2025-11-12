@@ -2,11 +2,12 @@
 package com.jetbrains.python.packaging.requirementsTxt
 
 import com.intellij.ide.IconProvider
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.requirements.RequirementsFileType
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.pythonSdk
 import javax.swing.Icon
 
 /**
@@ -15,16 +16,16 @@ import javax.swing.Icon
 internal class RequirementsTxtIconProvider : IconProvider() {
   override fun getIcon(element: PsiElement, flags: Int): Icon? {
     val psiFile = element as? PsiFile ?: return null
-    val vFile = psiFile.virtualFile ?: return null
     if (psiFile.fileType !is RequirementsFileType) return null
+    val vFile = psiFile.virtualFile ?: return null
+    val module = ModuleUtil.findModuleForFile(vFile, psiFile.project) ?: return null
 
-    // If this file is set as the requirements.txt for any SDK in the project, show the referenced-file icon
-    for (sdk in PythonSdkUtil.getAllSdks()) {
-      val saved = PythonRequirementTxtSdkUtils.findRequirementsTxt(sdk) ?: continue
-      if (saved == vFile) {
-        return PythonIcons.Python.ReferencedFile
-      }
+    val sdk = module.pythonSdk ?: return null
+    val saved = PythonRequirementTxtSdkUtils.findRequirementsTxt(sdk)
+    return if (saved == vFile) {
+      PythonIcons.Python.ReferencedFile
+    } else {
+      null
     }
-    return null
   }
 }
