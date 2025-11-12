@@ -38,6 +38,7 @@ class AutoRefreshingOnVfsCloseRef<T : Closeable>(private val factory: (FSRecords
 
   override fun close() {
     try {
+      val attributeAccessor = attributeAccessor
       attributeAccessor?.close()
     }
     finally {

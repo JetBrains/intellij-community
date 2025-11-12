@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +16,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.joining;
 
 final class CompositeBinaryBuilderMap {
   private static final Logger LOG = Logger.getInstance(CompositeBinaryBuilderMap.class);
@@ -34,14 +35,22 @@ final class CompositeBinaryBuilderMap {
         if (!(builder instanceof BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?>)) {
           continue;
         }
+        @SuppressWarnings("unchecked")
+        BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object> compositeBuilder =
+          (BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object>)builder;
 
         StringBuilder cumulativeVersion = new StringBuilder();
-        cumulativeVersion.append(fileType.getName()).append("->").append(builder.getClass().getName()).append(':').append(builder.getStubVersion());
-        @SuppressWarnings({"unchecked", "rawtypes"})
-        BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object> compositeBuilder =
-          (BinaryFileStubBuilder.CompositeBinaryFileStubBuilder)builder;
+        cumulativeVersion.append(fileType.getName())
+          .append("->").append(builder.getClass().getName())
+          .append(':').append(builder.getStubVersion());
+
         cumulativeVersion.append(";");
-        cumulativeVersion.append(compositeBuilder.getAllSubBuilders().map(b -> compositeBuilder.getSubBuilderVersion(b)).sorted().collect(Collectors.joining(";")));
+        cumulativeVersion.append(
+          compositeBuilder.getAllSubBuilders()
+            .map(compositeBuilder::getSubBuilderVersion)
+            .sorted()
+            .collect(joining(";"))
+        );
 
         int enumeratedId = cumulativeVersionEnumerator.enumerate(cumulativeVersion.toString());
         LOG.debug("composite binary stub builder for " + fileType + " registered:  " +
@@ -106,7 +115,7 @@ final class CompositeBinaryBuilderMap {
   }
 
   private int getBuilderCumulativeVersion(@NotNull VirtualFile file) {
-    FileType type = ProgressManager.getInstance().computeInNonCancelableSection(() -> file.getFileType());
+    FileType type = ProgressManager.getInstance().computeInNonCancelableSection(file::getFileType);
     return myCumulativeVersionMap.getInt(type);
   }
 
