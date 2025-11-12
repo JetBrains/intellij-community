@@ -21,6 +21,10 @@
                      default="false"
                      bundle="messages.CollaborationToolsBundle"
                      groupKey="advanced.settings.collab.tools"/>
+    <advancedSetting id="show.review.threads.with.increased.margins"
+                     default="true"
+                     bundle="messages.CollaborationToolsBundle"
+                     groupKey="advanced.settings.collab.tools"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.collaboration.ui.codereview.CodeReviewCombinedDiffAdvancedSettingsChangeListener"

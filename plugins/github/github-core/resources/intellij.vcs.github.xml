@@ -98,12 +98,6 @@
     <registryKey defaultValue="true"
                  description="Disable new ways of adding multiline comments in unified diff"
                  key="github.pr.new.multiline.comments.disabled"/>"/>
-    <advancedSetting
-      id="show.review.threads.with.increased.margins"
-      default="true"
-      bundle="messages.CollaborationToolsBundle"
-      groupKey="advanced.settings.collab.tools"
-    />
 
     <vcs.github.gistContentsCollector
       implementation="org.jetbrains.plugins.github.DefaultGithubGistContentsCollector"
