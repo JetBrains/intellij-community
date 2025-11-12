@@ -16,7 +16,7 @@ class PropertiesSupportTest : GrazieTestBase() {
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8)
-    EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(null, false)
+    EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(null, true)
 
     myFixture.configureByText(
       "a.properties",
@@ -50,7 +50,10 @@ class PropertiesSupportTest : GrazieTestBase() {
     myFixture.checkHighlighting()
   }
 
-  fun `_test properties typos spellcheck performance`() {
+  fun `test properties typos spellcheck performance`() {
+    EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8)
+    EncodingProjectManager.getInstance(project).setNative2AsciiForPropertiesFiles(null, false)
+
     Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
       runHighlightTestForFile("ide/language/properties/i18n.properties")
     }.setup {
