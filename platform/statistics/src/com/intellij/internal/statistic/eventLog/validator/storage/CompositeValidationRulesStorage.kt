@@ -30,11 +30,22 @@ class CompositeValidationRulesStorage internal constructor(
       get() = null
   }
 
+  private class EmptyGroupValidators : IGroupValidators<EventLogBuild> {
+    override val eventGroupRules: IEventGroupRules? = null
+    override val versionFilter: IEventGroupsFilterRules<EventLogBuild>? = null
+  }
+
   override fun getGroupValidators(groupId: String): IGroupValidators<EventLogBuild> {
     val testGroupRules = myTestRulesStorage.getGroupRules(groupId)
     if (testGroupRules != null) {
       return TestGroupValidators(testGroupRules)
     }
+
+    // if custom metadata is used in statistics tool window, we don't go to regular metadata storage
+    if (myTestRulesStorage.hasCustomPathMetadata()) {
+      return EmptyGroupValidators()
+    }
+
     return myMetadataStorage.getGroupValidators(groupId)
   }
 
