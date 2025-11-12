@@ -64,10 +64,7 @@ public class XmlTextExtractor extends TextExtractor {
     }
 
     if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && allowedDomains.contains(LITERALS) && hasSuitableDialect(element)) {
-      TextContent content = builder.build(element, LITERALS);
-      if (content != null) {
-        return List.of(content);
-      }
+      return ContainerUtil.createMaybeSingletonList(builder.build(element, LITERALS));
     }
 
     return List.of();
@@ -110,9 +107,17 @@ public class XmlTextExtractor extends TextExtractor {
           inlineTags.add(tag);
           markupIndices.add(group.size());
         }
-        if (each instanceof OuterLanguageElement || each instanceof XmlEntityRef) {
+        if (each instanceof OuterLanguageElement) {
           flushGroup(true);
           unknownBefore = true;
+        }
+        if (each instanceof XmlEntityRef) {
+          if (HtmlUtilsKt.isShyEntity(each.getText())) {
+            unknownIndices.add(group.size());
+          } else {
+            flushGroup(true);
+            unknownBefore = true;
+          }
         }
 
         if (isText(each)) {
@@ -224,7 +229,7 @@ public class XmlTextExtractor extends TextExtractor {
   }
 
   private static boolean isInlineNonTextTag(String name) {
-    return "code".equals(name);
+    return "code".equals(name) || "wbr".equals(name);
   }
 
   private static boolean isAuthorTag(String name) {
@@ -257,6 +262,7 @@ public class XmlTextExtractor extends TextExtractor {
 
       HtmlCodeStyleSettings settings = CodeStyle.getCustomSettings(context.getContainingFile(), HtmlCodeStyleSettings.class);
       Set<String> inlineTags = ContainerUtil.newHashSet(settings.HTML_INLINE_ELEMENTS.split(","));
+      inlineTags.add("wbr");
       return tag -> {
         String name = tag.getName();
         if (HtmlUtilsKt.commonBlockElements.contains(name) || isBlockNonTextTag(name)) return TagKind.Block;
