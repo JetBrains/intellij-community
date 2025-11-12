@@ -64,7 +64,7 @@ class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     }
     else true
 
-    val canManage = isPoetryProject && getPoetryExecutable().successOrNull != null
+    val canManage = isPoetryProject && getPoetryExecutable() != null
     val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.poetry.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 

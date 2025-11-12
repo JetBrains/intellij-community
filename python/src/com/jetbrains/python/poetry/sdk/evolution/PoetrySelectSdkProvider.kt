@@ -33,9 +33,7 @@ import kotlin.io.path.name
 
 private class PoetrySelectSdkProvider() : EvoSelectSdkProvider {
   override fun getTreeElement(evoModuleSdk: EvoModuleSdk): EvoTreeElement = EvoTreeLazyNodeElement("Poetry", PythonIcons.Python.Origami) {
-    getPoetryExecutable().getOr {
-      return@EvoTreeLazyNodeElement it
-    }
+    getPoetryExecutable() ?:PyResult.localizedError(PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message"))
 
     val pyProjectTomlFile = withContext(Dispatchers.IO) {
       PyProjectToml.findFile(evoModuleSdk.module)

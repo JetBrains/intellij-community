@@ -60,7 +60,7 @@ suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String>
  * Returns the configured poetry executable or detects it automatically.
  */
 @Internal
-suspend fun getPoetryExecutable(eel: EelApi = localEel): PyResult<Path> = POETRY_TOOL.getToolExecutable(eel)
+suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? = POETRY_TOOL.getToolExecutable(eel)
 
 /**
  * Runs poetry command for the specified Poetry SDK.

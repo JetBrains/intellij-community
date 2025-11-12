@@ -54,7 +54,7 @@ private class UvCliImpl(val dispatcher: CoroutineDispatcher, val uv: Path) : UvC
   }
 }
 
-suspend fun detectUvExecutable(eel: EelApi): Path? = detectTool("uv", eel).successOrNull
+suspend fun detectUvExecutable(eel: EelApi): Path? = detectTool("uv", eel)
 
 suspend fun getUvExecutable(eel: EelApi = localEel): Path? {
   return PropertiesComponent.getInstance().uvPath?.takeIf { it.exists() } ?: detectUvExecutable(eel)

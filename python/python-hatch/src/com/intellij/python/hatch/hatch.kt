@@ -85,7 +85,7 @@ interface HatchService {
 
   suspend fun syncDependencies(envName: String? = null): PyResult<String>
 
-  suspend fun isHatchManagedProject(): PyResult<Boolean>
+  suspend fun isHatchManagedProject(): Boolean
 
   suspend fun createNewProject(projectName: String): PyResult<ProjectStructure>
 

@@ -20,7 +20,7 @@ import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
 
 /**
- * Detects the path to a CLI tool executable in the given Eel environment.
+ * Detects the path to a CLI tool executable in the given Eel environment, returns `null` it no tool found
  *
  * Search order (first match wins):
  * - [EelApi.exec.where] for the given [toolName].
@@ -45,10 +45,10 @@ suspend fun detectTool(
   toolName: String,
   eel: EelApi = localEel,
   additionalSearchPaths: List<Path> = listOf(),
-): PyResult<Path> = withContext(Dispatchers.IO) {
+): Path? = withContext(Dispatchers.IO) {
   val binary = eel.exec.where(toolName)?.asNioPath()
   if (binary != null) {
-    return@withContext PyResult.success(binary)
+    return@withContext binary
   }
 
   val binaryName = if (eel.platform.isWindows) "$toolName.exe" else toolName
@@ -62,8 +62,8 @@ suspend fun detectTool(
     }
   }
 
-  paths.firstOrNull { it.isExecutable() }?.let { PyResult.success(it) }
-  ?: PyResult.localizedError(PySdkBundle.message("cannot.find.executable", binaryName, localEel.descriptor.machine.name))
+  paths.firstOrNull { it.isExecutable() }
+
 }
 
 private fun MutableList<Path>.addUnixPaths(eel: EelApi, binaryName: String) {

@@ -188,7 +188,7 @@ sealed interface FileSystem<P : PathHolder> {
       return pythonHome.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
     }
 
-    override suspend fun which(cmd: String): PathHolder.Eel? = detectTool(cmd, eelApi).mapSuccess { PathHolder.Eel(it) }.successOrNull
+    override suspend fun which(cmd: String): PathHolder.Eel? = detectTool(cmd, eelApi)?.let { PathHolder.Eel(it) }
   }
 
   data class Target(

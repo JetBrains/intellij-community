@@ -23,7 +23,7 @@ class PoetryViewModel<P : PathHolder>(
     defaultPathSupplier = {
       when (fileSystem) {
         is FileSystem.Eel -> {
-          if (fileSystem.eelApi == localEel) getPoetryExecutable().getOrNull()?.let { PathHolder.Eel(it) } as P?
+          if (fileSystem.eelApi == localEel) getPoetryExecutable()?.let { PathHolder.Eel(it) } as P?
           else null // getPoetryExecutable() works only with localEel currently
         }
         else -> null

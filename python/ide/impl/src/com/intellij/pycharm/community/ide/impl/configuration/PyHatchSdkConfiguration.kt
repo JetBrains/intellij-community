@@ -42,7 +42,7 @@ class PyHatchSdkConfiguration : PyProjectTomlConfigurationExtension {
   ): EnvCheckerResult = reportRawProgress {
     it.text(PyCharmCommunityCustomizationBundle.message("sdk.set.up.hatch.project.analysis"))
     val hatchService = module.getHatchService().getOr { return EnvCheckerResult.CannotConfigure }
-    val canManage = if (checkToml) hatchService.isHatchManagedProject().orLogException(LOGGER) == true else true
+    val canManage = if (checkToml) hatchService.isHatchManagedProject() else true
     val intentionName = PyCharmCommunityCustomizationBundle.message("sdk.set.up.hatch.environment")
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 

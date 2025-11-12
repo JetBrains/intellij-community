@@ -9,8 +9,9 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrNull
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
@@ -30,27 +31,29 @@ internal data class ToolCommandExecutor(
   /**
    * Detects the executable in `$PATH`.
    */
-  suspend fun detectToolExecutable(eel: EelApi): PyResult<Path> = detectTool(toolName, eel, additionalSearchPaths = getAdditionalSearchPaths(eel))
+  suspend fun detectToolExecutable(eel: EelApi): Path? = detectTool(toolName, eel, additionalSearchPaths = getAdditionalSearchPaths(eel))
 
   /**
    * Returns the configured executable or detects it automatically.
    */
-  suspend fun getToolExecutable(eel: EelApi): PyResult<Path> {
+  suspend fun getToolExecutable(eel: EelApi): Path? {
     val toolPathFromSettings = getToolPathFromSettings(PropertiesComponent.getInstance())?.let { Path.of(it) }
     if (toolPathFromSettings != null && toolPathFromSettings.getEelDescriptor() == eel.descriptor) {
-      return PyResult.success(toolPathFromSettings)
+      return toolPathFromSettings
     }
     return detectToolExecutable(eel)
   }
+
+  suspend fun <T> runTool(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
+    val executable = getToolExecutable(dirPath?.getEelDescriptor()?.toEelApi() ?: localEel)
+                     ?: return PyResult.localizedError(PySdkBundle.message("cannot.find.executable", toolName, localEel.descriptor.machine.name))
+    return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args, transformer = transformer)
+  }
 }
 
+@RequiresBackgroundThread
 internal fun ToolCommandExecutor.detectToolExecutableOrNull(eel: EelApi): Path? {
-  return runBlockingCancellable { detectToolExecutable(eel) }.getOrNull()
-}
-
-internal suspend fun <T> ToolCommandExecutor.runTool(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> {
-  val executable = getToolExecutable(dirPath?.getEelDescriptor()?.toEelApi() ?: localEel).getOr { return it }
-  return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args, transformer = transformer)
+  return runBlockingCancellable { detectToolExecutable(eel) }
 }
 
 internal suspend fun ToolCommandExecutor.runTool(dirPath: Path?, vararg args: String): PyResult<String> =

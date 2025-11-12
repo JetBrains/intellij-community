@@ -38,7 +38,7 @@ internal fun detectPipEnvExecutableOrNull(eel: EelApi = localEel): Path?  = PIP_
  * Returns the configured pipenv executable or detects it automatically.
  */
 @Internal
-suspend fun getPipEnvExecutable(eel: EelApi = localEel): PyResult<Path> =  PIP_TOOL.getToolExecutable(eel)
+suspend fun getPipEnvExecutable(eel: EelApi = localEel): Path? =  PIP_TOOL.getToolExecutable(eel)
 
 /**
  * Sets up the pipenv environment under the modal progress window.
