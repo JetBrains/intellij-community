@@ -13,51 +13,62 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 
 import static java.util.stream.Collectors.joining;
 
-final class CompositeBinaryBuilderMap {
+final class CompositeBinaryBuilderMap implements Closeable {
   private static final Logger LOG = Logger.getInstance(CompositeBinaryBuilderMap.class);
-  private static final IntFileAttribute VERSION_STAMP = IntFileAttribute.create("stubIndex.cumulativeBinaryBuilder", 1);
+
+  /** Must be a single instance of IntFileAttribute per id */
+  private final static IntFileAttribute VERSIONS_STORAGE = IntFileAttribute.create("stubIndex.cumulativeBinaryBuilder", /*version: */ 1);
+
+  private final IntFileAttribute versionsStorage;
 
   private final Object2IntMap<FileType> myCumulativeVersionMap;
 
-  CompositeBinaryBuilderMap() throws IOException {
-    try (PersistentStringEnumerator cumulativeVersionEnumerator = new PersistentStringEnumerator(registeredCompositeBinaryBuilderFiles())) {
-      myCumulativeVersionMap = new Object2IntOpenHashMap<>();
+  /** @param useDummyAttributes don't touch persistence, just emulate behavior */
+  CompositeBinaryBuilderMap(boolean useDummyAttributes) throws IOException {
+    myCumulativeVersionMap = new Object2IntOpenHashMap<>();
+    if (useDummyAttributes) {
+      versionsStorage = IntFileAttribute.dummyAttribute();
+    }
+    else {
+      try (PersistentStringEnumerator cumulativeVersionEnumerator = new PersistentStringEnumerator(registeredCompositeBinaryBuilderFiles())) {
+        for (Map.Entry<FileType, BinaryFileStubBuilder> entry : BinaryFileStubBuilders.INSTANCE.getAllRegisteredExtensions().entrySet()) {
+          FileType fileType = entry.getKey();
+          BinaryFileStubBuilder builder = entry.getValue();
+          if (!(builder instanceof BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?>)) {
+            continue;
+          }
+          @SuppressWarnings("unchecked")
+          BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object> compositeBuilder =
+            (BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object>)builder;
 
-      for (Map.Entry<FileType, BinaryFileStubBuilder> entry : BinaryFileStubBuilders.INSTANCE.getAllRegisteredExtensions().entrySet()) {
-        FileType fileType = entry.getKey();
-        BinaryFileStubBuilder builder = entry.getValue();
-        if (!(builder instanceof BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?>)) {
-          continue;
+          StringBuilder cumulativeVersion = new StringBuilder();
+          cumulativeVersion.append(fileType.getName())
+            .append("->").append(builder.getClass().getName())
+            .append(':').append(builder.getStubVersion());
+
+          cumulativeVersion.append(";");
+          cumulativeVersion.append(
+            compositeBuilder.getAllSubBuilders()
+              .map(compositeBuilder::getSubBuilderVersion)
+              .sorted()
+              .collect(joining(";"))
+          );
+
+          int enumeratedId = cumulativeVersionEnumerator.enumerate(cumulativeVersion.toString());
+          LOG.debug("composite binary stub builder for " + fileType + " registered:  " +
+                    "id = " + enumeratedId + ", " +
+                    "value" + cumulativeVersion);
+          myCumulativeVersionMap.put(fileType, enumeratedId);
         }
-        @SuppressWarnings("unchecked")
-        BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object> compositeBuilder =
-          (BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object>)builder;
-
-        StringBuilder cumulativeVersion = new StringBuilder();
-        cumulativeVersion.append(fileType.getName())
-          .append("->").append(builder.getClass().getName())
-          .append(':').append(builder.getStubVersion());
-
-        cumulativeVersion.append(";");
-        cumulativeVersion.append(
-          compositeBuilder.getAllSubBuilders()
-            .map(compositeBuilder::getSubBuilderVersion)
-            .sorted()
-            .collect(joining(";"))
-        );
-
-        int enumeratedId = cumulativeVersionEnumerator.enumerate(cumulativeVersion.toString());
-        LOG.debug("composite binary stub builder for " + fileType + " registered:  " +
-                  "id = " + enumeratedId + ", " +
-                  "value" + cumulativeVersion);
-        myCumulativeVersionMap.put(fileType, enumeratedId);
       }
+      versionsStorage = VERSIONS_STORAGE;
     }
   }
 
@@ -66,10 +77,10 @@ final class CompositeBinaryBuilderMap {
     persistVersion(version, fileId);
   }
 
-  private static void persistVersion(int version, int fileId) {
+  private void persistVersion(int version, int fileId) {
     if (version == 0) return;
     try {
-      VERSION_STAMP.writeInt(fileId, version);
+      versionsStorage.writeInt(fileId, version);
     }
     catch (IOException e) {
       LOG.error("Can't persistVersion(#" + fileId + " = " + version + ")", e);
@@ -83,17 +94,23 @@ final class CompositeBinaryBuilderMap {
 
   void resetPersistedState(int fileId) {
     try {
-      VERSION_STAMP.writeInt(fileId, 0);
+      versionsStorage.writeInt(fileId, 0);
     }
     catch (IOException e) {
       LOG.error("Can't resetPersistedState(#" + fileId + ")", e);
     }
   }
 
+  @Override
+  public void close() throws IOException {
+    //since it is AutoRefreshingOnVfsCloseRef under the hood, the storage will be automatically re-opened on next access
+    versionsStorage.close();
+  }
+
   FileIndexingStateWithExplanation isUpToDateState(int fileId, @NotNull VirtualFile file) {
     int indexedVersion;
     try {
-      indexedVersion = VERSION_STAMP.readInt(fileId);
+      indexedVersion = versionsStorage.readInt(fileId);
     }
     catch (IOException e) {
       LOG.error(e);

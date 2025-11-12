@@ -25,9 +25,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   /** Cached {@code StubIndex.getInstance()} */
   private StubIndexImpl myCachedStubIndex;
 
-  private final @Nullable CompositeBinaryBuilderMap myCompositeBinaryBuilderMap = FileBasedIndex.USE_IN_MEMORY_INDEX
-                                                                                  ? null
-                                                                                  : new CompositeBinaryBuilderMap();
+  private final @NotNull CompositeBinaryBuilderMap myCompositeBinaryBuilderMap = new CompositeBinaryBuilderMap(FileBasedIndex.USE_IN_MEMORY_INDEX);
   private final @NotNull SerializationManagerEx mySerializationManager;
 
   StubUpdatingIndexStorage(@NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
@@ -155,6 +153,13 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
       }
       finally {
         mySerializationManager.performShutdown();
+
+        try {
+          myCompositeBinaryBuilderMap.close();
+        }
+        catch (IOException e) {
+          throw new StorageException(e);
+        }
       }
     }
   }
@@ -198,9 +203,6 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
 
   @Override
   protected FileIndexingStateWithExplanation isIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
-    if (myCompositeBinaryBuilderMap == null) {
-      return FileIndexingStateWithExplanation.upToDate();
-    }
     return myCompositeBinaryBuilderMap.isUpToDateState(fileId, file.getFile());
   }
 
@@ -210,21 +212,15 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   }
 
   private void setBinaryBuilderConfiguration(int fileId, @NotNull IndexedFile file) {
-    if (myCompositeBinaryBuilderMap != null) {
-      myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
-    }
+    myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
   }
 
   private void setBinaryBuilderConfiguration(int fileId, @NotNull Data fileData) {
-    if (myCompositeBinaryBuilderMap != null) {
-      myCompositeBinaryBuilderMap.persistState(fileId, fileData.myFileType);
-    }
+    myCompositeBinaryBuilderMap.persistState(fileId, fileData.myFileType);
   }
 
   private void resetBinaryBuilderConfiguration(int fileId) {
-    if (myCompositeBinaryBuilderMap != null) {
-      myCompositeBinaryBuilderMap.resetPersistedState(fileId);
-    }
+    myCompositeBinaryBuilderMap.resetPersistedState(fileId);
   }
 
   @Internal
