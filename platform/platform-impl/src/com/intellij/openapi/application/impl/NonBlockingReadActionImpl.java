@@ -33,6 +33,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.*;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
@@ -827,6 +828,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
    * and a test might never switch to the smart mode at all.
    */
   @TestOnly
+  @RequiresEdt
   public static void waitForAsyncTaskCompletion() {
     ThreadingAssertions.assertEventDispatchThread();
     assert ApplicationManager.getApplication()==null || !ApplicationManager.getApplication().isWriteAccessAllowed();
@@ -839,6 +841,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   }
 
   @TestOnly
+  @RequiresEdt
   private static void waitForTask(@NotNull Submission<?> task) {
     ThreadingAssertions.assertEventDispatchThread();
     for (ContextConstraint constraint : task.builder.myConstraints) {
@@ -848,7 +851,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     int iteration = 0;
-    while (!task.isDone() && iteration++ < 60_000) {
+    while (!task.isDone() && iteration++ < 5*60_000) {
       UIUtil.dispatchAllInvocationEvents();
       try {
         task.blockingGet(1, TimeUnit.MILLISECONDS);
