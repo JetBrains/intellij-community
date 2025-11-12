@@ -142,9 +142,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
       val localPort = targetPortBinding.local ?: NetUtils.findAvailableSocketPort()
       val targetAddress = EelTunnelsApi.HostAddress.Builder(targetPortBinding.target.toUShort()).build()
 
-      forwardingScope.launch {
-        forwardLocalPort(eel.tunnels, localPort, targetAddress)
-      }
+      forwardingScope.forwardLocalPort(eel.tunnels, localPort, targetAddress)
 
       myTargetPortBindings[targetPortBinding] = ResolvedPortBinding(
         localEndpoint = HostPort(NetUtils.getLocalHostString(), localPort),
