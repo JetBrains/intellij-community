@@ -389,7 +389,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
       return null;
     }
-    return PyUnionType.union(types);
+    return PyUnionType.unionOrNever(types);
   }
 
   @Override

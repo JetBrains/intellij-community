@@ -4147,6 +4147,17 @@ public class Py3TypeTest extends PyTestCase {
       expr = f()
       """);
   }
+  
+  // PY-81684
+  public void testFunctionAlwaysRaisesReturnsNever() {
+    // The function actually returns NoReturn, but its get converted to Never upon assignment to expr
+    doTest("Never", """
+      def f():
+          raise Exception()
+    
+      expr = f()
+    """);
+  }
 
   @TestFor(issues="PY-81651")
   public void testEqWithAny() {
