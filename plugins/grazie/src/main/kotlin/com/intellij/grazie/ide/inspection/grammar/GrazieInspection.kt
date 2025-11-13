@@ -135,7 +135,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
         val contents = findAllTextContents(file.viewProvider, TextContent.TextDomain.ALL)
         logger<GrazieInspection>().debug("Evaluating text length of: ${TextContentRelatedData(file, contents)}")
         val length = contents.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length }
-        CachedValueProvider.Result.create(length > MAX_TEXT_LENGTH_IN_FILE, service<GrazieConfig>())
+        CachedValueProvider.Result.create(length > MAX_TEXT_LENGTH_IN_FILE, service<GrazieConfig>(), file)
       }
     }
 
