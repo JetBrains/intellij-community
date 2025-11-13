@@ -43,6 +43,8 @@ internal class UvInterpreterSection(
 
   fun hintVisiblePredicate() = _uv and model.uvViewModel.uvExecutable.isNotNull()
 
+  fun getUvCreator() = uvCreator
+
   private suspend fun selectUvIfExists() {
     if (PropertiesComponent.getInstance().getValue(FAV_MODE) != null) return
     if (hasUvExecutable() && selectedMode.get() != PythonInterpreterSelectionMode.PROJECT_UV) {
