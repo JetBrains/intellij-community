@@ -8,7 +8,7 @@ import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.orLogExceptionAsWarn
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.asBinToExecute
 import com.jetbrains.python.sdk.configuration.EnvCheckerResult
 
@@ -18,5 +18,7 @@ internal suspend fun PythonBinary.findEnvOrNull(@IntentionName intentionName: St
 internal suspend fun Sdk.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? =
   asBinToExecute().validatePythonAndGetInfo().findEnvOrNull(intentionName)
 
-internal fun PyResult<PythonInfo>.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? =
-  orLogExceptionAsWarn(fileLogger())?.let { EnvCheckerResult.EnvFound(it, intentionName) }
+internal fun PyResult<PythonInfo>.findEnvOrNull(@IntentionName intentionName: String): EnvCheckerResult.EnvFound? {
+  return orLogException(logger)?.let { EnvCheckerResult.EnvFound(it, intentionName) }
+}
+private val logger = fileLogger()

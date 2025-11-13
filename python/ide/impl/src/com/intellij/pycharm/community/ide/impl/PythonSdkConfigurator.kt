@@ -51,6 +51,8 @@ import java.nio.file.Path
 
 
 class PythonSdkConfigurator : DirectoryProjectConfigurator {
+  private val logger = thisLogger()
+
   init {
     // new SDK configurator obsoletes this engine
     if (enableSDKAutoConfigurator) {
@@ -241,7 +243,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdkCreator == null) {
       return false
     }
-    sdkCreator(true).orLogException(thisLogger())
+    sdkCreator(true).orLogException(logger)
     return true
   }
 
