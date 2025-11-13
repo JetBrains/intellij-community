@@ -266,7 +266,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
                              try:
                                print("a")
                              finally:
-                               <warning descr="Python versions 2.7, 3.7, 3.14 do not support 'continue' inside 'finally' clause">continue</warning>""")
+                               <warning descr="Python versions 2.7, 3.7, 3.14, 3.15 do not support 'continue' inside 'finally' clause">continue</warning>""")
     );
   }
 
