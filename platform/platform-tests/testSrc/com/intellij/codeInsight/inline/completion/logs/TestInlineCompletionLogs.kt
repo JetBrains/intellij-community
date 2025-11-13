@@ -27,7 +27,7 @@ object TestInlineCompletionLogs {
    * Also see [singleSessionLog].
    */
   fun InlineCompletionLifecycleTestDSL.noSessionLogs(block: suspend InlineCompletionLifecycleTestDSL.() -> Unit) {
-    val events = FUCollectorTestCase.collectLogEvents("ML", fixture.testRootDisposable) {
+    val events = FUCollectorTestCase.collectLogEvents("ML", fixture.testRootDisposable, true) {
       runBlocking {
         block()
       }
@@ -58,7 +58,7 @@ object TestInlineCompletionLogs {
   ): List<SingleSessionLog> {
     val disposable = Disposer.newDisposable()
     val events = try {
-      FUCollectorTestCase.collectLogEvents("ML", disposable) {
+      FUCollectorTestCase.collectLogEvents("ML", parentDisposable = disposable, escapeChars = true) {
         runBlocking {
           block()
         }
