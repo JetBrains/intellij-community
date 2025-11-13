@@ -60,7 +60,7 @@ abstract class SuspendContextImpl @ApiStatus.Internal constructor(
   internal var myIsVotedForResume: Boolean = true
 
   @JvmField
-  protected var mySteppingThreadForResumeOneSteppingCurrentMode: ThreadReferenceProxyImpl? = null
+  internal var mySteppingThreadForResumeOneSteppingCurrentMode: ThreadReferenceProxyImpl? = null
 
   @JvmField
   internal var threadFilterWasPassed = true

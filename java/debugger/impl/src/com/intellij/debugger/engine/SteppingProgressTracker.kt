@@ -8,6 +8,9 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.openapi.ui.MessageType
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl
+import com.sun.jdi.ThreadReference
 import com.sun.jdi.request.EventRequest
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.Nls
@@ -20,6 +23,10 @@ private data class TrackedSteppingData(
 ) {
   fun isFit(thread: ThreadReferenceProxy?, suspendContext: SuspendContextImpl): Boolean {
     return thread == null || (filter != null && filter.checkSameThread(thread.threadReference, suspendContext))
+  }
+
+  fun isThreadStepping(thread: ThreadReference): Boolean {
+    return filter?.realThread == thread
   }
 }
 
@@ -46,6 +53,21 @@ internal class SteppingProgressTracker(private val debuggerProcessImpl: DebugPro
 
   fun addStepping(stepCompetedStatus: CompletableDeferred<Unit>, isSuspendAllStepping: Boolean, filter: LightOrRealThreadInfo?) {
     trackedStepping.add(TrackedSteppingData(stepCompetedStatus, isSuspendAllStepping, filter))
+  }
+
+  fun processTheadDeath(thread: ThreadReference) {
+    val needToEndTracking = trackedStepping.filter { it.isThreadStepping(thread) }
+    if (needToEndTracking.isEmpty()) return
+
+    for (steppingData in needToEndTracking) {
+      steppingData.stepCompetedStatus.complete(Unit)
+      trackedStepping.remove(steppingData)
+    }
+
+    val message = JavaDebuggerBundle.message("message.stepping.thread.has.been.stopped")
+    XDebuggerManagerImpl.getNotificationGroup()
+      .createNotification(message, MessageType.INFO)
+      .notify(debuggerProcessImpl.project)
   }
 }
 

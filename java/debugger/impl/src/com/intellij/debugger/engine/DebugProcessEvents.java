@@ -390,6 +390,11 @@ public class DebugProcessEvents extends DebugProcessImpl {
         enableNonSuspendingRequest(platformThreadsOnly(requestManager.createThreadDeathRequest()),
                                    event -> {
                                      ThreadReference thread = ((ThreadDeathEvent)event).thread();
+
+                                     mySteppingProgressTracker.processTheadDeath(thread);
+
+                                     ThreadSteppingMonitor.checkSteppingIsOverOnThreadDeath((SuspendManagerImpl)getSuspendManager(), thread);
+
                                      machineProxy.threadStopped(thread);
                                      forEachSafe(myDebugProcessListeners, it -> it.threadStopped(this, thread));
                                    });

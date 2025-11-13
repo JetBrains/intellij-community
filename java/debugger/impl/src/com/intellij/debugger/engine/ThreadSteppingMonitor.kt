@@ -34,4 +34,15 @@ internal object ThreadSteppingMonitor {
       }
     }
   }
+
+  @JvmStatic
+  fun checkSteppingIsOverOnThreadDeath(suspendManager: SuspendManagerImpl, thread: ThreadReference) {
+    val suspendAllContexts = suspendManager.suspendAllContexts
+    val toResume = suspendAllContexts.filter { it.mySteppingThreadForResumeOneSteppingCurrentMode?.threadReference == thread }
+    for (suspendContext in toResume) {
+      suspendManager.resume(suspendContext)
+    }
+
+    suspendManager.myExplicitlyResumedThreads.removeIf { it.threadReference == thread }
+  }
 }
