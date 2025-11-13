@@ -20,7 +20,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
@@ -94,14 +93,11 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   protected open val additionalEnabledContextLanguages: Set<Language> = emptySet()
 
-  protected open val enableGrazieChecker: Boolean = false
-
   override fun getBasePath() = "community/plugins/grazie/src/test/testData"
 
   override fun setUp() {
     super.setUp()
     maskSaxParserFactory(testRootDisposable)
-    if (enableGrazieChecker) Registry.get("spellchecker.grazie.enabled").setValue(true, testRootDisposable)
     myFixture.enableInspections(*inspectionTools)
 
     enableProofreadingFor(enabledLanguages)

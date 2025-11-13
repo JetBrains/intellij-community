@@ -16,7 +16,6 @@ class MarkdownSupportTest : GrazieTestBase() {
     "LanguageTool.EN.COMMA_COMPOUND_SENTENCE",
     "LanguageTool.EN.EN_QUOTES"
   )
-  override val enableGrazieChecker: Boolean = true
 
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))

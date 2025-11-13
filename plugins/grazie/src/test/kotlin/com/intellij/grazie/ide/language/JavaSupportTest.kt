@@ -19,7 +19,6 @@ import java.util.function.Consumer
 
 
 class JavaSupportTest : GrazieTestBase() {
-  override val enableGrazieChecker: Boolean = true
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST

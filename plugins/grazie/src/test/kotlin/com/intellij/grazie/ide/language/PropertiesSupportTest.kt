@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets
 
 @Suppress("NonAsciiCharacters")
 class PropertiesSupportTest : GrazieTestBase() {
-  override val enableGrazieChecker: Boolean = true
 
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))

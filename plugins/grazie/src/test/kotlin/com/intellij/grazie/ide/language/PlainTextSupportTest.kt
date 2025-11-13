@@ -9,7 +9,6 @@ import com.intellij.ui.TextFieldWithAutoCompletion
 
 
 class PlainTextSupportTest : GrazieTestBase() {
-  override val enableGrazieChecker: Boolean = true
 
   fun `test grammar check in file`() {
     enableProofreadingFor(setOf(Lang.RUSSIAN))
