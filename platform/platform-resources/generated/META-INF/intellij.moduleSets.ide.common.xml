@@ -158,6 +158,15 @@
     <!-- </editor-fold> -->
     <!-- </editor-fold> -->
 
+    <!-- <editor-fold desc="nested: essential > debugger"> -->
+    <module name="intellij.platform.debugger.impl.frontend"/>
+    <module name="intellij.platform.debugger.impl.backend"/>
+    <module name="intellij.platform.debugger.impl.shared" loading="embedded"/>
+    <module name="intellij.platform.debugger.impl.rpc" loading="embedded"/>
+    <module name="intellij.platform.debugger.impl" loading="embedded"/>
+    <module name="intellij.platform.debugger" loading="embedded"/>
+    <!-- </editor-fold> -->
+
     <!-- <editor-fold desc="direct modules"> -->
     <module name="intellij.platform.scopes" loading="embedded"/>
     <module name="intellij.platform.scopes.backend"/>
@@ -177,10 +186,6 @@
     <module name="intellij.platform.editor.frontend"/>
     <module name="intellij.platform.managed.cache" loading="embedded"/>
     <module name="intellij.platform.managed.cache.backend"/>
-    <module name="intellij.platform.debugger.impl.frontend"/>
-    <module name="intellij.platform.debugger.impl.backend"/>
-    <module name="intellij.platform.debugger.impl.shared" loading="embedded"/>
-    <module name="intellij.platform.debugger.impl.rpc" loading="embedded"/>
     <module name="intellij.platform.bookmarks.backend"/>
     <module name="intellij.platform.bookmarks.frontend"/>
     <module name="intellij.platform.recentFiles"/>

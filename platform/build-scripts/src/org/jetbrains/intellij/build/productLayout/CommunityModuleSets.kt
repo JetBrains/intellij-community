@@ -86,6 +86,9 @@ object CommunityModuleSets : ModuleSetProvider {
     // Include minimal essential modules (core backend/frontend, editor, search)
     moduleSet(essentialMinimal())
 
+    // TODO: may be debugger shouldn't be essential? E.g. gateway doesn't need it.
+    moduleSet(debugger())
+
     // The loading="embedded" attribute is required here because the intellij.platform.find module (which is loaded
     // in embedded mode) has a compile dependency on intellij.platform.scopes. Without marking scopes as embedded,
     // this would cause NoClassDefFoundError at runtime when classes from find try to use classes from scopes.
@@ -118,11 +121,6 @@ object CommunityModuleSets : ModuleSetProvider {
     embeddedModule("intellij.platform.managed.cache")
     module("intellij.platform.managed.cache.backend")
 
-    module("intellij.platform.debugger.impl.frontend")
-    module("intellij.platform.debugger.impl.backend")
-    embeddedModule("intellij.platform.debugger.impl.shared")
-    embeddedModule("intellij.platform.debugger.impl.rpc")
-
     module("intellij.platform.bookmarks.backend")
     module("intellij.platform.bookmarks.frontend")
 
@@ -145,6 +143,19 @@ object CommunityModuleSets : ModuleSetProvider {
 
     embeddedModule("intellij.platform.analysis")
     embeddedModule("intellij.platform.polySymbols")
+  }
+
+  /**
+   * Provides the platform for implementing Debugger functionality.
+   * Corresponds to intellij.moduleSets.debugger.xml
+   */
+  fun debugger(): ModuleSet = moduleSet("debugger") {
+    module("intellij.platform.debugger.impl.frontend")
+    module("intellij.platform.debugger.impl.backend")
+    embeddedModule("intellij.platform.debugger.impl.shared")
+    embeddedModule("intellij.platform.debugger.impl.rpc")
+    embeddedModule("intellij.platform.debugger.impl")
+    embeddedModule("intellij.platform.debugger")
   }
 
   /**
