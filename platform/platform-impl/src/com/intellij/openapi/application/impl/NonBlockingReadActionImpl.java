@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.*;
 import com.intellij.util.concurrency.Semaphore;
@@ -359,11 +360,16 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
         };
         //noinspection TestOnlyProblems
-        Disposable parentDisposable =
-          parent instanceof ProjectImpl && ((ProjectEx)parent).isLight() ? ((ProjectImpl)parent).getEarlyDisposable() : parent;
-        if (!Disposer.tryRegister(parentDisposable, child)) {
+        Disposable parentDisposable = parent instanceof ProjectImpl && ((ProjectEx)parent).isLight() ? ((ProjectImpl)parent).getEarlyDisposable() : parent;
+        try {
+          if (!Disposer.tryRegister(parentDisposable, child)) {
+            cancel();
+            break;
+          }
+        }
+        catch (IncorrectOperationException e) {
           cancel();
-          break;
+          throw e;
         }
         myExpirationDisposables.set(i, child);
       }

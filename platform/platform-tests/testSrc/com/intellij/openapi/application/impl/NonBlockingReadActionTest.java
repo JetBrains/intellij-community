@@ -542,78 +542,74 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void test_submit_doesNot_fail_without_readAction_when_parent_isDisposed() throws Exception {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
+    try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
+      for (int i = 0; i < 50; i++) {
+        List<Disposable> parents = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
+        List<Future<?>> futures = new ArrayList<>();
+        for (Disposable parent : parents) {
+          futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {
+          }).expireWith(parent).submit(executor).get()));
+          futures.add(executor.submit(() -> {
+            try {
+              ReadAction.nonBlocking(() -> {
+              }).expireWith(parent).executeSynchronously();
+            }
+            catch (ProcessCanceledException ignore) {
+            }
+          }));
+        }
+        parents.forEach(Disposer::dispose);
 
-    for (int i = 0; i < 50; i++) {
-      List<Disposable> parents = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
-      List<Future<?>> futures = new ArrayList<>();
-      for (Disposable parent : parents) {
-        futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).submit(executor).get()));
-        futures.add(executor.submit(() -> {
-          try {
-            ReadAction.nonBlocking(() -> {}).expireWith(parent).executeSynchronously();
-          }
-          catch (ProcessCanceledException ignore) {
-          }
-        }));
+        ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
       }
-      parents.forEach(Disposer::dispose);
-
-      ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
     }
   }
 
   public void testSubmitDoesNotFailWhenParentsAreDisposedConcurrently() throws Exception {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
-
-    for (int i = 0; i < 50; i++) {
-      List<CheckedDisposable> parents = new ArrayList<>(200);
-      List<Future<?>> futures = new ArrayList<>();
-      for (int j = 0; j < 100; j++) {
-        CheckedDisposable parent = Disposer.newCheckedDisposable();
-        CheckedDisposable parent2 = Disposer.newCheckedDisposable();
-        parents.add(parent);
-        parents.add(parent2);
-        futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).submit(executor).get()));
-        futures.add(executor.submit(() -> {
-          try {
-            ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).executeSynchronously();
-          }
-          catch (ProcessCanceledException ignore) {
-          }
-        }));
-      }
-      parents.forEach(Disposer::dispose);
-
-      ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
-      for (CheckedDisposable parent : parents) {
-        assertTrue(parent.isDisposed());
+    try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
+      for (int i = 0; i < 5000; i++) {
+        List<Future<?>> futures = new ArrayList<>();
+        for (int j = 0; j < 100; j++) {
+          CheckedDisposable parent = Disposer.newCheckedDisposable();
+          CheckedDisposable parent2 = Disposer.newCheckedDisposable();
+          futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).submit(executor).get()));
+          futures.add(executor.submit(() -> {
+            try {
+              ReadAction.nonBlocking(() -> {}).expireWith(parent).expireWith(parent2).executeSynchronously();
+            }
+            catch (ProcessCanceledException ignore) {
+            }
+          }));
+          futures.add(executor.submit(() -> Disposer.dispose(parent)));
+          futures.add(executor.submit(() -> Disposer.dispose(parent2)));
+        }
+        ConcurrencyUtil.getAll(50, TimeUnit.SECONDS, futures);
       }
     }
   }
 
   public void test_executeSynchronously_doesNot_return_null_with_not_nullable_callable() {
-    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
+    try (ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 1000)) {
+      for (int i = 0; i < 50; i++) {
+        List<Disposable> disposables = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
+        List<Future<?>> futuresList = new ArrayList<>();
+        for (Disposable disposable : disposables) {
+          futuresList.add(executor.submit(() -> {
+            try {
+              Boolean value = ReadAction.nonBlocking(() -> {
+                return Boolean.TRUE;
+              }).expireWith(disposable).executeSynchronously();
+              assertNotNull(value);
+            }
+            catch (ProcessCanceledException e) {
+              //valid outcome
+            }
+          }));
+        }
+        disposables.forEach(Disposer::dispose);
 
-    for (int i = 0; i < 50; i++) {
-      List<Disposable> disposables = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
-      List<Future<?>> futuresList = new ArrayList<>();
-      for (Disposable disposable : disposables) {
-        futuresList.add(executor.submit(() -> {
-          try {
-            Boolean value = ReadAction.nonBlocking(() -> {
-              return Boolean.TRUE;
-            }).expireWith(disposable).executeSynchronously();
-            assertNotNull(value);
-          }
-          catch (ProcessCanceledException e) {
-            //valid outcome
-          }
-        }));
+        futuresList.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
       }
-      disposables.forEach(Disposer::dispose);
-
-      futuresList.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
     }
   }
 

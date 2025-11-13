@@ -196,7 +196,7 @@ public final class Disposer {
   }
 
   public static void dispose(@NotNull Disposable disposable) {
-    dispose(dereferenceIfNeeded(disposable), true);
+    dispose(disposable, true);
   }
 
   /**
