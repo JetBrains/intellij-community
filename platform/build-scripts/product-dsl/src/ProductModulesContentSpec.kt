@@ -97,6 +97,13 @@ class ProductModulesContentSpec(
   @JvmField val productModuleAliases: List<String>,
 
   /**
+   * Product vendor name for the `<vendor>` tag in plugin.xml.
+   * If null (default), no vendor tag will be generated.
+   * Example: "JetBrains"
+   */
+  @JvmField val vendor: String? = null,
+
+  /**
    * XML includes to add (xi:include directives).
    * These will be generated before module content blocks.
    * Each include specifies a module name and resource path within that module.
@@ -136,6 +143,7 @@ class ProductModulesContentSpec(
 @ProductDslMarker
 class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   private val productModuleAliases = mutableListOf<String>()
+  private var vendor: String? = null
   private val xmlIncludes = mutableListOf<DeprecatedXmlInclude>()
   private val moduleSets = mutableListOf<ModuleSetWithOverrides>()
   private val additionalModules = mutableListOf<ContentModule>()
@@ -164,6 +172,14 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   }
 
   /**
+   * Set the product vendor for the `<vendor>` tag in plugin.xml.
+   * Example: vendor("JetBrains")
+   */
+  fun vendor(value: String) {
+    this.vendor = value
+  }
+
+  /**
    * Include another ProductModulesContentSpec, merging all its contents into this builder.
    * This enables composition of product spec fragments for reuse across products.
    *
@@ -189,6 +205,9 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
 
     // Flatten content (existing behavior for backward compatibility)
     productModuleAliases.addAll(spec.productModuleAliases)
+    if (spec.vendor != null) {
+      vendor = spec.vendor
+    }
     xmlIncludes.addAll(spec.deprecatedXmlIncludes)
     moduleSets.addAll(spec.moduleSets)
     additionalModules.addAll(spec.additionalModules)
@@ -306,6 +325,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   internal fun build(): ProductModulesContentSpec {
     return ProductModulesContentSpec(
       productModuleAliases = java.util.List.copyOf(productModuleAliases),
+      vendor = vendor,
       deprecatedXmlIncludes = java.util.List.copyOf(xmlIncludes),
       moduleSets = java.util.List.copyOf(moduleSets),
       additionalModules = java.util.List.copyOf(additionalModules),

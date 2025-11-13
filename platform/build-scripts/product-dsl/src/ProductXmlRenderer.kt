@@ -48,6 +48,9 @@ internal fun StringBuilder.appendOpeningTag(
   if (!includesPlatformLang) {
     append("  <id>com.intellij</id>\n")
     append("  <name>IDEA CORE</name>\n")
+    if (spec.vendor != null) {
+      append("  <vendor>${spec.vendor}</vendor>\n")
+    }
   }
 }
 
