@@ -137,6 +137,7 @@ LEADING_TOKEN_MARKDOWN="///"
       (\\\]) { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
       (\\\() { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
       (\\\)) { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
+      (\\\`) { yybegin(COMMENT_DATA); return JavaDocSyntaxTokenType.DOC_COMMENT_DATA; }
 
       [,] {
           yybegin(COMMENT_DATA);
