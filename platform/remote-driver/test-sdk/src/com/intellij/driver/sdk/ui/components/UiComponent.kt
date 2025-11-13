@@ -467,10 +467,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun rightClick(point: Point? = null) {
     LOG.info("Right click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      withComponent { robot.click(it, point, RemoteMouseButton.RIGHT, 1) }
+      withComponent { robot.click(it, point, RemoteMouseButton.RIGHT) }
     }
     else {
-      withComponent { robot.rightClick(it) }
+      withComponent { robot.click(it, RemoteMouseButton.RIGHT) }
     }
   }
 
