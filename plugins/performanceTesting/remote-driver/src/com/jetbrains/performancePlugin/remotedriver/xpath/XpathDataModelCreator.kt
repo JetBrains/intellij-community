@@ -28,13 +28,15 @@ class XpathDataModelCreator(val onlyVisibleComponents: Boolean = true) {
     parentElement: Element,
     hierarchy: ComponentHierarchy,
     component: Component,
-    targetComponent: Component? = null
+    targetComponent: Component? = null,
   ) {
     val element = createElement(doc, component, targetComponent)
     parentElement.appendChild(element)
 
     val allChildren = hierarchy.childrenOf(component)
-    val filteredChildren = allChildren.filter(componentFilter)
+    val filteredChildren = elementProcessors.fold(allChildren.filter(componentFilter)) { items, processor ->
+      processor.filterChildItems(component, items, onlyVisibleComponents)
+    }
     val exceptionChildren = if (System.getProperty("os.name").startsWith("mac", true)) {
       allChildren.filter {
         it.javaClass.name.contains("DialogWrapperPeerImpl")
