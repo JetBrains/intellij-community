@@ -48,7 +48,6 @@ import kotlin.io.path.Path
 import kotlin.io.path.copyToRecursively
 import kotlin.io.path.exists
 
-// Adapted from com.intellij.clion.testFramework.nolang.junit5.core.FixturesKt.testNameFixture
 @JvmOverloads
 @TestOnly
 fun testNameFixture(lowerCaseFirstLetter: Boolean = true): TestFixture<String> = testFixture {

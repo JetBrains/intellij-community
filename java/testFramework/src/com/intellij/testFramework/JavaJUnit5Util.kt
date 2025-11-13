@@ -39,8 +39,7 @@ object JavaJUnit5Util {
   @TestOnly
   @RequiresEdt
   fun setUpJdk(level: LanguageLevel, project: Project, module: Module, disposable: Disposable) {
-    IdeaTestUtil.getMockJdk(level)
-    val jdk = IdeaTestUtil.getMockJdk9()
+    val jdk = IdeaTestUtil.getMockJdk(level)
     WriteAction.runAndWait<Exception> {
       ProjectJdkTable.getInstance().addJdk(jdk, disposable)
       ProjectRootManager.getInstance(project).setProjectSdk(jdk)

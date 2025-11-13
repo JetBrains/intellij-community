@@ -111,7 +111,7 @@ private fun getTestDataPathString(context: TestContext): String {
    return resolvedPath.pathString
   }
   // If the project opened as IJ community, then the test path for community will be duplicated, e.g. it is $HOME/community/community/...
-  // We need to handle this scenario
+  // To handle this scenario, we are trying to resolve the path $HOME/community/../community/...
   check(rootPath.startsWith(COMMUNITY_PATH_PREFIX)) {
     "The test data path is not located in community folder, but it doesn't exist in the ultimate."
   }

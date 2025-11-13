@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration
 
-import com.intellij.openapi.project.Project
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.JavaJUnit5Util.javaCodeInsightFixture
 import com.intellij.testFramework.JavaJUnit5Util.setUpJdk
@@ -13,7 +12,6 @@ import com.intellij.testFramework.junit5.fixture.*
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.nio.file.Path
 
 
 @TestApplication
@@ -29,8 +27,8 @@ class TryFinallyCanBeTryWithResourcesInspectionTest {
     }
 
     private val disposable by disposableFixture()
-    private val tempDir: TestFixture<Path> = tempPathFixture()
-    private val project: TestFixture<Project> = projectFixture(tempDir, openAfterCreation = true)
+    private val tempDir = tempPathFixture()
+    private val project = projectFixture(tempDir, openAfterCreation = true)
     private val module by project.moduleFixture(tempDir, addPathToSourceRoot = true)
   }
 
