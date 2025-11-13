@@ -17,6 +17,7 @@ import java.nio.file.Path
 data class ContentModule(
   @JvmField val name: String,
   @JvmField val loading: ModuleLoadingRule? = null,
+  @JvmField val includeDependencies: Boolean = false,
 )
 
 /**
@@ -65,8 +66,8 @@ class ModuleSetBuilder {
   /**
    * Add a single module with EMBEDDED loading.
    */
-  fun embeddedModule(name: String) {
-    modules.add(ContentModule(name, ModuleLoadingRule.EMBEDDED))
+  fun embeddedModule(name: String, includeDependencies: Boolean = false) {
+    modules.add(ContentModule(name, ModuleLoadingRule.EMBEDDED, includeDependencies))
   }
 
   /**

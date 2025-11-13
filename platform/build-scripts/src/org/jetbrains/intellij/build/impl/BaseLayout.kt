@@ -219,6 +219,7 @@ class ModuleItem(
   @JvmField val relativeOutputFile: String,
   @JvmField val reason: String?,
   @JvmField val moduleSet: List<String>? = null,
+  @JvmField val includeDependencies: Boolean = false,
 ) {
   init {
     require(!moduleName.isEmpty()) {
@@ -234,5 +235,5 @@ class ModuleItem(
 
   override fun hashCode(): Int = 31 * moduleName.hashCode() + relativeOutputFile.hashCode()
 
-  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason, moduleSet=$moduleSet)"
+  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason, moduleSet=$moduleSet, includeDependencies=$includeDependencies)"
 }

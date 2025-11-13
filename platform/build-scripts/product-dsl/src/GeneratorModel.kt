@@ -39,6 +39,8 @@ data class ModuleWithLoading(
   @JvmField val name: String,
   /** Effective loading mode (null means default/no attribute) */
   @JvmField val loading: ModuleLoadingRule?,
+  /** Whether to include dependencies of this module */
+  @JvmField val includeDependencies: Boolean = false,
 )
 
 /**
@@ -52,6 +54,8 @@ data class ProductContentBuildResult(
   @JvmField val contentBlocks: List<ContentBlock>,
   /** Mapping from module name to its module set chain as list (e.g., ["parent", "child"]) */
   @JvmField val moduleToSetChainMapping: Map<String, List<String>>,
+  /** Mapping from module name to includeDependencies flag */
+  @JvmField val moduleToIncludeDependenciesMapping: Map<String, Boolean>,
 )
 
 /**

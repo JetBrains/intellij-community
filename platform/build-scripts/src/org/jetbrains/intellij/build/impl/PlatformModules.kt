@@ -255,7 +255,26 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
       context = context
     ),
     context = context,
-  )
+  ).toMutableSet()
+
+  // Compute and add dependencies for embedded modules with includeDependencies=true
+  val embeddedModulesWithDeps = productPluginContentModules.filter {
+    it.reason == ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES && it.includeDependencies
+  }
+  if (embeddedModulesWithDeps.isNotEmpty()) {
+    // Collect modules already in layout
+    val alreadyIncluded = layout.includedModules.mapTo(HashSet()) { it.moduleName }
+    productPluginContentModules.mapTo(alreadyIncluded) { it.moduleName }
+    alreadyIncluded.addAll(explicitModuleNames)
+
+    val embeddedDependencies = computeEmbeddedModuleDependencies(
+      alreadyIncluded = alreadyIncluded,
+      embeddedModules = embeddedModulesWithDeps,
+      productLayout = productLayout,
+      context = context,
+    )
+    productPluginContentModules.addAll(embeddedDependencies)
+  }
 
   val implicit = computeImplicitRequiredModules(
     explicit = explicitModuleNames,
@@ -304,7 +323,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   }
 
   // as a separate step, not a part of computing implicitModules, as we should collect libraries from such implicitly included modules
-  layout.collectProjectLibrariesFromIncludedModules(context = context) { lib, module ->
+  layout.collectProjectLibrariesFromIncludedModules(context) { lib, module ->
     val libName = lib.name
     // this module is used only when running IDE from sources, no need to include its dependencies, see IJPL-125
     if (module.name == "intellij.platform.buildScripts.downloader" && libName == "zstd-jni") {
@@ -339,7 +358,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
 
 private suspend fun computePartialListToResolveIncludesAndCollectProductModules(
   layout: PlatformLayout,
-  explicitModuleNames: List<String>,
+  explicitModuleNames: Collection<String>,
   productLayout: ProductModulesLayout,
   context: BuildContext,
 ): Collection<String> {
@@ -453,8 +472,57 @@ private fun toModuleItemSequence(list: Collection<String>, productLayout: Produc
     .map { ModuleItem(moduleName = it, relativeOutputFile = PlatformJarNames.getPlatformModuleJarName(it, frontendModuleFilter), reason = reason) }
 }
 
+/**
+ * Computes transitive dependencies for embedded modules that have `includeDependencies=true`.
+ * Dependencies are packaged into the same JAR as their parent embedded module.
+ *
+ * @param embeddedModules embedded modules with includeDependencies=true (already filtered)
+ * @param productLayout product modules layout
+ * @param context build context
+ * @return set of module items representing dependencies to add
+ */
+private fun computeEmbeddedModuleDependencies(
+  embeddedModules: Collection<ModuleItem>,
+  productLayout: ProductModulesLayout,
+  alreadyIncluded: HashSet<String>,
+  context: BuildContext,
+): Set<ModuleItem> {
+  val result = LinkedHashSet<ModuleItem>()
+  val rootChain = persistentListOf<String>()
+
+  // For each embedded module, compute its transitive dependencies
+  for (embeddedModule in embeddedModules) {
+    val moduleName = embeddedModule.moduleName
+    val relativeOutputFile = embeddedModule.relativeOutputFile
+    val moduleSet = embeddedModule.moduleSet
+
+    // Prepare list for dependency computation - same pattern as computeImplicitRequiredModules
+    val rootList = listOf(moduleName to rootChain)
+    val deps = mutableListOf<Pair<String, PersistentList<String>>>()
+    computeTransitive(list = rootList, unique = alreadyIncluded, result = deps, context = context)
+
+    // Add dependencies to result, filtering out excluded modules
+    for ((depName, chain) in deps) {
+      if (productLayout.excludedModuleNames.contains(depName)) {
+        continue
+      }
+
+      result.add(
+        ModuleItem(
+          moduleName = depName,
+          relativeOutputFile = relativeOutputFile, // Same JAR as parent embedded module
+          reason = ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES + " <- " + chain.asReversed().joinToString(separator = " <- "),
+          moduleSet = moduleSet,
+        )
+      )
+    }
+  }
+
+  return result
+}
+
 private suspend fun computeImplicitRequiredModules(
-  explicit: List<String>,
+  explicit: Collection<String>,
   layout: PlatformLayout,
   productPluginContentModules: Set<String>,
   productLayout: ProductModulesLayout,
@@ -499,7 +567,7 @@ private suspend fun computeImplicitRequiredModules(
   val pluginsContents = computeContentModulesPluginsWhichUseIdeaClassloader(context)
 
   val requiredDependencies = mutableListOf<Pair<String, PersistentList<String>>>()
-  computeTransitive(list = rootList, context = context, unique = unique, result = requiredDependencies)
+  computeTransitive(list = rootList, unique = unique, result = requiredDependencies, context = context)
   val requiredModules = requiredDependencies.filter { it.first !in pluginsContents }
 
   if (validateImplicitPlatformModule) {
@@ -526,9 +594,9 @@ private fun computeContentModulesPluginsWhichUseIdeaClassloader(context: BuildCo
 
 private fun computeTransitive(
   list: List<Pair<String, PersistentList<String>>>,
-  context: BuildContext,
   unique: HashSet<String>,
   result: MutableList<Pair<String, PersistentList<String>>>,
+  context: BuildContext,
 ) {
   val oldSize = result.size
   for ((dependentName, dependentChain) in list) {
@@ -543,7 +611,7 @@ private fun computeTransitive(
   }
 
   if (oldSize != result.size) {
-    computeTransitive(list = result.subList(oldSize, result.size).sortedBy { it.first }, context = context, unique = unique, result = result)
+    computeTransitive(list = result.subList(oldSize, result.size).sortedBy { it.first }, unique = unique, result = result, context = context)
   }
 }
 
@@ -561,5 +629,8 @@ internal object ModuleIncludeReasons {
   const val PRODUCT_MODULES: String = "productModule"
   const val PRODUCT_EMBEDDED_MODULES: String = "productEmbeddedModule"
 
-  fun isProductModule(reason: String?): Boolean = reason == PRODUCT_MODULES || reason == PRODUCT_EMBEDDED_MODULES
+  fun isProductModule(reason: String?): Boolean =
+    reason == PRODUCT_MODULES ||
+    reason == PRODUCT_EMBEDDED_MODULES ||
+    reason?.startsWith("$PRODUCT_EMBEDDED_MODULES <- ") == true
 }

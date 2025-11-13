@@ -55,10 +55,12 @@ internal fun processAndGetProductPluginContentModules(
 
   val element: Element
   val moduleToSetChainMapping: Map<String, List<String>>?
+  val moduleToIncludeDependenciesMapping: Map<String, Boolean>?
   val programmaticModulesSpec = context.productProperties.getProductContentDescriptor()
   if (programmaticModulesSpec == null) {
     element = JDOMUtil.load(file)
     moduleToSetChainMapping = null
+    moduleToIncludeDependenciesMapping = null
   }
   else {
     val buildResult = buildProductContentXml(
@@ -74,6 +76,7 @@ internal fun processAndGetProductPluginContentModules(
 
     element = JDOMUtil.load(buildResult.xml)
     moduleToSetChainMapping = buildResult.moduleToSetChainMapping
+    moduleToIncludeDependenciesMapping = buildResult.moduleToIncludeDependenciesMapping
   }
 
   // Scrambling isn’t an issue: the scrambler can modify XML.
@@ -97,6 +100,7 @@ internal fun processAndGetProductPluginContentModules(
       frontendModuleFilter = frontendModuleFilter,
       result = moduleItems,
       moduleToSetChainOverride = moduleToSetChainMapping,
+      moduleToIncludeDependenciesOverride = moduleToIncludeDependenciesMapping,
       descriptorCache = descriptorCache,
       xIncludeResolver = xIncludeResolver,
       context = context,
@@ -150,6 +154,7 @@ private fun processProductModule(
   frontendModuleFilter: FrontendModuleFilter,
   result: LinkedHashSet<ModuleItem>,
   moduleToSetChainOverride: Map<String, List<String>>? = null,
+  moduleToIncludeDependenciesOverride: Map<String, Boolean>? = null,
   descriptorCache: ScopedCachedDescriptorContainer,
   xIncludeResolver: XIncludeElementResolverImpl,
   context: BuildContext,
@@ -166,12 +171,14 @@ private fun processProductModule(
 
   // extract module set from override mapping (for programmatic spec)
   val moduleSet = moduleToSetChainOverride?.get(moduleName)
+  val includeDependencies = moduleToIncludeDependenciesOverride?.get(moduleName) ?: false
   result.add(
     ModuleItem(
       moduleName = moduleName,
       relativeOutputFile = relativeOutFile,
       reason = if (isEmbedded) ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES else ModuleIncludeReasons.PRODUCT_MODULES,
       moduleSet = moduleSet,
+      includeDependencies = includeDependencies,
     )
   )
   PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let { list ->

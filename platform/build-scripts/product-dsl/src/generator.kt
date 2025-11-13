@@ -138,7 +138,11 @@ fun buildProductContentXml(
   isUltimateBuild: Boolean,
 ): ProductContentBuildResult {
   // Build content blocks, chain mapping, and collect module set aliases in single traversal
-  val (contentBlocks, moduleToSetChainMapping, moduleSetAliases) = buildContentBlocksAndChainMapping(spec, collectModuleSetAliases = inlineModuleSets)
+  val buildData = buildContentBlocksAndChainMapping(spec, collectModuleSetAliases = inlineModuleSets)
+  val contentBlocks = buildData.contentBlocks
+  val moduleToSetChainMapping = buildData.moduleToSetChainMapping
+  val moduleSetAliases = buildData.aliasToSource
+  val moduleToIncludeDependenciesMapping = buildData.moduleToIncludeDependencies
 
   val xml = buildString {
     appendXmlHeader(generatorCommand, productPropertiesClass)
@@ -208,5 +212,10 @@ fun buildProductContentXml(
     append("</idea-plugin>\n")
   }
 
-  return ProductContentBuildResult(xml = xml, contentBlocks = contentBlocks, moduleToSetChainMapping = moduleToSetChainMapping)
+  return ProductContentBuildResult(
+    xml = xml,
+    contentBlocks = contentBlocks,
+    moduleToSetChainMapping = moduleToSetChainMapping,
+    moduleToIncludeDependenciesMapping = moduleToIncludeDependenciesMapping,
+  )
 }

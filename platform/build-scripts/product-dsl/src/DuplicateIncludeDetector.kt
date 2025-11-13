@@ -95,26 +95,21 @@ object DuplicateIncludeDetector {
    */
   private fun parseXiIncludes(xmlFile: Path): List<XiInclude> {
     val includes = mutableListOf<XiInclude>()
-    
-    try {
-      val content = xmlFile.readText()
-      val root = JDOMUtil.load(xmlFile)
-      
-      // Find all xi:include elements (recursively)
-      val includeElements = findElementsByName(root, "include")
-      for (element in includeElements) {
-        val href = element.getAttributeValue("href")
-        if (!href.isNullOrEmpty()) {
-          // Try to find line number by searching in the file content
-          val lineNumber = findLineNumber(content, href)
-          includes.add(XiInclude(href, lineNumber))
-        }
+
+    val content = xmlFile.readText()
+    val root = JDOMUtil.load(xmlFile)
+
+    // Find all xi:include elements (recursively)
+    val includeElements = findElementsByName(root, "include")
+    for (element in includeElements) {
+      val href = element.getAttributeValue("href")
+      if (!href.isNullOrEmpty()) {
+        // Try to find line number by searching in the file content
+        val lineNumber = findLineNumber(content, href)
+        includes.add(XiInclude(href, lineNumber))
       }
     }
-    catch (e: Exception) {
-      // Ignore parsing errors
-    }
-    
+
     return includes
   }
   

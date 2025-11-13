@@ -41,6 +41,11 @@ object CommunityModuleSets : ModuleSetProvider {
   fun essentialMinimal(): ModuleSet = moduleSet("essential.minimal") {
     // Include libraries first (they are xi:included in essential.minimal.xml)
     moduleSet(libraries())
+
+    embeddedModule("intellij.platform.projectModel.impl", includeDependencies = true)
+    embeddedModule("intellij.platform.ide.impl", includeDependencies = true)
+    embeddedModule("intellij.platform.lang.impl", includeDependencies = true)
+
     // RPC is used by core IDE functionality
     moduleSet(rpc())
 

@@ -5,21 +5,29 @@ package org.jetbrains.intellij.build.productLayout
 
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
 
+internal data class ContentBuildData(
+  @JvmField val contentBlocks: List<ContentBlock>,
+  @JvmField val moduleToSetChainMapping: Map<String, List<String>>,
+  @JvmField val aliasToSource: Map<String, String>,
+  @JvmField val moduleToIncludeDependencies: Map<String, Boolean>,
+)
+
 /**
  * Builds content blocks and module-to-set chain mapping in a single hierarchical traversal.
  * This optimized version eliminates redundant tree walking by computing all results simultaneously.
  *
  * @param spec The product modules specification
  * @param collectModuleSetAliases Whether to collect module set aliases during traversal (for inlineModuleSets mode)
- * @return Triple of (content blocks, module-to-set chain mapping, module set alias-to-source mapping)
+ * @return ContentBuildData containing all computed mappings
  */
 internal fun buildContentBlocksAndChainMapping(
   spec: ProductModulesContentSpec,
   collectModuleSetAliases: Boolean = false
-): Triple<List<ContentBlock>, Map<String, List<String>>, Map<String, String>> {
+): ContentBuildData {
   val contentBlocks = mutableListOf<ContentBlock>()
   val moduleToChain = mutableMapOf<String, List<String>>()
   val moduleToSets = mutableMapOf<String, MutableList<String>>()
+  val moduleToIncludeDeps = mutableMapOf<String, Boolean>()
   val aliasToSource = if (collectModuleSetAliases) mutableMapOf<String, String>() else null
   val processedSets = HashSet<String>()
   val contentBlockByName = HashMap<String, ContentBlock>()
@@ -41,7 +49,7 @@ internal fun buildContentBlocksAndChainMapping(
             val updatedModules = mutableListOf<ModuleWithLoading>()
             for (existingModule in existingBlock.modules) {
               val effectiveLoading = overrides[existingModule.name] ?: existingModule.loading
-              updatedModules.add(ModuleWithLoading(existingModule.name, effectiveLoading))
+              updatedModules.add(ModuleWithLoading(existingModule.name, effectiveLoading, existingModule.includeDependencies))
             }
             
             // Create new content block with overrides and replace the old one
@@ -76,9 +84,13 @@ internal fun buildContentBlocksAndChainMapping(
       moduleToSets.computeIfAbsent(module.name) { mutableListOf() }.add(moduleSet.name)
       // Track chain
       moduleToChain[module.name] = currentChain
+      // Track includeDependencies flag
+      if (module.includeDependencies) {
+        moduleToIncludeDeps[module.name] = true
+      }
       // Build loading info - apply overrides from module set
       val effectiveLoading = overrides[module.name] ?: module.loading
-      modulesWithLoading.add(ModuleWithLoading(module.name, effectiveLoading))
+      modulesWithLoading.add(ModuleWithLoading(module.name, effectiveLoading, module.includeDependencies))
     }
 
     if (modulesWithLoading.isNotEmpty()) {
@@ -109,14 +121,23 @@ internal fun buildContentBlocksAndChainMapping(
   // Add additional modules if any
   val additionalModulesWithLoading = mutableListOf<ModuleWithLoading>()
   for (module in spec.additionalModules) {
-    additionalModulesWithLoading.add(ModuleWithLoading(module.name, module.loading))
+    additionalModulesWithLoading.add(ModuleWithLoading(module.name, module.loading, module.includeDependencies))
+    // Track includeDependencies flag
+    if (module.includeDependencies) {
+      moduleToIncludeDeps[module.name] = true
+    }
   }
 
   if (additionalModulesWithLoading.isNotEmpty()) {
     contentBlocks.add(ContentBlock(ADDITIONAL_MODULES_BLOCK, additionalModulesWithLoading))
   }
 
-  return Triple(contentBlocks, moduleToChain, aliasToSource ?: emptyMap())
+  return ContentBuildData(
+    contentBlocks = contentBlocks,
+    moduleToSetChainMapping = moduleToChain,
+    aliasToSource = aliasToSource ?: emptyMap(),
+    moduleToIncludeDependencies = moduleToIncludeDeps,
+  )
 }
 
 /**

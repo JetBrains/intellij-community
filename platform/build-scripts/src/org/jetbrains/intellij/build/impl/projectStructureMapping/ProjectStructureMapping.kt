@@ -278,11 +278,51 @@ private fun groupPlatformEntries(
   val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
   val productModuleToEntries = HashMap<ModuleItem, MutableList<DistributionFileEntry>>()
   val fileToPresentablePath = HashMap<Path, String>()
+
+  // First pass: identify container modules with includeDependencies=true
+  val containerModules = HashMap<String, ModuleItem>() // module name -> ModuleItem
+  for (entry in contentReport.platform) {
+    if (entry is ModuleOwnedFileEntry) {
+      val owner = entry.owner
+      if (owner != null && owner.isProductModule() && owner.includeDependencies) {
+        containerModules[owner.moduleName] = owner
+      }
+    }
+  }
+
+  // Build a map from dependency module name to its root container module
+  val dependencyToContainer = HashMap<String, ModuleItem>()
+  for (entry in contentReport.platform) {
+    if (entry is ModuleOwnedFileEntry) {
+      val owner = entry.owner
+      if (owner != null && owner.isProductModule()) {
+        val reason = owner.reason
+        // Check if this is a dependency module (reason starts with PRODUCT_EMBEDDED_MODULES + " <- ")
+        if (reason != null && reason.startsWith(ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES + " <- ")) {
+          // Extract the root container module from the reason chain
+          // Reason format: "productEmbeddedModule <- dep <- ... <- container"
+          // The last element is the root container
+          val chain = reason.substring((ModuleIncludeReasons.PRODUCT_EMBEDDED_MODULES + " <- ").length).split(" <- ")
+          if (chain.isNotEmpty()) {
+            val rootContainerName = chain.last()
+            val containerModule = containerModules[rootContainerName]
+            if (containerModule != null) {
+              dependencyToContainer[owner.moduleName] = containerModule
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Second pass: group entries, aggregating dependencies into their containers
   for (entry in contentReport.platform) {
     if (entry is ModuleOwnedFileEntry) {
       val owner = entry.owner
       if (owner != null && ModuleIncludeReasons.isProductModule(owner.reason)) {
-        productModuleToEntries.computeIfAbsent(owner) { mutableListOf() }.add(entry)
+        // Check if this module is a dependency of a container module
+        val targetOwner = dependencyToContainer[owner.moduleName] ?: owner
+        productModuleToEntries.computeIfAbsent(targetOwner) { mutableListOf() }.add(entry)
         continue
       }
     }

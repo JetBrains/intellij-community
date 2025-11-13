@@ -56,7 +56,7 @@ internal fun StringBuilder.appendInlinedModuleSet(
       // Append modules with effective overrides
       for (module in directBlock.modules) {
         val effectiveLoading = overrides[module.name] ?: module.loading
-        appendModuleLine(ModuleWithLoading(module.name, effectiveLoading), "    ")
+        appendModuleLine(ModuleWithLoading(module.name, effectiveLoading, module.includeDependencies), "    ")
       }
       
       append("  </content>\n")

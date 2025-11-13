@@ -133,6 +133,9 @@
     <!-- </editor-fold> -->
 
     <!-- <editor-fold desc="direct modules"> -->
+    <module name="intellij.platform.projectModel.impl" loading="embedded"/>
+    <module name="intellij.platform.ide.impl" loading="embedded"/>
+    <module name="intellij.platform.lang.impl" loading="embedded"/>
     <module name="intellij.platform.settings.local"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.project.backend"/>
