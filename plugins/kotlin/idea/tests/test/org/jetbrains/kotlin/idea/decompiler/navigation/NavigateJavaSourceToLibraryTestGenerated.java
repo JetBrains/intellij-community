@@ -85,6 +85,16 @@ public class NavigateJavaSourceToLibraryTestGenerated extends AbstractNavigateJa
         runTest("testData/decompiler/navigation/userJavaCode/GlobalProperty.java");
     }
 
+    @TestMetadata("JvmStatics.java")
+    public void testJvmStatics() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/JvmStatics.java");
+    }
+
+    @TestMetadata("JvmStaticsProperties.java")
+    public void testJvmStaticsProperties() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/JvmStaticsProperties.java");
+    }
+
     @TestMetadata("NamedObject.java")
     public void testNamedObject() throws Exception {
         runTest("testData/decompiler/navigation/userJavaCode/NamedObject.java");
