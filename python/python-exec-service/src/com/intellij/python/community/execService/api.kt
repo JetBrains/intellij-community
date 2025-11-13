@@ -237,8 +237,10 @@ class Args(vararg initialArgs: String) {
     return this
   }
 
+  fun addArgs(args: List<String>): Args = addArgs(*args.toTypedArray())
+
   /**
-   * This file will be copied to remote machine and its remote name will be added to the list of arguments.
+   * This file will be copied to remote machine, and its remote name will be added to the list of arguments.
    * Use [argGenerator] to modify name
    */
   fun addLocalFile(localFile: Path, argGenerator: FileArgGenerator = FileArgGenerator { it }): Args {
@@ -267,5 +269,3 @@ class Args(vararg initialArgs: String) {
       }
     }
 }
-
-fun Args.addArgs(args: List<String>): Args = addArgs(*args.toTypedArray())
