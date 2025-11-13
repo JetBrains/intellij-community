@@ -163,11 +163,42 @@ public final class AppMode {
     String firstArg = args.get(0);
 
     List<String> headlessCommands = Arrays.asList(
-      "ant", "duplocate", "dataSources", "dump-launch-parameters", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format",
-      "keymap", "update", "inspections", "intentions", "rdserver-headless", "thinClient-headless", "installFrontendPlugins", "installPlugins", "dumpActions",
-      "cwmHostStatus", "remoteDevStatus", "invalidateCaches", "warmup", "openUrlOnClient", "buildEventsScheme", "inspectopedia-generator", "remoteDevShowHelp",
-      "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "appcodeClangModulesDiff", "appcodeClangModulesPrinter", "exit",
-      "qodanaExcludedPlugins", "project-with-shared-caches", "registerBackendLocationForGateway", "cherryPickAnalyzer", "listBundledPlugins");
+      "ant",
+      "appcodeClangModulesDiff",
+      "appcodeClangModulesPrinter",
+      "buildAppcodeCache",
+      "buildEventsScheme",
+      "cherryPickAnalyzer",
+      "cwmHostStatus",
+      "dataSources",
+      "dump-launch-parameters",
+      "dump-shared-index",
+      "dumpActions",
+      "duplocate",
+      "exit",
+      "format",
+      "inspections",
+      "inspectopedia-generator",
+      "installFrontendPlugins",
+      "installGatewayProtocolHandler",
+      "installPlugins",
+      "intentions",
+      "invalidateCaches",
+      "keymap",
+      "listBundledPlugins",
+      "openUrlOnClient",
+      "project-with-shared-caches",
+      "qodanaExcludedPlugins",
+      "rdserver-headless",
+      "registerBackendLocationForGateway",
+      "remoteDevShowHelp",
+      "remoteDevStatus",
+      "thinClient-headless",
+      "traverseUI",
+      "uninstallGatewayProtocolHandler",
+      "update",
+      "warmup"
+    );
     return headlessCommands.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 
