@@ -7,6 +7,7 @@ import com.intellij.grazie.text.TextContent.ExclusionKind;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
 import com.intellij.grazie.utils.HtmlUtilsKt;
+import com.intellij.grazie.utils.Text;
 import com.intellij.lang.Language;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLLanguage;
@@ -30,11 +31,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.*;
 
 public class XmlTextExtractor extends TextExtractor {
+  private static final Pattern ESCAPE_EXCLUSIONS = Pattern.compile("\\\\[nt]");
   private static final TextContentBuilder builder = TextContentBuilder.FromPsi.removingIndents(" \t").removingLineSuffixes(" \t");
+
   private final Set<Class<? extends Language>> myEnabledDialects;
 
   protected XmlTextExtractor(Class<? extends Language>... enabledDialects) {
@@ -43,6 +47,10 @@ public class XmlTextExtractor extends TextExtractor {
 
   protected Function<XmlTag, TagKind> tagClassifier(@NotNull PsiElement context) {
     return __ -> TagKind.Unknown;
+  }
+
+  protected boolean shouldMaskEscapeSymbols() {
+    return false;
   }
 
   @Override
@@ -166,6 +174,7 @@ public class XmlTextExtractor extends TextExtractor {
           TextContent component = extractRange(e.getTextRange().shiftLeft(containerStart));
           component = applyExclusions(i, component, markupIndices, ExclusionKind.markup);
           component = applyExclusions(i, component, unknownIndices, ExclusionKind.unknown);
+          component = maskEscapeSymbols(component);
           components.add(component);
           i++;
         }
@@ -199,6 +208,11 @@ public class XmlTextExtractor extends TextExtractor {
     container.acceptChildren(visitor);
     visitor.flushGroup(unknownContainer);
     return visitor.result;
+  }
+
+  private TextContent maskEscapeSymbols(TextContent component) {
+    if (!shouldMaskEscapeSymbols()) return component;
+    return component.excludeRanges(ContainerUtil.map(Text.allOccurrences(ESCAPE_EXCLUSIONS, component), Exclusion::markUnknown));
   }
 
   private static boolean isText(PsiElement leaf) {
@@ -239,6 +253,11 @@ public class XmlTextExtractor extends TextExtractor {
   public static class Xml extends XmlTextExtractor {
     public Xml() {
       super(XMLLanguage.class, XHTMLLanguage.class, DTDLanguage.class);
+    }
+
+    @Override
+    protected boolean shouldMaskEscapeSymbols() {
+      return true;
     }
   }
 
