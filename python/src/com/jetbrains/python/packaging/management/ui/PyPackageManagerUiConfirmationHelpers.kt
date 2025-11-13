@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.Messages
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.ui.PyChooseRequirementsDialog
+import com.jetbrains.python.packaging.utils.PyPIPackageRanking
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,34 +22,47 @@ internal object PyPackageManagerUiConfirmationHelpers {
   internal suspend fun getConfirmedPackages(pyRequirements: List<PyRequirement>, project: Project): List<PyRequirement> {
     if (pyRequirements.isEmpty())
       return emptyList()
+
+    val (rankedPackages, unrankedPackages) = pyRequirements.partition { requirement ->
+      PyPIPackageRanking().rankedPackages.await().map { it.name }.contains(requirement.name)
+    }
+
+      if (unrankedPackages.isEmpty()) {
+      return pyRequirements
+    }
+
     val confirmationEnabled = PropertiesComponent.getInstance()
       .getBoolean(CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
 
-    if (!confirmationEnabled)
+    if (!confirmationEnabled) {
       return pyRequirements
+    }
 
-    if (pyRequirements.size == 1) {
-      val pyPackage = pyRequirements.first()
+    val confirmedUnranked = if (unrankedPackages.size == 1) {
+      val pyPackage = unrankedPackages.first()
       if (askSingleFileConfirmation(pyPackage, project)) {
-        return listOf(pyPackage)
+        listOf(pyPackage)
       }
       else {
         PyPackagesUsageCollector.installAllCanceledEvent.log()
-        return listOf()
+        emptyList()
+      }
+    }
+    else {
+      withContext(Dispatchers.EDT) {
+        val dialog = PyChooseRequirementsDialog(project, unrankedPackages) { it.presentableText }
+        val result = dialog.showAndGet()
+        if (!result) {
+          PyPackagesUsageCollector.installAllCanceledEvent.log()
+          emptyList()
+        }
+        else {
+          dialog.markedElements
+        }
       }
     }
 
-    return withContext(Dispatchers.EDT) {
-      val dialog = PyChooseRequirementsDialog(project, pyRequirements) { it.presentableText }
-      val result = dialog.showAndGet()
-      if (!result) {
-        PyPackagesUsageCollector.installAllCanceledEvent.log()
-        listOf()
-      }
-      else {
-        dialog.markedElements
-      }
-    }
+    return rankedPackages + confirmedUnranked
   }
 
   private suspend fun askSingleFileConfirmation(pyRequirement: PyRequirement, project: Project): Boolean = withContext(Dispatchers.EDT) {
