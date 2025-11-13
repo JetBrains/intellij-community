@@ -402,6 +402,10 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   @NotNull
   @Unmodifiable
+  List<IntentionAction> getAvailableQuickFixes(@TestDataFile String @NotNull ... filePaths);
+
+  @NotNull
+  @Unmodifiable
   List<IntentionAction> getAvailableIntentions();
 
   /**
