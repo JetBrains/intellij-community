@@ -359,8 +359,6 @@ a:com.intellij.openapi.diagnostic.Logger
 - f:warnWithDebug(java.lang.String,java.lang.Throwable):V
 - f:warnWithDebug(java.lang.Throwable):V
 f:com.intellij.openapi.diagnostic.LoggerKt
-- sf:debug(com.intellij.openapi.diagnostic.Logger,java.lang.Exception,kotlin.jvm.functions.Function0):V
-- bs:debug$default(com.intellij.openapi.diagnostic.Logger,java.lang.Exception,kotlin.jvm.functions.Function0,I,java.lang.Object):V
 - sf:trace(com.intellij.openapi.diagnostic.Logger,kotlin.jvm.functions.Function0):V
 - sf:traceThrowable(com.intellij.openapi.diagnostic.Logger,kotlin.jvm.functions.Function0):V
 c:com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments

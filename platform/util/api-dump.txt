@@ -60,6 +60,9 @@ com.intellij.openapi.diagnostic.ExceptionWithAttachments
 - a:getAttachments():com.intellij.openapi.diagnostic.Attachment[]
 com.intellij.openapi.diagnostic.Logger$Factory
 - a:getLoggerInstance(java.lang.String):com.intellij.openapi.diagnostic.Logger
+f:com.intellij.openapi.diagnostic.LoggerKt
+- sf:debug(com.intellij.openapi.diagnostic.Logger,java.lang.Throwable,kotlin.jvm.functions.Function0):V
+- bs:debug$default(com.intellij.openapi.diagnostic.Logger,java.lang.Throwable,kotlin.jvm.functions.Function0,I,java.lang.Object):V
 com.intellij.openapi.diagnostic.UntraceableException
 com.intellij.openapi.util.BooleanGetter
 - java.util.function.BooleanSupplier
