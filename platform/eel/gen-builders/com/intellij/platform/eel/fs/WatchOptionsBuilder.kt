@@ -5,24 +5,22 @@
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.GeneratedBuilder
-import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchOptions
-import com.intellij.platform.eel.fs.EelFileSystemApi.WatchedPath
 import org.jetbrains.annotations.ApiStatus
 
 
 @GeneratedBuilder.Result
 @ApiStatus.Internal
 class WatchOptionsBuilder {
-  private var changeTypes: Set<FileChangeType> = emptySet()
+  private var changeTypes: Set<EelFileSystemApi.FileChangeType> = emptySet()
 
-  private var paths: Set<WatchedPath> = emptySet()
+  private var paths: Set<EelFileSystemApi.WatchedPath> = emptySet()
 
-  fun changeTypes(arg: Set<FileChangeType>): WatchOptionsBuilder = apply {
+  fun changeTypes(arg: Set<EelFileSystemApi.FileChangeType>): WatchOptionsBuilder = apply {
     this.changeTypes = arg
   }
 
-  fun paths(arg: Set<WatchedPath>): WatchOptionsBuilder = apply {
+  fun paths(arg: Set<EelFileSystemApi.WatchedPath>): WatchOptionsBuilder = apply {
     this.paths = arg
   }
 
@@ -35,6 +33,6 @@ class WatchOptionsBuilder {
 
 @GeneratedBuilder.Result
 internal class WatchOptionsImpl(
-  override val changeTypes: Set<FileChangeType>,
-  override val paths: Set<WatchedPath>,
+  override val changeTypes: Set<EelFileSystemApi.FileChangeType>,
+  override val paths: Set<EelFileSystemApi.WatchedPath>,
 ) : WatchOptions

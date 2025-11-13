@@ -6,7 +6,6 @@ package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.MoveArgs
-import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,25 +18,25 @@ class MoveArgsBuilder(
 ) {
   private var followLinks: Boolean = false
 
-  private var replaceExisting: ReplaceExistingDuringMove = ReplaceExistingDuringMove.REPLACE_EVERYTHING
+  private var replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove = EelFileSystemApi.ReplaceExistingDuringMove.REPLACE_EVERYTHING
 
   fun followLinks(arg: Boolean): MoveArgsBuilder = apply {
     this.followLinks = arg
   }
 
-  fun replaceExisting(arg: ReplaceExistingDuringMove): MoveArgsBuilder = apply {
+  fun replaceExisting(arg: EelFileSystemApi.ReplaceExistingDuringMove): MoveArgsBuilder = apply {
     this.replaceExisting = arg
   }
 
   fun doNotReplace(): MoveArgsBuilder =
-    replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE)
+    replaceExisting(EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE)
 
   /** For compatibility with Java NIO. */
   fun doNotReplaceDirectories(): MoveArgsBuilder =
-    replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES)
+    replaceExisting(EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES)
 
   fun replaceEverything(): MoveArgsBuilder =
-    replaceExisting(ReplaceExistingDuringMove.REPLACE_EVERYTHING)
+    replaceExisting(EelFileSystemApi.ReplaceExistingDuringMove.REPLACE_EVERYTHING)
 
   fun source(arg: EelPath): MoveArgsBuilder = apply {
     this.source = arg
@@ -59,7 +58,7 @@ class MoveArgsBuilder(
 @GeneratedBuilder.Result
 internal class MoveArgsImpl(
   override val followLinks: Boolean,
-  override val replaceExisting: ReplaceExistingDuringMove,
+  override val replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove,
   override val source: EelPath,
   override val target: EelPath,
 ) : MoveArgs

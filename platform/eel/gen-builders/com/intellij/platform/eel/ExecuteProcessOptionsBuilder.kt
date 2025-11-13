@@ -5,8 +5,6 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
-import com.intellij.platform.eel.EelExecApi.InteractionOptions
-import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -28,9 +26,9 @@ class ExecuteProcessOptionsBuilder(
 
   private var env: Map<String, String> = mapOf()
 
-  private var interactionOptions: InteractionOptions? = null
+  private var interactionOptions: EelExecApi.InteractionOptions? = null
 
-  private var ptyOrStdErrSettings: PtyOrStdErrSettings? = interactionOptions
+  private var ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings? = interactionOptions
 
   private var scope: CoroutineScope? = null
 
@@ -75,13 +73,13 @@ class ExecuteProcessOptionsBuilder(
    * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
    */
   @ApiStatus.Experimental
-  fun interactionOptions(arg: InteractionOptions?): ExecuteProcessOptionsBuilder = apply {
+  fun interactionOptions(arg: EelExecApi.InteractionOptions?): ExecuteProcessOptionsBuilder = apply {
     this.interactionOptions = arg
   }
 
   @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
   @ApiStatus.Internal
-  fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): ExecuteProcessOptionsBuilder = apply {
+  fun ptyOrStdErrSettings(arg: EelExecApi.PtyOrStdErrSettings?): ExecuteProcessOptionsBuilder = apply {
     this.ptyOrStdErrSettings = arg
   }
 
@@ -118,8 +116,8 @@ internal class ExecuteProcessOptionsImpl(
   override val args: List<String>,
   override val env: Map<String, String>,
   override val exe: String,
-  override val interactionOptions: InteractionOptions?,
-  override val ptyOrStdErrSettings: PtyOrStdErrSettings?,
+  override val interactionOptions: EelExecApi.InteractionOptions?,
+  override val ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings?,
   override val scope: CoroutineScope?,
   override val workingDirectory: EelPath?,
 ) : ExecuteProcessOptions

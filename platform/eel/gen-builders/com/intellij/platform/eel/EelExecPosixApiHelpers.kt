@@ -6,9 +6,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
-import com.intellij.platform.eel.EelExecApi.InteractionOptions
-import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
-import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode
+import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
@@ -54,9 +52,9 @@ object EelExecPosixApiHelpers {
 
     private var env: Map<String, String> = mapOf()
 
-    private var interactionOptions: InteractionOptions? = null
+    private var interactionOptions: EelExecApi.InteractionOptions? = null
 
-    private var ptyOrStdErrSettings: PtyOrStdErrSettings? = interactionOptions
+    private var ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings? = interactionOptions
 
     private var scope: CoroutineScope? = null
 
@@ -101,13 +99,13 @@ object EelExecPosixApiHelpers {
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
     @ApiStatus.Experimental
-    fun interactionOptions(arg: InteractionOptions?): SpawnProcess = apply {
+    fun interactionOptions(arg: EelExecApi.InteractionOptions?): SpawnProcess = apply {
       this.interactionOptions = arg
     }
 
     @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
     @ApiStatus.Internal
-    fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): SpawnProcess = apply {
+    fun ptyOrStdErrSettings(arg: EelExecApi.PtyOrStdErrSettings?): SpawnProcess = apply {
       this.ptyOrStdErrSettings = arg
     }
 
@@ -154,11 +152,11 @@ object EelExecPosixApiHelpers {
   class EnvironmentVariables(
     private val owner: EelExecPosixApi,
   ) : OwnedBuilder<EelExecApi.EnvironmentVariablesDeferred> {
-    private var mode: Mode = Mode.DEFAULT
+    private var mode: PosixEnvironmentVariablesOptions.Mode = PosixEnvironmentVariablesOptions.Mode.DEFAULT
 
     private var onlyActual: Boolean = false
 
-    fun mode(arg: Mode): EnvironmentVariables = apply {
+    fun mode(arg: PosixEnvironmentVariablesOptions.Mode): EnvironmentVariables = apply {
       this.mode = arg
     }
 
@@ -172,7 +170,7 @@ object EelExecPosixApiHelpers {
      * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
      */
     fun default(): EnvironmentVariables =
-      mode(Mode.DEFAULT)
+      mode(PosixEnvironmentVariablesOptions.Mode.DEFAULT)
 
     /**
      *  **Use with caution, avoid when possible.**
@@ -196,7 +194,7 @@ object EelExecPosixApiHelpers {
      */
     @EelDelicateApi
     fun loginInteractive(): EnvironmentVariables =
-      mode(Mode.LOGIN_INTERACTIVE)
+      mode(PosixEnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE)
 
     /**
      * This mode executes a shell process supposed to load various profile scripts:
@@ -209,7 +207,7 @@ object EelExecPosixApiHelpers {
      * **Notice:** In this mode [EelExecApi.EnvironmentVariablesException] MAY be thrown.
      */
     fun loginNonInteractive(): EnvironmentVariables =
-      mode(Mode.LOGIN_NON_INTERACTIVE)
+      mode(PosixEnvironmentVariablesOptions.Mode.LOGIN_NON_INTERACTIVE)
 
     /**
      * The fastest way to get environment variables. It doesn't call shell scripts written by users.
@@ -219,7 +217,7 @@ object EelExecPosixApiHelpers {
      * In this mode [EelExecApi.EnvironmentVariablesException] is not thrown.
      */
     fun minimal(): EnvironmentVariables =
-      mode(Mode.MINIMAL)
+      mode(PosixEnvironmentVariablesOptions.Mode.MINIMAL)
 
     /**
      * The implementation MAY cache the environment variables by default because they rarely change in real life.

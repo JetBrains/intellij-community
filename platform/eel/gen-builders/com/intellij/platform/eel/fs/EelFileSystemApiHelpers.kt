@@ -8,18 +8,10 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.OwnedBuilder
 import com.intellij.platform.eel.channels.EelDelicateApi
-import com.intellij.platform.eel.fs.EelFileInfo.Permissions
-import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
-import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
-import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
-import com.intellij.platform.eel.fs.EelFileSystemApi.SymlinkPolicy
-import com.intellij.platform.eel.fs.EelFileSystemApi.TimeSinceEpoch
 import com.intellij.platform.eel.fs.EelFileSystemApi.UnwatchOptions
-import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryEntryOrder
-import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions.WalkDirectoryTraversalOrder
+import com.intellij.platform.eel.fs.EelFileSystemApi.WalkDirectoryOptions
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchOptions
-import com.intellij.platform.eel.fs.EelFileSystemApi.WatchedPath
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -231,17 +223,17 @@ object EelFileSystemApiHelpers {
     private val owner: EelFileSystemApi,
     private var path: EelPath,
   ) : OwnedBuilder<EelResult<Unit, EelFileSystemApi.ChangeAttributesError>> {
-    private var accessTime: TimeSinceEpoch? = null
+    private var accessTime: EelFileSystemApi.TimeSinceEpoch? = null
 
-    private var modificationTime: TimeSinceEpoch? = null
+    private var modificationTime: EelFileSystemApi.TimeSinceEpoch? = null
 
-    private var permissions: Permissions? = null
+    private var permissions: EelFileInfo.Permissions? = null
 
-    fun accessTime(arg: TimeSinceEpoch?): ChangeAttributes = apply {
+    fun accessTime(arg: EelFileSystemApi.TimeSinceEpoch?): ChangeAttributes = apply {
       this.accessTime = arg
     }
 
-    fun modificationTime(arg: TimeSinceEpoch?): ChangeAttributes = apply {
+    fun modificationTime(arg: EelFileSystemApi.TimeSinceEpoch?): ChangeAttributes = apply {
       this.modificationTime = arg
     }
 
@@ -249,7 +241,7 @@ object EelFileSystemApiHelpers {
       this.path = arg
     }
 
-    fun permissions(arg: Permissions?): ChangeAttributes = apply {
+    fun permissions(arg: EelFileInfo.Permissions?): ChangeAttributes = apply {
       this.permissions = arg
     }
 
@@ -441,13 +433,13 @@ object EelFileSystemApiHelpers {
     private val owner: EelFileSystemApi,
     private var path: EelPath,
   ) : OwnedBuilder<EelResult<Collection<Pair<String, EelFileInfo>>, EelFileSystemApi.ListDirectoryError>> {
-    private var symlinkPolicy: SymlinkPolicy = SymlinkPolicy.DO_NOT_RESOLVE
+    private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): ListDirectoryWithAttrs = apply {
       this.path = arg
     }
 
-    fun symlinkPolicy(arg: SymlinkPolicy): ListDirectoryWithAttrs = apply {
+    fun symlinkPolicy(arg: EelFileSystemApi.SymlinkPolicy): ListDirectoryWithAttrs = apply {
       this.symlinkPolicy = arg
     }
 
@@ -456,20 +448,20 @@ object EelFileSystemApiHelpers {
      * This option makes the operation a bit more efficient if it is not interested in symlinks.
      */
     fun doNotResolve(): ListDirectoryWithAttrs =
-      symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
 
     /**
      * Resolves a symlink and returns the information about the target of the symlink,
      * But does not perform anything on the target of the symlink itself.
      */
     fun justResolve(): ListDirectoryWithAttrs =
-      symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE)
 
     /**
      * Resolves a symlink, follows it, and performs the required operation on target.
      */
     fun resolveAndFollow(): ListDirectoryWithAttrs =
-      symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
 
     /**
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.listDirectoryWithAttrs]
@@ -497,25 +489,25 @@ object EelFileSystemApiHelpers {
   ) : OwnedBuilder<EelResult<Unit, EelFileSystemApi.MoveError>> {
     private var followLinks: Boolean = false
 
-    private var replaceExisting: ReplaceExistingDuringMove = ReplaceExistingDuringMove.REPLACE_EVERYTHING
+    private var replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove = EelFileSystemApi.ReplaceExistingDuringMove.REPLACE_EVERYTHING
 
     fun followLinks(arg: Boolean): Move = apply {
       this.followLinks = arg
     }
 
-    fun replaceExisting(arg: ReplaceExistingDuringMove): Move = apply {
+    fun replaceExisting(arg: EelFileSystemApi.ReplaceExistingDuringMove): Move = apply {
       this.replaceExisting = arg
     }
 
     fun doNotReplace(): Move =
-      replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE)
+      replaceExisting(EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE)
 
     /** For compatibility with Java NIO. */
     fun doNotReplaceDirectories(): Move =
-      replaceExisting(ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES)
+      replaceExisting(EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE_DIRECTORIES)
 
     fun replaceEverything(): Move =
-      replaceExisting(ReplaceExistingDuringMove.REPLACE_EVERYTHING)
+      replaceExisting(EelFileSystemApi.ReplaceExistingDuringMove.REPLACE_EVERYTHING)
 
     fun source(arg: EelPath): Move = apply {
       this.source = arg
@@ -700,13 +692,13 @@ object EelFileSystemApiHelpers {
     private val owner: EelFileSystemApi,
     private var path: EelPath,
   ) : OwnedBuilder<EelResult<EelFileInfo, StatError>> {
-    private var symlinkPolicy: SymlinkPolicy = SymlinkPolicy.DO_NOT_RESOLVE
+    private var symlinkPolicy: EelFileSystemApi.SymlinkPolicy = EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE
 
     fun path(arg: EelPath): Stat = apply {
       this.path = arg
     }
 
-    fun symlinkPolicy(arg: SymlinkPolicy): Stat = apply {
+    fun symlinkPolicy(arg: EelFileSystemApi.SymlinkPolicy): Stat = apply {
       this.symlinkPolicy = arg
     }
 
@@ -715,20 +707,20 @@ object EelFileSystemApiHelpers {
      * This option makes the operation a bit more efficient if it is not interested in symlinks.
      */
     fun doNotResolve(): Stat =
-      symlinkPolicy(SymlinkPolicy.DO_NOT_RESOLVE)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE)
 
     /**
      * Resolves a symlink and returns the information about the target of the symlink,
      * But does not perform anything on the target of the symlink itself.
      */
     fun justResolve(): Stat =
-      symlinkPolicy(SymlinkPolicy.JUST_RESOLVE)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.JUST_RESOLVE)
 
     /**
      * Resolves a symlink, follows it, and performs the required operation on target.
      */
     fun resolveAndFollow(): Stat =
-      symlinkPolicy(SymlinkPolicy.RESOLVE_AND_FOLLOW)
+      symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
 
     /**
      * Complete the builder and call [com.intellij.platform.eel.fs.EelFileSystemApi.stat]
@@ -781,7 +773,7 @@ object EelFileSystemApiHelpers {
     private val owner: EelFileSystemApi,
     private var path: EelPath,
   ) : OwnedBuilder<Flow<WalkDirectoryEntryResult>> {
-    private var entryOrder: WalkDirectoryEntryOrder = WalkDirectoryEntryOrder.RANDOM
+    private var entryOrder: WalkDirectoryOptions.WalkDirectoryEntryOrder = WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM
 
     private var fileContentsHash: Boolean = false
 
@@ -789,7 +781,7 @@ object EelFileSystemApiHelpers {
 
     private var readMetadata: Boolean = false
 
-    private var traversalOrder: WalkDirectoryTraversalOrder = WalkDirectoryTraversalOrder.DFS
+    private var traversalOrder: WalkDirectoryOptions.WalkDirectoryTraversalOrder = WalkDirectoryOptions.WalkDirectoryTraversalOrder.DFS
 
     private var yieldDirectories: Boolean = true
 
@@ -802,7 +794,7 @@ object EelFileSystemApiHelpers {
     /**
      * The default is RANDOM.
      */
-    fun entryOrder(arg: WalkDirectoryEntryOrder): WalkDirectory = apply {
+    fun entryOrder(arg: WalkDirectoryOptions.WalkDirectoryEntryOrder): WalkDirectory = apply {
       this.entryOrder = arg
     }
 
@@ -810,14 +802,14 @@ object EelFileSystemApiHelpers {
      * Yield directory entries in alphabetical order.
      */
     fun alphabetical(): WalkDirectory =
-      entryOrder(WalkDirectoryEntryOrder.ALPHABETICAL)
+      entryOrder(WalkDirectoryOptions.WalkDirectoryEntryOrder.ALPHABETICAL)
 
     /**
      * Yield directory entries in order in which they appear on the file system.
      * If you do not care for the order of the files, this is the preferable option.
      */
     fun random(): WalkDirectory =
-      entryOrder(WalkDirectoryEntryOrder.RANDOM)
+      entryOrder(WalkDirectoryOptions.WalkDirectoryEntryOrder.RANDOM)
 
     /**
      * Yield hash of the regular file's contents. Contents are hashed using xxHash. Default is false.
@@ -866,7 +858,7 @@ object EelFileSystemApiHelpers {
     /**
      * The default is DFS.
      */
-    fun traversalOrder(arg: WalkDirectoryTraversalOrder): WalkDirectory = apply {
+    fun traversalOrder(arg: WalkDirectoryOptions.WalkDirectoryTraversalOrder): WalkDirectory = apply {
       this.traversalOrder = arg
     }
 
@@ -889,7 +881,7 @@ object EelFileSystemApiHelpers {
      * ```
      */
     fun bfs(): WalkDirectory =
-      traversalOrder(WalkDirectoryTraversalOrder.BFS)
+      traversalOrder(WalkDirectoryOptions.WalkDirectoryTraversalOrder.BFS)
 
     /**
      * Depth-first traversal, where directory entries are yielded in order they are encountered.
@@ -911,7 +903,7 @@ object EelFileSystemApiHelpers {
      * ```
      */
     fun dfs(): WalkDirectory =
-      traversalOrder(WalkDirectoryTraversalOrder.DFS)
+      traversalOrder(WalkDirectoryOptions.WalkDirectoryTraversalOrder.DFS)
 
     /**
      * Default is true.
@@ -971,15 +963,15 @@ object EelFileSystemApiHelpers {
   class AddWatchRoots(
     private val owner: EelFileSystemApi,
   ) : OwnedBuilder<Boolean> {
-    private var changeTypes: Set<FileChangeType> = emptySet()
+    private var changeTypes: Set<EelFileSystemApi.FileChangeType> = emptySet()
 
-    private var paths: Set<WatchedPath> = emptySet()
+    private var paths: Set<EelFileSystemApi.WatchedPath> = emptySet()
 
-    fun changeTypes(arg: Set<FileChangeType>): AddWatchRoots = apply {
+    fun changeTypes(arg: Set<EelFileSystemApi.FileChangeType>): AddWatchRoots = apply {
       this.changeTypes = arg
     }
 
-    fun paths(arg: Set<WatchedPath>): AddWatchRoots = apply {
+    fun paths(arg: Set<EelFileSystemApi.WatchedPath>): AddWatchRoots = apply {
       this.paths = arg
     }
 
@@ -1008,7 +1000,7 @@ object EelFileSystemApiHelpers {
   ) : OwnedBuilder<EelResult<EelOpenedFile.ReaderWriter, EelFileSystemApi.FileWriterError>> {
     private var append: Boolean = false
 
-    private var creationMode: FileWriterCreationMode = FileWriterCreationMode.ALLOW_CREATE
+    private var creationMode: EelFileSystemApi.FileWriterCreationMode = EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
 
     private var truncateExisting: Boolean = true
 
@@ -1016,18 +1008,18 @@ object EelFileSystemApiHelpers {
       this.append = arg
     }
 
-    fun creationMode(arg: FileWriterCreationMode): OpenForReadingAndWriting = apply {
+    fun creationMode(arg: EelFileSystemApi.FileWriterCreationMode): OpenForReadingAndWriting = apply {
       this.creationMode = arg
     }
 
     fun allowCreate(): OpenForReadingAndWriting =
-      creationMode(FileWriterCreationMode.ALLOW_CREATE)
+      creationMode(EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE)
 
     fun onlyCreate(): OpenForReadingAndWriting =
-      creationMode(FileWriterCreationMode.ONLY_CREATE)
+      creationMode(EelFileSystemApi.FileWriterCreationMode.ONLY_CREATE)
 
     fun onlyOpenExisting(): OpenForReadingAndWriting =
-      creationMode(FileWriterCreationMode.ONLY_OPEN_EXISTING)
+      creationMode(EelFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING)
 
     fun path(arg: EelPath): OpenForReadingAndWriting = apply {
       this.path = arg
@@ -1064,7 +1056,7 @@ object EelFileSystemApiHelpers {
   ) : OwnedBuilder<EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError>> {
     private var append: Boolean = false
 
-    private var creationMode: FileWriterCreationMode = FileWriterCreationMode.ALLOW_CREATE
+    private var creationMode: EelFileSystemApi.FileWriterCreationMode = EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
 
     private var truncateExisting: Boolean = true
 
@@ -1072,18 +1064,18 @@ object EelFileSystemApiHelpers {
       this.append = arg
     }
 
-    fun creationMode(arg: FileWriterCreationMode): OpenForWriting = apply {
+    fun creationMode(arg: EelFileSystemApi.FileWriterCreationMode): OpenForWriting = apply {
       this.creationMode = arg
     }
 
     fun allowCreate(): OpenForWriting =
-      creationMode(FileWriterCreationMode.ALLOW_CREATE)
+      creationMode(EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE)
 
     fun onlyCreate(): OpenForWriting =
-      creationMode(FileWriterCreationMode.ONLY_CREATE)
+      creationMode(EelFileSystemApi.FileWriterCreationMode.ONLY_CREATE)
 
     fun onlyOpenExisting(): OpenForWriting =
-      creationMode(FileWriterCreationMode.ONLY_OPEN_EXISTING)
+      creationMode(EelFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING)
 
     fun path(arg: EelPath): OpenForWriting = apply {
       this.path = arg

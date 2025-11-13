@@ -6,8 +6,6 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
-import com.intellij.platform.eel.EelExecApi.InteractionOptions
-import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -45,9 +43,9 @@ object EelExecWindowsApiHelpers {
 
     private var env: Map<String, String> = mapOf()
 
-    private var interactionOptions: InteractionOptions? = null
+    private var interactionOptions: EelExecApi.InteractionOptions? = null
 
-    private var ptyOrStdErrSettings: PtyOrStdErrSettings? = interactionOptions
+    private var ptyOrStdErrSettings: EelExecApi.PtyOrStdErrSettings? = interactionOptions
 
     private var scope: CoroutineScope? = null
 
@@ -92,13 +90,13 @@ object EelExecWindowsApiHelpers {
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
     @ApiStatus.Experimental
-    fun interactionOptions(arg: InteractionOptions?): SpawnProcess = apply {
+    fun interactionOptions(arg: EelExecApi.InteractionOptions?): SpawnProcess = apply {
       this.interactionOptions = arg
     }
 
     @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
     @ApiStatus.Internal
-    fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): SpawnProcess = apply {
+    fun ptyOrStdErrSettings(arg: EelExecApi.PtyOrStdErrSettings?): SpawnProcess = apply {
       this.ptyOrStdErrSettings = arg
     }
 

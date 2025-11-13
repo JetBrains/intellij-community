@@ -49,6 +49,7 @@ jvm_library(
     "//platform/util/jdom",
     "//plugins/kotlin/base/test",
     "//plugins/kotlin/base/test:test_test_lib",
+    "//plugins/kotlin/base/indices",
   ],
   runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"]
 )
