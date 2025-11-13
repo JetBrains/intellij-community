@@ -20,7 +20,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
     var typeMetadata: StorageTypeMetadata
 
     typeMetadata = FinalClassMetadata.ObjectMetadata(
-      fqName = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider\$MainKtsKotlinScriptEntitySource",
+      fqName = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsConfigurationProvider\$MainKtsKotlinScriptEntitySource",
       properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl",
                                               valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true,
                                                                                                   typeMetadata = FinalClassMetadata.KnownClass(
@@ -236,13 +236,13 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                     metadataHash = -1162660984)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.SdkId", metadataHash = 51502100)
     addMetadataHash(typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptDiagnosticData", metadataHash = -579968699)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -706084288)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1965151115)
     addMetadataHash(
       typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler\$DefaultScriptEntitySource",
       metadataHash = -513260474)
     addMetadataHash(
-      typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider\$MainKtsKotlinScriptEntitySource",
-      metadataHash = 2056756862)
+      typeFqn = "org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsConfigurationProvider\$MainKtsKotlinScriptEntitySource",
+      metadataHash = 618687241)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -2087540107)
   }
 

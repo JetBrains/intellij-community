@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsConfigurationProvider
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.SourceCode
@@ -11,7 +11,7 @@ import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
 internal class ReportingExternalDependenciesResolver(
     private val delegate: ExternalDependenciesResolver,
-    private val configurationProvider: MainKtsScriptConfigurationProvider,
+    private val configurationProvider: MainKtsConfigurationProvider,
 ) : ExternalDependenciesResolver {
 
     override fun acceptsArtifact(artifactCoordinates: String): Boolean =

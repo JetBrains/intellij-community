@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationProviderExtension
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptModuleManager.Companion.removeScriptModules
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptRelatedModuleNameFile
@@ -23,7 +23,7 @@ class K2KotlinScratchFile(project: Project, virtualFile: VirtualFile, val corout
         val psiFile = ktFile ?: return
 
         coroutineScope.launch {
-            psiFile.findScriptDefinition()?.getConfigurationResolver(project)?.remove(virtualFile)
+            psiFile.findScriptDefinition()?.getConfigurationProviderExtension(project)?.remove(virtualFile)
             project.removeScriptModules(listOf(virtualFile))
             KotlinScriptResolutionService.getInstance(project).process(psiFile)
         }

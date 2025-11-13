@@ -15,7 +15,7 @@ import kotlin.script.experimental.api.ScriptDiagnostic.Severity
 import kotlin.script.experimental.api.SourceCode
 
 interface ScriptWorkspaceModelManager {
-    suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptCompilationConfigurationResult>)
+    suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptCompilationConfigurationResult>) {}
 }
 
 @Service(Service.Level.PROJECT)

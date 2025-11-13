@@ -20,8 +20,7 @@ internal class ScriptTrafficLightRendererContributor : TrafficLightRendererContr
         return ScriptTrafficLightRenderer(ktFile.project, editor, ktFile)
     }
 
-    class ScriptTrafficLightRenderer(project: Project, editor: Editor, private val file: KtFile) :
-      TrafficLightRenderer(project, editor) {
+    class ScriptTrafficLightRenderer(project: Project, editor: Editor, private val file: KtFile) : TrafficLightRenderer(project, editor) {
         override fun getDaemonCodeAnalyzerStatus(severityRegistrar: SeverityRegistrar): DaemonCodeAnalyzerStatus {
             val status = super.getDaemonCodeAnalyzerStatus(severityRegistrar)
 

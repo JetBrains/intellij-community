@@ -53,8 +53,6 @@
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.configurations.DefaultScriptConfigurationHandler"/>
-
     <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptWorkspaceFileIndexContributor"/>
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.KotlinScriptExternalLibrariesNodesProvider"/>
 

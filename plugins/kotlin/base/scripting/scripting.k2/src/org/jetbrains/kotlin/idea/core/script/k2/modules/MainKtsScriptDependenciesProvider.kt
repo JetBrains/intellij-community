@@ -5,13 +5,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsConfigurationProvider
 
 class MainKtsScriptDependenciesProvider : K2IdeScriptAdditionalIdeaDependenciesProvider {
     override fun getRelatedModules(
         file: VirtualFile, project: Project
     ): List<VirtualFile> {
-        return MainKtsScriptConfigurationProvider.getInstance(project).getImportedScripts(file)
+        return MainKtsConfigurationProvider.getInstance(project).getImportedScripts(file)
     }
 
     override fun getRelatedLibraries(

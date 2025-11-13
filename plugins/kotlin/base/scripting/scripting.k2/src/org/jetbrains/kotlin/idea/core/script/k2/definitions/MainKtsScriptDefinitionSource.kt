@@ -3,9 +3,8 @@ package org.jetbrains.kotlin.idea.core.script.k2.definitions
 
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.configurationResolverDelegate
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.scriptWorkspaceModelManagerDelegate
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsConfigurationProvider
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.configurationProviderExtension
 import org.jetbrains.kotlin.idea.core.script.v1.NewScriptFileInfo
 import org.jetbrains.kotlin.idea.core.script.v1.kotlinScriptTemplateInfo
 import org.jetbrains.kotlin.idea.core.script.v1.loggingReporter
@@ -27,11 +26,11 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                 ::loggingReporter
             ).definitions
 
-            val mainKtsScriptConfigurationProvider = MainKtsScriptConfigurationProvider.getInstance(project)
+            val mainKtsConfigurationProvider = MainKtsConfigurationProvider.getInstance(project)
 
             return discoveredDefinitions.map { definition ->
                 val compilationConfiguration = definition.compilationConfiguration.withTransformedResolvers {
-                    ReportingExternalDependenciesResolver(it, mainKtsScriptConfigurationProvider)
+                    ReportingExternalDependenciesResolver(it, mainKtsConfigurationProvider)
                 }.with {
                     ide.dependenciesSources(JvmDependency(KotlinArtifacts.kotlinStdlibSources))
                     ide {
@@ -40,11 +39,8 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                             title = ".main.kts"
                             templateName = "Kotlin Script MainKts"
                         })
-                        configurationResolverDelegate {
-                            mainKtsScriptConfigurationProvider
-                        }
-                        scriptWorkspaceModelManagerDelegate {
-                            mainKtsScriptConfigurationProvider
+                        configurationProviderExtension {
+                            mainKtsConfigurationProvider
                         }
                     }
                 }

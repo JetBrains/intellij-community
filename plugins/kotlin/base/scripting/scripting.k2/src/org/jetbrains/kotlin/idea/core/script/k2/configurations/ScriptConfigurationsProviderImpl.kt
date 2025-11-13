@@ -20,17 +20,13 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.customName
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptLibraryEntity
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
-import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ide
 
 private class AllScriptsDependencies(
     val classes: Set<VirtualFile>,
@@ -116,12 +112,7 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val definition = file.findScriptDefinition() ?: return null
-        return getConfigurationSupplier(definition).get(file.alwaysVirtualFile)
-    }
-
-    private fun getConfigurationSupplier(definition: ScriptDefinition): ScriptRefinedConfigurationResolver {
-        return definition.compilationConfiguration[ScriptCompilationConfiguration.ide.configurationResolverDelegate]?.invoke()
-            ?: DefaultScriptConfigurationHandler.getInstance(project)
+        return definition.getConfigurationProviderExtension(project).get(project, file.alwaysVirtualFile)
     }
 
     companion object {

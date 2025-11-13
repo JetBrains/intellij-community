@@ -8,15 +8,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModuleStateModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
-import org.jetbrains.kotlin.idea.core.script.k2.configurations.getWorkspaceModelManager
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService.Companion.dropKotlinScriptCachesUnderWriteAction
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationProviderExtension
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
@@ -26,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 
 
 /**
@@ -115,36 +115,23 @@ class KotlinScriptResolutionService(
      * - Tries to get an existing configuration for the file; if absent, creates it.
      * - Accumulates configurations and applies them to the workspace model in a single batch update.
      *
-     * After updating the model, Kotlin script-related caches are dropped via [dropKotlinScriptCachesUnderWriteAction].
-     *
      * @param definitionByFile mapping of script files to their resolved [ScriptDefinition].
      */
     private suspend fun prepareHighlighting(definitionByFile: Map<KtFile, ScriptDefinition>) {
-        val configurationsSupplier = definitionByFile.firstNotNullOf { it.value.getConfigurationResolver(project) }
-        val projectModelUpdater = definitionByFile.firstNotNullOf { it.value.getWorkspaceModelManager(project) }
-
-        val configurationPerVirtualFile = definitionByFile.entries.associate { (file, definition) ->
-            val virtualFile = file.virtualFile
-            val configuration = configurationsSupplier.get(virtualFile) ?: configurationsSupplier.create(virtualFile, definition) ?: return
-
-            virtualFile to configuration
-        }
+        val configurationProviderExtension = definitionByFile.firstNotNullOf { it.value.getConfigurationProviderExtension(project) }
 
         assert(!application.isWriteAccessAllowed)
-
-        dropKotlinScriptCachesUnderWriteAction(project)
-        projectModelUpdater.updateWorkspaceModel(configurationPerVirtualFile)
+        val configurationByFile = mutableMapOf<VirtualFile, ScriptCompilationConfigurationResult>()
+        for ((file, definition) in definitionByFile) {
+            val virtualFile = file.virtualFile
+            configurationByFile[virtualFile] = configurationProviderExtension.get(project, virtualFile)
+                ?: configurationProviderExtension.create(virtualFile, definition) ?: continue
+        }
     }
 
     companion object {
         @JvmStatic
         fun getInstance(project: Project): KotlinScriptResolutionService = project.service()
-
-        suspend fun dropKotlinScriptCachesUnderWriteAction(project: Project) {
-            edtWriteAction {
-                dropKotlinScriptCaches(project)
-            }
-        }
 
         fun dropKotlinScriptCaches(project: Project) {
             ThreadingAssertions.assertWriteAccess()

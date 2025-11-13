@@ -6,8 +6,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptRefinedConfigurationResolver
-import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptWorkspaceModelManager
+import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptConfigurationProviderExtension
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import java.io.File
 import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
@@ -15,15 +14,10 @@ import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.util.PropertiesCollection
 
-val IdeScriptCompilationConfigurationKeys.configurationResolverDelegate: PropertiesCollection.Key<() -> ScriptRefinedConfigurationResolver> by PropertiesCollection.key()
-val IdeScriptCompilationConfigurationKeys.scriptWorkspaceModelManagerDelegate: PropertiesCollection.Key<() -> ScriptWorkspaceModelManager> by PropertiesCollection.key()
+val IdeScriptCompilationConfigurationKeys.configurationProviderExtension: PropertiesCollection.Key<() -> ScriptConfigurationProviderExtension> by PropertiesCollection.key()
 
-fun ScriptDefinition.getConfigurationResolver(project: Project): ScriptRefinedConfigurationResolver =
-    compilationConfiguration[ScriptCompilationConfiguration.ide.configurationResolverDelegate]?.invoke()
-        ?: DefaultScriptConfigurationHandler.getInstance(project)
-
-fun ScriptDefinition.getWorkspaceModelManager(project: Project): ScriptWorkspaceModelManager =
-    compilationConfiguration[ScriptCompilationConfiguration.ide.scriptWorkspaceModelManagerDelegate]?.invoke()
+fun ScriptDefinition.getConfigurationProviderExtension(project: Project): ScriptConfigurationProviderExtension =
+    compilationConfiguration[ScriptCompilationConfiguration.ide.configurationProviderExtension]?.invoke()
         ?: DefaultScriptConfigurationHandler.getInstance(project)
 
 fun VirtualFile.relativeLocation(project: Project): String {
