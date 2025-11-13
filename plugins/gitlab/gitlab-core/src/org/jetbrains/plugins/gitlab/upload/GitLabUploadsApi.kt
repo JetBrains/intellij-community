@@ -8,23 +8,19 @@ import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUploadRestDTO
 import org.jetbrains.plugins.gitlab.api.restApiUri
+import java.io.InputStream
 import java.net.http.HttpRequest.BodyPublishers
 import java.net.http.HttpResponse
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.*
 
 
 @SinceGitLab("15.10")
-suspend fun GitLabApi.Rest.markdownUploadFile(
+internal suspend fun GitLabApi.Rest.markdownUploadFile(
   project: GitLabProjectCoordinates,
-  path: Path,
+  filename: String,
+  mimeType: String,
+  fileInputStream: InputStream,
 ): HttpResponse<out GitLabUploadRestDTO> {
-  val uri = project.restApiUri.resolveRelative("uploads")
-  val filename = path.fileName.toString()
-
-  val mimeType = Files.probeContentType(path) ?: "application/octet-stream"
-
   val boundary = "FormBoundary" + UUID.randomUUID()
   val boundaryStart = "--$boundary\r\n" +
                       "Content-Disposition: form-data; name=\"file\"; filename=\"$filename\"\r\n" +
@@ -33,10 +29,11 @@ suspend fun GitLabApi.Rest.markdownUploadFile(
 
   val bodyPublisher = BodyPublishers.concat(
     BodyPublishers.ofString(boundaryStart),
-    BodyPublishers.ofInputStream { Files.newInputStream(path) },
+    BodyPublishers.ofInputStream { fileInputStream },
     BodyPublishers.ofString(boundaryEnd)
   )
 
+  val uri = project.restApiUri.resolveRelative("uploads")
   val httpRequest = request(uri)
     .POST(bodyPublisher)
     .header("Content-Type", "multipart/form-data; boundary=$boundary")

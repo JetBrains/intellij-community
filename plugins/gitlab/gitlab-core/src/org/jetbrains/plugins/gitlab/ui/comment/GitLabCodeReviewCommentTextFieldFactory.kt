@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import java.awt.Image
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.io.File
@@ -89,16 +90,25 @@ object GitLabCodeReviewCommentTextFieldFactory {
           val contents = CopyPasteManager.getInstance().getContents() ?: return
           FileCopyPasteUtil.getFileList(contents)?.firstOrNull()?.let {
             vm.uploadFile(it.toPath())
+            return
+          }
+          CopyPasteManager.getInstance().getContents<Image>(DataFlavor.imageFlavor)?.let {
+            vm.uploadImage(it)
+            return
           }
         }
+
         override fun isPastePossible(dataContext: DataContext): Boolean {
           return true
         }
+
         override fun isPasteEnabled(dataContext: DataContext): Boolean {
           if (!canUploadFile) return false
           val contents = CopyPasteManager.getInstance().getContents() ?: return false
           return !FileCopyPasteUtil.getFileList(contents).isNullOrEmpty()
+                 || contents.isDataFlavorSupported(DataFlavor.imageFlavor)
         }
+
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
       }
     }

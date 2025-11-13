@@ -27,12 +27,14 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
 import org.jetbrains.plugins.gitlab.upload.GitLabUploadFileUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
+import java.awt.Image
 import java.nio.file.Path
 import java.util.*
 import javax.swing.Action
 
 interface GitLabCodeReviewSubmittableTextViewModel : CodeReviewSubmittableTextViewModel {
   fun uploadFile(path: Path?)
+  fun uploadImage(image: Image)
   fun canUploadFile(): Boolean
 }
 
@@ -90,6 +92,14 @@ abstract class AbstractGitLabNoteEditingViewModel(
   override fun uploadFile(path: Path?) {
     launchTask {
       GitLabUploadFileUtil.uploadFileAndNotify(project, projectData, path)?.let { fileText ->
+        text.update { if (it.isBlank()) fileText else it.trimEnd() + "\n\n" + fileText }
+      }
+    }
+  }
+
+  override fun uploadImage(image: Image) {
+    launchTask {
+      GitLabUploadFileUtil.uploadImageAndNotify(project, projectData, image)?.let { fileText ->
         text.update { if (it.isBlank()) fileText else it.trimEnd() + "\n\n" + fileText }
       }
     }

@@ -6,11 +6,13 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.*
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.util.localizedMessageOrClassName
 import org.jetbrains.plugins.gitlab.notification.GitLabNotificationIds.GL_NOTIFICATION_UPLOAD_FILE_ERROR
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
+import java.awt.Image
 import java.nio.file.Path
 import java.nio.file.AccessDeniedException
 import java.nio.file.NoSuchFileException
@@ -27,6 +29,16 @@ internal object GitLabUploadFileUtil {
 
     return withContext(Dispatchers.IO) {
       uploadFileAndNotify(project) { projectData.uploadFile(resultingPath) }
+    }
+  }
+
+  suspend fun uploadImageAndNotify(
+    project: Project,
+    projectData: GitLabProject,
+    image: Image,
+  ): String? {
+    return withContext(Dispatchers.IO) {
+      uploadFileAndNotify(project) { projectData.uploadImage(ImageUtil.toBufferedImage(image)) }
     }
   }
 
