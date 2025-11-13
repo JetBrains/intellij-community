@@ -99,13 +99,15 @@ internal fun generateClassPathByLayoutReport(libDir: Path, entries: List<Distrib
  * so we would like to include all distribution entities of **embedded** modules (and their libraries) from plugins marked with `use-idea-classloader`.
  */
 internal fun generateCoreClasspathFromPlugins(
+  platformLayout: PlatformLayout,
   context: BuildContext,
   pluginEntities: List<PluginBuildDescriptor>,
 ): Set<Path> {
   val classPathResult = mutableSetOf<Path>()
   for (pluginEntity in pluginEntities) {
     val pluginLayout = pluginEntity.layout
-    val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(context, pluginLayout.mainModule)
+    val cacheContainer = platformLayout.descriptorCacheContainer.forPlugin(pluginEntity.dir)
+    val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(context, pluginLayout.mainModule, cacheContainer)
     for (distributionEntry in pluginEntity.distribution) {
       if (distributionEntry is ModuleOwnedFileEntry && distributionEntry.owner?.moduleName in classPathModules) {
         classPathResult.add(distributionEntry.path)
@@ -122,9 +124,11 @@ internal fun generateCoreClasspathFromPlugins(
 internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   context: BuildContext,
   pluginMainModule: String,
+  cacheContainer: ScopedCachedDescriptorContainer?,
 ): Set<String> {
   val pluginModule = context.findRequiredModule(pluginMainModule)
-  val pluginXmlContent = getUnprocessedPluginXmlContent(pluginModule, context).decodeToString()
+  val pluginXmlBytes = cacheContainer?.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: getUnprocessedPluginXmlContent(pluginModule, context)
+  val pluginXmlContent = pluginXmlBytes.decodeToString()
   val rootElement = JDOMUtil.load(pluginXmlContent)
   if (rootElement.getAttribute("use-idea-classloader")?.value?.toBoolean() != true) {
     return emptySet()

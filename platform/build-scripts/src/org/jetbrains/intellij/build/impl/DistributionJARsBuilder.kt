@@ -138,7 +138,7 @@ internal suspend fun buildDistribution(
     )
 
     val platformItems = buildPlatformJob.await()
-    context.bootClassPathJarNames = generateCoreClassPath(context, platformItems, bundledPluginItems)
+    context.bootClassPathJarNames = generateCoreClassPath(platformLayout, context, platformItems, bundledPluginItems)
 
     ContentReport(platform = platformItems, bundledPlugins = bundledPluginItems, nonBundledPlugins = buildNonBundledPlugins.await())
   }
@@ -167,6 +167,7 @@ internal suspend fun buildDistribution(
 }
 
 private fun generateCoreClassPath(
+  platformLayout: PlatformLayout,
   context: BuildContext,
   platformDistribution: List<DistributionFileEntry>,
   bundledPluginsDistribution: List<PluginBuildDescriptor>,
@@ -181,7 +182,7 @@ private fun generateCoreClassPath(
     skipNioFs = isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)
   ).map { libDir.relativize(it).toString() }
   val pluginsDir = context.paths.distAllDir.resolve("plugins")
-  val coreClassPathFromPlugins = generateCoreClasspathFromPlugins(context, bundledPluginsDistribution).map { pluginsDir.resolve(it).toString() }
+  val coreClassPathFromPlugins = generateCoreClasspathFromPlugins(platformLayout, context, bundledPluginsDistribution).map { pluginsDir.resolve(it).toString() }
   return platformClassPath + coreClassPathFromPlugins
 }
 

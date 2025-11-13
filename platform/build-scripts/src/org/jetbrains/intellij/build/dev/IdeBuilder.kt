@@ -235,7 +235,8 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
     launch {
       val platformClasspath = platformLayoutResultDeferred.await().coreClassPath
       val pluginDistributionEntities = pluginDistributionEntriesDeferred.await().pluginEntries
-      val coreClasspathFromPlugins = generateCoreClasspathFromPlugins(context, pluginDistributionEntities)
+      val platformLayoutAwaited = platformLayout.await()
+      val coreClasspathFromPlugins = generateCoreClasspathFromPlugins(platformLayoutAwaited, context, pluginDistributionEntities)
       val classPath = platformClasspath + coreClasspathFromPlugins
 
       if (request.writeCoreClasspath) {
