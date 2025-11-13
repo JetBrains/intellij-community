@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.utility
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.notification.NotificationType
 
 @Remote("com.intellij.notification.Notification")
 interface Notification {
@@ -11,6 +12,7 @@ interface Notification {
   fun getContent(): String
   fun getGroupId(): String
   fun getActions(): List<AnAction>
+  fun getType(): NotificationType
 }
 
 @Remote("com.intellij.notification.ActionCenter")
