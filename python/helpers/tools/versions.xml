@@ -10,6 +10,7 @@
     <module>_aix_support</module>
     <module>_android_support</module>
     <module>_apple_support</module>
+    <module>_ast_unparse</module>
     <module>_asyncio</module>
     <module>_blake2</module>
     <module>_bootlocale</module>
@@ -26,6 +27,7 @@
     <module>_decimal</module>
     <module>_dummy_thread</module>
     <module>_gdbm</module>
+    <module>_hmac</module>
     <module>_imp</module>
     <module>_interpchannels</module>
     <module>_interpqueues</module>
@@ -44,13 +46,16 @@
     <module>_posixshmem</module>
     <module>_posixsubprocess</module>
     <module>_py_abc</module>
+    <module>_py_warnings</module>
     <module>_pydatetime</module>
     <module>_pydecimal</module>
     <module>_pylong</module>
     <module>_pyrepl</module>
     <module>_pyrepl.__main__</module>
     <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl._module_completer</module>
     <module>_pyrepl._threading_handler</module>
+    <module>_pyrepl.base_eventqueue</module>
     <module>_pyrepl.commands</module>
     <module>_pyrepl.completing_reader</module>
     <module>_pyrepl.console</module>
@@ -64,13 +69,16 @@
     <module>_pyrepl.reader</module>
     <module>_pyrepl.readline</module>
     <module>_pyrepl.simple_interact</module>
+    <module>_pyrepl.terminfo</module>
     <module>_pyrepl.trace</module>
     <module>_pyrepl.types</module>
     <module>_pyrepl.unix_console</module>
     <module>_pyrepl.unix_eventqueue</module>
     <module>_pyrepl.utils</module>
     <module>_pyrepl.windows_console</module>
+    <module>_pyrepl.windows_eventqueue</module>
     <module>_queue</module>
+    <module>_remote_debugging</module>
     <module>_scproxy</module>
     <module>_sha1</module>
     <module>_sha2</module>
@@ -99,6 +107,7 @@
     <module>_tkinter</module>
     <module>_tokenize</module>
     <module>_tracemalloc</module>
+    <module>_types</module>
     <module>_typing</module>
     <module>_uuid</module>
     <module>_winapi</module>
@@ -107,6 +116,7 @@
     <module>_xxsubinterpreters</module>
     <module>_xxtestfuzz</module>
     <module>_zoneinfo</module>
+    <module>_zstd</module>
     <module>annotationlib</module>
     <module>asyncio</module>
     <module>asyncio.__main__</module>
@@ -139,6 +149,7 @@
     <module>asyncio.test_utils</module>
     <module>asyncio.threads</module>
     <module>asyncio.timeouts</module>
+    <module>asyncio.tools</module>
     <module>asyncio.transports</module>
     <module>asyncio.trsock</module>
     <module>asyncio.unix_events</module>
@@ -146,12 +157,24 @@
     <module>asyncio.windows_utils</module>
     <module>builtins</module>
     <module>collections.abc</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
     <module>concurrent</module>
     <module>concurrent.futures</module>
     <module>concurrent.futures._base</module>
     <module>concurrent.futures.interpreter</module>
     <module>concurrent.futures.process</module>
     <module>concurrent.futures.thread</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
     <module>configparser</module>
     <module>contextvars</module>
     <module>copyreg</module>
@@ -317,6 +340,7 @@
     <module>importlib.metadata._itertools</module>
     <module>importlib.metadata._meta</module>
     <module>importlib.metadata._text</module>
+    <module>importlib.metadata._typing</module>
     <module>importlib.metadata.diagnose</module>
     <module>importlib.readers</module>
     <module>importlib.resources</module>
@@ -357,6 +381,19 @@
     <module>pathlib._local</module>
     <module>pathlib._os</module>
     <module>pathlib.types</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
     <module>queue</module>
     <module>re._casefix</module>
     <module>re._compiler</module>
@@ -367,6 +404,7 @@
     <module>selectors</module>
     <module>socketserver</module>
     <module>sqlite3.__main__</module>
+    <module>sqlite3._completer</module>
     <module>sqlite3.test.backup</module>
     <module>sqlite3.test.test_backup</module>
     <module>sqlite3.test.test_dbapi</module>
@@ -378,6 +416,7 @@
     <module>sqlite3.test.test_types</module>
     <module>sqlite3.test.test_userfunctions</module>
     <module>statistics</module>
+    <module>string.templatelib</module>
     <module>sysconfig.__main__</module>
     <module>tkinter</module>
     <module>tkinter.__main__</module>
@@ -477,6 +516,7 @@
     <module>zipapp</module>
     <module>zipfile.__main__</module>
     <module>zipfile._path</module>
+    <module>zipfile._path._functools</module>
     <module>zipfile._path.glob</module>
     <module>zoneinfo</module>
     <module>zoneinfo._common</module>
@@ -559,8 +599,10 @@
     <module>_abcoll</module>
     <module>_android_support</module>
     <module>_apple_support</module>
+    <module>_ast_unparse</module>
     <module>_colorize</module>
     <module>_dummy_thread</module>
+    <module>_hmac</module>
     <module>_hotshot</module>
     <module>_interpchannels</module>
     <module>_interpqueues</module>
@@ -568,12 +610,15 @@
     <module>_ios_support</module>
     <module>_opcode_metadata</module>
     <module>_peg_parser</module>
+    <module>_py_warnings</module>
     <module>_pydatetime</module>
     <module>_pylong</module>
     <module>_pyrepl</module>
     <module>_pyrepl.__main__</module>
     <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl._module_completer</module>
     <module>_pyrepl._threading_handler</module>
+    <module>_pyrepl.base_eventqueue</module>
     <module>_pyrepl.commands</module>
     <module>_pyrepl.completing_reader</module>
     <module>_pyrepl.console</module>
@@ -587,12 +632,15 @@
     <module>_pyrepl.reader</module>
     <module>_pyrepl.readline</module>
     <module>_pyrepl.simple_interact</module>
+    <module>_pyrepl.terminfo</module>
     <module>_pyrepl.trace</module>
     <module>_pyrepl.types</module>
     <module>_pyrepl.unix_console</module>
     <module>_pyrepl.unix_eventqueue</module>
     <module>_pyrepl.utils</module>
     <module>_pyrepl.windows_console</module>
+    <module>_pyrepl.windows_eventqueue</module>
+    <module>_remote_debugging</module>
     <module>_sha2</module>
     <module>_suggestions</module>
     <module>_sysconfig</module>
@@ -603,9 +651,11 @@
     <module>_testlimitedcapi</module>
     <module>_testsinglephase</module>
     <module>_tokenize</module>
+    <module>_types</module>
     <module>_typing</module>
     <module>_wmi</module>
     <module>_xxinterpchannels</module>
+    <module>_zstd</module>
     <module>annotationlib</module>
     <module>anydbm</module>
     <module>asyncio.compat</module>
@@ -613,6 +663,7 @@
     <module>asyncio.taskgroups</module>
     <module>asyncio.test_utils</module>
     <module>asyncio.timeouts</module>
+    <module>asyncio.tools</module>
     <module>audiodev</module>
     <module>bsddb</module>
     <module>bsddb.db</module>
@@ -660,7 +711,19 @@
     <module>compiler.syntax</module>
     <module>compiler.transformer</module>
     <module>compiler.visitor</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
     <module>concurrent.futures.interpreter</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
     <module>cookielib</module>
     <module>copy_reg</module>
     <module>ctypes._layout</module>
@@ -768,6 +831,7 @@
     <module>ihooks</module>
     <module>importlib._itertools</module>
     <module>importlib._legacy</module>
+    <module>importlib.metadata._typing</module>
     <module>importlib.metadata.diagnose</module>
     <module>importlib.resources._adapters</module>
     <module>importlib.resources._common</module>
@@ -1121,6 +1185,19 @@
     <module>pip._vendor.webencodings.x_user_defined</module>
     <module>popen2</module>
     <module>posixfile</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
     <module>re._casefix</module>
     <module>re._compiler</module>
     <module>re._constants</module>
@@ -1133,6 +1210,7 @@
     <module>sgmllib</module>
     <module>sha</module>
     <module>sqlite3.__main__</module>
+    <module>sqlite3._completer</module>
     <module>sqlite3.test.py25tests</module>
     <module>sqlite3.test.test_backup</module>
     <module>sqlite3.test.test_dbapi</module>
@@ -1145,6 +1223,7 @@
     <module>sqlite3.test.test_userfunctions</module>
     <module>sre</module>
     <module>statvfs</module>
+    <module>string.templatelib</module>
     <module>stringold</module>
     <module>strop</module>
     <module>sunaudio</module>
@@ -1172,6 +1251,7 @@
     <module>xmlrpclib</module>
     <module>zipfile.__main__</module>
     <module>zipfile._path</module>
+    <module>zipfile._path._functools</module>
     <module>zipfile._path.glob</module>
     <func>BaseExceptionGroup</func>
     <func>ExceptionGroup</func>
@@ -1233,9 +1313,11 @@
     <module>_abcoll</module>
     <module>_android_support</module>
     <module>_apple_support</module>
+    <module>_ast_unparse</module>
     <module>_bootlocale</module>
     <module>_colorize</module>
     <module>_dummy_thread</module>
+    <module>_hmac</module>
     <module>_hotshot</module>
     <module>_interpchannels</module>
     <module>_interpqueues</module>
@@ -1243,12 +1325,15 @@
     <module>_ios_support</module>
     <module>_opcode_metadata</module>
     <module>_peg_parser</module>
+    <module>_py_warnings</module>
     <module>_pydatetime</module>
     <module>_pylong</module>
     <module>_pyrepl</module>
     <module>_pyrepl.__main__</module>
     <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl._module_completer</module>
     <module>_pyrepl._threading_handler</module>
+    <module>_pyrepl.base_eventqueue</module>
     <module>_pyrepl.commands</module>
     <module>_pyrepl.completing_reader</module>
     <module>_pyrepl.console</module>
@@ -1262,12 +1347,15 @@
     <module>_pyrepl.reader</module>
     <module>_pyrepl.readline</module>
     <module>_pyrepl.simple_interact</module>
+    <module>_pyrepl.terminfo</module>
     <module>_pyrepl.trace</module>
     <module>_pyrepl.types</module>
     <module>_pyrepl.unix_console</module>
     <module>_pyrepl.unix_eventqueue</module>
     <module>_pyrepl.utils</module>
     <module>_pyrepl.windows_console</module>
+    <module>_pyrepl.windows_eventqueue</module>
+    <module>_remote_debugging</module>
     <module>_sha2</module>
     <module>_suggestions</module>
     <module>_sysconfig</module>
@@ -1277,13 +1365,16 @@
     <module>_testexternalinspection</module>
     <module>_testlimitedcapi</module>
     <module>_testsinglephase</module>
+    <module>_types</module>
     <module>_wmi</module>
     <module>_xxinterpchannels</module>
+    <module>_zstd</module>
     <module>annotationlib</module>
     <module>anydbm</module>
     <module>asyncio.compat</module>
     <module>asyncio.graph</module>
     <module>asyncio.test_utils</module>
+    <module>asyncio.tools</module>
     <module>audiodev</module>
     <module>binhex</module>
     <module>bsddb</module>
@@ -1332,7 +1423,19 @@
     <module>compiler.syntax</module>
     <module>compiler.transformer</module>
     <module>compiler.visitor</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
     <module>concurrent.futures.interpreter</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
     <module>cookielib</module>
     <module>copy_reg</module>
     <module>ctypes._layout</module>
@@ -1444,6 +1547,7 @@
     <module>idlelib.tabbedpages</module>
     <module>idlelib.textView</module>
     <module>ihooks</module>
+    <module>importlib.metadata._typing</module>
     <module>importlib.metadata.diagnose</module>
     <module>importlib.resources._functional</module>
     <module>imputil</module>
@@ -1789,6 +1893,19 @@
     <module>pip._vendor.webencodings.x_user_defined</module>
     <module>popen2</module>
     <module>posixfile</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
     <module>repr</module>
     <module>rexec</module>
     <module>rfc822</module>
@@ -1797,6 +1914,7 @@
     <module>sgmllib</module>
     <module>sha</module>
     <module>sqlite3.__main__</module>
+    <module>sqlite3._completer</module>
     <module>sqlite3.test.backup</module>
     <module>sqlite3.test.dbapi</module>
     <module>sqlite3.test.dump</module>
@@ -1809,6 +1927,7 @@
     <module>sqlite3.test.userfunctions</module>
     <module>sre</module>
     <module>statvfs</module>
+    <module>string.templatelib</module>
     <module>stringold</module>
     <module>strop</module>
     <module>sunaudio</module>
@@ -1831,6 +1950,7 @@
     <module>xmlrpclib</module>
     <module>zipfile.__main__</module>
     <module>zipfile._path</module>
+    <module>zipfile._path._functools</module>
     <module>zipfile._path.glob</module>
     <func>PythonFinalizationError</func>
     <func>StandardError</func>
@@ -1892,11 +2012,13 @@
     <module>_abcoll</module>
     <module>_android_support</module>
     <module>_apple_support</module>
+    <module>_ast_unparse</module>
     <module>_bootlocale</module>
     <module>_bootsubprocess</module>
     <module>_colorize</module>
     <module>_dummy_thread</module>
     <module>_gdbm</module>
+    <module>_hmac</module>
     <module>_hotshot</module>
     <module>_interpchannels</module>
     <module>_interpqueues</module>
@@ -1906,11 +2028,14 @@
     <module>_opcode_metadata</module>
     <module>_overlapped</module>
     <module>_peg_parser</module>
+    <module>_py_warnings</module>
     <module>_pydatetime</module>
     <module>_pyrepl</module>
     <module>_pyrepl.__main__</module>
     <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl._module_completer</module>
     <module>_pyrepl._threading_handler</module>
+    <module>_pyrepl.base_eventqueue</module>
     <module>_pyrepl.commands</module>
     <module>_pyrepl.completing_reader</module>
     <module>_pyrepl.console</module>
@@ -1924,12 +2049,15 @@
     <module>_pyrepl.reader</module>
     <module>_pyrepl.readline</module>
     <module>_pyrepl.simple_interact</module>
+    <module>_pyrepl.terminfo</module>
     <module>_pyrepl.trace</module>
     <module>_pyrepl.types</module>
     <module>_pyrepl.unix_console</module>
     <module>_pyrepl.unix_eventqueue</module>
     <module>_pyrepl.utils</module>
     <module>_pyrepl.windows_console</module>
+    <module>_pyrepl.windows_eventqueue</module>
+    <module>_remote_debugging</module>
     <module>_suggestions</module>
     <module>_sysconfig</module>
     <module>_sysconfigdata</module>
@@ -1938,13 +2066,16 @@
     <module>_testconsole</module>
     <module>_testexternalinspection</module>
     <module>_testlimitedcapi</module>
+    <module>_types</module>
     <module>_winapi</module>
     <module>_wmi</module>
+    <module>_zstd</module>
     <module>annotationlib</module>
     <module>anydbm</module>
     <module>asyncio.compat</module>
     <module>asyncio.graph</module>
     <module>asyncio.test_utils</module>
+    <module>asyncio.tools</module>
     <module>audiodev</module>
     <module>binhex</module>
     <module>bsddb</module>
@@ -1993,7 +2124,19 @@
     <module>compiler.syntax</module>
     <module>compiler.transformer</module>
     <module>compiler.visitor</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
     <module>concurrent.futures.interpreter</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
     <module>cookielib</module>
     <module>copy_reg</module>
     <module>ctypes._layout</module>
@@ -2162,6 +2305,7 @@
     <module>importlib._common</module>
     <module>importlib._itertools</module>
     <module>importlib._legacy</module>
+    <module>importlib.metadata._typing</module>
     <module>importlib.metadata.diagnose</module>
     <module>importlib.resources._functional</module>
     <module>imputil</module>
@@ -2524,6 +2668,19 @@
     <module>pip._vendor.webencodings.x_user_defined</module>
     <module>popen2</module>
     <module>posixfile</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
     <module>repr</module>
     <module>rexec</module>
     <module>rfc822</module>
@@ -2532,6 +2689,7 @@
     <module>sgmllib</module>
     <module>sha</module>
     <module>smtpd</module>
+    <module>sqlite3._completer</module>
     <module>sqlite3.test</module>
     <module>sqlite3.test.backup</module>
     <module>sqlite3.test.dbapi</module>
@@ -2554,6 +2712,7 @@
     <module>sqlite3.test.userfunctions</module>
     <module>sre</module>
     <module>statvfs</module>
+    <module>string.templatelib</module>
     <module>stringold</module>
     <module>strop</module>
     <module>sunaudio</module>
@@ -2627,6 +2786,7 @@
     <module>winsound</module>
     <module>xmllib</module>
     <module>xmlrpclib</module>
+    <module>zipfile._path._functools</module>
     <module>zipfile._path.glob</module>
     <func>PythonFinalizationError</func>
     <func>StandardError</func>
@@ -2687,12 +2847,14 @@
     <module>_abcoll</module>
     <module>_android_support</module>
     <module>_apple_support</module>
+    <module>_ast_unparse</module>
     <module>_bootlocale</module>
     <module>_bootsubprocess</module>
     <module>_colorize</module>
     <module>_crypt</module>
     <module>_dummy_thread</module>
     <module>_gdbm</module>
+    <module>_hmac</module>
     <module>_hotshot</module>
     <module>_interpchannels</module>
     <module>_interpqueues</module>
@@ -2700,10 +2862,13 @@
     <module>_ios_support</module>
     <module>_msi</module>
     <module>_peg_parser</module>
+    <module>_py_warnings</module>
     <module>_pyrepl</module>
     <module>_pyrepl.__main__</module>
     <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl._module_completer</module>
     <module>_pyrepl._threading_handler</module>
+    <module>_pyrepl.base_eventqueue</module>
     <module>_pyrepl.commands</module>
     <module>_pyrepl.completing_reader</module>
     <module>_pyrepl.console</module>
@@ -2717,12 +2882,15 @@
     <module>_pyrepl.reader</module>
     <module>_pyrepl.readline</module>
     <module>_pyrepl.simple_interact</module>
+    <module>_pyrepl.terminfo</module>
     <module>_pyrepl.trace</module>
     <module>_pyrepl.types</module>
     <module>_pyrepl.unix_console</module>
     <module>_pyrepl.unix_eventqueue</module>
     <module>_pyrepl.utils</module>
     <module>_pyrepl.windows_console</module>
+    <module>_pyrepl.windows_eventqueue</module>
+    <module>_remote_debugging</module>
     <module>_sha256</module>
     <module>_sha512</module>
     <module>_suggestions</module>
@@ -2730,6 +2898,8 @@
     <module>_sysconfigdata__darwin_darwin</module>
     <module>_testexternalinspection</module>
     <module>_testlimitedcapi</module>
+    <module>_types</module>
+    <module>_zstd</module>
     <module>aifc</module>
     <module>annotationlib</module>
     <module>anydbm</module>
@@ -2737,6 +2907,7 @@
     <module>asyncio.compat</module>
     <module>asyncio.graph</module>
     <module>asyncio.test_utils</module>
+    <module>asyncio.tools</module>
     <module>asyncore</module>
     <module>audiodev</module>
     <module>audioop</module>
@@ -2790,7 +2961,19 @@
     <module>compiler.syntax</module>
     <module>compiler.transformer</module>
     <module>compiler.visitor</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
     <module>concurrent.futures.interpreter</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
     <module>cookielib</module>
     <module>copy_reg</module>
     <module>crypt</module>
@@ -3053,6 +3236,7 @@
     <module>importlib._common</module>
     <module>importlib._itertools</module>
     <module>importlib._legacy</module>
+    <module>importlib.metadata._typing</module>
     <module>importlib.metadata.diagnose</module>
     <module>importlib.resources._functional</module>
     <module>importlib.resources._legacy</module>
@@ -3492,6 +3676,19 @@
     <module>pipes</module>
     <module>popen2</module>
     <module>posixfile</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
     <module>repr</module>
     <module>rexec</module>
     <module>rfc822</module>
@@ -3502,6 +3699,7 @@
     <module>smtpd</module>
     <module>sndhdr</module>
     <module>spwd</module>
+    <module>sqlite3._completer</module>
     <module>sqlite3.test</module>
     <module>sqlite3.test.backup</module>
     <module>sqlite3.test.dbapi</module>
@@ -3524,6 +3722,7 @@
     <module>sqlite3.test.userfunctions</module>
     <module>sre</module>
     <module>statvfs</module>
+    <module>string.templatelib</module>
     <module>stringold</module>
     <module>strop</module>
     <module>sunau</module>
@@ -3599,6 +3798,7 @@
     <module>xdrlib</module>
     <module>xmllib</module>
     <module>xmlrpclib</module>
+    <module>zipfile._path._functools</module>
     <func>PythonFinalizationError</func>
     <func>StandardError</func>
     <func>_IncompleteInputError</func>
@@ -3657,8 +3857,984 @@
     <module>__phello__.ham</module>
     <module>__phello__.ham.eggs</module>
     <module>_abcoll</module>
+    <module>_ast_unparse</module>
     <module>_bootlocale</module>
     <module>_bootsubprocess</module>
+    <module>_crypt</module>
+    <module>_dummy_thread</module>
+    <module>_gdbm</module>
+    <module>_hmac</module>
+    <module>_hotshot</module>
+    <module>_msi</module>
+    <module>_overlapped</module>
+    <module>_peg_parser</module>
+    <module>_py_warnings</module>
+    <module>_pyrepl._module_completer</module>
+    <module>_pyrepl.base_eventqueue</module>
+    <module>_pyrepl.terminfo</module>
+    <module>_pyrepl.windows_eventqueue</module>
+    <module>_remote_debugging</module>
+    <module>_sha256</module>
+    <module>_sha512</module>
+    <module>_sysconfigdata</module>
+    <module>_testconsole</module>
+    <module>_tkinter</module>
+    <module>_types</module>
+    <module>_winapi</module>
+    <module>_wmi</module>
+    <module>_xxinterpchannels</module>
+    <module>_xxsubinterpreters</module>
+    <module>_zstd</module>
+    <module>aifc</module>
+    <module>anydbm</module>
+    <module>asynchat</module>
+    <module>asyncio.compat</module>
+    <module>asyncio.test_utils</module>
+    <module>asyncio.tools</module>
+    <module>asyncore</module>
+    <module>audiodev</module>
+    <module>audioop</module>
+    <module>binhex</module>
+    <module>bsddb</module>
+    <module>bsddb.db</module>
+    <module>bsddb.dbobj</module>
+    <module>bsddb.dbrecio</module>
+    <module>bsddb.dbshelve</module>
+    <module>bsddb.dbtables</module>
+    <module>bsddb.dbutils</module>
+    <module>bsddb.test</module>
+    <module>bsddb.test.test_all</module>
+    <module>bsddb.test.test_associate</module>
+    <module>bsddb.test.test_basics</module>
+    <module>bsddb.test.test_compare</module>
+    <module>bsddb.test.test_compat</module>
+    <module>bsddb.test.test_cursor_pget_bug</module>
+    <module>bsddb.test.test_db</module>
+    <module>bsddb.test.test_dbenv</module>
+    <module>bsddb.test.test_dbobj</module>
+    <module>bsddb.test.test_dbshelve</module>
+    <module>bsddb.test.test_dbtables</module>
+    <module>bsddb.test.test_distributed_transactions</module>
+    <module>bsddb.test.test_early_close</module>
+    <module>bsddb.test.test_fileid</module>
+    <module>bsddb.test.test_get_none</module>
+    <module>bsddb.test.test_join</module>
+    <module>bsddb.test.test_lock</module>
+    <module>bsddb.test.test_misc</module>
+    <module>bsddb.test.test_pickle</module>
+    <module>bsddb.test.test_queue</module>
+    <module>bsddb.test.test_recno</module>
+    <module>bsddb.test.test_replication</module>
+    <module>bsddb.test.test_sequence</module>
+    <module>bsddb.test.test_thread</module>
+    <module>cPickle</module>
+    <module>cStringIO</module>
+    <module>cgi</module>
+    <module>cgitb</module>
+    <module>chunk</module>
+    <module>commands</module>
+    <module>compiler</module>
+    <module>compiler.ast</module>
+    <module>compiler.consts</module>
+    <module>compiler.future</module>
+    <module>compiler.misc</module>
+    <module>compiler.pyassem</module>
+    <module>compiler.pycodegen</module>
+    <module>compiler.symbols</module>
+    <module>compiler.syntax</module>
+    <module>compiler.transformer</module>
+    <module>compiler.visitor</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
+    <module>cookielib</module>
+    <module>copy_reg</module>
+    <module>crypt</module>
+    <module>ctypes.test</module>
+    <module>ctypes.test.__main__</module>
+    <module>ctypes.test.runtests</module>
+    <module>ctypes.test.test_anon</module>
+    <module>ctypes.test.test_array_in_pointer</module>
+    <module>ctypes.test.test_arrays</module>
+    <module>ctypes.test.test_as_parameter</module>
+    <module>ctypes.test.test_bitfields</module>
+    <module>ctypes.test.test_buffers</module>
+    <module>ctypes.test.test_bytes</module>
+    <module>ctypes.test.test_byteswap</module>
+    <module>ctypes.test.test_callbacks</module>
+    <module>ctypes.test.test_cast</module>
+    <module>ctypes.test.test_cfuncs</module>
+    <module>ctypes.test.test_checkretval</module>
+    <module>ctypes.test.test_delattr</module>
+    <module>ctypes.test.test_errno</module>
+    <module>ctypes.test.test_find</module>
+    <module>ctypes.test.test_frombuffer</module>
+    <module>ctypes.test.test_funcptr</module>
+    <module>ctypes.test.test_functions</module>
+    <module>ctypes.test.test_incomplete</module>
+    <module>ctypes.test.test_init</module>
+    <module>ctypes.test.test_internals</module>
+    <module>ctypes.test.test_keeprefs</module>
+    <module>ctypes.test.test_libc</module>
+    <module>ctypes.test.test_loading</module>
+    <module>ctypes.test.test_macholib</module>
+    <module>ctypes.test.test_memfunctions</module>
+    <module>ctypes.test.test_numbers</module>
+    <module>ctypes.test.test_objects</module>
+    <module>ctypes.test.test_parameters</module>
+    <module>ctypes.test.test_pep3118</module>
+    <module>ctypes.test.test_pickling</module>
+    <module>ctypes.test.test_pointers</module>
+    <module>ctypes.test.test_prototypes</module>
+    <module>ctypes.test.test_python_api</module>
+    <module>ctypes.test.test_random_things</module>
+    <module>ctypes.test.test_refcounts</module>
+    <module>ctypes.test.test_repr</module>
+    <module>ctypes.test.test_returnfuncptrs</module>
+    <module>ctypes.test.test_simplesubclasses</module>
+    <module>ctypes.test.test_sizes</module>
+    <module>ctypes.test.test_slicing</module>
+    <module>ctypes.test.test_stringptr</module>
+    <module>ctypes.test.test_strings</module>
+    <module>ctypes.test.test_struct_fields</module>
+    <module>ctypes.test.test_structures</module>
+    <module>ctypes.test.test_unaligned_structures</module>
+    <module>ctypes.test.test_unicode</module>
+    <module>ctypes.test.test_values</module>
+    <module>ctypes.test.test_varsize_struct</module>
+    <module>ctypes.test.test_win32</module>
+    <module>ctypes.test.test_wintypes</module>
+    <module>curses.wrapper</module>
+    <module>dbhash</module>
+    <module>dircache</module>
+    <module>distutils</module>
+    <module>distutils._msvccompiler</module>
+    <module>distutils.archive_util</module>
+    <module>distutils.bcppcompiler</module>
+    <module>distutils.ccompiler</module>
+    <module>distutils.cmd</module>
+    <module>distutils.command</module>
+    <module>distutils.command.bdist</module>
+    <module>distutils.command.bdist_dumb</module>
+    <module>distutils.command.bdist_msi</module>
+    <module>distutils.command.bdist_rpm</module>
+    <module>distutils.command.bdist_wininst</module>
+    <module>distutils.command.build</module>
+    <module>distutils.command.build_clib</module>
+    <module>distutils.command.build_ext</module>
+    <module>distutils.command.build_py</module>
+    <module>distutils.command.build_scripts</module>
+    <module>distutils.command.check</module>
+    <module>distutils.command.clean</module>
+    <module>distutils.command.config</module>
+    <module>distutils.command.install</module>
+    <module>distutils.command.install_data</module>
+    <module>distutils.command.install_egg_info</module>
+    <module>distutils.command.install_headers</module>
+    <module>distutils.command.install_lib</module>
+    <module>distutils.command.install_scripts</module>
+    <module>distutils.command.register</module>
+    <module>distutils.command.sdist</module>
+    <module>distutils.command.upload</module>
+    <module>distutils.config</module>
+    <module>distutils.core</module>
+    <module>distutils.cygwinccompiler</module>
+    <module>distutils.debug</module>
+    <module>distutils.dep_util</module>
+    <module>distutils.dir_util</module>
+    <module>distutils.dist</module>
+    <module>distutils.emxccompiler</module>
+    <module>distutils.errors</module>
+    <module>distutils.extension</module>
+    <module>distutils.fancy_getopt</module>
+    <module>distutils.file_util</module>
+    <module>distutils.filelist</module>
+    <module>distutils.log</module>
+    <module>distutils.msvc9compiler</module>
+    <module>distutils.msvccompiler</module>
+    <module>distutils.spawn</module>
+    <module>distutils.sysconfig</module>
+    <module>distutils.tests</module>
+    <module>distutils.tests.setuptools_build_ext</module>
+    <module>distutils.tests.setuptools_extension</module>
+    <module>distutils.tests.support</module>
+    <module>distutils.tests.test_archive_util</module>
+    <module>distutils.tests.test_bdist</module>
+    <module>distutils.tests.test_bdist_dumb</module>
+    <module>distutils.tests.test_bdist_msi</module>
+    <module>distutils.tests.test_bdist_rpm</module>
+    <module>distutils.tests.test_bdist_wininst</module>
+    <module>distutils.tests.test_build</module>
+    <module>distutils.tests.test_build_clib</module>
+    <module>distutils.tests.test_build_ext</module>
+    <module>distutils.tests.test_build_py</module>
+    <module>distutils.tests.test_build_scripts</module>
+    <module>distutils.tests.test_ccompiler</module>
+    <module>distutils.tests.test_check</module>
+    <module>distutils.tests.test_clean</module>
+    <module>distutils.tests.test_cmd</module>
+    <module>distutils.tests.test_config</module>
+    <module>distutils.tests.test_config_cmd</module>
+    <module>distutils.tests.test_core</module>
+    <module>distutils.tests.test_cygwinccompiler</module>
+    <module>distutils.tests.test_dep_util</module>
+    <module>distutils.tests.test_dir_util</module>
+    <module>distutils.tests.test_dist</module>
+    <module>distutils.tests.test_extension</module>
+    <module>distutils.tests.test_file_util</module>
+    <module>distutils.tests.test_filelist</module>
+    <module>distutils.tests.test_install</module>
+    <module>distutils.tests.test_install_data</module>
+    <module>distutils.tests.test_install_headers</module>
+    <module>distutils.tests.test_install_lib</module>
+    <module>distutils.tests.test_install_scripts</module>
+    <module>distutils.tests.test_log</module>
+    <module>distutils.tests.test_msvc9compiler</module>
+    <module>distutils.tests.test_msvccompiler</module>
+    <module>distutils.tests.test_register</module>
+    <module>distutils.tests.test_sdist</module>
+    <module>distutils.tests.test_spawn</module>
+    <module>distutils.tests.test_sysconfig</module>
+    <module>distutils.tests.test_text_file</module>
+    <module>distutils.tests.test_unixccompiler</module>
+    <module>distutils.tests.test_upload</module>
+    <module>distutils.tests.test_util</module>
+    <module>distutils.tests.test_version</module>
+    <module>distutils.tests.test_versionpredicate</module>
+    <module>distutils.text_file</module>
+    <module>distutils.unixccompiler</module>
+    <module>distutils.util</module>
+    <module>distutils.version</module>
+    <module>distutils.versionpredicate</module>
+    <module>dumbdbm</module>
+    <module>dummy_thread</module>
+    <module>dummy_threading</module>
+    <module>email.test</module>
+    <module>email.test.test_email</module>
+    <module>email.test.test_email_codecs</module>
+    <module>email.test.test_email_codecs_renamed</module>
+    <module>email.test.test_email_renamed</module>
+    <module>email.test.test_email_torture</module>
+    <module>encodings.cp65001</module>
+    <module>encodings.mac_centeuro</module>
+    <module>encodings.string_escape</module>
+    <module>encodings.unicode_internal</module>
+    <module>ensurepip._bundled</module>
+    <module>exceptions</module>
+    <module>formatter</module>
+    <module>fpformat</module>
+    <module>future_builtins</module>
+    <module>gdbm</module>
+    <module>hotshot</module>
+    <module>hotshot.log</module>
+    <module>hotshot.stats</module>
+    <module>hotshot.stones</module>
+    <module>htmlentitydefs</module>
+    <module>htmllib</module>
+    <module>httplib</module>
+    <module>idlelib.AutoComplete</module>
+    <module>idlelib.AutoCompleteWindow</module>
+    <module>idlelib.AutoExpand</module>
+    <module>idlelib.Bindings</module>
+    <module>idlelib.CallTipWindow</module>
+    <module>idlelib.CallTips</module>
+    <module>idlelib.ClassBrowser</module>
+    <module>idlelib.CodeContext</module>
+    <module>idlelib.ColorDelegator</module>
+    <module>idlelib.Debugger</module>
+    <module>idlelib.Delegator</module>
+    <module>idlelib.EditorWindow</module>
+    <module>idlelib.FileList</module>
+    <module>idlelib.FormatParagraph</module>
+    <module>idlelib.GrepDialog</module>
+    <module>idlelib.HyperParser</module>
+    <module>idlelib.IOBinding</module>
+    <module>idlelib.IdleHistory</module>
+    <module>idlelib.MultiCall</module>
+    <module>idlelib.MultiStatusBar</module>
+    <module>idlelib.ObjectBrowser</module>
+    <module>idlelib.OutputWindow</module>
+    <module>idlelib.ParenMatch</module>
+    <module>idlelib.PathBrowser</module>
+    <module>idlelib.Percolator</module>
+    <module>idlelib.PyParse</module>
+    <module>idlelib.PyShell</module>
+    <module>idlelib.RemoteDebugger</module>
+    <module>idlelib.RemoteObjectBrowser</module>
+    <module>idlelib.ReplaceDialog</module>
+    <module>idlelib.RstripExtension</module>
+    <module>idlelib.ScriptBinding</module>
+    <module>idlelib.ScrolledList</module>
+    <module>idlelib.SearchDialog</module>
+    <module>idlelib.SearchDialogBase</module>
+    <module>idlelib.SearchEngine</module>
+    <module>idlelib.StackViewer</module>
+    <module>idlelib.ToolTip</module>
+    <module>idlelib.TreeWidget</module>
+    <module>idlelib.UndoDelegator</module>
+    <module>idlelib.WidgetRedirector</module>
+    <module>idlelib.WindowList</module>
+    <module>idlelib.ZoomHeight</module>
+    <module>idlelib._pyclbr</module>
+    <module>idlelib.aboutDialog</module>
+    <module>idlelib.configDialog</module>
+    <module>idlelib.configHandler</module>
+    <module>idlelib.configHelpSourceEdit</module>
+    <module>idlelib.configSectionNameDialog</module>
+    <module>idlelib.dynOptionMenuWidget</module>
+    <module>idlelib.idle_test.test_calltips</module>
+    <module>idlelib.idle_test.test_config_name</module>
+    <module>idlelib.idle_test.test_formatparagraph</module>
+    <module>idlelib.idle_test.test_helpabout</module>
+    <module>idlelib.idle_test.test_idlehistory</module>
+    <module>idlelib.idle_test.test_io</module>
+    <module>idlelib.idle_test.test_paragraph</module>
+    <module>idlelib.idle_test.test_rstrip</module>
+    <module>idlelib.idle_test.test_searchdialogbase</module>
+    <module>idlelib.idle_test.test_widgetredir</module>
+    <module>idlelib.idlever</module>
+    <module>idlelib.keybindingDialog</module>
+    <module>idlelib.macosxSupport</module>
+    <module>idlelib.paragraph</module>
+    <module>idlelib.rstrip</module>
+    <module>idlelib.tabbedpages</module>
+    <module>idlelib.textView</module>
+    <module>ihooks</module>
+    <module>imghdr</module>
+    <module>imp</module>
+    <module>importlib._adapters</module>
+    <module>importlib._common</module>
+    <module>importlib._itertools</module>
+    <module>importlib._legacy</module>
+    <module>importlib.metadata._typing</module>
+    <module>importlib.resources._legacy</module>
+    <module>imputil</module>
+    <module>json.tests</module>
+    <module>json.tests.test_check_circular</module>
+    <module>json.tests.test_decode</module>
+    <module>json.tests.test_default</module>
+    <module>json.tests.test_dump</module>
+    <module>json.tests.test_encode_basestring_ascii</module>
+    <module>json.tests.test_fail</module>
+    <module>json.tests.test_float</module>
+    <module>json.tests.test_indent</module>
+    <module>json.tests.test_pass1</module>
+    <module>json.tests.test_pass2</module>
+    <module>json.tests.test_pass3</module>
+    <module>json.tests.test_recursion</module>
+    <module>json.tests.test_scanstring</module>
+    <module>json.tests.test_separators</module>
+    <module>json.tests.test_speedups</module>
+    <module>json.tests.test_tool</module>
+    <module>json.tests.test_unicode</module>
+    <module>lib2to3</module>
+    <module>lib2to3.__main__</module>
+    <module>lib2to3.btm_matcher</module>
+    <module>lib2to3.btm_utils</module>
+    <module>lib2to3.fixer_base</module>
+    <module>lib2to3.fixer_util</module>
+    <module>lib2to3.fixes</module>
+    <module>lib2to3.fixes.fix_apply</module>
+    <module>lib2to3.fixes.fix_asserts</module>
+    <module>lib2to3.fixes.fix_basestring</module>
+    <module>lib2to3.fixes.fix_buffer</module>
+    <module>lib2to3.fixes.fix_dict</module>
+    <module>lib2to3.fixes.fix_except</module>
+    <module>lib2to3.fixes.fix_exec</module>
+    <module>lib2to3.fixes.fix_execfile</module>
+    <module>lib2to3.fixes.fix_exitfunc</module>
+    <module>lib2to3.fixes.fix_filter</module>
+    <module>lib2to3.fixes.fix_funcattrs</module>
+    <module>lib2to3.fixes.fix_future</module>
+    <module>lib2to3.fixes.fix_getcwdu</module>
+    <module>lib2to3.fixes.fix_has_key</module>
+    <module>lib2to3.fixes.fix_idioms</module>
+    <module>lib2to3.fixes.fix_import</module>
+    <module>lib2to3.fixes.fix_imports</module>
+    <module>lib2to3.fixes.fix_imports2</module>
+    <module>lib2to3.fixes.fix_input</module>
+    <module>lib2to3.fixes.fix_intern</module>
+    <module>lib2to3.fixes.fix_isinstance</module>
+    <module>lib2to3.fixes.fix_itertools</module>
+    <module>lib2to3.fixes.fix_itertools_imports</module>
+    <module>lib2to3.fixes.fix_long</module>
+    <module>lib2to3.fixes.fix_map</module>
+    <module>lib2to3.fixes.fix_metaclass</module>
+    <module>lib2to3.fixes.fix_methodattrs</module>
+    <module>lib2to3.fixes.fix_ne</module>
+    <module>lib2to3.fixes.fix_next</module>
+    <module>lib2to3.fixes.fix_nonzero</module>
+    <module>lib2to3.fixes.fix_numliterals</module>
+    <module>lib2to3.fixes.fix_operator</module>
+    <module>lib2to3.fixes.fix_paren</module>
+    <module>lib2to3.fixes.fix_print</module>
+    <module>lib2to3.fixes.fix_raise</module>
+    <module>lib2to3.fixes.fix_raw_input</module>
+    <module>lib2to3.fixes.fix_reduce</module>
+    <module>lib2to3.fixes.fix_reload</module>
+    <module>lib2to3.fixes.fix_renames</module>
+    <module>lib2to3.fixes.fix_repr</module>
+    <module>lib2to3.fixes.fix_set_literal</module>
+    <module>lib2to3.fixes.fix_standarderror</module>
+    <module>lib2to3.fixes.fix_sys_exc</module>
+    <module>lib2to3.fixes.fix_throw</module>
+    <module>lib2to3.fixes.fix_tuple_params</module>
+    <module>lib2to3.fixes.fix_types</module>
+    <module>lib2to3.fixes.fix_unicode</module>
+    <module>lib2to3.fixes.fix_urllib</module>
+    <module>lib2to3.fixes.fix_ws_comma</module>
+    <module>lib2to3.fixes.fix_xrange</module>
+    <module>lib2to3.fixes.fix_xreadlines</module>
+    <module>lib2to3.fixes.fix_zip</module>
+    <module>lib2to3.main</module>
+    <module>lib2to3.patcomp</module>
+    <module>lib2to3.pgen2</module>
+    <module>lib2to3.pgen2.conv</module>
+    <module>lib2to3.pgen2.driver</module>
+    <module>lib2to3.pgen2.grammar</module>
+    <module>lib2to3.pgen2.literals</module>
+    <module>lib2to3.pgen2.parse</module>
+    <module>lib2to3.pgen2.pgen</module>
+    <module>lib2to3.pgen2.token</module>
+    <module>lib2to3.pgen2.tokenize</module>
+    <module>lib2to3.pygram</module>
+    <module>lib2to3.pytree</module>
+    <module>lib2to3.refactor</module>
+    <module>lib2to3.tests</module>
+    <module>lib2to3.tests.__main__</module>
+    <module>lib2to3.tests.pytree_idempotency</module>
+    <module>lib2to3.tests.support</module>
+    <module>lib2to3.tests.test_all_fixers</module>
+    <module>lib2to3.tests.test_fixers</module>
+    <module>lib2to3.tests.test_main</module>
+    <module>lib2to3.tests.test_parser</module>
+    <module>lib2to3.tests.test_pytree</module>
+    <module>lib2to3.tests.test_refactor</module>
+    <module>lib2to3.tests.test_util</module>
+    <module>linuxaudiodev</module>
+    <module>macpath</module>
+    <module>macurl2path</module>
+    <module>mailcap</module>
+    <module>markupbase</module>
+    <module>md5</module>
+    <module>mhlib</module>
+    <module>mimetools</module>
+    <module>mimify</module>
+    <module>msilib</module>
+    <module>msilib.schema</module>
+    <module>msilib.sequence</module>
+    <module>msilib.text</module>
+    <module>msvcrt</module>
+    <module>multifile</module>
+    <module>multiprocessing.forking</module>
+    <module>multiprocessing.semaphore_tracker</module>
+    <module>mutex</module>
+    <module>new</module>
+    <module>nis</module>
+    <module>nntplib</module>
+    <module>nt</module>
+    <module>os2emxpath</module>
+    <module>ossaudiodev</module>
+    <module>parser</module>
+    <module>pip</module>
+    <module>pip.__main__</module>
+    <module>pip._internal</module>
+    <module>pip._internal.build_env</module>
+    <module>pip._internal.cache</module>
+    <module>pip._internal.cli</module>
+    <module>pip._internal.cli.autocompletion</module>
+    <module>pip._internal.cli.base_command</module>
+    <module>pip._internal.cli.cmdoptions</module>
+    <module>pip._internal.cli.main_parser</module>
+    <module>pip._internal.cli.parser</module>
+    <module>pip._internal.cli.status_codes</module>
+    <module>pip._internal.commands</module>
+    <module>pip._internal.commands.check</module>
+    <module>pip._internal.commands.completion</module>
+    <module>pip._internal.commands.configuration</module>
+    <module>pip._internal.commands.download</module>
+    <module>pip._internal.commands.freeze</module>
+    <module>pip._internal.commands.hash</module>
+    <module>pip._internal.commands.help</module>
+    <module>pip._internal.commands.install</module>
+    <module>pip._internal.commands.list</module>
+    <module>pip._internal.commands.search</module>
+    <module>pip._internal.commands.show</module>
+    <module>pip._internal.commands.uninstall</module>
+    <module>pip._internal.commands.wheel</module>
+    <module>pip._internal.configuration</module>
+    <module>pip._internal.download</module>
+    <module>pip._internal.exceptions</module>
+    <module>pip._internal.index</module>
+    <module>pip._internal.locations</module>
+    <module>pip._internal.models</module>
+    <module>pip._internal.models.candidate</module>
+    <module>pip._internal.models.format_control</module>
+    <module>pip._internal.models.index</module>
+    <module>pip._internal.models.link</module>
+    <module>pip._internal.operations</module>
+    <module>pip._internal.operations.check</module>
+    <module>pip._internal.operations.freeze</module>
+    <module>pip._internal.operations.prepare</module>
+    <module>pip._internal.pep425tags</module>
+    <module>pip._internal.pyproject</module>
+    <module>pip._internal.req</module>
+    <module>pip._internal.req.constructors</module>
+    <module>pip._internal.req.req_file</module>
+    <module>pip._internal.req.req_install</module>
+    <module>pip._internal.req.req_set</module>
+    <module>pip._internal.req.req_tracker</module>
+    <module>pip._internal.req.req_uninstall</module>
+    <module>pip._internal.resolve</module>
+    <module>pip._internal.utils</module>
+    <module>pip._internal.utils.appdirs</module>
+    <module>pip._internal.utils.compat</module>
+    <module>pip._internal.utils.deprecation</module>
+    <module>pip._internal.utils.encoding</module>
+    <module>pip._internal.utils.filesystem</module>
+    <module>pip._internal.utils.glibc</module>
+    <module>pip._internal.utils.hashes</module>
+    <module>pip._internal.utils.logging</module>
+    <module>pip._internal.utils.misc</module>
+    <module>pip._internal.utils.models</module>
+    <module>pip._internal.utils.outdated</module>
+    <module>pip._internal.utils.packaging</module>
+    <module>pip._internal.utils.setuptools_build</module>
+    <module>pip._internal.utils.temp_dir</module>
+    <module>pip._internal.utils.typing</module>
+    <module>pip._internal.utils.ui</module>
+    <module>pip._internal.vcs</module>
+    <module>pip._internal.vcs.bazaar</module>
+    <module>pip._internal.vcs.git</module>
+    <module>pip._internal.vcs.mercurial</module>
+    <module>pip._internal.vcs.subversion</module>
+    <module>pip._internal.wheel</module>
+    <module>pip._vendor</module>
+    <module>pip._vendor.appdirs</module>
+    <module>pip._vendor.cachecontrol</module>
+    <module>pip._vendor.cachecontrol._cmd</module>
+    <module>pip._vendor.cachecontrol.adapter</module>
+    <module>pip._vendor.cachecontrol.cache</module>
+    <module>pip._vendor.cachecontrol.caches</module>
+    <module>pip._vendor.cachecontrol.caches.file_cache</module>
+    <module>pip._vendor.cachecontrol.caches.redis_cache</module>
+    <module>pip._vendor.cachecontrol.compat</module>
+    <module>pip._vendor.cachecontrol.controller</module>
+    <module>pip._vendor.cachecontrol.filewrapper</module>
+    <module>pip._vendor.cachecontrol.heuristics</module>
+    <module>pip._vendor.cachecontrol.serialize</module>
+    <module>pip._vendor.cachecontrol.wrapper</module>
+    <module>pip._vendor.certifi</module>
+    <module>pip._vendor.certifi.__main__</module>
+    <module>pip._vendor.certifi.core</module>
+    <module>pip._vendor.chardet</module>
+    <module>pip._vendor.chardet.big5freq</module>
+    <module>pip._vendor.chardet.big5prober</module>
+    <module>pip._vendor.chardet.chardistribution</module>
+    <module>pip._vendor.chardet.charsetgroupprober</module>
+    <module>pip._vendor.chardet.charsetprober</module>
+    <module>pip._vendor.chardet.cli</module>
+    <module>pip._vendor.chardet.cli.chardetect</module>
+    <module>pip._vendor.chardet.codingstatemachine</module>
+    <module>pip._vendor.chardet.compat</module>
+    <module>pip._vendor.chardet.cp949prober</module>
+    <module>pip._vendor.chardet.enums</module>
+    <module>pip._vendor.chardet.escprober</module>
+    <module>pip._vendor.chardet.escsm</module>
+    <module>pip._vendor.chardet.eucjpprober</module>
+    <module>pip._vendor.chardet.euckrfreq</module>
+    <module>pip._vendor.chardet.euckrprober</module>
+    <module>pip._vendor.chardet.euctwfreq</module>
+    <module>pip._vendor.chardet.euctwprober</module>
+    <module>pip._vendor.chardet.gb2312freq</module>
+    <module>pip._vendor.chardet.gb2312prober</module>
+    <module>pip._vendor.chardet.hebrewprober</module>
+    <module>pip._vendor.chardet.jisfreq</module>
+    <module>pip._vendor.chardet.jpcntx</module>
+    <module>pip._vendor.chardet.langbulgarianmodel</module>
+    <module>pip._vendor.chardet.langcyrillicmodel</module>
+    <module>pip._vendor.chardet.langgreekmodel</module>
+    <module>pip._vendor.chardet.langhebrewmodel</module>
+    <module>pip._vendor.chardet.langhungarianmodel</module>
+    <module>pip._vendor.chardet.langthaimodel</module>
+    <module>pip._vendor.chardet.langturkishmodel</module>
+    <module>pip._vendor.chardet.latin1prober</module>
+    <module>pip._vendor.chardet.mbcharsetprober</module>
+    <module>pip._vendor.chardet.mbcsgroupprober</module>
+    <module>pip._vendor.chardet.mbcssm</module>
+    <module>pip._vendor.chardet.sbcharsetprober</module>
+    <module>pip._vendor.chardet.sbcsgroupprober</module>
+    <module>pip._vendor.chardet.sjisprober</module>
+    <module>pip._vendor.chardet.universaldetector</module>
+    <module>pip._vendor.chardet.utf8prober</module>
+    <module>pip._vendor.chardet.version</module>
+    <module>pip._vendor.colorama</module>
+    <module>pip._vendor.colorama.ansi</module>
+    <module>pip._vendor.colorama.ansitowin32</module>
+    <module>pip._vendor.colorama.initialise</module>
+    <module>pip._vendor.colorama.win32</module>
+    <module>pip._vendor.colorama.winterm</module>
+    <module>pip._vendor.distlib</module>
+    <module>pip._vendor.distlib._backport</module>
+    <module>pip._vendor.distlib._backport.misc</module>
+    <module>pip._vendor.distlib._backport.shutil</module>
+    <module>pip._vendor.distlib._backport.sysconfig</module>
+    <module>pip._vendor.distlib._backport.tarfile</module>
+    <module>pip._vendor.distlib.compat</module>
+    <module>pip._vendor.distlib.database</module>
+    <module>pip._vendor.distlib.index</module>
+    <module>pip._vendor.distlib.locators</module>
+    <module>pip._vendor.distlib.manifest</module>
+    <module>pip._vendor.distlib.markers</module>
+    <module>pip._vendor.distlib.metadata</module>
+    <module>pip._vendor.distlib.resources</module>
+    <module>pip._vendor.distlib.scripts</module>
+    <module>pip._vendor.distlib.util</module>
+    <module>pip._vendor.distlib.version</module>
+    <module>pip._vendor.distlib.wheel</module>
+    <module>pip._vendor.distro</module>
+    <module>pip._vendor.html5lib</module>
+    <module>pip._vendor.html5lib._ihatexml</module>
+    <module>pip._vendor.html5lib._inputstream</module>
+    <module>pip._vendor.html5lib._tokenizer</module>
+    <module>pip._vendor.html5lib._trie</module>
+    <module>pip._vendor.html5lib._trie._base</module>
+    <module>pip._vendor.html5lib._trie.datrie</module>
+    <module>pip._vendor.html5lib._trie.py</module>
+    <module>pip._vendor.html5lib._utils</module>
+    <module>pip._vendor.html5lib.constants</module>
+    <module>pip._vendor.html5lib.filters</module>
+    <module>pip._vendor.html5lib.filters.alphabeticalattributes</module>
+    <module>pip._vendor.html5lib.filters.base</module>
+    <module>pip._vendor.html5lib.filters.inject_meta_charset</module>
+    <module>pip._vendor.html5lib.filters.lint</module>
+    <module>pip._vendor.html5lib.filters.optionaltags</module>
+    <module>pip._vendor.html5lib.filters.sanitizer</module>
+    <module>pip._vendor.html5lib.filters.whitespace</module>
+    <module>pip._vendor.html5lib.html5parser</module>
+    <module>pip._vendor.html5lib.serializer</module>
+    <module>pip._vendor.html5lib.treeadapters</module>
+    <module>pip._vendor.html5lib.treeadapters.genshi</module>
+    <module>pip._vendor.html5lib.treeadapters.sax</module>
+    <module>pip._vendor.html5lib.treebuilders</module>
+    <module>pip._vendor.html5lib.treebuilders.base</module>
+    <module>pip._vendor.html5lib.treebuilders.dom</module>
+    <module>pip._vendor.html5lib.treebuilders.etree</module>
+    <module>pip._vendor.html5lib.treebuilders.etree_lxml</module>
+    <module>pip._vendor.html5lib.treewalkers</module>
+    <module>pip._vendor.html5lib.treewalkers.base</module>
+    <module>pip._vendor.html5lib.treewalkers.dom</module>
+    <module>pip._vendor.html5lib.treewalkers.etree</module>
+    <module>pip._vendor.html5lib.treewalkers.etree_lxml</module>
+    <module>pip._vendor.html5lib.treewalkers.genshi</module>
+    <module>pip._vendor.idna</module>
+    <module>pip._vendor.idna.codec</module>
+    <module>pip._vendor.idna.compat</module>
+    <module>pip._vendor.idna.core</module>
+    <module>pip._vendor.idna.idnadata</module>
+    <module>pip._vendor.idna.intranges</module>
+    <module>pip._vendor.idna.package_data</module>
+    <module>pip._vendor.idna.uts46data</module>
+    <module>pip._vendor.ipaddress</module>
+    <module>pip._vendor.lockfile</module>
+    <module>pip._vendor.lockfile.linklockfile</module>
+    <module>pip._vendor.lockfile.mkdirlockfile</module>
+    <module>pip._vendor.lockfile.pidlockfile</module>
+    <module>pip._vendor.lockfile.sqlitelockfile</module>
+    <module>pip._vendor.lockfile.symlinklockfile</module>
+    <module>pip._vendor.msgpack</module>
+    <module>pip._vendor.msgpack._version</module>
+    <module>pip._vendor.msgpack.exceptions</module>
+    <module>pip._vendor.msgpack.fallback</module>
+    <module>pip._vendor.packaging</module>
+    <module>pip._vendor.packaging.__about__</module>
+    <module>pip._vendor.packaging._compat</module>
+    <module>pip._vendor.packaging._structures</module>
+    <module>pip._vendor.packaging.markers</module>
+    <module>pip._vendor.packaging.requirements</module>
+    <module>pip._vendor.packaging.specifiers</module>
+    <module>pip._vendor.packaging.utils</module>
+    <module>pip._vendor.packaging.version</module>
+    <module>pip._vendor.pep517</module>
+    <module>pip._vendor.pep517._in_process</module>
+    <module>pip._vendor.pep517.build</module>
+    <module>pip._vendor.pep517.check</module>
+    <module>pip._vendor.pep517.colorlog</module>
+    <module>pip._vendor.pep517.compat</module>
+    <module>pip._vendor.pep517.envbuild</module>
+    <module>pip._vendor.pep517.wrappers</module>
+    <module>pip._vendor.pkg_resources</module>
+    <module>pip._vendor.pkg_resources.py31compat</module>
+    <module>pip._vendor.progress</module>
+    <module>pip._vendor.progress.bar</module>
+    <module>pip._vendor.progress.counter</module>
+    <module>pip._vendor.progress.helpers</module>
+    <module>pip._vendor.progress.spinner</module>
+    <module>pip._vendor.pyparsing</module>
+    <module>pip._vendor.pytoml</module>
+    <module>pip._vendor.pytoml.core</module>
+    <module>pip._vendor.pytoml.parser</module>
+    <module>pip._vendor.pytoml.test</module>
+    <module>pip._vendor.pytoml.utils</module>
+    <module>pip._vendor.pytoml.writer</module>
+    <module>pip._vendor.requests</module>
+    <module>pip._vendor.requests.__version__</module>
+    <module>pip._vendor.requests._internal_utils</module>
+    <module>pip._vendor.requests.adapters</module>
+    <module>pip._vendor.requests.api</module>
+    <module>pip._vendor.requests.auth</module>
+    <module>pip._vendor.requests.certs</module>
+    <module>pip._vendor.requests.compat</module>
+    <module>pip._vendor.requests.cookies</module>
+    <module>pip._vendor.requests.exceptions</module>
+    <module>pip._vendor.requests.help</module>
+    <module>pip._vendor.requests.hooks</module>
+    <module>pip._vendor.requests.models</module>
+    <module>pip._vendor.requests.packages</module>
+    <module>pip._vendor.requests.sessions</module>
+    <module>pip._vendor.requests.status_codes</module>
+    <module>pip._vendor.requests.structures</module>
+    <module>pip._vendor.requests.utils</module>
+    <module>pip._vendor.retrying</module>
+    <module>pip._vendor.six</module>
+    <module>pip._vendor.urllib3</module>
+    <module>pip._vendor.urllib3._collections</module>
+    <module>pip._vendor.urllib3.connection</module>
+    <module>pip._vendor.urllib3.connectionpool</module>
+    <module>pip._vendor.urllib3.contrib</module>
+    <module>pip._vendor.urllib3.contrib._appengine_environ</module>
+    <module>pip._vendor.urllib3.contrib._securetransport</module>
+    <module>pip._vendor.urllib3.contrib._securetransport.bindings</module>
+    <module>pip._vendor.urllib3.contrib._securetransport.low_level</module>
+    <module>pip._vendor.urllib3.contrib.appengine</module>
+    <module>pip._vendor.urllib3.contrib.ntlmpool</module>
+    <module>pip._vendor.urllib3.contrib.pyopenssl</module>
+    <module>pip._vendor.urllib3.contrib.securetransport</module>
+    <module>pip._vendor.urllib3.contrib.socks</module>
+    <module>pip._vendor.urllib3.exceptions</module>
+    <module>pip._vendor.urllib3.fields</module>
+    <module>pip._vendor.urllib3.filepost</module>
+    <module>pip._vendor.urllib3.packages</module>
+    <module>pip._vendor.urllib3.packages.backports</module>
+    <module>pip._vendor.urllib3.packages.backports.makefile</module>
+    <module>pip._vendor.urllib3.packages.six</module>
+    <module>pip._vendor.urllib3.packages.ssl_match_hostname</module>
+    <module>pip._vendor.urllib3.packages.ssl_match_hostname._implementation</module>
+    <module>pip._vendor.urllib3.poolmanager</module>
+    <module>pip._vendor.urllib3.request</module>
+    <module>pip._vendor.urllib3.response</module>
+    <module>pip._vendor.urllib3.util</module>
+    <module>pip._vendor.urllib3.util.connection</module>
+    <module>pip._vendor.urllib3.util.queue</module>
+    <module>pip._vendor.urllib3.util.request</module>
+    <module>pip._vendor.urllib3.util.response</module>
+    <module>pip._vendor.urllib3.util.retry</module>
+    <module>pip._vendor.urllib3.util.ssl_</module>
+    <module>pip._vendor.urllib3.util.timeout</module>
+    <module>pip._vendor.urllib3.util.url</module>
+    <module>pip._vendor.urllib3.util.wait</module>
+    <module>pip._vendor.webencodings</module>
+    <module>pip._vendor.webencodings.labels</module>
+    <module>pip._vendor.webencodings.mklabels</module>
+    <module>pip._vendor.webencodings.tests</module>
+    <module>pip._vendor.webencodings.x_user_defined</module>
+    <module>pipes</module>
+    <module>popen2</module>
+    <module>posixfile</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
+    <module>repr</module>
+    <module>rexec</module>
+    <module>rfc822</module>
+    <module>robotparser</module>
+    <module>sets</module>
+    <module>sgmllib</module>
+    <module>sha</module>
+    <module>smtpd</module>
+    <module>sndhdr</module>
+    <module>spwd</module>
+    <module>sqlite3._completer</module>
+    <module>sqlite3.test</module>
+    <module>sqlite3.test.backup</module>
+    <module>sqlite3.test.dbapi</module>
+    <module>sqlite3.test.dump</module>
+    <module>sqlite3.test.factory</module>
+    <module>sqlite3.test.hooks</module>
+    <module>sqlite3.test.py25tests</module>
+    <module>sqlite3.test.regression</module>
+    <module>sqlite3.test.test_backup</module>
+    <module>sqlite3.test.test_dbapi</module>
+    <module>sqlite3.test.test_dump</module>
+    <module>sqlite3.test.test_factory</module>
+    <module>sqlite3.test.test_hooks</module>
+    <module>sqlite3.test.test_regression</module>
+    <module>sqlite3.test.test_transactions</module>
+    <module>sqlite3.test.test_types</module>
+    <module>sqlite3.test.test_userfunctions</module>
+    <module>sqlite3.test.transactions</module>
+    <module>sqlite3.test.types</module>
+    <module>sqlite3.test.userfunctions</module>
+    <module>sre</module>
+    <module>statvfs</module>
+    <module>string.templatelib</module>
+    <module>stringold</module>
+    <module>strop</module>
+    <module>sunau</module>
+    <module>sunaudio</module>
+    <module>symbol</module>
+    <module>telnetlib</module>
+    <module>thread</module>
+    <module>tkColorChooser</module>
+    <module>tkCommonDialog</module>
+    <module>tkFileDialog</module>
+    <module>tkFont</module>
+    <module>tkMessageBox</module>
+    <module>tkSimpleDialog</module>
+    <module>tkinter.test</module>
+    <module>tkinter.test.runtktests</module>
+    <module>tkinter.test.support</module>
+    <module>tkinter.test.test_tkinter</module>
+    <module>tkinter.test.test_tkinter.test_colorchooser</module>
+    <module>tkinter.test.test_tkinter.test_font</module>
+    <module>tkinter.test.test_tkinter.test_geometry_managers</module>
+    <module>tkinter.test.test_tkinter.test_images</module>
+    <module>tkinter.test.test_tkinter.test_loadtk</module>
+    <module>tkinter.test.test_tkinter.test_messagebox</module>
+    <module>tkinter.test.test_tkinter.test_misc</module>
+    <module>tkinter.test.test_tkinter.test_simpledialog</module>
+    <module>tkinter.test.test_tkinter.test_text</module>
+    <module>tkinter.test.test_tkinter.test_variables</module>
+    <module>tkinter.test.test_tkinter.test_widgets</module>
+    <module>tkinter.test.test_ttk</module>
+    <module>tkinter.test.test_ttk.test_extensions</module>
+    <module>tkinter.test.test_ttk.test_functions</module>
+    <module>tkinter.test.test_ttk.test_style</module>
+    <module>tkinter.test.test_ttk.test_widgets</module>
+    <module>tkinter.test.widget_tests</module>
+    <module>tkinter.tix</module>
+    <module>toaiff</module>
+    <module>ttk</module>
+    <module>unittest.test</module>
+    <module>unittest.test.__main__</module>
+    <module>unittest.test._test_warnings</module>
+    <module>unittest.test.dummy</module>
+    <module>unittest.test.support</module>
+    <module>unittest.test.test_assertions</module>
+    <module>unittest.test.test_async_case</module>
+    <module>unittest.test.test_break</module>
+    <module>unittest.test.test_case</module>
+    <module>unittest.test.test_discovery</module>
+    <module>unittest.test.test_functiontestcase</module>
+    <module>unittest.test.test_loader</module>
+    <module>unittest.test.test_program</module>
+    <module>unittest.test.test_result</module>
+    <module>unittest.test.test_runner</module>
+    <module>unittest.test.test_setups</module>
+    <module>unittest.test.test_skipping</module>
+    <module>unittest.test.test_suite</module>
+    <module>unittest.test.testmock</module>
+    <module>unittest.test.testmock.__main__</module>
+    <module>unittest.test.testmock.support</module>
+    <module>unittest.test.testmock.testasync</module>
+    <module>unittest.test.testmock.testcallable</module>
+    <module>unittest.test.testmock.testhelpers</module>
+    <module>unittest.test.testmock.testmagicmethods</module>
+    <module>unittest.test.testmock.testmock</module>
+    <module>unittest.test.testmock.testpatch</module>
+    <module>unittest.test.testmock.testsealable</module>
+    <module>unittest.test.testmock.testsentinel</module>
+    <module>unittest.test.testmock.testwith</module>
+    <module>urllib2</module>
+    <module>urlparse</module>
+    <module>user</module>
+    <module>uu</module>
+    <module>whichdb</module>
+    <module>winreg</module>
+    <module>winsound</module>
+    <module>xdrlib</module>
+    <module>xmllib</module>
+    <module>xmlrpclib</module>
+    <module>zipfile._path._functools</module>
+    <func>StandardError</func>
+    <func>WindowsError</func>
+    <func>apply</func>
+    <func>basestring</func>
+    <func>buffer</func>
+    <func>cmp</func>
+    <func>coerce</func>
+    <func>execfile</func>
+    <func>file</func>
+    <func>intern</func>
+    <func>long</func>
+    <func>raw_input</func>
+    <func>reduce</func>
+    <func>reload</func>
+    <func>unichr</func>
+    <func>unicode</func>
+    <func>xrange</func>
+  </python>
+  <python version="3.15">
+    <module>BaseHTTPServer</module>
+    <module>Bastion</module>
+    <module>CDROM</module>
+    <module>CGIHTTPServer</module>
+    <module>Canvas</module>
+    <module>ConfigParser</module>
+    <module>Cookie</module>
+    <module>DLFCN</module>
+    <module>Dialog</module>
+    <module>DocXMLRPCServer</module>
+    <module>FileDialog</module>
+    <module>FixTk</module>
+    <module>HTMLParser</module>
+    <module>IN</module>
+    <module>MimeWriter</module>
+    <module>Queue</module>
+    <module>ScrolledText</module>
+    <module>SimpleDialog</module>
+    <module>SimpleHTTPServer</module>
+    <module>SimpleXMLRPCServer</module>
+    <module>SocketServer</module>
+    <module>StringIO</module>
+    <module>TYPES</module>
+    <module>Tix</module>
+    <module>Tkconstants</module>
+    <module>Tkdnd</module>
+    <module>Tkinter</module>
+    <module>UserDict</module>
+    <module>UserList</module>
+    <module>UserString</module>
+    <module>_LWPCookieJar</module>
+    <module>_MozillaCookieJar</module>
+    <module>__builtin__</module>
+    <module>__main__</module>
+    <module>__phello__.foo</module>
+    <module>__phello__.ham</module>
+    <module>__phello__.ham.eggs</module>
+    <module>_abcoll</module>
+    <module>_bootlocale</module>
+    <module>_bootsubprocess</module>
+    <module>_compression</module>
     <module>_crypt</module>
     <module>_dummy_thread</module>
     <module>_gdbm</module>
@@ -3666,11 +4842,17 @@
     <module>_msi</module>
     <module>_overlapped</module>
     <module>_peg_parser</module>
+    <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl.curses</module>
     <module>_sha256</module>
     <module>_sha512</module>
     <module>_sysconfigdata</module>
+    <module>_testcapi</module>
+    <module>_testclinic</module>
+    <module>_testclinic_limited</module>
     <module>_testconsole</module>
-    <module>_tkinter</module>
+    <module>_testexternalinspection</module>
+    <module>_testlimitedcapi</module>
     <module>_winapi</module>
     <module>_wmi</module>
     <module>_xxinterpchannels</module>
@@ -3968,16 +5150,81 @@
     <module>idlelib.configHelpSourceEdit</module>
     <module>idlelib.configSectionNameDialog</module>
     <module>idlelib.dynOptionMenuWidget</module>
+    <module>idlelib.idle_test</module>
+    <module>idlelib.idle_test.htest</module>
+    <module>idlelib.idle_test.mock_idle</module>
+    <module>idlelib.idle_test.mock_tk</module>
+    <module>idlelib.idle_test.template</module>
+    <module>idlelib.idle_test.test_autocomplete</module>
+    <module>idlelib.idle_test.test_autocomplete_w</module>
+    <module>idlelib.idle_test.test_autoexpand</module>
+    <module>idlelib.idle_test.test_browser</module>
+    <module>idlelib.idle_test.test_calltip</module>
+    <module>idlelib.idle_test.test_calltip_w</module>
     <module>idlelib.idle_test.test_calltips</module>
+    <module>idlelib.idle_test.test_codecontext</module>
+    <module>idlelib.idle_test.test_colorizer</module>
+    <module>idlelib.idle_test.test_config</module>
+    <module>idlelib.idle_test.test_config_key</module>
     <module>idlelib.idle_test.test_config_name</module>
+    <module>idlelib.idle_test.test_configdialog</module>
+    <module>idlelib.idle_test.test_debugger</module>
+    <module>idlelib.idle_test.test_debugger_r</module>
+    <module>idlelib.idle_test.test_debugobj</module>
+    <module>idlelib.idle_test.test_debugobj_r</module>
+    <module>idlelib.idle_test.test_delegator</module>
+    <module>idlelib.idle_test.test_editmenu</module>
+    <module>idlelib.idle_test.test_editor</module>
+    <module>idlelib.idle_test.test_filelist</module>
+    <module>idlelib.idle_test.test_format</module>
     <module>idlelib.idle_test.test_formatparagraph</module>
+    <module>idlelib.idle_test.test_grep</module>
+    <module>idlelib.idle_test.test_help</module>
+    <module>idlelib.idle_test.test_help_about</module>
     <module>idlelib.idle_test.test_helpabout</module>
+    <module>idlelib.idle_test.test_history</module>
+    <module>idlelib.idle_test.test_hyperparser</module>
     <module>idlelib.idle_test.test_idlehistory</module>
     <module>idlelib.idle_test.test_io</module>
+    <module>idlelib.idle_test.test_iomenu</module>
+    <module>idlelib.idle_test.test_macosx</module>
+    <module>idlelib.idle_test.test_mainmenu</module>
+    <module>idlelib.idle_test.test_multicall</module>
+    <module>idlelib.idle_test.test_outwin</module>
     <module>idlelib.idle_test.test_paragraph</module>
+    <module>idlelib.idle_test.test_parenmatch</module>
+    <module>idlelib.idle_test.test_pathbrowser</module>
+    <module>idlelib.idle_test.test_percolator</module>
+    <module>idlelib.idle_test.test_pyparse</module>
+    <module>idlelib.idle_test.test_pyshell</module>
+    <module>idlelib.idle_test.test_query</module>
+    <module>idlelib.idle_test.test_redirector</module>
+    <module>idlelib.idle_test.test_replace</module>
+    <module>idlelib.idle_test.test_rpc</module>
     <module>idlelib.idle_test.test_rstrip</module>
+    <module>idlelib.idle_test.test_run</module>
+    <module>idlelib.idle_test.test_runscript</module>
+    <module>idlelib.idle_test.test_scrolledlist</module>
+    <module>idlelib.idle_test.test_search</module>
+    <module>idlelib.idle_test.test_searchbase</module>
     <module>idlelib.idle_test.test_searchdialogbase</module>
+    <module>idlelib.idle_test.test_searchengine</module>
+    <module>idlelib.idle_test.test_sidebar</module>
+    <module>idlelib.idle_test.test_squeezer</module>
+    <module>idlelib.idle_test.test_stackviewer</module>
+    <module>idlelib.idle_test.test_statusbar</module>
+    <module>idlelib.idle_test.test_text</module>
+    <module>idlelib.idle_test.test_textview</module>
+    <module>idlelib.idle_test.test_tooltip</module>
+    <module>idlelib.idle_test.test_tree</module>
+    <module>idlelib.idle_test.test_undo</module>
+    <module>idlelib.idle_test.test_util</module>
+    <module>idlelib.idle_test.test_warning</module>
     <module>idlelib.idle_test.test_widgetredir</module>
+    <module>idlelib.idle_test.test_window</module>
+    <module>idlelib.idle_test.test_zoomheight</module>
+    <module>idlelib.idle_test.test_zzdummy</module>
+    <module>idlelib.idle_test.tkinter_testing_utils</module>
     <module>idlelib.idlever</module>
     <module>idlelib.keybindingDialog</module>
     <module>idlelib.macosxSupport</module>
@@ -4121,6 +5368,8 @@
     <module>os2emxpath</module>
     <module>ossaudiodev</module>
     <module>parser</module>
+    <module>pathlib._abc</module>
+    <module>pathlib._local</module>
     <module>pip</module>
     <module>pip.__main__</module>
     <module>pip._internal</module>
@@ -4457,6 +5706,9 @@
     <module>sqlite3.test.types</module>
     <module>sqlite3.test.userfunctions</module>
     <module>sre</module>
+    <module>sre_compile</module>
+    <module>sre_constants</module>
+    <module>sre_parse</module>
     <module>statvfs</module>
     <module>stringold</module>
     <module>strop</module>
@@ -4464,6 +5716,7 @@
     <module>sunaudio</module>
     <module>symbol</module>
     <module>telnetlib</module>
+    <module>test</module>
     <module>thread</module>
     <module>tkColorChooser</module>
     <module>tkCommonDialog</module>
@@ -4535,6 +5788,8 @@
     <module>xdrlib</module>
     <module>xmllib</module>
     <module>xmlrpclib</module>
+    <module>xxlimited</module>
+    <module>xxlimited_35</module>
     <func>StandardError</func>
     <func>WindowsError</func>
     <func>apply</func>
@@ -4598,9 +5853,11 @@
     <module>_aix_support</module>
     <module>_android_support</module>
     <module>_apple_support</module>
+    <module>_ast_unparse</module>
     <module>_bootsubprocess</module>
     <module>_colorize</module>
     <module>_contextvars</module>
+    <module>_hmac</module>
     <module>_hotshot</module>
     <module>_interpchannels</module>
     <module>_interpqueues</module>
@@ -4613,12 +5870,15 @@
     <module>_peg_parser</module>
     <module>_posixshmem</module>
     <module>_py_abc</module>
+    <module>_py_warnings</module>
     <module>_pydatetime</module>
     <module>_pylong</module>
     <module>_pyrepl</module>
     <module>_pyrepl.__main__</module>
     <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl._module_completer</module>
     <module>_pyrepl._threading_handler</module>
+    <module>_pyrepl.base_eventqueue</module>
     <module>_pyrepl.commands</module>
     <module>_pyrepl.completing_reader</module>
     <module>_pyrepl.console</module>
@@ -4632,13 +5892,16 @@
     <module>_pyrepl.reader</module>
     <module>_pyrepl.readline</module>
     <module>_pyrepl.simple_interact</module>
+    <module>_pyrepl.terminfo</module>
     <module>_pyrepl.trace</module>
     <module>_pyrepl.types</module>
     <module>_pyrepl.unix_console</module>
     <module>_pyrepl.unix_eventqueue</module>
     <module>_pyrepl.utils</module>
     <module>_pyrepl.windows_console</module>
+    <module>_pyrepl.windows_eventqueue</module>
     <module>_queue</module>
+    <module>_remote_debugging</module>
     <module>_scproxy</module>
     <module>_sha2</module>
     <module>_statistics</module>
@@ -4655,6 +5918,7 @@
     <module>_testsinglephase</module>
     <module>_tkinter</module>
     <module>_tokenize</module>
+    <module>_types</module>
     <module>_typing</module>
     <module>_uuid</module>
     <module>_winapi</module>
@@ -4663,6 +5927,7 @@
     <module>_xxsubinterpreters</module>
     <module>_xxtestfuzz</module>
     <module>_zoneinfo</module>
+    <module>_zstd</module>
     <module>annotationlib</module>
     <module>anydbm</module>
     <module>asyncio.__main__</module>
@@ -4675,6 +5940,7 @@
     <module>asyncio.taskgroups</module>
     <module>asyncio.threads</module>
     <module>asyncio.timeouts</module>
+    <module>asyncio.tools</module>
     <module>asyncio.trsock</module>
     <module>audiodev</module>
     <module>bsddb</module>
@@ -4723,7 +5989,19 @@
     <module>compiler.syntax</module>
     <module>compiler.transformer</module>
     <module>compiler.visitor</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
     <module>concurrent.futures.interpreter</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
     <module>contextvars</module>
     <module>cookielib</module>
     <module>copy_reg</module>
@@ -4845,6 +6123,7 @@
     <module>importlib.metadata._itertools</module>
     <module>importlib.metadata._meta</module>
     <module>importlib.metadata._text</module>
+    <module>importlib.metadata._typing</module>
     <module>importlib.metadata.diagnose</module>
     <module>importlib.readers</module>
     <module>importlib.resources</module>
@@ -5204,6 +6483,19 @@
     <module>pip._vendor.webencodings.x_user_defined</module>
     <module>popen2</module>
     <module>posixfile</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
     <module>re._casefix</module>
     <module>re._compiler</module>
     <module>re._constants</module>
@@ -5216,6 +6508,7 @@
     <module>sgmllib</module>
     <module>sha</module>
     <module>sqlite3.__main__</module>
+    <module>sqlite3._completer</module>
     <module>sqlite3.test.backup</module>
     <module>sqlite3.test.py25tests</module>
     <module>sqlite3.test.test_backup</module>
@@ -5229,6 +6522,7 @@
     <module>sqlite3.test.test_userfunctions</module>
     <module>sre</module>
     <module>statvfs</module>
+    <module>string.templatelib</module>
     <module>stringold</module>
     <module>strop</module>
     <module>sunaudio</module>
@@ -5266,6 +6560,7 @@
     <module>xxlimited_35</module>
     <module>zipfile.__main__</module>
     <module>zipfile._path</module>
+    <module>zipfile._path._functools</module>
     <module>zipfile._path.glob</module>
     <module>zoneinfo</module>
     <module>zoneinfo._common</module>
@@ -5341,8 +6636,10 @@
     <module>_aix_support</module>
     <module>_android_support</module>
     <module>_apple_support</module>
+    <module>_ast_unparse</module>
     <module>_bootsubprocess</module>
     <module>_colorize</module>
+    <module>_hmac</module>
     <module>_hotshot</module>
     <module>_interpchannels</module>
     <module>_interpqueues</module>
@@ -5353,12 +6650,15 @@
     <module>_overlapped</module>
     <module>_peg_parser</module>
     <module>_posixshmem</module>
+    <module>_py_warnings</module>
     <module>_pydatetime</module>
     <module>_pylong</module>
     <module>_pyrepl</module>
     <module>_pyrepl.__main__</module>
     <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl._module_completer</module>
     <module>_pyrepl._threading_handler</module>
+    <module>_pyrepl.base_eventqueue</module>
     <module>_pyrepl.commands</module>
     <module>_pyrepl.completing_reader</module>
     <module>_pyrepl.console</module>
@@ -5372,12 +6672,15 @@
     <module>_pyrepl.reader</module>
     <module>_pyrepl.readline</module>
     <module>_pyrepl.simple_interact</module>
+    <module>_pyrepl.terminfo</module>
     <module>_pyrepl.trace</module>
     <module>_pyrepl.types</module>
     <module>_pyrepl.unix_console</module>
     <module>_pyrepl.unix_eventqueue</module>
     <module>_pyrepl.utils</module>
     <module>_pyrepl.windows_console</module>
+    <module>_pyrepl.windows_eventqueue</module>
+    <module>_remote_debugging</module>
     <module>_scproxy</module>
     <module>_sha2</module>
     <module>_statistics</module>
@@ -5393,12 +6696,14 @@
     <module>_testlimitedcapi</module>
     <module>_testsinglephase</module>
     <module>_tokenize</module>
+    <module>_types</module>
     <module>_typing</module>
     <module>_winapi</module>
     <module>_wmi</module>
     <module>_xxinterpchannels</module>
     <module>_xxsubinterpreters</module>
     <module>_zoneinfo</module>
+    <module>_zstd</module>
     <module>annotationlib</module>
     <module>anydbm</module>
     <module>asyncio.__main__</module>
@@ -5411,6 +6716,7 @@
     <module>asyncio.test_utils</module>
     <module>asyncio.threads</module>
     <module>asyncio.timeouts</module>
+    <module>asyncio.tools</module>
     <module>asyncio.trsock</module>
     <module>audiodev</module>
     <module>bsddb</module>
@@ -5459,7 +6765,19 @@
     <module>compiler.syntax</module>
     <module>compiler.transformer</module>
     <module>compiler.visitor</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
     <module>concurrent.futures.interpreter</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
     <module>cookielib</module>
     <module>copy_reg</module>
     <module>ctypes._layout</module>
@@ -5575,6 +6893,7 @@
     <module>importlib.metadata._itertools</module>
     <module>importlib.metadata._meta</module>
     <module>importlib.metadata._text</module>
+    <module>importlib.metadata._typing</module>
     <module>importlib.metadata.diagnose</module>
     <module>importlib.readers</module>
     <module>importlib.resources._adapters</module>
@@ -5934,6 +7253,19 @@
     <module>pip._vendor.webencodings.x_user_defined</module>
     <module>popen2</module>
     <module>posixfile</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
     <module>re._casefix</module>
     <module>re._compiler</module>
     <module>re._constants</module>
@@ -5946,6 +7278,7 @@
     <module>sgmllib</module>
     <module>sha</module>
     <module>sqlite3.__main__</module>
+    <module>sqlite3._completer</module>
     <module>sqlite3.test.py25tests</module>
     <module>sqlite3.test.test_backup</module>
     <module>sqlite3.test.test_dbapi</module>
@@ -5958,6 +7291,7 @@
     <module>sqlite3.test.test_userfunctions</module>
     <module>sre</module>
     <module>statvfs</module>
+    <module>string.templatelib</module>
     <module>stringold</module>
     <module>strop</module>
     <module>sunaudio</module>
@@ -5994,6 +7328,7 @@
     <module>xxlimited_35</module>
     <module>zipfile.__main__</module>
     <module>zipfile._path</module>
+    <module>zipfile._path._functools</module>
     <module>zipfile._path.glob</module>
     <module>zoneinfo</module>
     <module>zoneinfo._common</module>
@@ -6068,8 +7403,10 @@
     <module>_aix_support</module>
     <module>_android_support</module>
     <module>_apple_support</module>
+    <module>_ast_unparse</module>
     <module>_bootsubprocess</module>
     <module>_colorize</module>
+    <module>_hmac</module>
     <module>_hotshot</module>
     <module>_interpchannels</module>
     <module>_interpqueues</module>
@@ -6079,12 +7416,15 @@
     <module>_opcode_metadata</module>
     <module>_overlapped</module>
     <module>_peg_parser</module>
+    <module>_py_warnings</module>
     <module>_pydatetime</module>
     <module>_pylong</module>
     <module>_pyrepl</module>
     <module>_pyrepl.__main__</module>
     <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl._module_completer</module>
     <module>_pyrepl._threading_handler</module>
+    <module>_pyrepl.base_eventqueue</module>
     <module>_pyrepl.commands</module>
     <module>_pyrepl.completing_reader</module>
     <module>_pyrepl.console</module>
@@ -6098,12 +7438,15 @@
     <module>_pyrepl.reader</module>
     <module>_pyrepl.readline</module>
     <module>_pyrepl.simple_interact</module>
+    <module>_pyrepl.terminfo</module>
     <module>_pyrepl.trace</module>
     <module>_pyrepl.types</module>
     <module>_pyrepl.unix_console</module>
     <module>_pyrepl.unix_eventqueue</module>
     <module>_pyrepl.utils</module>
     <module>_pyrepl.windows_console</module>
+    <module>_pyrepl.windows_eventqueue</module>
+    <module>_remote_debugging</module>
     <module>_scproxy</module>
     <module>_sha2</module>
     <module>_suggestions</module>
@@ -6117,11 +7460,13 @@
     <module>_testlimitedcapi</module>
     <module>_testsinglephase</module>
     <module>_tokenize</module>
+    <module>_types</module>
     <module>_typing</module>
     <module>_winapi</module>
     <module>_wmi</module>
     <module>_xxinterpchannels</module>
     <module>_zoneinfo</module>
+    <module>_zstd</module>
     <module>annotationlib</module>
     <module>anydbm</module>
     <module>asyncio.compat</module>
@@ -6131,6 +7476,7 @@
     <module>asyncio.test_utils</module>
     <module>asyncio.threads</module>
     <module>asyncio.timeouts</module>
+    <module>asyncio.tools</module>
     <module>audiodev</module>
     <module>bsddb</module>
     <module>bsddb.db</module>
@@ -6178,7 +7524,19 @@
     <module>compiler.syntax</module>
     <module>compiler.transformer</module>
     <module>compiler.visitor</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
     <module>concurrent.futures.interpreter</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
     <module>cookielib</module>
     <module>copy_reg</module>
     <module>ctypes._layout</module>
@@ -6298,6 +7656,7 @@
     <module>importlib.metadata._itertools</module>
     <module>importlib.metadata._meta</module>
     <module>importlib.metadata._text</module>
+    <module>importlib.metadata._typing</module>
     <module>importlib.metadata.diagnose</module>
     <module>importlib.readers</module>
     <module>importlib.resources._adapters</module>
@@ -6657,6 +8016,19 @@
     <module>pip._vendor.webencodings.x_user_defined</module>
     <module>popen2</module>
     <module>posixfile</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
     <module>re._casefix</module>
     <module>re._compiler</module>
     <module>re._constants</module>
@@ -6669,6 +8041,7 @@
     <module>sgmllib</module>
     <module>sha</module>
     <module>sqlite3.__main__</module>
+    <module>sqlite3._completer</module>
     <module>sqlite3.test.py25tests</module>
     <module>sqlite3.test.test_backup</module>
     <module>sqlite3.test.test_dbapi</module>
@@ -6681,6 +8054,7 @@
     <module>sqlite3.test.test_userfunctions</module>
     <module>sre</module>
     <module>statvfs</module>
+    <module>string.templatelib</module>
     <module>stringold</module>
     <module>strop</module>
     <module>sunaudio</module>
@@ -6712,6 +8086,7 @@
     <module>xxlimited_35</module>
     <module>zipfile.__main__</module>
     <module>zipfile._path</module>
+    <module>zipfile._path._functools</module>
     <module>zipfile._path.glob</module>
     <module>zoneinfo</module>
     <module>zoneinfo._common</module>
@@ -6785,21 +8160,26 @@
     <module>_abcoll</module>
     <module>_android_support</module>
     <module>_apple_support</module>
+    <module>_ast_unparse</module>
     <module>_colorize</module>
     <module>_dbm</module>
     <module>_dummy_thread</module>
+    <module>_hmac</module>
     <module>_hotshot</module>
     <module>_interpchannels</module>
     <module>_interpqueues</module>
     <module>_interpreters</module>
     <module>_ios_support</module>
     <module>_opcode_metadata</module>
+    <module>_py_warnings</module>
     <module>_pydatetime</module>
     <module>_pylong</module>
     <module>_pyrepl</module>
     <module>_pyrepl.__main__</module>
     <module>_pyrepl._minimal_curses</module>
+    <module>_pyrepl._module_completer</module>
     <module>_pyrepl._threading_handler</module>
+    <module>_pyrepl.base_eventqueue</module>
     <module>_pyrepl.commands</module>
     <module>_pyrepl.completing_reader</module>
     <module>_pyrepl.console</module>
@@ -6813,12 +8193,15 @@
     <module>_pyrepl.reader</module>
     <module>_pyrepl.readline</module>
     <module>_pyrepl.simple_interact</module>
+    <module>_pyrepl.terminfo</module>
     <module>_pyrepl.trace</module>
     <module>_pyrepl.types</module>
     <module>_pyrepl.unix_console</module>
     <module>_pyrepl.unix_eventqueue</module>
     <module>_pyrepl.utils</module>
     <module>_pyrepl.windows_console</module>
+    <module>_pyrepl.windows_eventqueue</module>
+    <module>_remote_debugging</module>
     <module>_scproxy</module>
     <module>_sha2</module>
     <module>_suggestions</module>
@@ -6832,9 +8215,11 @@
     <module>_testlimitedcapi</module>
     <module>_testsinglephase</module>
     <module>_tokenize</module>
+    <module>_types</module>
     <module>_typing</module>
     <module>_wmi</module>
     <module>_xxinterpchannels</module>
+    <module>_zstd</module>
     <module>annotationlib</module>
     <module>anydbm</module>
     <module>asyncio.compat</module>
@@ -6843,6 +8228,7 @@
     <module>asyncio.taskgroups</module>
     <module>asyncio.test_utils</module>
     <module>asyncio.timeouts</module>
+    <module>asyncio.tools</module>
     <module>audiodev</module>
     <module>bsddb</module>
     <module>bsddb.db</module>
@@ -6890,7 +8276,19 @@
     <module>compiler.syntax</module>
     <module>compiler.transformer</module>
     <module>compiler.visitor</module>
+    <module>compression</module>
+    <module>compression._common</module>
+    <module>compression._common._streams</module>
+    <module>compression.bz2</module>
+    <module>compression.gzip</module>
+    <module>compression.lzma</module>
+    <module>compression.zlib</module>
+    <module>compression.zstd</module>
+    <module>compression.zstd._zstdfile</module>
     <module>concurrent.futures.interpreter</module>
+    <module>concurrent.interpreters</module>
+    <module>concurrent.interpreters._crossinterp</module>
+    <module>concurrent.interpreters._queues</module>
     <module>cookielib</module>
     <module>copy_reg</module>
     <module>ctypes._layout</module>
@@ -7009,6 +8407,7 @@
     <module>importlib.metadata._itertools</module>
     <module>importlib.metadata._meta</module>
     <module>importlib.metadata._text</module>
+    <module>importlib.metadata._typing</module>
     <module>importlib.metadata.diagnose</module>
     <module>importlib.readers</module>
     <module>importlib.resources._adapters</module>
@@ -7362,6 +8761,19 @@
     <module>pip._vendor.webencodings.x_user_defined</module>
     <module>popen2</module>
     <module>posixfile</module>
+    <module>profiling</module>
+    <module>profiling.sampling</module>
+    <module>profiling.sampling.__main__</module>
+    <module>profiling.sampling._sync_coordinator</module>
+    <module>profiling.sampling.collector</module>
+    <module>profiling.sampling.gecko_collector</module>
+    <module>profiling.sampling.pstats_collector</module>
+    <module>profiling.sampling.sample</module>
+    <module>profiling.sampling.stack_collector</module>
+    <module>profiling.sampling.string_table</module>
+    <module>profiling.tracing</module>
+    <module>profiling.tracing.__main__</module>
+    <module>profiling.tracing._utils</module>
     <module>re._casefix</module>
     <module>re._compiler</module>
     <module>re._constants</module>
@@ -7374,6 +8786,7 @@
     <module>sgmllib</module>
     <module>sha</module>
     <module>sqlite3.__main__</module>
+    <module>sqlite3._completer</module>
     <module>sqlite3.test.py25tests</module>
     <module>sqlite3.test.test_backup</module>
     <module>sqlite3.test.test_dbapi</module>
@@ -7386,6 +8799,7 @@
     <module>sqlite3.test.test_userfunctions</module>
     <module>sre</module>
     <module>statvfs</module>
+    <module>string.templatelib</module>
     <module>stringold</module>
     <module>strop</module>
     <module>sunaudio</module>
@@ -7414,6 +8828,7 @@
     <module>xxlimited_35</module>
     <module>zipfile.__main__</module>
     <module>zipfile._path</module>
+    <module>zipfile._path._functools</module>
     <module>zipfile._path.glob</module>
     <func>BaseExceptionGroup</func>
     <func>EncodingWarning</func>
