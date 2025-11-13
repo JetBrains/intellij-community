@@ -7,6 +7,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.impl.ProjectUtil.getRootFrameForWindow
 import com.intellij.idea.AppMode
+import com.intellij.idea.WellKnownCommands
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
@@ -74,7 +75,7 @@ fun scheduleShowSplashIfNeeded(
   }
 }
 
-private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != AppMode.SPLIT_MODE_COMMAND
+private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != WellKnownCommands.SPLIT_MODE
 
 private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()

@@ -198,7 +198,7 @@ private fun initRemoteDev(args: List<String>) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
-  val isSplitMode = args.firstOrNull() == AppMode.SPLIT_MODE_COMMAND
+  val isSplitMode = args.firstOrNull() == WellKnownCommands.SPLIT_MODE
 
   // avoid an icon jumping in dock for the backend process
   if (OS.CURRENT == OS.macOS) {
