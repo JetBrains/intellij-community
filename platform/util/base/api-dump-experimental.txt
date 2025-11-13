@@ -1,0 +1,9 @@
+f:com.intellij.util.containers.CollectionFactory
+- *s:createConcurrentSoftMap(com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.concurrent.ConcurrentMap
+- *s:createConcurrentSoftMap(com.intellij.util.containers.HashingStrategy,com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.concurrent.ConcurrentMap
+- *s:createConcurrentSoftValueMap(com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.concurrent.ConcurrentMap
+- *s:createConcurrentWeakValueMap(com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.concurrent.ConcurrentMap
+- *s:createSoftMap(com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.Map
+- *s:createSoftMap(com.intellij.util.containers.HashingStrategy,com.intellij.util.containers.CollectionFactory$EvictionListener):java.util.Map
+*:com.intellij.util.containers.CollectionFactory$EvictionListener
+- a:evicted(java.util.Map,I,java.lang.Object):V

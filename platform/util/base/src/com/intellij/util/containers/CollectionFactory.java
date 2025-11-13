@@ -8,7 +8,6 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
 
 // ContainerUtil requires trove in classpath
 @SuppressWarnings("UnnecessaryFullyQualifiedName")
@@ -56,20 +55,22 @@ public final class CollectionFactory {
 
   /**
    * Create {@link ConcurrentMap} with hard-referenced keys and weak-referenced values.
-   * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding key
+   * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked, passing (this map, the key hash code and the associated key) as arguments there.
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
-    return new ConcurrentWeakValueHashMap<>(evictionListener);
+  @ApiStatus.Experimental
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakValueMap(@NotNull CollectionFactory.EvictionListener<K, V, ? super K> valueEvictionListener) {
+    return new ConcurrentWeakValueHashMap<>(valueEvictionListener);
   }
 
   /**
    * Create {@link ConcurrentMap} with hard-referenced keys and soft-referenced values.
-   * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding key
+   * When the value get garbage-collected, the {@code evictionListener} is (eventually) invoked, passing (this map, the key hash code and the associated key) as arguments there.
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super K> evictionListener) {
-    return new ConcurrentSoftValueHashMap<>(evictionListener);
+  @ApiStatus.Experimental
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftValueMap(@NotNull EvictionListener<K,V,? super K> valueEvictionListener) {
+    return new ConcurrentSoftValueHashMap<>(valueEvictionListener);
   }
 
   /**
@@ -395,19 +396,21 @@ public final class CollectionFactory {
 
   /**
    * Create {@link Map} with soft-referenced keys and hard-referenced values.
-   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding value
+   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked, passing (this map, the evicted key hash code and the associated value) as arguments there.
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K,V> Map<@NotNull K,V> createSoftMap(@Nullable BiConsumer<? super @NotNull Map<K, V>, ? super V> evictionListener) {
-    return createSoftMap(HashingStrategy.canonical(), evictionListener);
+  @ApiStatus.Experimental
+  public static @NotNull <K,V> Map<@NotNull K,V> createSoftMap(@Nullable EvictionListener<K,V,? super V> keyEvictionListener) {
+    return createSoftMap(HashingStrategy.canonical(), keyEvictionListener);
   }
   /**
    * Create {@link Map} with soft-referenced keys and hard-referenced values, with a custom hashing strategy.
-   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding value
+   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked, passing (this map, the evicted key hash code and the associated value) as arguments there.
    */
   @Contract(value = "_,_ -> new", pure = true)
-  public static @NotNull <K,V> Map<@NotNull K,V> createSoftMap(@NotNull HashingStrategy<? super K> hashingStrategy, @Nullable BiConsumer<? super @NotNull Map<K, V>, ? super V> evictionListener) {
-    return new SoftHashMap<>(10, hashingStrategy, evictionListener);
+  @ApiStatus.Experimental
+  public static @NotNull <K,V> Map<@NotNull K,V> createSoftMap(@NotNull HashingStrategy<? super K> hashingStrategy, @Nullable EvictionListener<K,V,? super V> keyEvictionListener) {
+    return new SoftHashMap<>(10, hashingStrategy, keyEvictionListener);
   }
 
   @Contract(value = " -> new", pure = true)
@@ -417,21 +420,35 @@ public final class CollectionFactory {
 
   /**
    * Create {@link ConcurrentMap} with soft-referenced keys and hard-referenced values.
-   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding value
+   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked, passing (this map, the evicted key hash code and the associated value) as arguments there.
    */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
-    return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, null, evictionListener);
+  @ApiStatus.Experimental
+  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull EvictionListener<K,V,? super V> keyEvictionListener) {
+    return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR,
+                                       ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, null, keyEvictionListener);
   }
   /**
    * Create {@link ConcurrentMap} with soft-referenced keys and hard-referenced values.
    * Keys are hashed and compared using {@code hashingStrategy}.
-   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked with this map and the corresponding value.
+   * When the key get garbage-collected, the {@code evictionListener} is (eventually) invoked, passing (this map, the evicted key hash code and the associated value) as arguments there.
    */
   @Contract(value = "_,_ -> new", pure = true)
+  @ApiStatus.Experimental
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftMap(@NotNull HashingStrategy<? super K> hashingStrategy,
-                                                                                              @NotNull BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
-    return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR, ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, hashingStrategy, evictionListener);
+                                                                                              @NotNull EvictionListener<K,V,? super V> keyEvictionListener) {
+    return new ConcurrentSoftHashMap<>(ConcurrentRefHashMap.DEFAULT_CAPACITY, ConcurrentRefHashMap.DEFAULT_LOAD_FACTOR,
+                                       ConcurrentRefHashMap.DEFAULT_CONCURRENCY_LEVEL, hashingStrategy, keyEvictionListener);
+  }
+
+  /**
+   * a callback for invoking when the key (with the hashcode {@code keyHashCode} or value in the {@code map} are garbage collected.
+   * When a key is evicted, {@code objectAssociatedWithEvicted} is the corresponding value.
+   * When a value is evicted, {@code objectAssociatedWithEvicted} is the corresponding key.
+   */
+  @ApiStatus.Experimental
+  public interface EvictionListener<K,V,T> {
+    void evicted(@NotNull Map<K,V> map, int keyHashCode, @Nullable T objectAssociatedWithEvicted);
   }
 
   @Contract(value = "_,_,_,_-> new", pure = true)

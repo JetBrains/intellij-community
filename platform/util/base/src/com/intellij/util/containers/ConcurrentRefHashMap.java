@@ -9,7 +9,6 @@ import java.lang.ref.SoftReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
 
 /**
  * Base class for concurrent (soft/weak) key:K -> strong value:V map
@@ -24,16 +23,16 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   static final float DEFAULT_LOAD_FACTOR = 0.75f;
   static final int DEFAULT_CAPACITY = 16;
   static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(Runtime.getRuntime().availableProcessors(), 4);
-  private final BiConsumer<? super @NotNull ConcurrentMap<K, V>, ? super V> myEvictionListener;
+  private final @Nullable CollectionFactory.EvictionListener<K, V, ? super V> myEvictionListener;
 
   ConcurrentRefHashMap(int initialCapacity,
                        float loadFactor,
                        int concurrencyLevel,
                        @Nullable HashingStrategy<? super K> hashingStrategy,
-                       @Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
+                       @Nullable CollectionFactory.EvictionListener<K, V, ? super V> keyEvictionListener) {
     myHashingStrategy = hashingStrategy == null ? this : hashingStrategy;
     myMap = new ConcurrentHashMap<>(initialCapacity, loadFactor, concurrencyLevel);
-    myEvictionListener = evictionListener;
+    myEvictionListener = keyEvictionListener;
   }
 
   @FunctionalInterface
@@ -63,7 +62,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     while ((wk = (KeyReference<K>)myReferenceQueue.poll()) != null) {
       V v = myMap.remove(wk);
       if (myEvictionListener != null) {
-        myEvictionListener.accept(this, v);
+        myEvictionListener.evicted(this, wk.hashCode(), v);
       }
       processed = true;
     }

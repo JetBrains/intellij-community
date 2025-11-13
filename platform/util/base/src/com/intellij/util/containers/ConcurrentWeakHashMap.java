@@ -6,8 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.concurrent.ConcurrentMap;
-import java.util.function.BiConsumer;
 
 /**
  * Concurrent weak key:K -> strong value:V map.
@@ -20,8 +18,8 @@ final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
                         float loadFactor,
                         int concurrencyLevel,
                         @Nullable HashingStrategy<? super K> hashingStrategy,
-                        @Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
-    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy, evictionListener);
+                        @Nullable CollectionFactory.EvictionListener<K, V, ? super V> keyEvictionListener) {
+    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy, keyEvictionListener);
   }
 
   private static final class WeakKey<K> extends WeakReference<K> implements KeyReference<K> {
@@ -41,11 +39,11 @@ final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof KeyReference)) return false;
-      K t = get();
+      K key = get();
       //noinspection unchecked
-      K u = ((KeyReference<K>)o).get();
-      if (t == null || u == null) return false;
-      return t == u || myStrategy.equals(t, u);
+      K otherKey = ((KeyReference<K>)o).get();
+      if (key == null || otherKey == null) return false;
+      return key == otherKey || myStrategy.equals(key, otherKey);
     }
 
     @Override
@@ -55,8 +53,7 @@ final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   }
 
   @Override
-  protected @NotNull KeyReference<K> createKeyReference(@NotNull K key,
-                                                        @NotNull HashingStrategy<? super K> hashingStrategy) {
+  protected @NotNull KeyReference<K> createKeyReference(@NotNull K key, @NotNull HashingStrategy<? super K> hashingStrategy) {
     return new WeakKey<>(key, hashingStrategy.hashCode(key), hashingStrategy, myReferenceQueue);
   }
 }

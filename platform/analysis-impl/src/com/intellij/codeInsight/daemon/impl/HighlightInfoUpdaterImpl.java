@@ -108,13 +108,16 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
   }
 
-  private final BiConsumer<Map<PsiElement, List<? extends HighlightInfo>>, List<? extends HighlightInfo>> psiElementEvictionListener = (__, evicted) -> {
+  private final CollectionFactory.EvictionListener<PsiElement, List<? extends HighlightInfo>, List<? extends HighlightInfo>> psiElementEvictionListener = (__, hash, evicted) -> {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("psiElementEvictionListener: {" + hash+"} -> ("+(evicted == null ? 0 : evicted.size())+"): "+evicted);
+    }
     if (evicted != null) {
       addEvictedInfos(evicted);
     }
   };
 
-  private final BiConsumer<@NotNull Map<FileViewProvider, Map<Object, ToolHighlights>>, Map<Object, ToolHighlights>> psiFileEvictionListener = (__, oldMap) -> {
+  private final CollectionFactory.EvictionListener<FileViewProvider, Map<Object, ToolHighlights>, Map<Object, ToolHighlights>> psiFileEvictionListener = (__, hash, oldMap) -> {
     if (oldMap != null) {
       for (ToolHighlights toolHighlights : oldMap.values()) {
         addEvictedInfos(ContainerUtil.flatten(toolHighlights.elementHighlights.values()));
