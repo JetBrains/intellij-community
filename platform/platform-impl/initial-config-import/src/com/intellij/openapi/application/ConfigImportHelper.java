@@ -396,12 +396,22 @@ public final class ConfigImportHelper {
   }
 
   private static Path backupAndDeleteCurrentConfig(Path currentConfig, Logger log, @Nullable ConfigImportSettings settings) throws IOException {
+    return backupCurrentConfig(currentConfig, log, settings, true);
+  }
+
+  public static Path backupCurrentConfig(Path currentConfig, Logger log, @Nullable ConfigImportSettings settings) throws IOException {
+    return backupCurrentConfig(currentConfig, log, settings, false);
+  }
+
+  private static Path backupCurrentConfig(Path currentConfig, Logger log, @Nullable ConfigImportSettings settings, boolean deleteFiles) throws IOException {
     var tempDir = Files.createDirectories(currentConfig.getFileSystem().getPath(System.getProperty("java.io.tmpdir")));
     var tempBackupDir = Files.createTempDirectory(tempDir, currentConfig.getFileName() + "-backup-" + UUID.randomUUID());
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
     NioFiles.copyRecursively(currentConfig, tempBackupDir, file -> !shouldSkipFileDuringImport(file, settings));
 
-    deleteCurrentConfigDir(currentConfig, log);
+    if (deleteFiles) {
+      deleteCurrentConfigDir(currentConfig, log);
+    }
 
     var pluginDir = currentConfig.getFileSystem().getPath(PathManager.getPluginsDir().toString());
     if (Files.exists(pluginDir) && !pluginDir.startsWith(currentConfig)) {
@@ -409,7 +419,9 @@ public final class ConfigImportHelper {
       log.info("Backup plugins dir separately from " + pluginDir + " to " + pluginBackup);
       NioFiles.createDirectories(pluginBackup);
       NioFiles.copyRecursively(pluginDir, pluginBackup);
-      NioFiles.deleteRecursively(pluginDir);
+      if (deleteFiles) {
+        NioFiles.deleteRecursively(pluginDir);
+      }
     }
 
     return tempBackupDir;
