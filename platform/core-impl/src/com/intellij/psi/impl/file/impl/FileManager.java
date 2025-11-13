@@ -47,7 +47,7 @@ public interface FileManager {
   void cleanupForNextTest();
 
   // todo IJPL-339 mark deprecated?
-  FileViewProvider findViewProvider(@NotNull VirtualFile vFile);
+  @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile vFile);
 
   @ApiStatus.Experimental
   FileViewProvider findViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);

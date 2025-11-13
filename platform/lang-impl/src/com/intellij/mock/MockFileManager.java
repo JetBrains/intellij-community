@@ -84,7 +84,7 @@ public final class MockFileManager implements FileManager {
   }
 
   @Override
-  public FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
+  public @NotNull FileViewProvider findViewProvider(@NotNull VirtualFile vFile) {
     throw new UnsupportedOperationException("Method findViewProvider is not yet implemented in " + getClass().getName());
   }
 
