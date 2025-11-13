@@ -1252,6 +1252,34 @@
       "description": "Selection background"
     },
     {
+      "key": "ParameterInfo.matchedOverloadBackgroundBase",
+      "description": "Matched overload background blend base. Default is green. Should match with ParameterInfo.mismatchedParameterBackgroundBase, which by default is red. The color is blended onto ParameterInfo.background using ParameterInfo.matchedOverloadBackgroundOpacity."
+    },
+    {
+      "key": "ParameterInfo.matchedOverloadBackgroundOpacity",
+      "description": "Matched overload opacity percentage in range 0 - 100. It is used to control how much should ParameterInfo.currentOverloadBackgroundBase color blend with the ParameterInfo.background color."
+    },
+    {
+      "key": "ParameterInfo.mismatchedParameterBackgroundBase",
+      "description": "Mismatched parameter background blend base. Default is red. Should match with ParameterInfo.matchedOverloadBackgroundBase, which by default is green. The color is blended onto ParameterInfo.background using ParameterInfo.mismatchedParameterBackgroundOpacity."
+    },
+    {
+      "key": "ParameterInfo.mismatchedParameterBackgroundOpacity",
+      "description": "Mismatched parameter background opacity percentage in range 0 - 100. It is used to control how much should ParameterInfo.mismatchedParameterBackgroundBase color blend with the ParameterInfo.background color."
+    },
+    {
+      "key": "ParameterInfo.mismatchedOverloadOpacity",
+      "description": "Opacity percentage in range 0 - 100. It is used to control how opaque should non-matching signature be."
+    },
+    {
+      "key": "ParameterInfo.defaultValueOpacity",
+      "description": "Opacity percentage in range 0 - 100. It is used to control how opaque should parameter default values be."
+    },
+    {
+      "key": "ParameterInfo.notCurrentParameterOpacity",
+      "description": "Opacity percentage in range 0 - 100. It is used to control how opaque should a not current parameter be. A current parameter is that under the cursor and it has 100% opacity."
+    },
+    {
       "key": "ParameterInfo.currentParameterForeground"
     },
     {
