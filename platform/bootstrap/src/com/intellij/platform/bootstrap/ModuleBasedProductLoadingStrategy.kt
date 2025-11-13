@@ -138,7 +138,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     val bundled = productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
-        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet } || isPlatformPlugin(moduleGroup, context)) {
+        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet } || isPluginWithUseIdeaClassLoader(moduleGroup, context)) {
           val serviceModuleMapping = serviceModuleMappingDeferred.await()
           loadPluginDescriptorFromRuntimeModule(
             pluginModuleGroup = moduleGroup,
@@ -167,7 +167,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
    * Returns true if [pluginModuleGroup] is a plugin with `use-idea-classloader` which should be loaded by platform.
    * Content modules of these plugins always should be loaded.
    */
-  private fun isPlatformPlugin(
+  private fun isPluginWithUseIdeaClassLoader(
     pluginModuleGroup: PluginModuleGroup,
     loadingContext: PluginDescriptorLoadingContext,
   ): Boolean {

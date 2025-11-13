@@ -105,7 +105,7 @@ internal fun generateCoreClasspathFromPlugins(
   val classPathResult = mutableSetOf<Path>()
   for (pluginEntity in pluginEntities) {
     val pluginLayout = pluginEntity.layout
-    val classPathModules = extractPlatformPluginsModules(context, pluginLayout.mainModule)
+    val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(context, pluginLayout.mainModule)
     for (distributionEntry in pluginEntity.distribution) {
       if (distributionEntry is ModuleOwnedFileEntry && distributionEntry.owner?.moduleName in classPathModules) {
         classPathResult.add(distributionEntry.path)
@@ -119,7 +119,7 @@ internal fun generateCoreClasspathFromPlugins(
  * Provides a set of content modules ("embedded" ones) and the module of the plugin itself, if it uses `use-idea-classloader`.
  * These modules should be included in the core classpath, also their libraries should be treated as platform libraries.
  */
-internal fun extractPlatformPluginsModules(
+internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   context: BuildContext,
   pluginMainModule: String,
 ): Set<String> {

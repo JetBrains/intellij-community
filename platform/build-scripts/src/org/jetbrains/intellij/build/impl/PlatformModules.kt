@@ -15,7 +15,7 @@ import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.UTIL_RT_JAR
-import org.jetbrains.intellij.build.classPath.extractPlatformPluginsModules
+import org.jetbrains.intellij.build.classPath.getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.isModuleNameLikeFilename
 import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
@@ -380,7 +380,7 @@ fun collectExportedLibrariesFromLibraryModules(
   val javaExtensionService = JpsJavaExtensionService.getInstance()
   val result = mutableMapOf<String, String>()
   val includedModuleNames = layout.includedModules.map { it.moduleName }
-  val corePluginsContentModuleNames = computePlatformPluginsContentModules(context)
+  val corePluginsContentModuleNames = computeContentModulesPluginsWhichUseIdeaClassloader(context)
 
   (includedModuleNames + corePluginsContentModuleNames)
     .asSequence()
@@ -496,11 +496,11 @@ private suspend fun computeImplicitRequiredModules(
   unique.add("intellij.notebooks.visualization")
 
   // we should filter out modules which are included in plugins with `use-idea-classloader`
-  val corePluginContents = computePlatformPluginsContentModules(context)
+  val pluginsContents = computeContentModulesPluginsWhichUseIdeaClassloader(context)
 
   val requiredDependencies = mutableListOf<Pair<String, PersistentList<String>>>()
   computeTransitive(list = rootList, context = context, unique = unique, result = requiredDependencies)
-  val requiredModules = requiredDependencies.filter { it.first !in corePluginContents }
+  val requiredModules = requiredDependencies.filter { it.first !in pluginsContents }
 
   if (validateImplicitPlatformModule) {
     withContext(Dispatchers.IO) {
@@ -518,10 +518,10 @@ private suspend fun computeImplicitRequiredModules(
   return requiredModules
 }
 
-private fun computePlatformPluginsContentModules(context: BuildContext): Set<String> {
+private fun computeContentModulesPluginsWhichUseIdeaClassloader(context: BuildContext): Set<String> {
   val bundledPlugins = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
-  val corePluginContents = bundledPlugins.flatMap { extractPlatformPluginsModules(context, it.mainModule) }.toSet()
-  return corePluginContents
+  val pluginContents = bundledPlugins.flatMap { getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(context, it.mainModule) }.toSet()
+  return pluginContents
 }
 
 private fun computeTransitive(
