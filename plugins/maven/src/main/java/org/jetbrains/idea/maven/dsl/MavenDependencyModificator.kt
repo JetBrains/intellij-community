@@ -9,15 +9,18 @@ import com.intellij.externalSystem.ExternalDependencyModificator
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.childrenOfType
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
 import org.jetbrains.idea.maven.dom.MavenDomElement
@@ -122,8 +125,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     rootTag.addAfter(child, lastOrNull)
   }
 
-  private fun getDependenciesModel(module: Module,
-                                   groupId: String, artifactId: String): Pair<MavenDomProjectModel, MavenDomDependency?> {
+  private fun getDependenciesModel(module: Module, groupId: String, artifactId: String): Pair<MavenDomProjectModel, MavenDomDependency?> {
     val project: MavenProject = myProjectsManager.findProject(module) ?: throw IllegalArgumentException(MavenProjectBundle.message(
       "maven.project.not.found.for", module.name))
 
@@ -186,11 +188,12 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     }
   }
 
-  private fun updateManagedDependency(model: MavenDomProjectModel,
-                                      managedDependency: MavenDomDependency,
-                                      oldMavenId: MavenId,
-                                      newMavenId: MavenId,
-                                      oldScope: String?,
+  private fun updateManagedDependency(
+    model: MavenDomProjectModel,
+    managedDependency: MavenDomDependency,
+    oldMavenId: MavenId,
+    newMavenId: MavenId,
+    oldScope: String?,
                                       newScope: String?) {
     val domDependency = model.dependencies.dependencies.find { dep ->
       dep.artifactId.stringValue == oldMavenId.artifactId
@@ -208,11 +211,12 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
                         siblingsBeforeTag = elementsBeforeDependencyScope)
   }
 
-  private fun updateValueIfNeeded(model: MavenDomProjectModel,
-                                  domDependency: MavenDomDependency,
-                                  domValue: GenericDomValue<String>,
-                                  managedDomValue: GenericDomValue<String>,
-                                  newValue: String?,
+  private fun updateValueIfNeeded(
+    model: MavenDomProjectModel,
+    domDependency: MavenDomDependency,
+    domValue: GenericDomValue<String>,
+    managedDomValue: GenericDomValue<String>,
+    newValue: String?,
                                   siblingsBeforeTag: Set<String>) {
     when {
       newValue == null -> domValue.xmlTag?.delete()
@@ -223,10 +227,11 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     }
   }
 
-  private fun updatePlainDependency(model: MavenDomProjectModel,
-                                    oldMavenId: MavenId,
-                                    newMavenId: MavenId,
-                                    oldScope: String?,
+  private fun updatePlainDependency(
+    model: MavenDomProjectModel,
+    oldMavenId: MavenId,
+    newMavenId: MavenId,
+    oldScope: String?,
                                     newScope: String?) {
     val domDependency = model.dependencies.dependencies.find { dep ->
       dep.artifactId.stringValue == oldMavenId.artifactId
@@ -251,10 +256,11 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     //}
   }
 
-  private fun updateValueIfNeeded(model: MavenDomProjectModel,
-                                  domDependency: MavenDomDependency,
-                                  domValue: GenericDomValue<String>,
-                                  oldValue: String?,
+  private fun updateValueIfNeeded(
+    model: MavenDomProjectModel,
+    domDependency: MavenDomDependency,
+    domValue: GenericDomValue<String>,
+    oldValue: String?,
                                   newValue: String?) {
     if (oldValue == newValue) return
 
@@ -349,9 +355,11 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
     FileDocumentManager.getInstance().saveDocument(document)
   }
 
-  private fun updateVariableOrValue(model: MavenDomProjectModel,
-                                    domValue: GenericDomValue<String>,
-                                    newValue: String) {
+  private fun updateVariableOrValue(
+    model: MavenDomProjectModel,
+    domValue: GenericDomValue<String>,
+    newValue: String,
+  ) {
     val rawText = domValue.rawText?.trim()
     if (rawText != null && rawText.startsWith("${'$'}{") && rawText.endsWith("}")) {
       val propertyName = rawText.substring(2, rawText.length - 1)
@@ -379,13 +387,16 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
 
   override fun declaredDependencies(module: Module): List<DeclaredDependency> {
     val project = MavenProjectsManager.getInstance(module.project).findProject(module) ?: return emptyList()
-    return declaredDependencies(project.file) ?: emptyList()
+    return runBlockingCancellable {
+      declaredDependencies(project.file) ?: emptyList()
+    }
   }
 
   //for faster testing
-  fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
-    return ReadAction.compute<List<DeclaredDependency>?, Throwable> {
-      val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@compute null
+  @RequiresBackgroundThread(generateAssertion = false)
+  suspend fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
+    val dependencies = readAction {
+      val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@readAction emptyList()
       val dependencies = model.dependencies.dependencies.map { mavenDomDependency ->
         DeclaredDependencyData(
           groupId = mavenDomDependency.groupId.stringValue,
@@ -395,16 +406,18 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
           dataContext = DataContext { if (CommonDataKeys.PSI_ELEMENT.`is`(it)) mavenDomDependency.xmlElement else null },
         )
       }
-      retrieveDependencyVersions(myProject, model, dependencies.filter{it.version == null})
-      return@compute dependencies.map { data ->
-        DeclaredDependency(
-          groupId = data.groupId,
-          artifactId = data.artifactId,
-          version = data.version,
-          configuration = data.configuration,
-          dataContext = data.dataContext
-        )
-      }
+      retrieveDependencyVersions(myProject, model, dependencies.filter { it.version == null })
+      dependencies
+    }
+
+    return dependencies.map { data ->
+      DeclaredDependency(
+        groupId = data.groupId,
+        artifactId = data.artifactId,
+        version = data.version,
+        configuration = data.configuration,
+        dataContext = data.dataContext
+      )
     }
   }
 
