@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings;
 
 import com.intellij.ui.IconManager;
@@ -33,12 +33,6 @@ public final class StartupImportIcons {
   }
 
   public static final class IdeIcons {
-    /** 20x20 */ public static final @NotNull Icon AC_20 = load("ideIcons/AC_20.svg", -1074688217, 0);
-    /** 24x24 */ public static final @NotNull Icon AC_24 = load("ideIcons/AC_24.svg", -1828838322, 0);
-    /** 48x48 */ public static final @NotNull Icon AC_48 = load("ideIcons/AC_48.svg", -1086304524, 0);
-    /** 20x20 */ public static final @NotNull Icon Aqua_20 = load("ideIcons/Aqua_20.svg", 1954897688, 0);
-    /** 24x24 */ public static final @NotNull Icon Aqua_24 = load("ideIcons/Aqua_24.svg", 940802515, 0);
-    /** 48x48 */ public static final @NotNull Icon Aqua_48 = load("ideIcons/Aqua_48.svg", -364727221, 0);
     /** 20x20 */ public static final @NotNull Icon CL_20 = load("ideIcons/CL_20.svg", -573631315, 0);
     /** 24x24 */ public static final @NotNull Icon CL_24 = load("ideIcons/CL_24.svg", 1543516562, 0);
     /** 48x48 */ public static final @NotNull Icon CL_48 = load("ideIcons/CL_48.svg", 41895949, 0);
@@ -78,32 +72,9 @@ public final class StartupImportIcons {
     /** 20x20 */ public static final @NotNull Icon RR_20 = load("ideIcons/RR_20.svg", -1910775509, 0);
     /** 24x24 */ public static final @NotNull Icon RR_24 = load("ideIcons/RR_24.svg", -797810320, 0);
     /** 48x48 */ public static final @NotNull Icon RR_48 = load("ideIcons/RR_48.svg", -1423111044, 0);
-    /** 20x20 */ public static final @NotNull Icon Writerside_20 = load("ideIcons/Writerside_20.svg", 89548907, 0);
-    /** 24x24 */ public static final @NotNull Icon Writerside_24 = load("ideIcons/Writerside_24.svg", 2013081357, 0);
-    /** 48x48 */ public static final @NotNull Icon Writerside_48 = load("ideIcons/Writerside_48.svg", -1907506261, 0);
     /** 20x20 */ public static final @NotNull Icon WS_20 = load("ideIcons/WS_20.svg", 1428577595, 0);
     /** 24x24 */ public static final @NotNull Icon WS_24 = load("ideIcons/WS_24.svg", 548335021, 0);
     /** 48x48 */ public static final @NotNull Icon WS_48 = load("ideIcons/WS_48.svg", -1352066478, 0);
-  }
-
-  public static final class IdeNames {
-    /** 145x29 */ public static final @NotNull Icon AC = load("ideNames/AC.svg", -2022301558, 2);
-    /** 77x29 */ public static final @NotNull Icon Aqua = load("ideNames/Aqua.svg", 689940552, 2);
-    /** 227x24 */ public static final @NotNull Icon AS = load("ideNames/AS.svg", 1619827372, 2);
-    /** 87x24 */ public static final @NotNull Icon CL = load("ideNames/CL.svg", -952791123, 2);
-    /** 140x29 */ public static final @NotNull Icon DG = load("ideNames/DG.svg", 1972725857, 2);
-    /** 143x29 */ public static final @NotNull Icon DS = load("ideNames/DS.svg", 1754791872, 2);
-    /** 119x24 */ public static final @NotNull Icon GO = load("ideNames/GO.svg", -693864257, 2);
-    /** 291x67 */ public static final @NotNull Icon IC = load("ideNames/IC.svg", -1523330134, 2);
-    /** 312x25 */ public static final @NotNull Icon IU = load("ideNames/IU.svg", 1956857230, 2);
-    /** 67x24 */ public static final @NotNull Icon MPS = load("ideNames/MPS.svg", 2042563748, 2);
-    /** 291x66 */ public static final @NotNull Icon PC = load("ideNames/PC.svg", -790053601, 2);
-    /** 149x29 */ public static final @NotNull Icon PS = load("ideNames/PS.svg", 419094735, 2);
-    /** 301x61 */ public static final @NotNull Icon PY = load("ideNames/PY.svg", 846931481, 2);
-    /** 78x24 */ public static final @NotNull Icon RD = load("ideNames/RD.svg", 138410788, 2);
-    /** 154x29 */ public static final @NotNull Icon RM = load("ideNames/RM.svg", 1949968562, 2);
-    /** 154x24 */ public static final @NotNull Icon RR = load("ideNames/RR.svg", -251128189, 2);
-    /** 163x24 */ public static final @NotNull Icon WS = load("ideNames/WS.svg", 1353680367, 2);
   }
 
   public static final class VisualStudio {
