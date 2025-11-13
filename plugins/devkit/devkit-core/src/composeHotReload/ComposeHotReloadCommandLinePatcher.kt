@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.composeHotReload
 
+import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.RunConfigurationExtension
 import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.JavaParameters
@@ -13,6 +14,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
@@ -31,7 +33,7 @@ import kotlin.io.path.*
 
 private val logger = logger<ComposeHotReloadCommandLinePatcher>()
 
-private const val COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION = "1.0.0-beta04"
+private const val COMPOSE_HOT_RELOAD_AGENT_DEFAULT_VERSION = "1.0.0-rc03"
 private const val COMPOSE_HOT_RELOAD_AGENT_FILE_PREFIX = "compose-hot-reload-agent"
 private const val HOT_RELOAD_ENABLED_REGISTRY_KEY = "devkit.compose.hot.reload.enabled"
 private const val HOT_RELOAD_AGENT_VERSION_REGISTRY_KEY = "devkit.compose.hot.reload.agent.version"
@@ -126,6 +128,23 @@ internal class ComposeHotReloadCommandLinePatcher : RunConfigurationExtension() 
   }
 
   override fun <T : RunConfigurationBase<*>?> updateJavaParameters(configuration: T & Any, params: JavaParameters, runnerSettings: RunnerSettings?) {
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(configuration.project)) return
+    if (configuration !is JavaRunConfigurationBase) return
+
+    if (params.mainClass != "org.jetbrains.intellij.build.devServer.DevMainKt"
+        && params.mainClass != "com.intellij.idea.Main") {
+      // only IDE build configurations supported here so far
+      return
+    }
+
+    val module = configuration.configurationModule.module ?: return
+    val jdk = JavaParameters.getJdkToRunModule(module, true) ?: return
+    val versionString = jdk.versionString ?: ""
+    if (!versionString.contains("JetBrains Runtime")) {
+      // we may only expect -XX:+AllowEnhancedClassRedefinition on JBR
+      return
+    }
+
     val project = configuration.project
     val agentHolder = service<ComposeHotReloadAgentHolder>()
 
