@@ -113,6 +113,9 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], args = [], data = [], tags
         # so com.intellij.tests.JUnit5BazelRunner.guessBazelWorkspaceDir will find a real workspace root
         all_data.append("@community//:intellij.idea.community.main.iml")
 
+        if "no-sandbox" not in all_tags:
+            all_tags.append("no-sandbox")
+
     # https://bazel.build/reference/be/java#java_test
     # https://bazel.build/reference/be/common-definitions#common-attributes-tests
     java_test(
