@@ -75,6 +75,11 @@ public final class MockFileManager implements FileManager {
     return provider.getPsi(provider.getBaseLanguage());
   }
 
+  @Override
+  public @NotNull @Unmodifiable List<PsiFile> getCachedPsiFiles(@NotNull VirtualFile vFile) {
+    return ContainerUtil.createMaybeSingletonList(getCachedPsiFile(vFile));
+  }
+
   @ApiStatus.Internal
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {

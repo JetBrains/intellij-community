@@ -533,7 +533,19 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
+  public @NotNull @Unmodifiable List<PsiFile> getCachedPsiFiles(@NotNull VirtualFile vFile) {
+    ensureValidAndDispatchPendingEvents(vFile);
+
+    return getCachedPsiFilesInner(vFile);
+  }
+
+  @Override
+  public @NotNull List<@NotNull PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile vFile) {
+    List<FileViewProvider> viewProviders = findCachedViewProviders(vFile);
+    return ContainerUtil.mapNotNull(viewProviders, p -> ((AbstractFileViewProvider)p).getCachedPsi(p.getBaseLanguage()));
+  }
+
+  private void ensureValidAndDispatchPendingEvents(@NotNull VirtualFile vFile) {
     if (!vFile.isValid()) {
       throw new InvalidVirtualFileAccessException(vFile);
     }
@@ -544,6 +556,11 @@ public final class FileManagerImpl implements FileManagerEx {
     }
 
     dispatchPendingEvents();
+  }
+
+  @Override
+  public @Nullable PsiFile getCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
+    ensureValidAndDispatchPendingEvents(vFile);
 
     return getCachedPsiFileInner(vFile, context);
   }
@@ -551,20 +568,11 @@ public final class FileManagerImpl implements FileManagerEx {
   @RequiresReadLock
   @Override
   public @Nullable PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
-    Project project = myManager.getProject();
-    if (project.isDisposed()) {
-      LOG.error("Access to psi files should not be performed after project disposal: " + project);
-    }
-
-    if (!vFile.isValid()) {
-      LOG.error(new InvalidVirtualFileAccessException(vFile));
-      return null;
-    }
+    ensureValidAndDispatchPendingEvents(vFile);
 
     if (!vFile.isDirectory()) {
       return null;
     }
-    dispatchPendingEvents();
 
     return findDirectoryImpl(vFile, getVFileToPsiDirMap());
   }
@@ -916,14 +924,7 @@ public final class FileManagerImpl implements FileManagerEx {
   @RequiresReadLock
   @Override
   public PsiFile getFastCachedPsiFile(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context) {
-    if (!vFile.isValid()) {
-      throw new InvalidVirtualFileAccessException(vFile);
-    }
-    Project project = myManager.getProject();
-    if (project.isDisposed()) {
-      LOG.error("Project is already disposed: " + project);
-    }
-    dispatchPendingEvents();
+    ensureValidAndDispatchPendingEvents(vFile);
 
     FileViewProvider viewProvider = getRawCachedViewProvider(vFile, context);
     if (viewProvider == null || viewProvider.getUserData(IN_COMA) != null) {

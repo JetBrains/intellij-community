@@ -108,6 +108,7 @@ com.intellij.psi.impl.file.impl.FileManager
 - *a:findFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 - *a:findViewProvider(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.FileViewProvider
 - *a:getCachedPsiFile(com.intellij.openapi.vfs.VirtualFile,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
+- *a:getCachedPsiFiles(com.intellij.openapi.vfs.VirtualFile):java.util.List
 a:com.intellij.psi.impl.source.PsiFileImpl
 - com.intellij.psi.impl.ElementBase
 - com.intellij.openapi.ui.Queryable
