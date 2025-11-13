@@ -26,7 +26,6 @@ abstract class AbstractCompletionHandlerTest(private val defaultCompletionType: 
         const val LOOKUP_STRING_PREFIX = "ELEMENT:"
         const val ELEMENT_TEXT_PREFIX = "ELEMENT_TEXT:"
         const val TAIL_TEXT_PREFIX = "TAIL_TEXT:"
-        const val USE_EXPENSIVE_RENDERER = "// USE_EXPENSIVE_RENDERER"
         const val COMPLETION_CHAR_PREFIX = "CHAR:"
         const val COMPLETION_CHARS_PREFIX = "CHARS:"
         const val COMPLETION_TYPE_AFTER_COMPLETED_PREFIX = "TYPE_AFTER_COMPLETED:"
