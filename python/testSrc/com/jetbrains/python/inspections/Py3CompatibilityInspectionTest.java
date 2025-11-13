@@ -27,7 +27,7 @@ public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
                    try:
                      print("a")
                    finally:
-                     <error descr="Python version 3.14 does not support 'break' inside 'finally' clause">break</error>"""
+                     <error descr="Python version 3.15 does not support 'break' inside 'finally' clause">break</error>"""
     );
   }
 
@@ -38,7 +38,7 @@ public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
                    try:
                      pass
                    finally:
-                     <error descr="Python version 3.14 does not support 'return' inside 'finally' clause">return</error>"""
+                     <error descr="Python version 3.15 does not support 'return' inside 'finally' clause">return</error>"""
     );
   }
 
