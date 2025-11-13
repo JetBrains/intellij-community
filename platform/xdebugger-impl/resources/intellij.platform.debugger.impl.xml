@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <applicationListeners>
     <listener topic="com.intellij.openapi.project.ProjectManagerListener"
               class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"

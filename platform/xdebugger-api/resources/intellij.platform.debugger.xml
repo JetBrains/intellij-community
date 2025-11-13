@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="public">
   <extensionPoints>
     <extensionPoint name="xdebugger.settings" interface="com.intellij.xdebugger.settings.XDebuggerSettings" dynamic="true"/>
     <extensionPoint name="xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType" dynamic="true"/>
