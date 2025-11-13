@@ -171,6 +171,7 @@ class IDEScreenRecorder(private val runContext: IDERunContext) {
         expectedExitCode = 0,
         stdoutRedirect = ExecOutputRedirect.ToFile(ffmpegLogFile.toFile()),
         stderrRedirect = ExecOutputRedirect.ToFile(ffmpegLogFile.toFile()),
+        timeout = ideRunContext.runTimeout,
       ).startCancellable()
     }
     catch (e: CancellationException) {
