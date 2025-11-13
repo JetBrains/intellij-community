@@ -12,9 +12,7 @@ import com.intellij.codeInspection.SuppressionUtil
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.concurrency.JobLauncher
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Predicates
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
@@ -32,7 +30,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isCalleeExpression
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isConstructorCallReference
 import org.jetbrains.kotlin.idea.inspections.describe
@@ -71,18 +68,13 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
                 && profile.isToolEnabled(deadCodeKey, ktFile)
     }
 
-    internal fun collectHighlights(holder: HighlightInfoHolder) {
+    fun registerAllLocalReferences(holder: HighlightInfoHolder) {
         if (!enabled) return
-
         Divider.divideInsideAndOutsideAllRoots(ktFile, ktFile.textRange, holder.annotationSession.priorityRange, Predicates.alwaysTrue()) { dividedElements ->
             analyze(ktFile) {
                 registerLocalReferences(dividedElements.inside())
                 registerLocalReferences(dividedElements.outside())
             }
-
-            // highlight visible symbols first
-            collectAndHighlightNamedElements(dividedElements.inside(), holder)
-            collectAndHighlightNamedElements(dividedElements.outside(), holder)
             true
         }
     }
@@ -165,22 +157,12 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         }
     }
 
-    private fun collectAndHighlightNamedElements(psiElements: List<PsiElement>, holder: HighlightInfoHolder) {
-        val namedElements: MutableList<KtNamedDeclaration> = mutableListOf()
-        val namedElementVisitor = object : KtVisitorVoid() {
-            override fun visitNamedDeclaration(declaration: KtNamedDeclaration) {
-                if (declaration.isExplicitlyIgnoredByName()) return
-                namedElements.add(declaration)
+    fun visit(element: PsiElement, holder: HighlightInfoHolder) {
+        if (!enabled) return
+        if (element is KtNamedDeclaration) {
+            analyze(element) {
+                handleDeclaration(element, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
             }
-        }
-        for (declaration in psiElements) {
-            declaration.accept(namedElementVisitor)
-        }
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(namedElements, ProgressManager.getGlobalProgressIndicator()) { declaration ->
-            analyze(declaration) {
-                handleDeclaration(declaration, deadCodeInspection!!, deadCodeInfoType!!, deadCodeKey!!, holder)
-            }
-            true
         }
     }
 
