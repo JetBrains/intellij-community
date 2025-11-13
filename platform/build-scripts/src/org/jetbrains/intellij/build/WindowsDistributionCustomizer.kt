@@ -8,12 +8,12 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Path to 256x256 *.ico file for Windows distribution.
    */
-  var icoPath: String? = null
+  var icoPath: Path? = null
 
   /**
    * Path to an ico file for EAP builds (if `null` [icoPath] will be used).
    */
-  var icoPathForEAP: String? = null
+  var icoPathForEAP: Path? = null
 
   /**
    * If `true`, *.bat files (productName.bat and inspect.bat) will be included in the distribution.
@@ -42,7 +42,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * Path to a directory containing images for installer: `logo.bmp`, `headerlogo.bmp`, `install.ico`, `uninstall.ico`.
    */
-  var installerImagesPath: String? = null
+  var installerImagesPath: Path? = null
 
   /**
    * Set to `false` for products that are not updated with patches.

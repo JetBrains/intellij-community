@@ -611,22 +611,22 @@ private suspend fun checkProductProperties(context: BuildContext) {
   }
 
   context.linuxDistributionCustomizer?.let { linuxDistributionCustomizer ->
-    checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPath), "productProperties.linuxCustomizer.iconPngPath")
-    checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPathForEAP), "productProperties.linuxCustomizer.iconPngPathForEAP")
+    checkStringPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPath), "productProperties.linuxCustomizer.iconPngPath")
+    checkStringPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPathForEAP), "productProperties.linuxCustomizer.iconPngPathForEAP")
   }
 
   context.macDistributionCustomizer?.let { macCustomizer ->
     checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
     checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
-    checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
-    checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIcon), "productProperties.macCustomizer.icnsPathForAlternativeIcon")
-    checkPaths(
+    checkStringPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
+    checkStringPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIcon), "productProperties.macCustomizer.icnsPathForAlternativeIcon")
+    checkStringPaths(
       listOfNotNull(macCustomizer.icnsPathForAlternativeIconForEAP),
       "productProperties.macCustomizer.icnsPathForAlternativeIconForEAP"
     )
     context.executeStep(spanBuilder("check .dmg images"), BuildOptions.MAC_DMG_STEP) {
       checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
-      checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")
+      checkStringPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")
     }
   }
 
@@ -767,7 +767,14 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
   }
 }
 
-private fun checkPaths(paths: Collection<String>, propertyName: String) {
+private fun checkPaths(paths: Collection<Path>, propertyName: String) {
+  val nonExistingFiles = paths.filter { Files.notExists(it) }
+  check(nonExistingFiles.isEmpty()) {
+    "$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}"
+  }
+}
+
+private fun checkStringPaths(paths: Collection<String>, propertyName: String) {
   val nonExistingFiles = paths.filter { Files.notExists(Path.of(it)) }
   check(nonExistingFiles.isEmpty()) {
     "$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}"
@@ -789,7 +796,7 @@ private fun checkMandatoryField(value: String?, fieldName: String) {
 
 private fun checkMandatoryPath(path: String, fieldName: String) {
   checkMandatoryField(path, fieldName)
-  checkPaths(listOf(path), fieldName)
+  checkPaths(listOf(Path.of(path)), fieldName)
 }
 
 private fun logFreeDiskSpace(phase: String, context: CompilationContext) {

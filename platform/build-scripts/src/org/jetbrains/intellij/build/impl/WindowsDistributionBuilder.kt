@@ -468,13 +468,13 @@ internal class WindowsDistributionBuilder(
     val customizer = context.windowsDistributionCustomizer!!
     val icoPath = (if (context.applicationInfo.isEAP) customizer.icoPathForEAP else null) ?: customizer.icoPath
     requireNotNull(icoPath) { "`WindowsDistributionCustomizer#icoPath` must be set" }
-    return Path.of(icoPath)
+    return icoPath
   }
 
   private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
-    val vmOptions = VmOptionsGenerator.generate(context).asSequence()
-    VmOptionsGenerator.writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
+    val vmOptions = generateVmOptions(context).asSequence()
+    writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
     return vmOptionsFile
   }
 

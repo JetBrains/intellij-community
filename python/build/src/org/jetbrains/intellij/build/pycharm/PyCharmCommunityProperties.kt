@@ -90,9 +90,9 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
 
   override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = object : WindowsDistributionCustomizer() {
     init {
-      icoPath = "${communityHome}/python/build/resources/PyCharmCore.ico"
-      icoPathForEAP = "${communityHome}/python/build/resources/PyCharmCore_EAP.ico"
-      installerImagesPath = "${communityHome}/python/build/resources"
+      icoPath = communityHome.resolve("python/build/resources/PyCharmCore.ico")
+      icoPathForEAP = communityHome.resolve("python/build/resources/PyCharmCore_EAP.ico")
+      installerImagesPath = communityHome.resolve("python/build/resources")
     }
 
     override val fileAssociations: List<String>
