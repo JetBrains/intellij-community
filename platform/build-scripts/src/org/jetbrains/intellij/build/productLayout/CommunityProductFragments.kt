@@ -42,4 +42,30 @@ object CommunityProductFragments {
     // Extensions block (UTM tracking, new UI onboarding)
     deprecatedInclude("intellij.java.ide.resources", "META-INF/JavaIdePlugin.xml")
   }
+
+  /**
+     * PyCharm Core fragment: provides PyCharm-specific platform extensions.
+     *
+     * Includes:
+     * - Platform language support (via platformLangBaseFragment)
+     * - Module capability alias for PyCharm
+     * - Optional remote servers support
+     * - PyCharm-specific extensions and actions (via pycharm-core.xml)
+     *
+     * Use this fragment for products that include PyCharm functionality (PyCharm Community, PyCharm Professional, DataSpell).
+     * Note: The extensions and actions blocks remain in pycharm-core.xml as they cannot be represented in the product content DSL.
+     */
+  fun pycharmCoreFragment(): ProductModulesContentSpec = productModules {
+    // Include platform lang base (PyCharm requires platform language support)
+    include(platformLangBaseFragment())
+
+    // Module capability alias
+    alias("com.intellij.modules.pycharm")
+
+    // Optional remote servers support
+    deprecatedInclude("intellij.platform.remoteServers.impl", "intellij.platform.remoteServers.impl.xml", optional = true)
+
+    // Extensions and actions block (PyCharm-specific customization)
+    deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core.xml")
+  }
 }

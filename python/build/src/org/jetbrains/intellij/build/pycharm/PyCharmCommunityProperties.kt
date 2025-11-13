@@ -7,10 +7,7 @@ import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyFileToDir
-import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
-import org.jetbrains.intellij.build.productLayout.ModuleSetProvider
-import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
-import org.jetbrains.intellij.build.productLayout.productModules
+import org.jetbrains.intellij.build.productLayout.*
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -68,9 +65,11 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     moduleSet(CommunityModuleSets.ideCommon())
     moduleSet(CommunityModuleSets.rdCommon())
 
+    // PyCharm Core fragment (includes platformLangBaseFragment, module aliases, and pycharm-core.xml)
+    include(CommunityProductFragments.pycharmCoreFragment())
+
     // Static includes
     deprecatedInclude("intellij.platform.extended.community.impl", "META-INF/community-extensions.xml", ultimateOnly = true)
-    deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core.xml")
     deprecatedInclude("intellij.pycharm.community", "META-INF/pycharm-core-customization.xml")
   }
 
