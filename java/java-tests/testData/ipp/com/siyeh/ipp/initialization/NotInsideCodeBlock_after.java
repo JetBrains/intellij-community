@@ -1,5 +1,5 @@
 class X {
-  Object obj<caret>;
+    Object obj<caret>;
 
     {
         obj = new Object() {

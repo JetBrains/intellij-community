@@ -326,11 +326,11 @@ public abstract class CodeBlockSurrounder {
       }
       return null;
     }
-    if (parent instanceof PsiField) {
-      if (parent.getParent() instanceof PsiImplicitClass) {
-        return null;
-      }
-      return new ExtractFieldInitializerSurrounder(expression, (PsiField)parent);
+    if (parent instanceof PsiField field) {
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null || containingClass instanceof PsiImplicitClass || containingClass.isInterface()) return null;
+      if (containingClass.isRecord() && !field.hasModifierProperty(PsiModifier.STATIC)) return null;
+      return new ExtractFieldInitializerSurrounder(expression, field);
     }
 
     return null;
@@ -580,12 +580,10 @@ public abstract class CodeBlockSurrounder {
     @Override
     @NotNull PsiStatement replace(@NotNull Project project, @NotNull PsiElementFactory factory) {
       myField.normalizeDeclaration();
-      PsiClassInitializer initializer =
-        tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(myField), PsiClassInitializer.class);
-      boolean isStatic = myField.hasModifierProperty(PsiModifier.STATIC);
-      if (initializer == null || initializer.hasModifierProperty(PsiModifier.STATIC) != isStatic) {
+      PsiClassInitializer initializer = findInitializer();
+      if (initializer == null) {
         initializer = factory.createClassInitializer();
-        if (isStatic) {
+        if (myField.hasModifierProperty(PsiModifier.STATIC)) {
           Objects.requireNonNull(initializer.getModifierList()).setModifierProperty(PsiModifier.STATIC, true);
         }
         initializer = (PsiClassInitializer)myField.getParent().addAfter(initializer, myField);
@@ -609,6 +607,30 @@ public abstract class CodeBlockSurrounder {
       rExpression.replace(fieldInitializer);
       Objects.requireNonNull(myField.getInitializer()).delete();
       return assignment;
+    }
+
+    private @Nullable PsiClassInitializer findInitializer() {
+      PsiElement current = myField;
+      boolean isStatic = myField.hasModifierProperty(PsiModifier.STATIC);
+      while (true) {
+        current = PsiTreeUtil.skipWhitespacesAndCommentsForward(current);
+        if (current instanceof PsiClassInitializer initializer) {
+          if (initializer.hasModifierProperty(PsiModifier.STATIC) == isStatic) {
+            return initializer;
+          }
+          continue;
+        }
+        if (current instanceof PsiField field) {
+          if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) {
+            continue;
+          }
+          PsiExpression initializer = field.getInitializer();
+          if (initializer == null || 
+              ExpressionUtils.isSafelyRecomputableExpression(initializer) &&
+              !VariableAccessUtils.variableIsUsed(myField, initializer)) continue;
+        }
+        return null;
+      }
     }
 
     @Override

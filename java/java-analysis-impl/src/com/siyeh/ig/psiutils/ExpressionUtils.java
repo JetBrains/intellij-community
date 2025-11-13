@@ -679,6 +679,9 @@ public final class ExpressionUtils {
         isEvaluatedAtCompileTime(expression)) {
       return true;
     }
+    if (expression instanceof PsiArrayInitializerExpression initializer) {
+      return ContainerUtil.all(initializer.getInitializers(), e -> isSafelyRecomputableExpression(e));
+    }
     if (expression instanceof PsiConditionalExpression cond) {
       return isSafelyRecomputableExpression(cond.getCondition()) &&
              isSafelyRecomputableExpression(cond.getThenExpression()) &&

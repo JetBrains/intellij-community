@@ -6,6 +6,8 @@ import java.util.stream.*;
 public class Main {
     static final List<String> STR;
 
+    final String field;
+
     static {
         List<String> list = new ArrayList<>();
         for (String s : Arrays.asList("foo", "bar", "baz")) {
@@ -13,9 +15,10 @@ public class Main {
             list.add(upperCase);
         }
         STR = list;
+        System.out.println("static initializer already exists");
     }
 
-    final String field;
+    final long count;
 
     {
         StringJoiner joiner = new StringJoiner(",");
@@ -25,15 +28,6 @@ public class Main {
             }
         }
         field = joiner.toString();
-    }
-
-    static {
-        System.out.println("static initializer already exists");
-    }
-
-    final long count;
-
-    {
         long result = 0L;
         for (Integer i : Arrays.asList(1, 2, 3, 4)) {
             if (i % 2 == 0) {
@@ -47,33 +41,26 @@ public class Main {
     final long x = 0;
     final long count2;
 
-    {
-        long result = 0L;
-        for (Integer i : Arrays.asList(1, 2, 3, 4)) {
-            if (i % 2 == 0) {
-                result++;
-            }
-        }
-        count2 = result;
-    }
-
     final long count3;
-
-    {
-        long result = 0L;
-        for (Integer i : Arrays.asList(1, 2, 3, 4)) {
-            if (i % 2 == 0) {
-                result++;
-            }
-        }
-        count3 = result;
-    }
-
     final long y = 0;
 
     final long[] countArray;
 
     {
+        long result1 = 0L;
+        for (Integer i1 : Arrays.asList(1, 2, 3, 4)) {
+            if (i1 % 2 == 0) {
+                result1++;
+            }
+        }
+        count2 = result1;
+        long count1 = 0L;
+        for (Integer integer : Arrays.asList(1, 2, 3, 4)) {
+            if (integer % 2 == 0) {
+                count1++;
+            }
+        }
+        count3 = count1;
         long result = 0L;
         for (Integer i : Arrays.asList(1, 2, 3, 4)) {
             if (i % 2 == 0) {

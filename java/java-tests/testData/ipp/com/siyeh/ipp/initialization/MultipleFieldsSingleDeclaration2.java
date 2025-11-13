@@ -1,8 +1,8 @@
 class MultipleFieldsSingleDeclaration {
 
-  String <caret>s = "", array[] = {"s"};
+    String <caret>s = "", array[] = {"s"};
 
-  {
-    System.out.println();
-  }
+    {
+        System.out.println();
+    }
 }
