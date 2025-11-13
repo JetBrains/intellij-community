@@ -242,7 +242,9 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       return;
     }
     ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      () -> ReadAction.nonBlocking(commandSupplier::get).executeSynchronously(),
+      () -> ReadAction.nonBlocking(commandSupplier::get)
+        .expireWhen(() -> context.project().isDisposed() || (editor != null && editor.isDisposed()))
+        .executeSynchronously(),
       title, true, context.project());
     if (!command.isEmpty()) {
       CommandProcessor commandProcessor = CommandProcessor.getInstance();
