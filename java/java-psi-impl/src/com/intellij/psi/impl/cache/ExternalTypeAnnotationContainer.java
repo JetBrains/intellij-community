@@ -2,19 +2,18 @@
 package com.intellij.psi.impl.cache;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.TypeAnnotationProvider;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A container that reports external type annotations. External type annotations are described in annotation.xml files
- * with additional {@code typePath} attribute. The attribute contains several components starting with '/' and separated with '/'
- * (no ending '/' is allowed). The allowed components are the following:
+ * with additional {@code typePath} attribute. The attribute contains several components starting with '/' or '-' and separated with '/'
+ * (no ending '/' is allowed).
+ * '-' indicates that type parameters are considered.
+ * The allowed components are the following:
  * <ul>
  *   <li>{@code number} - one-based type argument index (1-255)
- *   <li>{@code *} (asterisk) - bound of a wildcard type
+ *   <li>{@code *} (asterisk) - go to a bound
  *   <li>{@code []} (square brackets) - array element (also works for varargs)
  *   <li>{@code .} (dot) - enclosing type of inner type
  * </ul>
@@ -69,5 +68,18 @@ public final class ExternalTypeAnnotationContainer implements TypeAnnotationCont
 
   public static @NotNull TypeAnnotationContainer create(@NotNull PsiModifierListOwner owner) {
     return new ExternalTypeAnnotationContainer("", owner);
+  }
+
+  public static @NotNull TypeAnnotationContainer create(@NotNull PsiTypeParameter typeParameter) {
+    PsiElement parent = typeParameter.getParent();
+    if (parent instanceof PsiTypeParameterList &&
+        parent.getParent() instanceof PsiModifierListOwner &&
+        parent.getParent() instanceof PsiTypeParameterListOwner) {
+      PsiTypeParameterList parameterList = (PsiTypeParameterList)parent;
+      int index = parameterList.getTypeParameterIndex(typeParameter);
+      String path = "-/" + (index + 1);
+      return new ExternalTypeAnnotationContainer(path, (PsiModifierListOwner)parent.getParent());
+    }
+    return EMPTY;
   }
 }

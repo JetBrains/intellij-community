@@ -374,4 +374,9 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testNewMethodReferenceMustBeNonNull() {
     doTestWith((insp, __) -> insp.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true); 
   }
+  public void testExternalTypeParameterAnnotations() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
 }

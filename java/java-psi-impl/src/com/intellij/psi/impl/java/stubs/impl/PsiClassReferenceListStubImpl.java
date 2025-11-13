@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl;
@@ -65,6 +66,13 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       for (int i = 0; i < types.length; i++) {
         TypeInfo info = myInfos[i];
         TypeAnnotationContainer annotations = info.getTypeAnnotations();
+        if (annotations == TypeAnnotationContainer.EMPTY) {
+          PsiElement psi = myParent.getPsi();
+          if (psi instanceof PsiTypeParameter) {
+            annotations = ExternalTypeAnnotationContainer.create((PsiTypeParameter)psi);
+            annotations = annotations.forBound().forConjunction(i);
+          }
+        }
         ClsJavaCodeReferenceElementImpl reference = new ClsJavaCodeReferenceElementImpl(getPsi(), info.text(), annotations);
         types[i] = new PsiClassReferenceType(reference, null).annotate(annotations.getProvider(reference));
       }

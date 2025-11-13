@@ -51,6 +51,13 @@ public final class JavaTypeNullabilityUtil {
       PsiTypeParameter typeParameter = (PsiTypeParameter)target;
       PsiReferenceList extendsList = typeParameter.getExtendsList();
       PsiClassType[] extendTypes = extendsList.getReferencedTypes();
+      Set<PsiClassType> nextVisited = visited == null ? new HashSet<>() : visited;
+      nextVisited.add(type);
+      //superTypes returns Object for `empty` parameter list, which can contain external annotations
+      List<TypeNullability> nullabilities = ContainerUtil.map(typeParameter.getSuperTypes(), t -> getTypeNullability(t, nextVisited, checkContainer));
+      TypeNullability fromSuper = TypeNullability.intersect(nullabilities).inherited();
+      if (fromSuper != TypeNullability.UNKNOWN) return fromSuper;
+      //but this Object cannot hold nullability container, because doesn't have a reference
       if (extendTypes.length == 0 && checkContainer) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(typeParameter.getProject());
         // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
@@ -58,11 +65,6 @@ public final class JavaTypeNullabilityUtil {
         if (typeUseNullability != null) {
           return typeUseNullability.toTypeNullability().inherited();
         }
-      } else {
-        Set<PsiClassType> nextVisited = visited == null ? new HashSet<>() : visited;
-        nextVisited.add(type);
-        List<TypeNullability> nullabilities = ContainerUtil.map(extendTypes, t -> getTypeNullability(t, nextVisited, checkContainer));
-        return TypeNullability.intersect(nullabilities).inherited();
       }
     }
     return TypeNullability.UNKNOWN;
