@@ -140,7 +140,9 @@ private class PsiVFSListener(private val project: Project) {
   }
 
   private fun clearViewProvider(vFile: VirtualFile, why: String) {
-    DebugUtil.performPsiModification<RuntimeException>(why) { fileManager.setViewProvider(vFile, null) }
+    DebugUtil.performPsiModification<RuntimeException>(why) {
+      fileManager.setViewProvider(vFile, null)
+    }
   }
 
   private fun beforePropertyChange(event: VFilePropertyChangeEvent) {
@@ -675,7 +677,9 @@ private class PsiVFSModuleRootListenerImpl(private val listenerProject: Project)
           return@externalChangeAction
         }
 
-        DebugUtil.performPsiModification<RuntimeException>(null) { fileManager.possiblyInvalidatePhysicalPsi() }
+        DebugUtil.performPsiModification<RuntimeException>(null) {
+          fileManager.possiblyInvalidatePhysicalPsi()
+        }
 
         val treeEvent = PsiTreeChangeEventImpl(psiManager)
         treeEvent.propertyName = PsiTreeChangeEvent.PROP_ROOTS
@@ -708,7 +712,9 @@ private class MyFileDocumentManagerListener(private val project: Project) : File
   override fun fileContentReloaded(file: VirtualFile, document: Document) {
     val psiFile = fileManager.findCachedViewProvider(file)
     if (file.isValid && psiFile != null && file.isTooLarge() && psiFile !is PsiLargeFile) {
-      ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction { fileManager.reloadPsiAfterTextChange(psiFile, file) })
+      ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+        fileManager.reloadPsiAfterTextChange(psiFile, file) }
+      )
     }
   }
 }
