@@ -37,7 +37,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
-      val logs = FUCollectorTestCase.collectLogEvents("ML", testRootDisposable) {
+      val logs = FUCollectorTestCase.collectLogEvents("ML", testRootDisposable, true) {
         logsContainer.logCurrent()
       }
 
@@ -65,7 +65,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
-      val logs = FUCollectorTestCase.collectLogEvents("ML", testRootDisposable) {
+      val logs = FUCollectorTestCase.collectLogEvents("ML", testRootDisposable, true) {
         logsContainer.logCurrent()
       }
 
@@ -94,7 +94,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
-      val logs = FUCollectorTestCase.collectLogEvents("ML", testRootDisposable) {
+      val logs = FUCollectorTestCase.collectLogEvents("ML", testRootDisposable, true) {
         logsContainer.logCurrent()
       }
 
@@ -122,7 +122,7 @@ class InlineCompletionLogsContainerTest : LightPlatformTestCase() {
       logsContainer.add(TestPhasedLogs.basicTestField with 42)
       logsContainer.add(TestPhasedLogs.fullTestField with 1337)
 
-      val logs = FUCollectorTestCase.collectLogEvents("ML", testRootDisposable) {
+      val logs = FUCollectorTestCase.collectLogEvents("ML", testRootDisposable, true) {
         logsContainer.logCurrent()
       }
 

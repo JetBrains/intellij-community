@@ -15,7 +15,7 @@ import java.util.function.Consumer
 object FUCollectorTestCase {
   fun collectLogEvents(parentDisposable: Disposable,
                        action: () -> Unit): List<LogEvent> {
-    return collectLogEvents("FUS", parentDisposable, action)
+    return collectLogEvents("FUS", parentDisposable, true, action)
   }
 
   @JvmStatic
@@ -33,21 +33,23 @@ object FUCollectorTestCase {
 
   fun collectLogEvents(recorder: String,
                        parentDisposable: Disposable,
-                       action: () -> Unit): List<LogEvent> = collectLogEvents(recorder, parentDisposable, null, action)
+                       escapeChars: Boolean,
+                       action: () -> Unit): List<LogEvent> = collectLogEvents(recorder, parentDisposable, null, escapeChars, action)
 
   fun listenForEvents(recorder: String,
                       parentDisposable: Disposable,
                       listener: Consumer<LogEvent>,
                       action: () -> Unit) {
-    collectLogEvents(recorder, parentDisposable, listener, action)
+    collectLogEvents(recorder, parentDisposable, listener, true, action)
     return
   }
 
   fun collectLogEvents(recorder: String,
                        parentDisposable: Disposable,
                        listener: Consumer<LogEvent>?,
+                       escapeChars: Boolean,
                        action: () -> Unit): List<LogEvent> {
-    val mockLoggerProvider = TestStatisticsEventLoggerProvider(recorder)
+    val mockLoggerProvider = TestStatisticsEventLoggerProvider(recorder, escapeChars)
     (StatisticsEventLoggerProvider.EP_NAME.point as ExtensionPointImpl<StatisticsEventLoggerProvider>)
       .maskAll(listOf(mockLoggerProvider), parentDisposable, true)
     mockLoggerProvider.logger.eventListener = listener
@@ -62,7 +64,7 @@ object FUCollectorTestCase {
                        parentDisposable: Disposable,
                        action: () -> Unit): Map<String, List<LogEvent>> {
     val mockProviderByRecorder: Map<String, TestStatisticsEventLoggerProvider> = listenerPerRecorder.entries.associate { (recorder, listener) ->
-      val mockLoggerProvider = TestStatisticsEventLoggerProvider(recorder)
+      val mockLoggerProvider = TestStatisticsEventLoggerProvider(recorder, escapeChars = false)
       mockLoggerProvider.logger.eventListener = listener
       recorder to mockLoggerProvider
     }

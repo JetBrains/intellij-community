@@ -28,7 +28,7 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
       val emptyDisposable = Disposer.newDisposable()
       disposables.add(emptyDisposable)
 
-      return FUCollectorTestCase.collectLogEvents(MLSE_RECORDER_ID, emptyDisposable) {
+      return FUCollectorTestCase.collectLogEvents(MLSE_RECORDER_ID, emptyDisposable, true) {
         val searchEverywhereUI = this.provide(project)
         disposables.add(searchEverywhereUI)
 
