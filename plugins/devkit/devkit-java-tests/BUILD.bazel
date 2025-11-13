@@ -47,6 +47,7 @@ jvm_library(
     "//plugins/devkit/devkit-tests:testFramework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/testFramework/junit5/codeInsight",
     "//java/compiler:compiler-tests_test_lib",
     "//java/testFramework",
     "//xml/dom-tests:dom-tests_test_lib",
