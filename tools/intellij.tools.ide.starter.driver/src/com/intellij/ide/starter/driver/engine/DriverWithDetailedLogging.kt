@@ -101,10 +101,11 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
         }
         else {
           runContext?.let { context ->
-            val fileName = path.name
-            logOutput("Adding screenshot to metadata: $fileName")
-            TeamCityClient.publishTeamCityArtifacts(path, context.contextName.replaceSpecialCharactersWithHyphens(), fileName, false)
-            TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.IMAGE, flowId = null, name = null, value = context.contextName.replaceSpecialCharactersWithHyphens() + "/$fileName")
+            val artifactPath = context.contextName.replaceSpecialCharactersWithHyphens()
+            val artifactName = path.name.replaceSpecialCharactersWithHyphens()
+            logOutput("Adding screenshot to metadata: $artifactPath/$artifactName")
+            TeamCityClient.publishTeamCityArtifacts(path, artifactPath, artifactName, false)
+            TeamCityCIServer.addTestMetadata(testName = null, TeamCityCIServer.TeamCityMetadataType.IMAGE, flowId = null, name = null, value = "$artifactPath/$artifactName")
           }
         }
       }
