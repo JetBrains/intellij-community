@@ -14,6 +14,12 @@ enum class LibraryPackMode {
   STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
 }
 
+/**
+ * @param owner content module ([ModuleItem]) which brings the project library to distribution
+ * (commonly when "intellij.libraries.*" content module brings the project library).
+ * Or `null` if content modules that hold the project library are not used.
+ * So, this library is brought as an `iml` dependency or through custom layout.
+ */
 class ProjectLibraryData(
   @JvmField val libraryName: String,
   @JvmField val packMode: LibraryPackMode = LibraryPackMode.STANDALONE_MERGED,
