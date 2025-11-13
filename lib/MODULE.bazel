@@ -7511,34 +7511,6 @@ http_file(
 )
 
 http_file(
-  name = "androidx_lifecycle-lifecycle-common-jvm-2_10_0-alpha03_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-common-jvm/2.10.0-alpha03/lifecycle-common-jvm-2.10.0-alpha03.jar",
-  sha256 = "ee37d7927dba6cffd167c6244fc33e483f2b6d407def89395c8a2986bc2504c5",
-  downloaded_file_path = "lifecycle-common-jvm-2.10.0-alpha03.jar"
-)
-
-http_file(
-  name = "androidx_lifecycle-lifecycle-runtime-desktop-2_10_0-alpha03_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-runtime-desktop/2.10.0-alpha03/lifecycle-runtime-desktop-2.10.0-alpha03.jar",
-  sha256 = "70634adb54f9268685e45226e386a9f3856a2568dfc3de2db49b6b4c75c831fe",
-  downloaded_file_path = "lifecycle-runtime-desktop-2.10.0-alpha03.jar"
-)
-
-http_file(
-  name = "androidx_arch_core-core-common-2_2_0_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/arch/core/core-common/2.2.0/core-common-2.2.0.jar",
-  sha256 = "65308a06b1c00ee186cb9e19321383f043b993813f1522c47f4a3e3303bdba41",
-  downloaded_file_path = "core-common-2.2.0.jar"
-)
-
-http_file(
-  name = "androidx_annotation-annotation-1_1_0_http",
-  url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/annotation/annotation/1.1.0/annotation-1.1.0.jar",
-  sha256 = "d38d63edb30f1467818d50aaf05f8a692dea8b31392a049bfa991b159ad5b692",
-  downloaded_file_path = "annotation-1.1.0.jar"
-)
-
-http_file(
   name = "androidx_lifecycle-lifecycle-viewmodel-savedstate-desktop-2_9_4_http",
   url = "https://cache-redirector.jetbrains.com/dl.google.com/dl/android/maven2/androidx/lifecycle/lifecycle-viewmodel-savedstate-desktop/2.9.4/lifecycle-viewmodel-savedstate-desktop-2.9.4.jar",
   sha256 = "3e0b44e2514eafdd6938d5457d9f46e4785077c45d3b4364b5c23c4dcb93efd3",
