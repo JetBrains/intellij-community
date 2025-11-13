@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INVO
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.breakpoints.inTheMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimMethodNameMangling
 import org.jetbrains.kotlin.idea.debugger.core.stepping.StopOnReachedMethodFilter
 import org.jetbrains.kotlin.psi.*
 
@@ -60,7 +60,7 @@ class KotlinLambdaMethodFilter(
     override fun getCallingExpressionLines() = callingExpressionLines
 
     fun isTargetLambdaName(name: String): Boolean {
-        val actualName = name.trimIfMangledInBytecode(lambdaInfo.isNameMangledInBytecode)
+        val actualName = name.trimMethodNameMangling()
         if (lambdaInfo.isSuspend) {
             return actualName == INVOKE_SUSPEND_METHOD_NAME
         }

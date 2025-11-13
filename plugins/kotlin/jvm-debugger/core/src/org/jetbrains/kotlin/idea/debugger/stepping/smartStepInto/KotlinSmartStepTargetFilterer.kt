@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimMethodNameMangling
 import org.jetbrains.kotlin.idea.debugger.core.getJvmInternalClassName
 import org.jetbrains.kotlin.idea.debugger.core.getJvmInternalName
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
@@ -169,8 +169,8 @@ internal fun isIntrinsicEquals(owner: String, name: String, signature: String): 
 private data class BytecodeSignature(val owner: String, val name: String, val signature: String, val isStatic: Boolean)
 
 private fun BytecodeSignature.handleMangling(methodInfo: CallableMemberInfo): BytecodeSignature {
-    if (!methodInfo.isNameMangledInBytecode) return this
-    return copy(name = name.trimIfMangledInBytecode(true))
+    val nameWithoutMangling = name.trimMethodNameMangling()
+    return if (nameWithoutMangling != name) copy(name = nameWithoutMangling) else this
 }
 
 /**

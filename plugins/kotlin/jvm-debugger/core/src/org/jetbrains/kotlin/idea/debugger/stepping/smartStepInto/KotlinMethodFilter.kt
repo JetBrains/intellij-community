@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimMethodNameMangling
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.core.isInlineFunctionMarkerVariableName
 import org.jetbrains.kotlin.idea.debugger.core.isInlineLambdaMarkerVariableName
@@ -123,8 +123,7 @@ open class KotlinMethodFilter(
     private fun nameMatches(location: Location, frameProxy: StackFrameProxyImpl?): Boolean {
         val method = location.safeMethod() ?: return false
         val targetMethodName = methodName
-        val isNameMangledInBytecode = methodInfo.isNameMangledInBytecode
-        val actualMethodName = method.name().trimIfMangledInBytecode(isNameMangledInBytecode)
+        val actualMethodName = method.name().trimMethodNameMangling()
 
         val isGeneratedLambda = actualMethodName.isGeneratedIrBackendLambdaMethodName()
         return actualMethodName == targetMethodName ||
@@ -180,7 +179,7 @@ internal fun methodNameMatches(methodInfo: CallableMemberInfo, name: String): Bo
 }
 
 private fun LocalVariable.isInlinedFromFunction(methodInfo: CallableMemberInfo): Boolean {
-    val variableName = name().dropInlineScopeInfo().trimIfMangledInBytecode(methodInfo.isNameMangledInBytecode)
+    val variableName = name().dropInlineScopeInfo().trimMethodNameMangling()
     return when {
         variableName.isInlineFunctionMarkerVariableName -> {
             val inlineMethodName = variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
