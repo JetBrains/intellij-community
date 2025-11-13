@@ -1545,6 +1545,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
                                   @NotNull HighlightingSessionImpl session,
                                   @NotNull Map<? super Pair<Document, Class<? extends ProgressableTextEditorHighlightingPass>>, ProgressableTextEditorHighlightingPass> mainDocumentPasses) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("submitInBackground: " + virtualFile + "; viewProvider.hashCode()={"+psiFile.getViewProvider().hashCode()+"}");
+    }
     try {
       ProgressManager.getInstance().executeProcessUnderProgress(Context.current().wrap(() -> {
         HighlightingPass[] passes = ReadAction.compute(() -> {
@@ -1609,7 +1612,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         synchronized (TextEditorHighlightingPassRegistrar.getInstance(myProject)) {
           myPassExecutorService.submitPasses(document, session.getCodeInsightContext(), virtualFile, psiFile, fileEditor, passes, progress);
         }
-//        clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(document, myProject);
+        //clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(document, myProject);
         ProgressManager.checkCanceled();
       }), progress);
     }
@@ -1641,6 +1644,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     });
 
     for (RangeHighlighter highlighter : invalid) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("clearObsoleteRangeHighlightersManagedToSneakInAllTheSame(" + document + "): " + highlighter);
+      }
       highlighter.dispose();
     }
   }

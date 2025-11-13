@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -42,8 +43,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -85,9 +86,10 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   private static final Key<Map<FileViewProvider, Map<Object, ToolHighlights>>> VISITED_PSI_ELEMENTS = Key.create("VISITED_PSI_ELEMENTS");
   // list of HighlightInfos for psi elements which were gc-ed
   private static final Key<List<HighlightInfo>> EVICTED_PSI_ELEMENTS = Key.create("EVICTED_PSI_ELEMENTS"); // list guarded by this
+  private final Project myProject;
 
   // true if some complex internal invariants must be checked on every operation;
-  private boolean ASSERT_INVARIANTS;
+  private boolean ASSERT_INVARIANTS /*= true*/;
   private boolean isAssertInvariants() {
     //return ApplicationManagerEx.getApplicationEx().isUnitTestMode() && !ApplicationManagerEx.isInStressTest();
     return ASSERT_INVARIANTS;
@@ -153,6 +155,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   }
 
   HighlightInfoUpdaterImpl(Project project) {
+    myProject = project;
     FileManagerEx fileManager = (FileManagerEx)PsiManagerEx.getInstanceEx(project).getFileManager();
     Disposer.register(this, () ->
       fileManager.forEachCachedDocument(document -> document.putUserData(VISITED_PSI_ELEMENTS, null)));
@@ -163,15 +166,17 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   }
 
   private synchronized void addEvictedInfos(@NotNull List<? extends HighlightInfo> infos) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("addEvictedInfos: " + infos + currentProgressInfo());
-    }
-    for (HighlightInfo info : infos) {
-      RangeHighlighterEx highlighter = info.getHighlighter();
-      if (highlighter != null) {
-        Document hostDocument = highlighter.getDocument();
-        List<HighlightInfo> evictedInfos = ConcurrencyUtil.computeIfAbsent(hostDocument, EVICTED_PSI_ELEMENTS, ()->new ArrayList<>());
-        evictedInfos.addAll(infos);
+    if (!infos.isEmpty()) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("addEvictedInfos: " + StringUtil.join(infos, i->i+(i.getHighlighter()==null ? "" : "; rh:" + i.getHighlighter().getTextRange()), ", ")+currentProgressInfo());
+      }
+      for (HighlightInfo info : infos) {
+        RangeHighlighterEx highlighter = info.getHighlighter();
+        if (highlighter != null) {
+          Document hostDocument = highlighter.getDocument();
+          List<HighlightInfo> evictedInfos = ConcurrencyUtil.computeIfAbsent(hostDocument, EVICTED_PSI_ELEMENTS, ()->new ArrayList<>());
+          evictedInfos.addAll(infos);
+        }
       }
     }
   }
@@ -224,8 +229,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   }
 
   private static void invokeProcessQueueToTriggerEvictedListener(@NotNull Map<? extends PsiElement, ?> map) {
-    Object v = map.remove(PsiUtilCore.NULL_PSI_FILE); // to invoke processQueue() and call evictionListener if needed
-    assert null == v : v;
+    ((ReferenceQueueable)map).processQueue(); // to call evictionListener if needed
   }
 
   @Override
@@ -261,8 +265,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     Collection<InvalidPsi> psiElements = recycler.forAllInGarbageBin();
     HighlightingSession session = recycler.myHighlightingSession;
     if (!psiElements.isEmpty()) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("incinerateAndRemoveFromDataAtomically: psiElements (" + psiElements.size() + "): " + psiElements + " " + session.getProgressIndicator());
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("incinerateAndRemoveFromDataAtomically: psiElements (" + psiElements.size() + "): " + psiElements + " " + session.getProgressIndicator());
       }
     }
     Map<Object, ToolHighlights> data = getData(session.getPsiFile(), session.getDocument());
@@ -341,10 +345,12 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         else {
           toolHighlights.elementHighlights.put(psiElement, List.copyOf(resultInfos));
         }
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("removeFromDataAtomically: " + psiElement.getClass() + psiElement.getTextRange()+": old=" + oldInfos.size()+(oldInfos.size() == resultInfos.size() ? "; "+StringUtil.join(oldInfos, "\n   ")+"\n  " : "")
-                    + "; new=" + resultInfos.size()+(oldInfos.size() == resultInfos.size() ? "; "+StringUtil.join(resultInfos, "\n   ")+"\n  "+"toRemove=("+toRemove.size()+") "+StringUtil.join(toRemove, "\n   ") : "")
-                    + " " +session.getProgressIndicator());
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("removeFromDataAtomically: " + debugPsiInfo(psiElement) +
+                    (removed ? "" : "; removed="+removed) +
+                    ": old=" + oldInfos.size() + (oldInfos.size() == resultInfos.size() ? "; "+StringUtil.join(oldInfos, "\n   ")+"\n  " : "")
+                    + "; new=" + resultInfos.size() + (oldInfos.size() == resultInfos.size() ? "; "+StringUtil.join(resultInfos, "\n   ")+"\n  "+"toRemove=("+toRemove.size()+") "+StringUtil.join(toRemove, "\n   ") : "")
+                    + " " + session.getProgressIndicator());
         }
       }
     }
@@ -363,11 +369,12 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
           // heuristic: when the incremental reparse support is poor, and a lot of PSI is invalidated unnecessarily on each typing,
           //  that PSI has a big chance to be recreated in that exact place later, when a (major) chunk of the file is reparsed, so we do not kill that highlighter, just recycle it to avoid annoying blinking
           // if however, that invalid PSI highlighter wasn't recycled after a short delay, kill it (runWithInvalidPsiRecycler()) to improve responsiveness to outdated infos
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("recycleInvalidPsiElements (predicate=" + toolIdPredicate + ") " + info.getHighlighter() +
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("recycleInvalidPsiElements (predicate=" + toolIdPredicate + ") " + info.getHighlighter() +
                       "; toolIdPredicate=" + toolIdPredicate +
-                      " for invalid " + psiElement + " from " + requestor +
-                      " " +session.getProgressIndicator());
+                      " for invalid " + debugPsiInfo(psiElement) +
+                      " from " + requestor +
+                      " " + session.getProgressIndicator());
           }
            if (info.getHighlighter() != null) {
              invalidPsiRecycler.recycleHighlighter(psiElement, info);
@@ -375,12 +382,18 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
          }
     );
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isTraceEnabled() && !invalidPsiRecycler.forAllInGarbageBin().isEmpty()) {
       Collection<InvalidPsi> psis = invalidPsiRecycler.forAllInGarbageBin();
-      LOG.debug("recycleInvalidPsiElements: found " + psis.size() + " invalid psi elements in " + psiFile.getName() + " for " + toolIdPredicate +
+      LOG.trace("recycleInvalidPsiElements: found " + psis.size() + " invalid psi elements in " + psiFile.getName() + " for " + toolIdPredicate +
                 (psis.isEmpty() ? "" : ":\n"+ StringUtil.join(psis, "\n    ")) +
                 " " +session.getProgressIndicator());
     }
+  }
+
+  static @NotNull String debugPsiInfo(@NotNull PsiElement psiElement) {
+    return ""+psiElement + psiElement.getTextRange()+
+           (psiElement.isValid() ? "" : " (invalid)") +
+           " {" + System.identityHashCode(psiElement) + "}" + psiElement.getClass();
   }
 
   private void disposeEvictedInfos(@NotNull HighlightingSession session, @NotNull WhatTool predicate) {
@@ -397,6 +410,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       evictedInfos.removeIf(info -> {
         boolean matches = predicate.matches(info.toolId);
         if (matches) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("disposeEvictedInfos: "+info);
+          }
           UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, session);
         }
         return matches;
@@ -490,8 +506,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         }
       }
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("removeAllHighlighterInsideFile: removed invalid file: " + psiFile + " (" + removed + " highlighters removed); from " + requestor+" " +session.getProgressIndicator());
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("removeAllHighlighterInsideFile: removed invalid file: " + psiFile + " (" + removed + " highlighters removed); from " + requestor+" " +session.getProgressIndicator());
     }
   }
 
@@ -554,12 +570,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       if (oldInfos.isEmpty() && newInfos.isEmpty()) {
         return;
       }
-      if (LOG.isDebugEnabled()) {
-        //noinspection removal
-        LOG.debug("psiElementVisited: " + visitedPsiElement + " in " + visitedPsiElement.getTextRange() +
-                  (psiFile.getViewProvider() instanceof InjectedFileViewProvider ? " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
-                  "; tool:" + toolId + "; infos:" + head(newInfos) + "; oldInfos:" + head(oldInfos) + " " + session.getProgressIndicator());
-      }
       // execute in non-cancelable block. It should not throw PCE anyway, but just in case
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         //assertNoDuplicates(psiFile, getInfosFromMarkup(hostDocument, project), "markup before psiElementVisited ");
@@ -571,7 +581,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
               recycler.recycleHighlighter(visitedPsiElement, oldInfo);
             }
           }
-          List<? extends HighlightInfo> newInfosToStore = assignRangeHighlighters(newInfos, toolId, session, psiFile, hostDocument, invalidElementRecycler, recycler, data);
+          List<? extends HighlightInfo> newInfosToStore = assignRangeHighlighters(visitedPsiElement, oldInfos, newInfos, toolId, session, psiFile, hostDocument, invalidElementRecycler, recycler, data);
           ToolHighlights notNullToolHighlights = toolHighlights == null ? data.computeIfAbsent(toolId, __ -> new ToolHighlights()) : toolHighlights;
 
           if (newInfosToStore.isEmpty()) {
@@ -581,9 +591,11 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
             notNullToolHighlights.elementHighlights.put(visitedPsiElement, newInfosToStore);
           }
 
-          //recycler.incinerateAndClear(); // do not remove from data because we just calculated new infos manually and removed the old ones, so we don't want to remove them again
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("remap: newInfos:" + newInfosToStore + "; oldInfos: " + oldInfos+" "+session.getProgressIndicator());
+          if (LOG.isTraceEnabled()) {
+            //noinspection removal
+            LOG.trace("psiElementVisited: " + debugPsiInfo(visitedPsiElement) +
+                      (psiFile.getViewProvider() instanceof InjectedFileViewProvider ? " injected in " + InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange()) : "") +
+                      "; tool:" + toolId + "; infos:" + head(newInfosToStore) + "; oldInfos:" + head(oldInfos) + " " + session.getProgressIndicator());
           }
 
           assertNoDuplicates(psiFile, newInfosToStore, "psiElementVisited ");
@@ -599,7 +611,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return infos.size() < 10 ? infos : "("+infos.size()+"):"+ContainerUtil.getFirstItems(infos, 10)+"...";
   }
 
-  private synchronized void assertNoDuplicates(@NotNull PsiFile psiFile, @NotNull Collection<? extends HighlightInfo> infos, @NotNull String cause) {
+  private void assertNoDuplicates(@NotNull PsiFile psiFile, @NotNull Collection<? extends HighlightInfo> infos, @NotNull String cause) {
     if (!isAssertInvariants()) return;
     record HI(TextRange range, String desc, TextAttributes attributes){}
     List<HI> map = ContainerUtil.map(infos, h -> new HI(TextRange.create(h), h.getDescription(), h.getTextAttributes(psiFile, EditorColorsUtil.getGlobalOrDefaultColorScheme())));
@@ -607,8 +619,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       // duplicates are still possible when e.g. two range highlighters (with same desc) are merged into one after the doc modifications
       // try to remove invalid PSI elements and retry the check
       List<HighlightInfo> filtered = ContainerUtil.filter(infos, info -> {
-        PsiElement psiElement = findPsiElement(info, psiFile);
-        return psiElement != null && psiElement.isValid();
+        Map.Entry<PsiElement, List<? extends HighlightInfo>> entry = findInData(info, psiFile);
+        return entry != null && entry.getKey().isValid();
       });
       List<HI> map2 = ContainerUtil.map(filtered, h -> new HI(TextRange.create(h), h.getDescription(), h.getTextAttributes(psiFile, EditorColorsUtil.getGlobalOrDefaultColorScheme())));
       if (new HashSet<HI>(map2).size() != filtered.size()) {
@@ -618,13 +630,13 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
   }
 
-  private synchronized PsiElement findPsiElement(@NotNull HighlightInfo info, @NotNull PsiFile psiFile) {
-    Map<Object, ToolHighlights> data = getData(psiFile);
-    ToolHighlights highlights = data.get(info.toolId);
-    for (Map.Entry<PsiElement, List<? extends HighlightInfo>> entry : highlights.elementHighlights.entrySet()) {
-      PsiElement psiElement = entry.getKey();
-      if (ContainerUtil.containsIdentity(entry.getValue(), info)) {
-        return psiElement;
+  private Map.Entry<PsiElement, List<? extends HighlightInfo>> findInData(@NotNull HighlightInfo info, @NotNull PsiFile psiFile) {
+    ToolHighlights highlights = getData(psiFile).get(info.toolId);
+    if (highlights != null) {
+      for (Map.Entry<PsiElement, List<? extends HighlightInfo>> entry : highlights.elementHighlights.entrySet()) {
+        if (ContainerUtil.containsIdentity(entry.getValue(), info)) {
+          return entry;
+        }
       }
     }
     return null;
@@ -668,9 +680,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       List<HighlightInfo> ms = ContainerUtil.sorted(fromMarkup, toString);
       String fromDataStr = StringUtil.join(ds, "\n");
       String fromMarkupStr = StringUtil.join(ms, "\n");
-      throw new AssertionError("data inconsistent with markup: data:\n"
-                                 + fromDataStr + "\n---------------markup:\n"
-                                 + fromMarkupStr+"\n========="
+      LOG.error("data inconsistent with markup: data:\n"
+                + fromDataStr + "\n---------------markup:\n"
+                + fromMarkupStr+"\n========="
       );
     }
   }
@@ -728,11 +740,15 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
           return false;
         }
         ToolHighlights toolHighlights = entry.getValue();
-        for (List<? extends HighlightInfo> highlights : toolHighlights.elementHighlights.values()) {
-          for (HighlightInfo info : highlights) {
-            if (LOG.isTraceEnabled()) {
-              LOG.trace("removeHighlightsForObsoleteTools: " + info);
-            }
+        for (Map.Entry<PsiElement, List<? extends HighlightInfo>> tentry : toolHighlights.elementHighlights.entrySet()) {
+          List<? extends HighlightInfo> infos = tentry.getValue();
+          if (LOG.isTraceEnabled()) {
+            PsiElement psiElement = tentry.getKey();
+            LOG.trace("removeHighlightsForObsoleteTools: " + debugPsiInfo(psiElement) +
+                      "; infos(" + infos.size() + "): " + infos
+            );
+          }
+          for (HighlightInfo info : infos) {
             UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, highlightingSession);
           }
         }
@@ -805,6 +821,13 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                   else {
                     elementEntry.setValue(listMinusInfo);
                   }
+
+                  if (LOG.isTraceEnabled()) {
+                    LOG.trace("removeWarningsInsideErrors: " + debugPsiInfo(psiElement) +
+                              "; removed " + info + "; now infos(" + listMinusInfo.size() + "): " + listMinusInfo
+                    );
+                  }
+
                   break;
                 }
               }
@@ -814,8 +837,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         });
       }
       Collection<InvalidPsi> warns = recycler.forAllInGarbageBin();
-      if (LOG.isDebugEnabled() && !warns.isEmpty()) {
-        LOG.debug("removeWarningsInsideErrors: found " + warns+" " +session.getProgressIndicator());
+      if (LOG.isTraceEnabled() && !warns.isEmpty()) {
+        LOG.trace("removeWarningsInsideErrors: found " + warns+" " +session.getProgressIndicator());
       }
     });
   }
@@ -928,8 +951,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
             ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
               // do not incinerate when the session is canceled because even though all RHs here need to be disposed eventually, the new restarted session might have used them to reduce flicker
               if (session.isCanceled() || session.getProgressIndicator().isCanceled()) {
-                if (LOG.isDebugEnabled()) {
-                  LOG.debug("runWithInvalidPsiRecycler: recycler(" + toolIdPredicate + ") abandoned because the session was canceled: " + invalidPsiRecycler+" "+session.getProgressIndicator());
+                if (LOG.isTraceEnabled()) {
+                  LOG.trace("runWithInvalidPsiRecycler: recycler(" + toolIdPredicate + ") abandoned because the session was canceled: " + invalidPsiRecycler+" "+session.getProgressIndicator());
                 }
               }
               else {
@@ -958,9 +981,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
    * For these infos the associated PSI element is assumed to be this {@code FAKE_ELEMENT}
    */
   @ApiStatus.Internal
-  public static final PsiElement FAKE_ELEMENT = createFakePsiElement();
+  public static final PsiElement FAKE_ELEMENT = createFakePsiElement("inspectionFinished");
 
-  static @NotNull PsiElement createFakePsiElement() {
+  static @NotNull PsiElement createFakePsiElement(@NotNull String debugString) {
     return new PsiElement() {
       @Override
       public @NotNull Project getProject() {
@@ -1236,7 +1259,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
 
       @Override
       public String toString() {
-        return "FAKE_PSI_ELEMENT";
+        return "FAKE_PSI_ELEMENT: "+debugString;
       }
     };
   }
@@ -1245,13 +1268,15 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
    * for each info in `newInfos` retrieve the RH from recycler (and then invalidElementRecycler if not found) or create new RH
    * could be reentrant, be careful to avoid leaking/blinking RHs
    */
-  private static @NotNull @Unmodifiable List<? extends HighlightInfo> assignRangeHighlighters(@NotNull List<? extends HighlightInfo> newInfos,
-                                                                                              @NotNull Object toolId, @NotNull HighlightingSession session,
-                                                                                              @NotNull PsiFile psiFile,
-                                                                                              @NotNull Document hostDocument,
-                                                                                              @NotNull ManagedHighlighterRecycler invalidElementRecycler,
-                                                                                              @NotNull ManagedHighlighterRecycler recycler,
-                                                                                              @NotNull Map<Object, ToolHighlights> data) {
+  private @NotNull @Unmodifiable List<? extends HighlightInfo> assignRangeHighlighters(@NotNull PsiElement visitedPsiElement,
+                                                                                       @NotNull List<? extends HighlightInfo> oldInfos,
+                                                                                       @NotNull List<? extends HighlightInfo> newInfos,
+                                                                                       @NotNull Object toolId, @NotNull HighlightingSession session,
+                                                                                       @NotNull PsiFile psiFile,
+                                                                                       @NotNull Document hostDocument,
+                                                                                       @NotNull ManagedHighlighterRecycler invalidElementRecycler,
+                                                                                       @NotNull ManagedHighlighterRecycler recycler,
+                                                                                       @NotNull Map<Object, ToolHighlights> data) {
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(hostDocument, session.getProject(), true);
 
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(session.getProject());
@@ -1288,14 +1313,46 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
         from = "recycler";
       }
       if (recycled != null) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("assignRangeHighlighters: pickedup " + recycled + " from " + from+ " "+session.getProgressIndicator());
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("assignRangeHighlighters: pickedup " + recycled + " from " + from+ " "+session.getProgressIndicator());
         }
         toRemove.add(recycled);
       }
-      changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer, severityRegistrar);
+      List<Object> existingInfos = List.of();
+      if (recycled == null && LOG.isTraceEnabled()) {
+        List<RangeHighlighterEx> dups = new ArrayList<>();
+        markup.processRangeHighlightersOverlappingWith(newInfo.getStartOffset(), newInfo.getEndOffset(), new CommonProcessors.CollectProcessor<>(dups));
+        String description = newInfo.getDescription();
+        TextAttributesKey infoTextAttributesKey = newInfo.forcedTextAttributesKey == null ? newInfo.type.getAttributesKey() : newInfo.forcedTextAttributesKey;
+        dups.removeIf(r-> {
+          HighlightInfo hi;
+          return !r.getTextRange().equalsToRange(infoStartOffset, infoEndOffset) ||
+                 !Objects.equals(r.getTextAttributesKey(), infoTextAttributesKey) ||
+                 (hi=HighlightInfo.fromRangeHighlighter(r)) == null ||
+                 !Objects.equals(hi.getDescription(), description)
+            ;
+        });
+
+        existingInfos =
+          ContainerUtil.map(dups, dup -> {
+            HighlightInfo info = HighlightInfo.fromRangeHighlighter(dup);
+            return info == null ? "no HI" : info.getHighlighter() != dup ? "inconsistent HI" : "duplicate: "+dup+":"+findInData(info, psiFile);
+          });
+      }
+      RangeHighlighterEx newHighlighter = changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer, severityRegistrar);
       if (recycled != null) {
         recycled.info().invalidate();
+      }
+      else if (LOG.isTraceEnabled() && !existingInfos.isEmpty()) {
+        LOG.trace("assignRangeHighlighters duplicates: " + newInfo +
+                  "\ndups(" + existingInfos.size() + "): " + existingInfos +
+                  "\nnew: " + newHighlighter +
+                  "\nrecycler: " + recycler + ":" + recycler.forAllInGarbageBin() +
+                  "\ninvalidRecycler:" + invalidElementRecycler + ":" + invalidElementRecycler.forAllInGarbageBin() +
+                  "\nold infos(" + oldInfos.size() + "): " + oldInfos +
+                  "\nvisitedPsiElement:" + debugPsiInfo(visitedPsiElement) +
+                  "\n " + session.getProgressIndicator()
+                  );
       }
     }
     removeFromDataAtomically(data, toRemove, session);
@@ -1317,26 +1374,22 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     return sorted;
   }
 
-  private static void changeRangeHighlighterAttributes(@NotNull HighlightingSession session,
-                                                       @NotNull PsiFile psiFile,
-                                                       @NotNull MarkupModelEx markup,
-                                                       @NotNull HighlightInfo newInfo,
-                                                       @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
-                                                       long finalInfoRange,
-                                                       @Nullable InvalidPsi recycled,
-                                                       boolean isFileLevel,
-                                                       int infoStartOffset,
-                                                       int infoEndOffset,
-                                                       int newLayer,
-                                                       @NotNull SeverityRegistrar severityRegistrar) {
+  private static @NotNull RangeHighlighterEx changeRangeHighlighterAttributes(@NotNull HighlightingSession session,
+                                                                              @NotNull PsiFile psiFile,
+                                                                              @NotNull MarkupModelEx markup,
+                                                                              @NotNull HighlightInfo newInfo,
+                                                                              @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
+                                                                              long finalInfoRange,
+                                                                              @Nullable InvalidPsi recycled,
+                                                                              boolean isFileLevel,
+                                                                              int infoStartOffset,
+                                                                              int infoEndOffset,
+                                                                              int newLayer,
+                                                                              @NotNull SeverityRegistrar severityRegistrar) {
     CodeInsightContext context = session.getCodeInsightContext();
     TextAttributes infoAttributes = newInfo.getTextAttributes(psiFile, session.getColorsScheme());
     com.intellij.util.Consumer<RangeHighlighterEx> changeAttributes = finalHighlighter ->
       BackgroundUpdateHighlightersUtil.changeAttributes(finalHighlighter, newInfo, session.getColorsScheme(), psiFile, infoAttributes, context);
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("remap: create " + (recycled == null ? "(new RH)" : "(recycled)") + newInfo + " "+session.getProgressIndicator());
-    }
 
     RangeHighlighterEx highlighter;
     if (recycled == null) {
@@ -1348,8 +1401,8 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       else {
         //assertNoInfoInMarkup(newInfo, markup, recycler, invalidElementRecycler);
         highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, newLayer,
-                                                      HighlighterTargetArea.EXACT_RANGE, false,
-                                                      changeAttributes);
+                                                                    HighlighterTargetArea.EXACT_RANGE, false,
+                                                                    changeAttributes);
         newInfo.updateQuickFixFields(session.getDocument(), range2markerCache, finalInfoRange);
       }
     }
@@ -1372,6 +1425,13 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       assert newLayer == oldLayer : "Trying to to change the severity/layer of existing range highlighter: "+highlighter+"; oldInfo="+oldInfo+"; newInfo="+newInfo+"; oldSeverity="+oldSeverity+"(oldLayer="+oldLayer+"); newSeverity="+newInfo.getSeverity()+"(newLayer="+newLayer+")";
     }
     range2markerCache.put(finalInfoRange, highlighter);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("changeRangeHighlighterAttributes: "+
+                (recycled == null ? "(create new RH)" : "(recycled)")
+                + newInfo + " "+session.getProgressIndicator());
+    }
+
+    return highlighter;
   }
 
   public static @NotNull RangeHighlighterEx createOrReuseFakeFileLevelHighlighter(int group,
