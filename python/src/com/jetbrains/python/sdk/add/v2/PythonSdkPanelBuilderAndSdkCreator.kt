@@ -26,7 +26,6 @@ import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.sdk.add.v2.conda.selectCondaEnvironment
 import com.jetbrains.python.sdk.add.v2.uv.UvInterpreterSection
-import com.jetbrains.python.sdk.add.v2.uv.uvCreator
 import com.jetbrains.python.sdk.add.v2.venv.setupVirtualenv
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -192,7 +191,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
         model.setupVirtualenv(venvFolder, moduleOrProject)
       }
       BASE_CONDA -> model.selectCondaEnvironment(moduleOrProject, base = true)
-      PROJECT_UV -> model.uvCreator(module).getOrCreateSdkWithBackground(moduleOrProject)
+      PROJECT_UV -> uvSection.getUvCreator().getOrCreateSdkWithBackground(moduleOrProject)
       CUSTOM -> custom.currentSdkManager.getOrCreateSdkWithBackground(moduleOrProject)
     }.getOr { return it }
 
