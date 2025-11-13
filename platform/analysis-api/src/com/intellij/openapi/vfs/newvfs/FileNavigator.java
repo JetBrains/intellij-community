@@ -86,7 +86,12 @@ public interface FileNavigator<F extends VirtualFile> {
                                                                      @NotNull String path,
                                                                      @NotNull FileNavigator<F> navigator) {
     Pair<NewVirtualFile, Iterable<String>> rootAndPath = NewVirtualFileSystem.extractRootAndPathSegments(vfs, path);
-    if (rootAndPath == null) return NavigateResult.empty();
+    if (rootAndPath == null) {
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("extractRootAndPathSegments(" + vfs + ", " + path + ") = null");
+      }
+      return NavigateResult.empty();
+    }
 
     F file = (F)rootAndPath.first;
     for (String pathElement : rootAndPath.second) {
