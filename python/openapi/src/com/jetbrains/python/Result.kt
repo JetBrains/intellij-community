@@ -221,3 +221,9 @@ val <S, E> Result<S, E>.isSuccess: Boolean get() = this is Success
  */
 fun <S, E> Result<S, E>.getOrThrow(): S = orThrow()
 
+
+/**
+ * See [Result.mapSuccess]
+ */
+inline fun <S, E, E2> Iterable<Result<S, E>>.mapError(code: (E) -> E2): List<Result<S, E2>> =
+  map { it.mapError(code) }
