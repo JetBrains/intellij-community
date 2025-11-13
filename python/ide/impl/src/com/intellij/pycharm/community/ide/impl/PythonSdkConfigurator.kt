@@ -90,6 +90,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
         if (module.isDisposed) return
         project.service<MyCoroutineScopeProvider>().coroutineScope.launch {
           val sdkInfos = findSuitableCreateSdkInfos(module)
+          thisLogger().debug { "Suitable sdkInfos: $sdkInfos" }
           withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress"), true) {
             val lifetime = suppressTipAndInspectionsFor(module, "all suitable extensions")
             lifetime.use { configureSdk(project, module, sdkInfos) }
