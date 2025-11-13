@@ -2,6 +2,9 @@
 package com.intellij.find
 
 import com.intellij.ide.impl.HeadlessDataManager.fallbackToProductionDataManager
+import com.intellij.lang.fakeLang.FakeFile
+import com.intellij.lang.fakeLang.FakeLanguage
+import com.intellij.lang.fakeLang.registerFakeLanguage
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 internal class SearchTargetTest : BasePlatformTestCase() {
@@ -11,12 +14,12 @@ internal class SearchTargetTest : BasePlatformTestCase() {
     // use production data manager!
     fallbackToProductionDataManager(testRootDisposable)
 
-    registerTestLanguage(testRootDisposable)
-    registerTestSymbolAndSearchTarget(testRootDisposable, TestLanguage.id, TestFile::class.java.name)
+    registerFakeLanguage(testRootDisposable)
+    registerTestSymbolAndSearchTarget(testRootDisposable, FakeLanguage.id, FakeFile::class.java.name)
   }
 
   fun testSearchTarget() {
-    val fileName = getTestName(false) + ".test"
+    val fileName = getTestName(false) + ".fake"
 
     myFixture.configureByText(fileName, """
        search <caret>targets must work, targets are important
