@@ -116,7 +116,7 @@ public class GradleDaemonModelHolder {
   }
 
   private @NotNull List<DefaultGradleLightBuild> pollPendingConvertedNestedBuilds() {
-    List<DefaultGradleLightBuild> builds = GradleExecutorServiceUtil.poolPendingResult(myConvertedBuilds);
+    List<DefaultGradleLightBuild> builds = GradleExecutorServiceUtil.firstOrNull(myConvertedBuilds);
     return builds == null ? Collections.emptyList() : builds;
   }
 
