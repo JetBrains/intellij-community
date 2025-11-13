@@ -2559,11 +2559,6 @@ f:com.intellij.ide.browsers.impl.WebBrowserServiceImpl$Companion
 - f:getDebuggableUrl(com.intellij.psi.PsiElement):com.intellij.util.Url
 - f:getDebuggableUrls(com.intellij.psi.PsiElement):java.util.Collection
 - f:getProviders(com.intellij.ide.browsers.OpenInBrowserRequest):kotlin.sequences.Sequence
-f:com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider
-- com.intellij.openapi.application.IdeUrlTrackingParametersProvider
-- <init>():V
-- augmentUrl(java.lang.String):java.lang.String
-- augmentUrl(java.lang.String,java.lang.String):java.lang.String
 f:com.intellij.ide.dnd.DnDEventImpl
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.ide.dnd.DnDEvent

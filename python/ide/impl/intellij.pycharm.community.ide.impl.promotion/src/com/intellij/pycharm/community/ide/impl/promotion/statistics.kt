@@ -2,7 +2,6 @@
 package com.intellij.pycharm.community.ide.impl.promotion
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.customization.UtmIdeUrlTrackingParametersProvider
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -14,15 +13,16 @@ import com.intellij.pycharm.community.ide.impl.promotion.PyCharmPromoCollector.P
 import org.apache.http.client.utils.URIBuilder
 import java.net.URISyntaxException
 
-object PyCharmPromoCollector : CounterUsagesCollector() {
+private object PyCharmPromoCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private const val FUS_GROUP_ID = "pycharm.promo"
   private val GROUP = EventLogGroup(FUS_GROUP_ID, 2)
   private val PromoEventSourceField = EventFields.Enum("source", PromoEventSource::class.java) { it.name.lowercase() }
   private val PromoTopicField = EventFields.Enum("topic", PromoTopic::class.java) { it.name.lowercase() }
-  internal val PromoOpenDownloadPageEvent = GROUP.registerEvent("open.download.page", PromoEventSourceField, PromoTopicField)
-  internal val PromoLearnModeEvent = GROUP.registerEvent("open.learn.more.page", PromoEventSourceField, PromoTopicField)
+
+  val PromoOpenDownloadPageEvent = GROUP.registerEvent("open.download.page", PromoEventSourceField, PromoTopicField)
+  val PromoLearnModeEvent = GROUP.registerEvent("open.learn.more.page", PromoEventSourceField, PromoTopicField)
 }
 
 enum class PromoEventSource {
@@ -68,7 +68,7 @@ private fun createLinkWithInfo(promoTopic: PromoTopic, originalUrl: String): Str
       .build().toString()
   }
   catch (e: URISyntaxException) {
-    Logger.getInstance(UtmIdeUrlTrackingParametersProvider::class.java).warn(originalUrl, e)
+    Logger.getInstance(PyCharmPromoCollector::class.java).warn(originalUrl, e)
     return originalUrl
   }
 }
