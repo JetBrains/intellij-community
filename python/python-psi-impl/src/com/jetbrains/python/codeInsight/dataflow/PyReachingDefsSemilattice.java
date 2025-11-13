@@ -33,7 +33,7 @@ public class PyReachingDefsSemilattice implements MapSemilattice<ScopeVariable> 
       return ins.get(0);
     }
 
-    ins = ins.stream().filter( e -> e != PyReachingDefsDfaInstance.UNREACHABLE_MARKER).toList();
+    ins = ins.stream().filter(e -> e != PyReachingDefsDfaInstance.UNREACHABLE_MARKER).toList();
 
     final Set<String> resultNames = getResultNames(ins);
     if (resultNames == null || resultNames.isEmpty()) {

@@ -55,7 +55,8 @@ public class PyGlobalAnnotatorVisitor extends PyElementVisitor {
       for (PyTargetExpression expr : node.getGlobals()) {
         final String expr_name = expr.getReferencedName();
         if (paramNames.contains(expr_name)) {
-          myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.name.used.both.as.global.and.param", expr_name)).range(expr).create();
+          myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.name.used.both.as.global.and.param", expr_name))
+            .range(expr).create();
         }
       }
     }

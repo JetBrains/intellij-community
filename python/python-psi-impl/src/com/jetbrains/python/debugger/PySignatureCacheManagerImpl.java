@@ -107,7 +107,8 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     }
     else {
       //noinspection ConstantConditions
-      return signatureToString(stringToSignature(filePath, oldSignatureString).addAllArgs(signature).addReturnType(signature.getReturnTypeQualifiedName()));
+      return signatureToString(
+        stringToSignature(filePath, oldSignatureString).addAllArgs(signature).addReturnType(signature.getReturnTypeQualifiedName()));
     }
   }
 

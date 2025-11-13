@@ -58,15 +58,15 @@ public final class PyClassRefactoringUtil {
   /**
    * Copies class field declarations to some other place
    *
-   * @param assignmentStatements list of class fields
-   *                             @param dequalifyIfDeclaredInClass If not null method will check if field declared in this class.
-   *                                                               If declared -- qualifier will be removed.
-   *                                                               For example: MyClass.Foo will become Foo it this param is MyClass.
+   * @param assignmentStatements       list of class fields
+   * @param dequalifyIfDeclaredInClass If not null method will check if field declared in this class.
+   *                                   If declared -- qualifier will be removed.
+   *                                   For example: MyClass.Foo will become Foo it this param is MyClass.
    * @return new (copied) fields
    */
   public static @NotNull List<PyAssignmentStatement> copyFieldDeclarationToStatement(final @NotNull Collection<? extends PyAssignmentStatement> assignmentStatements,
-                                                                            final @NotNull PyStatementList superClassStatement,
-                                                                            final @Nullable PyClass dequalifyIfDeclaredInClass) {
+                                                                                     final @NotNull PyStatementList superClassStatement,
+                                                                                     final @Nullable PyClass dequalifyIfDeclaredInClass) {
     final List<PyAssignmentStatement> declarations = new ArrayList<>(assignmentStatements.size());
 
     for (final PyAssignmentStatement pyAssignmentStatement : assignmentStatements) {
@@ -77,7 +77,6 @@ public final class PyClassRefactoringUtil {
         final String newValue = getNewValueToAssign((PyReferenceExpression)value, dequalifyIfDeclaredInClass);
 
         setNewAssigneeValue(newDeclaration, newValue);
-
       }
 
       declarations.add(PyPsiRefactoringUtil.addElementToStatementList(newDeclaration, superClassStatement));
@@ -88,27 +87,32 @@ public final class PyClassRefactoringUtil {
 
   /**
    * Sets new value to assignment statement.
+   *
    * @param assignmentStatement statement to change
-   * @param newValue new value
+   * @param newValue            new value
    */
   private static void setNewAssigneeValue(final @NotNull PyAssignmentStatement assignmentStatement, final @NotNull String newValue) {
     final PyExpression oldValue = assignmentStatement.getAssignedValue();
     final PyExpression newExpression =
-      PyElementGenerator.getInstance(assignmentStatement.getProject()).createExpressionFromText(LanguageLevel.forElement(assignmentStatement), newValue);
+      PyElementGenerator.getInstance(assignmentStatement.getProject())
+        .createExpressionFromText(LanguageLevel.forElement(assignmentStatement), newValue);
     if (oldValue != null) {
       oldValue.replace(newExpression);
-    } else {
+    }
+    else {
       assignmentStatement.add(newExpression);
     }
   }
 
   /**
    * Checks if current value declared in provided class and removes class qualifier if true
-   * @param currentValue current value
-   * @param dequalifyIfDeclaredInClass  class to check
+   *
+   * @param currentValue               current value
+   * @param dequalifyIfDeclaredInClass class to check
    * @return value as string
    */
-  private static @NotNull String getNewValueToAssign(final @NotNull PyReferenceExpression currentValue, final @NotNull PyClass dequalifyIfDeclaredInClass) {
+  private static @NotNull String getNewValueToAssign(final @NotNull PyReferenceExpression currentValue,
+                                                     final @NotNull PyClass dequalifyIfDeclaredInClass) {
     final PyExpression qualifier = currentValue.getQualifier();
     if ((qualifier instanceof PyReferenceExpression) &&
         ((PyReferenceExpression)qualifier).getReference().isReferenceTo(dequalifyIfDeclaredInClass)) {
@@ -126,7 +130,9 @@ public final class PyClassRefactoringUtil {
    * @param skipIfExist do not add anything if method already exists
    * @return newly added methods or existing one (if skipIfExists is true and method already exists)
    */
-  public static @NotNull List<PyFunction> addMethods(final @NotNull PyClass destination, final boolean skipIfExist, final PyFunction @NotNull ... methods) {
+  public static @NotNull List<PyFunction> addMethods(final @NotNull PyClass destination,
+                                                     final boolean skipIfExist,
+                                                     final PyFunction @NotNull ... methods) {
 
     final PyStatementList destStatementList = destination.getStatementList();
     final List<PyFunction> result = new ArrayList<>(methods.length);
@@ -197,7 +203,7 @@ public final class PyClassRefactoringUtil {
     newElement.putCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS, null);
     PsiFile destFile = newElement.getContainingFile();
     if (fromFutureImports != null & destFile != null) {
-      for (FutureFeature futureFeature: fromFutureImports) {
+      for (FutureFeature futureFeature : fromFutureImports) {
         AddImportHelper.addOrUpdateFromImportStatement(destFile, PyNames.FUTURE_MODULE, futureFeature.toString(), null,
                                                        AddImportHelper.ImportPriority.FUTURE, null);
       }
@@ -364,7 +370,7 @@ public final class PyClassRefactoringUtil {
 
   private static @NotNull Set<FutureFeature> collectFromFutureImports(@NotNull PyFile file) {
     EnumSet<FutureFeature> result = EnumSet.noneOf(FutureFeature.class);
-    for (FutureFeature feature: FutureFeature.values()) {
+    for (FutureFeature feature : FutureFeature.values()) {
       if (file.hasImportFromFuture(feature)) {
         result.add(feature);
       }
@@ -431,7 +437,8 @@ public final class PyClassRefactoringUtil {
 
   /**
    * Forces the use of 'import as' when restoring references (i.e. if there are name clashes)
-   * @param node with encoded import
+   *
+   * @param node   with encoded import
    * @param asName new alias for import
    */
   public static void forceAsName(@NotNull PyReferenceExpression node, @NotNull String asName) {
@@ -462,7 +469,7 @@ public final class PyClassRefactoringUtil {
    *
    * @param importStatement parent import statement that contains reference to given element
    * @param element         PSI element reference to which should be updated
-   * @return                whether import statement was actually updated
+   * @return whether import statement was actually updated
    */
   public static boolean updateUnqualifiedImportOfElement(@NotNull PyImportStatementBase importStatement, @NotNull PsiNamedElement element) {
     final String name = PyPsiRefactoringUtil.getOriginalName(element);
@@ -514,7 +521,8 @@ public final class PyClassRefactoringUtil {
   }
 
 
-  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, boolean isNamespace) throws IOException {
+  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, boolean isNamespace)
+    throws IOException {
     return placeFile(project, path, filename, null, isNamespace);
   }
 
@@ -523,7 +531,11 @@ public final class PyClassRefactoringUtil {
    *
    * @return the placed file
    */
-  public static PsiFile placeFile(@NotNull Project project, @NotNull String path, @NotNull String filename, @Nullable String content, boolean isNamespace) throws IOException {
+  public static PsiFile placeFile(@NotNull Project project,
+                                  @NotNull String path,
+                                  @NotNull String filename,
+                                  @Nullable String content,
+                                  boolean isNamespace) throws IOException {
     PsiDirectory psiDir = createDirectories(project, path, isNamespace);
     LOG.assertTrue(psiDir != null);
     PsiFile psiFile = psiDir.findFile(filename);
@@ -544,10 +556,11 @@ public final class PyClassRefactoringUtil {
   /**
    * Create all intermediate dirs with inits from one of roots up to target dir.
    *
-   * @param target  a full path to target dir
+   * @param target a full path to target dir
    * @return deepest child directory, or null if target is not in roots or process fails at some point.
    */
-  private static @Nullable PsiDirectory createDirectories(@NotNull Project project, @NotNull String target, boolean isNamespace) throws IOException {
+  private static @Nullable PsiDirectory createDirectories(@NotNull Project project, @NotNull String target, boolean isNamespace)
+    throws IOException {
     String relativePath = null;
     VirtualFile closestRoot = null;
 
@@ -620,13 +633,13 @@ public final class PyClassRefactoringUtil {
         properties.setProperty("NAME", FileUtilRt.getNameWithoutExtension(file.getName()));
         final String content = template.getText(properties);
         psi = PyClassRefactoringUtil.placeFile(project,
-                                                  StringUtil.notNullize(
-                                                    file.getParent(),
-                                                    baseDir != null ? baseDir
-                                                      .getPath() : "."
-                                                  ),
-                                                  file.getName(),
-                                                  content, isNamespace
+                                               StringUtil.notNullize(
+                                                 file.getParent(),
+                                                 baseDir != null ? baseDir
+                                                   .getPath() : "."
+                                               ),
+                                               file.getName(),
+                                               content, isNamespace
         );
       }
       catch (IOException e) {

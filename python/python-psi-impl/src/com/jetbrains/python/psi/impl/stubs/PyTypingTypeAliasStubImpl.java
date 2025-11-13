@@ -55,6 +55,6 @@ public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
 
   @Override
   public String toString() {
-    return "PyTypingAliasStub(text='" + getText() +"')";
+    return "PyTypingAliasStub(text='" + getText() + "')";
   }
 }

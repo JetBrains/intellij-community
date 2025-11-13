@@ -16,7 +16,7 @@ import com.jetbrains.python.psi.*
 class PyFStringToTStringIntention : PsiUpdateModCommandAction<PyFormattedStringElement>(PyFormattedStringElement::class.java) {
   override fun getPresentation(context: ActionContext, stringElement: PyFormattedStringElement): Presentation? {
     if (LanguageLevel.forElement(stringElement).isOlderThan(LanguageLevel.PYTHON314)) return null
-    
+
     val stringLiteral = stringElement.getParent() as? PyStringLiteralExpression ?: return null
     val docStringOwner = stringLiteral.parentOfType<PyDocStringOwner>()
     if (docStringOwner != null && docStringOwner.getDocStringExpression() === stringLiteral) return null

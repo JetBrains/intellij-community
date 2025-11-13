@@ -23,31 +23,34 @@ public class AddGlobalQuickFix extends PsiUpdateModCommandQuickFix {
     if (element instanceof PyReferenceExpression expression) {
       final String name = expression.getReferencedName();
       final ScopeOwner owner = PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
-      assert owner instanceof PyClass || owner instanceof PyFunction : "Add global quickfix is available only inside class or function, but applied for " + owner;
+      assert owner instanceof PyClass || owner instanceof PyFunction :
+        "Add global quickfix is available only inside class or function, but applied for " +
+        owner;
       final Ref<Boolean> added = new Ref<>(false);
-      owner.accept(new PyRecursiveElementVisitor(){
+      owner.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitElement(@NotNull PsiElement element) {
-          if (!added.get()){
+          if (!added.get()) {
             super.visitElement(element);
           }
         }
+
         @Override
         public void visitPyGlobalStatement(final @NotNull PyGlobalStatement node) {
-          if (!added.get()){
+          if (!added.get()) {
             node.addGlobal(name);
             added.set(true);
           }
         }
       });
-      if (added.get()){
+      if (added.get()) {
         return;
       }
       final PyGlobalStatement globalStatement =
         PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyGlobalStatement.class, "global " + name);
       final PyStatementList statementList;
       boolean hasDocString = false;
-      if (owner instanceof PyClass){
+      if (owner instanceof PyClass) {
         statementList = ((PyClass)owner).getStatementList();
         if (((PyClass)owner).getDocStringExpression() != null) hasDocString = true;
       }
@@ -56,8 +59,9 @@ public class AddGlobalQuickFix extends PsiUpdateModCommandQuickFix {
         if (((PyFunction)owner).getDocStringExpression() != null) hasDocString = true;
       }
       PyStatement first = statementList.getStatements()[0];
-      if (hasDocString)
+      if (hasDocString) {
         first = statementList.getStatements()[1];
+      }
       statementList.addBefore(globalStatement, first);
     }
   }

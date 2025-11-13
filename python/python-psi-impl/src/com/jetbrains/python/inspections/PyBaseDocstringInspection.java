@@ -28,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PyBaseDocstringInspection extends PyInspection {
   @Override
-  public abstract @NotNull Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session);
+  public abstract @NotNull Visitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                boolean isOnTheFly,
+                                                @NotNull LocalInspectionToolSession session);
 
   protected abstract static class Visitor extends PyInspectionVisitor {
     public Visitor(@Nullable ProblemsHolder holder,

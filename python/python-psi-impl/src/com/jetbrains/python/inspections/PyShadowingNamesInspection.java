@@ -56,6 +56,7 @@ public final class PyShadowingNamesInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyClass(@NotNull PyClass node) {
       processElement(node);
@@ -109,7 +110,7 @@ public final class PyShadowingNamesInspection extends PyInspection {
                   return;
                 }
                 if (Arrays.stream(PyInspectionExtension.EP_NAME.getExtensions())
-                          .anyMatch(o -> o.ignoreShadowed(resolved))) {
+                  .anyMatch(o -> o.ignoreShadowed(resolved))) {
                   return;
                 }
                 registerProblem(problemElement, PyPsiBundle.message("INSP.shadows.name.from.outer.scope", name),

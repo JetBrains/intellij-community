@@ -61,11 +61,13 @@ final class SuperClassesManager extends MembersManager<PyClass> {
 
   /**
    * Returns superclass expressions that are resolved to one or more classes from collection
-   * @param from class to get superclass expressions from
+   *
+   * @param from    class to get superclass expressions from
    * @param classes classes to check superclasses against
    * @return collection of expressions that are resolved to one or more class from classes param
    */
-  private static @NotNull List<PyExpression> getExpressionsBySuperClass(final @NotNull PyClass from, final @NotNull Collection<PyClass> classes) {
+  private static @NotNull List<PyExpression> getExpressionsBySuperClass(final @NotNull PyClass from,
+                                                                        final @NotNull Collection<PyClass> classes) {
     final List<PyExpression> expressionsToDelete = new ArrayList<>(classes.size());
 
     for (final PyExpression expression : from.getSuperClassExpressions()) {

@@ -47,7 +47,7 @@ private class PyEnumAttributeStubImpl(
   }
 
   override fun getCalleeName(): QualifiedName? = null
-  
+
   override fun toString(): String {
     return "PyEnumAttributeStub(literalKind=$literalKind, isMember=$isMember)"
   }

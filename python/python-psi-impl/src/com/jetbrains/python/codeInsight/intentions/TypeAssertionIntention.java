@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: ktisha
- *
+ * <p>
  * Helps to specify type by assertion
  */
 public final class TypeAssertionIntention extends PyBaseIntentionAction {
@@ -74,8 +74,9 @@ public final class TypeAssertionIntention extends PyBaseIntentionAction {
       final PyExpression qualifier = problemElement.getQualifier();
       if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
         final String referencedName = problemElement.getReferencedName();
-        if (referencedName == null || PyNames.GETITEM.equals(referencedName))
+        if (referencedName == null || PyNames.GETITEM.equals(referencedName)) {
           name = qualifier.getText();
+        }
       }
 
       final String text = "assert isinstance(" + name + ", )";
@@ -97,20 +98,25 @@ public final class TypeAssertionIntention extends PyBaseIntentionAction {
         if (statementList != null) {
           PsiElement statementListParent = PsiTreeUtil.getParentOfType(statementList, PyStatement.class);
           if (statementListParent != null && document.getLineNumber(statementList.getTextOffset()) ==
-              document.getLineNumber(statementListParent.getTextOffset())) {
+                                             document.getLineNumber(statementListParent.getTextOffset())) {
             final String substring =
-              TextRange.create(statementListParent.getTextRange().getStartOffset(), statementList.getTextOffset()).substring(document.getText());
+              TextRange.create(statementListParent.getTextRange().getStartOffset(), statementList.getTextOffset())
+                .substring(document.getText());
             final PyStatement foo =
-              elementGenerator.createFromText(LanguageLevel.forElement(problemElement), PyStatement.class, substring + "\n\t" +
-                                             text + "\n\t" + statementList.getText());
+              elementGenerator.createFromText(LanguageLevel.forElement(problemElement), PyStatement.class, substring +
+                                                                                                           "\n\t" +
+                                                                                                           text +
+                                                                                                           "\n\t" +
+                                                                                                           statementList.getText());
 
             statementListParent = statementListParent.replace(foo);
             statementList = PsiTreeUtil.findChildOfType(statementListParent, PyStatementList.class);
             assert statementList != null;
             element = statementList.getStatements()[0];
           }
-          else
+          else {
             element = parent.addBefore(assertStatement, parentStatement);
+          }
         }
         else {
           element = parent.addBefore(assertStatement, parentStatement);
@@ -122,7 +128,7 @@ public final class TypeAssertionIntention extends PyBaseIntentionAction {
 
       element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(element);
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(element);
-      builder.replaceRange(TextRange.create(text.length()-1, text.length()-1), PyNames.OBJECT);
+      builder.replaceRange(TextRange.create(text.length() - 1, text.length() - 1), PyNames.OBJECT);
       builder.run(editor, true);
     }
   }

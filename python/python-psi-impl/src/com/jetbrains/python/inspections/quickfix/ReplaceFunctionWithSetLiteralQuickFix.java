@@ -43,11 +43,12 @@ public class ReplaceFunctionWithSetLiteralQuickFix extends PsiUpdateModCommandQu
     for (int i = 0; i != elements.length; ++i) {
       PyElement e = elements[i];
       str.append(e.getText());
-      if (i != elements.length-1)
+      if (i != elements.length - 1) {
         str.append(", ");
+      }
     }
     str.append("}");
     element.replace(elementGenerator.createFromText(LanguageLevel.forElement(element), PyExpressionStatement.class,
-                                                             str.toString()).getExpression());
+                                                    str.toString()).getExpression());
   }
 }

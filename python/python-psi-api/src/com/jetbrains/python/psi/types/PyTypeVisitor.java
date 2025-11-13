@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * Because the "unknown" type is historically represented as {@code null} in the type system, {@code PyTypeVisitor.visitPyType(type, visitor)}
  * should be used instead of direct {@code type.acceptTypeVisitor(visitor)} to properly account for possible {@code null} values.
  * <p>
- * This class gives access only to the types declared in the <tt>intellij.python.psi</tt> module. 
+ * This class gives access only to the types declared in the <tt>intellij.python.psi</tt> module.
  * Most actual implementations should extend {@link PyTypeVisitorExt}.
  * <p>
  * There are helper {@link PyRecursiveTypeVisitor} and {@link PyCloningTypeVisitor} for recursive type
@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * @see PyRecursiveTypeVisitor
  * @see PyCloningTypeVisitor
  * @see PyType#acceptTypeVisitor(PyTypeVisitor)
- * @see #visit(PyType, PyTypeVisitor) 
+ * @see #visit(PyType, PyTypeVisitor)
  * @see #visitUnknownType()
  */
 @ApiStatus.Experimental
@@ -74,7 +74,7 @@ public abstract class PyTypeVisitor<T> {
   public T visitPyCallableParameterListType(@NotNull PyCallableParameterListType callableParameterListType) {
     return visitPyType(callableParameterListType);
   }
-  
+
   public T visitPyNeverType(@NotNull PyNeverType neverType) {
     return visitPyType(neverType);
   }

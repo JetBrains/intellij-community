@@ -37,7 +37,8 @@ fun isTestFunction(function: PyFunction): Boolean {
  * Inheritor of TestCase class is always test for unittest and could also be launched with pytest.
  * See `PythonUnitTestDetectorsBasedOnSettings.isTestFunction`.
  */
-fun isUnitTestCaseClass(clazz: PyClass, context: TypeEvalContext): Boolean = clazz.inherits(context, "unittest.TestCase", "unittest.case.TestCase")
+fun isUnitTestCaseClass(clazz: PyClass, context: TypeEvalContext): Boolean =
+  clazz.inherits(context, "unittest.TestCase", "unittest.case.TestCase")
 
 /**
  * Checks if class [isUnitTestCaseClass] or both conditions are true: it's name starts/ends with "Test" and it has at least one
@@ -70,8 +71,10 @@ fun isTestClass(clazz: PyClass, context: TypeEvalContext): Boolean {
   }
 }
 
-fun isTestFile(file: PyFile,
-               context: TypeEvalContext): Boolean {
+fun isTestFile(
+  file: PyFile,
+  context: TypeEvalContext,
+): Boolean {
   return if (file.topLevelClasses.any { o: PyClass ->
       isTestClass(o, context)
     }) {

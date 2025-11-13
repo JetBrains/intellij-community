@@ -54,7 +54,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
   public static final Key<Pair<PsiElement, TextRange>> SELECTION_BREAKS_AST_NODE =
     new Key<>("python.selection.breaks.ast.node");
 
-  private PyReplaceExpressionUtil() {}
+  private PyReplaceExpressionUtil() { }
 
   /**
    * @param oldExpr old expression that will be substituted
@@ -433,7 +433,9 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     int priority = 0;
     if (expr instanceof PyReferenceExpression ||
         expr instanceof PySubscriptionExpression ||
-        expr instanceof PyCallExpression) priority = 1;
+        expr instanceof PyCallExpression) {
+      priority = 1;
+    }
     else if (expr instanceof PyPrefixExpression) {
       final IElementType opType = getOperationType(expr);
       if (opType == AWAIT_KEYWORD) priority = 2;
@@ -442,9 +444,9 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     }
     else if (expr instanceof PyBinaryExpression) {
       final IElementType opType = getOperationType(expr);
-      if (opType == EXP) priority =  4;
-      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority =  5;
-      if (opType == PLUS || opType == MINUS) priority =  6;
+      if (opType == EXP) priority = 4;
+      if (opType == MULT || opType == AT || opType == DIV || opType == PERC || opType == FLOORDIV) priority = 5;
+      if (opType == PLUS || opType == MINUS) priority = 6;
       if (opType == LTLT || opType == GTGT) priority = 7;
       if (opType == AND) priority = 8;
       if (opType == XOR) priority = 9;
@@ -453,8 +455,12 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
       if (opType == AND_KEYWORD) priority = 13;
       if (opType == OR_KEYWORD) priority = 14;
     }
-    else if (expr instanceof PyConditionalExpression) priority = 15;
-    else if (expr instanceof PyLambdaExpression) priority = 16;
+    else if (expr instanceof PyConditionalExpression) {
+      priority = 15;
+    }
+    else if (expr instanceof PyLambdaExpression) {
+      priority = 16;
+    }
     else if (expr instanceof PyAssignmentExpression) priority = 17;
 
     return -priority;

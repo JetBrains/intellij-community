@@ -37,8 +37,8 @@ public final class PyClassNameIndex extends StringStubIndexExtension<PyClass> {
 
 
   public static @NotNull List<PyClass> findByQualifiedName(@NotNull QualifiedName qName,
-                                                          @NotNull Project project,
-                                                          @NotNull GlobalSearchScope scope) {
+                                                           @NotNull Project project,
+                                                           @NotNull GlobalSearchScope scope) {
     String shortName = qName.getLastComponent();
     if (shortName == null) return Collections.emptyList();
     String qNameString = qName.toString();

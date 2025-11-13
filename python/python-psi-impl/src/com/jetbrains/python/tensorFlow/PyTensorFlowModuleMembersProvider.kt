@@ -40,8 +40,10 @@ class PyTensorFlowModuleMembersProvider : PyModuleMembersProvider() {
     return QualifiedNameFinder.findShortestImportableQName(module).let { it != null && it.matches("tensorflow") }
   }
 
-  private fun getMembers(context: PyQualifiedNameResolveContext,
-                         pathConfig: Map<String, String>): Collection<PyCustomMember> {
+  private fun getMembers(
+    context: PyQualifiedNameResolveContext,
+    pathConfig: Map<String, String>,
+  ): Collection<PyCustomMember> {
     val result = mutableListOf<PyCustomMember>()
 
     pathConfig.filterKeys { it != "*" }.mapNotNullTo(result) { (module, path) ->
@@ -58,9 +60,11 @@ class PyTensorFlowModuleMembersProvider : PyModuleMembersProvider() {
     return result
   }
 
-  private fun resolveMember(name: String,
-                            context: PyQualifiedNameResolveContext,
-                            pathConfig: Map<String, String>): PsiElement? {
+  private fun resolveMember(
+    name: String,
+    context: PyQualifiedNameResolveContext,
+    pathConfig: Map<String, String>,
+  ): PsiElement? {
     if (name in pathConfig) {
       return takeFirstResolvedInTensorFlow(pathConfig.getValue(name), context)
     }

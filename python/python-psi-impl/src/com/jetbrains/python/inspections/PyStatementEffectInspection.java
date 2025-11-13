@@ -38,7 +38,9 @@ import java.util.List;
 public final class PyStatementEffectInspection extends PyInspection {
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -60,8 +62,9 @@ public final class PyStatementEffectInspection extends PyInspection {
         return;
       }
       final PyExpression expression = node.getExpression();
-      if (PsiTreeUtil.hasErrorElements(expression))
+      if (PsiTreeUtil.hasErrorElements(expression)) {
         return;
+      }
       if (hasEffect(expression)) return;
 
       // https://twitter.com/gvanrossum/status/112670605505077248

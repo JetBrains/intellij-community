@@ -373,7 +373,7 @@ public final class PyDocumentationBuilder {
     final PyStringLiteralExpression effectiveDocstring = modifyDocStringByOwnerType(ownDocstring, elementDefinition, isProperty);
 
     if (PyUtil.isTopLevel(elementDefinition)) {
-      final PsiFile containing = ObjectUtils.chooseNotNull(PyiUtil.getOriginalElement(elementDefinition), 
+      final PsiFile containing = ObjectUtils.chooseNotNull(PyiUtil.getOriginalElement(elementDefinition),
                                                            elementDefinition).getContainingFile();
       if (containing instanceof PyFile) {
         final HtmlChunk linkToModule = getLinkToModule((PyFile)containing);
@@ -837,7 +837,9 @@ public final class PyDocumentationBuilder {
       return Objects.hash(body, fragments);
     }
 
-    @NotNull @NlsSafe String getBody() {
+    @NotNull
+    @NlsSafe
+    String getBody() {
       return body;
     }
 

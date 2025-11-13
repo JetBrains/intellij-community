@@ -115,7 +115,7 @@ public final class ImportToImportFromIntention extends PsiBasedModCommandAction<
         Collection<PyReferenceExpression> referencesToUpdate = unqualifyAll ? myReferences : getSameNameReferences();
         for (PyReferenceExpression ref : referencesToUpdate) {
           final PsiElement parentElt = ref.getParent();
-          assert parentElt instanceof PyReferenceExpression: parentElt.getClass();
+          assert parentElt instanceof PyReferenceExpression : parentElt.getClass();
           final String nameUsed = Objects.requireNonNull(((PyReferenceExpression)parentElt).getReferencedName());
           usedNames.add(nameUsed);
           final PyElement newReference = generator.createExpressionFromText(languageLevel, nameUsed);

@@ -32,8 +32,8 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
     val filteredType = PyCaptureContext.getCaptureType(this, context).toList().filter { captureType: PyType? ->
       val mappingType = PyTypeUtil.convertToType(captureType, "typing.Mapping", this, context) ?: return@filter false
       PyTypeChecker.match(mappingType, patternMappingType, context)
-    }.let { 
-      PyUnionType.union(it) 
+    }.let {
+      PyUnionType.union(it)
     }
 
     return filteredType ?: patternMappingType
@@ -49,9 +49,9 @@ class PyMappingPatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyMappin
       }
       return null
     }
-    
+
     if (sequenceMember !is PyKeyValuePattern) return null
-    
+
     return PyCaptureContext.getCaptureType(this, context).toList()
       .map { possibleMapping -> possibleMapping.getValueType(sequenceMember, context) }
       .let { PyUnionType.union(it) }

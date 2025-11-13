@@ -42,7 +42,6 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   }
 
 
-
   @Override
   public @NotNull List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return Optional
@@ -57,13 +56,13 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
   public @Nullable PyType getReturnType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     final PyExpression body = getBody();
     if (body == null) return null;
-    
+
     final PyFunctionImpl.YieldCollector visitor = new PyFunctionImpl.YieldCollector();
     body.accept(visitor);
-    
+
     final List<PyType> yieldTypes = map(visitor.getYieldExpressions(), it -> it.getYieldType(context));
     final List<PyType> sendTypes = map(visitor.getYieldExpressions(), it -> it.getSendType(context));
-    
+
     if (!yieldTypes.isEmpty()) {
       return PyTypingTypeProvider.wrapInGeneratorType(
         PyUnionType.union(yieldTypes), PyUnionType.union(sendTypes), context.getType(body), this);

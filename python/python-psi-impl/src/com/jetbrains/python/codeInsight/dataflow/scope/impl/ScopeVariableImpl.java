@@ -40,7 +40,7 @@ public class ScopeVariableImpl implements ScopeVariable {
 
   @Override
   public String toString() {
-    return (isParameter() ? "par" : "var") + "(" + myName+ ")[" + myDeclarations.size() + "]";
+    return (isParameter() ? "par" : "var") + "(" + myName + ")[" + myDeclarations.size() + "]";
   }
 
   @Override

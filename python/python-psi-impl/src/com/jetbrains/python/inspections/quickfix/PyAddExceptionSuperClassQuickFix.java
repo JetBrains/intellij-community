@@ -46,5 +46,4 @@ public class PyAddExceptionSuperClassQuickFix extends PsiUpdateModCommandQuickFi
       }
     }
   }
-
 }

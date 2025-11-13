@@ -31,7 +31,9 @@ import java.util.Set;
 public final class PyExceptClausesOrderInspection extends PyInspection {
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -49,12 +51,13 @@ public final class PyExceptClausesOrderInspection extends PyInspection {
         for (PyExceptPart exceptPart : exceptParts) {
           PyExpression exceptClass = exceptPart.getExceptClass();
           if (exceptClass instanceof PyReferenceExpression) {
-            PsiElement element = ((PyReferenceExpression) exceptClass).followAssignmentsChain(getResolveContext()).getElement();
+            PsiElement element = ((PyReferenceExpression)exceptClass).followAssignmentsChain(getResolveContext()).getElement();
             if (element instanceof PyClass pyClass) {
               if (exceptClasses.contains(pyClass)) {
                 registerProblem(exceptClass, PyPsiBundle.message("INSP.bad.except.exception.class.already.caught", pyClass.getName()));
-              } else {
-                for (PyClass superClass: pyClass.getSuperClasses(null)) {
+              }
+              else {
+                for (PyClass superClass : pyClass.getSuperClasses(null)) {
                   if (exceptClasses.contains(superClass)) {
                     registerProblem(exceptClass, PyPsiBundle
                                       .message("INSP.bad.except.superclass.of.exception.class.already.caught", superClass.getName(), pyClass.getName()),

@@ -37,8 +37,12 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
   private static final String IMPOSSIBLE_NAME = "#";
 
   private static void writeOne(Maybe<String> what, StubOutputStream stream) throws IOException {
-    if (what.isDefined()) stream.writeName(what.value());
-    else stream.writeName(IMPOSSIBLE_NAME);
+    if (what.isDefined()) {
+      stream.writeName(what.value());
+    }
+    else {
+      stream.writeName(IMPOSSIBLE_NAME);
+    }
   }
 
   @Override
@@ -71,8 +75,8 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
 
   public static PropertyStubStorage deserialize(StubInputStream stream) throws IOException {
     PropertyStubStorage me = new PropertyStubStorage();
-    me.myGetter  = readOne(stream);
-    me.mySetter  = readOne(stream);
+    me.myGetter = readOne(stream);
+    me.mySetter = readOne(stream);
     me.myDeleter = readOne(stream);
     //
     me.myDoc = stream.readNameString();
@@ -84,17 +88,22 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
 
   private static @Nullable Maybe<String> readOne(StubInputStream stream) throws IOException {
     String s = stream.readNameString();
-    if (s == null) return none;
+    if (s == null) {
+      return none;
+    }
     else {
-      if (IMPOSSIBLE_NAME.equals(s)) return unknown;
-      else return new Maybe<>(s);
+      if (IMPOSSIBLE_NAME.equals(s)) {
+        return unknown;
+      }
+      else {
+        return new Maybe<>(s);
+      }
     }
   }
 
   public static @Nullable PropertyStubStorage fromCall(@Nullable PyExpression expr) {
     final PropertyStubStorage prop = new PropertyStubStorage();
     final boolean success = fillFromCall(expr, prop);
-    return success? prop : null;
+    return success ? prop : null;
   }
-
 }

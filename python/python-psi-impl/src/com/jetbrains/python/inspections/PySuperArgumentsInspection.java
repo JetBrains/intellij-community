@@ -34,7 +34,9 @@ import org.jetbrains.annotations.Nullable;
 public final class PySuperArgumentsInspection extends PyInspection {
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -72,7 +74,9 @@ public final class PySuperArgumentsInspection extends PyInspection {
     private @Nullable PyClass findClassOf(PyExpression argument) {
       PsiElement firstElement = ((PyReferenceExpression)argument).followAssignmentsChain(getResolveContext()).getElement();
       PyClass firstClass = null;
-      if (firstElement instanceof PyClass) firstClass = (PyClass)firstElement;
+      if (firstElement instanceof PyClass) {
+        firstClass = (PyClass)firstElement;
+      }
       else if (firstElement instanceof PyExpression) {
         PyType first_type = myTypeEvalContext.getType((PyExpression)firstElement);
         if (first_type instanceof PyClassType) {

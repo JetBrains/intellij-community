@@ -20,7 +20,7 @@ class PyMakeReturnExplicitFix(statement: PyStatement) : PsiUpdateModCommandActio
     }
     return super.getPresentation(context, element)
   }
-  
+
   override fun invoke(context: ActionContext, element: PyStatement, updater: ModPsiUpdater) {
     val elementGenerator = PyElementGenerator.getInstance(element.getProject())
     val languageLevel = LanguageLevel.forElement(element)

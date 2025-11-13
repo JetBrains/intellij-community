@@ -213,7 +213,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         allPathsScopeReads.addAll(analyzeReadsInDoctests(docstring, owner));
       }
     }
-    
+
     final Instruction[] instructions = ControlFlowCache.getControlFlow(owner).getInstructions();
     for (int i = 0; i < instructions.length; i++) {
       final Instruction instruction = instructions[i];
@@ -239,7 +239,8 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         else {
           startInstruction = i;
         }
-        allPathsScopeReads.addAll(analyzeReadsInScope(name, owner, instructions, startInstruction, PyUtil.as(element, PyReferenceExpression.class)));
+        allPathsScopeReads.addAll(
+          analyzeReadsInScope(name, owner, instructions, startInstruction, PyUtil.as(element, PyReferenceExpression.class)));
       }
     }
     myScopeReads.put(owner, Collections.unmodifiableSet(allPathsScopeReads));
@@ -293,15 +294,16 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return readsFromInstruction;
   }
 
-  static class DontPerformException extends RuntimeException {}
+  static class DontPerformException extends RuntimeException {
+  }
 
   private static boolean callsLocals(final ScopeOwner owner) {
     try {
-      owner.acceptChildren(new PyRecursiveElementVisitor(){
+      owner.acceptChildren(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyCallExpression(final @NotNull PyCallExpression node) {
           final PyExpression callee = node.getCallee();
-          if (callee != null && "locals".equals(callee.getName())){
+          if (callee != null && "locals".equals(callee.getName())) {
             throw new DontPerformException();
           }
           node.acceptChildren(this); // look at call expr in arguments
@@ -369,8 +371,8 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         String name = element instanceof PsiNamedElement namedElement ? StringUtil.notNullize(namedElement.getName()) : element.getText();
         if (element instanceof PyNamedParameter || element.getParent() instanceof PyNamedParameter) {
           PyNamedParameter namedParameter = element instanceof PyNamedParameter
-                                            ? (PyNamedParameter) element
-                                            : (PyNamedParameter) element.getParent();
+                                            ? (PyNamedParameter)element
+                                            : (PyNamedParameter)element.getParent();
           name = namedParameter.getName();
           // When function is inside a class, first parameter may be either self or cls which is always 'used'.
           if (namedParameter.isSelf()) {
@@ -405,7 +407,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             }
           }
           boolean canRemove = !(PsiTreeUtil.getPrevSiblingOfType(element, PyParameter.class) instanceof PySingleStarParameter) ||
-            PsiTreeUtil.getNextSiblingOfType(element, PyParameter.class) != null;
+                              PsiTreeUtil.getNextSiblingOfType(element, PyParameter.class) != null;
 
           final List<LocalQuickFix> fixes = new ArrayList<>();
           if (mayBeField) {
@@ -414,7 +416,8 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (canRemove) {
             fixes.add(new PyRemoveParameterQuickFix());
           }
-          registerWarning(element, PyPsiBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          registerWarning(element, PyPsiBundle.message("INSP.unused.locals.parameter.isnot.used", name),
+                          fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else {
           if (myIgnoreVariablesStartingWithUnderscore && element.getText().startsWith(PyNames.UNDERSCORE)) continue;
@@ -521,14 +524,14 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     }
     // Handling of the star expressions
     PsiElement parent = element.getParent();
-    if (parent instanceof PyStarExpression){
+    if (parent instanceof PyStarExpression) {
       element = parent;
       parent = element.getParent();
     }
     if (parent instanceof PyTupleExpression tuple) {
       // if all the items of the tuple are unused, we still highlight all of them; if some are unused, we ignore
       for (PyExpression expression : tuple.getElements()) {
-        if (expression instanceof PyStarExpression){
+        if (expression instanceof PyStarExpression) {
           if (!unusedElements.contains(((PyStarExpression)expression).getExpression())) {
             return true;
           }
@@ -541,7 +544,7 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private void registerWarning(@NotNull PsiElement element, @InspectionMessage String msg, @NotNull LocalQuickFix @NotNull... quickfixes) {
+  private void registerWarning(@NotNull PsiElement element, @InspectionMessage String msg, @NotNull LocalQuickFix @NotNull ... quickfixes) {
     registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, quickfixes);
   }
 
@@ -553,8 +556,8 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(element.getProject()).createDummyFile(LanguageLevel.getDefault(),
-                                                                                                             "for _ in tuples:\n  pass"
+      final PyFile pyFile = (PyFile)PyElementGenerator.getInstance(element.getProject()).createDummyFile(LanguageLevel.getDefault(),
+                                                                                                         "for _ in tuples:\n  pass"
       );
       final PyExpression target = ((PyForStatement)pyFile.getStatements().get(0)).getForPart().getTarget();
       if (target != null) {

@@ -43,9 +43,11 @@ public interface Scope {
                                     @NotNull TypeEvalContext typeEvalContext) throws DFALimitExceededException;
 
   boolean hasGlobals();
+
   boolean isGlobal(String name);
 
   boolean hasNonLocals();
+
   boolean isNonlocal(String name);
 
   boolean containsDeclaration(String name);

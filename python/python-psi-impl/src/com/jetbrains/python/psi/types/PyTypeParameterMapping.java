@@ -256,7 +256,7 @@ public final class PyTypeParameterMapping {
   // See https://typing.readthedocs.io/en/latest/spec/generics.html#user-defined-generic-classes
   private static @NotNull List<PyType> replaceExpectedTypesWithParameterList(@NotNull List<PyType> expectedTypes,
                                                                              @NotNull List<PyType> actualTypes) {
-    if (ContainerUtil.getOnlyItem(expectedTypes) instanceof PyParamSpecType && 
+    if (ContainerUtil.getOnlyItem(expectedTypes) instanceof PyParamSpecType &&
         !actualTypes.isEmpty() && !ContainerUtil.exists(actualTypes, o -> o instanceof PyVariadicType)) {
       PyCallableParameterListType callableParameterListType =
         new PyCallableParameterListTypeImpl(ContainerUtil.map(actualTypes, PyCallableParameterImpl::nonPsi));

@@ -78,7 +78,7 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
                                               final @NotNull Collection<PyMemberInfo<PyTargetExpression>> members,
                                               final PyClass @NotNull ... to) {
     return moveAssignments(from, Collections2
-      .filter(Collections2.transform(fetchElements(members), ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
+                             .filter(Collections2.transform(fetchElements(members), ASSIGNMENT_TRANSFORM), NotNullPredicate.INSTANCE),
                            to);
   }
 

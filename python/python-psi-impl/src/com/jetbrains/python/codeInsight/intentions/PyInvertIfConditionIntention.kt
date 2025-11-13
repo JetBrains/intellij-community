@@ -56,7 +56,8 @@ class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiEl
 
     return if (ifStatement != null && ifStatement.elifParts.isEmpty() &&
                isAvailableForIfStatement(element, ifStatement) &&
-                ifStatement.ifPart.condition?.let(::isValidConditionExpression) != false) super.getPresentation(context, element) else null
+               ifStatement.ifPart.condition?.let(::isValidConditionExpression) != false) super.getPresentation(context, element)
+    else null
   }
 
 
@@ -188,7 +189,8 @@ class PyInvertIfConditionIntention : PsiUpdateModCommandAction<PsiElement>(PsiEl
   }
 
   private fun invertIfStatementFollowup(
-    project: Project, file: PsiFile, statement: PyIfStatement, terminableStatement: PyStatementListContainer) {
+    project: Project, file: PsiFile, statement: PyIfStatement, terminableStatement: PyStatementListContainer,
+  ) {
     statement.ifPart.condition?.let { it.replace(getInvertedConditionExpression(project, file, it)) }
 
     val ifStatements = statement.ifPart.statementList

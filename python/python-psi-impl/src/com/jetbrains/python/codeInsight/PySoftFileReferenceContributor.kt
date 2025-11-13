@@ -75,7 +75,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           parameterNames.any(::matchesPathNamePattern)
         }
         .any {
-          val mapping = callExpr.mapArguments( it, typeEvalContext)
+          val mapping = callExpr.mapArguments(it, typeEvalContext)
           val parameterName = mapping.mappedParameters[expr]?.name ?: return@any false
           matchesPathNamePattern(parameterName)
         }
@@ -110,12 +110,12 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
           val mapping = callExpr.mapArguments(it, typeEvalContext)
           mapping.mappedParameters[expr]?.getArgumentType(typeEvalContext)
         }
-      
+
       // We can't use PyTypeChecker.match directly because the type `str | PathLike` is considered incompatible 
       // with neither str nor PathLike (strict union semantics).
-      fun PyType.allowsValuesCompatibleWith(superType: PyType): Boolean = 
+      fun PyType.allowsValuesCompatibleWith(superType: PyType): Boolean =
         PyTypeUtil.toStream(this).anyMatch { it != null && PyTypeChecker.match(superType, it, typeEvalContext) }
-      
+
       return argumentTypes.any { it.allowsValuesCompatibleWith(bytesOrUnicodeType) } &&
              argumentTypes.any { it.allowsValuesCompatibleWith(osPathLikeType) }
     }
@@ -207,9 +207,11 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
     override fun createFileReference(range: TextRange, index: Int, text: String): FileReference? =
       doCreateFileReference(range, index, expandUserHome(text))
 
-    open fun doCreateFileReference(range: TextRange,
-                                   index: Int,
-                                   expandedText: String?): FileReference? =
+    open fun doCreateFileReference(
+      range: TextRange,
+      index: Int,
+      expandedText: String?,
+    ): FileReference? =
       super.createFileReference(range, index, expandedText)
 
     override fun isAbsolutePathReference(): Boolean =

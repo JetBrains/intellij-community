@@ -58,7 +58,7 @@ public abstract class PyFindUsagesHandler extends FindUsagesHandlerBase {
 
   protected void completePrimaryElementsWithStubAndOriginalElements(@NotNull List<PsiElement> result) {
     List<PsiElement> additionalElements = new ArrayList<>();
-    for (PsiElement element: result) {
+    for (PsiElement element : result) {
       PsiElement stubElement = tryGetStubElement(element);
       if (stubElement != null) {
         additionalElements.add(stubElement);

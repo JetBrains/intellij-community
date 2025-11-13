@@ -70,7 +70,7 @@ public final class PyDefUseUtil {
     if (startNum < 0) {
       return Collections.emptyList();
     }
-    
+
     QualifiedName varQname = QualifiedName.fromDottedString(varName);
 
     LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(anchor.getContainingFile());
@@ -100,7 +100,8 @@ public final class PyDefUseUtil {
                   }
                   if (instruction.num() < startNum
                       && acceptTypeAssertions && instruction instanceof ConditionalInstruction conditionalInstruction) {
-                    if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() == typedElement.getContainingFile()) {
+                    if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement &&
+                        context.getOrigin() == typedElement.getContainingFile()) {
                       var newContext = (MAX_CONTROL_FLOW_SIZE > instructions.length)
                                        ? TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin())
                                        : TypeEvalContext.codeInsightFallback(context.getOrigin().getProject());
@@ -125,14 +126,14 @@ public final class PyDefUseUtil {
                         acceptTypeAssertions && access.isAssertTypeAccess() && instruction.num() < startNum) {
 
                       final String name = rwInstruction.getName();
-                      
+
                       if (name != null && isQualifiedBy(varQname, name)) {
-                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)){
+                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {
                           foundPrefixWrite.set(true);
                           return ControlFlowUtil.Operation.BREAK;
                         }
                       }
-                      
+
                       if (Comparing.strEqual(name, varName)) {
                         if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {
                           result.add(rwInstruction);
@@ -284,7 +285,8 @@ public final class PyDefUseUtil {
         ControlFlowUtil.iteratePrev(index, instructions, instruction -> {
           if (instruction.getElement() == searched) {
             boolean isImport = searched instanceof PyImportedNameDefiner;
-            boolean isWriteAccess = instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess();
+            boolean isWriteAccess =
+              instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess();
             if (isImport || isWriteAccess) {
               definedBefore.set(true);
               return ControlFlowUtil.Operation.BREAK;

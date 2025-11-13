@@ -174,7 +174,9 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
   }
 
   @Override
-  public @NotNull String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
+  public @NotNull String getPresentableText(boolean includeDefaultValue,
+                                            @Nullable TypeEvalContext context,
+                                            @NotNull Predicate<PyType> typeFilter) {
     if (myElement instanceof PyNamedParameter || myElement == null) {
       final StringBuilder sb = new StringBuilder();
 

@@ -153,16 +153,17 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
     return null;
   }
 
-  private static @Nullable LinkedHashMap<String, FieldTypeAndHasDefault> resolveTupleFields(@NotNull PyCallExpression callExpression, @NotNull NamedTupleModule module) {
+  private static @Nullable LinkedHashMap<String, FieldTypeAndHasDefault> resolveTupleFields(@NotNull PyCallExpression callExpression,
+                                                                                            @NotNull NamedTupleModule module) {
     return switch (module) {
       case TYPING -> resolveTypingNTFields(callExpression);
       case COLLECTIONS -> resolveCollectionsNTFields(callExpression);
     };
   }
 
-  private static @NotNull LinkedHashMap<String, FieldTypeAndHasDefault>  deserializeFields(@NotNull StubInputStream stream, int fieldsSize)
+  private static @NotNull LinkedHashMap<String, FieldTypeAndHasDefault> deserializeFields(@NotNull StubInputStream stream, int fieldsSize)
     throws IOException {
-    final LinkedHashMap<String, FieldTypeAndHasDefault>  fields = new LinkedHashMap<>(fieldsSize);
+    final LinkedHashMap<String, FieldTypeAndHasDefault> fields = new LinkedHashMap<>(fieldsSize);
 
     for (int i = 0; i < fieldsSize; i++) {
       final String name = stream.readNameString();
@@ -207,8 +208,8 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
     final PyExpression defaults = getDefaultsArgumentValue(callExpression);
     final PyExpression resolvedDefaults = defaults instanceof PyReferenceExpression
-                                        ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)defaults)
-                                        : defaults;
+                                          ? PyResolveUtil.fullResolveLocally((PyReferenceExpression)defaults)
+                                          : defaults;
     int defaultStart = fieldNames.size();
     if (resolvedDefaults instanceof PySequenceExpression seq) {
       defaultStart -= seq.getElements().length;

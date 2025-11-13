@@ -44,7 +44,7 @@ public final class PyFlipComparisonIntention extends PsiUpdateModCommandAction<P
           return Presentation.of(PyPsiBundle.message("INTN.flip.comparison", operatorText));
         }
         else {
-         return Presentation.of(PyPsiBundle.message("INTN.flip.comparison.to.operator", operatorText, flippedOperatorText));
+          return Presentation.of(PyPsiBundle.message("INTN.flip.comparison.to.operator", operatorText, flippedOperatorText));
         }
       }
       element = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);
@@ -64,8 +64,8 @@ public final class PyFlipComparisonIntention extends PsiUpdateModCommandAction<P
       if (operator != null && Holder.FLIPPED_OPERATORS.containsKey(operator)) {
         PyElementGenerator elementGenerator = PyElementGenerator.getInstance(context.project());
         element.replace(elementGenerator.createBinaryExpression(Holder.FLIPPED_OPERATORS.get(operator),
-                                                                         element.getRightExpression(),
-                                                                         element.getLeftExpression()));
+                                                                element.getRightExpression(),
+                                                                element.getLeftExpression()));
         return;
       }
       element = PsiTreeUtil.getParentOfType(element, PyBinaryExpression.class);

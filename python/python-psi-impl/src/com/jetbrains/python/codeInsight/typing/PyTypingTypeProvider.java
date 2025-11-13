@@ -1147,8 +1147,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         var class_ = PyPsiFacade.getInstance(element.getProject()).createClassByQName(element.getText(), element);
         type = class_ != null ? class_.getType(typeContext) : null;
       }
-      else
+      else {
         type = typeContext.getType((PyTypedElement)element);
+      }
       if (type instanceof PyClassLikeType classLikeType) {
         if (classLikeType.isDefinition()) {
           // If we're interpreting a type hint like "MyGeneric" that is not followed by a list of type arguments (e.g. MyGeneric[int]),
@@ -2345,7 +2346,9 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     return staticWithCustomContext(context, false, delegate);
   }
 
-  private static <T> T staticWithCustomContext(@NotNull TypeEvalContext context, boolean useFqn, @NotNull Function<@NotNull Context, T> delegate) {
+  private static <T> T staticWithCustomContext(@NotNull TypeEvalContext context,
+                                               boolean useFqn,
+                                               @NotNull Function<@NotNull Context, T> delegate) {
     Context customContext = context.getProcessingContext().get(TYPE_HINT_EVAL_CONTEXT);
     boolean firstEntrance = customContext == null;
     if (firstEntrance) {

@@ -142,7 +142,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                                        boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     PsiElement classMember =
-      resolveByOverridingMembersProviders(this, name, location, resolveContext); //overriding members provers have priority to normal resolve
+      resolveByOverridingMembersProviders(this, name, location,
+                                          resolveContext); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -903,7 +904,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return p1 != p2;
     }
 
-    private static @Nullable PyStatementPart findIfStatementPartByElement(@NotNull PsiElement element, @NotNull List<PyStatementPart> parts) {
+    private static @Nullable PyStatementPart findIfStatementPartByElement(@NotNull PsiElement element,
+                                                                          @NotNull List<PyStatementPart> parts) {
       return ContainerUtil.find(parts, part -> PsiTreeUtil.isAncestor(part, element, true));
     }
 

@@ -71,7 +71,7 @@ class PyTypeHintsInspection : PyInspection() {
       val calleeQName = callee?.let { PyResolveUtil.resolveImportedElementQNameLocally(it) } ?: emptyList()
 
       if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR) in calleeQName ||
-        QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR_EXT) in calleeQName) {
+          QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR_EXT) in calleeQName) {
         val target = getTargetFromAssignment(node)
 
         checkTypeVarPlacement(node, target)
@@ -135,7 +135,8 @@ class PyTypeHintsInspection : PyInspection() {
       val typeExpression = node.typeExpression ?: return
       if (!isValidTypeHint(typeExpression, myTypeEvalContext)) {
         registerProblem(typeExpression, PyPsiBundle.message("INSP.type.hints.type.hint.is.not.valid"))
-      } else {
+      }
+      else {
         val typeExpression = node.typeExpression
         if (typeExpression != null) {
           if (PyTypingTypeProvider.getType(typeExpression, myTypeEvalContext) == null) {

@@ -145,7 +145,7 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
           .filterIsInstance<PyFile>()
           .map { PyModuleType(it) }
           .flatMap { it.getCompletionVariantsAsLookupElements(parameters.position, context, false, false, typeContext) }
-          .filter { PyNames.isIdentifier(it.lookupString) && !it.lookupString.startsWith('_')}
+          .filter { PyNames.isIdentifier(it.lookupString) && !it.lookupString.startsWith('_') }
           .filter { attribute.isEmpty() || resultMatchingCompleteReference.prefixMatcher.prefixMatches("$qualifier.${it.lookupString}") }
           .mapNotNull {
             val element = it.psiElement as? PyElement

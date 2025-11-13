@@ -146,8 +146,8 @@ public final class PyStructuralTypeAttributesCompletionContributor extends Compl
      * intermediate results in case of a large class hierarchy.
      */
     private static @NotNull Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
-                                                       @NotNull TypeEvalContext context,
-                                                       @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
+                                                                @NotNull TypeEvalContext context,
+                                                                @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<PyClass> ancestors = ancestorsCache.get(pyClass);
       if (ancestors != null) {
         return ancestors;

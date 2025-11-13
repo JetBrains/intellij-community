@@ -23,9 +23,11 @@ import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_TOTAL
 
 class PyTypedDictInspection : PyInspection() {
 
-  override fun buildVisitor(holder: ProblemsHolder,
-                            isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor {
+  override fun buildVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+    session: LocalInspectionToolSession,
+  ): PsiElementVisitor {
     return Visitor(holder, PyInspectionVisitor.getContext(session))
   }
 
@@ -366,8 +368,10 @@ class PyTypedDictInspection : PyInspection() {
       }
     }
 
-    private fun matchTypedDictFieldTypeAndTotality(expected: PyTypedDictType.FieldTypeAndTotality,
-                                                   actual: PyTypedDictType.FieldTypeAndTotality): Boolean {
+    private fun matchTypedDictFieldTypeAndTotality(
+      expected: PyTypedDictType.FieldTypeAndTotality,
+      actual: PyTypedDictType.FieldTypeAndTotality,
+    ): Boolean {
       return expected.qualifiers.isRequired == actual.qualifiers.isRequired &&
              PyTypeChecker.match(expected.type, actual.type, myTypeEvalContext)
     }

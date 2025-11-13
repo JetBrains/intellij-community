@@ -50,7 +50,8 @@ public final class PyRefactoringUtil {
             if (text != null && expr.getStringNodes().size() == 1) {
               final int start = text.indexOf(substring);
               if (start >= 0) {
-                element.putUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE, Pair.create(element, TextRange.from(start, substring.length())));
+                element.putUserData(PyReplaceExpressionUtil.SELECTION_BREAKS_AST_NODE,
+                                    Pair.create(element, TextRange.from(start, substring.length())));
                 occurrences.add(element);
                 return;
               }
@@ -85,15 +86,15 @@ public final class PyRefactoringUtil {
     }
 
     // If it is PyIfPart for example, parent if statement, we should deny
-    if (!(parent instanceof PyExpression)){
+    if (!(parent instanceof PyExpression)) {
       return null;
     }
     // We cannot extract anything within import statements
-    if (PsiTreeUtil.getParentOfType(parent, PyImportStatement.class, PyFromImportStatement.class) != null){
+    if (PsiTreeUtil.getParentOfType(parent, PyImportStatement.class, PyFromImportStatement.class) != null) {
       return null;
     }
     if ((element1 == PsiTreeUtil.getDeepestFirst(parent)) && (element2 == PsiTreeUtil.getDeepestLast(parent))) {
-      return (PyExpression) parent;
+      return (PyExpression)parent;
     }
 
     // Check if selection breaks AST node in binary expression
@@ -282,11 +283,16 @@ public final class PyRefactoringUtil {
     return selectUniqueName(templateName, false, scopeAnchor, PyRefactoringUtil::isValidNewName);
   }
 
-  public static @NotNull String selectUniqueName(@NotNull String templateName, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
+  public static @NotNull String selectUniqueName(@NotNull String templateName,
+                                                 @NotNull PsiElement scopeAnchor,
+                                                 @NotNull BiPredicate<String, PsiElement> isValid) {
     return selectUniqueName(templateName, false, scopeAnchor, isValid);
   }
 
-  private static @NotNull String selectUniqueName(@NotNull String templateName, boolean templateIsType, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> isValid) {
+  private static @NotNull String selectUniqueName(@NotNull String templateName,
+                                                  boolean templateIsType,
+                                                  @NotNull PsiElement scopeAnchor,
+                                                  @NotNull BiPredicate<String, PsiElement> isValid) {
     final Collection<String> suggestions;
     if (templateIsType) {
       suggestions = NameSuggesterUtil.generateNamesByType(templateName);
@@ -309,10 +315,12 @@ public final class PyRefactoringUtil {
    *
    * @param name        initial name
    * @param scopeAnchor PSI element used to determine correct scope
-   * @param predicate used to test if suggested name is valid
+   * @param predicate   used to test if suggested name is valid
    * @return unique name in the scope probably with number suffix appended
    */
-  public static @NotNull String appendNumberUntilValid(@NotNull String name, @NotNull PsiElement scopeAnchor, @NotNull BiPredicate<String, PsiElement> predicate) {
+  public static @NotNull String appendNumberUntilValid(@NotNull String name,
+                                                       @NotNull PsiElement scopeAnchor,
+                                                       @NotNull BiPredicate<String, PsiElement> predicate) {
     int counter = 1;
     String candidate = name;
     while (!predicate.test(candidate, scopeAnchor)) {

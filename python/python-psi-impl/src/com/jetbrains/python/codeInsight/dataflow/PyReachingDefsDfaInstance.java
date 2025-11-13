@@ -32,9 +32,9 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
 
   @Override
   public DFAMap<ScopeVariable> fun(final DFAMap<ScopeVariable> map, final Instruction instruction) {
-    if (map == UNREACHABLE_MARKER)  return map;
+    if (map == UNREACHABLE_MARKER) return map;
     final PsiElement element = instruction.getElement();
-    if (element == null || ((PyFile) element.getContainingFile()).getLanguageLevel().isPython2()){
+    if (element == null || ((PyFile)element.getContainingFile()).getLanguageLevel().isPython2()) {
       return processReducedMap(map, instruction, element);
     }
     if (PyDataFlowKt.isUnreachableForInspection(element, myContext)) {
@@ -50,11 +50,11 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
     for (Map.Entry<String, ScopeVariable> entry : map.entrySet()) {
       final ScopeVariable value = entry.getValue();
       // Support PEP-3110. (PY-1408)
-      if (value.isParameter()){
+      if (value.isParameter()) {
         final PsiElement declaration = value.getDeclarations().iterator().next();
         final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(declaration);
-        if (exceptPart != null){
-          if (!PsiTreeUtil.isAncestor(exceptPart, element, false)){
+        if (exceptPart != null) {
+          if (!PsiTreeUtil.isAncestor(exceptPart, element, false)) {
             continue;
           }
         }
@@ -85,10 +85,10 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
       }
     }
     // Processing PyFunction
-    else if (element instanceof PyFunction){
+    else if (element instanceof PyFunction) {
       name = ((PyFunction)element).getName();
     }
-    if (name == null){
+    if (name == null) {
       return map;
     }
     final ScopeVariable variable = map.get(name);
@@ -106,7 +106,8 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
       final boolean isParameter = variable != null && variable.isParameter();
       if (variable == null) {
         scopeVariable = new ScopeVariableImpl(name, isParameter, element);
-      } else {
+      }
+      else {
         scopeVariable = new ScopeVariableImpl(name, isParameter, variable.getDeclarations());
       }
       map = map.asWritable();

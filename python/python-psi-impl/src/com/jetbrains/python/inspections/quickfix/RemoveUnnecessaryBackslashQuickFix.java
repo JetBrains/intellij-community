@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to remove all unnecessary backslashes in expression
  */
 public class RemoveUnnecessaryBackslashQuickFix extends PsiUpdateModCommandQuickFix {
@@ -26,17 +26,19 @@ public class RemoveUnnecessaryBackslashQuickFix extends PsiUpdateModCommandQuick
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      PsiElement parent = PsiTreeUtil.getParentOfType(element, PyEditorHandlerConfig.IMPLICIT_WRAP_CLASSES);
-      removeBackSlash(parent);
+    PsiElement parent = PsiTreeUtil.getParentOfType(element, PyEditorHandlerConfig.IMPLICIT_WRAP_CLASSES);
+    removeBackSlash(parent);
   }
 
   public static void removeBackSlash(PsiElement parent) {
     if (parent != null) {
       Stack<PsiElement> stack = new Stack<>();
-      if (parent instanceof PyParenthesizedExpression)
+      if (parent instanceof PyParenthesizedExpression) {
         stack.push(((PyParenthesizedExpression)parent).getContainedExpression());
-      else
+      }
+      else {
         stack.push(parent);
+      }
       while (!stack.isEmpty()) {
         PsiElement el = stack.pop();
         PsiWhiteSpace[] children = PsiTreeUtil.getChildrenOfType(el, PsiWhiteSpace.class);

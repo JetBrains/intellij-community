@@ -89,7 +89,8 @@ public final class PyKeywordPatternReference extends PsiReferenceBase.Poly<PyKey
     return true;
   }
 
-  private static @NotNull List<PyClassLikeType> resolveToClassTypes(@NotNull PyClassPattern classPattern, @NotNull PyResolveContext resolveContext) {
+  private static @NotNull List<PyClassLikeType> resolveToClassTypes(@NotNull PyClassPattern classPattern,
+                                                                    @NotNull PyResolveContext resolveContext) {
     List<PsiElement> elements = PyUtil.multiResolveTopPriority(classPattern.getClassNameReference(), resolveContext);
     return StreamEx.of(elements)
       .select(PyClass.class)

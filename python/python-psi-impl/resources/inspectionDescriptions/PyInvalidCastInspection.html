@@ -6,7 +6,8 @@
   and <code>typing.cast</code> does not dynamically validate the type.</p>
 
 <p>This check applies even to types that could theoretically have a common descendant.
-  For example, it will flag a cast between two sibling classes <code>Left</code> and <code>Right</code> that both inherit from <code>Top</code>,
+  For example, it will flag a cast between two sibling classes <code>Left</code> and <code>Right</code> that both inherit from
+  <code>Top</code>,
   because there is no direct inheritance relationship between them.</p>
 
 <p><b>Example:</b></p>

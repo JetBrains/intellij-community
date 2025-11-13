@@ -64,7 +64,9 @@ public final class AddImportHelper {
   }
 
   public static @NotNull Comparator<String> getImportTextComparator(@NotNull PsiFile settingsAnchor) {
-    return PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor) ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+    return PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor)
+           ? String.CASE_INSENSITIVE_ORDER
+           : Comparator.naturalOrder();
   }
 
   private static @NotNull List<String> getSortNames(@NotNull PyImportStatementBase importStatement) {
@@ -161,7 +163,6 @@ public final class AddImportHelper {
     if (parentElement != null) {
       parentElement.addBefore(generator.createFromImportStatement(languageLevel, qualifier, name, asName), anchor);
     }
-
   }
 
   public static @Nullable PsiElement getLocalInsertPosition(@NotNull PsiElement anchor) {
@@ -368,7 +369,8 @@ public final class AddImportHelper {
     return getImportPriorityWithReason(importStatement, resolvedFileOrDir);
   }
 
-  static @NotNull ImportPriorityChoice getImportPriorityWithReason(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
+  static @NotNull ImportPriorityChoice getImportPriorityWithReason(@NotNull PsiElement importLocation,
+                                                                   @NotNull PsiFileSystemItem toImport) {
     final VirtualFile vFile = toImport.getVirtualFile();
     if (vFile == null) {
       return new ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, toImport + " doesn't have an associated virtual file");

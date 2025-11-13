@@ -60,8 +60,8 @@ public abstract class PyAnnotator extends PyElementVisitor {
   }
 
   protected void addHighlightingAnnotation(@NotNull PsiElement target,
-                                         @NotNull TextAttributesKey key,
-                                         @NotNull HighlightSeverity severity) {
+                                           @NotNull TextAttributesKey key,
+                                           @NotNull HighlightSeverity severity) {
     _holder.addHighlightingAnnotation(target, key, severity);
   }
 

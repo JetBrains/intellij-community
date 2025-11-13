@@ -126,7 +126,8 @@ private fun getInvertedConditionExpression(
   level: LanguageLevel,
   generator: PyElementGenerator,
   expression: PyExpression,
-  isTopLevelExpression: Boolean): PyExpression {
+  isTopLevelExpression: Boolean,
+): PyExpression {
   if (expression is PyParenthesizedExpression) {
     return getInvertedConditionExpression(
       project, file, level, generator, expression.containedExpression!!, isTopLevelExpression)
@@ -271,7 +272,8 @@ private fun requiresParentheses(element: PsiElement): Boolean {
 }
 
 private fun createOrExpression(
-  level: LanguageLevel, generator: PyElementGenerator, expressions: Iterable<PyExpression>, isTopLevelExpression: Boolean): PyExpression {
+  level: LanguageLevel, generator: PyElementGenerator, expressions: Iterable<PyExpression>, isTopLevelExpression: Boolean,
+): PyExpression {
   val result = StringBuilder()
 
   val requiresParentheses = !isTopLevelExpression && expressions.count() > 1

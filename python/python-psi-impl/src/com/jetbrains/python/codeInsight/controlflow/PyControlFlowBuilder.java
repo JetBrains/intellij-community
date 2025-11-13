@@ -45,11 +45,12 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
 
   private @Nullable TrueFalseNodes myTrueFalseNodes;
-  
+
   // see com.jetbrains.python.PyPatternTypeTest.testMatchClassPatternShadowingCapture
   private final @NotNull List<String> myPatternBindingNames = new ArrayList<>();
 
-  private record TrueFalseNodes(@NotNull Instruction trueNode, @NotNull Instruction falseNode) {}
+  private record TrueFalseNodes(@NotNull Instruction trueNode, @NotNull Instruction falseNode) {
+  }
 
   public PyControlFlow buildControlFlow(final @NotNull ScopeOwner owner) {
     return new PyControlFlow(myBuilder.build(this, owner));
@@ -346,15 +347,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     for (PyCaseClause clause : matchStatement.getCaseClauses()) {
       myBuilder.prevInstruction = nextClause;
       nextClause = addTransparentInstruction();
-      
+
       myPatternBindingNames.clear();
-      
+
       PyPattern pattern = clause.getPattern();
       if (pattern != null) {
         pattern.accept(this);
         addTypeAssertionNodes(clause, true, myPatternBindingNames);
       }
-      
+
       PyExpression guard = clause.getGuardCondition();
       if (guard != null) {
         TransparentInstruction trueNode = addTransparentInstruction();
@@ -650,7 +651,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-    
+
 
     myBuilder.flowAbrupted();
     collectInternalPendingEdges(node);
@@ -958,7 +959,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         myBuilder.addEdge(myBuilder.prevInstruction, i);
       }
     }
-    
+
     collectInternalPendingEdges(node);
   }
 
@@ -1147,7 +1148,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private TransparentInstruction addTransparentInstruction() {
     return addTransparentInstruction(null);
   }
-  
+
   private TransparentInstruction addTransparentInstruction(@Nullable PsiElement element) {
     TransparentInstructionImpl instruction = new TransparentInstructionImpl(myBuilder, element, "");
     myBuilder.instructions.add(instruction);
@@ -1162,11 +1163,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   /**
-   * Can be used to collect all pending edges  
+   * Can be used to collect all pending edges
    * that we used to build CFG for `node`,
    * but are not relevant to other elements.
    * Is almost equivalent to this:
-   * 
+   *
    * <pre>{@code
    * visitPy...(node);
    * myBuilder.startNode(node.nextSibling); // collectInternalPendingEdges does this, without needing nextSibling

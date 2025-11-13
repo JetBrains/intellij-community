@@ -84,13 +84,14 @@ public final class PyIncorrectDocstringInspection extends PyBaseDocstringInspect
     };
   }
 
-  private static @NotNull List<PyNamedParameter> getMissingParams(@NotNull StructuredDocString docString, PyParameter @NotNull [] realParams) {
+  private static @NotNull List<PyNamedParameter> getMissingParams(@NotNull StructuredDocString docString,
+                                                                  PyParameter @NotNull [] realParams) {
     final List<PyNamedParameter> missing = new ArrayList<>();
     final List<String> docStringParameters = docString.getParameters();
     if (docStringParameters.isEmpty()) {
       return Collections.emptyList();
     }
-    
+
     for (PyParameter p : realParams) {
       final PyNamedParameter named = as(p, PyNamedParameter.class);
       if (p.isSelf() || named == null || named.isPositionalContainer() || named.isKeywordContainer()) {

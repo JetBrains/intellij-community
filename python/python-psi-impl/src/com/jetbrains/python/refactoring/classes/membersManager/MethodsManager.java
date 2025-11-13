@@ -125,13 +125,13 @@ class MethodsManager extends MembersManager<PyFunction> {
    * @param from          source
    * @param methodsToMove what to move
    * @param to            where
-   * @param skipIfExist skip (do not add) if method already exists
+   * @param skipIfExist   skip (do not add) if method already exists
    * @return newly added methods
    */
   static List<PyElement> moveMethods(@NotNull PyClass from,
                                      @NotNull Collection<? extends PyFunction> methodsToMove,
                                      boolean skipIfExist,
-                                     PyClass @NotNull... to) {
+                                     PyClass @NotNull ... to) {
     if (methodsToMove.isEmpty() || to.length == 0) return Collections.emptyList();
     final List<PyElement> result = new ArrayList<>();
     for (PyClass destClass : to) {

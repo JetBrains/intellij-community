@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class PyFromImportSourceReference extends PyImportReference {
   private final PyFromImportStatement myStatement;
-  
+
   public PyFromImportSourceReference(PyReferenceExpressionImpl element, PyResolveContext context) {
     super(element, context);
     myStatement = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);

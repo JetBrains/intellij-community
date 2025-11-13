@@ -36,5 +36,6 @@ public interface PyNamedTupleStub extends CustomTargetExpressionStub {
   @NotNull
   LinkedHashMap<String, FieldTypeAndHasDefault> getFields();
 
-  record FieldTypeAndHasDefault(@Nullable String type, boolean hasDefault) {}
+  record FieldTypeAndHasDefault(@Nullable String type, boolean hasDefault) {
+  }
 }

@@ -75,5 +75,4 @@ public class PythonParserDefinition implements ParserDefinition {
     // see LanguageTokenSeparatorGenerator instead
     return SpaceRequirements.MAY;
   }
-
 }

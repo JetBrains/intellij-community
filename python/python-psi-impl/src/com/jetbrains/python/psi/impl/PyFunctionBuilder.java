@@ -49,7 +49,8 @@ public class PyFunctionBuilder {
    * @param decoratorsToCopyIfExist list of decorator names to be copied to new function.
    * @return builder configured by this function
    */
-  public static @NotNull PyFunctionBuilder copySignature(final @NotNull PyFunction source, final String @NotNull ... decoratorsToCopyIfExist) {
+  public static @NotNull PyFunctionBuilder copySignature(final @NotNull PyFunction source,
+                                                         final String @NotNull ... decoratorsToCopyIfExist) {
     final String name = source.getName();
     final PyFunctionBuilder functionBuilder = new PyFunctionBuilder((name != null) ? name : "", source);
     for (final PyParameter parameter : source.getParameterList().getParameters()) {
@@ -91,6 +92,7 @@ public class PyFunctionBuilder {
 
   /**
    * Adds param and its type to doc
+   *
    * @param name param name
    * @param type param type
    */

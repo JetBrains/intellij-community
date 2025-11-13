@@ -29,13 +29,14 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyTypeParameter(typeParameter: PyTypeParameter) {
-      val boundExpression =  typeParameter.boundExpression
+      val boundExpression = typeParameter.boundExpression
       val defaultExpression = typeParameter.defaultExpression
 
       boundExpression?.accept(object : PyRecursiveElementVisitor() {
         override fun visitPyElement(node: PyElement) {
           if (!(node is PyParenthesizedExpression && node === boundExpression) &&
-              !(node is PyTupleExpression && node.parent === boundExpression)) {
+              !(node is PyTupleExpression && node.parent === boundExpression)
+          ) {
             if (node is PyExpression) {
               if (!PyTypeHintsInspection.isValidTypeHint(node, myTypeEvalContext)) {
                 registerProblem(
@@ -167,7 +168,8 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
         override fun visitPyReferenceExpression(node: PyReferenceExpression) {
           node.getTypeParameterType()?.let {
             if (it.declarationElement is PyTargetExpression
-                && ScopeUtil.getScopeOwner(it.declarationElement) !is PyTypeAliasStatement) {
+                && ScopeUtil.getScopeOwner(it.declarationElement) !is PyTypeAliasStatement
+            ) {
               registerProblem(node, message, ProblemHighlightType.GENERIC_ERROR)
             }
           }

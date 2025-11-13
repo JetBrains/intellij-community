@@ -21,5 +21,6 @@ import java.util.List;
 @Deprecated
 public interface PythonPathContributingFacet {
   List<String> getAdditionalPythonPath();
+
   boolean acceptRootAsTopLevelPackage();
 }

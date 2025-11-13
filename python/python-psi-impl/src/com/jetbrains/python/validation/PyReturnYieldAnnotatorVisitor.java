@@ -39,7 +39,7 @@ public class PyReturnYieldAnnotatorVisitor extends PyElementVisitor {
 
       if (function.isAsync() && function.isAsyncAllowed()) {
         myHolder.newAnnotation(HighlightSeverity.ERROR,
-                                  PyPsiBundle.message("ANN.python.does.not.support.yield.from.inside.async.functions")).create();
+                               PyPsiBundle.message("ANN.python.does.not.support.yield.from.inside.async.functions")).create();
       }
     }
   }

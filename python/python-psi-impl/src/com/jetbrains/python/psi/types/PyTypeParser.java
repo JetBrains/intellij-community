@@ -162,7 +162,10 @@ public final class PyTypeParser {
    * @param context type evaluation context
    * @param fqnOnly if true, resolves names using only fully-qualified lookup (ignores local scope/imported aliases)
    */
-  public static @NotNull ParseResult parse(@NotNull PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context, boolean fqnOnly) {
+  public static @NotNull ParseResult parse(@NotNull PsiElement anchor,
+                                           @NotNull String type,
+                                           @NotNull TypeEvalContext context,
+                                           boolean fqnOnly) {
     PyPsiUtils.assertValid(anchor);
 
     final ForwardDeclaration<ParseResult, PyElementType> typeExpr = ForwardDeclaration.create();
@@ -427,12 +430,13 @@ public final class PyTypeParser {
       final Token<PyElementType> firstToken = tokens.get(0);
       final String firstText = firstToken.getText().toString();
       final TextRange firstRange = firstToken.getRange();
-      
+
       final List<RatedResolveResult> resolveResults;
       if (myFqnOnly) {
         // First, try to resolve from "typing" for unqualified names (e.g., Literal, Any)
         final var qNameContext = PyResolveImportUtil.fromFoothold(myAnchor);
-        final PsiElement typingMember = PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString("typing." + firstText), qNameContext);
+        final PsiElement typingMember =
+          PyResolveImportUtil.resolveTopLevelMember(QualifiedName.fromDottedString("typing." + firstText), qNameContext);
         if (typingMember != null) {
           resolveResults = Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, typingMember));
         }

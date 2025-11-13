@@ -109,7 +109,8 @@ public final class NameResolverTools {
    * @param functionName function to find
    * @return parent call or null if not found
    */
-  public static @Nullable PyCallExpression findCallExpParent(final @NotNull PsiElement anchor, final @NotNull FQNamesProvider functionName) {
+  public static @Nullable PyCallExpression findCallExpParent(final @NotNull PsiElement anchor,
+                                                             final @NotNull FQNamesProvider functionName) {
     final PsiElement parent = PsiTreeUtil.findFirstParent(anchor, new MyFunctionCondition(functionName));
     if (parent instanceof PyCallExpression) {
       return (PyCallExpression)parent;
@@ -151,7 +152,7 @@ public final class NameResolverTools {
   /**
    * Checks if some string contains last component one of name
    *
-   * @param text  test to check
+   * @param text test to check
    */
   public static boolean isContainsName(final @NotNull String text, final @NotNull FQNamesProvider names) {
     for (final String lastComponent : getLastComponents(names)) {
@@ -165,7 +166,7 @@ public final class NameResolverTools {
   /**
    * Checks if some file contains last component one of name
    *
-   * @param file  file to check
+   * @param file file to check
    */
   public static boolean isContainsName(final @NotNull PsiFile file, final @NotNull FQNamesProvider names) {
     return isContainsName(file.getText(), names);

@@ -90,5 +90,5 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
 
   @Override
   public void dispose() {
- }
+  }
 }

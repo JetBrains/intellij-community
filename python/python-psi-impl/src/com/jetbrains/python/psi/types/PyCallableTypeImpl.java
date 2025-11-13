@@ -29,6 +29,7 @@ public class PyCallableTypeImpl implements PyCallableType {
   public PyCallableTypeImpl(@Nullable List<PyCallableParameter> parameters, @Nullable PyType returnType) {
     this(parameters, returnType, null, null, 0);
   }
+
   public PyCallableTypeImpl(@Nullable List<PyCallableParameter> parameters,
                             @Nullable PyType returnType,
                             @Nullable PyCallable callable,

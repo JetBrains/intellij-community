@@ -148,7 +148,9 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     return result.toFragment();
   }
 
-  static @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter, boolean showKind, @NotNull TypeEvalContext context) {
+  static @NotNull HtmlChunk describeTypeParameter(@NotNull PyTypeParameter typeParameter,
+                                                  boolean showKind,
+                                                  @NotNull TypeEvalContext context) {
     HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan(StringUtil.notNullize(typeParameter.getName()), PyHighlighter.PY_TYPE_PARAMETER));
     PyExpression boundExpression = typeParameter.getBoundExpression();
@@ -340,8 +342,8 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * In particular callables are rendered as {@code (p1: T1, p2: T2, ...) -> R}, not as {@code Callable[[T1, T2, ...], R]}.
    * To render a type as a valid expression for a type annotation use {@link #getTypeHint(PyType, TypeEvalContext)}.
    *
-   * @param type     the type to render
-   * @param context  TypeEvalContext instance to infer extra types with
+   * @param type    the type to render
+   * @param context TypeEvalContext instance to infer extra types with
    * @return string representation of the type
    * @see #getTypeHint(PyType, TypeEvalContext)
    */

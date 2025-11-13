@@ -23,13 +23,15 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 class PyNamedTupleInspection : PyInspection() {
 
   companion object {
-    fun inspectFieldsOrder(cls: PyClass,
-                           classFieldsFilter: (PyClass) -> Boolean,
-                           checkInheritedOrder: Boolean,
-                           context: TypeEvalContext,
-                           callback: (PsiElement, @InspectionMessage String, ProblemHighlightType) -> Unit,
-                           fieldsFilter: (PyTargetExpression) -> Boolean = { true },
-                           hasAssignedValue: (PyTargetExpression) -> Boolean = PyTargetExpression::hasAssignedValue) {
+    fun inspectFieldsOrder(
+      cls: PyClass,
+      classFieldsFilter: (PyClass) -> Boolean,
+      checkInheritedOrder: Boolean,
+      context: TypeEvalContext,
+      callback: (PsiElement, @InspectionMessage String, ProblemHighlightType) -> Unit,
+      fieldsFilter: (PyTargetExpression) -> Boolean = { true },
+      hasAssignedValue: (PyTargetExpression) -> Boolean = PyTargetExpression::hasAssignedValue,
+    ) {
       val fieldsProcessor = if (classFieldsFilter(cls)) processFields(cls, fieldsFilter, hasAssignedValue, context) else null
 
       if ((fieldsProcessor == null || fieldsProcessor.fieldsWithoutDefaultValue.isEmpty()) && !checkInheritedOrder) return
@@ -60,7 +62,8 @@ class PyNamedTupleInspection : PyInspection() {
             seenAncestorHavingFieldWithDefaultValue = ancestor
           }
           else if (ancestorKind == Ancestor.HAS_FIELD_WITHOUT_DEFAULT_VALUE && seenAncestorHavingFieldWithDefaultValue != null) {
-            val msg = PyPsiBundle.message("INSP.named.tuple.default.value.order.inherited", ancestor.name, seenAncestorHavingFieldWithDefaultValue.name)
+            val msg = PyPsiBundle.message("INSP.named.tuple.default.value.order.inherited", ancestor.name,
+                                          seenAncestorHavingFieldWithDefaultValue.name)
             callback(cls.superClassExpressionList!!, msg, ProblemHighlightType.GENERIC_ERROR)
             break
           }
@@ -90,10 +93,12 @@ class PyNamedTupleInspection : PyInspection() {
       }
     }
 
-    private fun processFields(cls: PyClass,
-                              filter: (PyTargetExpression) -> Boolean,
-                              hasAssignedValue: (PyTargetExpression) -> Boolean,
-                              context: TypeEvalContext): LocalFieldsProcessor {
+    private fun processFields(
+      cls: PyClass,
+      filter: (PyTargetExpression) -> Boolean,
+      hasAssignedValue: (PyTargetExpression) -> Boolean,
+      context: TypeEvalContext,
+    ): LocalFieldsProcessor {
       val isDataclass = parseDataclassParameters(cls, context) != null
       val fieldsProcessor = LocalFieldsProcessor(filter, hasAssignedValue, isDataclass, context)
       cls.processClassLevelDeclarations(fieldsProcessor)
@@ -114,7 +119,8 @@ class PyNamedTupleInspection : PyInspection() {
       super.visitPyClass(node)
 
       if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36) &&
-          PyNamedTupleTypeProvider.isTypingNamedTupleDirectInheritor(node, myTypeEvalContext)) {
+          PyNamedTupleTypeProvider.isTypingNamedTupleDirectInheritor(node, myTypeEvalContext)
+      ) {
         inspectFieldsOrder(node, { it == node }, false,
                            myTypeEvalContext,
                            this::registerProblem)
@@ -122,10 +128,12 @@ class PyNamedTupleInspection : PyInspection() {
     }
   }
 
-  private class LocalFieldsProcessor(private val filter: (PyTargetExpression) -> Boolean,
-                                     private val hasAssignedValue: (PyTargetExpression) -> Boolean,
-                                     private val isDataclass: Boolean,
-                                     private val context: TypeEvalContext) : PsiScopeProcessor {
+  private class LocalFieldsProcessor(
+    private val filter: (PyTargetExpression) -> Boolean,
+    private val hasAssignedValue: (PyTargetExpression) -> Boolean,
+    private val isDataclass: Boolean,
+    private val context: TypeEvalContext,
+  ) : PsiScopeProcessor {
     val fieldsWithDefaultValue = mutableListOf<PyTargetExpression>()
     val fieldsWithoutDefaultValue = mutableListOf<PyTargetExpression>()
     var kwOnlyMarkerVisited: Boolean = false
@@ -134,7 +142,8 @@ class PyNamedTupleInspection : PyInspection() {
       if (element is PyTargetExpression && filter(element)) {
         if (isDataclass && isKwOnlyMarker(element, context)) {
           kwOnlyMarkerVisited = true
-        } else if (hasAssignedValue(element) || kwOnlyMarkerVisited) {
+        }
+        else if (hasAssignedValue(element) || kwOnlyMarkerVisited) {
           fieldsWithDefaultValue.add(element)
         }
         else {

@@ -45,9 +45,11 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
     }
   }
 
-  private fun addCompletionToCallExpression(originalElement: PsiElement,
-                                            possibleSequenceExpr: PySequenceExpression,
-                                            result: CompletionResultSet) {
+  private fun addCompletionToCallExpression(
+    originalElement: PsiElement,
+    possibleSequenceExpr: PySequenceExpression,
+    result: CompletionResultSet,
+  ) {
     val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
     val quote = getForcedQuote(possibleSequenceExpr, originalElement)
     possibleSequenceExpr.getMappedParameters(PyResolveContext.defaultContext(typeEvalContext))?.forEach {
@@ -67,9 +69,11 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
     return ""
   }
 
-  private fun addCompletionToAssignment(originalElement: PsiElement,
-                                        possibleSequenceExpr: PySequenceExpression,
-                                        result: CompletionResultSet) {
+  private fun addCompletionToAssignment(
+    originalElement: PsiElement,
+    possibleSequenceExpr: PySequenceExpression,
+    result: CompletionResultSet,
+  ) {
     val assignment = PsiTreeUtil.getParentOfType(originalElement, PyAssignmentStatement::class.java)
     if (assignment != null) {
       val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
@@ -97,9 +101,11 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
     }
   }
 
-  private fun addCompletionToReturnStatement(originalElement: PsiElement,
-                                             possibleSequenceExpr: PySequenceExpression,
-                                             result: CompletionResultSet) {
+  private fun addCompletionToReturnStatement(
+    originalElement: PsiElement,
+    possibleSequenceExpr: PySequenceExpression,
+    result: CompletionResultSet,
+  ) {
     val returnStatement = PsiTreeUtil.getParentOfType(originalElement, PyReturnStatement::class.java)
     if (returnStatement != null) {
       val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
@@ -115,10 +121,12 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
     }
   }
 
-  private fun addCompletionForTypedDictKeys(expectedType: PyType?,
-                                            expression: PyExpression,
-                                            dictCompletion: CompletionResultSet,
-                                            quote: String) {
+  private fun addCompletionForTypedDictKeys(
+    expectedType: PyType?,
+    expression: PyExpression,
+    dictCompletion: CompletionResultSet,
+    quote: String,
+  ) {
     if (expectedType is PyTypedDictType) {
       val keys = when (expression) {
         is PyDictLiteralExpression -> expression.elements

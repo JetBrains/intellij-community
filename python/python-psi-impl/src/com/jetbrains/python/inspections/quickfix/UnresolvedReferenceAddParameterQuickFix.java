@@ -20,11 +20,12 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: ktisha
- *
+ * <p>
  * QuickFix to add parameter to unresolved reference
  */
 public class UnresolvedReferenceAddParameterQuickFix implements LocalQuickFix {
   private final String myName;
+
   public UnresolvedReferenceAddParameterQuickFix(String name) {
     myName = name;
   }

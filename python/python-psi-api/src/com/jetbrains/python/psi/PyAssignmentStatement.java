@@ -65,6 +65,7 @@ public interface PyAssignmentStatement extends PyAstAssignmentStatement, PyState
    * <br/>
    * If RHS and LHS are mis-balanced, certain target or value expressions may be null.
    * If source is severely incorrect, the returned mapping is empty.
+   *
    * @return a list of [target, value] pairs; either part of a pair may be null, but not both.
    */
   @Override
@@ -77,5 +78,4 @@ public interface PyAssignmentStatement extends PyAstAssignmentStatement, PyState
   default @Nullable PyExpression getLeftHandSideExpression() {
     return (PyExpression)PyAstAssignmentStatement.super.getLeftHandSideExpression();
   }
-
 }

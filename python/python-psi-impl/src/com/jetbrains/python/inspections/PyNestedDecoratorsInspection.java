@@ -33,12 +33,14 @@ public final class PyNestedDecoratorsInspection extends PyInspection {
     private static final Set<String> TRANSFORMING_DECORATORS = Set.of(PyNames.CLASSMETHOD, PyNames.STATICMETHOD);
     private static final Set<String> UNAFFECTED_DECORATORS = Set.of(
       "typing.final", "typing.no_type_check", "typing.overload", "typing.override", "typing.type_check_only",
-      "typing_extensions.final", "typing_extensions.no_type_check", "typing_extensions.overload", "typing_extensions.override", "typing_extensions.type_check_only",
+      "typing_extensions.final", "typing_extensions.no_type_check", "typing_extensions.overload", "typing_extensions.override",
+      "typing_extensions.type_check_only",
       "functools.singledispatchmethod",
-      "pydantic.functional_validators.field_validator", "pydantic.functional_validators.model_validator", "pydantic.class_validators.validator",
+      "pydantic.functional_validators.field_validator", "pydantic.functional_validators.model_validator",
+      "pydantic.class_validators.validator",
       "django.views.decorators.cache.cache_page",
       "tenacity.retry"
-      );
+    );
 
 
     public Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {

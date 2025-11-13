@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * User: catherine
- *
+ * <p>
  * Intention to convert dict literal expression to dict constructor if the keys are all string constants on a literal dict.
  * For instance,
  * {} -> dict
@@ -65,14 +65,16 @@ public final class PyDictLiteralFormToConstructorIntention extends PsiUpdateModC
           stringBuilder.append(((PyStringLiteralExpression)key).getStringValue());
           stringBuilder.append("=");
           stringBuilder.append(value.getText());
-          if (i != size-1)
+          if (i != size - 1) {
             stringBuilder.append(", ");
+          }
         }
       }
     }
     stringBuilder.append(")");
     PyCallExpression callExpression = (PyCallExpression)elementGenerator.createFromText(LanguageLevel.forElement(dictExpression),
-                                                     PyExpressionStatement.class, stringBuilder.toString()).getExpression();
+                                                                                        PyExpressionStatement.class,
+                                                                                        stringBuilder.toString()).getExpression();
     dictExpression.replace(callExpression);
   }
 }

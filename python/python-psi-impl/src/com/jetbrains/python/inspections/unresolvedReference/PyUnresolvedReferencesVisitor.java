@@ -137,8 +137,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       boolean ignoreUnresolved = ignoreUnresolved(node, reference) || !evaluateVersionsForElement(node).contains(myVersion);
       if (!ignoreUnresolved) {
         HighlightSeverity severity = reference instanceof PsiReferenceEx
-                                           ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
-                                           : HighlightSeverity.ERROR;
+                                     ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
+                                     : HighlightSeverity.ERROR;
         if (severity == null) {
           if (isAwaitCallToImportedNonAsyncFunction(reference)) {
             // special case: type of prefixExpression.getQualifier() is null but we want to check whether the called function is async
@@ -166,7 +166,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
             String unionMemberRender = PythonDocumentationProvider.getTypeName(unionMemberMissingAttr, myTypeEvalContext);
             registerProblem(
               node,
-              PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.in.union.type", unionMemberRender, unionTypeRender, referencedName),
+              PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.in.union.type", unionMemberRender, unionTypeRender,
+                                  referencedName),
               ProblemHighlightType.WEAK_WARNING,
               null,
               reference.getRangeInElement()

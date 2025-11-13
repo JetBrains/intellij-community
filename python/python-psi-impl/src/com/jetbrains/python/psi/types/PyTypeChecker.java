@@ -1253,7 +1253,8 @@ public final class PyTypeChecker {
         PyType substitution = Ref.deref(substitutionRef);
         if (substitutionRef == null) {
           final PyInstantiableType<?> invertedTypeVar = invert(typeVarType);
-          final PyInstantiableType<?> invertedSubstitution = as(Ref.deref(substitutions.typeVars.get(invertedTypeVar)), PyInstantiableType.class);
+          final PyInstantiableType<?> invertedSubstitution =
+            as(Ref.deref(substitutions.typeVars.get(invertedTypeVar)), PyInstantiableType.class);
           if (invertedSubstitution != null) {
             substitution = invert(invertedSubstitution);
           }
@@ -1832,7 +1833,7 @@ public final class PyTypeChecker {
 
   @ApiStatus.Experimental
   public static class GenericSubstitutions {
-    
+
     // Nullable-Nullable because of com.jetbrains.python.psi.types.PyTypeChecker.collectTypeSubstitutions
     private final @NotNull Map<PyTypeVarType, @Nullable Ref<@Nullable PyType>> typeVars;
 

@@ -26,7 +26,7 @@ public class PyDictCompExpressionImpl extends PyComprehensionElementImpl impleme
     if (resultExpr instanceof PyKeyValueExpression keyValue && dictionary != null) {
       final PyType keyType = context.getType(keyValue.getKey());
       PyExpression value = keyValue.getValue();
-      final PyType valueType =  value != null ? context.getType(value) : null;
+      final PyType valueType = value != null ? context.getType(value) : null;
       return new PyCollectionTypeImpl(dictionary.getPyClass(), false, new SmartList<>(keyType, valueType));
     }
     return dictionary;

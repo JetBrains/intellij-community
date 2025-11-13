@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
- *
+ * <p>
  * QuickFix to convert docstrings to the common form according to PEP-257
  * For consistency, always use """triple double quotes""" around docstrings.
  */
@@ -35,19 +35,21 @@ public class ConvertDocstringQuickFix extends PsiUpdateModCommandQuickFix {
       int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
       String prefix = stringText.substring(0, prefixLength);
       String content = stringText.substring(prefixLength);
-      if (content.startsWith("'''") ) {
-        content = content.substring(3, content.length()-3);
-      } else if (content.startsWith("\"\"\""))
-        return;
-      else {
-        content = content.length() == 1 ? "" : content.substring(1, content.length()-1);
+      if (content.startsWith("'''")) {
+        content = content.substring(3, content.length() - 3);
       }
-      if (content.endsWith("\""))
-        content = StringUtil.replaceSubstring(content, TextRange.create(content.length()-1, content.length()), "\\\"");
+      else if (content.startsWith("\"\"\"")) {
+        return;
+      }
+      else {
+        content = content.length() == 1 ? "" : content.substring(1, content.length() - 1);
+      }
+      if (content.endsWith("\"")) {
+        content = StringUtil.replaceSubstring(content, TextRange.create(content.length() - 1, content.length()), "\\\"");
+      }
 
-      PyExpression newString = elementGenerator.createDocstring(prefix+"\"\"\"" + content + "\"\"\"").getExpression();
+      PyExpression newString = elementGenerator.createDocstring(prefix + "\"\"\"" + content + "\"\"\"").getExpression();
       element.replace(newString);
     }
   }
-
 }

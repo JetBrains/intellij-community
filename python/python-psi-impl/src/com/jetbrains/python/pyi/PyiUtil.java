@@ -39,7 +39,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class PyiUtil {
-  private PyiUtil() {}
+  private PyiUtil() { }
 
   public static boolean isInsideStub(@NotNull PsiElement element) {
     return PyiUtilCore.isInsideStub(element);
@@ -79,7 +79,7 @@ public final class PyiUtil {
     if (originalFile == null) return null;
 
     PsiElement result = findSimilarElement(element, originalFile);
-    
+
     // If a name is defined in a .pyi stub and the corresponding .py module in a different manner, e.g.
     // it's exported through an assignment to a top-level attribute in a .pyi stub, but though a regular
     // "from" import in .py file, we might end up in another stub file again. It happens because resolving 
@@ -155,10 +155,10 @@ public final class PyiUtil {
     }
     final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(file);
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)
-      .stream()
-      .findFirst()
-      .map(PyUtil::turnDirIntoInitPyi)
-      .orElse(null), PyiFile.class);
+                       .stream()
+                       .findFirst()
+                       .map(PyUtil::turnDirIntoInitPyi)
+                       .orElse(null), PyiFile.class);
   }
 
   private static @Nullable PyFile getOriginalFile(@NotNull PyiFile file) {

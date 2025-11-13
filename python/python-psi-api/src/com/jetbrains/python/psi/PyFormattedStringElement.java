@@ -8,10 +8,10 @@ import java.util.List;
 
 /**
  * Represents an f-string, a special kind of interpolated string literal introduced in Python 3.6.
- * 
+ * <p>
  * Unlike {@link PyPlainStringElement} these elements are composite and consist of several kinds of tokens
  * and normal PSI trees for embedded expressions.
- * 
+ *
  * @see com.jetbrains.python.PyTokenTypes#FSTRING_START
  * @see com.jetbrains.python.PyTokenTypes#FSTRING_TEXT
  * @see PyFStringFragment

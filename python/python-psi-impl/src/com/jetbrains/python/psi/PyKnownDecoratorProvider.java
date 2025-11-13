@@ -20,7 +20,8 @@ public interface PyKnownDecoratorProvider {
    * @deprecated Use {@link #getKnownDecorators()} instead to provide a new {@link PyKnownDecorator} using {@link PyKnownDecorator.Builder}
    */
   @Deprecated(forRemoval = true)
-  @Nullable default String toKnownDecorator(String decoratorName) {
+  @Nullable
+  default String toKnownDecorator(String decoratorName) {
     return null;
   }
 }

@@ -51,7 +51,7 @@ public final class PySplitIfIntention extends PyBaseIntentionAction {
       element = element.getParent();
     }
     if (((PyBinaryExpression)element).getOperator() != PyTokenTypes.AND_KEYWORD
-        || ((PyBinaryExpression) element).getRightExpression() == null) {
+        || ((PyBinaryExpression)element).getRightExpression() == null) {
       return false;
     }
     final PsiElement parent = element.getParent();
@@ -83,19 +83,21 @@ public final class PySplitIfIntention extends PyBaseIntentionAction {
     PyIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PyIfStatement.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
-    PyIfStatement subIf = (PyIfStatement) ifStatement.copy();
+    PyIfStatement subIf = (PyIfStatement)ifStatement.copy();
 
     subIf.getIfPart().getCondition().replace(element.getRightExpression());
     ifStatement.getIfPart().getCondition().replace(element.getLeftExpression());
-    PyStatementList statementList = elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if a:\n    a = 1").getIfPart().getStatementList();
+    PyStatementList statementList =
+      elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if a:\n    a = 1").getIfPart().getStatementList();
     statementList.getStatements()[0].replace(subIf);
     PyIfStatement newIf = elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if a:\n    a = 1");
     newIf.getIfPart().getCondition().replace(ifStatement.getIfPart().getCondition());
     newIf.getIfPart().getStatementList().replace(statementList);
-    for (PyIfPart elif : ifStatement.getElifParts())
+    for (PyIfPart elif : ifStatement.getElifParts()) {
       newIf.add(elif);
+    }
     if (ifStatement.getElsePart() != null) {
-        newIf.add(ifStatement.getElsePart());
+      newIf.add(ifStatement.getElsePart());
     }
     ifStatement.replace(newIf);
   }

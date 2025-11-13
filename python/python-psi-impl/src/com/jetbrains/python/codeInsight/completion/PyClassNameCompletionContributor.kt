@@ -100,7 +100,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
         return
       }
     }
-    
+
     val project = originalFile.getProject()
     val typeEvalContext = TypeEvalContext.codeCompletion(project, originalFile)
     val maxVariants = intValue("ide.completion.variant.limit")
@@ -109,7 +109,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     val fileBasedIndex = FileBasedIndex.getInstance()
     TimeoutUtil.run<RuntimeException>(ThrowableRunnable {
       val alreadySuggested: MutableSet<QualifiedName> = HashSet()
-      
+
       // Suggest importable modules and packages
       val modulePackageScope = createScope(originalFile, false)
       forEachModulePackageNameFromIndex(modulePackageScope) { modulePackageName: String ->
@@ -209,7 +209,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
   private fun getInsertHandler(
     exported: PyElement,
     position: PsiElement,
-    typeEvalContext: TypeEvalContext
+    typeEvalContext: TypeEvalContext,
   ): InsertHandler<LookupElement> {
     if (position.getParent() is PyStringLiteralExpression) {
       if (isInsideAllInInitPy(position)) {
@@ -228,7 +228,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
 
   private fun containsOnlyElementUnderTheCaret(
     remainingResults: MutableSet<CompletionResult>,
-    parameters: CompletionParameters
+    parameters: CompletionParameters,
   ): Boolean {
     val position = parameters.originalPosition
     if (remainingResults.size == 1 && position != null) {
@@ -272,9 +272,9 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
 
   private fun isApplicableInInsertionContext(
     definition: PyElement,
-    fqn: QualifiedName, 
+    fqn: QualifiedName,
     position: PsiElement,
-    context: TypeEvalContext
+    context: TypeEvalContext,
   ): Boolean {
     if (PyTypingTypeProvider.isInsideTypeHint(position, context)) {
       // Not all names from typing.py are defined as classes
@@ -295,15 +295,15 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     }
     return element is PyTypeAliasStatement
   }
-  
+
   private fun isInsideErrorElement(referenceExpression: PyReferenceExpression): Boolean {
     return referenceExpression.findParentOfType<PsiErrorElement>() != null
   }
 
   private fun isInsideImportElement(referenceExpression: PyReferenceExpression): Boolean {
     return referenceExpression.findParentOfType<PyImportStatementBase>() != null
-  } 
-  
+  }
+
   private fun isDirectlyInsideClassBody(referenceExpression: PyReferenceExpression): Boolean {
     return referenceExpression.parent is PyExpressionStatement &&
            ScopeUtil.getScopeOwner(referenceExpression.parent) is PyClass
@@ -403,7 +403,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
     // See PY-73964, IJPL-265
     private const val RECURSIVE_INDEX_ACCESS_ALLOWED = false
   }
-  
+
   object InsertHandlers {
     internal val importingInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
       addImportForLookupElement(context, item, context.tailOffset - 1)
@@ -445,7 +445,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
         context.document.insertString(context.startOffset, qualifiedNamePrefix)
       }
     }
-    
+
     fun addImportForLookupElement(context: InsertionContext, item: LookupElement, tailOffset: Int) {
       val manager = PsiDocumentManager.getInstance(context.project)
       val document = manager.getDocument(context.file)

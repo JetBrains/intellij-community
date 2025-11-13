@@ -59,6 +59,7 @@ public final class PyPsiUtils {
 
   /**
    * Finds first sibling that is neither comment, nor whitespace before given element.
+   *
    * @param strict prohibit returning element itself
    */
   public static @Nullable PsiElement getPrevNonCommentSibling(@Nullable PsiElement start, boolean strict) {
@@ -109,6 +110,7 @@ public final class PyPsiUtils {
 
   /**
    * Finds first sibling that is neither comment, nor whitespace after given element.
+   *
    * @param strict prohibit returning element itself
    */
   public static @Nullable PsiElement getNextNonCommentSibling(@Nullable PsiElement start, boolean strict) {
@@ -117,6 +119,7 @@ public final class PyPsiUtils {
 
   /**
    * Finds first token after given element that doesn't consist solely of spaces and is not empty (e.g. error marker).
+   *
    * @param ignoreComments ignore commentaries as well
    */
   public static @Nullable PsiElement getNextSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
@@ -128,6 +131,7 @@ public final class PyPsiUtils {
 
   /**
    * Finds first token before given element that doesn't consist solely of spaces and is not empty (e.g. error marker).
+   *
    * @param ignoreComments ignore commentaries as well
    */
   public static @Nullable PsiElement getPrevSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
@@ -261,7 +265,8 @@ public final class PyPsiUtils {
   public static boolean isMethodContext(final PsiElement element) {
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(element, PyFile.class, PyFunction.class, PyClass.class);
     // In case if element is inside method which is inside class
-    if (parent instanceof PyFunction && PsiTreeUtil.getParentOfType(parent, PyFile.class, PyFunction.class, PyClass.class) instanceof PyClass) {
+    if (parent instanceof PyFunction &&
+        PsiTreeUtil.getParentOfType(parent, PyFile.class, PyFunction.class, PyClass.class) instanceof PyClass) {
       return true;
     }
     return false;
@@ -302,6 +307,7 @@ public final class PyPsiUtils {
   /**
    * Returns comments preceding given elements as pair of the first and the last such comments. Comments should not be
    * separated by any empty line.
+   *
    * @param element element comments should be adjacent to
    * @return described range or {@code null} if there are no such comments
    */
@@ -348,7 +354,7 @@ public final class PyPsiUtils {
    * def func():
    *     pass
    * }</pre>
-   *
+   * <p>
    * Note that in the following case it will additionally return an empty list of comments as the last element
    * to distinguish between the cases when there is a blank line above the provided element and when there is not.
    *

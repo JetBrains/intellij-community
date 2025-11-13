@@ -109,7 +109,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   }
 
   @Override
-  public @NotNull PyTargetExpressionStub deserialize(final @NotNull StubInputStream stream, final StubElement parentStub) throws IOException {
+  public @NotNull PyTargetExpressionStub deserialize(final @NotNull StubInputStream stream, final StubElement parentStub)
+    throws IOException {
     String name = stream.readNameString();
     String docString = stream.readUTFFast();
     if (docString.isEmpty()) {

@@ -32,7 +32,8 @@ import java.util.List;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub> implements PyFromImportStatement, PsiListLikeElement{
+public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportStatementStub>
+  implements PyFromImportStatement, PsiListLikeElement {
   private volatile @Nullable ValueHolder<QualifiedName> myImportSourceQName;
 
   public PyFromImportStatementImpl(ASTNode astNode) {
@@ -245,7 +246,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   /**
    * The statement 'from pkg1.m1 import ...' makes 'm1' available as a local name in the package 'pkg1'.
-   *
+   * <p>
    * http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
    */
   private @Nullable PsiElement resolveImplicitSubModule() {

@@ -85,10 +85,10 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
       assert atToken(PyTokenTypes.LPAR);
       final SyntaxTreeBuilder.Marker listMark = myBuilder.mark();
       myBuilder.advanceLexer();
-      
+
       final ExpressionParsing exprParser = getExpressionParser();
       int paramCount = 0;
-      while (!(atAnyOfTokens(PyTokenTypes.RPAR, PyTokenTypes.RARROW, PyTokenTypes.STATEMENT_BREAK) || myBuilder.eof()) ) {
+      while (!(atAnyOfTokens(PyTokenTypes.RPAR, PyTokenTypes.RARROW, PyTokenTypes.STATEMENT_BREAK) || myBuilder.eof())) {
         if (paramCount > 0) {
           checkMatches(PyTokenTypes.COMMA, PyParsingBundle.message("PARSE.expected.comma"));
         }
@@ -110,7 +110,8 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
         }
         if (!parsed) {
           myBuilder.error(PyParsingBundle.message("PARSE.expected.expression"));
-          recoverUntilMatches(PyParsingBundle.message("PARSE.expected.expression"), PyTokenTypes.COMMA, PyTokenTypes.RPAR, PyTokenTypes.RARROW, PyTokenTypes.STATEMENT_BREAK);
+          recoverUntilMatches(PyParsingBundle.message("PARSE.expected.expression"), PyTokenTypes.COMMA, PyTokenTypes.RPAR,
+                              PyTokenTypes.RARROW, PyTokenTypes.STATEMENT_BREAK);
         }
         paramCount++;
       }

@@ -62,6 +62,7 @@ public final class PyRedeclarationInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyFunction(final @NotNull PyFunction node) {
       if (!PyKnownDecoratorUtil.hasUnknownDecorator(node, myTypeEvalContext) &&

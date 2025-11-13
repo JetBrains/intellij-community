@@ -181,7 +181,8 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   public @NotNull PyGenericType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
-    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), getVariance(), isDefinition(), getDeclarationElement(), scopeOwner);
+    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), getVariance(), isDefinition(),
+                                 getDeclarationElement(), scopeOwner);
   }
 
   public @NotNull PyGenericType withTargetExpression(@Nullable PyTargetExpression targetExpression) {
@@ -189,16 +190,20 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   public @NotNull PyGenericType withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
-    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), getVariance(), isDefinition(), declarationElement, getScopeOwner());
+    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), getVariance(), isDefinition(),
+                                 declarationElement, getScopeOwner());
   }
 
   @Override
   public @NotNull PyGenericType toInstance() {
-    return myIsDefinition ? new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, myVariance, false, myDeclarationElement, myScopeOwner) : this;
+    return myIsDefinition ? new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, myVariance, false, myDeclarationElement,
+                                                  myScopeOwner) : this;
   }
 
   @Override
   public @NotNull PyGenericType toClass() {
-    return myIsDefinition ? this : new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, myVariance, true, myDeclarationElement, myScopeOwner);
+    return myIsDefinition
+           ? this
+           : new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, myVariance, true, myDeclarationElement, myScopeOwner);
   }
 }

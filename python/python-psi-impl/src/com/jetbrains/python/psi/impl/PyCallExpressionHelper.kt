@@ -131,9 +131,9 @@ fun PyCallExpression.multipleResolveCallee(resolveContext: PyResolveContext): Li
   return PyUtil.getParameterizedCachedValue(
     this,
     resolveContext) {
-      getExplicitResolveResults(it) +
-      getImplicitResolveResults(it) +
-      getRemoteResolveResults(it)
+    getExplicitResolveResults(it) +
+    getImplicitResolveResults(it) +
+    getRemoteResolveResults(it)
   }
 }
 
@@ -613,9 +613,9 @@ private fun getSuperCallTypeForArguments(context: TypeEvalContext, firstClass: P
       if (secondClass.isSubclass(firstClass, context)) {
         val nextAfterFirstInMro =
           secondClass.getAncestorClasses(context)
-          .dropWhile { it !== firstClass }
-          .drop(1)
-          .firstOrNull()
+            .dropWhile { it !== firstClass }
+            .drop(1)
+            .firstOrNull()
 
         if (nextAfterFirstInMro != null) {
           return PyClassTypeImpl(nextAfterFirstInMro, false)
@@ -913,7 +913,7 @@ private fun PyClassType.resolveMetaclassDunderCall(
       ?.asSequence()
       ?.map { it.element }
       ?.toSet()
-      ?: emptySet()
+    ?: emptySet()
 
   return results.filter { it.element !in typeDunderCall }
 }

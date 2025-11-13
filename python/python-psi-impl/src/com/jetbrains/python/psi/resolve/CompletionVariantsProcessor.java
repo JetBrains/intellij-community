@@ -67,7 +67,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       final TypeEvalContext context = TypeEvalContext.codeCompletion(project, myContext != null ? myContext.getContainingFile() : null);
 
       if (myContext != null && PyParameterizedTypeInsertHandler.isCompletingParameterizedType(element, myContext, context)) {
-        item = item.withInsertHandler(PyParameterizedTypeInsertHandler.INSTANCE);        
+        item = item.withInsertHandler(PyParameterizedTypeInsertHandler.INSTANCE);
       }
       else if (!mySuppressParentheses &&
                element instanceof PyFunction && ((PyFunction)element).getProperty() == null &&

@@ -15,17 +15,19 @@ import com.jetbrains.python.psi.types.*
 
 class PyClassVarInspection : PyInspection() {
 
-  override fun buildVisitor(holder: ProblemsHolder,
-                            isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder,
-                                                                                              PyInspectionVisitor.getContext(session))
+  override fun buildVisitor(
+    holder: ProblemsHolder,
+    isOnTheFly: Boolean,
+    session: LocalInspectionToolSession,
+  ): PsiElementVisitor = Visitor(holder,
+                                 PyInspectionVisitor.getContext(session))
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 
     override fun visitPyTargetExpression(node: PyTargetExpression) {
-        checkClassVarReassignment(node)
-        checkClassVarDeclaration(node)
-        checkAssignedValue(node)
+      checkClassVarReassignment(node)
+      checkClassVarDeclaration(node)
+      checkAssignedValue(node)
     }
 
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -100,7 +102,8 @@ class PyClassVarInspection : PyInspection() {
           val expectedType = myTypeEvalContext.getType(node)
           val actualType = node.findAssignedValue()?.let { myTypeEvalContext.getType(it) }
           if (expectedType != null && actualType != null &&
-              !PyTypeChecker.match(expectedType, actualType, myTypeEvalContext)) {
+              !PyTypeChecker.match(expectedType, actualType, myTypeEvalContext)
+          ) {
             val expectedName = PythonDocumentationProvider.getTypeName(expectedType, myTypeEvalContext)
             val actualName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
             registerProblem(node.findAssignedValue(),

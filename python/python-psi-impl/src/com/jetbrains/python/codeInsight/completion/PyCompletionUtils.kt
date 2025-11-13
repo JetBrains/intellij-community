@@ -60,12 +60,14 @@ fun CompletionParameters.getTypeEvalContext(): TypeEvalContext = TypeEvalContext
  * @param pyClass if provided will check if method does not exist already
  * @param builderPostprocessor function to be used to tune lookup builder
  */
-fun addMethodToResult(result: CompletionResultSet,
-                      pyClass: PyClass?,
-                      typeEvalContext: TypeEvalContext,
-                      methodName: String,
-                      methodParentheses: String = "(self)",
-                      builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null) {
+fun addMethodToResult(
+  result: CompletionResultSet,
+  pyClass: PyClass?,
+  typeEvalContext: TypeEvalContext,
+  methodName: String,
+  methodParentheses: String = "(self)",
+  builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null,
+) {
   if (pyClass?.findMethodByName(methodName, false, typeEvalContext) != null) return
 
   val item = LookupElementBuilder.create(methodName + methodParentheses).withIcon(
@@ -79,11 +81,13 @@ fun addMethodToResult(result: CompletionResultSet,
  * @param pyFile if provided will check if function does not exist already
  * @param builderPostprocessor function to be used to tune lookup builder
  */
-fun addFunctionToResult(result: CompletionResultSet,
-                        pyFile: PyFile?,
-                        functionName: String,
-                        functionParentheses: String = "()",
-                        builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null) {
+fun addFunctionToResult(
+  result: CompletionResultSet,
+  pyFile: PyFile?,
+  functionName: String,
+  functionParentheses: String = "()",
+  builderPostprocessor: ((LookupElementBuilder) -> LookupElementBuilder)? = null,
+) {
   if (pyFile?.findTopLevelFunction(functionName) != null) return
 
   val item = LookupElementBuilder.create(functionName + functionParentheses).withIcon(
@@ -126,7 +130,13 @@ const val FALLBACK_WEIGHT = -1_000_000
  * @param completionLocation file, in which the completion is taking place
  * @param nameOnly indicates that we just need to check the name for underscores
  */
-fun computeCompletionWeight(element: PsiElement, elementName: String?, path: QualifiedName?, completionLocation: PsiFile?, nameOnly: Boolean): Int {
+fun computeCompletionWeight(
+  element: PsiElement,
+  elementName: String?,
+  path: QualifiedName?,
+  completionLocation: PsiFile?,
+  nameOnly: Boolean,
+): Int {
   var weight = 0
   val name = elementName ?: return FALLBACK_WEIGHT
 
@@ -156,18 +166,18 @@ fun computeCompletionWeight(element: PsiElement, elementName: String?, path: Qua
     weight -= LOCATION_NOT_YET_IMPORTED
   }
 
-  val privatePathComponents = importPath.components.count{ it.startsWith("_") } * PRIVATE_API
+  val privatePathComponents = importPath.components.count { it.startsWith("_") } * PRIVATE_API
   weight -= privatePathComponents + importPath.componentCount
 
   if (vFile != null) {
-    weight -=  when {
+    weight -= when {
       PySkeletonUtil.isStdLib(vFile, sdk) -> LOCATION
       ModuleUtilCore.findModuleForFile(vFile, element.project) == null -> LOCATION * 2
       else -> 0
     }
   }
 
-  weight -= when(PyUtil.turnInitIntoDir(element)) {
+  weight -= when (PyUtil.turnInitIntoDir(element)) {
     is PsiDirectory -> ELEMENT_TYPE * 2
     is PyFile -> ELEMENT_TYPE
     else -> 0

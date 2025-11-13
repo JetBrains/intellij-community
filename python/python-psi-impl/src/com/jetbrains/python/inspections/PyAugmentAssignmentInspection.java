@@ -41,14 +41,16 @@ import java.util.Set;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect assignments that can be replaced with augmented assignments.
  */
 public final class PyAugmentAssignmentInspection extends PyInspection {
 
   private static final @NotNull TokenSet OPERATIONS = TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MINUS, PyTokenTypes.MULT,
-                                                                      PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC, PyTokenTypes.AND,
-                                                                      PyTokenTypes.OR, PyTokenTypes.XOR, PyTokenTypes.LTLT, PyTokenTypes.GTGT,
+                                                                      PyTokenTypes.FLOORDIV, PyTokenTypes.DIV, PyTokenTypes.PERC,
+                                                                      PyTokenTypes.AND,
+                                                                      PyTokenTypes.OR, PyTokenTypes.XOR, PyTokenTypes.LTLT,
+                                                                      PyTokenTypes.GTGT,
                                                                       PyTokenTypes.EXP);
   private static final @NotNull TokenSet COMMUTATIVE_OPERATIONS =
     TokenSet.create(PyTokenTypes.PLUS, PyTokenTypes.MULT, PyTokenTypes.OR, PyTokenTypes.AND);
@@ -103,7 +105,8 @@ public final class PyAugmentAssignmentInspection extends PyInspection {
 
         final PyElementType operator = value.getOperator();
         if (operator != null && assignmentCanBeReplaced(mainOperandExpression, otherOperandExpression, operator, changedParts)) {
-          registerProblem(node, PyPsiBundle.message("INSP.assignment.can.be.replaced.with.augmented.assignment"), new AugmentedAssignmentQuickFix());
+          registerProblem(node, PyPsiBundle.message("INSP.assignment.can.be.replaced.with.augmented.assignment"),
+                          new AugmentedAssignmentQuickFix());
         }
       }
     }

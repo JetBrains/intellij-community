@@ -68,7 +68,7 @@ class PyBuiltinCache private constructor(
   @Suppress("KotlinUnreachableCode")
   fun getByName(name: @NonNls String?): PsiElement? =
     builtinsFile?.getElementNamed(name)?.let { return it }
-      ?: myExceptionsFile?.file?.getElementNamed(name)
+    ?: myExceptionsFile?.file?.getElementNamed(name)
 
 
   fun getClass(name: @NonNls String): PyClass? {

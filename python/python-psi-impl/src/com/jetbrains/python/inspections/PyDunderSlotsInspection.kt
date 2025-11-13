@@ -26,7 +26,7 @@ class PyDunderSlotsInspection : PyInspection() {
     isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
   ): PsiElementVisitor = Visitor(
-    holder,PyInspectionVisitor.getContext(session))
+    holder, PyInspectionVisitor.getContext(session))
 
   private class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
 

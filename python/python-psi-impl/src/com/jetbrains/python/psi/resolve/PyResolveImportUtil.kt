@@ -277,16 +277,19 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
     val results = if (isModuleSource) moduleResults else sdkResults
     val effectiveSdk = sdk ?: context.effectiveSdk
     if (!root.isValid ||
-        effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)) {
+        effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)
+    ) {
       return@RootVisitor true
     }
     if (withoutStubs && (PyTypeShed.isInside(root) ||
-                         PsiManager.getInstance(context.project).findDirectory(root)?.let { isInStubPackage(it) } == true)) {
+                         PsiManager.getInstance(context.project).findDirectory(root)?.let { isInStubPackage(it) } == true)
+    ) {
       return@RootVisitor true
     }
     results.addAll(resolveInRoot(name, root, context))
     if (isAcceptRootAsTopLevelPackage(context) && name.matchesPrefix(
-        QualifiedName.fromDottedString(root.name))) {
+        QualifiedName.fromDottedString(root.name))
+    ) {
       //TODO[akniazev]: resolving from parent root. Is it still a thing for Django?
       results.addAll(resolveInRoot(name, root.parent, context))
     }
@@ -365,8 +368,10 @@ private fun isSameDirectoryResult(element: PsiElement, context: PyQualifiedNameR
   }
 }
 
-private fun isSameDirectoryOrRelativeImportResult(name: QualifiedName, directory: PsiDirectory, result: PsiElement,
-                                                  context: PyQualifiedNameResolveContext): Boolean {
+private fun isSameDirectoryOrRelativeImportResult(
+  name: QualifiedName, directory: PsiDirectory, result: PsiElement,
+  context: PyQualifiedNameResolveContext,
+): Boolean {
   if (context.relativeLevel > 0) {
     return true
   }
@@ -379,9 +384,11 @@ private fun checkAccess() {
   Preconditions.checkState(ApplicationManager.getApplication().isReadAccessAllowed, "This method requires read access")
 }
 
-private fun filterTopPriorityResultsWithFallback(primaryResults: List<PsiElement>, fallbackResults: List<PsiElement>,
-                                                 foreignResults: List<PsiElement>, name: QualifiedName,
-                                                 context: PyQualifiedNameResolveContext): List<PsiElement> {
+private fun filterTopPriorityResultsWithFallback(
+  primaryResults: List<PsiElement>, fallbackResults: List<PsiElement>,
+  foreignResults: List<PsiElement>, name: QualifiedName,
+  context: PyQualifiedNameResolveContext,
+): List<PsiElement> {
   val allResults = primaryResults + fallbackResults + foreignResults
   if (name.componentCount <= 0) return allResults
   val filteredPrimaryResults = filterTopPriorityResults(primaryResults, context.module)
@@ -402,7 +409,7 @@ private fun filterTopPriorityResults(resolved: List<PsiElement>, module: Module?
   if (groupedResults.topResultIs(Priority.NAMESPACE_PACKAGE)) return groupedResults[Priority.NAMESPACE_PACKAGE]!! + skeletons
   groupedResults.remove(Priority.NAMESPACE_PACKAGE)
 
-  val priorityResults =  when {
+  val priorityResults = when {
     groupedResults.isEmpty() -> emptyList()
     // stub packages can be partial
     groupedResults.topResultIs(Priority.STUB_PACKAGE) -> firstResultWithFallback(groupedResults, Priority.STUB_PACKAGE)

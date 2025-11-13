@@ -228,7 +228,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final PyExpression qualifier = getQualifier();
     if (qualifier == null) return null;
-    
+
     final String attrName = getName();
     if (attrName == null) return null;
 
@@ -236,7 +236,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final PyType dunderClassType = getDunderClassType(qualifierType, attrName);
     if (dunderClassType != null) return Ref.create(dunderClassType);
-    
+
     final Ref<PyType> typeOfProperty = getTypeOfProperty(qualifierType, attrName, context);
     if (typeOfProperty != null) {
       return typeOfProperty;
@@ -259,12 +259,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     // - PyTypingTypeProvider checks if qualifier's class has a type annotation for 'this_name'
     //   and returns that annotated type if found
     // - If no providers return a type, falls back to returning the type of the assigned value
-    
+
     final PyType typeByControlFlow = getQualifiedReferenceTypeByControlFlow(context);
     if (typeByControlFlow != null) {
       return Ref.create(typeByControlFlow);
     }
-    
+
     return null;
   }
 
@@ -441,7 +441,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (scopeOwner != null &&
           name != null &&
           (!ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty()
-            || target instanceof PyTargetExpression || target instanceof PyNamedParameter)) {
+           || target instanceof PyTargetExpression || target instanceof PyNamedParameter)) {
         final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
         if (type != null) {
           return type;
@@ -572,7 +572,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       myQualifiers = qualifiers;
     }
 
-    public static @NotNull MultiFollowQueueNode create(@Nullable MultiFollowQueueNode previous, @NotNull PyReferenceExpression referenceExpression) {
+    public static @NotNull MultiFollowQueueNode create(@Nullable MultiFollowQueueNode previous,
+                                                       @NotNull PyReferenceExpression referenceExpression) {
       final PyExpression qualifier = referenceExpression.getQualifier();
       final List<PyExpression> previousQualifiers = previous == null ? Collections.emptyList() : previous.myQualifiers;
       final List<PyExpression> newQualifiers = qualifier == null ? previousQualifiers : ContainerUtil.append(previousQualifiers, qualifier);

@@ -140,7 +140,7 @@ public abstract class PyBaseConvertCollectionLiteralIntention extends PsiUpdateM
     }
 
     final String replacedText = literal.getText();
-    
+
     final PsiElement firstChild = literal.getFirstChild();
     final int contentStartOffset;
     if (PyTokenTypes.OPEN_BRACES.contains(firstChild.getNode().getElementType())) {

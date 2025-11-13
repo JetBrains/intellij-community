@@ -39,7 +39,7 @@ import java.util.*;
 
 /**
  * User : ktisha
- *
+ * <p>
  * Quick fix to rename unresolved references
  */
 public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
@@ -66,7 +66,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
 
     ReferenceNameExpression refExpr = new ReferenceNameExpression(items, name);
     TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().
-                                          createTemplateBuilder(parentScope);
+      createTemplateBuilder(parentScope);
     for (PyReferenceExpression expr : refs) {
       if (!expr.equals(referenceExpression)) {
         builder.replaceElement(expr, name, name, false);
@@ -82,7 +82,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   public static boolean isValidReference(final PsiReference reference) {
     if (!(reference instanceof PyReferenceImpl)) return false;
     ResolveResult[] results = ((PyReferenceImpl)reference).multiResolve(true);
-    if(results.length == 0) return false;
+    if (results.length == 0) return false;
     for (ResolveResult result : results) {
       if (!result.isValidResult()) return false;
     }
@@ -113,8 +113,9 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
 
     final Collection<String> usedNames = PyUtil.collectUsedNames(parentScope);
     for (String name : usedNames) {
-      if (name != null)
+      if (name != null) {
         items.add(LookupElementBuilder.create(name));
+      }
     }
 
     return items.toArray(LookupElement.EMPTY_ARRAY);

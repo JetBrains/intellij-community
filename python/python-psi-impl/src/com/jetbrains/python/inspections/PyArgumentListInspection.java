@@ -37,7 +37,9 @@ import java.util.stream.Collectors;
 public final class PyArgumentListInspection extends PyInspection {
 
   @Override
-  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                                 boolean isOnTheFly,
+                                                 @NotNull LocalInspectionToolSession session) {
     return new Visitor(holder, PyInspectionVisitor.getContext(session));
   }
 
@@ -73,7 +75,8 @@ public final class PyArgumentListInspection extends PyInspection {
         final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
         if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
           // no parameters left to pass function implicitly, or wrong param type
-          registerProblem(deco, PyPsiBundle.message("INSP.function.lacks.positional.argument", callable.getName())); // TODO: better names for anon lambdas
+          registerProblem(deco, PyPsiBundle.message("INSP.function.lacks.positional.argument",
+                                                    callable.getName())); // TODO: better names for anon lambdas
         }
         else { // possible unfilled params
           for (int i = firstParamOffset; i < params.size(); i++) {
@@ -250,7 +253,8 @@ public final class PyArgumentListInspection extends PyInspection {
           final Project project = node.getProject();
           if (callable instanceof PyFunction && !PyPsiIndexUtil.isNotUnderSourceRoot(project, callable.getContainingFile())) {
             final String message = PyPsiBundle.message("INSP.unexpected.arg(s)");
-            holder.registerProblem(node, message, ProblemHighlightType.INFORMATION, PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchedCall(mapping));
+            holder.registerProblem(node, message, ProblemHighlightType.INFORMATION,
+                                   PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchedCall(mapping));
           }
         }
       }

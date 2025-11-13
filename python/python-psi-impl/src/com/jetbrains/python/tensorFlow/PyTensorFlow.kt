@@ -19,10 +19,10 @@ private val LAYOUT_PER_VERSION: List<Pair<VersionRange, Map<String, String>>> = 
     "keras" to "keras._tf_keras.keras",
     // losses, metrics, optimizers, initializers should be covered by the content of 
     // typeshed/stubs/tensorflow/tensorflow/keras
-    "initializers" to "keras._tf_keras.keras.initializers", 
-    "losses" to "keras._tf_keras.keras.losses", 
-    "metrics" to "keras._tf_keras.keras.metrics", 
-    "optimizers" to "keras._tf_keras.keras.optimizers", 
+    "initializers" to "keras._tf_keras.keras.initializers",
+    "losses" to "keras._tf_keras.keras.losses",
+    "metrics" to "keras._tf_keras.keras.metrics",
+    "optimizers" to "keras._tf_keras.keras.optimizers",
     "security" to "tensorflow.security",
     "*" to "tensorflow._api.v2",
   ),
@@ -90,5 +90,6 @@ private data class VersionRange(val minIncluded: String?, val maxExcluded: Strin
     minIncluded?.let { pyRequirementVersionSpec(PyRequirementRelation.GTE, minIncluded) },
     maxExcluded?.let { pyRequirementVersionSpec(PyRequirementRelation.LT, maxExcluded) },
   )
+
   operator fun contains(version: String): Boolean = versionSpecs.all { it.matches(version) }
 }

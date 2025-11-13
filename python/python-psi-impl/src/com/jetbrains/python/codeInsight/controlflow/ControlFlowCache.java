@@ -27,7 +27,8 @@ import static com.intellij.reference.SoftReference.dereference;
 
 
 public final class ControlFlowCache {
-  private static final Key<SoftReference<PyControlFlow>> CONTROL_FLOW_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.ControlFlow");
+  private static final Key<SoftReference<PyControlFlow>> CONTROL_FLOW_KEY =
+    Key.create("com.jetbrains.python.codeInsight.controlflow.ControlFlow");
   private static final Key<SoftReference<Scope>> SCOPE_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.Scope");
 
   private ControlFlowCache() {

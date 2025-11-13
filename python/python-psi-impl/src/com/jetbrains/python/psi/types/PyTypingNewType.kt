@@ -6,9 +6,11 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 
-class PyTypingNewType(private val classType: PyClassType,
-                      private val name: String,
-                      private val declaration: PyTargetExpression?) : PyClassType by classType {
+class PyTypingNewType(
+  private val classType: PyClassType,
+  private val name: String,
+  private val declaration: PyTargetExpression?,
+) : PyClassType by classType {
 
   override fun getName(): String = name
 

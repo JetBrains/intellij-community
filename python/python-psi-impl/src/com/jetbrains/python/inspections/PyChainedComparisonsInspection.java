@@ -38,7 +38,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * User: catherine
- *
+ * <p>
  * Inspection to detect chained comparisons which can be simplified
  * For instance, a < b and b < c  -->  a < b < c
  */
@@ -119,7 +119,8 @@ public final class PyChainedComparisonsInspection extends PyInspection {
             }
           }
           else {
-            registerProblem(node, PyPsiBundle.message("INSP.simplify.chained.comparison"), new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
+            registerProblem(node, PyPsiBundle.message("INSP.simplify.chained.comparison"),
+                            new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
           }
         }
       }

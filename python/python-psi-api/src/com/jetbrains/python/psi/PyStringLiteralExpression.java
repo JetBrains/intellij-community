@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * A string literal expression can consist of a number of implicitly concatenated string literals
- * each with its own set of quotes and prefixes. For instance, the following string literal expression 
+ * each with its own set of quotes and prefixes. For instance, the following string literal expression
  * in the right hand side of the assignment:
  * <p>
  * <code><pre>
@@ -27,13 +27,14 @@ import java.util.List;
  * decoded value, etc.
  *
  * @see <a href="https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation">
- *   https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation</a>
+ * https://docs.python.org/3/reference/lexical_analysis.html#string-literal-concatenation</a>
  * @see #getStringElements()
  * @see PyStringElement
  * @see PyPlainStringElement
  * @see PyFormattedStringElement
  */
-public interface PyStringLiteralExpression extends PyAstStringLiteralExpression, PyLiteralExpression, StringLiteralExpression, PsiLanguageInjectionHost {
+public interface PyStringLiteralExpression
+  extends PyAstStringLiteralExpression, PyLiteralExpression, StringLiteralExpression, PsiLanguageInjectionHost {
   /**
    * Returns a list of implicitly concatenated string elements composing this literal expression.
    */

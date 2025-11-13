@@ -104,7 +104,8 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   private @NotNull Ref<PyExpression> resolveKeywordFormat(@NotNull PyArgumentList argumentList) {
     final Ref<PyExpression> valueExprRef = getKeyValueFromArguments(argumentList);
-    final String indexElement = myChunk instanceof NewStyleSubstitutionChunk ? ((NewStyleSubstitutionChunk)myChunk).getMappingKeyElementIndex() : null;
+    final String indexElement =
+      myChunk instanceof NewStyleSubstitutionChunk ? ((NewStyleSubstitutionChunk)myChunk).getMappingKeyElementIndex() : null;
     if (valueExprRef != null && !valueExprRef.isNull() && indexElement != null) {
       final PyExpression valueExpr = PyPsiUtils.flattenParens(valueExprRef.get());
       assert valueExpr != null;
@@ -130,7 +131,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     if (valueFromKeywordArg != null) {
       valueExprRef = Ref.create(valueFromKeywordArg.getValueExpression());
     }
-    else if (!keywordStarArgs.isEmpty()){
+    else if (!keywordStarArgs.isEmpty()) {
       for (PyStarArgument arg : keywordStarArgs) {
         final Ref<PyExpression> resolvedRef = resolveKeywordStarExpression(arg);
         if (resolvedRef != null && (valueExprRef == null || valueExprRef.get() == null)) {
@@ -256,7 +257,9 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         return null;
       }
       boolean isKeyWordSubstitution = myChunk.getMappingKey() != null;
-      return isKeyWordSubstitution ? resolveKeywordPercent(rightExpression, myChunk.getMappingKey()) : resolvePositionalPercent(rightExpression);
+      return isKeyWordSubstitution
+             ? resolveKeywordPercent(rightExpression, myChunk.getMappingKey())
+             : resolvePositionalPercent(rightExpression);
     }
     return null;
   }
@@ -297,7 +300,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       }
     }
     else if (myPosition != 0 && PsiTreeUtil.instanceOf(containedExpression, PyLiteralExpression.class, PySetLiteralExpression.class,
-                                                                  PyListLiteralExpression.class, PyDictLiteralExpression.class)) {
+                                                       PyListLiteralExpression.class, PyDictLiteralExpression.class)) {
       return null;
     }
     return containedExpression;
@@ -347,8 +350,9 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   private @Nullable Ref<PyExpression> resolvePositionalStarExpression(@NotNull PyStarArgument starArgument, int argumentPosition) {
     assert myPosition >= 0;
-    final PyExpression expr = PyPsiUtils.flattenParens(PsiTreeUtil.getChildOfAnyType(starArgument, PyListLiteralExpression.class, PyParenthesizedExpression.class,
-                                                            PyStringLiteralExpression.class));
+    final PyExpression expr =
+      PyPsiUtils.flattenParens(PsiTreeUtil.getChildOfAnyType(starArgument, PyListLiteralExpression.class, PyParenthesizedExpression.class,
+                                                             PyStringLiteralExpression.class));
     if (expr == null) {
       return Ref.create(starArgument);
     }
@@ -374,7 +378,10 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     return resolveDoubleStar(expression, mappingKey, false, allKeysForSure);
   }
 
-  private @Nullable Ref<PyExpression> resolveDoubleStar(@NotNull PyDictLiteralExpression expression, @NotNull String mappingKey, boolean isNumeric, boolean allKeysForSure) {
+  private @Nullable Ref<PyExpression> resolveDoubleStar(@NotNull PyDictLiteralExpression expression,
+                                                        @NotNull String mappingKey,
+                                                        boolean isNumeric,
+                                                        boolean allKeysForSure) {
     final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
     PyDoubleStarExpression[] starExpressions = PsiTreeUtil.getChildrenOfType(expression, PyDoubleStarExpression.class);
     if (languageLevel.isAtLeast(LanguageLevel.PYTHON35) && starExpressions != null) {
@@ -391,7 +398,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
             }
 
             allKeysForSure = element != null;
-             if (element != null && !element.isNull()) return element;
+            if (element != null && !element.isNull()) return element;
           }
           else if (underStarExpr instanceof PyCallExpression) {
             Ref<PyExpression> element = resolveDictCall((PyCallExpression)underStarExpr, mappingKey, true);

@@ -220,8 +220,8 @@ object PyTypeShed {
                          "${PathManager.getConfigPath()}/../typeshed",
                          PythonHelpersLocator.findPathStringInHelpers("typeshed"))
       return paths.asSequence()
-          .filter { File(it).exists() }
-          .firstOrNull()
+        .filter { File(it).exists() }
+        .firstOrNull()
     }
 
   fun isInThirdPartyLibraries(file: VirtualFile): Boolean =

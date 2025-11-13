@@ -18,7 +18,7 @@ package com.jetbrains.python.psi.types;
 import com.jetbrains.python.psi.PyElementType;
 
 public final class PyTypeTokenTypes {
-  private PyTypeTokenTypes() {}
+  private PyTypeTokenTypes() { }
 
   public static final PyElementType NL = new PyElementType("NL");
   public static final PyElementType SPACE = new PyElementType("SPACE");

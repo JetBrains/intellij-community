@@ -54,10 +54,12 @@ public class PyTypeAnnotationTargetAnnotatorVisitor extends PyElementVisitor {
     final PyExpression innerExpr = PyPsiUtils.flattenParens(expression);
     if (innerExpr instanceof PyTupleExpression || innerExpr instanceof PyListLiteralExpression) {
       myHolder.newAnnotation(HighlightSeverity.ERROR,
-                             PyPsiBundle.message("ANN.variable.annotation.cannot.be.combined.with.tuple.unpacking")).range(innerExpr).create();
+                             PyPsiBundle.message("ANN.variable.annotation.cannot.be.combined.with.tuple.unpacking")).range(innerExpr)
+        .create();
     }
     else if (innerExpr != null && !(innerExpr instanceof PyTargetExpression || innerExpr instanceof PySubscriptionExpression)) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.illegal.target.for.variable.annotation")).range(innerExpr).create();
+      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.illegal.target.for.variable.annotation")).range(innerExpr)
+        .create();
     }
   }
 }

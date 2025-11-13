@@ -152,7 +152,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
 
     final PsiElement statement1 = PyPsiUtils.getParentRightBefore(element1, statementList);
     final PsiElement statement2 = PyPsiUtils.getParentRightBefore(element2, statementList);
-    if (statement1 == null || statement2 == null){
+    if (statement1 == null || statement2 == null) {
       return null;
     }
 

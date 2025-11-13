@@ -283,10 +283,10 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             }
             else if (isReferenceToParameter(expr)) {
               StreamEx.of(getParametersByCallArgument(expr, context))
-                      .nonNull()
-                      .map(parameter -> parameter.getType(context))
-                      .select(PyStructuralType.class)
-                      .forEach(type -> usedAttributes.addAll(type.getAttributeNames()));
+                .nonNull()
+                .map(parameter -> parameter.getType(context))
+                .select(PyStructuralType.class)
+                .forEach(type -> usedAttributes.addAll(type.getAttributeNames()));
             }
           }
           super.visitPyElement(node);

@@ -33,7 +33,6 @@ public final class PyClassAttributesIndex extends StringStubIndexExtension<PyCla
   }
 
 
-
   public static Collection<PyTargetExpression> findClassAndInstanceAttributes(
     @NotNull String name,
     @NotNull Project project,
@@ -47,7 +46,7 @@ public final class PyClassAttributesIndex extends StringStubIndexExtension<PyCla
       }
 
       PyTargetExpression instAttr = clazz.findInstanceAttribute(name, false);
-      if (instAttr != null){
+      if (instAttr != null) {
         ret.add(instAttr);
       }
 
@@ -65,8 +64,8 @@ public final class PyClassAttributesIndex extends StringStubIndexExtension<PyCla
    */
   public static @NotNull List<String> getAllDeclaredAttributeNames(@NotNull PyClass pyClass) {
     List<PsiNamedElement> members = ContainerUtil.concat(pyClass.getInstanceAttributes(),
-                                                               pyClass.getClassAttributes(),
-                                                               Arrays.asList(pyClass.getMethods()));
+                                                         pyClass.getClassAttributes(),
+                                                         Arrays.asList(pyClass.getMethods()));
     return ContainerUtil.mapNotNull(members, expression -> expression.getName());
   }
 }

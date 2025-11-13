@@ -27,12 +27,12 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
   }
 
   override fun hashCode(): Int = 31 * pyClass.hashCode()
-  
+
   override fun <T : Any?> acceptTypeVisitor(visitor: PyTypeVisitor<T?>): T? {
     if (visitor is PyTypeVisitorExt) {
       return visitor.visitPyLiteralType(this)
     }
-    return visitor.visitPyClassType(this)  
+    return visitor.visitPyClassType(this)
   }
 
   companion object {
@@ -114,7 +114,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       private fun promoteDictLiteralOrDictComprehension(
         expectedType: PyType?,
         anchor: PyElement,
-        elements: Collection<PyKeyValueExpression>
+        elements: Collection<PyKeyValueExpression>,
       ): PyType? {
         val (expectedKeyType, expectedValueType) = if (expectedType is PyCollectionType && expectedType.classQName == PyNames.DICT) {
           expectedType.elementTypes[0] to expectedType.elementTypes[1]
@@ -160,7 +160,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
         return expected.expression.name == actual.expression.name
       }
       return PyEvaluator.evaluateNoResolve(expected.expression, Any::class.java) ==
-             PyEvaluator.evaluateNoResolve(actual.expression, Any::class.java)
+        PyEvaluator.evaluateNoResolve(actual.expression, Any::class.java)
     }
 
     /**
@@ -168,10 +168,12 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
      * then tries to infer `typing.Literal[...]` for [expression],
      * otherwise returns type inferred by [context].
      */
-    fun promoteToLiteral(expression: PyExpression,
-                         expected: PyType?,
-                         context: TypeEvalContext,
-                         substitutions: PyTypeChecker.GenericSubstitutions?): PyType? {
+    fun promoteToLiteral(
+      expression: PyExpression,
+      expected: PyType?,
+      context: TypeEvalContext,
+      substitutions: PyTypeChecker.GenericSubstitutions?,
+    ): PyType? {
       val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
       val substitutionOrBound = if (substitution is PyTypeVarType) PyTypeUtil.getEffectiveBound(substitution) else substitution
       if (substitutionOrBound == null) return null

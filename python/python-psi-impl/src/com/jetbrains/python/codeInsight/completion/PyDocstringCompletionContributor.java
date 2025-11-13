@@ -116,7 +116,7 @@ public final class PyDocstringCompletionContributor extends CompletionContributo
     }
     final String text = file.getText();
     StringBuilder prefixBuilder = new StringBuilder();
-    while(offset > 0 && Character.isLetterOrDigit(text.charAt(offset))) {
+    while (offset > 0 && Character.isLetterOrDigit(text.charAt(offset))) {
       prefixBuilder.insert(0, text.charAt(offset));
       offset--;
     }

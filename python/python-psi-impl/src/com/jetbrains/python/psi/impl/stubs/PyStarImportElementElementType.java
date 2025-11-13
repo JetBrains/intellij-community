@@ -39,7 +39,8 @@ public class PyStarImportElementElementType extends PyStubElementType<PyStarImpo
   }
 
   @Override
-  public @NotNull PyStarImportElementStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public @NotNull PyStarImportElementStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub)
+    throws IOException {
     return new PyStarImportElementStubImpl(parentStub);
   }
 }

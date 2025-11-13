@@ -268,7 +268,9 @@ public sealed class TypeEvalContext {
                                                               myConstraints.myAllowStubToAST,
                                                               myConstraints.myAllowCallContext,
                                                               // code completion will always have a new PsiFile, use original file instead
-                                                              myConstraints.myOrigin != null ? myConstraints.myOrigin.getOriginalFile() : null);
+                                                              myConstraints.myOrigin != null
+                                                              ? myConstraints.myOrigin.getOriginalFile()
+                                                              : null);
     return project.getService(TypeEvalContextCache.class).getLibraryContext(new LibraryTypeEvalContext(constraints));
   }
 
@@ -430,7 +432,7 @@ public sealed class TypeEvalContext {
   }
 
   private static class PyNullType implements PyType {
-    private PyNullType() {}
+    private PyNullType() { }
 
     @Override
     public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,

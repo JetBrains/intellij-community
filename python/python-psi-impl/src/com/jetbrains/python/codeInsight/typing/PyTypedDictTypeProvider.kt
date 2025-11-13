@@ -371,12 +371,14 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
       return PyTypedDictType.FieldTypeAndTotality(null, pyType, qualifiers)
     }
 
-    private fun getStringBasedTypeForTypedDict(contents: String,
-                                               anchor: PsiElement,
-                                               context: TypeEvalContext): Pair<Ref<PyType?>?, PyTypedDictType.TypedDictFieldQualifiers?>? {
+    private fun getStringBasedTypeForTypedDict(
+      contents: String,
+      anchor: PsiElement,
+      context: TypeEvalContext,
+    ): Pair<Ref<PyType?>?, PyTypedDictType.TypedDictFieldQualifiers?>? {
       val file = FileContextUtil.getContextFile(anchor) ?: return null
       val expr = PyUtil.createExpressionFromFragment(contents, file)
-      var qualifiers: PyTypedDictType.TypedDictFieldQualifiers ? = null
+      var qualifiers: PyTypedDictType.TypedDictFieldQualifiers? = null
       if (expr is PySubscriptionExpression) {
         qualifiers = parseTypedDictFieldQualifiers(expr, context)
       }

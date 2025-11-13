@@ -42,6 +42,7 @@ public final class PyFromFutureImportInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
       PyReferenceExpression importSource = node.getImportSource();
@@ -52,7 +53,7 @@ public final class PyFromFutureImportInspection extends PyInspection {
           boolean skippedDocString = false;
           for (PyStatement statement : statementList) {
             if (statement instanceof PyExpressionStatement &&
-                ((PyExpressionStatement) statement).getExpression() instanceof PyStringLiteralExpression &&
+                ((PyExpressionStatement)statement).getExpression() instanceof PyStringLiteralExpression &&
                 !skippedDocString) {
               skippedDocString = true;
               continue;

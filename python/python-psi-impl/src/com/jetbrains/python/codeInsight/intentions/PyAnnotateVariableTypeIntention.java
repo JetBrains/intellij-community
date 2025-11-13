@@ -88,9 +88,9 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
                                                                                    @NotNull Set<PyReferenceOwner> alreadyVisited) {
     alreadyVisited.add(element);
     return StreamEx.of(PyUtil.multiResolveTopPriority(element, resolveContext))
-                   .filter(resolved -> resolved instanceof PyTargetExpression || !alreadyVisited.contains(resolved))
-                   .flatMap(resolved -> expandResolveAugAssignments(resolved, resolveContext, alreadyVisited))
-                   .distinct();
+      .filter(resolved -> resolved instanceof PyTargetExpression || !alreadyVisited.contains(resolved))
+      .flatMap(resolved -> expandResolveAugAssignments(resolved, resolveContext, alreadyVisited))
+      .distinct();
   }
 
   private static @NotNull StreamEx<PsiElement> expandResolveAugAssignments(@NotNull PsiElement element,
@@ -150,7 +150,8 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     return false;
   }
 
-  private static @NotNull List<PyTargetExpression> findClassLevelDefinitions(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
+  private static @NotNull List<PyTargetExpression> findClassLevelDefinitions(@NotNull PyTargetExpression target,
+                                                                             @NotNull TypeEvalContext context) {
     assert target.getContainingClass() != null;
     assert target.getName() != null;
     final PyClassTypeImpl classType = new PyClassTypeImpl(target.getContainingClass(), true);

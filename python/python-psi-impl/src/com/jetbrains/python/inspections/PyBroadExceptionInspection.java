@@ -53,10 +53,11 @@ public final class PyBroadExceptionInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyExceptBlock(final @NotNull PyExceptPart node){
+    public void visitPyExceptBlock(final @NotNull PyExceptPart node) {
       PyExpression exceptClass = node.getExceptClass();
-      if (reRaised(node))
+      if (reRaised(node)) {
         return;
+      }
       if (exceptClass == null) {
         registerProblem(node.getFirstChild(), PyPsiBundle.message("INSP.too.broad.exception.clause"));
       }

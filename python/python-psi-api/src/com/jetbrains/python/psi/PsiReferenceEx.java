@@ -24,5 +24,8 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiReferenceEx extends PsiReference {
   @Nullable
   HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context);
-  @Nullable @Nls String getUnresolvedDescription();
+
+  @Nullable
+  @Nls
+  String getUnresolvedDescription();
 }

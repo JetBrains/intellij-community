@@ -119,7 +119,8 @@ public final class PyConvertTypeCommentToVariableAnnotationIntention extends PyB
     return Collections.emptyMap();
   }
 
-  private static @NotNull Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PyExpression targetExpr, @NotNull PsiComment typeComment) {
+  private static @NotNull Map<PyTargetExpression, String> mapTargetsToAnnotations(@NotNull PyExpression targetExpr,
+                                                                                  @NotNull PsiComment typeComment) {
     final PyTargetExpression firstTarget = PsiTreeUtil.findChildOfType(targetExpr, PyTargetExpression.class, false);
     if (firstTarget == null || firstTarget.getTypeComment() != typeComment) {
       return Collections.emptyMap();

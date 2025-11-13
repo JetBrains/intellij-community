@@ -64,7 +64,7 @@ public abstract class PyPsiPath {
         return null;
       }
       if (parent instanceof PyFile) {
-        return ((PyFile) parent).findTopLevelClass(myClassName);
+        return ((PyFile)parent).findTopLevelClass(myClassName);
       }
       if (resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
         if (parent instanceof PyClass) {
@@ -115,10 +115,10 @@ public abstract class PyPsiPath {
         return null;
       }
       if (parent instanceof PyFile) {
-        return ((PyFile) parent).findTopLevelFunction(myFunctionName);
+        return ((PyFile)parent).findTopLevelFunction(myFunctionName);
       }
       if (parent instanceof PyClass) {
-        return ((PyClass) parent).findMethodByName(myFunctionName, false, resolveContext.getTypeEvalContext());
+        return ((PyClass)parent).findMethodByName(myFunctionName, false, resolveContext.getTypeEvalContext());
       }
       if (resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
         for (PsiElement element : parent.getChildren()) {
@@ -230,14 +230,14 @@ public abstract class PyPsiPath {
 
       final PyExpression callee = node.getCallee();
       if (callee instanceof PyReferenceExpression) {
-        final String calleeName = ((PyReferenceExpression) callee).getReferencedName();
+        final String calleeName = ((PyReferenceExpression)callee).getReferencedName();
         if (myCallName.equals(calleeName)) {
           final PyExpression[] args = node.getArguments();
           if (myArgs.length <= args.length) {
             boolean argsMatch = true;
             for (int i = 0; i < myArgs.length; i++) {
               if (!(args[i] instanceof PyStringLiteralExpression) ||
-                  !myArgs [i].equals(((PyStringLiteralExpression)args[i]).getStringValue())) {
+                  !myArgs[i].equals(((PyStringLiteralExpression)args[i]).getStringValue())) {
                 argsMatch = false;
                 break;
               }

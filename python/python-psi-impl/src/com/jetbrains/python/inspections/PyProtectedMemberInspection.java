@@ -42,7 +42,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * User: ktisha
- *
+ * <p>
  * Inspection to detect situations, where
  * protected member (i.e. class member with a name beginning with an underscore)
  * is access outside the class or a descendant of the class where it's defined.
@@ -63,6 +63,7 @@ public final class PyProtectedMemberInspection extends PyInspection {
     Visitor(@Nullable ProblemsHolder holder, @NotNull TypeEvalContext context) {
       super(holder, context);
     }
+
     @Override
     public void visitPyImportElement(@NotNull PyImportElement node) {
       final PyStatement statement = node.getContainingImportStatement();
@@ -159,8 +160,8 @@ public final class PyProtectedMemberInspection extends PyInspection {
         }
         final PyType type = myTypeEvalContext.getType(qualifier);
         final @InspectionMessage String message = type instanceof PyModuleType
-                                 ? PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.module", name)
-                                 : PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.class", name);
+                                                  ? PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.module", name)
+                                                  : PyPsiBundle.message("INSP.protected.member.access.to.protected.member.of.class", name);
         registerProblem(node, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null, quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }

@@ -232,10 +232,10 @@ public class ScopeImpl implements Scope {
         importStmt.accept(new PyVersionAwareElementVisitor(languageLevel) {
           @Override
           public void visitPyElement(@NotNull PyElement node) {
-           if (node instanceof PyImportedNameDefiner definer) {
-             importedNameDefiners.add(definer);
-           }
-           super.visitPyElement(node);
+            if (node instanceof PyImportedNameDefiner definer) {
+              importedNameDefiners.add(definer);
+            }
+            super.visitPyElement(node);
           }
         });
       }

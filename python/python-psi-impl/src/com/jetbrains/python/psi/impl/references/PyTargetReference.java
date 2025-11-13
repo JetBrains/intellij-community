@@ -40,7 +40,7 @@ public class PyTargetReference extends PyReferenceImpl {
       }
     }
     // resolve to self if no other target found
-    return new ResolveResult[] { new PsiElementResolveResult(myElement) };
+    return new ResolveResult[]{new PsiElementResolveResult(myElement)};
   }
 
   @Override

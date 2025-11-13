@@ -71,7 +71,7 @@ public final class PyDescriptorTypeUtil {
           instanceTypeArgument = noneType;
         }
         List<PyType> argumentTypes = List.of(instanceArgumentType, instanceTypeArgument);
-        PyType type  = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.DUNDER_GET, receiverType, argumentTypes, context);
+        PyType type = PySyntheticCallHelper.getCallTypeByFunctionName(PyNames.DUNDER_GET, receiverType, argumentTypes, context);
         return Ref.create(type);
       }
     }
@@ -119,5 +119,4 @@ public final class PyDescriptorTypeUtil {
     }
     return null;
   }
-
 }

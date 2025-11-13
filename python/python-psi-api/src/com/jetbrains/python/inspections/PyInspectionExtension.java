@@ -58,6 +58,7 @@ public abstract class PyInspectionExtension {
 
   /**
    * Enable "unresolved reference" inspection regardless of IDE type and initialized SDK.
+   *
    * @return true -- Enable forcibly, false -- disable forcibly, null -- act as usual.
    */
   public Boolean overrideUnresolvedReferenceInspection(@NotNull PsiFile file) {
@@ -124,5 +125,5 @@ public abstract class PyInspectionExtension {
   /**
    * @return Do not report "unused import"
    */
- public boolean ignoreUnusedImports(@NotNull PyImportedNameDefiner importNameDefiner) {return false;}
+  public boolean ignoreUnusedImports(@NotNull PyImportedNameDefiner importNameDefiner) { return false; }
 }

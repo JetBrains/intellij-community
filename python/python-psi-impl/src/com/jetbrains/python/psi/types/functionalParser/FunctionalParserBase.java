@@ -193,8 +193,8 @@ public abstract class FunctionalParserBase<R, T> implements FunctionalParser<R, 
   }
 
   private static class OrParser<R, T> extends FunctionalParserBase<R, T> {
-   private final @NotNull FunctionalParserBase<R, T> myFirst;
-   private final @NotNull FunctionalParser<R, T> mySecond;
+    private final @NotNull FunctionalParserBase<R, T> myFirst;
+    private final @NotNull FunctionalParser<R, T> mySecond;
 
     OrParser(@NotNull FunctionalParserBase<R, T> first, @NotNull FunctionalParser<R, T> second) {
       myFirst = first;
