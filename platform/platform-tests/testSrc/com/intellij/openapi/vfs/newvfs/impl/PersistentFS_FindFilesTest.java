@@ -131,6 +131,7 @@ public class PersistentFS_FindFilesTest {
     forRandomValidFilesInVFS(pFS, filesToTrial, (fileId, file) -> {
 
       String path = file.getPath();
+      @SuppressWarnings("removal")
       NewVirtualFile fileFoundByPath = VfsImplUtil.findFileByPath(file.getFileSystem(), path);
       assertEquals(
         file,
@@ -185,6 +186,7 @@ public class PersistentFS_FindFilesTest {
 
       String path = file.getPath();
       String nonCanonicalPath = path.replace("/", "/./"); // [/a] -> [/./a]
+      @SuppressWarnings("removal")
       NewVirtualFile fileFoundByNonCanonicalPath = VfsImplUtil.findFileByPath(file.getFileSystem(), nonCanonicalPath);
       assertEquals(
         file,
@@ -239,6 +241,7 @@ public class PersistentFS_FindFilesTest {
 
       String nonCanonicalPath = path.replaceAll("([\\w+\\-.@\\s]+)/", "$1/../$1/");// [/a/] -> [/a/../a/]
 
+      @SuppressWarnings("removal")
       NewVirtualFile fileFoundByNonCanonicalPath = VfsImplUtil.findFileByPath(fileSystem, nonCanonicalPath);
       if (!file.equals(fileFoundByNonCanonicalPath)) {
         if (!hasSymlinkInThePath(path)) {

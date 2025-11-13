@@ -93,6 +93,7 @@ public interface FileNavigator<F extends VirtualFile> {
       return NavigateResult.empty();
     }
 
+    @SuppressWarnings("unchecked")
     F file = (F)rootAndPath.first;
     for (String pathElement : rootAndPath.second) {
 
