@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -18,7 +19,7 @@ class ProjectInspectionToolRegistrar(project: Project, scope: CoroutineScope) : 
     fun getInstance(project: Project): ProjectInspectionToolRegistrar = project.service()
   }
 
-  private val dynamicInspectionsFlow: StateFlow<Set<DynamicInspectionDescriptor>?> = dynamicInspectionsFlow(project)
+  val dynamicInspectionsFlow: StateFlow<Set<DynamicInspectionDescriptor>?> = dynamicInspectionsFlow(project)
     .flowOn(Dispatchers.Default)
     .stateIn(scope, SharingStarted.Lazily, initialValue = null)
 
@@ -81,6 +82,7 @@ class ProjectInspectionToolRegistrar(project: Project, scope: CoroutineScope) : 
   override fun createTools(): List<InspectionToolWrapper<*, *>> {
     updateInspectionProfilesSubscription.start()
     val dynamicTools = dynamicInspectionsFlow.value?.map { it.toolWrapper } ?: emptyList()
+    fileLogger().debug("Creating tools: ${dynamicTools.size} dynamic tools")
     return InspectionToolRegistrar.getInstance().createTools() + dynamicTools
   }
 }
