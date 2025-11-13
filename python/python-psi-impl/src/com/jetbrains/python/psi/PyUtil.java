@@ -73,7 +73,7 @@ import static com.jetbrains.python.ast.PyAstFunction.Modifier.STATICMETHOD;
  */
 public final class PyUtil {
 
-  private static final boolean VERBOSE_MODE = System.getenv().get("_PYCHARM_VERBOSE_MODE") != null;
+  private static final boolean VERBOSE_MODE = System.getenv("_PYCHARM_VERBOSE_MODE") != null;
 
   private PyUtil() {
   }
