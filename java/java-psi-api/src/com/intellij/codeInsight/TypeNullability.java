@@ -129,7 +129,7 @@ public final class TypeNullability {
     if (manager != null) {
       NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(parameter);
       if (typeUseNullability != null) {
-        return typeUseNullability.toTypeNullability();
+        return typeUseNullability.toTypeNullability().inherited();
       }
     }
     return UNKNOWN;
