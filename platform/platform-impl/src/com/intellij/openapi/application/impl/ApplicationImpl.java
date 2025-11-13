@@ -1106,7 +1106,9 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       }
       else {
         var indicator = new EmptyProgressIndicator();
-        action.accept(indicator);
+        ProgressManager.getInstance().runProcess(() -> {
+          action.accept(indicator);
+        }, indicator);
         return !indicator.isCanceled();
       }
     });
