@@ -28,7 +28,7 @@ public class IrKotlinScriptEvaluateExpressionTestGenerated extends AbstractIrKot
     }
 
     private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+        KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM, testDataFilePath);
     }
 
     @TestMetadata("kt51755.kt")

@@ -246,7 +246,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     fun isTestIgnored(): Boolean {
         val outputFile = getExpectedOutputFile()
-        return outputFile.exists() && isIgnoredTarget(TargetBackend.JVM_IR_WITH_IR_EVALUATOR, outputFile)
+        return outputFile.exists() && isIgnoredTarget(TargetBackend.JVM, outputFile)
     }
 
     override fun areLogErrorsIgnored(): Boolean {
