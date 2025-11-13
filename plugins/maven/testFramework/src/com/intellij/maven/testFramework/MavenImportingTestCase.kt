@@ -327,7 +327,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected fun getModule(name: String): Module {
-    val m = ReadAction.compute<Module?, RuntimeException> { ModuleManager.getInstance(project).findModuleByName(name) }
+    val m = ModuleManager.getInstance(project).findModuleByName(name)
     assertNotNull("Module $name not found", m)
     return m as Module
   }
