@@ -1,189 +1,181 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.text;
+package com.intellij.util.text
 
-import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ArrayUtilRt
 
-import java.util.ArrayList;
-import java.util.List;
-
-public final class NameUtilCore {
-
-  private static final int KANA_START = 0x3040;
-  private static final int KANA_END = 0x3358;
-  private static final int KANA2_START = 0xFF66;
-  private static final int KANA2_END = 0xFF9D;
+object NameUtilCore {
+  private const val KANA_START = 0x3040
+  private const val KANA_END = 0x3358
+  private const val KANA2_START = 0xFF66
+  private const val KANA2_END = 0xFF9D
 
   /**
    * Splits an identifier into words, separated with underscores or upper-case characters
    * (camel-case).
-   *
+   * 
    * @param name the identifier to split.
    * @return the list of strings into which the identifier has been split.
    */
-  @NotNull
-  public static List<@NotNull String> splitNameIntoWordList(@NotNull String name) {
-    final String[] underlineDelimited = name.split("_");
-    List<String> result = new ArrayList<>();
-    for (String word : underlineDelimited) {
-      addAllWords(word, result);
+  @JvmStatic
+  fun splitNameIntoWordList(name: String): List<String> {
+    val underlineDelimited = name.split('_')
+    val result = mutableListOf<String>()
+    for (word in underlineDelimited) {
+      var start = 0
+      while (start < word.length) {
+        val next = nextWord(word, start)
+        result.add(word.substring(start, next))
+        start = next
+      }
     }
-    return result;
+    return result
   }
 
   /**
-   * @deprecated use {@link #splitNameIntoWordList(String)} to avoid redundant allocations
-   * <p>
-   * Splits an identifier into words, separated with underscores or upper-case characters
-   * (camel-case).
-   *
    * @param name the identifier to split.
    * @return the array of strings into which the identifier has been split.
    */
-  @Deprecated
-  public static String @NotNull [] splitNameIntoWords(@NotNull String name) {
-    return ArrayUtilRt.toStringArray(splitNameIntoWordList(name));
+  @JvmStatic
+  @Deprecated(
+    """use {@link #splitNameIntoWordList(String)} to avoid redundant allocations
+    <p>
+    Splits an identifier into words, separated with underscores or upper-case characters
+    (camel-case).
+   
+    """)
+  fun splitNameIntoWords(name: String): Array<String> {
+    return ArrayUtilRt.toStringArray(splitNameIntoWordList(name))
   }
 
-  private static void addAllWords(@NotNull String text, @NotNull List<? super String> result) {
-    int start = 0;
-    while (start < text.length()) {
-      int next = nextWord(text, start);
-      result.add(text.substring(start, next));
-      start = next;
-    }
-  }
-
-  public static int nextWord(@NotNull String text, int start) {
-    int ch = text.codePointAt(start);
-    int chLen = Character.charCount(ch);
+  @JvmStatic
+  fun nextWord(text: String, start: Int): Int {
+    val ch = text.codePointAt(start)
+    val chLen = Character.charCount(ch)
     if (!Character.isLetterOrDigit(ch)) {
-      return start + chLen;
+      return start + chLen
     }
 
-    int i = start;
-    while (i < text.length()) {
-      int codePoint = text.codePointAt(i);
-      if (!Character.isDigit(codePoint)) break;
-      i += Character.charCount(codePoint);
+    var i = start
+    while (i < text.length) {
+      val codePoint = text.codePointAt(i)
+      if (!Character.isDigit(codePoint)) break
+      i += Character.charCount(codePoint)
     }
     if (i > start) {
       // digits form a separate hump
-      return i;
+      return i
     }
 
-    while (i < text.length()) {
-      int codePoint = text.codePointAt(i);
-      if (!Character.isUpperCase(codePoint)) break;
-      i += Character.charCount(codePoint);
+    while (i < text.length) {
+      val codePoint = text.codePointAt(i)
+      if (!Character.isUpperCase(codePoint)) break
+      i += Character.charCount(codePoint)
     }
 
     if (i > start + chLen) {
       // several consecutive uppercase letters form a hump
-      if (i == text.length() || !Character.isLetter(text.codePointAt(i))) {
-        return i;
+      if (i == text.length || !Character.isLetter(text.codePointAt(i))) {
+        return i
       }
-      return i - Character.charCount(text.codePointBefore(i));
+      return i - Character.charCount(text.codePointBefore(i))
     }
 
-    if (i == start) i += chLen;
-    while (i < text.length()) {
-      int codePoint = text.codePointAt(i);
-      if (!Character.isLetter(codePoint) || isWordStart(text, i)) break;
-      i += Character.charCount(codePoint);
+    if (i == start) i += chLen
+    while (i < text.length) {
+      val codePoint = text.codePointAt(i)
+      if (!Character.isLetter(codePoint) || isWordStart(text, i)) break
+      i += Character.charCount(codePoint)
     }
-    return i;
+    return i
   }
 
-  public static boolean isWordStart(String text, int i) {
-    int cur = text.codePointAt(i);
-    int prev = i > 0 ? text.codePointBefore(i) : -1;
+  @JvmStatic
+  fun isWordStart(text: String, i: Int): Boolean {
+    val cur = text.codePointAt(i)
+    val prev = if (i > 0) text.codePointBefore(i) else -1
     if (Character.isUpperCase(cur)) {
       if (Character.isUpperCase(prev)) {
         // check that we're not in the middle of an all-caps word
-        int nextPos = i + Character.charCount(cur);
-        return nextPos < text.length() && Character.isLowerCase(text.codePointAt(nextPos));
+        val nextPos = i + Character.charCount(cur)
+        return nextPos < text.length && Character.isLowerCase(text.codePointAt(nextPos))
       }
-      return true;
+      return true
     }
     if (Character.isDigit(cur)) {
-      return true;
+      return true
     }
     if (!Character.isLetter(cur)) {
-      return false;
+      return false
     }
     if (Character.isIdeographic(cur)) {
       // Consider every ideograph as a separate word
-      return true;
+      return true
     }
-    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) ||
-           isKanaBreak(cur, prev);
-  }
-  
-  private static boolean maybeKana(int codePoint) {
-    return codePoint >= KANA_START && codePoint <= KANA_END ||
-           codePoint >= KANA2_START && codePoint <= KANA2_END;
+    return i == 0 || !text[i - 1].isLetterOrDigit() || isKanaBreak(cur, prev)
   }
 
-  private static boolean isKanaBreak(int cur, int prev) {
-    if (!maybeKana(cur) && !maybeKana(prev)) return false;
-    Character.UnicodeScript curScript = Character.UnicodeScript.of(cur);
-    Character.UnicodeScript prevScript = Character.UnicodeScript.of(prev);
-    if (prevScript == curScript) return false;
-    return (curScript == Character.UnicodeScript.KATAKANA || curScript == Character.UnicodeScript.HIRAGANA ||
-            prevScript == Character.UnicodeScript.KATAKANA || prevScript == Character.UnicodeScript.HIRAGANA) &&
-           prevScript != Character.UnicodeScript.COMMON && curScript != Character.UnicodeScript.COMMON;
+  private fun maybeKana(codePoint: Int): Boolean {
+    return codePoint in KANA_START..KANA_END ||
+           codePoint in KANA2_START..KANA2_END
   }
 
-  /**
-   * @deprecated use {@link #nameToWordList(String)} to avoid redundant allocations
-   */
-  @Deprecated
-  public static String @NotNull [] nameToWords(@NotNull String name) {
-    return ArrayUtilRt.toStringArray(nameToWordList(name));
+  private fun isKanaBreak(cur: Int, prev: Int): Boolean {
+    if (!maybeKana(cur) && !maybeKana(prev)) return false
+    val curScript = Character.UnicodeScript.of(cur)
+    val prevScript = Character.UnicodeScript.of(prev)
+    if (prevScript == curScript) return false
+    return (curScript == Character.UnicodeScript.KATAKANA ||
+            curScript == Character.UnicodeScript.HIRAGANA ||
+            prevScript == Character.UnicodeScript.KATAKANA ||
+            prevScript == Character.UnicodeScript.HIRAGANA) && prevScript != Character.UnicodeScript.COMMON && curScript != Character.UnicodeScript.COMMON
   }
 
-  @NotNull
-  public static List<@NotNull String> nameToWordList(@NotNull String name) {
-    List<String> array = new ArrayList<>();
-    int index = 0;
+  @JvmStatic
+  @Deprecated("use {@link #nameToWordList(String)} to avoid redundant allocations")
+  fun nameToWords(name: String): Array<String> {
+    return ArrayUtilRt.toStringArray(nameToWordList(name))
+  }
 
-    while (index < name.length()) {
-      int wordStart = index;
-      int upperCaseCount = 0;
-      int lowerCaseCount = 0;
-      int digitCount = 0;
-      int specialCount = 0;
-      while (index < name.length()) {
-        char c = name.charAt(index);
-        if (Character.isDigit(c)) {
-          if (upperCaseCount > 0 || lowerCaseCount > 0 || specialCount > 0) break;
-          digitCount++;
+  @JvmStatic
+  fun nameToWordList(name: String): List<String> {
+    val array = mutableListOf<String>()
+    var index = 0
+
+    while (index < name.length) {
+      val wordStart = index
+      var upperCaseCount = 0
+      var lowerCaseCount = 0
+      var digitCount = 0
+      var specialCount = 0
+      while (index < name.length) {
+        val c = name[index]
+        if (c.isDigit()) {
+          if (upperCaseCount > 0 || lowerCaseCount > 0 || specialCount > 0) break
+          digitCount++
         }
-        else if (Character.isUpperCase(c)) {
-          if (lowerCaseCount > 0 || digitCount > 0 || specialCount > 0) break;
-          upperCaseCount++;
+        else if (c.isUpperCase()) {
+          if (lowerCaseCount > 0 || digitCount > 0 || specialCount > 0) break
+          upperCaseCount++
         }
-        else if (Character.isLowerCase(c)) {
-          if (digitCount > 0 || specialCount > 0) break;
+        else if (c.isLowerCase()) {
+          if (digitCount > 0 || specialCount > 0) break
           if (upperCaseCount > 1) {
-            index--;
-            break;
+            index--
+            break
           }
-          lowerCaseCount++;
+          lowerCaseCount++
         }
         else {
-          if (upperCaseCount > 0 || lowerCaseCount > 0 || digitCount > 0) break;
-          specialCount++;
+          if (upperCaseCount > 0 || lowerCaseCount > 0 || digitCount > 0) break
+          specialCount++
         }
-        index++;
+        index++
       }
-      String word = name.substring(wordStart, index);
-      if (!StringUtilRt.isEmptyOrSpaces(word)) {
-        array.add(word);
+      val word = name.subSequence(wordStart, index)
+      if (word.isNotBlank()) {
+        array.add(word.toString())
       }
     }
-    return array;
+    return array
   }
 }

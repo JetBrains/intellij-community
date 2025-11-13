@@ -575,13 +575,13 @@ a:com.intellij.util.text.ImmutableCharSequence
 com.intellij.util.text.Matcher
 - a:matches(java.lang.String):Z
 f:com.intellij.util.text.NameUtilCore
-- <init>():V
-- s:isWordStart(java.lang.String,I):Z
-- s:nameToWordList(java.lang.String):java.util.List
-- s:nameToWords(java.lang.String):java.lang.String[]
-- s:nextWord(java.lang.String,I):I
-- s:splitNameIntoWordList(java.lang.String):java.util.List
-- s:splitNameIntoWords(java.lang.String):java.lang.String[]
+- sf:INSTANCE:com.intellij.util.text.NameUtilCore
+- sf:isWordStart(java.lang.String,I):Z
+- sf:nameToWordList(java.lang.String):java.util.List
+- sf:nameToWords(java.lang.String):java.lang.String[]
+- sf:nextWord(java.lang.String,I):I
+- sf:splitNameIntoWordList(java.lang.String):java.util.List
+- sf:splitNameIntoWords(java.lang.String):java.lang.String[]
 f:com.intellij.util.text.SemVer
 - java.lang.Comparable
 - <init>(java.lang.String,I,I,I):V
