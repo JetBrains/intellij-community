@@ -64,8 +64,6 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
-
 @ApiStatus.Internal
 public final class XFramesView extends XDebugView {
   private static final Logger LOG = Logger.getInstance(XFramesView.class);
@@ -401,11 +399,6 @@ public final class XFramesView extends XDebugView {
     if (builder != null) {
       consumer.accept(builder);
     }
-  }
-
-  @Override
-  protected void sessionStopped() {
-    myFramesList.sessionStopped();
   }
 
   @Override

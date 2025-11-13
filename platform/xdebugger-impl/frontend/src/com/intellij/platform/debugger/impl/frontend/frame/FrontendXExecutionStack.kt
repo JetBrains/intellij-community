@@ -3,6 +3,7 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
+import com.intellij.platform.debugger.impl.frontend.storage.findStackFrame
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackDto
@@ -11,6 +12,7 @@ import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
 import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
+import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
@@ -53,6 +55,14 @@ internal class FrontendXExecutionStack(
             val feFrames = event.frames.map { suspendContextLifetimeScope.getOrCreateStackFrame(it, project) }
             container.addStackFrames(feFrames, event.last)
           }
+          is XStackFramesEvent.NewPresentation -> {
+            val frame = suspendContextLifetimeScope.findStackFrame(event.stackFrameId)
+            if (frame == null) {
+              logger.warn("Frame with id ${event.stackFrameId} not found. Probably presentation event was received earlier than stack frame")
+              return@collect
+            }
+            frame.newUiPresentation(event.presentation)
+          }
         }
       }
     }
@@ -68,5 +78,9 @@ internal class FrontendXExecutionStack(
 
   override fun hashCode(): Int {
     return id.hashCode()
+  }
+
+  companion object {
+    private val logger = logger<FrontendXExecutionStack>()
   }
 }

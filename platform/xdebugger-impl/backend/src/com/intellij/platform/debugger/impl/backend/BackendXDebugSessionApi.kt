@@ -6,11 +6,9 @@ import com.intellij.ide.rpc.bindToFrontend
 import com.intellij.ide.rpc.util.toRpc
 import com.intellij.ide.ui.colors.rpcId
 import com.intellij.ide.ui.icons.rpcId
-import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.ide.vfs.rpcId
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -21,6 +19,7 @@ import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.util.coroutines.attachAsChildTo
+import com.intellij.ui.FileColorManager
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.ThreeState
 import com.intellij.util.asDisposable
@@ -32,7 +31,6 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XSteppingSuspendContext
-import com.intellij.xdebugger.impl.frame.ColorState
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
 import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.rpc.models.getOrStoreGlobally
@@ -227,28 +225,6 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }.buffer(Channel.UNLIMITED)
   }
 
-  override suspend fun getFileColorsFlow(sessionId: XDebugSessionId): Flow<XFileColorDto> {
-    val session = sessionId.findValue() ?: return emptyFlow()
-    return channelFlow {
-      session.fileColorsComputer.fileColors.collect { (virtualFile, colorState) ->
-        val serializedState = when (colorState) {
-          is ColorState.Computed -> SerializedColorState.Computed(colorState.color.rpcId())
-          ColorState.Computing -> SerializedColorState.Computing
-          ColorState.NoColor -> SerializedColorState.NoColor
-        }
-        // TODO[IJPL-177087]: send in batches to optimize throughput?
-        send(XFileColorDto(virtualFile.rpcId(), serializedState))
-      }
-    }
-  }
-
-  override suspend fun scheduleFileColorComputation(sessionId: XDebugSessionId, virtualFileId: VirtualFileId) {
-    val session = sessionId.findValue() ?: return
-    val file = virtualFileId.virtualFile() ?: return
-    // TODO[IJPL-177087]: collect in batches to optimize throughput?
-    session.fileColorsComputer.sendRequest(file)
-  }
-
   override suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean) {
     val session = sessionDataId.findValue()?.session ?: return
     withContext(Dispatchers.EDT) {
@@ -322,7 +298,7 @@ internal fun XStackFrame.toRpc(coroutineScope: CoroutineScope, session: XDebugSe
   }
   val evaluatorDto = XDebuggerEvaluatorDto(isDocumentEvaluator)
   return XStackFrameDto(id, sourcePosition?.toRpc(), serializedEqualityObject, evaluatorDto, computeTextPresentation(),
-                        captionInfo(), customBackgroundInfo(), canDrop(session))
+                        captionInfo(), backgroundInfo(session.project), canDrop(session))
 }
 
 internal fun XExecutionStack.toRpc(coroutineScope: CoroutineScope, session: XDebugSessionImpl): XExecutionStackDto {
@@ -347,11 +323,15 @@ private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
   }
 }
 
-private fun XStackFrame.customBackgroundInfo(): XStackFrameCustomBackgroundInfo? {
-  if (this !is XDebuggerFramesList.ItemWithCustomBackgroundColor) {
-    return null
+private fun XStackFrame.backgroundInfo(project: Project): XStackFrameBackgroundColor? {
+  if (this is XDebuggerFramesList.ItemWithCustomBackgroundColor) {
+    XStackFrameBackgroundColor(backgroundColor?.rpcId())
   }
-  return XStackFrameCustomBackgroundInfo(backgroundColor?.rpcId())
+  val file = sourcePosition?.file ?: return null
+  val fileColor = runReadAction {
+    FileColorManager.getInstance(project).getFileColor(file)
+  } ?: return null
+  return XStackFrameBackgroundColor(fileColor.rpcId())
 }
 
 private fun XStackFrame.canDrop(session: XDebugSessionImpl): ThreeState {

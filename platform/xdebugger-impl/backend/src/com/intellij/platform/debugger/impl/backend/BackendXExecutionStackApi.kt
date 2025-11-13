@@ -8,55 +8,58 @@ import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.models.findValue
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class BackendXExecutionStackApi : XExecutionStackApi {
   override suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent> {
     val executionStackModel = executionStackId.findValue() ?: return emptyFlow()
     return channelFlow {
-      val channel = Channel<Deferred<XStackFramesEvent>>(capacity = Channel.UNLIMITED)
 
-      launch {
-        for (event in channel) {
-          val event = event.await()
-          this@channelFlow.send(event)
-          if (event is XStackFramesEvent.ErrorOccurred || event is XStackFramesEvent.XNewStackFrames && event.last) {
-            channel.close()
-            this@channelFlow.close()
-            break
-          }
-        }
-      }
       val executionStack = executionStackModel.executionStack
       executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {
         override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
           // Create a copy of stackFrames to avoid concurrent modification
           val framesCopy = stackFrames.toList()
 
-          channel.trySend(this@channelFlow.async {
-            val session = executionStackModel.session
-            val stackDtos = framesCopy.map { frame ->
-              frame.toRpc(executionStackModel.coroutineScope, session)
+          val session = executionStackModel.session
+          val frameDtos = framesCopy.map { frame ->
+            frame.toRpc(executionStackModel.coroutineScope, session)
+          }
+          trySend(XStackFramesEvent.XNewStackFrames(frameDtos, last))
+          val framesWithIds = frameDtos.zip(framesCopy) { dto, frame -> dto.stackFrameId to frame }
+          subscribeToPresentationUpdates(framesWithIds)
+        }
+
+        private fun ProducerScope<XStackFramesEvent>.subscribeToPresentationUpdates(stacksWithIds: List<Pair<XStackFrameId, XStackFrame>>) {
+          for ((id, stack) in stacksWithIds) {
+            launch(CoroutineName("Presentation update for $id")) {
+              stack.customizePresentation().collectLatest { presentation ->
+                val fragments = buildList {
+                  presentation.fragments.forEach { (text, attributes) ->
+                    add(XStackFramePresentationFragment(text, attributes.toRpc()))
+                  }
+                }
+                val newPresentation = XStackFramePresentation(fragments, presentation.icon?.rpcId(), presentation.tooltipText)
+                send(XStackFramesEvent.NewPresentation(id, newPresentation))
+              }
             }
-            XStackFramesEvent.XNewStackFrames(stackDtos, last)
-          })
+          }
         }
 
         override fun errorOccurred(errorMessage: @NlsContexts.DialogMessage String) {
-          channel.trySend(this@channelFlow.async {
-            XStackFramesEvent.ErrorOccurred(errorMessage)
-          })
+          trySend(XStackFramesEvent.ErrorOccurred(errorMessage))
         }
       })
       awaitClose()
-    }
+    }.buffer(Channel.UNLIMITED)
   }
 
   override fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent> {
@@ -79,16 +82,5 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
     withContext(Dispatchers.EDT) {
       session.debugProcess.dropFrameHandler?.drop(stack.stackFrame)
     }
-  }
-
-  override suspend fun computeUiPresentation(stackFrameId: XStackFrameId): Flow<XStackFramePresentation> {
-    return stackFrameId.findValue()?.stackFrame?.customizePresentation()?.map { presentation ->
-      val fragments = buildList {
-        presentation.fragments.forEach { (text, attributes) ->
-          add(XStackFramePresentationFragment(text, attributes.toRpc()))
-        }
-      }
-      XStackFramePresentation(fragments, presentation.icon?.rpcId(), presentation.tooltipText)
-    } ?: emptyFlow()
   }
 }

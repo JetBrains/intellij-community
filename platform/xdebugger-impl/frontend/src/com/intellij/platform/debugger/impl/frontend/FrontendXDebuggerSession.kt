@@ -52,6 +52,7 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Color
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.event.HyperlinkListener
 import kotlin.time.Duration.Companion.seconds
@@ -468,7 +469,13 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {
-    return FrontendXStackFramesListColorsCache(this, framesList)
+    return object : XStackFramesListColorsCache(project) {
+      override fun get(stackFrame: XStackFrame): Color? {
+        require(stackFrame is FrontendXStackFrame) { "Expected FrontendXStackFrame, got ${stackFrame::class.java}" }
+
+        return stackFrame.backgroundColor
+      }
+    }
   }
 
   override fun areBreakpointsMuted(): Boolean {
