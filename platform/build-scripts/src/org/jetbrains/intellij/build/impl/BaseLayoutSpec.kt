@@ -36,22 +36,23 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withProjectLibrary(libraryName)
   }
 
+  @Deprecated("Project Library should be provided as a content module")
   fun withProjectLibraries(libraryNames: Sequence<String>) {
     layout.withProjectLibraries(libraryNames)
   }
 
+  @Deprecated("Project Library should be provided as a content module")
   fun withProjectLibrary(libraryName: String, outPath: String) {
-    // TODO: owner shouldn't be null in case of PluginLayoutSpec?
     layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, outPath = outPath, reason = "withProjectLibrary", owner = null))
   }
 
+  @Deprecated("Project should be provided as a content module")
   fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
-    // TODO: owner shouldn't be null in case of PluginLayoutSpec?
     layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, reason = "withProjectLibrary", owner = null))
   }
 
+  @Deprecated("Project should be provided as a content module")
   fun withProjectLibrary(libraryName: String, outPath: String, packMode: LibraryPackMode) {
-    // TODO: owner shouldn't be null in case of PluginLayoutSpec?
     layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, outPath = outPath, reason = "withProjectLibrary", owner = null))
   }
 
