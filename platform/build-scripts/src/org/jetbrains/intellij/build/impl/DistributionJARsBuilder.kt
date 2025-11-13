@@ -171,17 +171,15 @@ private fun generateCoreClassPath(
   platformDistribution: List<DistributionFileEntry>,
   bundledPluginsDistribution: List<PluginBuildDescriptor>,
 ): List<String> {
-  val platformClassPath = if (context.useModularLoader) {
-    listOf(PLATFORM_LOADER_JAR)
+  if (context.useModularLoader) {
+    return listOf(PLATFORM_LOADER_JAR)
   }
-  else {
-    val libDir = context.paths.distAllDir.resolve("lib")
-    generateClassPathByLayoutReport(
-      libDir = libDir,
-      entries = platformDistribution,
-      skipNioFs = isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)
-    ).map { libDir.relativize(it).toString() }
-  }
+  val libDir = context.paths.distAllDir.resolve("lib")
+  val platformClassPath = generateClassPathByLayoutReport(
+    libDir = libDir,
+    entries = platformDistribution,
+    skipNioFs = isMultiRoutingFileSystemEnabledForProduct(context.productProperties.platformPrefix)
+  ).map { libDir.relativize(it).toString() }
   val pluginsDir = context.paths.distAllDir.resolve("plugins")
   val coreClassPathFromPlugins = generateCoreClasspathFromPlugins(context, bundledPluginsDistribution).map { pluginsDir.resolve(it).toString() }
   return platformClassPath + coreClassPathFromPlugins
@@ -336,13 +334,15 @@ private fun writePluginInfo(
     specificClasspath?.let { out.write(it) }
     out.close()
 
-    context.addDistFile(DistFile(
-      content = InMemoryDistFileContent(byteOut.toByteArray()),
-      relativePath = PLUGIN_CLASSPATH,
-      os = supportedDist.os,
-      libcImpl = supportedDist.libcImpl,
-      arch = supportedDist.arch,
-    ))
+    context.addDistFile(
+      DistFile(
+        content = InMemoryDistFileContent(byteOut.toByteArray()),
+        relativePath = PLUGIN_CLASSPATH,
+        os = supportedDist.os,
+        libcImpl = supportedDist.libcImpl,
+        arch = supportedDist.arch,
+      )
+    )
   }
 }
 
@@ -660,8 +660,10 @@ private fun CoroutineScope.createBuildBrokenPluginListJob(context: BuildContext)
 }
 
 private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: Sequence<DistributionFileEntry>, context: BuildContext): Job {
-  return createSkippableJob(spanBuilder("generate table of licenses for used third-party libraries"),
-                            BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
+  return createSkippableJob(
+    spanBuilder("generate table of licenses for used third-party libraries"),
+    BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context
+  ) {
     val generator = createLibraryLicensesListGenerator(
       context = context,
       licenseList = context.productProperties.allLibraryLicenses,
