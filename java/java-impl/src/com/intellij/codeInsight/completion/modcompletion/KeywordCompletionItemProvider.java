@@ -86,8 +86,6 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
         not(JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN));
 
   private static final PsiElementPattern<PsiElement, ?> START_FOR = psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for"));
-  private static final ElementPattern<PsiElement> CLASS_REFERENCE =
-    psiElement().withParent(psiReferenceExpression().referencing(psiClass().andNot(psiElement(PsiTypeParameter.class))));
 
   @Override
   public void provideItems(CompletionContext context, Consumer<CompletionItem> sink) {
@@ -158,14 +156,109 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       addClassKeywords();
       addMethodHeaderKeywords();
       addPrimitiveTypes();
-      //
-      //addVar();
-      //
-      //addClassLiteral();
-      //
-      //addExtendsImplements();
-      //
-      //addCaseNullToSwitch();
+      addVar();
+      addClassLiteral();
+      addExtendsImplements();
+      addCaseNullToSwitch();
+    }
+
+    private void addCaseNullToSwitch() {
+      if (!isInsideCaseLabel()) return;
+
+      final PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(myPosition, PsiSwitchBlock.class, false, PsiMember.class);
+      if (switchBlock == null) return;
+
+      final PsiType selectorType = getSelectorType(switchBlock);
+      if (selectorType instanceof PsiPrimitiveType) return;
+
+      mySink.accept(createKeyword(JavaKeywords.NULL));
+    }
+
+    private boolean isInsideCaseLabel() {
+      if (!PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, myPosition)) return false;
+      return PsiJavaPatterns.psiElement().withSuperParent(2, PsiCaseLabelElementList.class).accepts(myPosition);
+    }
+    
+    private void addExtendsImplements() {
+      if (myPrevLeaf == null ||
+          !(myPrevLeaf instanceof PsiIdentifier || myPrevLeaf.textMatches(">") || myPrevLeaf.textMatches(")"))) {
+        return;
+      }
+
+      PsiClass psiClass = null;
+      PsiElement prevParent = myPrevLeaf.getParent();
+      if (myPrevLeaf instanceof PsiIdentifier && prevParent instanceof PsiClass) {
+        psiClass = (PsiClass)prevParent;
+      }
+      else {
+        PsiReferenceList referenceList = PsiTreeUtil.getParentOfType(myPrevLeaf, PsiReferenceList.class);
+        if (referenceList != null && referenceList.getParent() instanceof PsiClass) {
+          psiClass = (PsiClass)referenceList.getParent();
+        }
+        else if ((prevParent instanceof PsiTypeParameterList || prevParent instanceof PsiRecordHeader)
+                 && prevParent.getParent() instanceof PsiClass) {
+          psiClass = (PsiClass)prevParent.getParent();
+        }
+      }
+
+      if (psiClass != null) {
+        if (!psiClass.isEnum() && !psiClass.isRecord()) {
+          mySink.accept(createKeyword(JavaKeywords.EXTENDS, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType()));
+          if (PsiUtil.isAvailable(JavaFeature.SEALED_CLASSES, psiClass)) {
+            PsiModifierList modifiers = psiClass.getModifierList();
+            if (myContext.invocationCount() > 1 ||
+                (modifiers != null &&
+                 !modifiers.hasExplicitModifier(PsiModifier.FINAL) &&
+                 !modifiers.hasExplicitModifier(PsiModifier.NON_SEALED))) {
+              CommonCompletionItem permits =
+                createKeyword(JavaKeywords.PERMITS, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType());
+              if (modifiers != null && !modifiers.hasExplicitModifier(PsiModifier.SEALED)) {
+                permits = permits
+                  .withAdditionalUpdater((start, file, updater) -> {
+                    PsiClass aClass = PsiTreeUtil.findElementOfClassAtOffset(file, start, PsiClass.class, false);
+                    if (aClass != null) {
+                      PsiModifierList modifierList = aClass.getModifierList();
+                      if (modifierList != null) {
+                        modifierList.setModifierProperty(PsiModifier.SEALED, true);
+                      }
+                    }
+                  });
+              }
+              mySink.accept(permits);
+            }
+          }
+        }
+        if (!psiClass.isInterface() && !(psiClass instanceof PsiTypeParameter)) {
+          mySink.accept(createKeyword(JavaKeywords.IMPLEMENTS, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType()));
+        }
+      }
+    }
+    
+    private void addClassLiteral() {
+      if (JavaKeywordCompletion.isAfterTypeDot(myPosition)) {
+        mySink.accept(createKeyword(JavaKeywords.CLASS));
+      }
+    }
+
+    private void addVar() {
+      if (isVarAllowed()) {
+        mySink.accept(createKeyword(JavaKeywords.VAR, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType()));
+      }
+    }
+
+    private boolean isVarAllowed() {
+      if (PsiUtil.isAvailable(JavaFeature.VAR_LAMBDA_PARAMETER, myPosition) && isLambdaParameterType(myPosition)) {
+        return true;
+      }
+
+      if (!PsiUtil.isAvailable(JavaFeature.LVTI, myPosition)) return false;
+
+      if (isAtCatchOrResourceVariableStart(myPosition) && PsiTreeUtil.getParentOfType(myPosition, PsiCatchSection.class) == null) {
+        return true;
+      }
+
+      return isVariableTypePosition(myPosition) &&
+             PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class, PsiLambdaExpression.class) != null;
     }
 
     private void addPrimitiveTypes() {
@@ -1130,10 +1223,12 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       return false;
     }
 
+    @Contract(pure = true)
     private CommonCompletionItem createKeyword(@NlsSafe String keyword) {
       return createKeyword(keyword, (ModNavigatorTailType)TailTypes.noneType());
     }
 
+    @Contract(pure = true)
     private CommonCompletionItem createKeyword(@NlsSafe String keyword, ModNavigatorTailType tailType) {
       return new CommonCompletionItem(keyword)
         .withObject(JavaPsiFacade.getElementFactory(myFile.getProject()).createKeyword(keyword, myPosition))
@@ -1330,5 +1425,15 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       }
     }
     return true;
+  }
+
+  private static boolean isLambdaParameterType(PsiElement position) {
+    PsiParameterList paramList = PsiTreeUtil.getParentOfType(position, PsiParameterList.class);
+    if (paramList != null && paramList.getParent() instanceof PsiLambdaExpression) {
+      PsiParameter param = PsiTreeUtil.getParentOfType(position, PsiParameter.class);
+      PsiTypeElement type = param == null ? null : param.getTypeElement();
+      return type == null || PsiTreeUtil.isAncestor(type, position, false);
+    }
+    return false;
   }
 }

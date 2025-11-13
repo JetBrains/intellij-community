@@ -1155,7 +1155,7 @@ public class JavaKeywordCompletion {
           not(psiElement().withText(JavaKeywords.CLASS))))).accepts(element);
   }
 
-  static boolean isAfterTypeDot(PsiElement position) {
+  public static boolean isAfterTypeDot(PsiElement position) {
     if (isInsideParameterList(position) || position.getContainingFile() instanceof PsiJavaCodeReferenceCodeFragment) {
       return false;
     }
