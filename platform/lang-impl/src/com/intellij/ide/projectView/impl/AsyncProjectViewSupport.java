@@ -156,8 +156,8 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
   @Override
   public void updateAll(@Nullable Runnable onDone, @NotNull Collection<ProjectViewUpdateCause> causes) {
     LOG.debug(new RuntimeException("reload a whole tree"));
-    ProjectViewPerformanceMonitor.getInstance(project).reportUpdateAll(causes);
-    CompletableFuture<?> future = myStructureTreeModel.invalidateAsync();
+    var request = ProjectViewPerformanceMonitor.getInstance(project).beginUpdateAll(causes);
+    CompletableFuture<?> future = myStructureTreeModel.invalidateAsync(request);
     if (onDone != null) {
       future.thenRun(() -> myAsyncTreeModel.onValidThread(onDone));
     }

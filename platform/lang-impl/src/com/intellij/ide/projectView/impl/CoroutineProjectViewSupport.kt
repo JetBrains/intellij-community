@@ -70,7 +70,6 @@ internal class CoroutineProjectViewSupport(
   }
 
   override fun updateAll(afterUpdate: Runnable?, causes: Collection<ProjectViewUpdateCause>) {
-    ProjectViewPerformanceMonitor.getInstance(project).reportUpdateAll(causes)
     updateImpl(null, true, afterUpdate)
   }
 
