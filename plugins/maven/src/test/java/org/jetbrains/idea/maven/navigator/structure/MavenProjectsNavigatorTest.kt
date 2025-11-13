@@ -41,7 +41,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       myNavigator!!.initForTests()
       myNavigator!!.groupModules = true
 
-      myStructure = myNavigator!!.structureForTests
+      myStructure = myNavigator!!.structureForTests()
     }
   }
 
