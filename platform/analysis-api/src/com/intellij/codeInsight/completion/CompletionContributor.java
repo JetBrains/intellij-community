@@ -15,7 +15,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -235,7 +234,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
 
   public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language) {
     List<CompletionContributor> contributors = INSTANCE.forKey(language);
-    if (Registry.is("ide.completion.modcommand", false)) {
+    if (CompletionItemProvider.modCommandCompletionEnabled()) {
       contributors =
         ContainerUtil.concat(ContainerUtil.map(CompletionItemProvider.forLanguage(language), CompletionItemContributor::new), contributors);
     }

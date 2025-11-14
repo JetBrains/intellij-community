@@ -6,8 +6,10 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 
 import java.util.List;
@@ -34,6 +36,14 @@ public interface CompletionItemProvider {
    */
   static List<CompletionItemProvider> forLanguage(Language language) {
     return EP_NAME.forKey(language);
+  }
+
+  /**
+   * @return true if the mod command completion is enabled in registry
+   */
+  @ApiStatus.Internal
+  static boolean modCommandCompletionEnabled() {
+    return Registry.is("ide.completion.modcommand", false);
   }
 
   /**
