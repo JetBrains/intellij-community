@@ -119,7 +119,7 @@ class SePopupHeaderPane(
               configuration.selectedTab.value = uiSelectedTabIndex
             }
 
-            tabbedPane.bindSelectedTabIn(configuration.selectedTab, this)
+            tabbedPane.bindSelectedTabIn(configuration.selectedTab, coroutineScope)
           }
           else {
             tabbedPane.addTab(SeAllTab.NAME, null, JPanel(), null)
