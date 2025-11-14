@@ -162,6 +162,7 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - f:getActions(Z,Z):java.util.List
 - getActions(Z,Z,Z):java.util.List
 - bs:getActions$default(com.intellij.ide.RecentProjectListActionProvider,Z,Z,Z,I,java.lang.Object):java.util.List
+- recentProjectsInDocSupported():Z
 c:com.intellij.ide.RecentProjectsManagerBase
 - f:addRecentPath(java.nio.file.Path,com.intellij.ide.RecentProjectMetaInfo):V
 - f:getDisplayName(java.nio.file.Path):java.lang.String
