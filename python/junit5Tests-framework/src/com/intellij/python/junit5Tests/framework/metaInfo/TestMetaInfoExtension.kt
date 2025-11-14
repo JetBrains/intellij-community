@@ -1,16 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.framework.metaInfo
 
-import com.intellij.python.junit5Tests.framework.MultiFileTest
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
-import org.junit.jupiter.api.extension.BeforeAllCallback
-import org.junit.jupiter.api.extension.BeforeEachCallback
-import org.junit.jupiter.api.extension.Extension
-import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.api.extension.*
 import org.junit.jupiter.api.extension.ExtensionContext.Namespace
-import org.junit.jupiter.api.extension.ParameterContext
-import org.junit.jupiter.api.extension.ParameterResolver
+import org.junit.platform.commons.support.AnnotationSupport
 import java.nio.file.Path
 import kotlin.io.path.relativeTo
 import kotlin.jvm.optionals.getOrNull
@@ -86,15 +81,25 @@ class TestMetaInfoExtension : BeforeAllCallback, BeforeEachCallback, Extension, 
   override fun beforeEach(context: ExtensionContext) {
     val explicitPath = context.getTestCaseFilePath()
 
-    val testCaseFilePath = if (explicitPath != null) explicitPath
+    val testCaseFilePath = if (explicitPath != null) {
+      explicitPath
+    }
     else {
       val testClassInfo = context.getTestClassInfo()
       testClassInfo.testDataPath?.let { testDataPath ->
         val testName = context.resolveTestName()
-        val path = testClassInfo.getTestResourcePath(testName)?.relativeTo(testDataPath)
-        val multiFileTest = context.testMethod.get().getAnnotation(MultiFileTest::class.java)
-        if (multiFileTest != null) path?.resolve(multiFileTest.mainFileName)
-                                   ?: error("Test file ${multiFileTest.mainFileName} not found in $path") else path
+        val testMetaInfo = AnnotationSupport.findAnnotation(context.testMethod.get(), TestMetaInfo::class.java).getOrNull()
+
+        if (testMetaInfo != null) {
+          val resourceRaw = testMetaInfo.resourcePath
+          val substitutedPath = resourceRaw.replace($$"$TEST_NAME", testName)
+
+          val resolved = testDataPath.resolve(substitutedPath) ?: error("Test file ${substitutedPath} not found under $testDataPath")
+          resolved.relativeTo(testDataPath)
+        }
+        else {
+          testClassInfo.getTestResourcePath(testName)?.relativeTo(testDataPath)
+        }
       }
     }
 
