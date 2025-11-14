@@ -3331,6 +3331,73 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-85123
+  public void testOverloadedMethodInConcreteClassWithGenericProtocol() {
+    doTestByText("""
+                   from typing import TypeVar, overload, Protocol
+                   
+                   T = TypeVar("T", contravariant=True)
+                   
+                   class SupportsWrite(Protocol[T]):
+                       def write(self, s: T): ...
+                   
+                   class B:
+                       @overload
+                       def write(self, s: int): ...
+                   
+                       @overload
+                       def write(self, s: str): ...
+                   
+                   
+                   a: SupportsWrite[str] = B()
+                   """);
+  }
+
+  // PY-85123
+  public void testProtocolPartialSpecializationFixedReturnGenericParam() {
+    doTestByText("""
+                   from typing import Protocol, TypeVar, overload
+                   
+                   T = TypeVar("T", contravariant=True)
+                   S = TypeVar("S", covariant=True)
+                   
+                   class P(Protocol[T, S]):
+                       def write(self, x: T) -> S: ...
+                   
+                   class B:
+                       @overload
+                       def write(self, x: int) -> str: ...
+                       @overload
+                       def write(self, x: str) -> str: ...
+                   
+                   
+                   def accepts_p(arg: P[T, str]) -> None: ...
+                   accepts_p(B())
+                   """);
+  }
+
+  // PY-85123
+  public void testProtocolPartialSpecializationUnionConcreteAndGeneric() {
+    doTestByText("""
+                   from typing import Protocol, TypeVar, overload
+                   
+                   T = TypeVar("T", contravariant=True)
+                   
+                   class SupportsWrite(Protocol[T]):
+                       def write(self, s: T): ...
+                   
+                   class B:
+                       @overload
+                       def write(self, s: int): ...
+                       @overload
+                       def write(self, s: str): ...
+                   
+                   
+                   def accepts_union(x: SupportsWrite[str] | SupportsWrite[T]) -> None: ...
+                   accepts_union(B())
+                   """);
+  }
+
   // PY-76822
   public void testExplicitAnyInConcreteType() {
     doTestByText("""
@@ -3426,25 +3493,24 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from collections.abc import Iterable
                    from typing import assert_type
-
-
+                   
                    # PY-84544
                    def foo(iterable: Iterable[int] | Iterable[str]) -> None:
                        assert_type(next(iter(iterable)), int | str)
-
-
+                   
+                   
                    # PY-25989
                    assert_type(max(1, 2.6), float)
                    assert_type(max(2.6, 1), float)
                    max(1, <warning descr="Expected type 'int' (matched generic type 'SupportsRichComparisonT ≤: SupportsDunderLT[Any] | SupportsDunderGT[Any]'), got 'object' instead">object()</warning>)    
-
-
+                   
+                   
                    def bar[T: int, str](v1: T, v2: T) -> T:
                        if (bool(input())):
                            return v1
                        return v2
-
-
+                   
+                   
                    _ = bar(1, <warning descr="Expected type 'int' (matched generic type 'T ≤: int'), got 'str' instead">"a"</warning>)
                    """);
   }
@@ -3639,3 +3705,4 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 }
+

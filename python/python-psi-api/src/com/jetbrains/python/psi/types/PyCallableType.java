@@ -49,6 +49,12 @@ public interface PyCallableType extends PyType {
     return null;
   }
 
+  @ApiStatus.Experimental
+  @NotNull
+  default PyCallableType dropSelf(@NotNull TypeEvalContext context) {
+    return this;
+  }
+
   default @Nullable PyFunction.Modifier getModifier() {
     return null;
   }
@@ -65,11 +71,5 @@ public interface PyCallableType extends PyType {
   @Override
   default <T> T acceptTypeVisitor(@NotNull PyTypeVisitor<T> visitor) {
     return visitor.visitPyCallableType(this);
-  }
-
-  @ApiStatus.Experimental
-  @NotNull
-  default PyCallableType dropSelf(@NotNull TypeEvalContext context) {
-    return this;
   }
 }

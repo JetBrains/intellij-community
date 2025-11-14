@@ -4580,6 +4580,27 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+  // PY-85123
+  public void testGenericReturnTypeMatchInProtocol() {
+    doTest("int", """
+      from typing_extensions import reveal_type, Protocol, TypeVar
+      
+      _T_co = TypeVar("_T_co", covariant=True)
+      
+      class P(Protocol[_T_co]):
+          def f(self) -> _T_co: ...
+      
+      class C:
+          def f(self) -> int:
+              return 1
+      
+      def a[_T](p1: P[_T]) -> _T:
+          return p1.f()
+      
+      expr = a(C())
+      """);
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
