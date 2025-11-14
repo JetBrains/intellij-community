@@ -332,11 +332,12 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(myUpdatesForPlugins, plugins -> {
+          Collection<PluginDownloader> updatesForPlugins = myUpdatesForPlugins;
+          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(updatesForPlugins, plugins -> {
             var dialog = new PluginUpdateDialog(e.getProject(), plugins.values(), myCustomRepositoryPlugins, plugins);
             dialog.setFinishCallback(() -> setEnableUpdateAction(true));
             setEnableUpdateAction(false);
-            if (!PluginUpdateDialog.showDialogAndUpdate(myUpdatesForPlugins, dialog)) {
+            if (!PluginUpdateDialog.showDialogAndUpdate(updatesForPlugins, dialog)) {
               setEnableUpdateAction(true);
             }
             return Unit.INSTANCE;
