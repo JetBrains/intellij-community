@@ -547,6 +547,7 @@ fun <T : CommandChain> T.expandMainMenu(): T = apply {
 }
 
 fun <T : CommandChain> T.closeAllTabs(): T = apply {
+  addCommand("${CMD_PREFIX}takeScreenshot before_close_all_tabs")
   addCommand("${CMD_PREFIX}closeAllTabs")
 }
 
@@ -1364,5 +1365,6 @@ fun <T : CommandChain> T.detectProjectLeaks(): T = apply {
 }
 
 fun <T : CommandChain> T.hideAllToolWindows(): T = apply {
+  addCommand("${CMD_PREFIX}takeScreenshot before_close_all_tabs")
   addCommand("${CMD_PREFIX}hideAllToolWindows")
 }
