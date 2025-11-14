@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.*;
@@ -123,11 +124,11 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
     @NotNull Collection<? extends GradleBuild> gradleBuilds,
     @NotNull GradleVersion gradleVersion
   ) {
-    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted = new LinkedHashMap<>();
+    Map<File, DefaultGradleLightBuild> gradleBuildsToConverted = new LinkedHashMap<>();
     // TODO traverse builds via graph to avoid separated parent build field initialization
     for (GradleBuild gradleBuild : gradleBuilds) {
       DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild, gradleVersion);
-      gradleBuildsToConverted.put(gradleBuild, build);
+      gradleBuildsToConverted.put(gradleBuild.getBuildIdentifier().getRootDir(), build);
     }
     setIncludedBuildsHierarchy(gradleBuilds, gradleBuildsToConverted);
     setBuildSrcHierarchy(gradleBuildsToConverted.values());
@@ -137,14 +138,14 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
   /// Sets parent builds for included builds, relying on the data provided by Gradle.
   private static void setIncludedBuildsHierarchy(
     @NotNull Collection<? extends GradleBuild> gradleBuilds,
-    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted
+    Map<File, DefaultGradleLightBuild> gradleBuildsToConverted
   ) {
     for (GradleBuild gradleBuild : gradleBuilds) {
-      DefaultGradleLightBuild build = gradleBuildsToConverted.get(gradleBuild);
+      DefaultGradleLightBuild build = gradleBuildsToConverted.get(gradleBuild.getBuildIdentifier().getRootDir());
       assert build != null;
 
       for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
-        DefaultGradleLightBuild buildToUpdate = gradleBuildsToConverted.get(includedGradleBuild);
+        DefaultGradleLightBuild buildToUpdate = gradleBuildsToConverted.get(includedGradleBuild.getBuildIdentifier().getRootDir());
         assert buildToUpdate != null;
         buildToUpdate.setParentBuild(build);
       }
