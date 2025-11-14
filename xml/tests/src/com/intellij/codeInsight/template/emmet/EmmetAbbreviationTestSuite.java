@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.Assert.fail;
+
 public abstract class EmmetAbbreviationTestSuite extends TestSuite {
   protected void setUp(@NotNull Project project) throws Exception {
   }
@@ -46,20 +48,23 @@ public abstract class EmmetAbbreviationTestSuite extends TestSuite {
 
   protected void addTestFromJson(String filePath, String... extensions) throws IOException {
     JsonFactory factory = JsonFactory.builder().build();
-    JsonParser parser = factory.createParser(new File(filePath));
-    parser.enable(JsonParser.Feature.ALLOW_COMMENTS);
-    if (parser.nextToken() != JsonToken.START_OBJECT) {
-      throw new IOException("Unexpected JSON format");
-    }
-    while (parser.nextToken() != JsonToken.END_OBJECT) {
-      String key = parser.getText();
-      parser.nextToken();
-      String expected = parser.getText();
-      for (String source : StringUtil.split(key, "|")) {
-        // replace ${1:hello} with hello
-        expected = expected.replaceAll("\\$\\{\\d(:([^}]+))?}", "$2");
-        addTest(source, expected, extensions);
+    try (JsonParser parser = factory.createParser(new File(filePath))) {
+      parser.enable(JsonParser.Feature.ALLOW_COMMENTS);
+      if (parser.nextToken() != JsonToken.START_OBJECT) {
+        throw new IOException("Unexpected JSON format");
       }
+      while (parser.nextToken() != JsonToken.END_OBJECT) {
+        String key = parser.getText();
+        parser.nextToken();
+        String expected = parser.getText();
+        for (String source : StringUtil.split(key, "|")) {
+          // replace ${1:hello} with hello
+          expected = expected.replaceAll("\\$\\{\\d(:([^}]+))?}", "$2");
+          addTest(source, expected, extensions);
+        }
+      }
+    } catch (IOException e) {
+      fail(e.getMessage());
     }
     /*
       JsonObject jsonObject = new GsonBuilder().setLenient().create()
