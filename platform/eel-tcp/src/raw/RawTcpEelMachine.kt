@@ -2,7 +2,11 @@
 package com.intellij.platform.eel.tcp.raw
 
 import com.intellij.platform.eel.tcp.TcpEelMachine
+import com.intellij.platform.ijent.tcp.IjentIsolatedTcpDeployingStrategy
 import kotlinx.coroutines.CoroutineScope
 
-class RawTcpEelMachine(val host: String, coroutineScope: CoroutineScope) : TcpEelMachine("tcp-$host", coroutineScope) {
-}
+class RawTcpEelMachine(
+  val host: String,
+  coroutineScope: CoroutineScope,
+  strategyFactory: () -> IjentIsolatedTcpDeployingStrategy,
+) : TcpEelMachine("tcp-$host", coroutineScope, strategyFactory)

@@ -19,6 +19,7 @@ abstract class IjentIsolatedTcpDeployingStrategy : IjentDeployingStrategy {
    */
   protected abstract suspend fun deployEnvironment(): IjentSessionMediator
   abstract override suspend fun getConnectionStrategy(): IjentConnectionStrategy.Tcp
+  abstract suspend fun getRemoteBinaryPath(): String
 
   protected abstract fun closeConnection()
 
@@ -26,7 +27,7 @@ abstract class IjentIsolatedTcpDeployingStrategy : IjentDeployingStrategy {
     try {
       val mediator = deployEnvironment()
       createIjentSession(getConnectionStrategy(),
-                         "", // Binary path is used only in tests to acquire a path to deployed binary. TcpConnection
+                         getRemoteBinaryPath(),
                          getTargetPlatform(),
                          mediator)
     } catch (err: Exception) {

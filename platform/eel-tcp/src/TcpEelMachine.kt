@@ -9,9 +9,9 @@ import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.tcp.IjentIsolatedTcpDeployingStrategy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -23,10 +23,12 @@ enum class TcpEelDeployingMode {
 abstract class TcpEelMachine(
   override val internalName: String,
   val coroutineScope: CoroutineScope,
-  val deployingMode: TcpEelDeployingMode = TcpEelDeployingMode.Greedy,
+  val strategyFactory: () -> IjentIsolatedTcpDeployingStrategy,
 ) : EelMachine {
   private val deferredEelSession = CompletableDeferred<IjentSession<IjentApi>>()
-  private val deployingState = AtomicBoolean(false)
+
+  @VisibleForTesting
+  val deployingState: AtomicBoolean = AtomicBoolean(false)
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
     val session = deferredEelSession.await()
     /** Do not need additional cache, since the current implementation of [IjentSession.getIjentInstance] doing caching */
@@ -44,13 +46,9 @@ abstract class TcpEelMachine(
    * That means that there could be possible an indefinite (as persistance is implemented and enabled) number of running Ijent instances to the different remote machines.
    */
   @ApiStatus.Internal
-  fun deploy(strategyFactory: () -> IjentIsolatedTcpDeployingStrategy) {
-    val coroutineStart = when (deployingMode) {
-      TcpEelDeployingMode.Greedy -> CoroutineStart.DEFAULT
-      TcpEelDeployingMode.Lazy -> CoroutineStart.LAZY
-    }
+  fun deploy() {
     if (deployingState.compareAndSet(false, true)) {
-      coroutineScope.async(start = coroutineStart) {
+      coroutineScope.async {
         deferredEelSession.complete(strategyFactory().createIjentSession())
       }
     }

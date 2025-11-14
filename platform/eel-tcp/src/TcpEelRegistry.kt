@@ -14,7 +14,7 @@ internal class TcpEelRegistry {
   }
 
   private val registry = ConcurrentHashMap<String, TcpEelDescriptor>()
-  fun register(internalName: String): TcpEelDescriptor {
+  fun register(internalName: String): TcpEelDescriptor? {
     return registry.compute(internalName) { _, oldValue ->
       if (oldValue == null) {
         LOG.info("Creating TCP descriptor for $internalName")
@@ -22,7 +22,7 @@ internal class TcpEelRegistry {
       } else {
         oldValue
       }
-    }!!
+    }
   }
 
   private fun tryRegister(internalName: String): TcpEelDescriptor? = TcpEelPathParser.toDescriptor(internalName)

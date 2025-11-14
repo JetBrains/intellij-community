@@ -11,8 +11,9 @@ import java.nio.file.Path
 class TcpEelProvider : EelProvider {
   override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String): EelMachine? {
     val internalName = TcpEelPathParser.extractInternalMachineId(path) ?: return null
-    val descriptor = TcpEelRegistry.getInstance().register(internalName)
+    val descriptor = TcpEelRegistry.getInstance().register(internalName) ?: return null
     val tcpMachine = descriptor.getEelMachine() as? TcpEelMachine ?: return null
+    tcpMachine.deploy()
     tcpMachine.waitForDeployment()
     return tcpMachine
   }
