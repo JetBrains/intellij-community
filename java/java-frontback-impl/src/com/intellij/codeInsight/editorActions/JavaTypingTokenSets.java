@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public final class JavaTypingTokenSets {
@@ -16,11 +16,11 @@ public final class JavaTypingTokenSets {
                     JavaTokenType.STRING_LITERAL, JavaTokenType.TEXT_BLOCK_LITERAL);
 
   public static final TokenSet UNWANTED_TOKEN_BEFORE_QUESTION =
-    TokenSet.orSet(JavaBinaryOperations.ASSIGNMENT_OPS, TokenSet.create(JavaTokenType.QUEST, JavaTokenType.COLON));
+    TokenSet.orSet(ElementType.ASSIGNMENT_OPS, TokenSet.create(JavaTokenType.QUEST, JavaTokenType.COLON));
 
   public static final TokenSet WANTED_TOKEN_BEFORE_QUESTION =
     // Tokens that may appear before ?: in polyadic expression that may have non-boolean result
     TokenSet.orSet(
       TokenSet.create(JavaTokenType.OR, JavaTokenType.XOR, JavaTokenType.AND),
-      JavaBinaryOperations.SHIFT_OPS, JavaBinaryOperations.ADDITIVE_OPS, JavaBinaryOperations.MULTIPLICATIVE_OPS);
+      ElementType.SHIFT_OPS, ElementType.ADDITIVE_OPS, ElementType.MULTIPLICATIVE_OPS);
 }

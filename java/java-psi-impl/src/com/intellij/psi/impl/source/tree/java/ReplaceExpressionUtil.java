@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -57,10 +56,10 @@ public final class ReplaceExpressionUtil {
       return true;
     }
     if (i == JavaElementType.INSTANCE_OF_EXPRESSION ||
-             i == JavaElementType.PREFIX_EXPRESSION ||
-             i == JavaElementType.TYPE_CAST_EXPRESSION ||
-             i == JavaElementType.REFERENCE_EXPRESSION ||
-             i == JavaElementType.METHOD_REF_EXPRESSION) {
+        i == JavaElementType.PREFIX_EXPRESSION ||
+        i == JavaElementType.TYPE_CAST_EXPRESSION ||
+        i == JavaElementType.REFERENCE_EXPRESSION ||
+        i == JavaElementType.METHOD_REF_EXPRESSION) {
       return priority < parentPriority;
     }
     if (i == JavaElementType.ARRAY_ACCESS_EXPRESSION) {
@@ -68,16 +67,16 @@ public final class ReplaceExpressionUtil {
       return role != ChildRole.ARRAY_DIMENSION && role != ChildRole.INDEX && priority < parentPriority;
     }
     if (i == JavaElementType.METHOD_CALL_EXPRESSION ||
-             i == JavaElementType.NEW_EXPRESSION ||
-             i == JavaElementType.ARRAY_INITIALIZER_EXPRESSION ||
-             i == JavaElementType.PARENTH_EXPRESSION ||
-             i == JavaElementType.LITERAL_EXPRESSION ||
-             i == JavaElementType.THIS_EXPRESSION ||
-             i == JavaElementType.SUPER_EXPRESSION ||
-             i == JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION ||
-             i == JavaElementType.LAMBDA_EXPRESSION ||
-             i == JavaElementType.SWITCH_EXPRESSION ||
-             i == JavaElementType.TEMPLATE_EXPRESSION) {
+        i == JavaElementType.NEW_EXPRESSION ||
+        i == JavaElementType.ARRAY_INITIALIZER_EXPRESSION ||
+        i == JavaElementType.PARENTH_EXPRESSION ||
+        i == JavaElementType.LITERAL_EXPRESSION ||
+        i == JavaElementType.THIS_EXPRESSION ||
+        i == JavaElementType.SUPER_EXPRESSION ||
+        i == JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION ||
+        i == JavaElementType.LAMBDA_EXPRESSION ||
+        i == JavaElementType.SWITCH_EXPRESSION ||
+        i == JavaElementType.TEMPLATE_EXPRESSION) {
       return false;
     }
 
@@ -117,13 +116,13 @@ public final class ReplaceExpressionUtil {
       else if (opType == JavaTokenType.LT || opType == JavaTokenType.GT || opType == JavaTokenType.LE || opType == JavaTokenType.GE) {
         return 8;
       }
-      else if (JavaBinaryOperations.SHIFT_OPS.contains(opType)) {
+      else if (ElementType.SHIFT_OPS.contains(opType)) {
         return 9;
       }
-      else if (JavaBinaryOperations.ADDITIVE_OPS.contains(opType)) {
+      else if (ElementType.ADDITIVE_OPS.contains(opType)) {
         return 10;
       }
-      else if (JavaBinaryOperations.MULTIPLICATIVE_OPS.contains(opType)) {
+      else if (ElementType.MULTIPLICATIVE_OPS.contains(opType)) {
         return 11;
       }
       return 8;

@@ -2,7 +2,6 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -95,7 +94,7 @@ public class PsiAssignmentExpressionImpl extends ExpressionPsiElement implements
     }
   }
 
-  private static final TokenSet OUR_OPERATIONS_BIT_SET = JavaBinaryOperations.ASSIGNMENT_OPS;
+  private static final TokenSet OUR_OPERATIONS_BIT_SET = ElementType.ASSIGNMENT_OPS;
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
