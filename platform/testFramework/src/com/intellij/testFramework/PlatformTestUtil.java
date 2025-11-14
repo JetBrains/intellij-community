@@ -179,15 +179,19 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull String print(@NotNull JTree tree, boolean withSelection) {
-    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, null);
+    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, null, null);
   }
 
   public static @NotNull String print(@NotNull JTree tree, @NotNull TreePath path, @Nullable Queryable.PrintInfo printInfo, boolean withSelection) {
-    return print(tree, path,  withSelection, printInfo, null);
+    return print(tree, path,  withSelection, printInfo, null, null);
   }
 
   public static @NotNull String print(@NotNull JTree tree, boolean withSelection, @Nullable Predicate<? super String> nodePrintCondition) {
-    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
+    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition, null);
+  }
+
+  public static @NotNull String print(@NotNull JTree tree, boolean withSelection, @Nullable Predicate<? super String> nodePrintCondition, @Nullable Function<PrintNodeInfo, PrintChildrenResult> beforeChildren) {
+    return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition, beforeChildren);
   }
 
   private static String print(
@@ -195,10 +199,12 @@ public final class PlatformTestUtil {
     TreePath path,
     boolean withSelection,
     @Nullable Queryable.PrintInfo printInfo,
-    @Nullable Predicate<? super String> nodePrintCondition
+    @Nullable Predicate<? super String> nodePrintCondition,
+    @Nullable Function<PrintNodeInfo, PrintChildrenResult> beforeChildren
   ) {
     var strings = new ArrayList<String>();
-    printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
+    Predicate<Pair<Object, String>> condition = nodePrintCondition == null ? null : pair -> nodePrintCondition.test(pair.second);
+    printImpl(tree, path, strings, 0, withSelection, printInfo, condition, beforeChildren);
     return String.join("\n", strings);
   }
 
@@ -209,13 +215,14 @@ public final class PlatformTestUtil {
     int level,
     boolean withSelection,
     @Nullable Queryable.PrintInfo printInfo,
-    @Nullable Predicate<? super String> nodePrintCondition
+    @Nullable Predicate<Pair<Object, String>> nodePrintCondition,
+    @Nullable Function<@NotNull PrintNodeInfo, @NotNull PrintChildrenResult> beforeChildren
   ) {
     var pathComponent = path.getLastPathComponent();
     var userObject = TreeUtil.getUserObject(pathComponent);
     var nodeText = toString(userObject, printInfo);
 
-    if (nodePrintCondition != null && !nodePrintCondition.test(nodeText)) {
+    if (nodePrintCondition != null && !nodePrintCondition.test(new Pair<>(userObject, nodeText))) {
       return;
     }
 
@@ -224,7 +231,15 @@ public final class PlatformTestUtil {
 
     var expanded = tree.isExpanded(path);
     var childCount = tree.getModel().getChildCount(pathComponent);
-    if (childCount > 0) {
+
+    PrintChildrenResult printChildrenResult = null;
+    PrintChildrenResult.ChildrenAction childrenAction = PrintChildrenResult.ChildrenAction.VISIT;
+    if (beforeChildren != null) {
+      printChildrenResult = beforeChildren.apply(new PrintNodeInfo(userObject, nodeText, childCount));
+      childrenAction = requireNonNull(printChildrenResult).Action;
+    }
+
+    if (childCount > 0 && childrenAction != PrintChildrenResult.ChildrenAction.REMOVE) {
       buff.append(expanded ? '-' : '+');
     }
 
@@ -242,9 +257,17 @@ public final class PlatformTestUtil {
     strings.add(buff.toString());
 
     if (expanded) {
-      for (var i = 0; i < childCount; i++) {
-        var childPath = path.pathByAddingChild(tree.getModel().getChild(pathComponent, i));
-        printImpl(tree, childPath, strings, level + 1, withSelection, printInfo, nodePrintCondition);
+      if (childrenAction == PrintChildrenResult.ChildrenAction.REPLACE) {
+        assert printChildrenResult.ReplacementText != null : "Expected children replacement text for REPLACE_CHILDREN action, but got null";
+        buff.setLength(0);
+        buff.repeat(' ', level + 1);
+        buff.append(printChildrenResult.ReplacementText);
+        strings.add(buff.toString());
+      } else if (childrenAction == PrintChildrenResult.ChildrenAction.VISIT) {
+        for (var i = 0; i < childCount; i++) {
+          var childPath = path.pathByAddingChild(tree.getModel().getChild(pathComponent, i));
+          printImpl(tree, childPath, strings, level + 1, withSelection, printInfo, nodePrintCondition, beforeChildren);
+        }
       }
     }
   }
