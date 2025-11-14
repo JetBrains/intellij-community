@@ -58,6 +58,10 @@ import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.withLazyProgressIndicator
+import java.io.File
+import java.nio.file.Files
+import kotlin.time.Duration.Companion.seconds
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
@@ -681,14 +685,13 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     docs: Boolean,
   ): ArtifactDownloadResult {
     if (!sources && !docs) return ArtifactDownloadResult()
-
-    downloadArtifactMutex.withLock {
-      val result = withBackgroundProgressTraced(myProject, "downloadArtifacts", MavenProjectBundle.message("maven.downloading"), true) {
-        reportRawProgress { reporter ->
-          doDownloadArtifacts(projects, artifacts, sources, docs, reporter)
+    return downloadArtifactMutex.withLock {
+      tracer.spanBuilder("downloadArtifacts")
+        .useWithScope {
+          withLazyProgressIndicator(myProject, 1.seconds, MavenProjectBundle.message("maven.downloading"), true) { reporter ->
+            doDownloadArtifacts(projects, artifacts, sources, docs, reporter)
+          }
         }
-      }
-      return result
     }
   }
 
