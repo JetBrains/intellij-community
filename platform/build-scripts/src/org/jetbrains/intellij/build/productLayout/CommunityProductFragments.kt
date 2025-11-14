@@ -31,6 +31,8 @@ object CommunityProductFragments {
    * Use this fragment for products that include Java IDE functionality.
    */
   fun javaIdeBaseFragment(): ProductModulesContentSpec = productModules {
+    include(platformLangBaseFragment())
+
     // Module capability aliases
     alias("com.intellij.modules.all")
     alias("com.intellij.modules.jsp.base")
