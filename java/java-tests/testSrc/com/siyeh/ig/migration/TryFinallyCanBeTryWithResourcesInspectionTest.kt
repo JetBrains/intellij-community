@@ -2,13 +2,13 @@
 package com.siyeh.ig.migration
 
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.JavaJUnit5Util.javaCodeInsightFixture
-import com.intellij.testFramework.JavaJUnit5Util.setUpJdk
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.javaCodeInsightFixture
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
+import com.intellij.testFramework.setUpJdk
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
