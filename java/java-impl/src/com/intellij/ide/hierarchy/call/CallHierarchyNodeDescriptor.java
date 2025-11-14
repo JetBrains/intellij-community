@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -156,9 +156,9 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       return;
     }
 
-    PsiReference firstReference = myReferences.get(0);
+    PsiReference firstReference = myReferences.getFirst();
     PsiElement element = firstReference.getElement();
-    PsiElement callElement = element.getParent();
+    PsiElement callElement = (element instanceof PsiNameIdentifierOwner) ? element : element.getParent();
     if (callElement instanceof Navigatable navigatable && navigatable.canNavigate()) {
       navigatable.navigate(requestFocus);
     }
@@ -173,9 +173,10 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     if (editor != null) {
       HighlightManager highlightManager = HighlightManager.getInstance(myProject);
       List<RangeHighlighter> highlighters = new ArrayList<>();
-      for (PsiReference psiReference : myReferences) {
-        PsiElement eachElement = psiReference.getElement();
-        PsiElement eachMethodCall = eachElement.getParent();
+      for (PsiReference ref : myReferences) {
+        PsiElement eachElement = ref.getElement();
+        PsiElement eachMethodCall = 
+          eachElement instanceof PsiNameIdentifierOwner owner ? owner.getNameIdentifier() : eachElement.getParent();
         if (eachMethodCall != null) {
           TextRange textRange = eachMethodCall.getTextRange();
           highlightManager.addRangeHighlight(editor, textRange.getStartOffset(), textRange.getEndOffset(), 
@@ -191,7 +192,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       return getPsiElement() instanceof Navigatable navigatable && navigatable.canNavigate();
     }
     if (myReferences.isEmpty()) return false;
-    PsiReference firstReference = myReferences.get(0);
+    PsiReference firstReference = myReferences.getFirst();
     PsiElement callElement = firstReference.getElement().getParent();
     if (callElement == null || !callElement.isValid()) return false;
     if (!(callElement instanceof Navigatable navigatable) || !navigatable.canNavigate()) {

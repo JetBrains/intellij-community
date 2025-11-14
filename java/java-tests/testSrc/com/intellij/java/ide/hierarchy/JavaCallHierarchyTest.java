@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
@@ -97,6 +98,17 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   public void testDefaultConstructor() {
     doCallerHierarchyTest("A", "A", "A.java");
   }
+  
+  public void testDefaultConstructors() {
+    doHierarchyTest(() -> {
+      PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("Sweet", ProjectScope.getProjectScope(getProject()));
+      return new CallerMethodsTreeStructure(getProject(), LightDefaultConstructor.create(aClass), HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, JavaHierarchyUtil.getComparator(myProject), "Tastes.java");
+  }
+  
+  public void testDefaultConstructorsReverse() {
+    doCalleeHierarchyTest("Bitter", "main", "Tastes.java");
+  }
 
   public void testRecordCanonicalConstructor() {
     doHierarchyTest(() -> {
@@ -115,7 +127,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   public void testRecordCanonicalConstructorReverse2() {
     doHierarchyTest(() -> {
       PsiClass aClass = JavaPsiFacade.getInstance(getProject()).findClass("Value", ProjectScope.getProjectScope(getProject()));
-      return new CalleeMethodsTreeStructure(getProject(), aClass, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+      return new CalleeMethodsTreeStructure(getProject(), aClass, HierarchyBrowserBaseEx.SCOPE_ALL);
     }, JavaHierarchyUtil.getComparator(myProject), "Value.java");
   }
 

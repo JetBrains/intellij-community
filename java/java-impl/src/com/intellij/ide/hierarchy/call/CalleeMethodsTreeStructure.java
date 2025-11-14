@@ -5,11 +5,15 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightDefaultConstructor;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -29,7 +33,15 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
 
   @Override
   protected Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
+    PsiElement targetElement = ((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
+    PsiElement base = (targetElement instanceof PsiMethod baseMethod) ? baseMethod.getContainingClass() : targetElement;
     PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
+    if (enclosingElement instanceof LightDefaultConstructor constructor) {
+      PsiMethod superConstructor = findNoArgSuperConstructor(constructor);
+      return superConstructor != null && isInScope(base, superConstructor, myScopeType)
+             ? new Object[]{new CallHierarchyNodeDescriptor(myProject, descriptor, superConstructor, false, false)}
+             : ArrayUtilRt.EMPTY_OBJECT_ARRAY; 
+    }
     if (!(enclosingElement instanceof PsiMethod method) || enclosingElement instanceof SyntheticElement) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
@@ -39,18 +51,19 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     if (body != null) {
       collectCallees(body, methods);
     }
-
-    PsiElement targetElement = ((CallHierarchyNodeDescriptor)getBaseDescriptor()).getTargetElement();
-    PsiClass baseClass = (targetElement instanceof PsiMethod baseMethod) ? baseMethod.getContainingClass() : null;
+    if (method.isConstructor() && JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method) == null) {
+      PsiMethod superConstructor = findNoArgSuperConstructor(method);
+      if (superConstructor != null) methods.add(superConstructor);
+    }
 
     Map<PsiMethod, CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<>();
     List<CallHierarchyNodeDescriptor> result = new ArrayList<>();
 
-    // also add overriding methods as children when possible
-    Iterable<PsiMethod> allMethods = (baseClass == null) ? methods : ContainerUtil.concat(methods, OverridingMethodsSearch.search(method).asIterable());
+    // also add overriding methods as children
+    SearchScope scope = getSearchScope(myScopeType, base);
+    Iterable<PsiMethod> allMethods = ContainerUtil.concat(methods, OverridingMethodsSearch.search(method, scope, true).findAll());
     for (PsiMethod callee : allMethods) {
-      if (baseClass != null && !isInScope(baseClass, callee, myScopeType)
-          || JavaCallReferenceProcessor.isRecursiveNode(callee, descriptor)) {
+      if (!isInScope(base, callee, myScopeType) || JavaCallReferenceProcessor.isRecursiveNode(callee, descriptor)) {
         continue;
       }
 
@@ -68,10 +81,27 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
     return ArrayUtil.toObjectArray(result);
   }
 
+  private static @Nullable PsiMethod findNoArgSuperConstructor(PsiMethod method) {
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return null;
+    PsiClass superClass = aClass.getSuperClass();
+    if (superClass == null) return null;
+    PsiMethod[] constructors = superClass.getConstructors();
+    if (constructors.length == 0) {
+      return LightDefaultConstructor.create(superClass);
+    }
+    else {
+      for (PsiMethod constructor : constructors) {
+        if (constructor.getParameterList().isEmpty()) {
+          return constructor;
+        }
+      }
+    }
+    return null;
+  }
 
   private static void collectCallees(@NotNull PsiElement element, @NotNull List<? super PsiMethod> methods) {
-    PsiElement[] children = element.getChildren();
-    for (PsiElement child : children) {
+    for (PsiElement child : element.getChildren()) {
       collectCallees(child, methods);
       if (child instanceof PsiMethodCallExpression callExpression) {
         PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
