@@ -42,6 +42,7 @@ import com.intellij.xdebugger.XEvaluationListener;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
@@ -54,6 +55,7 @@ import com.intellij.xdebugger.impl.inline.InlineWatchesRootNode;
 import com.intellij.xdebugger.impl.inline.XInlineWatchesView;
 import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -476,12 +478,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @Override
-  protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
+  protected XValueContainerNode.Root<XValueContainer> doCreateNewRootNode(@Nullable XStackFrame stackFrame,
+                                                                          @Nullable XDebuggerTreeState stateToRecover) {
     if (inlineWatchesEnabled) {
-      myRootNode = new InlineWatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables);
+      myRootNode = new InlineWatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables, stateToRecover);
     }
     else {
-      myRootNode = new WatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables);
+      myRootNode = new WatchesRootNode(getTree(), this, myConfigurationName, stackFrame, myWatchesInVariables, stateToRecover);
     }
     return myRootNode;
   }

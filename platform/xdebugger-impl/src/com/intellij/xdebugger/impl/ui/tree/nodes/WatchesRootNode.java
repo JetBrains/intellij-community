@@ -12,7 +12,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XAlwaysEvaluatedWatch;
@@ -20,12 +19,14 @@ import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.XWatchImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
+public class WatchesRootNode extends XValueContainerNode.Root<XValueContainer> {
   private final XWatchesView myWatchesView;
   private final List<WatchNodeImpl> myChildren;
 
@@ -72,36 +73,39 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   }
 
   /**
-   * @deprecated Use {@link WatchesRootNode#WatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean)} instead
+   * @deprecated Use {@link WatchesRootNode#WatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean, XDebuggerTreeState)} instead
    */
   @Deprecated
   // required for com.google.gct.core
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
                          XExpression @NotNull [] expressions) {
-    this(tree, watchesView, Arrays.asList(expressions), null, false);
+    this(tree, watchesView, Arrays.asList(expressions), null, false, null);
   }
 
   /**
-   * @deprecated Use {@link WatchesRootNode#WatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean)} instead
+   * @deprecated Use {@link WatchesRootNode#WatchesRootNode(XDebuggerTree, XWatchesView, String, XStackFrame, boolean, XDebuggerTreeState)} instead
    */
   @Deprecated
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
                          @NotNull List<? extends XExpression> expressions,
                          @Nullable XStackFrame stackFrame,
-                         boolean watchesInVariables) {
-    this(tree, watchesView, ContainerUtil.map(expressions, XAlwaysEvaluatedWatch::new), stackFrame, watchesInVariables, false);
+                         boolean watchesInVariables,
+                         XDebuggerTreeState stateToRecover) {
+    this(tree, watchesView, ContainerUtil.map(expressions, XAlwaysEvaluatedWatch::new), stackFrame, watchesInVariables, stateToRecover,
+         false);
   }
 
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
                          @NotNull String configurationName,
                          @Nullable XStackFrame stackFrame,
-                         boolean watchesInVariables) {
+                         boolean watchesInVariables,
+                         XDebuggerTreeState stateToRecover) {
     this(tree, watchesView,
          ((XDebuggerManagerImpl)XDebuggerManager.getInstance(tree.getProject())).getWatchesManager().getWatchEntries(configurationName),
-         stackFrame, watchesInVariables, false);
+         stackFrame, watchesInVariables, stateToRecover, false);
   }
 
   private WatchesRootNode(@NotNull XDebuggerTree tree,
@@ -109,8 +113,9 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
                           @NotNull List<? extends XWatch> watches,
                           @Nullable XStackFrame stackFrame,
                           boolean watchesInVariables,
+                          XDebuggerTreeState stateToRecover,
                           @SuppressWarnings("unused") boolean avoidSignatureClash) {
-    super(tree, null, false, new RootContainerNode(stackFrame, watchesInVariables));
+    super(tree, null, false, new RootContainerNode(stackFrame, watchesInVariables), stateToRecover);
     myWatchesView = watchesView;
     myChildren = new ArrayList<>();
     copyEvaluationResultFromOldRoot(tree, stackFrame);

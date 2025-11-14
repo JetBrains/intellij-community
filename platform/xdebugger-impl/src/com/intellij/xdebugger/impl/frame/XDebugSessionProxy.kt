@@ -30,7 +30,6 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.asProxy
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -106,8 +105,6 @@ interface XDebugSessionProxy {
   fun isInactiveSlaveBreakpoint(breakpoint: XBreakpointProxy): Boolean
   fun getDropFrameHandler(): XDropFrameHandler?
   fun getActiveNonLineBreakpoint(): XBreakpointProxy?
-
-  fun onTreeStateSaved(state: XDebuggerTreeState, frameEqualityObject: Any) {}
 
   suspend fun stepOver(ignoreBreakpoints: Boolean)
   suspend fun stepOut()

@@ -513,7 +513,6 @@ a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
 - ps:clearInlays(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V
 - pf:createNewRootNode(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 - dispose():V
-- p:doCreateNewRootNode(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 - getDefaultFocusedComponent():javax.swing.JComponent
 - getMainComponent():javax.swing.JComponent
 - getPanel():javax.swing.JComponent
@@ -565,25 +564,6 @@ f:com.intellij.xdebugger.impl.inline.InlineWatch
 - f:getPosition():com.intellij.xdebugger.XSourcePosition
 - f:setMarker():Z
 - f:updatePosition():Z
-c:com.intellij.xdebugger.impl.inline.InlineWatchesRootNode
-- com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
-- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.lang.String,com.intellij.xdebugger.frame.XStackFrame,Z):V
-- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
-- addInlineWatchExpression(com.intellij.xdebugger.frame.XStackFrame,com.intellij.xdebugger.impl.inline.InlineWatch,I,Z):V
-- clearChildren():V
-- computeWatches():V
-- editWatch(com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl):V
-- fireInlineNodeInserted(I):V
-- getChildren():java.util.List
-- getInlineWatchChildren():java.util.List
-- getLoadedChildren():java.util.List
-- headerNodesCount():I
-- inlinesRootNodeIsShown():Z
-- moveDown(com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode):V
-- moveUp(com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode):V
-- removeAllChildren():V
-- removeChildNode(com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode):I
-- removeInlineChildren(java.util.List):V
 c:com.intellij.xdebugger.impl.inline.XDebuggerTreeInlayPopup
 - com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTreePopup
 - p:getToolbarActions():com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -1239,8 +1219,6 @@ c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
 - p:shouldUpdateInlineDebuggerData():Z
 c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
 - com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
-- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.lang.String,com.intellij.xdebugger.frame.XStackFrame,Z):V
-- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
 - <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,com.intellij.xdebugger.XExpression[]):V
 - addNewWatch():V
 - addResultNode(com.intellij.xdebugger.frame.XStackFrame,com.intellij.xdebugger.XExpression):V

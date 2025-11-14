@@ -117,16 +117,21 @@ public abstract class XVariablesViewBase extends XDebugView {
     return node;
   }
 
-  protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
-    XValueContainerNode root;
+  @ApiStatus.Internal
+  protected XValueContainerNode.Root doCreateNewRootNode(@Nullable XStackFrame stackFrame, @Nullable XDebuggerTreeState stateToRecover) {
     if (stackFrame == null) {
       // do not set leaf=false here, otherwise info messages do not appear, see IDEA-200865
-      root = new XValueContainerNode<XValueContainer>(getTree(), null, false, new XValueContainer() {}) {};
+      return new XValueContainerNode.Root<XValueContainer>(getTree(), null, false, new XValueContainer() {}, stateToRecover) {};
     }
     else {
-      root = new XStackFrameNode(getTree(), stackFrame);
+      return new XStackFrameNode(getTree(), stackFrame, stateToRecover);
     }
-    return root;
+  }
+
+  @ApiStatus.NonExtendable
+  protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
+    XDebuggerTreeState state = stackFrame != null ? myTreeStates.get(stackFrame.getEqualityObject()) : null;
+    return doCreateNewRootNode(stackFrame, state);
   }
 
   private void registerInlineEvaluator(final XStackFrame stackFrame,
@@ -142,17 +147,10 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
   }
 
-  @ApiStatus.Internal
-  protected void onTreeStateSaved(@NotNull XDebuggerTreeState state, @NotNull Object frameEqualityObject) {
-  }
-
   private void saveCurrentTreeState() {
     removeSelectionListener();
-    Object equalityObject = myFrameEqualityObject;
-    if (equalityObject != null && (myTreeRestorer == null || myTreeRestorer.isFinished())) {
-      XDebuggerTreeState state = XDebuggerTreeState.saveState(getTree());
-      myTreeStates.put(equalityObject, state);
-      onTreeStateSaved(state, equalityObject);
+    if (myFrameEqualityObject != null && (myTreeRestorer == null || myTreeRestorer.isFinished())) {
+      myTreeStates.put(myFrameEqualityObject, XDebuggerTreeState.saveState(getTree()));
     }
     disposeTreeRestorer();
   }

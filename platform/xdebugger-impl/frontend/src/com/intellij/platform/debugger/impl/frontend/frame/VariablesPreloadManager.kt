@@ -16,26 +16,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.AbstractCoroutineContextElement
-import kotlin.coroutines.CoroutineContext
 
-internal class PreloadManagerContainer(private val cs: CoroutineScope) : AbstractCoroutineContextElement(PreloadManagerContainer) {
-  companion object Key : CoroutineContext.Key<PreloadManagerContainer>
-
-  private val currentManager = AtomicReference<VariablesPreloadManager?>(null)
-
-  val manager: VariablesPreloadManager? get() = currentManager.get()
-
-  fun initializePreload(
-    treeState: XDebuggerTreeState,
-    newFrame: FrontendXStackFrame?,
-    oldFrameEqualityObject: Any,
-  ) {
-    val new = VariablesPreloadManager.creteIfNeeded(cs, treeState, newFrame, oldFrameEqualityObject)
-    currentManager.getAndUpdate { new }?.cancel()
-  }
-}
 
 /**
  * Preloads the variables in the tree described by [XDebuggerTreeExpandedNode].
@@ -90,15 +71,12 @@ class VariablesPreloadManager(
   companion object {
     internal fun creteIfNeeded(
       parentScope: CoroutineScope,
-      treeState: XDebuggerTreeState,
-      newFrame: FrontendXStackFrame?,
-      oldFrameEqualityObject: Any,
+      treeState: XDebuggerTreeState?,
+      xFrameId: XStackFrameId,
     ): VariablesPreloadManager? {
-      if (newFrame == null) return null
-      if (oldFrameEqualityObject != newFrame.equalityObject) return null
-      val rootInfo = treeState.rootInfo ?: return null
+      val rootInfo = treeState?.rootInfo ?: return null
       if (!rootInfo.isExpanded) return null
-      return VariablesPreloadManager(parentScope, rootInfo.toRpc(), newFrame.id)
+      return VariablesPreloadManager(parentScope, rootInfo.toRpc(), xFrameId)
     }
   }
 }

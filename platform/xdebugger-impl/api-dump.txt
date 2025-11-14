@@ -47,6 +47,8 @@ f:com.intellij.xdebugger.impl.frame.XDebuggerThreadsList$Companion
 com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
 - com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
 - a:addStackFrames(java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z):V
+a:com.intellij.xdebugger.impl.frame.XVariablesViewBase
+- pF:doCreateNewRootNode(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
 com.intellij.xdebugger.impl.frame.XWatchesView
 - sf:DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - a:addWatchExpression(com.intellij.xdebugger.XExpression,I,Z):V
@@ -68,5 +70,8 @@ com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
 - javax.swing.tree.TreeNode
 - a:getExpression():com.intellij.xdebugger.XExpression
 - a:setObsolete():V
+c:com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.lang.String,com.intellij.xdebugger.frame.XStackFrame,Z,com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState):V
+- <init>(com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView,java.util.List,com.intellij.xdebugger.frame.XStackFrame,Z,com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState):V
 com.intellij.xdebugger.memory.utils.InstancesProvider
 - a:getInstances(I):java.util.List

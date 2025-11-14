@@ -43,7 +43,6 @@ import com.intellij.xdebugger.impl.rpc.*
 import com.intellij.xdebugger.impl.ui.SplitDebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import com.intellij.xdebugger.impl.util.XDebugMonolithUtils
 import com.intellij.xdebugger.ui.XDebugTabLayouter
 import kotlinx.coroutines.*
@@ -497,10 +496,6 @@ class FrontendXDebuggerSession private constructor(
 
   override fun getActiveNonLineBreakpoint(): XBreakpointProxy? {
     return activeNonLineBreakpoint.value
-  }
-
-  override fun onTreeStateSaved(state: XDebuggerTreeState, frameEqualityObject: Any) {
-    currentStackFrame.value.frame?.initializePreload(state, frameEqualityObject)
   }
 
   override suspend fun stepOver(ignoreBreakpoints: Boolean) {

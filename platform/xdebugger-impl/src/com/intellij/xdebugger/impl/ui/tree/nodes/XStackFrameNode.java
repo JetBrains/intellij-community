@@ -3,14 +3,16 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public class XStackFrameNode extends XValueContainerNode<XStackFrame> {
+public class XStackFrameNode extends XValueContainerNode.Root<XStackFrame> {
 
-  public XStackFrameNode(final @NotNull XDebuggerTree tree, final @NotNull XStackFrame xStackFrame) {
-    super(tree, null, false, xStackFrame);
+  public XStackFrameNode(final @NotNull XDebuggerTree tree, final @NotNull XStackFrame xStackFrame, @Nullable XDebuggerTreeState state) {
+    super(tree, null, false, xStackFrame, state);
   }
 
 }
