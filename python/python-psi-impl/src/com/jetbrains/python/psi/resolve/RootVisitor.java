@@ -29,6 +29,7 @@ public interface RootVisitor {
    * @param root what we're visiting.
    * @param module the module to which the root belongs, or null
    * @param sdk the SDK to which the root belongs, or null
+   * @param isModuleSource true iff the root belongs to the module in case both module and sdk are present
    *
    * @return false when visiting must stop.
    */
