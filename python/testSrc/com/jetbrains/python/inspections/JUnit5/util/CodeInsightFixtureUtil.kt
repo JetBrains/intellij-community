@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections.JUnit5.util
 
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.jetbrains.python.PythonFileType
 
 
 fun CodeInsightTestFixture.doTestByFile(file: PsiFile) {
@@ -12,7 +13,7 @@ fun CodeInsightTestFixture.doTestByFile(file: PsiFile) {
 }
 
 fun CodeInsightTestFixture.doTestByText(text: String) {
-  this.configureByText("test.py", text)
+  this.configureByText(PythonFileType.INSTANCE, text)
   this.doHighlighting()
   this.checkHighlighting(true, false, true)
 }
