@@ -1350,7 +1350,7 @@ com.intellij.openapi.editor.Editor
 - addEditorMouseListener(com.intellij.openapi.editor.event.EditorMouseListener,com.intellij.openapi.Disposable):V
 - a:addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener):V
 - addEditorMouseMotionListener(com.intellij.openapi.editor.event.EditorMouseMotionListener,com.intellij.openapi.Disposable):V
-- asPsiNavigator():com.intellij.openapi.editor.ModNavigator
+- asModNavigator():com.intellij.openapi.editor.ModNavigator
 - calculateVisibleRange():com.intellij.openapi.util.ProperTextRange
 - getAscent():I
 - a:getCaretModel():com.intellij.openapi.editor.CaretModel

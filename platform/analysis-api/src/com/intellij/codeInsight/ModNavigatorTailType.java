@@ -14,7 +14,7 @@ import java.util.Objects;
 public abstract class ModNavigatorTailType extends TailType {
   @Override
   public int processTail(final @NotNull Editor editor, int tailOffset) {
-    return processTail(Objects.requireNonNull(editor.getProject()), editor.asPsiNavigator(), tailOffset);
+    return processTail(Objects.requireNonNull(editor.getProject()), editor.asModNavigator(), tailOffset);
   }
 
   /**

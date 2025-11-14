@@ -44,7 +44,7 @@ public abstract class TailType {
   }
 
   public static int insertChar(@NotNull Editor editor, int tailOffset, char c, boolean overwrite) {
-    return insertChar(editor.asPsiNavigator(), tailOffset, c, overwrite);
+    return insertChar(editor.asModNavigator(), tailOffset, c, overwrite);
   }
 
   public static int insertChar(@NotNull ModNavigator editor, int tailOffset, char c, boolean overwrite) {
@@ -62,7 +62,7 @@ public abstract class TailType {
   }
 
   protected static int moveCaret(@NotNull Editor editor, int tailOffset, int delta) {
-    return moveCaret(editor.asPsiNavigator(), tailOffset, delta);
+    return moveCaret(editor.asModNavigator(), tailOffset, delta);
   }
 
   protected static int moveCaret(@NotNull ModNavigator editor, int tailOffset, int delta) {
