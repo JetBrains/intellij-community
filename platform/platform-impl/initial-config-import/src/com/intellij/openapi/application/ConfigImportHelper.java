@@ -300,7 +300,7 @@ public final class ConfigImportHelper {
         if (importSettings == null || importSettings.shouldRestartAfterVmOptionsChange()) {
           log.info("The vmoptions file has changed, restarting...");
           try {
-            writeOptionsForRestart(newConfigDir);
+            InitialConfigImportState.writeOptionsForRestart(newConfigDir);
           }
           catch (IOException e) {
             log.error("cannot write config migration marker file to " + newConfigDir, e);
@@ -369,15 +369,6 @@ public final class ConfigImportHelper {
 
   private static boolean doesVmOptionsFileExist(Path configDir) {
     return Files.isRegularFile(configDir.resolve(VMOptions.getFileName()));
-  }
-
-  private static void writeOptionsForRestart(Path newConfigDir) throws IOException {
-    var properties = new ArrayList<String>();
-    properties.add(InitialConfigImportState.FIRST_SESSION_KEY);
-    if (InitialConfigImportState.isConfigImported()) {
-      properties.add(InitialConfigImportState.CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
-    }
-    new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
   }
 
   private static void restart(List<String> args) {
