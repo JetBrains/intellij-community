@@ -70,6 +70,14 @@
               optionId="python.type.inlays.function.return"/>
     </codeInsight.declarativeInlayProvider>
 
+    <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyPseudoKeywordPatternInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.positional.args.patterns"
+                                          providerId="python.pseudo.keyword.pattern.inlays"/>
+
     <codeInsight.inlayActionHandler implementationClass="com.jetbrains.python.inlayHints.PyPseudoKeywordPatternInlayActionHandler"
                                     handlerId="py.pseudo.keyword.pattern"/>
 
