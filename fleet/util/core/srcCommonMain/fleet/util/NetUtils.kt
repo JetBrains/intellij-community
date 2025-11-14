@@ -3,5 +3,5 @@ package fleet.util
 
 object NetUtils {
   fun localHost(): String = "127.0.0.1"
-  fun localHostIpV6(): String = "::"
+  fun localHostIpV6(): String = "::1"
 }
