@@ -491,9 +491,9 @@ private class PsiVFSListener(private val project: Project) {
 
   // optimization: call fileManager.removeInvalidFilesAndDirs() once for a group of move events, instead of once for each event
   private fun filesMoved(events: List<VFileEvent>) {
-    val oldElements = ArrayList<PsiElement?>(events.size)
-    val oldParentDirs = ArrayList<PsiDirectory?>(events.size)
-    val newParentDirs = ArrayList<PsiDirectory?>(events.size)
+    val allOldElements = ArrayList<PsiElement?>(events.size)
+    val allOldParentDirs = ArrayList<PsiDirectory?>(events.size)
+    val allNewParentDirs = ArrayList<PsiDirectory?>(events.size)
 
     // find old directories before removing invalid ones
     for (e in events) {
@@ -520,22 +520,22 @@ private class PsiVFSListener(private val project: Project) {
         oldParentDir = null
         newParentDir = null
       }
-      oldElements.add(oldElement)
-      oldParentDirs.add(oldParentDir)
-      newParentDirs.add(newParentDir)
+      allOldElements.add(oldElement)
+      allOldParentDirs.add(oldParentDir)
+      allNewParentDirs.add(newParentDir)
     }
     fileManager.removeInvalidFilesAndDirs(true)
 
     for ((i, event) in events.withIndex()) {
       val vFile = event.file!!
 
-      val oldParentDir = oldParentDirs[i]
-      val newParentDir = newParentDirs[i]
+      val oldParentDir = allOldParentDirs[i]
+      val newParentDir = allNewParentDirs[i]
       if (oldParentDir == null && newParentDir == null) {
         continue
       }
 
-      val oldElement = oldElements[i]
+      val oldElement = allOldElements[i]
       var newElement: PsiElement?
       var newViewProvider: FileViewProvider?
       if (vFile.isDirectory) {
