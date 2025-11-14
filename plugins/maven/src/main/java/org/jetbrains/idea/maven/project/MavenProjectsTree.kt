@@ -1104,6 +1104,30 @@ class MavenProjectsTree(val project: Project) {
 
   }
 
+  @ApiStatus.Internal
+  fun read(path: Path) {
+    if (!Files.exists(path)) return
+    DataInputStream(BufferedInputStream(Files.newInputStream(path))).use { inputStream ->
+      var storageVersion = ""
+      try {
+        storageVersion = inputStream.readUTF()
+        val storageVersionNumber = storageVersion.getStorageVersionNumber()
+
+        myManagedFilesPaths = readCollection(inputStream, LinkedHashSet())
+        myIgnoredFilesPaths = readCollection(inputStream, ArrayList())
+        myIgnoredFilesPatterns = readCollection(inputStream, ArrayList())
+        myExplicitProfiles = MavenExplicitProfiles(readCollection(inputStream, HashSet()), readCollection(inputStream, HashSet()))
+
+        if (STORAGE_VERSION_NUMBER == storageVersionNumber) {
+          myRootProjects.addAll(readProjectsRecursively(inputStream, this))
+        }
+      }
+      catch (e: IOException) {
+        MavenLog.LOG.warn("Cannot read project tree from storage, storageVersion $storageVersion", e)
+      }
+    }
+  }
+
   companion object {
     private val LOG = Logger.getInstance(MavenProjectsTree::class.java)
 
@@ -1118,33 +1142,6 @@ class MavenProjectsTree(val project: Project) {
       catch (_: Exception) {
         0
       }
-    }
-
-    @JvmStatic
-    @ApiStatus.Internal
-    fun read(project: Project, path: Path): MavenProjectsTree {
-      val tree = MavenProjectsTree(project)
-      if (!Files.exists(path)) return tree
-      DataInputStream(BufferedInputStream(Files.newInputStream(path))).use { inputStream ->
-        var storageVersion = ""
-        try {
-          storageVersion = inputStream.readUTF()
-          val storageVersionNumber = storageVersion.getStorageVersionNumber()
-
-          tree.myManagedFilesPaths = readCollection(inputStream, LinkedHashSet())
-          tree.myIgnoredFilesPaths = readCollection(inputStream, ArrayList())
-          tree.myIgnoredFilesPatterns = readCollection(inputStream, ArrayList())
-          tree.myExplicitProfiles = MavenExplicitProfiles(readCollection(inputStream, HashSet()), readCollection(inputStream, HashSet()))
-
-          if (STORAGE_VERSION_NUMBER == storageVersionNumber) {
-            tree.myRootProjects.addAll(readProjectsRecursively(inputStream, tree))
-          }
-        }
-        catch (e: IOException) {
-          MavenLog.LOG.warn("Cannot read project tree from storage, storageVersion $storageVersion", e)
-        }
-      }
-      return tree
     }
 
     @Throws(IOException::class)
