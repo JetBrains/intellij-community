@@ -41,6 +41,7 @@ internal class MultiversePsiEventTest {
 
     private val sourceRoot = sharedSourceRootFixture(module1, module2)
     private val sourceRoot2 = sharedSourceRootFixture(module1, module2)
+    private val m1sourceRoot = module1.sourceRootFixture()
 
     @Suppress("unused")
     private val registerFakeLang = testFixture {
@@ -280,6 +281,51 @@ internal class MultiversePsiEventTest {
       file.move(this, sourceRoot2.get().virtualFile)
     },
     expectedEventNumber = 2
+  )
+
+  @Test
+  fun `test we receive 2 child moved events on moving a file with 2 psi files`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun childMoved(event: PsiTreeChangeEvent) {
+          counter.incrementAndGet()
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.move(this, sourceRoot2.get().virtualFile)
+    },
+    expectedEventNumber = 2
+  )
+
+  @Test
+  fun `test we receive 1 child moved event (and 1 child removed event) on moving a file with 2 psi files to a directory where only 1 context exists`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun childMoved(event: PsiTreeChangeEvent) {
+          counter.incrementAndGet()
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.move(this, m1sourceRoot.get().virtualFile)
+    },
+    expectedEventNumber = 1
+  )
+
+  @Test
+  fun `test we receive (1 child moved event and) 1 child removed event on moving a file with 2 psi files to a directory where only 1 context exists`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun childRemoved(event: PsiTreeChangeEvent) {
+          counter.incrementAndGet()
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.move(this, m1sourceRoot.get().virtualFile)
+    },
+    expectedEventNumber = 1
   )
 
   private fun doChangeTest(
