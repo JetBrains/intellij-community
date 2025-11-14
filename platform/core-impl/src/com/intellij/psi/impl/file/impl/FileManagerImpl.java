@@ -673,13 +673,13 @@ public final class FileManagerImpl implements FileManagerEx {
       myVFileToViewProviderMap.clear();
     }
 
-    // When some file is moved to another directory, its contexts might change
-    // So, view providers associated with irrelevant contexts should be processed
+    // When some file is moved to another directory, its contexts might change.
+    // So, view providers associated with irrelevant contexts should be processed.
     // The best way to deal with such view providers is just to invalidate them.
     // But PSI clients are not usually ready for that.
-    // So we try to preserve one of them, clearing the context of this lucky view provider and setting its context to `any`.
+    // So we try to preserve one of the view providers, clearing the context of this lucky view provider and setting its context to `any`.
     // It is possible to do that if there are no other relevant view providers for this file left.
-    // Also, if there's a view provider with `any` context, there can be no other view providers for this file, so we can silently accept them here.
+    // Also, if there's a view provider with `any` context, there can be no other view providers for this file, so we don't need to do anything for this file.
     Set<VirtualFile> filesHavingRelevantViewProviders = new HashSet<>();
     Map<VirtualFile, Entry> irrelevantViewProviders = new LinkedHashMap<>();
 
