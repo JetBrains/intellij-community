@@ -389,7 +389,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
            + ", content=" + getContent() + ", eventSystemEnabled=" + isEventSystemEnabled() + '}';
   }
 
-  public abstract PsiFile getCachedPsi(@NotNull Language target);
+  public abstract @Nullable PsiFile getCachedPsi(@NotNull Language target);
 
   public abstract @Unmodifiable @NotNull List<PsiFile> getCachedPsiFiles();
 
