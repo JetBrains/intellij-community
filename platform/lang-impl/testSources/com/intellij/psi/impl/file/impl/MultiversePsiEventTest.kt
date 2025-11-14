@@ -151,10 +151,44 @@ internal class MultiversePsiEventTest {
     expectedEventNumber = 1
   )
 
+  @Test
+  fun `test we receive 2 writeable event on changing writable status of a file with 2 psi files`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun propertyChanged(event: PsiTreeChangeEvent) {
+          if (event.propertyName == PsiTreeChangeEvent.PROP_WRITABLE) {
+            counter.incrementAndGet()
+          }
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.isWritable = false
+    },
+    expectedEventNumber = 2
+  )
+
+  @Test
+  fun `test we receive 2 before-writeable event on changing writable status of a file with 2 psi files`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun beforePropertyChange(event: PsiTreeChangeEvent) {
+          if (event.propertyName == PsiTreeChangeEvent.PROP_WRITABLE) {
+            counter.incrementAndGet()
+          }
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.isWritable = false
+    },
+    expectedEventNumber = 2
+  )
+
   private fun doChangeTest(
     listenerFactory: (AtomicInteger) -> PsiTreeChangeListener,
     updateBlock: (file: VirtualFile) -> Unit,
-    @Suppress("SameParameterValue") expectedEventNumber: Int
+    @Suppress("SameParameterValue") expectedEventNumber: Int,
   ) = runTest {
     val counter = AtomicInteger(0)
     val listener = listenerFactory(counter)
