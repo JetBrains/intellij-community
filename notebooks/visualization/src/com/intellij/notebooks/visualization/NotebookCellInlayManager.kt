@@ -136,11 +136,7 @@ class NotebookCellInlayManager private constructor(
     setupFoldingListener()
     setupSelectionUI()
 
-    notebook.addCellEventsListener(this, object : EditorCellEventListener {
-      override fun onEditorCellEvents(events: List<EditorCellEvent>) {
-        updateUI(events)
-      }
-    })
+    notebook.addCellEventsListener(this) { events -> updateUI(events) }
 
     handleRefreshedDocument()
   }
@@ -176,7 +172,7 @@ class NotebookCellInlayManager private constructor(
     return when {
       line < cell.interval.lines.first -> 1
       line >= cell.interval.lines.last + 1 -> -1
-      else -> return 0
+      else -> 0
     }
   }
 
@@ -385,7 +381,7 @@ class NotebookCellInlayManager private constructor(
             change.subsequentPointers.forEach {
               addCell(it.pointer)
             }
-            //After insert we need fix ranges of previous cell
+            //After insert, we need fix ranges of previous cell
             change.subsequentPointers.forEach {
               val prevCell = getCellOrNull(it.interval.ordinal - 1)
               prevCell?.checkAndRebuildInlays()
