@@ -97,6 +97,26 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON38, false, false);
   }
 
+  // PY-80237
+  public void testBreakInFinallyBlockBefore314() {
+    doTest(LanguageLevel.PYTHON313, false, false);
+  }
+
+  // PY-80237
+  public void testBreakInFinallyBlock() {
+    doTest(LanguageLevel.PYTHON314, false, false);
+  }
+
+  // PY-80237
+  public void testReturnInFinallyBlockBefore314() {
+    doTest(LanguageLevel.PYTHON313, false, false);
+  }
+
+  // PY-80237
+  public void testReturnInFinallyBlock() {
+    doTest(LanguageLevel.PYTHON314, false, false);
+  }
+
   public void testReturnWithArgumentsInGenerator() {
     doTest();
   }
