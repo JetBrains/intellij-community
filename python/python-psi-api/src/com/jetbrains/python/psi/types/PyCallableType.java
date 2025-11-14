@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,12 @@ public interface PyCallableType extends PyType {
 
   default @Nullable PyCallable getCallable() {
     return null;
+  }
+
+  @ApiStatus.Experimental
+  @NotNull
+  default PyCallableType dropSelf(@NotNull TypeEvalContext context) {
+    return this;
   }
 
   default @Nullable PyFunction.Modifier getModifier() {

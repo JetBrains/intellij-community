@@ -145,6 +145,21 @@ public class PyCallableTypeImpl implements PyCallableType {
   }
 
   @Override
+  public @NotNull PyCallableType dropSelf(@NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> parameters = getParameters(context);
+    if (parameters != null && myCallable instanceof PyFunction function) {
+      final List<PyCallableParameter> functionParameters = function.getParameters(context);
+
+      if (!ContainerUtil.isEmpty(functionParameters) && functionParameters.get(0).isSelf()) {
+        List<PyCallableParameter> newParameters = ContainerUtil.subList(parameters, 1);
+        return new PyCallableTypeImpl(newParameters, myReturnType, myCallable, myModifier, myImplicitOffset);
+      }
+    }
+
+    return this;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

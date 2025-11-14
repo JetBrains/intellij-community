@@ -23,6 +23,7 @@ import com.jetbrains.python.ast.impl.ParamHelperCore;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
+import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -173,6 +174,23 @@ public final class ParamHelper {
     }
 
     return false;
+  }
+
+  public static boolean isSelfArgsKwargsCallable(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> parameters = type.getParameters(context);
+    return parameters != null
+           && parameters.size() == 3 &&
+           parameters.get(0).isSelf() &&
+           parameters.get(1).isPositionalContainer() &&
+           parameters.get(2).isKeywordContainer();
+  }
+
+  public static boolean isArgsKwargsCallable(@NotNull PyCallableType type, @NotNull TypeEvalContext context) {
+    final List<PyCallableParameter> parameters = type.getParameters(context);
+    return parameters != null
+           && parameters.size() == 2 &&
+           parameters.get(0).isPositionalContainer() &&
+           parameters.get(1).isKeywordContainer();
   }
 
   public interface ParamWalker {
