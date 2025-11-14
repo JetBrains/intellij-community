@@ -134,7 +134,7 @@ fun startApplication(
 
   val initAwtToolkitJob = scheduleInitAwtToolkit(scope, lockSystemDirsJob, busyThread)
   val initBaseLafJob = scope.launch {
-    initUi(initAwtToolkitJob = initAwtToolkitJob, isHeadless = isHeadless, asyncScope = scope)
+    initUi(initAwtToolkitJob, isHeadless, asyncScope = scope)
   }
 
   var initUiScale: Job? = null
@@ -152,9 +152,9 @@ fun startApplication(
       }
     }
 
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope = scope, initAwtToolkitJob = initAwtToolkitJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
+    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope, initAwtToolkitJob, initUiScale, appInfoDeferred)
 
-    scheduleShowSplashIfNeeded(scope = scope, lockSystemDirsJob = lockSystemDirsJob, initUiScale = initUiScale, appInfoDeferred = appInfoDeferred, args = args)
+    scheduleShowSplashIfNeeded(scope, lockSystemDirsJob, initUiScale, appInfoDeferred, args)
   }
 
   val initLafJob = scope.launch {
@@ -207,34 +207,19 @@ fun startApplication(
     }
   }
 
-  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(
-    scope = scope,
-    logDeferred = logDeferred,
-    appInfoDeferred = appInfoDeferred,
-    initUiDeferred = initLafJob,
-    args = args,
-    mainScope = mainScope,
-  )
+  scheduleLoadSystemLibsAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 
-  val configImportDeferred: Deferred<Job?> = scope.async {
+  val configImportDeferred = scope.async {
     importConfigIfNeeded(
-      scope = scope,
-      isHeadless = isHeadless,
-      configImportNeededDeferred = configImportNeededDeferred,
-      lockSystemDirsJob = lockSystemDirsJob,
-      logDeferred = logDeferred,
-      args = args,
-      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
-      appStarterDeferred = appStarterDeferred,
-      euaDocumentDeferred = euaDocumentDeferred,
-      initLafJob = initLafJob,
+      scope, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, args,
+      customTargetDirectoryToImportConfig, appStarterDeferred, euaDocumentDeferred, initLafJob
     )
   }
 
   configImportDeferred.invokeOnCompletion {
-    // In case of patch update from Community Edition to Single Product we need to rename IDE folder on MacOS and rename Desktop shortcuts on Windows.
+    // after updating from a Community Edition to a single product we need to rename the macOS app bundle
     migrateCommunityToSingleProductIfNeeded(args)
   }
 
@@ -252,12 +237,7 @@ fun startApplication(
       }
     }
 
-    PluginManagerCore.scheduleDescriptorLoading(
-      coroutineScope = this,
-      zipPoolDeferred = zipPoolDeferred,
-      mainClassLoaderDeferred = mainClassLoaderDeferred,
-      logDeferred = logDeferred,
-    )
+    PluginManagerCore.scheduleDescriptorLoading(coroutineScope = this, zipPoolDeferred, mainClassLoaderDeferred, logDeferred)
   }
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
@@ -303,18 +283,7 @@ fun startApplication(
     }
 
     val args = ApplicationStartArguments.stripKnownArguments(args)
-    loadApp(
-      app = app,
-      pluginSetDeferred = pluginSetDeferred,
-      appInfoDeferred = appInfoDeferred,
-      euaDocumentDeferred = euaDocumentDeferred,
-      asyncScope = scope,
-      initLafJob = initLafJob,
-      logDeferred = logDeferred,
-      appRegisteredJob = appRegisteredJob,
-      args = args,
-      initAwtToolkitAndEventQueueJob = initEventQueueJob,
-    )
+    loadApp(app, pluginSetDeferred, appInfoDeferred, euaDocumentDeferred, scope, initLafJob, logDeferred, appRegisteredJob, args, initEventQueueJob)
   }
 
   scope.launch {
@@ -328,7 +297,7 @@ fun startApplication(
     // must be scheduled before preparing app start
     configImportDeferred.join()
 
-    withContext(mainScope.coroutineContext + CoroutineName("appStarter set")) {
+    withContext(@Suppress("CoroutineContextWithJob") mainScope.coroutineContext + CoroutineName("appStarter set")) {
       appStarter.prepareStart(args)
       appStartPreparedJob.complete(Unit)
     }
@@ -454,7 +423,7 @@ private fun checkDirectories(scope: CoroutineScope, lockSystemDirJob: Job): Job 
   val homePath = PathManager.getHomeDir().toString()
   val configPath = PathManager.getConfigDir()
   val systemPath = PathManager.getSystemDir()
-  if (!span("system dirs checking") { checkDirectories(homePath = homePath, configPath = configPath, systemPath = systemPath) }) {
+  if (!span("system dirs checking") { checkDirectories(homePath, configPath, systemPath) }) {
     exitProcess(AppExitCodes.DIR_CHECK_FAILED)
   }
 }
@@ -477,13 +446,13 @@ private suspend fun checkDirectories(homePath: String, configPath: Path, systemP
   }
 
   return withContext(Dispatchers.IO) {
-    val logPath = Path.of(PathManager.getLogPath()).normalize()
-    val tempPath = Path.of(PathManager.getTempPath()).normalize()
+    val logPath = PathManager.getLogDir().normalize()
+    val tempPath = PathManager.getTempDir().normalize()
     // directories might be nested, hence should be checked sequentially
-    checkDirectory(dir = configPath, kind = 0, property = PathManager.PROPERTY_CONFIG_PATH) &&
-    checkDirectory(dir = systemPath, kind = 1, property = PathManager.PROPERTY_SYSTEM_PATH) &&
-    checkDirectory(dir = logPath, kind = 2, property = PathManager.PROPERTY_LOG_PATH) &&
-    checkDirectory(dir = tempPath, kind = 3, property = PathManager.PROPERTY_SYSTEM_PATH)
+    checkDirectory(configPath, kind = 0, property = PathManager.PROPERTY_CONFIG_PATH) &&
+    checkDirectory(systemPath, kind = 1, property = PathManager.PROPERTY_SYSTEM_PATH) &&
+    checkDirectory(logPath, kind = 2, property = PathManager.PROPERTY_LOG_PATH) &&
+    checkDirectory(tempPath, kind = 3, property = PathManager.PROPERTY_SYSTEM_PATH)
   }
 }
 
@@ -614,11 +583,12 @@ fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<S
   @Suppress("SystemGetProperty")
   log.info(
     """locale=${Locale.getDefault()} JNU=${System.getProperty("sun.jnu.encoding")} file.encoding=${System.getProperty("file.encoding")}
-    ${PathManager.PROPERTY_HOME_PATH}=${logPath(PathManager.getHomePath())}
-    ${PathManager.PROPERTY_CONFIG_PATH}=${logPath(PathManager.getConfigPath())}
-    ${PathManager.PROPERTY_SYSTEM_PATH}=${logPath(PathManager.getSystemPath())}
-    ${PathManager.PROPERTY_PLUGINS_PATH}=${logPath(PathManager.getPluginsPath())}
-    ${PathManager.PROPERTY_LOG_PATH}=${logPath(PathManager.getLogPath())}""")
+    ${PathManager.PROPERTY_HOME_PATH}=${logPath(PathManager.getHomeDir())}
+    ${PathManager.PROPERTY_CONFIG_PATH}=${logPath(PathManager.getConfigDir())}
+    ${PathManager.PROPERTY_SYSTEM_PATH}=${logPath(PathManager.getSystemDir())}
+    ${PathManager.PROPERTY_PLUGINS_PATH}=${logPath(PathManager.getPluginsDir())}
+    ${PathManager.PROPERTY_LOG_PATH}=${logPath(PathManager.getLogDir())}"""
+  )
   val cores = Runtime.getRuntime().availableProcessors()
   val pool = ForkJoinPool.commonPool()
   log.info("CPU cores: $cores; ForkJoinPool.commonPool: $pool; factory: ${pool.factory}")
@@ -630,11 +600,10 @@ private fun logEnvVar(log: Logger, variable: String) {
   }
 }
 
-private fun logPath(path: String): String {
+private fun logPath(path: Path): String {
   try {
-    val configured = Path.of(path)
-    val real = configured.toRealPath()
-    return if (configured == real) path else "$path -> $real"
+    val real = path.toRealPath()
+    return if (path == real) path.toString() else "$path -> $real"
   }
   catch (e: Exception) {
     return "$path -> ${e.javaClass.name}: ${e.message}"
@@ -653,8 +622,7 @@ private fun shouldLoadShellEnv(log: Logger): Boolean {
   }
 
   val shLvl = System.getenv("SHLVL")
-  @Suppress("RemoveUnnecessaryParentheses")
-  if (shLvl != null && (shLvl.toIntOrNull() ?: 1) > 0) {
+  if (shLvl != null && @Suppress("RemoveUnnecessaryParentheses") (shLvl.toIntOrNull() ?: 1) > 0) {
     log.info("skipping shell environment: the IDE is likely launched from a terminal (SHLVL=${shLvl})")
     return false
   }
@@ -669,9 +637,9 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
   try {
     val timeoutMillis = System.getProperty(LOAD_SHELL_ENV_TIMEOUT_PROPERTY)?.toLongOrNull() ?: 0
     val env = ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(null, null, null), timeoutMillis).first
-    if ("LANG" !in env && "LC_ALL" !in env && "LC_CTYPE" !in env) {
+    if ("LANG" !in env && "LC_ALL" !in env && @Suppress("SpellCheckingInspection") "LC_CTYPE" !in env) {
       val value = EnvironmentUtil.setLocaleEnv(env, Charset.defaultCharset())
-      log.info("LC_CTYPE=${value}")
+      log.info(@Suppress("SpellCheckingInspection") "LC_CTYPE=${value}")
     }
     envFuture.complete(env.toImmutableMap())
     return true
