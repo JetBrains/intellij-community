@@ -100,7 +100,8 @@ object PluginManagerCore {
   @JvmField
   var isUnitTestMode: Boolean = java.lang.Boolean.getBoolean("idea.is.unit.test")
 
-  private class PluginsMutableState {
+  @ApiStatus.Internal
+  class PluginsMutableState {
     @Volatile
     var nullablePluginSet: PluginSet? = null
     var pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>? = null
@@ -121,7 +122,12 @@ object PluginManagerCore {
     var ourBuildNumber: BuildNumber? = null
   }
 
-  private val pluginsState = PluginsMutableState()
+  @ApiStatus.Internal
+  var pluginsStateSupplier: (() -> PluginsMutableState)? = null
+
+  private val pluginsStateLazy = lazy { PluginsMutableState() }
+  private val pluginsState
+    get() = pluginsStateSupplier?.invoke() ?: pluginsStateLazy.value
 
   /**
    * Returns `true` if the IDE is running from source code **without using 'dev build'**.
