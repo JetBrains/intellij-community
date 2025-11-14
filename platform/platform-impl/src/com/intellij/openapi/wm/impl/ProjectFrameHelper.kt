@@ -124,9 +124,6 @@ abstract class ProjectFrameHelper internal constructor(
     frame.doSetRootPane(rootPane)
 
     frameDecorator = IdeFrameDecorator.decorate(frame, glassPane, coroutineScope.childScope("IdeFrameDecorator"))
-    // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane via
-    // [com.intellij.openapi.wm.impl.IdeFrameDecorator.notifyFrameComponents]
-    frameDecorator?.setStoredFullScreen(getReusedFullScreenState())
 
     IdeRootPaneBorderHelper.install(
       app = ApplicationManager.getApplication(),
@@ -174,6 +171,12 @@ abstract class ProjectFrameHelper internal constructor(
         }
       }
     })
+
+    // NB!: the root pane must be set before decorator, which holds its own client properties in a root pane via
+    // [com.intellij.openapi.wm.impl.IdeFrameDecorator.notifyFrameComponents]
+    // Another important point is that the frame helper must be set before this,
+    // as it's used within (e.g., to initialize FloatingMenuBarFlavor).
+    frameDecorator?.setStoredFullScreen(getReusedFullScreenState())
 
     frame.background = JBColor.PanelBackground
     val balloonLayout = ActionCenterBalloonLayout(rootPane, JBUI.insets(8)).also {
