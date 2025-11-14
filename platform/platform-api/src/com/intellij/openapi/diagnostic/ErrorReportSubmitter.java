@@ -22,7 +22,6 @@ import java.awt.*;
  *   </extensions>
  * }</pre>
  */
-@ApiStatus.OverrideOnly
 public abstract class ErrorReportSubmitter implements PluginAware {
   @ApiStatus.Internal
   public static final ExtensionPointName<ErrorReportSubmitter> EP_NAME = ExtensionPointName.create("com.intellij.errorHandler");
@@ -47,11 +46,13 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   /**
    * @return an action text to be used in Error Reporter user interface, e.g. "Report to JetBrains".
    */
+  @ApiStatus.OverrideOnly
   public abstract @NlsActions.ActionText @NotNull String getReportActionText();
 
   /**
    * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
    */
+  @ApiStatus.OverrideOnly
   @RequiresBackgroundThread
   public @DetailedDescription @Nullable String getPrivacyNoticeText() {
     return null;
@@ -61,6 +62,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * If this reporter allows a user to identify themselves, the method should return either the name of an account that will be used
    * for submitting reports or an empty string. Otherwise, it should return {@code null}.
    */
+  @ApiStatus.OverrideOnly
   @RequiresBackgroundThread
   public @Nullable String getReporterAccount() {
     return null;
@@ -70,6 +72,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * If {@link #getReporterAccount()} returns a non-null value, this method may be called when a user wants to change a reporter account.
    * It is expected to be synchronous - i.e., do not return until a user finished entering their data.
    */
+  @ApiStatus.OverrideOnly
   public void changeReporterAccount(@NotNull Component parentComponent) {
     throw new UnsupportedOperationException();
   }
@@ -85,6 +88,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @param consumer        a callback to be called after sending is finished (or failed).
    * @return {@code true} if reporting was started (must invoke {@code consumer} callback with a result), {@code false} if a report can't be sent at the moment.
    */
+  @ApiStatus.OverrideOnly
   public boolean submit(
     @NotNull IdeaLoggingEvent @NotNull [] events,
     @Nullable String additionalInfo,
