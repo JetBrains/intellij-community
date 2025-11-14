@@ -10,19 +10,21 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.BasicLiteralUtil;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static com.intellij.psi.impl.source.tree.ElementType.STRING_LITERALS;
+import static com.intellij.psi.impl.source.tree.ElementType.STRING_TEMPLATE_FRAGMENTS;
 
 public final class LiteralSelectioner extends BasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
     IElementType type = e.getNode().getElementType();
-    return BasicElementTypes.BASIC_STRING_LITERALS.contains(type) ||
-           BasicElementTypes.BASIC_STRING_TEMPLATE_FRAGMENTS.contains(type);
+    return STRING_LITERALS.contains(type) ||
+           STRING_TEMPLATE_FRAGMENTS.contains(type);
   }
 
   @Override
@@ -47,8 +49,8 @@ public final class LiteralSelectioner extends BasicSelectioner {
     }
     else if (tokenType == JavaTokenType.STRING_TEMPLATE_END || tokenType == JavaTokenType.STRING_LITERAL) {
       int end = text.charAt(range.getEndOffset() - 1) == '"'
-                      ? range.getEndOffset() - 1
-                      : range.getEndOffset();
+                ? range.getEndOffset() - 1
+                : range.getEndOffset();
       return new TextRange(range.getStartOffset() + 1, end);
     }
     else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN || tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END ||

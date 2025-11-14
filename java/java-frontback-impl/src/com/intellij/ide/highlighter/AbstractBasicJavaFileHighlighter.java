@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.*;
+import static com.intellij.psi.impl.source.tree.ElementType.*;
 
 //suppress to be clear, what type is used
 @SuppressWarnings("UnnecessarilyQualifiedStaticUsage")
@@ -31,9 +31,9 @@ public abstract class AbstractBasicJavaFileHighlighter extends SyntaxHighlighter
     ourMap1 = new HashMap<>();
     ourMap2 = new HashMap<>();
 
-    fillMap(ourMap1, BASIC_KEYWORD_BIT_SET, JavaHighlightingColors.KEYWORD);
-    fillMap(ourMap1, BASIC_LITERAL_BIT_SET, JavaHighlightingColors.KEYWORD);
-    fillMap(ourMap1, BASIC_OPERATION_BIT_SET, JavaHighlightingColors.OPERATION_SIGN);
+    fillMap(ourMap1, KEYWORD_BIT_SET, JavaHighlightingColors.KEYWORD);
+    fillMap(ourMap1, LITERAL_BIT_SET, JavaHighlightingColors.KEYWORD);
+    fillMap(ourMap1, OPERATION_BIT_SET, JavaHighlightingColors.OPERATION_SIGN);
 
     for (IElementType type : JavaDocTokenType.ALL_JAVADOC_TOKENS.getTypes()) {
       ourMap1.put(type, JavaHighlightingColors.DOC_COMMENT);
@@ -71,7 +71,7 @@ public abstract class AbstractBasicJavaFileHighlighter extends SyntaxHighlighter
     ourMap1.put(JavaTokenType.SEMICOLON, JavaHighlightingColors.JAVA_SEMICOLON);
 
     ourMap1.put(JavaTokenType.C_STYLE_COMMENT, JavaHighlightingColors.JAVA_BLOCK_COMMENT);
-    ourMap1.put(BASIC_DOC_COMMENT, JavaHighlightingColors.DOC_COMMENT);
+    ourMap1.put(DOC_COMMENT, JavaHighlightingColors.DOC_COMMENT);
     ourMap1.put(JavaTokenType.END_OF_LINE_COMMENT, JavaHighlightingColors.LINE_COMMENT);
     ourMap1.put(TokenType.BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
 
