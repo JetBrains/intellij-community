@@ -10,28 +10,24 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
-import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_TEXT_LITERALS;
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_LITERAL_EXPRESSION;
-import static com.intellij.psi.impl.source.BasicJavaElementType.REFERENCE_EXPRESSION_SET;
+import static com.intellij.psi.impl.source.tree.ElementType.TEXT_LITERALS;
 
 public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements JavaLikeQuoteHandler, MultiCharQuoteHandler {
   private final TokenSet myConcatenableStrings = TokenSet.create(JavaTokenType.STRING_LITERAL);
-  private final ParentAwareTokenSet myAppropriateElementTypeForLiteral = ParentAwareTokenSet.orSet(
-    ParentAwareTokenSet.create(JavaDocTokenType.ALL_JAVADOC_TOKENS),
-    BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET, ParentAwareTokenSet.create(BASIC_TEXT_LITERALS),
-    ParentAwareTokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.COMMA, JavaTokenType.RPARENTH, JavaTokenType.RBRACKET,
-                               JavaTokenType.RBRACE));
+  private final TokenSet myAppropriateElementTypeForLiteral = TokenSet.orSet(
+    JavaDocTokenType.ALL_JAVADOC_TOKENS,
+    ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET, TEXT_LITERALS,
+    TokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.COMMA, JavaTokenType.RPARENTH, JavaTokenType.RBRACKET, JavaTokenType.RBRACE));
 
   public JavaQuoteHandler() {
-    super(TokenSet.orSet(BASIC_TEXT_LITERALS, TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE, JavaDocTokenType.DOC_INLINE_CODE_FENCE, JavaDocTokenType.DOC_CODE_FENCE)));
+    super(TokenSet.orSet(TEXT_LITERALS, TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE, JavaDocTokenType.DOC_INLINE_CODE_FENCE, JavaDocTokenType.DOC_CODE_FENCE)));
   }
 
   @Override
@@ -93,9 +89,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
   @Override
   public boolean needParenthesesAroundConcatenation(PsiElement element) {
     // example code: "some string".length() must become ("some" + " string").length()
-    return element != null && element.getParent() != null && element.getParent().getParent() != null &&
-           BasicJavaAstTreeUtil.is(element.getParent().getNode(), BASIC_LITERAL_EXPRESSION) &&
-           BasicJavaAstTreeUtil.is(element.getParent().getParent().getNode(), REFERENCE_EXPRESSION_SET);
+    return element.getParent() instanceof PsiLiteralExpression && element.getParent().getParent() instanceof PsiReferenceExpression;
   }
 
   @Override
@@ -133,12 +127,11 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
     editor.getDocument().insertString(offset, "\n\"\"\"");
     Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    PsiElement token = file.findElementAt(offset);
+    PsiJavaToken token = ObjectUtils.tryCast(file.findElementAt(offset), PsiJavaToken.class);
     if (token == null) return;
-    PsiElement parent = token.getParent();
-    if (parent != null && BasicJavaAstTreeUtil.is(parent.getNode(), BASIC_LITERAL_EXPRESSION)) {
-      CodeStyleManager.getInstance(project).reformat(parent);
-      editor.getCaretModel().moveToOffset(parent.getTextRange().getEndOffset() - 3);
-    }
+    PsiLiteralExpression textBlock = ObjectUtils.tryCast(token.getParent(), PsiLiteralExpression.class);
+    if (textBlock == null) return;
+    CodeStyleManager.getInstance(project).reformat(textBlock);
+    editor.getCaretModel().moveToOffset(textBlock.getTextRange().getEndOffset() - 3);
   }
 }

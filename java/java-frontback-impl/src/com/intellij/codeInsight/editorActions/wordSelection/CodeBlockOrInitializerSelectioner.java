@@ -1,41 +1,31 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.wordSelection;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
-
-public final class CodeBlockOrInitializerSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class CodeBlockOrInitializerSelectioner extends BasicSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {
-    ASTNode node = BasicJavaAstTreeUtil.toNode(e);
-    return BasicJavaAstTreeUtil.is(node, BASIC_CODE_BLOCK) ||
-           BasicJavaAstTreeUtil.is(node, BASIC_ARRAY_INITIALIZER_EXPRESSION) ||
-           BasicJavaAstTreeUtil.is(node, CLASS_SET) &&
-           !BasicJavaAstTreeUtil.is(node, BASIC_TYPE_PARAMETER);
+    return e instanceof PsiCodeBlock ||
+           e instanceof PsiArrayInitializerExpression ||
+           e instanceof PsiClass && !(e instanceof PsiTypeParameter);
   }
+
 
   @Override
   public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result = new ArrayList<>();
-    ASTNode node = BasicJavaAstTreeUtil.toNode(e);
-    if (node == null) {
-      return null;
-    }
-    result.add(getElementRange(node));
+    result.add(getElementRange(e));
 
-
-    List<ASTNode> children = BasicJavaAstTreeUtil.getChildren(node);
-    if (!children.isEmpty()) {
+    PsiElement[] children = e.getChildren();
+    if (children.length > 0) {
       int start = findOpeningBrace(children);
 
       // in non-Java PsiClasses, there can be no opening brace
@@ -48,49 +38,49 @@ public final class CodeBlockOrInitializerSelectioner extends AbstractBasicBackBa
     return result;
   }
 
-  public TextRange getElementRange(@NotNull ASTNode astNode) {
-    if (BasicJavaAstTreeUtil.is(astNode, CLASS_SET)) {
-      ASTNode lBrace = BasicJavaAstTreeUtil.getLBrace(astNode);
-      ASTNode rBrace = BasicJavaAstTreeUtil.getRBrace(astNode);
+  public TextRange getElementRange(@NotNull PsiElement e) {
+    if (e instanceof PsiClass) {
+      PsiElement lBrace = ((PsiClass)e).getLBrace();
+      PsiElement rBrace = ((PsiClass)e).getRBrace();
       if (lBrace != null && rBrace != null) {
-        return new TextRange(BasicJavaAstTreeUtil.getTextOffset(lBrace), rBrace.getTextRange().getEndOffset());
+        return new TextRange(lBrace.getTextOffset(), rBrace.getTextRange().getEndOffset());
       }
     }
 
-    return astNode.getTextRange();
+    return e.getTextRange();
   }
 
-  public static int findOpeningBrace(List<ASTNode> children) {
+  public static int findOpeningBrace(PsiElement[] children) {
     int start = 0;
-    for (int i = 0; i < children.size(); i++) {
-      ASTNode child = children.get(i);
+    for (int i = 0; i < children.length; i++) {
+      PsiElement child = children[i];
 
-      if (BasicJavaAstTreeUtil.is(child, JavaTokenType.LBRACE)) {
+      if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACE)) {
         int j = i + 1;
 
-        while (BasicJavaAstTreeUtil.isWhiteSpace(children.get(j))) {
+        while (children[j] instanceof PsiWhiteSpace) {
           j++;
         }
 
-        start = children.get(j).getTextRange().getStartOffset();
+        start = children[j].getTextRange().getStartOffset();
       }
     }
     return start;
   }
 
-  public static int findClosingBrace(List<ASTNode> children, int startOffset) {
-    int end = children.getLast().getTextRange().getEndOffset();
-    for (int i = 0; i < children.size(); i++) {
-      ASTNode child = children.get(i);
+  public static int findClosingBrace(PsiElement[] children, int startOffset) {
+    int end = children[children.length - 1].getTextRange().getEndOffset();
+    for (int i = 0; i < children.length; i++) {
+      PsiElement child = children[i];
 
-      if (BasicJavaAstTreeUtil.is(child, JavaTokenType.RBRACE)) {
+      if (PsiUtil.isJavaToken(child, JavaTokenType.RBRACE)) {
         int j = i - 1;
 
-        while (BasicJavaAstTreeUtil.isWhiteSpace(children.get(j)) && children.get(j).getTextRange().getStartOffset() > startOffset) {
+        while (children[j] instanceof PsiWhiteSpace && children[j].getTextRange().getStartOffset() > startOffset) {
           j--;
         }
 
-        end = children.get(j).getTextRange().getEndOffset();
+        end = children[j].getTextRange().getEndOffset();
       }
     }
     return end;

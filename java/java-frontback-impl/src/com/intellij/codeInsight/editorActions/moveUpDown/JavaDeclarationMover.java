@@ -98,7 +98,7 @@ final class JavaDeclarationMover extends LineMover {
 
   @Override
   public boolean checkAvailable(final @NotNull Editor editor, final @NotNull PsiFile file, final @NotNull MoveInfo info, final boolean down) {
-    if (!(file instanceof PsiJavaFile)) {
+    if (!(file instanceof AbstractBasicJavaFile)) {
       return false;
     }
 

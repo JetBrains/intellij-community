@@ -16,47 +16,36 @@
 
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
 public class MissingLambdaBodyFixer implements Fixer {
 
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    ASTNode body = null;
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_LAMBDA_EXPRESSION)) {
-      final ASTNode lastChild = astNode.getLastChildNode();
-      if (BasicJavaAstTreeUtil.is(lastChild, EXPRESSION_SET) ||
-          BasicJavaAstTreeUtil.is(lastChild, BASIC_CODE_BLOCK)) {
-        body = lastChild;
-      }
-    }
-    else if (BasicJavaAstTreeUtil.is(astNode, BASIC_SWITCH_LABELED_RULE)) {
-      body = BasicJavaAstTreeUtil.getRuleBody(astNode);
-    }
-    else {
-      return;
-    }
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement) throws IncorrectOperationException {
+    PsiElement body;
+    if (psiElement instanceof PsiLambdaExpression lambda) {
+      body = lambda.getBody();
+    } else if (psiElement instanceof PsiSwitchLabeledRuleStatement rule) {
+      body = rule.getBody();
+    } else return;
     if (body != null) return;
-    PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(astNode);
-    if (psiElement == null) {
-      return;
-    }
+    Document doc = editor.getDocument();
     PsiElement arrow = PsiTreeUtil.getDeepestVisibleLast(psiElement);
-    if (arrow == null || !arrow.getNode().getElementType().equals(JavaTokenType.ARROW)) return;
+    if (!PsiUtil.isJavaToken(arrow, JavaTokenType.ARROW)) return;
     int offset = arrow.getTextRange().getEndOffset();
-    processor.insertBracesWithNewLine(editor, offset);
+    doc.insertString(offset, "{\n}");
     editor.getCaretModel().moveToOffset(offset + 1);
     processor.commit(editor);
     processor.reformat(psiElement);
-    processor.setSkipEnter(BasicJavaAstTreeUtil.is(astNode, BASIC_LAMBDA_EXPRESSION));
+    processor.setSkipEnter(psiElement instanceof PsiLambdaExpression);
   }
 }

@@ -2,49 +2,35 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_ANNOTATION_ARRAY_INITIALIZER;
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_ARRAY_INITIALIZER_EXPRESSION;
-
 public class MissingArrayInitializerBraceFixer implements Fixer {
-
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    if (!(
-      BasicJavaAstTreeUtil.is(astNode, BASIC_ARRAY_INITIALIZER_EXPRESSION) ||
-      BasicJavaAstTreeUtil.is(astNode, BASIC_ANNOTATION_ARRAY_INITIALIZER))) {
-      return;
-    }
-    ASTNode child = astNode.getFirstChildNode();
-    if (!child.getElementType().equals(JavaTokenType.LBRACE)) return;
-    PsiElement psi = BasicJavaAstTreeUtil.toPsi(astNode);
-    if (psi == null) {
-      return;
-    }
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement)
+    throws IncorrectOperationException {
+    if (!(psiElement instanceof PsiArrayInitializerExpression || psiElement instanceof PsiArrayInitializerMemberValue)) return;
+    PsiElement child = psiElement.getFirstChild();
+    if (!PsiUtil.isJavaToken(child, JavaTokenType.LBRACE)) return;
     if (!EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, child.getTextRange().getEndOffset(),
-                                                                psi.getContainingFile().getFileType())) {
+                                                                psiElement.getContainingFile().getFileType())) {
       return;
     }
-    ASTNode anchor = BasicJavaAstTreeUtil.findChildByType(astNode, TokenType.ERROR_ELEMENT);
+    PsiElement anchor = PsiTreeUtil.getChildOfType(psiElement, PsiErrorElement.class);
     if (anchor == null) {
-      PsiElement last = PsiTreeUtil.getDeepestVisibleLast(psi);
-      while (last != null && last.getNode().getElementType().equals(JavaTokenType.RBRACE)) {
+      PsiElement last = PsiTreeUtil.getDeepestVisibleLast(psiElement);
+      while (PsiUtil.isJavaToken(last, JavaTokenType.RBRACE)) {
         last = PsiTreeUtil.prevCodeLeaf(last);
       }
-      if (last != null && PsiTreeUtil.isAncestor(psi, last, true)) {
-        anchor = last.getNode();
+      if (last != null && PsiTreeUtil.isAncestor(psiElement, last, true)) {
+        anchor = last;
       }
     }
-    int endOffset = (anchor != null ? anchor : astNode).getTextRange().getEndOffset();
+    int endOffset = (anchor != null ? anchor : psiElement).getTextRange().getEndOffset();
     editor.getDocument().insertString(endOffset, "}");
   }
 }

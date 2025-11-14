@@ -15,7 +15,7 @@ public final class JavaCatchBlockMover extends LineMover {
 
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
-    if (!(file instanceof PsiJavaFile)) return false;
+    if (!(file instanceof AbstractBasicJavaFile)) return false;
     if (!super.checkAvailable(editor, file, info, down)) return false;
 
     final Document document = editor.getDocument();

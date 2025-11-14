@@ -21,7 +21,7 @@ import static com.intellij.psi.tree.ParentAwareTokenSet.orSet;
 public class WhiteSpaceAndCommentSetHolder {
   public static final WhiteSpaceAndCommentSetHolder INSTANCE = new WhiteSpaceAndCommentSetHolder();
   private static final ParentAwareTokenSet PRECEDING_COMMENT_SET =
-    orSet(create(BasicJavaElementType.BASIC_MODULE, BasicJavaElementType.BASIC_IMPLICIT_CLASS), 
+    orSet(create(BasicJavaElementType.BASIC_MODULE, BasicJavaElementType.BASIC_IMPLICIT_CLASS),
           BasicElementTypes.BASIC_FULL_MEMBER_BIT_SET);
 
   private static final ParentAwareTokenSet TRAILING_COMMENT_SET =
@@ -31,10 +31,14 @@ public class WhiteSpaceAndCommentSetHolder {
   private WhiteSpaceAndCommentSetHolder() {
   }
 
-  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITH_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(false, true);
-  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITH_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(true, true);
-  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(false, false);
-  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN = new PrecedingWhitespacesAndCommentsBinder(true, false);
+  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITH_MARKDOWN =
+    new PrecedingWhitespacesAndCommentsBinder(false, true);
+  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITH_MARKDOWN =
+    new PrecedingWhitespacesAndCommentsBinder(true, true);
+  private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN =
+    new PrecedingWhitespacesAndCommentsBinder(false, false);
+  private final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER_WITHOUT_MARKDOWN =
+    new PrecedingWhitespacesAndCommentsBinder(true, false);
   private final WhitespacesAndCommentsBinder TRAILING_COMMENT_BINDER = new TrailingWhitespacesAndCommentsBinder();
 
   public WhitespacesAndCommentsBinder getPrecedingCommentBinder(@NotNull LanguageLevel myLanguageLevel) {

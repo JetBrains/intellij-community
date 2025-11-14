@@ -9,17 +9,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_LITERAL_EXPRESSION;
 
 public final class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandler {
 
@@ -31,7 +26,7 @@ public final class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandl
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement textBlock = getTextBlockAt(file, offset);
+    PsiLiteralExpression textBlock = getTextBlockAt(file, offset);
     if (textBlock == null) return Result.Continue;
     int textBlockOffset = textBlock.getTextOffset();
     String text = textBlock.getText();
@@ -62,15 +57,11 @@ public final class JavaEnterInTextBlockHandler extends EnterInStringLiteralHandl
   }
 
   @Contract("null, _ -> null")
-  private static PsiElement getTextBlockAt(PsiFile file, int offset) {
-    if (!isJavaFile(file)) return null;
-    PsiElement token = file.findElementAt(offset);
-    if (token == null || token.getNode() == null || !BasicJavaAstTreeUtil.is(token.getNode(), JavaTokenType.TEXT_BLOCK_LITERAL)) return null;
-    PsiElement parent = token.getParent();
-    if (!BasicJavaAstTreeUtil.is(BasicJavaAstTreeUtil.toNode(parent), BASIC_LITERAL_EXPRESSION)) {
-      return null;
-    }
-    return parent;
+  private static PsiLiteralExpression getTextBlockAt(PsiFile file, int offset) {
+    if (!(file instanceof AbstractBasicJavaFile)) return null;
+    PsiJavaToken token = ObjectUtils.tryCast(file.findElementAt(offset), PsiJavaToken.class);
+    if (token == null || token.getTokenType() != JavaTokenType.TEXT_BLOCK_LITERAL) return null;
+    return ObjectUtils.tryCast(token.getParent(), PsiLiteralExpression.class);
   }
 
   private static boolean isJavaFile(@Nullable PsiFile file) {

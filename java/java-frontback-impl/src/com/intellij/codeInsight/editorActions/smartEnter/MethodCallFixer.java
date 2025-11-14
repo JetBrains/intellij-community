@@ -3,13 +3,11 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
-import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -20,8 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class MethodCallFixer implements Fixer {
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(astNode);
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement) throws IncorrectOperationException {
     PsiExpressionList argList = null;
     if (psiElement instanceof PsiMethodCallExpression && psiElement.getLanguage().equals(JavaLanguage.INSTANCE)) {
       argList = ((PsiMethodCallExpression)psiElement).getArgumentList();

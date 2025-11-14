@@ -12,32 +12,25 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
-
-public class PlainEnterProcessor implements ASTNodeEnterProcessor {
-
+public class PlainEnterProcessor implements EnterProcessor {
   @Override
-  public boolean doEnter(@NotNull Editor editor, @NotNull ASTNode astNode, boolean isModified) {
-    if (expandCodeBlock(editor, astNode)) return true;
+  public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {
+    if (expandCodeBlock(editor, psiElement)) return true;
 
     getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE).execute(editor, editor.getCaretModel().getCurrentCaret(),
                                                                      EditorUtil.getEditorDataContext(editor));
     return true;
   }
 
-  public static boolean expandCodeBlock(@NotNull Editor editor, @Nullable ASTNode astNode) {
-    ASTNode block = getControlStatementBlock(editor.getCaretModel().getOffset(), astNode);
-    PsiElement psiBlock = BasicJavaAstTreeUtil.toPsi(block);
-    if (processExistingBlankLine(editor, psiBlock, astNode)) {
+  static boolean expandCodeBlock(Editor editor, PsiElement psiElement) {
+    PsiCodeBlock block = getControlStatementBlock(editor.getCaretModel().getOffset(), psiElement);
+    if (processExistingBlankLine(editor, block, psiElement)) {
       return true;
     }
     if (block == null) {
@@ -45,9 +38,9 @@ public class PlainEnterProcessor implements ASTNodeEnterProcessor {
     }
 
     EditorActionHandler enterHandler = getEnterHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
-    ASTNode firstElement = BasicJavaAstTreeUtil.getFirstBodyElement(block);
+    PsiElement firstElement = block.getFirstBodyElement();
     if (firstElement == null) {
-      firstElement = BasicJavaAstTreeUtil.getRBrace(block);
+      firstElement = block.getRBrace();
       // Plain enter processor inserts enter after the end of line, hence, we don't want to use it here because the line ends with
       // the empty braces block. So, we get the following in case of default handler usage:
       //     Before:
@@ -68,53 +61,52 @@ public class PlainEnterProcessor implements ASTNodeEnterProcessor {
     return EditorActionManager.getInstance().getActionHandler(actionId);
   }
 
-  private static @Nullable ASTNode getControlStatementBlock(int caret, ASTNode astNode) {
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_TRY_STATEMENT)) {
-      ASTNode tryBlock = BasicJavaAstTreeUtil.getCodeBlock(astNode);
+  private static @Nullable PsiCodeBlock getControlStatementBlock(int caret, PsiElement element) {
+    if (element instanceof PsiTryStatement) {
+      PsiCodeBlock tryBlock = ((PsiTryStatement)element).getTryBlock();
       if (tryBlock != null && caret < tryBlock.getTextRange().getEndOffset()) return tryBlock;
 
-      for (ASTNode catchBlock : BasicJavaAstTreeUtil.getCatchBlocks(astNode)) {
+      for (PsiCodeBlock catchBlock : ((PsiTryStatement)element).getCatchBlocks()) {
         if (catchBlock != null && caret < catchBlock.getTextRange().getEndOffset()) return catchBlock;
       }
 
-      return BasicJavaAstTreeUtil.getFinallyBlock(astNode);
+      return ((PsiTryStatement)element).getFinallyBlock();
     }
 
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_SYNCHRONIZED_STATEMENT)) {
-      return BasicJavaAstTreeUtil.getCodeBlock(astNode);
+    if (element instanceof PsiSynchronizedStatement) {
+      return ((PsiSynchronizedStatement)element).getBody();
     }
 
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_METHOD)) {
-      ASTNode methodBody = BasicJavaAstTreeUtil.getCodeBlock(astNode);
+    if (element instanceof PsiMethod) {
+      PsiCodeBlock methodBody = ((PsiMethod)element).getBody();
       if (methodBody != null) return methodBody;
     }
 
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_SWITCH_STATEMENT)) {
-      return BasicJavaAstTreeUtil.getCodeBlock(astNode);
+    if (element instanceof PsiSwitchStatement) {
+      return ((PsiSwitchStatement)element).getBody();
     }
 
-    ASTNode body = null;
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_IF_STATEMENT)) {
-      body = BasicJavaAstTreeUtil.getThenBranch(astNode);
+    PsiStatement body = null;
+    if (element instanceof PsiIfStatement) {
+      body = ((PsiIfStatement)element).getThenBranch();
       if (body != null && caret > body.getTextRange().getEndOffset()) {
-        body = BasicJavaAstTreeUtil.getElseBranch(astNode);
+        body = ((PsiIfStatement)element).getElseBranch();
       }
     }
-    else if (BasicJavaAstTreeUtil.is(astNode, BASIC_WHILE_STATEMENT)) {
-      body = BasicJavaAstTreeUtil.getBlock(astNode);
+    else if (element instanceof PsiWhileStatement) {
+      body = ((PsiWhileStatement)element).getBody();
     }
-    else if (BasicJavaAstTreeUtil.is(astNode, BASIC_FOR_STATEMENT)) {
-      body = BasicJavaAstTreeUtil.getForBody(astNode);
+    else if (element instanceof PsiForStatement) {
+      body = ((PsiForStatement)element).getBody();
     }
-    else if (BasicJavaAstTreeUtil.is(astNode, BASIC_FOREACH_STATEMENT)) {
-      body = BasicJavaAstTreeUtil.getBlock(astNode);
+    else if (element instanceof PsiForeachStatement) {
+      body = ((PsiForeachStatement)element).getBody();
     }
-    else if (BasicJavaAstTreeUtil.is(astNode, BASIC_DO_WHILE_STATEMENT)) {
-      body = BasicJavaAstTreeUtil.getDoWhileBody(astNode);
+    else if (element instanceof PsiDoWhileStatement) {
+      body = ((PsiDoWhileStatement)element).getBody();
     }
 
-    return BasicJavaAstTreeUtil.is(body, BASIC_BLOCK_STATEMENT) ?
-           BasicJavaAstTreeUtil.getCodeBlock(body) : null;
+    return body instanceof PsiBlockStatement ? ((PsiBlockStatement)body).getCodeBlock() : null;
   }
 
   /**
@@ -135,12 +127,11 @@ public class PlainEnterProcessor implements ASTNodeEnterProcessor {
    * is pointed to correct position there, i.e. no additional processing is required;
    * {@code false} otherwise
    */
-  private static boolean processExistingBlankLine(@NotNull Editor editor, @Nullable PsiElement codeBlock, @Nullable ASTNode element) {
+  private static boolean processExistingBlankLine(@NotNull Editor editor, @Nullable PsiCodeBlock codeBlock, @Nullable PsiElement element) {
     PsiWhiteSpace whiteSpace = null;
     if (codeBlock == null) {
-      PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(element);
-      if (psiElement != null && !(BasicJavaAstTreeUtil.is(element, MEMBER_SET))) {
-        final PsiElement next = PsiTreeUtil.nextLeaf(psiElement);
+      if (element != null && !(element instanceof PsiMember)) {
+        final PsiElement next = PsiTreeUtil.nextLeaf(element);
         if (next instanceof PsiWhiteSpace) {
           whiteSpace = (PsiWhiteSpace)next;
         }

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public final class LiteralSelectioner extends AbstractBasicBackBasicSelectioner {
+public final class LiteralSelectioner extends BasicSelectioner {
 
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

@@ -1,45 +1,39 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.tree.ParentAwareTokenSet;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
-
 public class MissingReturnExpressionFixer implements Fixer {
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    if (!(BasicJavaAstTreeUtil.is(astNode, BASIC_RETURN_STATEMENT))) {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor, @NotNull PsiElement psiElement)
+    throws IncorrectOperationException {
+    if (!(psiElement instanceof PsiReturnStatement retStatement)) {
       return;
     }
-    if (!BasicJavaAstTreeUtil.hasErrorElements(astNode)) {
-      return;
-    }
-
-    if (fixMethodCallWithoutTrailingSemicolon(astNode, editor, processor)) {
+    if (!PsiTreeUtil.hasErrorElements(psiElement)) {
       return;
     }
 
-    ASTNode returnValue = BasicJavaAstTreeUtil.getReturnValue(astNode);
+    if (fixMethodCallWithoutTrailingSemicolon(retStatement, editor, processor)) {
+      return;
+    }
+
+    PsiExpression returnValue = retStatement.getReturnValue();
     if (returnValue != null
         && lineNumber(editor, editor.getCaretModel().getOffset()) == lineNumber(editor, returnValue.getTextRange().getStartOffset())) {
       return;
     }
 
-    ASTNode parent = BasicJavaAstTreeUtil.getParentOfType(astNode, ParentAwareTokenSet.create(BASIC_CLASS_INITIALIZER, BASIC_METHOD));
-    if (BasicJavaAstTreeUtil.is(parent, BASIC_METHOD)) {
-      ASTNode type = BasicJavaAstTreeUtil.findChildByType(parent, BASIC_TYPE);
-      if (type != null && !type.getText().equals("void")) {
-        final int startOffset = astNode.getTextRange().getStartOffset();
+    PsiElement parent = PsiTreeUtil.getParentOfType(psiElement, PsiClassInitializer.class, PsiMethod.class);
+    if (parent instanceof PsiMethod) {
+      final PsiType returnType = ((PsiMethod)parent).getReturnType();
+      if (returnType != null && !PsiTypes.voidType().equals(returnType)) {
+        final int startOffset = retStatement.getTextRange().getStartOffset();
         if (returnValue != null) {
           editor.getDocument().insertString(startOffset + "return".length(), ";");
         }
@@ -49,29 +43,24 @@ public class MissingReturnExpressionFixer implements Fixer {
     }
   }
 
-  private static boolean fixMethodCallWithoutTrailingSemicolon(@Nullable ASTNode returnStatement, @NotNull Editor editor,
-                                                               @NotNull AbstractBasicJavaSmartEnterProcessor processor) {
+  private static boolean fixMethodCallWithoutTrailingSemicolon(@Nullable PsiReturnStatement returnStatement, @NotNull Editor editor,
+                                                               @NotNull JavaSmartEnterProcessor processor) {
     if (returnStatement == null) {
       return false;
     }
-
-    final ASTNode lastChild = returnStatement.getLastChildNode();
-    if (!(BasicJavaAstTreeUtil.is(lastChild, TokenType.ERROR_ELEMENT))) {
+    final PsiElement lastChild = returnStatement.getLastChild();
+    if (!(lastChild instanceof PsiErrorElement)) {
       return false;
     }
-    ASTNode prev = lastChild.getTreePrev();
-    if (BasicJavaAstTreeUtil.isWhiteSpace(prev)) {
-      prev = prev.getTreePrev();
+    PsiElement prev = lastChild.getPrevSibling();
+    if (prev instanceof PsiWhiteSpace) {
+      prev = prev.getPrevSibling();
     }
 
     if (!(prev instanceof PsiJavaToken prevToken)) {
       int offset = returnStatement.getTextRange().getEndOffset();
-      final PsiElement psiMethod =
-        BasicJavaAstTreeUtil.getParentOfType(BasicJavaAstTreeUtil.toPsi(returnStatement), BASIC_METHOD, true,
-                                             ParentAwareTokenSet.create(BASIC_LAMBDA_EXPRESSION));
-      ASTNode method = BasicJavaAstTreeUtil.toNode(psiMethod);
-      ASTNode type = BasicJavaAstTreeUtil.findChildByType(method, BASIC_TYPE);
-      if (method != null && type != null && type.getText().equals("void")) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class, true, PsiLambdaExpression.class);
+      if (method != null && PsiTypes.voidType().equals(method.getReturnType())) {
         offset = returnStatement.getTextRange().getStartOffset() + "return".length();
       }
       editor.getDocument().insertString(offset, ";");
@@ -86,16 +75,14 @@ public class MissingReturnExpressionFixer implements Fixer {
     final int offset = returnStatement.getTextRange().getEndOffset();
     editor.getDocument().insertString(offset, ";");
     if (prevToken.getTokenType() == JavaTokenType.RETURN_KEYWORD) {
-      final ASTNode method = BasicJavaAstTreeUtil.getParentOfType(returnStatement, BASIC_METHOD);
-      ASTNode type = BasicJavaAstTreeUtil.findChildByType(method, BASIC_TYPE);
-      if (method != null && type != null && !type.getText().equals("void")) {
+      final PsiMethod method = PsiTreeUtil.getParentOfType(returnStatement, PsiMethod.class);
+      if (method != null && !PsiTypes.voidType().equals(method.getReturnType())) {
         editor.getCaretModel().moveToOffset(offset);
         processor.setSkipEnter(true);
       }
     }
     return true;
   }
-
 
   private static int lineNumber(Editor editor, int offset) {
     return editor.getDocument().getLineNumber(offset);

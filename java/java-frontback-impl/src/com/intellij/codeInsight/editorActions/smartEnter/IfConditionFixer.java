@@ -2,56 +2,48 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_PLAIN_COMMENT_BIT_SET;
-import static com.intellij.psi.impl.source.BasicJavaDocElementType.BASIC_DOC_COMMENT;
-import static com.intellij.psi.impl.source.BasicJavaElementType.*;
-
 public class IfConditionFixer implements Fixer {
 
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_IF_STATEMENT)) {
+  public void apply(Editor editor, JavaSmartEnterProcessor processor,
+                    @NotNull PsiElement psiElement) throws IncorrectOperationException {
+    if (psiElement instanceof PsiIfStatement ifStatement) {
       final Document doc = editor.getDocument();
-      final ASTNode rParen = BasicJavaAstTreeUtil.getRParenth(astNode);
-      final ASTNode lParen = BasicJavaAstTreeUtil.getLParenth(astNode);
-      final ASTNode condition = BasicJavaAstTreeUtil.getIfCondition(astNode);
+      final PsiJavaToken rParen = ifStatement.getRParenth();
+      final PsiJavaToken lParen = ifStatement.getLParenth();
+      final PsiExpression condition = ifStatement.getCondition();
 
       if (condition == null) {
         if (lParen == null || rParen == null) {
-          int stopOffset = doc.getLineEndOffset(doc.getLineNumber(astNode.getTextRange().getStartOffset()));
-          final ASTNode then = BasicJavaAstTreeUtil.getThenBranch(astNode);
+          int stopOffset = doc.getLineEndOffset(doc.getLineNumber(ifStatement.getTextRange().getStartOffset()));
+          final PsiStatement then = ifStatement.getThenBranch();
           if (then != null) {
             stopOffset = Math.min(stopOffset, then.getTextRange().getStartOffset());
           }
-          stopOffset = Math.min(stopOffset, astNode.getTextRange().getEndOffset());
+          stopOffset = Math.min(stopOffset, ifStatement.getTextRange().getEndOffset());
 
-          ASTNode lastChild = astNode.getLastChildNode();
+          PsiElement lastChild = ifStatement.getLastChild();
           String innerComment = "";
           String lastComment = "";
           if (lParen != null && PsiUtilCore.getElementType(lastChild) == JavaTokenType.C_STYLE_COMMENT) {
             innerComment = lastChild.getText();
           }
-          else if (BasicJavaAstTreeUtil.is(lastChild, BASIC_DOC_COMMENT) ||
-                   BasicJavaAstTreeUtil.is(lastChild, BASIC_JAVA_PLAIN_COMMENT_BIT_SET)
-          ) {
+          else if (lastChild instanceof PsiComment) {
             lastComment = lastChild.getText();
           }
 
           String prefix = "if (" + innerComment;
-          doc.replaceString(astNode.getTextRange().getStartOffset(), stopOffset, prefix + ")" + lastComment);
+          doc.replaceString(ifStatement.getTextRange().getStartOffset(), stopOffset, prefix + ")" + lastComment);
 
-          processor.registerUnresolvedError(astNode.getTextRange().getStartOffset() + prefix.length());
+          processor.registerUnresolvedError(ifStatement.getTextRange().getStartOffset() + prefix.length());
         }
         else {
           processor.registerUnresolvedError(lParen.getTextRange().getEndOffset());
@@ -61,16 +53,12 @@ public class IfConditionFixer implements Fixer {
         doc.insertString(condition.getTextRange().getEndOffset(), ")");
       }
     }
-    else if (BasicJavaAstTreeUtil.is(astNode, EXPRESSION_SET) &&
-             BasicJavaAstTreeUtil.is(astNode.getTreeParent(), BASIC_EXPRESSION_STATEMENT)) {
-      PsiElement psi = BasicJavaAstTreeUtil.toPsi(astNode);
-      if (psi != null) {
-        PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(psi);
-        if (prevLeaf != null && prevLeaf.textMatches(JavaKeywords.IF)) {
-          Document doc = editor.getDocument();
-          doc.insertString(astNode.getTextRange().getEndOffset(), ")");
-          doc.insertString(astNode.getTextRange().getStartOffset(), "(");
-        }
+    else if (psiElement instanceof PsiExpression && psiElement.getParent() instanceof PsiExpressionStatement) {
+      PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(psiElement);
+      if (prevLeaf != null && prevLeaf.textMatches(JavaKeywords.IF)) {
+        Document doc = editor.getDocument();
+        doc.insertString(psiElement.getTextRange().getEndOffset(), ")");
+        doc.insertString(psiElement.getTextRange().getStartOffset(), "(");
       }
     }
   }

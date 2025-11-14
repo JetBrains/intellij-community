@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//todo
 public abstract class AbstractBasicJavaTypingTest extends BasePlatformTestCase {
 
   public void testMulticaretSkipSemicolon() {

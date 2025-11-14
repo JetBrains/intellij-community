@@ -2,33 +2,23 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
+import com.intellij.psi.PsiStatement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
-import static com.intellij.psi.impl.source.BasicJavaElementType.BASIC_CODE_BLOCK;
-import static com.intellij.psi.impl.source.BasicJavaElementType.STATEMENT_SET;
-
-public class BlockBraceFixer implements Fixer{
+public class BlockBraceFixer implements Fixer {
   @Override
-  public void apply(Editor editor, AbstractBasicJavaSmartEnterProcessor processor, @NotNull ASTNode astNode) throws IncorrectOperationException {
-    PsiElement psiElement = BasicJavaAstTreeUtil.toPsi(astNode);
-    if (psiElement == null) {
-      return;
-    }
-    if (BasicJavaAstTreeUtil.is(astNode, BASIC_CODE_BLOCK) && afterUnmatchedBrace(editor, psiElement.getContainingFile().getFileType())) {
-      int stopOffset = astNode.getTextRange().getEndOffset();
-      List<ASTNode> statements = BasicJavaAstTreeUtil.getChildren(astNode).stream().filter(node->
-        BasicJavaAstTreeUtil.is(node, STATEMENT_SET)
-      ).toList();
-      if (!statements.isEmpty()) {
-        stopOffset = statements.get(0).getTextRange().getEndOffset();
+  public void apply(Editor editor, JavaSmartEnterProcessor processor,
+                    @NotNull PsiElement psiElement) throws IncorrectOperationException {
+    if (psiElement instanceof PsiCodeBlock block && afterUnmatchedBrace(editor, psiElement.getContainingFile().getFileType())) {
+      int stopOffset = block.getTextRange().getEndOffset();
+      final PsiStatement[] statements = block.getStatements();
+      if (statements.length > 0) {
+        stopOffset = statements[0].getTextRange().getEndOffset();
       }
       editor.getDocument().insertString(stopOffset, "}");
     }
