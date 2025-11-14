@@ -86,6 +86,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.CheckDtdReferencesInspection;
 import kotlin.Unit;
@@ -2463,5 +2464,43 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     errs = highlightErrors();
     info = ContainerUtil.find(errs, e -> "Cannot resolve symbol 'Str'".equals(e.getDescription()));
     assertTrue(errs.toString(), info != null && info.getText().equals("Str"));
+  }
+
+  public void testGarbageCollectedFileViewProviderAtUnfortunateMomentMustNotLeadToDanglingRangeHighlighters() {
+    @Language("JAVA")
+    String text = """
+      class X {
+         void foo() {
+           String xxx;
+         }
+      }""";
+
+    configureByText(JavaFileType.INSTANCE, text);
+    doHighlighting();
+    RangeHighlighter[] highlighters = getSortedHighs();
+    String h1 = StringUtil.join(Arrays.asList(highlighters), "\n");
+
+    GCWatcher tracking = GCWatcher.tracking(myFile);
+    myFile = null;
+    IntentionsUI.getInstance(myProject).invalidate(); // clear com.intellij.codeInsight.intention.impl.CachedIntentions.myProject
+    tracking.ensureCollectedWithinTimeout(30_000);
+
+    myFile = PsiDocumentManager.getInstance(myProject).getPsiFile(getEditor().getDocument());
+    DaemonCodeAnalyzer.getInstance(myProject).restart(getTestName(false));
+    doHighlighting();
+    RangeHighlighter[] highlighters2 = getSortedHighs();
+    String h2 = StringUtil.join(Arrays.asList(highlighters2), "\n");
+
+    assertEquals(h1, h2);
+  }
+
+  private RangeHighlighter @NotNull [] getSortedHighs() {
+    RangeHighlighter[] highlighters = DocumentMarkupModel.forDocument(myEditor.getDocument(), myProject, true).getAllHighlighters();
+    Arrays.sort(highlighters, (o1, o2) -> {
+      HighlightInfo h1 = HighlightInfo.fromRangeHighlighter(o1);
+      HighlightInfo h2 = HighlightInfo.fromRangeHighlighter(o2);
+      return h1 == null || h2 == null ? Segment.BY_START_OFFSET_THEN_END_OFFSET.compare(o1, o2) : HighlightInfoUpdaterImpl.BY_OFFSETS_AND_HASH_ERRORS_FIRST.compare(h1, h2);
+    });
+    return highlighters;
   }
 }
