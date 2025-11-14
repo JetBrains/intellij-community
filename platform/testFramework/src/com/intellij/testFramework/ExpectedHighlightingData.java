@@ -565,7 +565,7 @@ public class ExpectedHighlightingData {
 
       @Override
       public boolean equals(HighlightInfo o1, HighlightInfo o2) {
-        return o1==null || o2 == null ? o1 == o2 : matchesPattern(o1, o2, false);
+        return o1==null || o2 == null ? o1 == o2 : matchesPattern(o1, o2);
       }
     });
     index.addAll(infos);
@@ -739,15 +739,15 @@ public class ExpectedHighlightingData {
     return ThreeState.NO;
   }
 
-  private static boolean matchesPattern(@NotNull HighlightInfo expectedInfo, @NotNull HighlightInfo info, boolean strictMatch) {
+  private static boolean matchesPattern(@NotNull HighlightInfo expectedInfo, @NotNull HighlightInfo info) {
     if (expectedInfo == info) return true;
-    boolean typeMatches = expectedInfo.type.equals(info.type) || !strictMatch && (expectedInfo.type == Holder.WHATEVER || info.type == Holder.WHATEVER);
+    boolean typeMatches = expectedInfo.type.equals(info.type) ||  (expectedInfo.type == Holder.WHATEVER || info.type == Holder.WHATEVER);
     boolean textAttributesMatches = sameTextAttributesByValue(expectedInfo.getTextAttributes(null, null), info.getTextAttributes(null, null)) ||
-                                    !strictMatch && (expectedInfo.forcedTextAttributes == null || info.forcedTextAttributes == null);
-    boolean attributesKeyMatches = !strictMatch && (expectedInfo.forcedTextAttributesKey == null || info.forcedTextAttributesKey == null) ||
+                                    (expectedInfo.forcedTextAttributes == null || info.forcedTextAttributes == null);
+    boolean attributesKeyMatches = (expectedInfo.forcedTextAttributesKey == null || info.forcedTextAttributesKey == null) ||
                                    Objects.equals(expectedInfo.forcedTextAttributesKey, info.forcedTextAttributesKey);
     return
-      haveSamePresentation(info, expectedInfo, strictMatch) &&
+      haveSamePresentation(info, expectedInfo, false) &&
       info.getSeverity() == expectedInfo.getSeverity() &&
       typeMatches &&
       textAttributesMatches &&
