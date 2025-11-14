@@ -3,9 +3,12 @@ package com.intellij.psi.impl.file.impl
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
+import com.intellij.lang.fakeLang.registerFakeLanguage
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.projectStructure.fixture.withSharedSourceEnabled
 import com.intellij.psi.PsiFile
@@ -16,10 +19,9 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.disposableFixture
-import com.intellij.testFramework.junit5.fixture.moduleFixture
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.virtualFileFixture
+import com.intellij.testFramework.junit5.fixture.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.lang.ref.Reference
@@ -34,6 +36,19 @@ internal class MultiversePsiEventTest {
     private val module2 = projectFixture.moduleFixture("m2")
 
     private val sourceRoot = sharedSourceRootFixture(module1, module2)
+
+    @Suppress("unused")
+    private val registerFakeLang = testFixture {
+      val newDisposable = Disposer.newDisposable()
+      withContext(Dispatchers.EDT) {
+        registerFakeLanguage(newDisposable)
+      }
+      initialized(Unit) {
+        withContext(Dispatchers.EDT) {
+          Disposer.dispose(newDisposable)
+        }
+      }
+    }
   }
 
   private val testDisposable by disposableFixture()
@@ -108,10 +123,72 @@ internal class MultiversePsiEventTest {
     expectedEventNumber = 2
   )
 
+  @Test
+  fun `test we receive 1 delete event on renaming file to another file type with 2 psi files`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun childRemoved(event: PsiTreeChangeEvent) {
+          counter.incrementAndGet()
+        }
+      }
+    },
+    updateBlock = { file -> file.rename(this, "A.fake") },
+    expectedEventNumber = 1
+  )
+
+  @Test
+  fun `test we receive 1 replaced event on renaming file to another file type with 2 psi files`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun childReplaced(event: PsiTreeChangeEvent) {
+          counter.incrementAndGet()
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.rename(this, "A.fake")
+    },
+    expectedEventNumber = 1
+  )
+
+  @Test
+  fun `test we receive 2 writeable event on changing writable status of a file with 2 psi files`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun propertyChanged(event: PsiTreeChangeEvent) {
+          if (event.propertyName == PsiTreeChangeEvent.PROP_WRITABLE) {
+            counter.incrementAndGet()
+          }
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.isWritable = false
+    },
+    expectedEventNumber = 2
+  )
+
+  @Test
+  fun `test we receive 2 before-writeable event on changing writable status of a file with 2 psi files`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun beforePropertyChange(event: PsiTreeChangeEvent) {
+          if (event.propertyName == PsiTreeChangeEvent.PROP_WRITABLE) {
+            counter.incrementAndGet()
+          }
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.isWritable = false
+    },
+    expectedEventNumber = 2
+  )
+
   private fun doChangeTest(
     listenerFactory: (AtomicInteger) -> PsiTreeChangeListener,
     updateBlock: (file: VirtualFile) -> Unit,
-    @Suppress("SameParameterValue") expectedEventNumber: Int
+    @Suppress("SameParameterValue") expectedEventNumber: Int,
   ) = runTest {
     val counter = AtomicInteger(0)
     val listener = listenerFactory(counter)
