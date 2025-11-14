@@ -9,23 +9,25 @@ import org.jetbrains.annotations.ApiStatus
 @Serializable
 class SeSortedProviderIds(
   val essential: Set<SeProviderId>,
-  val adapted: Set<SeProviderId>,
+  val adaptedAllTab: Set<SeProviderId>,
+  val adaptedSeparateTab: List<SeLegacyTabInfo>,
   val nonEssentialNonAdapted: Set<SeProviderId>,
   private val fetchTestItemData: SeItemData?,
 ) {
-  val nonEssential: Set<SeProviderId> get() = nonEssentialNonAdapted + adapted
+  val nonEssential: Set<SeProviderId> get() = nonEssentialNonAdapted + adaptedAllTab
   val isFetchable: Boolean get() = fetchTestItemData?.fetchItemIfExists() != null
 
   companion object {
     suspend fun create(providerIds: List<SeProviderId>, providersHolder: SeProvidersHolder, session: SeSession): SeSortedProviderIds {
       val essential: Set<SeProviderId> = providersHolder.getEssentialAllTabProviderIds().filter { it in providerIds }.toSet()
-      val adapted: Set<SeProviderId> = providersHolder.adaptedAllTabProviders.filter { it in providerIds }.toSet()
-      val nonEssentialNonAdapted: Set<SeProviderId> = providerIds.filter { it !in essential && it !in adapted }.toSet()
+      val adaptedAllTab: Set<SeProviderId> = providersHolder.adaptedAllTabProviders.filter { it in providerIds }.toSet()
+      val adaptedSeparateTab: List<SeLegacyTabInfo> = providersHolder.adaptedLegacyTabInfos.filter { it.providerId in providerIds }
+      val nonEssentialNonAdapted: Set<SeProviderId> = providerIds.filter { it !in essential && it !in adaptedAllTab }.toSet()
 
       val item = SeFetchTestItem()
       val itemData = SeItemData.createItemData(session, "", item, "".toProviderId(), item.weight(), item.presentation(), emptyMap(), emptyList())
 
-      return SeSortedProviderIds(essential, adapted, nonEssentialNonAdapted, itemData)
+      return SeSortedProviderIds(essential, adaptedAllTab, adaptedSeparateTab, nonEssentialNonAdapted, itemData)
     }
   }
 }

@@ -5,7 +5,9 @@ import com.intellij.ide.actions.SearchEverywhereManagerFactory
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
+import com.intellij.ide.rpc.rpcId
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -14,6 +16,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.asRef
@@ -27,6 +30,7 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextTab
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
+import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.SeLog.LIFE_CYCLE
 import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
@@ -165,6 +169,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val customizedTabFactories = SeTabsCustomizer.getInstance().customize(tabFactories)
     val orderedTabFactoryIds = customizedTabFactories.map { it.id }
 
+    // We initialize `adaptedTabs` before `tabsOrDeferredTabs`,
+    // because `tabsOrDeferredTabs` are not fully asynchronous and may delay initialization of `adaptedTabs`
+    val adaptedTabs = createAdaptedTabsIfMonolith(orderedTabFactoryIds, initEvent, popupScope, session)
+
     val tabsOrDeferredTabs = customizedTabFactories.map {
       it.id to initAsync(popupScope) {
         computeCatchingOrNull({ e -> "Error while getting tab from ${it.id} tab factory: ${e.message}" }) {
@@ -191,14 +199,6 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
     }.awaitAll()
 
-    val orphanedLegacySeparateTabContributors =
-      providersHolder.legacySeparateTabContributors.filter { !orderedTabFactoryIds.contains(it.key.value) }.values.sortedBy { it.sortWeight }
-    val adaptedTabs = orphanedLegacySeparateTabContributors.map { legacyContributor->
-      val name = legacyContributor.groupName
-      val adaptedTab = SeAdaptedTab.create(legacyContributor.searchProviderId, name, popupScope, project, session, initEvent)
-      adaptedTab
-    }
-
     val tabs = tabsOrDeferredTabs.filterIsInstance<SeTab>().sortedWith { tab1, tab2 ->
       val order1 = orderedTabFactoryIds.indexOf(tab1.id).let { if (it == -1) orderedTabFactoryIds.size + 1 else it }
       val order2 = orderedTabFactoryIds.indexOf(tab2.id).let { if (it == -1) orderedTabFactoryIds.size + 1 else it }
@@ -207,27 +207,65 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     }
     val deferredTabs = tabsOrDeferredTabs.filterIsInstance<SuspendLazyProperty<SeTab?>>()
 
-    val popupVm = SePopupVm(popupScope, session, project, tabs + adaptedTabs, deferredTabs, searchText, tabId, historyList, providersHolder.legacyAllTabContributors, onShowFindToolWindow = {
-      popupScope.launch(NonCancellable) {
-        removeSessionRef.set(false)
-        try {
-          it.openInFindWindow(session, initEvent)
-        } finally {
-          change {
-            shared {
-              session.asRef().derefOrNull()?.delete()
+    val popupVm = SePopupVm(
+      popupScope,
+      session,
+      project,
+      tabs,
+      deferredTabs,
+      adaptedTabs,
+      searchText,
+      tabId,
+      historyList,
+      providersHolder.legacyAllTabContributors,
+      providersHolder.legacySeparateTabContributors,
+      onShowFindToolWindow = {
+        popupScope.launch(NonCancellable) {
+          removeSessionRef.set(false)
+          try {
+            it.openInFindWindow(session, initEvent)
+          }
+          finally {
+            change {
+              shared {
+                session.asRef().derefOrNull()?.delete()
+              }
             }
           }
         }
-      }
-      popupScope.cancel()
-    }, closePopupHandler = {
+        popupScope.cancel()
+      }, closePopupHandler = {
       popup.cancel()
     })
     popupVm.showTab(tabId)
 
     popupContentPane.setVm(popupVm)
     popupFuture.complete(SePopupInstance(popupVm, popupContentPane, searchStatePublisher))
+  }
+
+  private fun createAdaptedTabsIfMonolith(
+    supportedTabIds: List<String>,
+    initEvent: AnActionEvent,
+    popupScope: CoroutineScope,
+    session: SeSession
+  ) : SuspendLazyProperty<List<SeTab>> = initAsync(popupScope) {
+    val orphanedRemoteAdaptedTabInfos = initAsync(popupScope) {
+      val dataContextId = readAction { initEvent.dataContext.rpcId() }
+      val availableRemoteProviders = project?.let { SeRemoteApi.getInstance().getAvailableProviderIds(it.projectId(), session, dataContextId) }
+
+      availableRemoteProviders?.adaptedSeparateTab
+        ?.takeIf { availableRemoteProviders.isFetchable }
+        ?.filter { !supportedTabIds.contains(it.providerId.value) }
+        ?.sortedBy { it.tabSortWeight }
+    }.getValue() ?: return@initAsync emptyList()
+
+    val tabs = orphanedRemoteAdaptedTabInfos.map {
+      popupScope.async {
+        SeAdaptedTab.create(it.providerId.value, it.tabName, popupScope, project, session, initEvent) to it.tabSortWeight
+      }
+    }.awaitAll().sortedBy { it.second }.map { it.first }
+
+    tabs
   }
 
   private fun createAndShowIdlePopup(

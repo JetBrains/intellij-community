@@ -346,7 +346,7 @@ class SeTabDelegate(
       }?.toSet() ?: emptySet()
 
       val adaptedAndAvailableToRenderRemoteProviderIds = if (adaptedRemoteProviderItemsAreFetchable) {
-        availableRemoteProviders.adapted.filter {
+        availableRemoteProviders.adaptedAllTab.filter {
           !frontendOnlyIds.contains(it) && localProvidersHolder.legacyAllTabContributors.containsKey(it)
         }
       }

@@ -25,6 +25,7 @@ import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionResult
 import com.intellij.platform.searchEverywhere.frontend.SeTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
+import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.psi.PsiManager
 import com.intellij.usageView.UsageInfo
@@ -42,10 +43,12 @@ class SePopupVm(
   private val project: Project?,
   tabs: List<SeTab>,
   deferredTabs: List<SuspendLazyProperty<SeTab?>>,
+  adaptedTabs: SuspendLazyProperty<List<SeTab>>,
   initialSearchPattern: String?,
   initialTabIndex: String,
   private val historyList: SearchHistoryList,
-  private val availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+  private val availableLegacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
+  private val availableLegacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
   private val onShowFindToolWindow: (SePopupVm) -> Unit,
   private val closePopupHandler: () -> Unit,
 ) {
@@ -54,7 +57,7 @@ class SePopupVm(
 
   private val _deferredTabVms = MutableSharedFlow<SeTabVm>(replay = 100)
   val deferredTabVms: SharedFlow<SeTabVm> = _deferredTabVms.asSharedFlow()
-  private val tabVmsSateFlow = MutableStateFlow(tabs.map { SeTabVm(project, coroutineScope, it, searchPattern, availableLegacyContributors) })
+  private val tabVmsSateFlow = MutableStateFlow(tabs.map { SeTabVm(project, coroutineScope, it, searchPattern, availableLegacyAllTabContributors) })
   val tabVms: List<SeTabVm> get() = tabVmsSateFlow.value
 
   val currentTabIndex: MutableStateFlow<Int> = MutableStateFlow(tabVms.indexOfFirst { it.tabId == initialTabIndex }.takeIf { it >= 0 } ?: 0)
@@ -120,11 +123,22 @@ class SePopupVm(
       }
     }
 
-    deferredTabs.forEach {
+    val deferredTabJobs = deferredTabs.map {
       coroutineScope.launch {
         it.getValue()?.let { tab ->
-          _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern, availableLegacyContributors))
+          _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern, availableLegacyAllTabContributors))
         }
+      }
+    }
+
+    coroutineScope.launch {
+      deferredTabJobs.joinAll()
+
+      val adaptedTabs = adaptedTabs.getValue()
+      adaptedTabs.forEach { tab ->
+        val providerId = tab.id.toProviderId()
+        val availableLegacyContributor = availableLegacySeparateTabContributors[providerId] ?: return@forEach
+        _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, searchPattern, mapOf(providerId to availableLegacyContributor)))
       }
     }
 
