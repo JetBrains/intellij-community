@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ktor-client-cio-internal" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-cio-jvm:3.1.3">
+        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-cio-jvm:3.3.2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.1.3/ktor-client-cio-jvm-3.1.3.jar">
-              <sha256sum>9a86341588057a23d3ba4562fdc8afcef6facd071678a0c20b3b28a19ec35c88</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.3.2/ktor-client-cio-jvm-3.3.2.jar">
+              <sha256sum>e16cb28d9a1bf0a33bc12f69ee0af3338f5303e6e3aa011534a7a5adb9030a33</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.1.3/ktor-client-cio-jvm-3.1.3.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.3.2/ktor-client-cio-jvm-3.3.2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.1.3/ktor-client-cio-jvm-3.1.3-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3.3.2/ktor-client-cio-jvm-3.3.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
