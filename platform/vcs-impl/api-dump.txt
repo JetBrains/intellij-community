@@ -4080,7 +4080,7 @@ c:com.intellij.vcs.commit.CommitProgressPanel
 - com.intellij.openapi.editor.event.DocumentListener
 - com.intellij.openapi.vcs.changes.InclusionListener
 - com.intellij.vcs.commit.CommitProgressUi
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.vcs.commit.CommitWorkflowUi,com.intellij.ui.EditorTextComponent):V
 - addCommitCheckFailure(com.intellij.vcs.commit.CommitCheckFailure):V
 - p:buildErrorText():java.lang.String

@@ -46,7 +46,7 @@ private class CommitChunkPanel(
   private val tracker: ChangelistsLocalLineStatusTracker,
   private val amendCommitHandler: NonModalAmendCommitHandler,
 ) : NonModalCommitPanel(tracker.project) {
-  override val commitProgressUi: CommitProgressUi = object : CommitProgressPanel(tracker.project) {
+  override val commitProgressUi = object : CommitProgressPanel(tracker.project, this) {
     override var isEmptyMessage: Boolean
       get() = commitMessage.text.isBlank()
       set(_) {}
