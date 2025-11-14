@@ -25,6 +25,7 @@ import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.containers.FileCollectionFactory
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import kotlinx.coroutines.*
 import org.jdom.output.Format
 import org.jdom.output.XMLOutputter
 import org.jetbrains.annotations.ApiStatus
@@ -36,12 +37,15 @@ import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.*
 import java.io.*
+import java.lang.Runnable
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Consumer
+import java.util.function.Predicate
 import java.util.regex.Pattern
 import java.util.zip.CRC32
 
@@ -1102,6 +1106,23 @@ class MavenProjectsTree(val project: Project) {
       my.putAll(theirs)
     }
 
+  }
+
+  internal suspend fun collectProblems() {
+    val existingFiles = ConcurrentHashMap<File, Boolean>()
+    val fileExistsPredicate = Predicate { f: File -> existingFiles.computeIfAbsent(f) { file: File -> Files.exists(file.toPath()) } }
+
+    coroutineScope {
+      withContext(Dispatchers.IO) {
+        projects.forEach { project ->
+          launch(CoroutineName("collecting problems in ${project.name}")) {
+            tracer.spanBuilder("collectProblems").useWithScope {
+              project.collectProblems(fileExistsPredicate) // fill problem cache
+            }
+          }
+        }
+      }
+    }
   }
 
   @ApiStatus.Internal

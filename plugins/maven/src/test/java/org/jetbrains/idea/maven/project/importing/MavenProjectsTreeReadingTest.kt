@@ -608,6 +608,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     val mavenProject = tree.findProject(projectPom)!!
     resolve(project, mavenProject, mavenGeneralSettings)
     assertEquals(log().add("resolved", "project"), listener.log)
+    updateAllProjects()
     assertFalse(mavenProject.problems.isEmpty())
   }
 

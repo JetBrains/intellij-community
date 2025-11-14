@@ -58,8 +58,6 @@ import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.File
-import java.nio.file.Files
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
@@ -112,10 +110,6 @@ interface MavenAsyncProjectsManager {
     previewModule: Module?,
     syncProject: Boolean,
   ): List<Module>
-
-  fun projectFileExists(file: File): Boolean {
-    return Files.exists(file.toPath())
-  }
 
   suspend fun onProjectStartup()
 }
@@ -466,6 +460,10 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
     val result = tracer.spanBuilder("importModules").useWithScope {
       importModules(syncActivity, resolutionResult, modelsProvider, mavenEmbedderWrappers)
+    }
+
+    tracer.spanBuilder("collectMavenProblems").useWithScope {
+      projectsTree.collectProblems()
     }
 
     tracer.spanBuilder("notifyMavenProblems").useWithScope {

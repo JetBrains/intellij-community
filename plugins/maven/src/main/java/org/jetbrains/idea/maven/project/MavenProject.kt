@@ -28,12 +28,12 @@ import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher
 import org.jetbrains.idea.maven.server.MavenGoalExecutionResult
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.hasArtifactFile
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.*
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Predicate
 import kotlin.io.path.isDirectory
 
@@ -50,6 +50,7 @@ class MavenProject(val file: VirtualFile) {
 
   private val cache = ConcurrentHashMap<Key<*>, Any>()
   private val stateCache = ConcurrentHashMap<Key<*>, Any>()
+  private val problemsCache = CopyOnWriteArrayList<MavenProjectProblem>()
 
   enum class ProcMode {
     BOTH, ONLY, NONE
@@ -434,17 +435,13 @@ class MavenProject(val file: VirtualFile) {
 
   val problems: List<MavenProjectProblem>
     get() {
-      return collectProblems(null)
+      return problemsCache
     }
 
-  @Internal
-  fun collectProblems(fileExistsPredicate: Predicate<File>?): List<MavenProjectProblem> {
-    var problemsCache = getStateCachedValue(PROBLEMS_CACHE_KEY)
-    if (problemsCache == null) {
-      problemsCache = doCollectProblems(file, fileExistsPredicate)
-      putStateCachedValue(PROBLEMS_CACHE_KEY, problemsCache)
-    }
-    return problemsCache
+  internal fun collectProblems(fileExistsPredicate: Predicate<File>?) {
+    val collectedProblems = doCollectProblems(file, fileExistsPredicate)
+    problemsCache.clear()
+    problemsCache.addAll(collectedProblems)
   }
 
   private fun doCollectProblems(file: VirtualFile, fileExistsPredicate: Predicate<File>?): List<MavenProjectProblem> {
@@ -803,7 +800,6 @@ class MavenProject(val file: VirtualFile) {
   companion object {
     private val DEPENDENCIES_CACHE_KEY: Key<MavenArtifactIndex?> = Key.create("MavenProject.DEPENDENCIES_CACHE_KEY")
     private val FILTERS_CACHE_KEY: Key<List<String>> = Key.create("MavenProject.FILTERS_CACHE_KEY")
-    private val PROBLEMS_CACHE_KEY: Key<List<MavenProjectProblem>> = Key.create("MavenProject.PROBLEMS_CACHE_KEY")
     private val UNRESOLVED_DEPENDENCIES_CACHE_KEY: Key<List<MavenArtifact>> = Key.create("MavenProject.UNRESOLVED_DEPENDENCIES_CACHE_KEY")
     private val UNRESOLVED_PLUGINS_CACHE_KEY: Key<List<MavenPlugin>> = Key.create("MavenProject.UNRESOLVED_PLUGINS_CACHE_KEY")
     private val UNRESOLVED_EXTENSIONS_CACHE_KEY: Key<List<MavenArtifact>> = Key.create("MavenProject.UNRESOLVED_EXTENSIONS_CACHE_KEY")
