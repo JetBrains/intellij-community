@@ -21,11 +21,14 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.lang.ref.Reference
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 internal class MultiversePsiEventTest {
@@ -185,9 +188,53 @@ internal class MultiversePsiEventTest {
     expectedEventNumber = 2
   )
 
+  @Test
+  fun `test we receive 2 property-change events on changing encoding of a file with 2 psi files`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun propertyChanged(event: PsiTreeChangeEvent) {
+          if (event.propertyName == VirtualFile.PROP_ENCODING) {
+            counter.incrementAndGet()
+          }
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.charset = Charsets.UTF_16
+    },
+    awaitCondition = { counter -> counter.get() >= 2 },
+    expectedEventNumber = 2
+  )
+
+  @Test
+  fun `test we receive 0 before-property-change events on changing encoding of a file with 2 psi files`() {
+    val afterEventFlag = AtomicBoolean(false)
+    doChangeTest(
+      listenerFactory = { counter ->
+        object : PsiTreeChangeAdapter() {
+          override fun beforePropertyChange(event: PsiTreeChangeEvent) {
+            if (event.propertyName == VirtualFile.PROP_ENCODING) {
+              counter.incrementAndGet()
+            }
+          }
+
+          override fun propertyChanged(event: PsiTreeChangeEvent) {
+            afterEventFlag.set(true)
+          }
+        }
+      },
+      updateBlock = { file ->
+        file.charset = Charsets.UTF_16
+      },
+      awaitCondition = { afterEventFlag.get() },
+      expectedEventNumber = 0
+    )
+  }
+
   private fun doChangeTest(
     listenerFactory: (AtomicInteger) -> PsiTreeChangeListener,
     updateBlock: (file: VirtualFile) -> Unit,
+    awaitCondition: (AtomicInteger) -> Boolean = { true },
     @Suppress("SameParameterValue") expectedEventNumber: Int,
   ) = runTest {
     val counter = AtomicInteger(0)
@@ -200,6 +247,10 @@ internal class MultiversePsiEventTest {
 
     writeAction {
       updateBlock(virtualFile)
+    }
+
+    while (!awaitCondition(counter)) {
+      delay(50.milliseconds)
     }
 
     Reference.reachabilityFence(f1)
