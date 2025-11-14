@@ -98,7 +98,7 @@
       "selectedBackground": "ToolWindowBackground",
       "hoverBackground": "#FFFFFF12",
       "separatorColor": "#FFFFFF16",
-      "foreground": "#FFFFFF65"
+      "foreground": "Gray8"
     },
 
     "MainToolbar": {
