@@ -17,6 +17,7 @@ object CommunityProductFragments {
    */
   fun platformLangBaseFragment(): ProductModulesContentSpec = productModules {
     deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
+    embeddedModule("intellij.platform.builtInServer.impl")
   }
 
   /**

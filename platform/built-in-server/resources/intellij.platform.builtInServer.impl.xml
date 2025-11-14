@@ -1,4 +1,7 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
   <extensionPoints>
     <extensionPoint qualifiedName="org.jetbrains.webServerPathHandler" interface="org.jetbrains.builtInWebServer.WebServerPathHandler" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.webServerFileHandler" interface="org.jetbrains.builtInWebServer.WebServerFileHandler" dynamic="true"/>

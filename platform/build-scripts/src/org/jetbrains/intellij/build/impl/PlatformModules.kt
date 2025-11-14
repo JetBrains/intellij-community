@@ -162,6 +162,8 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "javax.activation",
     "jaxb-runtime",
     "jaxb-api",
+    // todo - convert to product module
+    "netty-codec-compression"
   ))
 
   layout.withProjectLibraries(

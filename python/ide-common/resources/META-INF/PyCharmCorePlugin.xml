@@ -23,6 +23,7 @@
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.tips"/>
+    <module name="intellij.platform.builtInServer.impl" loading="embedded"/>
   </content>
   <!-- </editor-fold> -->
 </idea-plugin>
