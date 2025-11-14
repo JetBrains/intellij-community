@@ -800,6 +800,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense("kotlin-metadata-jvm", libraryName = "kotlin-metadata-jvm", url = "https://github.com/JetBrains/kotlin")
+      .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
+
     LibraryLicense("Kotlin Coroutines for Guava", libraryName = "kotlinx-coroutines-guava", url = "https://github.com/Kotlin/kotlinx.coroutines")
       .apache("https://github.com/Kotlin/kotlinx.coroutines/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
