@@ -12,11 +12,9 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.Processor
 import com.intellij.util.xml.ConvertContext
@@ -33,8 +31,9 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 
 private const val SUB_DESCRIPTOR_DELIMITER = "/"
 private const val SUB_DESCRIPTOR_FILENAME_DELIMITER = "."
+private const val GRADLE_MAIN_MODULE_SUFFIX = ".main"
 private val LOOKUP_PRIORITY = Key.create<Double>("LOOKUP_PRIORITY")
-private val IS_IN_LIBRARY = Key.create<Boolean>("IS_IN_LIBRARY")
+private val CONTEXT = Key.create<ModuleContext>("MODULE_CONTEXT")
 
 class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
 
@@ -55,14 +54,14 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
 
   override fun fromString(s: String?, context: ConvertContext): IdeaPlugin? {
     if (s == null || s.isEmpty()) return null
-    val currentModule = context.module ?: return null
     val moduleManager = ModuleManager.getInstance(context.project)
     val (jpsModuleName, descriptorFileName) = getJpsModuleNameAndDescriptorFileName(s)
-    return findDescriptor(currentModule, jpsModuleName, descriptorFileName, moduleManager)
+    return findDescriptorInModuleSources(jpsModuleName, descriptorFileName, moduleManager)
+           ?: findDescriptorFileInGradleSubProjectContent(moduleManager, jpsModuleName, descriptorFileName)
+           ?: findDescriptorInModuleLibraries(context, descriptorFileName)
   }
 
-  private fun findDescriptor(
-    currentModule: Module,
+  private fun findDescriptorInModuleSources(
     jpsModuleName: String,
     descriptorFileName: String,
     moduleManager: ModuleManager,
@@ -74,7 +73,7 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
         return plugin
       }
     }
-    return findDescriptorInModuleLibraries(currentModule, descriptorFileName)
+    return null
   }
 
   override fun getPsiElement(resolvedValue: IdeaPlugin?): PsiElement? {
@@ -129,12 +128,23 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
           .forEach { variants.add(it) }
         true
       }
+      // plugin Gradle projects:
+      if (moduleName.endsWith(GRADLE_MAIN_MODULE_SUFFIX)) {
+        for (contentRoot in ModuleRootManager.getInstance(module).contentRoots) {
+          val pluginModuleName = moduleName.removeSuffix(GRADLE_MAIN_MODULE_SUFFIX)
+          val resources = contentRoot.findChild("resources")?.takeIf { it.isDirectory } ?: continue
+          resources.children
+            .filter { it.extension == "xml" && it.name.startsWith(pluginModuleName) }
+            .mapNotNull { findIdeaPlugin(resources, it.name, project)?.apply { putUserData(CONTEXT, ModuleContext.SOURCES_GRADLE) } }
+            .forEach { variants.add(it) }
+        }
+      }
     }
     processModuleLibraryRoots(currentModule) { root ->
       val libraryName = root.nameWithoutExtension
       root.children
         .filter { it.extension == "xml" && it.name.startsWith(libraryName) }
-        .mapNotNull { findIdeaPlugin(root, it.name, project)?.apply { putUserData(IS_IN_LIBRARY, true) } }
+        .mapNotNull { findIdeaPlugin(root, it.name, project)?.apply { putUserData(CONTEXT, ModuleContext.LIBRARY) } }
         .forEach { variants.add(it) }
       true
     }
@@ -142,14 +152,12 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
   }
 
   private fun getDisplayName(plugin: IdeaPlugin): String {
-    val isInLibrary = plugin.getUserData(IS_IN_LIBRARY) ?: false
-
+    val context = plugin.getUserData(CONTEXT) ?: ModuleContext.SOURCES
     val descriptorFile = DomUtil.getFile(plugin).virtualFile
-    val jpsModuleName = if (isInLibrary) {
-      descriptorFile.parent!!.nameWithoutExtension
-    }
-    else {
-      plugin.module!!.name
+    val jpsModuleName = when (context) {
+      ModuleContext.SOURCES -> plugin.module!!.name
+      ModuleContext.SOURCES_GRADLE -> plugin.module!!.name.removeSuffix(GRADLE_MAIN_MODULE_SUFFIX)
+      ModuleContext.LIBRARY -> descriptorFile.parent!!.nameWithoutExtension
     }
     val pluginModuleName = descriptorFile.nameWithoutExtension
     if (jpsModuleName == pluginModuleName) {
@@ -167,17 +175,38 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
     return ideaPlugin
   }
 
-  private fun findDescriptorInModuleLibraries(module: Module, fileName: String): IdeaPlugin? {
+  private fun findDescriptorFileInGradleSubProjectContent(
+    moduleManager: ModuleManager,
+    moduleNamePrefix: String,
+    fileName: String,
+  ): IdeaPlugin? {
+    val module = moduleManager.findModuleByName("$moduleNamePrefix$GRADLE_MAIN_MODULE_SUFFIX") ?: return null
+    for (contentRoot in ModuleRootManager.getInstance(module).contentRoots) {
+      val candidate = contentRoot.findFileByRelativePath("resources/$fileName")
+      val ideaPlugin = findIdeaPlugin(candidate, module.project)
+      if (ideaPlugin != null) {
+        return ideaPlugin
+      }
+    }
+    return null
+  }
+
+  private fun findDescriptorInModuleLibraries(context: ConvertContext, fileName: String): IdeaPlugin? {
+    val currentModule = context.module ?: return null
     var ideaPlugin: IdeaPlugin? = null
-    processModuleLibraryRoots(module) {
-      ideaPlugin = findIdeaPlugin(it, fileName, module.project)
+    processModuleLibraryRoots(currentModule) {
+      ideaPlugin = findIdeaPlugin(it, fileName, context.project)
       ideaPlugin == null // continue if not found
     }
     return ideaPlugin
   }
 
   private fun findIdeaPlugin(root: VirtualFile, fileName: String, project: Project): IdeaPlugin? {
-    val candidate = root.findChild(fileName) ?: return null
+    return findIdeaPlugin(root.findChild(fileName), project)
+  }
+
+  private fun findIdeaPlugin(candidate: VirtualFile?, project: Project): IdeaPlugin? {
+    candidate ?: return null
     val psiFile = PsiManager.getInstance(project).findFile(candidate)
     if (DescriptorUtil.isPluginXml(psiFile)) {
       return DescriptorUtil.getIdeaPlugin(psiFile as XmlFile)
@@ -226,4 +255,8 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
     return getDescriptorFileName(moduleName + SUB_DESCRIPTOR_FILENAME_DELIMITER + fileName)
   }
 
+}
+
+private enum class ModuleContext {
+  SOURCES, SOURCES_GRADLE, LIBRARY;
 }
