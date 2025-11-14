@@ -131,7 +131,7 @@ open class JTreeTextFixture(robot: Robot, private val component: JTree) : JTreeF
     }
   }
 
-  private fun scrollToRowAndGetVisibleCenter(row: Int): Point {
+  fun scrollToRowAndGetVisibleCenter(row: Int): Point {
     return computeOnEdt {
       val tree = target()
       ComponentPreconditions.checkEnabledAndShowing(tree)

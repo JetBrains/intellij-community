@@ -20,6 +20,7 @@ import org.intellij.lang.annotations.Language
 import java.awt.Point
 import javax.swing.JTree
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 fun Finder.tree(@Language("xpath") xpath: String? = null) =
@@ -122,6 +123,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw PathNotFoundException(path.toList())
   }
 
+
   fun expandAll(timeout: Duration = 5.seconds): JTreeUiComponent {
     waitForNodesLoaded()
     fixture.expandAll(timeout.inWholeMilliseconds.toInt())
@@ -130,14 +132,14 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun expandPath(vararg path: String, fullMatch: Boolean = true) {
     for (i in path.indices) {
-      waitForNodesLoaded(10.seconds)
+      waitForNodesLoaded(1.minutes)
       val subPath = path.sliceArray(0..i)
       findExpandedPath(*subPath, fullMatch = fullMatch)?.let {
         driver.withContext(OnDispatcher.EDT) { treeComponent.expandRow(it.row) }
         wait(1.seconds) // wait expand
       } ?: throw PathNotFoundException(path.toList())
     }
-    waitForNodesLoaded(10.seconds)
+    waitForNodesLoaded(1.minutes)
   }
 
   fun expandPathWithEnter(vararg path: String, fullMatch: Boolean = true) = waitFor("Expand path by enter '${path.toList()}'") {
@@ -168,9 +170,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     fixture.collapseRow(findExpandedPath(*path, fullMatch = fullMatch)?.row ?: throw PathNotFoundException(path.toList()))
   }
 
-  fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? = findExpandedPaths(*path, fullMatch = fullMatch).singleOrNull()
+  fun findExpandedPath(vararg path: String, fullMatch: Boolean): TreePathToRow? =
+    findExpandedPaths(*path, fullMatch = fullMatch).singleOrNull()
 
-  private fun findExpandedPaths(
+  fun findExpandedPaths(
     vararg path: String,
     fullMatch: Boolean,
   ): List<TreePathToRow> = collectExpandedPaths().filter { expandedPath ->
@@ -215,6 +218,14 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getComponentAtRow(row: Int): Component = fixture.getComponentAtRow(row)
 
+  fun dragAndDropRowByNumberToPoint(row: Int, to:Point) {
+    val actualLocation = this.boundsOnScreen.location.apply {
+      val rowLocation = fixture.scrollToRowAndGetVisibleCenter(row)
+      translate(rowLocation.x, rowLocation.y)
+    }
+    driver.ui.dragAndDrop(actualLocation, to)
+  }
+
   fun waitForNodesLoaded(timeout: Duration = 10.seconds) {
     waitFor("tree nodes are loaded", timeout) { fixture.areTreeNodesLoaded() }
   }
@@ -227,6 +238,10 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
 
   class PathNotFoundException(message: String? = null) : Exception(message) {
     constructor(path: List<String>) : this("$path not found")
+  }
+
+  fun getRootNode(): String {
+    return collectExpandedPaths()[0].path.joinToString()
   }
 }
 
@@ -253,6 +268,7 @@ interface JTreeFixtureRef : Component {
   fun getRowPoint(row: Int): Point
   fun replaceCellRendererReader(reader: CellRendererReader)
   fun getComponentAtRow(row: Int): Component
+  fun scrollToRowAndGetVisibleCenter(row: Int): Point
   fun collectIconsAtRow(row: Int): List<Icon>
   fun areTreeNodesLoaded(): Boolean
 }

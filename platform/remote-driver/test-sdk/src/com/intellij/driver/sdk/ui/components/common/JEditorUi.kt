@@ -13,6 +13,9 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
+import com.intellij.driver.sdk.ui.components.elements.JCheckBoxUi
+import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.actionButton
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
@@ -428,31 +431,31 @@ fun Finder.editorSearchReplace(@Language("xpath") xpath: String? = null, action:
 }
 
 class EditorSearchReplaceComponent(data: ComponentData) : UiComponent(data) {
-  val searchField = textField { and(byClass("JBTextArea"), byAccessibleName("Search")) }
-  val replaceField = textField { and(byClass("JBTextArea"), byAccessibleName("Replace")) }
-  val clearSearchButton = actionButton { byAttribute("myicon", "closeSmall.svg") }
-  val newLineButton = actionButton { byAccessibleName("New Line") }
-  val matchCaseButton = actionButton { byAccessibleName("Match Case") }
-  val regexButton = actionButton { byAccessibleName("Regex") }
-  val preserveCaseButton = actionButton { byAccessibleName("Preserve case") }
-  val matchesLabel = x("//div[@class='ActionToolbarImpl']//div[@class='JLabel']")
-  val nextOccurrenceButton = actionButton { byAccessibleName("Next Occurrence") }
-  val previousOccurrenceButton = actionButton { byAccessibleName("Previous Occurrence") }
-  val filterSearchResultsButton = actionButton { byAccessibleName("Filter Search Results") }
-  val optionsButton = actionButton { byAccessibleName("Open in Window, Multiple Cursors") }
-  val replaceButton = actionButton { byVisibleText("Replace") }
-  val replaceAllButton = actionButton { byAccessibleName("Replace All") }
-  val excludeButton = actionButton { byAccessibleName("Exclude") }
-  val closeSearchReplaceButton = actionButton { byAccessibleName("Close") }
-  val searchHistoryButton = actionButton { byAccessibleName("Search History") }
+  val searchField: JTextFieldUI = textField { and(byClass("JBTextArea"), byAccessibleName("Search")) }
+  val replaceField: JTextFieldUI = textField { and(byClass("JBTextArea"), byAccessibleName("Replace")) }
+  val clearSearchButton: ActionButtonUi = actionButton { byAttribute("myicon", "closeSmall.svg") }
+  val newLineButton: ActionButtonUi = actionButton { byAccessibleName("New Line") }
+  val matchCaseButton: ActionButtonUi = actionButton { byAccessibleName("Match Case") }
+  val regexButton: ActionButtonUi = actionButton { byAccessibleName("Regex") }
+  val preserveCaseButton: ActionButtonUi = actionButton { byAccessibleName("Preserve case") }
+  val matchesLabel: UiComponent = x("//div[@class='ActionToolbarImpl']//div[@class='JLabel']")
+  val nextOccurrenceButton: ActionButtonUi = actionButton { byAccessibleName("Next Occurrence") }
+  val previousOccurrenceButton: ActionButtonUi = actionButton { byAccessibleName("Previous Occurrence") }
+  val filterSearchResultsButton: ActionButtonUi = actionButton { byAccessibleName("Filter Search Results") }
+  val optionsButton: ActionButtonUi = actionButton { byAccessibleName("Open in Window, Multiple Cursors") }
+  val replaceButton: ActionButtonUi = actionButton { byVisibleText("Replace") }
+  val replaceAllButton: ActionButtonUi = actionButton { byAccessibleName("Replace All") }
+  val excludeButton: ActionButtonUi = actionButton { byAccessibleName("Exclude") }
+  val closeSearchReplaceButton: ActionButtonUi = actionButton { byAccessibleName("Close") }
+  val searchHistoryButton: ActionButtonUi = actionButton { byAccessibleName("Search History") }
 
   // The components below are available in "find in large file" only
-  val matchCaseCheckBox = checkBox { byAccessibleName("Match сase") }
-  val wordsCheckBox = checkBox { byAccessibleName("Words") }
-  val regexCheckBox = checkBox { byAccessibleName("Regex") }
-  val searchAllButton = actionButton { byAccessibleName("Search All") }
-  val searchBackwardButton = actionButton { byAccessibleName("Search Backward") }
-  val searchForwardButton = actionButton { byAccessibleName("Search Forward") }
+  val matchCaseCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Match сase") }
+  val wordsCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Words") }
+  val regexCheckBox: JCheckBoxUi = checkBox { byAccessibleName("Regex") }
+  val searchAllButton: ActionButtonUi = actionButton { byAccessibleName("Search All") }
+  val searchBackwardButton: ActionButtonUi = actionButton { byAccessibleName("Search Backward") }
+  val searchForwardButton: ActionButtonUi = actionButton { byAccessibleName("Search Forward") }
 }
 
 @Remote("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")

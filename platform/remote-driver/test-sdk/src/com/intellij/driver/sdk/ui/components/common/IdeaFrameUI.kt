@@ -8,6 +8,7 @@ import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
+import com.intellij.driver.sdk.ui.components.common.editor.EditorTabsManager
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
 import com.intellij.driver.sdk.ui.components.elements.WindowUiComponent
@@ -46,6 +47,8 @@ open class IdeaFrameUI(data: ComponentData) : WindowUiComponent(data) {
 
   val project: Project?
     get() = driver.utility(ProjectFrameHelper::class).getFrameHelper(component).getProject()
+
+  val editorTabsManager: EditorTabsManager get() = EditorTabsManager(this)
 
   val isFullScreen: Boolean
     get() = ideaFrameComponent.isInFullScreen()
