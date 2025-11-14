@@ -3887,6 +3887,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/NoEnumMembersFromImplicitQualifier.kt");
             }
 
+            @TestMetadata("NoExtensionForNull.kt")
+            public void testNoExtensionForNull() throws Exception {
+                runTest("../testData/basic/common/NoExtensionForNull.kt");
+            }
+
             @TestMetadata("NoExtensionsAfterQualifier.kt")
             public void testNoExtensionsAfterQualifier() throws Exception {
                 runTest("../testData/basic/common/NoExtensionsAfterQualifier.kt");
