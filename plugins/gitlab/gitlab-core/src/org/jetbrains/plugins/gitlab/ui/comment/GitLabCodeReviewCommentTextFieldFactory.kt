@@ -11,6 +11,7 @@ import com.intellij.ide.PasteProvider
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.DataKey.Companion.create
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorDropHandler
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import java.awt.Image
 import java.awt.datatransfer.DataFlavor
@@ -48,7 +50,9 @@ object GitLabCodeReviewCommentTextFieldFactory {
                                              GitLabBundle.message("action.GitLab.Review.Upload.File.description"),
                                              AllIcons.Actions.Upload) {
       override fun actionPerformed(e: AnActionEvent) {
-        vm.uploadFile(null)
+        val editor = e.getData(CommonDataKeys.EDITOR) ?: return
+
+        vm.uploadFile(null, editor.caretModel.offset)
       }
 
       override fun update(e: AnActionEvent) {
@@ -58,20 +62,31 @@ object GitLabCodeReviewCommentTextFieldFactory {
       override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
     }
 
-    val dropHandler = object: EditorDropHandler {
-      override fun canHandleDrop(transferFlavors: Array<out DataFlavor>): Boolean {
-        return canUploadFile && transferFlavors.contains(DataFlavor.javaFileListFlavor)
-      }
-
-      override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
-        val list = t.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
-        list.filterIsInstance<File>().firstOrNull()?.let { file ->
-          vm.uploadFile(file.toPath())
+    val editorComponent = CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon) { editor: Editor ->
+      cs.launch {
+        vm.uploadFinishedSignal.collect { fileUploadResult ->
+          WriteCommandAction.writeCommandAction(editor.project)
+            .withName(GitLabBundle.message("upload.file.command.name"))
+            .run<Throwable> {
+              if (editor.isDisposed) return@run
+              editor.document.insertString(fileUploadResult.offset, fileUploadResult.text)
+              editor.caretModel.moveToOffset(fileUploadResult.offset + fileUploadResult.text.length)
+            }
         }
       }
-    }
 
-    val editorComponent = CodeReviewCommentTextFieldFactory.createIn(cs, vm, actions, icon) { editor: Editor ->
+      val dropHandler = object: EditorDropHandler {
+        override fun canHandleDrop(transferFlavors: Array<out DataFlavor>): Boolean {
+          return canUploadFile && transferFlavors.contains(DataFlavor.javaFileListFlavor)
+        }
+
+        override fun handleDrop(t: Transferable, project: Project?, editorWindow: EditorWindow?) {
+          val list = t.getTransferData(DataFlavor.javaFileListFlavor) as List<*>
+          list.filterIsInstance<File>().firstOrNull()?.let { file ->
+            vm.uploadFile(file.toPath(), editor.caretModel.offset)
+          }
+        }
+      }
 
       (editor as EditorImpl).setDropHandler(dropHandler)
 
@@ -89,11 +104,13 @@ object GitLabCodeReviewCommentTextFieldFactory {
         override fun performPaste(dataContext: DataContext) {
           val contents = CopyPasteManager.getInstance().getContents() ?: return
           FileCopyPasteUtil.getFileList(contents)?.firstOrNull()?.let {
-            vm.uploadFile(it.toPath())
+            val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
+            vm.uploadFile(it.toPath(), editor.caretModel.offset)
             return
           }
           CopyPasteManager.getInstance().getContents<Image>(DataFlavor.imageFlavor)?.let {
-            vm.uploadImage(it)
+            val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
+            vm.uploadImage(it, editor.caretModel.offset)
             return
           }
         }

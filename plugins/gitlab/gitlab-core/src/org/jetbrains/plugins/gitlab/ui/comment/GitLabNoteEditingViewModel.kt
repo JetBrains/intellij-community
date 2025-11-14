@@ -12,19 +12,15 @@ import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewTracka
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
-import org.jetbrains.plugins.gitlab.mergerequest.data.MutableGitLabNote
+import org.jetbrains.plugins.gitlab.mergerequest.data.*
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabCodeReviewSubmittableTextViewModel.*
 import org.jetbrains.plugins.gitlab.upload.GitLabUploadFileUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.Image
@@ -33,9 +29,12 @@ import java.util.*
 import javax.swing.Action
 
 interface GitLabCodeReviewSubmittableTextViewModel : CodeReviewSubmittableTextViewModel {
-  fun uploadFile(path: Path?)
-  fun uploadImage(image: Image)
+  val uploadFinishedSignal: Flow<FileUploadResult>
+  fun uploadFile(path: Path?, offset: Int)
+  fun uploadImage(image: Image, offset: Int)
   fun canUploadFile(): Boolean
+
+  data class FileUploadResult(val offset: Int, val text: String)
 }
 
 interface GitLabNoteEditingViewModel : GitLabCodeReviewSubmittableTextViewModel {
@@ -89,18 +88,21 @@ abstract class AbstractGitLabNoteEditingViewModel(
 ) : CodeReviewSubmittableTextViewModelBase(project, parentCs, initialText), GitLabNoteEditingViewModel {
   override suspend fun destroy() = cs.cancelAndJoinSilently()
 
-  override fun uploadFile(path: Path?) {
+  private val _uploadFinishedSignal = Channel<FileUploadResult>(1, BufferOverflow.DROP_OLDEST)
+  override val uploadFinishedSignal: Flow<FileUploadResult> = _uploadFinishedSignal.receiveAsFlow()
+
+  override fun uploadFile(path: Path?, offset: Int) {
     launchTask {
       GitLabUploadFileUtil.uploadFileAndNotify(project, projectData, path)?.let { fileText ->
-        text.update { if (it.isBlank()) fileText else it.trimEnd() + "\n\n" + fileText }
+        _uploadFinishedSignal.send(FileUploadResult(offset, fileText))
       }
     }
   }
 
-  override fun uploadImage(image: Image) {
+  override fun uploadImage(image: Image, offset: Int) {
     launchTask {
       GitLabUploadFileUtil.uploadImageAndNotify(project, projectData, image)?.let { fileText ->
-        text.update { if (it.isBlank()) fileText else it.trimEnd() + "\n\n" + fileText }
+        _uploadFinishedSignal.send(FileUploadResult(offset, fileText))
       }
     }
   }
