@@ -76,7 +76,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private final MavenEmbeddersManager myEmbeddersManager;
 
-  private MavenProjectsTree myProjectsTree;
+  private final @NotNull MavenProjectsTree myProjectsTree = new MavenProjectsTree(getProject());
   private MavenProjectManagerWatcher myWatcher;
 
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
@@ -260,7 +260,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       if (projectsTreeInitialized.getAndSet(true)) return;
 
       Path path = getProjectsTreeFile();
-      myProjectsTree = MavenProjectsTree.read(myProject, path);
+      myProjectsTree.read(path);
       applyStateToTree(myProjectsTree, this);
       myProjectsTree.addListener(myProjectsTreeDispatcher.getMulticaster(), this);
     }
@@ -302,11 +302,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void saveTree() {
     try {
-      MavenProjectsTree tree = myProjectsTree;
-      if (tree == null) {
+      if (!projectsTreeInitialized.get()) {
         return;
       }
-      tree.save(getProjectsTreeFile());
+      myProjectsTree.save(getProjectsTreeFile());
     }
     catch (IOException e) {
       MavenLog.LOG.info(e);
@@ -580,7 +579,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public @NotNull MavenProjectsTree getProjectsTree() {
-    if (myProjectsTree == null) {
+    if (!projectsTreeInitialized.get()) {
       initProjectsTree();
     }
     return myProjectsTree;
