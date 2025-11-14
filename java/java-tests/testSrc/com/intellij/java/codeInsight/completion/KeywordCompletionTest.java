@@ -172,6 +172,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     checkResultByTestName();
   }
 
+  @NeedsIndex.ForStandardLibrary
+  public void testNoExtraArrowMultiCaret() { doTest(); }
+
   public void testNoPrimitivesInBooleanAnnotationAttribute() { doTest(1, "true", "int", "boolean"); }
   public void testNoPrimitivesInIntAnnotationValueAttribute() { doTest(0, "true", "int", "boolean"); }
   public void testNoPrimitivesInEnumAnnotationAttribute() { doTest(0, "true", "int", "boolean"); }
