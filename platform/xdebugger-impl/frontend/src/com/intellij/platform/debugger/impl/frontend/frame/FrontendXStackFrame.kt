@@ -43,9 +43,7 @@ internal class FrontendXStackFrame(
     createFrontendXDebuggerEvaluator(project, suspendContextLifetimeScope, evaluatorDto, id)
   }
 
-  private val xValueContainer = FrontendXValueContainer(project, cs, false, id) {
-    XExecutionStackApi.getInstance().computeVariables(id)
-  }
+  private val xValueContainer = FrontendXValueContainer(project, cs, false, id)
 
   val backgroundColor: Color?
     get() = bgColor?.colorId?.color()

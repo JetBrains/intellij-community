@@ -62,11 +62,6 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
     }.buffer(Channel.UNLIMITED)
   }
 
-  override fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent> {
-    val stackFrameModel = xStackFrameId.findValue() ?: return emptyFlow()
-    return computeContainerChildren(stackFrameModel.coroutineScope, stackFrameModel.stackFrame, stackFrameModel.session)
-  }
-
   override suspend fun canDrop(sessionId: XDebugSessionId, stackFrameId: XStackFrameId): Boolean {
     val session = sessionId.findValue() ?: return false
     val stack = stackFrameId.findValue() ?: return false

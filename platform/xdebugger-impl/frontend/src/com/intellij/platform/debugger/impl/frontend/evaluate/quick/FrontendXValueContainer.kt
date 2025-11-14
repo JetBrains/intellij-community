@@ -5,10 +5,11 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.frame.PreloadManagerContainer
+import com.intellij.platform.debugger.impl.rpc.XContainerId
+import com.intellij.platform.debugger.impl.rpc.XValueApi
 import com.intellij.platform.debugger.impl.rpc.XValueComputeChildrenEvent
 import com.intellij.platform.debugger.impl.rpc.XValueGroupDto
 import com.intellij.platform.debugger.impl.shared.XValuesPresentationBuilder
-import com.intellij.platform.rpc.Id
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XNamedValue
@@ -16,20 +17,18 @@ import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.frame.XValueContainer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 internal class FrontendXValueContainer(
   private val project: Project,
   private val cs: CoroutineScope,
   private val hasParentValue: Boolean,
-  private val id: Id,
-  private val childrenComputation: suspend () -> Flow<XValueComputeChildrenEvent>,
+  private val id: XContainerId,
 ) : XValueContainer() {
   override fun computeChildren(node: XCompositeNode) {
     val preloadManager = cs.coroutineContext[PreloadManagerContainer]?.manager
     node.childCoroutineScope(parentScope = cs, "FrontendXValueContainer#computeChildren").launch(Dispatchers.EDT) {
-      val flow = preloadManager?.getChildrenEventsFlow(id) ?: childrenComputation()
+      val flow = preloadManager?.getChildrenEventsFlow(id) ?: XValueApi.getInstance().computeChildren(id)
       val builder = XValuesPresentationBuilder()
       flow.collect { event ->
         when (event) {

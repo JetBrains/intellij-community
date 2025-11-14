@@ -68,9 +68,7 @@ class FrontendXValue private constructor(
   var canMarkValue: Boolean = false
     private set
 
-  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue, xValueDto.id) {
-    XValueApi.getInstance().computeChildren(xValueDto.id)
-  }
+  private val xValueContainer = FrontendXValueContainer(project, cs, hasParentValue, xValueDto.id)
 
   private val fullValueEvaluator = fullValueEvaluatorFlow.map { evaluatorDto ->
     if (evaluatorDto == null) {

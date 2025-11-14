@@ -17,8 +17,6 @@ interface XExecutionStackApi : RemoteApi<Unit> {
 
   suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent>
 
-  fun computeVariables(xStackFrameId: XStackFrameId): Flow<XValueComputeChildrenEvent>
-
   suspend fun canDrop(sessionId: XDebugSessionId, stackFrameId: XStackFrameId): Boolean
   suspend fun dropFrame(sessionId: XDebugSessionId, stackFrameId: XStackFrameId)
 
@@ -42,7 +40,7 @@ data class XExecutionStackId(override val uid: UID) : Id
  */
 @ApiStatus.Internal
 @Serializable
-data class XStackFrameId(override val uid: UID) : Id
+data class XStackFrameId(override val uid: UID) : XContainerId
 
 @ApiStatus.Internal
 @Serializable
