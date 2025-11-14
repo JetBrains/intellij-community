@@ -7,6 +7,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcompletion.CompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.MarkupText;
@@ -155,9 +156,11 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   public void update(ActionContext actionContext, InsertionContext insertionContext, PsiFile file, ModPsiUpdater updater) {
     Project project = actionContext.project();
     PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-    manager.commitDocument(file.getFileDocument());
+    Document document = file.getFileDocument();
+    manager.commitDocument(document);
     myAdditionalUpdater.update(actionContext.selection().getStartOffset(), updater.getWritable(file), updater, insertionContext);
-    manager.commitDocument(file.getFileDocument());
+    manager.commitDocument(document);
+    manager.doPostponedOperationsAndUnblockDocument(document);
     myTail.processTail(project, updater, updater.getCaretOffset());
   }
 
