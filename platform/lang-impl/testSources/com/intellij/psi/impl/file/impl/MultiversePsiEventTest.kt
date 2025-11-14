@@ -40,6 +40,7 @@ internal class MultiversePsiEventTest {
     private val module2 = projectFixture.moduleFixture("m2")
 
     private val sourceRoot = sharedSourceRootFixture(module1, module2)
+    private val sourceRoot2 = sharedSourceRootFixture(module1, module2)
 
     @Suppress("unused")
     private val registerFakeLang = testFixture {
@@ -262,6 +263,21 @@ internal class MultiversePsiEventTest {
     },
     updateBlock = { file ->
       file.setBinaryContent("class Baz {}".toByteArray())
+    },
+    expectedEventNumber = 2
+  )
+
+  @Test
+  fun `test we receive 2 before-child-moved events on moving a file with 2 psi files`() = doChangeTest(
+    listenerFactory = { counter ->
+      object : PsiTreeChangeAdapter() {
+        override fun beforeChildMovement(event: PsiTreeChangeEvent) {
+          counter.incrementAndGet()
+        }
+      }
+    },
+    updateBlock = { file ->
+      file.move(this, sourceRoot2.get().virtualFile)
     },
     expectedEventNumber = 2
   )
