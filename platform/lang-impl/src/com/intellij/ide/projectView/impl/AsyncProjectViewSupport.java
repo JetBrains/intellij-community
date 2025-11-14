@@ -48,6 +48,7 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
       @Override
       protected void updateStructure(boolean fromRoot, @NotNull Set<? extends VirtualFile> updatedFiles) {
         if (fromRoot) {
+          getAndClearUpdateByFileCauses(); // update from root takes priority, smaller requests are no longer relevant
           updateAll(null, getAndClearUpdateFromRootCauses());
         }
         else {
@@ -60,7 +61,8 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
           }
           List<VirtualFile> roots = collector.get();
           LOG.debug("found ", roots.size(), " roots in ", System.currentTimeMillis() - time, "ms");
-          roots.forEach(root -> updateByFile(root, true));
+          var causes = getAndClearUpdateByFileCauses();
+          roots.forEach(root -> updateByFile(root, true, causes));
         }
       }
     };
@@ -164,19 +166,20 @@ public final class AsyncProjectViewSupport extends ProjectViewPaneSupport {
   }
 
   @Override
-  public void update(@NotNull TreePath path, boolean structure) {
-    myStructureTreeModel.invalidate(path, structure);
+  public void update(@NotNull TreePath path, boolean structure, @NotNull Collection<ProjectViewUpdateCause> causes) {
+    var request = ProjectViewPerformanceMonitor.getInstance(project).beginUpdatePath(path, structure, causes);
+    myStructureTreeModel.invalidate(path, structure, request);
   }
 
   @Override
   protected void acceptAndUpdate(
     @NotNull TreeVisitor visitor,
     @Nullable List<? extends TreePath> presentations,
-    @Nullable List<? extends TreePath> structures
-  ) {
+    @Nullable List<? extends TreePath> structures,
+    @NotNull Collection<ProjectViewUpdateCause> causes) {
     myAsyncTreeModel.accept(visitor, false).onSuccess(path -> {
-      if (presentations != null) update(presentations, false);
-      if (structures != null) update(structures, true);
+      if (presentations != null) update(presentations, false, causes);
+      if (structures != null) update(structures, true, causes);
     });
   }
 

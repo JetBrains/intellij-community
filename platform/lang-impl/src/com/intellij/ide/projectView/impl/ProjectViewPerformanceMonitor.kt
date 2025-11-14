@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.tree.TreeModelUpdateRequest
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
+import javax.swing.tree.TreePath
 import kotlin.concurrent.atomics.*
 import kotlin.time.TimeSource
 
@@ -22,16 +23,20 @@ internal class ProjectViewPerformanceMonitor {
   private val requestId = AtomicLong(0L)
 
   fun beginUpdateAll(causes: Collection<ProjectViewUpdateCause>): TreeModelUpdateRequest {
-    return Request(requestId.incrementAndFetch(), causes)
+    return Request("The entire PV", requestId.incrementAndFetch(), causes)
   }
-  
-  private class Request(val id: Long, causes: Collection<ProjectViewUpdateCause>) : TreeModelUpdateRequest {
+
+  fun beginUpdatePath(path: TreePath, structure: Boolean, causes: Collection<ProjectViewUpdateCause>): TreeModelUpdateRequest {
+    return Request("The path=$path, structure=$structure", requestId.incrementAndFetch(), causes)
+  }
+
+  private class Request(private val what: String, val id: Long, causes: Collection<ProjectViewUpdateCause>) : TreeModelUpdateRequest {
     private val start = TimeSource.Monotonic.markNow()
     private val count = AtomicInt(0)
     private val finished = AtomicBoolean(false)
     
     init {
-      LOG.debug { "[request $id] The entire PV is updated because $causes" }
+      LOG.debug { "[request $id] $what is updated because $causes" }
     }
     
     override fun nodesLoaded(count: Int) {

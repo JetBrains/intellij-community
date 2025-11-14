@@ -77,6 +77,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.ide.projectView.impl.ProjectViewUtilKt.*;
+import static com.intellij.ui.tree.project.ProjectViewUpdateCauseUtilKt.guessProjectViewUpdateCauseByCaller;
 
 /**
  * Allows to add additional panes to the Project view.
@@ -237,13 +238,18 @@ public abstract class AbstractProjectViewPane implements UiCompatibleDataProvide
   public abstract @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths);
 
   public void updateFrom(Object element, boolean forceResort, boolean updateStructure) {
+    updateFrom(element, forceResort, updateStructure, guessProjectViewUpdateCauseByCaller(AbstractProjectViewPane.class));
+  }
+
+  @ApiStatus.Internal
+  public void updateFrom(Object element, boolean forceResort, boolean updateStructure, @NotNull ProjectViewUpdateCause cause) {
     if (element instanceof PsiElement) {
       var support = getAsyncSupport();
-      if (support != null) support.updateByElement((PsiElement)element, updateStructure);
+      if (support != null) support.updateByElement((PsiElement)element, updateStructure, List.of(cause));
     }
     else if (element instanceof TreePath) {
       var support = getAsyncSupport();
-      if (support != null) support.update((TreePath)element, updateStructure);
+      if (support != null) support.update((TreePath)element, updateStructure, List.of(cause));
     }
   }
 

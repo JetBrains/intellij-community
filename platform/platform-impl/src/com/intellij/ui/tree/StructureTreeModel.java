@@ -230,6 +230,20 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
     return Promises.asPromise(onValidThread(path, node -> invalidateInternal(node, structure)));
   }
 
+  @ApiStatus.Internal
+  public final @NotNull Promise<TreePath> invalidate(@NotNull TreePath path, boolean structure, @NotNull TreeModelUpdateRequest request) {
+    return Promises.asPromise(onValidThread(path, node -> {
+      var requestRef = updateRequest.get();
+      requestRef.set(request);
+      try {
+        return invalidateInternal(node, structure);
+      }
+      finally {
+        requestRef.set(null);
+      }
+    }));
+  }
+
   /**
    * Invalidates specified nodes and notifies Swing model that these nodes are changed.
    * This method does not bother Swing model if the corresponding nodes have not yet been loaded.

@@ -73,7 +73,7 @@ internal class CoroutineProjectViewSupport(
     updateImpl(null, true, afterUpdate)
   }
 
-  override fun update(path: TreePath, updateStructure: Boolean) {
+  override fun update(path: TreePath, updateStructure: Boolean, causes: MutableCollection<ProjectViewUpdateCause>) {
     updateImpl(path, updateStructure)
   }
 
@@ -87,11 +87,16 @@ internal class CoroutineProjectViewSupport(
     }
   }
 
-  override fun acceptAndUpdate(visitor: TreeVisitor, presentations: List<TreePath?>?, structures: List<TreePath?>?) {
+  override fun acceptAndUpdate(
+    visitor: TreeVisitor,
+    presentations: List<TreePath?>?,
+    structures: List<TreePath?>?,
+    causes: MutableCollection<ProjectViewUpdateCause>,
+  ) {
     coroutineScope.launch(CoroutineName("Updating ${presentations?.size} presentations and ${structures?.size} structures after accepting $visitor")) {
       swingModel.accept(visitor, false).await()
-      if (presentations != null) update(presentations, false)
-      if (structures != null) update(structures, true)
+      if (presentations != null) update(presentations, false, causes)
+      if (structures != null) update(structures, true, causes)
     }
   }
 
@@ -225,7 +230,7 @@ internal class CoroutineProjectViewSupport(
           collector.get()
         }
         for (root in roots) {
-          updateByFile(root, true)
+          updateByFile(root, true, emptyList())
         }
       }
     }
