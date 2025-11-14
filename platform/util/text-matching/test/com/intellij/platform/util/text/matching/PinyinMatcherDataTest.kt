@@ -1,158 +1,161 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.util.text.matching;
+package com.intellij.platform.util.text.matching
 
-import com.intellij.psi.codeStyle.PinyinMatcher;
-import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.text.Normalizer;
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import com.intellij.psi.codeStyle.PinyinMatcher
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import java.net.URL
+import java.text.Normalizer
+import java.util.zip.ZipInputStream
+import kotlin.test.assertEquals
 
 /**
- * Generates data arrays for {@link PinyinMatcher} using Unihan_Readings.txt file from unicode.org
+ * Generates data arrays for [PinyinMatcher] using Unihan_Readings.txt file from unicode.org
  * Requires Internet connection.
  */
 @Disabled("It's a generator, not a real test")
-public class PinyinMatcherDataTest {
-  private static final int LINE_LENGTH = 100;
-  private static final String DATA_SOURCE = "https://unicode.org/Public/UNIDATA/Unihan.zip";
-  private static final String READINGS_FILE = "Unihan_Readings.txt";
-
+class PinyinMatcherDataTest {
   @Test
-  public void ensurePinyinDataIsUpToDate() throws IOException {
-    List<Mapping> mappings = readMappings();
-    List<String> initials = generateInitials(mappings);
-    String encodingStr = String.join(",", initials);
-    String data = getDataString(mappings, initials);
+  fun ensurePinyinDataIsUpToDate() {
+    val mappings = readMappings()
+    val initials = generateInitials(mappings)
+    val encodingStr = initials.joinToString(",")
+    val data = getDataString(mappings, initials)
 
-    Supplier<String> message = () ->
-      "Pinyin data mismatch. Please update constants in " + PinyinMatcher.class.getName() + " to the following:\n" +
-      toJavaStringLiteral("ENCODING", encodingStr) + "\n" +
-      toJavaStringLiteral("DATA", data) + "\n";
+    val message = """Pinyin data mismatch. Please update constants in ${PinyinMatcher::class.qualifiedName} to the following:
+       ${toJavaStringLiteral("ENCODING", encodingStr)}
+       ${toJavaStringLiteral("DATA", data)}
+       """.trimIndent()
 
-    Assertions.assertEquals(PinyinMatcher.ENCODING, encodingStr, message);
-    Assertions.assertEquals(PinyinMatcher.DATA, data, message);
+    assertEquals(PinyinMatcher.ENCODING, encodingStr, message)
+    assertEquals(PinyinMatcher.DATA, data, message)
   }
 
-  private static String toJavaStringLiteral(String varName, String input) {
-    StringBuilder result = new StringBuilder(varName + " =\n\"");
-    int curLineLength = 0;
-    for (int i = 0; i < input.length(); i++) {
-      char ch = input.charAt(i);
-      String charRepresentation;
-      if (ch == '"' || ch == '\\') {
-        charRepresentation = "\\" + ch;
-      }
-      else if (ch < 127) {
-        charRepresentation = Character.toString(ch);
-      }
-      else {
-        charRepresentation = String.format("\\u%04X", (int)ch);
-      }
-      result.append(charRepresentation);
-      curLineLength += charRepresentation.length();
-      if (curLineLength > LINE_LENGTH && i < input.length() - 1) {
-        curLineLength = 0;
-        result.append("\" +\n\"");
+  companion object {
+    private const val LINE_LENGTH = 100
+    private const val DATA_SOURCE = "https://unicode.org/Public/UNIDATA/Unihan.zip"
+    private const val READINGS_FILE = "Unihan_Readings.txt"
+
+    private val U4_UPPER = HexFormat {
+      upperCase = true
+      number {
+        minLength = 4
       }
     }
-    return result.append("\";").toString();
-  }
 
-  @NotNull
-  private static String getDataString(List<Mapping> mappings, List<String> initials) {
-    Map<String, Character> encoding = initials.stream()
-      .collect(Collectors.toMap(s -> s, s -> (char)(PinyinMatcher.BASE_CHAR + initials.indexOf(s))));
-
-    Map<Integer, Character> map = mappings.stream()
-      .collect(Collectors.toMap(mapping -> mapping.codePoint, m -> encoding.get(m.charString())));
-    int lastCodePoint = mappings.stream().mapToInt(m -> m.codePoint).max().orElseThrow(NoSuchElementException::new);
-    return IntStream.rangeClosed(PinyinMatcher.BASE_CODE_POINT, lastCodePoint)
-      .mapToObj(i -> map.getOrDefault(i, ' ').toString()).collect(Collectors.joining());
-  }
-
-  @NotNull
-  private static List<String> generateInitials(List<Mapping> mappings) {
-    return mappings.stream().map(Mapping::charString).distinct()
-      .sorted(Comparator.comparing(String::length).thenComparing(Comparator.naturalOrder()))
-      .collect(Collectors.toList());
-  }
-
-  @NotNull
-  private static List<Mapping> readMappings() throws IOException {
-    try (ZipInputStream zis = new ZipInputStream(new URL(DATA_SOURCE).openStream())) {
-      while (true) {
-        ZipEntry entry = zis.getNextEntry();
-        if (entry == null) {
-          throw new IllegalStateException(String.format("No %s found inside %s", READINGS_FILE, DATA_SOURCE));
+    private fun toJavaStringLiteral(varName: String?, input: String): String {
+      val result = StringBuilder("$varName =\n\"")
+      var curLineLength = 0
+      input.forEachIndexed { i, ch ->
+        val charRepresentation = when {
+          ch == '"' || ch == '\\' -> {
+            "\\" + ch
+          }
+          ch.code < 127 -> {
+            ch.toString()
+          }
+          else -> {
+            "\\u${unicodeEscapeCodePoint(ch.code)}"
+          }
         }
-        if (entry.getName().equals(READINGS_FILE)) {
-          Collection<Mapping> mappings = new BufferedReader(new InputStreamReader(zis, StandardCharsets.UTF_8)).lines()
-            .map(Mapping::parseUniHan)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toMap(m -> m.codePoint, m -> m, Mapping::merge, LinkedHashMap::new))
-            .values();
-          return new ArrayList<>(mappings);
+        result.append(charRepresentation)
+        curLineLength += charRepresentation.length
+        if (curLineLength > LINE_LENGTH && i < input.length - 1) {
+          curLineLength = 0
+          result.append("\" +\n\"")
         }
       }
+      return result.append("\";").toString()
+    }
+
+    // todo
+    fun unicodeEscapeCodePoint(cp: Int): String {
+      if (cp <= 0xFFFF) return "\\u" + cp.toHexString(U4_UPPER)
+      val u = cp - 0x10000
+      val hi = 0xD800 + (u ushr 10)
+      val lo = 0xDC00 + (u and 0x3FF)
+      return "\\u" + hi.toHexString(U4_UPPER) + "\\u" + lo.toHexString(U4_UPPER)
+    }
+
+    private fun getDataString(mappings: List<Mapping>, initials: List<String>): String {
+      val encoding = initials.associateWith { PinyinMatcher.BASE_CHAR + initials.indexOf(it) }
+      val map = mappings.associate { mapping -> mapping.codePoint to encoding[mapping.charString()] }
+      val lastCodePoint = mappings.maxOf(Mapping::codePoint)
+      return (PinyinMatcher.BASE_CODE_POINT..lastCodePoint).map { map[it] ?: ' ' }.joinToString("")
+    }
+
+    private fun generateInitials(mappings: List<Mapping>): List<String> {
+      return mappings.map(Mapping::charString).distinct().sortedWith(compareBy(String::length).then(naturalOrder()))
+    }
+
+    private fun readMappings(): List<Mapping> {
+      ZipInputStream(URL(DATA_SOURCE).openStream()).use { zis ->
+        while (true) {
+          val entry = zis.nextEntry
+          requireNotNull(entry) { "No $READINGS_FILE found inside $DATA_SOURCE" }
+          if (entry.name == READINGS_FILE) {
+            return zis.bufferedReader(Charsets.UTF_8).lineSequence()
+              .mapNotNull(Mapping::parseUniHan)
+              .groupBy(Mapping::codePoint)
+              .map { (_, mappings) -> mappings.reduce { acc, mapping -> Mapping.merge(acc, mapping) } }
+          }
+        }
+      }
     }
   }
 
-  private record Mapping(int codePoint, long chars) {
-    String charString() {
-      return BitSet.valueOf(new long[]{chars}).stream().mapToObj(bit -> Character.toString((char)(bit + 'a')))
-        .collect(Collectors.joining());
+  private data class Mapping(val codePoint: Int, val chars: Long) {
+    fun charString(): String {
+      return oneBitsSequence(chars).joinToString("") { bit -> (bit + 'a'.code).toChar().toString() }
     }
 
-    static Mapping merge(Mapping m1, Mapping m2) {
-      if (m1.codePoint != m2.codePoint) throw new IllegalArgumentException();
-      return new Mapping(m1.codePoint, m1.chars | m2.chars);
-    }
-
-    static Mapping parseUniHan(String line) {
-      if (line.startsWith("#")) return null;
-      String[] parts = line.split("\\s+");
-      if (parts.length != 3) return null;
-      if (!parts[0].startsWith("U+")) return null;
-      int codePoint = Integer.parseInt(parts[0].substring(2), 16);
-      if (codePoint < PinyinMatcher.BASE_CODE_POINT) return null;
-      // Codepoints outside BMP are not supported for now
-      if (codePoint > 0xA000) return null;
-      String[] readings;
-      switch (parts[1]) {
-        case "kMandarin" -> readings = new String[]{parts[2]};
-        case "kHanyuPinyin" -> {
-          int colonPos = parts[2].indexOf(':');
-          if (colonPos == -1) return null;
-          readings = parts[2].substring(colonPos + 1).split(",");
-        }
-        default -> {
-          return null;
-        }
+    private fun oneBitsSequence(n: Long): Sequence<Int> = sequence {
+      var bits = n
+      while (bits != 0L) {
+        val lsbIndex = bits.countTrailingZeroBits()
+        yield(lsbIndex)
+        bits = bits and (bits - 1)
       }
-      long encoded = 0;
-      for (String reading : readings) {
-        char initial = Normalizer.normalize(reading, Normalizer.Form.NFKD).charAt(0);
-        encoded |= 1L << (initial - 'a');
-      }
-      return new Mapping(codePoint, encoded);
     }
 
-    @Override
-    public String toString() {
-      return String.format("%04X: %s", codePoint, charString());
+    override fun toString(): String {
+      return "${codePoint.toHexString(U4_UPPER)}: ${charString()}"
+    }
+
+    companion object {
+      private val whitespaceRegex = "\\s+".toRegex()
+      fun merge(m1: Mapping, m2: Mapping): Mapping {
+        require(m1.codePoint == m2.codePoint)
+        return Mapping(m1.codePoint, m1.chars or m2.chars)
+      }
+
+      fun parseUniHan(line: String): Mapping? {
+        if (line.startsWith('#')) return null
+        val parts = line.split(whitespaceRegex)
+        if (parts.size != 3) return null
+        if (!parts.first().startsWith("U+")) return null
+        val codePoint = parts.first().substring(2).toInt(16)
+        if (codePoint < PinyinMatcher.BASE_CODE_POINT) return null
+        // Codepoints outside BMP are not supported for now
+        if (codePoint > 0xA000) return null
+        val readings = when (parts[1]) {
+          "kMandarin" -> listOf(parts[2])
+          "kHanyuPinyin" -> {
+            val colonPos = parts[2].indexOf(':')
+            if (colonPos == -1) return null
+            parts[2].substring(colonPos + 1).split(',')
+          }
+          else -> {
+            return null
+          }
+        }
+        var encoded: Long = 0
+        for (reading in readings) {
+          val initial = Normalizer.normalize(reading, Normalizer.Form.NFKD)[0]
+          encoded = encoded or (1L shl (initial.code - 'a'.code))
+        }
+        return Mapping(codePoint, encoded)
+      }
     }
   }
 }
