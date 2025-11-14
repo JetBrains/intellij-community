@@ -71,8 +71,6 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   }
 
   override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> {
-    savePathToExecutableToProperties(null)
-
     // todo think about better error handling
     val selectedBasePython = model.state.baseInterpreter.get()!!
     val basePythonBinaryPath = model.installPythonIfNeeded(selectedBasePython)
@@ -169,7 +167,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
       when (val r = installExecutableViaPythonScript(pythonExecutable, "-n", name, *versionArgs.toTypedArray())) {
         is Result.Success -> {
           val pathHolder = PathHolder.Eel(r.result)
-          savePathToExecutableToProperties(pathHolder)
+          savePathToExecutableToProperties(pathHolder as? P)
         }
         is Result.Failure -> {
           errorSink.emit(r.error)
@@ -183,14 +181,6 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
   internal abstract val toolValidator: ToolValidator<P>
 
   internal open val installationVersion: String? = null
-
-
-  /**
-   * Saves the provided path to an executable in the properties of the environment
-   *
-   * @param [path] The path to the executable that needs to be saved. This may be null when tries to find automatically.
-   */
-  internal abstract suspend fun savePathToExecutableToProperties(pathHolder: PathHolder?)
 
   protected abstract suspend fun setupEnvSdk(moduleBasePath: Path, baseSdks: List<Sdk>, basePythonBinaryPath: P?, installPackages: Boolean): PyResult<Sdk>
 

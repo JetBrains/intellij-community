@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.v2.hatch
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
@@ -28,6 +29,10 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
   override val interpreterType: InterpreterType = InterpreterType.HATCH
   override val toolValidator: ToolValidator<P> = model.hatchViewModel.toolValidator
   private lateinit var hatchFormFields: HatchFormFields<P>
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.hatchViewModel.hatchExecutable
+  override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
+    savePathForEelOnly(pathHolder) { path -> HatchConfiguration.persistPathForTarget(hatchExecutablePath = path) }
+  }
 
   override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     hatchFormFields = panel.buildHatchFormFields(
@@ -45,14 +50,8 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
     hatchFormFields.onShown(scope, model, isFilterOnlyExisting = false)
   }
 
-  override suspend fun savePathToExecutableToProperties(pathHolder: PathHolder?) {
-    val savingPath = pathHolder ?: toolValidator.backProperty.get()?.pathHolder ?: return
-    val eelPath = (savingPath as? PathHolder.Eel)?.path ?: return
-    HatchConfiguration.persistPathForTarget(hatchExecutablePath = eelPath)
-  }
-
   override suspend fun createPythonModuleStructure(module: Module): PyResult<Unit> {
-    val hatchExecutablePath = (toolValidator.backProperty.get()?.pathHolder as? PathHolder.Eel)?.path
+    val hatchExecutablePath = (model.hatchViewModel.hatchExecutable.get()?.pathHolder as? PathHolder.Eel)?.path
                               ?: return Result.failure(HatchUIError.HatchExecutablePathIsNotValid(null))
 
     val hatchService = module.getHatchService(hatchExecutablePath).getOr { return it }
@@ -78,7 +77,7 @@ internal class HatchNewEnvironmentCreator<P : PathHolder>(
       is PathHolder.Eel -> basePythonBinaryPath.path
       else -> return PyResult.localizedError(PyBundle.message("target.is.not.supported", basePythonBinaryPath))
     }
-    val hatchExecutablePath = when (val hatchBinary = toolValidator.backProperty.get()?.pathHolder) {
+    val hatchExecutablePath = when (val hatchBinary = model.hatchViewModel.hatchExecutable.get()?.pathHolder) {
       is PathHolder.Eel -> hatchBinary.path
       else -> null
     }

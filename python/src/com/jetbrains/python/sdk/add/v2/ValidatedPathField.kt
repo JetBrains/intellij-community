@@ -11,6 +11,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.transform
@@ -56,6 +57,9 @@ import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
+  /**
+   * [backProperty] should only be used in [PathValidator] and its inheritors
+   */
   val backProperty: ObservableMutableProperty<VP?>
   val isDirtyValue: ObservableMutableProperty<Boolean>
   val isValidationInProgress: Boolean
@@ -64,6 +68,9 @@ interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
     isDirtyValue.set(true)
     backProperty.set(null)
   }
+
+  val isValidationSuccessful: ObservableProperty<Boolean>
+    get() = backProperty.transform { it?.validationResult?.successOrNull != null }
 }
 
 private interface ValidationStatusExtension

@@ -4,11 +4,11 @@ package com.jetbrains.python.sdk.add.v2.uv
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
-import com.intellij.platform.eel.LocalEelApi
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.ui.dsl.builder.AlignX
@@ -66,11 +66,15 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   private val executableFlow = MutableStateFlow(model.uvViewModel.uvExecutable.get())
   private val pythonVersion: ObservableMutableProperty<Version?> = propertyGraph.property(null)
   private lateinit var versionComboBox: ComboBox<Version?>
+  override val toolExecutable: ObservableProperty<ValidatedPath.Executable<P>?> = model.uvViewModel.uvExecutable
+  override val toolExecutablePersister: suspend (P) -> Unit = { pathHolder ->
+    savePathForEelOnly(pathHolder) { path -> setUvExecutable(path) }
+  }
 
   private val loading = AtomicBooleanProperty(false)
 
   init {
-    toolValidator.backProperty.afterChange {
+    model.uvViewModel.uvExecutable.afterChange {
       executableFlow.value = it
     }
   }
@@ -173,16 +177,6 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
     }
     else {
       model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PYTHON)
-    }
-  }
-
-  override suspend fun savePathToExecutableToProperties(pathHolder: PathHolder?) {
-    if ((model.fileSystem as? FileSystem.Eel)?.eelApi !is LocalEelApi) return
-
-    val savingPath = (pathHolder as? PathHolder.Eel)?.path
-                     ?: (toolValidator.backProperty.get()?.pathHolder as? PathHolder.Eel)?.path
-    savingPath?.let {
-      setUvExecutable(it)
     }
   }
 
