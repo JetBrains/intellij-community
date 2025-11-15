@@ -247,19 +247,15 @@ private class PsiVFSListener(private val project: Project) {
         }
       }
       else if (propertyName == VirtualFile.PROP_WRITABLE) {
-        val psiFiles = fileManager.getCachedPsiFilesInner(vFile).ifEmpty {
-          return@externalChangeAction
-        }
-
-        for (psiFile in psiFiles) {
-          val treeEvent = PsiTreeChangeEventImpl(manager)
-          treeEvent.parent = parentDir
-          treeEvent.element = psiFile
-          treeEvent.propertyName = PsiTreeChangeEvent.PROP_WRITABLE
-          treeEvent.oldValue = event.oldValue
-          treeEvent.newValue = event.newValue
-          manager.beforePropertyChange(treeEvent)
-        }
+        // todo IJPL-339 implement proper event for multiple files
+        val psiFile = fileManager.getCachedPsiFileInner(vFile, anyContext()) ?: return@externalChangeAction
+        val treeEvent = PsiTreeChangeEventImpl(manager)
+        treeEvent.parent = parentDir
+        treeEvent.element = psiFile
+        treeEvent.propertyName = PsiTreeChangeEvent.PROP_WRITABLE
+        treeEvent.oldValue = event.oldValue
+        treeEvent.newValue = event.newValue
+        manager.beforePropertyChange(treeEvent)
       }
     })
   }
@@ -412,15 +408,13 @@ private class PsiVFSListener(private val project: Project) {
             return@externalChangeAction
           }
 
-          for (oldPsiFile in oldPsiFiles) {
-            val treeEvent = PsiTreeChangeEventImpl(manager)
-            treeEvent.parent = parentDir
-            treeEvent.element = oldPsiFile
-            treeEvent.propertyName = PsiTreeChangeEvent.PROP_WRITABLE
-            treeEvent.oldValue = event.oldValue
-            treeEvent.newValue = event.newValue
-            manager.propertyChanged(treeEvent)
-          }
+          val treeEvent = PsiTreeChangeEventImpl(manager)
+          treeEvent.parent = parentDir
+          treeEvent.element = oldPsiFiles.first() // todo IJPL-339 update me
+          treeEvent.propertyName = PsiTreeChangeEvent.PROP_WRITABLE
+          treeEvent.oldValue = event.oldValue
+          treeEvent.newValue = event.newValue
+          manager.propertyChanged(treeEvent)
         }
         VirtualFile.PROP_ENCODING -> {
           if (oldPsiFiles.isEmpty()) {
