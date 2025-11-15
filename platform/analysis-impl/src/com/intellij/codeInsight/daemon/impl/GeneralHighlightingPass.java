@@ -168,11 +168,10 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
               if (!newInfos.isEmpty()) {
                 int size = newInfos.size(); // size == 1 most of the time
                 for (int i = 0; i < size; i++) {
-                  myHighlights.add(newInfos.get(i));
                   final HighlightInfo info = newInfos.get(i);
+                  myHighlights.add(info);
                   if (info.getSeverity() == HighlightSeverity.ERROR) {
                     myHasErrorSeverity = true;
-                    break;
                   }
                 }
               }
