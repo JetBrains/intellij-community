@@ -427,15 +427,13 @@ private class PsiVFSListener(private val project: Project) {
             return@externalChangeAction
           }
 
-          for (oldPsiFile in oldPsiFiles) {
-            val treeEvent = PsiTreeChangeEventImpl(manager)
-            treeEvent.parent = parentDir
-            treeEvent.element = oldPsiFile
-            treeEvent.propertyName = VirtualFile.PROP_ENCODING
-            treeEvent.oldValue = event.oldValue
-            treeEvent.newValue = event.newValue
-            manager.propertyChanged(treeEvent)
-          }
+          val treeEvent = PsiTreeChangeEventImpl(manager)
+          treeEvent.parent = parentDir
+          treeEvent.element = oldPsiFiles.first() // todo IJPL-339 update me
+          treeEvent.propertyName = VirtualFile.PROP_ENCODING
+          treeEvent.oldValue = event.oldValue
+          treeEvent.newValue = event.newValue
+          manager.propertyChanged(treeEvent)
         }
       }
     })
