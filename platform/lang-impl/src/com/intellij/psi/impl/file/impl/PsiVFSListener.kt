@@ -242,12 +242,6 @@ private class PsiVFSListener(private val project: Project) {
     val vFile = event.file
 
     val oldFileViewProvider = fileManager.findCachedViewProvider(vFile)
-    if (oldFileViewProvider != null && FileContentUtilCore.FORCE_RELOAD_REQUESTOR == event.requestor) {
-      // there is no need to rebuild if there were no PSI in the first place
-      fileManager.forceReload(vFile)
-      return
-    }
-
     val oldPsiFile = fileManager.getCachedPsiFile(vFile)
     val parentDir = run {
       val parent = vFile.parent
@@ -255,6 +249,12 @@ private class PsiVFSListener(private val project: Project) {
         fileManager.findDirectory(parent)
       else
         getCachedDirectory(parent)
+    }
+
+    if (oldFileViewProvider != null && FileContentUtilCore.FORCE_RELOAD_REQUESTOR == event.requestor) {
+      // there is no need to rebuild if there were no PSI in the first place
+      fileManager.forceReload(vFile)
+      return
     }
 
     // do not suppress reparse request for light files
