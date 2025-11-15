@@ -38,7 +38,7 @@ internal object NoReturnValueFactory {
             val newExpression = buildNewExpression(factory, element, parent)
 
             val elementToReplace = when (parent) {
-                is KtParenthesizedExpression -> parent
+                is KtParenthesizedExpression, is KtBinaryExpression -> parent
                 else -> element
             }.let(updater::getWritable)
 
@@ -56,6 +56,9 @@ internal object NoReturnValueFactory {
                     factory.createDeclaration(baseExpressionText)
                 }
                 is KtParenthesizedExpression if parent.parent !is KtContainerNode -> {
+                    factory.createDeclaration("val _ = ${parent.text}")
+                }
+                is KtBinaryExpression -> {
                     factory.createDeclaration("val _ = ${parent.text}")
                 }
                 is KtParenthesizedExpression, is KtWhenEntry, is KtContainerNode -> {

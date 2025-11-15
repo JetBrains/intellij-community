@@ -9772,6 +9772,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("binaryExpressions.kt")
+        public void testBinaryExpressions() throws Exception {
+            runTest("testData/quickfix/explicitlyIgnoreReturnValue/binaryExpressions.kt");
+        }
+
         @TestMetadata("if.kt")
         public void testIf() throws Exception {
             runTest("testData/quickfix/explicitlyIgnoreReturnValue/if.kt");
