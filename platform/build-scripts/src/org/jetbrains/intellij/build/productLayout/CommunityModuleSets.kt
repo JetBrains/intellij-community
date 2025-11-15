@@ -458,6 +458,7 @@ object CommunityModuleSets : ModuleSetProvider {
   fun platformLangBase(): ModuleSet = moduleSet("platformLangBase") {
     embeddedModule("intellij.platform.builtInServer.impl")
     embeddedModule("intellij.platform.smRunner")
+    embeddedModule("intellij.platform.externalSystem.dependencyUpdater")
   }
 
   /**

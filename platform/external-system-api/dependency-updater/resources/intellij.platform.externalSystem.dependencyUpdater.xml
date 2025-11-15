@@ -1,4 +1,8 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij"/>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.externalSystem.dependencyModifier" dynamic="true" interface="com.intellij.externalSystem.ExternalDependencyModificator" area="IDEA_PROJECT"/>
