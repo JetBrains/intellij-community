@@ -271,17 +271,17 @@ private class PsiVFSListener(private val project: Project) {
     val propertyName = event.propertyName
     val vFile = event.file
 
-    val oldFileViewProviders = fileManager.findCachedViewProviders(vFile)
-    if (oldFileViewProviders.isNotEmpty() && FileContentUtilCore.FORCE_RELOAD_REQUESTOR == event.requestor) {
+    val oldFileViewProvider = fileManager.findCachedViewProvider(vFile)
+    if (oldFileViewProvider != null && FileContentUtilCore.FORCE_RELOAD_REQUESTOR == event.requestor) {
       // there is no need to rebuild if there were no PSI in the first place
       fileManager.forceReload(vFile)
       return
     }
 
-    val oldPsiFiles = fileManager.getCachedPsiFiles(vFile)
+    val oldPsiFile = fileManager.getCachedPsiFile(vFile)
     val parentDir = run {
       val parent = vFile.parent
-      if (oldPsiFiles.isNotEmpty() && parent != null)
+      if (oldPsiFile != null && parent != null)
         fileManager.findDirectory(parent)
       else
         getCachedDirectory(parent)
@@ -302,6 +302,8 @@ private class PsiVFSListener(private val project: Project) {
 
     val fileTypeManager = FileTypeManager.getInstance()
     ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+      val treeEvent = PsiTreeChangeEventImpl(manager)
+      treeEvent.parent = parentDir
       when (propertyName) {
         VirtualFile.PROP_NAME -> {
           if (vFile.isDirectory) {
@@ -310,14 +312,10 @@ private class PsiVFSListener(private val project: Project) {
               if (fileTypeManager.isFileIgnored(vFile)) {
                 fileManager.removeFilesAndDirsRecursively(vFile)
 
-                val treeEvent = PsiTreeChangeEventImpl(manager)
-                treeEvent.parent = parentDir
                 treeEvent.child = psiDir
                 manager.childRemoved(treeEvent)
               }
               else {
-                val treeEvent = PsiTreeChangeEventImpl(manager)
-                treeEvent.parent = parentDir
                 treeEvent.element = psiDir
                 treeEvent.propertyName = PsiTreeChangeEvent.PROP_DIRECTORY_NAME
                 treeEvent.oldValue = event.oldValue
@@ -328,75 +326,41 @@ private class PsiVFSListener(private val project: Project) {
             else {
               val psiDir1 = fileManager.findDirectory(vFile)
               if (psiDir1 != null) {
-                val treeEvent = PsiTreeChangeEventImpl(manager)
-                treeEvent.parent = parentDir
                 treeEvent.child = psiDir1
                 manager.childAdded(treeEvent)
               }
             }
           }
           else {
-            val newFileViewProvider = fileManager.createFileViewProvider(vFile, true)
-            val newPsiFile = newFileViewProvider.getPsi(newFileViewProvider.baseLanguage)
-            if (oldPsiFiles.isNotEmpty()) {
+            val fileViewProvider = fileManager.createFileViewProvider(vFile, true)
+            val newPsiFile = fileViewProvider.getPsi(fileViewProvider.baseLanguage)
+            if (oldPsiFile != null) {
               if (newPsiFile == null) {
                 clearViewProvider(vFile, "PSI renamed")
 
-                for (oldPsiFile in oldPsiFiles) {
-                  val treeEvent = PsiTreeChangeEventImpl(manager)
-                  treeEvent.parent = parentDir
-                  treeEvent.child = oldPsiFile
-                  manager.childRemoved(treeEvent)
-                }
+                treeEvent.child = oldPsiFile
+                manager.childRemoved(treeEvent)
+              }
+              else if (!FileManagerImpl.areViewProvidersEquivalent(fileViewProvider, oldFileViewProvider!!)) {
+                fileManager.changeViewProvider(vFile, fileViewProvider)
+
+                treeEvent.oldChild = oldPsiFile
+                treeEvent.newChild = newPsiFile
+                manager.childReplaced(treeEvent)
               }
               else {
-                val firstOldViewProvider = oldFileViewProviders.first() // todo IJPL-339 do we want to select a preferred view provider instead of the first one???
-                if (!FileManagerImpl.areViewProvidersEquivalent(newFileViewProvider, firstOldViewProvider)) {
-                  // the file has changed its view provider factory
-                  // we need to delete all old providers and create one new provider.
+                FileManagerImpl.clearPsiCaches(oldFileViewProvider)
 
-                  fileManager.changeViewProvider(vFile, newFileViewProvider)
-
-                  run {
-                    val treeEvent = PsiTreeChangeEventImpl(manager)
-                    treeEvent.parent = parentDir
-                    treeEvent.oldChild = firstOldViewProvider.getPsi(firstOldViewProvider.baseLanguage)
-                    treeEvent.newChild = newPsiFile
-                    manager.childReplaced(treeEvent)
-                  }
-
-                  for (oldFileViewProvider in oldFileViewProviders.drop(1)) {
-                    val treeEvent = PsiTreeChangeEventImpl(manager)
-                    treeEvent.parent = parentDir
-                    treeEvent.oldChild = oldFileViewProvider.getPsi(oldFileViewProvider.baseLanguage)
-                    manager.childRemoved(treeEvent)
-                  }
-                }
-                else {
-                  // the file keeps the same view provider factory
-                  // let's reuse all old view providers
-
-                  for (oldFileViewProvider in oldFileViewProviders) {
-                    FileManagerImpl.clearPsiCaches(oldFileViewProvider)
-                  }
-
-                  for (oldPsiFile in oldPsiFiles) {
-                    val treeEvent = PsiTreeChangeEventImpl(manager)
-                    treeEvent.parent = parentDir
-                    treeEvent.element = oldPsiFile
-                    treeEvent.propertyName = PsiTreeChangeEvent.PROP_FILE_NAME
-                    treeEvent.oldValue = event.oldValue
-                    treeEvent.newValue = event.newValue
-                    manager.propertyChanged(treeEvent)
-                  }
-                }
+                treeEvent.element = oldPsiFile
+                treeEvent.propertyName = PsiTreeChangeEvent.PROP_FILE_NAME
+                treeEvent.oldValue = event.oldValue
+                treeEvent.newValue = event.newValue
+                manager.propertyChanged(treeEvent)
               }
             }
             else if (newPsiFile != null) {
-              fileManager.changeViewProvider(vFile, newFileViewProvider)
+              fileManager.changeViewProvider(vFile, fileViewProvider)
               if (parentDir != null) {
-                val treeEvent = PsiTreeChangeEventImpl(manager)
-                treeEvent.parent = parentDir
                 treeEvent.child = newPsiFile
                 manager.childAdded(treeEvent)
               }
@@ -404,26 +368,22 @@ private class PsiVFSListener(private val project: Project) {
           }
         }
         VirtualFile.PROP_WRITABLE -> {
-          if (oldPsiFiles.isEmpty()) {
+          if (oldPsiFile == null) {
             return@externalChangeAction
           }
 
-          val treeEvent = PsiTreeChangeEventImpl(manager)
-          treeEvent.parent = parentDir
-          treeEvent.element = oldPsiFiles.first() // todo IJPL-339 update me
+          treeEvent.element = oldPsiFile
           treeEvent.propertyName = PsiTreeChangeEvent.PROP_WRITABLE
           treeEvent.oldValue = event.oldValue
           treeEvent.newValue = event.newValue
           manager.propertyChanged(treeEvent)
         }
         VirtualFile.PROP_ENCODING -> {
-          if (oldPsiFiles.isEmpty()) {
+          if (oldPsiFile == null) {
             return@externalChangeAction
           }
 
-          val treeEvent = PsiTreeChangeEventImpl(manager)
-          treeEvent.parent = parentDir
-          treeEvent.element = oldPsiFiles.first() // todo IJPL-339 update me
+          treeEvent.element = oldPsiFile
           treeEvent.propertyName = VirtualFile.PROP_ENCODING
           treeEvent.oldValue = event.oldValue
           treeEvent.newValue = event.newValue
