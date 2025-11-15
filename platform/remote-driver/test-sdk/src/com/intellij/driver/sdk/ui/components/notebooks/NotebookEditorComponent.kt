@@ -98,6 +98,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     )
   val imagePanel: List<UiComponent>
     get() = xx("//div[@class='FullEditorWidthRenderer']//div[@class='ImagePanel']").list()
+  val firstNotebookOutput: String
+    get() = notebookCellOutputs.first().getAllTexts().asString()
   val lastNotebookOutput: String
     get() = notebookCellOutputs.last().getAllTexts().asString()
   val statusBar: UiComponent
@@ -427,4 +429,14 @@ fun Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> Unit): I
   }
 }
 
-
+fun Driver.openFileWithProjectPanel(fileName: String) = ideFrame {
+  leftToolWindowToolbar.projectButton.open()
+  projectView {
+    projectViewTree.run {
+      waitOneText(fileName).doubleClick()
+    }
+  }
+  waitFor("the editor is present", timeout = 30.seconds) {
+    editor().present()
+  }
+}
