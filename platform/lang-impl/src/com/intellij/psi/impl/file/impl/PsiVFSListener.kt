@@ -451,38 +451,24 @@ private class PsiVFSListener(private val project: Project) {
     }
 
     ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+      val treeEvent = PsiTreeChangeEventImpl(manager)
       val isExcluded = vFile.isDirectory && Registry.`is`("ide.hide.excluded.files") && myProjectRootManager.fileIndex.isExcluded(vFile)
       if (oldParentDir != null && !isExcluded) {
-
-        // a list of:
-        // - one or several not-null PsiFiles
-        // - one not-null PsiDirectory
-        // - single 'null' if corresponding PsiDirectory or PsiFile cannot be created
-        val eventChildren: List<PsiFileSystemItem?> = if (vFile.isDirectory) {
-          listOf(fileManager.findDirectory(vFile))
+        val eventChild = if (vFile.isDirectory) fileManager.findDirectory(vFile) else fileManager.findFile(vFile)
+        treeEvent.child = eventChild
+        if (newParentDir != null) {
+          treeEvent.oldParent = oldParentDir
+          treeEvent.newParent = newParentDir
+          manager.beforeChildMovement(treeEvent)
         }
         else {
-          fileManager.getCachedPsiFiles(vFile).ifEmpty { listOf(fileManager.findFile(vFile)) }
-        }
-
-        for (eventChild in eventChildren) {
-          val treeEvent = PsiTreeChangeEventImpl(manager)
-          treeEvent.child = eventChild
-          if (newParentDir != null) {
-            treeEvent.oldParent = oldParentDir
-            treeEvent.newParent = newParentDir
-            manager.beforeChildMovement(treeEvent)
-          }
-          else {
-            treeEvent.parent = oldParentDir
-            manager.beforeChildRemoval(treeEvent)
-          }
+          treeEvent.parent = oldParentDir
+          manager.beforeChildRemoval(treeEvent)
         }
       }
       else {
         // checked above
         LOG.assertTrue(newParentDir != null)
-        val treeEvent = PsiTreeChangeEventImpl(manager)
         treeEvent.parent = newParentDir
         manager.beforeChildAddition(treeEvent)
       }
