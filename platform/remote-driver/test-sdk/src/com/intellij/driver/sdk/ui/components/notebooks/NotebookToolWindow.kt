@@ -26,7 +26,7 @@ fun Finder.withKotlinNotebookSessionToolWindow(action: KotlinNotebookToolWindowU
 class KotlinNotebookToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
   val notebookTabs: UIComponentsList<UiComponent>
     get() = xx("""
-      /div[@class='JPanel']
+      //div[@class='JPanel']
       //div[@class='TabPanel']
       /div[@class='ContentTabLabel']
     """.trimIndent())
@@ -39,15 +39,15 @@ class KotlinNotebookToolWindowUiComponent(data: ComponentData) : UiComponent(dat
     """.trimIndent()).list()
 
   fun openVariablesTab() {
-    variablesButton?.click()
+    variablesButton?.click() ?: error("Variables tab is not available")
   }
 
   fun openKernelLogsTab() {
-    kernelLogsButton?.click()
+    kernelLogsButton?.click() ?: error("Kernel logs tab is not available")
   }
 
   internal val kernelLogsButton: UiComponent?
-    get() = perNotebookTabs.firstOrNull { it.hasSubtext("Kernel logs") }
+    get() = perNotebookTabs.firstOrNull { it.hasSubtext("Kernel Logs") }
 
   internal val variablesButton: UiComponent?
     get() = perNotebookTabs.firstOrNull { it.hasSubtext("Variables") }
