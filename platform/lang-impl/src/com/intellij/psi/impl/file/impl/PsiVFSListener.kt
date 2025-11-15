@@ -148,15 +148,11 @@ private class PsiVFSListener(private val project: Project) {
   private fun beforePropertyChange(event: VFilePropertyChangeEvent) {
     val vFile = event.file
     val propertyName = event.propertyName
+
+    val viewProvider = fileManager.findCachedViewProvider(vFile)
+
     val parent = vFile.parent
-    val parentDir = run {
-      if (parent == null || fileManager.findCachedViewProvider(vFile) == null) {
-        getCachedDirectory(parent)
-      }
-      else {
-        fileManager.findDirectory(parent)
-      }
-    }
+    val parentDir = if (viewProvider != null && parent != null) fileManager.findDirectory(parent) else getCachedDirectory(parent)
     // do not notifyListeners event if the parent directory was never accessed via PSI
     if (parent != null && parentDir == null) {
       return
@@ -193,7 +189,8 @@ private class PsiVFSListener(private val project: Project) {
           }
         }
         else {
-          val psiFile = fileManager.findViewProvider(vFile).getPsi(fileManager.findViewProvider(vFile).baseLanguage)
+          val viewProvider1 = fileManager.findViewProvider(vFile)
+          val psiFile = viewProvider1.getPsi(viewProvider1.baseLanguage)
           val psiFile1 = createFileCopyWithNewName(vFile, newName)
 
           if (psiFile != null) {
