@@ -176,6 +176,8 @@ private class PsiVFSListener(private val project: Project) {
     }
 
     ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+      val treeEvent = PsiTreeChangeEventImpl(manager)
+      treeEvent.parent = parentDir
       if (propertyName == VirtualFile.PROP_NAME) {
         if (parentDir == null) {
           return@externalChangeAction
@@ -186,8 +188,6 @@ private class PsiVFSListener(private val project: Project) {
           val psiDir = fileManager.findDirectory(vFile)
           if (psiDir != null) {
             if (!FileTypeManager.getInstance().isFileIgnored(newName)) {
-              val treeEvent = PsiTreeChangeEventImpl(manager)
-              treeEvent.parent = parentDir
               treeEvent.child = psiDir
               treeEvent.propertyName = PsiTreeChangeEvent.PROP_DIRECTORY_NAME
               treeEvent.oldValue = vFile.name
@@ -195,62 +195,45 @@ private class PsiVFSListener(private val project: Project) {
               manager.beforePropertyChange(treeEvent)
             }
             else {
-              val treeEvent = PsiTreeChangeEventImpl(manager)
-              treeEvent.parent = parentDir
               treeEvent.child = psiDir
               manager.beforeChildRemoval(treeEvent)
             }
           }
           else {
             if ((!Registry.`is`("ide.hide.excluded.files") || !isExcludeRoot(vFile)) && !FileTypeManager.getInstance().isFileIgnored(newName)) {
-              val treeEvent = PsiTreeChangeEventImpl(manager)
-              treeEvent.parent = parentDir
               manager.beforeChildAddition(treeEvent)
             }
           }
         }
         else {
-          val viewProviders = fileManager.findCachedViewProviders(vFile).ifEmpty { listOf(fileManager.findViewProvider(vFile)) }
-          for (viewProvider in viewProviders) {
-            val psiFile = viewProvider.getPsi(fileManager.findViewProvider(vFile).baseLanguage)
-            val psiFile1 = createFileCopyWithNewName(vFile, newName)
+          val psiFile = fileManager.findViewProvider(vFile).getPsi(fileManager.findViewProvider(vFile).baseLanguage)
+          val psiFile1 = createFileCopyWithNewName(vFile, newName)
 
-            if (psiFile != null) {
-              if (psiFile1 == null) {
-                val treeEvent = PsiTreeChangeEventImpl(manager)
-                treeEvent.parent = parentDir
-                treeEvent.child = psiFile
-                manager.beforeChildRemoval(treeEvent)
-              }
-              else if (psiFile1.javaClass != psiFile.javaClass) {
-                val treeEvent = PsiTreeChangeEventImpl(manager)
-                treeEvent.parent = parentDir
-                treeEvent.oldChild = psiFile
-                manager.beforeChildReplacement(treeEvent)
-              }
-              else {
-                val treeEvent = PsiTreeChangeEventImpl(manager)
-                treeEvent.parent = parentDir
-                treeEvent.child = psiFile
-                treeEvent.propertyName = PsiTreeChangeEvent.PROP_FILE_NAME
-                treeEvent.oldValue = vFile.name
-                treeEvent.newValue = newName
-                manager.beforePropertyChange(treeEvent)
-              }
+          if (psiFile != null) {
+            if (psiFile1 == null) {
+              treeEvent.child = psiFile
+              manager.beforeChildRemoval(treeEvent)
             }
-            else if (psiFile1 != null) {
-              val treeEvent = PsiTreeChangeEventImpl(manager)
-              treeEvent.parent = parentDir
-              manager.beforeChildAddition(treeEvent)
+            else if (psiFile1.javaClass != psiFile.javaClass) {
+              treeEvent.oldChild = psiFile
+              manager.beforeChildReplacement(treeEvent)
             }
+            else {
+              treeEvent.child = psiFile
+              treeEvent.propertyName = PsiTreeChangeEvent.PROP_FILE_NAME
+              treeEvent.oldValue = vFile.name
+              treeEvent.newValue = newName
+              manager.beforePropertyChange(treeEvent)
+            }
+          }
+          else if (psiFile1 != null) {
+            manager.beforeChildAddition(treeEvent)
           }
         }
       }
       else if (propertyName == VirtualFile.PROP_WRITABLE) {
         // todo IJPL-339 implement proper event for multiple files
         val psiFile = fileManager.getCachedPsiFileInner(vFile, anyContext()) ?: return@externalChangeAction
-        val treeEvent = PsiTreeChangeEventImpl(manager)
-        treeEvent.parent = parentDir
         treeEvent.element = psiFile
         treeEvent.propertyName = PsiTreeChangeEvent.PROP_WRITABLE
         treeEvent.oldValue = event.oldValue

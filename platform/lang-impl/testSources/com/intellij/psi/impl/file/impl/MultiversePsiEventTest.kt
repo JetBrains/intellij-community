@@ -84,32 +84,6 @@ internal class MultiversePsiEventTest {
     expectedEventNumber = 2
   )
 
-  @Test
-  fun `test we receive 2 before-property-change rename events on renaming file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
-      object : PsiTreeChangeAdapter() {
-        override fun beforePropertyChange(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
-        }
-      }
-    },
-    updateBlock = { file -> file.rename(this, "B.java") },
-    expectedEventNumber = 2
-  )
-
-  @Test
-  fun `test we receive 2 property-change rename events on renaming file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
-      object : PsiTreeChangeAdapter() {
-        override fun propertyChanged(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
-        }
-      }
-    },
-    updateBlock = { file -> file.rename(this, "B.java") },
-    expectedEventNumber = 2
-  )
-
   private fun doChangeTest(
     listenerFactory: (AtomicInteger) -> PsiTreeChangeListener,
     updateBlock: (file: VirtualFile) -> Unit,
