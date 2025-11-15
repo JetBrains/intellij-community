@@ -243,13 +243,9 @@ private class PsiVFSListener(private val project: Project) {
 
     val oldFileViewProvider = fileManager.findCachedViewProvider(vFile)
     val oldPsiFile = fileManager.getCachedPsiFile(vFile)
-    val parentDir = run {
-      val parent = vFile.parent
-      if (oldPsiFile != null && parent != null)
-        fileManager.findDirectory(parent)
-      else
-        getCachedDirectory(parent)
-    }
+
+    val parent = vFile.parent
+    val parentDir = if (oldPsiFile != null && parent != null) fileManager.findDirectory(parent) else getCachedDirectory(parent)
 
     if (oldFileViewProvider != null && FileContentUtilCore.FORCE_RELOAD_REQUESTOR == event.requestor) {
       // there is no need to rebuild if there were no PSI in the first place
