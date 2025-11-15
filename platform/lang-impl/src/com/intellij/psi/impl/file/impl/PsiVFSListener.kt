@@ -784,8 +784,8 @@ private class MyFileDocumentManagerListener(private val project: Project) : File
   private val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as FileManagerEx
 
   override fun fileWithNoDocumentChanged(file: VirtualFile) {
-    val viewProviders = fileManager.findCachedViewProviders(file)
-    if (viewProviders.isEmpty()) {
+    val viewProvider = fileManager.findCachedViewProvider(file)
+    if (viewProvider == null) {
       project.service<PsiVFSListener>().handleVfsChangeWithoutPsi(file)
     }
     else {
@@ -794,9 +794,7 @@ private class MyFileDocumentManagerListener(private val project: Project) : File
           fileManager.forceReload(file)
         }
         else {
-          for (viewProvider in viewProviders) {
-            fileManager.reloadPsiAfterTextChange(viewProvider, file)
-          }
+          fileManager.reloadPsiAfterTextChange(viewProvider, file)
         }
       })
     }

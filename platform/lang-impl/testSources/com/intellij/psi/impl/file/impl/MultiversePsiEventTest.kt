@@ -16,7 +16,6 @@ import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.PsiTreeChangeListener
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -231,40 +230,6 @@ internal class MultiversePsiEventTest {
       expectedEventNumber = 0
     )
   }
-
-  @Test
-  fun `test we receive 2 before children changed events on updating content of a file with 2 psi files and WITHOT a document `() = doChangeTest(
-    listenerFactory = { counter ->
-      object : PsiTreeChangeAdapter() {
-        override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
-          if (!(event as PsiTreeChangeEventImpl).isGenericChange) {
-            counter.incrementAndGet()
-          }
-        }
-      }
-    },
-    updateBlock = { file ->
-      file.setBinaryContent("class Baz {}".toByteArray())
-    },
-    expectedEventNumber = 2
-  )
-
-  @Test
-  fun `test we receive 2 children changed events on updating content of a file with 2 psi files and WITHOT a document `() = doChangeTest(
-    listenerFactory = { counter ->
-      object : PsiTreeChangeAdapter() {
-        override fun childrenChanged(event: PsiTreeChangeEvent) {
-          if (!(event as PsiTreeChangeEventImpl).isGenericChange) {
-            counter.incrementAndGet()
-          }
-        }
-      }
-    },
-    updateBlock = { file ->
-      file.setBinaryContent("class Baz {}".toByteArray())
-    },
-    expectedEventNumber = 2
-  )
 
   private fun doChangeTest(
     listenerFactory: (AtomicInteger) -> PsiTreeChangeListener,
