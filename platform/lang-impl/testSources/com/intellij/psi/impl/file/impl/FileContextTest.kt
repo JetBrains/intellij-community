@@ -118,7 +118,7 @@ internal class FileContextTest {
         }
 
         writeAction {
-          psiManager.fileManager.dropViewProviders(virtualFile)
+          psiManager.fileManager.setViewProvider(virtualFile, null)
         }
       }
       while (true)

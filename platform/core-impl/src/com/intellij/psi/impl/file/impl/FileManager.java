@@ -63,23 +63,10 @@ public interface FileManager {
   @Nullable
   FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile, @NotNull CodeInsightContext context);
 
-  /** @deprecated use {@link #changeViewProvider(VirtualFile, FileViewProvider)} or {@link #dropViewProviders(VirtualFile)} instead. */
-  @Deprecated
+  /**
+   * Requires write lock for physical files, and <i>usually</i> does not require a write lock for non-physical files.
+   */
   void setViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider);
-
-  /**
-   * Requires write lock for physical files, and <i>usually</i> does not require a write lock for non-physical files.
-   * <p>
-   * If a file has several view providers, all of them will be invalidated.
-   */
-  @ApiStatus.Experimental
-  void changeViewProvider(@NotNull VirtualFile vFile, @NotNull FileViewProvider viewProvider);
-
-  /**
-   * Requires write lock for physical files, and <i>usually</i> does not require a write lock for non-physical files.
-   */
-  @ApiStatus.Experimental
-  void dropViewProviders(@NotNull VirtualFile vFile);
 
   @NotNull
   List<PsiFile> getAllCachedFiles();

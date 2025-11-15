@@ -444,7 +444,7 @@ public class InjectedLanguageUtilBase {
     PsiManagerEx psiManagerEx = PsiManagerEx.getInstanceEx(project);
 
     DebugUtil.performPsiModification("injected clearCaches", () ->
-      psiManagerEx.getFileManager().dropViewProviders(virtualFile));
+      psiManagerEx.getFileManager().setViewProvider(virtualFile, null));
 
     VirtualFile delegate = virtualFile.getDelegate();
     if (!delegate.isValid()) return;

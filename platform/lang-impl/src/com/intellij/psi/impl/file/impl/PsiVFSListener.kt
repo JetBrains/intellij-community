@@ -107,7 +107,7 @@ private class PsiVFSListener(private val project: Project) {
       val psiFile = fileManager.getCachedPsiFileInner(vFile, anyContext())
       var element: PsiElement?
       if (psiFile != null) {
-        fileManager.dropViewProviders(vFile)
+        fileManager.setViewProvider(vFile, null)
         element = psiFile
       }
       else {
@@ -141,7 +141,7 @@ private class PsiVFSListener(private val project: Project) {
 
   private fun clearViewProvider(vFile: VirtualFile, why: String) {
     DebugUtil.performPsiModification<RuntimeException>(why) {
-      fileManager.dropViewProviders(vFile)
+      fileManager.setViewProvider(vFile, null)
     }
   }
 
@@ -305,7 +305,7 @@ private class PsiVFSListener(private val project: Project) {
                 manager.childRemoved(treeEvent)
               }
               else if (!FileManagerImpl.areViewProvidersEquivalent(fileViewProvider, oldFileViewProvider!!)) {
-                fileManager.changeViewProvider(vFile, fileViewProvider)
+                fileManager.setViewProvider(vFile, fileViewProvider)
 
                 treeEvent.oldChild = oldPsiFile
                 treeEvent.newChild = newPsiFile
@@ -322,7 +322,7 @@ private class PsiVFSListener(private val project: Project) {
               }
             }
             else if (newPsiFile != null) {
-              fileManager.changeViewProvider(vFile, fileViewProvider)
+              fileManager.setViewProvider(vFile, fileViewProvider)
               if (parentDir != null) {
                 treeEvent.child = newPsiFile
                 manager.childAdded(treeEvent)
@@ -455,9 +455,7 @@ private class PsiVFSListener(private val project: Project) {
       ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
         val treeEvent = PsiTreeChangeEventImpl(manager)
         if (oldElement == null) {
-          if (newViewProvider != null) {
-            fileManager.changeViewProvider(vFile, newViewProvider)
-          }
+          fileManager.setViewProvider(vFile, newViewProvider)
           treeEvent.parent = newParentDir
           treeEvent.child = newElement
           manager.childAdded(treeEvent)
@@ -478,7 +476,7 @@ private class PsiVFSListener(private val project: Project) {
               manager.childMoved(treeEvent)
             }
             else {
-              fileManager.changeViewProvider(vFile, newViewProvider)
+              fileManager.setViewProvider(vFile, newViewProvider)
               val treeRemoveEvent = PsiTreeChangeEventImpl(manager)
               treeRemoveEvent.parent = oldParentDir
               treeRemoveEvent.child = oldElement
