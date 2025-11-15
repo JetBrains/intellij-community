@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.fakeLang
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.find
 
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.ide.plugins.PluginManagerCore
@@ -22,34 +22,34 @@ import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import javax.swing.Icon
 
-fun registerFakeLanguage(testRootDisposable: Disposable) {
+internal fun registerTestLanguage(testRootDisposable: Disposable) {
   (FileTypeManager.getInstance() as FileTypeManagerImpl).registerFileType(
-    /* type = */ FakeFileType.INSTANCE,
-    /* defaultAssociations = */ listOf(ExtensionFileNameMatcher(FakeFileType.INSTANCE.defaultExtension)),
+    /* type = */ TestFileType.INSTANCE,
+    /* defaultAssociations = */ listOf(ExtensionFileNameMatcher(TestFileType.INSTANCE.defaultExtension)),
     /* disposable = */ testRootDisposable,
     /* pluginDescriptor = */ PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)!!
   )
 
   LanguageParserDefinitions.INSTANCE.addExplicitExtension(
-    /* key = */ FakeLanguage,
-    /* t = */ FakeParserDefinition(),
+    /* key = */ TestLanguage,
+    /* t = */ TestParserDefinition(),
     /* parentDisposable = */ testRootDisposable
   )
 }
 
-object FakeLanguage : Language("FakeLang")
+internal object TestLanguage : Language("TestLang")
 
-private class FakeParserDefinition : ParserDefinition {
+private class TestParserDefinition : ParserDefinition {
   override fun createLexer(project: Project?): Lexer = EmptyLexer()
-  override fun createParser(project: Project?): PsiParser = FakeParser()
-  override fun getFileNodeType(): IFileElementType = FakeFileElementType
+  override fun createParser(project: Project?): PsiParser = TestParser()
+  override fun getFileNodeType(): IFileElementType = TestFileElementType
   override fun getCommentTokens(): TokenSet = TokenSet.EMPTY
   override fun getStringLiteralElements(): TokenSet = TokenSet.EMPTY
   override fun createElement(node: ASTNode?): PsiElement = throw UnsupportedOperationException()
-  override fun createFile(viewProvider: FileViewProvider): PsiFile = FakeFile(viewProvider)
+  override fun createFile(viewProvider: FileViewProvider): PsiFile = TestFile(viewProvider)
 }
 
-private class FakeParser : PsiParser {
+private class TestParser : PsiParser {
   override fun parse(root: IElementType, builder: PsiBuilder): ASTNode {
     val marker = builder.mark()
     builder.advanceLexer()
@@ -58,20 +58,20 @@ private class FakeParser : PsiParser {
   }
 }
 
-private class FakeFileType : LanguageFileType(FakeLanguage) {
-  override fun getName(): String = "FakeFileType"
-  override fun getDescription(): String = "Fake file type"
-  override fun getDefaultExtension(): String = "fake"
+private class TestFileType : LanguageFileType(TestLanguage) {
+  override fun getName(): String = "TestFileType"
+  override fun getDescription(): String = "Test file type"
+  override fun getDefaultExtension(): String = "test"
   override fun getIcon(): Icon? = null
 
   companion object {
     @JvmField
-    val INSTANCE = FakeFileType()
+    val INSTANCE = TestFileType()
   }
 }
 
-class FakeFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, FakeLanguage), PsiExternalReferenceHost {
-  override fun getFileType(): FileType = FakeFileType.INSTANCE
+internal class TestFile(viewProvider: FileViewProvider) : PsiFileBase(viewProvider, TestLanguage), PsiExternalReferenceHost {
+  override fun getFileType(): FileType = TestFileType.INSTANCE
 }
 
-private object FakeFileElementType : IFileElementType("FakeFileElementType", FakeLanguage)
+private object TestFileElementType : IFileElementType("TesFileElementType", TestLanguage)
