@@ -20,8 +20,10 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.ParameterizedCachedValue
 import com.intellij.psi.util.ParameterizedCachedValueProvider
+import org.jetbrains.annotations.ApiStatus
 
-internal interface CachedValuesFactory {
+@ApiStatus.Internal
+interface CachedValuesFactory {
   fun <T> createCachedValue(provider: CachedValueProvider<T>, trackValue: Boolean): CachedValue<T>
 
   fun <T> createCachedValue(userDataHolder: UserDataHolder, provider: CachedValueProvider<T>, trackValue: Boolean): CachedValue<T>
