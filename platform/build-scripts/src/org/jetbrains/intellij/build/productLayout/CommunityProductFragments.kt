@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets.platformLangBase
+
 /**
  * Registry of reusable product content fragments for community products.
  * These fragments bundle commonly repeated patterns into reusable units.
@@ -17,7 +19,7 @@ object CommunityProductFragments {
    */
   fun platformLangBaseFragment(): ProductModulesContentSpec = productModules {
     deprecatedInclude("intellij.platform.resources", "META-INF/PlatformLangPlugin.xml")
-    embeddedModule("intellij.platform.builtInServer.impl")
+    moduleSet(platformLangBase())
   }
 
   /**

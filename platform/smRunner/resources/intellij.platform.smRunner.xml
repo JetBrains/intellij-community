@@ -1,5 +1,8 @@
-<idea-plugin>
-  
+<idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint name="importTestOutput" interface="com.intellij.execution.testframework.sm.runner.history.ImportTestOutputExtension" dynamic="true"/>
   </extensionPoints>

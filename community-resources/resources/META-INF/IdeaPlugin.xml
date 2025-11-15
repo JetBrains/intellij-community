@@ -24,12 +24,12 @@
   <xi:include href="/META-INF/community-extensions.xml">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="/META-INF/intellij.moduleSets.platformLangBase.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.debugger.streams.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
   <!-- <editor-fold desc="additional"> -->
   <content namespace="jetbrains">
-    <module name="intellij.platform.builtInServer.impl" loading="embedded"/>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
     <module name="intellij.xml.xmlbeans"/>

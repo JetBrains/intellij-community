@@ -154,9 +154,6 @@
     <xi:fallback/>
   </xi:include>
 
-  <xi:include href="/META-INF/smRunner.xml">
-    <xi:fallback/>
-  </xi:include>
   <xi:include href="/META-INF/ExternalProcessAuthHelper.xml">
     <xi:fallback/>
   </xi:include>

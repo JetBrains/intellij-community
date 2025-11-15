@@ -37,7 +37,7 @@ object CommunityModuleSets : ModuleSetProvider {
    * Minimal essential platform modules required by lightweight IDE products like GitClient.
    * Contains only core backend/frontend split, editor, search, and basic infrastructure.
    * Nested by essential() to avoid duplication.
-   */
+ */
   fun essentialMinimal(): ModuleSet = moduleSet("essential.minimal") {
     // Include libraries first (they are xi:included in essential.minimal.xml)
     moduleSet(libraries())
@@ -449,6 +449,15 @@ object CommunityModuleSets : ModuleSetProvider {
     embeddedModule("fleet.util.core")
     embeddedModule("fleet.util.logging.api")
     embeddedModule("fleet.util.serialization")
+  }
+
+  /**
+   * Platform language base modules required by PlatformLangPlugin.xml.
+   * Contains core platform modules that are xi:included in PlatformLangPlugin.xml.
+   */
+  fun platformLangBase(): ModuleSet = moduleSet("platformLangBase") {
+    embeddedModule("intellij.platform.builtInServer.impl")
+    embeddedModule("intellij.platform.smRunner")
   }
 
   /**
