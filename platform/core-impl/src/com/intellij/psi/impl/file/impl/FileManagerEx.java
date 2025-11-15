@@ -9,9 +9,11 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.List;
 import java.util.function.Consumer;
 
 @ApiStatus.Internal
@@ -33,9 +35,6 @@ public interface FileManagerEx extends FileManager {
 
   @Nullable
   PsiFile getCachedPsiFileInner(@NotNull VirtualFile file, @NotNull CodeInsightContext context);
-
-  @NotNull @Unmodifiable
-  List<PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile file);
 
   /**
    * Removes invalid files and directories from the cache.

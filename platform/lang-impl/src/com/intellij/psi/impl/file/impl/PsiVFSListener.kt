@@ -86,67 +86,54 @@ private class PsiVFSListener(private val project: Project) {
     val parentDir = getCachedDirectory(parent) ?: return
 
     ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
-      val items = if (vFile.isDirectory) listOfNotNull(fileManager.findDirectory(vFile)) else fileManager.getCachedPsiFiles(vFile)
-      for (item in items) {
-        val treeEvent = PsiTreeChangeEventImpl(manager)
-        treeEvent.parent = parentDir
-        treeEvent.child = item
-        manager.beforeChildRemoval(treeEvent)
-      }
+      val item = (if (vFile.isDirectory) fileManager.findDirectory(vFile) else fileManager.getCachedPsiFile(vFile))
+                 ?: return@externalChangeAction
+      val treeEvent = PsiTreeChangeEventImpl(manager)
+      treeEvent.parent = parentDir
+      treeEvent.child = item
+      manager.beforeChildRemoval(treeEvent)
     })
   }
 
   // optimization: call myFileManager.removeInvalidFilesAndDirs() once for a group of deletion events, instead of once for each event
   private fun filesDeleted(events: List<VFileEvent>) {
     var needToRemoveInvalidFilesAndDirs = false
-
-    fun fireChildRemoved(element: PsiElement, parentDir: PsiDirectory?) {
-      if (parentDir == null) return
-      ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
-        val treeEvent = PsiTreeChangeEventImpl(manager)
-        treeEvent.parent = parentDir
-        treeEvent.child = element
-        manager.childRemoved(treeEvent)
-      })
-    }
-
-    fun dirDeleted(dir: VirtualFile, parent: VirtualFile?) {
-      val psiDir = fileManager.getCachedDirectory(dir) ?: run {
-        handleVfsChangeWithoutPsi(parent)
-        return
-      }
-
-      val parentDir = getCachedDirectory(parent)
-      fireChildRemoved(psiDir, parentDir)
-      needToRemoveInvalidFilesAndDirs = true
-    }
-
-    fun fileDeleted(vFile: VirtualFile, parent: VirtualFile?) {
-      val cachedPsiFiles = fileManager.getCachedPsiFilesInner(vFile).ifEmpty {
-        handleVfsChangeWithoutPsi(parent)
-        return
-      }
-
-      val parentDir = getCachedDirectory(parent)
-      fileManager.dropViewProviders(vFile)
-      for (psiFile in cachedPsiFiles) {
-        fireChildRemoved(psiFile, parentDir)
-      }
-    }
-
     for (event in events) {
       val de = event as VFileDeleteEvent
       val vFile = de.file
       val parent = vFile.parent
 
-      if (vFile.isDirectory) {
-        dirDeleted(vFile, parent)
+      // todo IJPL-339 implement proper event for multiple files
+      val psiFile = fileManager.getCachedPsiFileInner(vFile, anyContext())
+      var element: PsiElement?
+      if (psiFile != null) {
+        fileManager.dropViewProviders(vFile)
+        element = psiFile
       }
       else {
-        fileDeleted(vFile, parent)
+        val psiDir = fileManager.getCachedDirectory(vFile)
+        if (psiDir != null) {
+          needToRemoveInvalidFilesAndDirs = true
+          element = psiDir
+        }
+        else if (parent != null) {
+          handleVfsChangeWithoutPsi(parent)
+          return
+        }
+        else {
+          element = null
+        }
+      }
+      val parentDir = getCachedDirectory(parent)
+      if (element != null && parentDir != null) {
+        ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction {
+          val treeEvent = PsiTreeChangeEventImpl(manager)
+          treeEvent.parent = parentDir
+          treeEvent.child = element
+          manager.childRemoved(treeEvent)
+        })
       }
     }
-
     if (needToRemoveInvalidFilesAndDirs) {
       fileManager.removeInvalidFilesAndDirs(false)
     }
@@ -533,11 +520,7 @@ private class PsiVFSListener(private val project: Project) {
     )
   }
 
-  fun handleVfsChangeWithoutPsi(vFile: VirtualFile?) {
-    if (vFile == null) {
-      return
-    }
-
+  fun handleVfsChangeWithoutPsi(vFile: VirtualFile) {
     if (!reportedUnloadedPsiChange && isInRootModel(vFile)) {
       fileManager.firePropertyChangedForUnloadedPsi()
       reportedUnloadedPsiChange = true
