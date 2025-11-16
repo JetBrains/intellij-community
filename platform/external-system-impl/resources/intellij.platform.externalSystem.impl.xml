@@ -1,0 +1,9 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="public">
+  <dependencies>
+    <module name="intellij.platform.ide.impl"/>
+  </dependencies>
+
+  <xi:include href="/META-INF/ExternalSystemExtensionPoints.xml"/>
+  <xi:include href="/META-INF/ExternalSystemExtensions.xml"/>
+  <xi:include href="/META-INF/ExternalSystemActions.xml"/>
+</idea-plugin>

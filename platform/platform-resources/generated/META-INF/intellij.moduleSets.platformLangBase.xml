@@ -7,5 +7,7 @@
     <module name="intellij.platform.builtInServer.impl" loading="embedded"/>
     <module name="intellij.platform.smRunner" loading="embedded"/>
     <module name="intellij.platform.externalSystem.dependencyUpdater" loading="embedded"/>
+    <module name="intellij.platform.externalSystem.impl" loading="embedded"/>
+    <module name="intellij.platform.externalProcessAuthHelper" loading="embedded"/>
   </content>
 </idea-plugin>

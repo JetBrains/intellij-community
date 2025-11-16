@@ -459,6 +459,8 @@ object CommunityModuleSets : ModuleSetProvider {
     embeddedModule("intellij.platform.builtInServer.impl")
     embeddedModule("intellij.platform.smRunner")
     embeddedModule("intellij.platform.externalSystem.dependencyUpdater")
+    embeddedModule("intellij.platform.externalSystem.impl")
+    embeddedModule("intellij.platform.externalProcessAuthHelper")
   }
 
   /**

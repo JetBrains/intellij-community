@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <extensions defaultExtensionNs="com.intellij">
     <httpRequestHandler implementation="com.intellij.externalProcessAuthHelper.NativeSshExternalProcessRest"/>
   </extensions>
