@@ -74,7 +74,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   private var myNotificationAware: AutoImportProjectNotificationAware? = null
   private var myProjectTracker: AutoImportProjectTracker? = null
   private var isAutoReloadEnabled = false
-  private lateinit var myDisposable: Disposable
+  protected lateinit var myDisposable: Disposable
 
   // plugin resolution is slow and many tests do not need it
   protected open fun skipPluginResolution(): Boolean {
@@ -94,7 +94,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
           return PluginResolutionResult(emptySet())
         }
       }
-      project.replaceService(MavenPluginResolver::class.java, pluginResolver, project)
+      project.replaceService(MavenPluginResolver::class.java, pluginResolver, myDisposable)
     }
     myCodeStyleSettingsTracker = CodeStyleSettingsTracker { currentCodeStyleSettings }
     val settingsFile = MavenUtil.resolveGlobalSettingsFile(BundledMaven3)
@@ -109,6 +109,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   @Throws(Exception::class)
   override fun tearDown() {
     runAll(
+      ThrowableRunnable<Throwable> {
+        if (::myDisposable.isInitialized) {
+          Disposer.dispose(myDisposable)
+        }
+      },
       ThrowableRunnable<Throwable> { WriteAction.runAndWait<RuntimeException> { JavaAwareProjectJdkTableImpl.removeInternalJdkInTests() } },
       ThrowableRunnable<Throwable> { TestDialogManager.setTestDialog(TestDialog.DEFAULT) },
       ThrowableRunnable<Throwable> { removeFromLocalRepository("test") },
@@ -123,11 +128,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       ThrowableRunnable<Throwable> {
         if (myCodeStyleSettingsTracker != null) {
           myCodeStyleSettingsTracker!!.checkForSettingsDamage()
-        }
-      },
-      ThrowableRunnable<Throwable> {
-        if (::myDisposable.isInitialized) {
-          Disposer.dispose(myDisposable)
         }
       },
     )

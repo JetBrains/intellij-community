@@ -33,7 +33,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       override fun invokeLater(runnable: Runnable) {
         runnable.run()
       }
-    }, testRootDisposable)
+    }, myDisposable)
     initProjectsManager(false)
 
     withContext(Dispatchers.EDT) {
