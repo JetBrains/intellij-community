@@ -89,9 +89,24 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
         builder.addErrorMessage("inspection.message.not.generating.field.s.field.with.same.name.already.exists", loggerName);
         result = false;
       }
+
+      final boolean loggerStatic = isLoggerStatic(psiClass);
+      if (psiClass.isRecord() && !loggerStatic) {
+        builder.addErrorMessage("inspection.message.logger.fields.must.be.static.in.records");
+        result = false;
+      }
+
+      if (loggerStatic &&
+          !(psiClass.hasModifierProperty(PsiModifier.STATIC) || psiClass.getContainingClass() == null || psiClass.isRecord())
+      ) {
+        builder.addErrorMessage("inspection.message.logger.can.be.used.on.static.inner.classes.only", StringUtil.getShortName(getSupportedAnnotationClasses()[0]));
+        result = false;
+      }
     }
     return result;
   }
+
+
 
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
