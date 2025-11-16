@@ -379,11 +379,11 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected open suspend fun importProjectsAsync(files: List<VirtualFile>) {
-
     initProjectsManager(false)
     projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
 
     IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    awaitConfiguration()
   }
 
   protected fun importProjectWithProfiles(vararg profiles: String) {
@@ -419,6 +419,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
+    runBlockingMaybeCancellable { awaitConfiguration() }
   }
 
   protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
