@@ -8,6 +8,7 @@ import com.intellij.execution.target.value.TargetValue
 import com.intellij.util.execution.ParametersListUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 import org.jetbrains.concurrency.await
@@ -109,6 +110,20 @@ class TargetedCommandLine internal constructor(private val exePath: TargetValue<
       value.targetValue.resolve("environment variable $name")
       ?: throw ExecutionException(ExecutionBundle.message("targeted.command.line.resolved.env.value.is.null", name))
     }
+
+  @ApiStatus.Internal
+  fun toBuilder(request: TargetEnvironmentRequest): TargetedCommandLineBuilder {
+    val builder = TargetedCommandLineBuilder(request)
+    builder.exePath = exePath
+    builder.setWorkingDirectory(_workingDirectory)
+    builder.setInputFile(_inputFilePath)
+    builder.charset = charset
+    builder.setParameters(parameters)
+    builder.setEnvironmentVariables(environment)
+    builder.redirectErrorStream = isRedirectErrorStream
+    builder.ptyOptions = ptyOptions
+    return builder
+  }
 
   override fun toString(): String =
     listOf(exePath).plus(parameters).joinToString(

@@ -238,6 +238,9 @@ com.intellij.execution.target.TargetProgressIndicator
 - a:isStopped():Z
 - a:stop():V
 - stopWithErrorMessage(java.lang.String):V
+f:com.intellij.execution.target.TargetedCommandLineBuilder
+- f:setEnvironmentVariables(java.util.Map):V
+- f:setParameters(java.util.List):V
 com.intellij.execution.target.java.JavaLanguageRuntimeUIFactory
 - a:create(com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration,com.intellij.execution.target.TargetEnvironmentType,java.util.function.Supplier,com.intellij.openapi.project.Project):com.intellij.openapi.options.Configurable
 com.intellij.execution.target.value.TargetValue
