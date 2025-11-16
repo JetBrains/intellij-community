@@ -3,6 +3,7 @@ package com.intellij.execution.target
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
+import com.intellij.execution.target.local.toLocalPtyOptions
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -319,6 +320,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     builder.args(command.drop(1))
     builder.env(commandLine.environmentVariables)
     builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, eel.descriptor) })
+    builder.interactionOptions(commandLine.interactionOptions())
 
     return runBlockingCancellable {
       try {
@@ -328,6 +330,15 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
         throw ExecutionException(e)
       }
     }
+  }
+
+  private fun TargetedCommandLine.interactionOptions(): EelExecApi.InteractionOptions? = when {
+    ptyOptions != null -> {
+      val echo = !ptyOptions.toLocalPtyOptions().consoleMode
+      EelExecApi.Pty(ptyOptions.initialColumns, ptyOptions.initialRows, echo)
+    }
+    isRedirectErrorStream -> EelExecApi.RedirectStdErr(EelExecApi.RedirectTo.STDOUT)
+    else -> null
   }
 
   override val targetPlatform: TargetPlatform = request.targetPlatform
