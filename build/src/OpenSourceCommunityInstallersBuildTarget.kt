@@ -22,6 +22,8 @@ object OpenSourceCommunityInstallersBuildTarget {
     // never published from .github/workflows/IntelliJ_IDEA.yml
     buildStepsToSkip += BuildOptions.WINDOWS_ZIP_STEP
     buildStepsToSkip += BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP
+    buildStepsToSkip += BuildOptions.SOURCES_ARCHIVE_STEP
+    buildStepsToSkip += BuildOptions.ARCHIVE_PLUGINS
     if (OsFamily.currentOs == OsFamily.MACOS) {
       // generally not needed; doesn't work well on build agents
       buildStepsToSkip += BuildOptions.WINDOWS_EXE_INSTALLER_STEP
