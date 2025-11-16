@@ -20,6 +20,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.asRef
+import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
@@ -171,7 +172,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
     // We initialize `adaptedTabs` before `tabsOrDeferredTabs`,
     // because `tabsOrDeferredTabs` are not fully asynchronous and may delay initialization of `adaptedTabs`
-    val adaptedTabs = createAdaptedTabsIfMonolith(orderedTabFactoryIds, initEvent, popupScope, session)
+    val adaptedTabs = createAdaptedTabsIfMonolith(orderedTabFactoryIds, providersHolder, initEvent, popupScope, session)
 
     val tabsOrDeferredTabs = customizedTabFactories.map {
       it.id to initAsync(popupScope) {
@@ -245,23 +246,39 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
   private fun createAdaptedTabsIfMonolith(
     supportedTabIds: List<String>,
+    frontendProvidersHolder: SeProvidersHolder,
     initEvent: AnActionEvent,
     popupScope: CoroutineScope,
     session: SeSession
   ) : SuspendLazyProperty<List<SeTab>> = initAsync(popupScope) {
     val orphanedRemoteAdaptedTabInfos = initAsync(popupScope) {
       val dataContextId = readAction { initEvent.dataContext.rpcId() }
-      val availableRemoteProviders = project?.let { SeRemoteApi.getInstance().getAvailableProviderIds(it.projectId(), session, dataContextId) }
+      val availableRemoteProviders = project?.let {
+        SeRemoteApi.getInstance().getAvailableProviderIds(it.projectId(), session, dataContextId)
+      } ?: return@initAsync null
 
-      availableRemoteProviders?.adaptedSeparateTab
-        ?.takeIf { availableRemoteProviders.isFetchable }
-        ?.filter { !supportedTabIds.contains(it.providerId.value) }
-        ?.sortedBy { it.tabSortWeight }
+      // We support adapted tabs only for monolith mode
+      if (!availableRemoteProviders.isFetchable) return@initAsync null
+
+      availableRemoteProviders.adaptedSeparateTab
+        .filter { !supportedTabIds.contains(it.providerId.value) }
+        .sortedBy { it.tabSortWeight }
     }.getValue() ?: return@initAsync emptyList()
 
     val tabs = orphanedRemoteAdaptedTabInfos.map {
+      // This trick is supposed to work only for monolith mode
+      val filterEditor = frontendProvidersHolder.legacySeparateTabContributors[it.providerId]?.let { contributor ->
+        SeAdaptedFilterEditor(contributor)
+      }
+
       popupScope.async {
-        SeAdaptedTab.create(it.providerId.value, it.tabName, popupScope, project, session, initEvent) to it.tabSortWeight
+        SeAdaptedTab.create(it.providerId.value,
+                            it.tabName,
+                            filterEditor,
+                            popupScope,
+                            project,
+                            session,
+                            initEvent) to it.tabSortWeight
       }
     }.awaitAll().sortedBy { it.second }.map { it.first }
 

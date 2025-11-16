@@ -1,25 +1,80 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.tabs
 
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.platform.searchEverywhere.SeSession
+import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
-import com.intellij.platform.searchEverywhere.toProviderId
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.util.*
 
+/**
+ * Adapted tab for unsupported legacy SearchEverywhereContributors
+ */
 @ApiStatus.Internal
-class SeAdaptedTab private constructor(delegate: SeTabDelegate, override val name: @Nls String, override val id: String): SeDefaultTabBase(delegate) {
-  override suspend fun getFilterEditor(): SeFilterEditor? = null
+class SeAdaptedTab private constructor(delegate: SeTabDelegate,
+                                       override val name: @Nls String,
+                                       override val id: String,
+                                       private val filterEditor: SeAdaptedFilterEditor?): SeDefaultTabBase(delegate) {
+  override suspend fun getFilterEditor(): SeFilterEditor? = filterEditor
 
   companion object {
-    fun create(legacyContributorId: String, name: @Nls String, scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent): SeAdaptedTab {
+    fun create(legacyContributorId: String,
+               name: @Nls String,
+               filterEditor: SeAdaptedFilterEditor?,
+               scope: CoroutineScope,
+               project: Project?,
+               session: SeSession,
+               initEvent: AnActionEvent): SeAdaptedTab {
       val delegate = SeTabDelegate(project, session, legacyContributorId, listOf(legacyContributorId.toProviderId()), initEvent, scope)
 
-      return SeAdaptedTab(delegate, name, legacyContributorId)
+      return SeAdaptedTab(delegate, name, legacyContributorId, filterEditor)
+    }
+  }
+}
+
+@ApiStatus.Internal
+class SeAdaptedFilterEditor(val contributor: SearchEverywhereContributor<Any>) : SeFilterEditor {
+  override val resultFlow: StateFlow<SeFilterState> get() = _resultFlow.asStateFlow()
+  private val _resultFlow = MutableStateFlow(SeAdaptedTabFilter().toState())
+
+  override fun getHeaderActions(): List<AnAction> = contributor.getActions {
+    // Generate the new value to restart the search
+    _resultFlow.value = SeAdaptedTabFilter().toState()
+  }
+}
+
+/**
+ * Filter for adapted tabs that doesn't bring any value, but just notifies that the filter was changed
+ */
+@ApiStatus.Internal
+class SeAdaptedTabFilter: SeFilter {
+  override fun toState(): SeFilterState =
+    SeFilterState.Data(mapOf(IS_ADAPTED_FILTER to SeFilterValue.One("true"),
+                             // Generate a random value so that the filter change would restart the search
+                             RANDOM_VALUE to SeFilterValue.One(UUID.randomUUID().toString())))
+
+  companion object {
+    private const val IS_ADAPTED_FILTER = "IS_ADAPTED_FILTER"
+    private const val RANDOM_VALUE = "RANDOM_VALUE"
+
+    fun from(state: SeFilterState): SeAdaptedTabFilter? {
+      return when (state) {
+        is SeFilterState.Data -> {
+          if (state.map[IS_ADAPTED_FILTER]?.let { it as? SeFilterValue.One }?.value?.toBoolean() ?: false)
+            SeAdaptedTabFilter()
+          else null
+        }
+        SeFilterState.Empty -> null
+      }
     }
   }
 }
