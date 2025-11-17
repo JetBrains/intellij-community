@@ -812,6 +812,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" filepath="$PROJECT_DIR$/plugins/laf/win10/intellij.laf.win10.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.sampleTests/intellij.lambda.sampleTests.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.sampleTests/intellij.lambda.sampleTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.sampleTests/plugin/intellij.lambda.sampleTests.plugin.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.sampleTests/plugin/intellij.lambda.sampleTests.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.sampleTestsWithFixtures/intellij.lambda.sampleTestsWithFixtures.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.sampleTestsWithFixtures/intellij.lambda.sampleTestsWithFixtures.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.sampleTestsWithFixtures/plugin/intellij.lambda.sampleTestsWithFixtures.plugin.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.sampleTestsWithFixtures/plugin/intellij.lambda.sampleTestsWithFixtures.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.testFramework/plugin/intellij.lambda.test.plugin.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.testFramework/plugin/intellij.lambda.test.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/intellij.lambda.testFramework/intellij.lambda.testFramework.iml" filepath="$PROJECT_DIR$/tools/intellij.lambda.testFramework/intellij.lambda.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/aalto-xml/intellij.libraries.aalto.xml.iml" filepath="$PROJECT_DIR$/libraries/aalto-xml/intellij.libraries.aalto.xml.iml" />
