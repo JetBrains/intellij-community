@@ -5,6 +5,12 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfo
 import org.jetbrains.annotations.ApiStatus
 import org.junit.jupiter.api.Test
 
+/**
+ * Annotation for JUnit 5 multi-file Python code insight tests.
+ *
+ * Marks that all the files from the subdirectory containing the main test file (`a.py` by default)
+ * should be copied to the temporary test directory.
+ */
 @Test
 @ApiStatus.Experimental
 @TestMetaInfo(resourcePath = $$"$TEST_NAME/a.py")

@@ -8,6 +8,9 @@ import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.reflect.KClass
 
+/**
+ * Enables the specific inspection(s) for the test class.
+ */
 @TestOnly
 @ApiStatus.Experimental
 @ExtendWith(PyInspectionTestJUnit5Extension::class)

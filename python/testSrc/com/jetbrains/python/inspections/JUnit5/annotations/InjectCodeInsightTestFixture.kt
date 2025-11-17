@@ -4,6 +4,11 @@ package com.jetbrains.python.inspections.JUnit5.annotations
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
+/**
+ * Injects [com.intellij.testFramework.fixtures.CodeInsightTestFixture] into a test class field to reduce verbosity.
+ *
+ * See example in [com.jetbrains.python.inspections.JUnit5.showcase.PyJUnit5CodeInsightExampleTest].
+ */
 @TestOnly
 @ApiStatus.Experimental
 @Target(AnnotationTarget.FIELD)

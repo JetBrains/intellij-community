@@ -11,7 +11,14 @@ import com.jetbrains.python.inspections.JUnit5.impl.PyWithLanguageLevelExtension
 import org.jetbrains.annotations.ApiStatus
 import org.junit.jupiter.api.extension.ExtendWith
 
-
+/**
+ * PyDefaultTestApplication is a test annotation used to initialize a shared application context,
+ * adapted for code-insight tests. It enriches it with various predefined test extensions
+ * (project, module, source root, mock SDK and [com.intellij.testFramework.fixtures.CodeInsightTestFixture] itself).
+ *
+ * It initializes a shared [com.intellij.openapi.application.Application] instance before any tests are run
+ * and disposes it after all tests finish, through the [TestApplication] annotation.
+ */
 @TestApplication
 @ApiStatus.Experimental
 @ExtendWith(LookupFixtureExtension::class)

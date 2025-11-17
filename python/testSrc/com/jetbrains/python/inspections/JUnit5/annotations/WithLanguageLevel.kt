@@ -5,6 +5,9 @@ import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
+/**
+ * Annotation to override the default (latest) language level used for a test.
+ */
 @ApiStatus.Experimental
 @TestOnly
 @Target(AnnotationTarget.FUNCTION)
