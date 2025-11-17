@@ -66,10 +66,10 @@ public class PluginUpdateDialog extends DialogWrapper {
   private @Nullable Runnable myFinishCallback;
 
   public PluginUpdateDialog(@Nullable Project project,
-                            @NotNull Collection<PluginUiModel> plugins,
+                            @NotNull Collection<PluginUiModel> updates,
                             @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                             Map<PluginId, PluginUiModel> installedPlugins) {
-    this(project, plugins, customRepositoryPlugins, installedPlugins, false);
+    this(project, updates, customRepositoryPlugins, installedPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
