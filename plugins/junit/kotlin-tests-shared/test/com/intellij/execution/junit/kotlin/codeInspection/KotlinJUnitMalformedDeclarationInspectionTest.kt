@@ -1416,25 +1416,37 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTest : KotlinJUnitMalfor
           fun beforeAll(foo: String) { println(foo) }
         }
       }
-      
-      @org.junit.jupiter.api.extension.ExtendWith(MyTest.MyCallback::class)
-      @CustomTestAnnotation
-      annotation class MyTest {
-          class MyCallback : org.junit.jupiter.api.extension.AfterEachCallback {
-              override fun afterEach(context: org.junit.jupiter.api.extension.ExtensionContext) {
-              }
-          }
-      }
-
-      @MyTest
-      class MultipleMetaParameterResolver {
-        companion object {
-          @JvmStatic
-          @org.junit.jupiter.api.BeforeAll
-          fun beforeAll(foo: String) { println(foo) }
-        }
-      }
     """.trimIndent())
+  }
+
+  fun `test nested meta-annotations`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+         class MyBefore : org.junit.jupiter.api.extension.BeforeEachCallback {
+          override fun beforeEach(context: org.junit.jupiter.api.extension.ExtensionContext) {
+          }
+        }
+        
+        @org.junit.jupiter.api.extension.ExtendWith(MyBefore::class)
+        annotation class CustomTestAnnotation
+
+        @org.junit.jupiter.api.extension.ExtendWith(MyTest.MyCallback::class)
+        @CustomTestAnnotation
+        annotation class MyTest {
+            class MyCallback : org.junit.jupiter.api.extension.AfterEachCallback {
+                override fun afterEach(context: org.junit.jupiter.api.extension.ExtensionContext) {
+                }
+            }
+        }
+  
+        @MyTest
+        class MultipleMetaParameterResolver {
+          companion object {
+            @org.junit.jupiter.api.Test
+            fun test() { }
+          }
+        }
+        """.trimIndent())
   }
 
   fun `test non-malformed parameter resolver with value source`() {
