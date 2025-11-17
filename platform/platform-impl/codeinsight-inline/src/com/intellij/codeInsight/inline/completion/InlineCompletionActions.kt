@@ -126,19 +126,6 @@ class BackspaceDeleteInlineCompletionHandler(private val originalHandler: Editor
   }
 }
 
-@ApiStatus.Internal
-class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
-
-  class CallInlineCompletionHandler : EditorWriteActionHandler() {
-    override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-      val curCaret = caret ?: editor.caretModel.currentCaret
-
-      val listener = InlineCompletion.getHandlerOrNull(editor) ?: return
-      listener.invoke(InlineCompletionEvent.DirectCall(editor, curCaret, dataContext))
-    }
-  }
-}
-
 @ApiStatus.Experimental
 @ApiStatus.Internal
 class InsertInlineCompletionWordAction : EditorAction(Handler()), HintManagerImpl.ActionToIgnore {

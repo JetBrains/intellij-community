@@ -916,6 +916,12 @@
     />
 
     <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypedHandlerDelegate"/>
+    <inline.edit.awaiter implementation="com.intellij.codeInsight.inline.edit.InlineCompletionAwaiter"/>
+    <editorActionHandler
+      action="CallInlineCompletionAction"
+      id="inline.edit.no.suggestions.hint"
+      order="last"
+      implementationClass="com.intellij.codeInsight.inline.completion.action.CallInlineCompletionAction$ShowNoSuggestionsHintIfNeededHandler"/>
 
     <registryKey key="editor.action.caretMovement.UpDownIgnoreSelectionBoundaries" defaultValue="false"
                  description="Allows to restore the legacy behavior of Up/Down w.r.t. selection boundaries.\n\
