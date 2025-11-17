@@ -530,8 +530,8 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
         addKeyword(createKeyword(JavaKeywords.INSTANCEOF).withAdditionalUpdater((startOffset, file, updater, insertionContext) -> {
           Document document = updater.getDocument();
           int offset = updater.getCaretOffset();
-          document.insertString(offset, " ");
-          updater.moveCaretTo(offset + 1);
+          ModNavigatorTailType tailType = (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType();
+          tailType.processTail(file.getProject(), updater, offset);
           PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
           PsiInstanceOfExpression expr = 
             PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiInstanceOfExpression.class, false);
