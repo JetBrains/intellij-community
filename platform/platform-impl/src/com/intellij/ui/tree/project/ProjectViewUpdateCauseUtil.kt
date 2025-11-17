@@ -1,12 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.project
 
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause.PLUGIN
-import com.intellij.ui.treeStructure.ProjectViewUpdateCause.UNKNOWN
 import java.util.*
 import kotlin.streams.asSequence
 
@@ -22,7 +21,7 @@ internal fun guessProjectViewUpdateCauseByCaller(calleeClass: Class<*>): Project
   }
   if (callee == null) {
     LOG.warn(Throwable("The callee $calleeClass is not present in the call stack, can't detect the caller"))
-    return UNKNOWN
+    return ProjectViewUpdateCause.UNKNOWN
   }
   val caller = walker.walk { frames ->
     frames.asSequence()
@@ -30,13 +29,13 @@ internal fun guessProjectViewUpdateCauseByCaller(calleeClass: Class<*>): Project
       .map { it.declaringClass }
       .firstOrNull()
   }
-  if (caller == null) return UNKNOWN // shouldn't be reasonably possible
+  if (caller == null) return ProjectViewUpdateCause.UNKNOWN // shouldn't be reasonably possible
   val callerClassloader = caller.getClassLoader()
-  if (callerClassloader is PluginClassLoader) return PLUGIN
+  if (callerClassloader is PluginAwareClassLoader) return ProjectViewUpdateCause.plugin(callerClassloader.pluginId.idString)
   if (!ApplicationManager.getApplication().isUnitTestMode) {
     LOG.warn(Throwable("${callee.className}.${callee.methodName} called without specifying the cause from $caller"))
   }
-  return UNKNOWN
+  return ProjectViewUpdateCause.UNKNOWN
 }
 
 private val LOG = fileLogger()
