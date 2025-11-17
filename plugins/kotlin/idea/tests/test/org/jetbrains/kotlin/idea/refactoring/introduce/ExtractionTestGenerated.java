@@ -4585,6 +4585,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                 runTest("testData/refactoring/introduceParameter/usedContextParameter.kt");
             }
 
+            @TestMetadata("usedReceiver.kt")
+            public void testUsedReceiver() throws Exception {
+                runTest("testData/refactoring/introduceParameter/usedReceiver.kt");
+            }
+
             @TestMetadata("valueAtCallSite.kt")
             public void testValueAtCallSite() throws Exception {
                 runTest("testData/refactoring/introduceParameter/valueAtCallSite.kt");

@@ -97,7 +97,7 @@ open class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroduc
             object : KtTreeVisitorVoid() {
                 override fun visitThisExpression(expression: KtThisExpression) {
                     super.visitThisExpression(expression)
-                    if (receiverTypeRef != null && expression.instanceReference.mainReference.resolve() == targetParent) {
+                    if (receiverTypeRef != null && expression.instanceReference.mainReference.resolve() == receiverTypeRef) {
                         usages.putValue(receiverTypeRef, expression)
                     }
                 }
