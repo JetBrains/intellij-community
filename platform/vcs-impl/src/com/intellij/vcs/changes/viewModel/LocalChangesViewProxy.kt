@@ -59,10 +59,6 @@ internal class LocalChangesViewProxy(
     panel.resetViewImmediatelyAndRefreshLater()
   }
 
-  override fun setShowCheckboxes(value: Boolean) {
-    panel.changesView.isShowCheckboxes = value
-  }
-
   override fun getDisplayedChanges(): List<Change> = all(panel.changesView).userObjects(Change::class.java)
 
   override fun getIncludedChanges(): List<Change> = included(panel.changesView).userObjects(Change::class.java)

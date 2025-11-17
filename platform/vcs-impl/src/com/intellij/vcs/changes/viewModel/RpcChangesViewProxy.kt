@@ -77,10 +77,6 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
   override fun resetViewImmediatelyAndRefreshLater() {
   }
 
-  override fun setShowCheckboxes(value: Boolean) {
-    _eventsForFrontend.tryEmit(BackendChangesViewEvent.ToggleCheckboxes(value))
-  }
-
   override fun getDisplayedChanges(): List<Change> = emptyList()
 
   override fun getIncludedChanges(): List<Change> = inclusionModel.value?.getInclusion()?.filterIsInstance<Change>().orEmpty()

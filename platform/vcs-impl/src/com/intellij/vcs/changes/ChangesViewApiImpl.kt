@@ -2,9 +2,11 @@
 package com.intellij.vcs.changes
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.vcs.AbstractVcsHelper
+import com.intellij.openapi.vcs.changes.AllowExcludeFromCommitStateHolder
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.InclusionModel
@@ -52,6 +54,10 @@ internal class ChangesViewApiImpl : ChangesViewApi {
     LOG.trace { "Refresh performed ($refreshCounter)" }
     project.getRpcChangesView().refreshPerformed(refreshCounter)
   }
+
+  override suspend fun canExcludeFromCommit(projectId: ProjectId): Flow<Boolean> = getProjectScoped(projectId) { project ->
+    project.serviceAsync<AllowExcludeFromCommitStateHolder>().allowExcludeFromCommit
+  } ?: flowOf(false)
 
   override suspend fun showResolveConflictsDialog(projectId: ProjectId, changeIds: List<ChangeId>) = projectScoped(projectId) { project ->
     LOG.trace { "Showing resolve conflicts dialog for ${changeIds.size} changes" }

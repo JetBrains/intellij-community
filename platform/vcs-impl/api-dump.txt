@@ -3947,7 +3947,6 @@ f:com.intellij.vcs.commit.ChangesViewCommitPanel
 - com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
 - activate():Z
 - deactivate(Z):V
-- dispose():V
 - endExecution():V
 - expand(java.lang.Object):V
 - getCommitProgressUi():com.intellij.vcs.commit.CommitProgressUi

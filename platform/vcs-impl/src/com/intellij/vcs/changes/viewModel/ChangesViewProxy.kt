@@ -43,7 +43,6 @@ internal abstract class ChangesViewProxy(val project: Project, protected val sco
   abstract fun resetViewImmediatelyAndRefreshLater()
 
   abstract fun setInclusionModel(model: InclusionModel?)
-  abstract fun setShowCheckboxes(value: Boolean)
 
   abstract fun getDisplayedChanges(): List<Change>
   abstract fun getIncludedChanges(): List<Change>

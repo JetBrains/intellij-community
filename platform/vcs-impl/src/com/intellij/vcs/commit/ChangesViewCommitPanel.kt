@@ -51,7 +51,6 @@ class ChangesViewCommitPanel internal constructor(
     val scope = VcsDisposable.getInstance(project).coroutineScope.childScope("ChangesViewCommitPanel")
     Disposer.register(this) { scope.cancel() }
     changesView.inclusionChanged.onEach { writeIntentReadAction { fireInclusionChanged() } }.launchIn(scope)
-    changesView.setShowCheckboxes(true)
 
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode && UIUtil.isFocusAncestor(rootComponent ?: component)
@@ -115,17 +114,11 @@ class ChangesViewCommitPanel internal constructor(
     }
   }
 
-  override fun dispose() {
-    super.dispose()
-    changesView.setShowCheckboxes(false)
-  }
-
   override fun activate(): Boolean {
     val toolWindow = getVcsToolWindow() ?: return false
     val contentManager = ChangesViewContentManager.getInstance(project)
 
     saveToolWindowState()
-    changesView.setShowCheckboxes(true)
     component.isVisible = true
     commitActionsPanel.isActive = true
 
@@ -142,7 +135,6 @@ class ChangesViewCommitPanel internal constructor(
     }
 
     clearToolWindowState()
-    changesView.setShowCheckboxes(false)
     component.isVisible = false
     commitActionsPanel.isActive = false
 

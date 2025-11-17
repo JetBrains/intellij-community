@@ -20,7 +20,4 @@ sealed class BackendChangesViewEvent {
 
   @Serializable
   data class RefreshRequested(val withDelay: Boolean, val refreshCounter: Int) : BackendChangesViewEvent()
-
-  @Serializable
-  data class ToggleCheckboxes(val showCheckboxes: Boolean) : BackendChangesViewEvent()
 }

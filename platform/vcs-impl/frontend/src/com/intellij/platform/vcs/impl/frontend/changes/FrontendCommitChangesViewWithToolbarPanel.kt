@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.changes
 
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
@@ -16,10 +17,12 @@ import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi
 import fleet.rpc.client.durable
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class FrontendCommitChangesViewWithToolbarPanel(
   changesView: ChangesListView,
@@ -52,7 +55,11 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   private suspend fun subscribeToBackendEvents() {
     durable {
       ChangesViewApi.getInstance().getBackendChangesViewEvents(project.projectId()).collect { event ->
-        handleBackendEvent(event)
+        try {
+          handleBackendEvent(event)
+        } catch (e: Exception) {
+          LOG.error(e, "Failed to handle event $event")
+        }
       }
     }
   }
@@ -68,7 +75,6 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     when (event) {
       is BackendChangesViewEvent.InclusionChanged -> inclusionModel.applyBackendState(event.inclusionState)
       is BackendChangesViewEvent.RefreshRequested -> scheduleRefresh(event.withDelay, event.refreshCounter)
-      is BackendChangesViewEvent.ToggleCheckboxes -> changesView.setShowCheckboxes(event.showCheckboxes)
     }
   }
 

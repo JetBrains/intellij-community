@@ -21,6 +21,8 @@ interface ChangesViewApi : RemoteApi<Unit> {
    */
   suspend fun getBackendChangesViewEvents(projectId: ProjectId): Flow<BackendChangesViewEvent>
 
+  suspend fun canExcludeFromCommit(projectId: ProjectId): Flow<Boolean>
+
   /**
    * Notifies when refresh request with [BackendChangesViewEvent.RefreshRequested.refreshCounter] is performed.
    */

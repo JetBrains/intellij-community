@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -78,6 +79,12 @@ abstract class CommitChangesViewWithToolbarPanel(
     cs.launch(Dispatchers.UI) {
       ChangeListsViewModel.getInstance(project).changeListManagerState.collectLatest {
         changesView.repaint()
+      }
+    }
+
+    cs.launch(Dispatchers.UI) {
+      project.serviceAsync<CommitToolWindowViewModel>().canExcludeFromCommit.collectLatest { canExclude ->
+        changesView.isShowCheckboxes = canExclude
       }
     }
 

@@ -24,6 +24,12 @@ internal class CommitToolWindowViewModel(
     }
   }.stateIn(cs, SharingStarted.Eagerly, true)
 
+  val canExcludeFromCommit = flow {
+    durable {
+      emitAll(ChangesViewApi.getInstance().canExcludeFromCommit(project.projectId()))
+    }
+  }.stateIn(cs, SharingStarted.Eagerly, false)
+
   val diffPreviewOnDoubleClickOrEnter: Boolean
     get() =
       if (commitTwEnabled.value) VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
