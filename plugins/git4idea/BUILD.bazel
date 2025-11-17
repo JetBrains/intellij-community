@@ -145,6 +145,7 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/lang-api:lang",
     "@lib//:junit4",
     "//platform/lvcs-api:lvcs",

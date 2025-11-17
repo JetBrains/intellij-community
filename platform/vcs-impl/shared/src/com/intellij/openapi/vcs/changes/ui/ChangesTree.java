@@ -522,16 +522,13 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
       if (node instanceof DefaultMutableTreeNode mutableTreeNode) {
         Object userObject = mutableTreeNode.getUserObject();
         return (userObject instanceof Change change) ?
-               matches(change, toSelect) :
+               ChangesUtil.matches(change, toSelect) :
                toSelect.equals(VcsTreeModelData.mapUserObjectToFilePath(userObject));
       }
       return false;
     });
   }
 
-  private static boolean matches(@NotNull Change change, @NotNull FilePath toSelect) {
-    return toSelect.equals(ChangesUtil.getAfterPath(change)) || toSelect.equals(ChangesUtil.getBeforePath(change));
-  }
 
   public @NotNull ChangesBrowserNode<?> getRoot() {
     return (ChangesBrowserNode<?>)getModel().getRoot();

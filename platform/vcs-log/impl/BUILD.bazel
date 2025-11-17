@@ -119,6 +119,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/util/storages",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
     "//libraries/mockito",
     "//platform/bookmarks",
   ]

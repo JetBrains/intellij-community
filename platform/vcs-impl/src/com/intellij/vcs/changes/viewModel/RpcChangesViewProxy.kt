@@ -12,6 +12,7 @@ import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
+import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
 import com.intellij.ui.split.createComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -41,6 +42,8 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
   val eventsForFrontend: SharedFlow<BackendChangesViewEvent> = _eventsForFrontend.asSharedFlow()
 
   val inclusionModel = MutableStateFlow<InclusionModel?>(null)
+
+  val diffableSelection = MutableStateFlow<ChangesViewDiffableSelection?>(null)
 
   private var _panel: JComponent? = null
   override val panel: JComponent
@@ -108,6 +111,10 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
   }
 
   fun refreshPerformed(counter: Int) = refresher.refreshPerformed(counter)
+
+  fun selectionUpdated(selection: ChangesViewDiffableSelection?) {
+    diffableSelection.value = selection
+  }
 }
 
 private val REFRESH_TIMEOUT = 1.minutes
@@ -117,6 +124,7 @@ private class BackendRemoteCommitChangesViewModelRefresher(
   private val requestsSink: MutableSharedFlow<in BackendChangesViewEvent.RefreshRequested>,
 ) {
   private val refreshRequestCounter = AtomicInteger(0)
+
   /**
    * Once backend was notified about refresh applied with the given counter,
    * all the pending callbacks having counter less than or equal to it will be executed.

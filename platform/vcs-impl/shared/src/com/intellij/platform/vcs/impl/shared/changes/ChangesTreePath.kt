@@ -14,7 +14,7 @@ data class ChangesTreePath(
   val filePath: FilePathDto,
   val changeId: ChangeId?,
 ) {
-  internal companion object {
+  companion object {
     fun create(userObject: Any): ChangesTreePath? {
       val filePath = VcsTreeModelData.mapUserObjectToFilePath(userObject) ?: return null
       return ChangesTreePath(

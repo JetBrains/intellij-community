@@ -13,6 +13,7 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi
+import com.intellij.util.asDisposable
 import fleet.rpc.client.durable
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
@@ -21,11 +22,15 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
+private val LOG = logger<FrontendCommitChangesViewWithToolbarPanel>()
+
 internal class FrontendCommitChangesViewWithToolbarPanel(
   changesView: ChangesListView,
   cs: CoroutineScope,
   val inclusionModel: ChangesViewDelegatingInclusionModel,
 ) : CommitChangesViewWithToolbarPanel(changesView, cs) {
+  private val diffableSelectionHelper = ChangesViewDiffableSelectionHelper(changesView)
+
   init {
     changesView.setInclusionModel(inclusionModel)
     ChangeListsViewModel.getInstance(project).changeListsState.onEach { scheduleRefresh() }.launchIn(cs)
@@ -35,6 +40,12 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     cs.launch {
       forwardDiffActionsToBackend()
     }
+    cs.launch {
+      diffableSelectionHelper.diffableSelection.collectLatest {
+        ChangesViewDiffApi.getInstance().notifySelectionUpdated(project.projectId(), it)
+      }
+    }
+    changesView.addSelectionListener({ diffableSelectionHelper.tryUpdateSelection() }, cs.asDisposable())
   }
 
   override fun getModelData(): ModelData {
@@ -85,8 +96,6 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   }
 
   companion object {
-    private val LOG = logger<FrontendCommitChangesViewWithToolbarPanel>()
-
     fun create(project: Project, cs: CoroutineScope): FrontendCommitChangesViewWithToolbarPanel {
       val tree = LocalChangesListView(project)
       val inclusionModel = ChangesViewDelegatingInclusionModel(project, cs)
@@ -95,3 +104,4 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
     }
   }
 }
+

@@ -46,6 +46,7 @@ jvm_library(
     "//platform/util/diff",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/editor-ui-ex:editor-ex",
     "//java/execution/impl",
     "//platform/diff-api:diff",

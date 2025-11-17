@@ -58,6 +58,7 @@ jvm_library(
     "//platform/usageView-impl",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
     "//platform/workspace/storage",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/code-insight/api",

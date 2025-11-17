@@ -112,6 +112,7 @@ jvm_library(
     "@lib//:app-cash-turbine-jvm",
     "@lib//:assert_j",
     "//platform/vcs-impl/shared",
+    "//platform/vcs-impl/shared:shared_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.collaborationTools` end

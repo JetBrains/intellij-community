@@ -14,6 +14,8 @@ import org.jetbrains.annotations.ApiStatus
 interface ChangesViewDiffApi : RemoteApi<Unit> {
   suspend fun performDiffAction(projectId: ProjectId, action: ChangesViewDiffAction)
 
+  suspend fun notifySelectionUpdated(projectId: ProjectId, selection: ChangesViewDiffableSelection?)
+
   companion object {
     suspend fun getInstance(): ChangesViewDiffApi = RemoteApiProviderService.resolve(remoteApiDescriptor<ChangesViewDiffApi>())
   }
