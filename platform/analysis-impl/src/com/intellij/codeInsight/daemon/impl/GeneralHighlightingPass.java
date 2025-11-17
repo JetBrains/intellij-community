@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.analytics.AndroidStudioAnalytics;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.problems.ProblemImpl;
@@ -109,7 +108,6 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
 
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
-    long start = System.nanoTime(); // Android Studio: collect metrics for syntax highlighting latency.
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
@@ -217,10 +215,6 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
             daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(getDocument(), getContext(), myHasErrorSeverity);
             reportErrorsToWolf(myHasErrorSeverity);
           }
-
-          // Android Studio: collect metrics for syntax highlighting latency.
-          long latencyMs = (System.nanoTime() - start) / 1_000_000;
-          AndroidStudioAnalytics.getInstance().recordHighlightingLatency(getDocument(), latencyMs);
         }
         else {
           cancelAndRestartDaemonLater(progress, myProject, "GHP.collectHighlights() == false");

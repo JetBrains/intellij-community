@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
-import com.intellij.analytics.AndroidStudioAnalytics;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.idea.AppMode;
 import com.intellij.l10n.LocalizationUtil;
@@ -405,11 +404,6 @@ public final class ConsentOptions implements ModificationTracker {
       catch (IOException e) {
         LOG.info("Unable to save confirmed consents", e);
       }
-      // Android Studio addition:
-      // Update the Android Studio metrics after saving consents in case the IJ Statistics consent
-      // has been updated. This will write any changed settings and reinitialize the UsageTracker
-      // & Publisher if changes were made.
-      AndroidStudioAnalytics.getInstance().updateAndroidStudioMetrics();
     }
   }
 
