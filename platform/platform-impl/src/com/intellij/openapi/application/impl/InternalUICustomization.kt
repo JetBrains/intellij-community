@@ -21,6 +21,7 @@ import com.intellij.ui.BorderPainter
 import com.intellij.ui.JBColor
 import com.intellij.ui.mac.WindowTabsComponent
 import com.intellij.ui.tabs.JBTabPainter
+import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.ui.tabs.impl.TabPainterAdapter
@@ -167,11 +168,13 @@ open class InternalUICustomization {
 
   open fun paintProjectTab(frame: JFrame, label: TabLabel, g: Graphics, tabs: JBTabsImpl, selected: Boolean, index: Int, lastIndex: Int): Boolean = false
 
-  open fun paintTab(g: Graphics, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean = false
+  open fun paintTab(g: Graphics, position: JBTabsPosition, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean = false
 
   open fun paintTabBorder(g: Graphics, tabPlacement: Int, tabIndex: Int, x: Int, y: Int, w: Int, h: Int, isSelected: Boolean): Boolean = false
 
   open fun getTabLayoutStart(layout: ContentLayout): Int = 0
+
+  open fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
 }
 
 @ApiStatus.Internal

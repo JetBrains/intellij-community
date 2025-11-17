@@ -811,9 +811,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
       }
     }
 
-    override fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
+    override fun paintTab(g: Graphics2D, position: JBTabsPosition, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      super.paintTab(g, rect, tabColor, active, hovered, selected)
+      super.paintTab(g, position, rect, tabColor, active, hovered, selected)
     }
   }
 
@@ -821,9 +821,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   override val debuggerTabPainterAdapter: IslandsTabPainterAdapter = IslandsTabPainterAdapter(true, true, isManyIslandEnabled)
 
-  override fun paintTab(g: Graphics, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean {
+  override fun paintTab(g: Graphics, position: JBTabsPosition, rect: Rectangle, hovered: Boolean, selected: Boolean): Boolean {
     if (isManyIslandEnabled) {
-      toolWindowTabPainter.paintTab(g as Graphics2D, rect, null, true, hovered, selected)
+      toolWindowTabPainter.paintTab(g as Graphics2D, position, rect, null, true, hovered, selected)
       return true
     }
     return true
@@ -838,6 +838,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return JBUI.scale(4)
     }
     return 0
+  }
+
+  override fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? {
+    val compactMode = UISettings.getInstance().compactMode
+
+    return if (isManyIslandEnabled && tabsPosition.isSide && compactMode) JBUI.insetsTop(3) else null
   }
 
   private fun getMainBackgroundColor(): Color {
