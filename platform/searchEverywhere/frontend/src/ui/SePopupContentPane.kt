@@ -500,7 +500,7 @@ class SePopupContentPane(
       closePopup()
     }
     else {
-      (selectedItems?.filterIsInstance<SeSelectionResultText>()?.firstOrNull())?.let { textField.text = it.searchText }
+      (selectedItems?.filterIsInstance<SeSelectionResultText>()?.firstOrNull())?.let { textField.text = it.searchText + " " }
 
       resultList.repaint()
       refreshPresentations()
