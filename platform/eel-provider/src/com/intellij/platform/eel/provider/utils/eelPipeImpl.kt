@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.ReadResult
@@ -34,7 +34,7 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel, EelSendChannelCustomS
    * It only works when [sendWholeBufferCustom] is used, as it is the only way to become responsible for the whole buffer.
    */
   private val _bytesInQueue = AtomicInteger(0)
-  internal val bytesInQueue: Int get() = if (channel.isClosedForSend) 0 else _bytesInQueue.get()
+  override fun available(): Int = if (channel.isClosedForSend) 0 else _bytesInQueue.get()
 
   override val sink: EelSendChannel = this
   override val source: EelReceiveChannel = this
@@ -96,19 +96,23 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel, EelSendChannelCustomS
     return OK_NOT_EOF
   }
 
-  override suspend fun close() {
+  override suspend fun close(error: Throwable?) {
     if (_bytesInQueue.get() > 0) {
       // We still have some data to be delivered. Let's wait sometime to give change to read it
       delay(200)
     }
-    closePipe()
+    closePipe(error)
   }
 
   override suspend fun closeForReceive() {
     closePipe()
   }
 
-  override fun closePipe(error: Throwable?) {
+  private suspend fun closePipe() {
+    closePipe(null)
+  }
+
+  override suspend fun closePipe(error: Throwable?) {
     if (_bytesInQueue.get() > 0) {
       // We still have some data to be delivered. Let's wait sometime to give change to read it
       Thread.sleep(200)

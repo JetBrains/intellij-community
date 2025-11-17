@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.ReadResult.EOF
+import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +27,7 @@ suspend fun EelSendChannel.sendWholeText(text: String, charset: Charset = DEFAUL
 /**
  * Reads text from the channel to the end.
  */
+@ThrowsChecked(EelReceiveChannelException::class)
 @ApiStatus.Internal
 suspend fun EelReceiveChannel.readWholeText(bufferSize: Int = DEFAULT_BUFFER_SIZE, charset: Charset = DEFAULT_CHARSET): String = withContext(Dispatchers.IO) {
   val buffer = ByteBuffer.allocate(bufferSize)

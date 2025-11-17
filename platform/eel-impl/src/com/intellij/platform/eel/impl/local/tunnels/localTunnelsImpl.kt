@@ -88,8 +88,8 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
           }
         }
         listOf(fromClient, toClient).joinAll()
-        tx.closePipe()
-        tx.closePipe()
+        tx.closePipe(null)
+        tx.closePipe(null)
       }
     }
     object : ListenOnUnixSocketResult {
@@ -204,7 +204,7 @@ private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocket
 @Service
 private class MyService(val scope: CoroutineScope)
 
-private suspend fun copyWithLoggingAndErrorHandling(src: EelReceiveChannel, dest: EelSendChannel, title: String, onError: (IOException) -> Unit) {
+private suspend fun copyWithLoggingAndErrorHandling(src: EelReceiveChannel, dest: EelSendChannel, title: String, onError: suspend (IOException) -> Unit) {
   try {
     copy(src, dest)
   }

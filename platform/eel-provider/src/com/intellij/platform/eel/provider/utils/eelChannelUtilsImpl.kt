@@ -2,9 +2,7 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.ReadResult
-import com.intellij.platform.eel.channels.EelReceiveChannel
-import com.intellij.platform.eel.channels.EelSendChannel
-import com.intellij.platform.eel.channels.sendWholeBuffer
+import com.intellij.platform.eel.channels.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -18,11 +16,19 @@ import java.nio.channels.WritableByteChannel
 import java.nio.charset.Charset
 import kotlin.coroutines.CoroutineContext
 
-internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByteChannel) : EelReceiveChannel {
+internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByteChannel, private val availableDelegate: () -> Int) : EelReceiveChannel {
   override suspend fun receive(dst: ByteBuffer): ReadResult = withContext(Dispatchers.IO) {
-    val read = readableByteChannel.read(dst)
+    val read =
+      try {
+        readableByteChannel.read(dst)
+      }
+      catch (err: IOException) {
+        throw EelReceiveChannelException(this@NioReadToEelAdapter, err)
+      }
     ReadResult.fromNumberOfReadBytes(read)
   }
+
+  override fun available(): Int = availableDelegate()
 
   override suspend fun closeForReceive() {
     withContext(Dispatchers.IO + NonCancellable) {
@@ -43,7 +49,7 @@ internal class NioWriteToEelAdapter(
     flushable?.flush()
   }
 
-  override suspend fun close() {
+  override suspend fun close(err: Throwable?) {
     withContext(Dispatchers.IO + NonCancellable) {
       try {
         flushable?.flush()
@@ -81,17 +87,14 @@ internal class InputStreamAdapterImpl(
   // Pipe is a special case we can tell how much bytes are available.
   // In other cases, we do not know.
   // Unblocking read in IJ depends on it, so we can't simply return 0 here not to break unblocking read
+  @OptIn(EelDelicateApi::class)
+  @Suppress("checkedExceptions")
   override fun available(): Int {
     return when (receiveChannel) {
-      is EelPipeImpl -> {
-        receiveChannel.bytesInQueue
-      }
-      is EelOutputChannel -> {
+      is EelPipeImpl, is EelOutputChannel -> {
         receiveChannel.available()
       }
-      else -> {
-        0
-      }
+      else -> 0
     }
   }
 
@@ -149,7 +152,7 @@ internal class OutputStreamAdapterImpl(
 
   override fun close() {
     runBlocking(blockingContext) {
-      sendChannel.close()
+      sendChannel.close(null)
     }
   }
 }

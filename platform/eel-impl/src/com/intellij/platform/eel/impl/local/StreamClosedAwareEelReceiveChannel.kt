@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.platform.eel.ReadResult
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -34,6 +35,9 @@ internal class StreamClosedAwareEelReceiveChannel(
       throw e
     }
   }
+
+  @OptIn(EelDelicateApi::class)
+  override fun available(): Int = delegate.available()
 
   override suspend fun closeForReceive() {
     delegate.closeForReceive()
