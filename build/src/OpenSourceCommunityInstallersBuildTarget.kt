@@ -9,9 +9,21 @@ import org.jetbrains.intellij.build.createCommunityBuildContext
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
+import kotlin.collections.plus
 
 @ApiStatus.Internal
 object OpenSourceCommunityInstallersBuildTarget {
+  /**
+   * The steps which are excessive because the results're never published from .github/workflows/IntelliJ_IDEA.yml.
+   * Also, skipping them allows sparing GitHub runner's disk space.
+   */
+  private val BUILD_STEPS_DISABLED_FOR_GITHUB_ACTIONS: Set<String> = setOf(
+    BuildOptions.WINDOWS_ZIP_STEP,
+    BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP,
+    BuildOptions.SOURCES_ARCHIVE_STEP,
+    BuildOptions.ARCHIVE_PLUGINS,
+  )
+
   val OPTIONS: BuildOptions = BuildOptions().apply {
     // do not bother external users about clean/incremental
     // just remove out/ directory for clean build
@@ -19,11 +31,6 @@ object OpenSourceCommunityInstallersBuildTarget {
     useCompiledClassesFromProjectOutput = false
     buildStepsToSkip += BuildOptions.MAC_SIGN_STEP
     buildStepsToSkip += BuildOptions.WIN_SIGN_STEP
-    // never published from .github/workflows/IntelliJ_IDEA.yml
-    buildStepsToSkip += BuildOptions.WINDOWS_ZIP_STEP
-    buildStepsToSkip += BuildOptions.CROSS_PLATFORM_DISTRIBUTION_STEP
-    buildStepsToSkip += BuildOptions.SOURCES_ARCHIVE_STEP
-    buildStepsToSkip += BuildOptions.ARCHIVE_PLUGINS
     if (OsFamily.currentOs == OsFamily.MACOS) {
       // generally not needed; doesn't work well on build agents
       buildStepsToSkip += BuildOptions.WINDOWS_EXE_INSTALLER_STEP
@@ -33,7 +40,7 @@ object OpenSourceCommunityInstallersBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     runBlocking(Dispatchers.Default) {
-      val context = createCommunityBuildContext(OPTIONS)
+      val context = createCommunityBuildContext(OPTIONS.copy(buildStepsToSkip = OPTIONS.buildStepsToSkip + BUILD_STEPS_DISABLED_FOR_GITHUB_ACTIONS))
       context.compileModules(moduleNames = null, includingTestsInModules = listOf("intellij.platform.jps.build.tests"))
       buildDistributions(context)
       spanBuilder("build standalone JPS").use {
