@@ -60,9 +60,9 @@ import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.UnsupportedCharsetException
 import java.nio.file.Path
+import java.util.*
 import java.util.function.Function
 import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 
@@ -423,13 +423,25 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       source = FileUtil.createTempFile("idea-" + myConfiguration.project.getLocationHash(), "-mvn.properties").toPath(),
       target = TransferTarget.Temporary(eel.descriptor)
     )
+    val remoteMap = toRemotePaths(map)
 
     remoteMapFile.outputStream().use { os ->
-      map.store(BufferedOutputStream(os), null)
+      remoteMap.store(BufferedOutputStream(os), null)
     }
 
-    args.addProperty(MavenModuleMap.PATHS_FILE_PROPERTY, remoteMapFile.absolutePathString())
+    args.addProperty(MavenModuleMap.PATHS_FILE_PROPERTY, remoteMapFile.asEelPath().toString())
 
+  }
+
+  private fun toRemotePaths(map: Properties): Properties {
+    if (myConfiguration.project.getEelDescriptor() is LocalEelDescriptor) return map
+    val result = Properties()
+    map.keys.forEach {
+      val key = it.toString()
+      val path = map.getProperty(key)
+      result.setProperty(key, Path.of(path).asEelPath().toString())
+    }
+    return result
   }
 
   private fun addMavenEventListener(args: ParametersList, eel: EelApi) {
@@ -467,9 +479,10 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     val defaultSettings = MavenRunner.getInstance(myConfiguration.project).state
     val jreName = myConfiguration.runnerSettings?.jreName ?: defaultSettings.jreName
     val isGlobalRunnerSettings = defaultSettings === myConfiguration.runnerSettings
-    return readAction {
+    val javaHome = readAction {
       MavenExternalParameters.getJdk(myConfiguration.project, jreName, isGlobalRunnerSettings)
-    }.homePath
+    }.homePath ?: return null
+    return Path.of(javaHome).asEelPath().toString()
   }
 
   private suspend fun getEnv(existingEnv: Map<String, String>, debug: Boolean): MutableMap<String, String> {
