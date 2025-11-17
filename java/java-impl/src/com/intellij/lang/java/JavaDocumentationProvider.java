@@ -54,10 +54,12 @@ import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.Url;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import org.jetbrains.annotations.*;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
+import org.jspecify.annotations.NonNull;
 
 import java.io.IOException;
 import java.util.*;
@@ -101,7 +103,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                                        getQuickNavigationInfoInner(element, originalElement));
   }
 
-  private static @Nullable @Nls String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
+  public static @Nullable @Nls String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass)element);
     }
@@ -699,6 +701,11 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   @Override
   public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
+    return generateDocStatic(element, originalElement);
+  }
+
+  @RequiresReadLock
+  public static @Nullable @Nls String generateDocStatic(PsiElement element, PsiElement originalElement) {
     // for new Class(<caret>) or methodCall(<caret>) proceed from method call or new expression
     // same for new Cl<caret>ass() or method<caret>Call()
     if (element instanceof PsiExpressionList ||
@@ -753,7 +760,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       if (targetClass != null) {
         PsiMethod[] constructors = targetClass.getConstructors();
         if (constructors.length > 0) {
-          if (constructors.length == 1) return generateDoc(constructors[0], originalElement);
+          if (constructors.length == 1) return generateDocStatic(constructors[0], originalElement);
           final StringBuilder sb = new StringBuilder();
 
           for (PsiMethod constructor : constructors) {
@@ -784,6 +791,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   @Override
   public @Nls @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+    return generateRenderedDocStatic(comment);
+  }
+
+  public static @Nls @Nullable String generateRenderedDocStatic(@NonNull PsiDocCommentBase comment) {
     PsiElement target = comment.getOwner();
     if (target == null) target = comment;
     JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.getBuilder(target.getProject())
@@ -862,7 +873,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     return JavaDocExternalFilter.filterInternalDocInfo(generator.generateDocInfo(docURLs));
   }
 
-  private @Nls String getMethodCandidateInfo(PsiMethodCallExpression expr) {
+  private static @Nls String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
 
@@ -870,7 +881,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (candidates.length > 0) {
       if (candidates.length == 1) {
         PsiElement element = candidates[0].getElement();
-        if (element instanceof PsiMethod) return generateDoc(element, null);
+        if (element instanceof PsiMethod) return generateDocStatic(element, null);
       }
       final StringBuilder sb = new StringBuilder();
       @NotNull List<? extends CandidateInfo> conflicts = new ArrayList<>(Arrays.asList(candidates));
