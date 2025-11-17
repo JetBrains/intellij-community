@@ -14,6 +14,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Handler
 import java.util.logging.LogRecord
 import kotlin.io.path.name
@@ -226,6 +227,7 @@ private class OldAttachmentPruner(
   private val baseDir: Path
 ) {
 
+  private val counter = AtomicInteger(0)
   private val signal = MutableSharedFlow<Unit>(replay = 1)
 
   @Suppress("RAW_SCOPE_CREATION")
@@ -239,10 +241,16 @@ private class OldAttachmentPruner(
   }
 
   fun pruneOldAttachmentGroups() {
+    counter.incrementAndGet()
     signal.tryEmit(Unit)
   }
 
   private suspend fun doPruneOldAttachmentGroups() = withContext(Dispatchers.IO) {
+    val recentlyReported = counter.get()
+    if (recentlyReported * 2 < MAX_ATTACHMENT_GROUPS) {
+      return@withContext
+    }
+
     val entries = collectAttachmentGroups()
 
     val toDeleteCount = entries.size - MAX_ATTACHMENT_GROUPS
@@ -255,6 +263,7 @@ private class OldAttachmentPruner(
       ensureActive()
       deleteRecursively(entries[i])
     }
+    counter.set(0)
   }
 
   private fun CoroutineScope.collectAttachmentGroups(): MutableList<Path> {
