@@ -7,9 +7,9 @@ import com.intellij.python.junit5Tests.framework.metaInfo.Repository
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.jetbrains.python.inspections.JUnit5.annotations.InspectionTest
-import com.jetbrains.python.inspections.JUnit5.annotations.PyCodeInsightTestApplication
-import com.jetbrains.python.inspections.JUnit5.util.doTestByFile
+import com.jetbrains.python.junit5.framework.annotations.InspectionTest
+import com.jetbrains.python.junit5.framework.annotations.PyCodeInsightTestApplication
+import com.jetbrains.python.junit5.framework.util.doTestByFile
 
 @PyCodeInsightTestApplication
 @InspectionTest(PyMissingConstructorInspection::class)

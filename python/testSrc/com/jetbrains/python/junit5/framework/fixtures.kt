@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.inspections.JUnit5
+package com.jetbrains.python.junit5.framework
 
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module

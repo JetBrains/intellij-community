@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.inspections.JUnit5.showcase
+package com.jetbrains.python.junit5.framework.showcase
 
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.TestDataPath
@@ -8,7 +8,7 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.PythonMockSdk
-import com.jetbrains.python.inspections.JUnit5.pyMockSdkFixture
+import com.jetbrains.python.junit5.framework.pyMockSdkFixture
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.BeforeEach
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 /**
  * This test represents the platform way of writing JUnit5 tests.
  *
- * Unlike [com.jetbrains.python.inspections.JUnit5.showcase.PyJUnit5CodeInsightExampleTest],
+ * Unlike [PyJUnit5CodeInsightExampleTest],
  * all fixtures here are defined explicitly.
  */
 @TestApplication

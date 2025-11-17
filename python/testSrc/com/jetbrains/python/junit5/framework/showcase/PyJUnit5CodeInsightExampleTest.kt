@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.inspections.JUnit5.showcase
+package com.jetbrains.python.junit5.framework.showcase
 
 import com.intellij.psi.PsiFile
 import com.intellij.python.junit5Tests.framework.FolderTest
@@ -8,9 +8,13 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfo
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
-import com.jetbrains.python.inspections.JUnit5.annotations.*
-import com.jetbrains.python.inspections.JUnit5.util.doTestByFile
-import com.jetbrains.python.inspections.JUnit5.util.doTestByText
+import com.jetbrains.python.junit5.framework.annotations.InjectCodeInsightTestFixture
+import com.jetbrains.python.junit5.framework.annotations.InspectionTest
+import com.jetbrains.python.junit5.framework.annotations.MultiFileTest
+import com.jetbrains.python.junit5.framework.annotations.PyCodeInsightTestApplication
+import com.jetbrains.python.junit5.framework.annotations.WithLanguageLevel
+import com.jetbrains.python.junit5.framework.util.doTestByFile
+import com.jetbrains.python.junit5.framework.util.doTestByText
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.psi.LanguageLevel
 import org.junit.jupiter.api.Assertions
