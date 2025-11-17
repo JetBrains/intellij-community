@@ -63,7 +63,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val connectorFactory = ToolingProxyConnector.ToolingProxyConnectorFactory(
       classloaderHolder,
       serverEnvironmentSetup,
-      connection.environmentConfigurationProvider as? GradleServerConfigurationProvider
+      connection.environmentConfigurationProvider as? GradleServerConfigurationProvider,
+      connection.taskId
     )
     val serverProcessListener = GradleServerProcessListener(
       targetProgressIndicator,

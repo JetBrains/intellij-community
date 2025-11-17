@@ -10,8 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.utils.forwardLocalPort
 import com.intellij.platform.eel.provider.utils.forwardLocalServer
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import java.util.concurrent.ConcurrentHashMap
@@ -44,6 +46,16 @@ internal class GradleEelProxyManager(
    */
   fun launchReverseProxy(taskId: ExternalSystemTaskId, localPort: Int): Int = project.getEelDescriptor()
     .openLocalSink(taskId, localPort)
+
+  /**
+   * Set up a proxy between %localhost%:[@result] and %remote_localhost%:[@remotePort].
+   *
+   * @param taskId the corresponding task ID.
+   * @param remotePort a remote port that should be forwarded onto the local side.
+   * @return an opened port on the **local** side.
+   */
+  fun launchProxy(taskId: ExternalSystemTaskId, remotePort: Int): Int = project.getEelDescriptor()
+    .openRemoteSink(taskId, remotePort)
 
   /**
    * Get mapping between remote and local port.
@@ -81,6 +93,20 @@ internal class GradleEelProxyManager(
       val remotePort = remoteAddress.port.toInt()
       registerMapping(taskId, localPort, remotePort)
       return@runBlockingCancellable remotePort
+    }
+  }
+
+  private fun EelDescriptor.openRemoteSink(taskId: ExternalSystemTaskId, remotePort: Int): Int {
+    val remoteHostAddress = EelTunnelsApi.HostAddress.Builder(remotePort.toUShort())
+      .connectionTimeout(90.seconds)
+      .build()
+    val localPort = NetUtils.findAvailableSocketPort()
+    return runBlockingCancellable {
+      val eelApi = toEelApi()
+      getTaskScope(taskId)
+        .forwardLocalPort(eelApi.tunnels, localPort, remoteHostAddress)
+      registerMapping(taskId, localPort, remotePort)
+      return@runBlockingCancellable localPort
     }
   }
 
