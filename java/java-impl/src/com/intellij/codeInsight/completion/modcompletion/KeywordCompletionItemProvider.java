@@ -1219,8 +1219,10 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       if (PsiTreeUtil.getNonStrictParentOfType(myPosition, PsiLiteralExpression.class, PsiComment.class) != null) {
         return false;
       }
-
       if (psiElement().afterLeaf("::").accepts(myPosition)) {
+        return false;
+      }
+      if (JavaCompletionContributor.findAnnotationWhoseAttributeIsCompleted(myPosition) != null) {
         return false;
       }
       return true;

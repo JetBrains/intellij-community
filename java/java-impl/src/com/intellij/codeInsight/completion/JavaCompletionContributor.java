@@ -646,7 +646,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return hadItems[0];
   }
 
-  private static @Nullable PsiAnnotation findAnnotationWhoseAttributeIsCompleted(@NotNull PsiElement position) {
+  public static @Nullable PsiAnnotation findAnnotationWhoseAttributeIsCompleted(@NotNull PsiElement position) {
     return ANNOTATION_ATTRIBUTE_NAME.accepts(position) && !JavaKeywordCompletion.isAfterPrimitiveOrArrayType(position)
            ? Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiAnnotation.class))
            : null;
@@ -734,9 +734,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       items.add(LookupElementBuilder.create("*"));
     }
 
-    if (findAnnotationWhoseAttributeIsCompleted(position) == null) {
-      items.addAll(new JavaKeywordCompletion(parameters, session, smart).getResults());
-    }
+    items.addAll(new JavaKeywordCompletion(parameters, session, smart).getResults());
 
     addExpressionVariants(parameters, position, items::add);
 
