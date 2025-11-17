@@ -216,7 +216,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
 
   private void downloadPatchAndRestart(Map<PluginId, PluginUiModel> installedPlugins) {
     if (myUpdatesForPlugins != null && !installedPlugins.isEmpty()) {
-      var dialog = new PluginUpdateDialog(myProject, installedPlugins.values(), null, installedPlugins);
+      var dialog = new PluginUpdateDialog(myProject, ContainerUtil.map(myUpdatesForPlugins, it -> it.getUiModel()), null, installedPlugins);
       if (!PluginUpdateDialog.showDialogAndUpdate(myUpdatesForPlugins, dialog)) {
         return;  // update cancelled
       }
