@@ -62,9 +62,9 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
+import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilBase;
@@ -1208,10 +1208,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           return true;
         }
       }
-      if (info.getHighlighter() != null && !CodeInsightContextHighlightingUtil.acceptRangeHighlighter(highlightingContext, info.getHighlighter())) {
-        return true;
+      RangeHighlighterEx highlighter = info.getHighlighter();
+      if (highlighter == null || CodeInsightContextHighlightingUtil.acceptRangeHighlighter(highlightingContext, highlighter)) {
+        foundInfoList.add(info);
       }
-      foundInfoList.add(info);
       return true;
     }
 
