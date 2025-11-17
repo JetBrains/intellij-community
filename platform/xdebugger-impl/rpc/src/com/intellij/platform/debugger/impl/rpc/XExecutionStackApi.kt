@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 interface XExecutionStackApi : RemoteApi<Unit> {
 
-  suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent>
+  suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int, config: ComputeFramesConfig?): Flow<XStackFramesEvent>
 
   suspend fun canDrop(sessionId: XDebugSessionId, stackFrameId: XStackFrameId): Boolean
   suspend fun dropFrame(sessionId: XDebugSessionId, stackFrameId: XStackFrameId)
@@ -55,3 +55,9 @@ sealed interface ShowSessionTabRequest {
 @ApiStatus.Internal
 @Serializable
 data class ShowFramesRequest(override val sessionId: XDebugSessionId) : ShowSessionTabRequest
+
+@ApiStatus.Internal
+@Serializable
+data class ComputeFramesConfig(
+  val includeLibraryFrames: Boolean,
+)
