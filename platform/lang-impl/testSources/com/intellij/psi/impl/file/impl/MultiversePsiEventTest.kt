@@ -28,7 +28,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.lang.ref.Reference
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
@@ -75,11 +74,11 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 before-delete events on deleting file with 2 psi-files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun beforeChildRemoval(event: PsiTreeChangeEvent) {
           if (event.child?.containingFile?.virtualFile == virtualFile) {
-            counter.incrementAndGet()
+            collector.add(event)
           }
         }
       }
@@ -92,10 +91,10 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 delete events on deleting file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun childRemoved(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
+          collector.add(event)
         }
       }
     },
@@ -105,10 +104,10 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 before-property-change rename events on renaming file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun beforePropertyChange(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
+          collector.add(event)
         }
       }
     },
@@ -118,10 +117,10 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 property-change rename events on renaming file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun propertyChanged(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
+          collector.add(event)
         }
       }
     },
@@ -131,10 +130,10 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 1 delete event on renaming file to another file type with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun childRemoved(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
+          collector.add(event)
         }
       }
     },
@@ -144,10 +143,10 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 1 replaced event on renaming file to another file type with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun childReplaced(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
+          collector.add(event)
         }
       }
     },
@@ -159,11 +158,11 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 writeable event on changing writable status of a file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun propertyChanged(event: PsiTreeChangeEvent) {
           if (event.propertyName == PsiTreeChangeEvent.PROP_WRITABLE) {
-            counter.incrementAndGet()
+            collector.add(event)
           }
         }
       }
@@ -176,11 +175,11 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 before-writeable event on changing writable status of a file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun beforePropertyChange(event: PsiTreeChangeEvent) {
           if (event.propertyName == PsiTreeChangeEvent.PROP_WRITABLE) {
-            counter.incrementAndGet()
+            collector.add(event)
           }
         }
       }
@@ -193,11 +192,11 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 property-change events on changing encoding of a file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun propertyChanged(event: PsiTreeChangeEvent) {
           if (event.propertyName == VirtualFile.PROP_ENCODING) {
-            counter.incrementAndGet()
+            collector.add(event)
           }
         }
       }
@@ -205,7 +204,7 @@ internal class MultiversePsiEventTest {
     updateBlock = { file ->
       file.charset = Charsets.UTF_16
     },
-    awaitCondition = { counter -> counter.get() >= 2 },
+    awaitCondition = { ec -> ec.events.size >= 2 },
     expectedEventNumber = 2
   )
 
@@ -213,11 +212,11 @@ internal class MultiversePsiEventTest {
   fun `test we receive 0 before-property-change events on changing encoding of a file with 2 psi files`() {
     val afterEventFlag = AtomicBoolean(false)
     doChangeTest(
-      listenerFactory = { counter ->
+      listenerFactory = { collector ->
         object : PsiTreeChangeAdapter() {
           override fun beforePropertyChange(event: PsiTreeChangeEvent) {
             if (event.propertyName == VirtualFile.PROP_ENCODING) {
-              counter.incrementAndGet()
+              collector.add(event)
             }
           }
 
@@ -229,18 +228,18 @@ internal class MultiversePsiEventTest {
       updateBlock = { file ->
         file.charset = Charsets.UTF_16
       },
-      awaitCondition = { afterEventFlag.get() },
+      awaitCondition = { _ -> afterEventFlag.get() },
       expectedEventNumber = 0
     )
   }
 
   @Test
   fun `test we receive 2 before children changed events on updating content of a file with 2 psi files and WITHOUT a document`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
           if (!(event as PsiTreeChangeEventImpl).isGenericChange) {
-            counter.incrementAndGet()
+            collector.add(event)
           }
         }
       }
@@ -253,11 +252,11 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 children changed events on updating content of a file with 2 psi files and WITHOUT a document`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun childrenChanged(event: PsiTreeChangeEvent) {
           if (!(event as PsiTreeChangeEventImpl).isGenericChange) {
-            counter.incrementAndGet()
+            collector.add(event)
           }
         }
       }
@@ -270,10 +269,10 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 before-child-moved events on moving a file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun beforeChildMovement(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
+          collector.add(event)
         }
       }
     },
@@ -285,10 +284,10 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 2 child moved events on moving a file with 2 psi files`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun childMoved(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
+          collector.add(event)
         }
       }
     },
@@ -300,10 +299,10 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive 1 child moved event (and 1 child removed event) on moving a file with 2 psi files to a directory where only 1 context exists`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun childMoved(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
+          collector.add(event)
         }
       }
     },
@@ -315,10 +314,10 @@ internal class MultiversePsiEventTest {
 
   @Test
   fun `test we receive (1 child moved event and) 1 child removed event on moving a file with 2 psi files to a directory where only 1 context exists`() = doChangeTest(
-    listenerFactory = { counter ->
+    listenerFactory = { collector ->
       object : PsiTreeChangeAdapter() {
         override fun childRemoved(event: PsiTreeChangeEvent) {
-          counter.incrementAndGet()
+          collector.add(event)
         }
       }
     },
@@ -329,13 +328,13 @@ internal class MultiversePsiEventTest {
   )
 
   private fun doChangeTest(
-    listenerFactory: (AtomicInteger) -> PsiTreeChangeListener,
+    listenerFactory: (EventCollector) -> PsiTreeChangeListener,
     updateBlock: (file: VirtualFile) -> Unit,
-    awaitCondition: (AtomicInteger) -> Boolean = { true },
+    awaitCondition: (EventCollector) -> Boolean = { true },
     @Suppress("SameParameterValue") expectedEventNumber: Int,
   ) = runTest {
-    val counter = AtomicInteger(0)
-    val listener = listenerFactory(counter)
+    val collector = EventCollector()
+    val listener = listenerFactory(collector)
 
     psiManager.addPsiTreeChangeListenerBackgroundable(listener, testDisposable)
 
@@ -346,18 +345,36 @@ internal class MultiversePsiEventTest {
       updateBlock(virtualFile)
     }
 
-    while (!awaitCondition(counter)) {
+    while (!awaitCondition(collector)) {
       delay(50.milliseconds)
     }
 
     Reference.reachabilityFence(f1)
     Reference.reachabilityFence(f2)
 
-    assertThat(counter.get()).isEqualTo(expectedEventNumber)
+    val events = collector.events
+    assertThat(events.size).isEqualTo(expectedEventNumber)
+
+    // Check that events correspond to different psi trees
+    if (expectedEventNumber >= 2) {
+      val psiFiles = events.mapNotNull { it.element ?: it.child ?: it.parent }.distinct()
+      assertThat(psiFiles).hasSize(2).containsExactlyInAnyOrder(f1, f2)
+    }
   }
 
   private fun runTest(block: suspend () -> Unit) = timeoutRunBlocking {
     IndexingTestUtil.waitUntilIndexesAreReady(project)
     block()
+  }
+
+  private class EventCollector {
+    private val _events: MutableList<PsiTreeChangeEvent> = mutableListOf()
+
+    fun add(event: PsiTreeChangeEvent) {
+      _events.add(event)
+    }
+
+    val events: List<PsiTreeChangeEvent>
+      get() = _events
   }
 }
