@@ -192,7 +192,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
     val rootPane = frame.rootPane
     if (rootPane != null) {
       rootPane.putClientProperty(FULL_SCREEN, if (state) true else null)
-      if (rootPane.border != null) {
+      if (state && rootPane.border != null) {
         rootPane.setBorder(null)
       }
     }
