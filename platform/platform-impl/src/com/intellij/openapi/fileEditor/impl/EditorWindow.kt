@@ -397,8 +397,10 @@ class EditorWindow internal constructor(
         if (options.requestFocus) {
           withContext(Dispatchers.Default) {
             composite.waitForAvailable()
+            withContext(Dispatchers.EDT) {
+              focusEditorOnComposite(composite = composite, splitters = owner, forceFocus = options.forceFocus)
+            }
           }
-          focusEditorOnComposite(composite = composite, splitters = owner, forceFocus = options.forceFocus)
         }
       }
     }
