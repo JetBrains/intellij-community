@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.codeInsight
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.module.JavaModuleType
+import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -11,6 +12,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.ObjectArrayAssert
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.module.PluginModuleType
+import org.jetbrains.jps.model.java.JavaResourceRootType
 
 class PluginXmlContentModuleCompletionTest : JavaCodeInsightFixtureTestCase() {
 
@@ -63,9 +65,9 @@ class PluginXmlContentModuleCompletionTest : JavaCodeInsightFixtureTestCase() {
     myFixture.addModule("SplitPlugin.shared", "split-plugin/shared")
 
     myFixture.addModule("SplitPlugin.main", "split-plugin/src/main")
-    myFixture.addModule("SplitPlugin.backend.main", "split-plugin/backend/src/main")
-    myFixture.addModule("SplitPlugin.frontend.main", "split-plugin/frontend/src/main")
-    myFixture.addModule("SplitPlugin.shared.main", "split-plugin/shared/src/main")
+    myFixture.addModuleWithResourcesRoot("SplitPlugin.backend.main", "split-plugin/backend/src/main", "resources")
+    myFixture.addModuleWithResourcesRoot("SplitPlugin.frontend.main", "split-plugin/frontend/src/main", "frontendResources")
+    myFixture.addModuleWithResourcesRoot("SplitPlugin.shared.main", "split-plugin/shared/src/main", "resources")
 
     myFixture.addXmlFile(
       "split-plugin/backend/src/main/resources/SplitPlugin.backend.xml",
@@ -80,7 +82,7 @@ class PluginXmlContentModuleCompletionTest : JavaCodeInsightFixtureTestCase() {
       """.trimIndent())
 
     myFixture.addXmlFile(
-      "split-plugin/frontend/src/main/resources/SplitPlugin.frontend.xml",
+      "split-plugin/frontend/src/main/frontendResources/SplitPlugin.frontend.xml",
       """
       <idea-plugin>
           <dependencies>
@@ -124,8 +126,15 @@ class PluginXmlContentModuleCompletionTest : JavaCodeInsightFixtureTestCase() {
     return addXmlFile(pluginDescriptorFilePath, pluginDescriptorContent)
   }
 
-  private fun CodeInsightTestFixture.addModule(name: String, path: String) {
-    PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), name, tempDirFixture.findOrCreateDir(path))
+  private fun CodeInsightTestFixture.addModule(name: String, path: String): Module {
+    return PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), name, tempDirFixture.findOrCreateDir(path))
+  }
+
+  private fun CodeInsightTestFixture.addModuleWithResourcesRoot(name: String, path: String, resourcesDirName: String): Module {
+    return addModule(name, path).apply {
+      val resourcesDir = myFixture.tempDirFixture.findOrCreateDir("$path/$resourcesDirName")
+      PsiTestUtil.addSourceRoot(this, resourcesDir, JavaResourceRootType.RESOURCE)
+    }
   }
 
   private fun CodeInsightTestFixture.addXmlFile(relativePath: String, @Language("XML") fileText: String): PsiFile {
