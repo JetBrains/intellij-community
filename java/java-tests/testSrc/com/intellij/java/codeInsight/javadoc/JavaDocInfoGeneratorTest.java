@@ -199,11 +199,17 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[1];
     verifyJavaDoc(outerClass.getMethods()[0]);
   }
+  public void testMarkdownInheritDocSingleLine() {
+    configureByFile();
+    PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[1];
+    verifyJavaDoc(outerClass.getMethods()[0]);
+  }
   public void testMarkdownInlineWithTags(){
     configureByFile();
     PsiClass outerClass = ((PsiJavaFile) myFile).getClasses()[0];
     verifyJavaDoc(outerClass.getMethods()[0]);
   }
+  public void testMarkdownParagraphSeparation() { doTestClass(); }
   public void testMarkdownJepExample(){ doTestMethod(); }
   public void testHtmlCodeInMarkdown() { doTestMethod(); }
   public void testMarkdownInlineCodeBlock() { doTestClass(); }
