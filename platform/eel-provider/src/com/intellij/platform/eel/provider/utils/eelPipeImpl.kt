@@ -2,129 +2,198 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.ReadResult
-import com.intellij.platform.eel.channels.EelReceiveChannel
-import com.intellij.platform.eel.channels.EelSendApi
-import com.intellij.platform.eel.channels.EelSendChannel
-import com.intellij.platform.eel.channels.EelSendChannelCustomSendWholeBuffer
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ClosedReceiveChannelException
-import kotlinx.coroutines.channels.ClosedSendChannelException
-import kotlinx.coroutines.delay
+import com.intellij.platform.eel.channels.*
+import com.intellij.platform.eel.provider.utils.EelPipeImpl.State.*
+import kotlinx.coroutines.flow.*
 import java.io.IOException
 import java.nio.ByteBuffer
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.atomic.AtomicInteger
 
-internal class EelPipeImpl() : EelPipe, EelReceiveChannel, EelSendChannelCustomSendWholeBuffer {
-  private companion object {
-    val OK_EOF = ReadResult.EOF
-    val OK_NOT_EOF = ReadResult.NOT_EOF
+internal class EelPipeImpl : EelPipe, EelReceiveChannel, EelSendChannelCustomSendWholeBuffer {
+  private sealed interface State {
+    object Idle : State
+
+    sealed interface TransferState : State {
+      val bufferToSend: ByteBuffer
+    }
+
+    class ReadyToTransfer(override val bufferToSend: ByteBuffer) : TransferState {
+      val initialPos: Int = bufferToSend.position()
+    }
+
+    class TransferringNow(override val bufferToSend: ByteBuffer) : TransferState
+
+    class LastTransfer(val currentState: TransferState, val nextState: Closed) : State
+
+    class Closed(val error: Throwable?) : State
   }
 
-  @Volatile
-  override var isClosed: Boolean = false
-    private set
-
-  private val channel = Channel<Triple<ByteBuffer, CompletableDeferred<Unit>, Boolean>>()
-
-  /**
-   * Number of bytes currently waiting to be received by [source].
-   * This can be used as a hint for [java.io.InputStream.available]/
-   * It only works when [sendWholeBufferCustom] is used, as it is the only way to become responsible for the whole buffer.
-   */
-  private val _bytesInQueue = AtomicInteger(0)
-  override fun available(): Int = if (channel.isClosedForSend) 0 else _bytesInQueue.get()
+  private val state = MutableStateFlow<State>(Idle)
 
   override val sink: EelSendChannel = this
   override val source: EelReceiveChannel = this
-  private val sendLocks = ConcurrentLinkedDeque<CompletableDeferred<Unit>>()
+
+  override suspend fun closePipe(error: Throwable?) {
+    sink.close(error)
+    source.closeForReceive()
+  }
+
+  private val closedToken = ReadyToTransfer(ByteBuffer.allocate(0))
+
+  @EelDelicateApi
+  override fun available(): Int =
+    availableImpl(state.value)
+
+  private tailrec fun availableImpl(value: State): Int =
+    when (value) {
+      is Closed, Idle, is TransferringNow -> 0
+      is LastTransfer -> availableImpl(value.currentState)
+      is ReadyToTransfer -> value.bufferToSend.remaining()
+    }
+
+  override suspend fun receive(dst: ByteBuffer): ReadResult {
+    var readyToTransfer: ReadyToTransfer
+    var transferringNow: TransferringNow
+    do {
+      readyToTransfer = state
+        .mapNotNull { state ->
+          when (state) {
+            is Closed -> {
+              if (state.error != null) {
+                state.throwError()
+              }
+              else {
+                closedToken
+              }
+            }
+            Idle -> null
+            is LastTransfer -> when (val c = state.currentState) {
+              is ReadyToTransfer -> c
+              is TransferringNow -> null
+            }
+            is ReadyToTransfer -> state
+            is TransferringNow -> null
+          }
+        }
+        .first()
+
+      if (readyToTransfer === closedToken) {
+        return ReadResult.EOF
+      }
+      transferringNow = TransferringNow(readyToTransfer.bufferToSend)
+    }
+    while (!state.compareAndSet(readyToTransfer, transferringNow))
+
+    val newState = run {
+      val src = readyToTransfer.bufferToSend
+      dst.putPartially(src)
+      if (src.hasRemaining())
+        ReadyToTransfer(src)
+      else
+        Idle
+    }
+
+    state.update { state ->
+      when (state) {
+        is TransferringNow -> {
+          return@update newState
+        }
+        is LastTransfer -> {
+          if (state.currentState === transferringNow) {
+            return@update if (newState == Idle)
+              state.nextState
+            else
+              LastTransfer(newState as TransferState, state.nextState)
+          }
+        }
+
+        is Closed, Idle, is ReadyToTransfer -> Unit
+      }
+      error("Bug. Unexpected concurrent modification of state: $transferringNow => ($state | $newState)")
+    }
+
+    // It's enough info now to check if the end of the stream is reached,
+    // but the previous implementation wouldn't return EOF in this situation.
+    return ReadResult.NOT_EOF
+  }
+
+  override suspend fun closeForReceive() {
+    state.update {
+      val outerError = RuntimeException("Closed for receiving")
+      when (it) {
+        is LastTransfer -> {
+          it.nextState.error?.let(outerError::addSuppressed)
+          Closed(outerError)
+        }
+        is Closed -> it
+        Idle, is ReadyToTransfer, is TransferringNow -> Closed(outerError)
+      }
+    }
+  }
 
   override suspend fun sendWholeBufferCustom(src: ByteBuffer) {
-    _bytesInQueue.addAndGet(src.remaining())
-    while (src.hasRemaining()) {
-      send(src, true)
-    }
+    startSending(src).takeWhile { it?.bufferToSend === src }.collect()
   }
 
   @EelSendApi
   override suspend fun send(src: ByteBuffer) {
-    return send(src, false)
+    val initialPos = src.position()
+    startSending(src)
+      .takeWhile { transfer ->
+        when (transfer) {
+          null -> false
+          is TransferringNow -> transfer.bufferToSend === src
+          is ReadyToTransfer -> transfer.bufferToSend === src || transfer.initialPos == initialPos
+        }
+      }
+      .collect()
   }
 
-  private suspend fun send(src: ByteBuffer, decreaseQueueAfterReceive: Boolean) {
-    val sendLock = CompletableDeferred<Unit>()
-    // `send` should return when buffer is read
-    sendLocks.add(sendLock)
-    try {
-      channel.send(Triple(src, sendLock, decreaseQueueAfterReceive))
-      return
+  private suspend fun startSending(src: ByteBuffer): Flow<TransferState?> {
+    do {
+      val actualState = state
+        .mapNotNull {
+          when (it) {
+            is Closed, Idle -> it
+            is LastTransfer -> it.nextState
+            is ReadyToTransfer, is TransferringNow -> null
+          }
+        }
+        .first()
+
+      if (actualState is Closed) {
+        actualState.throwError()
+      }
     }
-    catch (_: ClosedSendChannelException) {
-      closePipe()
-      throw IOException("Channel is closed")
-    }
-    catch (e: PipeBrokenException) {
-      closePipe()
-      throw e
-    }
-    finally {
-      sendLock.await() //wait for buffer to read
-      sendLocks.remove(sendLock)
+    while (!state.compareAndSet(actualState, ReadyToTransfer(src)))
+
+    return state.map {
+      when (it) {
+        is Closed -> throw IOException("Channel is closed")
+        is Idle -> null
+        is LastTransfer -> it.currentState
+        is TransferState -> it
+      }
     }
   }
 
-  override suspend fun receive(dst: ByteBuffer): ReadResult {
-    val (src, sendLock, decreaseQueueAfterReceive) = try {
-      channel.receive()
-    }
-    catch (_: ClosedReceiveChannelException) {
-      closePipe()
-      return OK_EOF
-    }
-    catch (e: PipeBrokenException) {
-      closePipe()
-      throw e
-    }
-    val bytesRead = dst.putPartially(src)
-    // Decreasing the number of bytes should take place on the same thread `receive` is called, as receiver checks number after before
-    // sender gets the chance to fix it.
-    if (decreaseQueueAfterReceive) {
-      _bytesInQueue.addAndGet(-bytesRead)
-    }
-    sendLock.complete(Unit) //buffer read
-    return OK_NOT_EOF
+  private fun Closed.throwError(): Nothing {
+    // It's important to always wrap `Closed.error` into another exception. Otherwise, the stacktrace of the caller wouldn't be printed.
+    throw EelSendChannelException(sink, error?.message?.let { "Pipe was broken with message: $it" } ?: "Channel is closed", error)
   }
 
-  override suspend fun close(error: Throwable?) {
-    if (_bytesInQueue.get() > 0) {
-      // We still have some data to be delivered. Let's wait sometime to give change to read it
-      delay(200)
+  override suspend fun close(err: Throwable?) {
+    state.update { oldState ->
+      when (oldState) {
+        Idle -> Closed(err)
+        is TransferState -> LastTransfer(oldState, Closed(err))
+        is Closed, is LastTransfer -> oldState
+      }
     }
-    closePipe(error)
   }
 
-  override suspend fun closeForReceive() {
-    closePipe()
-  }
-
-  private suspend fun closePipe() {
-    closePipe(null)
-  }
-
-  override suspend fun closePipe(error: Throwable?) {
-    if (_bytesInQueue.get() > 0) {
-      // We still have some data to be delivered. Let's wait sometime to give change to read it
-      Thread.sleep(200)
+  override val isClosed: Boolean
+    get() = when (state.value) {
+      is Closed, is LastTransfer -> true
+      Idle, is TransferState -> false
     }
-    channel.close(error?.let { PipeBrokenException(it) })
-    channel.cancel() //If there is a coroutine near `send`, it must get an error
-    for (deferred in sendLocks) {
-      deferred.complete(Unit)
-    }
-    sendLocks.clear()
-    isClosed = true
-  }
 }
-
-private class PipeBrokenException(cause: Throwable) : IOException("Pipe was broken with message: ${cause.message}", cause)
