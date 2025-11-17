@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.AllOccurrencesMatcher.Companion.create
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.text.Matcher
+import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.Test
 import kotlin.test.assertContentEquals
@@ -446,40 +447,40 @@ class NameUtilMatchingTest {
 
   @Test
   fun testMinusculeAllImportant() {
-    assertTrue(NameUtil.buildMatcher("WebLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"))
-    assertFalse(NameUtil.buildMatcher("webLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("weblogic"))
-    assertFalse(NameUtil.buildMatcher("FOO", NameUtil.MatchingCaseSensitivity.ALL).matches("foo"))
-    assertFalse(NameUtil.buildMatcher("foo", NameUtil.MatchingCaseSensitivity.ALL).matches("fOO"))
-    assertFalse(NameUtil.buildMatcher("Wl", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"))
-    assertTrue(NameUtil.buildMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"))
-    assertFalse(NameUtil.buildMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("Weblogic"))
-    assertFalse(NameUtil.buildMatcher("WL", NameUtil.MatchingCaseSensitivity.ALL).matches("weblogic"))
-    assertFalse(NameUtil.buildMatcher("webLogic", NameUtil.MatchingCaseSensitivity.ALL).matches("WebLogic"))
-    assertFalse(NameUtil.buildMatcher("Str", NameUtil.MatchingCaseSensitivity.ALL).matches("SomeThingRidiculous"))
-    assertFalse(NameUtil.buildMatcher("*list*", NameUtil.MatchingCaseSensitivity.ALL).matches("List"))
-    assertFalse(NameUtil.buildMatcher("*list*", NameUtil.MatchingCaseSensitivity.ALL).matches("AbstractList"))
-    assertFalse(NameUtil.buildMatcher("java.util.list", NameUtil.MatchingCaseSensitivity.ALL).matches("java.util.List"))
-    assertFalse(NameUtil.buildMatcher("java.util.list", NameUtil.MatchingCaseSensitivity.ALL).matches("java.util.AbstractList"))
+    assertTrue(NameUtil.buildMatcher("WebLogic", MatchingMode.MATCH_CASE).matches("WebLogic"))
+    assertFalse(NameUtil.buildMatcher("webLogic", MatchingMode.MATCH_CASE).matches("weblogic"))
+    assertFalse(NameUtil.buildMatcher("FOO", MatchingMode.MATCH_CASE).matches("foo"))
+    assertFalse(NameUtil.buildMatcher("foo", MatchingMode.MATCH_CASE).matches("fOO"))
+    assertFalse(NameUtil.buildMatcher("Wl", MatchingMode.MATCH_CASE).matches("WebLogic"))
+    assertTrue(NameUtil.buildMatcher("WL", MatchingMode.MATCH_CASE).matches("WebLogic"))
+    assertFalse(NameUtil.buildMatcher("WL", MatchingMode.MATCH_CASE).matches("Weblogic"))
+    assertFalse(NameUtil.buildMatcher("WL", MatchingMode.MATCH_CASE).matches("weblogic"))
+    assertFalse(NameUtil.buildMatcher("webLogic", MatchingMode.MATCH_CASE).matches("WebLogic"))
+    assertFalse(NameUtil.buildMatcher("Str", MatchingMode.MATCH_CASE).matches("SomeThingRidiculous"))
+    assertFalse(NameUtil.buildMatcher("*list*", MatchingMode.MATCH_CASE).matches("List"))
+    assertFalse(NameUtil.buildMatcher("*list*", MatchingMode.MATCH_CASE).matches("AbstractList"))
+    assertFalse(NameUtil.buildMatcher("java.util.list", MatchingMode.MATCH_CASE).matches("java.util.List"))
+    assertFalse(NameUtil.buildMatcher("java.util.list", MatchingMode.MATCH_CASE).matches("java.util.AbstractList"))
   }
 
   @Test
   fun testMatchingFragments() {
     @NonNls var sample = "NoClassDefFoundException"
     //                    0 2    7  10   15    21
-    assertContentEquals(NameUtil.buildMatcher("ncldfou*ion", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertContentEquals(NameUtil.buildMatcher("ncldfou*ion", MatchingMode.IGNORE_CASE).matchingFragments(sample),
                         listOf(TextRange.from(0, 1), TextRange.from(2, 2), TextRange.from(7, 1), TextRange.from(10, 3), TextRange.from(21, 3)))
 
     sample = "doGet(HttpServletRequest, HttpServletResponse):void"
     //        0                     22
-    assertContentEquals(NameUtil.buildMatcher("d*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertContentEquals(NameUtil.buildMatcher("d*st", MatchingMode.IGNORE_CASE).matchingFragments(sample),
                         listOf(TextRange.from(0, 1), TextRange.from(22, 2)))
-    assertContentEquals(NameUtil.buildMatcher("doge*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertContentEquals(NameUtil.buildMatcher("doge*st", MatchingMode.IGNORE_CASE).matchingFragments(sample),
                         listOf(TextRange.from(0, 4), TextRange.from(22, 2)))
 
     sample = "_test"
-    assertContentEquals(NameUtil.buildMatcher("_", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertContentEquals(NameUtil.buildMatcher("_", MatchingMode.IGNORE_CASE).matchingFragments(sample),
                         listOf(TextRange.from(0, 1)))
-    assertContentEquals(NameUtil.buildMatcher("_t", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertContentEquals(NameUtil.buildMatcher("_t", MatchingMode.IGNORE_CASE).matchingFragments(sample),
                         listOf(TextRange.from(0, 2)))
   }
 
@@ -487,7 +488,7 @@ class NameUtilMatchingTest {
   fun testMatchingFragmentsSorted() {
     @NonNls val sample = "SWUPGRADEHDLRFSPR7TEST"
     //                    0        9  12
-    assertContentEquals(NameUtil.buildMatcher("SWU*H*R", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertContentEquals(NameUtil.buildMatcher("SWU*H*R", MatchingMode.IGNORE_CASE).matchingFragments(sample),
                         listOf(TextRange.from(0, 3), TextRange.from(9, 1), TextRange.from(12, 1)))
   }
 
@@ -495,7 +496,7 @@ class NameUtilMatchingTest {
   fun testPreferCapsMatching() {
     val sample = "getCurrentUser"
     //            0   4     10
-    assertContentEquals(NameUtil.buildMatcher("getCU", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
+    assertContentEquals(NameUtil.buildMatcher("getCU", MatchingMode.IGNORE_CASE).matchingFragments(sample),
                         listOf(TextRange.from(0, 4), TextRange.from(10, 1)))
   }
 
@@ -522,49 +523,49 @@ class NameUtilMatchingTest {
 
   @Test
   fun testMatchingDegree() {
-    assertPreference("jscote", "JsfCompletionTest", "JSCompletionTest", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("jscote", "JsfCompletionTest", "JSCompletionTest", MatchingMode.IGNORE_CASE)
     assertPreference("OCO", "OneCoolObject", "OCObject")
     assertPreference("MUp", "MavenUmlProvider", "MarkUp")
     assertPreference("MUP", "MarkUp", "MavenUmlProvider")
     assertPreference("CertificateExce", "CertificateEncodingException", "CertificateException")
-    assertPreference("boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("boo", "Boolean", "boolean", MatchingMode.IGNORE_CASE)
+    assertPreference("Boo", "boolean", "Boolean", MatchingMode.IGNORE_CASE)
     assertPreference("getCU", "getCurrentSomething", "getCurrentUser")
     assertPreference("cL", "class", "coreLoader")
     assertPreference("cL", "class", "classLoader")
-    assertPreference("inse", "InstrumentationError", "intSet", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("String", "STRING", "String", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("*String", "STRING", "String", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("inse", "InstrumentationError", "intSet", MatchingMode.IGNORE_CASE)
+    assertPreference("String", "STRING", "String", MatchingMode.IGNORE_CASE)
+    assertPreference("*String", "STRING", "String", MatchingMode.IGNORE_CASE)
   }
 
   @Test
   fun testPreferAdjacentWords() {
-    assertPreference("*psfi", "PsiJavaFileBaseImpl", "PsiFileImpl", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*psfi", "PsiJavaFileBaseImpl", "PsiFileImpl", MatchingMode.IGNORE_CASE)
   }
 
   @Test
   fun testPreferMatchesToTheEnd() {
-    assertPreference("*e", "fileIndex", "file", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*e", "fileIndex", "file", MatchingMode.IGNORE_CASE)
   }
 
   @Test
   fun testPreferences() {
-    assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference(" fb", "FooBar", "_fooBar", MatchingMode.IGNORE_CASE)
     assertPreference("*foo", "barFoo", "foobar")
     assertPreference("*fo", "barfoo", "barFoo")
     assertPreference("*fo", "barfoo", "foo")
-    assertPreference("*fo", "asdfo", "Foo", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference(" sto", "StackOverflowError", "ArrayStoreException", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference(" EUC-", "x-EUC-TW", "EUC-JP", NameUtil.MatchingCaseSensitivity.FIRST_LETTER)
-    assertPreference(" boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference(" Boo", "boolean", "Boolean", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*fo", "asdfo", "Foo", MatchingMode.IGNORE_CASE)
+    assertPreference(" sto", "StackOverflowError", "ArrayStoreException", MatchingMode.IGNORE_CASE)
+    assertPreference(" EUC-", "x-EUC-TW", "EUC-JP", MatchingMode.FIRST_LETTER)
+    assertPreference(" boo", "Boolean", "boolean", MatchingMode.IGNORE_CASE)
+    assertPreference(" Boo", "boolean", "Boolean", MatchingMode.IGNORE_CASE)
     assertPreference("ob", "oci_bind_array_by_name", "obj")
-    assertNoPreference("en", "ENABLED", "Enum", NameUtil.MatchingCaseSensitivity.NONE)
+    assertNoPreference("en", "ENABLED", "Enum", MatchingMode.IGNORE_CASE)
   }
 
   @Test
   fun testHonorFirstLetterCaseInCompletion() {
-    val matcher = NameUtil.buildMatcher("*pim", NameUtil.MatchingCaseSensitivity.NONE)
+    val matcher = NameUtil.buildMatcher("*pim", MatchingMode.IGNORE_CASE)
     val iLess = matcher.matchingDegree("PImageDecoder", true)
     val iMore = matcher.matchingDegree("posIdMap", true)
     assertTrue(iLess < iMore)
@@ -572,41 +573,41 @@ class NameUtilMatchingTest {
 
   @Test
   fun testPreferWordBoundaryMatch() {
-    assertPreference("*ap", "add_profile", "application", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*ap", "add_profile", "application", MatchingMode.IGNORE_CASE)
     assertPreference("*les", "configureByFiles", "getLookupElementStrings")
-    assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("*ea", "LEADING", "NORTH_EAST", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*les", "configureByFiles", "getLookupElementStrings", MatchingMode.IGNORE_CASE)
+    assertPreference("*ea", "LEADING", "NORTH_EAST", MatchingMode.IGNORE_CASE)
 
-    assertPreference("*Icon", "isControlKeyDown", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("*icon", "isControlKeyDown", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*Icon", "isControlKeyDown", "getErrorIcon", MatchingMode.IGNORE_CASE)
+    assertPreference("*icon", "isControlKeyDown", "getErrorIcon", MatchingMode.IGNORE_CASE)
 
-    assertPreference("*Icon", "getInitControl", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE)
-    assertPreference("*icon", "getInitControl", "getErrorIcon", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*Icon", "getInitControl", "getErrorIcon", MatchingMode.IGNORE_CASE)
+    assertPreference("*icon", "getInitControl", "getErrorIcon", MatchingMode.IGNORE_CASE)
   }
 
   @Test
   fun testPreferNoWordSkipping() {
-    assertPreference("CBP", "CustomProcessBP", "ComputationBatchProcess", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("CBP", "CustomProcessBP", "ComputationBatchProcess", MatchingMode.IGNORE_CASE)
   }
 
   @Test
   fun testWordLengthDoesNotMatter() {
-    assertNoPreference("PropComp", "PropertyComponent", "PropertiesComponent", NameUtil.MatchingCaseSensitivity.NONE)
+    assertNoPreference("PropComp", "PropertyComponent", "PropertiesComponent", MatchingMode.IGNORE_CASE)
   }
 
   @Test
   fun testMatchStartDoesntMatterForDegree() {
-    assertNoPreference(" path", "getAbsolutePath", "findPath", NameUtil.MatchingCaseSensitivity.FIRST_LETTER)
+    assertNoPreference(" path", "getAbsolutePath", "findPath", MatchingMode.FIRST_LETTER)
   }
 
   @Test
   fun testPreferStartMatching() {
-    assertPreference("*tree", "FooTree", "Tree", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*tree", "FooTree", "Tree", MatchingMode.IGNORE_CASE)
   }
 
   @Test
   fun testPreferContiguousMatching() {
-    assertPreference("*mappablejs", "mappable-js.scope.js", "MappableJs.js", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*mappablejs", "mappable-js.scope.js", "MappableJs.js", MatchingMode.IGNORE_CASE)
   }
 
   @Test
@@ -643,13 +644,13 @@ class NameUtilMatchingTest {
   @Test
   fun testMatchingAllOccurrences() {
     val text = "some text"
-    val matcher = create("*e", NameUtil.MatchingCaseSensitivity.NONE, "")
+    val matcher = create("*e", MatchingMode.IGNORE_CASE, "")
     assertContentEquals(matcher.matchingFragments(text), listOf(TextRange(3, 4), TextRange(6, 7)))
   }
 
   @Test
   fun testCamelHumpWinsOverConsecutiveCaseMismatch() {
-    assertEquals(3, NameUtil.buildMatcher("GEN", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments("GetExtendedName")!!.size)
+    assertEquals(3, NameUtil.buildMatcher("GEN", MatchingMode.IGNORE_CASE).matchingFragments("GetExtendedName")!!.size)
 
     assertPreference("GEN", "GetName", "GetExtendedName")
     assertPreference("*GEN", "GetName", "GetExtendedName")
@@ -667,11 +668,11 @@ class NameUtilMatchingTest {
 
   companion object {
     private fun caseInsensitiveMatcher(pattern: String): MinusculeMatcher {
-      return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE)
+      return NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE)
     }
 
     private fun firstLetterMatcher(pattern: String): Matcher {
-      return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.FIRST_LETTER)
+      return NameUtil.buildMatcher(pattern, MatchingMode.FIRST_LETTER)
     }
 
     private fun assertMatches(@NonNls pattern: @NonNls String, @NonNls name: @NonNls String) {
@@ -686,9 +687,9 @@ class NameUtilMatchingTest {
       @NonNls pattern: @NonNls String,
       @NonNls less: @NonNls String,
       @NonNls more: @NonNls String,
-      sensitivity: NameUtil.MatchingCaseSensitivity = NameUtil.MatchingCaseSensitivity.FIRST_LETTER,
+      matchingMode: MatchingMode = MatchingMode.FIRST_LETTER,
     ) {
-      assertPreference(NameUtil.buildMatcher(pattern, sensitivity), less, more)
+      assertPreference(NameUtil.buildMatcher(pattern, matchingMode), less, more)
     }
 
     private fun assertPreference(matcher: MinusculeMatcher, less: String, more: String) {
@@ -705,9 +706,9 @@ class NameUtilMatchingTest {
       @NonNls pattern: @NonNls String,
       @NonNls name1: @NonNls String,
       @NonNls name2: @NonNls String,
-      sensitivity: NameUtil.MatchingCaseSensitivity,
+      matchingMode: MatchingMode,
     ) {
-      val matcher = NameUtil.buildMatcher(pattern, sensitivity)
+      val matcher = NameUtil.buildMatcher(pattern, matchingMode)
       assertEquals(matcher.matchingDegree(name1), matcher.matchingDegree(name2))
     }
   }

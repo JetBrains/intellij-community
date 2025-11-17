@@ -22,6 +22,7 @@ import com.intellij.platform.searchEverywhere.providers.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -131,7 +132,7 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncContribut
 
   private fun createDefaultMatchers(rawPattern: String): ItemMatchers {
     val namePattern = contributor.filterControlSymbols(rawPattern)
-    val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", NameUtil.MatchingCaseSensitivity.NONE)
+    val matcher = NameUtil.buildMatcherWithFallback("*$rawPattern", "*$namePattern", MatchingMode.IGNORE_CASE)
     return ItemMatchers(matcher, null)
   }
 

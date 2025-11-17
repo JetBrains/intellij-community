@@ -24,6 +24,7 @@ import com.intellij.util.containers.FList;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.text.EditDistance;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -283,7 +284,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     String fullRawPattern = buildFullPattern(base, parameters.getCompletePattern());
     String fullNamePattern = buildFullPattern(base, base.transformPattern(parameters.getCompletePattern()));
 
-    return NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, NameUtil.MatchingCaseSensitivity.NONE);
+    return NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, MatchingMode.IGNORE_CASE);
   }
 
   private static @NotNull String buildFullPattern(@NotNull ChooseByNameViewModel base, @NotNull String pattern) {
@@ -431,7 +432,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   }
 
   protected static @NotNull MinusculeMatcher buildPatternMatcher(@NotNull String pattern, boolean preferStartMatches) {
-    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(pattern).withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE);
+    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(pattern).withMatchingMode(MatchingMode.IGNORE_CASE);
     if (preferStartMatches) {
       builder = builder.preferringStartMatches();
     }

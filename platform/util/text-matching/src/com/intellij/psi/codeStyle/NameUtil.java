@@ -4,6 +4,7 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.text.NameUtilCore;
+import com.intellij.util.text.matching.MatchingMode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * todo: move to platform module as soon as com.intellij.psi.codeStyle.NameUtil.MatchingCaseSensitivity deleted
+ */
 public final class NameUtil {
   private static final int MAX_LENGTH = 40;
   //heuristics: 15 can take 10-20 ms in some cases, while 10 works in 1-5 ms
@@ -281,16 +285,18 @@ public final class NameUtil {
                                      int exactPrefixLen,
                                      boolean allowToUpper,
                                      boolean allowToLower) {
-    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL
-                                                                     : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER
-                                                                                          : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, options);
+    MatchingMode matchingMode =
+      !allowToLower && !allowToUpper ? MatchingMode.MATCH_CASE
+                                     : exactPrefixLen > 0 ? MatchingMode.FIRST_LETTER
+                                                          : MatchingMode.IGNORE_CASE;
+    return buildMatcher(pattern, matchingMode);
   }
 
   public static final class MatcherBuilder {
     private final String pattern;
     private String separators = "";
-    private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
+    private MatchingMode matchingMode =
+      MatchingMode.IGNORE_CASE;
     private boolean typoTolerant = false;
     private boolean preferStartMatches = false;
     private boolean allOccurrences = false;
@@ -299,8 +305,17 @@ public final class NameUtil {
       this.pattern = pattern;
     }
 
+    public MatcherBuilder withMatchingMode(MatchingMode matchingMode) {
+      this.matchingMode = matchingMode;
+      return this;
+    }
+
+    /**
+     * @deprecated use {@link #withMatchingMode(MatchingMode)}
+     */
+    @Deprecated
     public MatcherBuilder withCaseSensitivity(MatchingCaseSensitivity caseSensitivity) {
-      this.caseSensitivity = caseSensitivity;
+      this.matchingMode = caseSensitivity.matchingMode();
       return this;
     }
 
@@ -325,9 +340,9 @@ public final class NameUtil {
     }
 
     public MinusculeMatcher build() {
-      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators) :
-                                 allOccurrences ? AllOccurrencesMatcher.create(pattern, caseSensitivity, separators) :
-                                 new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, matchingMode, separators) :
+                                 allOccurrences ? AllOccurrencesMatcher.create(pattern, matchingMode, separators) :
+                                 new FixingLayoutMatcher(pattern, matchingMode, separators);
       if (preferStartMatches) {
         matcher = new PreferStartMatchMatcherWrapper(matcher);
       }
@@ -340,16 +355,25 @@ public final class NameUtil {
     return new MatcherBuilder(pattern);
   }
 
+  public static @NotNull MinusculeMatcher buildMatcher(@NotNull String pattern,
+                                                       @NotNull MatchingMode matchingMode) {
+    return buildMatcher(pattern).withMatchingMode(matchingMode).build();
+  }
+
+  /**
+   * @deprecated use {@link #buildMatcher(String, MatchingMode)}
+   */
+  @Deprecated
   public static @NotNull MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options) {
-    return buildMatcher(pattern).withCaseSensitivity(options).build();
+    return buildMatcher(pattern, options.matchingMode());
   }
 
   public static MinusculeMatcher buildMatcherWithFallback(@NotNull String pattern,
                                                           @NotNull String fallbackPattern,
-                                                          @NotNull MatchingCaseSensitivity options) {
+                                                          @NotNull MatchingMode matchingMode) {
     return pattern.equals(fallbackPattern)
-           ? buildMatcher(pattern, options)
-           : new MatcherWithFallback(buildMatcher(pattern, options), buildMatcher(fallbackPattern, options));
+           ? buildMatcher(pattern, matchingMode)
+           : new MatcherWithFallback(buildMatcher(pattern, matchingMode), buildMatcher(fallbackPattern, matchingMode));
   }
 
   public static @NotNull String capitalizeAndUnderscore(@NotNull String name) {
@@ -377,7 +401,19 @@ public final class NameUtil {
 
   }
 
+  /**
+   * @deprecated use {@link MatchingMode} instead
+   */
+  @Deprecated
   public enum MatchingCaseSensitivity {
-    NONE, FIRST_LETTER, ALL
+    NONE, FIRST_LETTER, ALL;
+
+    @NotNull MatchingMode matchingMode() {
+      return switch (this) {
+        case NONE -> MatchingMode.IGNORE_CASE;
+        case FIRST_LETTER -> MatchingMode.FIRST_LETTER;
+        case ALL -> MatchingMode.MATCH_CASE;
+      };
+    }
   }
 }

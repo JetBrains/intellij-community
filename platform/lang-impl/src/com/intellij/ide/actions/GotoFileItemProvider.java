@@ -18,7 +18,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -30,6 +32,7 @@ import com.intellij.util.UriUtil;
 import com.intellij.util.containers.*;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.ProcessorWithThrottledCancellationCheck;
+import com.intellij.util.text.matching.MatchingMode;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -342,7 +345,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     pattern = "*" + StringUtil.replace(StringUtil.replace(pattern, "\\", "*\\*"), "/", "*/*");
 
     return NameUtil.buildMatcher(pattern)
-      .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
+      .withMatchingMode(MatchingMode.IGNORE_CASE)
       .preferringStartMatches()
       .build();
   }
@@ -584,12 +587,12 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       boolean preferStartMatches = from == 0 && !patternSuffix.startsWith("*");
       String matchPattern = (from > 0 ? " " : "*") + patternSuffix;
 
-      NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(matchPattern).withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE);
+      NameUtil.MatcherBuilder builder = NameUtil.buildMatcher(matchPattern).withMatchingMode(MatchingMode.IGNORE_CASE);
       if (preferStartMatches) {
         builder.preferringStartMatches();
       }
 
-      final var fullBuilder = NameUtil.buildMatcher(patternSuffix).withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE);
+      final var fullBuilder = NameUtil.buildMatcher(patternSuffix).withMatchingMode(MatchingMode.IGNORE_CASE);
       if (preferStartMatches) {
         builder.preferringStartMatches();
       }

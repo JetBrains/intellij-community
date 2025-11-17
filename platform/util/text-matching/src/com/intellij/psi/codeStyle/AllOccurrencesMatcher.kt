@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.FList
+import com.intellij.util.text.matching.MatchingMode
 import kotlin.jvm.JvmStatic
 
 /**
@@ -11,10 +12,10 @@ import kotlin.jvm.JvmStatic
  */
 class AllOccurrencesMatcher private constructor(
   pattern: String,
-  options: NameUtil.MatchingCaseSensitivity,
+  matchingMode: MatchingMode,
   hardSeparators: String,
 ) : MinusculeMatcher() {
-  private val delegate: MinusculeMatcher = FixingLayoutMatcher(pattern, options, hardSeparators)
+  private val delegate: MinusculeMatcher = FixingLayoutMatcher(pattern, matchingMode, hardSeparators)
 
   override val pattern: String
     get() = delegate.pattern
@@ -49,8 +50,14 @@ class AllOccurrencesMatcher private constructor(
 
   companion object {
     @JvmStatic
+    fun create(pattern: String, matchingMode: MatchingMode, hardSeparators: String): MinusculeMatcher {
+      return AllOccurrencesMatcher(pattern, matchingMode, hardSeparators)
+    }
+
+    @Deprecated("Use {@link #create(String, MatchingCaseSensitivity, String)} instead")
+    @JvmStatic
     fun create(pattern: String, options: NameUtil.MatchingCaseSensitivity, hardSeparators: String): MinusculeMatcher {
-      return AllOccurrencesMatcher(pattern, options, hardSeparators)
+      return AllOccurrencesMatcher(pattern, options.matchingMode(), hardSeparators)
     }
   }
 }

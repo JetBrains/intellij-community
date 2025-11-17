@@ -20,6 +20,7 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.text.matching.MatchingMode;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -106,7 +107,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
                                                            UIUtil.getListForeground(isSelected, hasFocus),
                                                            JBColor.RED,
                                                            SimpleTextAttributes.STYLE_PLAIN);
-      Matcher matcher = NameUtil.buildMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
+      Matcher matcher = NameUtil.buildMatcher("*" + query, MatchingMode.IGNORE_CASE);
 
       String category = myPluginDescriptor.getDisplayCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getDisplayCategory());
       if (category != null) {

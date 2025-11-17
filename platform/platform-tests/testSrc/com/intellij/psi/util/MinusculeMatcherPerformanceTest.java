@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.matching.MatchingMode;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -19,10 +20,10 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
     final List<MinusculeMatcher> nonMatching = new ArrayList<>();
 
     for (String s : ContainerUtil.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
-      matching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+      matching.add(NameUtil.buildMatcher(s, MatchingMode.IGNORE_CASE));
     }
     for (String s : ContainerUtil.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tag")) {
-      nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
+      nonMatching.add(NameUtil.buildMatcher(s, MatchingMode.IGNORE_CASE));
     }
 
     Benchmark.newBenchmark("Matching", () -> {
@@ -41,10 +42,10 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testOnlyUnderscoresPerformance() {
     String small = StringUtil.repeat("_", 50000);
     String smallWildcard = "*" + small;
-    MinusculeMatcher smallMatcher = NameUtil.buildMatcher(smallWildcard, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher smallMatcher = NameUtil.buildMatcher(smallWildcard, MatchingMode.IGNORE_CASE);
     String big = StringUtil.repeat("_", small.length() + 1);
     String bigWildcard = "*" + big;
-    MinusculeMatcher bigMatcher = NameUtil.buildMatcher(big, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher bigMatcher = NameUtil.buildMatcher(big, MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 10_000; i++) {
         assertMatches(smallMatcher, smallWildcard, big);
@@ -56,9 +57,9 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testRepeatedLetterPerformance() {
     String big = StringUtil.repeat("Aaaaaa", 50000);
     String pattern = "aaaaaaaaaaaaaaaaaaaaaaaa";
-    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
     String mismatchPattern = "aaaaaaaaaaaaaaaaaaaaaaaab";
-    MinusculeMatcher mismatchMatcher = NameUtil.buildMatcher(mismatchPattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher mismatchMatcher = NameUtil.buildMatcher(mismatchPattern, MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 1_000; i++) {
         assertMatches(matcher, pattern, big);
@@ -71,7 +72,7 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
     String pattern = "*<p> aaa <div id=\"a";
     String html =
       "<html> <body> <H2> <FONT SIZE=\"-1\"> com.sshtools.cipher</FONT> <BR> Class AES128Cbc</H2> <PRE> java.lang.Object   <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.cipher.SshCipher       <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.crypto.engines.CbcBlockCipher           <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\"><B>com.sshtools.cipher.AES128Cbc</B> </PRE> <HR> <DL> <DT>public class <B>AES128Cbc</B><DT>extends com.maverick.ssh.crypto.engines.CbcBlockCipher</DL>  <P> This cipher can optionally be added to the J2SSH Maverick API. To add  the ciphers from this package simply add them to the <A HREF=\"../../../com/maverick/ssh2/Ssh2Context.html\" title=\"class in com.maverick.ssh2\"><CODE>Ssh2Context</CODE></A>  <blockquote><pre>   import com.sshtools.cipher.*;   </pre></blockquote> <P>  <P> <DL> <DT><B>Version:</B></DT>   <DD>Revision: 1.20</DD> </DL> <HR> </body> </html>";
-    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 10_000; i++) {
         assertDoesntMatch(matcher, pattern, html);
@@ -94,7 +95,7 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   }
 
   private void assertDoesntMatchFast(String pattern, String name, String subTestName) {
-    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 10_000; i++) {
         assertDoesntMatch(matcher, pattern, name);
@@ -107,7 +108,7 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
       "*# -*- coding: utf-8 -*-$:. unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App. setup do |app|  # Use `rake config' to see complete project settings.   app. sdk_version = '4. 3'end";
     String name =
       "# -*- coding: utf-8 -*-$:.unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App.setup do |app|  # Use `rake config' to see complete project settings.  app.sdk_version = '4.3'  app.frameworks -= ['UIKit']end";
-    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 100_000; i++) {
         assertDoesntMatch(matcher, pattern, name);
@@ -120,8 +121,8 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
       "the class with its attributes mapped to fields of records parsed by an {@link AbstractParser} or written by an {@link AbstractWriter}.";
     String wildcard = "*" + s;
     String substring = s.substring(0, 10);
-    MinusculeMatcher matcher = NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE);
-    MinusculeMatcher matcherWildcard = NameUtil.buildMatcher(wildcard, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher(s, MatchingMode.IGNORE_CASE);
+    MinusculeMatcher matcherWildcard = NameUtil.buildMatcher(wildcard, MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 100_000; i++) {
         assertMatches(matcher, s, s);

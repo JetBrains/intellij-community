@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.Processor
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.contentNonIndexableRoots
+import com.intellij.util.text.matching.MatchingMode
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -100,7 +101,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
     val pathMatcher = GotoFileItemProvider.getQualifiedNameMatcher(pathPattern)
 
     val nameMatcher = NameUtil.buildMatcher("*" + namePattern)
-      .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
+      .withMatchingMode(MatchingMode.IGNORE_CASE)
       .preferringStartMatches()
       .build()
 
@@ -143,7 +144,7 @@ class NonIndexableFilesSEContributor(event: AnActionEvent) : WeightedSearchEvery
 
     val otherNameMatchers = List(namePattern.length - 1) { i ->
       NameUtil.buildMatcher(" " + namePattern.substring(i + 1))
-        .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
+        .withMatchingMode(MatchingMode.IGNORE_CASE)
         .build()
     }
 

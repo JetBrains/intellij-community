@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.text.Matcher;
+import com.intellij.util.text.matching.MatchingMode;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,11 +149,11 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
 
   protected @NotNull Matcher createNewMatcher(String searchText) {
     String pattern = "*" + searchText;
-    NameUtil.MatchingCaseSensitivity caseSensitivity = NameUtil.MatchingCaseSensitivity.NONE;
+    MatchingMode matchingMode = MatchingMode.IGNORE_CASE;
     String separators = SpeedSearchUtil.getDefaultHardSeparators();
     NameUtil.MatcherBuilder builder =
       new NameUtil.MatcherBuilder(pattern)
-        .withCaseSensitivity(caseSensitivity)
+        .withMatchingMode(matchingMode)
         .withSeparators(separators);
     if (myMatchAllOccurrences) {
       builder = builder.allOccurrences();

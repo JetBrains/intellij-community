@@ -3,6 +3,7 @@ package com.intellij.platform.util.text.matching
 
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.codeStyle.TypoTolerantMatcher
+import com.intellij.util.text.matching.MatchingMode
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 import kotlin.test.assertEquals
@@ -14,7 +15,7 @@ class TypoTolerantMatcherTest {
   @Test
   fun testStability() {
     val data = randomStrings(Random(1)).take(20000)
-    val matcher = TypoTolerantMatcher("asd", NameUtil.MatchingCaseSensitivity.FIRST_LETTER, "")
+    val matcher = TypoTolerantMatcher("asd", MatchingMode.FIRST_LETTER, "")
     val matched = data.filter(matcher::matches).toList()
     val expected = listOf("oaebOeSnflvteoDsqhFo", "avsdCzdi", "axFskogmnmdufynMoewjDzsU", "JazjkxFvzhdogdvSBDwq",
                           "amEckovsuvscwqhgoSTdznk", "aAdmRJtQggyGcbzx", "asfZPktnVioCzeWx", "ajEhAd", "aaDuhgmkapirfpEufpNYbl",
@@ -29,7 +30,7 @@ class TypoTolerantMatcherTest {
 
   @Test
   fun testEmptyPattern() {
-    val matcher = TypoTolerantMatcher("*", NameUtil.MatchingCaseSensitivity.NONE, "")
+    val matcher = TypoTolerantMatcher("*", MatchingMode.IGNORE_CASE, "")
     val data = listOf("foo", "bar", "buzz")
     val matched = data.filter(matcher::matches)
     val expected = listOf("foo", "bar", "buzz")

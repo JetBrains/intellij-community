@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle
 
 import com.intellij.util.text.matching.KeyboardLayoutUtil
+import com.intellij.util.text.matching.MatchingMode
 import kotlin.jvm.JvmStatic
 
 /**
@@ -10,12 +11,16 @@ import kotlin.jvm.JvmStatic
  */
 open class FixingLayoutMatcher(
   pattern: String,
-  options: NameUtil.MatchingCaseSensitivity,
+  matchingMode: MatchingMode,
   hardSeparators: String,
 ) : MatcherWithFallback(
-  MinusculeMatcherImpl(pattern, options, hardSeparators),
-  withFixedLayout(pattern, options, hardSeparators)
+  MinusculeMatcherImpl(pattern, matchingMode, hardSeparators),
+  withFixedLayout(pattern, matchingMode, hardSeparators)
 ) {
+
+  @Deprecated("Use {@link #FixingLayoutMatcher(String, MatchingCaseSensitivity)} instead")
+  constructor(pattern: String, options: NameUtil.MatchingCaseSensitivity, hardSeparators: String) : this(pattern, options.matchingMode(), hardSeparators)
+
   companion object {
     @JvmStatic
     fun fixLayout(pattern: String): String? {
@@ -45,12 +50,12 @@ open class FixingLayoutMatcher(
 
     private fun withFixedLayout(
       pattern: String,
-      options: NameUtil.MatchingCaseSensitivity,
+      matchingMode: MatchingMode,
       hardSeparators: String,
     ): MinusculeMatcher? {
       val s: String? = fixLayout(pattern)
       return if (s != null && s != pattern) {
-        MinusculeMatcherImpl(s, options, hardSeparators)
+        MinusculeMatcherImpl(s, matchingMode, hardSeparators)
       }
       else {
         null

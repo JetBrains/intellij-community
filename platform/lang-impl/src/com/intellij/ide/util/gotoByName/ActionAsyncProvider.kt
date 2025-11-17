@@ -27,6 +27,7 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.CollectConsumer
 import com.intellij.util.gotoByName.FindActionSearchableOptionsFilter
+import com.intellij.util.text.matching.MatchingMode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.asFlow
@@ -481,7 +482,7 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
 
   private fun buildWeightMatcher(pattern: String): MinusculeMatcher {
     return NameUtil.buildMatcher("*$pattern")
-      .withCaseSensitivity(NameUtil.MatchingCaseSensitivity.NONE)
+      .withMatchingMode(MatchingMode.IGNORE_CASE)
       .preferringStartMatches()
       .build()
   }

@@ -2,15 +2,18 @@ f:com.intellij.psi.codeStyle.AllOccurrencesMatcher
 - com.intellij.psi.codeStyle.MinusculeMatcher
 - sf:Companion:com.intellij.psi.codeStyle.AllOccurrencesMatcher$Companion
 - sf:create(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher
+- sf:create(java.lang.String,com.intellij.util.text.matching.MatchingMode,java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher
 - getPattern():java.lang.String
 - matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
 f:com.intellij.psi.codeStyle.AllOccurrencesMatcher$Companion
 - f:create(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher
+- f:create(java.lang.String,com.intellij.util.text.matching.MatchingMode,java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher
 c:com.intellij.psi.codeStyle.FixingLayoutMatcher
 - com.intellij.psi.codeStyle.MinusculeMatcher
 - sf:Companion:com.intellij.psi.codeStyle.FixingLayoutMatcher$Companion
 - <init>(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):V
+- <init>(java.lang.String,com.intellij.util.text.matching.MatchingMode,java.lang.String):V
 - sf:fixLayout(java.lang.String):java.lang.String
 f:com.intellij.psi.codeStyle.FixingLayoutMatcher$Companion
 - f:fixLayout(java.lang.String):java.lang.String
@@ -32,7 +35,8 @@ f:com.intellij.psi.codeStyle.NameUtil
 - s:buildMatcher(java.lang.String):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
 - s:buildMatcher(java.lang.String,I,Z,Z):com.intellij.util.text.Matcher
 - s:buildMatcher(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity):com.intellij.psi.codeStyle.MinusculeMatcher
-- s:buildMatcherWithFallback(java.lang.String,java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity):com.intellij.psi.codeStyle.MinusculeMatcher
+- s:buildMatcher(java.lang.String,com.intellij.util.text.matching.MatchingMode):com.intellij.psi.codeStyle.MinusculeMatcher
+- s:buildMatcherWithFallback(java.lang.String,java.lang.String,com.intellij.util.text.matching.MatchingMode):com.intellij.psi.codeStyle.MinusculeMatcher
 - s:buildRegexp(java.lang.String,I,Z,Z):java.lang.String
 - s:buildRegexp(java.lang.String,I,Z,Z,Z,Z):java.lang.String
 - s:capitalizeAndUnderscore(java.lang.String):java.lang.String
@@ -50,6 +54,7 @@ f:com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
 - preferringStartMatches():com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
 - typoTolerant():com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
 - withCaseSensitivity(com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
+- withMatchingMode(com.intellij.util.text.matching.MatchingMode):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
 - withSeparators(java.lang.String):com.intellij.psi.codeStyle.NameUtil$MatcherBuilder
 e:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
 - java.lang.Enum
@@ -77,3 +82,11 @@ f:com.intellij.util.text.matching.KeyboardLayoutUtil
 - <init>():V
 - s:getAsciiForChar(C):java.lang.Character
 - s:storeAsciiForChar(I,C,I,I):V
+e:com.intellij.util.text.matching.MatchingMode
+- java.lang.Enum
+- sf:FIRST_LETTER:com.intellij.util.text.matching.MatchingMode
+- sf:IGNORE_CASE:com.intellij.util.text.matching.MatchingMode
+- sf:MATCH_CASE:com.intellij.util.text.matching.MatchingMode
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.util.text.matching.MatchingMode
+- s:values():com.intellij.util.text.matching.MatchingMode[]

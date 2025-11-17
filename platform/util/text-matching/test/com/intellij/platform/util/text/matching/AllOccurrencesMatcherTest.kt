@@ -3,14 +3,14 @@ package com.intellij.platform.util.text.matching
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.AllOccurrencesMatcher
-import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.util.text.matching.MatchingMode
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class AllOccurrencesMatcherTest {
   @Test
   fun simpleCase() {
-    val matcher = AllOccurrencesMatcher.create("*fooBar", NameUtil.MatchingCaseSensitivity.NONE, "")
+    val matcher = AllOccurrencesMatcher.create("*fooBar", MatchingMode.IGNORE_CASE, "")
     assertEquals(matcher.matchingFragments("fooBarFooBar")?.toList(), listOf(TextRange(0, 6), TextRange(6, 12)));
     assertEquals(matcher.matchingFragments("fooBarFooBuzzBar")?.toList(), listOf(TextRange(0, 6), TextRange(6, 9), TextRange(13, 16)));
     assertEquals(matcher.matchingFragments("fooBarBuzzFoo")?.toList(), listOf(TextRange(0, 6)));
