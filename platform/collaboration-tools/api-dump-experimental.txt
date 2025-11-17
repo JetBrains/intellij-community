@@ -1022,6 +1022,14 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - a:getKey():java.lang.Object
 - a:getLine():kotlinx.coroutines.flow.StateFlow
 - a:isVisible():kotlinx.coroutines.flow.StateFlow
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel
+- a:getRange():kotlinx.coroutines.flow.StateFlow
+- a:getShouldShowOutline():kotlinx.coroutines.flow.StateFlow
+- a:isDimmed():kotlinx.coroutines.flow.StateFlow
+- a:isFocused():kotlinx.coroutines.flow.StateFlow
+- a:setDimmed(Z):V
+- a:setFocused(Z):V
+- a:showOutline(Z):V
 *f:com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt
 - sf:controlInlaysIn(com.intellij.openapi.editor.ex.EditorEx,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - sf:insertComponentAfter(com.intellij.openapi.editor.ex.EditorEx,I,javax.swing.JComponent,I,kotlin.jvm.functions.Function1):com.intellij.openapi.editor.Inlay
@@ -1034,6 +1042,12 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - com.intellij.collaboration.ui.codereview.editor.EditorMapped
 - a:getLine():kotlinx.coroutines.flow.StateFlow
 - a:isVisible():kotlinx.coroutines.flow.StateFlow
+*:com.intellij.collaboration.ui.codereview.editor.ResizableInlayModel
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel
+- a:isHidden():kotlinx.coroutines.flow.StateFlow
+- a:requestFocus():V
+- a:setHidden(Z):V
+- a:setRange(kotlin.Pair):V
 *f:com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 - f:getREVIEW_CHANGES_STATUS_COLOR():com.intellij.ui.JBColor

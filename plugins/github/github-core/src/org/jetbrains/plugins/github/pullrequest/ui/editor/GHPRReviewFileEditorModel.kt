@@ -230,6 +230,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
     private val manualRange = MutableStateFlow(range.value)
     private var isManualUpdate = false
 
+    override fun requestFocus() = vm.requestFocus()
     override fun setRange(range: Pair<Side, IntRange>?) {
       if (manualRange.value == range) return
       isManualUpdate = true

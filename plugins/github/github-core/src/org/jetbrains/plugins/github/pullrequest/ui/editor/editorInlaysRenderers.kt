@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.util.addMouseHoverListener
@@ -16,7 +17,6 @@ import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
 import org.jetbrains.plugins.github.pullrequest.ui.FadeLayerUI
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRHoverableReviewComment
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JLayer
@@ -24,7 +24,7 @@ import javax.swing.JLayer
 @ApiStatus.Internal
 class GHPRReviewThreadEditorInlayRenderer internal constructor(
   cs: CoroutineScope,
-  hoverableVm: GHPRHoverableReviewComment,
+  hoverableVm: CodeReviewInlayWithOutlineModel,
   vm: GHPRCompactReviewThreadViewModel,
 ) : CodeReviewComponentInlayRenderer(
   run {
@@ -47,7 +47,7 @@ class GHPRReviewThreadEditorInlayRenderer internal constructor(
 @ApiStatus.Internal
 class GHPRNewCommentEditorInlayRenderer internal constructor(
   cs: CoroutineScope,
-  hoverableVm: GHPRHoverableReviewComment,
+  hoverableVm: CodeReviewInlayWithOutlineModel,
   vm: GHPRReviewNewCommentEditorViewModel,
 ) : CodeReviewComponentInlayRenderer(
   run {
@@ -79,7 +79,7 @@ internal class GHPRAICommentEditorInlayRenderer internal constructor(userIcon: I
 })
 
 
-private class MouseOverInlayListener(val vm: GHPRHoverableReviewComment) : HoverStateListener() {
+private class MouseOverInlayListener(val vm: CodeReviewInlayWithOutlineModel) : HoverStateListener() {
   override fun hoverChanged(component: Component, hovered: Boolean) {
     vm.showOutline(hovered)
   }

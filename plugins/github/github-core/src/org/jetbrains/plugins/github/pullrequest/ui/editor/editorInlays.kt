@@ -3,6 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel
+import com.intellij.collaboration.ui.codereview.editor.ResizableInlayModel
 import com.intellij.collaboration.util.Hideable
 import com.intellij.diff.util.Side
 import kotlinx.coroutines.CoroutineScope
@@ -10,17 +12,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCodeReviewInlayWithOutlineModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRHoverableReviewComment
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRHoverableReviewCommentImpl
 import javax.swing.Icon
 
-internal sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel, GHPRHoverableReviewComment {
-  val range: StateFlow<Pair<Side, IntRange>?>
+internal sealed interface GHPREditorMappedComponentModel : CodeReviewInlayWithOutlineModel, CodeReviewInlayModel {
 
   abstract class Thread<VM : GHPRCompactReviewThreadViewModel>(val vm: VM)
     : GHPREditorMappedComponentModel, Hideable,
-      GHPRHoverableReviewComment by GHPRHoverableReviewCommentImpl() {
+      CodeReviewInlayWithOutlineModel by GHPRCodeReviewInlayWithOutlineModelImpl() {
     final override val key: Any = vm.id
     final override val hiddenState = MutableStateFlow(false)
     final override fun setHidden(hidden: Boolean) {
@@ -29,17 +29,17 @@ internal sealed interface GHPREditorMappedComponentModel : CodeReviewInlayModel,
   }
 
   abstract class NewComment<VM : GHPRReviewNewCommentEditorViewModel>(val vm: VM)
-    : GHPREditorMappedComponentModel, GHPRHoverableReviewComment by GHPRHoverableReviewCommentImpl() {
-    abstract fun setRange(range: Pair<Side, IntRange>?)
+    : GHPREditorMappedComponentModel, ResizableInlayModel, CodeReviewInlayWithOutlineModel by GHPRCodeReviewInlayWithOutlineModelImpl() {
+    abstract override fun setRange(range: Pair<Side, IntRange>?)
     private val _isHidden: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isHidden: StateFlow<Boolean> = _isHidden.asStateFlow()
-    fun isHidden(hidden: Boolean) {
+    override val isHidden: StateFlow<Boolean> = _isHidden.asStateFlow()
+    override fun setHidden(hidden: Boolean) {
       _isHidden.value = hidden
     }
   }
 
   abstract class AIComment(val vm: GHPRAICommentViewModel)
-    : GHPREditorMappedComponentModel, Hideable, GHPRHoverableReviewComment by GHPRHoverableReviewCommentImpl() {
+    : GHPREditorMappedComponentModel, Hideable, CodeReviewInlayWithOutlineModel by GHPRCodeReviewInlayWithOutlineModelImpl() {
     final override val key: Any = vm.key
     final override val hiddenState = MutableStateFlow(false)
     final override fun setHidden(hidden: Boolean) {

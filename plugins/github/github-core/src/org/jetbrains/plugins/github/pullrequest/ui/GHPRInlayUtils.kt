@@ -5,10 +5,9 @@ import com.intellij.collaboration.action.findFocusedThreadId
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
+import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.ide.IdeTooltip
@@ -36,9 +35,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.comment.CommentedCodeFrameRenderer
-import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPREditorMappedComponentModel
 import java.awt.*
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -53,13 +50,13 @@ internal object GHPRInlayUtils {
     editor: Editor,
     isUnifiedDiff: Boolean,
     locationToLine: ((DiffLineLocation) -> Int?)?,
-    vm: GHPREditorMappedComponentModel,
+    vm: CodeReviewInlayWithOutlineModel,
   ) {
     val cs: CoroutineScope = parentCs.childScope("Comment inlay hover controller")
 
     var activeLineHighlighter: RangeHighlighter? = null
     val multilineCommentsDisabled = Registry.get("github.pr.new.multiline.comments.disabled").asBoolean()
-    val frameResizer = if (vm is GHPREditorMappedComponentModel.NewComment<*> && !(isUnifiedDiff && multilineCommentsDisabled)) {
+    val frameResizer = if (vm is ResizableInlayModel && !(isUnifiedDiff && multilineCommentsDisabled)) {
       ResizingFrameListener(editor, vm).also {
         editor.addEditorMouseMotionListener(it)
         editor.addEditorMouseListener(it)
@@ -117,7 +114,7 @@ internal object GHPRInlayUtils {
 
   private class ResizingFrameListener(
     private val editor: Editor,
-    private val vm: GHPREditorMappedComponentModel.NewComment<*>,
+    private val vm: ResizableInlayModel,
   ) : EditorMouseListener, EditorMouseMotionListener {
     private val editorEx = editor as EditorEx
     private val model: CodeReviewEditorGutterControlsModel.WithMultilineComments?
@@ -125,7 +122,7 @@ internal object GHPRInlayUtils {
 
     private var isDraggingFrame: Boolean = false
       set(value) {
-        vm.isHidden(value)
+        vm.setHidden(value)
         field = value
       }
 
@@ -183,7 +180,7 @@ internal object GHPRInlayUtils {
         isDraggingFrame = false
         val range = vm.range.value?.second ?: return
         model?.updateCommentLines(oldRange!!, LineRange(range.first, range.last)) ?: return
-        vm.vm.requestFocus()
+        vm.requestFocus()
         editorEx.setCustomCursor(this, null)
       }
     }
@@ -262,7 +259,7 @@ internal object GHPRInlayUtils {
       }
 
       if (currentTooltip == null) {
-        val label = JLabel(GithubBundle.message("pull.request.review.new.comment.code.outline.tooltip"))
+        val label = JLabel(CollaborationToolsBundle.message("review.comments.code.outline.tooltip"))
         currentTooltip = IdeTooltip(component, offsetPoint, label)
           .setPreferredPosition(Balloon.Position.below)
           .setShowCallout(false)
@@ -296,9 +293,9 @@ internal object GHPRInlayUtils {
     }
     cs.launch {
       model.inlays
-        .map { it.filterIsInstance<GHPREditorMappedComponentModel>() }
+        .map { it.filterIsInstance<CodeReviewInlayWithOutlineModel>() }
         .combine(focusedThreadFlow) { inlays, focusedThreadId ->
-          inlays.forEach { it.setFocused(it.key == focusedThreadId) }
+          inlays.forEach { it.setFocused((it as? CodeReviewInlayModel)?.key == focusedThreadId) }
         }.collect()
     }
   }
@@ -307,7 +304,7 @@ internal object GHPRInlayUtils {
   fun installInlaysDimming(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>, locationToLine: ((DiffLineLocation) -> Int?)?) {
     cs.launchNow {
       model.inlays
-        .map { it.filterIsInstance<GHPREditorMappedComponentModel>() }
+        .map { it.filterIsInstance<CodeReviewInlayWithOutlineModel>() }
         .flatMapLatestEach { item ->
           combine(item.shouldShowOutline, item.range) { shouldShowOutline, range ->
             InlayState(item, shouldShowOutline, range)
@@ -344,7 +341,7 @@ internal object GHPRInlayUtils {
   }
 
   private data class InlayState(
-    val inlay: GHPREditorMappedComponentModel,
+    val inlay: CodeReviewInlayWithOutlineModel,
     val shouldShowOutline: Boolean,
     val range: Pair<Side, IntRange>?,
   )

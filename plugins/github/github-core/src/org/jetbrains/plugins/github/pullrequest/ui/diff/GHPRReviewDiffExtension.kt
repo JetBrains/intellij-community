@@ -288,6 +288,8 @@ private class DiffEditorModel(
     override fun setRange(range: Pair<Side, IntRange>?) {
       _range.value = range
     }
+
+    override fun requestFocus() = vm.requestFocus()
   }
 
   private inner class MappedAIComment(vm: GHPRAICommentViewModel)
