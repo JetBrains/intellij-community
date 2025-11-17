@@ -17,6 +17,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.path.EelPath
@@ -27,6 +28,7 @@ import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.icons.EMPTY_ICON
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.*
@@ -314,15 +316,23 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
 
   @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
+    return createProcess(commandLine, EnvironmentVariablesOptionsBuilder().build())
+  }
+
+  @Throws(ExecutionException::class)
+  fun createProcess(
+    commandLine: TargetedCommandLine,
+    parentEnvVarsOptions: EelExecApi.EnvironmentVariablesOptions,
+  ): Process {
     val command = commandLine.collectCommandsSynchronously()
     val builder = eel.exec.spawnProcess(command.first())
 
     builder.args(command.drop(1))
-    builder.env(commandLine.environmentVariables)
     builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, eel.descriptor) })
     builder.interactionOptions(commandLine.interactionOptions())
 
     return runBlockingCancellable {
+      builder.env(buildEnvs(commandLine.environmentVariables, parentEnvVarsOptions))
       try {
         builder.eelIt().convertToJavaProcess()
       }
@@ -330,6 +340,26 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
         throw ExecutionException(e)
       }
     }
+  }
+
+  @Throws(ExecutionException::class)
+  private suspend fun buildEnvs(
+    additionalEnvs: Map<String, String>,
+    parentEnvVarsOptions: EelExecApi.EnvironmentVariablesOptions,
+  ): Map<String, String> {
+    val parentEnvs = try {
+      eel.exec.environmentVariables(parentEnvVarsOptions).await()
+    }
+    catch (e: EnvironmentVariablesException) {
+      throw ExecutionException(e)
+    }
+    val envs: MutableMap<String, String> = when (eel.descriptor.osFamily) {
+      EelOsFamily.Windows -> CollectionFactory.createCaseInsensitiveStringMap()
+      EelOsFamily.Posix -> HashMap()
+    }
+    envs.putAll(parentEnvs)
+    envs.putAll(additionalEnvs)
+    return envs
   }
 
   private fun TargetedCommandLine.interactionOptions(): EelExecApi.InteractionOptions? = when {

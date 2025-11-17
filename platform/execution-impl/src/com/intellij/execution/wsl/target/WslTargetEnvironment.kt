@@ -10,8 +10,11 @@ import com.intellij.execution.wsl.rootMappings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelExecPosixApi.PosixEnvironmentVariablesOptions.Mode
 import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.PosixEnvironmentVariablesOptionsBuilder
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.util.asSafely
@@ -108,7 +111,22 @@ class WslTargetEnvironment(
         TargetValue.fixed(value)
       })
     }.build()
-    return delegate.createProcess(resultCommandLine, indicator)
+    return delegate.createProcess(resultCommandLine, parentEnvVarsOptions())
+  }
+
+  private fun parentEnvVarsOptions(): EelExecPosixApi.PosixEnvironmentVariablesOptions {
+    // The command should be executed with login non-interactive environment variables by default.
+    // Or with login interactive environment variables if `wslOptions.isExecuteCommandInInteractiveShell` is enabled.
+    val mode = if (request.wslOptions.isExecuteCommandInShell && request.wslOptions.isExecuteCommandInLoginShell) {
+      // Here the command is executed in a login shell, like `/usr/bin/bash -l -c "command"`
+      // => no need to fetch the login env vars on the IDE side.
+      // Moreover, spawning with the login env vars may influence login shell startup in unpredictable ways.
+      Mode.MINIMAL
+    }
+    else {
+      Mode.LOGIN_NON_INTERACTIVE
+    }
+    return PosixEnvironmentVariablesOptionsBuilder().mode(mode).build()
   }
 
   override fun shutdown() {
