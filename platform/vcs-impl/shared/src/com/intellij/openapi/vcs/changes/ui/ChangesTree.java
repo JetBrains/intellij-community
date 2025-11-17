@@ -512,16 +512,18 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   public void selectFile(@Nullable FilePath toSelect) {
     if (toSelect == null) return;
     TreeNode node = findNodeContainingFile(getRoot(), toSelect);
-    TreeUtil.selectNode(this, node);
+    if (node != null) {
+      TreeUtil.selectNode(this, node);
+    }
   }
 
   private static @Nullable TreeNode findNodeContainingFile(@NotNull TreeNode root, @NotNull FilePath toSelect) {
     return TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
-      if (node instanceof DefaultMutableTreeNode) {
-        Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-        if (userObject instanceof Change) {
-          return matches((Change)userObject, toSelect);
-        }
+      if (node instanceof DefaultMutableTreeNode mutableTreeNode) {
+        Object userObject = mutableTreeNode.getUserObject();
+        return (userObject instanceof Change change) ?
+               matches(change, toSelect) :
+               toSelect.equals(VcsTreeModelData.mapUserObjectToFilePath(userObject));
       }
       return false;
     });
