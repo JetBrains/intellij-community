@@ -85,6 +85,6 @@ open class LinuxDistributionCustomizer {
    * Override this method to copy additional files to the Linux distribution of the product.
    */
   open suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
-    RepairUtilityBuilder.bundle(context, OsFamily.LINUX, arch, targetDir)
+    RepairUtilityBuilder.bundle(OsFamily.LINUX, arch, targetDir, context)
   }
 }

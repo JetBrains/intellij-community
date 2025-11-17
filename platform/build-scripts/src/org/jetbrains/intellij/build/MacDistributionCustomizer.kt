@@ -22,22 +22,22 @@ open class MacDistributionCustomizer {
    *
    * Reference: [Apple Icon Image Format](https://en.wikipedia.org/wiki/Apple_Icon_Image_format).
    */
-  lateinit var icnsPath: String
+  lateinit var icnsPath: Path
 
   /**
    * Path to an .icns file for EAP builds (if `null`, [icnsPath] will be used).
    */
-  var icnsPathForEAP: String? = null
+  var icnsPathForEAP: Path? = null
 
   /**
    * Path to an alternative .icns file in macOS Big Sur style
    */
-  var icnsPathForAlternativeIcon: String? = null
+  var icnsPathForAlternativeIcon: Path? = null
 
   /**
    * Path to an alternative .icns file in macOS Big Sur style for EAP
    */
-  var icnsPathForAlternativeIconForEAP: String? = null
+  var icnsPathForAlternativeIconForEAP: Path? = null
 
   /**
    * Relative paths to files in macOS distribution which should take 'executable' permissions.
@@ -56,7 +56,7 @@ open class MacDistributionCustomizer {
   /**
    * Path to an image which will be injected into the .dmg file.
    */
-  lateinit var dmgImagePath: String
+  lateinit var dmgImagePath: Path
 
   /**
    * The minimum version of macOS where the product is allowed to be installed.
@@ -114,7 +114,7 @@ open class MacDistributionCustomizer {
   /**
    * Path to an image which will be injected into .dmg file for EAP builds (if `null` dmgImagePath will be used).
    */
-  var dmgImagePathForEAP: String? = null
+  var dmgImagePathForEAP: Path? = null
 
   /**
    * If `true`, a separate *-[org.jetbrains.intellij.build.impl.NO_RUNTIME_SUFFIX].dmg artifact without a runtime will be produced.
@@ -139,7 +139,7 @@ open class MacDistributionCustomizer {
    * Override this method to copy additional files to the macOS distribution of the product.
    */
   open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
-    RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, targetDir)
+    RepairUtilityBuilder.bundle(os = OsFamily.MACOS, arch = arch, distributionDir = targetDir, context = context)
   }
 
   open fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, context: BuildContext): Sequence<String> {
