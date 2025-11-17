@@ -19,10 +19,10 @@ internal class PyInspectionTestJUnit5Extension : AfterEachCallback, BeforeEachCa
     val annotation = testClass.kotlin.findAnnotation<InspectionTest>()
                      ?: error("@InspectionTest is missing on ${testClass.name}")
 
-    val inspectionClass: Class<out LocalInspectionTool> = annotation.inspectionClass.java
+    val inspectionClasses = annotation.inspectionClasses.map { it.java }
     val testMethodLevelManager = context.getLookupFixtureManager()
     val codeInsightFixture = testMethodLevelManager.getRequired<CodeInsightTestFixture>()
-    codeInsightFixture.get().enableInspections(inspectionClass)
+    codeInsightFixture.get().enableInspections(inspectionClasses)
     InspectionProfileImpl.INIT_INSPECTIONS = true
   }
 

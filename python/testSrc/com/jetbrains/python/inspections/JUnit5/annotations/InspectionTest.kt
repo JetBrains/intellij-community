@@ -12,4 +12,4 @@ import kotlin.reflect.KClass
 @ApiStatus.Experimental
 @ExtendWith(PyInspectionTestJUnit5Extension::class)
 @Target(AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
-annotation class InspectionTest(val inspectionClass: KClass<out LocalInspectionTool>)
+annotation class InspectionTest(vararg val inspectionClasses: KClass<out LocalInspectionTool>)
