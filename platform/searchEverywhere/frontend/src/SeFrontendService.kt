@@ -20,8 +20,8 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeSessionEntity
 import com.intellij.platform.searchEverywhere.asRef
-import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedTab
+import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedTabFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTab
@@ -268,7 +268,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val tabs = orphanedRemoteAdaptedTabInfos.map {
       // This trick is supposed to work only for monolith mode
       val filterEditor = frontendProvidersHolder.legacySeparateTabContributors[it.providerId]?.let { contributor ->
-        SeAdaptedFilterEditor(contributor)
+        SeAdaptedTabFilterEditor(contributor)
       }
 
       popupScope.async {

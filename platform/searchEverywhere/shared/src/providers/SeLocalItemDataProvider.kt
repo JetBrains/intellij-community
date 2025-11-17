@@ -20,12 +20,9 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
-import kotlin.collections.filter
-import kotlin.collections.map
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
-import kotlin.to
 
 @ApiStatus.Internal
 class SeLocalItemDataProvider(
@@ -167,16 +164,10 @@ class SeLocalItemDataProvider(
   }
 
   fun isPreviewEnabled(): Boolean {
-    if (provider is SeAdaptedItemsProvider) {
-      return provider.isPreviewProvider()
-    }
     return provider is SeItemsPreviewProvider
   }
 
   fun isExtendedInfoEnabled(): Boolean {
-    if (provider is SeAdaptedItemsProvider) {
-      return provider.isExtendedInfoProvider()
-    }
     return provider is SeExtendedInfoProvider
   }
 

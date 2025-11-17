@@ -2,8 +2,6 @@
 package com.intellij.platform.searchEverywhere.providers
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
@@ -51,14 +49,6 @@ class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>) : Se
   }
 
   override suspend fun canBeShownInFindResults(): Boolean = contributorWrapper.contributor.showInFindResults()
-
-  fun isPreviewProvider(): Boolean {
-    return contributorWrapper.contributor is SearchEverywherePreviewProvider
-  }
-
-  fun isExtendedInfoProvider(): Boolean {
-    return contributorWrapper.contributor is SearchEverywhereExtendedInfoProvider
-  }
 
   fun isCommandsSupported(): Boolean {
     return contributorWrapper.contributor.supportedCommands.isNotEmpty()

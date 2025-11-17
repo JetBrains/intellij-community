@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.tabs
 
+import com.intellij.ide.actions.searcheverywhere.PreviewAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -23,13 +24,13 @@ import java.util.*
 class SeAdaptedTab private constructor(delegate: SeTabDelegate,
                                        override val name: @Nls String,
                                        override val id: String,
-                                       private val filterEditor: SeAdaptedFilterEditor?): SeDefaultTabBase(delegate) {
+                                       private val filterEditor: SeAdaptedTabFilterEditor?): SeDefaultTabBase(delegate) {
   override suspend fun getFilterEditor(): SeFilterEditor? = filterEditor
 
   companion object {
     fun create(legacyContributorId: String,
                name: @Nls String,
-               filterEditor: SeAdaptedFilterEditor?,
+               filterEditor: SeAdaptedTabFilterEditor?,
                scope: CoroutineScope,
                project: Project?,
                session: SeSession,
@@ -42,13 +43,16 @@ class SeAdaptedTab private constructor(delegate: SeTabDelegate,
 }
 
 @ApiStatus.Internal
-class SeAdaptedFilterEditor(val contributor: SearchEverywhereContributor<Any>) : SeFilterEditor {
+class SeAdaptedTabFilterEditor(val contributor: SearchEverywhereContributor<Any>) : SeFilterEditor {
   override val resultFlow: StateFlow<SeFilterState> get() = _resultFlow.asStateFlow()
   private val _resultFlow = MutableStateFlow(SeAdaptedTabFilter().toState())
 
   override fun getHeaderActions(): List<AnAction> = contributor.getActions {
     // Generate the new value to restart the search
     _resultFlow.value = SeAdaptedTabFilter().toState()
+  }.filter {
+    // Intentionally avoid preview action because it's not supported at this moment for adapted tabs
+    it !is PreviewAction
   }
 }
 
