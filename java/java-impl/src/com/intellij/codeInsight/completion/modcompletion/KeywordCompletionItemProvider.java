@@ -49,7 +49,7 @@ import static com.intellij.psi.SyntaxTraverser.psiApi;
 
 /**
  * A provider for Java keywords completion.
- * 
+ * <p> 
  * TODO: disable completion chars
  */
 @NotNullByDefault
@@ -126,6 +126,9 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
         return;
       }
 
+      if (addWildcardExtendsSuper()) {
+        return;
+      }
       addFinal();
       addWhen();
       boolean statementPosition = isStatementPosition(myPosition);
@@ -781,6 +784,18 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       addKeyword(createKeyword(JavaKeywords.WHEN, (ModNavigatorTailType)TailTypes.insertSpaceType()));
     }
 
+    private boolean addWildcardExtendsSuper() {
+      if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(myPosition)) {
+        for (String keyword : ContainerUtil.ar(JavaKeywords.EXTENDS, JavaKeywords.SUPER)) {
+          if (myKeywordMatcher.isStartMatch(keyword)) {
+            addKeyword(createKeyword(keyword, (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType()));
+          }
+        }
+        return true;
+      }
+      return false;
+    }
+    
     private void addFinal() {
       PsiStatement statement = PsiTreeUtil.getParentOfType(myPosition, PsiExpressionStatement.class, PsiDeclarationStatement.class);
       if (statement != null && statement.getTextRange().getStartOffset() == myPosition.getTextRange().getStartOffset()) {
