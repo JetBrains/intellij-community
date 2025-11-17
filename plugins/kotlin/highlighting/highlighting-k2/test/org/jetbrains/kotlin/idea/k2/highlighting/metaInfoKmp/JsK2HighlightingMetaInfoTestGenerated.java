@@ -351,6 +351,11 @@ public abstract class JsK2HighlightingMetaInfoTestGenerated extends AbstractK2Hi
             runTest("../../idea/tests/testData/highlighterMetaInfo/NamedArguments.kt");
         }
 
+        @TestMetadata("NamedDestructuring.kt")
+        public void testNamedDestructuring() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/NamedDestructuring.kt");
+        }
+
         @TestMetadata("NonNullAssertion.kt")
         public void testNonNullAssertion() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/NonNullAssertion.kt");
