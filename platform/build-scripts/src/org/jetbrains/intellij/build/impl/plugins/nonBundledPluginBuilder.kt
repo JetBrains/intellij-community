@@ -15,8 +15,8 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.apache.commons.compress.archivers.zip.Zip64Mode
@@ -42,6 +42,7 @@ import org.jetbrains.intellij.build.impl.executableFileUnixMode
 import org.jetbrains.intellij.build.impl.generatePluginRepositoryMetaFile
 import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
 import org.jetbrains.intellij.build.impl.nonBundledPluginsStageDir
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
@@ -58,7 +59,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 internal suspend fun buildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
-  buildPlatformLibJob: Job?,
+  buildPlatformLibJob: Deferred<List<DistributionFileEntry>>?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   descriptorCacheContainer: DescriptorCacheContainer,
@@ -81,7 +82,7 @@ internal suspend fun buildNonBundledPlugins(
 internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
   pluginsToPublish: Set<PluginLayout>,
   compressPluginArchive: Boolean,
-  buildPlatformLibJob: Job?,
+  buildPlatformLibJob: Deferred<List<DistributionFileEntry>>?,
   state: DistributionBuilderState,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   isUpdateFromSources: Boolean,

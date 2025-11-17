@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.dev
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
@@ -24,6 +23,7 @@ import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
 import org.jetbrains.intellij.build.impl.handleCustomPlatformSpecificAssets
 import org.jetbrains.intellij.build.impl.plugins.buildPlugins
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -41,7 +41,7 @@ internal suspend fun buildPluginsForDevMode(
   runDir: Path,
   platformLayout: Deferred<PlatformLayout>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
-  buildPlatformJob: Job,
+  buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   moduleOutputPatcher: ModuleOutputPatcher,
 ): PluginsLayoutResult {
   val bundledMainModuleNames = getBundledMainModuleNames(context, request.additionalModules)

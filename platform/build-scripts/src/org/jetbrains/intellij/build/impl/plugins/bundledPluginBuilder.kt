@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build.impl.plugins
 import io.opentelemetry.api.common.AttributeKey
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.intellij.build.BuildContext
@@ -103,7 +102,7 @@ private suspend fun buildOsSpecificBundledPlugins(
   state: DistributionBuilderState,
   plugins: Set<PluginLayout>,
   isUpdateFromSources: Boolean,
-  buildPlatformJob: Job?,
+  buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   context: BuildContext,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   pluginDirs: List<Pair<SupportedDistribution, Path>>,
@@ -156,7 +155,7 @@ internal suspend fun buildBundledPlugins(
   state: DistributionBuilderState,
   plugins: Collection<PluginLayout>,
   isUpdateFromSources: Boolean,
-  buildPlatformJob: Job?,
+  buildPlatformJob: Deferred<List<DistributionFileEntry>>,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   moduleOutputPatcher: ModuleOutputPatcher,
   descriptorCacheContainer: DescriptorCacheContainer,

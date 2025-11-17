@@ -19,11 +19,12 @@ interface ScrambleTool {
   /**
    * Scramble [PluginLayout.mainJarName] in "[BuildPaths.distAllDir]/lib" directory
    */
-  suspend fun scramble(platformLayout: PlatformLayout, platformFileEntries: List<DistributionFileEntry>, context: BuildContext)
+  suspend fun scramble(platformLayout: PlatformLayout, platformContent: List<DistributionFileEntry>, context: BuildContext)
 
   suspend fun scramblePlugin(
     pluginLayout: PluginLayout,
     platformLayout: PlatformLayout,
+    platformContent: List<DistributionFileEntry>,
     targetDir: Path,
     additionalPluginDir: Path,
     layouts: Collection<PluginLayout>,
@@ -37,3 +38,5 @@ interface ScrambleTool {
 
   suspend fun validatePlatformLayout(modules: Collection<ModuleItem>, context: BuildContext)
 }
+
+internal class PluginScrambleTask(@JvmField val pluginLayout: PluginLayout, @JvmField val pluginDir: Path, @JvmField val targetDir: Path)

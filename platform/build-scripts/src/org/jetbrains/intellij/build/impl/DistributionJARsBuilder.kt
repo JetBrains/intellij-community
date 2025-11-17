@@ -8,6 +8,7 @@ import com.intellij.util.io.Compressor
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -200,7 +201,7 @@ suspend fun buildPlatform(
       Span.current().addEvent("skip scrambling because `scrambleTool` isn't defined")
     }
     else {
-      tool.scramble(platformLayout = state.platformLayout, platformFileEntries = distributionFileEntries, context = context)
+      tool.scramble(platformLayout = state.platformLayout, platformContent = distributionFileEntries, context = context)
     }
   }
   return distributionFileEntries
@@ -237,17 +238,18 @@ fun validateModuleStructure(platform: PlatformLayout, context: BuildContext) {
   }
 }
 
-suspend fun buildBundledPlugins(
+suspend fun buildBundledPluginsAsStandaloneTask(
   state: DistributionBuilderState,
   plugins: Collection<PluginLayout>,
   searchableOptionSetDescriptor: SearchableOptionSetDescriptor?,
+  platformContent: List<DistributionFileEntry>,
   context: BuildContext,
 ) {
   buildBundledPlugins(
     state = state,
     plugins = plugins,
     isUpdateFromSources = false,
-    buildPlatformJob = null,
+    buildPlatformJob = CompletableDeferred(platformContent),
     searchableOptionSet = searchableOptionSetDescriptor,
     moduleOutputPatcher = ModuleOutputPatcher(),
     descriptorCacheContainer = state.platformLayout.descriptorCacheContainer,

@@ -226,7 +226,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
         runDir = runDir,
         platformLayout = platformLayout,
         searchableOptionSet = searchableOptionSet,
-        buildPlatformJob = platformLayoutResultDeferred,
+        buildPlatformJob = async { platformLayoutResultDeferred.await().distributionEntries },
         moduleOutputPatcher = moduleOutputPatcher,
       )
     }
@@ -277,7 +277,7 @@ internal suspend fun buildProduct(request: BuildRequest, createProductProperties
 
       // must be before generatePluginClassPath, because we modify plugin descriptors (e.g., rename classes)
       spanBuilder("scramble platform").use {
-        request.scrambleTool?.scramble(platformLayout = platformLayout, platformFileEntries = platformFileEntries, context = context)
+        request.scrambleTool?.scramble(platformLayout = platformLayout, platformContent = platformFileEntries, context = context)
       }
 
       launch {
