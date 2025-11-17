@@ -235,7 +235,7 @@ internal class MultiversePsiEventTest {
   }
 
   @Test
-  fun `test we receive 2 before children changed events on updating content of a file with 2 psi files and WITHOT a document `() = doChangeTest(
+  fun `test we receive 2 before children changed events on updating content of a file with 2 psi files and WITHOUT a document`() = doChangeTest(
     listenerFactory = { counter ->
       object : PsiTreeChangeAdapter() {
         override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
@@ -252,7 +252,7 @@ internal class MultiversePsiEventTest {
   )
 
   @Test
-  fun `test we receive 2 children changed events on updating content of a file with 2 psi files and WITHOT a document `() = doChangeTest(
+  fun `test we receive 2 children changed events on updating content of a file with 2 psi files and WITHOUT a document`() = doChangeTest(
     listenerFactory = { counter ->
       object : PsiTreeChangeAdapter() {
         override fun childrenChanged(event: PsiTreeChangeEvent) {
