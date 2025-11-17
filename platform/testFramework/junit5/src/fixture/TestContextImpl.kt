@@ -17,7 +17,6 @@ internal class TestContextImpl(private val context: ExtensionContext, override v
         if (name.startsWith("test") && name.length > 4) name.removePrefix("test").trimStart()
         else name
       }
-      .replaceFirstChar { it.lowercaseChar() }
 
   override fun <T : Annotation> findAnnotation(clazz: Class<T>): T? {
     var extContext: ExtensionContext? = context

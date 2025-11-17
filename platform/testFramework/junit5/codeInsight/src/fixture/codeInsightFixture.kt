@@ -58,7 +58,7 @@ fun codeInsightFixture(
 fun <T: CodeInsightTestFixture> codeInsightFixture(
   projectFixture: TestFixture<Project>,
   tempDirFixture: TestFixture<Path>,
-  fixtureConstructor: (IdeaProjectTestFixture, TempDirTestFixture) -> T,
+  createFixture: (IdeaProjectTestFixture, TempDirTestFixture) -> T,
 ): TestFixture<T> = testFixture { context ->
   val project = projectFixture.init()
   val tempDir = tempDirFixture.init()
@@ -89,7 +89,7 @@ fun <T: CodeInsightTestFixture> codeInsightFixture(
     override fun deleteOnTearDown(): Boolean = false
   }
 
-  val codeInsightFixture = fixtureConstructor(projectFixture, tempDirFixture)
+  val codeInsightFixture = createFixture(projectFixture, tempDirFixture)
 
   codeInsightFixture.testDataPath = getTestDataPathString(context)
 

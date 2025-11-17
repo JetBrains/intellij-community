@@ -41,7 +41,7 @@ class TryFinallyCanBeTryWithResourcesInspectionTest {
   }
 
   @Test
-  fun tryFinallyCanBeTryWithResources() {
+  fun testTryFinallyCanBeTryWithResources() {
     fixture.testHighlighting("$testName.java")
   }
 }

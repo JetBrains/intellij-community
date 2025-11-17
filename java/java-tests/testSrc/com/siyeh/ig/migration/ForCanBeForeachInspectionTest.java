@@ -44,7 +44,7 @@ public class ForCanBeForeachInspectionTest {
   }
 
   @Test
-  void forCanBeForEach() {
+  void testForCanBeForEach() {
     fixture.get().testHighlighting(testName.get() + ".java");
   }
 }

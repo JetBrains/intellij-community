@@ -51,8 +51,10 @@ import kotlin.io.path.exists
 @JvmOverloads
 @TestOnly
 fun testNameFixture(lowerCaseFirstLetter: Boolean = true): TestFixture<String> = testFixture {
-  val testName = it.testName.replaceFirstChar {
-    chr -> if (lowerCaseFirstLetter) chr.lowercaseChar() else chr.uppercaseChar()
+  val testName = if (lowerCaseFirstLetter) {
+    it.testName.replaceFirstChar { chr -> chr.lowercaseChar() }
+  } else {
+    it.testName
   }
 
   initialized(testName) {}
