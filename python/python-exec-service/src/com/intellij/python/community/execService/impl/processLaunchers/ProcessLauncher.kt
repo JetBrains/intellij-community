@@ -27,10 +27,11 @@ internal class ProcessLauncher(
           it,
           processCommands.scopeToBind.coroutineContext[TraceContext.Key],
           Clock.System.now(),
-          processCommands.cwd,
+          processCommands.info.cwd,
           exeForError,
           args,
-          processCommands.env,
+          processCommands.info.env,
+          processCommands.info.target,
         )
       }
 
@@ -43,9 +44,14 @@ internal interface ProcessCommands {
   suspend fun start(): Result<Process, ExecErrorReason.CantStart>
   val processFunctions: ProcessFunctions
   val scopeToBind: CoroutineScope
-  val env: Map<String, String>
-  val cwd: String?
+  val info: ProcessCommandsInfo
 }
+
+internal data class ProcessCommandsInfo(
+  val env: Map<String, String>,
+  val cwd: String?,
+  val target: String,
+)
 
 internal data class LaunchRequest(
   val scopeToBind: CoroutineScope,

@@ -180,6 +180,7 @@ private class LoggingTest {
         ),
         args = command.drop(1),
         env = mapOf(),
+        target = "Local",
         lines = MutableSharedFlow(),
         exitInfo = MutableStateFlow(null),
       )
@@ -233,7 +234,8 @@ private class LoggingTest {
         cwd,
         Exe.fromString(pathToExe),
         args,
-        env
+        env,
+        "Local",
       )
   }
 }
