@@ -1675,12 +1675,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun getDescription(): @Nls String? {
-    return installedPluginMarketplaceNode?.description?.takeIf { it.isNotBlank() }
+    return updateDescriptor?.description?.takeIf { it.isNotBlank() }
+           ?: installedPluginMarketplaceNode?.description?.takeIf { it.isNotBlank() }
            ?: plugin?.description?.takeIf { it.isNotBlank() }
   }
 
   private fun getChangeNotes(): @NlsSafe String? {
-    return plugin?.changeNotes?.takeIf { it.isNotBlank() }
+    return updateDescriptor?.changeNotes?.takeIf { it.isNotBlank() }
+           ?: plugin?.changeNotes?.takeIf { it.isNotBlank() }
            ?: installedPluginMarketplaceNode?.changeNotes?.takeIf { it.isNotBlank() }
   }
 
