@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -134,6 +135,9 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
     sink.set(CommonDataKeys.VIRTUAL_FILE, file);
     Editor editor = getEditor();
     sink.set(CommonDataKeys.EDITOR, editor);
+    if (editor != null) {
+      sink.set(PlatformCoreDataKeys.FILE_EDITOR, TextEditorProvider.getInstance().getTextEditor(editor));
+    }
   }
 
   @Override
