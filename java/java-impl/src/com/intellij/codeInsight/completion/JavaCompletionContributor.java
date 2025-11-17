@@ -1520,7 +1520,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   private static @NotNull LookupElement markAsInaccessible(@NotNull LookupElement lookup) {
     return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(lookup, new LookupElementRenderer<>() {
       @Override
-      public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+      public void renderElement(@NotNull LookupElementDecorator<LookupElement> element, @NotNull LookupElementPresentation presentation) {
         element.getDelegate().renderElement(presentation);
         presentation.setItemTextForeground(JBColor.RED);
       }
