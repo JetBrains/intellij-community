@@ -11,7 +11,7 @@
     />
 
     <applicationService
-            serviceInterface="com.intellij.openapi.application.impl.TransferredWriteActionService"
+            serviceInterface="com.intellij.util.concurrency.TransferredWriteActionService"
             serviceImplementation="com.intellij.openapi.application.impl.TransferredWriteActionServiceImpl"
     />
 

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -8,6 +9,8 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.util.concurrency.TransferredWriteActionService;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -33,7 +36,8 @@ public final class FileContentUtilCore {
    * @param files the files to reparse.
    */
   public static void reparseFiles(@NotNull Collection<? extends VirtualFile> files) {
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    Application application = ApplicationManager.getApplication();
+    application.runWriteAction(() -> {
       // files must be processed under one write action to prevent firing event for invalid files.
       Set<VFilePropertyChangeEvent> events = new HashSet<>();
       for (VirtualFile file : files) {
@@ -45,9 +49,21 @@ public final class FileContentUtilCore {
       BulkFileListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
       BulkFileListenerBackgroundable publisherBackgroundable = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES_BG);
       List<VFileEvent> eventList = Collections.unmodifiableList(new ArrayList<>(events));
-      publisher.before(eventList);
+      if (EDT.isCurrentThreadEdt()) {
+        publisher.before(eventList);
+      } else {
+        application.getService(TransferredWriteActionService.class).runOnEdtWithTransferredWriteActionAndWait(() -> {
+          publisher.before(eventList);
+        });
+      }
       publisherBackgroundable.before(eventList);
-      publisher.after(eventList);
+      if (EDT.isCurrentThreadEdt()) {
+        publisher.after(eventList);
+      } else {
+        application.getService(TransferredWriteActionService.class).runOnEdtWithTransferredWriteActionAndWait(() -> {
+          publisher.after(eventList);
+        });
+      }
       publisherBackgroundable.after(eventList);
 
       ForcefulReparseModificationTracker.increment();
