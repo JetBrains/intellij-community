@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.core.script.shared
 
 import com.intellij.openapi.extensions.ProjectExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
@@ -11,16 +13,16 @@ import org.jetbrains.kotlin.psi.KtFile
  */
 interface KotlinScriptProcessingFilter {
     /**
-     * @param file - file to decide about
+     * @param virtualFile - file to decide about
      * @return false if this filter disables processing for a given file, true if filter enables processing or can't decide
      */
-    fun shouldProcessScript(file: KtFile): Boolean
+    fun shouldProcessScript(virtualFile: VirtualFile): Boolean
 
     companion object {
         val EP_NAME: ProjectExtensionPointName<KotlinScriptProcessingFilter> =
             ProjectExtensionPointName("org.jetbrains.kotlin.kotlinScriptFilter")
 
-        fun shouldProcessScript(file: KtFile): Boolean =
-            EP_NAME.findFirstSafe(file.project) { !it.shouldProcessScript(file) } == null
+        fun shouldProcessScript(project: Project, virtualFile: VirtualFile): Boolean =
+            EP_NAME.findFirstSafe(project) { !it.shouldProcessScript(virtualFile) } == null
     }
 }

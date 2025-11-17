@@ -57,7 +57,7 @@ abstract class AbstractK2BundledCompilerPluginsInScriptHighlightingMetaInfoTest 
         globalDirectives: Directives
     ) {
         runBlocking {
-            KotlinScriptResolutionService.getInstance(project).process(files.filterIsInstance<KtFile>())
+            KotlinScriptResolutionService.getInstance(project).process(files.map { it.virtualFile })
         }
     }
 

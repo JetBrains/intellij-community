@@ -9,25 +9,20 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptDiagnostic.Severity
 import kotlin.script.experimental.api.SourceCode
 
-interface ScriptWorkspaceModelManager {
-    suspend fun updateWorkspaceModel(configurationPerFile: Map<VirtualFile, ScriptCompilationConfigurationResult>) {}
-}
-
 @Service(Service.Level.PROJECT)
 class KotlinScriptModuleManager(private val project: Project, private val coroutineScope: CoroutineScope) {
-    fun removeScriptModules(scripts: List<VirtualFile>) {
+    fun removeScriptEntities(scripts: List<VirtualFile>) {
         coroutineScope.launch {
-            project.removeScriptModules(scripts)
+            project.removeScriptEntities(scripts)
         }
     }
 
     companion object {
-        suspend fun Project.removeScriptModules(scripts: List<VirtualFile>) {
+        suspend fun Project.removeScriptEntities(scripts: List<VirtualFile>) {
             val currentSnapshot = workspaceModel.currentSnapshot
             val fileUrlManager = workspaceModel.getVirtualFileUrlManager()
 

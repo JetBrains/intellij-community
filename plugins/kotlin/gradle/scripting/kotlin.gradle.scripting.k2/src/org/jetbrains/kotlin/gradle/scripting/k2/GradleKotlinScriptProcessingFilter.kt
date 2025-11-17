@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2
 
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.gradle.scripting.k2.definition.GradleScriptDefinitionsSource
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDefinitionsSourceOfType
@@ -23,11 +25,11 @@ private const val GRADLE_KTS = ".gradle.kts"
  * This prevents premature resolution/highlighting of Gradle scripts
  * before their definitions are ready (typically before Gradle import).
  */
-class GradleKotlinScriptProcessingFilter : KotlinScriptProcessingFilter {
-    override fun shouldProcessScript(file: KtFile): Boolean {
+class GradleKotlinScriptProcessingFilter(val project: Project) : KotlinScriptProcessingFilter {
+    override fun shouldProcessScript(virtualFile: VirtualFile): Boolean {
         //remove `isUnitTestMode` after KTIJ-32773
-        if (!file.name.endsWith(GRADLE_KTS) || isUnitTestMode()) return true
+        if (!virtualFile.name.endsWith(GRADLE_KTS) || isUnitTestMode()) return true
 
-        return file.project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.definitions.orEmpty().any()
+        return project.scriptDefinitionsSourceOfType<GradleScriptDefinitionsSource>()?.definitions.orEmpty().any()
     }
 }

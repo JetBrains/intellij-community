@@ -23,7 +23,7 @@ class KotlinScriptFileListener : AsyncFileListener {
         return object : AsyncFileListener.ChangeApplier {
             override fun beforeVfsChange() {
                 projects.forEach { project ->
-                    KotlinScriptModuleManager.getInstance(project).removeScriptModules(scripts)
+                    KotlinScriptModuleManager.getInstance(project).removeScriptEntities(scripts)
                 }
             }
 
