@@ -10,8 +10,10 @@ import com.intellij.ui.treeStructure.ProjectViewUpdateCause.UNKNOWN
 import java.util.*
 import kotlin.streams.asSequence
 
+private object LocalPackageNameAccessor
+
 internal fun guessProjectViewUpdateCauseByCaller(calleeClass: Class<*>): ProjectViewUpdateCause {
-  val thisPackage = ProjectViewUpdateCause::class.java.packageName
+  val thisPackage = LocalPackageNameAccessor::class.java.packageName
   val calleePackage = calleeClass.packageName
   val walker = StackWalker.getInstance(EnumSet.of(StackWalker.Option.RETAIN_CLASS_REFERENCE))
   val callee = walker.walk { frames ->
