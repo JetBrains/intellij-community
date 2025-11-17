@@ -1,11 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.grazie.spellcheck.settings;
 
+import com.intellij.grazie.GrazieBundle;
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.spellchecker.DictionaryFileType;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.settings.BuiltInDictionariesProvider;
@@ -30,7 +35,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.spellchecker.SpellCheckerManagerKt.isDic;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
 import static java.util.Arrays.asList;
 
@@ -115,14 +119,12 @@ public final class CustomDictionariesPanel extends JPanel {
   }
 
   private void doChooseFiles(@NotNull Project project, @NotNull Consumer<? super List<VirtualFile>> consumer) {
-    final FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, true) {
-      @Override
-      public boolean isFileSelectable(@Nullable VirtualFile file) {
-        return file != null && isDic(file.getName());
-      }
-    };
-
-    final var directory = ProjectUtil.guessProjectDir(project);
+    FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.multiFiles()
+      .withExtensionFilter(
+        IdeCoreBundle.message("file.chooser.files.label", GrazieBundle.message("grazie.filetype.dictionary.display.name")),
+        PlainTextFileType.INSTANCE, DictionaryFileType.INSTANCE
+      );
+    var directory = ProjectUtil.guessProjectDir(project);
     FileChooser.chooseFiles(fileChooserDescriptor, project, this.getParent(), directory, consumer);
   }
 
