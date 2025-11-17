@@ -218,6 +218,14 @@ class JavaSupportTest : GrazieTestBase() {
     }.start()
   }
 
+  fun `test todo in dumb mode`() {
+    (DaemonCodeAnalyzer.getInstance(project) as DaemonCodeAnalyzerImpl).mustWaitForSmartMode(false, testRootDisposable)
+    runInDumbModeSynchronously(project) {
+      myFixture.configureByText("a.java", "// TODO It is an friend of human")
+      myFixture.checkHighlighting()
+    }
+  }
+
   private fun doTest(beforeText: String, afterText: String, hint: String) {
     myFixture.configureByText("a.java", beforeText)
     val intentionAction = myFixture.findSingleIntention(hint)
