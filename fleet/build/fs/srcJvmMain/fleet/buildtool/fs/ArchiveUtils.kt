@@ -212,7 +212,7 @@ private fun extract(
           zipFile.entries.asSequence().forEach { entry ->
             extractEntry(
               entry = entry,
-              destination = destination,
+              destination = tmpFolder,
               stripTopLevelFolder = stripTopLevelFolder,
               isSymbolicLink = entry.isUnixSymlink,
               unixMode = entry.unixMode,

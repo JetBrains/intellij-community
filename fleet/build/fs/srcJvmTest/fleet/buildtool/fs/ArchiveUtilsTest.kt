@@ -445,6 +445,29 @@ class ArchiveUtilsTest {
     assertEquals("content", outputFile.readText())
   }
 
+
+  @Test
+  fun `should clean destination zip when cleanDestination is true`() {
+    // Given
+    val sourceDir = tempDir.resolve("source").createDirectories()
+    sourceDir.resolve("new.txt").writeText("new")
+    val tarGz = tempDir.resolve("archive.zip")
+    val tmpDir = tempDir.resolve("tmp1")
+    zip(sourceDir, tarGz, withTopLevelFolder = false, tmpDir, logger, reproducibilityMode = None)
+
+    val destination = tempDir.resolve("extracted").createDirectories()
+    destination.resolve("old.txt").writeText("old")
+
+    val extractTmpDir = tempDir.resolve("tmp2")
+
+    // When
+    extractZip(tarGz, destination, stripTopLevelFolder = false, cleanDestination = true, extractTmpDir, logger)
+
+    // Then
+    assertTrue(destination.resolve("new.txt").exists())
+    assertFalse(destination.resolve("old.txt").exists())
+  }
+
   @Test
   fun `should throw error when singleZip is empty`() {
     // Given
