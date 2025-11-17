@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.LightCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
@@ -371,4 +372,18 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     configureByTestName();
     assertContainsItems(Arrays.stream(values).filter(Objects::nonNull).toArray(String[]::new));
   }
+  
+  public static class ModCommandBasedTest extends KeywordCompletionTest {
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+      Registry.get("ide.completion.modcommand").setValue(true, getTestRootDisposable());
+    }
+
+    @Override
+    public void testInstanceofNegation() {
+      // skip; TODO: support custom completion chars
+    }
+  }
+
 }
