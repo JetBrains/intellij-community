@@ -34,30 +34,31 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
-internal abstract class AbstractSimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, CallChainConversion>() {
+internal abstract class AbstractSimplifiableCallChainInspection :
+    KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, CallChainConversion>() {
     abstract override fun getProblemDescription(element: KtQualifiedExpression, context: CallChainConversion): String
 
     protected abstract val potentialConversions: Map<ConversionId, List<CallChainConversion>>
 
     override fun createQuickFix(
-      element: KtQualifiedExpression,
-      context: CallChainConversion,
+        element: KtQualifiedExpression,
+        context: CallChainConversion,
     ): KotlinModCommandQuickFix<KtQualifiedExpression> = SimplifyCallChainFix(
-      context,
-      modifyArguments = { callExpression ->
-        if (context.replacementName.startsWith(CallChainConversions.JOIN_TO)) {
-          val lastArgument = callExpression.valueArgumentList?.arguments?.singleOrNull()
-          val argumentExpression = lastArgument?.getArgumentExpression()
-          if (argumentExpression != null) {
-            lastArgument.replace(createArgument(argumentExpression, Name.identifier("transform")))
-          }
+        context,
+        modifyArguments = { callExpression ->
+            if (context.replacementName.startsWith(CallChainConversions.JOIN_TO)) {
+                val lastArgument = callExpression.valueArgumentList?.arguments?.singleOrNull()
+                val argumentExpression = lastArgument?.getArgumentExpression()
+                if (argumentExpression != null) {
+                    lastArgument.replace(createArgument(argumentExpression, Name.identifier("transform")))
+                }
+            }
         }
-      }
     )
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> {
         return qualifiedExpressionVisitor { qualifiedExpression ->
-          visitTargetElement(qualifiedExpression, holder, isOnTheFly)
+            visitTargetElement(qualifiedExpression, holder, isOnTheFly)
         }
     }
 
@@ -106,10 +107,10 @@ internal abstract class AbstractSimplifiableCallChainInspection : KotlinApplicab
     // region isConversionApplicable
     context(_: KaSession)
     private fun isConversionApplicable(
-      expression: KtQualifiedExpression,
-      conversion: CallChainConversion,
-      firstCall: KaCallInfo,
-      secondCall: KaCallInfo,
+        expression: KtQualifiedExpression,
+        conversion: CallChainConversion,
+        firstCall: KaCallInfo,
+        secondCall: KaCallInfo,
     ): Boolean {
         if (isRequiredNotNullAssertionMissing(conversion, expression)) return false
         if (isMapNotNullOnPrimitiveArrayConversion(conversion, firstCall)) return false
@@ -124,14 +125,19 @@ internal abstract class AbstractSimplifiableCallChainInspection : KotlinApplicab
     }
 
     private fun isRequiredNotNullAssertionMissing(
-      conversion: CallChainConversion,
-      expression: KtQualifiedExpression
+        conversion: CallChainConversion,
+        expression: KtQualifiedExpression
     ): Boolean {
         if (!conversion.removeNotNullAssertion) return false
-        if (conversion.firstName != CallChainConversions.MAP || conversion.secondName !in listOf(CallChainConversions.MAX,
-                                                                                                 CallChainConversions.MAX_OR_NULL,
-                                                                                                 CallChainConversions.MIN,
-                                                                                                 CallChainConversions.MIN_OR_NULL)) return false
+        if (
+            conversion.firstName != CallChainConversions.MAP || 
+            conversion.secondName !in listOf(
+                CallChainConversions.MAX,
+                CallChainConversions.MAX_OR_NULL,
+                CallChainConversions.MIN,
+                CallChainConversions.MIN_OR_NULL
+            )
+        ) return false
         val parentPostfixExpression = expression.parent as? KtPostfixExpression ?: return true
         return parentPostfixExpression.operationToken != KtTokens.EXCLEXCL
     }
@@ -168,8 +174,15 @@ internal abstract class AbstractSimplifiableCallChainInspection : KotlinApplicab
      */
     context(_: KaSession)
     private fun isMaxMinByConversionWithNullableFirstLambda(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
-        if (conversion.replacementName !in listOf(CallChainConversions.MAX_BY, CallChainConversions.MIN_BY, CallChainConversions.MAX_BY_OR_NULL,
-                                                  CallChainConversions.MIN_BY_OR_NULL)) return false
+        if (
+            conversion.replacementName !in listOf(
+                CallChainConversions.MAX_BY,
+                CallChainConversions.MIN_BY,
+                CallChainConversions.MAX_BY_OR_NULL,
+                CallChainConversions.MIN_BY_OR_NULL
+            )
+        ) return false
+
         val lastLambdaArgumentExpression = firstCall.lastLambdaArgumentExpressionOrNull() ?: return false
         return lastLambdaArgumentExpression.bodyExpression?.lastBlockStatementOrThis()?.expressionType?.isMarkedNullable == true
     }
@@ -239,7 +252,7 @@ internal abstract class AbstractSimplifiableCallChainInspection : KotlinApplicab
 
     context(_: KaSession)
     private fun KaType.lambdaReturnTypeOrNull(): KaType? =
-      (this as? KaFunctionType)?.returnType
+        (this as? KaFunctionType)?.returnType
 
     context(_: KaSession)
     private fun KaType.isApplicableTypeForSumOf(): Boolean =
