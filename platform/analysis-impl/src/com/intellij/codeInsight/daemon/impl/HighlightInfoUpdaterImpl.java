@@ -14,7 +14,6 @@ import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -420,10 +419,14 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       .forEach(toolHighlights -> ((ReferenceQueueable)toolHighlights.elementHighlights).processQueue());
     List<HighlightInfo> evictedInfos = document.getUserData(EVICTED_PSI_ELEMENTS);
     if (evictedInfos != null) {
+      int size = evictedInfos.size();
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("disposeEvictedInfos: disposing " + size + " entries");
+      }
       evictedInfos.removeIf(info -> {
         boolean matches = predicate.matches(info.toolId);
         if (matches) {
-          if (LOG.isTraceEnabled()) {
+          if (LOG.isTraceEnabled() && size < 200) {
             LOG.trace("disposeEvictedInfos: "+info);
           }
           UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, session);
