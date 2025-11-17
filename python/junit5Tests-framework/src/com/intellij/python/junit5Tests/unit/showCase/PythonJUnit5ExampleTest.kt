@@ -10,9 +10,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.python.junit5Tests.framework.FolderTest
 import com.intellij.python.junit5Tests.framework.PyDefaultTestApplication
+import com.intellij.python.junit5Tests.framework.TestResourcePathResolver
 import com.intellij.python.junit5Tests.framework.helper.doHighlighting
-import com.intellij.python.junit5Tests.framework.metaInfo.Repository
-import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
+import com.intellij.python.junit5Tests.framework.metaInfo.*
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 
@@ -60,6 +61,31 @@ class PythonJUnit5ExampleTest(
   ) = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       Assertions.assertEquals("print(\"Hello, world!\")\n", psiFile.text)
+    }
+  }
+
+  /**
+   * An example of a test that uses a custom test resource path resolver.
+   */
+  @Test
+  @TestMetaInfo(resourcePath = $$"$TEST_DIR/$TEST_NAME.py")
+  @WithCustomTestResourcePathResolver(MyResolver::class)
+  fun testMainFromDirCustom(
+    psiFile: PsiFile, /* testMainFromDirCustom -> custom/main.py converted by the custom resolver */
+  ) = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      Assertions.assertEquals("print(\"Custom path\")\n", psiFile.text)
+    }
+  }
+
+  object MyResolver : TestResourcePathResolver {
+    override fun resolve(resourcePath: String, context: ExtensionContext, testName: String, classInfo: TestClassInfoData): String {
+      val dirName = testName.substringAfter("Dir").lowercase()
+      val substitutedTestName = testName.substringBefore("From").lowercase()
+      val relativePath = resourcePath
+        .replace($$"$TEST_DIR", dirName)
+        .replace($$"$TEST_NAME", substitutedTestName)
+      return relativePath
     }
   }
 
