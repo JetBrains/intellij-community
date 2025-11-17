@@ -26,9 +26,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import kotlin.collections.flatMap
-import kotlin.collections.plus
-import kotlin.collections.toSet
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Internal
@@ -346,8 +343,14 @@ class SeTabDelegate(
       }?.toSet() ?: emptySet()
 
       val adaptedAndAvailableToRenderRemoteProviderIds = if (adaptedRemoteProviderItemsAreFetchable) {
-        availableRemoteProviders.adaptedAllTab.filter {
-          !frontendOnlyIds.contains(it) && localProvidersHolder.legacyAllTabContributors.containsKey(it)
+        val isAllTab = providerIds.contains(SeProviderIdUtils.WILDCARD_ID.toProviderId())
+
+        val (legacyContributors, adaptedRemoteProviders) =
+          if (isAllTab) localProvidersHolder.legacyAllTabContributors to availableRemoteProviders.adaptedAllTab
+          else localProvidersHolder.legacySeparateTabContributors to availableRemoteProviders.adaptedSeparateTab.map { it.providerId }
+
+        adaptedRemoteProviders.filter {
+          !frontendOnlyIds.contains(it) && legacyContributors.containsKey(it)
         }
       }
       else emptySet()
