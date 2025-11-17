@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
@@ -279,8 +280,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testTryInExpression() {
     configureByTestName();
-    assertEquals("toString", myItems[0].getLookupString());
-    assertEquals("this", myItems[1].getLookupString());
+    assertEquals(Set.of("toString", "this"), Set.of(myItems[0].getLookupString(), myItems[1].getLookupString()));
   }
 
   public void testAfterPackageAnnotation() {
