@@ -42,10 +42,10 @@ internal suspend fun buildPlugins(
   os: OsFamily?,
   targetDir: Path,
   state: DistributionBuilderState,
-  context: BuildContext,
   buildPlatformJob: Job?,
   searchableOptionSet: SearchableOptionSetDescriptor?,
   descriptorCacheContainer: DescriptorCacheContainer,
+  context: BuildContext,
   pluginBuilt: (suspend (PluginLayout, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
 ): List<PluginBuildDescriptor> {
   val scrambleTool = context.proprietaryBuildTools.scrambleTool

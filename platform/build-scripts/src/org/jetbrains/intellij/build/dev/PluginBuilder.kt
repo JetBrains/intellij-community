@@ -29,12 +29,10 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.Pair
-import kotlin.collections.List
 
 internal data class PluginsLayoutResult(
-  val pluginEntries: List<PluginBuildDescriptor>,
-  val additionalPlugins: List<Pair<Path, List<Path>>>?,
+  @JvmField val pluginEntries: List<PluginBuildDescriptor>,
+  @JvmField val additionalPlugins: List<Pair<Path, List<Path>>>?,
 )
 
 internal suspend fun buildPluginsForDevMode(
@@ -63,25 +61,24 @@ internal suspend fun buildPluginsForDevMode(
     buildPlugins(
       moduleOutputPatcher = moduleOutputPatcher,
       plugins = plugins,
+      os = null,
       targetDir = pluginRootDir,
       state = DistributionBuilderState(platformLayout = platform, pluginsToPublish = emptySet(), context = context),
-      context = context,
       buildPlatformJob = buildPlatformJob,
       searchableOptionSet = searchableOptionSet,
-      os = null,
       descriptorCacheContainer = platform.descriptorCacheContainer,
-      pluginBuilt = { layout, pluginDirOrFile ->
-        handleCustomPlatformSpecificAssets(
-          layout = layout,
-          targetPlatform = targetPlatform,
-          context = context,
-          pluginDir = pluginDirOrFile,
-          isDevMode = true,
-        )
-      },
-    )
+      context = context,
+    ) { layout, pluginDirOrFile ->
+      handleCustomPlatformSpecificAssets(
+        layout = layout,
+        targetPlatform = targetPlatform,
+        context = context,
+        pluginDir = pluginDirOrFile,
+        isDevMode = true,
+      )
+    }
   }
-  val additionalPlugins = copyAdditionalPlugins(context, pluginRootDir)
+  val additionalPlugins = copyAdditionalPlugins(pluginRootDir, context)
   return PluginsLayoutResult(pluginEntries, additionalPlugins)
 }
 
