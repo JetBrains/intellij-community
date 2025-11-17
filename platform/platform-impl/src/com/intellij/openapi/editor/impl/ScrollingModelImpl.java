@@ -495,12 +495,24 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     private final ScrollingHelper myScrollingHelper = new ScrollingHelper() {
       @Override
       public @NotNull Point calculateScrollingLocation(@NotNull Editor editor, @NotNull VisualPosition pos) {
-        return editor.visualPositionToXY(pos);
+        var prefixAdjustment = 0;
+        if (pos.column == 0 && editor instanceof EditorEx editorEx) {
+          prefixAdjustment = editorEx.getPrefixTextWidthInPixels();
+        }
+        var res = editor.visualPositionToXY(pos);
+        res.translate(-prefixAdjustment, 0);
+        return res;
       }
 
       @Override
       public @NotNull Point calculateScrollingLocation(@NotNull Editor editor, @NotNull LogicalPosition pos) {
-        return editor.logicalPositionToXY(pos);
+        var prefixAdjustment = 0;
+        if (pos.column == 0 && editor instanceof EditorEx editorEx) {
+          prefixAdjustment = editorEx.getPrefixTextWidthInPixels();
+        }
+        var res = editor.logicalPositionToXY(pos);
+        res.translate(-prefixAdjustment, 0);
+        return res;
       }
     };
 
