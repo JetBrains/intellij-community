@@ -217,6 +217,7 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUsersOnboarding" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.promoter" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.execution.process.elevation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab.yaml" scope="RUNTIME" />

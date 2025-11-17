@@ -22,10 +22,12 @@ import com.intellij.util.ui.FormBuilder
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.event.DocumentEvent
+import kotlin.io.path.invariantSeparatorsPathString
 
 @ApiStatus.Internal
 class WelcomeScreenNewFileDialog private constructor(
@@ -33,8 +35,24 @@ class WelcomeScreenNewFileDialog private constructor(
   private val builder: Builder,
 ) : DialogWrapper(project, true) {
 
-  private companion object {
+  internal companion object {
     private const val MAX_PATH_LENGTH = 70
+
+    /**
+     * Normalizes a directory path for use with [DirectoryUtil.mkdirs].
+     *
+     * This method ensures the path:
+     * - Uses forward slashes (/) as separators, which is required by [DirectoryUtil.mkdirs]
+     * - Has redundant path elements (like `.` and `..`) resolved
+     *
+     * This is necessary because on Windows, [Path.toString] returns paths with backslashes,
+     * but [DirectoryUtil.mkdirs] requires forward slashes.
+     *
+     * @see IJPL-217109
+     */
+    fun normalizeDirectoryPath(path: String): String {
+      return Path.of(path).normalize().invariantSeparatorsPathString
+    }
   }
 
   private val targetDirectoryField: ComponentWithBrowseButton<JBTextField> = ComponentWithBrowseButton(ExtendableTextField(), null)
@@ -155,7 +173,7 @@ class WelcomeScreenNewFileDialog private constructor(
 
     val targetDirectoryName = targetDirectoryField.childComponent.text
 
-    if (targetDirectoryName.isEmpty()) {
+    if (targetDirectoryName.isNullOrEmpty()) {
       Messages.showErrorDialog(
         project,
         NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.no.target.directory.specified"),
@@ -168,11 +186,13 @@ class WelcomeScreenNewFileDialog private constructor(
       ApplicationManager.getApplication().runWriteAction {
         try {
           targetDirectory = DirectoryUtil.mkdirs(
-            PsiManager.getInstance(project), 
-            Path.of(targetDirectoryName).normalize().toString()
+            PsiManager.getInstance(project),
+            normalizeDirectoryPath(targetDirectoryName)
           )
         }
         catch (_: IncorrectOperationException) {
+        }
+        catch (_: InvalidPathException) {
         }
       }
     }, NonModalWelcomeScreenBundle.message("welcome.screen.create.file.dialog.create.directory"), null)

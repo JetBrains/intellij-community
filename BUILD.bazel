@@ -364,6 +364,8 @@ jvm_library(
     "//plugins/jsonpath",
     "//plugins/jsonpath:jsonpath_test_lib",
     "//plugins/ui-designer/jps-plugin/tests:tests_test_lib",
+    "//platform/non-modal-welcome-screen",
+    "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
     "//platform/util/coroutines:coroutines-tests_test_lib",
     "//platform/util/progress:progress-tests_test_lib",
     "//platform/testFramework/junit5.jimfs",
