@@ -12,7 +12,12 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
 internal class PyWithLanguageLevelExtension : BeforeEachCallback, AfterEachCallback {
-  private var previousForced: LanguageLevel? = null
+  private val namespace: ExtensionContext.Namespace =
+    ExtensionContext.Namespace.create(PyWithLanguageLevelExtension::class.java)
+
+  private companion object {
+    const val PREV_LEVEL_KEY = "previousLanguageLevel"
+  }
 
   override fun beforeEach(context: ExtensionContext) {
     val testMethod = context.requiredTestMethod
@@ -25,14 +30,19 @@ internal class PyWithLanguageLevelExtension : BeforeEachCallback, AfterEachCallb
     val level = annotation.level
     val project = context.getClassLevelLookupFixtureManager().getRequired<Project>().get()
 
-    previousForced = LanguageLevel.FORCE_LANGUAGE_LEVEL
+    val store = context.getStore(namespace)
+
+    store.put(PREV_LEVEL_KEY, LanguageLevel.FORCE_LANGUAGE_LEVEL)
 
     PythonLanguageLevelPusher.setForcedLanguageLevel(project, level)
-    IndexingTestUtil.Companion.waitUntilIndexesAreReady(project)
+    IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
   override fun afterEach(context: ExtensionContext) {
     val project = context.getClassLevelLookupFixtureManager().getRequired<Project>().get()
+
+    val store = context.getStore(namespace)
+    val previousForced = store.remove(PREV_LEVEL_KEY, LanguageLevel::class.java)
 
     PythonLanguageLevelPusher.setForcedLanguageLevel(project, previousForced)
   }
