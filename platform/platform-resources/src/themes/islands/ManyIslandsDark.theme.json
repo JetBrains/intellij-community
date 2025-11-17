@@ -166,6 +166,8 @@
 
       "tabInsets": "-7,8,-7,8",
       "tabInsets.compact": "-2,6,-2,4",
+      "verticalTabInsets": "-2,10,-2,10",
+      "verticalTabInsets.compact": "0,10,0,10",
       "tabContentActionsRightInsets": "0,4,0,2"
     },
 

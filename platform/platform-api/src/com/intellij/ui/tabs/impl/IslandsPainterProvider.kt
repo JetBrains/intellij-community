@@ -3,7 +3,9 @@ package com.intellij.ui.tabs.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceOrNull
+import com.intellij.ui.tabs.JBTabsPosition
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Insets
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
@@ -18,4 +20,6 @@ open class IslandsPainterProvider {
   open fun useMacScrollBar(): Boolean = false
 
   open fun isTabOccupiesWholeHeight(): Boolean = true
+
+  open fun getSingleRowTabInsets(tabsPosition: JBTabsPosition): Insets? = null
 }

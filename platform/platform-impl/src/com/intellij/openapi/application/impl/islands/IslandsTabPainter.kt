@@ -52,7 +52,7 @@ internal class IslandsTabPainterAdapter(isDefault: Boolean, debugger: Boolean, v
       GraphicsUtil.setupAAPainting(g2)
 
       tabs.setFirstTabOffset(JBUI.scale(3))
-      (tabPainter as IslandsTabPainter).paintTab(g2, rect, info.tabColor, active, hovered, selected)
+      (tabPainter as IslandsTabPainter).paintTab(g2, tabs.tabsPosition, rect, info.tabColor, active, hovered, selected)
     }
     finally {
       g2.dispose()
@@ -128,11 +128,11 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
   override fun getBackgroundColor(): Color = myTheme.background!!
 
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
-    paintTab(g, rect, tabColor, active, hovered, false)
+    paintTab(g, position, rect, tabColor, active, hovered, false)
   }
 
   override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
-    paintTab(g, rect, tabColor, active, hovered, true)
+    paintTab(g, position, rect, tabColor, active, hovered, true)
   }
 
   override fun paintBorderLine(g: Graphics2D, thickness: Int, from: Point, to: Point) {
@@ -157,14 +157,15 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     RectanglePainter2D.FILL.paint(g, rect.x.toDouble(), rect.y.toDouble(), rect.width.toDouble(), rect.height.toDouble())
   }
 
-  open fun paintTab(g: Graphics2D, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
+  open fun paintTab(g: Graphics2D, position: JBTabsPosition, rect: Rectangle, tabColor: Color?, active: Boolean, hovered: Boolean, selected: Boolean) {
     val arc = JBUI.CurrentTheme.MainToolbar.Button.hoverArc().float.toDouble()
     val compactMode = UISettings.getInstance().compactMode
 
-    val hOffset = JBUIScale.scale(if (compactMode) 2f else 4f).toDouble()
+    val hOffset = JBUIScale.scale(getHOffsetUnscaled(compactMode, position).toFloat()).toDouble()
+    val minVOffset = JBUIScale.scale(if (compactMode) 4f else 8f).toDouble()
 
     val fullHeight = JBUIScale.scale(if (compactMode) 24f else 28f).toDouble()
-    val vOffset = (rect.height - fullHeight).coerceAtLeast(JBUIScale.scale(8f).toDouble())
+    val vOffset = (rect.height - fullHeight).coerceAtLeast(minVOffset)
 
     val x = rect.x + hOffset
     val y = floor(rect.y + vOffset / 2.0)
@@ -183,6 +184,13 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
 
     g.color = draw
     RectanglePainter2D.DRAW.paint(g, x, y, width, height, arc)
+  }
+
+  private fun getHOffsetUnscaled(compactMode: Boolean, position: JBTabsPosition): Int {
+    return  when (position.isSide) {
+        true -> 6
+        false -> if (compactMode) 2 else 4
+      }
   }
 
   private val hoverBackground = JBColor("EditorTabs.hoverBackground", JBColor(Color(0xE5, 0xEE, 0xFF, 0x80), Color(0x34, 0x3E, 0x51, 0x80)))
