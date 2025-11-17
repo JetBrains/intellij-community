@@ -278,7 +278,7 @@ open class IDETestContext(
     path.deleteRecursivelyQuietly()
   }
 
-  fun wipeWorkspaceState(): IDETestContext = apply {
+  open fun wipeWorkspaceState(): IDETestContext = apply {
     val path = paths.configDir.resolve("workspace")
     logOutput("Cleaning workspace dir in config dir for $this at $path")
     path.deleteRecursivelyQuietly()
