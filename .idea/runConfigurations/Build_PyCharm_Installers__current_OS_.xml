@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Build PyCharm Community Installers (current OS)" type="JetRunConfigurationType">
+  <configuration default="false" name="Build PyCharm Installers (current OS)" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="PyCharmCommunityInstallersBuildTarget" />
     <module name="intellij.pycharm.community.build" />
     <shortenClasspath name="ARGS_FILE" />
