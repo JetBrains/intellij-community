@@ -31,11 +31,6 @@ class BuildProblemLogMessage(description: String, val identity: String?) : LogMe
 
 @ApiStatus.Internal
 class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
-  companion object {
-    @JvmField
-    val FACTORY: () -> BuildMessageLogger = ::ConsoleBuildMessageLogger
-  }
-
   override fun processMessage(message: LogMessage) {
     when (message.kind) {
       // reported by trace exporter
@@ -52,7 +47,7 @@ class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
     }
   }
 
-  override fun shouldBePrinted(kind: LogMessage.Kind) = kind != LogMessage.Kind.DEBUG
+  override fun shouldBePrinted(kind: LogMessage.Kind): Boolean = kind != LogMessage.Kind.DEBUG
 
   override fun printLine(line: String) {
     println(line)

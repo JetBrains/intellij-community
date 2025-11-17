@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
@@ -23,7 +22,7 @@ class BuildMessagesImpl private constructor(
 ) : BuildMessages {
   companion object {
     fun create(): BuildMessagesImpl {
-      val mainLoggerFactory = if (isUnderTeamCity) TeamCityBuildMessageLogger.FACTORY else ConsoleBuildMessageLogger.FACTORY
+      val mainLoggerFactory = if (isUnderTeamCity) ::TeamCityBuildMessageLogger else ::ConsoleBuildMessageLogger
       val debugLogger = DebugLogger()
       return BuildMessagesImpl(
         logger = CompositeBuildMessageLogger(listOf(mainLoggerFactory(), debugLogger.createLogger())),
@@ -54,8 +53,13 @@ class BuildMessagesImpl private constructor(
 
   override fun getDebugLog(): String = debugLogger.getOutput()
 
-  override fun logErrorAndThrow(message: String): Unit = errorImpl(message, cause = null)
-  override fun logErrorAndThrow(message: String, cause: Throwable): Unit = errorImpl(message, cause)
+  override fun logErrorAndThrow(message: String) {
+    errorImpl(message, cause = null)
+  }
+
+  override fun logErrorAndThrow(message: String, cause: Throwable) {
+    errorImpl(message, cause)
+  }
 
   private fun errorImpl(message: String, cause: Throwable? = null) {
     processMessage(
@@ -147,7 +151,7 @@ private class DebugLogger {
     val file = outputFile ?: return
     if (output.isNotEmpty()) {
       Files.createDirectories(file.parent)
-      Files.writeString(outputFile, output.toString())
+      Files.writeString(file, output.toString())
     }
 
     outputFile = null
@@ -183,8 +187,7 @@ private class PrintWriterBuildMessageLogger(
   }
 }
 
-@Internal
-fun reportBuildProblem(description: String, identity: String? = null) {
+internal fun reportBuildProblem(description: String, identity: String? = null) {
   if (isUnderTeamCity) {
     val logger = TeamCityBuildMessageLogger()
     try {
