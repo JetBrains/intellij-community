@@ -265,6 +265,9 @@ public class JavaKeywordCompletion {
       return;
     }
 
+    if (addWildcardExtendsSuper()) {
+      return;
+    }
     addFinal();
     addWhen();
     boolean statementPosition = isStatementPosition(myPosition);
@@ -496,13 +499,11 @@ public class JavaKeywordCompletion {
     return false;
   }
 
-  boolean addWildcardExtendsSuper(CompletionResultSet result, PsiElement position) {
-    if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
+  private boolean addWildcardExtendsSuper() {
+    if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(myPosition)) {
       for (String keyword : ContainerUtil.ar(JavaKeywords.EXTENDS, JavaKeywords.SUPER)) {
-        if (myKeywordMatcher.isStartMatch(keyword)) {
-          LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(position, keyword);
-          result.addElement(new OverridableSpace(item, TailTypes.humbleSpaceBeforeWordType()));
-        }
+        LookupElement item = BasicExpressionCompletionContributor.createKeywordLookupItem(myPosition, keyword);
+        addKeyword(new OverridableSpace(item, TailTypes.humbleSpaceBeforeWordType()));
       }
       return true;
     }

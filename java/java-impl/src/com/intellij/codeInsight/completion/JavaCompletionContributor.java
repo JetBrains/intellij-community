@@ -453,15 +453,16 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     PrefixMatcher matcher = result.getPrefixMatcher();
     PsiElement parent = position.getParent();
 
-    if (new JavaKeywordCompletion(parameters, session, smart).addWildcardExtendsSuper(result, position)) {
-      result.stopHere();
-      return;
-    }
 
     boolean mayCompleteReference = true;
 
     if (position instanceof PsiIdentifier) {
       addIdentifierVariants(parameters, position, result, session, matcher);
+      if (JavaMemberNameCompletionContributor.INSIDE_TYPE_PARAMS_PATTERN.accepts(position)) {
+        session.flushBatchItems();
+        result.stopHere();
+        return;
+      }
 
       Set<ExpectedTypeInfo> expectedInfos = ContainerUtil.newHashSet(JavaSmartCompletionContributor.getExpectedTypes(parameters));
       boolean shouldAddExpressionVariants = shouldAddExpressionVariants(parameters);
