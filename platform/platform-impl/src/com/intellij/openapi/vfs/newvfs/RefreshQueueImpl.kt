@@ -272,7 +272,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
         }
         .onProcessed { stopIndicator() }
         .onError(Consumer { t: Throwable ->
-          if (!myRefreshIndicator.isCanceled()) {
+          if (!myRefreshIndicator.isCanceled() && t !is CancellationException) {
             LOG.error(t)
           }
         })
