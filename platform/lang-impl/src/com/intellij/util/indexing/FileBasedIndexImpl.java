@@ -1987,8 +1987,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       // TODO-ank (IJPL-412): use UnindexedFilesFinder.getFileStatus instead
       Set<ID<?, ?>> indexesToInvalidate = new HashSet<>(nontrivialFileIndexedStates);
+      boolean hasContentlessIndex = false;
       for (ID<?, ?> indexId : getRequiredIndexes(indexedFile)) {
         if (tryIndexWithoutContent(indexId, file, fileId, fileContent, onlyContentChanged)) {
+          hasContentlessIndex = true;
           indexesToInvalidate.remove(indexId); // IndexingStamp has been updated by applier just now
         }
         else {
@@ -2002,12 +2004,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           getIndex(indexId).invalidateIndexedStateForFile(fileId);
         }
 
-        IndexingStamp.flushCache(fileId);
         myFilesToUpdateCollector.scheduleForUpdate(FileIndexingRequest.updateRequest(file), containingProjects,
                                                    ContainerUtil.union(dirtyQueueProjects, containingProjects));
       }
       else {
         IndexingFlag.setFileIndexed(file, indexingStamp);
+      }
+      if (!indexesToInvalidate.isEmpty() || hasContentlessIndex) {
+        IndexingStamp.flushCache(fileId);
       }
     });
   }
