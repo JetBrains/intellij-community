@@ -1,5 +1,5 @@
 fun test() {
-    !(Foo().condition())
+    !Foo().condition()
 }
 
 class Foo {
