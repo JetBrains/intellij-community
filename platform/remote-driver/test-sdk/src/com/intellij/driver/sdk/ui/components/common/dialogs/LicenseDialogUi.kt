@@ -22,7 +22,7 @@ fun Finder.licenseDialog(action: LicenseDialogUi.() -> Unit) = licenseDialog().a
 
 fun Driver.licenseDialog(action: LicenseDialogUi.() -> Unit = {}) = ui.licenseDialog().apply(action)
 
-class LicenseDialogUi(data: ComponentData) : UiComponent(data) {
+class LicenseDialogUi(data: ComponentData) : DialogUiComponent(data) {
   val licenseServerRadioButton = radioButton { byAccessibleName("License server") }
   val licenseServerTextField = textField { byClass("JBTextField") }
   val activationCodeRadioButton = radioButton { byAccessibleName("Activation code") }
