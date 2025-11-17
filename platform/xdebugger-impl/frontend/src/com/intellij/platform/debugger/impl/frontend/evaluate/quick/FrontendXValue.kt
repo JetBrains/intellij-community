@@ -30,6 +30,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
 import java.util.concurrent.CompletableFuture
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 @ApiStatus.Internal
 class FrontendXValue private constructor(
@@ -368,9 +370,9 @@ private fun renderAdvancedPresentation(renderer: XValuePresentation.XValueTextRe
   }
 }
 
-internal fun Obsolescent.childCoroutineScope(parentScope: CoroutineScope, name: String): CoroutineScope {
+internal fun Obsolescent.childCoroutineScope(parentScope: CoroutineScope, name: String, context: CoroutineContext = EmptyCoroutineContext): CoroutineScope {
   val obsolescent = this
-  val scope = parentScope.childScope(name)
+  val scope = parentScope.childScope(name, context)
   parentScope.launch(context = Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
     while (!obsolescent.isObsolete) {
       delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)

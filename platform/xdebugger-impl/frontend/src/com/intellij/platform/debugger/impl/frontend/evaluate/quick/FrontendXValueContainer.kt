@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.frame.VariablesPreloadManager
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.XValuesPresentationBuilder
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XNamedValue
@@ -58,8 +57,8 @@ internal class FrontendXValueContainer(
 
   override fun computeChildren(node: XCompositeNode) {
     val childrenManager = getOrCreteChildrenManager(node)
-    val scope = cs.childScope("FrontendXValueContainer#computeChildren", childrenManager)
-    node.childCoroutineScope(parentScope = cs, "FrontendXValueContainer#computeChildren").launch(Dispatchers.EDT) {
+    val scope = node.childCoroutineScope(parentScope = cs, "FrontendXValueContainer#computeChildren", childrenManager)
+    scope.launch(Dispatchers.EDT) {
       val flow = childrenManager.getChildrenEventsFlow(id)
       val builder = XValuesPresentationBuilder()
       flow.collect { event ->
