@@ -1,18 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.JUnit5.impl
 
-import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.junit5.fixture.LookupFixtureExtension.Companion.getLookupFixtureManager
 import com.jetbrains.python.inspections.JUnit5.annotations.InspectionTest
-import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.Extension
 import org.junit.jupiter.api.extension.ExtensionContext
 import kotlin.reflect.full.findAnnotation
 
-internal class PyInspectionTestJUnit5Extension : AfterEachCallback, BeforeEachCallback, Extension {
+internal class PyInspectionTestJUnit5Extension : BeforeEachCallback, Extension {
 
   override fun beforeEach(context: ExtensionContext) {
     val testClass = context.requiredTestClass
@@ -23,10 +20,5 @@ internal class PyInspectionTestJUnit5Extension : AfterEachCallback, BeforeEachCa
     val testMethodLevelManager = context.getLookupFixtureManager()
     val codeInsightFixture = testMethodLevelManager.getRequired<CodeInsightTestFixture>()
     codeInsightFixture.get().enableInspections(inspectionClasses)
-    InspectionProfileImpl.INIT_INSPECTIONS = true
-  }
-
-  override fun afterEach(context: ExtensionContext) {
-    InspectionProfileImpl.INIT_INSPECTIONS = false
   }
 }
