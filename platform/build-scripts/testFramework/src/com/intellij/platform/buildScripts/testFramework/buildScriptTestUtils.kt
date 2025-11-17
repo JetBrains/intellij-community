@@ -309,7 +309,7 @@ private suspend fun doRunTestBuild(
   }
 }
 
-private suspend fun checkKeymapPluginsAreBundledWithFrontend(
+private fun checkKeymapPluginsAreBundledWithFrontend(
   jetBrainsClientMainModule: String,
   context: BuildContext,
   softly: SoftAssertions,
