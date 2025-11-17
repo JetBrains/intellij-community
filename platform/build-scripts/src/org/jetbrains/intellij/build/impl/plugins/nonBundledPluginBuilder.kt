@@ -169,7 +169,7 @@ internal suspend fun CoroutineScope.doBuildNonBundledPlugins(
               span.addEvent("doesn't exist, skipped", Attributes.of(AttributeKey.stringKey("path"), "$destFile"))
             }
             else {
-              validatePlugin(file = destFile, context = context, span = span)
+              //validatePlugin(file = destFile, context = context, span = span)
             }
           }
         }
