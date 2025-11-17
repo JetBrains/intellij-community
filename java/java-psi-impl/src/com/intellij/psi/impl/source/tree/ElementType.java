@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.java.syntax.element.SyntaxElementTypes;
+import com.intellij.platform.syntax.psi.ElementTypeConverterKt;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.TokenSet;
+
+import static com.intellij.lang.java.syntax.JavaElementTypeConverterExtensionKt.javaPsiElementTypeConverter;
 
 /**
  * @see com.intellij.psi.impl.source.BasicElementTypes
@@ -11,105 +15,91 @@ import com.intellij.psi.tree.TokenSet;
  */
 @SuppressWarnings("unused") //because of backward compatibility, some of these sets are used in plugins
 public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElementType, JavaDocElementType {
-  TokenSet JAVA_PLAIN_COMMENT_BIT_SET = TokenSet.create(END_OF_LINE_COMMENT, C_STYLE_COMMENT);
-  TokenSet JAVA_COMMENT_BIT_SET = TokenSet.orSet(JAVA_PLAIN_COMMENT_BIT_SET, DOC_COMMENT_TOKENS);
 
-  TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(TokenSet.WHITE_SPACE, JAVA_COMMENT_BIT_SET);
+  TokenSet JAVA_PLAIN_COMMENT_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getJAVA_PLAIN_COMMENT_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet KEYWORD_BIT_SET = TokenSet.create(
-    ABSTRACT_KEYWORD, ASSERT_KEYWORD, BOOLEAN_KEYWORD, BREAK_KEYWORD, BYTE_KEYWORD, CASE_KEYWORD, CATCH_KEYWORD, CHAR_KEYWORD,
-    CLASS_KEYWORD, CONST_KEYWORD, CONTINUE_KEYWORD, DEFAULT_KEYWORD, DO_KEYWORD, DOUBLE_KEYWORD, ELSE_KEYWORD, ENUM_KEYWORD,
-    EXTENDS_KEYWORD, FINAL_KEYWORD, FINALLY_KEYWORD, FLOAT_KEYWORD, FOR_KEYWORD, GOTO_KEYWORD, IF_KEYWORD, IMPLEMENTS_KEYWORD,
-    IMPORT_KEYWORD, INSTANCEOF_KEYWORD, INT_KEYWORD, INTERFACE_KEYWORD, LONG_KEYWORD, NATIVE_KEYWORD, NEW_KEYWORD, PACKAGE_KEYWORD,
-    PRIVATE_KEYWORD, PROTECTED_KEYWORD, PUBLIC_KEYWORD, RETURN_KEYWORD, SHORT_KEYWORD, SUPER_KEYWORD, STATIC_KEYWORD, STRICTFP_KEYWORD,
-    SWITCH_KEYWORD, SYNCHRONIZED_KEYWORD, THIS_KEYWORD, THROW_KEYWORD, THROWS_KEYWORD, TRANSIENT_KEYWORD, TRY_KEYWORD, VOID_KEYWORD,
-    VOLATILE_KEYWORD, WHILE_KEYWORD,
-    OPEN_KEYWORD, MODULE_KEYWORD, REQUIRES_KEYWORD, EXPORTS_KEYWORD, OPENS_KEYWORD, USES_KEYWORD, PROVIDES_KEYWORD,
-    TRANSITIVE_KEYWORD, TO_KEYWORD, WITH_KEYWORD, VAR_KEYWORD, YIELD_KEYWORD, RECORD_KEYWORD, SEALED_KEYWORD, PERMITS_KEYWORD,
-    NON_SEALED_KEYWORD, WHEN_KEYWORD, VALUE_KEYWORD
-  );
+  TokenSet JAVA_COMMENT_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getJAVA_COMMENT_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet LITERAL_BIT_SET = TokenSet.create(TRUE_KEYWORD, FALSE_KEYWORD, NULL_KEYWORD);
+  TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getJAVA_COMMENT_OR_WHITESPACE_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet OPERATION_BIT_SET = TokenSet.create(
-    EQ, GT, LT, EXCL, TILDE, QUEST, COLON, PLUS, MINUS, ASTERISK, DIV, AND, OR, XOR,
-    PERC, EQEQ, LE, GE, NE, ANDAND, OROR, PLUSPLUS, MINUSMINUS, LTLT, GTGT, GTGTGT,
-    PLUSEQ, MINUSEQ, ASTERISKEQ, DIVEQ, ANDEQ, OREQ, XOREQ, PERCEQ, LTLTEQ, GTGTEQ, GTGTGTEQ);
+  TokenSet KEYWORD_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getKEYWORD_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet MODIFIER_BIT_SET = TokenSet.create(
-    PUBLIC_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD, STATIC_KEYWORD, ABSTRACT_KEYWORD, FINAL_KEYWORD, NATIVE_KEYWORD,
-    SYNCHRONIZED_KEYWORD, STRICTFP_KEYWORD, TRANSIENT_KEYWORD, VOLATILE_KEYWORD, DEFAULT_KEYWORD, SEALED_KEYWORD, NON_SEALED_KEYWORD,
-    VALUE_KEYWORD);
+  TokenSet LITERAL_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getLITERAL_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet PRIMITIVE_TYPE_BIT_SET = TokenSet.create(
-    BOOLEAN_KEYWORD, BYTE_KEYWORD, SHORT_KEYWORD, INT_KEYWORD, LONG_KEYWORD, CHAR_KEYWORD, FLOAT_KEYWORD, DOUBLE_KEYWORD, VOID_KEYWORD);
+  TokenSet OPERATION_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getOPERATION_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet EXPRESSION_BIT_SET = TokenSet.create(
-    REFERENCE_EXPRESSION, LITERAL_EXPRESSION, THIS_EXPRESSION, SUPER_EXPRESSION,
-    PARENTH_EXPRESSION, METHOD_CALL_EXPRESSION,
-    TYPE_CAST_EXPRESSION, PREFIX_EXPRESSION, POSTFIX_EXPRESSION, BINARY_EXPRESSION,
-    POLYADIC_EXPRESSION, CONDITIONAL_EXPRESSION,
-    ASSIGNMENT_EXPRESSION, NEW_EXPRESSION, ARRAY_ACCESS_EXPRESSION,
-    ARRAY_INITIALIZER_EXPRESSION, INSTANCE_OF_EXPRESSION,
-    CLASS_OBJECT_ACCESS_EXPRESSION, METHOD_REF_EXPRESSION, LAMBDA_EXPRESSION, SWITCH_EXPRESSION,
-    EMPTY_EXPRESSION,
-    TEMPLATE_EXPRESSION);
+  TokenSet MODIFIER_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getMODIFIER_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet ANNOTATION_MEMBER_VALUE_BIT_SET = TokenSet.orSet(EXPRESSION_BIT_SET,
-                                                            TokenSet.create(ANNOTATION, ANNOTATION_ARRAY_INITIALIZER));
+  TokenSet PRIMITIVE_TYPE_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getPRIMITIVE_TYPE_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet ARRAY_DIMENSION_BIT_SET = TokenSet.create(
-    REFERENCE_EXPRESSION, LITERAL_EXPRESSION, THIS_EXPRESSION, SUPER_EXPRESSION,
-    PARENTH_EXPRESSION, METHOD_CALL_EXPRESSION,
-    TYPE_CAST_EXPRESSION, PREFIX_EXPRESSION, POSTFIX_EXPRESSION, BINARY_EXPRESSION,
-    POLYADIC_EXPRESSION, CONDITIONAL_EXPRESSION,
-    ASSIGNMENT_EXPRESSION, NEW_EXPRESSION, ARRAY_ACCESS_EXPRESSION, INSTANCE_OF_EXPRESSION,
-    CLASS_OBJECT_ACCESS_EXPRESSION,
-    EMPTY_EXPRESSION);
+  TokenSet EXPRESSION_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getEXPRESSION_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet JAVA_STATEMENT_BIT_SET = TokenSet.create(
-    EMPTY_STATEMENT, BLOCK_STATEMENT, EXPRESSION_STATEMENT, EXPRESSION_LIST_STATEMENT,
-    DECLARATION_STATEMENT, IF_STATEMENT,
-    WHILE_STATEMENT, FOR_STATEMENT, FOREACH_STATEMENT, DO_WHILE_STATEMENT,
-    SWITCH_STATEMENT, SWITCH_LABEL_STATEMENT, BREAK_STATEMENT,
-    CONTINUE_STATEMENT, RETURN_STATEMENT, THROW_STATEMENT, SYNCHRONIZED_STATEMENT,
-    TRY_STATEMENT, LABELED_STATEMENT, ASSERT_STATEMENT,
-    YIELD_STATEMENT);
+  TokenSet ANNOTATION_MEMBER_VALUE_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getANNOTATION_MEMBER_VALUE_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet JAVA_PATTERN_BIT_SET = TokenSet.create(TYPE_TEST_PATTERN, DECONSTRUCTION_PATTERN, UNNAMED_PATTERN);
+  TokenSet ARRAY_DIMENSION_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getARRAY_DIMENSION_BIT_SET(), javaPsiElementTypeConverter);
+
+  TokenSet JAVA_STATEMENT_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getJAVA_STATEMENT_BIT_SET(), javaPsiElementTypeConverter);
+
+  TokenSet JAVA_PATTERN_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getJAVA_PATTERN_BIT_SET(), javaPsiElementTypeConverter);
 
   TokenSet JAVA_CASE_LABEL_ELEMENT_BIT_SET =
-    TokenSet.orSet(JAVA_PATTERN_BIT_SET, EXPRESSION_BIT_SET, TokenSet.create(DEFAULT_CASE_LABEL_ELEMENT));
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getJAVA_CASE_LABEL_ELEMENT_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet JAVA_MODULE_STATEMENT_BIT_SET = TokenSet.create(
-    REQUIRES_STATEMENT, EXPORTS_STATEMENT, OPENS_STATEMENT, USES_STATEMENT, PROVIDES_STATEMENT);
+  TokenSet JAVA_MODULE_STATEMENT_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getJAVA_MODULE_STATEMENT_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet IMPORT_STATEMENT_BASE_BIT_SET = TokenSet.create(IMPORT_STATEMENT, IMPORT_STATIC_STATEMENT, IMPORT_MODULE_STATEMENT);
-  TokenSet CLASS_KEYWORD_BIT_SET = TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, RECORD_KEYWORD);
-  TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, ENUM_CONSTANT, METHOD, ANNOTATION_METHOD);
-  TokenSet FULL_MEMBER_BIT_SET = TokenSet.orSet(MEMBER_BIT_SET, TokenSet.create(
-    CLASS_INITIALIZER));
+  TokenSet IMPORT_STATEMENT_BASE_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getIMPORT_STATEMENT_BASE_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet INTEGER_LITERALS = TokenSet.create(INTEGER_LITERAL, LONG_LITERAL);
-  TokenSet REAL_LITERALS = TokenSet.create(FLOAT_LITERAL, DOUBLE_LITERAL);
-  TokenSet STRING_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL);
-  TokenSet TEXT_LITERALS = TokenSet.create(STRING_LITERAL, TEXT_BLOCK_LITERAL, CHARACTER_LITERAL);
+  TokenSet CLASS_KEYWORD_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getCLASS_KEYWORD_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet STRING_TEMPLATE_FRAGMENTS = TokenSet.create(STRING_TEMPLATE_BEGIN, STRING_TEMPLATE_MID, STRING_TEMPLATE_END,
-                                                     TEXT_BLOCK_TEMPLATE_BEGIN, TEXT_BLOCK_TEMPLATE_MID, TEXT_BLOCK_TEMPLATE_END);
+  TokenSet MEMBER_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getMEMBER_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet ALL_LITERALS = TokenSet.orSet(INTEGER_LITERALS,
-                                         REAL_LITERALS,
-                                         STRING_LITERALS,
-                                         TEXT_LITERALS);
+  TokenSet FULL_MEMBER_BIT_SET =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getFULL_MEMBER_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet SHIFT_OPS = TokenSet.create(LTLT, GTGT, GTGTGT);
+  TokenSet INTEGER_LITERALS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getINTEGER_LITERALS(), javaPsiElementTypeConverter);
 
-  TokenSet ADDITIVE_OPS = TokenSet.create(PLUS, MINUS);
+  TokenSet REAL_LITERALS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getREAL_LITERALS(), javaPsiElementTypeConverter);
 
-  TokenSet MULTIPLICATIVE_OPS = TokenSet.create(ASTERISK, DIV, PERC);
+  TokenSet STRING_LITERALS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getSTRING_LITERALS(), javaPsiElementTypeConverter);
 
-  TokenSet ASSIGNMENT_OPS = TokenSet.create(
-    EQ, ASTERISKEQ, DIVEQ, PERCEQ, PLUSEQ, MINUSEQ, LTLTEQ, GTGTEQ, GTGTGTEQ, ANDEQ,
-    OREQ, XOREQ);
+  TokenSet TEXT_LITERALS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getTEXT_LITERALS(), javaPsiElementTypeConverter);
+
+  TokenSet STRING_TEMPLATE_FRAGMENTS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getSTRING_TEMPLATE_FRAGMENTS(), javaPsiElementTypeConverter);
+
+  TokenSet ALL_LITERALS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getALL_LITERALS(), javaPsiElementTypeConverter);
+
+  TokenSet SHIFT_OPS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getSHIFT_OPS(), javaPsiElementTypeConverter);
+
+  TokenSet ADDITIVE_OPS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getADDITIVE_OPS(), javaPsiElementTypeConverter);
+
+  TokenSet MULTIPLICATIVE_OPS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getMULTIPLICATIVE_OPS(), javaPsiElementTypeConverter);
+
+  TokenSet ASSIGNMENT_OPS =
+    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getASSIGNMENT_OPS(), javaPsiElementTypeConverter);
 }
