@@ -22,10 +22,15 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
-private class XValueChildrenManager(cs: CoroutineScope, frameId: XStackFrameId, stateToRecover: XDebuggerTreeState?) : AbstractCoroutineContextElement(XValueChildrenManager) {
+private class XValueChildrenManager private constructor(
+  @Suppress("TestOnlyProblems")
+  private val preloadManager: VariablesPreloadManager?,
+) : AbstractCoroutineContextElement(Key) {
   companion object Key : CoroutineContext.Key<XValueChildrenManager>
 
-  private val preloadManager = VariablesPreloadManager.creteIfNeeded(cs, stateToRecover, frameId)
+  constructor() : this(null)
+  constructor(cs: CoroutineScope, frameId: XStackFrameId, stateToRecover: XDebuggerTreeState?)
+    : this(VariablesPreloadManager.creteIfNeeded(cs, stateToRecover, frameId))
 
   suspend fun getChildrenEventsFlow(entityId: XContainerId): Flow<XValueComputeChildrenEvent> {
     return preloadManager?.getChildrenEventsFlow(entityId) ?: XValueApi.getInstance().computeChildren(entityId)
@@ -39,12 +44,15 @@ internal class FrontendXValueContainer(
   private val id: XContainerId,
 ) : XValueContainer() {
   private fun getOrCreteChildrenManager(node: XCompositeNode): XValueChildrenManager {
+    val existing = cs.coroutineContext[XValueChildrenManager]
+    if (existing != null) return existing
+
     return if (id is XStackFrameId) {
       val stateToRecover = (node as? XValueContainerNode.Root<*>)?.stateToRecover
       XValueChildrenManager(cs, id, stateToRecover)
     }
     else {
-      cs.coroutineContext[XValueChildrenManager] ?: error("XValueChildrenManager should be installed, but it is not")
+      XValueChildrenManager()
     }
   }
 
