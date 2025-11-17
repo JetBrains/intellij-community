@@ -27,7 +27,6 @@ import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.pullrequest.ui.GHPRInlayUtils
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -120,13 +119,13 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
     launchNow {
       val userIcon = fileVm.iconProvider.getIcon(fileVm.currentUser.url, 16)
       editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) {
-        GHPRInlayUtils.installInlaysDimming(this, model, null)
+        CodeReviewEditorInlayUtils.installInlaysDimming(this, model, null)
         editor.project?.let { project ->
-          GHPRInlayUtils.installInlaysFocusTracker(this, model, project)
+          CodeReviewEditorInlayUtils.installInlaysFocusTracker(this, model, project)
         }
         launchNow {
           model.inlays
-            .mapStatefulToStateful { inlayModel -> GHPRInlayUtils.installInlayHoverOutline(this, editor, false, null, inlayModel) }
+            .mapStatefulToStateful { inlayModel -> CodeReviewEditorInlayUtils.installInlayHoverOutline(this, editor, false, null, inlayModel) }
             .collect()
         }
         createRenderer(it, userIcon)

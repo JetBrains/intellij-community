@@ -6,10 +6,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.ui.codereview.diff.viewer.EditorModelFactory
 import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
+import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.Hideable
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.syncOrToggleAll
@@ -33,7 +30,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.GHPRInlayUtils
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.lineLocation
@@ -100,13 +96,13 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
           cs.launchNow {
             inlays
               .mapStatefulToStateful { inlayModel ->
-                GHPRInlayUtils.installInlayHoverOutline(this, editor, side == null, locationToLine, inlayModel)
+                CodeReviewEditorInlayUtils.installInlayHoverOutline(this, editor, side == null, locationToLine, inlayModel)
               }
               .collect()
           }
-          GHPRInlayUtils.installInlaysDimming(cs, this@apply, locationToLine)
+          CodeReviewEditorInlayUtils.installInlaysDimming(cs, this@apply, locationToLine)
           editor.project?.let { project ->
-            GHPRInlayUtils.installInlaysFocusTracker(cs, this@apply, project)
+            CodeReviewEditorInlayUtils.installInlaysFocusTracker(cs, this@apply, project)
           }
         }
       }

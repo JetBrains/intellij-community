@@ -1008,6 +1008,11 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - paint(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.awt.Rectangle):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer$Companion
 - f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel,com.intellij.openapi.editor.ex.EditorEx,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayUtils
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayUtils
+- f:installInlayHoverOutline(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.editor.Editor,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel):V
+- f:installInlaysDimming(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel,kotlin.jvm.functions.Function1):V
+- f:installInlaysFocusTracker(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel,com.intellij.openapi.project.Project):V
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 - a:getInlays():kotlinx.coroutines.flow.StateFlow
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
@@ -1042,6 +1047,11 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - com.intellij.collaboration.ui.codereview.editor.EditorMapped
 - a:getLine():kotlinx.coroutines.flow.StateFlow
 - a:isVisible():kotlinx.coroutines.flow.StateFlow
+*f:com.intellij.collaboration.ui.codereview.editor.FadeLayerUI
+- javax.swing.plaf.LayerUI
+- <init>():V
+- paint(java.awt.Graphics,javax.swing.JComponent):V
+- f:setAlpha(F,javax.swing.JLayer):V
 *:com.intellij.collaboration.ui.codereview.editor.ResizableInlayModel
 - com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel
 - a:isHidden():kotlinx.coroutines.flow.StateFlow

@@ -1,11 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.pullrequest.ui
+package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.collaboration.action.findFocusedThreadId
 import com.intellij.collaboration.async.combineState
 import com.intellij.collaboration.async.flatMapLatestEach
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.comment.CommentedCodeFrameRenderer
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.diff.util.LineRange
@@ -35,7 +35,6 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.github.pullrequest.ui.comment.CommentedCodeFrameRenderer
 import java.awt.*
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
@@ -44,8 +43,8 @@ import javax.swing.JLayer
 import javax.swing.SwingUtilities
 import javax.swing.plaf.LayerUI
 
-internal object GHPRInlayUtils {
-  internal fun installInlayHoverOutline(
+object CodeReviewEditorInlayUtils {
+  fun installInlayHoverOutline(
     parentCs: CoroutineScope,
     editor: Editor,
     isUnifiedDiff: Boolean,
@@ -279,7 +278,7 @@ internal object GHPRInlayUtils {
     }
   }
 
-  internal fun installInlaysFocusTracker(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>, project: Project) {
+  fun installInlaysFocusTracker(cs: CoroutineScope, model: CodeReviewEditorInlaysModel<*>, project: Project) {
     val focusedThreadFlow: Flow<String?> = callbackFlow {
       val focusListener = PropertyChangeListener { evt ->
         if (evt.propertyName == "focusOwner") {
@@ -360,7 +359,7 @@ internal fun Editor.yRangeForLogicalLineRange(startLine: Int, endLine: Int): Int
   return startY..endY
 }
 
-internal class FadeLayerUI : LayerUI<JComponent>() {
+class FadeLayerUI : LayerUI<JComponent>() {
   private var alpha: Float = 1f
 
   fun setAlpha(a: Float, jLayer: JLayer<JComponent>) {

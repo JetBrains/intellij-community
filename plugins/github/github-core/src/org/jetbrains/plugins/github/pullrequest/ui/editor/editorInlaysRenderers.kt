@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel
+import com.intellij.collaboration.ui.codereview.editor.FadeLayerUI
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.observable.util.addMouseHoverListener
@@ -15,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.ai.GHPRAICommentViewModel
 import org.jetbrains.plugins.github.ai.GHPRAIReviewExtension
-import org.jetbrains.plugins.github.pullrequest.ui.FadeLayerUI
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import java.awt.Component
 import javax.swing.Icon

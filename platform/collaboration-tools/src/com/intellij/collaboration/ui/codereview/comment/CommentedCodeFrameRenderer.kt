@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.github.pullrequest.ui.comment
+package com.intellij.collaboration.ui.codereview.comment
 
+import com.intellij.collaboration.ui.codereview.editor.yRangeForLogicalLineRange
 import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Editor
@@ -9,12 +10,10 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.ui.scale.JBUIScale
-import org.jetbrains.plugins.github.pullrequest.ui.yRangeForLogicalLineRange
 import java.awt.*
 import java.awt.geom.Path2D
-import java.awt.geom.Path2D.WIND_NON_ZERO
 
-class CommentedCodeFrameRenderer(
+internal class CommentedCodeFrameRenderer(
   private val startLine: Int,
   private val endLine: Int,
   private val editorSide: Side?,
@@ -64,7 +63,7 @@ class CommentedCodeFrameRenderer(
     return startY to height
   }
   private fun createLeftOutlinePath(x: Float, y: Float, width: Float, height: Float): Path2D.Float {
-    return Path2D.Float(WIND_NON_ZERO).apply {
+    return Path2D.Float(Path2D.WIND_NON_ZERO).apply {
       moveTo(width, y)
       lineTo(x + radius, y)
       quadTo(x, y, x, y + radius)
@@ -75,7 +74,7 @@ class CommentedCodeFrameRenderer(
   }
 
   private fun createRightOutlinePath(x: Float, y: Float, width: Float, height: Float): Path2D.Float {
-    return Path2D.Float(WIND_NON_ZERO).apply {
+    return Path2D.Float(Path2D.WIND_NON_ZERO).apply {
       moveTo(x, y)
       lineTo(x + width - radius, y)
       quadTo(x + width, y, x + width, y + radius)
