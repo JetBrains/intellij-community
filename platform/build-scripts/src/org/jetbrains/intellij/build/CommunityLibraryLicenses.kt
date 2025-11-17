@@ -271,6 +271,10 @@ object CommunityLibraryLicenses {
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
 
+    LibraryLicense("Compose Runtime Retained", libraryName = "androidx.compose.runtime.retain.desktop", url = "https://source.android.com/")
+      .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
+      .suppliedByOrganizations(Suppliers.GOOGLE),
+
     LibraryLicense("Compose Runtime Saveable Desktop", libraryName = "androidx.compose.runtime.saveable.desktop", url = "https://source.android.com/")
       .apache("https://cs.android.com/androidx/platform/frameworks/support/+/androidx-main:LICENSE.txt")
       .suppliedByOrganizations(Suppliers.GOOGLE),
@@ -312,7 +316,7 @@ object CommunityLibraryLicenses {
       .lgpl2("https://github.com/hypfvieh/dbus-java/blob/dbus-java-3.0/LICENSE")
       .suppliedByPersons("David M. <hypfvieh@googlemail.com>"),
 
-    LibraryLicense("debugpy", version = LibraryLicense.CUSTOM_REVISION, attachedTo="intellij.python", url = "https://github.com/microsoft/debugpy")
+    LibraryLicense("debugpy", version = LibraryLicense.CUSTOM_REVISION, attachedTo = "intellij.python", url = "https://github.com/microsoft/debugpy")
       .mit("https://github.com/microsoft/debugpy/blob/main/LICENSE"),
 
     LibraryLicense("Detekt", libraryName = "io.gitlab.arturbosch.detekt.api", url = "https://github.com/detekt/detekt")
@@ -717,7 +721,7 @@ object CommunityLibraryLicenses {
       .newBsd("https://github.com/ymnk/jsch-agent-proxy/blob/master/LICENSE.txt")
       .suppliedByPersons("Atsuhiko Yamanaka"),
 
-    LibraryLicense("jSerialComm", libraryName = "jetbrains.intellij.deps.jSerialComm", url= "https://github.com/JetBrains/jSerialComm")
+    LibraryLicense("jSerialComm", libraryName = "jetbrains.intellij.deps.jSerialComm", url = "https://github.com/JetBrains/jSerialComm")
       .apache("https://github.com/JetBrains/jSerialComm/blob/master/LICENSE-APACHE-2.0")
       .forkedFrom(groupId = "com.fazecast", artifactId = "jSerialComm", version = "2.11.2", mavenRepositoryUrl = "https://repo1.maven.org/maven2/"),
 
@@ -935,7 +939,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/qos-ch/slf4j/blob/master/log4j-over-slf4j/LICENSE.txt")
       .suppliedByOrganizations("QOS.ch Sarl"),
 
-    LibraryLicense("LWJGL", libraryName="org.lwjgl.lwjgl.tinyfd", url = "https://github.com/LWJGL/lwjgl3")
+    LibraryLicense("LWJGL", libraryName = "org.lwjgl.lwjgl.tinyfd", url = "https://github.com/LWJGL/lwjgl3")
       .newBsd("https://github.com/LWJGL/lwjgl3/blob/master/LICENSE.md"),
 
     LibraryLicense("lz4-java", libraryName = "lz4-java", url = "https://github.com/lz4/lz4-java")
@@ -1167,10 +1171,13 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "Saxon-9HE", version = "9.9", url = "https://saxon.sourceforge.net/")
       .mpl2("https://www.mozilla.org/en-US/MPL/2.0/"),
 
-    LibraryLicense(name = "Schema Kenerator", libraryName = "io.github.smiley4.schema.kenerator.core", url = "https://github.com/SMILEY4/schema-kenerator",
-                   additionalLibraryNames = listOf(
-                     "io.github.smiley4.schema.kenerator.jsonschema",
-                     "io.github.smiley4.schema.kenerator.serialization",))
+    LibraryLicense(
+      name = "Schema Kenerator", libraryName = "io.github.smiley4.schema.kenerator.core", url = "https://github.com/SMILEY4/schema-kenerator",
+      additionalLibraryNames = listOf(
+        "io.github.smiley4.schema.kenerator.jsonschema",
+        "io.github.smiley4.schema.kenerator.serialization",
+      )
+    )
       .apache("https://github.com/SMILEY4/schema-kenerator/blob/develop/LICENSE"),
 
     LibraryLicense("setuptools", version = "44.1.1", attachedTo = "intellij.python", url = "https://setuptools.pypa.io/")
