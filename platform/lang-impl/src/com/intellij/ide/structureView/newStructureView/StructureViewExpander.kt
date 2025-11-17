@@ -35,11 +35,11 @@ internal class StructureViewExpander(val project: Project): TreeExpander {
   override fun expandAll() {
     val tree = getActualTree() ?: return
     val rootFile = (StructureViewComponent.unwrapValue(tree.model.root) as? PsiElement)?.containingFile?.virtualFile
-    TreeUtil.promiseExpand(tree, Int.Companion.MAX_VALUE) { path ->
+    TreeUtil.promiseExpand(tree, Int.MAX_VALUE) { path ->
       val structureElement = StructureViewComponent.unwrapWrapper(path.lastPathComponent)
       if (structureElement is LogicalStructureViewTreeElement<*>) {
         val logicalModel = structureElement.getLogicalAssembledModel().model
-        if (logicalModel is ExtendedLogicalObject) return@promiseExpand false
+        if (logicalModel is ExtendedLogicalObject && logicalModel.isTargetToExternalElement()) return@promiseExpand false
       }
       val pathObject = StructureViewComponent.unwrapValue(path.lastPathComponent)
       when (pathObject) {
