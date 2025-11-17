@@ -16,7 +16,7 @@ import java.nio.file.Path
 import kotlin.io.path.relativeTo
 import kotlin.jvm.optionals.getOrNull
 
-fun ExtensionContext.resolveTestName(): String {
+internal fun ExtensionContext.resolveTestName(): String {
   return testMethod.map { PlatformTestUtil.getTestName(it.name, true) }.getOrNull()
          ?: error("Can't resolve test name for ${testMethod.map { it.name }}")
 }
