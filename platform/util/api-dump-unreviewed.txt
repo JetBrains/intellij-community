@@ -3198,10 +3198,7 @@ a:com.intellij.util.containers.SingletonIteratorBase
 - f:hasNext():Z
 - f:next():java.lang.Object
 f:com.intellij.util.containers.SmartHashSet
-- java.util.HashSet
 - <init>():V
-- <init>(I):V
-- <init>(I,F):V
 - <init>(java.util.Collection):V
 - add(java.lang.Object):Z
 - clear():V
