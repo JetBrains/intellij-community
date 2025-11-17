@@ -3,8 +3,8 @@ package com.intellij.collaboration.ui.codereview.comment
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.ClippingRoundedPanel
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.FocusAwareClippingRoundedPanel
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil
@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.OverlaidOffsetIconsIcon
@@ -69,13 +68,9 @@ object CodeReviewCommentUIUtil {
   @ApiStatus.Internal
   fun createEditorInlayPanel(component: JComponent, tint: Color? = null): JPanel {
     val borderColor = JBColor.lazy {
-      if (UIUtil.isFocusAncestor(component))
-        return@lazy JBUI.CurrentTheme.Focus.focusColor()
-
-      val scheme = EditorColorsManager.getInstance().globalScheme
-      scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
+      EditorColorsManager.getInstance().globalScheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
     }
-    val roundedPanel = ClippingRoundedPanel(EDITOR_INLAY_PANEL_ARC, borderColor, BorderLayout()).apply {
+    val roundedPanel = FocusAwareClippingRoundedPanel(EDITOR_INLAY_PANEL_ARC, borderColor, BorderLayout()).apply {
       background = JBColor.lazy {
         val scheme = EditorColorsManager.getInstance().globalScheme
         tint?.let { ColorUtil.blendColorsInRgb(scheme.defaultBackground, it, 0.1) } ?: scheme.defaultBackground

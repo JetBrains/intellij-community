@@ -30,7 +30,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
@@ -78,14 +77,13 @@ internal object GHPRReviewEditorComponentsFactory {
           }
         }
       }
-
-      isFocusable = true
-
-      launchOnShow("focusRequests") {
-        vm.focusRequests.collectLatest { requestFocus(false) }
-      }
     }.let {
-      CodeReviewCommentUIUtil.createEditorInlayPanel(it)
+      CodeReviewCommentUIUtil.createEditorInlayPanel(it).apply {
+        isFocusable = true
+        launchOnShow("focusRequests") {
+          vm.focusRequests.collect { requestFocus(false) }
+        }
+      }
     }, UiDataProvider { sink ->
       sink[CodeReviewTrackableItemViewModel.TRACKABLE_ITEM_KEY] = vm
     }).apply {

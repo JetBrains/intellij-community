@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.diff
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.FocusableViewModel
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
@@ -38,20 +39,8 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
   ): JComponent =
     GitLabDiscussionComponentFactory.create(project, cs, avatarIconsProvider, imageLoader, vm, place).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
-    }.apply {
-      isFocusable = true
-      launchOnShow("focusRequests") {
-        vm.focusRequests.collect { requestFocus(false) }
-      }
     }.let {
-      return if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
-        Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(it)).apply {
-          border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
-        }
-      }
-      else {
-        CodeReviewCommentUIUtil.createEditorInlayPanel(it)
-      }
+      wrapInRoundedPanel(it, vm)
     }
 
   fun createDraftNote(
@@ -65,19 +54,24 @@ internal object GitLabMergeRequestDiffInlayComponentsFactory {
     GitLabNoteComponentFactory.create(CodeReviewChatItemUIUtil.ComponentType.COMPACT, project, cs, avatarIconsProvider,
                                       imageLoader, vm, place).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
-    }.apply {
+    }.let {
+      wrapInRoundedPanel(it, vm)
+    }
+
+  private fun wrapInRoundedPanel(component: JComponent, vm: FocusableViewModel): JComponent =
+    CodeReviewCommentUIUtil.createEditorInlayPanel(component).apply {
       isFocusable = true
       launchOnShow("focusRequests") {
         vm.focusRequests.collect { requestFocus(false) }
       }
-    }.let {
-      return if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
-        Wrapper(CodeReviewCommentUIUtil.createEditorInlayPanel(it)).apply {
+    }.let { roundedPanel ->
+      if (AdvancedSettings.getBoolean("show.review.threads.with.increased.margins")) {
+        Wrapper(roundedPanel).apply {
           border = JBUI.Borders.empty(VERTICAL_INLAY_MARGIN, LEFT_INLAY_MARGIN, VERTICAL_INLAY_MARGIN, RIGHT_INLAY_MARGIN)
         }
       }
       else {
-        CodeReviewCommentUIUtil.createEditorInlayPanel(it)
+        roundedPanel
       }
     }
 

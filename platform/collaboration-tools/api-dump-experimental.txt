@@ -290,6 +290,8 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:ClippingRoundedPanel(I,java.awt.LayoutManager):javax.swing.JPanel
 - bs:ClippingRoundedPanel$default(I,java.awt.Color,java.awt.LayoutManager,I,java.lang.Object):javax.swing.JPanel
 - bs:ClippingRoundedPanel$default(I,java.awt.LayoutManager,I,java.lang.Object):javax.swing.JPanel
+- sf:FocusAwareClippingRoundedPanel(I,java.awt.Color,java.awt.LayoutManager):javax.swing.JPanel
+- bs:FocusAwareClippingRoundedPanel$default(I,java.awt.Color,java.awt.LayoutManager,I,java.lang.Object):javax.swing.JPanel
 - sf:HorizontalListPanel(I):javax.swing.JPanel
 - bs:HorizontalListPanel$default(I,I,java.lang.Object):javax.swing.JPanel
 - sf:LoadingLabel():javax.swing.JLabel
