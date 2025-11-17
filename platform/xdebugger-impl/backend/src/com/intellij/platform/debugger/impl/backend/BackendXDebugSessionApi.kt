@@ -325,7 +325,7 @@ private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
 
 private fun XStackFrame.backgroundInfo(project: Project): XStackFrameBackgroundColor? {
   if (this is XDebuggerFramesList.ItemWithCustomBackgroundColor) {
-    XStackFrameBackgroundColor(backgroundColor?.rpcId())
+    return XStackFrameBackgroundColor(backgroundColor?.rpcId())
   }
   val file = sourcePosition?.file ?: return null
   val fileColor = runReadAction {
