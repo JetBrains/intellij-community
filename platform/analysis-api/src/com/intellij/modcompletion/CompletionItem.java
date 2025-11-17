@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcompletion;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.util.NlsSafe;
@@ -34,7 +35,8 @@ public interface CompletionItem {
   }
 
   /**
-   * @return a context object which could be used for item weighing
+   * @return a context object. Often, it's a PsiElement associated with the item to be inserted, 
+   * but it could be a type or any other object. It's used for item weighing, char filters, documentation providers, etc.
    */
   Object contextObject();
 
@@ -59,6 +61,13 @@ public interface CompletionItem {
    * selection range is already deleted.
    */
   ModCommand perform(ActionContext actionContext, InsertionContext insertionContext);
+
+  /**
+   * @return the desired behavior when this item is the only one item in the completion popup.
+   */
+  default AutoCompletionPolicy autoCompletionPolicy() {
+    return AutoCompletionPolicy.SETTINGS_DEPENDENT;
+  }
 
   /**
    * Context for the item insertion

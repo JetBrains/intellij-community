@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion.modcompletion;
 
 import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcompletion.CompletionItemPresentation;
@@ -30,6 +31,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   private final CompletionItemPresentation myPresentation;
   private final ModNavigatorTailType myTail;
   private final InsertionAwareUpdateHandler myAdditionalUpdater;
+  private final AutoCompletionPolicy myPolicy;
   private final double myPriority;
 
   public CommonCompletionItem(@NlsSafe String text) { 
@@ -40,10 +42,12 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
     myTail = (ModNavigatorTailType)TailTypes.noneType();
     myPriority = 0;
     myAdditionalUpdater = (UpdateHandler)(start, file, updater) -> { };
+    myPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
   }
   
   private CommonCompletionItem(@NlsSafe String text, Set<String> additionalStrings, Object object, CompletionItemPresentation presentation,
-                               ModNavigatorTailType tail, double priority, InsertionAwareUpdateHandler additionalUpdater) {
+                               ModNavigatorTailType tail, double priority, InsertionAwareUpdateHandler additionalUpdater,
+                               AutoCompletionPolicy policy) {
     myText = text;
     myAdditionalStrings = additionalStrings;
     myObject = object;
@@ -51,6 +55,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
     myTail = tail;
     myPriority = priority;
     myAdditionalUpdater = additionalUpdater;
+    myPolicy = policy;
   }
 
   /**
@@ -59,7 +64,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    */
   public CommonCompletionItem withTail(ModNavigatorTailType tail) {
     return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, tail, myPriority,
-                                    myAdditionalUpdater);
+                                    myAdditionalUpdater, myPolicy);
   }
 
   /**
@@ -76,7 +81,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    */
   public CommonCompletionItem withPresentation(CompletionItemPresentation presentation) {
     return new CommonCompletionItem(myText, myAdditionalStrings, myObject, presentation, myTail, myPriority,
-                                    myAdditionalUpdater);
+                                    myAdditionalUpdater, myPolicy);
   }
 
   /**
@@ -85,7 +90,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    */
   public CommonCompletionItem withObject(Object object) {
     return new CommonCompletionItem(myText, myAdditionalStrings, object, myPresentation, myTail, myPriority,
-                                    myAdditionalUpdater);
+                                    myAdditionalUpdater, myPolicy);
   }
 
   /**
@@ -94,7 +99,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    */
   public CommonCompletionItem withPriority(double priority) {
     return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, priority,
-                                    myAdditionalUpdater);
+                                    myAdditionalUpdater, myPolicy);
   }
 
   /**
@@ -103,7 +108,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return a new completion item with the given updater
    */
   public CommonCompletionItem withAdditionalUpdater(InsertionAwareUpdateHandler updater) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, myPriority, updater);
+    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, myPriority, updater, myPolicy);
   }
 
   /**
@@ -111,7 +116,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return a new completion item with the given updater
    */
   public CommonCompletionItem withAdditionalUpdater(UpdateHandler updater) {
-    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, myPriority, updater);
+    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, myPriority, updater, myPolicy);
   }
 
   /**
@@ -129,7 +134,16 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    */
   public CommonCompletionItem addLookupString(String string) {
     return new CommonCompletionItem(myText, StreamEx.of(myAdditionalStrings).append(string).toSet(), myObject, myPresentation, myTail,
-                                    myPriority, myAdditionalUpdater);
+                                    myPriority, myAdditionalUpdater, myPolicy);
+  }
+
+  /**
+   * @param policy desired completion policy when this element is the only available element
+   * @return new CommonCompletionItem with the given completion policy
+   */
+  public CommonCompletionItem withAutoCompletionPolicy(AutoCompletionPolicy policy) {
+    return new CommonCompletionItem(myText, myAdditionalStrings, myObject, myPresentation, myTail, myPriority,
+                                    myAdditionalUpdater, policy);
   }
 
   @Override
@@ -150,6 +164,11 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   @Override
   public CompletionItemPresentation presentation() {
     return myPresentation;
+  }
+
+  @Override
+  public AutoCompletionPolicy autoCompletionPolicy() {
+    return myPolicy;
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
@@ -1260,6 +1261,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       return new CommonCompletionItem(keyword)
         .withObject(JavaPsiFacade.getElementFactory(myFile.getProject()).createKeyword(keyword, myPosition))
         .withPresentation(MarkupText.builder().append(keyword, STRONG).build())
+        .withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE)
         .withTail(tailType);
     }
   }

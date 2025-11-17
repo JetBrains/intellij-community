@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.modcommand.ActionContext;
@@ -118,6 +119,11 @@ public final class CompletionItemLookupElement extends LookupElement implements 
   @Override
   public boolean isValid() {
     return item.isValid();
+  }
+
+  @Override
+  public AutoCompletionPolicy getAutoCompletionPolicy() {
+    return item.autoCompletionPolicy();
   }
 
   @Override
