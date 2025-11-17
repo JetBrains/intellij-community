@@ -104,7 +104,10 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     dataContextId: DataContextId,
   ): SeSortedProviderIds? {
     val providersHolder = getProvidersHolder(session, dataContextId) ?: return null
-    val allProviderIds = SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }
+    val allProviderIds = (SeItemsProviderFactory.EP_NAME.extensionList.map { it.id.toProviderId() } + providersHolder.legacyAllTabContributors.map { it.key }).filter {
+      // Remove the frontend version of TopHit contributor
+      it.value != SeProviderIdUtils.TOP_HIT_ID
+    }
     return SeSortedProviderIds.create(allProviderIds, providersHolder, session)
   }
 
