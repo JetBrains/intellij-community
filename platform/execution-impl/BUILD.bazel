@@ -99,6 +99,8 @@ jvm_library(
     "//platform/core-ui",
     "//libraries/jediterm-core",
     "//libraries/jediterm-ui",
+    "//platform/eel",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.platform.execution.tests` end
