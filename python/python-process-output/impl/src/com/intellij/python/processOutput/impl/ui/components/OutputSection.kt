@@ -137,6 +137,10 @@ internal fun OutputSection(controller: ProcessOutputController) {
                                         cwd,
                                     )
                                 },
+                                InfoLine.Single(
+                                    message("process.output.output.sections.info.target"),
+                                    it.target,
+                                ),
                                 InfoLine.Multi(
                                     message("process.output.output.sections.info.env"),
                                     it.env.entries.map { (key, value) -> "$key=$value" },
