@@ -29,24 +29,13 @@ internal class KotlinUnusedDeclarationHighlightingVisitor : HighlightVisitor {
         return !highlightingManager.runEssentialHighlightingOnly(file)
     }
 
-    var processor:KotlinUnusedHighlightingProcessor?=null
-    var holder: HighlightInfoHolder?=null
-
-    override fun visit(element: PsiElement) {
-        processor!!.visit(element, holder!!)
-    }
+    override fun visit(element: PsiElement) {}
 
     override fun analyze(file: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
         if (file !is KtFile) return true
-        this.holder = holder
-        this.processor = KotlinUnusedHighlightingProcessor(file)
-        try {
-            processor!!.registerAllLocalReferences(holder)
-            action.run()
-        } finally {
-            this.holder = null
-            this.processor = null
-        }
+
+        KotlinUnusedHighlightingProcessor(file).collectHighlights(holder)
+
         return true
     }
 
