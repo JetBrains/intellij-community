@@ -155,6 +155,10 @@ internal class BackendXDebuggerManagerApi : XDebuggerManagerApi {
         rawEvents.trySend { XDebuggerSessionEvent.SettingsChanged }
       }
 
+      override fun settingsChangedFromFrontend() {
+        // Ignore changes from the frontend side, they're already handled in FrontendXDebuggerSession
+      }
+
       override fun breakpointsMuted(muted: Boolean) {
         rawEvents.trySend { XDebuggerSessionEvent.BreakpointsMuted(muted) }
       }

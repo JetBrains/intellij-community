@@ -176,7 +176,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun triggerUpdate(sessionId: XDebugSessionId) {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
-      session.rebuildViews()
+      session.frontendUpdate()
     }
   }
 
