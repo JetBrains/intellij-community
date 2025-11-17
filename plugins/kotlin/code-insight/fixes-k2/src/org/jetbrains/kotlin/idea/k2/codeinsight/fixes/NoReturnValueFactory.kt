@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 internal object NoReturnValueFactory {
     val noReturnValue =
@@ -65,8 +65,9 @@ internal object NoReturnValueFactory {
                     factory.createExpression("{$baseExpressionText}")
                 }
                 else -> {
-                    LOG.error("Unknown parent class: ${parent?.javaClass?.name}. The result expression could be incorrect.")
-                    factory.createExpression("{$baseExpressionText}")
+                    throw KotlinExceptionWithAttachments("Unknown parent class: ${parent?.javaClass?.name}.")
+                        .withPsiAttachment("element.kt", element)
+                        .withPsiAttachment("file.kt", element.containingFile)
                 }
             }
             return newExpression
@@ -74,14 +75,12 @@ internal object NoReturnValueFactory {
 
         private fun findParentOrOuterMostParentheses(element: KtElement): PsiElement? {
             var parent: PsiElement? = element.parent
-            while (parent is KtParenthesizedExpression) {
+            while (parent is KtParenthesizedExpression || parent is KtBinaryExpression) {
                 val parentOfParent = parent.parent
-                if (parentOfParent !is KtParenthesizedExpression) break
+                if (parentOfParent !is KtParenthesizedExpression && parentOfParent !is KtBinaryExpression) break
                 parent = parentOfParent
             }
             return parent
         }
     }
 }
-
-private val LOG = Logger.getInstance(NoReturnValueFactory::class.java)

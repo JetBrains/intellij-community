@@ -9787,6 +9787,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/explicitlyIgnoreReturnValue/ignoredWithAnnotation.kt");
         }
 
+        @TestMetadata("nestedBinaryExpressions.kt")
+        public void testNestedBinaryExpressions() throws Exception {
+            runTest("testData/quickfix/explicitlyIgnoreReturnValue/nestedBinaryExpressions.kt");
+        }
+
         @TestMetadata("parentheses.kt")
         public void testParentheses() throws Exception {
             runTest("testData/quickfix/explicitlyIgnoreReturnValue/parentheses.kt");
