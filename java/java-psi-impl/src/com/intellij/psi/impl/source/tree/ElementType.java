@@ -22,8 +22,8 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
   TokenSet JAVA_COMMENT_BIT_SET =
     ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getJAVA_COMMENT_BIT_SET(), javaPsiElementTypeConverter);
 
-  TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET =
-    ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getJAVA_COMMENT_OR_WHITESPACE_BIT_SET(), javaPsiElementTypeConverter);
+  //is not changed, because it includes white_space
+  TokenSet JAVA_COMMENT_OR_WHITESPACE_BIT_SET = TokenSet.orSet(TokenSet.WHITE_SPACE, JAVA_COMMENT_BIT_SET);
 
   TokenSet KEYWORD_BIT_SET =
     ElementTypeConverterKt.asTokenSet(SyntaxElementTypes.INSTANCE.getKEYWORD_BIT_SET(), javaPsiElementTypeConverter);
