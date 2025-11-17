@@ -112,5 +112,9 @@
       name="inline.completion.editorTypeResolver"
       interface="com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorTypeResolver"
       dynamic="true"/>
+    <extensionPoint
+      name="inline.edit.awaiter"
+      interface="com.intellij.codeInsight.inline.edit.InlineEditAwaiter"
+      dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

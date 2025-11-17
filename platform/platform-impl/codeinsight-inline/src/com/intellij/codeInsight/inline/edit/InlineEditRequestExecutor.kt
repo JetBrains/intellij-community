@@ -11,8 +11,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
@@ -34,8 +35,6 @@ sealed interface InlineEditRequestExecutor : Disposable {
   @RequiresEdt
   fun cancelActiveRequest()
 
-  @TestOnly
-  @RequiresEdt
   suspend fun awaitActiveRequest()
 
   companion object {
@@ -51,7 +50,7 @@ private class InlineEditRequestExecutorImpl(parentScope: CoroutineScope) : Inlin
 
   // Timestamps of jobs are required to understand whether we waited for all requests by some moment
   private val lastRequestedTimestamp = AtomicLong(0)
-  private val lastExecutedTimestamp = AtomicLong(0)
+  private val lastExecutedTimestamp = MutableStateFlow(0L)
 
   private val nextTask = Channel<Request>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -115,13 +114,9 @@ private class InlineEditRequestExecutorImpl(parentScope: CoroutineScope) : Inlin
     nextTask.trySend(Request.Cancel(lastRequestedTimestamp.incrementAndGet()))
   }
 
-  @TestOnly
   override suspend fun awaitActiveRequest() {
-    ThreadingAssertions.assertEventDispatchThread()
     val currentTimestamp = lastRequestedTimestamp.get()
-    while (lastExecutedTimestamp.get() < currentTimestamp) {
-      yield()
-    }
+    lastExecutedTimestamp.first { it >= currentTimestamp }
   }
 
   override fun dispose() {
@@ -134,7 +129,7 @@ private class InlineEditRequestExecutorImpl(parentScope: CoroutineScope) : Inlin
 
   private fun setLastExecutedToAtLeast(atLeastTimestamp: Long) {
     while (true) {
-      val currentTimestamp = lastExecutedTimestamp.get()
+      val currentTimestamp = lastExecutedTimestamp.value
       if (currentTimestamp >= atLeastTimestamp) {
         return
       }

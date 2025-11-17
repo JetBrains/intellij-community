@@ -590,9 +590,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
 
   // -----------------------------------
 
-  @TestOnly
   suspend fun awaitExecution() {
-    ThreadingAssertions.assertEventDispatchThread()
     executor.awaitActiveRequest()
   }
 
