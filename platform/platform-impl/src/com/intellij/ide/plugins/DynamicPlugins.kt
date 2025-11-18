@@ -138,12 +138,12 @@ object DynamicPlugins {
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  fun loadPlugins(descriptors: List<PluginMainDescriptor>, project: Project?): Boolean {
-    if (descriptors.isEmpty()) {
+  fun loadPlugins(plugins: List<PluginMainDescriptor>, project: Project?): Boolean {
+    if (plugins.isEmpty()) {
       return true
     }
     return runProcess {
-      val descriptors = getDescriptorsToUpdateWithoutRestart(descriptors, load = true)
+      val descriptors = getDescriptorsToUpdateWithoutRestart(plugins, load = true)
       if (descriptors.isEmpty()) {
         return@runProcess false
       }
@@ -517,7 +517,7 @@ object DynamicPlugins {
 
   private fun doUnloadPluginWithProgress(project: Project? = null,
                                          parentComponent: JComponent?,
-                                         pluginDescriptor: IdeaPluginDescriptorImpl,
+                                         pluginDescriptor: PluginMainDescriptor,
                                          options: UnloadPluginOptions): Boolean {
     var result = false
     val modalOwner = project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess()
@@ -606,9 +606,8 @@ object DynamicPlugins {
     }
   }
 
-  private fun unloadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl,
+  private fun unloadPluginWithoutProgress(pluginDescriptor: PluginMainDescriptor,
                                           options: UnloadPluginOptions = UnloadPluginOptions(disable = true)): Boolean {
-    pluginDescriptor as PluginMainDescriptor
     LOG.debug { "Start unloading plugin $pluginDescriptor dynamically" }
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val pluginId = pluginDescriptor.pluginId
@@ -1019,7 +1018,7 @@ object DynamicPlugins {
   }
 
   @RequiresEdt
-  private fun doLoadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl): Boolean {
+  private fun doLoadPlugin(pluginDescriptor: PluginMainDescriptor): Boolean {
     val isVetoed = VETOER_EP_NAME.findFirstSafe {
       it.vetoPluginLoad(pluginDescriptor)
     } != null
@@ -1031,8 +1030,7 @@ object DynamicPlugins {
     return loadPluginWithoutProgress(pluginDescriptor, checkImplementationDetailDependencies = true)
   }
 
-  private fun loadPluginWithoutProgress(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
-    pluginDescriptor as PluginMainDescriptor
+  private fun loadPluginWithoutProgress(pluginDescriptor: PluginMainDescriptor, checkImplementationDetailDependencies: Boolean = true): Boolean {
     LOG.debug { "start loading plugin $pluginDescriptor dynamically" }
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId]?.isEmpty() == false) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
