@@ -156,13 +156,11 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
         HtmlChunk hyperLink = createLink(JavaDocUtil.getReferenceText(field.getProject(), field), displayName);
 
         final String typeText = field.getType().getPresentableText();
-        String requiredText = "";
-        if (required == RequiredFlag.REQUIRED) {
-          requiredText = " " + DevKitBundle.message("extension.point.documentation.field.required.suffix");
-        }
-        else if (required == RequiredFlag.REQUIRED_ALLOW_EMPTY) {
-          requiredText = " " + DevKitBundle.message("extension.point.documentation.field.required.can.be.empty.suffix");
-        }
+        final String requiredText = switch (required) {
+          case REQUIRED -> " " + DevKitBundle.message("extension.point.documentation.field.required.suffix");
+          case REQUIRED_ALLOW_EMPTY -> " " + DevKitBundle.message("extension.point.documentation.field.required.can.be.empty.suffix");
+          default -> "";
+        };
         final String initializer = field.getInitializer() != null ? " = " + field.getInitializer().getText() : "";
         bindingRows.append(createSectionRow(hyperLink, typeText + requiredText + initializer));
       }
