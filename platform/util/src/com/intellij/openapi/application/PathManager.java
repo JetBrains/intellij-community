@@ -670,7 +670,23 @@ public final class PathManager {
   // misc stuff
 
   /**
-   * Attempts to detect classpath entry containing the resource.
+   * Returns the absolute path to the resource root of the JAR containing {@code cls}, using it for classpath detection.
+   * <p>
+   * Consider this file hierarchy:
+   *
+   * <pre>
+   * &lt;jar_root&gt;/
+   *   resources/
+   *     META-INF/
+   *       some_file.xml
+   *   src/
+   *     com/
+   *       intellij/
+   *         SomeClass.java/
+   * </pre>
+   * <p>
+   * Calling this method with {@code SomeClass.java} as first argument and {@code resources/META-INF/some_file} as the second argument
+   * will return something like {@code /home/user/absolute/path/to/jar_root.jar}.
    */
   public static @Nullable String getResourceRoot(@NotNull Class<?> cls, @NotNull String path) {
     URL url = cls.getResource(path);
