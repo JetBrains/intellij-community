@@ -7,7 +7,7 @@ import com.intellij.credentialStore.kdbx.IncorrectMainPasswordException
 import com.intellij.credentialStore.keePass.*
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.passwordSafe.PasswordSafe
-import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
+import com.intellij.ide.passwordSafe.impl.BasePasswordSafe
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -102,11 +102,11 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
     panel.apply()
     val providerType = this.settings.providerType
+    val passwordSafe = PasswordSafe.instance as BasePasswordSafe
 
     // close if any, it is more reliable just close current store and later it will be recreated lazily with a new settings
-    (PasswordSafe.instance as PasswordSafeImpl).closeCurrentStore(isSave = false, isEvenMemoryOnly = providerType != ProviderType.MEMORY_ONLY)
+    passwordSafe.closeCurrentStore(isSave = false, isEvenMemoryOnly = providerType != ProviderType.MEMORY_ONLY)
 
-    val passwordSafe = PasswordSafe.instance as PasswordSafeImpl
     if (oldProviderType != providerType) {
       when (providerType) {
         ProviderType.MEMORY_ONLY -> {
@@ -338,5 +338,5 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
 
 // we must save and close opened KeePass database before any action that can modify KeePass database files
 private fun closeCurrentStore() {
-  (PasswordSafe.instance as PasswordSafeImpl).closeCurrentStore(isSave = true, isEvenMemoryOnly = false)
+  (PasswordSafe.instance as BasePasswordSafe).closeCurrentStore(isSave = true, isEvenMemoryOnly = false)
 }
