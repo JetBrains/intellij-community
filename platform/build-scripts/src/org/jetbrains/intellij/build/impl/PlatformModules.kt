@@ -590,8 +590,9 @@ private suspend fun computeImplicitRequiredModules(
 
 private fun computeContentModulesPluginsWhichUseIdeaClassloader(context: BuildContext): Set<String> {
   val bundledPlugins = getPluginLayoutsByJpsModuleNames(modules = context.getBundledPluginModules(), productLayout = context.productProperties.productLayout)
-  val pluginContents = bundledPlugins.flatMap { getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(context, it.mainModule, cacheContainer = null) }.toSet()
-  return pluginContents
+  return bundledPlugins.flatMapTo(LinkedHashSet()) {
+    getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(pluginMainModule = it.mainModule, cacheContainer = null, context = context)
+  }
 }
 
 private fun computeTransitive(
