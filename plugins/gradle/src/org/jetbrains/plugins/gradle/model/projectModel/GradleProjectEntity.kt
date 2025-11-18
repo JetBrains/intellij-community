@@ -25,5 +25,5 @@ interface GradleProjectEntity : WorkspaceEntityWithSymbolicId {
   val linkedProjectId: String
 
   override val symbolicId: GradleProjectEntityId
-    get() = GradleProjectEntityId(buildId, url)
+    get() = GradleProjectEntityId(buildId, identityPath)
 }
