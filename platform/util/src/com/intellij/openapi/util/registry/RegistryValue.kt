@@ -317,6 +317,7 @@ open class RegistryValue @Internal constructor(
   }
 
   /** Returns a flow that emits when the raw string value changes. */
+  @ApiStatus.Experimental
   fun asStringFlow(): Flow<String> = flow.distinctUntilChanged()
 
   /**
@@ -324,6 +325,7 @@ open class RegistryValue @Internal constructor(
    * Note that this will throw if the raw string value cannot be parsed as a boolean.
    * @see asBoolean
    */
+  @ApiStatus.Experimental
   fun asBooleanFlow(): Flow<Boolean> = flow.map { it.toBoolean() }.distinctUntilChanged()
 
   /**
@@ -331,6 +333,7 @@ open class RegistryValue @Internal constructor(
    * Note that this will throw if the raw string value cannot be parsed as an integer.
    * @see asInteger
    */
+  @ApiStatus.Experimental
   fun asIntegerFlow(): Flow<Int> = flow.map { it.toInt() }.distinctUntilChanged()
 
   /**
@@ -338,6 +341,7 @@ open class RegistryValue @Internal constructor(
    * Note that this will throw if the raw string value cannot be parsed as a double.
    * @see asDouble
    */
+  @ApiStatus.Experimental
   fun asDoubleFlow(): Flow<Double> = flow.map { it.toDouble() }.distinctUntilChanged()
 
   internal fun resetCache() {
