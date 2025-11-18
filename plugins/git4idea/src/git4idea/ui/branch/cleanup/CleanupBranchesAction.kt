@@ -4,6 +4,7 @@ package git4idea.ui.branch.cleanup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.GotItTooltip
@@ -66,7 +67,11 @@ internal class CleanupBranchesAction : DumbAwareAction() {
       e.project
     )
       .withShowCount(3)
-      .show(button, GotItTooltip.BOTTOM_MIDDLE)
+      .run {
+        runInEdt {
+          show(button, GotItTooltip.BOTTOM_MIDDLE)
+        }
+      }
 
     button.putClientProperty(shownKey, true)
   }
