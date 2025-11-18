@@ -450,7 +450,7 @@ class BuildContextImpl internal constructor(
   override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get()[os] ?: listOf()
 
   override val appInfoXml: String by lazy {
-    computeAppInfoXml(context = this, appInfo = applicationInfo)
+    computeAppInfoXml(appInfo = applicationInfo, context = this)
   }
 
   override fun loadRawProductModules(rootModuleName: String, productMode: ProductMode): RawProductModules {

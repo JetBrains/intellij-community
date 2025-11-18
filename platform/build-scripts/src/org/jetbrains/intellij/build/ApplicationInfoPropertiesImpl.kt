@@ -134,7 +134,7 @@ internal class ApplicationInfoPropertiesImpl(
   }
 }
 
-internal fun computeAppInfoXml(context: BuildContext, appInfo: ApplicationInfoProperties): String {
+internal fun computeAppInfoXml(appInfo: ApplicationInfoProperties, context: BuildContext): String {
   val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
   val snapshotBuildNumber = SnapshotBuildNumber.VALUE.takeWhile { it != '.' }
   check("${appInfo.majorVersion}${appInfo.minorVersion}".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
