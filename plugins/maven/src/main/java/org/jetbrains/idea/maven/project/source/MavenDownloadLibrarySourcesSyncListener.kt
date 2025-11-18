@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSyncListener
 import kotlin.time.Duration.Companion.seconds
@@ -28,6 +29,7 @@ class MavenDownloadLibrarySourcesSyncListener : MavenSyncListener {
           .withSources()
           .withProgressDelay(1.seconds)
           .withProgressVisibility(false)
+          .withProgressTitle(MavenProjectBundle.message("maven.downloading"))
           .build()
       )
     }

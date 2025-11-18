@@ -20,6 +20,7 @@ import com.intellij.openapi.project.IncompleteDependenciesService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -117,7 +118,18 @@ class MavenDownloadSourcesRequest private constructor(
   val progressIndicatorSettings: ProgressIndicatorSettings,
 ) {
 
-  class ProgressIndicatorSettings(val progressIndicatorDelay: Duration? = null, val visibleInStatusBar: Boolean = true)
+  class ProgressIndicatorSettings(
+    val progressIndicatorDelay: Duration? = null,
+    val visibleInStatusBar: Boolean = true,
+    val title: @ProgressTitle String? = null,
+  ) {
+
+    fun copy(
+      progressIndicatorDelay: Duration? = this.progressIndicatorDelay,
+      visibleInStatusBar: Boolean = this.visibleInStatusBar,
+      title: @ProgressTitle String? = this.title,
+    ): ProgressIndicatorSettings = ProgressIndicatorSettings(progressIndicatorDelay, visibleInStatusBar, title)
+  }
 
   class Builder {
     private var projects: Collection<MavenProject> = emptyList()
@@ -140,12 +152,16 @@ class MavenDownloadSourcesRequest private constructor(
 
     fun forAllArtifacts(): Builder = apply { this.artifacts = null }
 
-    fun withProgressDelay(duration: Duration): Builder = apply {
-      this.progressIndicatorSettings = ProgressIndicatorSettings(duration, this.progressIndicatorSettings.visibleInStatusBar)
+    fun withProgressDelay(delay: Duration): Builder = apply {
+      this.progressIndicatorSettings = progressIndicatorSettings.copy(progressIndicatorDelay = delay)
     }
 
     fun withProgressVisibility(visibleInStatusBar: Boolean): Builder = apply {
-      this.progressIndicatorSettings = ProgressIndicatorSettings(this.progressIndicatorSettings.progressIndicatorDelay, visibleInStatusBar)
+      this.progressIndicatorSettings = progressIndicatorSettings.copy(visibleInStatusBar = visibleInStatusBar)
+    }
+
+    fun withProgressTitle(title: @ProgressTitle String?): Builder = apply {
+      this.progressIndicatorSettings = progressIndicatorSettings.copy(title = title)
     }
 
     fun build(): MavenDownloadSourcesRequest = MavenDownloadSourcesRequest(
@@ -729,7 +745,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     settings: ProgressIndicatorSettings,
     action: suspend (reporter: RawProgressReporter) -> T,
   ): T {
-    val title = MavenProjectBundle.message("maven.downloading")
+    val title = settings.title ?: MavenProjectBundle.message("maven.downloading.short")
     return if (settings.progressIndicatorDelay != null) {
       withLazyProgressIndicator(myProject, settings.progressIndicatorDelay, title, settings.visibleInStatusBar) { reporter ->
         action(reporter)
