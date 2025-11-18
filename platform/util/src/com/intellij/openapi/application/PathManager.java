@@ -672,8 +672,8 @@ public final class PathManager {
   /**
    * Attempts to detect classpath entry containing the resource.
    */
-  public static @Nullable String getResourceRoot(@NotNull Class<?> context, @NotNull String path) {
-    URL url = context.getResource(path);
+  public static @Nullable String getResourceRoot(@NotNull Class<?> cls, @NotNull String path) {
+    URL url = cls.getResource(path);
     if (url == null) url = ClassLoader.getSystemResource(path.substring(1));
     return url != null ? extractRoot(url, path) : null;
   }
