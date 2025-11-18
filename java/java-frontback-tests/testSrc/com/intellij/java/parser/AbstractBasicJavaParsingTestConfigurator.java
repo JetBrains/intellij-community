@@ -17,14 +17,14 @@ public interface AbstractBasicJavaParsingTestConfigurator {
   PsiFile createPsiFile(@NotNull AbstractBasicJavaParsingTestCase thinJavaParsingTestCase,
                         @NotNull String name,
                         @NotNull String text,
-                        @NotNull BasicJavaParserUtil.ParserWrapper parser);
+                        @NotNull Object parser);
 
   /**
    * @param text          text to parse
    * @param parserWrapper parser to use or `null` if we want to parse the whole file
    * @return SyntaxNode   node representing the parsed content
    */
-  @NotNull
+  @Nullable
   SyntaxNode createFileSyntaxNode(@NotNull String text, @Nullable BasicJavaParserUtil.ParserWrapper parserWrapper);
 
   boolean checkPsi();
@@ -32,4 +32,8 @@ public interface AbstractBasicJavaParsingTestConfigurator {
   void setLanguageLevel(@NotNull LanguageLevel level);
 
   @NotNull LanguageLevel getLanguageLevel();
+
+  default @Nullable PsiFile createPsiFileForFullTestFile(AbstractBasicJavaParsingTestCase aCase, @NotNull String name, @NotNull String text) {
+    return null;
+  }
 }

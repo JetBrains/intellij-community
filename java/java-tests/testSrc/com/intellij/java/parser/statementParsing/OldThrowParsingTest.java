@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.java.parser;
+package com.intellij.java.parser.statementParsing;
 
-public class ImportParsingTest extends AbstractBasicImportParsingTest {
-  public ImportParsingTest() {
+import com.intellij.java.parser.OldJavaParsingTestConfigurator;
+
+// used only to check the old parser
+// new features are not supported
+@Deprecated
+public class OldThrowParsingTest extends AbstractBasicThrowParsingTest {
+  public OldThrowParsingTest() {
     super(new OldJavaParsingTestConfigurator("java.FILE"));
   }
 }

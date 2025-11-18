@@ -19,6 +19,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
 
   private final AbstractBasicJavaParsingTestConfigurator myConfigurator;
+  @Nullable
   private SyntaxNode myKmpTree;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
@@ -71,8 +73,11 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
     return file;
   }
 
-
   protected void doParserTest(BasicJavaParserUtil.@NotNull ParserWrapper parser) {
+    doParserTest((Object)parser);
+  }
+
+  protected void doParserTest(@NotNull Object parser) {
     String name = getTestName(false);
     try {
       String text = loadFile(name + "." + myFileExt);
@@ -97,6 +102,7 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
     String treeDump = DebugUtil.nodeTreeAsElementTypeToString(file.getNode(), !skipSpaces()).trim();
     assertSameLinesWithFile(getExpectedFileName(targetDataName), treeDump);
 
+    if (myKmpTree == null) return;
     checkKmpTree(targetDataName);
   }
 
@@ -123,14 +129,26 @@ public abstract class AbstractBasicJavaParsingTestCase extends ParsingTestCase {
   @Override
   protected @NotNull PsiFile parseFile(@NotNull String name, @NotNull String text) {
     myKmpTree = myConfigurator.createFileSyntaxNode(text, null);
+    PsiFile psiFile = myConfigurator.createPsiFileForFullTestFile(this, name, text);
+    if (psiFile != null) {
+      myFile = psiFile;
+      return psiFile;
+    }
     return super.parseFile(name, text);
   }
 
   protected void doParserTest(@NotNull String text,
                               BasicJavaParserUtil.@NotNull ParserWrapper parser) {
+    doParserTest(text, (Object)parser);
+  }
+
+  protected void doParserTest(@NotNull String text,
+                              @NotNull Object parser) {
     String name = getTestName(false);
     myFile = myConfigurator.createPsiFile(this, name, text, parser);
-    myKmpTree = myConfigurator.createFileSyntaxNode(text, parser);
+    if (parser instanceof BasicJavaParserUtil.@NotNull ParserWrapper wrapper) {
+      myKmpTree = myConfigurator.createFileSyntaxNode(text, wrapper);
+    }
     try {
       checkResult(name, myFile);
     }

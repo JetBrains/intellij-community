@@ -15,8 +15,11 @@
  */
 package com.intellij.java.parser;
 
-public class ImportParsingTest extends AbstractBasicImportParsingTest {
-  public ImportParsingTest() {
-    super(new OldJavaParsingTestConfigurator("java.FILE"));
+// used only to check the old parser
+// new features are not supported
+@Deprecated
+public class OldImportParsingTest extends AbstractBasicImportParsingTest {
+  public OldImportParsingTest() {
+    super(new JavaParsingTestConfigurator());
   }
 }

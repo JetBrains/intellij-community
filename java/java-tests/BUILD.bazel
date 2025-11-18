@@ -160,6 +160,7 @@ jvm_library(
     "@lib//:byte-buddy",
     "//plugins/grazie/src:core",
     "//platform/testFramework/junit5/codeInsight",
+    "//java/java-psi-impl:psi-impl",
   ],
   exports = [
     "//plugins/java-i18n",

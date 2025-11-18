@@ -76,9 +76,9 @@ abstract class JavaParsingTestConfiguratorBase(
     thinJavaParsingTestCase: AbstractBasicJavaParsingTestCase,
     name: String,
     text: String,
-    parser: BasicJavaParserUtil.ParserWrapper,
+    parser: Any,
   ): PsiFile {
-    ourTestParser = parser
+    ourTestParser = parser as BasicJavaParserUtil.ParserWrapper
 
     val virtualFile = LightVirtualFile("$name.java", JavaFileType.INSTANCE, text, -1)
     val psiManager = PsiManager.getInstance(thinJavaParsingTestCase.getProject())
@@ -125,7 +125,7 @@ private var ourTestParser: BasicJavaParserUtil.ParserWrapper? = null
 
 private val converter = elementTypeConverterOf(ourSyntaxElementType to ourTestFileElementType)
 
-private class JavaTestElementTypeConverterExtension : ElementTypeConverterFactory {
+internal class JavaTestElementTypeConverterExtension : ElementTypeConverterFactory {
   override fun getElementTypeConverter(): ElementTypeConverter = converter
 }
 
