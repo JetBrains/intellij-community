@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.util.registry
@@ -31,7 +31,7 @@ open class RegistryValue @Internal constructor(
   private val keyDescriptor: RegistryKeyDescriptor?
 ) {
   private val listeners: MutableList<RegistryValueListener> = ContainerUtil.createLockFreeCopyOnWriteList()
-  private val flow = MutableSharedFlow<String>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val flow = MutableSharedFlow<String>(onBufferOverflow = BufferOverflow.DROP_OLDEST, extraBufferCapacity = 1)
 
   var isChangedSinceAppStart: Boolean = false
     private set
@@ -261,7 +261,12 @@ open class RegistryValue @Internal constructor(
       listener.afterValueChanged(this)
     }
 
-    flow.tryEmit(value)
+    try {
+      flow.tryEmit(value)
+    } catch (e: ClassNotFoundException) {
+      // in Maven RMI, there are no coroutines
+      LOG.error(e)
+    }
 
     if (!isRestartRequired() && resolveNotRequiredValue(key) == registry.getBundleValueOrNull(key)) {
       registry.getStoredProperties().remove(key)
