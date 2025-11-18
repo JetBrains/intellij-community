@@ -17,6 +17,10 @@ public class StreamFilterPatching {
     return integers.stream().filter(obj -> Objects.nonNull(obj)).toList();
   }
 
+  public static List<Integer> getIntegersLambdaTakeWhile(List<@Nullable Integer> integers) {
+    return integers.stream().takeWhile(obj -> ((Objects.nonNull((obj))))).toList();
+  }
+
   public static List<Integer> getIntegersLambda2(List<@Nullable Integer> integers) {
     return <warning descr="Returning a class with nullable type arguments when a class with not-null type arguments is expected">integers.stream().filter(obj -> Objects.isNull(obj)).toList()</warning>;
   }
