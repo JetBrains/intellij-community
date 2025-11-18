@@ -21,7 +21,6 @@ import com.intellij.ide.starter.runner.startIdeWithoutProject
 import com.intellij.ide.starter.telemetry.TestTelemetryService
 import com.intellij.ide.starter.telemetry.computeWithSpan
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
-import com.intellij.ide.starter.utils.JvmUtils
 import com.intellij.ide.starter.utils.XmlBuilder
 import com.intellij.ide.starter.utils.replaceSpecialCharactersWithHyphens
 import com.intellij.openapi.diagnostic.LogLevel
@@ -35,8 +34,6 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.ui.NewUiValue
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
-import com.intellij.util.system.OS
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.kodein.di.direct
 import org.kodein.di.factory
@@ -186,7 +183,7 @@ open class IDETestContext(
       withXmx(4 * 1024)
     }
 
-  fun allowSkippingFullScanning(allow: Boolean = true): IDETestContext =
+  fun allowSkippingFullScanning(allow: Boolean): IDETestContext =
     applyVMOptionsPatch {
       addSystemProperty(ALLOW_SKIPPING_FULL_SCANNING_ON_STARTUP_OPTION, allow)
     }
