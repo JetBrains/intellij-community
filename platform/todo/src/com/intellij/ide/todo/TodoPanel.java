@@ -612,7 +612,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
   @ApiStatus.Internal
   static final class MyShowModulesAction extends ToggleAction implements DumbAware {
-    public MyShowModulesAction() {
+    MyShowModulesAction() {
       super(IdeBundle.messagePointer("action.group.by.modules"), AllIcons.Actions.GroupByModule);
     }
 
@@ -646,7 +646,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
   @ApiStatus.Internal
   static final class MyFlattenPackagesAction extends ToggleAction implements DumbAware {
-    public MyFlattenPackagesAction() {
+    MyFlattenPackagesAction() {
       super(IdeBundle.messagePointer("action.flatten.view"), PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
 
