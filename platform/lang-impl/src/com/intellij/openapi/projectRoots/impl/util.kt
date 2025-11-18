@@ -7,6 +7,7 @@ package com.intellij.openapi.projectRoots.impl
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
@@ -23,13 +24,46 @@ fun findClashingSdk(sdkName: String, sdk: Sdk): SdkEntity? {
   return relevantSnapshot.entities(SdkEntity::class.java).find { it.name == sdkName }
 }
 
-fun getEelDescriptorOfHomePath(homePath: String): EelDescriptor =
-  try {
+/**
+ * Returns the [EelDescriptor] that the Workspace Model should use for SDK entities
+ * associated with the given `homePath`.
+ *
+ * This helper abstracts the current "per-environment" separation of the global
+ * workspace model by EEL descriptors:
+ *
+ * - If the registry key `ide.workspace.model.per.environment.model.separation` is ON,
+ *   the descriptor is inferred from `homePath` via `Path.getEelDescriptor()` and thus
+ *   points to the machine that actually owns the path (e.g., local OS, a specific WSL
+ *   distribution, a remote/container environment).
+ * - If the registry key is OFF, the local machine descriptor ([LocalEelDescriptor]) is
+ *   always returned so that SDKs from different environments are kept together in a
+ *   single, shared model. This escape hatch is required by IDEs that expect certain
+ *   remote interpreters (e.g., WSL) to be visible from both local and remote projects,
+ *   where strict separation would otherwise break discovery or reuse.
+ * - If `homePath` cannot be parsed into a valid [Path], the method falls back to
+ *   [LocalEelDescriptor].
+ *
+ * The returned descriptor determines which instance of [GlobalWorkspaceModel] will hold
+ * the corresponding [SdkEntity] records, preventing cross-environment linkage issues
+ * when separation is enabled, while preserving legacy behavior when it is disabled.
+ *
+ * @param homePath a string path used solely to infer the owning environment; it does not
+ *                 need to exist locally and is not validated beyond basic path parsing
+ * @return the effective environment ([EelDescriptor]) to use for workspace model operations
+ * @see com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+ * @see com.intellij.platform.eel.provider.getEelDescriptor
+ */
+fun getEffectiveWorkspaceEelDescriptorOfHomePath(homePath: String): EelDescriptor {
+  if (!Registry.`is`("ide.workspace.model.per.environment.model.separation")) {
+    return LocalEelDescriptor
+  }
+  return try {
     Path.of(homePath).getEelDescriptor()
   }
   catch (_: InvalidPathException) {
     LocalEelDescriptor
   }
+}
 
 /**
  * Creates an SDK in the [GlobalWorkspaceModel] that matches the eek environment inferred
@@ -61,7 +95,7 @@ fun ProjectJdkTable.createSdkForEnvironment(
   homePathForEnvironmentDetection: String,
 ): Sdk =
   if (this is EnvironmentScopedSdkTableOps) {
-    val eelDescriptor = getEelDescriptorOfHomePath(homePathForEnvironmentDetection)
+    val eelDescriptor = getEffectiveWorkspaceEelDescriptorOfHomePath(homePathForEnvironmentDetection)
     createSdk(name, sdkType, eelDescriptor)
   }
   else {
