@@ -65,6 +65,7 @@ class LockReqAction : AnAction() {
         id = TOOLWINDOW_ID,
         anchor = ToolWindowAnchor.BOTTOM,
         component = null,
+        icon = LockReqIcons.LockReqIcon,
         contentFactory = LockReqsToolWindowFactory(),
         stripeTitle = DevkitComposeBundle.messagePointer("tab.title.locking.requirements"),
       )
@@ -74,6 +75,7 @@ class LockReqAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = shouldBeEnabled(e)
+    e.presentation.icon = LockReqIcons.LockReqIcon
   }
 
   private fun shouldBeEnabled(e: AnActionEvent): Boolean {
