@@ -138,7 +138,30 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
             type = variable.getType();
           } else if (listOwner instanceof PsiMethod method) {
             type = method.getReturnType();
-          } else {
+          }
+          else if (listOwner instanceof PsiTypeParameter typeParameter) {
+            if (typePath.startsWith("/")) {
+              typePath = typePath.substring(1);
+              String[] components = typePath.split("/", -1);
+              try {
+                int index = Integer.parseInt(components[0]) - 1;
+                type = typeParameter.getExtendsListTypes()[index];
+                typePath = typePath.substring(components[0].length());
+              }
+              catch (NumberFormatException ignored) {
+                fail("Invalid typePath: " + typePath, psiFile, externalName);
+                break;
+              }
+              if (typePath.isEmpty()) {
+                continue;
+              }
+            }
+            else {
+              fail("typePath should start with / " + listOwner.getClass().getSimpleName(), psiFile, externalName);
+              break;
+            }
+          }
+          else {
             fail("typePath is not allowed for " + listOwner.getClass().getSimpleName(), psiFile, externalName);
             break;
           }
@@ -203,6 +226,10 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   }
 
   private static @NotNull PsiType getType(@NotNull PsiModifierListOwner listOwner) {
+    if (listOwner instanceof PsiTypeParameter typeParameter) {
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(listOwner.getProject());
+      return factory.createType(typeParameter);
+    }
     return Objects.requireNonNull(PsiUtil.getTypeByPsiElement(listOwner), () -> String.valueOf(listOwner));
   }
 
@@ -333,6 +360,18 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
 
     String rest = unescaped.substring(className.length() + " ".length());
 
+    if (rest.startsWith("<") && rest.endsWith(">")) {
+      String parameterText = rest.substring(1, rest.length() - 1);
+      PsiTypeParameterList parameterList = aClass.getTypeParameterList();
+      for (PsiTypeParameter parameter : parameterList.getTypeParameters()) {
+        if (parameterText.equals(parameter.getName())) {
+          return parameter;
+        }
+      }
+      fail("Type parameter '" + parameterText + "' not found in class '" + className + "'", psiFile, externalName);
+      return null;
+    }
+
     if (rest.indexOf('(') == -1) {
       // field
       String field = StringUtil.trim(rest);
@@ -368,10 +407,20 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
       return null;
     }
 
-    PsiMethod method = methods.get(0);
+    PsiMethod method = methods.getFirst();
     String parameterNumberText = StringUtil.trim(rest.substring(rest.indexOf(')') + 1));
     if (parameterNumberText.isEmpty()) return method;
-
+    if (parameterNumberText.startsWith("<") && parameterNumberText.endsWith(">")) {
+      parameterNumberText = parameterNumberText.substring(1, parameterNumberText.length() - 1);
+      PsiTypeParameterList parameterList = method.getTypeParameterList();
+      for (PsiTypeParameter parameter : parameterList.getTypeParameters()) {
+        if (parameterNumberText.equals(parameter.getName())) {
+          return parameter;
+        }
+      }
+      fail("Type parameter '" + parameterNumberText + "' not found in method '" + methodSignature + "'", psiFile, externalName);
+      return null;
+    }
     try {
       int paramNumber = Integer.parseInt(parameterNumberText);
       PsiParameter parameter = method.getParameterList().getParameter(paramNumber);

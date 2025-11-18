@@ -83,8 +83,7 @@ public class AnnotationInlayProvider : InlayHintsProvider {
                 }
               if (originalParameter.superTypes.size == 1 && parameter.extendsList.referenceElements.isEmpty()) {
                 if (originalParameter.superTypes[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-                  originalParameter.superTypes[0].annotations
-                    .filter(manager::isExternalAnnotation)
+                  manager.findExternalAnnotations(originalParameter)
                     .forEach {
                       // it is not really correct, because
                       // annotations should be applied to object, like: `T extends @NotNull Object`

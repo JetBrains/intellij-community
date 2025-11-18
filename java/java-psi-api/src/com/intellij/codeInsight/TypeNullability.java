@@ -125,6 +125,10 @@ public final class TypeNullability {
     }
     NullableNotNullManager manager = NullableNotNullManager.getInstance(parameter.getProject());
     if (manager != null) {
+      NullabilityAnnotationInfo effective = manager.findOwnNullabilityInfo(parameter);
+      if (effective != null) {
+        return effective.toTypeNullability().inherited();
+      }
       NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(parameter);
       if (typeUseNullability != null) {
         return typeUseNullability.toTypeNullability().inherited();

@@ -70,7 +70,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
           PsiElement psi = myParent.getPsi();
           if (psi instanceof PsiTypeParameter) {
             annotations = ExternalTypeAnnotationContainer.create((PsiTypeParameter)psi);
-            annotations = annotations.forBound().forConjunction(i);
+            annotations = annotations.forConjunction(i);
           }
         }
         ClsJavaCodeReferenceElementImpl reference = new ClsJavaCodeReferenceElementImpl(getPsi(), info.text(), annotations);

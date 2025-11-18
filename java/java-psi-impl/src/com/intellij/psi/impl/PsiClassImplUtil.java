@@ -16,8 +16,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.PsiExtensionMethod;
-import com.intellij.psi.impl.cache.ExternalTypeAnnotationContainer;
-import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.java.stubs.PsiClassReferenceListStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiClassStubImpl;
@@ -847,12 +845,6 @@ public final class PsiClassImplUtil {
       }
       PsiManager manager = psiClass.getManager();
       PsiClassType objectType = PsiType.getJavaLangObject(manager, psiClass.getResolveScope());
-      if (psiClass instanceof PsiTypeParameter && psiClass.getParent() instanceof PsiTypeParameterList &&
-          psiClass.getParent().getParent() instanceof PsiCompiledElement) {
-        TypeAnnotationContainer annotations = ExternalTypeAnnotationContainer.create((PsiTypeParameter)psiClass);
-        annotations = annotations.forBound().forConjunction(0);
-        objectType = objectType.annotate(annotations.getProvider(psiClass));
-      }
       result[0] = objectType;
     }
     System.arraycopy(implementsTypes, 0, result, extendsListLength, implementsTypes.length);
