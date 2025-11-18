@@ -18,11 +18,11 @@ open class KotlinUField(
     override val sourcePsi: KtElement?,
     givenParent: UElement?
 ) : AbstractKotlinUVariable(givenParent), UFieldEx, PsiField by psi {
-    override fun getSourceElement() = sourcePsi ?: this
+    override fun getSourceElement(): NavigatablePsiElement = sourcePsi ?: this
 
-    override val javaPsi = unwrap<UField, PsiField>(psi)
+    override val javaPsi: PsiField = unwrap<UField, PsiField>(psi)
 
-    override val psi = javaPsi
+    override val psi: PsiField = javaPsi
 
     override fun getType(): PsiType {
         val type = delegateExpression?.getExpressionType()

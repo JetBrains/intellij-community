@@ -38,7 +38,7 @@ class UastFakeLightNullabilityAnnotation(
             KaTypeNullability.UNKNOWN -> null
         }
 
-    override fun toString() = "@$qualifiedName"
+    override fun toString(): String = "@$qualifiedName"
 
     override fun <T : PsiAnnotationMemberValue?> setDeclaredAttributeValue(attributeName: String?, value: T?): T = cannotModify()
 }

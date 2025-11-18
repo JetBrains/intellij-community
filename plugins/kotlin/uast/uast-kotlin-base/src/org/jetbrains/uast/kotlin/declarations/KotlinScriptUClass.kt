@@ -37,7 +37,7 @@ class KotlinScriptUClass(
 
     override val sourcePsi: KtClassOrObject? = psi.kotlinOrigin
 
-    override val psi = unwrap<UClass, KtLightClassForScript>(psi)
+    override val psi: KtLightClassForScript = unwrap<UClass, KtLightClassForScript>(psi)
 
     override fun getSuperClass(): UClass? = super.getSuperClass()
 
@@ -76,6 +76,6 @@ class KotlinScriptUClass(
                 KotlinLazyUBlockExpression.create(initializers, this)
             }
 
-        override val javaPsi = psi
+        override val javaPsi: KtLightMethod = psi
     }
 }

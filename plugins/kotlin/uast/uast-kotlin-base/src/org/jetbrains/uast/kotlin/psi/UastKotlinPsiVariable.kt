@@ -60,15 +60,15 @@ class UastKotlinPsiVariable private constructor(
 
     override fun getTextRange(): TextRange = ktElement.textRange
 
-    override fun getParent() = psiParent
+    override fun getParent(): PsiElement? = psiParent
 
-    override fun hasInitializer() = ktInitializer != null
+    override fun hasInitializer(): Boolean = ktInitializer != null
 
     override fun getInitializer(): PsiExpression? = psiInitializer
 
-    override fun getTypeElement() = psiTypeElement
+    override fun getTypeElement(): PsiTypeElement = psiTypeElement
 
-    override fun setInitializer(initializer: PsiExpression?) = throw NotImplementedError()
+    override fun setInitializer(initializer: PsiExpression?): Nothing = throw NotImplementedError()
 
     override fun getContainingFile(): PsiFile? = ktElement.containingFile
 
@@ -80,7 +80,7 @@ class UastKotlinPsiVariable private constructor(
 
     override fun isEquivalentTo(another: PsiElement?): Boolean = this == another || ktElement.isEquivalentTo(another)
 
-    override fun hashCode() = ktElement.hashCode()
+    override fun hashCode(): Int = ktElement.hashCode()
 
     companion object {
         fun create(

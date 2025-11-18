@@ -14,9 +14,9 @@ class KotlinUVariable(
     givenParent: UElement?
 ) : AbstractKotlinUVariable(givenParent), UVariable, PsiVariable by psi {
 
-    override val javaPsi = unwrap<UVariable, PsiVariable>(psi)
+    override val javaPsi: PsiVariable = unwrap<UVariable, PsiVariable>(psi)
 
-    override val psi = javaPsi
+    override val psi: PsiVariable = javaPsi
 
     override fun getInitializer(): PsiExpression? {
         return super<AbstractKotlinUVariable>.getInitializer()

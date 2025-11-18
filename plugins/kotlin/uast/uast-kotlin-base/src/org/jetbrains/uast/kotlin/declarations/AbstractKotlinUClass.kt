@@ -231,6 +231,6 @@ abstract class AbstractKotlinUClass(
             }
         }
 
-    override fun equals(other: Any?) = other is AbstractKotlinUClass && psi == other.psi
-    override fun hashCode() = psi.hashCode()
+    override fun equals(other: Any?): Boolean = other is AbstractKotlinUClass && psi == other.psi
+    override fun hashCode(): Int = psi.hashCode()
 }

@@ -21,9 +21,9 @@ open class KotlinULocalVariable(
     givenParent: UElement?
 ) : AbstractKotlinUVariable(givenParent), ULocalVariableEx, PsiLocalVariable by psi {
 
-    override val javaPsi = unwrap<ULocalVariable, PsiLocalVariable>(psi)
+    override val javaPsi: PsiLocalVariable = unwrap<ULocalVariable, PsiLocalVariable>(psi)
 
-    override val psi = javaPsi
+    override val psi: PsiLocalVariable = javaPsi
 
     private val uAnnotationsPart = UastLazyPart<List<UAnnotation>>()
 

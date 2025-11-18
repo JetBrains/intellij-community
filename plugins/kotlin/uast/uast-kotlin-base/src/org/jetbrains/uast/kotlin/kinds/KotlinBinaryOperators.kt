@@ -8,11 +8,11 @@ import org.jetbrains.uast.UastBinaryOperator
 @ApiStatus.Internal
 object KotlinBinaryOperators {
     @JvmField
-    val IN = UastBinaryOperator("in")
+    val IN: UastBinaryOperator = UastBinaryOperator("in")
     
     @JvmField
-    val NOT_IN = UastBinaryOperator("!in")
+    val NOT_IN: UastBinaryOperator = UastBinaryOperator("!in")
 
     @JvmField
-    val RANGE_TO = UastBinaryOperator("..")
+    val RANGE_TO: UastBinaryOperator = UastBinaryOperator("..")
 }

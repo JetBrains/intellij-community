@@ -5,5 +5,5 @@ import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiEllipsisType
 import com.intellij.psi.PsiType
 
-fun PsiType.toEllipsisTypeIfNeeded(isVarargs: Boolean) =
+fun PsiType.toEllipsisTypeIfNeeded(isVarargs: Boolean): PsiType =
     if (isVarargs && this is PsiArrayType) PsiEllipsisType(componentType, annotationProvider) else this

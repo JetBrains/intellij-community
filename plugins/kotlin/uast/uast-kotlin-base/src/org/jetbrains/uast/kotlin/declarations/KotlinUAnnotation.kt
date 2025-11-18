@@ -89,7 +89,7 @@ class KotlinUAnnotation(
             baseResolveProviderService.convertToPsiAnnotation(annotationEntry)
         }
 
-    override fun annotationUseSiteTarget() = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
+    override fun annotationUseSiteTarget(): AnnotationUseSiteTarget? = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
 
     override fun resolve(): PsiClass? {
         return baseResolveProviderService.resolveToClass(sourcePsi, this)

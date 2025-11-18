@@ -18,7 +18,7 @@ class KotlinLocalFunctionUVariable(
 
     private val uastInitializerPart = UastLazyPart<UExpression?>()
 
-    override val psi get() = javaPsi
+    override val psi: PsiVariable get() = javaPsi
     override val sourcePsi: PsiElement = (javaPsi as? UastKotlinPsiVariable?)?.ktElement ?: javaPsi
 
     override val uastInitializer: UExpression?

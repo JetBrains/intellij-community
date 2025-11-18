@@ -16,7 +16,7 @@ abstract class KotlinAbstractUExpression(
 
     override val javaPsi: PsiElement? = null
 
-    override val psi
+    override val psi: PsiElement?
         get() = sourcePsi
 
     override val uAnnotations: List<UAnnotation>
