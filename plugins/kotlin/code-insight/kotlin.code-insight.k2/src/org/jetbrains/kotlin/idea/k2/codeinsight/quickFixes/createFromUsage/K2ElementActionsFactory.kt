@@ -255,7 +255,7 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
             else -> javaPsiModifiersMapping[modifier] to shouldPresent
         }
         if (kToken == null) return emptyList()
-        if (kToken == KtTokens.OPEN_KEYWORD && kModifierOwner is KtClassOrObject) {
+        if (shouldPresentMapped && kToken == KtTokens.OPEN_KEYWORD && kModifierOwner is KtClassOrObject) {
             if (kModifierOwner is KtObjectDeclaration) {
                 val fix = ChangeObjectToClassFix(kModifierOwner, kToken)
                 return listOf(fix.asIntention())
