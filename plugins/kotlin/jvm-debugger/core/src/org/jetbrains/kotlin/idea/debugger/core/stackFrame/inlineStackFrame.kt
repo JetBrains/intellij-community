@@ -34,4 +34,13 @@ class InlineStackFrame(
             .schemeForCurrentUITheme
             .getAttributes(DebuggerColors.INLINE_STACK_FRAMES)
             .backgroundColor
+
+
+    override fun getEqualityObject(): Any? {
+        // inline frames share caller's stack frame proxy, so they share an equality object too
+        // (see JavaStackFrame.getEqualityObject())
+        val frameEqualityObject = super.getEqualityObject() ?: return null
+        val proxy = descriptor.frameProxy as? InlineStackFrameProxyImpl ?: return frameEqualityObject
+        return "$frameEqualityObject#${proxy.inlineDepth}"
+    }
 }

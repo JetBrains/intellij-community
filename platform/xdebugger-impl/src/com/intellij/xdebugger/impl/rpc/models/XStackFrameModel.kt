@@ -35,8 +35,9 @@ fun XStackFrame.getOrStoreGlobally(coroutineScope: CoroutineScope, session: XDeb
 }
 
 @Service(Service.Level.APP)
-private class XStackFrameDeduplicator : ModelDeduplicator<XStackFrame, XStackFrameModel>() {
-
+private class XStackFrameDeduplicator : ModelDeduplicator<XStackFrame, XStackFrameModel>({ value ->
+  value.equalityObject ?: value
+}) {
   companion object {
     @JvmStatic
     fun getInstance(): XStackFrameDeduplicator = service()
