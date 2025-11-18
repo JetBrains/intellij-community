@@ -1,13 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic
 
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.sanitizeFileName
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.FlowPreview
 import java.io.IOException
 import java.io.PrintWriter
 import java.nio.file.Files
@@ -18,7 +15,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Handler
 import java.util.logging.LogRecord
 import kotlin.io.path.name
-import kotlin.time.Duration.Companion.minutes
 
 /**
  * Handler for logging attachments of [ExceptionWithAttachments] to log folder.
@@ -226,50 +222,42 @@ internal class AttachmentHandler(logPath: Path) : Handler() {
 private class OldAttachmentPruner(
   private val baseDir: Path
 ) {
-
   private val counter = AtomicInteger(0)
-  private val signal = MutableSharedFlow<Unit>(replay = 1)
-
-  @Suppress("RAW_SCOPE_CREATION")
-  private val scope = CoroutineScope(CoroutineName("AttachmentHandler#Pruning") + SupervisorJob())
-
-  init {
-    signal
-      .onEach { doPruneOldAttachmentGroups() }
-      .debounce(1.minutes)
-      .launchIn(scope)
-  }
 
   fun pruneOldAttachmentGroups() {
-    counter.incrementAndGet()
-    signal.tryEmit(Unit)
-  }
-
-  private suspend fun doPruneOldAttachmentGroups() = withContext(Dispatchers.IO) {
-    val recentlyReported = counter.get()
+    val recentlyReported = counter.incrementAndGet()
     if (recentlyReported * 2 < MAX_ATTACHMENT_GROUPS) {
-      return@withContext
+      return
     }
 
-    val entries = collectAttachmentGroups()
+    synchronized(counter) {
+      if (counter.get() * 2 < MAX_ATTACHMENT_GROUPS) {
+        return
+      }
 
-    val toDeleteCount = entries.size - MAX_ATTACHMENT_GROUPS
-    if (toDeleteCount <= 0) return@withContext
+      val entries = collectAttachmentGroups()
 
-    // Sort by directory name which begins with timestamp in yy-MM-dd-HH-mm-ss format -> lexicographical order matches time order
-    entries.sortBy { it.fileName.toString() }
+      val toDeleteCount = entries.size - MAX_ATTACHMENT_GROUPS
+      if (toDeleteCount <= 0) return
 
-    repeat(toDeleteCount) { i ->
-      ensureActive()
-      deleteRecursively(entries[i])
+      // Sort by directory name which begins with timestamp in yy-MM-dd-HH-mm-ss format -> lexicographical order matches time order
+      entries.sortBy { it.fileName.toString() }
+
+      try {
+        repeat(toDeleteCount) { i ->
+          NioFiles.deleteRecursively(entries[i])
+        }
+      }
+      catch (_: IOException) {
+      }
+
+      counter.set(0)
     }
-    counter.set(0)
   }
 
-  private fun CoroutineScope.collectAttachmentGroups(): MutableList<Path> {
+  private fun collectAttachmentGroups(): MutableList<Path> {
     return try {
       val directoryStream = Files.newDirectoryStream(baseDir) { path ->
-        ensureActive()
         Files.isDirectory(path) && path.name.startsWith("attachments-")
       }
 
@@ -280,25 +268,6 @@ private class OldAttachmentPruner(
     catch (_: IOException) {
       mutableListOf()
     }
-  }
-}
-
-private fun deleteRecursively(path: Path) {
-  try {
-    // Delete files first, then directories
-    Files.walk(path)
-      .sorted(Comparator.reverseOrder())
-      .forEach { p ->
-        try {
-          Files.deleteIfExists(p)
-        }
-        catch (_: IOException) {
-          // ignore deletion errors
-        }
-      }
-  }
-  catch (_: IOException) {
-    // ignore traversal errors
   }
 }
 
