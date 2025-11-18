@@ -8,7 +8,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -19,16 +18,9 @@ import static com.intellij.psi.tree.ParentAwareTokenSet.create;
 import static com.intellij.psi.tree.ParentAwareTokenSet.orSet;
 
 
-/**
- * @deprecated  Use the new Java syntax library instead.
- *            See {@link com.intellij.java.syntax.parser.JavaParser}
- * You can temporarily use @{@link com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder}
- *
- */
-@ApiStatus.ScheduledForRemoval
 @Deprecated
-public class WhiteSpaceAndCommentSetHolder {
-  public static final WhiteSpaceAndCommentSetHolder INSTANCE = new WhiteSpaceAndCommentSetHolder();
+public class OldParserWhiteSpaceAndCommentSetHolder {
+  public static final OldParserWhiteSpaceAndCommentSetHolder INSTANCE = new OldParserWhiteSpaceAndCommentSetHolder();
   private static final ParentAwareTokenSet PRECEDING_COMMENT_SET =
     orSet(create(BasicJavaElementType.BASIC_MODULE, BasicJavaElementType.BASIC_IMPLICIT_CLASS),
           BasicElementTypes.BASIC_FULL_MEMBER_BIT_SET);
@@ -37,7 +29,7 @@ public class WhiteSpaceAndCommentSetHolder {
     orSet(create(BasicJavaElementType.BASIC_PACKAGE_STATEMENT), BasicElementTypes.BASIC_IMPORT_STATEMENT_BASE_BIT_SET,
           BasicElementTypes.BASIC_FULL_MEMBER_BIT_SET, BasicElementTypes.BASIC_JAVA_STATEMENT_BIT_SET);
 
-  private WhiteSpaceAndCommentSetHolder() {
+  private OldParserWhiteSpaceAndCommentSetHolder() {
   }
 
   private final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER_WITH_MARKDOWN =

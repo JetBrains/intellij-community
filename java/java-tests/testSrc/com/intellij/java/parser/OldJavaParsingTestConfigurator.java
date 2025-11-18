@@ -8,7 +8,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.parser.BasicJavaParserUtil;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension;
@@ -70,7 +69,7 @@ public class OldJavaParsingTestConfigurator
   }
 
   @Override
-  public @Nullable SyntaxNode createFileSyntaxNode(@NotNull String text, BasicJavaParserUtil.@Nullable ParserWrapper parserWrapper) {
+  public @Nullable SyntaxNode createFileSyntaxNode(@NotNull String text, JavaParserUtil.@Nullable ParserWrapper parserWrapper) {
     return null;
   }
 

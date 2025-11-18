@@ -7,7 +7,6 @@ import com.intellij.java.syntax.element.JavaLanguageLevelProvider
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.lang.java.JavaLanguage
-import com.intellij.lang.java.parser.BasicJavaParserUtil
 import com.intellij.lang.java.parser.JavaParserUtil
 import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -60,7 +59,7 @@ abstract class JavaParsingTestConfiguratorBase(
     ourLanguageLevel = languageLevel
   }
 
-  override fun createFileSyntaxNode(text: String, parserWrapper: BasicJavaParserUtil.ParserWrapper?): SyntaxNode {
+  override fun createFileSyntaxNode(text: String, parserWrapper: JavaParserUtil.ParserWrapper?): SyntaxNode {
     ourLanguageLevel = languageLevel
     return parseForSyntaxTree(text) { builder ->
       if (parserWrapper != null) {
@@ -78,7 +77,7 @@ abstract class JavaParsingTestConfiguratorBase(
     text: String,
     parser: Any,
   ): PsiFile {
-    ourTestParser = parser as BasicJavaParserUtil.ParserWrapper
+    ourTestParser = parser as JavaParserUtil.ParserWrapper
 
     val virtualFile = LightVirtualFile("$name.java", JavaFileType.INSTANCE, text, -1)
     val psiManager = PsiManager.getInstance(thinJavaParsingTestCase.getProject())
@@ -107,7 +106,7 @@ private fun createBuilder(chameleon: ASTNode?): PsiSyntaxBuilder {
   return builder
 }
 
-private fun parseWithWrapper(builder: SyntaxTreeBuilder, parser: BasicJavaParserUtil.ParserWrapper) {
+private fun parseWithWrapper(builder: SyntaxTreeBuilder, parser: JavaParserUtil.ParserWrapper) {
   val root = builder.mark()
   parser.parse(builder, ourLanguageLevel)
   if (!builder.eof()) {
@@ -121,7 +120,7 @@ private fun parseWithWrapper(builder: SyntaxTreeBuilder, parser: BasicJavaParser
 private lateinit var ourLanguageLevel: LanguageLevel
 private val ourSyntaxElementType = SyntaxElementType("test.java.file")
 private val ourTestFileElementType: IFileElementType = MyIFileElementType()
-private var ourTestParser: BasicJavaParserUtil.ParserWrapper? = null
+private var ourTestParser: JavaParserUtil.ParserWrapper? = null
 
 private val converter = elementTypeConverterOf(ourSyntaxElementType to ourTestFileElementType)
 
