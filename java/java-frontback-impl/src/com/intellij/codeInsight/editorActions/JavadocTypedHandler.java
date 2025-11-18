@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.impl.source.BasicJavaDocElementType.*;
+import static com.intellij.psi.impl.source.tree.JavaDocElementType.ALL_JAVADOC_ELEMENTS;
 import static com.intellij.util.text.CharArrayUtil.containsOnlyWhiteSpaces;
 
 /**
@@ -192,8 +193,7 @@ public final class JavadocTypedHandler extends TypedHandlerDelegate {
 
     ASTNode node = element.getNode();
     return node != null
-           && (JavaDocTokenType.ALL_JAVADOC_TOKENS.contains(node.getElementType())
-               || BASIC_ALL_JAVADOC_ELEMENTS.contains(node.getElementType()));
+           && (JavaDocTokenType.ALL_JAVADOC_TOKENS.contains(node.getElementType()));
   }
 
   private static boolean isTypeParamBracketClosedAfterParamTag(PsiDocTag tag, int bracketOffset) {
