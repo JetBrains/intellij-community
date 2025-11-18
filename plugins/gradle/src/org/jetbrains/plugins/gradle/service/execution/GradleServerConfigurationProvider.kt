@@ -13,11 +13,6 @@ interface GradleServerConfigurationProvider : TargetEnvironmentConfigurationProv
   fun getServerBindingAddress(targetEnvironmentConfiguration: TargetEnvironmentConfiguration): HostPort? = null
 
   fun getClientCommunicationAddress(
-    targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
-    gradleServerHostPort: HostPort,
-  ): HostPort? = getClientCommunicationAddress(null, targetEnvironmentConfiguration, gradleServerHostPort)
-
-  fun getClientCommunicationAddress(
     taskId: ExternalSystemTaskId?,
     targetEnvironmentConfiguration: TargetEnvironmentConfiguration,
     gradleServerHostPort: HostPort,
