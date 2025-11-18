@@ -124,15 +124,25 @@ object DynamicPlugins {
     return reason == null
   }
 
+  @Deprecated("use overload with Collection<PluginMainDescriptor> parameter")
+  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>, project: Project?): Boolean {
+    val unexpectedDescriptor = descriptors.find { it !is PluginMainDescriptor }
+    if (unexpectedDescriptor != null) {
+      LOG.warn("Unexpected descriptor type: $unexpectedDescriptor", Throwable())
+      return false
+    }
+    @Suppress("UNCHECKED_CAST")
+    return loadPlugins(descriptors.toList() as List<PluginMainDescriptor>, project)
+  }
+
   /**
    * @return true if the requested enabled state was applied without restart, false if restart is required
    */
-  fun loadPlugins(descriptors: Collection<IdeaPluginDescriptorImpl>, project: Project?): Boolean {
+  fun loadPlugins(descriptors: List<PluginMainDescriptor>, project: Project?): Boolean {
     if (descriptors.isEmpty()) {
       return true
     }
     return runProcess {
-      @Suppress("UNCHECKED_CAST") (descriptors as Collection<PluginMainDescriptor>)
       val descriptors = getDescriptorsToUpdateWithoutRestart(descriptors, load = true)
       if (descriptors.isEmpty()) {
         return@runProcess false
