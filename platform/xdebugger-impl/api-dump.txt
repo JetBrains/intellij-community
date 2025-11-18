@@ -65,6 +65,12 @@ com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
 - a:getPresentation():java.lang.String
 c:com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 - rebuild():V
+a:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase
+- p:handle(com.intellij.openapi.project.Project,java.lang.String):V
+- p:handle(com.intellij.openapi.project.Project,java.lang.String,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V
+c:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase$ValueCollector
+- <init>(com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase,com.intellij.openapi.project.Project):V
+- handleInCollector(com.intellij.openapi.project.Project,java.lang.String):V
 com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode
 - com.intellij.xdebugger.Obsolescent
 - javax.swing.tree.TreeNode

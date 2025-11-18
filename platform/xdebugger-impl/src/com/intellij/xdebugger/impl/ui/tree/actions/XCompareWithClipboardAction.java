@@ -22,7 +22,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class XCompareWithClipboardAction extends XFetchValueActionBase implements SplitDebuggerAction {
 
   @Override
-  protected void handle(final Project project, final String value, XDebuggerTree tree) {
+  protected void handle(final Project project, final String value) {
     UIUtil.invokeLaterIfNeeded(() -> {
       DiffRequest request = DiffRequestFactory.getInstance().createClipboardVsValue(value);
       DiffManager.getInstance().showDiff(project, request);
