@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import com.intellij.util.Function;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.tree.TreePath;
@@ -67,8 +68,7 @@ public interface TreeVisitor {
      * @param visitor an object that controls visiting a tree structure
      * @return a promise that will be resolved when visiting is finished
      */
-    @NotNull
-    Promise<TreePath> accept(@NotNull TreeVisitor visitor);
+    @NotNull Promise<@Nullable TreePath> accept(@NotNull TreeVisitor visitor);
   }
 
   /**
@@ -76,7 +76,7 @@ public interface TreeVisitor {
    */
   interface LoadingAwareAcceptor extends Acceptor {
     @Override
-    default @NotNull Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
+    default @NotNull Promise<@Nullable TreePath> accept(@NotNull TreeVisitor visitor) {
       return accept(visitor, true);
     }
 
@@ -85,8 +85,7 @@ public interface TreeVisitor {
      * @param allowLoading a flag that determines whether the nodes that weren't loaded yet will be loaded and visited or skipped
      * @return a promise that will be resolved when visiting is finished
      */
-    @NotNull
-    Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading);
+    @NotNull Promise<@Nullable TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading);
   }
 
   abstract class ByComponent<C, T> implements TreeVisitor {
