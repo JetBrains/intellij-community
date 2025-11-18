@@ -133,7 +133,6 @@ android/intellij.android.device.tests
 android/intellij.android.projectStructureTests
 android/intellij.android.testutils
 android/jps-model
-android/kotlin-integration
 android/layout-inspector
 android/layout-inspector/gradle
 android/layout-ui
