@@ -21,15 +21,22 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
   }
 
   public void testBeanClassExtensionPointDocumentation() {
-    doBeanClassExtensionPointTest("beanClassExtensionPointDocumentation.xml");
+    doBeanClassExtensionPointTest("beanClassExtensionPointDocumentation.xml",
+                                  "beanClassExtensionPointDocumentation.xml");
   }
 
   public void testBeanClassExtensionPointQualifiedNameDocumentation() {
-    doBeanClassExtensionPointTest("beanClassExtensionPointQualifiedNameDocumentation.xml");
+    doBeanClassExtensionPointTest("beanClassExtensionPointQualifiedNameDocumentation.xml",
+                                  "beanClassExtensionPointQualifiedNameDocumentation.xml");
   }
 
-  private void doBeanClassExtensionPointTest(String pluginXml) {
-    myFixture.configureByFiles(pluginXml,
+  public void testBeanClassExtensionPointDocumentationWhenFileNameIsPluginXml() {
+    doBeanClassExtensionPointTest("plugin.xml",
+                                  "plugin.xml (foo.bar)");
+  }
+
+  private void doBeanClassExtensionPointTest(String pluginXmlFileName, String expectedEpLocationString) {
+    myFixture.configureByFiles(pluginXmlFileName,
                                "bar/MyExtensionPoint.java", "bar/MyExtension.java");
     myFixture.addClass("package com.intellij.openapi.extensions; public @interface RequiredElement {}");
     myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Attribute {}");
@@ -41,14 +48,14 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
     String epDefinition = "[" + getModule().getName() + "]" +
-                          "<br/><b>foo.bar</b> (" + pluginXml + ")<br/>" +
+                          "<br/><b>foo.bar</b> (" + pluginXmlFileName + ")<br/>" +
                           "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br/>" +
                           "<a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a>";
     assertEquals(epDefinition,
                  provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
     assertEquals(
-      "<div class=\"definition\"><pre><b>foo.bar</b></pre><icon src=\"AllIcons.Nodes.Plugin\"/>&nbsp;" + pluginXml + "</div><div class=\"definition\"><pre>" +
+      "<div class=\"definition\"><pre><b>foo.bar</b></pre><icon src=\"AllIcons.Nodes.Plugin\"/>&nbsp;" + expectedEpLocationString + "</div><div class=\"definition\"><pre>" +
       "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Package\">&nbsp;<a href=\"psi_element://bar\"><code><span style=\"color:#000000;\">bar</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span> <span style=\"color:#000080;font-weight:bold;\">class</span> <span style=\"color:#000000;\">MyExtensionPoint</span></pre></div><div class='content'>\n" +
       "  MyExtensionPoint JavaDoc.\n" +
       " </div><table class='sections'><p></table><table class=\"sections\"><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#implementationClass\"><code>implementationClass</code></a></p></td><td valign=\"top\">String (required)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#stringCanBeEmpty\"><code>stringCanBeEmpty</code></a></p></td><td valign=\"top\">String (required, empty allowed)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#intValue\"><code>&lt;intValue&gt;</code></a></p></td><td valign=\"top\">Integer</td></tr><br/></table></pre></div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div><div class=\"content\"><h2>Extension Point Implementation</h2><div class=\"bottom\"><icon src=\"AllIcons.Nodes.Package\">&nbsp;<a href=\"psi_element://bar\"><code><span style=\"color:#000000;\">bar</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span> <span style=\"color:#000080;font-weight:bold;\">interface</span> <span style=\"color:#000000;\">MyExtension</span></pre></div><div class='content'>\n" +

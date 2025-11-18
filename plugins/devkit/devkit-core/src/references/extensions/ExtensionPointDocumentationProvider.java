@@ -5,6 +5,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.module.Module;
@@ -17,12 +18,16 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
@@ -92,8 +97,26 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
       HtmlChunk.text(extensionPoint.getEffectiveQualifiedName()).bold().wrapWith(PRE_ELEMENT),
       HtmlChunk.icon("AllIcons.Nodes.Plugin", AllIcons.Nodes.Plugin),
       HtmlChunk.nbsp(),
-      HtmlChunk.text(DomUtil.getFile(extensionPoint).getName())
+      HtmlChunk.text(getNameAndOptionalPluginId(extensionPoint))
     ).wrapWith(DEFINITION_ELEMENT);
+  }
+
+  private static @Nls @NotNull String getNameAndOptionalPluginId(ExtensionPoint extensionPoint) {
+    XmlFile file = DomUtil.getFile(extensionPoint);
+    String fileName = file.getName();
+    if (!PluginManagerCore.PLUGIN_XML.equals(fileName)) {
+      return fileName;
+    }
+    DomFileElement<DomElement> element = DomUtil.getFileElement(extensionPoint);
+    if (element == null) return fileName;
+    DomElement rootElement = element.getRootElement();
+    if (rootElement instanceof IdeaPlugin ideaPlugin) {
+      String pluginId = ideaPlugin.getId().getStringValue();
+      if (StringUtil.isNotEmpty(pluginId)) {
+        return fileName + " (" + pluginId + ")";
+      }
+    }
+    return fileName;
   }
 
   private static @NotNull HtmlChunk epBeanDocAndFields(ExtensionPoint extensionPoint) {
