@@ -79,6 +79,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     ExtensionPoint extensionPoint = findExtensionPoint(element);
     if (extensionPoint == null) return null;
     return new HtmlBuilder()
+      .append(epQualifiedNameAndFileName(extensionPoint))
       .append(epBeanDocAndFields(extensionPoint))
       .append(platformExplorerLink(extensionPoint))
       .append(epClassDoc(extensionPoint))
@@ -90,18 +91,19 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
       HtmlChunk.text(extensionPoint.getEffectiveQualifiedName()).bold(),
       HtmlChunk.br(),
       HtmlChunk.text(DomUtil.getFile(extensionPoint).getName())
-    );
+    ).wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT);
   }
 
   private static @NotNull HtmlChunk epBeanDocAndFields(ExtensionPoint extensionPoint) {
-    HtmlBuilder defBuilder = new HtmlBuilder();
-    defBuilder.append(epQualifiedNameAndFileName(extensionPoint));
     final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
     if (beanClass != null) {
-      defBuilder.append(generateClassDoc(beanClass));
-      defBuilder.append(epBeanFields(beanClass));
+      return new HtmlBuilder()
+        .append(generateClassDoc(beanClass))
+        .append(epBeanFields(beanClass))
+        .wrapWith(PRE_ELEMENT)
+        .wrapWith(DEFINITION_ELEMENT);
     }
-    return defBuilder.wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT);
+    return HtmlChunk.empty();
   }
 
   private static @NotNull HtmlChunk epBeanFields(PsiClass beanClass) {
