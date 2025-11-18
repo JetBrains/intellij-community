@@ -13,7 +13,7 @@ import java.util.Set;
  * An item in the code completion list
  */
 @NotNullByDefault
-public interface CompletionItem {
+public interface ModCompletionItem {
   /**
    * @return the string searched for
    */
@@ -43,7 +43,7 @@ public interface CompletionItem {
   /**
    * @return a presentation of the completion item
    */
-  CompletionItemPresentation presentation();
+  ModCompletionItemPresentation presentation();
 
   /**
    * @return explicit item priority; can be positive or negative. Default is 0.

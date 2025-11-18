@@ -22,7 +22,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
-import com.intellij.modcompletion.CompletionItem;
+import com.intellij.modcompletion.ModCompletionItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -657,9 +657,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
                                  int start, 
                                  @NotNull PsiFile psiFile,
                                  CompletionItemLookupElement wrapper) {
-    CompletionItem.InsertionContext insertionContext = new CompletionItem.InsertionContext(
+    ModCompletionItem.InsertionContext insertionContext = new ModCompletionItem.InsertionContext(
       completionChar == REPLACE_SELECT_CHAR ?
-      CompletionItem.InsertionMode.OVERWRITE : CompletionItem.InsertionMode.INSERT,
+      ModCompletionItem.InsertionMode.OVERWRITE : ModCompletionItem.InsertionMode.INSERT,
       completionChar);
     ActionContext actionContext = ActionContext.from(editor, psiFile);
     ActionContext finalActionContext = actionContext
@@ -1178,7 +1178,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           .withSelection(TextRange.create(start, actionContext.offset()));
         // Cache current item result
         ReadAction.nonBlocking(
-          () -> wrapper.computeCommand(finalActionContext, CompletionItem.DEFAULT_INSERTION_CONTEXT))
+          () -> wrapper.computeCommand(finalActionContext, ModCompletionItem.DEFAULT_INSERTION_CONTEXT))
           .expireWith(this)
           .submit(AppExecutorUtil.getAppExecutorService());
       }

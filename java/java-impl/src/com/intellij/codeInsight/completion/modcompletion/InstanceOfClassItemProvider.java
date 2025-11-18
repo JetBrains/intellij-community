@@ -3,8 +3,8 @@ package com.intellij.codeInsight.completion.modcompletion;
 
 import com.intellij.codeInsight.completion.JavaInheritorsGetter;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.modcompletion.CompletionItem;
-import com.intellij.modcompletion.CompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.InstanceOfLeftPartTypeGetter;
@@ -20,11 +20,11 @@ import java.util.function.Consumer;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 @NotNullByDefault
-final class InstanceOfClassItemProvider implements CompletionItemProvider {
+final class InstanceOfClassItemProvider implements ModCompletionItemProvider {
   static final ElementPattern<PsiElement> AFTER_INSTANCEOF = psiElement().afterLeaf(JavaKeywords.INSTANCEOF);
 
   @Override
-  public void provideItems(CompletionContext context, Consumer<CompletionItem> sink) {
+  public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
     if (!context.isSmart()) return;
     final PsiElement position = context.element();
     if (!AFTER_INSTANCEOF.accepts(position)) return;
@@ -52,7 +52,7 @@ final class InstanceOfClassItemProvider implements CompletionItemProvider {
       });
   }
 
-  private static CompletionItem createInstanceofLookupElement(PsiClass psiClass, Set<? extends PsiClass> toWildcardInheritors) {
+  private static ModCompletionItem createInstanceofLookupElement(PsiClass psiClass, Set<? extends PsiClass> toWildcardInheritors) {
     final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.completion.AllClassesGetter;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcompletion.CompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
@@ -75,7 +75,7 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem 
   }
 
   @Override
-  public CompletionItemPresentation presentation() {
+  public ModCompletionItemPresentation presentation() {
     String name = getName();
     String tailText = " " + myPackageDisplayName;
     if (mySubstitutor == PsiSubstitutor.EMPTY && myClass.getTypeParameters().length > 0) {
@@ -85,7 +85,7 @@ public final class ClassReferenceCompletionItem extends PsiUpdateCompletionItem 
     MarkupText mainText = MarkupText.builder()
       .append(name, myStrikeout ? MarkupText.Kind.STRIKEOUT : MarkupText.Kind.NORMAL)
       .append(tailText, MarkupText.Kind.GRAYED).build();
-    return new CompletionItemPresentation(mainText)
+    return new ModCompletionItemPresentation(mainText)
       .withMainIcon(myIcon);
   }
 

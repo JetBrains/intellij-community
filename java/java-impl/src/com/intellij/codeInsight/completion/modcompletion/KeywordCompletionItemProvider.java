@@ -12,9 +12,9 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.syntax.parser.JavaKeywords;
-import com.intellij.modcompletion.CompletionItem;
-import com.intellij.modcompletion.CompletionItemPresentation;
-import com.intellij.modcompletion.CompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsSafe;
@@ -58,7 +58,7 @@ import static com.intellij.psi.SyntaxTraverser.psiApi;
  * TODO: disable completion chars
  */
 @NotNullByDefault
-final class KeywordCompletionItemProvider implements CompletionItemProvider {
+final class KeywordCompletionItemProvider implements ModCompletionItemProvider {
   private static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
 
   private static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL =
@@ -95,19 +95,19 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
   private static final PsiElementPattern<PsiElement, ?> START_FOR = psiElement().afterLeaf(psiElement().withText("(").afterLeaf("for"));
 
   @Override
-  public void provideItems(CompletionContext context, Consumer<CompletionItem> sink) {
+  public void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink) {
     new KeywordAdder(context, sink).provideItems();
   }
 
   private static class KeywordAdder {
     private final CompletionContext myContext;
-    private final Consumer<CompletionItem> mySink;
+    private final Consumer<ModCompletionItem> mySink;
     private final PsiElement myPosition;
     private final @Nullable PsiElement myPrevLeaf;
     private final PsiFile myFile;
     private final PrefixMatcher myKeywordMatcher;
 
-    KeywordAdder(CompletionContext context, Consumer<CompletionItem> sink) {
+    KeywordAdder(CompletionContext context, Consumer<ModCompletionItem> sink) {
       myContext = context;
       mySink = sink;
       myPosition = context.element();
@@ -186,7 +186,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       addKeyword(createKeyword(JavaKeywords.NULL));
     }
 
-    private void addKeyword(CompletionItem item) {
+    private void addKeyword(ModCompletionItem item) {
       if (myKeywordMatcher.prefixMatches(item.mainLookupString())) {
         mySink.accept(item);
       }
@@ -473,7 +473,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       }
       return new CommonCompletionItem(keyword + " " + className)
         .withPresentation(
-          new CompletionItemPresentation(MarkupText.builder().append(keyword, STRONG).append(" " + className, NORMAL).build())
+          new ModCompletionItemPresentation(MarkupText.builder().append(keyword, STRONG).append(" " + className, NORMAL).build())
             .withMainIcon(CreateClassKind.valueOf(keyword.toUpperCase(Locale.ROOT)).getKindIcon()))
         .withAdditionalUpdater((start, file, updater) -> {
           Document document = updater.getDocument();
@@ -1028,7 +1028,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
         return;
       }
 
-      CompletionItem defaultCaseRule = createKeyword(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock))
+      ModCompletionItem defaultCaseRule = createKeyword(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock))
         .adjustIndent()
         .withPriority(prioritizeForRule(switchBlock));
       addKeyword(defaultCaseRule);
@@ -1043,7 +1043,7 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       if (defaultElement != null) {
         return;
       }
-      CompletionItem defaultCaseRule = createKeyword(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock))
+      ModCompletionItem defaultCaseRule = createKeyword(JavaKeywords.DEFAULT, JavaTailTypes.forSwitchLabel(switchBlock))
         .adjustIndent()
         .withPriority(prioritizeForRule(switchBlock));
       addKeyword(defaultCaseRule);
@@ -1072,9 +1072,9 @@ final class KeywordCompletionItemProvider implements CompletionItemProvider {
       addSealedHierarchyCases(selectorType, containedLabels);
     }
 
-    private static CompletionItem createCaseRule(@NlsSafe String caseRuleName,
-                                                 ModNavigatorTailType tailType,
-                                                 @Nullable PsiSwitchBlock switchBlock) {
+    private static ModCompletionItem createCaseRule(@NlsSafe String caseRuleName,
+                                                    ModNavigatorTailType tailType,
+                                                    @Nullable PsiSwitchBlock switchBlock) {
       @NlsSafe String prefix = "case ";
 
       return new CommonCompletionItem(prefix + caseRuleName)

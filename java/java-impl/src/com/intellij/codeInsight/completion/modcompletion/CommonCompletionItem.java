@@ -6,7 +6,7 @@ import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcompletion.CompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   private final String myText;
   private final Set<String> myAdditionalStrings;
   private final Object myObject;
-  private final CompletionItemPresentation myPresentation;
+  private final ModCompletionItemPresentation myPresentation;
   private final ModNavigatorTailType myTail;
   private final InsertionAwareUpdateHandler myAdditionalUpdater;
   private final AutoCompletionPolicy myPolicy;
@@ -37,7 +37,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   public CommonCompletionItem(@NlsSafe String text) { 
     myText = text; 
     myObject = text;
-    myPresentation = new CompletionItemPresentation(MarkupText.plainText(text));
+    myPresentation = new ModCompletionItemPresentation(MarkupText.plainText(text));
     myAdditionalStrings = Set.of();
     myTail = (ModNavigatorTailType)TailTypes.noneType();
     myPriority = 0;
@@ -45,7 +45,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
     myPolicy = AutoCompletionPolicy.SETTINGS_DEPENDENT;
   }
   
-  private CommonCompletionItem(@NlsSafe String text, Set<String> additionalStrings, Object object, CompletionItemPresentation presentation,
+  private CommonCompletionItem(@NlsSafe String text, Set<String> additionalStrings, Object object, ModCompletionItemPresentation presentation,
                                ModNavigatorTailType tail, double priority, InsertionAwareUpdateHandler additionalUpdater,
                                AutoCompletionPolicy policy) {
     myText = text;
@@ -72,14 +72,14 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
    * @return new CommonCompletionItem with the given presentation
    */
   public CommonCompletionItem withPresentation(MarkupText presentation) {
-    return withPresentation(new CompletionItemPresentation(presentation));
+    return withPresentation(new ModCompletionItemPresentation(presentation));
   }
 
   /**
    * @param presentation presentation to use for item rendering
    * @return new CommonCompletionItem with the given presentation
    */
-  public CommonCompletionItem withPresentation(CompletionItemPresentation presentation) {
+  public CommonCompletionItem withPresentation(ModCompletionItemPresentation presentation) {
     return new CommonCompletionItem(myText, myAdditionalStrings, myObject, presentation, myTail, myPriority,
                                     myAdditionalUpdater, myPolicy);
   }
@@ -162,7 +162,7 @@ public final class CommonCompletionItem extends PsiUpdateCompletionItem {
   }
 
   @Override
-  public CompletionItemPresentation presentation() {
+  public ModCompletionItemPresentation presentation() {
     return myPresentation;
   }
 

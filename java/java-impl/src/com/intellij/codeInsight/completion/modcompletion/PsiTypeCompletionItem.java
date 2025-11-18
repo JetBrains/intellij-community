@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcompletion.CompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.modcompletion.PsiUpdateCompletionItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Iconable;
@@ -187,7 +187,7 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
   }
 
   @Override
-  public CompletionItemPresentation presentation() {
+  public ModCompletionItemPresentation presentation() {
     MarkupText text = MarkupText.plainText(myLookupString);
     text = text.concat(calcGenerics(null, PsiUtil.resolveClassInType(myType)), MarkupText.Kind.NORMAL);
     text = text.concat("[]".repeat(myType.getArrayDimensions()), MarkupText.Kind.NORMAL);
@@ -200,7 +200,7 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem {
     if (myAddArrayInitializer) {
       text = text.concat("{...}", MarkupText.Kind.GRAYED);
     }
-    return new CompletionItemPresentation(text).withMainIcon(myIcon);
+    return new ModCompletionItemPresentation(text).withMainIcon(myIcon);
   }
 
   public static void addImportForItem(PsiClass aClass, PsiFile file, int startOffset, ModPsiUpdater updater) {

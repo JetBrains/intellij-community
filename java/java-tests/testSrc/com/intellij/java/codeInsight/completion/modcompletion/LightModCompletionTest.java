@@ -24,16 +24,16 @@ public final class LightModCompletionTest extends LightJavaCodeInsightFixtureTes
         }
       }
       """);
-    List<CompletionItem> result = new ArrayList<>();
+    List<ModCompletionItem> result = new ArrayList<>();
     int offset = getEditor().getCaretModel().getOffset();
     LightModCompletionServiceImpl.getItems(
       getFile(), offset, 1, CompletionType.BASIC, result::add);
     assertNotEmpty(result);
-    CompletionItem first = result.getFirst();
+    ModCompletionItem first = result.getFirst();
     assertEquals("switch", first.mainLookupString());
     ActionContext context = ActionContext.from(getEditor(), getFile())
       .withSelection(TextRange.create(offset - 3, offset));
-    ModCommand command = first.perform(context, CompletionItem.DEFAULT_INSERTION_CONTEXT);
+    ModCommand command = first.perform(context, ModCompletionItem.DEFAULT_INSERTION_CONTEXT);
     CommandProcessor.getInstance().executeCommand(
       getProject(), () -> {
         WriteAction.run(() -> getFile().getFileDocument().deleteString(offset - 3, offset));

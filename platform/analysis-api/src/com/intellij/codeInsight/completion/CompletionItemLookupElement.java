@@ -7,8 +7,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModUpdateFileText;
-import com.intellij.modcompletion.CompletionItem;
-import com.intellij.modcompletion.CompletionItemPresentation;
+import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemPresentation;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.MarkupText;
@@ -27,22 +27,22 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * A wrapper around {@link CompletionItem} that adapts it to {@link LookupElement}.
+ * A wrapper around {@link ModCompletionItem} that adapts it to {@link LookupElement}.
  */
 @NotNullByDefault
 @ApiStatus.Internal
 public final class CompletionItemLookupElement extends LookupElement implements ReportingClassSubstitutor {
-  private final CompletionItem item;
+  private final ModCompletionItem item;
   private volatile @Nullable ModCommand myCachedCommand;
 
-  CompletionItemLookupElement(CompletionItem item) {
+  CompletionItemLookupElement(ModCompletionItem item) {
     this.item = item;
   }
 
   /**
    * @return the completion item wrapped by this element.
    */
-  public CompletionItem item() {
+  public ModCompletionItem item() {
     return item;
   }
 
@@ -55,11 +55,11 @@ public final class CompletionItemLookupElement extends LookupElement implements 
    * @param insertionContext an insertion context, which describes how exactly the user invoked the completion
    * @return the command to perform the completion (e.g., insert the lookup string).
    * The command must assume that the selection range is already deleted. May return the cached command without recomputing.
-   * @see CompletionItem#perform(ActionContext, CompletionItem.InsertionContext) 
+   * @see ModCompletionItem#perform(ActionContext, ModCompletionItem.InsertionContext) 
    */
   @RequiresReadLock
-  public ModCommand computeCommand(ActionContext actionContext, CompletionItem.InsertionContext insertionContext) {
-    if (!insertionContext.equals(CompletionItem.DEFAULT_INSERTION_CONTEXT)) {
+  public ModCommand computeCommand(ActionContext actionContext, ModCompletionItem.InsertionContext insertionContext) {
+    if (!insertionContext.equals(ModCompletionItem.DEFAULT_INSERTION_CONTEXT)) {
       return item.perform(actionContext, insertionContext);
     }
     ModCommand command = getCachedCommand(actionContext, insertionContext);
@@ -73,18 +73,18 @@ public final class CompletionItemLookupElement extends LookupElement implements 
 
   /**
    * Cached command in case if it was already computed and stored before for the given context.
-   * May be used instead of {@link #computeCommand(ActionContext, CompletionItem.InsertionContext)} to optimize performance.
+   * May be used instead of {@link #computeCommand(ActionContext, ModCompletionItem.InsertionContext)} to optimize performance.
    * 
    * @param actionContext action context where the completion is performed. 
    *                      The selection range denotes the prefix text inserted during the current completion session.
    *                      The command must ignore it, as at the time it will be applied, the selection range will be deleted. 
    * @param insertionContext an insertion context, which describes how exactly the user invoked the completion
    * @return the command to perform the completion (e.g., insert the lookup string); null if it's not yet cached.
-   * @see #computeCommand(ActionContext, CompletionItem.InsertionContext)
+   * @see #computeCommand(ActionContext, ModCompletionItem.InsertionContext)
    */
-  public @Nullable ModCommand getCachedCommand(ActionContext actionContext, CompletionItem.InsertionContext insertionContext) {
+  public @Nullable ModCommand getCachedCommand(ActionContext actionContext, ModCompletionItem.InsertionContext insertionContext) {
     ModCommand command = myCachedCommand;
-    if (command == null || !insertionContext.equals(CompletionItem.DEFAULT_INSERTION_CONTEXT)) {
+    if (command == null || !insertionContext.equals(ModCompletionItem.DEFAULT_INSERTION_CONTEXT)) {
       return null;
     }
     if (isApplicableToContext(command, actionContext)) {
@@ -145,7 +145,7 @@ public final class CompletionItemLookupElement extends LookupElement implements 
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    CompletionItemPresentation itemPresentation = item.presentation();
+    ModCompletionItemPresentation itemPresentation = item.presentation();
     // TODO: apply styles when possible
     MarkupText mainText = itemPresentation.mainText();
     List<MarkupText.Fragment> fragments = mainText.fragments();
@@ -177,7 +177,7 @@ public final class CompletionItemLookupElement extends LookupElement implements 
 
   /**
    * Throws UnsupportedOperationException. Should not be called directly. Instead, to execute the command, 
-   * use {@link #computeCommand(ActionContext, CompletionItem.InsertionContext)}.
+   * use {@link #computeCommand(ActionContext, ModCompletionItem.InsertionContext)}.
    */
   @Override
   public void handleInsert(InsertionContext context) {

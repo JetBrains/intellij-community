@@ -19,13 +19,13 @@ import java.util.function.Consumer;
 
 /**
  * A lightweight implementation of completion using ModCompletion providers 
- * @see CompletionItemProvider 
+ * @see ModCompletionItemProvider 
  */
 @NotNullByDefault
 @ApiStatus.Internal
 public final class LightModCompletionServiceImpl {
   public static void getItems(PsiFile file, int caretOffset, int invocationCount, CompletionType type,
-                              Consumer<CompletionItem> sink) {
+                              Consumer<ModCompletionItem> sink) {
     CharSequence sequence = file.getFileDocument().getCharsSequence();
     int start = caretOffset;
     while (start > 0 && StringUtil.isJavaIdentifierPart(sequence.charAt(start-1))) {
@@ -35,7 +35,7 @@ public final class LightModCompletionServiceImpl {
   }
 
   public static void getItems(PsiFile file, int startOffset, int caretOffset, int invocationCount, CompletionType type,  
-                              Consumer<CompletionItem> sink) {
+                              Consumer<ModCompletionItem> sink) {
     PsiElement element;
     if (startOffset == caretOffset) {
       PsiFile copy = (PsiFile)file.copy();
@@ -47,11 +47,11 @@ public final class LightModCompletionServiceImpl {
     } else {
       element = Objects.requireNonNull(file.findElementAt(startOffset));
     }
-    List<CompletionItemProvider> providers = CompletionItemProvider.EP_NAME.allForLanguage(file.getLanguage());
+    List<ModCompletionItemProvider> providers = ModCompletionItemProvider.EP_NAME.allForLanguage(file.getLanguage());
     String prefix = file.getFileDocument().getText(TextRange.create(startOffset, caretOffset));
-    CompletionItemProvider.CompletionContext context = new CompletionItemProvider.CompletionContext(
+    ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
       file, caretOffset, element, new CamelHumpMatcher(prefix), invocationCount, type);
-    for (CompletionItemProvider provider : providers) {
+    for (ModCompletionItemProvider provider : providers) {
       provider.provideItems(context, sink);
     }
   }

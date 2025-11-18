@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageExtensionWithAny;
-import com.intellij.modcompletion.CompletionItemProvider;
+import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -234,9 +234,9 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
 
   public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language) {
     List<CompletionContributor> contributors = INSTANCE.forKey(language);
-    if (CompletionItemProvider.modCommandCompletionEnabled()) {
+    if (ModCompletionItemProvider.modCommandCompletionEnabled()) {
       contributors =
-        ContainerUtil.concat(ContainerUtil.map(CompletionItemProvider.forLanguage(language), CompletionItemContributor::new), contributors);
+        ContainerUtil.concat(ContainerUtil.map(ModCompletionItemProvider.forLanguage(language), CompletionItemContributor::new), contributors);
     }
     return contributors;
   }

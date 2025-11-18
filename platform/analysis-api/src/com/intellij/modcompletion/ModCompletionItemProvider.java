@@ -16,11 +16,11 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * A language-specific provider for {@link CompletionItem} completion options 
+ * A language-specific provider for {@link ModCompletionItem} completion options 
  */
 @NotNullByDefault
-public interface CompletionItemProvider {
-  LanguageExtension<CompletionItemProvider> EP_NAME = new LanguageExtension<>("com.intellij.modcompletion.completionItemProvider");
+public interface ModCompletionItemProvider {
+  LanguageExtension<ModCompletionItemProvider> EP_NAME = new LanguageExtension<>("com.intellij.modcompletion.completionItemProvider");
 
   /**
    * Provide completion items for given context
@@ -28,13 +28,13 @@ public interface CompletionItemProvider {
    * @param context context to use
    * @param sink a consumer to pass completion items to
    */
-  void provideItems(CompletionContext context, Consumer<CompletionItem> sink);
+  void provideItems(CompletionContext context, Consumer<ModCompletionItem> sink);
 
   /**
    * @param language language to get providers for
    * @return language-specific completion providers
    */
-  static List<CompletionItemProvider> forLanguage(Language language) {
+  static List<ModCompletionItemProvider> forLanguage(Language language) {
     return EP_NAME.forKey(language);
   }
 

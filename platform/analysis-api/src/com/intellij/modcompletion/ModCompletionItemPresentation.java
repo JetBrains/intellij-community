@@ -8,13 +8,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 /**
- * Visual representation of {@link CompletionItem}.
+ * Visual representation of {@link ModCompletionItem}.
  * 
  * @param mainText main text describing the completion item (usually the same text that will be inserted, with optional suffix information)
  * @param detailText optional text describing the completion item in more detail (like method type, etc.)
  */
 @NotNullByDefault
-public record CompletionItemPresentation(
+public record ModCompletionItemPresentation(
   MarkupText mainText,
   @Nullable Icon mainIcon,
   MarkupText detailText,
@@ -25,7 +25,7 @@ public record CompletionItemPresentation(
    * 
    * @param mainText main text to use
    */
-  public CompletionItemPresentation(MarkupText mainText) {
+  public ModCompletionItemPresentation(MarkupText mainText) {
     this(mainText, null, MarkupText.empty(), null);
   }
 
@@ -33,23 +33,23 @@ public record CompletionItemPresentation(
    * @param mainText new main text
    * @return a new presentation with the given main text and the same detail text
    */
-  public CompletionItemPresentation withMainText(MarkupText mainText) {
-    return new CompletionItemPresentation(mainText, mainIcon, detailText, detailIcon);
+  public ModCompletionItemPresentation withMainText(MarkupText mainText) {
+    return new ModCompletionItemPresentation(mainText, mainIcon, detailText, detailIcon);
   }
   
-  public CompletionItemPresentation withMainIcon(@Nullable Icon icon) {
-    return new CompletionItemPresentation(mainText, icon, detailText, detailIcon);
+  public ModCompletionItemPresentation withMainIcon(@Nullable Icon icon) {
+    return new ModCompletionItemPresentation(mainText, icon, detailText, detailIcon);
   }
 
   /**
    * @param detailText new detail text
    * @return a new presentation with the same main text and the given detail text
    */
-  public CompletionItemPresentation withDetailText(MarkupText detailText) {
-    return new CompletionItemPresentation(mainText, mainIcon, detailText, detailIcon);
+  public ModCompletionItemPresentation withDetailText(MarkupText detailText) {
+    return new ModCompletionItemPresentation(mainText, mainIcon, detailText, detailIcon);
   }
   
-  public CompletionItemPresentation withDetailIcon(@Nullable Icon icon) {
-    return new CompletionItemPresentation(mainText, mainIcon, detailText, icon);
+  public ModCompletionItemPresentation withDetailIcon(@Nullable Icon icon) {
+    return new ModCompletionItemPresentation(mainText, mainIcon, detailText, icon);
   }
 }

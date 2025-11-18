@@ -10,10 +10,10 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNullByDefault;
 
 /**
- * A {@link CompletionItem} that performs an update via {@link ModCommand#psiUpdate} API. The overwrite mode is handled automatically.
+ * A {@link ModCompletionItem} that performs an update via {@link ModCommand#psiUpdate} API. The overwrite mode is handled automatically.
  */
 @NotNullByDefault
-public abstract class PsiUpdateCompletionItem implements CompletionItem {
+public abstract class PsiUpdateCompletionItem implements ModCompletionItem {
   @Override
   public ModCommand perform(ActionContext actionContext, InsertionContext insertionContext) {
     String lookupString = mainLookupString();
