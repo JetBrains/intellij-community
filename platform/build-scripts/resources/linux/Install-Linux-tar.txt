@@ -14,7 +14,7 @@ INSTALLATION INSTRUCTIONS
      This will initialize various configuration files in the configuration directory:
      ~/.config/@@product_vendor@@/@@system_selector@@.
 
-  3. [OPTIONAL] To add @@product_full@@ to the system menu, use 'Tools | Create Desktop Entry'
+  3. [OPTIONAL] Add @@product_full@@ to the system menu using the 'Tools | Create Desktop Entry'
      menu action (also available in the "Options Menu" on the welcome screen).
 
   4. [OPTIONAL] Add "{installation home}/bin" to your PATH environment
