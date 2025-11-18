@@ -60,6 +60,7 @@ jvm_library(
     "//java/openapi:java",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
+    "//platform/util/jdom",
   ]
 )
 
@@ -119,6 +120,7 @@ jvm_library(
     "//java/openapi:java",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "//plugins/kotlin/base/external-build-system:kotlin-base-externalSystem",
+    "//platform/util/jdom",
   ]
 )
 ### auto-generated section `build intellij.kotlin.refactorings.move` end
