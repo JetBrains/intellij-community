@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2.uv
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
+import com.intellij.python.community.impl.uv.common.UV_UI_INFO
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -74,7 +75,7 @@ internal class UvExistingEnvironmentSelector<P : PathHolder>(model: PythonMutabl
                        ?: return@mapNotNull null
 
       val pathHolder = PathHolder.Eel(pythonBinaryPath) as P
-      DetectedSelectableInterpreter(pathHolder, pythonInfo, false)
+      DetectedSelectableInterpreter(pathHolder, pythonInfo, false, UV_UI_INFO)
     }
     return existingEnvs
   }

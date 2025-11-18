@@ -5,7 +5,7 @@ package com.intellij.python.community.impl.poetry.backend
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
-import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
+import com.intellij.python.community.impl.poetry.common.POETRY_UI_INFO
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
@@ -13,9 +13,6 @@ import com.intellij.python.pyproject.model.spi.Tool
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
-
-
-private val POETRY_UI_INFO: PyToolUIInfo = PyToolUIInfo("Poetry", PythonCommunityImplPoetryCommonIcons.Poetry)
 
 internal class PoetryTool : Tool {
 

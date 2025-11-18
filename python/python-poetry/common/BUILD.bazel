@@ -19,6 +19,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "//python/common",
+    "//python/openapi:community",
   ]
 )
 ### auto-generated section `build intellij.python.community.impl.poetry.common` end

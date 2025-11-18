@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.add.v2.poetry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.community.impl.poetry.common.POETRY_UI_INFO
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
@@ -46,7 +47,7 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
     val existingEnvs = detectPoetryEnvs(null, null, modulePath.pathString).mapNotNull { env ->
       env.homePath?.let { path ->
         model.fileSystem.parsePath(path).successOrNull?.let { fsPath ->
-          DetectedSelectableInterpreter<P>(fsPath, PythonInfo(env.version), false)
+          DetectedSelectableInterpreter(fsPath, PythonInfo(env.version), false, POETRY_UI_INFO)
         }
       }
     }

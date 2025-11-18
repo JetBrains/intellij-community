@@ -4,8 +4,11 @@ package com.intellij.python.community.impl.uv.common
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.impl.uv.common.icons.PythonCommunityImplUVCommonIcons
 import com.jetbrains.python.PyToolUIInfo
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 val UV_TOOL_ID: ToolId = ToolId("uv")
 
 // TODO: Move this symbol to backend as soon as all usages are moved to backend
+@ApiStatus.Internal
 val UV_UI_INFO: PyToolUIInfo = PyToolUIInfo("uv", PythonCommunityImplUVCommonIcons.UV)
