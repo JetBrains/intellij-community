@@ -74,12 +74,29 @@ internal fun K2MoveTargetModel.isMoveToExplicitPackage(): Boolean =
 internal fun KtNamedDeclaration.isExpectOrActual(): Boolean =
     isExpectDeclaration() || hasActualModifier()
 
+/**
+ * Searches for a source set name stem of a KMP source root.
+ *
+ * Stem is the main part of the source set name with `Main` and `Test` suffixes removed if present.
+ * Stem is not `null` only for KMP modules that have `dependsOn` dependencies.
+ *
+ * Stem examples:
+ * ```
+ * jvmTest -> "jvm"
+ * nativeMain -> "native"
+ * myCustomSourceSet -> "myCustomSourceSet"
+ * commonTest -> `null`
+ * myNonKmpModule -> `null`
+ * ```
+ */
 internal fun findSourceSetNameStem(kmpSourceRoot: PsiDirectory): String? {
     val project = kmpSourceRoot.project
     val kaModule = KaModuleProvider.getModule(project, kmpSourceRoot, useSiteModule = null)
+    val workspaceModule = kmpSourceRoot.module ?: return null
+
     val dependsOnDependencies = kaModule.directDependsOnDependencies
     if (dependsOnDependencies.isEmpty()) return null
-    val workspaceModule = kmpSourceRoot.module ?: return null
+
     val sourceSet = KotlinBuildSystemFacade.getInstance().findSourceSet(workspaceModule)
     val fullSourceSetName = sourceSet?.name ?: workspaceModule.name.split(".").last()
     val sourceSetNameStem = kmpSourceSetDefaultSuffixes.firstOrNull { fullSourceSetName.endsWith(it) }
@@ -88,7 +105,19 @@ internal fun findSourceSetNameStem(kmpSourceRoot: PsiDirectory): String? {
     return sourceSetNameStem
 }
 
-internal fun findSuffixedFileName(baseFileName: String, kmpSourceRoot: PsiDirectory?): String {
+/**
+ * Changes provided file name to add a possible source set stem suffix before the .kt extension.
+ * In case if no stem is available for the source root, the file name is returned unchanged.
+ * See [findSourceSetNameStem] for stem description and examples.
+ *
+ * Examples:
+ * ```
+ * myFile.kt in jvmMain -> myFile.jvm.kt
+ * myFile.kt in commonMain -> myFile.kt
+ * myFile.native.kt in nativeTest -> myFile.native.native.kt // NB!
+ * ```
+ */
+internal fun findFileNameWithSourceSetStemSuffix(baseFileName: String, kmpSourceRoot: PsiDirectory?): String {
     if (kmpSourceRoot == null) return baseFileName
     val sourceSetSuffix = findSourceSetNameStem(kmpSourceRoot) ?: return baseFileName
     val baseWithoutKt = baseFileName.substringBeforeLast(".kt")
