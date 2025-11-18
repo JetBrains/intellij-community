@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import kotlinx.coroutines.launch
 import org.jetbrains.idea.maven.model.MavenArtifact
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
@@ -18,7 +19,14 @@ open class DownloadSelectedSourcesAndDocsAction @JvmOverloads constructor(privat
   override fun perform(manager: MavenProjectsManager, mavenProjects: List<MavenProject>, e: AnActionEvent) {
     val cs = MavenCoroutineScopeProvider.getCoroutineScope(manager.project)
     cs.launch {
-      manager.downloadArtifacts(mavenProjects, getDependencies(e), mySources, myDocs)
+      manager.downloadArtifacts(
+        MavenDownloadSourcesRequest.builder()
+          .forProjects(mavenProjects)
+          .forArtifacts(getDependencies(e))
+          .downloadDocs(myDocs)
+          .downloadSources(mySources)
+          .build()
+      )
     }
   }
 

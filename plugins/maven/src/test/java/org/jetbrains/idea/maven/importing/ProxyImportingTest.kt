@@ -9,6 +9,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.junit.Test
 import java.net.URI
 import java.nio.file.Path
@@ -190,7 +191,14 @@ class ProxyImportingTest : MavenMultiVersionImportingTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    projectsManager.downloadArtifacts(projectsManager.rootProjects, null, true, true)
+    projectsManager.downloadArtifacts(
+      MavenDownloadSourcesRequest.builder()
+        .forProjects(projectsManager.rootProjects)
+        .forAllArtifacts()
+        .withSources()
+        .withDocs()
+        .build()
+    )
 
     assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0.jar", "/org/mytest/myartifact/1.0/myartifact-1.0.pom")
     assertContainsElements(myProxyFixture.requestedFiles, "/org/mytest/myartifact/1.0/myartifact-1.0-javadoc.jar", "/org/mytest/myartifact/1.0/myartifact-1.0-sources.jar")

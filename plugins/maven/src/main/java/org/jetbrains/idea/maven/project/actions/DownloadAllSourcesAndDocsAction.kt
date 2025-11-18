@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project.actions
 
 import kotlinx.coroutines.launch
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 
@@ -10,7 +11,14 @@ open class DownloadAllSourcesAndDocsAction @JvmOverloads constructor(private val
   override fun perform(manager: MavenProjectsManager) {
     val cs = MavenCoroutineScopeProvider.getCoroutineScope(manager.project)
     cs.launch {
-      manager.downloadArtifacts(manager.projects, null, mySources, myDocs)
+      manager.downloadArtifacts(
+        MavenDownloadSourcesRequest.builder()
+          .forProjects(manager.projects)
+          .forAllArtifacts()
+          .downloadSources(mySources)
+          .downloadDocs(myDocs)
+          .build()
+      )
     }
   }
 }

@@ -521,7 +521,14 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected suspend fun downloadArtifacts(): ArtifactDownloadResult {
-    return projectsManager.downloadArtifacts(projectsManager.projects, null, true, true)
+    return projectsManager.downloadArtifacts(
+      MavenDownloadSourcesRequest.builder()
+        .forProjects(projectsManager.projects)
+        .forAllArtifacts()
+        .withSources()
+        .withDocs()
+        .build()
+    )
   }
 
   @Throws(Exception::class)

@@ -28,6 +28,7 @@ import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -50,6 +51,7 @@ import org.jetbrains.idea.maven.importing.runMavenConfigurationTask
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest.ProgressIndicatorSettings
 import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
 import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 import org.jetbrains.idea.maven.server.*
@@ -59,9 +61,7 @@ import org.jetbrains.idea.maven.utils.MavenActivityKey
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.withLazyProgressIndicator
-import java.io.File
-import java.nio.file.Files
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration
 
 @ApiStatus.Experimental
 interface MavenAsyncProjectsManager {
@@ -92,19 +92,9 @@ interface MavenAsyncProjectsManager {
   @ApiStatus.Internal
   suspend fun importMavenProjects(projectsToImport: List<MavenProject>)
 
-  suspend fun downloadArtifacts(
-    projects: Collection<MavenProject>,
-    artifacts: Collection<MavenArtifact>?,
-    sources: Boolean,
-    docs: Boolean,
-  ): ArtifactDownloadResult
+  suspend fun downloadArtifacts(request: MavenDownloadSourcesRequest): ArtifactDownloadResult
 
-  fun scheduleDownloadArtifacts(
-    projects: Collection<MavenProject>,
-    artifacts: Collection<MavenArtifact>?,
-    sources: Boolean,
-    docs: Boolean,
-  )
+  fun scheduleDownloadArtifacts(request: MavenDownloadSourcesRequest)
 
   @ApiStatus.Internal
   suspend fun addManagedFilesWithProfiles(
@@ -116,6 +106,61 @@ interface MavenAsyncProjectsManager {
   ): List<Module>
 
   suspend fun onProjectStartup()
+}
+
+@ApiStatus.Experimental
+class MavenDownloadSourcesRequest private constructor(
+  val projects: Collection<MavenProject>,
+  val artifacts: Collection<MavenArtifact>?,
+  val sources: Boolean,
+  val docs: Boolean,
+  val progressIndicatorSettings: ProgressIndicatorSettings,
+) {
+
+  class ProgressIndicatorSettings(val progressIndicatorDelay: Duration? = null, val visibleInStatusBar: Boolean = true)
+
+  class Builder {
+    private var projects: Collection<MavenProject> = emptyList()
+    private var artifacts: Collection<MavenArtifact>? = null
+    private var sources: Boolean = false
+    private var docs: Boolean = false
+    private var progressIndicatorSettings: ProgressIndicatorSettings = ProgressIndicatorSettings()
+
+    fun forProjects(projects: Collection<MavenProject>): Builder = apply { this.projects = projects }
+
+    fun withSources(): Builder = downloadSources(true)
+
+    fun withDocs(): Builder = downloadDocs(true)
+
+    fun downloadSources(value: Boolean): Builder = apply { sources = value }
+
+    fun downloadDocs(value: Boolean): Builder = apply { docs = value }
+
+    fun forArtifacts(artifacts: Collection<MavenArtifact>): Builder = apply { this.artifacts = artifacts }
+
+    fun forAllArtifacts(): Builder = apply { this.artifacts = null }
+
+    fun withProgressDelay(duration: Duration): Builder = apply {
+      this.progressIndicatorSettings = ProgressIndicatorSettings(duration, this.progressIndicatorSettings.visibleInStatusBar)
+    }
+
+    fun withProgressVisibility(visibleInStatusBar: Boolean): Builder = apply {
+      this.progressIndicatorSettings = ProgressIndicatorSettings(this.progressIndicatorSettings.progressIndicatorDelay, visibleInStatusBar)
+    }
+
+    fun build(): MavenDownloadSourcesRequest = MavenDownloadSourcesRequest(
+      projects,
+      artifacts,
+      sources,
+      docs,
+      progressIndicatorSettings
+    )
+  }
+
+  companion object {
+    @JvmStatic
+    fun builder(): Builder = Builder()
+  }
 }
 
 open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project, cs) {
@@ -653,65 +698,63 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
     }
   }
 
-  override fun scheduleDownloadArtifacts(
-    projects: Collection<MavenProject>,
-    artifacts: Collection<MavenArtifact>?,
-    sources: Boolean,
-    docs: Boolean,
-  ) {
-    doScheduleDownloadArtifacts(cs, projects, artifacts, sources, docs)
+  override fun scheduleDownloadArtifacts(request: MavenDownloadSourcesRequest) {
+    doScheduleDownloadArtifacts(cs, request)
   }
 
   private fun doScheduleDownloadArtifacts(
     coroutineScope: CoroutineScope,
-    projects: Collection<MavenProject>,
-    artifacts: Collection<MavenArtifact>?,
-    sources: Boolean,
-    docs: Boolean,
+    request: MavenDownloadSourcesRequest,
   ) {
+    if (!request.sources && !request.docs) return
     coroutineScope.launchTracked(CoroutineName("doScheduleDownloadArtifacts")) {
-      if (!sources && !docs) return@launchTracked
-
       project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingScheduled()
-
-      downloadArtifacts(projects, artifacts, sources, docs)
+      downloadArtifacts(request)
     }
   }
 
-  override suspend fun downloadArtifacts(
-    projects: Collection<MavenProject>,
-    artifacts: Collection<MavenArtifact>?,
-    sources: Boolean,
-    docs: Boolean,
-  ): ArtifactDownloadResult {
-    if (!sources && !docs) return ArtifactDownloadResult()
+  override suspend fun downloadArtifacts(request: MavenDownloadSourcesRequest): ArtifactDownloadResult {
+    if (!request.sources && !request.docs) return ArtifactDownloadResult()
     return downloadArtifactMutex.withLock {
       tracer.spanBuilder("downloadArtifacts")
         .useWithScope {
-          withLazyProgressIndicator(myProject, 1.seconds, MavenProjectBundle.message("maven.downloading"), true) { reporter ->
-            doDownloadArtifacts(projects, artifacts, sources, docs, reporter)
+          withDownloadArtifactsProgress(request.progressIndicatorSettings) { reporter ->
+            doDownloadArtifacts(request, reporter)
           }
         }
     }
   }
 
-  private suspend fun doDownloadArtifacts(
-    projects: Collection<MavenProject>,
-    artifacts: Collection<MavenArtifact>?,
-    sources: Boolean,
-    docs: Boolean,
-    progressReporter: RawProgressReporter,
-  ): ArtifactDownloadResult {
+  private suspend fun <T> CoroutineScope.withDownloadArtifactsProgress(
+    settings: ProgressIndicatorSettings,
+    action: suspend (reporter: RawProgressReporter) -> T,
+  ): T {
+    val title = MavenProjectBundle.message("maven.downloading")
+    return if (settings.progressIndicatorDelay != null) {
+      withLazyProgressIndicator(myProject, settings.progressIndicatorDelay, title, settings.visibleInStatusBar) { reporter ->
+        action(reporter)
+      }
+    }
+    else {
+      withBackgroundProgress(myProject, title, TaskCancellation.cancellable(), null, settings.visibleInStatusBar) {
+        reportRawProgress { reporter ->
+          action(reporter)
+        }
+      }
+    }
+  }
+
+  private suspend fun doDownloadArtifacts(request: MavenDownloadSourcesRequest, progressReporter: RawProgressReporter): ArtifactDownloadResult {
     project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).artifactDownloadingStarted()
     try {
       val downloader = MavenArtifactDownloader(
         project,
         projectsTree,
-        artifacts,
+        request.artifacts,
         progressReporter,
         MavenArtifactDownloaderListener(syncConsole)
       )
-      return downloader.downloadSourcesAndJavadocs(projects, sources, docs)
+      return downloader.downloadSourcesAndJavadocs(projects, request.sources, request.docs)
     }
     catch (e: Exception) {
       syncConsole.notifyDownloadSourcesProblem(e)

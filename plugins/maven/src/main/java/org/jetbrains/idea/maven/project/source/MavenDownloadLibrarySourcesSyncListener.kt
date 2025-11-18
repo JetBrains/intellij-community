@@ -7,9 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.sync.Mutex
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSyncListener
+import kotlin.time.Duration.Companion.seconds
 
 class MavenDownloadLibrarySourcesSyncListener : MavenSyncListener {
 
@@ -19,7 +21,15 @@ class MavenDownloadLibrarySourcesSyncListener : MavenSyncListener {
     }
     val projectManager = MavenProjectsManager.getInstanceIfCreated(project) ?: return
     MavenDownloadLibrarySourcesAfterSyncDebouncer.withDebounce(project) {
-      projectManager.downloadArtifacts(projectManager.projects, null, true, false)
+      projectManager.downloadArtifacts(
+        MavenDownloadSourcesRequest.builder()
+          .forProjects(projectManager.projects)
+          .forAllArtifacts()
+          .withSources()
+          .withProgressDelay(1.seconds)
+          .withProgressVisibility(false)
+          .build()
+      )
     }
   }
 

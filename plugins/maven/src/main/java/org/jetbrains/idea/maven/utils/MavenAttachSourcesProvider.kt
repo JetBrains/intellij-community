@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.importing.MavenExtraArtifactType
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle
 import org.jetbrains.idea.maven.project.MavenProjectsManager
@@ -65,7 +66,13 @@ internal class MavenAttachSourcesProvider : AttachSourcesProvider {
             return@launch
           }
 
-          val downloadResult = manager.downloadArtifacts(mavenProjects, artifacts, true, false)
+          val downloadResult = manager.downloadArtifacts(
+            MavenDownloadSourcesRequest.builder()
+              .forProjects(mavenProjects)
+              .forArtifacts(artifacts)
+              .withSources()
+              .build()
+          )
 
           withContext(Dispatchers.EDT) {
             if (!downloadResult.unresolvedSources.isEmpty()) {

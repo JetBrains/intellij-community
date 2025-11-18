@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.utils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.reportRawProgress
@@ -15,7 +16,7 @@ suspend fun <T> CoroutineScope.withLazyProgressIndicator(
   project: Project,
   delay: Duration,
   title: @ProgressTitle String,
-  cancellable: Boolean,
+  visibleInStatusBar: Boolean,
   action: suspend (reporter: RawProgressReporter) -> T,
 ): T {
   val reporter = DelegatingReporter()
@@ -28,16 +29,16 @@ suspend fun <T> CoroutineScope.withLazyProgressIndicator(
     return actionJob.getCompleted()
   }
   return try {
-    withBackgroundProgress(project, title, cancellable) {
+    withBackgroundProgress(project, title, TaskCancellation.cancellable(), null, visibleInStatusBar) {
       reportRawProgress { realReporter ->
         reporter.setDelegate(realReporter)
         return@withBackgroundProgress actionJob.await()
       }
     }
   }
-  catch (cancellation: CancellationException) {
-    actionJob.cancel(cancellation)
-    throw cancellation
+  catch (c: CancellationException) {
+    actionJob.cancel(c)
+    throw c
   }
 }
 
