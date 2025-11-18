@@ -158,7 +158,11 @@ public final class PyFStringLikeCompletionContributor extends CompletionContribu
         !(argumentList.getParent() instanceof PyCallExpression call)) {
       return false;
     }
-    return ContainerUtil.all(call.multiMapArguments(PyResolveContext.defaultContext(typeEvalContext)), mapping -> {
+    List<PyCallExpression.PyArgumentsMapping> mappings = call.multiMapArguments(PyResolveContext.defaultContext(typeEvalContext));
+    if (mappings.isEmpty()) {
+      return false;
+    }
+    return ContainerUtil.all(mappings, mapping -> {
       PyCallableParameter param = mapping.getMappedParameters().get(callArgument);
       if (param == null) return false;
       PyType paramType = param.getType(typeEvalContext);

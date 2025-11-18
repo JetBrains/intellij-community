@@ -567,6 +567,11 @@ public class Py3CompletionTest extends PyTestCase {
   public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsAssignedValueWithUnpacking() {
     doTest();
   }
+
+  // PY-85706
+  public void testFStringLikeCompletionDoesNotAddTPrefixInsideUnresolvedFunctionCalls() {
+    doTest();
+  }
     
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
