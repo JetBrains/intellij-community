@@ -5,6 +5,8 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -20,11 +22,31 @@ internal object NoReturnValueFactory {
     private fun createQuickFix(
         element: KtElement,
     ): List<UnderscoreValueFix> {
-        return listOf(UnderscoreValueFix(element))
+        val parent = findParentOrOuterMostParentheses(element) ?: return emptyList()
+        if (!isSuitableParent(parent)) return emptyList()
+        return listOf(UnderscoreValueFix(element, parent.createSmartPointer()))
     }
+
+    private fun findParentOrOuterMostParentheses(element: KtElement): PsiElement? {
+        var parent: PsiElement? = element.parent
+        while (parent is KtParenthesizedExpression || parent is KtBinaryExpression) {
+            val parentOfParent = parent.parent
+            if (parentOfParent !is KtParenthesizedExpression && parentOfParent !is KtBinaryExpression) break
+            parent = parentOfParent
+        }
+        return parent
+    }
+
+    private fun isSuitableParent(element: PsiElement): Boolean =
+        element is KtBlockExpression
+                || element is KtParenthesizedExpression
+                || element is KtBinaryExpression
+                || element is KtWhenEntry
+                || element is KtContainerNode
 
     private class UnderscoreValueFix(
         element: KtElement,
+        private val parentPointer: SmartPsiElementPointer<PsiElement>,
     ) : PsiUpdateModCommandAction<KtElement>(element) {
         override fun getFamilyName(): String = KotlinBundle.message("explicitly.ignore.return.value")
 
@@ -33,8 +55,8 @@ internal object NoReturnValueFactory {
             element: KtElement,
             updater: ModPsiUpdater,
         ) {
+            val parent = parentPointer.element ?: return
             val factory = KtPsiFactory(element.project)
-            val parent = findParentOrOuterMostParentheses(element)
             val newExpression = buildNewExpression(factory, element, parent)
 
             val elementToReplace = when (parent) {
@@ -73,14 +95,5 @@ internal object NoReturnValueFactory {
             return newExpression
         }
 
-        private fun findParentOrOuterMostParentheses(element: KtElement): PsiElement? {
-            var parent: PsiElement? = element.parent
-            while (parent is KtParenthesizedExpression || parent is KtBinaryExpression) {
-                val parentOfParent = parent.parent
-                if (parentOfParent !is KtParenthesizedExpression && parentOfParent !is KtBinaryExpression) break
-                parent = parentOfParent
-            }
-            return parent
-        }
     }
 }
