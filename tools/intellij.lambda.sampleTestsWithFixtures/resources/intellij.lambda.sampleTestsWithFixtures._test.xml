@@ -30,5 +30,8 @@
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"
                         headlessImplementation="com.intellij.ide.impl.HeadlessDataManager"
                         overrides="true"/>
+    <applicationService serviceInterface="com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider"
+                        serviceImplementation="com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProviderImpl"
+                        overrides="true"/>
   </extensions>
 </idea-plugin>
