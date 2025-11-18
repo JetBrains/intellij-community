@@ -4,10 +4,9 @@ package com.intellij.platform.searchEverywhere.frontend.tabs.text
 import com.intellij.find.FindBundle
 import com.intellij.find.FindManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.SeTextSearchOptions
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
@@ -32,9 +31,7 @@ class SeTextTab(delegate: SeTabDelegate, registerShortcut: (AnAction) -> Unit) :
     return SeTextTabEmptyResultInfoProvider(filterEditor.getValue(), delegate.project).getEmptyResultInfo()
   }
 
-  override suspend fun openInFindToolWindow(session: SeSession, params: SeParams, initEvent: AnActionEvent): Boolean {
-    return delegate.openInFindToolWindow(session, params, initEvent, false)
-  }
+  override suspend fun canBeShownInFindResults(): Boolean = true
 
   private fun getTextSearchOptions(): SeTextSearchOptions? {
     val project = delegate.project
@@ -42,10 +39,6 @@ class SeTextTab(delegate: SeTabDelegate, registerShortcut: (AnAction) -> Unit) :
 
     val findModel = FindManager.getInstance(project).findInProjectModel
     return SeTextSearchOptions(findModel.isCaseSensitive, findModel.isWholeWordsOnly, findModel.isRegularExpressions)
-  }
-
-  override suspend fun getPreviewInfo(itemData: SeItemData): SePreviewInfo? {
-    return delegate.getPreviewInfo(itemData, false)
   }
 
   override fun dispose() {
