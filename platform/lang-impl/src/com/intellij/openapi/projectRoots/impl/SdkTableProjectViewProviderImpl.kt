@@ -71,7 +71,7 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
   }
 
   private fun validateDescriptor(sdk: Sdk): Boolean {
-    val sdkDescriptor = sdk.homePath?.let { getEelDescriptorOfHomePath(it) }
+    val sdkDescriptor = sdk.homePath?.let { getEffectiveWorkspaceEelDescriptorOfHomePath(it) }
     return if (sdkDescriptor == null) {
       true
     }
