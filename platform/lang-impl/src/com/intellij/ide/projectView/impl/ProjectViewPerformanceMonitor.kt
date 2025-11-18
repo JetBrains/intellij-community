@@ -144,8 +144,6 @@ internal class ProjectViewPerformanceMonitor(
       for (cause in event.causes) {
         val causeState = causeStates.getOrPut(cause) { CauseState(event.startedTime) }
         ++causeState.activeRequests
-        val causeReport = causeReports.getOrPut(cause) { CauseReport() }
-        causeReport.activeRequests = causeState.activeRequests
       }
     }
 
@@ -174,8 +172,7 @@ internal class ProjectViewPerformanceMonitor(
       for (cause in requestState.causes) {
         val causeState = ensureNotNull(cause, causeStates[cause]) ?: continue
         --causeState.activeRequests
-        val causeReport = ensureNotNull(cause, causeReports[cause]) ?: continue
-        causeReport.activeRequests = causeState.activeRequests
+        ++causeState.completedRequests
         if (causeState.activeRequests == 0) {
           allRequestsForCauseFinished(cause, event)
         }
@@ -184,8 +181,8 @@ internal class ProjectViewPerformanceMonitor(
 
     private fun allRequestsForCauseFinished(cause: ProjectViewUpdateCause, event: FinishedEvent) {
       val causeState = ensureNotNull(cause, causeStates.remove(cause)) ?: return
-      val causeReport = ensureNotNull(cause, causeReports[cause]) ?: return
-      ++causeReport.completedRequests
+      val causeReport = causeReports.getOrPut(cause) { CauseReport() }
+      causeReport.completedRequests += causeState.completedRequests
       causeReport.loadedNodeCount += causeState.loadedNodeCount
       causeReport.timeSpent += event.finishedTime - causeState.startedTime
     }
@@ -205,11 +202,19 @@ internal class ProjectViewPerformanceMonitor(
       if (startedRequests == 0 && activeRequests == 0 && finishedRequests == 0) return // don't spam the log when the IDE is idle
       if (LOG.isDebugEnabled) {
         LOG.debug(
-          "Project View performance sample: started requests = $startedRequests, finished requests = $finishedRequests, still active requests = $activeRequests. " +
-          "Update causes:"
+          "Project View performance sample: started requests = ${startedRequests}, finished requests = ${finishedRequests}, still active requests = ${activeRequests}"
         )
-        for (entry in causeReports.entries.sortedBy { it.key }) {
-          LOG.debug("${entry.key}: ${entry.value}")
+        if (causeReports.isNotEmpty()) {
+          LOG.debug("Finished requests by cause:")
+          for (entry in causeReports.entries.sortedBy { it.key }) {
+            LOG.debug("${entry.key}: ${entry.value}")
+          }
+        }
+        if (causeStates.isNotEmpty()) {
+          LOG.debug("Active requests by cause:")
+          for (entry in causeStates.entries.sortedBy { it.key }) {
+            LOG.debug("${entry.key}: ${entry.value}")
+          }
         }
       }
     }
@@ -217,19 +222,9 @@ internal class ProjectViewPerformanceMonitor(
     fun startNewSample(): StatsSample {
       val newSample = StatsSample()
       newSample.activeRequests = activeRequests
-      for ((id, requestState) in requestStates) {
-        if (requestState.isStillActive) {
-          newSample.requestStates[id] = requestState
-        }
-      }
+      newSample.requestStates.putAll(requestStates)
       newSample.causeStates.putAll(causeStates)
-      for ((cause, causeReport) in causeReports) {
-        if (causeReport.activeRequests > 0) {
-          newSample.causeReports[cause] = causeReport.copy(
-            completedRequests = 0, // we report completed requests per minute
-          )
-        }
-      }
+      // reports are not copied, as they're already reported
       return newSample
     }
   }
@@ -242,19 +237,16 @@ internal class ProjectViewPerformanceMonitor(
     var finishedTime: ComparableTimeMark? = null,
   ) {
     constructor(startedEvent: StartedEvent) : this(startedEvent.id, startedEvent.causes, startedEvent.startedTime)
-
-    val isStillActive: Boolean
-      get() = finishedTime == null
   }
 
   private data class CauseState(
     val startedTime: ComparableTimeMark,
     var activeRequests: Int = 0,
+    var completedRequests: Int = 0,
     var loadedNodeCount: Int = 0,
   )
 
   private data class CauseReport(
-    var activeRequests: Int = 0,
     var completedRequests: Int = 0,
     var loadedNodeCount: Int = 0,
     var timeSpent: Duration = Duration.ZERO,
