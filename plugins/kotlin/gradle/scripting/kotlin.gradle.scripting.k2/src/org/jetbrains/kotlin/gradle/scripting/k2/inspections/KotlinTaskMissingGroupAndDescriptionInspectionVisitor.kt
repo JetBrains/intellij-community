@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
-import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseStringExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.lang.BinaryOperationPrecedence
@@ -191,7 +190,7 @@ private class AddGroupDescriptionFix(
                 templateElement,
                 TextRange(1, 1),
                 "groupField",
-                ChooseStringExpression(getTaskGroups(project), "")
+                ConstantNode("").withLookupStrings(getTaskGroups(project))
             )
         }
         if (addDescription) {
@@ -244,7 +243,7 @@ private class AddConfigBlockWithGroupDescriptionFix() : KotlinModCommandQuickFix
             templateGroupElement,
             TextRange(1, 1),
             "groupField",
-            ChooseStringExpression(getTaskGroups(project), "")
+            ConstantNode("").withLookupStrings(getTaskGroups(project))
         )
         templateBuilder.field(
             templateDescriptionElement,
@@ -257,4 +256,4 @@ private class AddConfigBlockWithGroupDescriptionFix() : KotlinModCommandQuickFix
 
 private fun getTaskGroups(project: Project) = GradleTasksIndices.getInstance(project)
     .findTasks(project.guessProjectDir()!!.path)
-    .mapNotNull { it.group }.toSet().map { it.lowercase() }.sorted()
+    .mapNotNull { it.group }.toSet().sortedBy { it.lowercase() }
