@@ -22,7 +22,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -46,7 +45,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
       .append(epModule(element, epDeclarationFile))
       .append(epQualifiedNameAndFileName(extensionPoint, epDeclarationFile))
       .append(epBeanClassLinkOrEmpty(extensionPoint))
-      .append(epClassLink(extensionPoint.getExtensionPointClass()))
+      .append(classLink(extensionPoint.getExtensionPointClass()))
       .toString();
   }
 
@@ -73,7 +72,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
   private static HtmlChunk epBeanClassLinkOrEmpty(ExtensionPoint extensionPoint) {
     if (DomUtil.hasXml(extensionPoint.getBeanClass())) {
       return HtmlChunk.fragment(
-        epClassLink(extensionPoint.getBeanClass().getValue()),
+        classLink(extensionPoint.getBeanClass().getValue()),
         HtmlChunk.br()
       );
     }
@@ -198,10 +197,9 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 
-  private static HtmlChunk epClassLink(@Nullable PsiClass epClass) {
-    if (epClass == null) return HtmlChunk.empty();
-
-    return createLink(epClass.getQualifiedName(), epClass.getName());
+  private static HtmlChunk classLink(@Nullable PsiClass psiClass) {
+    if (psiClass == null) return HtmlChunk.empty();
+    return createLink(psiClass.getQualifiedName(), psiClass.getName());
   }
 
   private static HtmlChunk createLink(String refText, @Nls String label) {
