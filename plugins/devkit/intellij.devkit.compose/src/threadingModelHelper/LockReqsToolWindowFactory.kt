@@ -14,5 +14,6 @@ class LockReqsToolWindowFactory : ToolWindowFactory {
     val panel = JewelComposePanel { LockReqsToolWindow(project) }
     val content = contentFactory.createContent(panel, null, false)
     toolWindow.contentManager.addContent(content)
+    toolWindow.hide()
   }
 }
