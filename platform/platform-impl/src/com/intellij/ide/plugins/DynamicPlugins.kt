@@ -437,6 +437,15 @@ object DynamicPlugins {
         return dependency.pluginId
       }
     }
+    for (dependencyId in descriptor.moduleDependencies.plugins) {
+      if (!pluginSet.isPluginEnabled(dependencyId) &&
+          context.none {
+            it.pluginId == dependencyId || dependencyId in it.pluginAliases || dependencyId in it.contentModules.flatMap { it.pluginAliases }
+          }) {
+        return dependencyId
+      }
+    }
+    // TODO check modules
     return null
   }
 
