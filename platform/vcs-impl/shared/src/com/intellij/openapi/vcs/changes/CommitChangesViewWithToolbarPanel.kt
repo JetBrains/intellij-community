@@ -45,6 +45,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.merge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.event.MouseEvent
@@ -81,7 +82,10 @@ abstract class CommitChangesViewWithToolbarPanel(
   @RequiresEdt
   open fun initPanel() {
     cs.launch(Dispatchers.UI) {
-      ChangeListsViewModel.getInstance(project).changeListManagerState.collectLatest {
+      merge(
+        ChangeListsViewModel.getInstance(project).changeListManagerState,
+        PartialChangesHolder.getInstance(project).updates,
+      ).collect {
         changesView.repaint()
       }
     }
@@ -89,12 +93,6 @@ abstract class CommitChangesViewWithToolbarPanel(
     cs.launch(Dispatchers.UI) {
       project.serviceAsync<CommitToolWindowViewModel>().canExcludeFromCommit.collectLatest { canExclude ->
         changesView.isShowCheckboxes = canExclude
-      }
-    }
-
-    cs.launch(Dispatchers.UI) {
-      PartialChangesHolder.getInstance(project).updates.collectLatest {
-        changesView.repaint()
       }
     }
 
