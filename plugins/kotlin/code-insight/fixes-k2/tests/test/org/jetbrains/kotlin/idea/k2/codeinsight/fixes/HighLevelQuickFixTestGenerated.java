@@ -5353,6 +5353,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromDelegateConstructorCall.kt");
             }
 
+            @TestMetadata("fromQualifiedCallExpression.kt")
+            public void testFromQualifiedCallExpression() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromQualifiedCallExpression.kt");
+            }
+
             @TestMetadata("fromUnqualifiedCallExpression.kt")
             public void testFromUnqualifiedCallExpression() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromUnqualifiedCallExpression.kt");

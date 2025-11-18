@@ -7036,6 +7036,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/fromDelegateConstructorCall.kt");
                 }
 
+                @TestMetadata("fromQualifiedCallExpression.kt")
+                public void testFromQualifiedCallExpression() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/fromQualifiedCallExpression.kt");
+                }
+
                 @TestMetadata("fromUnqualifiedCallExpression.kt")
                 public void testFromUnqualifiedCallExpression() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/fromUnqualifiedCallExpression.kt");
