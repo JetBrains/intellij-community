@@ -15,8 +15,6 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.xdebugger.impl.actions.FrontendDebuggerActionsKt.areFrontendDebuggerActionsEnabled;
-
 public class XDebuggerTreeCreator implements DebuggerTreeCreator<Pair<XValue,String>> {
   private final @NotNull Project myProject;
   private final XDebuggerEditorsProvider myProvider;
