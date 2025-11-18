@@ -10,8 +10,7 @@ import com.intellij.psi.tree.TokenSet;
 import static com.intellij.lang.java.syntax.JavaElementTypeConverterExtensionKt.javaPsiElementTypeConverter;
 
 /**
- * @see com.intellij.psi.impl.source.BasicElementTypes
- * @see com.intellij.java.syntax.element.SyntaxElementTypes
+ * @see SyntaxElementTypes
  */
 @SuppressWarnings("unused") //because of backward compatibility, some of these sets are used in plugins
 public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElementType, JavaDocElementType {

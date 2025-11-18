@@ -20,8 +20,8 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -196,7 +196,7 @@ public class ModuleParser {
 
     PsiBuilder.Marker modifierList = builder.mark();
     while (true) {
-      if (expect(builder, BasicElementTypes.BASIC_MODIFIER_BIT_SET)) continue;
+      if (expect(builder, ElementType.MODIFIER_BIT_SET)) continue;
       if (builder.getTokenType() == JavaTokenType.IDENTIFIER && JavaKeywords.TRANSITIVE.equals(builder.getTokenText())) {
         mapAndAdvance(builder, JavaTokenType.TRANSITIVE_KEYWORD);
         continue;

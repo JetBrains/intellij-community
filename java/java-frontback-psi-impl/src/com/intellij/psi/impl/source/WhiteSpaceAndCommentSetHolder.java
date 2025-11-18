@@ -20,8 +20,8 @@ import static com.intellij.psi.tree.ParentAwareTokenSet.orSet;
 
 
 /**
- * @deprecated  Use the new Java syntax library instead.
- *            See {@link com.intellij.java.syntax.parser.JavaParser}
+ * @deprecated Use the new Java syntax library instead.
+ * See {@link com.intellij.java.syntax.parser.JavaParser}
  * You can temporarily use @{@link com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder}
  *
  */
@@ -94,20 +94,20 @@ public class WhiteSpaceAndCommentSetHolder {
       if (mySupportMarkdown) {
         //collect everything
         for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT)) return idx;
+          if (tokens.get(idx) == BASIC_DOC_COMMENT) return idx;
         }
       }
       else {
         // To preserve previous orders, let's try to find the first non-markdown comment (and skip markdown comments).
         // If there is no non-markdown, take the first markdown
         for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT) && !isDocMarkdownComment(idx, getter)) {
+          if (tokens.get(idx) == BASIC_DOC_COMMENT && !isDocMarkdownComment(idx, getter)) {
             return idx;
           }
         }
 
         for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), BASIC_DOC_COMMENT)) return idx;
+          if (tokens.get(idx) == BASIC_DOC_COMMENT) return idx;
         }
       }
 

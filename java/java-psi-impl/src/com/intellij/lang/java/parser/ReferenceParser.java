@@ -6,7 +6,7 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.BasicElementTypes;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public class ReferenceParser {
       builder.remapCurrentToken(tokenType = JavaTokenType.IDENTIFIER);
     }
 
-    if (expect(builder, BasicElementTypes.BASIC_PRIMITIVE_TYPE_BIT_SET)) {
+    if (expect(builder, ElementType.PRIMITIVE_TYPE_BIT_SET)) {
       typeInfo.isPrimitive = true;
     }
     else if ((isSet(flags, WILDCARD) || badWildcard) && (tokenType == JavaTokenType.QUEST)) {

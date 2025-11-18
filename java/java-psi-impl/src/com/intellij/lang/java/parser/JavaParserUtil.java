@@ -29,7 +29,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
-import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -86,28 +85,28 @@ public final class JavaParserUtil {
   }
 
   /**
-   * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
+   * @deprecated please, use {@link OldParserWhiteSpaceAndCommentSetHolder#INSTANCE} instead
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static final WhitespacesAndCommentsBinder PRECEDING_COMMENT_BINDER =
-    WhiteSpaceAndCommentSetHolder.INSTANCE.getPrecedingCommentBinder(LanguageLevel.HIGHEST);
+    OldParserWhiteSpaceAndCommentSetHolder.INSTANCE.getPrecedingCommentBinder(LanguageLevel.HIGHEST);
 
   /**
-   * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
+   * @deprecated please, use {@link OldParserWhiteSpaceAndCommentSetHolder#INSTANCE} instead
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static final WhitespacesAndCommentsBinder SPECIAL_PRECEDING_COMMENT_BINDER =
-    WhiteSpaceAndCommentSetHolder.INSTANCE.getSpecialPrecedingCommentBinder(LanguageLevel.HIGHEST);
+    OldParserWhiteSpaceAndCommentSetHolder.INSTANCE.getSpecialPrecedingCommentBinder(LanguageLevel.HIGHEST);
 
   /**
-   * @deprecated please, use {@link WhiteSpaceAndCommentSetHolder#INSTANCE} instead
+   * @deprecated please, use {@link OldParserWhiteSpaceAndCommentSetHolder#INSTANCE} instead
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static final WhitespacesAndCommentsBinder TRAILING_COMMENT_BINDER =
-    WhiteSpaceAndCommentSetHolder.INSTANCE.getTrailingCommentBinder();
+    OldParserWhiteSpaceAndCommentSetHolder.INSTANCE.getTrailingCommentBinder();
 
 
   private JavaParserUtil() { }
@@ -147,7 +146,7 @@ public final class JavaParserUtil {
    */
   @Deprecated
   public static void done(final PsiBuilder.Marker marker, final IElementType type) {
-    done(marker, type, WhiteSpaceAndCommentSetHolder.INSTANCE);
+    done(marker, type, OldParserWhiteSpaceAndCommentSetHolder.INSTANCE);
   }
 
 
@@ -190,12 +189,12 @@ public final class JavaParserUtil {
   }
 
   /**
-   * @deprecated use {@link JavaParserUtil#done(PsiBuilder.Marker, IElementType, PsiBuilder, WhiteSpaceAndCommentSetHolder)}
+   * @deprecated use {@link JavaParserUtil#done(PsiBuilder.Marker, IElementType, PsiBuilder, OldParserWhiteSpaceAndCommentSetHolder)}
    */
   @Deprecated
   public static void done(final @NotNull PsiBuilder.Marker marker,
                           final @NotNull IElementType type,
-                          final @NotNull WhiteSpaceAndCommentSetHolder commentSetHolder) {
+                          final @NotNull OldParserWhiteSpaceAndCommentSetHolder commentSetHolder) {
     marker.done(type);
     final WhitespacesAndCommentsBinder left =
       commentSetHolder.getPrecedingCommentSet().contains(type) ? commentSetHolder.getPrecedingCommentBinder(LanguageLevel.HIGHEST)

@@ -21,7 +21,7 @@ import static com.intellij.psi.tree.TokenSet.orSet;
 
 /**
  * @deprecated Use the new Java syntax library instead.
- *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ * See {@link com.intellij.java.syntax.parser.JavaParser}
  */
 @Deprecated
 public class OldParserWhiteSpaceAndCommentSetHolder {
@@ -91,20 +91,20 @@ public class OldParserWhiteSpaceAndCommentSetHolder {
       if (mySupportMarkdown) {
         //collect everything
         for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), DOC_COMMENT)) return idx;
+          if (tokens.get(idx) == DOC_COMMENT) return idx;
         }
       }
       else {
         // To preserve previous orders, let's try to find the first non-markdown comment (and skip markdown comments).
         // If there is no non-markdown, take the first markdown
         for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), DOC_COMMENT) && !isDocMarkdownComment(idx, getter)) {
+          if (tokens.get(idx) == DOC_COMMENT && !isDocMarkdownComment(idx, getter)) {
             return idx;
           }
         }
 
         for (int idx = tokens.size() - 1; idx >= 0; idx--) {
-          if (BasicJavaAstTreeUtil.is(tokens.get(idx), DOC_COMMENT)) return idx;
+          if (tokens.get(idx) == DOC_COMMENT) return idx;
         }
       }
 

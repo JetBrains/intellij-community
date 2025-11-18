@@ -8,9 +8,8 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
-import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +36,7 @@ public class FileParser {
   public FileParser(@NotNull JavaParser javaParser) {
     this.myParser = javaParser;
     this.IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
-      BasicElementTypes.BASIC_MODIFIER_BIT_SET,
+      ElementType.MODIFIER_BIT_SET,
       TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
     this.IMPLICIT_CLASS_INDICATORS =
       TokenSet.create(METHOD, FIELD,
