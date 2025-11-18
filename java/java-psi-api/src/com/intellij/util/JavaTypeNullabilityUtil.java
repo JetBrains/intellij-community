@@ -82,7 +82,12 @@ public final class JavaTypeNullabilityUtil {
     PsiElement context = classType.getPsiContext();
     return context instanceof PsiJavaCodeReferenceElement &&
            context.getParent() instanceof PsiTypeElement &&
-           context.getParent().getParent() instanceof PsiLocalVariable;
+           isLocalVariable(context.getParent().getParent());
+  }
+
+  private static boolean isLocalVariable(PsiElement element) {
+    return element instanceof PsiLocalVariable || 
+           element instanceof PsiParameter && !(element.getParent() instanceof PsiParameterList);
   }
 
   /**

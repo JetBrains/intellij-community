@@ -42,8 +42,10 @@ final class CheckerFrameworkSupport implements AnnotationPackageSupport {
             // DefaultQualifier is not applicable to type parameter declarations
             if (context instanceof PsiTypeParameter) return false;
             // DefaultQualifier is not applicable to type parameter uses
-            return !(PsiUtil.getTypeByPsiElement(context) instanceof PsiClassType classType) || 
-                   !(classType.resolve() instanceof PsiTypeParameter);
+            return !(PsiUtil.getTypeByPsiElement(context) instanceof PsiClassType classType &&
+                     classType.resolve() instanceof PsiTypeParameter ||
+                     context instanceof PsiJavaCodeReferenceElement ref &&
+                     ref.resolve() instanceof PsiTypeParameter);
           });
       }
       return ContextNullabilityInfo.EMPTY;

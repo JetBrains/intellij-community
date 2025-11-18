@@ -520,4 +520,8 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     addJSpecifyNullMarked(myFixture);
     doTest();
   }
+  
+  public void testDefaultNotNullTypeParameterOverrides() {
+    doTest();
+  }
 }
