@@ -6,6 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -13,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.searchEverywhere.SeProviderId
 import com.intellij.platform.searchEverywhere.SeSession
@@ -53,7 +55,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
-import kotlin.String
 
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT, Service.Level.APP)
@@ -107,6 +108,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
     coroutineScope.launch {
       val session = SeSessionEntity.createSession()
+
+      if (Registry.`is`("search.everywhere.reproduce.freeze.IJPL.218505", false)) {
+        reproduceFreezeIjpl218505(popupScope)
+      }
 
       try {
         popupSemaphore.withPermit {
@@ -368,6 +373,19 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
   @ApiStatus.Internal
   override fun isPreviewEnabled(): Boolean {
     return isExperimentEnabled
+  }
+
+  private fun reproduceFreezeIjpl218505(popupScope: CoroutineScope) {
+    popupScope.launch {
+      (1..1000).forEach { _ ->
+        delay(2000)
+        ApplicationManager.getApplication().invokeLater {
+          ApplicationManager.getApplication().runWriteAction {
+            println("write action")
+          }
+        }
+      }
+    }
   }
 
   companion object {
