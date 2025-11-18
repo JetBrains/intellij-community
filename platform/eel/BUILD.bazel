@@ -36,6 +36,7 @@ jvm_library(
     "//plugins/copyright:copyright_test_lib",
     "//java/openapi:java",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",

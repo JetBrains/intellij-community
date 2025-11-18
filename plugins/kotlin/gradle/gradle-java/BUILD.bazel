@@ -158,6 +158,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/idea-ui:ui",
     "//java/execution/impl",
     "//java/compiler/impl",

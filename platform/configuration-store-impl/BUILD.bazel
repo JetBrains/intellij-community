@@ -104,6 +104,7 @@ jvm_library(
     "//libraries/kotlinx/serialization/json",
     "//libraries/kotlinx/serialization/core",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.platform.configurationStore.tests` end

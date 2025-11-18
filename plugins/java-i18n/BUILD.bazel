@@ -87,6 +87,7 @@ jvm_library(
     "//plugins/grazie/src:core",
     "//plugins/grazie",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/usageView",
@@ -109,6 +110,7 @@ jvm_library(
   exports = [
     "//plugins/properties:properties-backend",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
   ]
 )
 ### auto-generated section `build intellij.java.i18n` end

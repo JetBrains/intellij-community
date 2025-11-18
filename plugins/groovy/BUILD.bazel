@@ -146,6 +146,7 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//plugins/copyright",
     "//plugins/copyright:copyright_test_lib",
     "//plugins/IntelliLang:langInjection",

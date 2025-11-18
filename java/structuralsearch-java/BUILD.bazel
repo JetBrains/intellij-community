@@ -41,6 +41,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/openapi:java",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/duplicates-analysis",
     "//java/testFramework",
     "//platform/structuralsearch:structuralSearch-tests_test_lib",

@@ -115,6 +115,7 @@ jvm_library(
     "//platform/collaboration-tools",
     "//platform/collaboration-tools:collaboration-tools_test_lib",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/backend/workspace",
     "//plugins/kotlin/code-insight/utils",
     "//platform/workspace/jps",

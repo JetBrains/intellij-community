@@ -72,6 +72,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//plugins/eclipse/jps-plugin:jps",
     "//plugins/eclipse/common-eclipse-util:common",
     "//platform/testFramework/extensions:testExtensions",

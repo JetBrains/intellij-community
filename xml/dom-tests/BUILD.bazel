@@ -26,6 +26,7 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "@lib//:assert_j",
     "//java/openapi:java",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",

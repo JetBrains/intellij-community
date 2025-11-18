@@ -49,6 +49,7 @@ jvm_library(
     "//platform/core-impl",
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",

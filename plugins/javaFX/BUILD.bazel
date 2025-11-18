@@ -80,6 +80,7 @@ jvm_library(
     "//java/java-psi-api:psi",
     "//xml/impl",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/java-indexing-api:indexing",
     "//java/openapi:java",
     "//java/compiler/openapi:java-compiler",

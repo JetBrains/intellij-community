@@ -38,6 +38,7 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//java/openapi:java",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/testFramework",

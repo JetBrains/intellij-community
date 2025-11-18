@@ -60,6 +60,7 @@ jvm_library(
     "//platform/lang-impl",
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//plugins/devkit/devkit-core:core",
     "//xml/xml-psi-api:psi",
     "//xml/dom-openapi:dom",

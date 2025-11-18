@@ -108,6 +108,7 @@ jvm_library(
     "//platform/external-system-api:externalSystem",
     "//java/openapi:java",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/java-analysis-api:analysis",
     "//java/testFramework",
     "//platform/backend/workspace",

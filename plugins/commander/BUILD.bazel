@@ -37,6 +37,7 @@ jvm_library(
   associates = [":commander"],
   deps = [
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/analysis-api:analysis",
     "//platform/diff-api:diff",
     "//platform/diff-impl",

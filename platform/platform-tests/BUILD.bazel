@@ -143,6 +143,7 @@ jvm_library(
     "//libraries/jsvg",
     "//libraries/hash4j",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/platform-impl/internal",
     "//platform/util/storages",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",

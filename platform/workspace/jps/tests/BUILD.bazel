@@ -50,6 +50,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/eel-provider",
     "//platform/testFramework/junit5/eel",
     "//platform/testFramework/junit5/eel:eel_test_lib",

@@ -89,6 +89,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/core-api:core",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//java/testFramework",

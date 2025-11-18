@@ -55,6 +55,7 @@ jvm_library(
     "//platform/execution-impl",
     "//platform/ide-core-impl",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/idea-ui:ui",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",

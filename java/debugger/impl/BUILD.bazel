@@ -106,6 +106,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//java/jsp-openapi:jsp",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-core",

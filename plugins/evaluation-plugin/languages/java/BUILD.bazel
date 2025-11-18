@@ -48,6 +48,7 @@ jvm_library(
     "//plugins/maven",
     "//java/openapi:java",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//plugins/evaluation-plugin/languages",
     "//plugins/evaluation-plugin/core",
     "//plugins/gradle:gradle-common",

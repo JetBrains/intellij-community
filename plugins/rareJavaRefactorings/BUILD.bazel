@@ -40,6 +40,7 @@ jvm_library(
   associates = [":java-rareRefactorings"],
   deps = [
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/java-indexing-api:indexing",
     "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",

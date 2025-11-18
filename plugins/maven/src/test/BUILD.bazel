@@ -69,6 +69,7 @@ jvm_library(
     "//platform/external-system-api/testFramework",
     "//platform/backend/workspace",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//libraries/hash4j",

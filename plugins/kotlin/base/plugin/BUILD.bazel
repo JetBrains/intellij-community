@@ -85,6 +85,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//java/openapi:java",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/idea-ui:ui",
     "//aether-dependency-resolver",
     "//aether-dependency-resolver:aether-dependency-resolver_test_lib",

@@ -51,6 +51,7 @@ jvm_library(
     "//platform/core-api:core",
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//libraries/stream",
     "//java/debugger/impl",
     "//java/debugger/impl:impl_test_lib",

@@ -96,6 +96,7 @@ jvm_library(
     "//java/testFramework",
     "//java/execution/openapi:java-execution",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "//java/jsp-openapi:jsp",
     "@lib//:test_n_g",
     "//java/java-indexing-api:indexing",

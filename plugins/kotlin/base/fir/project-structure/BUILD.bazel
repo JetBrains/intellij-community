@@ -79,6 +79,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "//platform/workspace/jps",
     "//java/java-impl:impl",
+    "//java/java-impl:impl_test_lib",
     "@lib//:kotlinc-analysis-api-platform-interface",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/base/test:test_test_lib",
