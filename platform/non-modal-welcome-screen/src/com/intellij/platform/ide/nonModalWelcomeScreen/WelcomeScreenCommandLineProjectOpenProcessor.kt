@@ -44,7 +44,10 @@ private abstract class DummyProjectOpenProcessor(override val name: String) : Pr
 private class WelcomeScreenCommandLineProjectOpenProcessor : DummyProjectOpenProcessor("WelcomeScreenCommandLineProjectOpenProcessor") {
   override suspend fun openProjectAndFile(file: Path, tempProject: Boolean, options: OpenProjectTask): Project? {
     val provider = getWelcomeScreenProjectProvider() ?: return null
-    return openWelcomeScreenProject(file)
+    if (provider.canOpenFilesFromSystemFileManager()) {
+      return openWelcomeScreenProject(file)
+    }
+    return null
   }
 
   private suspend fun openWelcomeScreenProject(file: Path): Project {

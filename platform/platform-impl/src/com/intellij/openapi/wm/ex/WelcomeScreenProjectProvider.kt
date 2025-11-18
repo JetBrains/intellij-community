@@ -72,6 +72,10 @@ abstract class WelcomeScreenProjectProvider {
       return getWelcomeScreenProjectProvider()?.getWelcomeScreenProjectPath()
     }
 
+    fun canOpenFilesFromSystemFileManager(): Boolean {
+      return getWelcomeScreenProjectProvider()?.canOpenFilesFromSystemFileManager() ?: false
+    }
+
     suspend fun createOrOpenWelcomeScreenProject(extension: WelcomeScreenProjectProvider): Project {
       val projectPath = extension.getWelcomeScreenProjectPath()
 
@@ -92,6 +96,11 @@ abstract class WelcomeScreenProjectProvider {
       return project
     }
   }
+
+  /**
+   * Return true if the welcome screen project can open non-project files from the file manager (Explorer, Finder).
+   */
+  abstract fun canOpenFilesFromSystemFileManager(): Boolean
 
   protected open fun getWelcomeScreenProjectPath(): Path {
     return ProjectUtil.getProjectPath(getWelcomeScreenProjectName()).absolute()
