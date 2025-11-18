@@ -87,8 +87,8 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     return new HtmlBuilder()
       .append(epQualifiedNameAndFileName(extensionPoint))
       .append(epBeanDocAndFields(extensionPoint))
-      .append(platformExplorerLink(extensionPoint))
       .append(epClassDoc(extensionPoint))
+      .append(platformExplorerLink(extensionPoint))
       .toString();
   }
 
