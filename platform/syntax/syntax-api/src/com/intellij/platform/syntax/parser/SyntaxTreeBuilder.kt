@@ -157,6 +157,10 @@ interface SyntaxTreeBuilder {
    */
   fun setDebugMode(dbgMode: Boolean)
 
+  /**
+   * Sets the comment tokens of the builder to the provided [tokens] set.
+   * Should be called before starting parsing, otherwise the result is undefined.
+   */
   fun enforceCommentTokens(tokens: SyntaxElementTypeSet)
 
   /**
