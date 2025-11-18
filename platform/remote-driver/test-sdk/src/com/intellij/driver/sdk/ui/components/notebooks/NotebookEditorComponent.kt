@@ -7,7 +7,6 @@ import com.intellij.driver.sdk.PsiManager
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.invokeActionWithRetries
 import com.intellij.driver.sdk.singleProject
-import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -28,10 +27,8 @@ import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
-import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForCodeAnalysis
-import com.intellij.driver.sdk.waitForIndicators
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -152,51 +149,11 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     deleteCell.click()
   }
 
-  fun runCellAndWaitExecuted(
-    timeout: Duration = 30.seconds,
-    expectedFinalExecutionCount: Int = 1,
-  ): Unit = step("Executing cell") {
-    runCell()
-    waitFor(timeout = timeout) {
-      areAllExecutionsFinishedSuccessfully(expectedFinalExecutionCount)
-    }
-  }
-
-  /*
-    This function should be removed when fixed:
-    PY-84369
-    PY-84374
-   */
-  fun softRunCellAndWaitExecuted(timeout: Duration = 2.minutes): Unit = step("Executing cell") {
-    runCell()
-    waitFor(timeout = timeout) {
-      val last = notebookCellExecutionInfos.lastOrNull()
-      if (last == null) {
-        false
-      }
-      else {
-        val timeBefore = last.getExecutionTimeInMsSafe()
-        wait(250.milliseconds)
-        val timeAfter = last.getExecutionTimeInMsSafe()
-        timeAfter == timeBefore && timeAfter != null
-      }
-    }
-  }
-
-  fun runAllCellsAndWaitExecuted(timeout: Duration = 1.minutes): Unit = step("Executing all cells") {
-    runAllCells()
-    waitFor(timeout = timeout) {
-      // TODO: what if we have some cells that were executed before, and their checkmarks are still there,
-      //  while new execution labels are not yet created?
-      areAllExecutionsFinishedSuccessfully(notebookCellEditors.size)
-    }
-  }
-
   /**
    * Checks if there are exactly [expectedFinalExecutionCount] finished cells with green checkmark
    * in the current notebook editor.
    */
-  private fun areAllExecutionsFinishedSuccessfully(
+  fun areAllExecutionsFinishedSuccessfully(
     expectedFinalExecutionCount: Int,
   ): Boolean {
     val infos = notebookCellExecutionInfos
@@ -205,37 +162,6 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
            infos.all {
              it.getParent().x { contains(byAttribute("defaulticon", "greenCheckmark.svg")) }.present()
            }
-  }
-
-  /**
-   * Combined action that runs all cells, wait for their execution, and waits for the indexes to update.
-   */
-  fun runAllCellsAndWaitIndexesUpdated(timeout: Duration = 1.minutes, indicatorsTimeout: Duration = timeout): Unit = step("Executing cells and wait for indexes") {
-    runAllCellsAndWaitExecuted(timeout)
-    step("Waiting for indicators after execution") {
-      driver.waitForIndicators(indicatorsTimeout)
-    }
-  }
-
-  /*
-    This functions should be removed when fixed:
-    PY-84369
-    PY-84374
-   */
-  fun softRunAllCellsAndWaitExecuted(timeout: Duration = 2.minutes): Unit = step("Executing all cells") {
-    runAllCells()
-    waitFor(timeout = timeout) {
-      val infos = notebookCellExecutionInfos
-      val timesBefore = infos.map { it.getExecutionTimeInMsSafe() }
-
-      wait(250.milliseconds)
-
-      val timesAfter = infos.map { it.getExecutionTimeInMsSafe() }
-
-      infos.isNotEmpty()
-      && timesAfter.all { it != null }
-      && timesBefore == timesAfter
-    }
   }
 
   fun clickOnCell(cellSelector: CellSelector) {
@@ -285,26 +211,6 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       ]
     """.trimIndent()
     ).list()
-
-  fun JLabelUiComponent.getExecutionTimeInMsSafe(): Long? = step("Get cell execution time") {
-    if (this.notPresent()) return@step null
-    val text = this.getText()
-    if (text.isEmpty()) return@step null
-
-    val seconds = Regex("""(\d+)s""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
-    val millis = Regex("""(\d+)ms""").find(text)?.groupValues?.get(1)?.toLongOrNull() ?: 0L
-
-    seconds * 1_000 + millis
-  }
-
-  fun JLabelUiComponent.getExecutionTime(): Duration = step("Get cell execution time") {
-    this.getText().run {
-      val matchSeconds = Regex("\\d+s").find(this)?.value?.substringBefore("s")?.toLong() ?: 0
-      val matchMs = Regex("\\d+ms").find(this)?.value?.substringBefore("ms")?.toLong() ?: 0
-
-      matchSeconds.seconds + matchMs.milliseconds
-    }
-  }
 }
 
 enum class NotebookType(val typeName: String, val newNotebookActionId: String) {
@@ -429,7 +335,7 @@ fun Driver.withNotebookEditor(testBody: NotebookEditorUiComponent.() -> Unit): I
   }
 }
 
-fun Driver.openFileWithProjectPanel(fileName: String) = ideFrame {
+fun Driver.openFileWithProjectPanel(fileName: String): IdeaFrameUI = ideFrame {
   leftToolWindowToolbar.projectButton.open()
   projectView {
     projectViewTree.run {
