@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiFileEx;
@@ -117,7 +118,7 @@ public abstract class DependenciesBuilder {
           if (!getScope().contains(file)) { //exclude paths through scope
             final List<List<PsiFile>> paths = findPaths(file, to, processed);
             for (List<PsiFile> path : paths) {
-              path.add(0, file);
+              path.addFirst(file);
             }
             result.addAll(paths);
           }
@@ -138,6 +139,8 @@ public abstract class DependenciesBuilder {
   public static void analyzeFileDependencies(@NotNull PsiFile file,
                                              @NotNull DependencyProcessor processor,
                                              @NotNull DependencyVisitorFactory.VisitorOptions options) {
+    file = (PsiFile)file.getNavigationElement();
+    if (file == null || file instanceof PsiCompiledElement) return;
     Boolean prev = file.getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING);
     file.putUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING, Boolean.TRUE);
     try {
