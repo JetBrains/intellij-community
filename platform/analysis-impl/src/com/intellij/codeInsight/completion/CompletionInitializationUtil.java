@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.PsiConsistencyAssertions;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -275,8 +274,6 @@ public final class CompletionInitializationUtil {
                 file.getClass());
     }
     CompletionAssertions.assertCorrectOriginalFile("New", file, copy);
-
-    copy.getFileDocument().putUserData(PsiDocumentManagerBase.FORCE_LOG_STACK_TRACE, "please find who does not commit document");
 
     if (CodeInsightContexts.isSharedSourceSupportEnabled(file.getProject())) {
       CodeInsightContextManagerImpl codeInsightContextManager =
