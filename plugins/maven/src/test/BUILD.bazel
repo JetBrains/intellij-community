@@ -27,6 +27,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//xml/xml-analysis-api:analysis",
     "//platform/execution-impl",
     "//platform/external-system-impl:externalSystem-impl",
     "//jps/model-api:model",
@@ -79,6 +80,8 @@ jvm_library(
     "//libraries/hamcrest",
     "//platform/testFramework/eelJava",
     "//platform/eel-provider",
+    "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-ui-common:ui-common",
   ]
 )
 ### auto-generated section `build intellij.maven.tests` end

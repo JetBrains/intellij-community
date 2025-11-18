@@ -5,11 +5,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.jetbrains.idea.maven.server.MavenDistribution
-
 
 class MavenRedundantVersionInspection : AbstractMavenRedundantParentInspection() {
-  override val elementName: String = "version"
+  override val elementName: String
+    get() = "version"
 
   override fun getShortName(): String = "MavenRedundantVersion"
 

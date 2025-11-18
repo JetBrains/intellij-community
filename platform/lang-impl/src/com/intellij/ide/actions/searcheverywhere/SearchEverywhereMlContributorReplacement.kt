@@ -13,7 +13,7 @@ interface SearchEverywhereMlContributorReplacement {
     val EP_NAME: ExtensionPointName<SearchEverywhereMlContributorReplacement> = ExtensionPointName.create(
       "com.intellij.searchEverywhereMlContributorReplacement")
 
-    var initEvent = WeakReference<AnActionEvent>(null)
+    var initEvent: WeakReference<AnActionEvent> = WeakReference<AnActionEvent>(null)
       private set
 
     @JvmStatic

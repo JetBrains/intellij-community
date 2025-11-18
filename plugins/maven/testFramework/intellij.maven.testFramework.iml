@@ -53,5 +53,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.eelJava" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.xml.analysis.impl" />
   </component>
 </module>

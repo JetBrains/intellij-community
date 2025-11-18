@@ -117,7 +117,6 @@ jvm_library(
   exports = [
     "//java/openapi:java",
     "//plugins/maven-server-api:maven-server",
-    "//xml/impl",
     "//xml/dom-openapi:dom",
     "//xml/dom-impl",
     "//java/compiler/openapi:java-compiler",

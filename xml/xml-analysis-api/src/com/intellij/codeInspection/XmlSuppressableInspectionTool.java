@@ -1,5 +1,4 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
@@ -135,7 +134,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     }
   }
 
-  public static class SuppressAllForFile extends SuppressForFile {
+  public static final class SuppressAllForFile extends SuppressForFile {
     public SuppressAllForFile(XmlSuppressionProvider provider) {
       super(ALL, provider);
     }

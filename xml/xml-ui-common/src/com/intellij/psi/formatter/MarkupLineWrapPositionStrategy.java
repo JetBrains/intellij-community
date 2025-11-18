@@ -28,8 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * {@link LineWrapPositionStrategy} for markup languages like XML, HTML etc.
  */
-public class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
-
+public final class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
   private static final IElementType[] TEXT_TOKENS = IElementType.enumerate(
     t -> t == XmlElementType.XML_TEXT ||
          t == XmlTokenType.XML_COMMENT_CHARACTERS ||
