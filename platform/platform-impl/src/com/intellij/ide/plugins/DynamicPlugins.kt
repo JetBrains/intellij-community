@@ -494,9 +494,21 @@ object DynamicPlugins {
     return null
   }
 
+  @Deprecated("use overload with PluginMainDescriptor parameter")
   fun unloadPluginWithProgress(project: Project? = null,
                                parentComponent: JComponent?,
                                pluginDescriptor: IdeaPluginDescriptorImpl,
+                               options: UnloadPluginOptions): Boolean {
+    if (pluginDescriptor !is PluginMainDescriptor) {
+      LOG.warn("Unexpected plugin descriptor type: $pluginDescriptor", Throwable())
+      return false
+    }
+    return unloadPluginWithProgress(project, parentComponent, pluginDescriptor, options)
+  }
+
+  fun unloadPluginWithProgress(project: Project? = null,
+                               parentComponent: JComponent?,
+                               pluginDescriptor: PluginMainDescriptor,
                                options: UnloadPluginOptions): Boolean {
     return runProcess {
       doUnloadPluginWithProgress(project, parentComponent, pluginDescriptor, options)
