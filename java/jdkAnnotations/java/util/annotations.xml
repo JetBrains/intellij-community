@@ -2752,10 +2752,12 @@
   </item>
   <item name='java.util.Comparator java.util.Comparator&lt;T&gt; naturalOrder()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
-    <annotation name='org.jetbrains.annotations.NotNull' typePath="-/1/*/1"/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
+  </item>
+  <item name='java.util.Comparator java.util.Comparator&lt;T&gt; naturalOrder() &lt;T&gt;'>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/1"/>
   </item>
   <item name='java.util.Comparator java.util.Comparator&lt;T&gt; nullsFirst(java.util.Comparator&lt;? super T&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3517,12 +3519,14 @@
   </item>
   <item name='java.util.List java.util.List&lt;E&gt; of(E, E)'>
     <annotation name="org.jetbrains.annotations.NotNull"/>
-    <annotation name="org.jetbrains.annotations.NotNull" typePath="-/1/*/1"/>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;_,_-&gt;new&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
     <annotation name='org.jetbrains.annotations.Unmodifiable'/>
+  </item>
+  <item name='java.util.List java.util.List&lt;E&gt; of(E, E) &lt;E&gt;'>
+    <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
   <item name='java.util.List java.util.List&lt;E&gt; of(E, E, E)'>
     <annotation name="org.jetbrains.annotations.NotNull"/>
@@ -4416,8 +4420,8 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
-  <item name='java.util.Optional'>
-    <annotation name='org.jetbrains.annotations.NotNull' typePath='-/1/*/1'/>
+  <item name='java.util.Optional &lt;T&gt;'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Optional T get()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

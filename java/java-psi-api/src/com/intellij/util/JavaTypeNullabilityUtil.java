@@ -62,10 +62,16 @@ public final class JavaTypeNullabilityUtil {
       //but this Object cannot hold nullability container, because doesn't have a reference
       if (extendTypes.length == 0 && checkContainer) {
         NullableNotNullManager manager = NullableNotNullManager.getInstance(typeParameter.getProject());
-        // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
-        NullabilityAnnotationInfo typeUseNullability = manager == null ? null : manager.findDefaultTypeUseNullability(typeParameter);
-        if (typeUseNullability != null) {
-          return typeUseNullability.toTypeNullability().inherited();
+        if (manager != null) {
+          NullabilityAnnotationInfo effective = manager.findOwnNullabilityInfo(typeParameter);
+          if (effective != null) {
+            return effective.toTypeNullability().inherited();
+          }
+          // If there's no bound, we assume an implicit `extends Object` bound, which is subject to default annotation if any.
+          NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(typeParameter);
+          if (typeUseNullability != null) {
+            return typeUseNullability.toTypeNullability().inherited();
+          }
         }
       }
     }
