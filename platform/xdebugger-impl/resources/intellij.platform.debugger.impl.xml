@@ -189,15 +189,15 @@
              popup="true"/>
     </group>
 
-    <group>
-      <separator text="Debug"/>
+    <group id="RunToolbarMainMoreActionGroupDebuggerPart">
+      <separator key="RunToolbarMainMoreActionGroupDebuggerPart.separator.text"/>
       <group id="RunToolbarDebugMoreActionSubGroupName"/>
       <reference ref="XDebugger.AttachGroup"/>
       <add-to-group group-id="RunToolbarMainMoreActionGroup" anchor="last"/>
     </group>
 
-    <group>
-      <separator text="Debug"/>
+    <group id="AdditionalRunningOptionsGroupMainDebuggerPart">
+      <separator key="AdditionalRunningOptionsGroupMainDebuggerPart.separator.text"/>
       <reference ref="XDebugger.AttachGroup"/>
       <add-to-group group-id="AdditionalRunningOptionsGroupMain"/>
     </group>
