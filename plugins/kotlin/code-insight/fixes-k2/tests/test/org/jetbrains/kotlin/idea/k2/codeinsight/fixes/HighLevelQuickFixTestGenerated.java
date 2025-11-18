@@ -5318,6 +5318,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/assignedInFunInClass.kt");
             }
 
+            @TestMetadata("callWithTypeArguments.kt")
+            public void testCallWithTypeArguments() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/callWithTypeArguments.kt");
+            }
+
             @TestMetadata("callableRef.kt")
             public void testCallableRef() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/callableRef.kt");

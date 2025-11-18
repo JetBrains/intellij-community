@@ -7001,6 +7001,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/assignedInFunInClass.kt");
                 }
 
+                @TestMetadata("callWithTypeArguments.kt")
+                public void testCallWithTypeArguments() throws Exception {
+                    runTest("testData/quickfix/createFromUsage/createVariable/parameter/callWithTypeArguments.kt");
+                }
+
                 @TestMetadata("callableRef.kt")
                 public void testCallableRef() throws Exception {
                     runTest("testData/quickfix/createFromUsage/createVariable/parameter/callableRef.kt");
