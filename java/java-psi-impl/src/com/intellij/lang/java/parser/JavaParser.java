@@ -59,6 +59,7 @@ public class JavaParser {
     return myPatternParser;
   }
 
+  @Deprecated
   @ApiStatus.ScheduledForRemoval
   public AbstractBasicJavaElementTypeFactory getJavaElementTypeFactory() {
     return JavaElementTypeFactory.INSTANCE;

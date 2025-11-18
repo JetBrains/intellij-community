@@ -60,8 +60,8 @@ public final class PrattExpressionParser {
     this.ourInfixParsers = new HashMap<>();
     AssignmentParser assignmentParser = new PrattExpressionParser.AssignmentParser();
     PolyExprParser polyExprParser = new PrattExpressionParser.PolyExprParser();
-    InstanceofParser instanceofParser = new PrattExpressionParser.InstanceofParser();
-    ConditionalExprParser conditionalExprParser = new PrattExpressionParser.ConditionalExprParser();
+    InstanceofParser instanceofParser = new InstanceofParser();
+    ConditionalExprParser conditionalExprParser = new ConditionalExprParser();
 
     for (IElementType type : Arrays.asList(EQ, ASTERISKEQ, DIVEQ, PERCEQ,
                                            PLUSEQ, MINUSEQ,
@@ -865,7 +865,9 @@ public final class PrattExpressionParser {
     return start;
   }
 
-  private @Nullable PsiBuilder.Marker parseClassObjectAccess(PsiBuilder builder, PsiBuilder.Marker expr, boolean optionalClassKeyword) {
+  private static @Nullable PsiBuilder.Marker parseClassObjectAccess(PsiBuilder builder,
+                                                                    PsiBuilder.Marker expr,
+                                                                    boolean optionalClassKeyword) {
     final PsiBuilder.Marker mark = builder.mark();
     builder.advanceLexer();
 
@@ -883,7 +885,7 @@ public final class PrattExpressionParser {
     return expr;
   }
 
-  private void emptyExpression(final PsiBuilder builder) {
+  private static void emptyExpression(final PsiBuilder builder) {
     emptyElement(builder, EMPTY_EXPRESSION);
   }
 
@@ -1000,7 +1002,7 @@ public final class PrattExpressionParser {
     }
   }
 
-  private final class ConditionalExprParser implements PrattExpressionParser.InfixParser {
+  private static final class ConditionalExprParser implements PrattExpressionParser.InfixParser {
     @Override
     public void parse(PrattExpressionParser parser,
                       PsiBuilder builder,
@@ -1033,7 +1035,7 @@ public final class PrattExpressionParser {
     }
   }
 
-  private final class InstanceofParser implements PrattExpressionParser.InfixParser {
+  private static final class InstanceofParser implements PrattExpressionParser.InfixParser {
 
     @Override
     public void parse(PrattExpressionParser parser,
