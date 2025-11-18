@@ -549,18 +549,15 @@ object ProjectUtil {
 
       LOG.debug { "$location: open file $file" }
       if (projectToClose == null) {
-        val processor = CommandLineProjectOpenProcessor.getInstanceIfExists()
-        if (processor != null) {
-          val opened = FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
-            processor.openProjectAndFile(file = file, tempProject = false)
+        val openedProject = FUSProjectHotStartUpMeasurer.withProjectContextElement(file) {
+          CommandLineProjectOpenProcessor.openProjectAndFile(file = file, tempProject = false)
+        }
+        if (openedProject != null) {
+          if (result == null) {
+            result = openedProject
           }
-          if (opened != null) {
-            if (result == null) {
-              result = opened
-            }
-            else {
-              FUSProjectHotStartUpMeasurer.openingMultipleProjects(false, list.size, false)
-            }
+          else {
+            FUSProjectHotStartUpMeasurer.openingMultipleProjects(false, list.size, false)
           }
         }
       }

@@ -135,7 +135,7 @@ object CommandLineProcessor {
     }
 
     if (projects.isEmpty()) {
-      val project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(ioFile, tempProject, OpenProjectTask {
+      val project = CommandLineProjectOpenProcessor.openProjectAndFile(ioFile, tempProject, OpenProjectTask {
         this.line = line
         this.column = column
       }) ?: return createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
