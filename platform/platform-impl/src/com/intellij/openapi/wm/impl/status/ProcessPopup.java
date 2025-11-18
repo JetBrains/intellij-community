@@ -75,6 +75,11 @@ final class ProcessPopup {
     myAnalyzingBannerDecorator.indicatorAdded(indicator);
     mySeparatorDecorator.indicatorAdded();
     revalidateAll();
+
+    if (myPopupVisible && myAnalyzingBannerDecorator.isBannerPresent()) {
+      updateContentUI();
+      updateHeight(myAnalyzingBannerDecorator.getBannerHeight());
+    }
   }
 
   public void removeIndicator(@NotNull ProgressComponent indicator) {
