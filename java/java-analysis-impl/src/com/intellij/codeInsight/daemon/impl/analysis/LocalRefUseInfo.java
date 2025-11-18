@@ -31,6 +31,7 @@ import java.util.HashSet;
  * Contains the information about references used locally in a given file.
  */
 public final class LocalRefUseInfo {
+  private static final LocalRefUseInfo EMPTY_INFO = new LocalRefUseInfo(MultiMap.empty(), Set.of(), Set.of());
   // resolved elements -> list of their references in this file
   private final @NotNull MultiMap<PsiElement, PsiReference> myLocalRefsMap;
 
@@ -43,6 +44,9 @@ public final class LocalRefUseInfo {
    * @return LocalRefUseInfo container (compute if it was not ready yet)
    */
   public static @NotNull LocalRefUseInfo forFile(@NotNull PsiFile psiFileRoot) {
+    if (psiFileRoot instanceof PsiCompiledFile) {
+      return EMPTY_INFO;
+    }
     return CachedValuesManager.getCachedValue(psiFileRoot, () -> {
       Builder builder = new Builder(psiFileRoot);
       for (PsiFile psiFile : psiFileRoot.getViewProvider().getAllFiles()) {
