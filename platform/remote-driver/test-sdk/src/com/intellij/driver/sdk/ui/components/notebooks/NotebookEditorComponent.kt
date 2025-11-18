@@ -318,12 +318,12 @@ enum class NotebookType(val typeName: String, val newNotebookActionId: String) {
  */
 fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) {
   ideFrame {
+    leftToolWindowToolbar.projectButton.open() // making sure the project view is open and in focus for correct scrolling
     projectView {
       projectViewTree.run {
         waitFor("wait for project tree to load", 30.seconds) {
           getAllTexts().isNotEmpty()
         }
-        leftToolWindowToolbar.projectButton.open() // making sure the project view is in focus
         invokeAction("ScrollPane-scrollHome") // making sure the first line is within the visible bounds
         getAllTexts().first().strictClick()
       }

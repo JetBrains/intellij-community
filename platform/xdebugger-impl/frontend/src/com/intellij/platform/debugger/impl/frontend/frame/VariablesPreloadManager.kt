@@ -3,11 +3,10 @@ package com.intellij.platform.debugger.impl.frontend.frame
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.debugger.impl.rpc.*
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.Flow
@@ -29,19 +28,19 @@ class VariablesPreloadManager(
   treeState: XDebuggerTreeExpandedNode,
   frameId: XStackFrameId,
 ) {
-  private val cs = parentScope.childScope("VariablesPreloadManager")
   private val preloadedEvents = ConcurrentHashMap<XContainerId, Channel<XValueComputeChildrenEvent>>()
 
   init {
-    markToBeLoaded(frameId)
-    cs.launch {
+    val localEvents = hashMapOf<XContainerId, Channel<XValueComputeChildrenEvent>>()
+    markToBeLoaded(frameId, localEvents)
+    parentScope.launch {
       XValueApi.getInstance().computeExpandedChildren(frameId, treeState).collect { event ->
         when (event) {
           is PreloadChildrenEvent.ToBePreloaded -> {
-            markToBeLoaded(event.id)
+            markToBeLoaded(event.id, localEvents)
           }
           is PreloadChildrenEvent.ExpandedChildrenEvent -> {
-            val channel = preloadedEvents[event.id] ?: run {
+            val channel = localEvents[event.id] ?: run {
               fileLogger().error("Preloaded event for ${event.id} was not properly received")
               return@collect
             }
@@ -50,22 +49,24 @@ class VariablesPreloadManager(
         }
       }
     }
+    parentScope.awaitCancellationAndInvoke {
+      preloadedEvents.clear()
+    }
   }
 
   fun getChildrenEventsFlow(entityId: XContainerId): Flow<XValueComputeChildrenEvent>? {
-    val eventsChannel = preloadedEvents[entityId] ?: return null
+    // channel can be consumed only once, so we remove it here
+    val eventsChannel = preloadedEvents.remove(entityId) ?: return null
     return channelFlow {
       eventsChannel.consumeEach { send(it) }
     }
   }
 
-  private fun markToBeLoaded(id: XContainerId) {
-    val old = preloadedEvents.put(id, Channel(capacity = Channel.UNLIMITED))
+  private fun markToBeLoaded(id: XContainerId, localEvents: MutableMap<XContainerId, Channel<XValueComputeChildrenEvent>>) {
+    val channel = Channel<XValueComputeChildrenEvent>(capacity = Channel.UNLIMITED)
+    val old = localEvents.put(id, channel)
     assert(old == null) { "Channel for $id was already registered" }
-  }
-
-  internal fun cancel() {
-    cs.cancel()
+    preloadedEvents[id] = channel
   }
 
   companion object {

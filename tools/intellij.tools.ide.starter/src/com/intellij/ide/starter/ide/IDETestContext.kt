@@ -766,22 +766,24 @@ open class IDETestContext(
   }
 
   fun applyAppCdsIfNecessary(currentRepetition: Int): IDETestContext {
-    if (currentRepetition % 2 == 0) {
-      // classes.jsa in jbr is not suitable for reuse, regenerate it, remove when it will be fixed
-      val jbrDistroPath = if (OS.CURRENT == OS.macOS) ide.installationPath / "jbr" / "Contents" / "Home" else ide.installationPath / "jbr"
-      if (jbrDistroPath.exists()) {
-        JvmUtils.execJavaCmd(jbrDistroPath, listOf("-Xshare:dump"))
-      }
-      else {
-        @Suppress("RAW_RUN_BLOCKING")
-        JvmUtils.execJavaCmd(runBlocking(Dispatchers.Default) { ide.resolveAndDownloadTheSameJDK() }, listOf("-Xshare:dump"))
-      }
-      applyVMOptionsPatch {
-        removeSystemClassLoader()
-        addSharedArchiveFile(paths.systemDir / "ide.jsa")
-      }
-    }
-    return this
+    // FIXME: IJPL-218141 enable app-cds back once it works with async profiler
+    return this;
+    //if (currentRepetition % 2 == 0) {
+    //  // classes.jsa in jbr is not suitable for reuse, regenerate it, remove when it will be fixed
+    //  val jbrDistroPath = if (OS.CURRENT == OS.macOS) ide.installationPath / "jbr" / "Contents" / "Home" else ide.installationPath / "jbr"
+    //  if (jbrDistroPath.exists()) {
+    //    JvmUtils.execJavaCmd(jbrDistroPath, listOf("-Xshare:dump"))
+    //  }
+    //  else {
+    //    @Suppress("RAW_RUN_BLOCKING")
+    //    JvmUtils.execJavaCmd(runBlocking(Dispatchers.Default) { ide.resolveAndDownloadTheSameJDK() }, listOf("-Xshare:dump"))
+    //  }
+    //  applyVMOptionsPatch {
+    //    removeSystemClassLoader()
+    //    addSharedArchiveFile(paths.systemDir / "ide.jsa")
+    //  }
+    //}
+    //return this
   }
 
   fun disableStickyLines(): IDETestContext {

@@ -166,6 +166,9 @@ public class JavaTestLocator implements SMTestLocator, DumbAware {
       }
       else {
         PsiMethod[] methods = aClass.findMethodsByName(methodName.trim(), true);
+        if (methods.length == 0 && !methodName.equals(methodName.trim())) {
+          methods = aClass.findMethodsByName(methodName, true);
+        }
         for (PsiMethod method : methods) {
           results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
                                         : MethodLocation.elementInClass(method, aClass));

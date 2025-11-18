@@ -364,6 +364,10 @@ public class JavaKeywordCompletion {
     if (psiElement().afterLeaf("::").accepts(myPosition)) {
       return false;
     }
+
+    if (JavaCompletionContributor.findAnnotationWhoseAttributeIsCompleted(myPosition) != null) {
+      return false;
+    }
     return true;
   }
 

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public final class CombinePropertiesFilesAction extends AnAction {
 
       final ResourceBundle resourceBundle = resourceBundleManager.combineToResourceBundleAndGet(propertiesFiles, newBaseName);
       FileEditorManager.getInstance(project).openFile(new ResourceBundleAsVirtualFile(resourceBundle), true);
-      ProjectView.getInstance(project).refresh();
+      ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.PLUGIN_PROPERTIES);
     }
   }
 

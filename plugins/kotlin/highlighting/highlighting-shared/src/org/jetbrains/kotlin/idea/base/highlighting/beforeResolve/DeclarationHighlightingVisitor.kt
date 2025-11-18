@@ -43,9 +43,10 @@ internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : Abs
     override fun visitDestructuringDeclaration(destructuringDeclaration: KtDestructuringDeclaration) {
         val isVar = destructuringDeclaration.isVar
         for (entry in destructuringDeclaration.entries) {
-            highlightName(entry, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)
+            val element = entry.identifyingElement ?: entry
+            highlightName(element, KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE)
             if (isVar) {
-                highlightName(entry, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
+                highlightName(element, KotlinHighlightInfoTypeSemanticNames.MUTABLE_VARIABLE)
             }
         }
     }

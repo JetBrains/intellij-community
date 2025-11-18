@@ -107,7 +107,12 @@ class SeProvidersHolder(
       }
 
       if (withAdaptedLegacyContributors) {
-        val adaptedProviders = legacyContributors.filter { !providers.keys.contains(it.key) }.map {
+        val providerIds = providers.keys.map {
+          if (it.value.startsWith(SeProviderIdUtils.TOP_HIT_ID)) SeProviderId(SeProviderIdUtils.TOP_HIT_ID) else it
+        }
+        val adaptedProviders = legacyContributors.filter {
+          !providerIds.contains(it.key)
+        }.map {
           it.key to SeLocalItemDataProvider(SeAdaptedItemsProvider(it.value), session, logLabel)
         }
 

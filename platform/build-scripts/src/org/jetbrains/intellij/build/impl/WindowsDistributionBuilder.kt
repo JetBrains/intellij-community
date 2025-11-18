@@ -455,7 +455,7 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(
         }
     }
     if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
-      RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
+      RepairUtilityBuilder.generateManifest(tempExe, OsFamily.WINDOWS, arch, context)
     }
   }
   finally {

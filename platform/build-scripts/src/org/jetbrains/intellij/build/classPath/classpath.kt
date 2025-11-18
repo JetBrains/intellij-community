@@ -107,7 +107,7 @@ internal fun generateCoreClasspathFromPlugins(
   for (pluginEntity in pluginEntities) {
     val pluginLayout = pluginEntity.layout
     val cacheContainer = platformLayout.descriptorCacheContainer.forPlugin(pluginEntity.dir)
-    val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(context, pluginLayout.mainModule, cacheContainer)
+    val classPathModules = getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(pluginLayout.mainModule, cacheContainer, context)
     for (distributionEntry in pluginEntity.distribution) {
       if (distributionEntry is ModuleOwnedFileEntry && distributionEntry.owner?.moduleName in classPathModules) {
         classPathResult.add(distributionEntry.path)
@@ -122,9 +122,9 @@ internal fun generateCoreClasspathFromPlugins(
  * These modules should be included in the core classpath, also their libraries should be treated as platform libraries.
  */
 internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
-  context: BuildContext,
   pluginMainModule: String,
   cacheContainer: ScopedCachedDescriptorContainer?,
+  context: BuildContext,
 ): Set<String> {
   val pluginModule = context.findRequiredModule(pluginMainModule)
   val pluginXmlBytes = cacheContainer?.getCachedFileData(PLUGIN_XML_RELATIVE_PATH) ?: getUnprocessedPluginXmlContent(pluginModule, context)
@@ -133,7 +133,8 @@ internal fun getEmbeddedContentModulesOfPluginsWithUseIdeaClassloader(
   if (rootElement.getAttribute("use-idea-classloader")?.value?.toBoolean() != true) {
     return emptySet()
   }
-  val embeddedModules = mutableSetOf(pluginMainModule)
+  val embeddedModules = LinkedHashSet<String>()
+  embeddedModules.add(pluginMainModule)
   filterAndProcessContentModules(rootElement, pluginMainModule, context) { _, moduleName, loadingRule ->
     if (loadingRule == "embedded") {
       embeddedModules.add(moduleName)

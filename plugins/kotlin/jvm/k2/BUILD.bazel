@@ -46,6 +46,7 @@ jvm_library(
     "//plugins/kotlin/base/scripting/scripting.shared",
     "//platform/util/jdom",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "@lib//:kotlinc-kotlin-scripting-common",
   ]
 )
 ### auto-generated section `build intellij.kotlin.jvm` end

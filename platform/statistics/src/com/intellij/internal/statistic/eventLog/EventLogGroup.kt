@@ -3,8 +3,11 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.IdeActivityDefinition
 import com.intellij.internal.statistic.eventLog.events.*
+import com.intellij.internal.statistic.eventLog.events.scheme.FUS_DESCRIPTION_REGISTRATION_ENABLED
 import com.intellij.internal.statistic.eventLog.events.scheme.RegisteredLogDescriptionsProcessor
 import org.jetbrains.annotations.NonNls
+
+const val FUS_RECORDER: String = "FUS"
 
 /**
  * Represents a group of events used for feature usage statistics.
@@ -38,9 +41,8 @@ open class EventLogGroup {
    * @param description A textual description of the event group.
    * The description is not null and not an empty string.
    * The description is registered at event group initialization using the RegisteredLogDescriptionsProcessor.
-   * There is no description in the memory if [RegisteredLogDescriptionsProcessor.isRegistered] is false.
-   * [RegisteredLogDescriptionsProcessor.isRegistered] is true just for
-   * [com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter] and tests
+   * There is no description in the memory if the environment variable [FUS_DESCRIPTION_REGISTRATION_ENABLED] is false.
+   * Descriptions are stored in memory just for [com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter] and unit tests.
    * @param groupData EventFields in groupData are going to be appended to every event in the group. To provide the data, a supplier
    * function is passed along with each EventField. See [com.intellij.internal.statistic.eventLog.events.EventId] for appending logic.
    *
@@ -49,7 +51,7 @@ open class EventLogGroup {
   constructor(
     @NonNls @EventIdName id: String,
     version: Int,
-    recorder: String,
+    recorder: String = FUS_RECORDER,
     description: String,
     groupData: List<Pair<EventField<*>, FeatureUsageData.() -> Unit>> = emptyList(),
   ) {
@@ -71,7 +73,7 @@ open class EventLogGroup {
   constructor(
     @NonNls @EventIdName id: String,
     version: Int,
-    recorder: String = "FUS",
+    recorder: String = FUS_RECORDER,
   ) {
     this.id = id
     this.version = version
@@ -86,7 +88,7 @@ open class EventLogGroup {
   constructor(
     @NonNls @EventIdName id: String,
     version: Int,
-    recorder: String,
+    recorder: String = FUS_RECORDER,
     description: String?,
   ) : this(id, version, recorder) {
     RegisteredLogDescriptionsProcessor.registerGroupDescription(id, description)
@@ -115,9 +117,8 @@ open class EventLogGroup {
    * @param description The unique identifier for the event.
    * The description is not null and not an empty string.
    * The description is registered at event initialization using the [RegisteredLogDescriptionsProcessor].
-   * There is no description in the memory if [RegisteredLogDescriptionsProcessor.isRegistered] is false.
-   * [RegisteredLogDescriptionsProcessor.isRegistered] is true just
-   * for [com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter] and tests
+   * There is no description in the memory if the environment variable [FUS_DESCRIPTION_REGISTRATION_ENABLED] is false.
+   * Descriptions are stored in memory just for [com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter] and unit tests.
    *
    * For events with more than 3 fields use EventLogGroup.registerVarargEvent
    *

@@ -29,6 +29,9 @@
 - name: lib/modules/intellij.devkit.core.jar
   contentModules:
   - name: intellij.devkit.core
+- name: lib/modules/intellij.devkit.mcp.jar
+  contentModules:
+  - name: intellij.devkit.mcp
 - name: lib/modules/intellij.devkit.modules.jar
   contentModules:
   - name: intellij.devkit.modules

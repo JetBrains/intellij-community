@@ -8034,6 +8034,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/ignoredWithAnnotation.kt");
         }
 
+        @TestMetadata("nestedBinaryExpressions.kt")
+        public void testNestedBinaryExpressions() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/nestedBinaryExpressions.kt");
+        }
+
         @TestMetadata("parentheses.kt")
         public void testParentheses() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/explicitlyIgnoreReturnValue/parentheses.kt");

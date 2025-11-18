@@ -40,7 +40,7 @@ public final class RefactoringCompletionContributor extends CompletionContributo
     }
 
     @Override
-    public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementDecorator<LookupElement> element, @NotNull LookupElementPresentation presentation) {
       element.getDelegate().renderElement(presentation);
       presentation.appendTailText(" [" + myModule.getName() + "]", true);
     }

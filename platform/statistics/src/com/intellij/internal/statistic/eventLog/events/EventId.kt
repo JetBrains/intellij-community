@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogger
+import com.intellij.internal.statistic.eventLog.events.scheme.FUS_DESCRIPTION_REGISTRATION_ENABLED
 import com.intellij.internal.statistic.eventLog.events.scheme.RegisteredLogDescriptionsProcessor
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NonNls
@@ -24,8 +25,8 @@ import java.util.function.Consumer
  * The description is not an empty string.
  * The description is not null for new events.
  * The description is registered at event initialization using the [RegisteredLogDescriptionsProcessor].
- * There is no description in the memory if [RegisteredLogDescriptionsProcessor.isRegistered] is false.
- * [RegisteredLogDescriptionsProcessor.isRegistered] is true just for [com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter] and tests
+ * There is no description in the memory if the environment variable [FUS_DESCRIPTION_REGISTRATION_ENABLED] is false.
+ * Descriptions are stored in memory just for [com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter] and unit tests.
  */
 abstract class BaseEventId(groupId: String, val eventId: String, val recorder: String, description: String?) {
   init {

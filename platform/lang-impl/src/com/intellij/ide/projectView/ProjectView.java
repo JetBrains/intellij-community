@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -56,6 +58,9 @@ public abstract class ProjectView {
    * @see #changeViewCB(String, String)
    */
   public abstract void changeView(@NotNull String viewId, @Nullable String subId);
+
+  @ApiStatus.Internal
+  public abstract void refresh(@NotNull ProjectViewUpdateCause cause);
 
   public abstract void refresh();
 

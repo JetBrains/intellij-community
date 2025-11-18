@@ -138,7 +138,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer = CommunityLinuxDistributionCustomizer()
 
-  override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer = CommunityMacDistributionCustomizer()
+  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = CommunityMacDistributionCustomizer()
 
   protected open inner class CommunityWindowsDistributionCustomizer : WindowsDistributionCustomizer() {
     init {
@@ -185,13 +185,13 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
   protected open inner class CommunityMacDistributionCustomizer : MacDistributionCustomizer() {
     init {
-      icnsPath = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea.icns"
-      icnsPathForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/communityEAP.icns"
+      icnsPath = communityHomeDir.resolve("build/conf/ideaCE/mac/images/idea.icns")
+      icnsPathForEAP = communityHomeDir.resolve("build/conf/ideaCE/mac/images/communityEAP.icns")
       urlSchemes = listOf("idea")
       associateIpr = true
       fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
       bundleIdentifier = "com.jetbrains.intellij.ce"
-      dmgImagePath = "${communityHomeDir}/build/conf/ideaCE/mac/images/dmg_background.tiff"
+      dmgImagePath = communityHomeDir.resolve("build/conf/ideaCE/mac/images/dmg_background.tiff")
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {

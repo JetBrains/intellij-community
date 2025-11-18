@@ -8,6 +8,7 @@ import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.rpc.models.findValue
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -19,10 +20,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal class BackendXExecutionStackApi : XExecutionStackApi {
-  override suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int): Flow<XStackFramesEvent> {
+  override suspend fun computeStackFrames(executionStackId: XExecutionStackId, firstFrameIndex: Int, config: ComputeFramesConfig?): Flow<XStackFramesEvent> {
+    if (config != null) {
+      XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = config.includeLibraryFrames
+    }
     val executionStackModel = executionStackId.findValue() ?: return emptyFlow()
     return channelFlow {
-
       val executionStack = executionStackModel.executionStack
       executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {
         override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {

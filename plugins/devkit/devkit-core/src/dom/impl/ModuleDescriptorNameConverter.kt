@@ -17,11 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.Processor
-import com.intellij.util.xml.ConvertContext
-import com.intellij.util.xml.DomUtil
-import com.intellij.util.xml.ElementPresentationManager
-import com.intellij.util.xml.GenericDomValue
-import com.intellij.util.xml.ResolvingConverter
+import com.intellij.util.xml.*
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
@@ -130,12 +126,11 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
       }
       // plugin Gradle projects:
       if (moduleName.endsWith(GRADLE_MAIN_MODULE_SUFFIX)) {
-        for (contentRoot in ModuleRootManager.getInstance(module).contentRoots) {
+        for (resourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
           val pluginModuleName = moduleName.removeSuffix(GRADLE_MAIN_MODULE_SUFFIX)
-          val resources = contentRoot.findChild("resources")?.takeIf { it.isDirectory } ?: continue
-          resources.children
+          resourceRoot.children
             .filter { it.extension == "xml" && it.name.startsWith(pluginModuleName) }
-            .mapNotNull { findIdeaPlugin(resources, it.name, project)?.apply { putUserData(CONTEXT, ModuleContext.SOURCES_GRADLE) } }
+            .mapNotNull { findIdeaPlugin(resourceRoot, it.name, project)?.apply { putUserData(CONTEXT, ModuleContext.SOURCES_GRADLE) } }
             .forEach { variants.add(it) }
         }
       }
@@ -181,8 +176,8 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
     fileName: String,
   ): IdeaPlugin? {
     val module = moduleManager.findModuleByName("$moduleNamePrefix$GRADLE_MAIN_MODULE_SUFFIX") ?: return null
-    for (contentRoot in ModuleRootManager.getInstance(module).contentRoots) {
-      val candidate = contentRoot.findFileByRelativePath("resources/$fileName")
+    for (resourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
+      val candidate = resourceRoot.findChild(fileName)
       val ideaPlugin = findIdeaPlugin(candidate, module.project)
       if (ideaPlugin != null) {
         return ideaPlugin

@@ -49,6 +49,7 @@ data class LoggedProcess(
   val exe: LoggedProcessExe,
   val args: List<String>,
   val env: Map<String, String>,
+  val target: String,
   val lines: SharedFlow<LoggedProcessLine>,
   val exitInfo: MutableStateFlow<LoggedProcessExitInfo?>,
 ) {
@@ -111,6 +112,7 @@ class LoggingProcess(
   exe: Exe,
   args: List<String>,
   env: Map<String, String>,
+  target: String,
 ) : Process() {
   val loggedProcess: LoggedProcess
 
@@ -139,6 +141,7 @@ class LoggingProcess(
         ),
         args,
         env,
+        target,
         linesFlow,
         exitInfoFlow,
       )

@@ -120,7 +120,7 @@ public abstract class NonStaticAuthenticator {
     return wrapper;
   }
 
-  private class AuthenticatorWrapper extends Authenticator {
+  private final class AuthenticatorWrapper extends Authenticator {
     @Override
     protected PasswordAuthentication getPasswordAuthentication() {
       synchronized (NonStaticAuthenticator.this) {

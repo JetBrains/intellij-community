@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -42,4 +43,44 @@ public abstract class ModNavigatorTailType extends TailType {
    * @return new tail offset
    */
   public abstract int processTail(@NotNull Project project, @NotNull ModNavigator navigator, int tailOffset);
+
+  /**
+   * @return tail type that does nothing
+   */
+  @Contract(pure = true)
+  public static @NotNull ModNavigatorTailType noneType() {
+    return (ModNavigatorTailType)TailTypes.noneType();
+  }
+
+  /**
+   * @return tail type that inserts a semicolon
+   */
+  @Contract(pure = true)
+  public static @NotNull ModNavigatorTailType semicolonType() {
+    return (ModNavigatorTailType)TailTypes.semicolonType();
+  }
+
+  /**
+   * @return tail type that always inserts a space
+   */
+  @Contract(pure = true)
+  public static @NotNull ModNavigatorTailType insertSpaceType() {
+    return (ModNavigatorTailType)TailTypes.insertSpaceType();
+  }
+
+  /**
+   * @return tail type that inserts a space, overtyping an existing one
+   */
+  @Contract(pure = true)
+  public static @NotNull ModNavigatorTailType spaceType() {
+    return (ModNavigatorTailType)TailTypes.spaceType();
+  }
+
+  /**
+   * @return tail type that insert a space unless there's one at the caret position already, followed by a word or '@'
+   */
+  @Contract(pure = true)
+  public static @NotNull ModNavigatorTailType humbleSpaceBeforeWordType() {
+    return (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType();
+  }
 }

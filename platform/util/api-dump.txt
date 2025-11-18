@@ -408,6 +408,10 @@ com.intellij.util.containers.Predicate
 - java.util.function.Predicate
 - a:apply(java.lang.Object):Z
 - test(java.lang.Object):Z
+f:com.intellij.util.containers.SmartHashSet
+- java.util.AbstractSet
+- <init>(I):V
+- <init>(I,F):V
 com.intellij.util.containers.hash.EqualityPolicy
 - sf:CANONICAL:com.intellij.util.containers.hash.EqualityPolicy
 - sf:IDENTITY:com.intellij.util.containers.hash.EqualityPolicy

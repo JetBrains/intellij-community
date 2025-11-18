@@ -37,6 +37,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -65,7 +66,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
         if (updateTarget == null) {
           updateTarget = ProjectView.getInstance(project).getProjectViewPaneById(ProjectViewPane.ID);
         }
-        if (updateTarget != null) updateTarget.updateFromRoot(true);
+        if (updateTarget != null) updateTarget.updateFromRoot(true, ProjectViewUpdateCause.SCRATCHES);
       }
     });
     ApplicationManager.getApplication().getMessageBus()
@@ -73,7 +74,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
         @Override
         public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
           if (SCRATCHES_NODE_SETTING.equals(id)) {
-            ProjectView.getInstance(project).refresh();
+            ProjectView.getInstance(project).refresh(ProjectViewUpdateCause.SETTINGS);
           }
         }
       });

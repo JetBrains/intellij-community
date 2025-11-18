@@ -5,6 +5,7 @@ import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.storage.findStackFrame
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
+import com.intellij.platform.debugger.impl.rpc.ComputeFramesConfig
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackApi
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackDto
 import com.intellij.platform.debugger.impl.rpc.XExecutionStackId
@@ -12,6 +13,7 @@ import com.intellij.platform.debugger.impl.rpc.XStackFramesEvent
 import com.intellij.xdebugger.frame.XDescriptor
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.intellij.xdebugger.frame.XStackFrame
+import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import fleet.util.logging.logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
@@ -42,7 +44,7 @@ internal class FrontendXExecutionStack(
 
   override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
     suspendContextLifetimeScope.launch {
-      XExecutionStackApi.getInstance().computeStackFrames(id, firstFrameIndex).collect { event ->
+      XExecutionStackApi.getInstance().computeStackFrames(id, firstFrameIndex, createComputeFramesConfig()).collect { event ->
         when (event) {
           is XStackFramesEvent.ErrorOccurred -> {
             container.errorOccurred(event.errorMessage)
@@ -67,6 +69,10 @@ internal class FrontendXExecutionStack(
       }
     }
   }
+
+  private fun createComputeFramesConfig(): ComputeFramesConfig = ComputeFramesConfig(
+    XDebuggerSettingsManager.getInstance().dataViewSettings.isShowLibraryStackFrames,
+  )
 
   override fun equals(other: Any?): Boolean {
     return other is FrontendXExecutionStack && other.id == id

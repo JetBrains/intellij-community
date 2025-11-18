@@ -4,10 +4,15 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.toolwindows.StripeButtonUi
 import com.intellij.driver.sdk.waitFor
 import kotlin.time.Duration.Companion.seconds
 
-internal val Finder.kotlinNotebookSessionToolWindow: KotlinNotebookToolWindowUiComponent
+val Finder.kotlinNotebookToolWindowButton: StripeButtonUi? get() = xx(StripeButtonUi::class.java) {
+  byAccessibleName("Kotlin Notebook")
+}.list().firstOrNull()
+
+val Finder.kotlinNotebookToolWindow: KotlinNotebookToolWindowUiComponent
   get() = x("""
     //div[@class='InternalDecoratorImpl']
     //div[@class='XNextIslandHolder' and
@@ -17,8 +22,8 @@ internal val Finder.kotlinNotebookSessionToolWindow: KotlinNotebookToolWindowUiC
     ]
   """.trimIndent(), KotlinNotebookToolWindowUiComponent::class.java)
 
-fun Finder.withKotlinNotebookSessionToolWindow(action: KotlinNotebookToolWindowUiComponent.() -> Unit) {
-  with(kotlinNotebookSessionToolWindow) {
+inline fun Finder.withKotlinNotebookToolWindow(action: KotlinNotebookToolWindowUiComponent.() -> Unit) {
+  with(kotlinNotebookToolWindow) {
     action()
   }
 }
@@ -26,7 +31,7 @@ fun Finder.withKotlinNotebookSessionToolWindow(action: KotlinNotebookToolWindowU
 class KotlinNotebookToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
   val notebookTabs: UIComponentsList<UiComponent>
     get() = xx("""
-      /div[@class='JPanel']
+      //div[@class='JPanel']
       //div[@class='TabPanel']
       /div[@class='ContentTabLabel']
     """.trimIndent())
@@ -39,15 +44,15 @@ class KotlinNotebookToolWindowUiComponent(data: ComponentData) : UiComponent(dat
     """.trimIndent()).list()
 
   fun openVariablesTab() {
-    variablesButton?.click()
+    variablesButton?.click() ?: error("Variables tab is not available")
   }
 
   fun openKernelLogsTab() {
-    kernelLogsButton?.click()
+    kernelLogsButton?.click() ?: error("Kernel logs tab is not available")
   }
 
   internal val kernelLogsButton: UiComponent?
-    get() = perNotebookTabs.firstOrNull { it.hasSubtext("Kernel logs") }
+    get() = perNotebookTabs.firstOrNull { it.hasSubtext("Kernel Logs") }
 
   internal val variablesButton: UiComponent?
     get() = perNotebookTabs.firstOrNull { it.hasSubtext("Variables") }
@@ -65,5 +70,7 @@ class KotlinNotebookToolWindowUiComponent(data: ComponentData) : UiComponent(dat
       variablesToolWindowUiComponent.getAllTexts().joinToString("") { it.text }
     }
 
-  fun waitForVariablesViewText(text: String) = waitFor("expect $text in $variablesViewText", timeout = 25.seconds) { variablesViewText.contains(text) }
+  fun waitForVariablesViewText(text: String) {
+    waitFor("expect $text in $variablesViewText", timeout = 25.seconds) { variablesViewText.contains(text) }
+  }
 }

@@ -360,7 +360,15 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           }
         };
         //noinspection TestOnlyProblems
-        Disposable parentDisposable = parent instanceof ProjectImpl && ((ProjectEx)parent).isLight() ? ((ProjectImpl)parent).getEarlyDisposable() : parent;
+        Disposable parentDisposable;
+        try {
+          parentDisposable = parent instanceof ProjectImpl && ((ProjectEx)parent).isLight() ? ((ProjectImpl)parent).getEarlyDisposable() : parent;
+        }
+        catch (Exception e) {
+          // getEarlyDisposable is encumbered with a lot of checks - ignore them all
+          cancel();
+          break;
+        }
         try {
           if (!Disposer.tryRegister(parentDisposable, child)) {
             cancel();

@@ -1,9 +1,14 @@
 *a:com.intellij.codeInsight.ModNavigatorTailType
 - com.intellij.codeInsight.TailType
 - <init>():V
+- s:humbleSpaceBeforeWordType():com.intellij.codeInsight.ModNavigatorTailType
+- s:insertSpaceType():com.intellij.codeInsight.ModNavigatorTailType
 - isApplicable(com.intellij.codeInsight.completion.InsertionContext):Z
+- s:noneType():com.intellij.codeInsight.ModNavigatorTailType
 - processTail(com.intellij.openapi.editor.Editor,I):I
 - a:processTail(com.intellij.openapi.project.Project,com.intellij.openapi.editor.ModNavigator,I):I
+- s:semicolonType():com.intellij.codeInsight.ModNavigatorTailType
+- s:spaceType():com.intellij.codeInsight.ModNavigatorTailType
 a:com.intellij.codeInsight.completion.CompletionService
 - *p:getVariantsFromGroupContributors(com.intellij.codeInsight.completion.CompletionParameters,com.intellij.codeInsight.completion.PrefixMatcher,com.intellij.util.Consumer):V
 *:com.intellij.codeInsight.completion.command.CommandCompletionFactory

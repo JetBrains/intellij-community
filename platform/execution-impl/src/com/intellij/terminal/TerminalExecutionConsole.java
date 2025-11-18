@@ -40,6 +40,7 @@ import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import com.jediterm.terminal.util.CharUtils;
 import com.pty4j.PtyProcess;
+import com.pty4j.windows.conpty.WinConPtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,9 +55,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
   private static final Logger LOG = Logger.getInstance(TerminalExecutionConsole.class);
-  private static final String MAKE_CURSOR_INVISIBLE = "\u001b[?25l";
-  private static final String MAKE_CURSOR_VISIBLE = "\u001b[?25h";
-  private static final String CLEAR_SCREEN = "\u001b[2J";
 
   private final JBTerminalWidget myTerminalWidget;
   private final Project myProject;
@@ -120,28 +118,51 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       myDataStream.append(encodeColor(foregroundColor));
     }
 
-    if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT && myFirstOutput.compareAndSet(false, true) && startsWithClearScreen(text)) {
-      LOG.trace("Clear Screen request detected at the beginning of the output, scheduling a scroll command.");
-      // Windows ConPTY generates the 'clear screen' escape sequence (ESC[2J) optionally preceded by a "make cursor invisible" (ESC?25l) before the process output.
-      // It pushes the already printed command line into the scrollback buffer which is not displayed by default.
-      // In such cases, let's scroll up to display the printed command line.
-      BoundedRangeModel verticalScrollModel = myTerminalWidget.getTerminalPanel().getVerticalScrollModel();
-      verticalScrollModel.addChangeListener(new javax.swing.event.ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          verticalScrollModel.removeChangeListener(this);
-          UiNotifyConnector.doWhenFirstShown(myTerminalWidget.getTerminalPanel(), () -> {
-            myTerminalWidget.getTerminalPanel().scrollToShowAllOutput();
-          });
-        }
-      });
-    }
     myDataStream.append(text);
 
     if (foregroundColor != null) {
       myDataStream.append((char)Ascii.ESC + "[39m"); //restore default foreground color
     }
     myContentHelper.onContentTypePrinted(text, ObjectUtils.notNull(contentType, ConsoleViewContentType.NORMAL_OUTPUT));
+
+    if (myFirstOutput.compareAndSet(false, true) &&
+        contentType == ConsoleViewContentType.SYSTEM_OUTPUT &&
+        getPtyProcess() instanceof WinConPtyProcess) {
+      moveScreenToScrollbackBufferAndShowAllOutput();
+    }
+  }
+
+  /**
+   * This method should be called after printing system output (command line) and before
+   * processing output from the ConPTY process. <p/>
+   * ConPTY assumes that the screen buffer is empty and the cursor is at (1,1) position when it starts.
+   * However, when a system output is printed, the cursor is moved from the (1,1) position.
+   * As ConPTY knows nothing about the printed system output and the changed cursor position,
+   * it may redraw the screen on top of the printed system output leading to corrupted output (RIDER-131843, WEB-75542).
+   * <a href="https://github.com/microsoft/terminal/issues/919#issuecomment-494600135">More details</a>
+   * <br/>
+   * To prevent the corrupted output, let's move system output from the screen buffer to the scrollback buffer
+   * and move the cursor back to (1,1) position to make ConPTY happy.
+   * <br/>
+   * However, the command line moved to the scrollback buffer is not visible by default.
+   * To ensure that the command output is fully visible, we scroll up programmatically.
+   */
+  private void moveScreenToScrollbackBufferAndShowAllOutput() throws IOException {
+    LOG.trace("Printing command line detected at the beginning of the output, scheduling a scroll command.");
+    BoundedRangeModel verticalScrollModel = myTerminalWidget.getTerminalPanel().getVerticalScrollModel();
+    verticalScrollModel.addChangeListener(new javax.swing.event.ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        verticalScrollModel.removeChangeListener(this);
+        UiNotifyConnector.doWhenFirstShown(myTerminalWidget.getTerminalPanel(), () -> {
+          myTerminalWidget.getTerminalPanel().scrollToShowAllOutput();
+        });
+      }
+    });
+    // `ESC[2J` moves screen lines to the scrollback buffer
+    myDataStream.append("\u001b[2J");
+    // `ESC[1;1H` positions the cursor in the top-level corner of the screen buffer
+    myDataStream.append("\u001b[1;1H");
   }
 
   @Override
@@ -158,16 +179,6 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   private static @NotNull String encodeColor(@NotNull Color color) {
     return ((char)Ascii.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
            color.getBlue() + "m";
-  }
-
-  private static boolean startsWithClearScreen(@NotNull String text) {
-    // ConPTY will randomly send these commands at any time, so we should skip them:
-    int offset = 0;
-    while (text.startsWith(MAKE_CURSOR_INVISIBLE, offset) || text.startsWith(MAKE_CURSOR_VISIBLE, offset)) {
-      offset += MAKE_CURSOR_INVISIBLE.length();
-    }
-
-    return text.startsWith(CLEAR_SCREEN, offset);
   }
 
   public @NotNull TerminalExecutionConsole withEnterKeyDefaultCodeEnabled(boolean enterKeyDefaultCodeEnabled) {

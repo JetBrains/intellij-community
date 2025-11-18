@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.frame.VariablesPreloadManager
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.debugger.impl.shared.XValuesPresentationBuilder
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XNamedValue
@@ -22,10 +21,15 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
-private class XValueChildrenManager(cs: CoroutineScope, frameId: XStackFrameId, stateToRecover: XDebuggerTreeState?) : AbstractCoroutineContextElement(XValueChildrenManager) {
+private class XValueChildrenManager private constructor(
+  @Suppress("TestOnlyProblems")
+  private val preloadManager: VariablesPreloadManager?,
+) : AbstractCoroutineContextElement(Key) {
   companion object Key : CoroutineContext.Key<XValueChildrenManager>
 
-  private val preloadManager = VariablesPreloadManager.creteIfNeeded(cs, stateToRecover, frameId)
+  constructor() : this(null)
+  constructor(cs: CoroutineScope, frameId: XStackFrameId, stateToRecover: XDebuggerTreeState?)
+    : this(VariablesPreloadManager.creteIfNeeded(cs, stateToRecover, frameId))
 
   suspend fun getChildrenEventsFlow(entityId: XContainerId): Flow<XValueComputeChildrenEvent> {
     return preloadManager?.getChildrenEventsFlow(entityId) ?: XValueApi.getInstance().computeChildren(entityId)
@@ -39,19 +43,22 @@ internal class FrontendXValueContainer(
   private val id: XContainerId,
 ) : XValueContainer() {
   private fun getOrCreteChildrenManager(node: XCompositeNode): XValueChildrenManager {
+    val existing = cs.coroutineContext[XValueChildrenManager]
+    if (existing != null) return existing
+
     return if (id is XStackFrameId) {
       val stateToRecover = (node as? XValueContainerNode.Root<*>)?.stateToRecover
       XValueChildrenManager(cs, id, stateToRecover)
     }
     else {
-      cs.coroutineContext[XValueChildrenManager] ?: error("XValueChildrenManager should be installed, but it is not")
+      XValueChildrenManager()
     }
   }
 
   override fun computeChildren(node: XCompositeNode) {
     val childrenManager = getOrCreteChildrenManager(node)
-    val scope = cs.childScope("FrontendXValueContainer#computeChildren", childrenManager)
-    node.childCoroutineScope(parentScope = cs, "FrontendXValueContainer#computeChildren").launch(Dispatchers.EDT) {
+    val scope = node.childCoroutineScope(parentScope = cs, "FrontendXValueContainer#computeChildren", childrenManager)
+    scope.launch(Dispatchers.EDT) {
       val flow = childrenManager.getChildrenEventsFlow(id)
       val builder = XValuesPresentationBuilder()
       flow.collect { event ->

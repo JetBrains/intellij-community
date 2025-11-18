@@ -294,7 +294,7 @@ abstract class ProductProperties {
    * @return an instance of the class containing properties specific for macOS distribution,
    * or `null` if the product doesn't have macOS distribution.
    */
-  abstract fun createMacCustomizer(projectHome: String): MacDistributionCustomizer?
+  abstract fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer?
 
   /**
    * If `true`, a .zip archive containing sources of modules included in the product will be produced.

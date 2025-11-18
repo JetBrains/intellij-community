@@ -88,5 +88,6 @@
     <orderEntry type="module" module-name="intellij.platform.smRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.searching" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.junit" scope="TEST" />
   </component>
 </module>

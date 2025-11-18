@@ -447,7 +447,9 @@ class FrontendXDebuggerSession private constructor(
   }
 
   override fun rebuildViews() {
-    cs.launch {
+    cs.launch(Dispatchers.EDT) {
+      // trigger optimistically
+      eventsDispatcher.multicaster.settingsChanged()
       XDebugSessionApi.getInstance().triggerUpdate(id)
     }
   }

@@ -1,5 +1,5 @@
 # Read more about project view files here:
-# https://code.jetbrains.team/p/ij/repositories/ultimate/files/master/plugins/bazel/commons/src/main/kotlin/org/jetbrains/bazel/projectview/README.md
+# https://www.jetbrains.com/help/idea/bazel-project-view.html
 
 targets:
   //...

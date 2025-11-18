@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.psi.KtFile
 abstract class AbstractK2ScriptHighlightingTest : AbstractHighlightingMetaInfoTest() {
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         runBlocking {
-            KotlinScriptResolutionService.getInstance(project).process(files.filterIsInstance<KtFile>())
+            KotlinScriptResolutionService.getInstance(project).process(files.map { it.virtualFile })
         }
 
         super.doMultiFileTest(files, globalDirectives)

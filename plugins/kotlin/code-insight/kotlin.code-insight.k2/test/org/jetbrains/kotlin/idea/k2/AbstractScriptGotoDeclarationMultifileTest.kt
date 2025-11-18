@@ -48,7 +48,7 @@ abstract class AbstractScriptGotoDeclarationMultifileTest : KotlinMultiFileLight
         }
 
         runBlocking {
-            KotlinScriptResolutionService.getInstance(project).process(files.filterIsInstance<KtFile>())
+            KotlinScriptResolutionService.getInstance(project).process(mainFile.virtualFile)
         }
 
         runInEdtAndWait {

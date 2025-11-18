@@ -304,6 +304,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
     myDispatcher.getMulticaster().settingsChanged()
   }
 
+  fun frontendUpdate() {
+    myDispatcher.getMulticaster().settingsChangedFromFrontend()
+  }
+
   override fun getRunProfile(): RunProfile? {
     return if (this.executionEnvironment != null) executionEnvironment.runProfile else null
   }

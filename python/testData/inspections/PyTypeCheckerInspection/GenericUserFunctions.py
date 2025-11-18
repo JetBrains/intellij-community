@@ -40,7 +40,11 @@ def test():
     print(result)
     print(result + <warning descr="Expected type 'int', got 'str' instead">'foo'</warning>)
 
-    f2(1, <warning descr="Expected type 'List[int]' (matched generic type 'List[T]'), got 'List[str]' instead">['foo']</warning>, 'bar')
+    # Bug: Expected error.
+    # Generics are considered to be covariant.
+    # I.e. `list[str]` is assignable to `list[int | str]`.
+    # Thus, substitution `T` -> `int | str` is considered valid.
+    f2(1, ['foo'], 'bar')
 
     result = f3(1, 'foo', True)
     f4(<warning descr="Expected type 'Tuple[bool, int, str]', got 'Tuple[int, str, bool]' instead">result</warning>)

@@ -288,7 +288,7 @@ public final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<
     private static final Key<ActionOrGroup> ACTION_OR_GROUP_KEY = Key.create("ACTION_OR_GROUP_KEY");
 
     @Override
-    public void renderElement(LookupElement element, LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElement element, @NotNull LookupElementPresentation presentation) {
       presentation.setItemText(element.getLookupString());
 
       ActionOrGroup actionOrGroup = element.getUserData(ACTION_OR_GROUP_KEY);

@@ -771,6 +771,10 @@
     <addServiceAnnotationProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaAddServiceAnnotationProvider"/>
+
+    <LockReqPsiOps
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.threadingModelHelper.java.JavaLockReqPsiOps"/>
   </extensions>
   <applicationListeners>
     <listener class="org.jetbrains.idea.devkit.composeHotReload.ComposeHotReloadCommandLinePatcher$ComposeHotReloadRegistryListener"
@@ -795,6 +799,11 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="DevKit.lang.LockReqPsiOps"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.threadingModelHelper.LockReqPsiOps"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
@@ -936,3 +945,5 @@
     </action>
   </actions>
 </idea-plugin>
+
+

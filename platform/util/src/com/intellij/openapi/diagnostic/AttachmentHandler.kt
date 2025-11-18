@@ -3,20 +3,31 @@ package com.intellij.openapi.diagnostic
 
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.sanitizeFileName
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import java.io.IOException
 import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Handler
 import java.util.logging.LogRecord
 import kotlin.io.path.name
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Handler for logging attachments of [ExceptionWithAttachments] to log folder.
  */
-internal class AttachmentHandler(private val logPath: Path ) : Handler() {
+internal class AttachmentHandler(logPath: Path) : Handler() {
+  private val baseDir = logPath.parent.resolve("attachments")
+
+  private val pruner = OldAttachmentPruner(baseDir)
+
   override fun publish(record: LogRecord) {
     if (!isLoggable(record)) return
 
@@ -36,7 +47,7 @@ internal class AttachmentHandler(private val logPath: Path ) : Handler() {
   }
 
   private fun writeEwas(ewas: MutableList<ExceptionWithAttachments>, t: Throwable): Path? {
-    val attachmentsDir = prepareDir(logPath, t) ?: return null
+    val attachmentsDir = prepareDir(t) ?: return null
 
     // store all EWAs directly in the main folder, prefixing files with the EWA index
     var index = 1
@@ -63,7 +74,7 @@ internal class AttachmentHandler(private val logPath: Path ) : Handler() {
 
   private fun writeSingleEwa(ewa: ExceptionWithAttachments, t: Throwable): Path? {
     val attachments = ewa.attachments.ifEmpty { return null }
-    val attachmentsDir = prepareDir(logPath, t) ?: return null
+    val attachmentsDir = prepareDir(t) ?: return null
     writeEwa(attachmentsDir, ewa, "", attachments)
     return attachmentsDir
   }
@@ -92,8 +103,7 @@ internal class AttachmentHandler(private val logPath: Path ) : Handler() {
     }
   }
 
-  private fun prepareDir(logPath: Path, t: Throwable): Path? {
-    val baseDir = logPath.parent.resolve("attachments")
+  private fun prepareDir(t: Throwable): Path? {
     val dirName = prepareDirName(t)
     val attachmentsDir = baseDir.resolve(dirName)
 
@@ -102,7 +112,7 @@ internal class AttachmentHandler(private val logPath: Path ) : Handler() {
       Files.createDirectories(baseDir)
 
       // Prune oldest groups to keep room for a new one
-      pruneOldAttachmentGroups(baseDir, MAX_ATTACHMENT_GROUPS)
+      pruner.pruneOldAttachmentGroups()
 
       // Create new group directory
       Files.createDirectories(attachmentsDir)
@@ -166,55 +176,6 @@ internal class AttachmentHandler(private val logPath: Path ) : Handler() {
   }
 
   /**
-   * Keep at most [maxGroups] attachment groups under [baseDir]. If the number of existing groups
-   * is >= [maxGroups], delete the oldest ones to make room for a new group.
-   */
-  @Suppress("SameParameterValue")
-  private fun pruneOldAttachmentGroups(baseDir: Path, maxGroups: Int) {
-    val entries = try {
-      val directoryStream = Files.newDirectoryStream(baseDir) { path ->
-        Files.isDirectory(path) && path.name.startsWith("attachments-")
-      }
-
-      directoryStream.use { ds ->
-        ds.toMutableList()
-      }
-    }
-    catch (_: IOException) {
-      return
-    }
-
-    val toDeleteCount = entries.size - maxGroups + 1 // make room for the incoming group
-    if (toDeleteCount <= 0) return
-
-    // Sort by directory name which begins with timestamp in yy-MM-dd-HH-mm-ss format -> lexicographical order matches time order
-    entries.sortBy { it.fileName.toString() }
-
-    for (i in 0 until toDeleteCount) {
-      deleteRecursively(entries[i])
-    }
-  }
-
-  private fun deleteRecursively(path: Path) {
-    try {
-      // Delete files first, then directories
-      Files.walk(path)
-        .sorted(Comparator.reverseOrder())
-        .forEach { p ->
-          try {
-            Files.deleteIfExists(p)
-          }
-          catch (_: IOException) {
-            // ignore deletion errors
-          }
-        }
-    }
-    catch (_: IOException) {
-      // ignore traversal errors
-    }
-  }
-
-  /**
    * Produce a short, filesystem-safe abbreviation for an error/exception class.
    * Examples:
    *  - NullPointerException -> NPE
@@ -253,6 +214,91 @@ internal class AttachmentHandler(private val logPath: Path ) : Handler() {
     }
 
     return sanitizeFileName(withSuffix.ifBlank { simple }).take(48)
+  }
+}
+
+/**
+ * Keep at most [MAX_ATTACHMENT_GROUPS] attachment groups under [baseDir].
+ * If the number of existing groups is >= [MAX_ATTACHMENT_GROUPS], delete the oldest ones to make room for a new group.
+ * Debounes execution by 1 minute.
+ */
+@OptIn(FlowPreview::class)
+private class OldAttachmentPruner(
+  private val baseDir: Path
+) {
+
+  private val counter = AtomicInteger(0)
+  private val signal = MutableSharedFlow<Unit>(replay = 1)
+
+  @Suppress("RAW_SCOPE_CREATION")
+  private val scope = CoroutineScope(CoroutineName("AttachmentHandler#Pruning") + SupervisorJob())
+
+  init {
+    signal
+      .onEach { doPruneOldAttachmentGroups() }
+      .debounce(1.minutes)
+      .launchIn(scope)
+  }
+
+  fun pruneOldAttachmentGroups() {
+    counter.incrementAndGet()
+    signal.tryEmit(Unit)
+  }
+
+  private suspend fun doPruneOldAttachmentGroups() = withContext(Dispatchers.IO) {
+    val recentlyReported = counter.get()
+    if (recentlyReported * 2 < MAX_ATTACHMENT_GROUPS) {
+      return@withContext
+    }
+
+    val entries = collectAttachmentGroups()
+
+    val toDeleteCount = entries.size - MAX_ATTACHMENT_GROUPS
+    if (toDeleteCount <= 0) return@withContext
+
+    // Sort by directory name which begins with timestamp in yy-MM-dd-HH-mm-ss format -> lexicographical order matches time order
+    entries.sortBy { it.fileName.toString() }
+
+    repeat(toDeleteCount) { i ->
+      ensureActive()
+      deleteRecursively(entries[i])
+    }
+    counter.set(0)
+  }
+
+  private fun CoroutineScope.collectAttachmentGroups(): MutableList<Path> {
+    return try {
+      val directoryStream = Files.newDirectoryStream(baseDir) { path ->
+        ensureActive()
+        Files.isDirectory(path) && path.name.startsWith("attachments-")
+      }
+
+      directoryStream.use { ds ->
+        ds.toMutableList()
+      }
+    }
+    catch (_: IOException) {
+      mutableListOf()
+    }
+  }
+}
+
+private fun deleteRecursively(path: Path) {
+  try {
+    // Delete files first, then directories
+    Files.walk(path)
+      .sorted(Comparator.reverseOrder())
+      .forEach { p ->
+        try {
+          Files.deleteIfExists(p)
+        }
+        catch (_: IOException) {
+          // ignore deletion errors
+        }
+      }
+  }
+  catch (_: IOException) {
+    // ignore traversal errors
   }
 }
 

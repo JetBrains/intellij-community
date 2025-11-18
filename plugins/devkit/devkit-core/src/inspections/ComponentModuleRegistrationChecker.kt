@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ComponentModuleRegistrationChecker")
 
 package org.jetbrains.idea.devkit.inspections
@@ -101,7 +101,7 @@ internal class ComponentModuleRegistrationChecker(
       val attributeName = attributeDescription.name
       if (attributeName == "forClass") continue
 
-      if (attributeName == "serviceInterface" && element.xmlTag.getAttributeValue("overrides") == "true") continue
+      if (attributeName == "serviceInterface") continue
 
       val attributeValue = attributeDescription.getDomAttributeValue(element)
       if (attributeValue == null || !DomUtil.hasXml(attributeValue)) continue
@@ -111,7 +111,6 @@ internal class ComponentModuleRegistrationChecker(
         if (checkProperXmlFileForClass(element, psiClass)) return
       }
     }
-
 
     for (childDescription in element.genericInfo.fixedChildrenDescriptions) {
       val domElement = childDescription.getValues(element).firstOrNull() ?: continue

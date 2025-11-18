@@ -482,7 +482,7 @@ public final class JavaCompletionUtil {
       LookupElement element = generateLookupElementDecorator(qualifierType, object, presentationDecorator ->
         LookupElementDecorator.withRenderer(item, new LookupElementRenderer<>() {
           @Override
-          public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+          public void renderElement(@NotNull LookupElementDecorator<LookupElement> element, @NotNull LookupElementPresentation presentation) {
             element.getDelegate().renderElement(presentation);
             presentationDecorator.accept(presentation);
           }

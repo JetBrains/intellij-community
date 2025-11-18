@@ -176,7 +176,7 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
   override suspend fun triggerUpdate(sessionId: XDebugSessionId) {
     val session = sessionId.findValue() ?: return
     withContext(Dispatchers.EDT) {
-      session.rebuildViews()
+      session.frontendUpdate()
     }
   }
 
@@ -325,7 +325,7 @@ private fun XStackFrame.captionInfo(): XStackFrameCaptionInfo {
 
 private fun XStackFrame.backgroundInfo(project: Project): XStackFrameBackgroundColor? {
   if (this is XDebuggerFramesList.ItemWithCustomBackgroundColor) {
-    XStackFrameBackgroundColor(backgroundColor?.rpcId())
+    return XStackFrameBackgroundColor(backgroundColor?.rpcId())
   }
   val file = sourcePosition?.file ?: return null
   val fileColor = runReadAction {

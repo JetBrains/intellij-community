@@ -8,6 +8,7 @@ import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService
+import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
@@ -75,7 +76,7 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         if (file !is KtFile || !file.isScript()) return
 
         runWithModalProgressBlocking(project, "AbstractK2LocalInspectionTest") {
-            KotlinScriptResolutionService.getInstance(project).process(file)
+            KotlinScriptResolutionService.getInstance(project).process(file.alwaysVirtualFile)
         }
     }
 }

@@ -86,6 +86,10 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @JvmField val ULTIMATE_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.modules.ultimate")
 
+  @Suppress("SpellCheckingInspection")
+  private val QODANA_PLUGINS_THIRD_PARTY_ACCEPT = java.lang.Boolean.getBoolean("idea.qodana.thirdpartyplugins.accept")
+  private val FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT = java.lang.Boolean.getBoolean("fleet.backend.third-party.plugins.accept")
+
   @VisibleForTesting
   @Volatile
   @JvmField
@@ -96,27 +100,34 @@ object PluginManagerCore {
   @JvmField
   var isUnitTestMode: Boolean = java.lang.Boolean.getBoolean("idea.is.unit.test")
 
-  @Volatile
-  private var nullablePluginSet: PluginSet? = null
-  private var pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>? = null
-  private val pluginErrors = ArrayList<PluginLoadingError>()
-  private var pluginsToDisable: Set<PluginId>? = null
-  private var pluginsToEnable: Set<PluginId>? = null
+  @ApiStatus.Internal
+  class PluginsMutableState {
+    @Volatile
+    var nullablePluginSet: PluginSet? = null
+    var pluginLoadingErrors: Map<PluginId, PluginNonLoadReason>? = null
+    val pluginErrors = ArrayList<PluginLoadingError>()
+    var pluginsToDisable: Set<PluginId>? = null
+    var pluginsToEnable: Set<PluginId>? = null
 
-  /**
-   * Bundled plugins that were updated.
-   * When we update a bundled plugin, it becomes non-bundled, so it is more challenging for analytics to use that data.
-   */
-  private var shadowedBundledPlugins: Set<PluginId> = Collections.emptySet()
+    /**
+     * Bundled plugins that were updated.
+     * When we update a bundled plugin, it becomes non-bundled, so it is more challenging for analytics to use that data.
+     */
+    var shadowedBundledPlugins: Set<PluginId> = Collections.emptySet()
+    var isRunningFromSources: Boolean? = null
+    @Volatile
+    var thirdPartyPluginsNoteAccepted: Boolean? = null
+    @Volatile
+    var initFuture: Deferred<PluginSet>? = null
+    var ourBuildNumber: BuildNumber? = null
+  }
 
-  private var isRunningFromSources: Boolean? = null
+  @ApiStatus.Internal
+  var pluginsStateSupplier: (() -> PluginsMutableState)? = null
 
-  @Suppress("SpellCheckingInspection")
-  private val QODANA_PLUGINS_THIRD_PARTY_ACCEPT = java.lang.Boolean.getBoolean("idea.qodana.thirdpartyplugins.accept")
-  private val FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT = java.lang.Boolean.getBoolean("fleet.backend.third-party.plugins.accept")
-
-  @Volatile
-  private var thirdPartyPluginsNoteAccepted: Boolean? = null
+  private val pluginsStateLazy = lazy { PluginsMutableState() }
+  private val pluginsState
+    get() = pluginsStateSupplier?.invoke() ?: pluginsStateLazy.value
 
   /**
    * Returns `true` if the IDE is running from source code **without using 'dev build'**.
@@ -127,19 +138,14 @@ object PluginManagerCore {
    */
   @JvmStatic
   fun isRunningFromSources(): Boolean {
-    var result = isRunningFromSources
+    var result = pluginsState.isRunningFromSources
     if (result == null) {
       // MPS is always loading platform classes from jars even though there is a project directory present
       result = !PlatformUtils.isMPS() && Files.isDirectory(Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER))
-      isRunningFromSources = result
+      pluginsState.isRunningFromSources = result
     }
     return result
   }
-
-  @Volatile
-  private var initFuture: Deferred<PluginSet>? = null
-
-  private var ourBuildNumber: BuildNumber? = null
 
   /**
    * Returns a list of all available plugin descriptors (bundled and custom, including disabled ones).
@@ -153,11 +159,11 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun getPluginSet(): PluginSet = nullablePluginSet!!
+  fun getPluginSet(): PluginSet = pluginsState.nullablePluginSet!!
 
   @ApiStatus.Internal
   @JvmStatic
-  fun getPluginSetOrNull(): PluginSet? = nullablePluginSet
+  fun getPluginSetOrNull(): PluginSet? = pluginsState.nullablePluginSet
 
   /**
    * Returns descriptors of plugins which are successfully loaded into the IDE.
@@ -179,6 +185,7 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   fun getAndClearPluginLoadingErrors(): List<PluginLoadingError> {
+    val pluginErrors = pluginsState.pluginErrors
     synchronized(pluginErrors) {
       if (pluginErrors.isEmpty()) {
         return emptyList()
@@ -192,12 +199,12 @@ object PluginManagerCore {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun arePluginsInitialized(): Boolean = nullablePluginSet != null
+  fun arePluginsInitialized(): Boolean = pluginsState.nullablePluginSet != null
 
   @ApiStatus.Internal
   @JvmStatic
   fun setPluginSet(value: PluginSet) {
-    nullablePluginSet = value
+    pluginsState.nullablePluginSet = value
   }
 
   /**
@@ -289,19 +296,19 @@ object PluginManagerCore {
   @Synchronized
   @JvmStatic
   fun invalidatePlugins() {
-    nullablePluginSet = null
-    val future = initFuture
+    pluginsState.nullablePluginSet = null
+    val future = pluginsState.initFuture
     if (future != null) {
-      initFuture = null
+      pluginsState.initFuture = null
       future.cancel(CancellationException("invalidatePlugins"))
     }
     invalidate()
-    shadowedBundledPlugins = Collections.emptySet()
+    pluginsState.shadowedBundledPlugins = Collections.emptySet()
   }
 
   @Suppress("LoggingSimilarMessage")
   private fun preparePluginErrors(globalErrors: List<PluginLoadingError>): List<PluginLoadingError> {
-    val pluginLoadingErrors = pluginLoadingErrors ?: emptyMap()
+    val pluginLoadingErrors = pluginsState.pluginLoadingErrors ?: emptyMap()
     if (pluginLoadingErrors.isEmpty() && globalErrors.isEmpty()) {
       return emptyList()
     }
@@ -333,20 +340,20 @@ object PluginManagerCore {
     return emptyList()
   }
 
-  fun getLoadingError(pluginId: PluginId): PluginNonLoadReason? = pluginLoadingErrors!![pluginId]
+  fun getLoadingError(pluginId: PluginId): PluginNonLoadReason? = pluginsState.pluginLoadingErrors!![pluginId]
 
   @ApiStatus.Internal
   fun clearLoadingErrorsFor(pluginId: PluginId) {
-    pluginLoadingErrors = pluginLoadingErrors?.minus(pluginId)
+    pluginsState.pluginLoadingErrors = pluginsState.pluginLoadingErrors?.minus(pluginId)
   }
 
   @ApiStatus.Internal
   @Synchronized
   @JvmStatic
   fun onEnable(enabled: Boolean): Boolean {
-    val pluginIds = if (enabled) pluginsToEnable else pluginsToDisable
-    pluginsToEnable = null
-    pluginsToDisable = null
+    val pluginIds = if (enabled) pluginsState.pluginsToEnable else pluginsState.pluginsToDisable
+    pluginsState.pluginsToEnable = null
+    pluginsState.pluginsToDisable = null
     val applied = pluginIds != null
     if (applied) {
       val descriptors = ArrayList<IdeaPluginDescriptorImpl>()
@@ -385,14 +392,14 @@ object PluginManagerCore {
     mainClassLoaderDeferred: Deferred<ClassLoader>?,
     logDeferred: Deferred<Logger>?,
   ): Deferred<PluginSet> {
-    var result = initFuture
+    var result = pluginsState.initFuture
     if (result == null) {
       result = coroutineScope.scheduleLoading(
         zipPoolDeferred = zipPoolDeferred,
         mainClassLoaderDeferred = mainClassLoaderDeferred,
         logDeferred = logDeferred,
       )
-      initFuture = result
+      pluginsState.initFuture = result
     }
     return result
   }
@@ -402,17 +409,17 @@ object PluginManagerCore {
    */
   @ApiStatus.Internal
   fun getEnabledPluginRawList(): CompletableFuture<List<IdeaPluginDescriptorImpl>> {
-    return initFuture!!.asCompletableFuture().thenApply { it.enabledPlugins }
+    return pluginsState.initFuture!!.asCompletableFuture().thenApply { it.enabledPlugins }
   }
 
   @get:ApiStatus.Internal
   val initPluginFuture: Deferred<PluginSet>
-    get() = initFuture ?: throw IllegalStateException("Call scheduleDescriptorLoading() first")
+    get() = pluginsState.initFuture ?: throw IllegalStateException("Call scheduleDescriptorLoading() first")
 
   @JvmStatic
   val buildNumber: BuildNumber
     get() {
-      var result = ourBuildNumber
+      var result = pluginsState.ourBuildNumber
       if (result == null) {
         result = BuildNumber.fromPluginCompatibleBuild()
         if (logger.isDebugEnabled()) {
@@ -432,7 +439,7 @@ object PluginManagerCore {
             }
           }
         }
-        ourBuildNumber = result
+        pluginsState.ourBuildNumber = result
       }
       return result
     }
@@ -599,10 +606,11 @@ object PluginManagerCore {
     }
 
     val actions = prepareActions(pluginNamesToDisable = pluginsToDisable.values, pluginNamesToEnable = pluginsToEnable.values)
-    pluginLoadingErrors = pluginErrorsById
+    pluginsState.pluginLoadingErrors = pluginErrorsById
 
     val errorList = preparePluginErrors(globalErrors)
     if (!errorList.isEmpty()) {
+      val pluginErrors = pluginsState.pluginErrors
       synchronized(pluginErrors) {
         pluginErrors.addAll(errorList)
         pluginErrors.addAll(actions.map { PluginLoadingError(reason = null, htmlMessageSupplier = it, error = null) })
@@ -646,7 +654,7 @@ object PluginManagerCore {
         if (missing == null) {
           missing = ArrayList()
         }
-        missing.add(id.idString to pluginLoadingErrors?.get(id))
+        missing.add(id.idString to pluginsState.pluginLoadingErrors?.get(id))
       }
     }
     if (missing != null) {
@@ -665,7 +673,7 @@ object PluginManagerCore {
 
     if (GraphicsEnvironment.isHeadless()) {
       if (QODANA_PLUGINS_THIRD_PARTY_ACCEPT || FLEET_BACKEND_PLUGINS_THIRD_PARTY_ACCEPT) {
-        thirdPartyPluginsNoteAccepted = true
+        pluginsState.thirdPartyPluginsNoteAccepted = true
         return
       }
       logger.info("3rd-party plugin privacy note not accepted yet; disabling plugins for this headless session")
@@ -686,17 +694,17 @@ object PluginManagerCore {
     else if (!askThirdPartyPluginsPrivacyConsent(aliens)) {
       logger.info("3rd-party plugin privacy note declined; disabling plugins")
       disableThirdPartyPlugins()
-      thirdPartyPluginsNoteAccepted = false
+      pluginsState.thirdPartyPluginsNoteAccepted = false
     }
     else {
-      thirdPartyPluginsNoteAccepted = true
+      pluginsState.thirdPartyPluginsNoteAccepted = true
     }
   }
 
   @ApiStatus.Internal
   fun consumeThirdPartyPluginsNoteAcceptedFlag(): Boolean? {
-    val result = thirdPartyPluginsNoteAccepted
-    thirdPartyPluginsNoteAccepted = null
+    val result = pluginsState.thirdPartyPluginsNoteAccepted
+    pluginsState.thirdPartyPluginsNoteAccepted = null
     return result
   }
 
@@ -736,11 +744,11 @@ object PluginManagerCore {
         coreLoader = coreLoader,
         parentActivity = tracerShim.getTraceActivity()
       )
-      pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)
-      pluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable)
-      shadowedBundledPlugins = loadingResult.shadowedBundledIds
+      pluginsState.pluginsToDisable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToDisable)
+      pluginsState.pluginsToEnable = Java11Shim.INSTANCE.copyOf(initResult.pluginIdsToEnable)
+      pluginsState.shadowedBundledPlugins = loadingResult.shadowedBundledIds
       //activity.setDescription("plugin count: ${initResult.pluginSet.enabledPlugins.size}")
-      nullablePluginSet = initResult.pluginSet
+      pluginsState.nullablePluginSet = initResult.pluginSet
       initResult.pluginSet
     }
   }
@@ -759,13 +767,13 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @JvmStatic
   fun findPlugin(id: PluginId): IdeaPluginDescriptorImpl? {
-    val pluginSet = nullablePluginSet ?: return null
+    val pluginSet = pluginsState.nullablePluginSet ?: return null
     return pluginSet.findEnabledPlugin(id) ?: pluginSet.findInstalledPlugin(id)
   }
 
   @JvmStatic
   fun isPluginInstalled(id: PluginId): Boolean {
-    val pluginSet = nullablePluginSet ?: return false
+    val pluginSet = pluginsState.nullablePluginSet ?: return false
     return pluginSet.isPluginEnabled(id) || pluginSet.isPluginInstalled(id)
   }
 
@@ -842,7 +850,7 @@ object PluginManagerCore {
   @ApiStatus.Internal
   @Synchronized
   @JvmStatic
-  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = !plugin.isBundled && shadowedBundledPlugins.contains(plugin.getPluginId())
+  fun isUpdatedBundledPlugin(plugin: PluginDescriptor): Boolean = !plugin.isBundled && pluginsState.shadowedBundledPlugins.contains(plugin.getPluginId())
 
   @ApiStatus.Internal
   fun dependsOnUltimateOptionally(pluginDescriptor: IdeaPluginDescriptor?): Boolean {

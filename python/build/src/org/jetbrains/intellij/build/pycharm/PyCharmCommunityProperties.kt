@@ -109,7 +109,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     }
   }
 
-  override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer = PyCharmMacDistributionCustomizer(communityHome)
+  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = PyCharmMacDistributionCustomizer(communityHome)
 
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
     return object : LinuxDistributionCustomizer() {
