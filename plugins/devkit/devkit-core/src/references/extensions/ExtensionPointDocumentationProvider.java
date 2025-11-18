@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.references.extensions;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.module.Module;
@@ -88,10 +89,11 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
 
   private static HtmlChunk epQualifiedNameAndFileName(ExtensionPoint extensionPoint) {
     return HtmlChunk.fragment(
-      HtmlChunk.text(extensionPoint.getEffectiveQualifiedName()).bold(),
-      HtmlChunk.br(),
+      HtmlChunk.text(extensionPoint.getEffectiveQualifiedName()).bold().wrapWith(PRE_ELEMENT),
+      HtmlChunk.icon("AllIcons.Nodes.Plugin", AllIcons.Nodes.Plugin),
+      HtmlChunk.nbsp(),
       HtmlChunk.text(DomUtil.getFile(extensionPoint).getName())
-    ).wrapWith(PRE_ELEMENT).wrapWith(DEFINITION_ELEMENT);
+    ).wrapWith(DEFINITION_ELEMENT);
   }
 
   private static @NotNull HtmlChunk epBeanDocAndFields(ExtensionPoint extensionPoint) {
