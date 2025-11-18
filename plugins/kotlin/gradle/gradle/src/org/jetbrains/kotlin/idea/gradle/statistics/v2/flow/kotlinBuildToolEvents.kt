@@ -33,7 +33,8 @@ val kotlinBuildToolsFusEvenList = listOf(
             KotlinBuildToolFusMetricName.ENABLED_COMPILER_PLUGIN_NO_ARG,
             KotlinBuildToolFusMetricName.ENABLED_COMPILER_PLUGIN_SAM_WITH_RECEIVER,
             KotlinBuildToolFusMetricName.JVM_DEFAULTS,
-            KotlinBuildToolFusMetricName.USE_OLD_BACKEND
+            KotlinBuildToolFusMetricName.USE_OLD_BACKEND,
+            KotlinBuildToolFusMetricName.ENABLED_COMPILER_REFERENCE_INDEX
         )
     ),
 
