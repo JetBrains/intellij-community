@@ -2,24 +2,13 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.impl.source.tree.java.TypeParameterElement;
 import com.intellij.psi.tree.ICompositeElementType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.Set;
-
-public class JavaTypeParameterElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
+public class JavaTypeParameterElementType extends JavaStubElementType implements ICompositeElementType {
   public JavaTypeParameterElementType() {
     super("TYPE_PARAMETER");
-  }
-
-  @Override
-  public @NotNull Set<IElementType> getParents() {
-    return Collections.singleton(BasicJavaElementType.BASIC_TYPE_PARAMETER);
   }
 
   @Override
