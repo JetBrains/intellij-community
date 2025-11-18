@@ -36,6 +36,7 @@ jvm_library(
     "//platform/testFramework/eelJava",
     "//platform/eel-provider",
     "//platform/util/progress",
+    "//xml/xml-analysis-api:analysis",
     "//xml/xml-analysis-impl:analysis-impl",
   ]
 )

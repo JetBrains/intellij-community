@@ -109,6 +109,7 @@ jvm_library(
     "@lib//:opentelemetry",
     "//java/debugger/shared",
     "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
     "//platform/xdebugger-impl:debugger-impl",
     "//libraries/http-client",
     ":platform_java-guiForms-rt_provided",

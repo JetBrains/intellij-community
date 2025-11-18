@@ -35,6 +35,7 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//platform/lang-core",
+    "//xml/xml-analysis-api:analysis",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",

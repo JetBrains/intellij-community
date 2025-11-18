@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(name = "CodeInsightSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE, perClient = true)
-public class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
+public final class CodeInsightSettings implements PersistentStateComponent<Element>, Cloneable {
   private static final Logger LOG = Logger.getInstance(CodeInsightSettings.class);
   private final List<PropertyChangeListener> myListeners = new CopyOnWriteArrayList<>();
 

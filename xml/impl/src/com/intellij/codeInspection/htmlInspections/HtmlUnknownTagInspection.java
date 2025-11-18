@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -24,8 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
-public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
-
+public final class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
   public HtmlUnknownTagInspection() {
     super();
   }

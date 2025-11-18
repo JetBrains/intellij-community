@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInspection.options.OptPane.expandableString;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-public class RequiredAttributesInspection extends RequiredAttributesInspectionBase {
+public final class RequiredAttributesInspection extends RequiredAttributesInspectionBase {
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(

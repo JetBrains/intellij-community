@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class AntResolveInspection extends AntInspection {
-
   public static final String SHORT_NAME = "AntResolveInspection";
 
   @Override
@@ -40,7 +39,7 @@ public final class AntResolveInspection extends AntInspection {
   @Override
   protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
     if (element instanceof GenericDomValue) {
-      final XmlElement valueElement = DomUtil.getValueElement(((GenericDomValue)element));
+      final XmlElement valueElement = DomUtil.getValueElement(((GenericDomValue<?>)element));
       if (valueElement != null) {
         checkReferences(valueElement, holder, element);
       }

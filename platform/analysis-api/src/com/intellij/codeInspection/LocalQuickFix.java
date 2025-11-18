@@ -36,8 +36,7 @@ import static com.intellij.codeInsight.intention.CustomizableIntentionAction.Ran
  * {@link com.intellij.codeInsight.intention.LowPriorityAction LowPriorityAction} to change ordering.
  * <p>
  * To learn how to implement preview correctly, read <a href="https://plugins.jetbrains.com/docs/intellij/code-intentions-preview.html">Intention Action Preview (IntelliJ Platform Docs)</a>.
- * 
- * @author max
+ *
  * @see ProblemDescriptor
  * @see com.intellij.openapi.util.Iconable
  */

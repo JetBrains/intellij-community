@@ -89,6 +89,7 @@ jvm_library(
     "//platform/platform-impl/internal",
     "//libraries/mockito",
     "@lib//:assert_j",
+    "//xml/xml-analysis-api:analysis",
     "//xml/xml-analysis-impl:analysis-impl",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",

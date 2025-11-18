@@ -32,6 +32,7 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//xml/xml-psi-api:psi",
     "//platform/libraries/cglib",
+    "//xml/xml-analysis-api:analysis",
   ]
 )
 ### auto-generated section `build intellij.xml.dom.tests` end

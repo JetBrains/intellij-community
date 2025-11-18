@@ -50,6 +50,7 @@
     <orderEntry type="module" module-name="intellij.platform.polySymbols.backend" />
     <orderEntry type="module" module-name="intellij.libraries.xerces" />
     <orderEntry type="module" module-name="intellij.xml.syntax" />
+    <orderEntry type="module" module-name="intellij.xml.analysis" />
   </component>
   <component name="copyright">
     <Base>

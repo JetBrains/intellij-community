@@ -32,6 +32,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
+    "//xml/xml-analysis-api:analysis",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//xml/xml-analysis-impl:analysis-impl",

@@ -22,8 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Avdeev
  */
-public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool {
-
+public final class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool {
   private static final @NonNls String XML = "xml";
 
   @Override

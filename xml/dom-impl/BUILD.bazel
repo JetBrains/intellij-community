@@ -23,6 +23,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView-impl",
     "//xml/dom-openapi:dom",
+    "//xml/xml-analysis-api:analysis",
     "//xml/impl",
     "//platform/util",
     "//platform/platform-api:ide",
