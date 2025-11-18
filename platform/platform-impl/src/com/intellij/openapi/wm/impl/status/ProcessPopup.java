@@ -133,6 +133,18 @@ final class ProcessPopup {
     return new Rectangle(x, y, width, height);
   }
 
+  private void updateHeight(int height) {
+    if (!myPopupVisible || myContentPanel.getSize().height >= height) {
+      return;
+    }
+
+    myContentPanel.setPreferredSize(new Dimension(myContentPanel.getPreferredSize().width, height));
+    myContentPanel.revalidate();
+    myPopup.pack(false, true);
+
+    myPopup.moveToFitScreen();
+  }
+
   public void show(boolean requestFocus) {
     updateContentUI();
 
@@ -144,6 +156,9 @@ final class ProcessPopup {
     myContentPanel.setPreferredSize(popupBounds.getSize());
     myPopupVisible = true;
     myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), popupBounds.getLocation());
+    if (myAnalyzingBannerDecorator.isBannerPresent()) {
+      updateHeight(myAnalyzingBannerDecorator.getBannerHeight());
+    }
   }
 
   public boolean isShowing() {

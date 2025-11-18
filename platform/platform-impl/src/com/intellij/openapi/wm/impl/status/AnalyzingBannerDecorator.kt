@@ -53,6 +53,14 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose
     panel.remove(banner)
   }
 
+  fun getBannerHeight(): Int {
+    return banner.preferredSize.height + (analyzingComponent?.preferredSize?.height ?: 0) + JBUI.scale(28)
+  }
+
+  fun isBannerPresent(): Boolean {
+    return panel.components.contains(banner)
+  }
+
   private fun createBanner(revalidatePanel: Runnable): Component {
     val banner = InlineBanner().apply {
       setMessage(IndexingBundle.message("progress.indexing.banner.text"))
