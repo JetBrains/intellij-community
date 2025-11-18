@@ -918,8 +918,21 @@ object DynamicPlugins {
     }
   }
 
+  /**
+   * Left for compatibility with older Junie versions, drop later
+   */
+  @Deprecated("use overload with PluginMainDescriptor parameter")
   @JvmOverloads
   fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, project: Project? = null): Boolean {
+    if (pluginDescriptor !is PluginMainDescriptor) {
+      LOG.warn("Unexpected plugin descriptor type: $pluginDescriptor", Throwable())
+      return false
+    }
+    return loadPlugin(pluginDescriptor, project)
+  }
+
+  @JvmOverloads
+  fun loadPlugin(pluginDescriptor: PluginMainDescriptor, project: Project? = null): Boolean {
     if (!allowLoadUnloadWithoutRestart(pluginDescriptor)) {
       return false
     }
