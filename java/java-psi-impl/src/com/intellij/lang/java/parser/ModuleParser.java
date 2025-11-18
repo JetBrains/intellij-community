@@ -20,7 +20,6 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.IElementType;
@@ -33,6 +32,7 @@ import java.util.Set;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.error;
 import static com.intellij.lang.java.parser.JavaParserUtil.semicolon;
+import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 /**
  * @deprecated Use the new Java syntax library instead.
@@ -43,12 +43,10 @@ public class ModuleParser {
   private static final Set<String> STATEMENT_KEYWORDS =
     ContainerUtil.newHashSet(JavaKeywords.REQUIRES, JavaKeywords.EXPORTS, JavaKeywords.USES, JavaKeywords.PROVIDES);
   private final JavaParser myParser;
-  private final AbstractBasicJavaElementTypeFactory.JavaElementTypeContainer myJavaElementTypeContainer;
   private final OldParserWhiteSpaceAndCommentSetHolder myWhiteSpaceAndCommentSetHolder = OldParserWhiteSpaceAndCommentSetHolder.INSTANCE;
 
   public ModuleParser(@NotNull JavaParser parser) {
     this.myParser = parser;
-    this.myJavaElementTypeContainer = parser.getJavaElementTypeFactory().getContainer();
   }
 
   public @Nullable PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
@@ -68,7 +66,7 @@ public class ModuleParser {
       mapAndAdvance(builder, JavaTokenType.OPEN_KEYWORD);
       text = builder.getTokenText();
     }
-    JavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+    JavaParserUtil.done(modifierList, MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
 
     if (JavaKeywords.MODULE.equals(text)) {
       mapAndAdvance(builder, JavaTokenType.MODULE_KEYWORD);
@@ -102,7 +100,7 @@ public class ModuleParser {
       parseModuleContent(builder);
     }
 
-    JavaParserUtil.done(module, myJavaElementTypeContainer.MODULE, builder, myWhiteSpaceAndCommentSetHolder);
+    JavaParserUtil.done(module, MODULE, builder, myWhiteSpaceAndCommentSetHolder);
 
     if (builder.getTokenType() != null) {
       parseExtras(builder, JavaPsiBundle.message("unexpected.tokens"));
@@ -135,7 +133,7 @@ public class ModuleParser {
 
     if (!empty) {
       if (idExpected) error(builder, JavaPsiBundle.message("expected.identifier"));
-      nameElement.done(myJavaElementTypeContainer.MODULE_REFERENCE);
+      nameElement.done(MODULE_REFERENCE);
       return nameElement;
     }
     else {
@@ -205,7 +203,7 @@ public class ModuleParser {
       }
       break;
     }
-    JavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+    JavaParserUtil.done(modifierList, MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
 
     if (parseNameRef(builder) != null) {
       semicolon(builder);
@@ -214,20 +212,20 @@ public class ModuleParser {
       expect(builder, JavaTokenType.SEMICOLON);
     }
 
-    statement.done(myJavaElementTypeContainer.REQUIRES_STATEMENT);
+    statement.done(REQUIRES_STATEMENT);
     return statement;
   }
 
   private PsiBuilder.Marker parseExportsStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     mapAndAdvance(builder, JavaTokenType.EXPORTS_KEYWORD);
-    return parsePackageStatement(builder, statement, myJavaElementTypeContainer.EXPORTS_STATEMENT);
+    return parsePackageStatement(builder, statement, EXPORTS_STATEMENT);
   }
 
   private PsiBuilder.Marker parseOpensStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     mapAndAdvance(builder, JavaTokenType.OPENS_KEYWORD);
-    return parsePackageStatement(builder, statement, myJavaElementTypeContainer.OPENS_STATEMENT);
+    return parsePackageStatement(builder, statement, OPENS_STATEMENT);
   }
 
   private @NotNull PsiBuilder.Marker parsePackageStatement(PsiBuilder builder, PsiBuilder.Marker statement, IElementType type) {
@@ -274,7 +272,7 @@ public class ModuleParser {
       expect(builder, JavaTokenType.SEMICOLON);
     }
 
-    statement.done(myJavaElementTypeContainer.USES_STATEMENT);
+    statement.done(USES_STATEMENT);
     return statement;
   }
 
@@ -291,7 +289,7 @@ public class ModuleParser {
     if (JavaKeywords.WITH.equals(builder.getTokenText())) {
       builder.remapCurrentToken(JavaTokenType.WITH_KEYWORD);
       hasError = myParser.getReferenceParser()
-        .parseReferenceList(builder, JavaTokenType.WITH_KEYWORD, myJavaElementTypeContainer.PROVIDES_WITH_LIST, JavaTokenType.COMMA);
+        .parseReferenceList(builder, JavaTokenType.WITH_KEYWORD, PROVIDES_WITH_LIST, JavaTokenType.COMMA);
     }
     else if (!hasError) {
       IElementType next = builder.getTokenType();
@@ -313,7 +311,7 @@ public class ModuleParser {
       expect(builder, JavaTokenType.SEMICOLON);
     }
 
-    statement.done(myJavaElementTypeContainer.PROVIDES_STATEMENT);
+    statement.done(PROVIDES_STATEMENT);
     return statement;
   }
 

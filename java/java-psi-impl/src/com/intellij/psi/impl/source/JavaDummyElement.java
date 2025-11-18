@@ -19,10 +19,11 @@ import com.intellij.java.syntax.element.lazyParser.IncompleteFragmentParsingExce
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.tree.FileElement;
-import com.intellij.psi.impl.source.tree.JavaElementTypeFactory;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.impl.source.tree.JavaElementType.DUMMY_ELEMENT;
 
 /**
  * Dummy file element for using together with DummyHolder.
@@ -37,28 +38,17 @@ public class JavaDummyElement extends FileElement {
   public JavaDummyElement(@Nullable CharSequence text,
                           JavaParserUtil.@NotNull ParserWrapper parser,
                           @NotNull LanguageLevel level) {
-    this(text, parser, level, JavaElementTypeFactory.INSTANCE, false);
+    this(text, parser, level, false);
   }
 
   public JavaDummyElement(@Nullable CharSequence text,
                           JavaParserUtil.@NotNull ParserWrapper parser,
                           @NotNull LanguageLevel level,
                           boolean consumeAll) {
-    super(JavaElementTypeFactory.INSTANCE.getContainer().DUMMY_ELEMENT, text);
+    super(DUMMY_ELEMENT, text);
     this.myParser = parser;
     this.myLanguageLevel = level;
     this.myConsumeAll = consumeAll;
-  }
-
-  public JavaDummyElement(@Nullable CharSequence text,
-                          @NotNull JavaParserUtil.ParserWrapper parser,
-                          @NotNull LanguageLevel level,
-                          @NotNull AbstractBasicJavaElementTypeFactory javaElementTypeFactory,
-                          boolean consumeAll) {
-    super(javaElementTypeFactory.getContainer().DUMMY_ELEMENT, text);
-    myParser = parser;
-    myLanguageLevel = level;
-    myConsumeAll = consumeAll;
   }
 
   public @NotNull JavaParserUtil.ParserWrapper getParser() {

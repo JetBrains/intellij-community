@@ -4,7 +4,6 @@ package com.intellij.lang.java.parser;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
-import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -53,12 +52,10 @@ public final class PrattExpressionParser {
   private final TokenSet TYPE_START =
     TokenSet.orSet(PRIMITIVE_TYPE_BIT_SET, TokenSet.create(IDENTIFIER, AT));
   private final JavaParser myParser;
-  private final AbstractBasicJavaElementTypeFactory.JavaElementTypeContainer myJavaElementTypeContainer;
   private final OldParserWhiteSpaceAndCommentSetHolder myWhiteSpaceAndCommentSetHolder = OldParserWhiteSpaceAndCommentSetHolder.INSTANCE;
 
   public PrattExpressionParser(@NotNull JavaParser parser) {
     this.myParser = parser;
-    this.myJavaElementTypeContainer = (parser).getJavaElementTypeFactory().getContainer();
 
     this.ourInfixParsers = new HashMap<>();
     AssignmentParser assignmentParser = new PrattExpressionParser.AssignmentParser();
@@ -156,7 +153,7 @@ public final class PrattExpressionParser {
         error(builder, JavaPsiBundle.message("expected.expression"));
       }
 
-      unary.done(myJavaElementTypeContainer.PREFIX_EXPRESSION);
+      unary.done(PREFIX_EXPRESSION);
       return unary;
     }
     else if (tokenType == LPARENTH) {
@@ -189,12 +186,12 @@ public final class PrattExpressionParser {
         }
       }
 
-      typeCast.done(myJavaElementTypeContainer.TYPE_CAST_EXPRESSION);
+      typeCast.done(TYPE_CAST_EXPRESSION);
       return typeCast;
     }
     else if (tokenType == SWITCH_KEYWORD) {
       return myParser.getStatementParser()
-        .parseExprInParenthWithBlock(builder, myJavaElementTypeContainer.SWITCH_EXPRESSION, true);
+        .parseExprInParenthWithBlock(builder, SWITCH_EXPRESSION, true);
     }
     else {
       return parsePostfix(builder, mode);
@@ -208,7 +205,7 @@ public final class PrattExpressionParser {
     while (POSTFIX_OPS.contains(builder.getTokenType())) {
       final PsiBuilder.Marker postfix = operand.precede();
       builder.advanceLexer();
-      postfix.done(myJavaElementTypeContainer.POSTFIX_EXPRESSION);
+      postfix.done(POSTFIX_EXPRESSION);
       operand = postfix;
     }
 
@@ -237,7 +234,7 @@ public final class PrattExpressionParser {
           dotTokenType = builder.getTokenType();
         }
 
-        if (dotTokenType == CLASS_KEYWORD && exprType(expr) == myJavaElementTypeContainer.REFERENCE_EXPRESSION) {
+        if (dotTokenType == CLASS_KEYWORD && exprType(expr) == REFERENCE_EXPRESSION) {
           if (breakPoint == BreakPoint.P1 && builder.getCurrentOffset() == breakOffset) {
             error(builder, JavaPsiBundle.message("expected.identifier"));
             drop(startMarker, dotPos);
@@ -264,9 +261,9 @@ public final class PrattExpressionParser {
         else if (dotTokenType == SUPER_KEYWORD && builder.lookAhead(1) == LPARENTH) {
           dotPos.drop();
           PsiBuilder.Marker refExpr = expr.precede();
-          builder.mark().done(myJavaElementTypeContainer.REFERENCE_PARAMETER_LIST);
+          builder.mark().done(REFERENCE_PARAMETER_LIST);
           builder.advanceLexer();
-          refExpr.done(myJavaElementTypeContainer.REFERENCE_EXPRESSION);
+          refExpr.done(REFERENCE_EXPRESSION);
           expr = refExpr;
         }
         else if (dotTokenType == STRING_TEMPLATE_BEGIN || dotTokenType == TEXT_BLOCK_TEMPLATE_BEGIN) {
@@ -278,11 +275,11 @@ public final class PrattExpressionParser {
           final PsiBuilder.Marker templateExpression = expr.precede();
           final PsiBuilder.Marker literal = builder.mark();
           builder.advanceLexer();
-          literal.done(myJavaElementTypeContainer.LITERAL_EXPRESSION);
-          templateExpression.done(myJavaElementTypeContainer.TEMPLATE_EXPRESSION);
+          literal.done(LITERAL_EXPRESSION);
+          templateExpression.done(TEMPLATE_EXPRESSION);
           expr = templateExpression;
         }
-        else if (THIS_OR_SUPER.contains(dotTokenType) && exprType(expr) == myJavaElementTypeContainer.REFERENCE_EXPRESSION) {
+        else if (THIS_OR_SUPER.contains(dotTokenType) && exprType(expr) == REFERENCE_EXPRESSION) {
           if (breakPoint == BreakPoint.P2 && builder.getCurrentOffset() == breakOffset) {
             dotPos.rollbackTo();
             startMarker.drop();
@@ -309,8 +306,8 @@ public final class PrattExpressionParser {
           startMarker = copy;
           expr = ref.precede();
           expr.done(dotTokenType == THIS_KEYWORD
-                    ? myJavaElementTypeContainer.THIS_EXPRESSION
-                    : myJavaElementTypeContainer.SUPER_EXPRESSION);
+                    ? THIS_EXPRESSION
+                    : SUPER_EXPRESSION);
         }
         else {
           PsiBuilder.Marker refExpr = expr.precede();
@@ -322,25 +319,25 @@ public final class PrattExpressionParser {
             builder.advanceLexer();
             myParser.getReferenceParser().parseReferenceParameterList(builder, false, false);
             error(builder, JavaPsiBundle.message("expected.identifier"));
-            refExpr.done(myJavaElementTypeContainer.REFERENCE_EXPRESSION);
+            refExpr.done(REFERENCE_EXPRESSION);
             startMarker.drop();
             return refExpr;
           }
 
           dotPos.drop();
-          refExpr.done(myJavaElementTypeContainer.REFERENCE_EXPRESSION);
+          refExpr.done(REFERENCE_EXPRESSION);
           expr = refExpr;
         }
       }
       else if (tokenType == LPARENTH) {
-        if (exprType(expr) != myJavaElementTypeContainer.REFERENCE_EXPRESSION) {
+        if (exprType(expr) != REFERENCE_EXPRESSION) {
           startMarker.drop();
           return expr;
         }
 
         PsiBuilder.Marker callExpr = expr.precede();
         parseArgumentList(builder);
-        callExpr.done(myJavaElementTypeContainer.METHOD_CALL_EXPRESSION);
+        callExpr.done(METHOD_CALL_EXPRESSION);
         expr = callExpr;
       }
       else if (tokenType == LBRACKET) {
@@ -352,7 +349,7 @@ public final class PrattExpressionParser {
         builder.advanceLexer();
 
         if (builder.getTokenType() == RBRACKET &&
-            exprType(expr) == myJavaElementTypeContainer.REFERENCE_EXPRESSION) {
+            exprType(expr) == REFERENCE_EXPRESSION) {
           final int pos = builder.getCurrentOffset();
           final PsiBuilder.Marker copy = startMarker.precede();
           startMarker.rollbackTo();
@@ -372,20 +369,20 @@ public final class PrattExpressionParser {
           final PsiBuilder.Marker index = parse(builder, mode);
           if (index == null) {
             error(builder, JavaPsiBundle.message("expected.expression"));
-            arrayAccess.done(myJavaElementTypeContainer.ARRAY_ACCESS_EXPRESSION);
+            arrayAccess.done(ARRAY_ACCESS_EXPRESSION);
             startMarker.drop();
             return arrayAccess;
           }
 
           if (builder.getTokenType() != RBRACKET) {
             error(builder, JavaPsiBundle.message("expected.rbracket"));
-            arrayAccess.done(myJavaElementTypeContainer.ARRAY_ACCESS_EXPRESSION);
+            arrayAccess.done(ARRAY_ACCESS_EXPRESSION);
             startMarker.drop();
             return arrayAccess;
           }
           builder.advanceLexer();
 
-          arrayAccess.done(myJavaElementTypeContainer.ARRAY_ACCESS_EXPRESSION);
+          arrayAccess.done(ARRAY_ACCESS_EXPRESSION);
           expr = arrayAccess;
         }
       }
@@ -409,7 +406,7 @@ public final class PrattExpressionParser {
     if (ALL_LITERALS.contains(tokenType)) {
       final PsiBuilder.Marker literal = builder.mark();
       builder.advanceLexer();
-      literal.done(myJavaElementTypeContainer.LITERAL_EXPRESSION);
+      literal.done(LITERAL_EXPRESSION);
       return literal;
     }
 
@@ -441,7 +438,7 @@ public final class PrattExpressionParser {
         error(builder, JavaPsiBundle.message("expected.rparen"));
       }
 
-      parenth.done(myJavaElementTypeContainer.PARENTH_EXPRESSION);
+      parenth.done(PARENTH_EXPRESSION);
       return parenth;
     }
 
@@ -479,16 +476,16 @@ public final class PrattExpressionParser {
       final PsiBuilder.Marker refExpr;
       if (annotation != null) {
         final PsiBuilder.Marker refParam = annotation.precede();
-        refParam.doneBefore(myJavaElementTypeContainer.REFERENCE_PARAMETER_LIST, annotation);
+        refParam.doneBefore(REFERENCE_PARAMETER_LIST, annotation);
         refExpr = refParam.precede();
       }
       else {
         refExpr = builder.mark();
-        builder.mark().done(myJavaElementTypeContainer.REFERENCE_PARAMETER_LIST);
+        builder.mark().done(REFERENCE_PARAMETER_LIST);
       }
 
       builder.advanceLexer();
-      refExpr.done(myJavaElementTypeContainer.REFERENCE_EXPRESSION);
+      refExpr.done(REFERENCE_EXPRESSION);
       return refExpr;
     }
 
@@ -516,14 +513,14 @@ public final class PrattExpressionParser {
     if (THIS_OR_SUPER.contains(tokenType)) {
       if (expr == null) {
         expr = builder.mark();
-        builder.mark().done(myJavaElementTypeContainer.REFERENCE_PARAMETER_LIST);
+        builder.mark().done(REFERENCE_PARAMETER_LIST);
       }
       builder.advanceLexer();
       expr.done(builder.getTokenType() == LPARENTH
-                ? myJavaElementTypeContainer.REFERENCE_EXPRESSION
+                ? REFERENCE_EXPRESSION
                 : tokenType == THIS_KEYWORD
-                  ? myJavaElementTypeContainer.THIS_EXPRESSION
-                  : myJavaElementTypeContainer.SUPER_EXPRESSION);
+                  ? THIS_EXPRESSION
+                  : SUPER_EXPRESSION);
       return expr;
     }
 
@@ -567,7 +564,7 @@ public final class PrattExpressionParser {
       error(builder, JavaPsiBundle.message("expected.identifier"));
     }
 
-    start.done(myJavaElementTypeContainer.METHOD_REF_EXPRESSION);
+    start.done(METHOD_REF_EXPRESSION);
     return start;
   }
 
@@ -595,8 +592,8 @@ public final class PrattExpressionParser {
     else {
       builder.advanceLexer();
     }
-    template.done(myJavaElementTypeContainer.TEMPLATE);
-    templateExpression.done(myJavaElementTypeContainer.TEMPLATE_EXPRESSION);
+    template.done(TEMPLATE);
+    templateExpression.done(TEMPLATE_EXPRESSION);
     return templateExpression;
   }
 
@@ -614,7 +611,7 @@ public final class PrattExpressionParser {
       refOrType = myParser.getReferenceParser().parseJavaCodeReference(builder, true, true, true, true);
       if (refOrType == null) {
         error(builder, JavaPsiBundle.message("expected.identifier"));
-        newExpr.done(myJavaElementTypeContainer.NEW_EXPRESSION);
+        newExpr.done(NEW_EXPRESSION);
         return newExpr;
       }
     }
@@ -624,7 +621,7 @@ public final class PrattExpressionParser {
     }
     else {
       error(builder, JavaPsiBundle.message("expected.identifier"));
-      newExpr.done(myJavaElementTypeContainer.NEW_EXPRESSION);
+      newExpr.done(NEW_EXPRESSION);
       return newExpr;
     }
 
@@ -633,9 +630,9 @@ public final class PrattExpressionParser {
       if (builder.getTokenType() == LBRACE) {
         final PsiBuilder.Marker classElement = refOrType.precede();
         myParser.getDeclarationParser().parseClassBodyWithBraces(builder, false, false);
-        classElement.done(myJavaElementTypeContainer.ANONYMOUS_CLASS);
+        classElement.done(ANONYMOUS_CLASS);
       }
-      newExpr.done(myJavaElementTypeContainer.NEW_EXPRESSION);
+      newExpr.done(NEW_EXPRESSION);
       return newExpr;
     }
 
@@ -644,7 +641,7 @@ public final class PrattExpressionParser {
     if (builder.getTokenType() != LBRACKET) {
       rollbackTo(anno);
       error(builder, JavaPsiBundle.message(refOrType == null ? "expected.lbracket" : "expected.lparen.or.lbracket"));
-      newExpr.done(myJavaElementTypeContainer.NEW_EXPRESSION);
+      newExpr.done(NEW_EXPRESSION);
       return newExpr;
     }
 
@@ -668,7 +665,7 @@ public final class PrattExpressionParser {
       bracketCount++;
 
       if (!expectOrError(builder, RBRACKET, "expected.rbracket")) {
-        newExpr.done(myJavaElementTypeContainer.NEW_EXPRESSION);
+        newExpr.done(NEW_EXPRESSION);
         return newExpr;
       }
     }
@@ -682,12 +679,12 @@ public final class PrattExpressionParser {
       }
     }
 
-    newExpr.done(myJavaElementTypeContainer.NEW_EXPRESSION);
+    newExpr.done(NEW_EXPRESSION);
     return newExpr;
   }
 
   private @NotNull PsiBuilder.Marker parseArrayInitializer(PsiBuilder builder) {
-    return parseArrayInitializer(builder, myJavaElementTypeContainer.ARRAY_INITIALIZER_EXPRESSION, this::parse,
+    return parseArrayInitializer(builder, ARRAY_INITIALIZER_EXPRESSION, this::parse,
                                  "expected.expression");
   }
 
@@ -783,7 +780,7 @@ public final class PrattExpressionParser {
       closed = false;
     }
 
-    list.done(myJavaElementTypeContainer.EXPRESSION_LIST);
+    list.done(EXPRESSION_LIST);
     if (!closed) {
       list.setCustomEdgeTokenBinders(null, WhitespacesBinders.GREEDY_RIGHT_BINDER);
     }
@@ -864,7 +861,7 @@ public final class PrattExpressionParser {
       builder.error(JavaPsiBundle.message("expected.lbrace"));
     }
 
-    start.done(myJavaElementTypeContainer.LAMBDA_EXPRESSION);
+    start.done(LAMBDA_EXPRESSION);
     return start;
   }
 
@@ -882,12 +879,12 @@ public final class PrattExpressionParser {
       builder.error(JavaPsiBundle.message("class.literal.expected"));
     }
 
-    expr.done(myJavaElementTypeContainer.CLASS_OBJECT_ACCESS_EXPRESSION);
+    expr.done(CLASS_OBJECT_ACCESS_EXPRESSION);
     return expr;
   }
 
   private void emptyExpression(final PsiBuilder builder) {
-    emptyElement(builder, myJavaElementTypeContainer.EMPTY_EXPRESSION);
+    emptyElement(builder, EMPTY_EXPRESSION);
   }
 
   private static IElementType getBinOpToken(PsiBuilder builder) {
@@ -971,7 +968,7 @@ public final class PrattExpressionParser {
       if (right == null) {
         error(builder, JavaPsiBundle.message("expected.expression"));
       }
-      done(beforeLhs, myJavaElementTypeContainer.ASSIGNMENT_EXPRESSION, builder, myWhiteSpaceAndCommentSetHolder);
+      done(beforeLhs, ASSIGNMENT_EXPRESSION, builder, myWhiteSpaceAndCommentSetHolder);
     }
   }
 
@@ -998,8 +995,8 @@ public final class PrattExpressionParser {
         }
       }
       done(beforeLhs, operandCount > 2
-                      ? myJavaElementTypeContainer.POLYADIC_EXPRESSION
-                      : myJavaElementTypeContainer.BINARY_EXPRESSION, builder, myWhiteSpaceAndCommentSetHolder);
+                      ? POLYADIC_EXPRESSION
+                      : BINARY_EXPRESSION, builder, myWhiteSpaceAndCommentSetHolder);
     }
   }
 
@@ -1016,13 +1013,13 @@ public final class PrattExpressionParser {
       final PsiBuilder.Marker truePart = parser.parse(builder, mode);
       if (truePart == null) {
         error(builder, JavaPsiBundle.message("expected.expression"));
-        beforeLhs.done(myJavaElementTypeContainer.CONDITIONAL_EXPRESSION);
+        beforeLhs.done(CONDITIONAL_EXPRESSION);
         return;
       }
 
       if (builder.getTokenType() != COLON) {
         error(builder, JavaPsiBundle.message("expected.colon"));
-        beforeLhs.done(myJavaElementTypeContainer.CONDITIONAL_EXPRESSION);
+        beforeLhs.done(CONDITIONAL_EXPRESSION);
         return;
       }
       builder.advanceLexer();
@@ -1032,7 +1029,7 @@ public final class PrattExpressionParser {
         error(builder, JavaPsiBundle.message("expected.expression"));
       }
 
-      beforeLhs.done(myJavaElementTypeContainer.CONDITIONAL_EXPRESSION);
+      beforeLhs.done(CONDITIONAL_EXPRESSION);
     }
   }
 
@@ -1058,7 +1055,7 @@ public final class PrattExpressionParser {
       else {
         javaParser.getPatternParser().parsePrimaryPattern(builder, false);
       }
-      beforeLhs.done(myJavaElementTypeContainer.INSTANCE_OF_EXPRESSION);
+      beforeLhs.done(INSTANCE_OF_EXPRESSION);
     }
   }
 }

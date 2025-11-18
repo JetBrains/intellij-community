@@ -20,6 +20,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 /**
  * @deprecated Use the new Java syntax library instead.
@@ -30,19 +31,17 @@ public class FileParser {
 
   protected final TokenSet IMPORT_LIST_STOPPER_SET;
   private final JavaParser myParser;
-  private final AbstractBasicJavaElementTypeFactory.JavaElementTypeContainer myJavaElementTypeContainer;
   private final TokenSet IMPLICIT_CLASS_INDICATORS;
   private final OldParserWhiteSpaceAndCommentSetHolder myWhiteSpaceAndCommentSetHolder = OldParserWhiteSpaceAndCommentSetHolder.INSTANCE;
 
   public FileParser(@NotNull JavaParser javaParser) {
     this.myParser = javaParser;
-    this.myJavaElementTypeContainer = (javaParser).getJavaElementTypeFactory().getContainer();
     this.IMPORT_LIST_STOPPER_SET = TokenSet.orSet(
       BasicElementTypes.BASIC_MODIFIER_BIT_SET,
       TokenSet.create(JavaTokenType.CLASS_KEYWORD, JavaTokenType.INTERFACE_KEYWORD, JavaTokenType.ENUM_KEYWORD, JavaTokenType.AT));
     this.IMPLICIT_CLASS_INDICATORS =
-      TokenSet.create(this.myJavaElementTypeContainer.METHOD, this.myJavaElementTypeContainer.FIELD,
-                      this.myJavaElementTypeContainer.CLASS_INITIALIZER);
+      TokenSet.create(METHOD, FIELD,
+                      CLASS_INITIALIZER);
   }
 
   public void parse(@NotNull PsiBuilder builder) {
@@ -75,7 +74,7 @@ public class FileParser {
           invalidElements = null;
         }
         if (firstDeclarationOk == null) {
-          firstDeclarationOk = exprType(declaration) != myJavaElementTypeContainer.MODIFIER_LIST;
+          firstDeclarationOk = exprType(declaration) != MODIFIER_LIST;
         }
         if (firstDeclaration == null) {
           firstDeclaration = declaration;
@@ -105,7 +104,7 @@ public class FileParser {
     }
     if (isImplicitClass) {
       PsiBuilder.Marker beforeFirst = firstDeclaration.precede();
-      done(beforeFirst, myJavaElementTypeContainer.IMPLICIT_CLASS, builder, myWhiteSpaceAndCommentSetHolder);
+      done(beforeFirst, IMPLICIT_CLASS, builder, myWhiteSpaceAndCommentSetHolder);
     }
   }
 
@@ -129,7 +128,7 @@ public class FileParser {
     if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
       PsiBuilder.Marker modList = builder.mark();
       myParser.getDeclarationParser().parseAnnotations(builder);
-      done(modList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+      done(modList, MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
       if (!expect(builder, JavaTokenType.PACKAGE_KEYWORD)) {
         statement.rollbackTo();
         return;
@@ -144,7 +143,7 @@ public class FileParser {
 
     semicolon(builder);
 
-    done(statement, myJavaElementTypeContainer.PACKAGE_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
+    done(statement, PACKAGE_STATEMENT, builder, myWhiteSpaceAndCommentSetHolder);
   }
 
   protected @NotNull Pair<PsiBuilder.Marker, Boolean> parseImportList(PsiBuilder builder, Predicate<? super PsiBuilder> stopper) {
@@ -187,7 +186,7 @@ public class FileParser {
       list = precede;
     }
 
-    done(list, myJavaElementTypeContainer.IMPORT_LIST, builder, myWhiteSpaceAndCommentSetHolder);
+    done(list, IMPORT_LIST, builder, myWhiteSpaceAndCommentSetHolder);
     return Pair.create(list, isEmpty);
   }
 
@@ -199,8 +198,8 @@ public class FileParser {
 
     String identifierText = builder.getTokenText();
     IElementType type = getImportType(builder);
-    boolean isStatic = type == myJavaElementTypeContainer.IMPORT_STATIC_STATEMENT;
-    boolean isModule = type == myJavaElementTypeContainer.IMPORT_MODULE_STATEMENT;
+    boolean isStatic = type == IMPORT_STATIC_STATEMENT;
+    boolean isModule = type == IMPORT_MODULE_STATEMENT;
     final boolean isOk;
     if (isModule) {
       isOk = myParser.getModuleParser().parseName(builder) != null;
@@ -226,16 +225,16 @@ public class FileParser {
     IElementType type = builder.getTokenType();
     if (type == JavaTokenType.STATIC_KEYWORD) {
       builder.advanceLexer();
-      return myJavaElementTypeContainer.IMPORT_STATIC_STATEMENT;
+      return IMPORT_STATIC_STATEMENT;
     }
     if (type == JavaTokenType.IDENTIFIER &&
         JavaKeywords.MODULE.equals(builder.getTokenText()) &&
         builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
       builder.remapCurrentToken(JavaTokenType.MODULE_KEYWORD);
       builder.advanceLexer();
-      return myJavaElementTypeContainer.IMPORT_MODULE_STATEMENT;
+      return IMPORT_MODULE_STATEMENT;
     }
-    return myJavaElementTypeContainer.IMPORT_STATEMENT;
+    return IMPORT_STATEMENT;
   }
 
   private static @NotNull @NlsContexts.ParsingError String error(@NotNull AbstractBundle bundle, @NotNull String errorMessageKey) {

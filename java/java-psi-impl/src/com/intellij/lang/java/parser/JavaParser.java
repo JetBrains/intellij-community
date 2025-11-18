@@ -3,6 +3,7 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.tree.JavaElementTypeFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -58,6 +59,7 @@ public class JavaParser {
     return myPatternParser;
   }
 
+  @ApiStatus.ScheduledForRemoval
   public AbstractBasicJavaElementTypeFactory getJavaElementTypeFactory() {
     return JavaElementTypeFactory.INSTANCE;
   }

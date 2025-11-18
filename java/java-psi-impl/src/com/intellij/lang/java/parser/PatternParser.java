@@ -5,7 +5,6 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.OldParserWhiteSpaceAndCommentSetHolder;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Contract;
@@ -14,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 
 /**
  * @deprecated Use the new Java syntax library instead.
@@ -23,12 +23,10 @@ import static com.intellij.lang.java.parser.JavaParserUtil.*;
 public class PatternParser {
   private static final TokenSet PATTERN_MODIFIERS = TokenSet.create(JavaTokenType.FINAL_KEYWORD);
   private final JavaParser myParser;
-  private final AbstractBasicJavaElementTypeFactory.JavaElementTypeContainer myJavaElementTypeContainer;
   private final OldParserWhiteSpaceAndCommentSetHolder myWhiteSpaceAndCommentSetHolder = OldParserWhiteSpaceAndCommentSetHolder.INSTANCE;
 
   public PatternParser(@NotNull JavaParser javaParser) {
     this.myParser = javaParser;
-    this.myJavaElementTypeContainer = (javaParser).getJavaElementTypeFactory().getContainer();
   }
 
   @Contract(pure = true)
@@ -45,9 +43,9 @@ public class PatternParser {
     PsiBuilder.Marker patternStart = builder.mark();
     if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
         "_".equals(builder.getTokenText())) {
-      emptyElement(builder, myJavaElementTypeContainer.TYPE);
+      emptyElement(builder, TYPE);
       builder.advanceLexer();
-      done(patternStart, myJavaElementTypeContainer.UNNAMED_PATTERN, builder, myWhiteSpaceAndCommentSetHolder);
+      done(patternStart, UNNAMED_PATTERN, builder, myWhiteSpaceAndCommentSetHolder);
       return true;
     }
     patternStart.rollbackTo();
@@ -119,7 +117,7 @@ public class PatternParser {
     if (!expect(builder, JavaTokenType.RPARENTH)) {
       builder.error(JavaPsiBundle.message("expected.rparen"));
     }
-    recordStructure.done(myJavaElementTypeContainer.DECONSTRUCTION_LIST);
+    recordStructure.done(DECONSTRUCTION_LIST);
   }
 
   private PsiBuilder.@NotNull Marker parseTypeOrRecordPattern(final PsiBuilder builder, boolean expectVar) {
@@ -146,7 +144,7 @@ public class PatternParser {
       if (isRecord) {
         PsiBuilder.Marker variable = builder.mark();
         builder.advanceLexer();
-        variable.done(myJavaElementTypeContainer.DECONSTRUCTION_PATTERN_VARIABLE);
+        variable.done(DECONSTRUCTION_PATTERN_VARIABLE);
       }
       else {
         builder.advanceLexer();
@@ -159,16 +157,16 @@ public class PatternParser {
 
     if (isRecord) {
       patternVariable.drop();
-      done(pattern, myJavaElementTypeContainer.DECONSTRUCTION_PATTERN, builder, myWhiteSpaceAndCommentSetHolder);
+      done(pattern, DECONSTRUCTION_PATTERN, builder, myWhiteSpaceAndCommentSetHolder);
     }
     else {
       if (hasIdentifier) {
-        done(patternVariable, myJavaElementTypeContainer.PATTERN_VARIABLE, builder, myWhiteSpaceAndCommentSetHolder);
+        done(patternVariable, PATTERN_VARIABLE, builder, myWhiteSpaceAndCommentSetHolder);
       }
       else {
         patternVariable.drop();
       }
-      done(pattern, myJavaElementTypeContainer.TYPE_TEST_PATTERN, builder, myWhiteSpaceAndCommentSetHolder);
+      done(pattern, TYPE_TEST_PATTERN, builder, myWhiteSpaceAndCommentSetHolder);
     }
     return pattern;
   }

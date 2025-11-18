@@ -6,7 +6,6 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -15,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
+import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 import static com.intellij.util.BitUtil.isSet;
 import static com.intellij.util.BitUtil.set;
 
@@ -34,7 +34,6 @@ public class ReferenceParser {
   public static final int VAR_TYPE = 0x80;
   private static final TokenSet WILDCARD_KEYWORD_SET = TokenSet.create(JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.SUPER_KEYWORD);
   private final JavaParser myParser;
-  private final AbstractBasicJavaElementTypeFactory.JavaElementTypeContainer myJavaElementTypeContainer;
 
   public @Nullable PsiBuilder.Marker parseType(PsiBuilder builder, int flags) {
     TypeInfo typeInfo = parseTypeInfo(builder, flags);
@@ -76,19 +75,19 @@ public class ReferenceParser {
     }
     else if (tokenType == JavaTokenType.VAR_KEYWORD) {
       builder.advanceLexer();
-      type.done(myJavaElementTypeContainer.TYPE);
+      type.done(TYPE);
       typeInfo.marker = type;
       return typeInfo;
     }
     else if (isSet(flags, DIAMONDS) && tokenType == JavaTokenType.GT) {
       if (anno == null) {
-        emptyElement(builder, myJavaElementTypeContainer.DIAMOND_TYPE);
+        emptyElement(builder, DIAMOND_TYPE);
       }
       else {
         error(builder, JavaPsiBundle.message("expected.identifier"));
         typeInfo.hasErrors = true;
       }
-      type.done(myJavaElementTypeContainer.TYPE);
+      type.done(TYPE);
       typeInfo.marker = type;
       return typeInfo;
     }
@@ -103,7 +102,7 @@ public class ReferenceParser {
       return null;
     }
 
-    type.done(myJavaElementTypeContainer.TYPE);
+    type.done(TYPE);
     while (true) {
       myParser.getDeclarationParser().parseAnnotations(builder);
 
@@ -127,7 +126,7 @@ public class ReferenceParser {
 
     if (typeInfo.isVarArg || typeInfo.isArray) {
       type = type.precede();
-      type.done(myJavaElementTypeContainer.TYPE);
+      type.done(TYPE);
     }
 
     typeInfo.marker = type;
@@ -142,7 +141,7 @@ public class ReferenceParser {
     }
 
     if (wildcard) {
-      type.done(myJavaElementTypeContainer.TYPE);
+      type.done(TYPE);
     }
     else {
       type.error(JavaPsiBundle.message("error.message.wildcard.not.expected"));
@@ -188,11 +187,11 @@ public class ReferenceParser {
       typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
     }
     else if (!isStaticImport) {
-      emptyElement(builder, myJavaElementTypeContainer.REFERENCE_PARAMETER_LIST);
+      emptyElement(builder, REFERENCE_PARAMETER_LIST);
     }
 
     while (builder.getTokenType() == JavaTokenType.DOT) {
-      refElement.done(myJavaElementTypeContainer.JAVA_CODE_REFERENCE);
+      refElement.done(JAVA_CODE_REFERENCE);
 
       if (isNew && !diamonds && typeInfo.isParameterized) {
         return refElement;
@@ -231,15 +230,15 @@ public class ReferenceParser {
         typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
       }
       else {
-        emptyElement(builder, myJavaElementTypeContainer.REFERENCE_PARAMETER_LIST);
+        emptyElement(builder, REFERENCE_PARAMETER_LIST);
       }
     }
 
     if (isStaticImport) {
-      refElement.done(myJavaElementTypeContainer.IMPORT_STATIC_REFERENCE);
+      refElement.done(IMPORT_STATIC_REFERENCE);
     }
     else {
-      refElement.done(myJavaElementTypeContainer.JAVA_CODE_REFERENCE);
+      refElement.done(JAVA_CODE_REFERENCE);
     }
     return refElement;
   }
@@ -247,7 +246,7 @@ public class ReferenceParser {
   public boolean parseReferenceParameterList(PsiBuilder builder, boolean wildcard, boolean diamonds) {
     PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
-      list.done(myJavaElementTypeContainer.REFERENCE_PARAMETER_LIST);
+      list.done(REFERENCE_PARAMETER_LIST);
       return false;
     }
 
@@ -274,14 +273,14 @@ public class ReferenceParser {
       flags = set(flags, DIAMONDS, false);
     }
 
-    list.done(myJavaElementTypeContainer.REFERENCE_PARAMETER_LIST);
+    list.done(REFERENCE_PARAMETER_LIST);
     return isOk;
   }
 
   public @NotNull PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
-      list.done(myJavaElementTypeContainer.TYPE_PARAMETER_LIST);
+      list.done(TYPE_PARAMETER_LIST);
       return list;
     }
 
@@ -311,7 +310,7 @@ public class ReferenceParser {
       }
     }
 
-    list.done(myJavaElementTypeContainer.TYPE_PARAMETER_LIST);
+    list.done(TYPE_PARAMETER_LIST);
     return list;
   }
 
@@ -326,10 +325,10 @@ public class ReferenceParser {
       return null;
     }
 
-    parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, myJavaElementTypeContainer.EXTENDS_BOUND_LIST, JavaTokenType.AND);
+    parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, EXTENDS_BOUND_LIST, JavaTokenType.AND);
 
     if (!wild) {
-      param.done(myJavaElementTypeContainer.TYPE_PARAMETER);
+      param.done(TYPE_PARAMETER);
     }
     else {
       param.error(JavaPsiBundle.message("error.message.wildcard.not.expected"));
@@ -383,7 +382,7 @@ public class ReferenceParser {
           parseTypeInfo(builder, flags, false);
         }
 
-        typeInfo1.marker.done(myJavaElementTypeContainer.TYPE);
+        typeInfo1.marker.done(TYPE);
       }
     }
 
@@ -403,7 +402,6 @@ public class ReferenceParser {
 
   public ReferenceParser(@NotNull JavaParser javaParser) {
     this.myParser = javaParser;
-    this.myJavaElementTypeContainer = javaParser.getJavaElementTypeFactory().getContainer();
   }
 
   public static class TypeInfo {
