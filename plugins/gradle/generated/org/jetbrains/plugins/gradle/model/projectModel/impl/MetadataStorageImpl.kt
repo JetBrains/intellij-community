@@ -123,14 +123,11 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           name = "codeCache", valueType = primitiveTypeIntNotNullable,
                                                                           withDefault = false),
                                                       OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
+                                                                          name = "identityPath", valueType = primitiveTypeStringNotNullable,
+                                                                          withDefault = false),
+                                                      OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
                                                                           name = "presentableName",
-                                                                          valueType = primitiveTypeStringNotNullable, withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "url",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                            isNullable = false,
-                                                                            typeMetadata = FinalClassMetadata.KnownClass(
-                                                                              fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                          withDefault = false)),
+                                                                          valueType = primitiveTypeStringNotNullable, withDefault = false)),
                                                     supertypes = listOf("com.intellij.platform.workspace.storage.SymbolicEntityId"))
 
     addMetadata(typeMetadata)
@@ -833,15 +830,13 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                         withDefault = false),
                                                                                     OwnPropertyMetadata(isComputable = false, isKey = false,
                                                                                                         isOpen = false,
-                                                                                                        name = "presentableName",
+                                                                                                        name = "identityPath",
                                                                                                         valueType = primitiveTypeStringNotNullable,
                                                                                                         withDefault = false),
                                                                                     OwnPropertyMetadata(isComputable = false, isKey = false,
-                                                                                                        isOpen = false, name = "url",
-                                                                                                        valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                          isNullable = false,
-                                                                                                          typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                            fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                                        isOpen = false,
+                                                                                                        name = "presentableName",
+                                                                                                        valueType = primitiveTypeStringNotNullable,
                                                                                                         withDefault = false)),
                                                                                   supertypes = listOf(
                                                                                     "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
@@ -1031,18 +1026,15 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                                                                   isComputable = false,
                                                                                                                   isKey = false,
                                                                                                                   isOpen = false,
-                                                                                                                  name = "presentableName",
+                                                                                                                  name = "identityPath",
                                                                                                                   valueType = primitiveTypeStringNotNullable,
                                                                                                                   withDefault = false),
                                                                                                                 OwnPropertyMetadata(
                                                                                                                   isComputable = false,
                                                                                                                   isKey = false,
                                                                                                                   isOpen = false,
-                                                                                                                  name = "url",
-                                                                                                                  valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                    isNullable = false,
-                                                                                                                    typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                      fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
+                                                                                                                  name = "presentableName",
+                                                                                                                  valueType = primitiveTypeStringNotNullable,
                                                                                                                   withDefault = false)),
                                                                                                               supertypes = listOf(
                                                                                                                 "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
@@ -1082,13 +1074,13 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity", metadataHash = 1322744333)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity", metadataHash = 657314474)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity", metadataHash = 1811017647)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity", metadataHash = -360987748)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity", metadataHash = -894338435)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity", metadataHash = 1998822139)
     addMetadataHash(typeFqn = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId", metadataHash = -535054241)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId", metadataHash = -1846600137)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId", metadataHash = -1029413002)
-    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 39125357)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId", metadataHash = -1550874392)
+    addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 1828939835)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 361104699)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource", metadataHash = -565169080)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.service.syncAction.impl.bridge.GradleBridgeEntitySource",

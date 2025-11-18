@@ -47,5 +47,5 @@ internal fun GradleLightProject.projectUrl(context: ProjectResolverContext): Vir
 }
 
 internal fun GradleLightProject.projectEntityId(context: ProjectResolverContext): GradleProjectEntityId {
-  return GradleProjectEntityId(build.buildEntityId(context), projectUrl(context))
+  return GradleProjectEntityId(build.buildEntityId(context), identityPath)
 }
