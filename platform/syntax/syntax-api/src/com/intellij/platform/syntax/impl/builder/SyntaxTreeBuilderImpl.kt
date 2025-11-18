@@ -129,17 +129,6 @@ internal class SyntaxTreeBuilderImpl(
     myComments = tokens
   }
 
-  override fun <T> enforceCommentTokensInside(tokens: SyntaxElementTypeSet, body: () -> T): T {
-    val oldComments = myComments
-    myComments = tokens
-    try {
-      return body()
-    }
-    finally {
-      myComments = oldComments
-    }
-  }
-
   override fun remapCurrentToken(type: SyntaxElementType) {
     remap(myCurrentLexeme, type)
     clearCachedTokenType()
