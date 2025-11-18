@@ -115,7 +115,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
 
       @Override
       public void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, RequiredFlag required) {
-        visitAttribute(field, "<" + tagName + ">", required);
+        appendFieldBindingText(field, "<" + tagName + ">", required);
       }
 
       @Override
@@ -123,7 +123,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
                                    @Nullable String tagName,
                                    @NotNull PsiAnnotation collectionAnnotation,
                                    RequiredFlag required) {
-        visitAttribute(field, "<" + tagName + ">...", required);
+        appendFieldBindingText(field, "<" + tagName + ">...", required);
       }
 
       private void appendFieldBindingText(@NotNull PsiField field, @NotNull @NlsSafe String displayName, RequiredFlag required) {
