@@ -78,13 +78,12 @@ suspend fun waitUntilAssertSucceeds(message: String? = null, timeout: Duration =
 }
 
 @TestOnly
-fun waitUntilAssertSucceedsBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, block: () -> Unit) {
+fun <T> waitUntilAssertSucceedsBlocking(timeout: Duration = DEFAULT_TEST_TIMEOUT, block: () -> T): T {
   val deadline = System.currentTimeMillis() + timeout.inWholeMilliseconds
   var storedFailure: AssertionError
   do {
     try {
-      block()
-      return
+      return block()
     }
     catch (e: AssertionError) {
       storedFailure = e
