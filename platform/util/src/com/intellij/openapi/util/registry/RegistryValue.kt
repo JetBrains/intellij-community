@@ -30,8 +30,20 @@ open class RegistryValue @Internal constructor(
   val key: @NonNls String,
   private val keyDescriptor: RegistryKeyDescriptor?
 ) {
+  companion object {
+    private const val NO_COROUTINES_DIAGNOSTIC = "There is no kotlinx.coroutines library in this environment"
+  }
+
   private val listeners: MutableList<RegistryValueListener> = ContainerUtil.createLockFreeCopyOnWriteList()
-  private val flow = MutableSharedFlow<String>(onBufferOverflow = BufferOverflow.DROP_OLDEST, extraBufferCapacity = 1)
+  private val flow = try {
+    MutableSharedFlow<String>(onBufferOverflow = BufferOverflow.DROP_OLDEST, extraBufferCapacity = 1)
+  } catch (e : Throwable) {
+    when (e) {
+      // in maven RMI, there are no coroutines
+      is ClassNotFoundException, is NoClassDefFoundError -> null
+      else -> throw e
+    }
+  }
 
   var isChangedSinceAppStart: Boolean = false
     private set
@@ -261,12 +273,7 @@ open class RegistryValue @Internal constructor(
       listener.afterValueChanged(this)
     }
 
-    try {
-      flow.tryEmit(value)
-    } catch (e: ClassNotFoundException) {
-      // in Maven RMI, there are no coroutines
-      LOG.error(e)
-    }
+    flow?.tryEmit(value)
 
     if (!isRestartRequired() && resolveNotRequiredValue(key) == registry.getBundleValueOrNull(key)) {
       registry.getStoredProperties().remove(key)
@@ -318,7 +325,7 @@ open class RegistryValue @Internal constructor(
 
   /** Returns a flow that emits when the raw string value changes. */
   @ApiStatus.Experimental
-  fun asStringFlow(): Flow<String> = flow.distinctUntilChanged()
+  fun asStringFlow(): Flow<String> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).distinctUntilChanged()
 
   /**
    * Returns a flow that emits when the raw string value changes, converting the values to a boolean.
@@ -326,7 +333,7 @@ open class RegistryValue @Internal constructor(
    * @see asBoolean
    */
   @ApiStatus.Experimental
-  fun asBooleanFlow(): Flow<Boolean> = flow.map { it.toBoolean() }.distinctUntilChanged()
+  fun asBooleanFlow(): Flow<Boolean> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).map { it.toBoolean() }.distinctUntilChanged()
 
   /**
    * Returns a flow that emits when the raw string value changes, converting the values to an integer.
@@ -334,7 +341,7 @@ open class RegistryValue @Internal constructor(
    * @see asInteger
    */
   @ApiStatus.Experimental
-  fun asIntegerFlow(): Flow<Int> = flow.map { it.toInt() }.distinctUntilChanged()
+  fun asIntegerFlow(): Flow<Int> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).map { it.toInt() }.distinctUntilChanged()
 
   /**
    * Returns a flow that emits when the raw string value changes, converting the values to a double.
@@ -342,7 +349,7 @@ open class RegistryValue @Internal constructor(
    * @see asDouble
    */
   @ApiStatus.Experimental
-  fun asDoubleFlow(): Flow<Double> = flow.map { it.toDouble() }.distinctUntilChanged()
+  fun asDoubleFlow(): Flow<Double> = requireNotNull(flow, { NO_COROUTINES_DIAGNOSTIC }).map { it.toDouble() }.distinctUntilChanged()
 
   internal fun resetCache() {
     stringCachedValue = null
