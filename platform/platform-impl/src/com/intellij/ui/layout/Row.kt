@@ -3,7 +3,6 @@
 
 package com.intellij.ui.layout
 
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -36,10 +35,6 @@ interface RowBuilder : BaseBuilder {
   fun row(label: @Nls String?, separated: Boolean = false, init: Row.() -> Unit): Row {
     return row(label?.let { Label(it) }, separated = separated, init)
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row
 
 }
 

@@ -26,15 +26,11 @@ internal interface SpacingConfiguration {
    */
   val labelColumnHorizontalGap: Int
 
-  val largeVerticalGap: Int
-
   val shortTextWidth: Int
   val maxShortTextWidth: Int
 
   // row comment top gap or gear icon left gap
   val unitSize: Int
-
-  val commentVerticalTopGap: Int
 
   val dialogTopBottom: Int
   val dialogLeftRight: Int
