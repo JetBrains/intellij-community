@@ -112,10 +112,12 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
       init {
         iconPngPath = "${communityHome}/python/build/resources/PyCharmCore128.png"
         iconPngPathForEAP = "${communityHome}/python/build/resources/PyCharmCore128_EAP.png"
-        snapName = "pycharm-community"
-        snapDescription =
-          "Python IDE for professional developers. Save time while PyCharm takes care of the routine. " +
-          "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
+        snaps += Snap(
+          name = "pycharm-community",
+          description =
+            "Python IDE for professional developers. Save time while PyCharm takes care of the routine. " +
+            "Focus on bigger things and embrace the keyboard-centric approach to get the most of PyCharm’s many productivity features."
+        )
       }
 
       override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {

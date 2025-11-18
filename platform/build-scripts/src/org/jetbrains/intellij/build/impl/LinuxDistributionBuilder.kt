@@ -234,16 +234,26 @@ class LinuxDistributionBuilder(
       Span.current().addEvent("Linux .snap package build is disabled")
       return
     }
-    val snapName = requireNotNull(customizer.snapName) {
-      "Linux .snap package build requires 'snapName' in ${customizer::class.java.simpleName}"
-    }
-    buildSnapPackage(snapName, runtimeDir, unixDistPath, arch, targetLibcImpl)
-    customizer.snapLegacyAliases.forEach {
-      buildSnapPackage(snapName = it, runtimeDir, unixDistPath, arch, targetLibcImpl)
+    customizer.snaps.forEach {
+      buildSnapPackage(
+        snapName = it.name,
+        snapDescription = it.description,
+        runtimeDir = runtimeDir,
+        unixDistPath = unixDistPath,
+        arch = arch,
+        targetLibcImpl = targetLibcImpl,
+      )
     }
   }
 
-  private suspend fun buildSnapPackage(snapName: String, runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl) = BuildSnapSemaphore.withPermit {
+  private suspend fun buildSnapPackage(
+    snapName: String,
+    snapDescription: String,
+    runtimeDir: Path,
+    unixDistPath: Path,
+    arch: JvmArchitecture,
+    targetLibcImpl: LinuxLibcImpl,
+  ) = BuildSnapSemaphore.withPermit {
     val architecture = getSnapArchName(arch)
     val snapDir = context.paths.buildOutputDir.resolve("dist.snap.$snapName.$architecture")
     val snapArtifactName = getSnapArtifactName(snapName, arch)
@@ -256,7 +266,6 @@ class LinuxDistributionBuilder(
         }
         check(Docker.isAvailable) { "Docker is required to build .snap package" }
         requireNotNull(iconPngPath) { "'iconPngPath' not set" }
-        check(!customizer.snapDescription.isNullOrBlank()) { "'snapDescription' not set" }
 
         span.addEvent("prepare files")
         val appInfo = context.applicationInfo
@@ -284,7 +293,7 @@ class LinuxDistributionBuilder(
             "NAME" to snapName,
             "VERSION" to snapVersion,
             "SUMMARY" to productName,
-            "DESCRIPTION" to (customizer.snapDescription ?: ""),
+            "DESCRIPTION" to snapDescription,
             "GRADE" to if (appInfo.isEAP) "devel" else "stable",
             "LAUNCHER" to "bin/${launcherFileName}"
           )
@@ -340,9 +349,7 @@ class LinuxDistributionBuilder(
     val archSuffix = suffix(arch, targetLibcImpl)
     return sequenceOf("${archSuffix}.tar.gz", "${NO_RUNTIME_SUFFIX}${archSuffix}.tar.gz")
       .map { suffix -> context.productProperties.getBaseArtifactName(context) + suffix }
-      .plus(customizer.snapName?.let { getSnapArtifactName(it, arch) })
-      .filterNotNull()
-      .plus(customizer.snapLegacyAliases.map { getSnapArtifactName(it, arch) })
+      .plus(customizer.snaps.asSequence().map { getSnapArtifactName(it.name, arch) })
       .map(context.paths.artifactDir::resolve)
       .filter { it.exists() }
       .toList()

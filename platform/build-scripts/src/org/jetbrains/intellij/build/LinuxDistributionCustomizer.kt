@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.plus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
@@ -24,10 +25,12 @@ inline fun communityLinuxCustomizer(projectHome: String, configure: LinuxDistrib
     init {
       iconPngPath = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_128.png"
       iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
-      snapName = "intellij-idea-community"
-      snapDescription =
-        "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
-        "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
+      snaps += Snap(
+        name = "intellij-idea-community",
+        description =
+          "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
+          "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
+      )
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "idea-IC-$buildNumber"
@@ -98,19 +101,34 @@ open class LinuxDistributionCustomizer {
   }
 
   /**
-   * If `true`, a separate `*[org.jetbrains.intellij.build.impl.LinuxDistributionBuilder.NO_RUNTIME_SUFFIX].tar.gz` artifact without a runtime will be produced.
+   * If `true`, a separate `*[org.jetbrains.intellij.build.impl.NO_RUNTIME_SUFFIX].tar.gz` artifact without a runtime will be produced.
    */
   var buildArtifactWithoutRuntime: Boolean = false
 
-  /**
-   * Set both properties if a .snap package should be produced.
-   * [snapName] is the name of the package (e.g., "intellij-idea" or "pycharm").
-   * [snapDescription] is the plain text description of the package.
-   * [snapLegacyAliases] are legacy names for the package, e.g., "intellij-idea-ultimate" or "pycharm-community".
-   */
+  @Deprecated(message = "IJI-2568", replaceWith = ReplaceWith("snaps += Snap(name = value, description = TODO())"))
   var snapName: String? = null
+
+  @Deprecated(message = "IJI-2568", replaceWith = ReplaceWith("snaps += Snap(name = TODO(), description = value)"))
   var snapDescription: String? = null
-  var snapLegacyAliases: List<String> = emptyList()
+
+  /**
+   * Add an instance of [Snap] if a .snap package should be produced.
+   */
+  var snaps: PersistentList<Snap> = persistentListOf()
+
+  /**
+   * [name] is the name of the package (e.g., "intellij-idea" or "pycharm").
+   * [description] is the plain text description of the package.
+   */
+  data class Snap(
+    val name: String,
+    val description: String,
+  ) {
+    init {
+      require(name.isNotBlank()) { "Snap name cannot be blank" }
+      require(description.isNotBlank()) { "$name Snap description cannot be blank" }
+    }
+  }
 
   /**
    * Name of the root directory inside the .tar.gz archive.
