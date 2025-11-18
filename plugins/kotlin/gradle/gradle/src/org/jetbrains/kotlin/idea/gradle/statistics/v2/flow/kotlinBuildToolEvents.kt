@@ -55,7 +55,9 @@ val kotlinBuildToolsFusEvenList = listOf(
         GradleStatisticsEventGroups.MPP, listOf(
             KotlinBuildToolFusMetricName.MPP_PLATFORMS,
             KotlinBuildToolFusMetricName.ENABLED_HMPP,
-            KotlinBuildToolFusMetricName.JS_COMPILER_MODE
+            KotlinBuildToolFusMetricName.JS_COMPILER_MODE,
+            KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_DISABLED,
+            KotlinBuildToolFusMetricName.KOTLIN_CROSS_COMPILATION_NOT_SUPPORTED
         )
     ),
 
