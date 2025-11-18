@@ -51,7 +51,7 @@ internal fun assertGradleProjectEntity(
   identityPath: String,
   projectName: String = projectUrl.fileName,
 ) {
-  val projectId = GradleProjectEntityId(buildId, projectUrl)
+  val projectId = GradleProjectEntityId(buildId, identityPath)
   val projectEntity = project.workspaceModel.currentSnapshot.resolve(projectId)
   assertNotNull(projectEntity) {
     "GradleProjectEntity with symbolic ID = $projectId should be available in the storage."
