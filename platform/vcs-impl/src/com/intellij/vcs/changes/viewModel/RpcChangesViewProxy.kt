@@ -85,11 +85,13 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
 
   override fun getDisplayedChanges(): List<Change> = emptyList()
 
-  override fun getIncludedChanges(): List<Change> = inclusionModel.value?.getInclusion()?.filterIsInstance<Change>().orEmpty()
+  override fun getIncludedChanges(): List<Change> = getIncluded<Change>()
 
   override fun getDisplayedUnversionedFiles(): List<FilePath> = emptyList()
 
-  override fun getIncludedUnversionedFiles(): List<FilePath> = emptyList()
+  override fun getIncludedUnversionedFiles(): List<FilePath> = getIncluded<FilePath>()
+
+  private inline fun <reified T> getIncluded(): List<T> = inclusionModel.value?.getInclusion()?.filterIsInstance<T>().orEmpty()
 
   override fun expand(item: Any) {
   }
