@@ -27,12 +27,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
-import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
-import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionListener
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionState
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultClose
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultText
+import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
@@ -196,12 +191,13 @@ class SePopupContentPane(
     DumbAwareAction.create { vm.getHistoryItem(false).let { textField.text = it; textField.selectAll() } }
       .registerCustomShortcutSet(SearchTextField.ALT_SHOW_HISTORY_SHORTCUT, contentPane)
 
-    tabConfigurationState.value = SePopupHeaderPane.Configuration(
-      vm.tabVms.map { SePopupHeaderPane.Tab(it) },
-      vm.deferredTabVms.map { SePopupHeaderPane.Tab(it) },
-      vm.currentTabIndex,
-      vm.ShowInFindToolWindowAction()
-    )
+    launch {
+      vm.tabsModelFlow.map {
+        SePopupHeaderPane.Configuration(it.sortedTabVms.map { tabVm -> SePopupHeaderPane.Tab(tabVm) }, it.selectedTabIndexFlow)
+      }.collectLatest {
+        tabConfigurationState.value = it
+      }
+    }
 
     withContext(Dispatchers.UI) {
       textField.configure(vm.searchPattern.value) { newText ->
