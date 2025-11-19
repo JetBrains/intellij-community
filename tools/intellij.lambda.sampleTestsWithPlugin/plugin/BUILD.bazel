@@ -1,4 +1,4 @@
-### auto-generated section `build intellij.lambda.sampleTests.plugin` start
+### auto-generated section `build intellij.lambda.sampleTestsWithPlugin.plugin` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 resourcegroup(
@@ -9,9 +9,9 @@ resourcegroup(
 
 jvm_library(
   name = "plugin_test_lib",
-  module_name = "intellij.lambda.sampleTests.plugin",
+  module_name = "intellij.lambda.sampleTestsWithPlugin.plugin",
   visibility = ["//visibility:public"],
   srcs = glob([], allow_empty = True),
   resources = [":plugin_test_resources"]
 )
-### auto-generated section `build intellij.lambda.sampleTests.plugin` end
+### auto-generated section `build intellij.lambda.sampleTestsWithPlugin.plugin` end

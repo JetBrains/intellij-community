@@ -19,6 +19,7 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-test-resource" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
@@ -59,6 +60,5 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
     <orderEntry type="library" name="rd-framework" level="project" />
     <orderEntry type="library" name="rd-core" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core.impl" scope="TEST" />
   </component>
 </module>

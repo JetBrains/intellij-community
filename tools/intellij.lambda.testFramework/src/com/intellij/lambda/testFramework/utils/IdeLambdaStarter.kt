@@ -69,7 +69,9 @@ object IdeLambdaStarter {
 
     applyVMOptionsPatch {
       addSystemProperty(LambdaTestsConstants.protocolPortPropertyName, testProtocolPort)
-      addSystemProperty(TEST_MODULE_ID_PROPERTY_NAME, LambdaTestPluginHolder.testModuleId())
+      LambdaTestPluginHolder.testModuleId()?.let {
+        addSystemProperty(TEST_MODULE_ID_PROPERTY_NAME, it)
+      }
     }
 
     val rdSession = LambdaRdTestSession(lambdaRdIdeType)

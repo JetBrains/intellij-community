@@ -1,4 +1,4 @@
-package com.intellij.lambda.sampleTests
+package com.intellij.lambda.sampleTestsWithPlugin
 
 import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
 import com.intellij.openapi.application.ApplicationManager
