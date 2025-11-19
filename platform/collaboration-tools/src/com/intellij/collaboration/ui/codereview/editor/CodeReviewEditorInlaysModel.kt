@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.editor
 
-import com.intellij.diff.util.Side
+import com.intellij.diff.util.LineRange
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -17,23 +17,12 @@ interface CodeReviewInlayModel : EditorMappedViewModel {
   val key: Any
   override val line: StateFlow<Int?>
   override val isVisible: StateFlow<Boolean>
-}
 
-interface CodeReviewInlayWithOutlineModel {
-  val shouldShowOutline: StateFlow<Boolean>
-  val range: StateFlow<Pair<Side, IntRange>?>
+  interface Ranged : CodeReviewInlayModel {
+    val range: StateFlow<LineRange?>
 
-  fun setFocused(isFocused: Boolean)
-  fun setDimmed(isDimmed: Boolean)
-  val isFocused: StateFlow<Boolean>
-  val isDimmed: StateFlow<Boolean>
-
-  fun showOutline(isHovered: Boolean)
-}
-
-interface ResizableInlayModel : CodeReviewInlayWithOutlineModel {
-  fun setRange(range: Pair<Side, IntRange>?)
-  fun requestFocus()
-  fun setHidden(hidden: Boolean)
-  val isHidden: StateFlow<Boolean>
+    interface Adjustable : Ranged {
+      fun adjustRange(newStart: Int? = null, newEnd: Int? = null)
+    }
+  }
 }

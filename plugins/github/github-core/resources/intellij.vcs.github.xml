@@ -95,9 +95,6 @@
     <registryKey defaultValue="30"
                  description="Seconds between checking the ETag for the PR list"
                  key="github.pr.list.automatic.refresh.seconds"/>
-    <registryKey defaultValue="true"
-                 description="Disable new ways of adding multiline comments in unified diff"
-                 key="github.pr.new.multiline.comments.disabled"/>"/>
 
     <vcs.github.gistContentsCollector
       implementation="org.jetbrains.plugins.github.DefaultGithubGistContentsCollector"

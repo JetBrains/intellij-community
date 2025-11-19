@@ -4,7 +4,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.editor
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
-import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.HashingUtil
@@ -99,8 +98,8 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
 private suspend fun showReview(project: Project, settings: GithubPullRequestsProjectUISettings, fileVm: GHPRReviewFileEditorViewModel, editor: EditorEx): Nothing {
   withContext(Dispatchers.Main.immediate) {
     val reviewHeadContent = fileVm.originalContent.mapNotNull { it?.result?.getOrThrow() }.first()
-
-    val model = GHPRReviewFileEditorModel(this, settings, fileVm) showEditor@{ changeToShow, lineIdx ->
+    val cs = this
+    val model = GHPRReviewFileEditorModel(cs, settings, fileVm) showEditor@{ changeToShow, lineIdx ->
       val file = changeToShow.filePathAfter?.virtualFile ?: return@showEditor
       val fileOpenDescriptor = OpenFileDescriptor(project, file, lineIdx, 0)
       FileEditorManager.getInstance(project).openFileEditor(fileOpenDescriptor, true)
@@ -117,18 +116,14 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
       CodeReviewEditorGutterControlsRenderer.render(model, editor)
     }
     launchNow {
+      val activeRangesTracker = CodeReviewActiveRangesTracker()
       val userIcon = fileVm.iconProvider.getIcon(fileVm.currentUser.url, 16)
-      editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) {
-        CodeReviewEditorInlayUtils.installInlaysDimming(this, model, null)
-        editor.project?.let { project ->
-          CodeReviewEditorInlayUtils.installInlaysFocusTracker(this, model, project)
+      editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) { inlayModel ->
+        createRenderer(inlayModel, userIcon, activeRangesTracker).also { inlayRenderer ->
+          launch {
+            CodeReviewEditorInlayRangeOutlineUtils.showInlayOutline(editor, model, inlayModel, inlayRenderer, activeRangesTracker)
+          }
         }
-        launchNow {
-          model.inlays
-            .mapStatefulToStateful { inlayModel -> CodeReviewEditorInlayUtils.installInlayHoverOutline(this, editor, false, null, inlayModel) }
-            .collect()
-        }
-        createRenderer(it, userIcon)
       }
     }
 

@@ -40,7 +40,7 @@ interface GHPRReviewNewCommentEditorViewModel : CodeReviewSubmittableTextViewMod
   val submitActions: StateFlow<List<SubmitAction>>
 
   fun cancel()
-  fun updateLineRange(range: LineRange?)
+  fun updateLineRange(newStartLine: Int?, newEndLine: Int?)
 
   sealed interface SubmitAction : () -> Unit {
     fun interface CreateSingleComment : SubmitAction
@@ -70,14 +70,19 @@ internal class GHPRReviewNewCommentEditorViewModelImpl(
   private val _position: MutableStateFlow<GHPRReviewCommentPosition> = MutableStateFlow(pos)
   override val position: StateFlow<GHPRReviewCommentPosition> = _position.asStateFlow()
 
-  override fun updateLineRange(range: LineRange?) {
-    if (range == null) return
-    _position.value = if (range.start == range.end) {
-      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(side, range.end))
+  override fun updateLineRange(newStartLine: Int?, newEndLine: Int?) {
+    val range = when (val location = position.value.location) {
+      is GHPRReviewCommentLocation.SingleLine -> LineRange(location.lineIdx, location.lineIdx)
+      is GHPRReviewCommentLocation.MultiLine -> LineRange(location.startLineIdx, location.lineIdx)
+    }
+    val newRange = LineRange(newStartLine ?: range.start, newEndLine ?: range.end)
+    _position.value = if (newRange.start == newRange.end) {
+      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(side, newRange.end))
     }
     else {
-      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(side, range.start, range.end))
+      GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.MultiLine(side, newRange.start, newRange.end))
     }
+    GHPRStatisticsCollector.logResizedComments(project)
   }
 
   private val pendingReviewState: StateFlow<ComputedResult<GHPullRequestPendingReview?>> =

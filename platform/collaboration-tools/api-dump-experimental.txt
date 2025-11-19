@@ -945,6 +945,9 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - *sf:controlInlaysIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
 - *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function6,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker
+- a:getActiveRanges():kotlinx.coroutines.flow.StateFlow
+- a:rangeActivated(com.intellij.diff.util.LineRange,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 - *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
 - a:canCreateComment(I):Z
@@ -992,9 +995,6 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - a:getLinesWithComments():java.util.Set
 - getLinesWithNewComments():java.util.Set
 - a:isLineCommentable(I):Z
-*:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments
-- com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments
-- a:updateCommentLines(com.intellij.diff.util.LineRange,com.intellij.diff.util.LineRange):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.markup.ActiveGutterRenderer
@@ -1008,11 +1008,12 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - paint(com.intellij.openapi.editor.Editor,java.awt.Graphics,java.awt.Rectangle):V
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer$Companion
 - f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel,com.intellij.openapi.editor.ex.EditorEx,kotlin.coroutines.Continuation):java.lang.Object
-*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayUtils
-- sf:INSTANCE:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayUtils
-- f:installInlayHoverOutline(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.editor.Editor,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel):V
-- f:installInlaysDimming(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel,kotlin.jvm.functions.Function1):V
-- f:installInlaysFocusTracker(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel,com.intellij.openapi.project.Project):V
+*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayRangeOutlineUtils
+- sf:INSTANCE:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayRangeOutlineUtils
+- f:showInlayOutline(com.intellij.openapi.editor.ex.EditorEx,com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments,com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged,com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer,com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker,kotlin.coroutines.Continuation):java.lang.Object
+- f:wrapWithDimming(javax.swing.JComponent,com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged,com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker):javax.swing.JComponent
+*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlayRangeOutlineUtilsKt
+- sf:CodeReviewActiveRangesTracker():com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorInlaysModel
 - a:getInlays():kotlinx.coroutines.flow.StateFlow
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
@@ -1027,14 +1028,13 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - a:getKey():java.lang.Object
 - a:getLine():kotlinx.coroutines.flow.StateFlow
 - a:isVisible():kotlinx.coroutines.flow.StateFlow
-*:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 - a:getRange():kotlinx.coroutines.flow.StateFlow
-- a:getShouldShowOutline():kotlinx.coroutines.flow.StateFlow
-- a:isDimmed():kotlinx.coroutines.flow.StateFlow
-- a:isFocused():kotlinx.coroutines.flow.StateFlow
-- a:setDimmed(Z):V
-- a:setFocused(Z):V
-- a:showOutline(Z):V
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged
+- a:adjustRange(java.lang.Integer,java.lang.Integer):V
+- bs:adjustRange$default(com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel$Ranged$Adjustable,java.lang.Integer,java.lang.Integer,I,java.lang.Object):V
 *f:com.intellij.collaboration.ui.codereview.editor.EditorComponentInlaysUtilKt
 - sf:controlInlaysIn(com.intellij.openapi.editor.ex.EditorEx,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - sf:insertComponentAfter(com.intellij.openapi.editor.ex.EditorEx,I,javax.swing.JComponent,I,kotlin.jvm.functions.Function1):com.intellij.openapi.editor.Inlay
@@ -1047,17 +1047,6 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - com.intellij.collaboration.ui.codereview.editor.EditorMapped
 - a:getLine():kotlinx.coroutines.flow.StateFlow
 - a:isVisible():kotlinx.coroutines.flow.StateFlow
-*f:com.intellij.collaboration.ui.codereview.editor.FadeLayerUI
-- javax.swing.plaf.LayerUI
-- <init>():V
-- paint(java.awt.Graphics,javax.swing.JComponent):V
-- f:setAlpha(F,javax.swing.JLayer):V
-*:com.intellij.collaboration.ui.codereview.editor.ResizableInlayModel
-- com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayWithOutlineModel
-- a:isHidden():kotlinx.coroutines.flow.StateFlow
-- a:requestFocus():V
-- a:setHidden(Z):V
-- a:setRange(kotlin.Pair):V
 *f:com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 - sf:INSTANCE:com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 - f:getREVIEW_CHANGES_STATUS_COLOR():com.intellij.ui.JBColor
