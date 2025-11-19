@@ -743,6 +743,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @ApiStatus.Internal
   @CalledInAny
   public synchronized void addProjectPane(final @NotNull AbstractProjectViewPane pane, boolean restoreState) {
+    if (idToPane.containsKey(pane.getId())) {
+      LOG.error("Pane with ID=" + pane.getId() + " already exists. Please remove it first with removeProjectPane(pane).");
+      removeProjectPane(idToPane.get(pane.getId()));
+    }
+
     uninitializedPanes.add(pane);
     if (restoreState) {
       applyUninitializedPaneState(pane);
@@ -771,9 +776,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public synchronized void removeProjectPane(@NotNull AbstractProjectViewPane pane) {
     ThreadingAssertions.assertEventDispatchThread();
-    uninitializedPanes.remove(pane);
     //assume we are completely initialized here
     @NotNull String idToRemove = pane.getId();
+
+    var oldPaneState = getPaneState(pane);
+    if (oldPaneState != null) {
+      myUninitializedPaneState.put(idToRemove, oldPaneState);
+    }
+    uninitializedPanes.remove(pane);
 
     if (!idToPane.containsKey(idToRemove)) return;
     for (int i = getContentManager().getContentCount() - 1; i >= 0; i--) {
@@ -1523,19 +1533,25 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private void writePaneState(@NotNull Element panesElement) {
     for (AbstractProjectViewPane pane : idToPane.values()) {
-      Element paneElement = new Element(ELEMENT_PANE);
-      paneElement.setAttribute(ATTRIBUTE_ID, pane.getId());
-      try {
-        pane.writeExternal(paneElement);
-      }
-      catch (WriteExternalException e) {
-        continue;
-      }
+      Element paneElement = getPaneState(pane);
+      if (paneElement == null) continue;
       panesElement.addContent(paneElement);
     }
     for (Element element : myUninitializedPaneState.values()) {
       panesElement.addContent(element.clone());
     }
+  }
+
+  private static @Nullable Element getPaneState(AbstractProjectViewPane pane) {
+    Element paneElement = new Element(ELEMENT_PANE);
+    paneElement.setAttribute(ATTRIBUTE_ID, pane.getId());
+    try {
+      pane.writeExternal(paneElement);
+    }
+    catch (WriteExternalException e) {
+      return null;
+    }
+    return paneElement;
   }
 
   private static ProjectViewSharedSettings getGlobalOptions() {
