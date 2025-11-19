@@ -26,6 +26,11 @@ class UsageTargetNode extends Node {
   }
 
   @Override
+  protected boolean canDataNavigate(boolean isDataValid) {
+    return false;
+  }
+
+  @Override
   protected @NotNull String getNodeText() {
     return ObjectUtils.notNull(getTarget().getPresentation().getPresentableText(), "");
   }

@@ -1902,8 +1902,11 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
   private @Nullable Navigatable getNavigatableForNode(@NotNull DefaultMutableTreeNode node, boolean allowRequestFocus) {
-    Object userObject = node.getUserObject();
-    if (userObject instanceof Navigatable navigatable) {
+    Object maybeNavigatable = node;
+    if (!(maybeNavigatable instanceof Navigatable)) {
+      maybeNavigatable = node.getUserObject();
+    }
+    if (maybeNavigatable instanceof Navigatable navigatable) {
       return navigatable.canNavigate() ? new Navigatable() {
         @Override
         public void navigate(boolean requestFocus) {
@@ -1939,9 +1942,7 @@ public class UsageViewImpl implements UsageViewEx {
         protected Navigatable createDescriptorForNode(@NotNull DefaultMutableTreeNode node) {
           if (node.getChildCount() > 0) return null;
           if (node instanceof Node n && n.isExcluded()) return null;
-          try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162332")) {
-            return getNavigatableForNode(node, !myPresentation.isReplaceMode());
-          }
+          return getNavigatableForNode(node, !myPresentation.isReplaceMode());
         }
 
         @Override

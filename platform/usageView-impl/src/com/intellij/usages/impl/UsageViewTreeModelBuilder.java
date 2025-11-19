@@ -54,6 +54,11 @@ final class UsageViewTreeModelBuilder extends DefaultTreeModel {
     }
 
     @Override
+    protected boolean canDataNavigate(boolean isDataValid) {
+      return false;
+    }
+
+    @Override
     protected @NotNull String getNodeText() {
       return getUserObject().toString();
     }
