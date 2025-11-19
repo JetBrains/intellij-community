@@ -69,28 +69,6 @@ class SystemPythonServiceShowCaseTest {
   }
 
   @Test
-  fun testCustomPythonSunnyDay(@PythonBinaryPath python: Path, @TempDir venvPath: Path): Unit = timeoutRunBlocking(10.minutes) {
-    createVenv(python, venvPath).getOrThrow()
-    val python = VirtualEnvReader.Instance.findPythonInPythonRoot(venvPath) ?: error("no python in $venvPath")
-    val newPython = SystemPythonService().registerSystemPython(python).orThrow()
-    var allPythons = SystemPythonService().findSystemPythons()
-    assertThat("No newly registered python returned", allPythons, hasItem(newPython))
-    if (SystemInfo.isWindows) {
-      deleteCheckLocking(python)
-    }
-    else {
-      python.deleteExisting()
-    }
-
-    allPythons = SystemPythonService().findSystemPythons(forceRefresh = true)
-    assertThat("Broken python returned", allPythons, not(hasItem(newPython)))
-
-    if (SystemInfo.isWindows) {
-      deleteCheckLocking(venvPath)
-    }
-  }
-
-  @Test
   fun testRefresh(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(10.minutes) {
     val provider = CountingTestProvider(Result.failure(MessageError("...")))
     val sut = SystemPythonService()

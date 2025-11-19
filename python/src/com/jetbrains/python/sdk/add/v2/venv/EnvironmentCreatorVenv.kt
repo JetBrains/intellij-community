@@ -48,10 +48,7 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
       val venvAlreadyExistsError = venvAlreadyExistsError.get()
 
       venvAlreadyExistsError?.let { error ->
-        val interpreter = error.detectedSelectableInterpreter.also {
-          model.addManuallyAddedInterpreter(it)
-        }
-
+        val interpreter = error.detectedSelectableInterpreter
         model.state.selectedInterpreter.set(interpreter)
         model.navigator.navigateTo(
           newMethod = PythonInterpreterSelectionMethod.SELECT_EXISTING,
@@ -66,7 +63,7 @@ class EnvironmentCreatorVenv<P : PathHolder>(model: PythonMutableTargetAddInterp
         title = message("sdk.create.custom.base.python"),
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addManuallyAddedInterpreter,
+        onPathSelected = model::addManuallyAddedSystemPython,
       )
 
 

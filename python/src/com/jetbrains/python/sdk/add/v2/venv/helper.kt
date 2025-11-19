@@ -40,10 +40,10 @@ private suspend fun <P : PathHolder> PythonAddInterpreterModel<P>.createSdkFromB
   val inheritSitePackages = venvViewModel.inheritSitePackages.get()
   createVenv(basePython, pathToVenvHome.toString(), inheritSitePackages).getOr(message("project.error.cant.venv")) { return it }
 
-  val pythonBinaryPath = fileSystem.resolvePythonBinary(pathToVenvHome)
-                         ?: return PyResult.localizedError(message("commandLine.directoryCantBeAccessed", pathToVenvHome))
+  val venvPythonBinaryPath = fileSystem.resolvePythonBinary(pathToVenvHome)
+                             ?: return PyResult.localizedError(message("commandLine.directoryCantBeAccessed", pathToVenvHome))
 
-  val detectedSelectableInterpreter = fileSystem.getSystemPythonFromSelection(pythonBinaryPath).getOr { return it }
+  val detectedSelectableInterpreter = fileSystem.getSystemPythonFromSelection(venvPythonBinaryPath, requireSystemPython = false).getOr { return it }
 
   val sdkResult = detectedSelectableInterpreter.setupSdk(
     moduleOrProject = moduleOrProject,

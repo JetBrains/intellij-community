@@ -45,7 +45,7 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
         title = message("sdk.create.custom.base.python"),
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addManuallyAddedInterpreter,
+        onPathSelected = model::addManuallyAddedSystemPython,
       )
 
       executablePath = validatablePathField(
@@ -98,7 +98,6 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
       module.baseDir?.refresh(true, false)
     }
 
-    model.addInterpreter(newSdk)
 
     return Result.success(newSdk)
   }

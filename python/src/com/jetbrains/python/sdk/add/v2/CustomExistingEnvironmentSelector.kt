@@ -50,7 +50,7 @@ internal abstract class CustomExistingEnvironmentSelector<P : PathHolder>(
         title = message("sdk.create.custom.existing.env.title"),
         selectedSdkProperty = selectedEnv,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addManuallyAddedInterpreter,
+        onPathSelected = model::addManuallyAddedPythonNotNecessarilySystem,
       ) {
         visibleIf(toolState.backProperty.transform { it?.validationResult?.successOrNull != null })
       }
