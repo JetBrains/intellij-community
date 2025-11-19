@@ -25,6 +25,7 @@ import com.intellij.driver.sdk.ui.components.elements.JcefOffScreenViewComponent
 import com.intellij.driver.sdk.ui.components.elements.LetsPlotComponent
 import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.hasFocus
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
@@ -274,6 +275,10 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
       newFileButton.present()
     }
     newFileButton.strictClick()
+
+    waitFor("New file popup will be selected", timeout = 15.seconds) {
+      hasFocus(popup())
+    }
 
     popup().run {
       waitOneText("${type.typeName} Notebook").strictClick()
