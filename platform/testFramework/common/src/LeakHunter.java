@@ -250,6 +250,7 @@ public final class LeakHunter {
         throw new RuntimeException(e);
       }
     }
+    NonBlockingReadActionImpl.dropTestTasks();
     PersistentEnumeratorCache.clearCacheForTests();
     flushTelemetry();
     GCUtil.tryGcSoftlyReachableObjects();
