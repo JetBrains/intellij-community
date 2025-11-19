@@ -257,7 +257,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
             LOG.info("'$serializedLambda': received serialized lambda execution request")
 
-            val providedCoroutineContext = Dispatchers.EDT + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.clazzName}#${serializedLambda.methodName}")
+            val providedCoroutineContext = Dispatchers.EDT + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.stepName}")
             val requestFocusBeforeStart = false
             val clientId = providedCoroutineContext.clientId() ?: ClientId.current
 
@@ -270,7 +270,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
 
               val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
-              runLogged(serializedLambda.methodName, 1.minutes) {
+              runLogged(serializedLambda.stepName, 1.minutes) {
                 URLClassLoader(urls.toTypedArray(), testModuleDescriptor.pluginClassLoader).use {
                   SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it, context = ideContext)
                     .accept(ideContext)
@@ -282,7 +282,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             }
           }
           catch (ex: Throwable) {
-            LOG.warn("${session.rdIdeType}: ${serializedLambda.methodName.let { "'$it' " }}hasn't finished successfully", ex)
+            LOG.warn("${session.rdIdeType}: '${serializedLambda.stepName}' hasn't finished successfully", ex)
             throw ex
           }
           return@setSuspend
