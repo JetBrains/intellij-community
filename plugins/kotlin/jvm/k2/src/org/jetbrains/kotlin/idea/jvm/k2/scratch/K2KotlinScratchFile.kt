@@ -26,7 +26,7 @@ class K2KotlinScratchFile(project: Project, virtualFile: VirtualFile, val corout
             ScriptDefinitionProvider.getInstance(project)
                 ?.findDefinition(VirtualFileScriptSource(virtualFile))
                 ?.getConfigurationProviderExtension(project)
-                ?.remove(virtualFile)
+                ?.removeConfiguration(virtualFile)
 
             project.removeScriptEntities(listOf(virtualFile))
             KotlinScriptResolutionService.getInstance(project).process(virtualFile)

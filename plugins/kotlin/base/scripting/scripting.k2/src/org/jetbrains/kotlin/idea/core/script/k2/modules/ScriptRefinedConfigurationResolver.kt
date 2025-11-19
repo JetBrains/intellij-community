@@ -7,25 +7,28 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService.Companion.dropKotlinScriptCaches
 import org.jetbrains.kotlin.idea.core.script.k2.toConfigurationResult
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 
 interface ScriptConfigurationProviderExtension {
-    fun get(project: Project, virtualFile: VirtualFile): ScriptCompilationConfigurationResult? =
-        getScriptConfigurationFromWorkspaceModel(project, virtualFile)
+    val project: Project
 
-    suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult? = null
+    fun getConfiguration(virtualFile: VirtualFile): ScriptCompilationConfigurationResult? =
+        getConfigurationFromWorkspaceModel(virtualFile, project)
 
-    fun remove(virtualFile: VirtualFile): Unit = Unit
+    suspend fun createConfiguration(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult?
+
+    fun removeConfiguration(virtualFile: VirtualFile): Unit = Unit
 
     companion object {
-        fun getScriptConfigurationFromWorkspaceModel(project: Project, virtualFile: VirtualFile): ScriptCompilationConfigurationResult? {
+        private fun getConfigurationFromWorkspaceModel(
+            virtualFile: VirtualFile,
+            project: Project
+        ): ScriptCompilationConfigurationResult? {
             val virtualFileUrl = virtualFile.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
             val entity = project.workspaceModel.currentSnapshot.getVirtualFileUrlIndex().findEntitiesByUrl(virtualFileUrl)
-                .singleOrNull { it is KotlinScriptEntity } as? KotlinScriptEntity
-
+                .filterIsInstance<KotlinScriptEntity>().singleOrNull()
             return entity?.toConfigurationResult()
         }
     }
@@ -34,6 +37,5 @@ interface ScriptConfigurationProviderExtension {
 suspend fun Project.updateKotlinScriptEntities(entitySource: EntitySource, updater: (MutableEntityStorage) -> Unit) {
     workspaceModel.update("updating kotlin script entities [$entitySource]") {
         updater(it)
-        dropKotlinScriptCaches(this)
     }
 }

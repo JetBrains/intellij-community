@@ -112,7 +112,7 @@ class ReloadScriptConfigurationService(private val project: Project, private val
         val virtualFile = ktFile.alwaysVirtualFile
 
         scope.launch {
-            definition.getConfigurationProviderExtension(project).remove(virtualFile)
+            definition.getConfigurationProviderExtension(project).removeConfiguration(virtualFile)
             project.removeScriptEntities(listOf(virtualFile))
             ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()
             KotlinScriptResolutionService.getInstance(project).process(virtualFile)

@@ -8,7 +8,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -17,7 +16,6 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.kotlin.gradle.scripting.k2.definition.withIdeKeys
 import org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleScriptData
 import org.jetbrains.kotlin.gradle.scripting.k2.importing.GradleScriptModel
@@ -29,7 +27,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.asEntity
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.sdkId
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.toVirtualFileUrl
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionsModificationTracker
-import org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService.Companion.dropKotlinScriptCaches
 import org.jetbrains.kotlin.idea.core.script.k2.modules.*
 import org.jetbrains.kotlin.idea.core.script.v1.indexSourceRootsEagerly
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
@@ -48,14 +45,14 @@ import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
 @Service(Service.Level.PROJECT)
-class GradleKotlinScriptService(val project: Project) : ScriptConfigurationProviderExtension {
+class GradleKotlinScriptService(override val project: Project) : ScriptConfigurationProviderExtension {
     private val urlManager: VirtualFileUrlManager
         get() = project.workspaceModel.getVirtualFileUrlManager()
 
     private val VirtualFile.virtualFileUrl: VirtualFileUrl
         get() = toVirtualFileUrl(urlManager)
 
-    override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult {
+    override suspend fun createConfiguration(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult {
         val configuration = refineScriptCompilationConfiguration(VirtualFileScriptSource(virtualFile), definition, project)
 
         val currentStorage = project.workspaceModel.currentSnapshot.toBuilder()
@@ -285,20 +282,9 @@ class GradleKotlinScriptService(val project: Project) : ScriptConfigurationProvi
     }
 
     @Suppress("unused")
-    private class GradleWorkspaceModelListener(val project: Project, val scope: CoroutineScope) : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
+    private class GradleWorkspaceModelListener(val project: Project) : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
             val definitionChanges = event.getChanges(GradleScriptDefinitionEntity::class.java)
-            val configurationChanges = event.getChanges(KotlinScriptEntity::class.java)
-
-            if (definitionChanges.any() || configurationChanges.any()) {
-                dropKotlinScriptCaches(project)
-            }
-        }
-
-        override fun changed(event: VersionedStorageChange) = scope.launchTracked {
-            val definitionChanges = event.getChanges(GradleScriptDefinitionEntity::class.java)
-            val configurationChanges = event.getChanges(KotlinScriptEntity::class.java)
-            if (definitionChanges.none() && configurationChanges.none()) return@launchTracked
 
             if (definitionChanges.any()) {
                 ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount()

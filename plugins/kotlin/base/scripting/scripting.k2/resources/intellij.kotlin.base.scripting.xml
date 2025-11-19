@@ -90,6 +90,10 @@
             implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptTemplatesFromDependenciesDefinitionSource"/>
   </extensions>
 
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.core.script.k2.highlighting.KotlinScriptResolutionService$KotlinScriptWorkspaceModelListener"
+              topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+  </projectListeners>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
     <group id="KotlinScripts.ReloadConfigurationActionGroup"/>

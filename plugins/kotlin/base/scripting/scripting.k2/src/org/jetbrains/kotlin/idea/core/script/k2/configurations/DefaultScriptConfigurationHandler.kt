@@ -33,10 +33,10 @@ import kotlin.script.experimental.jvm.jvm
 
 @Service(Service.Level.PROJECT)
 class DefaultScriptConfigurationHandler(
-    val project: Project, val coroutineScope: CoroutineScope
+    override val project: Project, val coroutineScope: CoroutineScope
 ) : ScriptConfigurationProviderExtension {
 
-    override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult {
+    override suspend fun createConfiguration(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult {
         val definitionJdk = definition.compilationConfiguration[ScriptCompilationConfiguration.jvm.jdkHome]
         val configuration = getInitialConfiguration(definitionJdk, definition)
 

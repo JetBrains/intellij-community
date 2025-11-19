@@ -40,7 +40,7 @@ import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
 @Service(Service.Level.PROJECT)
-class MainKtsConfigurationProvider(val project: Project, val coroutineScope: CoroutineScope) : ScriptConfigurationProviderExtension {
+class MainKtsConfigurationProvider(override val project: Project, val coroutineScope: CoroutineScope) : ScriptConfigurationProviderExtension {
     private val urlManager: VirtualFileUrlManager
         get() = project.workspaceModel.getVirtualFileUrlManager()
 
@@ -55,11 +55,11 @@ class MainKtsConfigurationProvider(val project: Project, val coroutineScope: Cor
     var reporter: ProgressReporter? = null
         private set
 
-    override fun remove(virtualFile: VirtualFile) {
+    override fun removeConfiguration(virtualFile: VirtualFile) {
         visitedScripts.removeAll(virtualFile)
     }
 
-    override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult? {
+    override suspend fun createConfiguration(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptCompilationConfigurationResult {
         val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
         val scriptsToResolve = mainKtsConfiguration.importedScripts - visitedScripts.keys()
         if (scriptsToResolve.isNotEmpty()) {
@@ -103,7 +103,7 @@ class MainKtsConfigurationProvider(val project: Project, val coroutineScope: Cor
             val definition = findScriptDefinition(project, scriptSource)
 
             val resolver = definition.getConfigurationProviderExtension(project)
-            resolver.get(project, script) ?: resolver.create(script, definition)
+            resolver.getConfiguration(script) ?: resolver.createConfiguration(script, definition)
         }
     }
 

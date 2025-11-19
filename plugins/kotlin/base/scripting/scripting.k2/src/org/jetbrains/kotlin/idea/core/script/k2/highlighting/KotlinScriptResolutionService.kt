@@ -10,6 +10,8 @@ import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.observation.launchTracked
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
@@ -17,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalModu
 import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalScriptModuleStateModificationEvent
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationProviderExtension
+import org.jetbrains.kotlin.idea.core.script.k2.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinScriptProcessingFilter
 import org.jetbrains.kotlin.idea.core.script.v1.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.v1.awaitExternalSystemInitialization
@@ -43,7 +46,6 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
  *
  * Notes:
  * - Only files ending with [KotlinFileType.DOT_SCRIPT_EXTENSION] are handled.
- * - Use [dropKotlinScriptCaches] when you need to explicitly invalidate script-related caches and notify the IDE about module changes.
  */
 @Service(Service.Level.PROJECT)
 class KotlinScriptResolutionService(
@@ -108,7 +110,7 @@ class KotlinScriptResolutionService(
 
         assert(!application.isWriteAccessAllowed)
         definitionByFile.forEach { (virtualFile, definition) ->
-            configurationProviderExtension.get(project, virtualFile) ?: configurationProviderExtension.create(virtualFile, definition)
+            configurationProviderExtension.getConfiguration(virtualFile) ?: configurationProviderExtension.createConfiguration(virtualFile, definition)
         }
     }
 
@@ -125,6 +127,17 @@ class KotlinScriptResolutionService(
         return definition
     }
 
+    @Suppress("unused")
+    private class KotlinScriptWorkspaceModelListener(val project: Project) : WorkspaceModelChangeListener {
+        override fun beforeChanged(event: VersionedStorageChange) {
+            val configurationChanges = event.getChanges(KotlinScriptEntity::class.java)
+
+            if (configurationChanges.any()) {
+                dropKotlinScriptCaches(project)
+            }
+        }
+    }
+
     companion object {
         @JvmStatic
         fun getInstance(project: Project): KotlinScriptResolutionService = project.service()
@@ -137,7 +150,7 @@ class KotlinScriptResolutionService(
          * - Increments [HighlightingSettingsPerFile] modification count to refresh daemon highlighting.
          * - Publishes global module and script module state modification events to re-run analysis.
          */
-        fun dropKotlinScriptCaches(project: Project) {
+        private fun dropKotlinScriptCaches(project: Project) {
             ThreadingAssertions.assertWriteAccess()
 
             ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()

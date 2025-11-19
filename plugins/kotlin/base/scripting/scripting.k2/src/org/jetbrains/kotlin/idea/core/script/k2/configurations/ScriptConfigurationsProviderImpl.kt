@@ -112,7 +112,7 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
 
     override fun getScriptConfigurationResult(file: KtFile): ScriptCompilationConfigurationResult? {
         val definition = file.findScriptDefinition() ?: return null
-        return definition.getConfigurationProviderExtension(project).get(project, file.alwaysVirtualFile)
+        return definition.getConfigurationProviderExtension(project).getConfiguration(file.alwaysVirtualFile)
     }
 
     companion object {
