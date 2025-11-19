@@ -356,6 +356,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
                 runTest("../../completion/testData/weighers/basic/expectedType/MatchingNullableType.kt");
             }
 
+            @TestMetadata("propertyAccessor.kt")
+            public void testPropertyAccessor() throws Exception {
+                runTest("../../completion/testData/weighers/basic/expectedType/propertyAccessor.kt");
+            }
+
             @TestMetadata("returnFromFunction.kt")
             public void testReturnFromFunction() throws Exception {
                 runTest("../../completion/testData/weighers/basic/expectedType/returnFromFunction.kt");
