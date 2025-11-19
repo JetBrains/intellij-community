@@ -7,6 +7,9 @@ import com.intellij.lambda.testFramework.testApi.utils.waitSuspending
 import com.intellij.lambda.testFramework.testApi.utils.waitSuspendingNotNull
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditor
@@ -17,6 +20,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 import java.nio.file.Path
@@ -201,7 +206,7 @@ suspend fun openFile(
 
 context(lambdaIdeContext: LambdaIdeContext)
 suspend fun EditorImpl.expandAllRegionsIfAny(waitForReadyState: Boolean = true) {
-  if (foldingModel.allFoldRegions.any { !it.isExpanded }) {
+  if (readAction { foldingModel.allFoldRegions.any { !it.isExpanded } }) {
     frameworkLogger.info("Expand all regions in the file ${fileName}")
     executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS, dataContext)
     if (waitForReadyState) { // analysis will be restarted on command execution
@@ -241,10 +246,12 @@ fun closeFile(virtualFile: VirtualFile, project: Project = getProject()) {
 }
 
 context(lambdaBackendContext: LambdaBackendContext)
-private fun doOpenFile(relativePath: String, project: Project) {
+private suspend fun doOpenFile(relativePath: String, project: Project) {
   val fileEditorManager = FileEditorManager.getInstance(project)
   val virtualFile = getVirtualFileByRelativePath(relativePath)
-  fileEditorManager.openFile(virtualFile, true)
+  writeAction {
+    fileEditorManager.openFile(virtualFile, true)
+  }
 }
 
 context(lambdaFrontendContext: LambdaFrontendContext)

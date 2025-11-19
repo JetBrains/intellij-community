@@ -233,7 +233,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
             LOG.info("'$parameters': received action execution request")
 
-            val providedCoroutineContext = Dispatchers.EDT + CoroutineName("Lambda task: ${ideAction.name()}")
+            val providedCoroutineContext = Dispatchers.Default + CoroutineName("Lambda task: ${ideAction.name()}")
             val requestFocusBeforeStart = false
             val clientId = providedCoroutineContext.clientId() ?: ClientId.current
 
@@ -265,7 +265,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
             LOG.info("'$serializedLambda': received serialized lambda execution request")
 
-            val providedCoroutineContext = Dispatchers.EDT + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.stepName}")
+            val providedCoroutineContext = Dispatchers.Default + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.stepName}")
             val requestFocusBeforeStart = false
             val clientId = providedCoroutineContext.clientId() ?: ClientId.current
 
