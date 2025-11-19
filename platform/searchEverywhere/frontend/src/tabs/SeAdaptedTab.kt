@@ -24,12 +24,14 @@ import java.util.*
 class SeAdaptedTab private constructor(delegate: SeTabDelegate,
                                        override val name: @Nls String,
                                        override val id: String,
+                                       override val priority: Int,
                                        private val filterEditor: SeAdaptedTabFilterEditor?): SeDefaultTabBase(delegate) {
   override suspend fun getFilterEditor(): SeFilterEditor? = filterEditor
 
   companion object {
     fun create(legacyContributorId: String,
                name: @Nls String,
+               priority: Int,
                filterEditor: SeAdaptedTabFilterEditor?,
                scope: CoroutineScope,
                project: Project?,
@@ -37,7 +39,7 @@ class SeAdaptedTab private constructor(delegate: SeTabDelegate,
                initEvent: AnActionEvent): SeAdaptedTab {
       val delegate = SeTabDelegate(project, session, legacyContributorId, listOf(legacyContributorId.toProviderId()), initEvent, scope)
 
-      return SeAdaptedTab(delegate, name, legacyContributorId, filterEditor)
+      return SeAdaptedTab(delegate, name, legacyContributorId, priority, filterEditor)
     }
   }
 }

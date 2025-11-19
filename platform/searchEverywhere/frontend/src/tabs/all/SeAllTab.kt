@@ -27,8 +27,8 @@ import java.util.function.Function
 @ApiStatus.Internal
 class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val name: String get() = NAME
-
   override val isIndexingDependent: Boolean get() = true
+  override val priority: Int get() = Integer.MAX_VALUE
 
   override val id: String get() = ID
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {

@@ -267,13 +267,14 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
     val tabs = orphanedRemoteAdaptedTabInfos.map {
       // This trick is supposed to work only for monolith mode
-      val filterEditor = frontendProvidersHolder.legacySeparateTabContributors[it.providerId]?.let { contributor ->
-        SeAdaptedTabFilterEditor(contributor)
-      }
+      val legacyContributor = frontendProvidersHolder.legacySeparateTabContributors[it.providerId]
+      val filterEditor = legacyContributor?.let { contributor -> SeAdaptedTabFilterEditor(contributor) }
+      val priority = legacyContributor?.sortWeight?.let { weight -> 1000 - (weight / 2) } ?: 0
 
       popupScope.async {
         SeAdaptedTab.create(it.providerId.value,
                             it.tabName,
+                            priority,
                             filterEditor,
                             popupScope,
                             project,

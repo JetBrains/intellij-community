@@ -18,6 +18,7 @@ class SeClassesTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
+  override val priority: Int get() = 950
 
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
     SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates(), true)

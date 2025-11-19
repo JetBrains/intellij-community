@@ -26,6 +26,7 @@ class SeActionsTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
+  override val priority: Int get() = 800
   private val filterEditor: SeFilterEditor = SeActionsFilterEditor()
 
   override suspend fun getFilterEditor(): SeFilterEditor = filterEditor

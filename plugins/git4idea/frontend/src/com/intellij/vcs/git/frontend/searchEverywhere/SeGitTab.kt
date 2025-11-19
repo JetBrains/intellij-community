@@ -18,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeGitTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val name: String get() = GitBundle.message("search.everywhere.group.name")
   override val id: String get() = ID
+  override val priority: Int get() = 750
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = suspendLazy { SeTargetsFilterEditor(null, delegate.getTypeVisibilityStates(), false) }
 
   override suspend fun getFilterEditor(): SeFilterEditor {

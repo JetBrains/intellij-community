@@ -18,14 +18,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.*
-import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
-import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
-import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionResult
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultClose
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultKeep
-import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultText
-import com.intellij.platform.searchEverywhere.frontend.SeTab
+import com.intellij.platform.searchEverywhere.frontend.*
 import com.intellij.platform.searchEverywhere.providers.SeAdaptedItem
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
@@ -36,7 +29,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.text.toBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalAtomicApi::class)
 @ApiStatus.Internal
@@ -51,6 +43,7 @@ class SeTabVm(
   val name: String get() = tab.name
   val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
   val tabId: String get() = tab.id
+  val priority: Int get() = tab.priority
   val reportableTabId: String =
     if (SearchEverywhereUsageTriggerCollector.isReportable(tab)) tabId
     else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID

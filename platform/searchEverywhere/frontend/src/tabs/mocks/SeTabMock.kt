@@ -17,6 +17,7 @@ class SeTabMock(
   delegate: SeTabDelegate,
 ) : SeDefaultTabBase(delegate) {
   override val id: String = name
+  override val priority: Int get() = 0
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> =
     delegate.getItems(params)

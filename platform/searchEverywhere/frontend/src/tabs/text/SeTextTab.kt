@@ -19,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeTextTab(delegate: SeTabDelegate, registerShortcut: (AnAction) -> Unit) : SeDefaultTabBase(delegate) {
   override val name: String get() = NAME
   override val id: String get() = ID
+  override val priority: Int get() = 250
   private val filterEditorDisposable = Disposer.newDisposable()
   private val filterEditor: SuspendLazyProperty<SeTextFilterEditor> = initAsync(delegate.scope) {
     SeTextFilterEditor(delegate.project, delegate.getSearchScopesInfos().firstOrNull(),
