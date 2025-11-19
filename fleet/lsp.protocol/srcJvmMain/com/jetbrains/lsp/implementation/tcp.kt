@@ -6,6 +6,8 @@ import io.ktor.network.sockets.*
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
 import kotlinx.coroutines.*
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 suspend fun tcpServer(config: TcpConnectionConfig.Server, server: suspend CoroutineScope.(LspConnection) -> Unit) {
   SelectorManager(Dispatchers.IO).use { selectorManager ->
@@ -38,25 +40,41 @@ suspend fun tcpServer(config: TcpConnectionConfig.Server, server: suspend Corout
 }
 
 
-suspend fun tcpClient(config: TcpConnectionConfig.Client, body: suspend CoroutineScope.(LspConnection) -> Unit) {
+suspend fun tcpClient(
+  config: TcpConnectionConfig.Client,
+  connectionTimeout: Duration = 30.seconds,
+  body: suspend CoroutineScope.(LspConnection) -> Unit
+) {
   SelectorManager(Dispatchers.IO).use { selectorManager ->
-    try {
-      aSocket(selectorManager).tcp().connect(config.host, config.port).use { server ->
-        LOG.info("Client is connected to server ${server.remoteAddress}")
-        coroutineScope { body(KtorSocketConnection(server)) }
+    var backoff = 2.seconds
+    var timeLeft = connectionTimeout
+    while (true) {
+      try {
+        aSocket(selectorManager).tcp().connect(config.host, config.port).use { server ->
+          LOG.info("Client is connected to server ${server.remoteAddress}")
+          try {
+            coroutineScope { body(KtorSocketConnection(server)) }
+          }
+          finally {
+            LOG.info("Client disconnected from the server")
+          }
+        }
+        return@use
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        if (timeLeft <= Duration.ZERO) throw e
+        LOG.warn {
+          "Reconnecting to ${config.host}:${config.port} in $backoff... (error: ${e.message})"
+        }
+        val delayTime = backoff.coerceAtMost(timeLeft)
+        delay(delayTime)
+        timeLeft -= delayTime
+        backoff = (backoff * 2).coerceAtMost(connectionTimeout / 2)
       }
     }
-    finally {
-      LOG.info("Client disconnected from the server")
-    }
-  }
-}
-
-
-suspend fun tcpConnection(config: TcpConnectionConfig, body: suspend CoroutineScope.(LspConnection) -> Unit) {
-  when (config) {
-    is TcpConnectionConfig.Client -> tcpClient(config, body)
-    is TcpConnectionConfig.Server -> tcpServer(config, body)
   }
 }
 
