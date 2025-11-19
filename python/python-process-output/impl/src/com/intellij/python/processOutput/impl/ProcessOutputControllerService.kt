@@ -376,6 +376,7 @@ class ProcessOutputControllerService(
 
         coroutineScope.launch {
             loggedProcesses
+                .debounce(100.milliseconds)
                 .collect { list ->
                     for (coroutine in backgroundObservingCoroutines) {
                         coroutine.cancelAndJoin()
@@ -403,7 +404,7 @@ class ProcessOutputControllerService(
 
         combine(
             backgroundErrorProcesses,
-            loggedProcesses,
+            loggedProcesses.debounce(100.milliseconds),
             snapshotFlow { processTreeUiState.searchState.text },
             snapshotFlow { processTreeUiState.filters.toSet() },
         )
