@@ -82,7 +82,7 @@ Interacting with IJ Community PR Robot:
   - `status <github-pr-id> - check status of a Patronus CI job for Github PR`
   - `recreate <github-pr-id> - recreate internal github/pr-<id>/<hash> branch — used when the PR branch was modified (e.g., rebased) and the internal branch needs to be updated`
   - `close <github-pr-id> - close Github PR`
-  - ``rebase <github-pr-id> - rebase internal github/pr-<id>/<hash> branch with the latest `master` state``
+  - `rebase <github-pr-id> - rebase internal github/pr-<id>/<hash> branch with the latest master state`
   - `restart <github-pr-id> - restart Patronus CI job`
   - `help - list all available commands`
 
@@ -95,7 +95,7 @@ It ensures that Jewel remains compatible with all IntelliJ platform modules and 
 
 ### 🔀 Mirror Bot
 
-Synchronizes Jewel commits between internal monorepository and public GitHub community fork making merged changes publicly available.
+Synchronizes Jewel commits between internal monorepository and public GitHub community mirror repository, making merged changes publicly available.
 
 ---
 
