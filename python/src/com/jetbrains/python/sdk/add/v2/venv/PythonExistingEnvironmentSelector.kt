@@ -28,7 +28,7 @@ class PythonExistingEnvironmentSelector<P : PathHolder>(model: PythonAddInterpre
         title = message("sdk.create.custom.python.path"),
         selectedSdkProperty = model.state.selectedInterpreter,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addManuallyAddedInterpreter,
+        onPathSelected = model::addManuallyAddedPythonNotNecessarilySystem,
       )
     }
   }
