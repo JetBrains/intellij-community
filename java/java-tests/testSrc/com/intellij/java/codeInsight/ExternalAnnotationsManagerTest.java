@@ -117,22 +117,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
         assertClassFqn(nameText, psiFile, externalName, null);
 
         String typePath = annotationData.getTypePath();
-        if (typePath != null && typePath.startsWith("-")) {
-          PsiTypeParameterList typeParameterList;
-          if (listOwner instanceof PsiClass variable) {
-            typeParameterList = variable.getTypeParameterList();
-          } else if (listOwner instanceof PsiMethod method) {
-            typeParameterList = method.getTypeParameterList();
-          } else {
-            fail("typePath is not allowed for " + listOwner.getClass().getSimpleName(), psiFile, externalName);
-            break;
-          }
-          String error = validatePath(typePath, typeParameterList);
-          if (error != null) {
-            fail("Invalid typePath: " + error, psiFile, externalName);
-          }
-        }
-        else if (typePath != null) {
+        if (typePath != null) {
           PsiType type;
           if (listOwner instanceof PsiVariable variable) {
             type = variable.getType();
@@ -231,45 +216,6 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
       return factory.createType(typeParameter);
     }
     return Objects.requireNonNull(PsiUtil.getTypeByPsiElement(listOwner), () -> String.valueOf(listOwner));
-  }
-
-  private static String validatePath(@NotNull String pathString, @NotNull PsiTypeParameterList typeParameterList) {
-    if (!pathString.startsWith("-/")) {
-      return "Must start with '-/'";
-    }
-    String[] components = pathString.split("/", -1);
-    String component = components[1];
-    int i;
-    try {
-      i = Integer.parseInt(component);
-    }
-    catch (NumberFormatException ignored) {
-      return "Invalid path: " + pathString + "; invalid component: " + component;
-    }
-    PsiTypeParameter[] parameters = typeParameterList.getTypeParameters();
-    if (i <= 0 || parameters.length < i) {
-      return "Invalid path: " + pathString + "; type parameter index out of bounds: " + i;
-    }
-    PsiTypeParameter parameter = parameters[i - 1];
-    String asterix = components[2];
-    if (!asterix.equals("*")) {
-      return "Invalid path: " + pathString + "; only '*' is allowed for type parameter " + parameter.getName();
-    }
-    String nextIndex = components[3];
-    try {
-      i = Integer.parseInt(nextIndex);
-    }
-    catch (NumberFormatException ignored) {
-      return "Invalid path: " + pathString + "; invalid extends component: " + nextIndex;
-    }
-    PsiClassType[] types = parameter.getExtendsList().getReferencedTypes();
-    if (components.length == 4 && i == 1 && types.length == 0) return null;
-    if (i <= 0 || types.length < i) {
-      return "Invalid path: " + pathString + "; extends index out of bounds: " + i;
-    }
-    String rest = StringUtil.join(components, 4, components.length, "/");
-    if (rest.isEmpty()) return null;
-    return validatePath(rest, types[i - 1]);
   }
 
   private static String validatePath(String pathString, PsiType type) {
