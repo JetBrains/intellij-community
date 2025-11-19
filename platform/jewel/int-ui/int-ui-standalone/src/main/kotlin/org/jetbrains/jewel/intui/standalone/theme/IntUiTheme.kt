@@ -64,6 +64,7 @@ import org.jetbrains.jewel.ui.component.styling.SliderStyle
 import org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
+import org.jetbrains.jewel.ui.component.styling.TableStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipAutoHideBehavior
@@ -282,6 +283,7 @@ public fun ComponentStyling.dark(
     speedSearchStyle: SpeedSearchStyle = SpeedSearchStyle.dark(),
     searchMatchStyle: SearchMatchStyle = SearchMatchStyle.dark(),
     popupAdStyle: PopupAdStyle = PopupAdStyle.dark(),
+    tableStyle: TableStyle = TableStyle.dark(),
 ): ComponentStyling =
     DefaultComponentStyling(
         checkboxStyle = checkboxStyle,
@@ -320,6 +322,7 @@ public fun ComponentStyling.dark(
         speedSearchStyle = speedSearchStyle,
         searchMatchStyle = searchMatchStyle,
         popupAdStyle = popupAdStyle,
+        tableStyle = tableStyle,
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -398,6 +401,7 @@ public fun ComponentStyling.dark(
         speedSearchStyle = speedSearchStyle,
         searchMatchStyle = searchMatchStyle,
         popupAdStyle = PopupAdStyle.dark(),
+        tableStyle = TableStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -474,6 +478,7 @@ public fun ComponentStyling.dark(
         speedSearchStyle = SpeedSearchStyle.dark(),
         searchMatchStyle = SearchMatchStyle.dark(),
         popupAdStyle = PopupAdStyle.dark(),
+        tableStyle = TableStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -549,6 +554,7 @@ public fun ComponentStyling.dark(
         speedSearchStyle = SpeedSearchStyle.dark(),
         searchMatchStyle = SearchMatchStyle.dark(),
         popupAdStyle = PopupAdStyle.dark(),
+        tableStyle = TableStyle.dark(),
     )
 
 @Suppress("UnusedReceiverParameter")
@@ -589,6 +595,7 @@ public fun ComponentStyling.light(
     speedSearchStyle: SpeedSearchStyle = SpeedSearchStyle.light(),
     searchMatchStyle: SearchMatchStyle = SearchMatchStyle.light(),
     popupAdStyle: PopupAdStyle = PopupAdStyle.light(),
+    tableStyle: TableStyle = TableStyle.light(),
 ): ComponentStyling =
     DefaultComponentStyling(
         checkboxStyle = checkboxStyle,
@@ -627,10 +634,11 @@ public fun ComponentStyling.light(
         speedSearchStyle = speedSearchStyle,
         searchMatchStyle = searchMatchStyle,
         popupAdStyle = popupAdStyle,
+        tableStyle = tableStyle,
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
-@Deprecated("Use the variant with popupAdTextStyle.", level = DeprecationLevel.HIDDEN)
+@Deprecated("Use the variant with popupAdTextStyle and tableStyle.", level = DeprecationLevel.HIDDEN)
 public fun ComponentStyling.light(
     checkboxStyle: CheckboxStyle = CheckboxStyle.light(),
     chipStyle: ChipStyle = ChipStyle.light(),
@@ -705,6 +713,7 @@ public fun ComponentStyling.light(
         speedSearchStyle = speedSearchStyle,
         searchMatchStyle = searchMatchStyle,
         popupAdStyle = PopupAdStyle.light(),
+        tableStyle = TableStyle.light(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -781,6 +790,7 @@ public fun ComponentStyling.light(
         speedSearchStyle = SpeedSearchStyle.light(),
         searchMatchStyle = SearchMatchStyle.light(),
         popupAdStyle = PopupAdStyle.light(),
+        tableStyle = TableStyle.light(),
     )
 
 @Suppress("UnusedReceiverParameter", "DEPRECATION_ERROR")
@@ -856,6 +866,7 @@ public fun ComponentStyling.light(
         speedSearchStyle = SpeedSearchStyle.light(),
         searchMatchStyle = SearchMatchStyle.light(),
         popupAdStyle = PopupAdStyle.light(),
+        tableStyle = TableStyle.light(),
     )
 
 @Composable
