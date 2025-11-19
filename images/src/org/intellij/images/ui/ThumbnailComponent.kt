@@ -1,124 +1,118 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.intellij.images.ui;
+package org.intellij.images.ui
 
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NonNls;
-
-import javax.swing.*;
+import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import javax.swing.JComponent
+import javax.swing.UIManager
 
 /**
  * Thumbnail component.
- *
- * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
+ * 
+ * @author [Alexey Efimov](mailto:aefimov.box@gmail.com)
  */
-@Deprecated(forRemoval = true)
-public class ThumbnailComponent extends JComponent {
-  private static final @NonNls String FORMAT_PROP = "format";
-  private static final @NonNls String FILE_SIZE_PROP = "fileSize";
-  private static final @NonNls String FILE_NAME_PROP = "fileName";
-  private static final @NonNls String DIRECTORY_PROP = "directory";
-  private static final @NonNls String IMAGES_COUNT_PROP = "imagesCount";
-
-  /**
-   * @see #getUIClassID
-   * @see #readObject
-   */
-  private static final @NonNls String uiClassID = "ThumbnailComponentUI";
-
-  static {
-    UIManager.getDefaults().put(uiClassID, ThumbnailComponentUI.class.getName());
-  }
+@Deprecated("Not needed anymore")
+@ApiStatus.ScheduledForRemoval
+open class ThumbnailComponent : JComponent() {
 
   /**
    * Image component for rendering thumbnail image.
    */
-  private final ImageComponent imageComponent = new ImageComponent();
+  val imageComponent: ImageComponent = ImageComponent()
 
-  private String format;
-  private long fileSize;
-  private String fileName;
-  private boolean directory;
-  private int imagesCount;
-
-  public ThumbnailComponent() {
-    updateUI();
-  }
-
-  public ImageComponent getImageComponent() {
-    return imageComponent;
-  }
-
-  public String getFormat() {
-    return format;
-  }
-
-  public void setFormat(String format) {
-    String oldValue = this.format;
-    if (oldValue != null && !oldValue.equals(format) || oldValue == null && format != null) {
-      this.format = format;
-      firePropertyChange(FORMAT_PROP, oldValue, this.format);
+  var format: String? = null
+    set(format) {
+      val oldValue = field
+      if (oldValue != null && oldValue != format || oldValue == null && format != null) {
+        field = format
+        firePropertyChange(FORMAT_PROP, oldValue, field)
+      }
     }
+
+  private var fileSize: Long = 0
+
+  var fileName: String? = null
+    set(fileName) {
+      val oldValue = field
+      if (oldValue != null && oldValue != fileName || oldValue == null && fileName != null) {
+        field = fileName
+        firePropertyChange(FILE_NAME_PROP, oldValue, field)
+      }
+    }
+
+  var isDirectory: Boolean = false
+    set(directory) {
+      val oldValue = field
+      if (oldValue != directory) {
+        field = directory
+        firePropertyChange(DIRECTORY_PROP, oldValue, field)
+      }
+    }
+
+  var imagesCount: Int = 0
+    set(imagesCount) {
+      val oldValue = field
+      if (oldValue != imagesCount) {
+        field = imagesCount
+        firePropertyChange(IMAGES_COUNT_PROP, oldValue, field)
+      }
+    }
+
+  init {
+    updateUI()
   }
 
-  public long getFileSize() {
-    return fileSize;
+  fun getFileSize(): Long {
+    return fileSize
   }
 
-  public void setFileSize(long fileSize) {
-    long oldValue = this.fileSize;
+  fun setFileSize(fileSize: Long) {
+    val oldValue = this.fileSize
     if (oldValue != fileSize) {
-      this.fileSize = fileSize;
-      firePropertyChange(FILE_SIZE_PROP, Long.valueOf(oldValue), Long.valueOf(this.fileSize));
+      this.fileSize = fileSize
+      firePropertyChange(FILE_SIZE_PROP, oldValue, this.fileSize)
     }
   }
 
-  public String getFileName() {
-    return fileName;
+  fun getFileSizeText(): String {
+    return StringUtil.formatFileSize(fileSize)
   }
 
-  public void setFileName(String fileName) {
-    String oldValue = this.fileName;
-    if (oldValue != null && !oldValue.equals(fileName) || oldValue == null && fileName != null) {
-      this.fileName = fileName;
-      firePropertyChange(FILE_NAME_PROP, oldValue, this.fileName);
+  override fun updateUI() {
+    setUI(UIManager.getUI(this))
+  }
+
+  override fun getUIClassID(): String {
+    return Companion.uiClassID
+  }
+
+  companion object {
+    @NonNls
+    private const val FORMAT_PROP = "format"
+
+    @NonNls
+    private const val FILE_SIZE_PROP = "fileSize"
+
+    @NonNls
+    private const val FILE_NAME_PROP = "fileName"
+
+    @NonNls
+    private const val DIRECTORY_PROP = "directory"
+
+    @NonNls
+    private const val IMAGES_COUNT_PROP = "imagesCount"
+
+    /**
+     * @see .getUIClassID
+     * 
+     * @see .readObject
+     */
+    @NonNls
+    private const val uiClassID = "ThumbnailComponentUI"
+
+    init {
+      UIManager.getDefaults().put(uiClassID, ThumbnailComponentUI::class.java.getName())
     }
-  }
-
-  public boolean isDirectory() {
-    return directory;
-  }
-
-  public void setDirectory(boolean directory) {
-    boolean oldValue = this.directory;
-    if (oldValue != directory) {
-      this.directory = directory;
-      firePropertyChange(DIRECTORY_PROP, oldValue, this.directory);
-    }
-  }
-
-  public int getImagesCount() {
-    return imagesCount;
-  }
-
-  public void setImagesCount(int imagesCount) {
-    int oldValue = this.imagesCount;
-    if (oldValue != imagesCount) {
-      this.imagesCount = imagesCount;
-      firePropertyChange(IMAGES_COUNT_PROP, oldValue, this.imagesCount);
-    }
-  }
-
-  public String getFileSizeText() {
-    return StringUtil.formatFileSize(fileSize);
-  }
-
-  @Override
-  public void updateUI() {
-    setUI(UIManager.getUI(this));
-  }
-
-  @Override
-  public String getUIClassID() {
-    return uiClassID;
   }
 }
