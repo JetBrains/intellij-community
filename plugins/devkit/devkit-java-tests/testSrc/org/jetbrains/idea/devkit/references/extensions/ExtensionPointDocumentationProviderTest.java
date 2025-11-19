@@ -58,7 +58,7 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
     assertEquals(
       //language=HTML
       "<div class=\"definition\"><pre><b>foo.bar</b></pre><icon src=\"AllIcons.Nodes.Plugin\"/>&nbsp;" + expectedEpLocationString + "</div>" +
-      "<div class=\"content\"><h4>Extension Point Bean</h4><a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><p><b>Field Bindings</b></p><table class=\"sections\"><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#implementationClass\"><code>implementationClass</code></a></p></td><td valign=\"top\">String (required)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#stringCanBeEmpty\"><code>stringCanBeEmpty</code></a></p></td><td valign=\"top\">String (required, empty allowed)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#intValue\"><code>&lt;intValue&gt;</code></a></p></td><td valign=\"top\">Integer</td></tr></table><h4>Extension Point Implementation</h4><a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a></div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div>",
+      "<div class=\"content\"><h4>Extension Point Bean</h4>Extension instances provide data via <a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a>.<p><b>Field Bindings</b></p><table class=\"sections\"><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#implementationClass\"><code>implementationClass</code></a></p></td><td valign=\"top\">String (required)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#stringCanBeEmpty\"><code>stringCanBeEmpty</code></a></p></td><td valign=\"top\">String (required, empty allowed)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#intValue\"><code>&lt;intValue&gt;</code></a></p></td><td valign=\"top\">Integer</td></tr></table><h4>Extension Point Implementation</h4>Extension instances implement <a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a>.</div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div>",
       provider.generateDoc(docElement, getOriginalElement()));
   }
 
@@ -80,7 +80,7 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
 
     assertEquals(
       //language=HTML
-      "<div class=\"definition\"><pre><b>foo.bar</b></pre><icon src=\"AllIcons.Nodes.Plugin\"/>&nbsp;interfaceExtensionPointDocumentation.xml</div><div class=\"content\"><h4>Extension Point Implementation</h4><a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a></div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div>",
+      "<div class=\"definition\"><pre><b>foo.bar</b></pre><icon src=\"AllIcons.Nodes.Plugin\"/>&nbsp;interfaceExtensionPointDocumentation.xml</div><div class=\"content\"><h4>Extension Point Implementation</h4>Extension instances implement <a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a>.</div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div>",
       provider.generateDoc(docElement, getOriginalElement())
     );
   }

@@ -129,7 +129,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     if (beanClass != null) {
       return HtmlChunk.fragment(
         sectionHeader(DevKitBundle.message("extension.point.documentation.bean.section")),
-        classLink(beanClass),
+        HtmlChunk.raw(DevKitBundle.message("extension.point.documentation.bean.details", classLink(beanClass))),
         epBeanFields(beanClass)
       );
     }
@@ -186,7 +186,11 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     if (implementationClass == null) return HtmlChunk.empty();
     return HtmlChunk.fragment(
       sectionHeader(DevKitBundle.message("extension.point.documentation.implementation.section")),
-      classLink(implementationClass)
+      HtmlChunk.raw(
+        implementationClass.isInterface() ?
+        DevKitBundle.message("extension.point.documentation.implementation.details.interface", classLink(implementationClass)) :
+        DevKitBundle.message("extension.point.documentation.implementation.details.class", classLink(implementationClass))
+      )
     );
   }
 
