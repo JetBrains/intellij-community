@@ -249,7 +249,7 @@ internal fun <P : PathHolder> Panel.buildHatchFormFields(
         title = message("sdk.create.custom.base.python"),
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addManuallyAddedInterpreter,
+        onPathSelected = model::addManuallyAddedSystemPython,
       )
     }
   }.visibleIf(model.hatchViewModel.hatchExecutable.transform { it?.validationResult?.successOrNull != null })

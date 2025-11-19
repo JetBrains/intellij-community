@@ -15,6 +15,7 @@ import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.shared.VanillaPythonWithPythonInfo
+import com.intellij.python.community.services.systemPython.SysPythonRegisterError
 import com.intellij.python.community.services.systemPython.SystemPython
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.jetbrains.python.PyBundle.message
@@ -22,8 +23,8 @@ import com.jetbrains.python.PythonInfo
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.orLogException
 import com.jetbrains.python.isCondaVirtualEnv
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
@@ -62,7 +63,10 @@ sealed interface FileSystem<P : PathHolder> {
   fun parsePath(raw: String): PyResult<P>
   fun validateExecutable(path: P): PyResult<Unit>
 
-  suspend fun getSystemPythonFromSelection(pathToPython: P): PyResult<DetectedSelectableInterpreter<P>>
+  /**
+   * [pathToPython] has to be system (not venv) if set [requireSystemPython]
+   */
+  suspend fun getSystemPythonFromSelection(pathToPython: P, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<P>>
 
   suspend fun validateVenv(homePath: P): PyResult<Unit>
   suspend fun suggestVenv(projectPath: Path): PyResult<P>
@@ -106,7 +110,7 @@ sealed interface FileSystem<P : PathHolder> {
         !homePath.path.isAbsolute -> PyResult.localizedError(message("python.sdk.new.error.no.absolute"))
         homePath.path.exists() -> {
           val pythonBinaryPath = homePath.path.resolvePythonBinary()?.let { PathHolder.Eel(it) }
-          val existingPython = pythonBinaryPath?.let { getSystemPythonFromSelection(it) }?.successOrNull
+          val existingPython = pythonBinaryPath?.let { getSystemPythonFromSelection(it, requireSystemPython = false) }?.successOrNull
           if (existingPython == null) {
             PyResult.localizedError(message("sdk.create.custom.venv.folder.not.empty"))
           }
@@ -126,12 +130,32 @@ sealed interface FileSystem<P : PathHolder> {
       parsePath(suggestedVirtualEnvPath)
     }
 
-    override suspend fun getSystemPythonFromSelection(pathToPython: PathHolder.Eel): PyResult<DetectedSelectableInterpreter<PathHolder.Eel>> {
-      val systemPython = SystemPythonService().registerSystemPython(pathToPython.path).getOr { return it }
+    override suspend fun getSystemPythonFromSelection(pathToPython: PathHolder.Eel, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<PathHolder.Eel>> {
+      val sysPythonValidationInfo = SystemPythonService().registerSystemPython(pathToPython.path)
+      val (vanillaPython, isSystem) = when (sysPythonValidationInfo) {
+        is Result.Failure -> {
+          if (requireSystemPython) {
+            // Not a system python, error
+            return Result.failure(sysPythonValidationInfo.error.asPyError)
+          }
+          else {
+            when (val r = sysPythonValidationInfo.error) {
+              // Not a system python, but we are ok with it
+              is SysPythonRegisterError.NotASystemPython -> Pair(r.notSystemPython, false)
+              // Not a python at all
+              is SysPythonRegisterError.PythonIsBroken -> {
+                return Result.failure(r.asPyError)
+              }
+            }
+          }
+        }
+        // Perfectly valid system python
+        is Result.Success -> Pair(sysPythonValidationInfo.result, true)
+      }
       val interpreter = DetectedSelectableInterpreter(
-        homePath = PathHolder.Eel(systemPython.pythonBinary),
-        pythonInfo = systemPython.pythonInfo,
-        isBase = true
+        homePath = PathHolder.Eel(vanillaPython.pythonBinary),
+        pythonInfo = vanillaPython.pythonInfo,
+        isBase = isSystem
       )
 
       return PyResult.success(interpreter)
@@ -215,7 +239,7 @@ sealed interface FileSystem<P : PathHolder> {
     override suspend fun validateVenv(homePath: PathHolder.Target): PyResult<Unit> = withContext(Dispatchers.IO) {
       val pythonBinaryPath = resolvePythonBinary(homePath)
 
-      val existingPython = getSystemPythonFromSelection(pythonBinaryPath).successOrNull
+      val existingPython = getSystemPythonFromSelection(pythonBinaryPath, requireSystemPython = false).successOrNull
       val validationResult = if (existingPython == null) {
         val validationInfo = validateEmptyDir(
           ValidationRequest(
@@ -275,14 +299,14 @@ sealed interface FileSystem<P : PathHolder> {
       return BinOnTarget(path.pathString, targetEnvironmentConfiguration)
     }
 
-    override suspend fun getSystemPythonFromSelection(pathToPython: PathHolder.Target): PyResult<DetectedSelectableInterpreter<PathHolder.Target>> {
+    override suspend fun getSystemPythonFromSelection(pathToPython: PathHolder.Target, requireSystemPython: Boolean): PyResult<DetectedSelectableInterpreter<PathHolder.Target>> {
       return registerSystemPython(pathToPython)
     }
 
     override suspend fun detectSelectableVenv(): List<DetectedSelectableInterpreter<PathHolder.Target>> {
       val fullPathOnTarget = pythonLanguageRuntimeConfiguration.pythonInterpreterPath
       val pathHolder = PathHolder.Target(fullPathOnTarget)
-      val systemPython = getSystemPythonFromSelection(pathHolder).getOr { return emptyList() }
+      val systemPython = getSystemPythonFromSelection(pathHolder, requireSystemPython = false).getOr { return emptyList() }
       return listOf(systemPython)
     }
 

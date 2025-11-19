@@ -21,7 +21,6 @@ import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.sdk.PySdkToInstall
-import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.add.v2.conda.CondaViewModel
 import com.jetbrains.python.sdk.add.v2.hatch.HatchViewModel
 import com.jetbrains.python.sdk.add.v2.pipenv.PipenvViewModel
@@ -29,7 +28,6 @@ import com.jetbrains.python.sdk.add.v2.poetry.PoetryViewModel
 import com.jetbrains.python.sdk.add.v2.uv.UvViewModel
 import com.jetbrains.python.sdk.add.v2.venv.VenvViewModel
 import com.jetbrains.python.sdk.basePath
-import com.jetbrains.python.sdk.isSystemWide
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -63,7 +61,7 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   internal val knownInterpreters: MutableStateFlow<List<PythonSelectableInterpreter<P>>?> = MutableStateFlow(null)
   private val _detectedInterpreters: MutableStateFlow<List<DetectedSelectableInterpreter<P>>?> = MutableStateFlow(null)
   val detectedInterpreters: StateFlow<List<DetectedSelectableInterpreter<P>>?> = _detectedInterpreters
-  val manuallyAddedInterpreters: MutableStateFlow<List<PythonSelectableInterpreter<P>>> = MutableStateFlow(emptyList())
+  val manuallyAddedInterpreters: MutableStateFlow<List<ManuallyAddedSelectableInterpreter<P>>> = MutableStateFlow(emptyList())
   private var installable: List<InstallableSelectableInterpreter<P>> = emptyList()
   lateinit var allInterpreters: StateFlow<List<PythonSelectableInterpreter<P>>?>
   lateinit var baseInterpreters: StateFlow<List<PythonSelectableInterpreter<P>>?>
@@ -111,11 +109,11 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
       all?.distinctBy { int -> int.homePath }?.sorted()
     }.stateIn(scope, started = SharingStarted.Eagerly, initialValue = null)
 
-    this.baseInterpreters = combine(
-      detectedInterpreters,
-      manuallyAddedInterpreters
+    this.baseInterpreters = combine( // base pythons are always system only
+      detectedInterpreters.map { it?.sysPythonsOnly() },
+      manuallyAddedInterpreters.sysPythonsOnly()
     ) { detected, manual ->
-      val base = detected?.filter { it.isBase } ?: return@combine null
+      val base = detected ?: return@combine null
       val existingLanguageLevels = base.map { it.pythonInfo.languageLevel }.toSet()
       val nonExistingInstallable = installable.filter { it.pythonInfo.languageLevel !in existingLanguageLevels }
       manual + base.sorted() + nonExistingInstallable
@@ -123,28 +121,22 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
   }
 
 
-  internal fun addManuallyAddedInterpreter(interpreter: PythonSelectableInterpreter<P>) {
+  internal fun addManuallyAddedInterpreter(interpreter: ManuallyAddedSelectableInterpreter<P>) {
     manuallyAddedInterpreters.value += interpreter
     state.selectedInterpreter.set(interpreter)
   }
 
-  internal suspend fun addManuallyAddedInterpreter(homePath: P): PyResult<ManuallyAddedSelectableInterpreter<P>> {
-    val python = homePath.let { fileSystem.getSystemPythonFromSelection(it) }.getOr { return it }
+  internal suspend fun addManuallyAddedPythonNotNecessarilySystem(homePath: P) = addManuallyAddedInterpreter(homePath, requireSystemPython = false)
+  internal suspend fun addManuallyAddedSystemPython(homePath: P) = addManuallyAddedInterpreter(homePath, requireSystemPython = true)
+  private suspend fun addManuallyAddedInterpreter(homePath: P, requireSystemPython: Boolean): PyResult<ManuallyAddedSelectableInterpreter<P>> {
+    val python = homePath.let { fileSystem.getSystemPythonFromSelection(it, requireSystemPython) }.getOr { return it }
 
-    val interpreter = ManuallyAddedSelectableInterpreter(homePath, python.pythonInfo).also {
+    val interpreter = ManuallyAddedSelectableInterpreter(homePath, python.pythonInfo, isBase = python.isBase).also {
       this@PythonAddInterpreterModel.addManuallyAddedInterpreter(it)
     }
     return PyResult.success(interpreter)
   }
 
-  open fun addInterpreter(sdk: Sdk) {
-    val interpreter = ExistingSelectableInterpreter(
-      fileSystem.wrapSdk(sdk),
-      PythonInfo(PySdkUtil.getLanguageLevelForSdk(sdk)),
-      sdk.isSystemWide
-    )
-    this@PythonAddInterpreterModel.addManuallyAddedInterpreter(interpreter)
-  }
 
   @RequiresEdt
   internal fun addInstalledInterpreter(homePath: P, pythonInfo: PythonInfo): DetectedSelectableInterpreter<P> {
@@ -174,6 +166,12 @@ class PythonLocalAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPa
   }
 }
 
+internal interface MaybeSystemPython {
+  /**
+   * System python can be used as a base python for other envs
+   */
+  val isBase: Boolean
+}
 
 sealed class PythonSelectableInterpreter<P : PathHolder> : Comparable<PythonSelectableInterpreter<*>>, UiHolder, PythonInfoHolder {
   companion object {
@@ -202,14 +200,14 @@ class ExistingSelectableInterpreter<P : PathHolder>(
 }
 
 /**
- * [isBase] is a system interpreter, see [isBasePython]
+ * [isBase] is a system interpreter (aka system python)
  */
 class DetectedSelectableInterpreter<P : PathHolder>(
   override val homePath: P,
   override val pythonInfo: PythonInfo,
-  val isBase: Boolean,
+  override val isBase: Boolean,
   override val ui: PyToolUIInfo? = null,
-) : PythonSelectableInterpreter<P>() {
+) : PythonSelectableInterpreter<P>(), MaybeSystemPython {
   override fun toString(): String {
     return "DetectedSelectableInterpreter(homePath='$homePath', pythonInfo=$pythonInfo, isBase=$isBase, uiCustomization=$ui)"
   }
@@ -218,7 +216,8 @@ class DetectedSelectableInterpreter<P : PathHolder>(
 class ManuallyAddedSelectableInterpreter<P : PathHolder>(
   override val homePath: P,
   override val pythonInfo: PythonInfo,
-) : PythonSelectableInterpreter<P>() {
+  override val isBase: Boolean,
+) : PythonSelectableInterpreter<P>(), MaybeSystemPython {
   override fun toString(): String {
     return "ManuallyAddedSelectableInterpreter(homePath='$homePath', pythonInfo=$pythonInfo)"
   }
@@ -278,3 +277,6 @@ internal suspend fun PythonAddInterpreterModel<*>.getBasePath(module: Module?): 
 
   pyProjectTomlBased ?: module?.basePath?.let { Path.of(it) } ?: projectPathFlows.projectPathWithDefault.first()
 }
+
+private fun <T : MaybeSystemPython> Flow<Iterable<T>>.sysPythonsOnly(): Flow<List<T>> = map { it.sysPythonsOnly() }
+private fun <T : MaybeSystemPython> Iterable<T>.sysPythonsOnly(): List<T> = filter { it.isBase }

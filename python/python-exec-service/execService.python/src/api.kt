@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.python
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.*
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
 import com.intellij.python.community.execService.python.advancedApi.validatePythonAndGetInfo
+import com.intellij.python.community.execService.python.impl.execGetStdoutBoolImpl
+import com.intellij.python.community.execService.python.impl.execGetStdoutImpl
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonInfo
@@ -41,6 +44,24 @@ suspend fun ExecService.validatePythonAndGetInfo(python: PythonBinaryOnEelOrTarg
 suspend fun PythonBinaryOnEelOrTarget.validatePythonAndGetInfo(): PyResult<PythonInfo> = ExecService().validatePythonAndGetInfo(this)
 suspend fun ExecService.validatePythonAndGetInfo(python: PythonBinary): PyResult<PythonInfo> = validatePythonAndGetInfo(python.asBinToExec())
 suspend fun PythonBinary.validatePythonAndGetInfo(): PyResult<PythonInfo> = asBinToExec().validatePythonAndGetInfo()
+
+/**
+ * Execute [pythonCode] on [ExecutablePython] and (if exitcode is 0) return stdout
+ */
+suspend fun ExecutablePython.execGetStdout(pythonCode: @NlsSafe String, execService: ExecService = ExecService()): PyResult<String> = execService.execGetStdoutImpl(this, pythonCode, ZeroCodeStdoutTransformer)
+suspend fun PythonBinaryOnEelOrTarget.execGetStdout(pythonCode: @NlsSafe String, execService: ExecService = ExecService()): PyResult<String> = execService.execGetStdoutImpl(ExecutablePython.vanillaExecutablePython(this), pythonCode, ZeroCodeStdoutTransformer)
+
+/**
+ * Execute [pythonCode] on [ExecutablePython] and (if exitcode is 0) return stdout converted to [Boolean]. Useful for things like:
+ * ```kotlin
+ *  when (val r = executeGetBoolFromStdout("print(some_system_check()")) {
+ *    is Success<*> -> {/*r is true of false*/}
+ *    is Failure<*> ->  {/*r is an error here*/}
+ *  }
+ * ```
+ */
+suspend fun ExecutablePython.execGetBoolFromStdout(pythonCode: @NlsSafe String, execService: ExecService = ExecService()): PyResult<Boolean> = execService.execGetStdoutBoolImpl(this, pythonCode)
+suspend fun PythonBinaryOnEelOrTarget.execGetBoolFromStdout(pythonCode: @NlsSafe String, execService: ExecService = ExecService()): PyResult<Boolean> = execService.execGetStdoutBoolImpl(ExecutablePython.vanillaExecutablePython(this), pythonCode)
 
 
 /**

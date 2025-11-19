@@ -15,7 +15,7 @@ import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.python.community.execService.impl.Arg
 import com.intellij.python.community.execService.impl.ExecServiceImpl
-import com.intellij.python.community.execService.impl.PyExecBundle
+import com.intellij.python.community.execService.impl.PyExecBundle.message
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
@@ -104,7 +104,7 @@ suspend fun ExecService.execGetStdout(
   procListener: PyProcessListener? = null,
 ): PyResult<String> {
   val binary = eelApi.exec.findExeFilesInPath(binaryName).firstOrNull()?.asNioPath()
-               ?: return PyResult.localizedError(PyExecBundle.message("py.exec.fileNotFound", binaryName, eelApi.descriptor.machine.name))
+               ?: return PyResult.localizedError(message("py.exec.fileNotFound", binaryName, eelApi.descriptor.machine.name))
   return execGetStdout(BinOnEel(binary), args, options, procListener)
 }
 
@@ -169,9 +169,40 @@ suspend fun <T> ExecService.execute(
  */
 typealias ProcessOutputTransformer<T> = (EelProcessExecutionResult) -> Result<T, @NlsSafe String?>
 
-object ZeroCodeStdoutTransformer : ProcessOutputTransformer<String> {
-  override fun invoke(processOutput: EelProcessExecutionResult): Result<String, String?> =
-    if (processOutput.exitCode == 0) Result.success(processOutput.stdoutString.trim()) else Result.failure(null)
+/**
+ * Return `stdout` if error code is `0`
+ */
+val ZeroCodeStdoutTransformer: ZeroCodeStdoutTransformerTyped<String> = ZeroCodeStdoutTransformerTyped { it }
+
+/**
+ * Parses `bool` out of `stdout` is error code is `0`
+ */
+val ZeroCodeStdoutTransformerBool: ZeroCodeStdoutTransformerTyped<Boolean> = ZeroCodeStdoutTransformerTyped {
+  when (it) {
+    "True" -> true
+    "False" -> false
+    else -> null
+  }
+}
+
+
+/**
+ * See also [ZeroCodeStdoutTransformer], [ZeroCodeStdoutTransformerBool]
+ */
+class ZeroCodeStdoutTransformerTyped<T : Any>(val strParser: (String) -> T?) : ProcessOutputTransformer<T> {
+  override fun invoke(processOutput: EelProcessExecutionResult): Result<T, String?> {
+    if (processOutput.exitCode != 0) {
+      return Result.failure(message("py.exec.error.not.zero"))
+    }
+    val output = processOutput.stdoutString.trim()
+    val result = strParser(output)
+    return if (result == null) {
+      Result.failure(message("py.exec.error.unexpected.output", output))
+    }
+    else {
+      Result.success(result)
+    }
+  }
 }
 
 /**

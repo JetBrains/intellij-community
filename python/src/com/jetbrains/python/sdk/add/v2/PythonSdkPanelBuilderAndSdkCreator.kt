@@ -120,7 +120,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
         title = message("sdk.create.python.version"),
         selectedSdkProperty = model.state.baseInterpreter,
         validationRequestor = validationRequestor,
-        onPathSelected = model::addManuallyAddedInterpreter
+        onPathSelected = model::addManuallyAddedSystemPython
       ) {
         visibleIf(_projectVenv)
       }

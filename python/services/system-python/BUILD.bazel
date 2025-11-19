@@ -35,6 +35,7 @@ jvm_library(
     "//python/installer",
     "//python/python-venv:community-impl-venv",
     "//python/python-psi-impl:psi-impl",
+    "//python/python-exec-service/execService.python",
   ],
   exports = ["//python/services/shared"]
 )
@@ -75,6 +76,8 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//python/python-psi-impl:psi-impl",
+    "//python/python-exec-service/execService.python",
+    "//python/python-exec-service/execService.python:execService.python_test_lib",
   ],
   exports = [
     "//python/services/shared",
