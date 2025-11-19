@@ -70,6 +70,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSimpleListItemStyleStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTableStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
@@ -89,6 +90,7 @@ import org.jetbrains.jewel.ui.component.styling.SliderStyle
 import org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
+import org.jetbrains.jewel.ui.component.styling.TableStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
@@ -270,6 +272,10 @@ public val JewelTheme.Companion.gotItButtonStyle: ButtonStyle
 /** The styling for search text field components. */
 public val JewelTheme.Companion.searchTextFieldStyle: SearchTextFieldStyle
     @Composable @ReadOnlyComposable get() = LocalSearchTextFieldStyle.current
+
+/** The styling for table components. */
+public val JewelTheme.Companion.tableStyle: TableStyle
+    @Composable @ReadOnlyComposable get() = LocalTableStyle.current
 
 /**
  * Applies [theme] and [styling] to the [content] composition tree with Swing compat mode disabled.
