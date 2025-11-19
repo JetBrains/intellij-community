@@ -17,7 +17,7 @@ class SampleTest {
   fun `serialized test`(ide: BackgroundRunWithLambda) = runBlocking {
     ide.apply {
       runInBackend {
-        //waitForProject(20.seconds)
+        waitForProject(20.seconds)
       }
 
       run {
@@ -26,8 +26,8 @@ class SampleTest {
       }
 
       runInBackend {
-        Logger.getInstance("test").warn("backend Projects: " + getProject())
-        openFile("src/com/example/Foo.java", waitForReadyState = false, requireFocus = false)
+        Logger.getInstance("test").warn("Projects: " + getProjects().joinToString { it.name })
+        openFile("src/com/example/Foo.java", project = getProjects().single { it.name == "Test" }, waitForReadyState = false, requireFocus = false)
       }
     }
     Unit
