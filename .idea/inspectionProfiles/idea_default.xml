@@ -1915,6 +1915,18 @@
         <constraint name="Field" within="" contains="" />
         <constraint name="elements" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Avoid setting null border to a Swing component" description="Null border can be overridden on look-and-feel update. For the permanent effect, use empty border instead, e.g. JBUI.Borders.empty()." suppressId="SwingNullBorder" problemDescriptor="Use empty border (e.g. JBUI.Borders.empty()) instead of null border to avoid re-setting on LaF update." text="$component$.setBorder(null)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="component" nameOfExprType="javax\.swing\.JComponent" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Avoid setting null border to a Swing component" text="$component$.setBorder(null)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="component" nameOfExprType="javax\.swing\.JComponent" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Avoid setting null border to a Swing component" text="$component$.border = null" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="component" nameOfExprType="javax\.swing\.JComponent" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Avoid usage of Optional in Kotlin" text="$Expression$.ofNullable($params$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Expression" nameOfExprType="java\.util\.Optional" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
