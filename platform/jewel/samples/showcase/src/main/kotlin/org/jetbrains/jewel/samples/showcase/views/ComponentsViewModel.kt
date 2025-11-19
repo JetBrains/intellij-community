@@ -23,6 +23,7 @@ import org.jetbrains.jewel.samples.showcase.components.Scrollbars
 import org.jetbrains.jewel.samples.showcase.components.SegmentedControls
 import org.jetbrains.jewel.samples.showcase.components.Sliders
 import org.jetbrains.jewel.samples.showcase.components.SplitLayouts
+import org.jetbrains.jewel.samples.showcase.components.Tables
 import org.jetbrains.jewel.samples.showcase.components.Tabs
 import org.jetbrains.jewel.samples.showcase.components.TextAreas
 import org.jetbrains.jewel.samples.showcase.components.TextFields
@@ -66,6 +67,7 @@ public class ComponentsViewModel(
                 content = { SegmentedControls() },
             ),
             ViewInfo(title = "Sliders", iconKey = ShowcaseIcons.Components.slider, content = { Sliders() }),
+            ViewInfo(title = "Table", iconKey = ShowcaseIcons.Components.table, content = { Tables() }),
             ViewInfo(title = "Tabs", iconKey = ShowcaseIcons.Components.tabs, content = { Tabs() }),
             ViewInfo(title = "Tooltips", iconKey = ShowcaseIcons.Components.tooltip, content = { Tooltips() }),
             ViewInfo(title = "TextAreas", iconKey = ShowcaseIcons.Components.textArea, content = { TextAreas() }),
