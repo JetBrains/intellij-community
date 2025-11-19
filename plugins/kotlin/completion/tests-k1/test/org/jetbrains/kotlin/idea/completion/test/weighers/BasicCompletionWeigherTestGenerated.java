@@ -356,6 +356,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
                 runTest("../testData/weighers/basic/expectedType/MatchingNullableType.kt");
             }
 
+            @TestMetadata("overrideWithoutExplicitType.kt")
+            public void testOverrideWithoutExplicitType() throws Exception {
+                runTest("../testData/weighers/basic/expectedType/overrideWithoutExplicitType.kt");
+            }
+
             @TestMetadata("propertyAccessor.kt")
             public void testPropertyAccessor() throws Exception {
                 runTest("../testData/weighers/basic/expectedType/propertyAccessor.kt");
