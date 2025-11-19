@@ -21,13 +21,13 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
-import org.jspecify.annotations.NonNull;
 
 import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
 import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
@@ -85,8 +85,14 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     if (extensionPoint == null) return null;
     return new HtmlBuilder()
       .append(epQualifiedNameAndFileName(extensionPoint))
-      .append(epClassesDocumentation(extensionPoint))
-      .append(platformExplorerLink(extensionPoint))
+      .append(
+        HtmlChunk.fragment(
+          epBeanClassLinkAndFields(extensionPoint),
+          epImplementationClassLink(extensionPoint),
+          HtmlChunk.hr(),
+          resourceLinks(extensionPoint)
+        ).wrapWith(DocumentationMarkup.CONTENT_ELEMENT)
+      )
       .toString();
   }
 
@@ -117,19 +123,12 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     return fileName;
   }
 
-  private static HtmlChunk.@NonNull Element epClassesDocumentation(ExtensionPoint extensionPoint) {
-    return HtmlChunk.fragment(
-      epBeanClassLinkAndFields(extensionPoint),
-      epImplementationClassLink(extensionPoint)
-    ).wrapWith(DocumentationMarkup.CONTENT_ELEMENT);
-  }
-
   private static @NotNull HtmlChunk epBeanClassLinkAndFields(ExtensionPoint extensionPoint) {
     final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
     if (beanClass != null) {
       return HtmlChunk.fragment(
         sectionHeader(DevKitBundle.message("extension.point.documentation.bean.section")),
-        HtmlChunk.raw(DevKitBundle.message("extension.point.documentation.bean.details", classLink(beanClass))),
+        HtmlChunk.raw(DevKitBundle.message("extension.point.documentation.bean.details", classLink(beanClass))).wrapWith(HtmlChunk.p()),
         epBeanFields(beanClass)
       );
     }
@@ -190,7 +189,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
         implementationClass.isInterface() ?
         DevKitBundle.message("extension.point.documentation.implementation.details.interface", classLink(implementationClass)) :
         DevKitBundle.message("extension.point.documentation.implementation.details.class", classLink(implementationClass))
-      )
+      ).wrapWith(HtmlChunk.p())
     );
   }
 
@@ -198,11 +197,25 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     return HtmlChunk.text(title).wrapWith("h4");
   }
 
-  private static @NotNull HtmlChunk platformExplorerLink(ExtensionPoint extensionPoint) {
-    String ipeLink = "https://jb.gg/ipe?extensions=" + extensionPoint.getEffectiveQualifiedName();
-    return new HtmlBuilder()
-      .appendLink(ipeLink, DevKitBundle.message("extension.point.documentation.link.platform.explorer"))
-      .wrapWith(DocumentationMarkup.CONTENT_ELEMENT);
+  private static @NotNull HtmlChunk resourceLinks(ExtensionPoint extensionPoint) {
+    return HtmlChunk.fragment(
+      HtmlChunk.text(DevKitBundle.message("extension.point.documentation.resources.section")),
+      HtmlChunk.ul().children(
+        linkItem(
+          "https://jb.gg/ipe?extensions=" + extensionPoint.getEffectiveQualifiedName(),
+          DevKitBundle.message("extension.point.documentation.link.platform.explorer")),
+        linkItem(
+          "https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html",
+          DevKitBundle.message("extension.point.documentation.link.extension.points")),
+        linkItem(
+          "https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html",
+          DevKitBundle.message("extension.point.documentation.link.extensions"))
+      )
+    );
+  }
+
+  private static @NotNull HtmlChunk linkItem(@NonNls String target, @Nls String text) {
+    return HtmlChunk.li().child(HtmlChunk.link(target, text));
   }
 
   @Override
