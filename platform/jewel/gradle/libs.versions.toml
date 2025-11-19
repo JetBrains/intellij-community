@@ -1,4 +1,5 @@
 [versions]
+androidxCollection = "1.5.0"
 assertJ = "3.26.3"
 coil = "3.2.0"
 commonmark = "0.24.0"
@@ -22,6 +23,7 @@ metalava = "1.0.0-alpha13"
 jsoup = "1.21.2"
 
 [libraries]
+androidx-collection = { module = "androidx.collection:collection", version.ref = "androidxCollection" }
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertJ"}
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
