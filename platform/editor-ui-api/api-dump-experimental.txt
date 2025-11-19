@@ -118,6 +118,9 @@ a:com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.PossiblyDumbAware
 - *:<init>(java.util.function.Supplier,java.util.function.Supplier):V
 - *:<init>(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier):V
+c:com.intellij.openapi.actionSystem.AnActionEvent
+- com.intellij.ui.PlaceProvider
+- *f:getCoroutineScope():kotlinx.coroutines.CoroutineScope
 *:com.intellij.openapi.editor.CustomFoldRegion
 - com.intellij.openapi.editor.FoldRegion
 - a:getGutterIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
