@@ -12,7 +12,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.community.execService.impl.ExecLoggerService
@@ -24,10 +23,14 @@ import com.intellij.python.processOutput.impl.ui.toggle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.TraceContext
+import kotlin.collections.minus
+import kotlin.collections.plus
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,7 +42,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
@@ -367,17 +369,25 @@ class ProcessOutputControllerService(
         }
     }
 
+    @OptIn(FlowPreview::class)
     private fun collectProcessTree() {
         val backgroundErrorProcesses = MutableStateFlow<Set<Int>>(setOf())
+        val backgroundObservingCoroutines = mutableListOf<Job>()
 
         coroutineScope.launch {
             loggedProcesses
                 .collect { list ->
+                    for (coroutine in backgroundObservingCoroutines) {
+                        coroutine.cancelAndJoin()
+                    }
+                    backgroundObservingCoroutines.clear()
+
                     backgroundErrorProcesses.value = setOf()
+
                     list
                         .filter { it.traceContext == NON_INTERACTIVE_ROOT_TRACE_CONTEXT }
                         .forEach { process ->
-                            launch {
+                            backgroundObservingCoroutines += launch {
                                 process.exitInfo.collect {
                                     val exitValue = it?.exitValue
                                     if (exitValue != null && exitValue != 0) {
