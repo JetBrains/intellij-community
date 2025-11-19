@@ -9,6 +9,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.ImagesIcons;
 import org.intellij.images.editor.ImageDocument;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -21,6 +22,7 @@ import java.awt.image.BufferedImage;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
+@ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public class ThumbnailComponentUI extends ComponentUI {
   private static final @NonNls String DOTS = "...";

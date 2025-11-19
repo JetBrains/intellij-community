@@ -12,7 +12,7 @@ import javax.swing.UIManager
  * 
  * @author [Alexey Efimov](mailto:aefimov.box@gmail.com)
  */
-@Deprecated("Not needed anymore")
+@Deprecated("Not needed anymore", level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 open class ThumbnailComponent : JComponent() {
 
