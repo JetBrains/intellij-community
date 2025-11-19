@@ -44,38 +44,34 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
     String smallWildcard = "*" + small;
     MinusculeMatcher smallMatcher = NameUtil.buildMatcher(smallWildcard, MatchingMode.IGNORE_CASE);
     String big = StringUtil.repeat("_", small.length() + 1);
-    String bigWildcard = "*" + big;
-    MinusculeMatcher bigMatcher = NameUtil.buildMatcher(big, MatchingMode.IGNORE_CASE);
+    MinusculeMatcher bigMatcher = NameUtil.buildMatcher("*" + big, MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 10_000; i++) {
-        assertMatches(smallMatcher, smallWildcard, big);
-        assertDoesntMatch(bigMatcher, bigWildcard, small);
+        assertMatches(smallMatcher, big);
+        assertDoesntMatch(bigMatcher, small);
       }
     }).runAsStressTest().start();
   }
 
   public void testRepeatedLetterPerformance() {
     String big = StringUtil.repeat("Aaaaaa", 50000);
-    String pattern = "aaaaaaaaaaaaaaaaaaaaaaaa";
-    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
-    String mismatchPattern = "aaaaaaaaaaaaaaaaaaaaaaaab";
-    MinusculeMatcher mismatchMatcher = NameUtil.buildMatcher(mismatchPattern, MatchingMode.IGNORE_CASE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher("aaaaaaaaaaaaaaaaaaaaaaaa", MatchingMode.IGNORE_CASE);
+    MinusculeMatcher mismatchMatcher = NameUtil.buildMatcher("aaaaaaaaaaaaaaaaaaaaaaaab", MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 1_000; i++) {
-        assertMatches(matcher, pattern, big);
-        assertDoesntMatch(mismatchMatcher, mismatchPattern, big);
+        assertMatches(matcher, big);
+        assertDoesntMatch(mismatchMatcher, big);
       }
     }).runAsStressTest().start();
   }
 
   public void testMatchingLongHtmlWithShortHtml() {
-    String pattern = "*<p> aaa <div id=\"a";
     String html =
       "<html> <body> <H2> <FONT SIZE=\"-1\"> com.sshtools.cipher</FONT> <BR> Class AES128Cbc</H2> <PRE> java.lang.Object   <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.cipher.SshCipher       <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.crypto.engines.CbcBlockCipher           <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\"><B>com.sshtools.cipher.AES128Cbc</B> </PRE> <HR> <DL> <DT>public class <B>AES128Cbc</B><DT>extends com.maverick.ssh.crypto.engines.CbcBlockCipher</DL>  <P> This cipher can optionally be added to the J2SSH Maverick API. To add  the ciphers from this package simply add them to the <A HREF=\"../../../com/maverick/ssh2/Ssh2Context.html\" title=\"class in com.maverick.ssh2\"><CODE>Ssh2Context</CODE></A>  <blockquote><pre>   import com.sshtools.cipher.*;   </pre></blockquote> <P>  <P> <DL> <DT><B>Version:</B></DT>   <DD>Revision: 1.20</DD> </DL> <HR> </body> </html>";
-    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*<p> aaa <div id=\"a", MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 10_000; i++) {
-        assertDoesntMatch(matcher, pattern, html);
+        assertDoesntMatch(matcher, html);
       }
     }).runAsStressTest().start();
   }
@@ -98,20 +94,19 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
     MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 10_000; i++) {
-        assertDoesntMatch(matcher, pattern, name);
+        assertDoesntMatch(matcher, name);
       }
     }).runAsStressTest().startAsSubtest(subTestName);
   }
 
   public void testMatchingLongRuby() {
-    String pattern =
-      "*# -*- coding: utf-8 -*-$:. unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App. setup do |app|  # Use `rake config' to see complete project settings.   app. sdk_version = '4. 3'end";
     String name =
       "# -*- coding: utf-8 -*-$:.unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App.setup do |app|  # Use `rake config' to see complete project settings.  app.sdk_version = '4.3'  app.frameworks -= ['UIKit']end";
-    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, MatchingMode.IGNORE_CASE);
+    MinusculeMatcher matcher = NameUtil.buildMatcher(
+      "*# -*- coding: utf-8 -*-$:. unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App. setup do |app|  # Use `rake config' to see complete project settings.   app. sdk_version = '4. 3'end", MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 100_000; i++) {
-        assertDoesntMatch(matcher, pattern, name);
+        assertDoesntMatch(matcher, name);
       }
     }).runAsStressTest().start();
   }
@@ -119,14 +114,13 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testLongStringMatchingWithItself() {
     String s =
       "the class with its attributes mapped to fields of records parsed by an {@link AbstractParser} or written by an {@link AbstractWriter}.";
-    String wildcard = "*" + s;
     String substring = s.substring(0, 10);
     MinusculeMatcher matcher = NameUtil.buildMatcher(s, MatchingMode.IGNORE_CASE);
-    MinusculeMatcher matcherWildcard = NameUtil.buildMatcher(wildcard, MatchingMode.IGNORE_CASE);
+    MinusculeMatcher matcherWildcard = NameUtil.buildMatcher("*" + s, MatchingMode.IGNORE_CASE);
     Benchmark.newBenchmark(getName(), () -> {
       for (int i = 0; i < 100_000; i++) {
-        assertMatches(matcher, s, s);
-        assertMatches(matcherWildcard, wildcard, s);
+        assertMatches(matcher, s);
+        assertMatches(matcherWildcard, s);
 
         assertPreference(matcher, substring, s);
         assertPreference(matcherWildcard, substring, s);
@@ -134,15 +128,15 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
     }).runAsStressTest().start();
   }
 
-  private static void assertMatches(MinusculeMatcher matcher, @NonNls String pattern, @NonNls String name) {
+  private static void assertMatches(MinusculeMatcher matcher, @NonNls String name) {
     if (!matcher.matches(name)) {
-      fail(pattern + " doesn't match " + name + "!!!");
+      fail(matcher.getPattern() + " doesn't match " + name + "!!!");
     }
   }
 
-  private static void assertDoesntMatch(MinusculeMatcher matcher, @NonNls String pattern, @NonNls String name) {
+  private static void assertDoesntMatch(MinusculeMatcher matcher, @NonNls String name) {
     if (matcher.matches(name)) {
-      fail(pattern + " matches " + name + "!!!");
+      fail(matcher.getPattern() + " matches " + name + "!!!");
     }
   }
 
