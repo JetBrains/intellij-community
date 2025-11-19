@@ -346,6 +346,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("destructuring.kt")
+            public void testDestructuring() throws Exception {
+                runTest("../../completion/testData/weighers/basic/expectedType/destructuring.kt");
+            }
+
             @TestMetadata("ifConditionQualified.kt")
             public void testIfConditionQualified() throws Exception {
                 runTest("../../completion/testData/weighers/basic/expectedType/ifConditionQualified.kt");
