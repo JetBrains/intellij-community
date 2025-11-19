@@ -43,6 +43,7 @@ class TerminalBlocksModelImpl(
         trimBlocksAfter(outputModel.endOffset)
         if (!event.isTrimming) {
           trimBlocksAfter(event.offset)
+          adjustActiveBlockOffsets(event)
         }
       }
     })
@@ -86,7 +87,7 @@ class TerminalBlocksModelImpl(
   }
 
   /**
-   * Removes all blocks that end before the [offset] (inclusive), and adjusts all left blocks offsets.
+   * Removes all blocks that end before the [offset] (inclusive).
    */
   private fun trimBlocksBefore(offset: TerminalOffset) {
     val firstNotRemovedBlockIndex = blocks.indexOfFirst { it.endOffset > offset || (it.startOffset == it.endOffset && it.endOffset == offset) }
@@ -104,7 +105,7 @@ class TerminalBlocksModelImpl(
   }
 
   /**
-   * Removes all blocks that start after [offset] and adjusts the end offset of the last block.
+   * Removes all blocks that start after [offset].
    */
   private fun trimBlocksAfter(offset: TerminalOffset) {
     val firstBlockToRemoveIndex = blocks.indexOfFirst { it.startOffset > offset }
@@ -118,10 +119,35 @@ class TerminalBlocksModelImpl(
     if (blocks.isEmpty()) {
       addNewBlock(outputModel.startOffset)
     }
-    else {
-      val active = activeBlock as TerminalCommandBlockImpl
-      activeBlock = active.copy(endOffset = outputModel.endOffset)
+  }
+
+  private fun adjustActiveBlockOffsets(event: TerminalContentChangeEvent) {
+    var block = activeBlock as TerminalCommandBlockImpl
+
+    val delta = event.newText.length.toLong() - event.oldText.length
+    if (block.commandStartOffset != null
+        && event.offset >= block.startOffset
+        && event.offset + event.oldText.length.toLong() < block.commandStartOffset) {
+      // Text changed inside the prompt after the command start offset was already set, let's update further offsets.
+      block = block.copy(
+        commandStartOffset = block.commandStartOffset + delta,
+        outputStartOffset = block.outputStartOffset?.let { it + delta },
+      )
     }
+    else if (block.commandStartOffset != null && block.outputStartOffset != null
+             && event.offset >= block.commandStartOffset
+             && event.offset + event.oldText.length.toLong() < block.outputStartOffset) {
+      // Text changed inside the command text after command was started, let's update further offsets.
+      // Shouldn't be the case, because command text shouldn't be changed after command is started,
+      // but let's consider this case as well.
+      block = block.copy(outputStartOffset = block.outputStartOffset + delta)
+    }
+    // Else:
+    // Command text or output was changed - updating block end offset is enough.
+    // 2+ parts (prompt/command/output) were changed in a single event, can't predict how to change the offsets.
+
+    // Always set the active block end offset to the end of the output.
+    activeBlock = block.copy(endOffset = outputModel.endOffset)
   }
 
   private fun replaceBlocks(newBlocks: List<TerminalBlockBase>) {
