@@ -19,8 +19,7 @@ import kotlin.test.assertTrue
 @ApiStatus.Internal
 object TestInlineCompletionLogs {
   private fun getSessionLogs(events: List<LogEvent>): List<LogEvent> = events.filter {
-    it.group.id == InlineCompletionLogs.GROUP.id
-    it.event.id == InlineCompletionLogs.Session.SESSION_EVENT.eventId
+    it.group.id == InlineCompletionLogs.GROUP.id && it.event.id == InlineCompletionLogs.Session.SESSION_EVENT.eventId
   }
 
   /**
