@@ -420,7 +420,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         focus = true
       }
       getToolWindowManager().getToolWindow(toolWindowId)!!.activate(descriptor.activationCallback, focus, focus)
-      emitToolWindowOpen(project, toolWindowId, focus)
+      //emitToolWindowOpen(project, toolWindowId, focus)
+      val manager = RunDashboardUiManager.getInstanceIfCreated(project)
+      manager?.openToolWindow(toolWindowId, focus);
     }, project.disposed)
   }
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper
@@ -123,6 +124,16 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     }
   }
 
+  internal suspend fun subscribeToBackendOpenToolWindowEvents() {
+    RunDashboardServiceRpc.getInstance().getOpenToolWindowEvents(project.projectId()).collect { updateFromBackend ->
+      val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(updateFromBackend.toolwindowId) ?: return@collect
+      withContext(Dispatchers.EDT) {
+        toolwindow.activate (null, updateFromBackend.focus, updateFromBackend.focus)
+      }
+    }
+  }
+
+
   fun getServicePresentations(): List<FrontendRunDashboardService> {
     return frontendDtos.value.map { dto -> FrontendRunDashboardService(dto) }
   }
@@ -224,6 +235,11 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   override fun getEnableByDefaultTypes(): Set<String?> {
     LOG.debug("getEnableByDefaultTypes() invoked on frontend; returning empty set")
     return emptySet()
+  }
+
+  override fun openServicesToolWindowOnRun(toolwindowId: String, focus: Boolean) {
+    LOG.debug("openServicesToolWindowOnRun() invoked on frontend; returning empty set")
+    return
   }
 
   override fun updateServiceRunContentDescriptor(contentWithNewDescriptor: Content, oldDescriptor: RunContentDescriptor) {
@@ -354,6 +370,9 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     }
     synchronizationScope.launch {
       subscribeToBackendExcludedConfigurationUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToNavigateToServiceEvents()
     }
     synchronizationScope.launch {
       FrontendRunDashboardLuxHolder.getInstance(project).subscribeToRunToolwindowUpdates()

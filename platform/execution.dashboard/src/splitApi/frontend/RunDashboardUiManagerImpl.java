@@ -249,6 +249,13 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
            || (ToolWindowId.RUN.equals(executor.getId()) && isShowLuxedRunToolwindowInServicesView());
   }
 
+  @Override
+  public void openToolWindow(String toolWindowId, Boolean focus) {
+    if(!IdeProductMode.isBackend()) return;
+    RunDashboardManagerImpl runDashboardManager = RunDashboardManagerImpl.getInstance(myProject);
+    runDashboardManager.openServicesToolWindowOnRun(toolWindowId, focus);
+  }
+
   @ApiStatus.Internal
   @NotNull
   public RunDashboardComponentWrapper getContentWrapper() {

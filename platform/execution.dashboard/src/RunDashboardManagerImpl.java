@@ -25,10 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
-import com.intellij.platform.execution.dashboard.splitApi.RunDashboardServiceDto;
-import com.intellij.platform.execution.dashboard.splitApi.RunDashboardSettingsDto;
-import com.intellij.platform.execution.dashboard.splitApi.ServiceCustomizationDto;
-import com.intellij.platform.execution.dashboard.splitApi.ServiceStatusDto;
+import com.intellij.platform.execution.dashboard.splitApi.*;
 import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiManagerImpl;
 import com.intellij.ui.content.Content;
 import com.intellij.util.SmartList;
@@ -99,6 +96,11 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
 
     RunDashboardUiManagerImpl.getInstance(myProject).getDashboardContentManager().addContent(contentWithNewDescriptor);
+  }
+
+  @Override
+  public void openServicesToolWindowOnRun(String toolwindowId, Boolean focus){
+    mySharedState.fireOpenToolwindowForRunningConfiguration(toolwindowId, focus);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -281,6 +283,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
 
   public Flow<Set<String>> getConfigurationTypes() {
     return mySharedState.getConfigurationTypes();
+  }
+
+  public Flow<OpenToolWindowEventDto> getOpenToolwindowEvents() {
+    return mySharedState.getOpenToolWindowEvents();
   }
 
   public void runCallbackForLink(@NotNull String link, @NotNull RunDashboardServiceId serviceId) {

@@ -99,6 +99,11 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
     return RunDashboardManagerImpl.getInstance(project).excludedTypesDto
   }
 
+  override suspend fun getOpenToolWindowEvents(projectId: ProjectId): Flow<OpenToolWindowEventDto> {
+    val project = projectId.findProjectOrNull() ?: return emptyFlow()
+    return RunDashboardManagerImpl.getInstance(project).openToolwindowEvents
+  }
+
   override suspend fun setNewExcluded(projectId: ProjectId, configurationTypeId: String, newExcluded: Boolean) {
     val project = projectId.findProjectOrNull() ?: return
     RunDashboardManagerImpl.getInstance(project).setNewExcluded(configurationTypeId, newExcluded)

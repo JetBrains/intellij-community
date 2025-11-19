@@ -32,6 +32,8 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
   private val sharedStateUpdatesQueue = BackendRunDashboardUpdatesQueue(RunDashboardCoroutineScopeProvider.getInstance(project)
                                                                           .cs.childScope("Backend run dashboard shared state updates"))
 
+  private val openToolWindowEvents = MutableSharedFlow<OpenToolWindowEventDto>(1, 100, BufferOverflow.DROP_OLDEST)
+
   private fun scheduleSharedStateUpdate(update: SequentialComputationRequest) {
     sharedStateUpdatesQueue.submit(update)
   }
@@ -84,6 +86,17 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
       }
       sharedStatuses.tryEmit(ServiceStatusDto(backendService.uuid, effectiveStatus.id))
     }
+  }
+
+  fun fireOpenToolwindowForRunningConfiguration(toolwindowId : String, focus: Boolean){
+    scheduleSharedStateUpdate {
+      openToolWindowEvents.tryEmit(OpenToolWindowEventDto(toolwindowId, focus))
+      println("fireOpenToolwindowForRunningConfiguration")
+    }
+  }
+
+  fun getOpenToolWindowEvents() : Flow<OpenToolWindowEventDto> {
+    return openToolWindowEvents.asSharedFlow()
   }
 
   fun getStatuses(): Flow<ServiceStatusDto> {

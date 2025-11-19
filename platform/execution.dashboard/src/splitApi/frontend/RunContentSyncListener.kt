@@ -36,10 +36,10 @@ class RunContentSyncListener() : ProjectRemoteTopicListener<RunContentSyncEvent>
       }
 
       is RunContentSyncEvent.OpenToolWindow -> {
-        val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(event.toolwindowId) ?: return
-        cs.launch(Dispatchers.EDT) {
-          toolwindow.activate (null, event.focus, event.focus)
-        } //todo: here we need more than just opening it, we also need to select the currently running configuration
+        //val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(event.toolwindowId) ?: return
+        //cs.launch(Dispatchers.EDT) {
+        //  toolwindow.activate (null, event.focus, event.focus)
+        //} //todo: here we need more than just opening it, we also need to select the currently running configuration
       }
     }
   }
