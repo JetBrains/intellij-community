@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,10 +7,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class FontPreferences {
   public static final @NlsSafe @NotNull String DEFAULT_FONT_NAME = getDefaultFontName();
@@ -88,4 +90,9 @@ public class FontPreferences {
     }
     return FALLBACK_FONT_FAMILY;
   }
+
+  /**
+   * @return a set of enabled font features (e.g. {@code zero}, {@code ss01}) for the default font.
+   */
+  public @Unmodifiable @NotNull Set<@NotNull String> getCharacterVariants() { return Set.of(); }
 }

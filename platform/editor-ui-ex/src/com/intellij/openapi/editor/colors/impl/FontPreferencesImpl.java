@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -17,12 +17,11 @@ import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Utility class which holds collection of font families and theirs sizes.
@@ -37,6 +36,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   private final @NotNull List<String> myRealFontFamilies = new ArrayList<>();
   private @Nullable String myRegularSubFamily;
   private @Nullable String myBoldSubFamily;
+  private final @NotNull HashSet<@NotNull String> myCharacterVariants = new HashSet<>();
 
   private boolean myUseLigatures;
   private float myLineSpacing = DEFAULT_LINE_SPACING;
@@ -71,6 +71,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     myUseLigatures = false;
     myRegularSubFamily = null;
     myBoldSubFamily = null;
+    myCharacterVariants.clear();
     notifyStateChanged();
   }
 
@@ -189,6 +190,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
       modifiablePreferences.setLineSpacing(myLineSpacing);
       modifiablePreferences.setRegularSubFamily(myRegularSubFamily);
       modifiablePreferences.setBoldSubFamily(myBoldSubFamily);
+      modifiablePreferences.setCharacterVariants(myCharacterVariants);
     }
   }
 
@@ -252,6 +254,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     if (myLineSpacing != that.myLineSpacing) return false;
     if (!Objects.equals(myRegularSubFamily, that.myRegularSubFamily)) return false;
     if (!Objects.equals(myBoldSubFamily, that.myBoldSubFamily)) return false;
+    if (!Objects.equals(myCharacterVariants, that.myCharacterVariants)) return false;
 
     return true;
   }
@@ -298,5 +301,27 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   @Override
   public @NonNls String toString() {
     return "Effective font families: " + myEffectiveFontFamilies;
+  }
+
+  @Override
+  public @NotNull Set<@NotNull String> getCharacterVariants() {
+    return myCharacterVariants;
+  }
+
+  @Override
+  public void setCharacterVariants(@Unmodifiable @NotNull Set<@NotNull String> variants) {
+    myCharacterVariants.clear();
+    myCharacterVariants.addAll(variants);
+    notifyStateChanged();
+  }
+
+  @Override
+  public void setCharacterVariant(@NotNull String variant, boolean enabled) {
+    if (enabled) {
+      myCharacterVariants.add(variant);
+    } else {
+      myCharacterVariants.remove(variant);
+    }
+    notifyStateChanged();
   }
 }

@@ -151,6 +151,7 @@ f:com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 - <init>():V
 - s:getInstance():com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 c:com.intellij.openapi.editor.colors.impl.AppEditorFontOptions$PersistentFontPreferences
+- CHARACTER_VARIANTS:java.util.Set
 - FONT_BOLD_SUB_FAMILY:java.lang.String
 - FONT_FAMILY:java.lang.String
 - FONT_REGULAR_SUB_FAMILY:java.lang.String
@@ -228,6 +229,7 @@ c:com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 - copyTo(com.intellij.openapi.editor.colors.FontPreferences):V
 - equals(java.lang.Object):Z
 - getBoldSubFamily():java.lang.String
+- getCharacterVariants():java.util.Set
 - getEffectiveFontFamilies():java.util.List
 - getFontFamily():java.lang.String
 - getLineSpacing():F
@@ -241,6 +243,8 @@ c:com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 - register(java.lang.String,I):V
 - resetFontSizes():V
 - setBoldSubFamily(java.lang.String):V
+- setCharacterVariant(java.lang.String,Z):V
+- setCharacterVariants(java.util.Set):V
 - setEffectiveFontFamilies(java.util.List):V
 - setFontSize(java.lang.String,F):V
 - setFontSize(java.lang.String,I):V

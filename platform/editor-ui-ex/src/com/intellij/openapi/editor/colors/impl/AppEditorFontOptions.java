@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -13,8 +13,10 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
+import java.util.Set;
 
 @State(name = "DefaultFont", storages = {
   @Storage(value = AppEditorFontOptions.STORAGE_NAME),
@@ -54,6 +56,8 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
     @ReportValue
     public                    boolean USE_LIGATURES = false;
     @ReportValue
+    public @Unmodifiable @NotNull Set<@NotNull String> CHARACTER_VARIANTS = Set.of();
+    @ReportValue
     public @NlsSafe @Nullable String  SECONDARY_FONT_FAMILY;
 
     /**
@@ -76,6 +80,7 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
       LINE_SPACING = fontPreferences.getLineSpacing();
       USE_LIGATURES = fontPreferences.useLigatures();
       List<String> fontFamilies = fontPreferences.getEffectiveFontFamilies();
+      CHARACTER_VARIANTS = fontPreferences.getCharacterVariants();
       if (fontFamilies.size() > 1) {
         SECONDARY_FONT_FAMILY = fontFamilies.get(1);
       }
