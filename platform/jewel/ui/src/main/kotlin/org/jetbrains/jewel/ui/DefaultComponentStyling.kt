@@ -52,6 +52,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalSelectableLazyColumnStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSimpleListItemStyleStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSliderStyle
 import org.jetbrains.jewel.ui.component.styling.LocalSpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.LocalTableStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.LocalTooltipStyle
@@ -70,11 +71,13 @@ import org.jetbrains.jewel.ui.component.styling.SliderStyle
 import org.jetbrains.jewel.ui.component.styling.SpeedSearchStyle
 import org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
+import org.jetbrains.jewel.ui.component.styling.TableStyle
 import org.jetbrains.jewel.ui.component.styling.TextAreaStyle
 import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSearchMatchStyle
 import org.jetbrains.jewel.ui.component.styling.fallbackSpeedSearchStyle
+import org.jetbrains.jewel.ui.component.styling.fallbackTableStyle
 
 @Stable
 @GenerateDataFunctions
@@ -114,7 +117,84 @@ public class DefaultComponentStyling(
     public val undecoratedDropdownStyle: DropdownStyle,
     public val speedSearchStyle: SpeedSearchStyle,
     public val searchMatchStyle: SearchMatchStyle,
+    public val tableStyle: TableStyle,
 ) : ComponentStyling {
+    @Deprecated("Use the variant with tableStyle.", level = DeprecationLevel.HIDDEN)
+    public constructor(
+        checkboxStyle: CheckboxStyle,
+        chipStyle: ChipStyle,
+        circularProgressStyle: CircularProgressStyle,
+        defaultBannerStyle: DefaultBannerStyles,
+        comboBoxStyle: ComboBoxStyle,
+        defaultButtonStyle: ButtonStyle,
+        defaultDropdownStyle: DropdownStyle,
+        defaultSplitButtonStyle: SplitButtonStyle,
+        defaultTabStyle: TabStyle,
+        dividerStyle: DividerStyle,
+        editorTabStyle: TabStyle,
+        groupHeaderStyle: GroupHeaderStyle,
+        horizontalProgressBarStyle: HorizontalProgressBarStyle,
+        iconButtonStyle: IconButtonStyle,
+        transparentIconButtonStyle: IconButtonStyle,
+        inlineBannerStyle: InlineBannerStyles,
+        lazyTreeStyle: LazyTreeStyle,
+        linkStyle: LinkStyle,
+        menuStyle: MenuStyle,
+        outlinedButtonStyle: ButtonStyle,
+        popupContainerStyle: PopupContainerStyle,
+        outlinedSplitButtonStyle: SplitButtonStyle,
+        radioButtonStyle: RadioButtonStyle,
+        scrollbarStyle: ScrollbarStyle,
+        segmentedControlButtonStyle: SegmentedControlButtonStyle,
+        segmentedControlStyle: SegmentedControlStyle,
+        selectableLazyColumnStyle: SelectableLazyColumnStyle,
+        simpleListItemStyle: SimpleListItemStyle,
+        sliderStyle: SliderStyle,
+        textAreaStyle: TextAreaStyle,
+        textFieldStyle: TextFieldStyle,
+        tooltipStyle: TooltipStyle,
+        undecoratedDropdownStyle: DropdownStyle,
+        speedSearchStyle: SpeedSearchStyle,
+        searchMatchStyle: SearchMatchStyle,
+    ) : this(
+        checkboxStyle,
+        chipStyle,
+        circularProgressStyle,
+        defaultBannerStyle,
+        comboBoxStyle,
+        defaultButtonStyle,
+        defaultDropdownStyle,
+        defaultSplitButtonStyle,
+        defaultTabStyle,
+        dividerStyle,
+        editorTabStyle,
+        groupHeaderStyle,
+        horizontalProgressBarStyle,
+        iconButtonStyle,
+        transparentIconButtonStyle,
+        inlineBannerStyle,
+        lazyTreeStyle,
+        linkStyle,
+        menuStyle,
+        outlinedButtonStyle,
+        popupContainerStyle,
+        outlinedSplitButtonStyle,
+        radioButtonStyle,
+        scrollbarStyle,
+        segmentedControlButtonStyle,
+        segmentedControlStyle,
+        selectableLazyColumnStyle,
+        simpleListItemStyle,
+        sliderStyle,
+        textAreaStyle,
+        textFieldStyle,
+        tooltipStyle,
+        undecoratedDropdownStyle,
+        speedSearchStyle,
+        searchMatchStyle,
+        fallbackTableStyle(),
+    )
+
     @Deprecated("Use the variant with speedSearchStyle.", level = DeprecationLevel.HIDDEN)
     public constructor(
         checkboxStyle: CheckboxStyle,
@@ -186,6 +266,7 @@ public class DefaultComponentStyling(
         undecoratedDropdownStyle,
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
+        fallbackTableStyle(),
     )
 
     @Deprecated("Use the variant with transparentIconButtonStyle.", level = DeprecationLevel.HIDDEN)
@@ -258,6 +339,7 @@ public class DefaultComponentStyling(
         undecoratedDropdownStyle,
         fallbackSpeedSearchStyle(),
         fallbackSearchMatchStyle(),
+        fallbackTableStyle(),
     )
 
     @Composable
@@ -300,6 +382,7 @@ public class DefaultComponentStyling(
             LocalUndecoratedDropdownStyle provides undecoratedDropdownStyle,
             LocalSpeedSearchStyle provides speedSearchStyle,
             LocalSearchMatchStyle provides searchMatchStyle,
+            LocalTableStyle provides tableStyle,
         )
 
     override fun equals(other: Any?): Boolean {
@@ -343,6 +426,7 @@ public class DefaultComponentStyling(
         if (undecoratedDropdownStyle != other.undecoratedDropdownStyle) return false
         if (speedSearchStyle != other.speedSearchStyle) return false
         if (searchMatchStyle != other.searchMatchStyle) return false
+        if (tableStyle != other.tableStyle) return false
 
         return true
     }
@@ -383,6 +467,7 @@ public class DefaultComponentStyling(
         result = 31 * result + undecoratedDropdownStyle.hashCode()
         result = 31 * result + speedSearchStyle.hashCode()
         result = 31 * result + searchMatchStyle.hashCode()
+        result = 31 * result + tableStyle.hashCode()
         return result
     }
 
@@ -422,6 +507,7 @@ public class DefaultComponentStyling(
             "tooltipStyle=$tooltipStyle, " +
             "undecoratedDropdownStyle=$undecoratedDropdownStyle, " +
             "speedSearchStyle=$speedSearchStyle, " +
-            "searchMatchStyle=$searchMatchStyle" +
+            "searchMatchStyle=$searchMatchStyle, " +
+            "tableStyle=$tableStyle" +
             ")"
 }
