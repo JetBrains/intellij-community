@@ -4,10 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.actions.ToolwindowFusEventFields;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -54,9 +51,11 @@ public final class MaximizeToolWindowAction extends AnAction implements DumbAwar
       return;
     }
     ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    e.getPresentation().setText(manager.isMaximized(toolWindow) ?
+    boolean maximized = manager.isMaximized(toolWindow);
+    e.getPresentation().setText(maximized ?
                                 ActionsBundle.message("action.ResizeToolWindowMaximize.text.alternative") :
                                 ActionsBundle.message("action.ResizeToolWindowMaximize.text"));
+    Toggleable.setSelected(e.getPresentation(), maximized);
   }
 
   @Override
