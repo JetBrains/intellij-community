@@ -16,8 +16,8 @@ data class GitLabMergeRequestNewDiscussionPosition(
   val newLineIndex: Int?,
   val paths: DiffPathsInput,
 ) : GitLabNotePosition.WithLine {
-  override val parentSha: String get() = startSha
-  override val sha: String get() = baseSha
+  override val parentSha: String get() = baseSha
+  override val sha: String get() = headSha
   override val filePathBefore: String? get() = paths.oldPath
   override val filePathAfter: String? get() = paths.newPath
   override val lineIndexLeft: Int? get() = oldLineIndex
