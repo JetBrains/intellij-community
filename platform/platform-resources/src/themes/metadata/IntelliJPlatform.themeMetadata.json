@@ -2754,6 +2754,36 @@
     {
       "key": "LicenseDialog.freeBadgeBackground",
       "since": "2025.3"
+    },
+    {
+      "key": "OpenTelemetry.Span.regularBounds",
+      "description": "Regular Span’s left and right bounds.",
+      "since": "2025.3"
+    },
+    {
+      "key": "OpenTelemetry.Span.regularFillStart",
+      "description": "Regular Span’s fill start color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "OpenTelemetry.Span.regularFillEnd",
+      "description": "Regular Span’s fill end color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "OpenTelemetry.Span.selectedBounds",
+      "description": "Selected Span’s left and right bounds.",
+      "since": "2025.3"
+    },
+    {
+      "key": "OpenTelemetry.Span.selectedFillStart",
+      "description": "Selected Span’s fill start color.",
+      "since": "2025.3"
+    },
+    {
+      "key": "OpenTelemetry.Span.selectedFillEnd",
+      "description": "Selected Span’s fill end color.",
+      "since": "2025.3"
     }
   ]
 }
