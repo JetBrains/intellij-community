@@ -4,6 +4,8 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.CodeStyleBundle
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
+import com.intellij.formatting.service.structuredAsyncDocumentFormattingScope
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -33,4 +35,12 @@ class ReformatBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandl
 
   override fun createCodeProcessor(files: List<VirtualFile>): AbstractLayoutCodeProcessor =
     ReformatCodeProcessor(project, getPsiFiles(project, files), CodeStyleBundle.message("process.reformat.code.before.commit"), null, true)
+
+  override suspend fun runCodeProcessor(processor: AbstractLayoutCodeProcessor) {
+    structuredAsyncDocumentFormattingScope {
+      coroutineToIndicator {
+        processor.processFilesUnderProgress(it)
+      }
+    }
+  }
 }

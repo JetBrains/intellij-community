@@ -27,6 +27,12 @@ abstract class CodeProcessorCheckinHandler(
   protected open fun getProgressMessage(): @NlsContexts.ProgressText String? = null
   protected abstract fun createCodeProcessor(files: List<VirtualFile>): AbstractLayoutCodeProcessor
 
+  protected open suspend fun runCodeProcessor(processor: AbstractLayoutCodeProcessor) {
+    coroutineToIndicator {
+      processor.processFilesUnderProgress(it)
+    }
+  }
+
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
@@ -36,9 +42,7 @@ abstract class CodeProcessorCheckinHandler(
       withProgressText(getProgressMessage()) {
         // TODO suspending code processor
         val processor = readAction { createCodeProcessor(affectedFiles) }
-        coroutineToIndicator {
-          processor.processFilesUnderProgress(ProgressManager.getGlobalProgressIndicator())
-        }
+        runCodeProcessor(processor)
       }
     }
 
