@@ -7458,8 +7458,6 @@ f:com.intellij.ui.dsl.builder.VerticalComponentGap
 - hashCode():I
 f:com.intellij.ui.dsl.builder.VerticalComponentGap$Companion
 f:com.intellij.ui.dsl.gridLayout.Gaps
-- sf:Companion:com.intellij.ui.dsl.gridLayout.Gaps$Companion
-- sf:EMPTY:com.intellij.ui.dsl.gridLayout.Gaps
 - <init>():V
 - <init>(I,I,I,I):V
 - b:<init>(I,I,I,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -7475,10 +7473,6 @@ f:com.intellij.ui.dsl.gridLayout.Gaps
 - f:getRight():I
 - f:getTop():I
 - hashCode():I
-f:com.intellij.ui.dsl.gridLayout.Gaps$Companion
-f:com.intellij.ui.dsl.gridLayout.GapsKt
-- bsf:JBGaps(I,I,I,I):com.intellij.ui.dsl.gridLayout.Gaps
-- bs:JBGaps$default(I,I,I,I,I,java.lang.Object):com.intellij.ui.dsl.gridLayout.Gaps
 com.intellij.ui.dsl.gridLayout.Grid
 - a:getColumnsGaps():java.util.List
 - a:getResizableColumns():java.util.Set

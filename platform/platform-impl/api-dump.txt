@@ -1308,7 +1308,6 @@ Ff:com.intellij.ui.dsl.builder.Cell$DefaultImpls
 - bs:commentRight$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 com.intellij.ui.dsl.builder.CellBase
 - a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.CellBase
-- ba:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.CellBase
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.CellBase
 - a:enabled(Z):com.intellij.ui.dsl.builder.CellBase
 - a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.CellBase
