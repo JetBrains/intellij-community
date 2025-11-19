@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Setter;
 import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,53 +27,47 @@ import java.util.function.Supplier;
 public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simple
   implements UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
 
-  private interface PropertyAccessor<T> {
-    T getValue();
+  private static final class CallbackAccessor {
+    private final @NotNull Supplier<Boolean> myGetter;
+    private final @NotNull Setter<? super Boolean> mySetter;
 
-    void setValue(@NotNull T value);
-  }
-
-  private static final class CallbackAccessor<T> implements PropertyAccessor<T> {
-    private final @NotNull Supplier<? extends T> myGetter;
-    private final @NotNull Setter<? super T> mySetter;
-
-    private CallbackAccessor(@NotNull Supplier<? extends T> getter, @NotNull Setter<? super T> setter) {
+    private CallbackAccessor(@NotNull Supplier<Boolean> getter, @NotNull Setter<? super Boolean> setter) {
       myGetter = getter;
       mySetter = setter;
     }
 
-    @Override
-    public T getValue() {
+    public Boolean getValue() {
       return myGetter.get();
     }
 
-    @Override
-    public void setValue(@NotNull T value) {
+    public void setValue(@NotNull Boolean value) {
       mySetter.set(value);
     }
   }
 
   @ApiStatus.Internal
-  abstract static class BeanField<C extends JComponent, T> {
+  static class BeanField {
 
-    @ApiStatus.Internal
-    final @NotNull PropertyAccessor<T> myAccessor;
+    private final @NotNull CallbackAccessor myAccessor;
+    private final @NotNull @NlsContexts.Checkbox String myTitle;
+    private @Nullable JCheckBox myComponent;
 
-    private @Nullable C myComponent;
-
-    private BeanField(@NotNull PropertyAccessor<T> accessor) {
+    private BeanField(@NotNull CallbackAccessor accessor, @NotNull @NlsContexts.Checkbox String title) {
       myAccessor = accessor;
+      myTitle = title;
     }
 
     @NotNull
-    C getComponent() {
+    JCheckBox getComponent() {
       if (myComponent == null) {
         myComponent = createComponent();
       }
       return myComponent;
     }
 
-    protected abstract @NotNull C createComponent();
+    private @NotNull JCheckBox createComponent() {
+      return new JCheckBox(myTitle);
+    }
 
     boolean isModified() {
       final Object componentValue = getComponentValue();
@@ -90,17 +83,12 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
       setComponentValue(myAccessor.getValue());
     }
 
-    protected abstract T getComponentValue();
+    private Boolean getComponentValue() {
+      return getComponent().isSelected();
+    }
 
-    protected abstract void setComponentValue(T value);
-  }
-
-  private static final class CheckboxField extends BeanField<JCheckBox, @NotNull Boolean> {
-    private final @NotNull @NlsContexts.Checkbox String myTitle;
-
-    private CheckboxField(@NotNull PropertyAccessor<Boolean> accessor, @NotNull @NlsContexts.Checkbox String title) {
-      super(accessor);
-      myTitle = title;
+    private void setComponentValue(@NotNull Boolean value) {
+      getComponent().setSelected(value);
     }
 
     private @NotNull String getTitle() {
@@ -114,31 +102,11 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
     private boolean getAccessorValue() {
       return myAccessor.getValue();
     }
-
-    @Override
-    protected @NotNull JCheckBox createComponent() {
-      return new JCheckBox(myTitle);
-    }
-
-    @Override
-    protected Boolean getComponentValue() {
-      return getComponent().isSelected();
-    }
-
-    @Override
-    protected void setComponentValue(@NotNull Boolean value) {
-      getComponent().setSelected(value);
-    }
   }
 
-  private final List<BeanField<?, ?>> myFields = new ArrayList<>();
+  private final List<BeanField> myFields = new ArrayList<>();
 
   protected ConfigurableBuilder() {
-  }
-
-  @ApiStatus.Internal
-  public @Nullable String getTitle() {
-    return null;
   }
 
   /**
@@ -147,14 +115,13 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
    * After the apply, the value from the check box is written back to model via {@code setter}.
    */
   protected void checkBox(@NotNull @NlsContexts.Checkbox String title, @NotNull Getter<@NotNull Boolean> getter, @NotNull Setter<? super Boolean> setter) {
-    myFields.add(new CheckboxField(new CallbackAccessor<>(getter, setter), title));
+    myFields.add(new BeanField(new CallbackAccessor(getter, setter), title));
   }
 
   @Override
   public @Unmodifiable @NotNull List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
                                                                              @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
-    List<ConfigurableBuilder.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
-    return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
+    return ContainerUtil.map(myFields, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
       @Override
       public boolean isOptionEnabled() {
         return box.getAccessorValue();
@@ -169,16 +136,13 @@ public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simpl
 
   @Override
   public void createContent(@NotNull Panel builder) {
-    ConfigurableBuilderHelper.buildFieldsPanel(builder, null, myFields);
+    ConfigurableBuilderHelper.buildFieldsPanel(builder, myFields);
   }
 
   @ApiStatus.Internal
   public static @Nullable String getConfigurableTitle(@NotNull UnnamedConfigurable configurable) {
     if (configurable instanceof BeanConfigurable<?>) {
       return ((BeanConfigurable<?>)configurable).getTitle();
-    }
-    if (configurable instanceof ConfigurableBuilder) {
-      return ((ConfigurableBuilder)configurable).getTitle();
     }
     return null;
   }

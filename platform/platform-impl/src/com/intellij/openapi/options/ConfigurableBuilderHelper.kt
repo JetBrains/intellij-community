@@ -2,7 +2,6 @@
 package com.intellij.openapi.options
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
@@ -17,14 +16,15 @@ class ConfigurableBuilderHelper {
     @ApiStatus.Internal
     @Deprecated("Will be removed")
     @JvmName("buildFieldsPanel")
-    internal fun Panel.buildFieldsPanel(@NlsContexts.BorderTitle title: String?, fields: List<ConfigurableBuilder.BeanField<*, *>>) {
-      if (title != null) {
-        group(title) {
-          appendFields(fields)
+    internal fun Panel.buildFieldsPanel(fields: List<ConfigurableBuilder.BeanField>) {
+      for (field in fields) {
+        row {
+          cell(field.component)
+            .onApply { field.apply() }
+            .onIsModified { field.isModified }
+            .onReset { field.reset() }
+          UIUtil.applyDeprecatedBackground(field.component)
         }
-      }
-      else {
-        appendFields(fields)
       }
     }
 
@@ -43,18 +43,6 @@ class ConfigurableBuilderHelper {
       rootPanel.onApply { beanConfigurable.apply() }
       rootPanel.onIsModified { beanConfigurable.isModified() }
       rootPanel.onReset { beanConfigurable.reset() }
-    }
-
-    private fun Panel.appendFields(fields: List<ConfigurableBuilder.BeanField<*, *>>) {
-      for (field in fields) {
-        row {
-          cell(field.component)
-            .onApply { field.apply() }
-            .onIsModified { field.isModified }
-            .onReset { field.reset() }
-          UIUtil.applyDeprecatedBackground(field.component)
-        }
-      }
     }
 
     private fun Panel.appendBeanConfigurableContent(beanConfigurable: BeanConfigurable<*>, components: List<JComponent>) {
