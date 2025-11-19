@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
+import com.google.common.collect.Comparators.min
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
@@ -200,9 +201,19 @@ internal class ProjectViewPerformanceMonitor(
 
     fun report() {
       if (startedRequests == 0 && activeRequests == 0 && finishedRequests == 0) return // don't spam the log when the IDE is idle
+      reportToDebugLog()
+      reportToFus()
+    }
+
+    private fun reportToDebugLog() {
       if (LOG.isDebugEnabled) {
+        val stuckRequests = requestStates.count { it.value.isStuck }
         LOG.debug(
-          "Project View performance sample: started requests = ${startedRequests}, finished requests = ${finishedRequests}, still active requests = ${activeRequests}"
+          "Project View performance sample: " +
+          "started requests = ${startedRequests}, " +
+          "finished requests = ${finishedRequests}, " +
+          "still active requests = ${activeRequests}, " +
+          "stuck requests = ${stuckRequests}"
         )
         if (causeReports.isNotEmpty()) {
           LOG.debug("Finished requests by cause:")
@@ -219,10 +230,53 @@ internal class ProjectViewPerformanceMonitor(
       }
     }
 
+    private fun reportToFus() {
+      reportFinishedUpdateCauses()
+      reportStuckRequests()
+    }
+
+    private fun reportFinishedUpdateCauses() {
+      for (entry in causeReports) {
+        ProjectViewPerformanceCollector.logUpdated(
+          entry.key,
+          entry.value.loadedNodeCount,
+          entry.value.timeSpent.inWholeMilliseconds,
+        )
+      }
+    }
+
+    private fun reportStuckRequests() {
+      val reports = hashMapOf<ProjectViewUpdateCause, StuckRequestReport>()
+      for (requestState in requestStates.values) {
+        if (!requestState.isStuck) continue
+        for (cause in requestState.causes) {
+          val report = reports.getOrPut(cause) {
+            StuckRequestReport(
+              sinceTime = requestState.startTime,
+            )
+          }
+          report.sinceTime = min(report.sinceTime, requestState.startTime)
+          ++report.requestCount
+          report.loadedNodeCount += requestState.loadedNodeCount
+        }
+      }
+      for (entry in reports) {
+        ProjectViewPerformanceCollector.logStuckUpdateRequest(
+          entry.key,
+          entry.value.requestCount,
+          entry.value.loadedNodeCount,
+          entry.value.sinceTime.elapsedNow().inWholeMilliseconds,
+        )
+      }
+    }
+
     fun startNewSample(): StatsSample {
       val newSample = StatsSample()
       newSample.activeRequests = activeRequests
       newSample.requestStates.putAll(requestStates)
+      newSample.requestStates.values.forEach {
+        it.isStuck = true // will be reported next time
+      }
       newSample.causeStates.putAll(causeStates)
       // reports are not copied, as they're already reported
       return newSample
@@ -235,6 +289,7 @@ internal class ProjectViewPerformanceMonitor(
     val startTime: ComparableTimeMark,
     var loadedNodeCount: Int = 0,
     var finishedTime: ComparableTimeMark? = null,
+    var isStuck: Boolean = false,
   ) {
     constructor(startedEvent: StartedEvent) : this(startedEvent.id, startedEvent.causes, startedEvent.startedTime)
   }
@@ -250,6 +305,12 @@ internal class ProjectViewPerformanceMonitor(
     var completedRequests: Int = 0,
     var loadedNodeCount: Int = 0,
     var timeSpent: Duration = Duration.ZERO,
+  )
+
+  private data class StuckRequestReport(
+    var sinceTime: ComparableTimeMark,
+    var requestCount: Int = 0,
+    var loadedNodeCount: Int = 0,
   )
 }
 

@@ -1,12 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure
 
+import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 sealed class ProjectViewUpdateCause : Comparable<ProjectViewUpdateCause> {
   companion object {
-    fun plugin(pluginId: String): ProjectViewUpdateCause = ProjectView3rdPartyPluginUpdateCause(pluginId)
+    fun plugin(pluginId: PluginId): ProjectViewUpdateCause = ProjectView3rdPartyPluginUpdateCause(pluginId)
 
     @JvmField val UNKNOWN: ProjectViewUpdateCause = ProjectViewStandardUpdateCause(ProjectViewUpdateCauseId.UNKNOWN)
     @JvmField val LEGACY: ProjectViewUpdateCause = ProjectViewStandardUpdateCause(ProjectViewUpdateCauseId.LEGACY)
@@ -59,6 +60,12 @@ sealed class ProjectViewUpdateCause : Comparable<ProjectViewUpdateCause> {
     @JvmField val DEBUG_VFS_INFO: ProjectViewUpdateCause = ProjectViewStandardUpdateCause(ProjectViewUpdateCauseId.DEBUG_VFS_INFO)
     @JvmField val DEBUG_INDEXABILITY: ProjectViewUpdateCause = ProjectViewStandardUpdateCause(ProjectViewUpdateCauseId.DEBUG_INDEXABILITY)
   }
+
+  val id: ProjectViewUpdateCauseId
+    get() = when (this) {
+      is ProjectView3rdPartyPluginUpdateCause -> ProjectViewUpdateCauseId.PLUGIN_3RD_PARTY
+      is ProjectViewStandardUpdateCause -> causeId
+    }
 
   override fun compareTo(other: ProjectViewUpdateCause): Int {
     return when (this) {
@@ -142,7 +149,7 @@ data class ProjectViewStandardUpdateCause(
 
 @ApiStatus.Internal
 data class ProjectView3rdPartyPluginUpdateCause(
-  val pluginId: String
+  val pluginId: PluginId
 ): ProjectViewUpdateCause() {
   override fun toString(): String = "PLUGIN=$pluginId"
 }

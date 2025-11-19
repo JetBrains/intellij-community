@@ -2,7 +2,6 @@
 package com.intellij.ui.tree.project
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
-import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
@@ -31,7 +30,7 @@ internal fun guessProjectViewUpdateCauseByCaller(calleeClass: Class<*>): Project
   }
   if (caller == null) return ProjectViewUpdateCause.UNKNOWN // shouldn't be reasonably possible
   val callerClassloader = caller.getClassLoader()
-  if (callerClassloader is PluginAwareClassLoader) return ProjectViewUpdateCause.plugin(callerClassloader.pluginId.idString)
+  if (callerClassloader is PluginAwareClassLoader) return ProjectViewUpdateCause.plugin(callerClassloader.pluginId)
   if (!ApplicationManager.getApplication().isUnitTestMode) {
     LOG.warn(Throwable("${callee.className}.${callee.methodName} called without specifying the cause from $caller"))
   }
