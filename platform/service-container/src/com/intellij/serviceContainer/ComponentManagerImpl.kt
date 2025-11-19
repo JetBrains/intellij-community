@@ -631,8 +631,8 @@ abstract class ComponentManagerImpl(
 
     val adapter = getComponentOrServiceAdapter(key, lookupService)
     if (adapter == null) {
-      checkCanceledIfNotInClassInit()
       if (containerState.get() == ContainerState.DISPOSE_COMPLETED) {
+        checkCanceledIfNotInClassInit()
         throwAlreadyDisposedError(key.name, this)
       }
       return null

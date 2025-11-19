@@ -39,14 +39,12 @@ class ComponentManagerCancellationTest : LightPlatformTestCase() {
     }
   }
 
-  @Ignore("Broken: demonstration of an issue")
   fun `test serviceIfCreated for missing service in cancelled context - client service via client session`() {
     runTestClientServiceViaClientService { manager ->
       testServiceIfCreatedForMissing(manager)
     }
   }
 
-  @Ignore("Broken: demonstration of an issue")
   fun `test serviceIfCreated for missing service in cancelled context - local service via client session`() {
     runTestLocalServiceViaClientService { manager ->
       testServiceIfCreatedForMissing(manager)
@@ -65,20 +63,17 @@ class ComponentManagerCancellationTest : LightPlatformTestCase() {
     }
   }
 
-  @Ignore("Broken: demonstration of an issue")
   fun `test serviceIfCreated for created service in cancelled context - local service via client session`() {
     runTestLocalServiceViaClientService { manager ->
       testServiceIfCreatedForCreated(manager)
     }
   }
 
-  @Ignore("Broken: demonstration of an issue")
   fun `test service for unregistered service in cancelled context - local service`() {
     val manager = TestComponentManager()
     testServiceForUnregistered(manager)
   }
 
-  @Ignore("Broken: demonstration of an issue")
   fun `test service for unregistered service in cancelled context - client service`() {
     val application = application as ApplicationImpl
     val manager = TestClientAppSession(application, TEST_CLIENT_ID)
