@@ -57,6 +57,8 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
 
   private var myStartedSet = LinkedHashSet<Pair<Any, String>>()
 
+  class RescheduledMavenDownloadJobException(override val message: String?) : CancellationException(message)
+
   @Synchronized
   fun startImport(explicit: Boolean) {
     if (started) {
@@ -208,6 +210,9 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
   @Synchronized
   fun notifyDownloadSourcesProblem(e: Exception) {
     val messageEvent = when (e) {
+      // a new job was submitted so no need to show anything to the user
+      is RescheduledMavenDownloadJobException -> null
+      // a normal cancellation happened
       is CancellationException -> {
         val message = MavenProjectBundle.message("maven.downloading.sources.cancelled")
         MessageEventImpl(mySyncId, MessageEvent.Kind.INFO, SyncBundle.message("build.event.title.error"), message, message)
@@ -217,7 +222,9 @@ class MavenSyncConsole(private val myProject: Project) : MavenEventHandler, Mave
         createMessageEvent(myProject, mySyncId, e)
       }
     }
-    mySyncView.onEvent(mySyncId, messageEvent)
+    if (messageEvent != null) {
+      mySyncView.onEvent(mySyncId, messageEvent)
+    }
   }
 
   @Synchronized

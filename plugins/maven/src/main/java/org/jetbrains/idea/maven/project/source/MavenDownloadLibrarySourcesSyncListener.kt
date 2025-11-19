@@ -4,14 +4,13 @@ package org.jetbrains.idea.maven.project.source
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
-import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectBundle
-import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.MavenSyncListener
+import kotlinx.coroutines.sync.withLock
+import org.jetbrains.idea.maven.buildtool.MavenSyncConsole.RescheduledMavenDownloadJobException
+import org.jetbrains.idea.maven.project.*
 import kotlin.time.Duration.Companion.seconds
 
 class MavenDownloadLibrarySourcesSyncListener : MavenSyncListener {
@@ -21,7 +20,7 @@ class MavenDownloadLibrarySourcesSyncListener : MavenSyncListener {
       return
     }
     val projectManager = MavenProjectsManager.getInstanceIfCreated(project) ?: return
-    MavenDownloadLibrarySourcesAfterSyncDebouncer.withDebounce(project) {
+    MavenDownloadLibrarySourcesAfterSyncTaskDispatcher.dispatchSingletonJob(project) {
       projectManager.downloadArtifacts(
         MavenDownloadSourcesRequest.builder()
           .forProjects(projectManager.projects)
@@ -36,28 +35,32 @@ class MavenDownloadLibrarySourcesSyncListener : MavenSyncListener {
   }
 
   @Service(Service.Level.PROJECT)
-  private class MavenDownloadLibrarySourcesAfterSyncDebouncer(
+  private class MavenDownloadLibrarySourcesAfterSyncTaskDispatcher(
     val cs: CoroutineScope,
   ) {
+    // This mutex is required to make sure that the previous job is canceled before a new one is submitted.
+    // It prevents several jobs to be executed at the same time
     private val mutex = Mutex()
+    private var job: Job? = null
 
     companion object {
-      fun withDebounce(project: Project, action: suspend () -> Unit) {
-        project.getService(MavenDownloadLibrarySourcesAfterSyncDebouncer::class.java)
-          .withDebounce { action() }
+      fun dispatchSingletonJob(project: Project, action: suspend () -> Unit) {
+        project.getService(MavenDownloadLibrarySourcesAfterSyncTaskDispatcher::class.java)
+          .dispatchSingletonJob { action() }
       }
     }
 
-    private fun withDebounce(action: suspend () -> Unit) {
-      if (mutex.tryLock()) {
-        cs.launchTracked {
-          try {
-            action()
-          }
-          finally {
-            mutex.unlock()
-          }
+    private fun dispatchSingletonJob(action: suspend () -> Unit) = cs.launch {
+      mutex.withLock {
+        job?.cancel(
+          RescheduledMavenDownloadJobException("A new job was submitted for execution. The previous one should be canceled.")
+        )
+        // we should wait for the job to be canceled before starting a new one
+        job?.join()
+        val newJob = launch {
+          action()
         }
+        job = newJob
       }
     }
   }
