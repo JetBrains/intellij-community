@@ -121,6 +121,17 @@ internal class GHPRReviewDataProviderImpl(parentCs: CoroutineScope,
                                   fileName: String,
                                   side: Side,
                                   line: Int): GHPullRequestReviewComment {
+    /*
+    The GraphQL threads API doesn't allow specifying the commit
+    (https://docs.github.com/en/graphql/reference/input-objects#addpullrequestreviewthreadinput)
+    The REST commits API doesn't allow specifying the review ID and fails when there's a draft review.
+    (https://docs.github.com/en/rest/pulls/comments?apiVersion=2022-11-28#create-a-review-comment-for-a-pull-request)
+
+    So the only way to do that reliably is to use a super-old deprecated way of passing so-called "position" to GQL comments API
+    (https://docs.github.com/en/graphql/reference/input-objects#addpullrequestreviewcommentinput)
+
+    Position is the index of the line in the raw diff between the merge base and the commit.
+    */
     val patch = changesProvider.loadPatchFromMergeBase(commitSha, fileName)
     check(patch != null && patch is TextFilePatch) { "Cannot find diff between $commitSha and merge base" }
     val position = PatchHunkUtil.findDiffFileLineIndex(patch, side to line) ?: error("Can't map file line to diff")
