@@ -447,10 +447,8 @@ class ProcessOutputControllerService(
                                     .firstOrNull { node ->
                                         node.traceContext == currentContext
                                     }
-                                    ?: run {
-                                        Node(traceContext = currentContext).also {
-                                            currentRoot += it
-                                        }
+                                    ?: Node(traceContext = currentContext).also {
+                                        currentRoot += it
                                     }
 
                             currentRoot = node.children
