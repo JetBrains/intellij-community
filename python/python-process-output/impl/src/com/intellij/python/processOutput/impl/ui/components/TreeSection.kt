@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,38 +82,43 @@ internal fun TreeSection(controller: ProcessOutputController) {
                     val style = JewelTheme.treeStyle
 
                     Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
-                        LazyTree(
-                            tree = tree,
-                            modifier = Modifier.fillMaxSize(),
-                            treeState = treeState,
-                            onSelectionChange = {
-                                val node = it.firstOrNull()?.data
+                        // Seems like the current implementation keeps track of all previous trees,
+                        // causing OOM issues. Wrapping it in `key(tree)` will force a full
+                        // recomposition of the tree, removing any garbage that was not collected.
+                        key(tree) {
+                            LazyTree(
+                                tree = tree,
+                                modifier = Modifier.fillMaxSize(),
+                                treeState = treeState,
+                                onSelectionChange = {
+                                    val node = it.firstOrNull()?.data
 
-                                if (node is TreeNode.Process) {
-                                    controller.selectProcess(node.process)
-                                } else {
-                                    controller.selectProcess(null)
-                                }
-                            },
-                            style = LazyTreeStyle(
-                                colors = style.colors,
-                                metrics = LazyTreeMetrics(
-                                    indentSize = style.metrics.indentSize,
-                                    elementMinHeight = style.metrics.elementMinHeight,
-                                    chevronContentGap = style.metrics.chevronContentGap,
-                                    simpleListItemMetrics = SimpleListItemMetrics(
-                                        innerPadding = PaddingValues(horizontal = 4.dp),
-                                        outerPadding = PaddingValues(1.dp),
-                                        selectionBackgroundCornerSize =
-                                            style.metrics.simpleListItemMetrics.selectionBackgroundCornerSize,
-                                        iconTextGap = style.metrics.simpleListItemMetrics.iconTextGap,
+                                    if (node is TreeNode.Process) {
+                                        controller.selectProcess(node.process)
+                                    } else {
+                                        controller.selectProcess(null)
+                                    }
+                                },
+                                style = LazyTreeStyle(
+                                    colors = style.colors,
+                                    metrics = LazyTreeMetrics(
+                                        indentSize = style.metrics.indentSize,
+                                        elementMinHeight = style.metrics.elementMinHeight,
+                                        chevronContentGap = style.metrics.chevronContentGap,
+                                        simpleListItemMetrics = SimpleListItemMetrics(
+                                            innerPadding = PaddingValues(horizontal = 4.dp),
+                                            outerPadding = PaddingValues(1.dp),
+                                            selectionBackgroundCornerSize =
+                                                style.metrics.simpleListItemMetrics.selectionBackgroundCornerSize,
+                                            iconTextGap = style.metrics.simpleListItemMetrics.iconTextGap,
+                                        ),
                                     ),
+                                    icons = style.icons,
                                 ),
-                                icons = style.icons,
-                            ),
-                            interactionSource = remember { MutableInteractionSource() },
-                        ) {
-                            TreeRow(it.data, filters.contains(TreeFilter.ShowTime))
+                                interactionSource = remember { MutableInteractionSource() },
+                            ) {
+                                TreeRow(it.data, filters.contains(TreeFilter.ShowTime))
+                            }
                         }
                     }
                 }
