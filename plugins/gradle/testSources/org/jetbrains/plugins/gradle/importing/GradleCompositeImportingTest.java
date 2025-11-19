@@ -90,29 +90,31 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject();
 
+    var appName = getCurrentGradleVersion().getMajorVersion() >= 6  ? "my-app" : "my-app-name";
+
     assertModules("adhoc",
-                  "my-app-name", "my-app-name.main", "my-app-name.test",
+                  appName, appName + ".main", appName + ".test",
                   "my-utils",
                   "my-utils.string-utils", "my-utils.string-utils.test", "my-utils.string-utils.main",
                   "my-utils.number-utils", "my-utils.number-utils.main", "my-utils.number-utils.test");
 
-    String[] rootModules = new String[]{"adhoc", "my-app-name", "my-utils", "my-utils.string-utils", "my-utils.number-utils"};
+    String[] rootModules = new String[]{"adhoc", appName, "my-utils", "my-utils.string-utils", "my-utils.number-utils"};
     for (String rootModule : rootModules) {
       assertModuleLibDeps(rootModule);
       assertModuleModuleDeps(rootModule);
     }
-    assertModuleModuleDeps("my-app-name.main", "my-utils.number-utils.main", "my-utils.string-utils.main");
-    assertModuleModuleDepScope("my-app-name.main", "my-utils.number-utils.main", COMPILE);
-    assertModuleModuleDepScope("my-app-name.main", "my-utils.string-utils.main", COMPILE);
-    assertModuleLibDepScope("my-app-name.main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
+    assertModuleModuleDeps(appName + ".main", "my-utils.number-utils.main", "my-utils.string-utils.main");
+    assertModuleModuleDepScope(appName + ".main", "my-utils.number-utils.main", COMPILE);
+    assertModuleModuleDepScope(appName + ".main", "my-utils.string-utils.main", COMPILE);
+    assertModuleLibDepScope(appName + ".main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
 
     assertTasksProjectPath("adhoc", getProjectPath());
     if (isGradleAtLeast("6.8")) {
       /* Has to be :my-app: as this is the name of the included build (rootProject.name) is not used for path construction */
-      assertTasksProjectPath("my-app-name", getProjectPath(), ":my-app:");
+      assertTasksProjectPath(appName, getProjectPath(), ":my-app:");
       assertTasksProjectPath("my-utils", getProjectPath(), ":my-utils:");
     } else {
-      assertTasksProjectPath("my-app-name", path("../my-app"));
+      assertTasksProjectPath(appName, path("../my-app"));
       assertTasksProjectPath("my-utils", path("../my-utils"));
     }
   }
@@ -545,8 +547,9 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject("");
 
+    var pluginName = getCurrentGradleVersion().getMajorVersion() >= 6  ? "plugin" : "test-plugin";
     assertModules("project",
-                  "test-plugin", "test-plugin.main", "test-plugin.test",
+                  pluginName, pluginName + ".main", pluginName + ".test",
                   "consumer", "consumer.library", "consumer.library.main", "consumer.library.test", "consumer.library.integrationTest");
   }
 
@@ -583,11 +586,13 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject("");
 
+    var includedProjectName = getCurrentGradleVersion().getMajorVersion() >= 6 ? "included-project" : "myId";
+
     assertModules("root-project",
                   "root-project.sub-project", "root-project.sub-project.main", "root-project.sub-project.test",
-                  "myId", "myId.main", "myId.test");
+                  includedProjectName, includedProjectName + ".main", includedProjectName + ".test");
 
-    assertModuleModuleDeps("root-project.sub-project.main", "myId.main");
+    assertModuleModuleDeps("root-project.sub-project.main", includedProjectName + ".main");
   }
 
   @Test
@@ -737,7 +742,11 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject("");
 
-    assertModules("root", "A", "AA", "AAA");
+    if (getCurrentGradleVersion().getMajorVersion() >= 8 ) {
+      assertModules("root", "A", "A.AA", "A.AA.AAA");
+    } else {
+      assertModules("root", "A", "AA", "AAA");
+    }
   }
 
   @Test
@@ -785,11 +794,19 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     importProject("");
 
-    assertModules("root",
-                  "A", "AA", "AAA",
-                  "B",
-                  "C",
-                  "D");
+    if (getCurrentGradleVersion().getMajorVersion() >= 8) {
+      assertModules("root",
+                    "A", "A.AA", "A.AA.AAA",
+                    "B",
+                    "C",
+                    "D");
+    } else {
+      assertModules("root",
+                    "A", "AA", "AAA",
+                    "B",
+                    "C",
+                    "D");
+    }
   }
 
   private static void addToComposite(GradleProjectSettings settings, String buildRootProjectName, String buildPath) {
