@@ -112,6 +112,11 @@ public class PluginUpdateDialog extends DialogWrapper {
     return Map.of(descriptor.getPluginId(), new PluginUiModelAdapter(descriptor));
   }
 
+  public static List<PluginDownloader> getSelectedDownloaders(@NotNull Collection<PluginDownloader> downloaders,
+                                                              @NotNull PluginUpdateDialog dialog) {
+    return findDownloadersForPlugins(downloaders, dialog.getSelectedPluginModels());
+  }
+
   private static @NotNull List<PluginDownloader> findDownloadersForPlugins(@NotNull Collection<PluginDownloader> downloaders,
                                                                            @NotNull List<PluginUiModel> selectedPlugins) {
     List<PluginDownloader> selectedDownloaders = new ArrayList<>();
