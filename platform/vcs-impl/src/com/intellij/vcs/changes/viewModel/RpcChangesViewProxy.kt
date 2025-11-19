@@ -3,6 +3,7 @@ package com.intellij.vcs.changes.viewModel
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
@@ -10,6 +11,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
@@ -93,6 +95,13 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
   }
 
   override fun select(item: Any) {
+    val treePath = ChangesTreePath.create(item)
+    if (treePath == null) {
+      LOG.warn("Cannot find tree path for $item")
+      return
+    }
+
+    selectPath(treePath)
   }
 
   override fun selectFirst(items: Collection<Any>) {
@@ -105,6 +114,9 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
   }
 
   override fun getTree(): ChangesListView = treeView
+  fun selectPath(path: ChangesTreePath) {
+    _eventsForFrontend.tryEmit(BackendChangesViewEvent.SelectPath(path))
+  }
 
   fun inclusionChanged() {
     inclusionChanged.tryEmit(Unit)
@@ -114,6 +126,10 @@ internal class RpcChangesViewProxy(project: Project, scope: CoroutineScope) : Ch
 
   fun selectionUpdated(selection: ChangesViewDiffableSelection?) {
     diffableSelection.value = selection
+  }
+
+  companion object {
+    private val LOG = logger<RpcChangesViewProxy>()
   }
 }
 
