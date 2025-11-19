@@ -6,7 +6,6 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +33,9 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     if (element == null) {
       return null;
     }
-    final PsiFile file = element.getContainingFile();
-    final PsiElement context = file.getContext();
-    if (context instanceof RegExpLanguageHost) {
-      return (RegExpLanguageHost)context;
+    final PsiElement context = element.getContainingFile().getContext();
+    if (context instanceof RegExpLanguageHost host) {
+      return host;
     }
     if (context != null) {
       return INSTANCE.forClass(context.getClass());
@@ -54,17 +52,11 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   }
 
   public boolean isRedundantEscape(final @NotNull RegExpChar ch, final @NotNull String text) {
-    if (text.length() <= 1) {
-      return false;
-    }
+    if (text.length() <= 1) return false;
     final RegExpLanguageHost host = findRegExpHost(ch);
-    if (host != null) {
-      final char c = text.charAt(1);
-      return !host.characterNeedsEscaping(c, ch.getParent() instanceof RegExpClass);
-    }
-    else {
-      return !("\\]".equals(text) || "\\}".equals(text));
-    }
+    return host != null
+           ? !host.characterNeedsEscaping(text.charAt(1), ch.getParent() instanceof RegExpClass)
+           : !"\\]".equals(text) && !"\\}".equals(text);
   }
 
   public boolean supportsInlineOptionFlag(char flag, PsiElement context) {
