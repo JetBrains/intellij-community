@@ -26,7 +26,7 @@ class SeActionsTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
-  override val priority: Int get() = 800
+  override val priority: Int get() = PRIORITY
   private val filterEditor: SeFilterEditor = SeActionsFilterEditor()
 
   override suspend fun getFilterEditor(): SeFilterEditor = filterEditor
@@ -52,6 +52,8 @@ class SeActionsTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
     const val ID: String = "ActionSearchEverywhereContributor"
     @ApiStatus.Internal
     val NAME: String = IdeBundle.message("search.everywhere.group.name.actions")
+    @ApiStatus.Internal
+    const val PRIORITY: Int = 800
   }
 }
 

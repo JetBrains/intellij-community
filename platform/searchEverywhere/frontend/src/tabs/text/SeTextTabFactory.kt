@@ -18,6 +18,7 @@ import org.jetbrains.annotations.ApiStatus
 class SeTextTabFactory : SeEssentialTabFactory {
   override val id: String get() = SeTextTab.ID
   override val name: String get() = SeTextTab.NAME
+  override val priority: Int get() = SeTextTab.PRIORITY
 
   override suspend fun getTab(scope: CoroutineScope, project: Project?, session: SeSession, initEvent: AnActionEvent, registerShortcut: (AnAction) -> Unit): SeTab? {
     if (project == null || !TextSearchContributor.enabled()) return null

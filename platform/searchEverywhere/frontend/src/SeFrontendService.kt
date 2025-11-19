@@ -91,8 +91,11 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val showPopupStartTime = System.currentTimeMillis()
 
     val tabFactories = SeTabFactory.EP_NAME.extensionList
-    val initialTabs = visibleTabsState
-                      ?: tabFactories.filterIsInstance<SeEssentialTabFactory>().map { SePopupHeaderPane.Tab(it.name, it.id, it.id) }
+    val initialTabs = visibleTabsState ?: tabFactories.filterIsInstance<SeEssentialTabFactory>().sortedBy {
+        -it.priority
+      }.map {
+        SePopupHeaderPane.Tab(it.name, it.id, it.id)
+      }
 
     val popupClosedCompletable = CompletableDeferred<Unit>()
     val searchStatePublisher = SeSearchStatePublisher()

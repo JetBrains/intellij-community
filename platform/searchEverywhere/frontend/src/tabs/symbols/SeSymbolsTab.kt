@@ -18,7 +18,7 @@ open class SeSymbolsTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
-  override val priority: Int get() = 850
+  override val priority: Int get() = PRIORITY
 
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
     SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates(), true)
@@ -40,5 +40,8 @@ open class SeSymbolsTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
 
     @ApiStatus.Internal
     val NAME: String = IdeBundle.message("search.everywhere.group.name.symbols")
+
+    @ApiStatus.Internal
+    const val PRIORITY: Int = 850
   }
 }

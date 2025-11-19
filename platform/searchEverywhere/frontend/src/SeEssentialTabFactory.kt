@@ -6,4 +6,5 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface SeEssentialTabFactory: SeTabFactory {
   val name: String
+  val priority: Int
 }

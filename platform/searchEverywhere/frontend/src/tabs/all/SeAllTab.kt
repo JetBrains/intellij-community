@@ -28,7 +28,7 @@ import java.util.function.Function
 class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val name: String get() = NAME
   override val isIndexingDependent: Boolean get() = true
-  override val priority: Int get() = Integer.MAX_VALUE
+  override val priority: Int get() = PRIORITY
 
   override val id: String get() = ID
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
@@ -69,6 +69,9 @@ class SeAllTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
 
     @ApiStatus.Internal
     val NAME: String = IdeBundle.message("searcheverywhere.all.elements.tab.name")
+
+    @ApiStatus.Internal
+    const val PRIORITY: Int = Integer.MAX_VALUE
   }
 }
 

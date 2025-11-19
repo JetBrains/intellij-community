@@ -11,6 +11,7 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.SeDefaultTabBase
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -18,7 +19,7 @@ class SeFilesTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val name: String get() = NAME
   override val id: String get() = ID
   override val isIndexingDependent: Boolean get() = true
-  override val priority: Int get() = 900
+  override val priority: Int get() = PRIORITY
 
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
     SeTargetsFilterEditor(delegate.getSearchScopesInfos().firstOrNull(), delegate.getTypeVisibilityStates(), true)
@@ -41,5 +42,8 @@ class SeFilesTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
 
     @Internal
     val NAME: String = IdeBundle.message("search.everywhere.group.name.files")
+
+    @ApiStatus.Internal
+    const val PRIORITY: Int = 900
   }
 }
