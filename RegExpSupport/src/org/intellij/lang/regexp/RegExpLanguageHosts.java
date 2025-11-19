@@ -1,6 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -12,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 
 public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost> {
   private static final RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
@@ -40,6 +43,14 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
       return INSTANCE.forClass(context.getClass());
     }
     return null;
+  }
+
+  public @NotNull EnumSet<RegExpCapability> getCapabilities(RegExpElement element) {
+    Language dialect = element.getContainingFile().getLanguage();
+    assert dialect == RegExpLanguage.INSTANCE || dialect.getBaseLanguage() == RegExpLanguage.INSTANCE;
+    return LanguageParserDefinitions.INSTANCE.forLanguage(dialect) instanceof RegExpParserDefinition definition
+           ? definition.getCapabilities()
+           : EnumSet.noneOf(RegExpCapability.class);
   }
 
   public boolean isRedundantEscape(final @NotNull RegExpChar ch, final @NotNull String text) {

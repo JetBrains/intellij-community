@@ -1,15 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.regexp;
 
-import com.intellij.lang.PsiParser;
-import com.intellij.lexer.Lexer;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
 import org.intellij.lang.regexp.RegExpCapability;
-import org.intellij.lang.regexp.RegExpLexer;
-import org.intellij.lang.regexp.RegExpParser;
 import org.intellij.lang.regexp.RegExpParserDefinition;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,14 +20,10 @@ public class PythonRegexpParserDefinition extends RegExpParserDefinition {
                                                                       OMIT_NUMBERS_IN_QUANTIFIERS,
                                                                       OMIT_BOTH_NUMBERS_IN_QUANTIFIERS,
                                                                       MIN_OCTAL_3_DIGITS);
-  @Override
-  public @NotNull Lexer createLexer(Project project) {
-    return new RegExpLexer(CAPABILITIES);
-  }
 
   @Override
-  public @NotNull PsiParser createParser(Project project) {
-    return new RegExpParser(CAPABILITIES);
+  public @NotNull EnumSet<RegExpCapability> getCapabilities() {
+    return CAPABILITIES;
   }
 
   @Override

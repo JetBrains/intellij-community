@@ -30,6 +30,7 @@ public class PyRegexpTest extends PyTestCase {
   }
 
   public void testCommentModeWhitespace() {
+    myFixture.enableInspections(new RegExpSimplifiableInspection());
     doTestHighlighting();
   }
 

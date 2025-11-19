@@ -37,95 +37,74 @@ public class RegExpParserDefinition implements ParserDefinition {
 
   public static final IFileElementType REGEXP_FILE = new RegExpFileElementType();
 
-  public @NotNull EnumSet<RegExpCapability> getDefaultCapabilities() {
-        return RegExpCapability.DEFAULT_CAPABILITIES;
-    }
+  public @NotNull EnumSet<RegExpCapability> getCapabilities() {
+    return RegExpCapability.DEFAULT_CAPABILITIES;
+  }
 
-    @Override
-    public @NotNull Lexer createLexer(Project project) {
-        return createLexer(project, getDefaultCapabilities());
-    }
+  @Override
+  public @NotNull Lexer createLexer(Project project) {
+    return createLexer(project, getCapabilities());
+  }
 
-    @Override
-    public @NotNull PsiParser createParser(Project project) {
-      return createParser(project, getDefaultCapabilities());
-    }
+  @Override
+  public @NotNull PsiParser createParser(Project project) {
+    return createParser(project, getCapabilities());
+  }
 
-    public @NotNull RegExpParser createParser(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
-        return new RegExpParser(capabilities);
-    }
+  public @NotNull RegExpParser createParser(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
+    return new RegExpParser(capabilities);
+  }
 
-    public @NotNull RegExpLexer createLexer(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
-        return new RegExpLexer(capabilities);
-    }
+  public @NotNull RegExpLexer createLexer(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
+    return new RegExpLexer(capabilities);
+  }
 
   @Override
   public @NotNull IFileElementType getFileNodeType() {
     return REGEXP_FILE;
   }
 
-    @Override
-    public @NotNull TokenSet getWhitespaceTokens() {
-        return TokenSet.create(RegExpTT.QUOTE_BEGIN, RegExpTT.QUOTE_END, TokenType.WHITE_SPACE);
-    }
+  @Override
+  public @NotNull TokenSet getWhitespaceTokens() {
+    return TokenSet.create(RegExpTT.QUOTE_BEGIN, RegExpTT.QUOTE_END, TokenType.WHITE_SPACE);
+  }
 
-    @Override
-    public @NotNull TokenSet getStringLiteralElements() {
-        return TokenSet.EMPTY;
-    }
+  @Override
+  public @NotNull TokenSet getStringLiteralElements() {
+    return TokenSet.EMPTY;
+  }
 
-    @Override
-    public @NotNull TokenSet getCommentTokens() {
-        return TokenSet.create(RegExpTT.COMMENT);
-    }
+  @Override
+  public @NotNull TokenSet getCommentTokens() {
+    return TokenSet.create(RegExpTT.COMMENT);
+  }
 
-    @Override
-    public @NotNull PsiElement createElement(ASTNode node) {
-        final IElementType type = node.getElementType();
-        if (type == RegExpElementTypes.PATTERN) {
-            return new RegExpPatternImpl(node);
-        } else if (type == RegExpElementTypes.BRANCH) {
-            return new RegExpBranchImpl(node);
-        } else if (type == RegExpElementTypes.SIMPLE_CLASS) {
-            return new RegExpSimpleClassImpl(node);
-        } else if (type == RegExpElementTypes.CLASS) {
-            return new RegExpClassImpl(node);
-        } else if (type == RegExpElementTypes.CHAR_RANGE) {
-            return new RegExpCharRangeImpl(node);
-        } else if (type == RegExpElementTypes.CHAR) {
-            return new RegExpCharImpl(node);
-        } else if (type == RegExpElementTypes.GROUP) {
-            return new RegExpGroupImpl(node);
-        } else if (type == RegExpElementTypes.PROPERTY) {
-            return new RegExpPropertyImpl(node);
-        } else if (type == RegExpElementTypes.NAMED_CHARACTER) {
-            return new RegExpNamedCharacterImpl(node);
-        } else if (type == RegExpElementTypes.SET_OPTIONS) {
-            return new RegExpSetOptionsImpl(node);
-        } else if (type == RegExpElementTypes.OPTIONS) {
-            return new RegExpOptionsImpl(node);
-        } else if (type == RegExpElementTypes.BACKREF) {                                    
-            return new RegExpBackrefImpl(node);
-        } else if (type == RegExpElementTypes.CLOSURE) {
-            return new RegExpClosureImpl(node);
-        } else if (type == RegExpElementTypes.QUANTIFIER) {
-            return new RegExpQuantifierImpl(node);
-        } else if (type == RegExpElementTypes.BOUNDARY) {
-            return new RegExpBoundaryImpl(node);
-        } else if (type == RegExpElementTypes.INTERSECTION) {
-            return new RegExpIntersectionImpl(node);
-        } else if (type == RegExpElementTypes.NAMED_GROUP_REF) {
-            return new RegExpNamedGroupRefImpl(node);
-        } else if (type == RegExpElementTypes.CONDITIONAL) {
-            return new RegExpConditionalImpl(node);
-        } else if (type == RegExpElementTypes.POSIX_BRACKET_EXPRESSION) {
-            return new RegExpPosixBracketExpressionImpl(node);
-        } else if (type == RegExpElementTypes.NUMBER) {
-            return new RegExpNumberImpl(node);
-        }
-      
-        return new ASTWrapperPsiElement(node);
-    }
+  @Override
+  public @NotNull PsiElement createElement(ASTNode node) {
+    final IElementType type = node.getElementType();
+    if (type == RegExpElementTypes.PATTERN) return new RegExpPatternImpl(node);
+    else if (type == RegExpElementTypes.BRANCH) return new RegExpBranchImpl(node);
+    else if (type == RegExpElementTypes.SIMPLE_CLASS) return new RegExpSimpleClassImpl(node);
+    else if (type == RegExpElementTypes.CLASS) return new RegExpClassImpl(node);
+    else if (type == RegExpElementTypes.CHAR_RANGE) return new RegExpCharRangeImpl(node);
+    else if (type == RegExpElementTypes.CHAR) return new RegExpCharImpl(node);
+    else if (type == RegExpElementTypes.GROUP) return new RegExpGroupImpl(node);
+    else if (type == RegExpElementTypes.PROPERTY) return new RegExpPropertyImpl(node);
+    else if (type == RegExpElementTypes.NAMED_CHARACTER) return new RegExpNamedCharacterImpl(node);
+    else if (type == RegExpElementTypes.SET_OPTIONS) return new RegExpSetOptionsImpl(node);
+    else if (type == RegExpElementTypes.OPTIONS) return new RegExpOptionsImpl(node);
+    else if (type == RegExpElementTypes.BACKREF) return new RegExpBackrefImpl(node);
+    else if (type == RegExpElementTypes.CLOSURE) return new RegExpClosureImpl(node);
+    else if (type == RegExpElementTypes.QUANTIFIER) return new RegExpQuantifierImpl(node);
+    else if (type == RegExpElementTypes.BOUNDARY) return new RegExpBoundaryImpl(node);
+    else if (type == RegExpElementTypes.INTERSECTION) return new RegExpIntersectionImpl(node);
+    else if (type == RegExpElementTypes.NAMED_GROUP_REF) return new RegExpNamedGroupRefImpl(node);
+    else if (type == RegExpElementTypes.CONDITIONAL) return new RegExpConditionalImpl(node);
+    else if (type == RegExpElementTypes.POSIX_BRACKET_EXPRESSION) return new RegExpPosixBracketExpressionImpl(node);
+    else if (type == RegExpElementTypes.NUMBER) return new RegExpNumberImpl(node);
+
+    return new ASTWrapperPsiElement(node);
+  }
 
   @Override
   public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
