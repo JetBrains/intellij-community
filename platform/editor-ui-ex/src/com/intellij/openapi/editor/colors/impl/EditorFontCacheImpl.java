@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,6 +6,8 @@ import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.impl.FontFamilyService;
+import com.intellij.util.ArrayUtil;
+import com.jetbrains.JBR;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,9 +97,13 @@ public class EditorFontCacheImpl extends EditorFontCache {
                        int style,
                        float fontSize,
                        FontPreferences fontPreferences) {
-    Font baseFont = FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
+    Font editorFont = FontFamilyService.getFont(familyName, fontPreferences.getRegularSubFamily(), fontPreferences.getBoldSubFamily(),
                                               style, fontSize);
-    fonts.put(fontType, deriveFontWithLigatures(baseFont, fontPreferences.useLigatures()));
+    editorFont = deriveFontWithLigatures(editorFont, fontPreferences.useLigatures());
+    if (!fontPreferences.getCharacterVariants().isEmpty()) {
+      editorFont = JBR.getFontExtensions().deriveFontWithFeatures(editorFont, ArrayUtil.toStringArray(fontPreferences.getCharacterVariants()));
+    }
+    fonts.put(fontType, editorFont);
   }
 
   private static @Nullable String getFallbackName(@NotNull String fontName) {

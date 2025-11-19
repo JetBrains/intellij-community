@@ -785,6 +785,8 @@ com.intellij.openapi.editor.ex.TooltipAction
 f:com.intellij.openapi.editor.impl.EditorIdKt
 f:com.intellij.openapi.editor.impl.FoldingModelImpl
 - onFoldInitializationStatusChanged(Z):V
+f:com.intellij.openapi.editor.impl.FontInfo
+- <init>(java.awt.Font,F,Z,java.util.Set,java.awt.font.FontRenderContext):V
 com.intellij.openapi.editor.impl.HighlighterListener
 - a:highlighterChanged(I,I):V
 com.intellij.openapi.editor.impl.TextDrawingCallback
