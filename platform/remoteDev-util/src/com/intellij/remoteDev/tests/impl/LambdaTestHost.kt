@@ -266,15 +266,9 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             LOG.info("'$serializedLambda': received serialized lambda execution request")
 
             val providedCoroutineContext = Dispatchers.Default + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.stepName}")
-            val requestFocusBeforeStart = false
             val clientId = providedCoroutineContext.clientId() ?: ClientId.current
 
             withContext(providedCoroutineContext) {
-              assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
-              if (!app.isHeadlessEnvironment && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
-                requestFocus()
-              }
-
               assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
 
               val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
