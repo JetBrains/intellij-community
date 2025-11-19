@@ -563,7 +563,13 @@ class StructureViewWrapperImpl(
     val titleActions: List<AnAction> = if (structureView is StructureViewComponent) {
       if (ExperimentalUI.isNewUI()) {
         readAction { structureView.getViewActions(myActionGroup) }
-        listOf(myActionGroup)
+        val headerActions = withContext(Dispatchers.EDT) { structureView.headerActions }
+        if (headerActions.isNotEmpty()) {
+          listOf(myActionGroup, Separator.getInstance()) + headerActions
+        }
+        else {
+          listOf(myActionGroup)
+        }
       }
       else {
         withContext(Dispatchers.EDT) { structureView.addExpandCollapseActions() }

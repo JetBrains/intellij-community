@@ -377,7 +377,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   @ApiStatus.Internal
-  public final void getViewActions(@NotNull DefaultActionGroup result) {
+  public void getViewActions(@NotNull DefaultActionGroup result) {
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.sort"));
     result.addAll(sortActionsByName(getSortActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.filter"));
@@ -429,6 +429,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     return result;
   }
 
+  @ApiStatus.Internal
+  public @NotNull List<AnAction> getHeaderActions() {
+    return Collections.emptyList();
+  }
 
   protected void addGroupByActions(@NotNull DefaultActionGroup result) {
     Grouper[] groupers = myTreeModel.getGroupers();
