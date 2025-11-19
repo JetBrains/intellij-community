@@ -1,5 +1,6 @@
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.ide.starter.coroutine.perTestSupervisorScope
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.jetbrains.rd.util.printlnError
 import kotlinx.coroutines.runBlocking
@@ -66,15 +67,15 @@ open class MonolithAndSplitModeInvocationInterceptor : InvocationInterceptor {
     }
 
     @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
+    runBlocking(perTestSupervisorScope.coroutineContext) {
       println("Executing test method $fullMethodName inside IDE in mode ${IdeInstance.currentIdeMode}")
 
       IdeInstance.ideBackgroundRun.runNamedLambda(InjectedLambda::class,
                                                   params = mapOf(
-                                               "testClass" to (invocationContext.targetClass.name ?: ""),
-                                               "testMethod" to (invocationContext.executable?.name ?: ""),
-                                               "methodArguments" to argumentsToString(invocationContext.arguments)
-                                             ))
+                                                    "testClass" to (invocationContext.targetClass.name ?: ""),
+                                                    "testMethod" to (invocationContext.executable?.name ?: ""),
+                                                    "methodArguments" to argumentsToString(invocationContext.arguments)
+                                                  ))
     }
     invocation.skip()
     return null

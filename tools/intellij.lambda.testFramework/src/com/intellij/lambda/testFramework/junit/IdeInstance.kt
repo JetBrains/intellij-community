@@ -5,9 +5,9 @@ import com.intellij.ide.starter.config.splitMode
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.starter.newContextWithLambda
-import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
+import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 
@@ -38,7 +38,7 @@ object IdeInstance {
       return ideBackgroundRun
     }
     catch (e: Throwable) {
-      logError(e.stackTraceToString())
+      logError("Problems when starting IDE", e)
       throw e
     }
   }
