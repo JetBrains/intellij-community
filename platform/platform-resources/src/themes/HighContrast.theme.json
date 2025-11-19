@@ -707,6 +707,15 @@
       "chroniclesBackgroundHovered": "#42424E",
       "chroniclesForeground": "#DFE1E5",
       "chroniclesForegroundGreyed": "#D8F45C"
+    },
+
+    "OpenTelemetry": {
+      "Span.regularBounds": "#FFFFFF",
+      "Span.regularFillStart": "#7E00D9",
+      "Span.regularFillEnd": "#7E00D9",
+      "Span.selectedBounds": "#FFFFFF",
+      "Span.selectedFillStart": "#E0861F",
+      "Span.selectedFillEnd": "#E0861F"
     }
   },
 
