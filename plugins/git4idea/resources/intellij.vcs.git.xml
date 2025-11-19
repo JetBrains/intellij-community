@@ -105,7 +105,6 @@
             class="git4idea.ui.branch.cleanup.CleanupBranchesAction"
             icon="AllIcons.Actions.ClearCash"
             internal="true">
-      <add-to-group group-id="Git.Branch.Placeholder"/>
       <add-to-group group-id="Git.Log.Branches.Toolbar.Actions"/>
     </action>
 
