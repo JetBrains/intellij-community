@@ -15,7 +15,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.stepping.ForceSmartStepIntoSource
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.future.future
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.asPromise
@@ -34,10 +33,10 @@ internal class JvmSmartStepIntoActionHandler(private val session: DebuggerSessio
 
   private fun findVariants(xPosition: XSourcePosition, smart: Boolean): Promise<List<JvmSmartStepIntoVariant>> {
     val scope = (session.xDebugSession as XDebugSessionImpl).currentSuspendCoroutineScope ?: return rejectedPromise()
+    val position = DebuggerUtilsEx.toSourcePosition(xPosition, session.project)
+    val handler = JvmSmartStepIntoHandler.EP_NAME.findFirstSafe { it.isAvailable(position) }
+                  ?: return rejectedPromise()
     return scope.future {
-      val position = DebuggerUtilsEx.toSourcePosition(xPosition, session.project)
-      val handler = JvmSmartStepIntoHandler.EP_NAME.findFirstSafe { it.isAvailable(position) }
-                    ?: throw CancellationException()
       val targetsPromise = if (smart) handler.findSmartStepTargetsAsync(position, session) else handler.findStepIntoTargets(position, session)
       val targets = targetsPromise.await()
       readAction { targets.map { JvmSmartStepIntoVariant(it, handler) } }
