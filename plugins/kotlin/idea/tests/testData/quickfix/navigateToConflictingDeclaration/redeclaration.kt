@@ -1,0 +1,11 @@
+// "Show conflicting 'myProperty' declarations" "true"
+// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+// K2_AFTER_ERROR: Conflicting declarations:<br>val myProperty: Int
+// K2_AFTER_ERROR: Conflicting declarations:<br>val myProperty: String
+// IGNORE_K1
+package test
+
+val myProperty<caret>: Int = 42
+
+val myProperty: String = "hello"
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ShowConflictingDeclarationsAction

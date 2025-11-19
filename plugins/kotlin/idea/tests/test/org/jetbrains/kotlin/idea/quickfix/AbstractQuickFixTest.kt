@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.extensions.LoadingOrder
@@ -25,7 +26,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -351,8 +351,10 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 comparisonFailure
             }
 
-            UIUtil.dispatchAllInvocationEvents()
-            UIUtil.dispatchAllInvocationEvents()
+            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+
+            // Wait in case ModCommand actions have scheduled an additional execution step
+            NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
 
             if (!shouldBeAvailableAfterExecution()) {
                 var action = findActionWithText(hint.expectedText, acceptMatchByFamilyName = true)

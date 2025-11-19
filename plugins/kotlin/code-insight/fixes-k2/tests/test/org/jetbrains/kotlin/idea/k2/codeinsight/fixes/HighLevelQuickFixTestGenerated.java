@@ -10355,6 +10355,40 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration")
+    public static class NavigateToConflictingDeclaration extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("classifierRedeclaration.kt")
+        public void testClassifierRedeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration/classifierRedeclaration.kt");
+        }
+
+        @TestMetadata("conflictingOverloads.kt")
+        public void testConflictingOverloads() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration/conflictingOverloads.kt");
+        }
+
+        @TestMetadata("redeclaration.kt")
+        public void testRedeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration/redeclaration.kt");
+        }
+
+        @TestMetadata("redeclaration_local.kt")
+        public void testRedeclaration_local() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/navigateToConflictingDeclaration/redeclaration_local.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/nullables")
     public abstract static class Nullables extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
