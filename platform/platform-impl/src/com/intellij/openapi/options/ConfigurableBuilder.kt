@@ -15,7 +15,9 @@ import java.util.function.Supplier
 import javax.swing.JCheckBox
 
 @Deprecated("Use identical {@link BeanConfigurable} for replacement")
-abstract class ConfigurableBuilder protected constructor() : UiDslUnnamedConfigurable.Simple(), UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
+abstract class ConfigurableBuilder
+@Deprecated("Use BeanConfigurable", level = DeprecationLevel.HIDDEN)
+protected constructor() : UiDslUnnamedConfigurable.Simple(), UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
 
   @ApiStatus.Internal
   internal class CallbackAccessor(private val myGetter: Supplier<Boolean>, private val mySetter: Setter<in Boolean?>) {

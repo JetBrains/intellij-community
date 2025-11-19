@@ -8326,7 +8326,7 @@ a:com.intellij.openapi.options.ConfigurableBuilder
 - com.intellij.openapi.options.UiDslUnnamedConfigurable$Simple
 - com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 - com.intellij.openapi.options.UiDslUnnamedConfigurable
-- p:<init>():V
+- bp:<init>():V
 - p:checkBox(java.lang.String,com.intellij.openapi.util.Getter,com.intellij.openapi.util.Setter):V
 - createContent(com.intellij.ui.dsl.builder.Panel):V
 - getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
