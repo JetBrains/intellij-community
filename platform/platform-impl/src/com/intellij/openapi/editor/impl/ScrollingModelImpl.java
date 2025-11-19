@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
+import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -38,6 +39,9 @@ import java.util.List;
 
 //@ApiStatus.Internal
 public final class ScrollingModelImpl implements ScrollingModelEx {
+  /**
+   * See also {@link EditorScrollingPositionKeeper} logger
+   */
   private static final Logger LOG = Logger.getInstance(ScrollingModelImpl.class);
 
   private final @NotNull ScrollingModel.Supplier supplier;
@@ -123,7 +127,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   @RequiresEdt
   public void scrollToCaret(@NotNull ScrollType scrollType) {
     if (LOG.isTraceEnabled()) {
-      LOG.trace(new Throwable());
+      LOG.trace(new Throwable("scrollToCaret request: " + scrollType));
     }
 
     Editor editor = supplier.getEditor();
@@ -163,6 +167,10 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
   @Override
   @RequiresEdt
   public void scrollTo(@NotNull LogicalPosition logicalPosition, @NotNull ScrollType scrollType) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("scrollTo request: " + scrollType + " - " + logicalPosition));
+    }
+
     Editor editor = supplier.getEditor();
     AsyncEditorLoader.Companion.performWhenLoaded(editor, (ContextAwareRunnable)() -> {
       for (ScrollRequestListener listener : scrollRequestListeners) {
@@ -255,6 +263,10 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   @Override
   public void scroll(int hOffset, int vOffset) {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("scroll to point: x:" + hOffset + ", y:" + vOffset));
+    }
+
     if (accumulateViewportChanges) {
       accumulatedXOffset = hOffset;
       accumulatedYOffset = vOffset;

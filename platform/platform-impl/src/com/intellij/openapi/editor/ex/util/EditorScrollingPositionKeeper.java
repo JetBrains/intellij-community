@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.util.Disposer;
@@ -21,6 +22,8 @@ import java.util.stream.Collectors;
  * {@link #restorePosition(boolean)} method - after the operation, to restore the position.
  */
 public final class EditorScrollingPositionKeeper implements Disposable {
+  private static final Logger LOG = Logger.getInstance(EditorScrollingPositionKeeper.class);
+
   private final Editor myEditor;
   private int myViewportShift;
   private RangeMarker myTopLeftCornerMarker;
@@ -44,6 +47,12 @@ public final class EditorScrollingPositionKeeper implements Disposable {
       myTopLeftCornerMarker = null;
       myViewportShift = caretY - visibleArea.y;
     }
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("savePosition:" +
+                              " offset: " + (myTopLeftCornerMarker != null ? myTopLeftCornerMarker.getStartOffset() : "null") +
+                              ", shift: " + myViewportShift));
+    }
   }
 
   public void restorePosition(boolean stopAnimation) {
@@ -57,6 +66,14 @@ public final class EditorScrollingPositionKeeper implements Disposable {
       if (!myTopLeftCornerMarker.isValid()) return;
       newY = myEditor.offsetToXY(myTopLeftCornerMarker.getStartOffset()).y;
     }
+
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(new Throwable("restorePosition:" +
+                              " offset: " + (myTopLeftCornerMarker != null ? myTopLeftCornerMarker.getStartOffset() : "null") +
+                              ", shift: " + myViewportShift +
+                              ", new_y: " + newY));
+    }
+
     ScrollingModel scrollingModel = myEditor.getScrollingModel();
     Rectangle targetArea = scrollingModel.getVisibleAreaOnScrollingFinished();
     // when animated scrolling is in progress, we'll not stop it immediately
