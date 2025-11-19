@@ -6,12 +6,14 @@ import com.intellij.codeInsight.daemon.LineMarkerProviders
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
+import com.intellij.openapi.application.ApplicationManager
 
 private class GutterIconsSearchableOptionContributor : SearchableOptionContributor() {
   override fun processOptions(processor: SearchableOptionProcessor) {
     val gutterIconsDisplayName = IdeBundle.message("configurable.GutterIconsConfigurable.display.name")
-    for (extension in LineMarkerProviders.EP_NAME.extensionList) {
-      val instance = extension.getInstance() as? LineMarkerProviderDescriptor ?: continue
+    val app = ApplicationManager.getApplication()
+    LineMarkerProviders.EP_NAME.processWithPluginDescriptor { extension, pluginDescriptor ->
+      val instance = extension.getInstance(app, pluginDescriptor) as? LineMarkerProviderDescriptor ?: return@processWithPluginDescriptor
       val name = instance.getName()
       if (!name.isNullOrEmpty()) {
         processor.addOptions(name, null, name, GutterIconsConfigurable.ID, gutterIconsDisplayName, true)
