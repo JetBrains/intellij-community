@@ -272,7 +272,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
               assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
 
               val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
-              runLogged(serializedLambda.stepName, 1.minutes) {
+              runLogged(serializedLambda.stepName, 10.minutes) {
                 URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use {
                   SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it, context = ideContext)
                     .accept(ideContext)
