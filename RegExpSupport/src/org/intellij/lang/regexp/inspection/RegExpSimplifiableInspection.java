@@ -36,6 +36,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
     @Override
     public void visitRegExpClass(RegExpClass regExpClass) {
       super.visitRegExpClass(regExpClass);
+      if (regExpClass.getLastChild() instanceof PsiErrorElement) return;
       final RegExpClassElement[] elements = regExpClass.getElements();
       for (RegExpClassElement element : elements) {
         if (element instanceof RegExpCharRange range) {
@@ -62,9 +63,9 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       else {
         if (elements.length == 1) {
           final RegExpClassElement element = elements[0];
-          if (element instanceof RegExpPosixBracketExpression) return;
+          if (element.getLastChild() instanceof PsiErrorElement || element instanceof RegExpPosixBracketExpression) return;
           if (!(element instanceof RegExpCharRange) && !(element instanceof RegExpIntersection)) {
-            if (!(element instanceof RegExpChar) || !"{}().*+?|$".contains(element.getText())) {
+            if (!(element instanceof RegExpChar) || !"[{}().*+?|$".contains(element.getText())) {
               // [a] -> a
               registerProblem(regExpClass, element.getUnescapedText());
             }

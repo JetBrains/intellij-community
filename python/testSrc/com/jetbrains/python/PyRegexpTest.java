@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
 import com.intellij.idea.TestFor;
@@ -53,6 +53,13 @@ public class PyRegexpTest extends PyTestCase {
 
   public void testNotEmptyGroup() { // PY-14381
     doTestHighlighting();
+  }
+  
+  public void testNonSimplifiableCharacterClass() {
+    myFixture.enableInspections(new RegExpSimplifiableInspection());
+    doTestHighlighting("""
+                           import re
+                           re.compile("[[]")""");
   }
 
   public void testNestedCharacterClasses() {  // PY-2908
@@ -256,7 +263,7 @@ public class PyRegexpTest extends PyTestCase {
   @TestFor(issues="PY-61777")
   public void testPossessiveQuantifierSupportedPy3() {
     runWithLanguageLevel(LanguageLevel.PYTHON311, () ->
-      testHighlighting("""
+      doTestHighlighting("""
                            import re
                            re.compile("a++ b*+ c?+")""")
     );
@@ -265,7 +272,7 @@ public class PyRegexpTest extends PyTestCase {
   @TestFor(issues="PY-61777")
   public void testPossessiveQuantifierUnsupportedPy3() {
     runWithLanguageLevel(LanguageLevel.PYTHON310, () ->
-      testHighlighting("""
+      doTestHighlighting("""
                            import re
                            re.compile("a+<error descr="Nested quantifier in regexp">+</error> b*<error descr="Nested quantifier in regexp">+</error> c?<error descr="Nested quantifier in regexp">+</error>")""")
     );
@@ -274,7 +281,7 @@ public class PyRegexpTest extends PyTestCase {
   @TestFor(issues="PY-61777")
   public void testAtomicGroupSupportedPy3() {
     runWithLanguageLevel(LanguageLevel.PYTHON311, () ->
-      testHighlighting("""
+      doTestHighlighting("""
                            import re
                            re.compile("(?>a+)")""")
     );
@@ -283,7 +290,7 @@ public class PyRegexpTest extends PyTestCase {
   @TestFor(issues="PY-61777")
   public void testAtomicGroupUnsupportedPy3() {
     runWithLanguageLevel(LanguageLevel.PYTHON310, () ->
-      testHighlighting("""
+      doTestHighlighting("""
                            import re
                            re.compile("<error descr="Atomic groups are not supported in this regex dialect">(?>a+)</error>")""")
     );
@@ -292,7 +299,7 @@ public class PyRegexpTest extends PyTestCase {
   @TestFor(issues="PY-35730")
   public void testGroupNameIsValidIdentifier() {
     //noinspection NonAsciiCharacters
-    testHighlighting(
+    doTestHighlighting(
       """
         import re
         re.compile("(?P<水>水)")  # non-ascii is a valid group name, a warning will be reported by `NonAsciiCharactersInspection`
@@ -331,7 +338,7 @@ public class PyRegexpTest extends PyTestCase {
     myFixture.testHighlighting(true, false, true, "regexp/" + getTestName(true) + ".py");
   }
 
-  private void testHighlighting(String text) {
+  private void doTestHighlighting(String text) {
     myFixture.configureByText("test.py", text);
     myFixture.testHighlighting(true, false, true, "test.py");
   }
