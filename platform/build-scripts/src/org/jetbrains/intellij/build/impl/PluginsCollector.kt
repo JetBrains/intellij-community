@@ -24,45 +24,17 @@ fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData,
   val descriptorMap = collectPluginDescriptors(skipImplementationDetails = !minimal, skipBundled = true, honorCompatiblePluginsToIgnore = true, context = context)
   val descriptorMapWithBundled = collectPluginDescriptors(skipImplementationDetails = true, skipBundled = false, honorCompatiblePluginsToIgnore = true, context = context)
 
-  // While collecting PluginDescriptor maps above, we may have chosen incorrect PluginLayout.
-  // Let's check that and substitute an incorrectly chosen one with a more suitable one or report an error.
-  val moreThanOneLayoutMap = context.productProperties.productLayout.pluginLayouts.groupBy { it.mainModule }.filterValues { it.size > 1 }
-  val moreThanOneLayoutSubstitutors = HashMap<PluginLayout, PluginLayout>()
-  for ((module, layouts) in moreThanOneLayoutMap) {
-    Span.current().addEvent("Module '$module' have ${layouts.size} layouts: $layouts")
-    val substitutor = layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
-                      ?: layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.NONE }
-                      ?: continue
-    for (layout in layouts) {
-      if (layout != substitutor) {
-        moreThanOneLayoutSubstitutors.put(layout, substitutor)
-      }
-    }
-  }
-
-  val errors = ArrayList<List<PluginLayout>>()
   for (descriptor in descriptorMap.values) {
     if (isPluginCompatible(plugin = descriptor, availableModulesAndPlugins = availableModulesAndPlugins, nonCheckedModules = descriptorMapWithBundled)) {
-      val layout = descriptor.pluginLayout
-      val suspicious = moreThanOneLayoutMap.values.filter { it.contains(layout) }
-      if (suspicious.isNotEmpty()) {
-        check(suspicious.size == 1) { "May have only one element: $suspicious" }
-        val substitutor = moreThanOneLayoutSubstitutors.get(layout)
-        if (substitutor != null) {
-          Span.current().addEvent("Substituting plugin layout $layout with Marketplace-ready $substitutor")
-          pluginsToPublish.add(substitutor)
-        }
-        else {
-          errors.add(suspicious.first())
-        }
+      val layouts = descriptor.pluginLayouts.toMutableList()
+      if (layouts.size == 2 && layouts.get(0).bundlingRestrictions != layouts.get(1).bundlingRestrictions) {
+        layouts.retainAll { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
       }
-      else {
-        pluginsToPublish.add(layout)
+      pluginsToPublish.addAll(layouts)
+      if (layouts.size > 1) {
+        Span.current().addEvent("Module '${descriptor.mainModule}' have ${layouts.size} layouts: $layouts")
       }
     }
-  }
-  check(errors.isEmpty()) {
-    "Attempt to publish plugins which have more than one layout and none of them are Marketplace-ready: $errors"
   }
 }
 
@@ -108,10 +80,10 @@ fun collectPluginDescriptors(
 ): MutableMap<String, PluginDescriptor> {
   val pluginDescriptors = LinkedHashMap<String, PluginDescriptor>()
   val productLayout = context.productProperties.productLayout
-  val nonTrivialPlugins = HashMap<String, PluginLayout>(productLayout.pluginLayouts.size)
+  val nonTrivialPlugins = HashMap<String, MutableList<PluginLayout>>(productLayout.pluginLayouts.size)
 
   for (pluginLayout in productLayout.pluginLayouts) {
-    nonTrivialPlugins.putIfAbsent(pluginLayout.mainModule, pluginLayout)
+    nonTrivialPlugins.getOrPut(pluginLayout.mainModule) { mutableListOf() }.add(pluginLayout)
   }
 
   val allBundledPlugins = java.util.Set.copyOf(context.getBundledPluginModules())
@@ -183,14 +155,14 @@ fun collectPluginDescriptors(
       continue
     }
 
-    val pluginLayout = nonTrivialPlugins.get(moduleName) ?: PluginLayout.pluginAuto(listOf(moduleName))
+    val pluginLayouts = nonTrivialPlugins.get(moduleName) ?: listOf(PluginLayout.pluginAuto(listOf(moduleName)))
     val descriptorCacheContainer = DescriptorCacheContainer()
     resolveIncludes(
       element = xml,
       elementResolver = XIncludeElementResolverImpl(
         searchPath = listOf(
           DescriptorSearchScope(
-            modules = pluginLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName },
+            modules = pluginLayouts.flatMap { it.includedModules }.mapTo(LinkedHashSet()) { it.moduleName },
             descriptorCache = descriptorCacheContainer.forPlugin(pluginXml),
             searchInDependencies = DescriptorSearchScope.SearchMode.PLUGIN_COLLECTOR,
           ),
@@ -287,7 +259,7 @@ fun collectPluginDescriptors(
 
     val description = xml.getChildTextTrim("description")
     val pluginDescriptor = PluginDescriptor(
-      id, description, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, pluginLayout
+      id, description, declaredModules, requiredDependencies, incompatiblePlugins, optionalDependencies, moduleName, pluginLayouts
     )
     pluginDescriptors.put(id, pluginDescriptor)
     for (module in declaredModules) {
@@ -311,5 +283,6 @@ class PluginDescriptor(
   @JvmField val requiredDependencies: Set<String>,
   @JvmField val incompatiblePlugins: Set<String>,
   @JvmField val optionalDependencies: List<Pair<String, String>>,
-  @JvmField val pluginLayout: PluginLayout,
+  @JvmField val mainModule: String,
+  @JvmField val pluginLayouts: List<PluginLayout>,
 )
