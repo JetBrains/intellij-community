@@ -318,13 +318,15 @@ class SeTabDelegate(
       initEvent: AnActionEvent,
       session: SeSession,
       logLabel: String,
-    ): Providers {
+    ): Providers = coroutineScope {
       val projectId = project?.projectId()
       val dataContextId = readAction {
         initEvent.dataContext.rpcId()
       }
 
       val hasWildcard = providerIds.any { it.isWildcard }
+
+      ensureActive()
       val localProvidersHolder = SeFrontendService.getInstance(project).localProvidersHolder
                                  ?: error("Local providers holder is not initialized")
 
@@ -390,7 +392,7 @@ class SeTabDelegate(
                           (frontendProvidersFacade?.essentialProviderIds ?: emptySet())
 
       SeLog.log(SeLog.THROTTLING) { "Essential contributors for $logLabel tab : " + allEssentials.joinToString(", ") { it.value } }
-      return Providers(localProviders, frontendProvidersFacade, allEssentials)
+      Providers(localProviders, frontendProvidersFacade, allEssentials)
     }
   }
 }
