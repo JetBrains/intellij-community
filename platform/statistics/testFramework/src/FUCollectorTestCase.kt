@@ -40,7 +40,7 @@ object FUCollectorTestCase {
                       parentDisposable: Disposable,
                       listener: Consumer<LogEvent>,
                       action: () -> Unit) {
-    collectLogEvents(recorder, parentDisposable, listener, true, action)
+    collectLogEvents(recorder, parentDisposable, listener, escapeChars = true, action)
     return
   }
 
