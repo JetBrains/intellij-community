@@ -14150,11 +14150,6 @@ c:com.intellij.ui.render.LabelBasedRenderer
 - repaint(java.awt.Rectangle):V
 - revalidate():V
 - validate():V
-f:com.intellij.ui.render.LabelBasedRenderer$List
-- com.intellij.ui.render.LabelBasedRenderer
-- javax.swing.ListCellRenderer
-- <init>():V
-- getListCellRendererComponent(javax.swing.JList,java.lang.Object,I,Z,Z):java.awt.Component
 c:com.intellij.ui.render.LabelBasedRenderer$Tree
 - com.intellij.ui.render.LabelBasedRenderer
 - javax.swing.tree.TreeCellRenderer
