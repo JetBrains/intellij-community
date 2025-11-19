@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * with additional {@code typePath} attribute. The attribute contains several components starting with '/' and separated with '/'
  * (no ending '/' is allowed). The allowed components are the following:
  * <ul>
- *   <li>{@code number} - one-based type argument index (1-255)
+ *   <li>{@code number} - one-based type argument index (1-255). Also, it is used to choose the bounds for type parameters.
  *   <li>{@code *} (asterisk) - bound of a wildcard type
  *   <li>{@code []} (square brackets) - array element (also works for varargs)
  *   <li>{@code .} (dot) - enclosing type of inner type
