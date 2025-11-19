@@ -47,6 +47,7 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                                                                        myFixture.getFile());
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
+    //language=HTML
     String epDefinition = "[" + getModule().getName() + "]" +
                           "<br/><b>foo.bar</b> (" + pluginXmlFileName + ")<br/>" +
                           "<a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><br/>" +
@@ -55,12 +56,9 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                  provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
     assertEquals(
-      "<div class=\"definition\"><pre><b>foo.bar</b></pre><icon src=\"AllIcons.Nodes.Plugin\"/>&nbsp;" + expectedEpLocationString + "</div><div class=\"definition\"><pre>" +
-      "<div class=\"bottom\"><icon src=\"AllIcons.Nodes.Package\">&nbsp;<a href=\"psi_element://bar\"><code><span style=\"color:#000000;\">bar</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span> <span style=\"color:#000080;font-weight:bold;\">class</span> <span style=\"color:#000000;\">MyExtensionPoint</span></pre></div><div class='content'>\n" +
-      "  MyExtensionPoint JavaDoc.\n" +
-      " </div><table class='sections'><p></table><table class=\"sections\"><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#implementationClass\"><code>implementationClass</code></a></p></td><td valign=\"top\">String (required)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#stringCanBeEmpty\"><code>stringCanBeEmpty</code></a></p></td><td valign=\"top\">String (required, empty allowed)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#intValue\"><code>&lt;intValue&gt;</code></a></p></td><td valign=\"top\">Integer</td></tr><br/></table></pre></div><div class=\"content\"><h2>Extension Point Implementation</h2><div class=\"bottom\"><icon src=\"AllIcons.Nodes.Package\">&nbsp;<a href=\"psi_element://bar\"><code><span style=\"color:#000000;\">bar</span></code></a></div><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span> <span style=\"color:#000080;font-weight:bold;\">interface</span> <span style=\"color:#000000;\">MyExtension</span></pre></div><div class='content'>\n" +
-      "  My Extension Javadoc.\n" +
-      " </div><table class='sections'><p></table></div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div>",
+      //language=HTML
+      "<div class=\"definition\"><pre><b>foo.bar</b></pre><icon src=\"AllIcons.Nodes.Plugin\"/>&nbsp;" + expectedEpLocationString + "</div>" +
+      "<div class=\"content\"><h4>Extension Point Bean</h4><a href=\"psi_element://bar.MyExtensionPoint\"><code>MyExtensionPoint</code></a><p><b>Field Bindings</b></p><table class=\"sections\"><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#implementationClass\"><code>implementationClass</code></a></p></td><td valign=\"top\">String (required)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#stringCanBeEmpty\"><code>stringCanBeEmpty</code></a></p></td><td valign=\"top\">String (required, empty allowed)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#intValue\"><code>&lt;intValue&gt;</code></a></p></td><td valign=\"top\">Integer</td></tr></table><h4>Extension Point Implementation</h4><a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a></div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div>",
       provider.generateDoc(docElement, getOriginalElement()));
   }
 
@@ -73,6 +71,7 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                                                                        myFixture.getFile());
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(docElement);
 
+    //language=HTML
     String epDefinition = "[" + getModule().getName() + "]" +
                           "<br/><b>foo.bar</b> (interfaceExtensionPointDocumentation.xml)<br/>" +
                           "<a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a>";
@@ -80,10 +79,9 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
                  provider.getQuickNavigateInfo(docElement, getOriginalElement()));
 
     assertEquals(
-      """
-        <div class="definition"><pre><b>foo.bar</b></pre><icon src="AllIcons.Nodes.Plugin"/>&nbsp;interfaceExtensionPointDocumentation.xml</div><div class="content"><h2>Extension Point Implementation</h2><div class="bottom"><icon src="AllIcons.Nodes.Package">&nbsp;<a href="psi_element://bar"><code><span style="color:#000000;">bar</span></code></a></div><div class='definition'><pre><span style="color:#000080;font-weight:bold;">public</span> <span style="color:#000080;font-weight:bold;">interface</span> <span style="color:#000000;">MyExtension</span></pre></div><div class='content'>
-          My Extension Javadoc.
-         </div><table class='sections'><p></table></div><div class="content"><a href="https://jb.gg/ipe?extensions=foo.bar">Show Usages in IntelliJ Platform Explorer</a></div>""",
-      provider.generateDoc(docElement, getOriginalElement()));
+      //language=HTML
+      "<div class=\"definition\"><pre><b>foo.bar</b></pre><icon src=\"AllIcons.Nodes.Plugin\"/>&nbsp;interfaceExtensionPointDocumentation.xml</div><div class=\"content\"><h4>Extension Point Implementation</h4><a href=\"psi_element://bar.MyExtension\"><code>MyExtension</code></a></div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div>",
+      provider.generateDoc(docElement, getOriginalElement())
+    );
   }
 }

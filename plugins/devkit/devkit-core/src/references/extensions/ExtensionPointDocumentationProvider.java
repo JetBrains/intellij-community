@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references.extensions;
 
-import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.icons.AllIcons;
@@ -28,6 +27,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
+import org.jspecify.annotations.NonNull;
 
 import static com.intellij.lang.documentation.DocumentationMarkup.DEFINITION_ELEMENT;
 import static com.intellij.lang.documentation.DocumentationMarkup.PRE_ELEMENT;
@@ -85,8 +85,7 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     if (extensionPoint == null) return null;
     return new HtmlBuilder()
       .append(epQualifiedNameAndFileName(extensionPoint))
-      .append(epBeanDocAndFields(extensionPoint))
-      .append(epClassDoc(extensionPoint))
+      .append(epClassesDocumentation(extensionPoint))
       .append(platformExplorerLink(extensionPoint))
       .toString();
   }
@@ -118,14 +117,21 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     return fileName;
   }
 
-  private static @NotNull HtmlChunk epBeanDocAndFields(ExtensionPoint extensionPoint) {
+  private static HtmlChunk.@NonNull Element epClassesDocumentation(ExtensionPoint extensionPoint) {
+    return HtmlChunk.fragment(
+      epBeanClassLinkAndFields(extensionPoint),
+      epImplementationClassLink(extensionPoint)
+    ).wrapWith(DocumentationMarkup.CONTENT_ELEMENT);
+  }
+
+  private static @NotNull HtmlChunk epBeanClassLinkAndFields(ExtensionPoint extensionPoint) {
     final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
     if (beanClass != null) {
-      return new HtmlBuilder()
-        .append(generateClassDoc(beanClass))
-        .append(epBeanFields(beanClass))
-        .wrapWith(PRE_ELEMENT)
-        .wrapWith(DEFINITION_ELEMENT);
+      return HtmlChunk.fragment(
+        sectionHeader(DevKitBundle.message("extension.point.documentation.bean.section")),
+        classLink(beanClass),
+        epBeanFields(beanClass)
+      );
     }
     return HtmlChunk.empty();
   }
@@ -167,26 +173,31 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     });
 
     if (!bindingRows.isEmpty()) {
-      return bindingRows.br().wrapWith(DocumentationMarkup.SECTIONS_TABLE);
+      return HtmlChunk.fragment(
+        HtmlChunk.text(DevKitBundle.message("extension.point.documentation.field.bindings.section")).bold().wrapWith(HtmlChunk.p()),
+        bindingRows.wrapWith(DocumentationMarkup.SECTIONS_TABLE)
+      );
     }
     return HtmlChunk.empty();
   }
 
-  private static @NotNull HtmlChunk epClassDoc(ExtensionPoint extensionPoint) {
-    final PsiClass extensionPointClass = extensionPoint.getExtensionPointClass();
-    if (extensionPointClass != null) { // e.g. ServiceDescriptor
-      HtmlBuilder content = new HtmlBuilder();
-      content.append(HtmlChunk.text(DevKitBundle.message("extension.point.documentation.implementation.section")).wrapWith("h2"));
-      content.append(generateClassDoc(extensionPointClass));
-      return content.wrapWith(DocumentationMarkup.CONTENT_ELEMENT);
-    }
-    return HtmlChunk.empty();
+  private static @NotNull HtmlChunk epImplementationClassLink(ExtensionPoint extensionPoint) {
+    PsiClass implementationClass = extensionPoint.getExtensionPointClass();
+    if (implementationClass == null) return HtmlChunk.empty();
+    return HtmlChunk.fragment(
+      sectionHeader(DevKitBundle.message("extension.point.documentation.implementation.section")),
+      classLink(implementationClass)
+    );
+  }
+
+  private static @NotNull HtmlChunk sectionHeader(@Nls String title) {
+    return HtmlChunk.text(title).wrapWith("h4");
   }
 
   private static @NotNull HtmlChunk platformExplorerLink(ExtensionPoint extensionPoint) {
-    HtmlBuilder platformExplorerLink = new HtmlBuilder();
     String ipeLink = "https://jb.gg/ipe?extensions=" + extensionPoint.getEffectiveQualifiedName();
-    return platformExplorerLink.appendLink(ipeLink, DevKitBundle.message("extension.point.documentation.link.platform.explorer"))
+    return new HtmlBuilder()
+      .appendLink(ipeLink, DevKitBundle.message("extension.point.documentation.link.platform.explorer"))
       .wrapWith(DocumentationMarkup.CONTENT_ELEMENT);
   }
 
@@ -204,16 +215,6 @@ final class ExtensionPointDocumentationProvider implements DocumentationProvider
     HtmlChunk text = HtmlChunk.text(label).wrapWith("code");
     String link = DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL + refText;
     return HtmlChunk.link(link, text);
-  }
-
-  private static HtmlChunk generateClassDoc(@NotNull PsiElement element) {
-    final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
-    String doc = StringUtil.notNullize(documentationProvider.generateDoc(element, null));
-    int bodyIndex = doc.indexOf("<body>");
-    if (bodyIndex >= 0) {
-      doc = doc.substring(bodyIndex + 6);
-    }
-    return HtmlChunk.raw(doc);
   }
 
   private static HtmlChunk createSectionRow(HtmlChunk sectionName, @Nls String sectionContent) {
