@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -56,11 +56,18 @@ public final class AppFontPanel implements Disposable {
     };
     splitter.setFirstComponent(myOptionsPanel);
     splitter.setSecondComponent(myPreview.getPanel());
+    splitter.setHonorComponentsMinimumSize(true);
     innerPanel.add(splitter, BorderLayout.CENTER);
     myOptionsPanel.addListener(
       new ColorAndFontSettingsListener.Abstract() {
         @Override
         public void fontChanged() {
+          updatePreview();
+          updateWarning();
+        }
+
+        @Override
+        public void schemeChanged(@NotNull Object source) {
           updatePreview();
           updateWarning();
         }
