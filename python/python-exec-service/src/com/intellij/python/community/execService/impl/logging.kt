@@ -36,7 +36,7 @@ internal object LoggingLimits {
   /**
    * The maximum buffer size of a LoggingProcess
    */
-  const val MAX_OUTPUT_SIZE = 10_000_000
+  const val MAX_OUTPUT_SIZE = 100_000
   const val MAX_LINES = 1024
 }
 

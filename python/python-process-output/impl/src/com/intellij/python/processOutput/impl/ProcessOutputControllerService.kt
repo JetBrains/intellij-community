@@ -51,7 +51,7 @@ import org.jetbrains.jewel.foundation.lazy.tree.TreeState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 
 internal object ProcessOutputControllerServiceLimits {
-    const val MAX_PROCESSES = 256
+    const val MAX_PROCESSES = 512
 }
 
 internal interface ProcessOutputController {
