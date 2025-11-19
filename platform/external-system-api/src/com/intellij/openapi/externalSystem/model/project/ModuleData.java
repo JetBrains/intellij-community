@@ -229,7 +229,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
       return nullize(join(ArrayUtil.remove(ideModuleGroup, ideModuleGroup.length - 1), "."));
     } else {
       final String name = getInternalName();
-      int i = name.lastIndexOf("." + moduleName);
+      int i = name.lastIndexOf("." + moduleName.replace(".", "_"));
       if (i > -1) {
         return name.substring(0, i);
       } else {

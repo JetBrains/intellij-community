@@ -326,13 +326,13 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
       "multiproject.util.main",
       "multiproject.util.test",
 
-      "inc-build",
-      "inc-build.util",
+      "included-build",
+      "included-build.util",
 
-      "inc-build.buildSrc",
-      "inc-build.buildSrc.util",
-      "inc-build.buildSrc.main",
-      "inc-build.buildSrc.test"
+      "included-build.buildSrc",
+      "included-build.buildSrc.util",
+      "included-build.buildSrc.main",
+      "included-build.buildSrc.test"
     );
 
     assertExternalProjectId("multiproject", "multiproject");
@@ -359,13 +359,13 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertExternalProjectId("multiproject.util.main", ":util:main");
     assertExternalProjectId("multiproject.util.test", ":util:test");
 
-    assertExternalProjectId("inc-build", ":included-build");
-    assertExternalProjectId("inc-build.util", ":included-build:util");
+    assertExternalProjectId("included-build", ":included-build");
+    assertExternalProjectId("included-build.util", ":included-build:util");
 
-    assertExternalProjectId("inc-build.buildSrc", ":included-build:buildSrc");
-    assertExternalProjectId("inc-build.buildSrc.util", ":included-build:buildSrc:util");
-    assertExternalProjectId("inc-build.buildSrc.main", ":included-build:buildSrc:main");
-    assertExternalProjectId("inc-build.buildSrc.test", ":included-build:buildSrc:test");
+    assertExternalProjectId("included-build.buildSrc", ":included-build:buildSrc");
+    assertExternalProjectId("included-build.buildSrc.util", ":included-build:buildSrc:util");
+    assertExternalProjectId("included-build.buildSrc.main", ":included-build:buildSrc:main");
+    assertExternalProjectId("included-build.buildSrc.test", ":included-build:buildSrc:test");
 
     Map<String, ExternalProject> projectMap = getExternalProjectsMap();
     assertExternalProjectIds(projectMap, "multiproject", "multiproject:main", "multiproject:test");
@@ -432,6 +432,28 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     assertTrue(ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, moduleAfter));
   }
 
+  @Test
+  public void testDotInModuleName() throws Exception {
+    createSettingsFile(
+      "rootProject.name='root.project'\n" +
+      "include ':child1'\n" +
+      "include ':child2'\n" +
+      "include ':child2:with.dot'\n"
+    );
+
+    createProjectSubFile("build.gradle", "");
+    createProjectSubFile("child1/build.gradle", "");
+    createProjectSubFile("child2/build.gradle", "");
+    createProjectSubFile("child2/with.dot/build.gradle", "");
+
+    importProject();
+
+    assertModules("root_project",
+                "root_project.child1",
+                "root_project.child2",
+                "root_project.child2.with_dot"
+    );
+  }
 
   @Test
   public void testProjectLibraryCoordinatesAreSet() throws Exception {

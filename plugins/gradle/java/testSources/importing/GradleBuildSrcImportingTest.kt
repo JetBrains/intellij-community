@@ -233,10 +233,10 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
                   "}")
     assertModules("buildSrc-composite-dependency",
                   "buildSrc-composite-dependency.buildSrc", "buildSrc-composite-dependency.buildSrc.main", "buildSrc-composite-dependency.buildSrc.test",
-                  "greeter", "greeter.main", "greeter.test")
+                  "another-build", "another-build.main", "another-build.test")
 
-    assertModuleModuleDeps("buildSrc-composite-dependency.buildSrc.main", "greeter.main")
-    assertModuleModuleDepScope("buildSrc-composite-dependency.buildSrc.main", "greeter.main", DependencyScope.COMPILE)
+    assertModuleModuleDeps("buildSrc-composite-dependency.buildSrc.main", "another-build.main")
+    assertModuleModuleDepScope("buildSrc-composite-dependency.buildSrc.main", "another-build.main", DependencyScope.COMPILE)
   }
 
   @Test
@@ -273,9 +273,11 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     createProjectSubFile("buildSrcIncluded/settings.gradle", "rootProject.name='includedFromBuildSrc'")
 
     importProject("")
-    assertModules("A",
-                  "A.buildSrc", "A.buildSrc.test", "A.buildSrc.main",
-                  "includedFromBuildSrc")
+    assertModules(
+      "A",
+      "A.buildSrc", "A.buildSrc.main", "A.buildSrc.test",
+      "buildSrcIncluded",
+    )
   }
 
   /*
@@ -319,11 +321,12 @@ class GradleBuildSrcImportingTest : GradleImportingTestCase() {
     createProjectSubFile("C/D/buildSrc/settings.gradle", "")
 
     importProject("")
-    assertModules("A", "B", "C", "D", "C.D",
+    assertModules("A", "B", "B.D", "C", "C.D",
                   "B.buildSrc", "B.buildSrc.main", "B.buildSrc.test",
+                  "B.D.buildSrc", "B.D.buildSrc.main", "B.D.buildSrc.test",
                   "C.buildSrc", "C.buildSrc.main", "C.buildSrc.test",
-                  "D.buildSrc", "D.buildSrc.main", "D.buildSrc.test",
-                  "C.D.buildSrc", "C.D.buildSrc.main", "C.D.buildSrc.test")
+                  "C.D.buildSrc", "C.D.buildSrc.main", "C.D.buildSrc.test",
+    )
   }
 
   private fun assertBuildScriptClassPathContains(moduleName: String, expectedEntries: Collection<VirtualFile>) {
