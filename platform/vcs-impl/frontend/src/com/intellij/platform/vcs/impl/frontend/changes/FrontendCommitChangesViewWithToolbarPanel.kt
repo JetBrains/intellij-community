@@ -61,6 +61,9 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
   }
 
   override fun synchronizeInclusion(changeLists: List<LocalChangeList>, unversionedFiles: List<FilePath>) {
+    cs.launch {
+      ChangesViewApi.getInstance().synchronizeInclusion(project.projectId())
+    }
   }
 
   private suspend fun subscribeToBackendEvents() {

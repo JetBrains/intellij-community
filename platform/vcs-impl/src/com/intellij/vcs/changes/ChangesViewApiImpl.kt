@@ -2,16 +2,15 @@
 package com.intellij.vcs.changes
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
-import com.intellij.openapi.vcs.changes.InclusionListener
-import com.intellij.openapi.vcs.changes.InclusionModel
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.platform.vcs.impl.shared.rpc.BackendChangesViewEvent
 import com.intellij.platform.vcs.impl.shared.rpc.ChangeId
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi
@@ -71,6 +70,15 @@ internal class ChangesViewApiImpl : ChangesViewApi {
   override suspend fun isCommitToolWindowEnabled(projectId: ProjectId): Flow<Boolean> = getProjectScoped(projectId) { project ->
     ChangesViewContentManager.getInstanceImpl(project)?.isCommitToolWindowEnabled
   } ?: flowOf(false)
+
+  override suspend fun synchronizeInclusion(projectId: ProjectId) = projectScoped(projectId) { project ->
+    val changeListManager = ChangeListManager.getInstance(project)
+    val changeLists = changeListManager.getChangeLists()
+    val unversionedFiles = changeListManager.unversionedFilesPaths
+    withContext(Dispatchers.UiWithModelAccess) {
+      ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler?.synchronizeInclusion(changeLists, unversionedFiles)
+    }
+  }
 
   private suspend fun handleNewInclusionModel(newModel: InclusionModel, channel: SendChannel<BackendChangesViewEvent>): Nothing {
     coroutineScope {

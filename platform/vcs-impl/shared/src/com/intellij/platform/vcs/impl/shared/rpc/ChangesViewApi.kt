@@ -38,6 +38,8 @@ interface ChangesViewApi : RemoteApi<Unit> {
    */
   suspend fun isCommitToolWindowEnabled(projectId: ProjectId): Flow<Boolean>
 
+  suspend fun synchronizeInclusion(projectId: ProjectId)
+
   companion object {
     suspend fun getInstance(): ChangesViewApi = RemoteApiProviderService.resolve(remoteApiDescriptor<ChangesViewApi>())
   }
