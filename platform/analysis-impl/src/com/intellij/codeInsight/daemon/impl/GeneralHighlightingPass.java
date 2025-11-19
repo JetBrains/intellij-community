@@ -167,6 +167,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
               }
               if (!newInfos.isEmpty()) {
                 int size = newInfos.size(); // size == 1 most of the time
+                //noinspection ForLoopReplaceableByForEach
                 for (int i = 0; i < size; i++) {
                   final HighlightInfo info = newInfos.get(i);
                   myHighlights.add(info);
