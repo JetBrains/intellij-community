@@ -779,7 +779,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
     else {
-      acceptChildren(new PyVersionAwareTopLevelElementVisitor(languageLevel) {
+      acceptChildren(new PyTypeCheckedTopLevelElementVisitor(languageLevel) {
         @Override
         protected void checkAddElement(PsiElement node) {
           if (type.isInstance(node)) {
@@ -810,7 +810,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       }
     }
     else {
-      element.acceptChildren(new PyVersionAwareTopLevelElementVisitor(languageLevel) {
+      element.acceptChildren(new PyTypeCheckedTopLevelElementVisitor(languageLevel) {
         @Override
         protected void checkAddElement(PsiElement node) {
           result.add(node);
