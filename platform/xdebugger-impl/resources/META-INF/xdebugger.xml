@@ -161,6 +161,8 @@
     <runDashboardCustomizer implementation="com.intellij.xdebugger.impl.dashboard.XDebuggerRunDashboardCustomizer" order="first"/>
     <xdebugger.managerProxy implementation="com.intellij.xdebugger.impl.MonolithXDebugManagerProxy" order="last"/>
 
+    <bookmarksListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointListProvider"/>
+
     <registryKey defaultValue="false"
                  description="Enables remove/disable all but this breakpoint actions"
                  key="debugger.remove.disable.actions"/>
