@@ -31,43 +31,41 @@ private enum class TaskProperty(val propertyName: String, val setterName: String
 }
 
 class KotlinTaskMissingGroupAndDescriptionInspectionVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
-    override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
-        if (expression.receiverExpression.text != "tasks") return
-        val selectorExpression = expression.selectorExpression ?: return
-        val selectorName = when (selectorExpression) {
-            is KtCallExpression -> selectorExpression.calleeExpression?.text
-            is KtNameReferenceExpression -> selectorExpression.text
-            else -> return
-        }
-
+    override fun visitCallExpression(expression: KtCallExpression) {
         analyze(expression) {
-            when (selectorName) {
+            when (expression.calleeExpression?.text) {
                 "register", "create" -> {
-                    val callableId = selectorExpression.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId ?: return
-                    if (callableId.classId?.asSingleFqName() != FqName(GRADLE_API_TASK_CONTAINER)) return
+                    val callableId = expression.resolveExpression().asSafely<KaCallableSymbol>()?.callableId ?: return
+                    if (callableId.classId?.asSingleFqName() !in setOf(
+                            FqName(GRADLE_API_TASK_CONTAINER),
+                            GRADLE_KOTLIN_TASK_CONTAINER_DELEGATE
+                        )
+                    ) return
                 }
 
                 "registering", "creating" -> {
-                    val tasksClassId = expression.receiverExpression.resolveExpression()
-                        .asSafely<KaCallableSymbol>()?.callableId?.classId?.asSingleFqName() ?: return
-                    if (tasksClassId != GRADLE_KOTLIN_PROJECT_DELEGATE &&
-                        !tasksClassId.toString().startsWith(GRADLE_API_COMMON_PACKAGE)
-                    ) return
+                    val callableId = expression.resolveExpression().asSafely<KaCallableSymbol>()?.callableId ?: return
+                    if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return
                 }
 
                 else -> return
             }
         }
 
-        when (selectorExpression) {
-            is KtCallExpression -> {
-                val blockExpression = selectorExpression.getBlock()
-                if (blockExpression != null) checkConfigBlockAndReport(selectorExpression, blockExpression)
-                else reportCallNoConfigBlock(selectorExpression)
-            }
+        val blockExpression = expression.getBlock()
+        if (blockExpression != null) checkConfigBlockAndReport(expression, blockExpression)
+        else reportCallNoConfigBlock(expression)
+    }
 
-            is KtNameReferenceExpression -> reportReference(selectorExpression)
+    override fun visitReferenceExpression(expression: KtReferenceExpression) {
+        if (expression.text !in setOf("registering", "creating")) return
+        if (expression !is KtNameReferenceExpression || expression.parent is KtCallExpression) return
+        analyze(expression) {
+            val callableId = expression.resolveExpression().asSafely<KaCallableSymbol>()?.callableId ?: return
+            if (callableId.packageName != FqName(GRADLE_KOTLIN_PACKAGE)) return
         }
+
+        reportReference(expression)
     }
 
     private fun checkConfigBlockAndReport(callExpression: KtCallExpression, blockExpression: KtBlockExpression) {
@@ -153,6 +151,7 @@ class KotlinTaskMissingGroupAndDescriptionInspectionVisitor(private val holder: 
     companion object {
         private const val GRADLE_API_COMMON_PACKAGE = "org.gradle.api"
         private val GRADLE_KOTLIN_PROJECT_DELEGATE = FqName("org.gradle.kotlin.dsl.support.delegates.ProjectDelegate")
+        private val GRADLE_KOTLIN_TASK_CONTAINER_DELEGATE = FqName("org.gradle.kotlin.dsl.support.delegates.TaskContainerDelegate")
     }
 }
 
