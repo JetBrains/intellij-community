@@ -348,7 +348,7 @@ public final class NameUtil {
       if (preferStartMatches) {
         matcher = new PreferStartMatchMatcherWrapper(matcher);
       }
-      matcher = PinyinMatcher.create(matcher);
+      matcher = PinyinMatcher.create(pattern, matcher);
       return matcher;
     }
   }

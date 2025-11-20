@@ -542,8 +542,7 @@ public final class PinyinMatcher extends MinusculeMatcher {
     return Integer.MIN_VALUE;
   }
 
-  static MinusculeMatcher create(MinusculeMatcher delegate) {
-    String pattern = delegate.getPattern();
+  static MinusculeMatcher create(String pattern, MinusculeMatcher delegate) {
     if (pattern.startsWith("*")) {
       pattern = pattern.substring(1);
     }
