@@ -140,4 +140,13 @@ class TypoTolerantMatcherTest {
     assertFalse(firstLetterMatcher.matches("fooBar"), "First letter case mismatch should prevent match")
   }
 
+  @Test
+  fun camelHumps() {
+    assertFalse(TypoTolerantMatcher("*NNINa", MatchingMode.IGNORE_CASE, "").matches("PlanningFailureException"))
+    assertTrue(TypoTolerantMatcher("*Git", MatchingMode.IGNORE_CASE, "").matches("BlagitBla"))
+    assertTrue(TypoTolerantMatcher("Wlo", MatchingMode.IGNORE_CASE, "").matches("WebLogic"))
+    assertTrue(TypoTolerantMatcher("*Git", MatchingMode.FIRST_LETTER, "").matches("BlagitBla"))
+    assertTrue(TypoTolerantMatcher("*Bcomp", MatchingMode.FIRST_LETTER, "").matches("BaseComponent"))
+    assertTrue(TypoTolerantMatcher("Cl", MatchingMode.FIRST_LETTER, "").matches("CoreLoader"))
+  }
 }

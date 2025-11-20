@@ -1,7 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.codeStyle
-
-import kotlin.jvm.JvmStatic
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util.text.matching
 
 /**
  * String utility methods that assume that the string content is ASCII-only (all codepoints are <= 127).
@@ -10,12 +8,11 @@ import kotlin.jvm.JvmStatic
 internal object AsciiUtils {
   /**
    * Implementation of [com.intellij.util.text.NameUtilCore.nextWord] for ASCII-only strings
-   * 
+   *
    * @param text text to find the next word in
    * @param start starting position within the text
    * @return position of the next word; may point to the end of the string
    */
-  @JvmStatic
   fun nextWordAscii(text: String, start: Int): Int {
     if (!isLetterOrDigitAscii(text[start])) {
       return start + 1
@@ -82,7 +79,6 @@ internal object AsciiUtils {
     return cur in '0'..'9'
   }
 
-  @JvmStatic
   fun toUpperAscii(c: Char): Char {
     return if (isLowerAscii(c)) {
       // 0x20. It's 'A'.code - 'a'.code, kotlin doesn't fold the constant during compilation
@@ -93,7 +89,6 @@ internal object AsciiUtils {
     }
   }
 
-  @JvmStatic
   fun toLowerAscii(c: Char): Char {
     return if (isUpperAscii(c)) {
       // 0x20. It's 'A'.code - 'a'.code, kotlin doesn't fold the constant during compilation
@@ -104,12 +99,10 @@ internal object AsciiUtils {
     }
   }
 
-  @JvmStatic
   fun isUpperAscii(c: Char): Boolean {
     return c in 'A'..'Z'
   }
 
-  @JvmStatic
   fun isLowerAscii(c: Char): Boolean {
     return c in 'a'..'z'
   }
@@ -118,13 +111,14 @@ internal object AsciiUtils {
    * @param string string to check
    * @return true if a given string contains ASCII-only characters, so it can be processed with other methods in this class
    */
-  @JvmStatic
   fun isAscii(string: String): Boolean {
     for (c in string) {
-      if (c.code >= 128) {
+      if (!isAscii(c)) {
         return false
       }
     }
     return true
   }
+
+  fun isAscii(c: Char): Boolean = c.code < 128
 }
