@@ -301,6 +301,13 @@ f:com.intellij.platform.eel.EelPlatformKt
 - *a:close(kotlin.coroutines.Continuation):java.lang.Object
 - *a:getReceiveChannel():com.intellij.platform.eel.channels.EelReceiveChannel
 - *a:getSendChannel():com.intellij.platform.eel.channels.EelSendChannel
+*:com.intellij.platform.eel.EelTunnelsApi$ConnectionAcceptor
+- a:close(kotlin.coroutines.Continuation):java.lang.Object
+- a:getBoundAddress():com.intellij.platform.eel.EelTunnelsApi$ResolvedSocketAddress
+- a:getIncomingConnections():kotlinx.coroutines.channels.ReceiveChannel
+*:com.intellij.platform.eel.EelTunnelsApi$GetAcceptorForRemotePort
+- com.intellij.platform.eel.EelTunnelsApi$HostAddress
+- getConfigureServerSocket():kotlin.jvm.functions.Function1
 *:com.intellij.platform.eel.EelTunnelsApi$GetConnectionToRemotePortArgs
 - com.intellij.platform.eel.EelTunnelsApi$HostAddress
 *:com.intellij.platform.eel.EelTunnelsApi$HostAddress
