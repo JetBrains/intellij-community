@@ -42,7 +42,7 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   fun closeAllTabs() {
-    driver.invokeAction("CloseAllEditors")
+    driver.invokeAction("CloseAllEditors", component = component)
   }
 
   fun isTabOpened(text: String) = getTabs().any { it.text == text }
