@@ -135,11 +135,13 @@ public final class PathClassLoader extends UrlClassLoader {
 
         String[] paths = classPathAttr.split(" ");
         List<Path> newPaths = new ArrayList<>(paths.length);
+
         for (String path : paths) {
           if (!path.startsWith("file:")) {
-            throw new IllegalArgumentException("Classpath entry must be a file: URL: " + path);
+            newPaths.add(jarPath.getParent().resolve(urlToFilePath(path)).normalize());
+          } else {
+            newPaths.add(Paths.get(urlToFilePath(path)));
           }
-          newPaths.add(Paths.get(urlToFilePath(path)));
         }
         classPath.reset(newPaths);
       }
