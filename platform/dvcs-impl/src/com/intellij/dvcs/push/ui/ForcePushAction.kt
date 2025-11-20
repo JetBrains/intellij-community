@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push.ui
 
 import com.intellij.dvcs.push.PushSupport
 import com.intellij.dvcs.push.PushTarget
 import com.intellij.dvcs.ui.DvcsBundle
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.showOkCancelDialog
@@ -69,6 +69,11 @@ private class ForcePushAction : PushActionBase() {
     else {
       DvcsBundle.message("action.force.push.confirmation.text")
     }
+
+    if (AdvancedSettings.getBoolean("vcs.allow.force.push.without.confirmation")) {
+      return true
+    }
+
     val myDoNotAskOption = if (commonTarget != null) MyDoNotAskOptionForPush(aSupport!!, commonTarget) else null
     val decision = showOkCancelDialog(title = DvcsBundle.message("force.push.dialog.title"),
                                       message = XmlStringUtil.wrapInHtml(message),
