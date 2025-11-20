@@ -402,7 +402,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       boolean collectImplicitReturn = true;
 
       ControlFlowUtil.Operation checkInstruction(@NotNull Instruction instruction) {
-        if (dataFlow.isUnreachable(instruction)) {
+        if (dataFlow.getReachability(instruction) != Reachability.REACHABLE) {
           return ControlFlowUtil.Operation.CONTINUE;
         }
         if (instruction instanceof PyFinallyFailExitInstruction exitInstruction) {

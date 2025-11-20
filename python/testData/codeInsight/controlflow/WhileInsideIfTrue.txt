@@ -12,7 +12,7 @@
 11(12) ASSERTTYPE ACCESS: expr
 12(13) element: PyStatementList
 13(17) element: PyBreakStatement
-14(15) ASSERTTYPE ACCESS: null
+14(15) Unreachable
 15(16) element: PyStatementList
 16() element: PyPrintStatement
 17() element: null

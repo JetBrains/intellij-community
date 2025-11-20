@@ -3436,5 +3436,18 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    do(Impl(name="vrf1"))
                    """);
   }
+
+  // PY-50642
+  public void testTypeChecking() {
+    doTestByText("""
+                   import typing
+                   
+                   if typing.TYPE_CHECKING:
+                       x: str
+                   
+                   if not typing.TYPE_CHECKING:
+                       x = 1
+                   """);
+  }
 }
 

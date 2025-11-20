@@ -477,6 +477,18 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
                    """);
   }
 
+  // PY-50642
+  public void testTypeChecking() {
+    doTestByText("""
+                   import typing
+                   
+                   if not typing.TYPE_CHECKING:
+                       x: str = 'ab'
+                   
+                   if not typing.TYPE_CHECKING:
+                       _ = x
+                   """);
+  }
 
   // PY-83529
   public void testPackageAttributeInPresenceOfBinarySkeleton() {
