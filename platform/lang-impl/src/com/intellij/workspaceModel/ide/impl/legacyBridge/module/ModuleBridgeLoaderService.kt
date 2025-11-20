@@ -34,6 +34,7 @@ import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG: Logger
   get() = logger<ModuleBridgeLoaderService>()
@@ -51,7 +52,8 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
   )
 }
 
-private class ModuleBridgeLoaderService : InitProjectActivity {
+@ApiStatus.Internal
+class ModuleBridgeLoaderService : InitProjectActivity {
   override suspend fun run(project: Project) {
     coroutineScope {
       val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
