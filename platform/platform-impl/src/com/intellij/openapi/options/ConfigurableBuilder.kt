@@ -15,6 +15,7 @@ import java.util.function.Supplier
 import javax.swing.JCheckBox
 
 @Deprecated("Use identical {@link BeanConfigurable} for replacement")
+@ApiStatus.ScheduledForRemoval
 abstract class ConfigurableBuilder
 @Deprecated("Use BeanConfigurable", level = DeprecationLevel.HIDDEN)
 protected constructor() : UiDslUnnamedConfigurable.Simple(), UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {

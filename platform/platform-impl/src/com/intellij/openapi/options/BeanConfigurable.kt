@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Setter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.dsl.builder.Panel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Function
 import java.util.function.Supplier
@@ -146,6 +147,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
   }
 
   @Deprecated("use {@link #checkBox(String, Getter, Setter)} instead", level = DeprecationLevel.ERROR)
+  @ApiStatus.ScheduledForRemoval
   protected fun checkBox(fieldName: @NonNls String, title: @NlsContexts.Checkbox String?) {
     myFields.add(CheckboxField(fieldName, title))
   }
