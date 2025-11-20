@@ -15,7 +15,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.tree.TreePath
+import kotlin.collections.iterator
 import kotlin.concurrent.atomics.*
 import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration
@@ -33,6 +36,7 @@ internal class ProjectViewPerformanceMonitor(
   
   private val requestId = AtomicLong(0L)
   private val events = Channel<Event>(capacity = Channel.UNLIMITED)
+  private val calculator = ProjectViewUpdatePerformanceCalculator { reportToFus(it) }
 
   init {
     coroutineScope.launch(CoroutineName("ProjectViewPerformanceMonitor heartbeat")) {
@@ -42,10 +46,9 @@ internal class ProjectViewPerformanceMonitor(
       }
     }
     coroutineScope.launch(context = CoroutineName("ProjectViewPerformanceMonitor events")) {
-      val stats = Stats()
       try {
         for (event in events) {
-          stats.processEvent(event)
+          processEvent(event)
         }
       }
       finally {
@@ -60,6 +63,33 @@ internal class ProjectViewPerformanceMonitor(
 
   fun beginUpdatePath(path: TreePath, structure: Boolean, causes: Collection<ProjectViewUpdateCause>): TreeModelUpdateRequest {
     return Request("The path=$path, structure=$structure", requestId.incrementAndFetch(), causes)
+  }
+
+  private fun processEvent(event: Event) {
+    when (event) {
+      is StartedEvent -> calculator.requestStarted(event.id, event.causes, event.startedTime)
+      is LoadedEvent -> calculator.nodesLoaded(event.id, event.loadedCount)
+      is FinishedEvent -> calculator.requestFinished(event.id, event.finishedTime)
+      is HeartbeatEvent -> calculator.reportSample()
+    }
+  }
+
+  private fun reportToFus(report: ProjectViewUpdateReport) {
+    for (entry in report.updateCauseReports) {
+      ProjectViewPerformanceCollector.logUpdated(
+        entry.key,
+        entry.value.loadedNodeCount,
+        entry.value.timeSpent.inWholeMilliseconds,
+      )
+    }
+    for (entry in report.stuckRequestReports) {
+      ProjectViewPerformanceCollector.logStuckUpdateRequest(
+        entry.key,
+        entry.value.requestCount,
+        entry.value.loadedNodeCount,
+        entry.value.sinceTime.elapsedNow().inWholeMilliseconds,
+      )
+    }
   }
 
   private inner class Request(private val what: String, val id: Long, causes: Collection<ProjectViewUpdateCause>) : TreeModelUpdateRequest {
@@ -111,23 +141,33 @@ internal class ProjectViewPerformanceMonitor(
     val finishedTime: ComparableTimeMark,
     val count: Int,
   ): Event(), RequestEvent
+}
 
-  private class Stats {
-    private var current = StatsSample()
+@ApiStatus.Internal
+@VisibleForTesting
+class ProjectViewUpdatePerformanceCalculator(
+  private val processReport: (ProjectViewUpdateReport) -> Unit,
+) {
+  private var current = StatsSample()
 
-    fun processEvent(event: Event) {
-      when (event) {
-        is StartedEvent -> current.requestStarted(event)
-        is LoadedEvent -> current.requestLoadedCountChanged(event)
-        is FinishedEvent -> current.requestFinished(event)
-        is HeartbeatEvent -> reportSample()
-      }
+  fun requestStarted(id: Long, causes: Collection<ProjectViewUpdateCause>, startedTime: ComparableTimeMark) {
+    current.requestStarted(id, causes, startedTime)
+  }
+
+  fun nodesLoaded(id: Long, loadedCount: Int) {
+    current.nodesLoaded(id, loadedCount)
+  }
+
+  fun requestFinished(id: Long, finishedTime: ComparableTimeMark) {
+    current.requestFinished(id, finishedTime)
+  }
+
+  fun reportSample() {
+    val report = current.report()
+    if (report != null) {
+      processReport(report)
     }
-
-    private fun reportSample() {
-      current.report()
-      current = current.startNewSample()
-    }
+    current = current.startNewSample()
   }
 
   private class StatsSample {
@@ -136,56 +176,56 @@ internal class ProjectViewPerformanceMonitor(
     private var finishedRequests = 0
     private val requestStates = hashMapOf<Long, RequestState>()
     private val causeStates = hashMapOf<ProjectViewUpdateCause, CauseState>()
-    private val causeReports = hashMapOf<ProjectViewUpdateCause, CauseReport>()
+    private val causeReports = hashMapOf<ProjectViewUpdateCause, ProjectViewUpdateCauseReport>()
 
-    fun requestStarted(event: StartedEvent) {
-      requestStates[event.id] = RequestState(event)
+    fun requestStarted(id: Long, causes: Collection<ProjectViewUpdateCause>, startedTime: ComparableTimeMark) {
+      requestStates[id] = RequestState(id, causes, startedTime)
       ++activeRequests
       ++startedRequests
-      for (cause in event.causes) {
-        val causeState = causeStates.getOrPut(cause) { CauseState(event.startedTime) }
+      for (cause in causes) {
+        val causeState = causeStates.getOrPut(cause) { CauseState(startedTime) }
         ++causeState.activeRequests
       }
     }
 
-    fun requestLoadedCountChanged(event: LoadedEvent) {
-      val requestState = requestStates[event.id]
+    fun nodesLoaded(id: Long, loadedCount: Int) {
+      val requestState = requestStates[id]
       if (requestState == null) {
-        LOG.warn(Throwable("Got an event for a request that doesn't exist: $event"))
+        LOG.warn(Throwable("Got an event for a request that doesn't exist: $id"))
         return
       }
-      requestState.loadedNodeCount += event.loadedCount
+      requestState.loadedNodeCount += loadedCount
       for (cause in requestState.causes) {
         val causeState = ensureNotNull(cause, causeStates[cause]) ?: continue
-        causeState.loadedNodeCount += event.loadedCount
+        causeState.loadedNodeCount += loadedCount
       }
     }
 
-    fun requestFinished(event: FinishedEvent) {
-      val requestState = requestStates.remove(event.id)
+    fun requestFinished(id: Long, finishedTime: ComparableTimeMark) {
+      val requestState = requestStates.remove(id)
       if (requestState == null) {
-        LOG.warn(Throwable("Got an event for a request that doesn't exist: $event"))
+        LOG.warn(Throwable("Got an event for a request that doesn't exist: $id"))
         return
       }
       --activeRequests
       ++finishedRequests
-      requestState.finishedTime = event.finishedTime
+      requestState.finishedTime = finishedTime
       for (cause in requestState.causes) {
         val causeState = ensureNotNull(cause, causeStates[cause]) ?: continue
         --causeState.activeRequests
         ++causeState.completedRequests
         if (causeState.activeRequests == 0) {
-          allRequestsForCauseFinished(cause, event)
+          allRequestsForCauseFinished(cause, finishedTime)
         }
       }
     }
 
-    private fun allRequestsForCauseFinished(cause: ProjectViewUpdateCause, event: FinishedEvent) {
+    private fun allRequestsForCauseFinished(cause: ProjectViewUpdateCause, finishedTime: ComparableTimeMark) {
       val causeState = ensureNotNull(cause, causeStates.remove(cause)) ?: return
-      val causeReport = causeReports.getOrPut(cause) { CauseReport() }
+      val causeReport = causeReports.getOrPut(cause) { ProjectViewUpdateCauseReport() }
       causeReport.completedRequests += causeState.completedRequests
       causeReport.loadedNodeCount += causeState.loadedNodeCount
-      causeReport.timeSpent += event.finishedTime - causeState.startedTime
+      causeReport.timeSpent += finishedTime - causeState.startedTime
     }
 
     private fun <T> ensureNotNull(cause: ProjectViewUpdateCause, result: T?): T? {
@@ -199,59 +239,32 @@ internal class ProjectViewPerformanceMonitor(
       return result
     }
 
-    fun report() {
-      if (startedRequests == 0 && activeRequests == 0 && finishedRequests == 0) return // don't spam the log when the IDE is idle
-      reportToDebugLog()
-      reportToFus()
+    fun report(): ProjectViewUpdateReport? {
+      if (startedRequests == 0 && activeRequests == 0 && finishedRequests == 0) return null // don't spam when the IDE is idle
+      val report = computeReport()
+      reportToDebugLog(report)
+      return report
     }
 
-    private fun reportToDebugLog() {
-      if (LOG.isDebugEnabled) {
-        val stuckRequests = requestStates.count { it.value.isStuck }
-        LOG.debug(
-          "Project View performance sample: " +
-          "started requests = ${startedRequests}, " +
-          "finished requests = ${finishedRequests}, " +
-          "still active requests = ${activeRequests}, " +
-          "stuck requests = ${stuckRequests}"
-        )
-        if (causeReports.isNotEmpty()) {
-          LOG.debug("Finished requests by cause:")
-          for (entry in causeReports.entries.sortedBy { it.key }) {
-            LOG.debug("${entry.key}: ${entry.value}")
-          }
-        }
-        if (causeStates.isNotEmpty()) {
-          LOG.debug("Active requests by cause:")
-          for (entry in causeStates.entries.sortedBy { it.key }) {
-            LOG.debug("${entry.key}: ${entry.value}")
-          }
-        }
-      }
+    private fun computeReport(): ProjectViewUpdateReport {
+      return ProjectViewUpdateReport(
+        ProjectViewUpdateStatsReport(
+          startedRequests,
+          activeRequests,
+          finishedRequests,
+        ),
+        causeReports,
+        computeStuckRequestReports(),
+      )
     }
 
-    private fun reportToFus() {
-      reportFinishedUpdateCauses()
-      reportStuckRequests()
-    }
-
-    private fun reportFinishedUpdateCauses() {
-      for (entry in causeReports) {
-        ProjectViewPerformanceCollector.logUpdated(
-          entry.key,
-          entry.value.loadedNodeCount,
-          entry.value.timeSpent.inWholeMilliseconds,
-        )
-      }
-    }
-
-    private fun reportStuckRequests() {
-      val reports = hashMapOf<ProjectViewUpdateCause, StuckRequestReport>()
+    private fun computeStuckRequestReports(): HashMap<ProjectViewUpdateCause, ProjectViewUpdateStuckRequestReport> {
+      val reports = hashMapOf<ProjectViewUpdateCause, ProjectViewUpdateStuckRequestReport>()
       for (requestState in requestStates.values) {
         if (!requestState.isStuck) continue
         for (cause in requestState.causes) {
           val report = reports.getOrPut(cause) {
-            StuckRequestReport(
+            ProjectViewUpdateStuckRequestReport(
               sinceTime = requestState.startTime,
             )
           }
@@ -260,14 +273,7 @@ internal class ProjectViewPerformanceMonitor(
           report.loadedNodeCount += requestState.loadedNodeCount
         }
       }
-      for (entry in reports) {
-        ProjectViewPerformanceCollector.logStuckUpdateRequest(
-          entry.key,
-          entry.value.requestCount,
-          entry.value.loadedNodeCount,
-          entry.value.sinceTime.elapsedNow().inWholeMilliseconds,
-        )
-      }
+      return reports
     }
 
     fun startNewSample(): StatsSample {
@@ -290,9 +296,7 @@ internal class ProjectViewPerformanceMonitor(
     var loadedNodeCount: Int = 0,
     var finishedTime: ComparableTimeMark? = null,
     var isStuck: Boolean = false,
-  ) {
-    constructor(startedEvent: StartedEvent) : this(startedEvent.id, startedEvent.causes, startedEvent.startedTime)
-  }
+  )
 
   private data class CauseState(
     val startedTime: ComparableTimeMark,
@@ -300,18 +304,59 @@ internal class ProjectViewPerformanceMonitor(
     var completedRequests: Int = 0,
     var loadedNodeCount: Int = 0,
   )
-
-  private data class CauseReport(
-    var completedRequests: Int = 0,
-    var loadedNodeCount: Int = 0,
-    var timeSpent: Duration = Duration.ZERO,
-  )
-
-  private data class StuckRequestReport(
-    var sinceTime: ComparableTimeMark,
-    var requestCount: Int = 0,
-    var loadedNodeCount: Int = 0,
-  )
 }
+
+private fun reportToDebugLog(report: ProjectViewUpdateReport) {
+  if (LOG.isDebugEnabled) {
+    val stuckRequests = report.stuckRequestReports.size
+    LOG.debug(
+      "Project View performance sample: " +
+      "started requests = ${report.stats.startedRequests}, " +
+      "finished requests = ${report.stats.finishedRequests}, " +
+      "still active requests = ${report.stats.activeRequests}, " +
+      "stuck requests = ${stuckRequests}"
+    )
+    if (report.updateCauseReports.isNotEmpty()) {
+      LOG.debug("Finished requests by cause:")
+      for (entry in report.updateCauseReports.entries.sortedBy { it.key }) {
+        LOG.debug("${entry.key}: ${entry.value}")
+      }
+    }
+    if (report.stuckRequestReports.isNotEmpty()) {
+      LOG.debug("Active requests by cause:")
+      for (entry in report.updateCauseReports.entries.sortedBy { it.key }) {
+        LOG.debug("${entry.key}: ${entry.value}")
+      }
+    }
+  }
+}
+
+@ApiStatus.Internal
+@VisibleForTesting
+data class ProjectViewUpdateReport(
+  val stats: ProjectViewUpdateStatsReport,
+  val updateCauseReports: Map<ProjectViewUpdateCause, ProjectViewUpdateCauseReport>,
+  val stuckRequestReports: Map<ProjectViewUpdateCause, ProjectViewUpdateStuckRequestReport>,
+)
+
+@ApiStatus.Internal
+@VisibleForTesting
+data class ProjectViewUpdateStatsReport(val startedRequests: Int, val activeRequests: Int, val finishedRequests: Int)
+
+@ApiStatus.Internal
+@VisibleForTesting
+data class ProjectViewUpdateCauseReport(
+  var completedRequests: Int = 0,
+  var loadedNodeCount: Int = 0,
+  var timeSpent: Duration = Duration.ZERO,
+)
+
+@ApiStatus.Internal
+@VisibleForTesting
+data class ProjectViewUpdateStuckRequestReport(
+  var sinceTime: ComparableTimeMark,
+  var requestCount: Int = 0,
+  var loadedNodeCount: Int = 0,
+)
 
 private val LOG = logger<ProjectViewPerformanceMonitor>()
