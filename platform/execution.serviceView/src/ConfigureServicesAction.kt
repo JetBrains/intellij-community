@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.platform.execution.serviceView.splitApi.ServiceViewRpc
@@ -37,7 +36,7 @@ internal class ConfigureServicesAction : DumbAwareAction(), ActionRemoteBehavior
       (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl).includeToolWindow(toolWindow.id)
     }
     else {
-      currentThreadCoroutineScope().launch {
+      e.coroutineScope.launch {
         val settings = ServiceViewRpc.getInstance().loadConfigurationTypes(project.projectId()) ?: return@launch
         withContext(Dispatchers.EDT) {
           ConfigureServicesDialog(project, settings).show()
