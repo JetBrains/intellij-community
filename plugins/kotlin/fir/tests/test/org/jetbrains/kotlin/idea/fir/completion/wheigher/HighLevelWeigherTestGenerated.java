@@ -371,6 +371,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
                 runTest("../../completion/testData/weighers/basic/expectedType/propertyAccessor.kt");
             }
 
+            @TestMetadata("propertyAccessorWithoutBody.kt")
+            public void testPropertyAccessorWithoutBody() throws Exception {
+                runTest("../../completion/testData/weighers/basic/expectedType/propertyAccessorWithoutBody.kt");
+            }
+
             @TestMetadata("returnFromFunction.kt")
             public void testReturnFromFunction() throws Exception {
                 runTest("../../completion/testData/weighers/basic/expectedType/returnFromFunction.kt");
