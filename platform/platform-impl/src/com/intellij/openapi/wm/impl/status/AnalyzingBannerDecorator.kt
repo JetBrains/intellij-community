@@ -21,7 +21,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose
   // placed above banner
   private var analyzingComponent: Component? = null
 
-  private val banner: Component = createBanner(onBannerClose)
+  private val banner: Component by lazy { createBanner(onBannerClose) }
 
 
   fun indicatorAdded(indicator: ProgressComponent) {
@@ -47,17 +47,17 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose
 
   // hides banner on popup close if analyzing completed
   fun handlePopupClose() {
-    if (analyzingComponent != null) {
-      return
-    }
+    if (userClosedBanner() || analyzingComponent != null) return
     panel.remove(banner)
   }
 
   fun getBannerHeight(): Int {
+    if (userClosedBanner()) return 0
     return banner.preferredSize.height + (analyzingComponent?.preferredSize?.height ?: 0) + JBUI.scale(28)
   }
 
   fun isBannerPresent(): Boolean {
+    if (userClosedBanner()) return false
     return panel.components.contains(banner)
   }
 
