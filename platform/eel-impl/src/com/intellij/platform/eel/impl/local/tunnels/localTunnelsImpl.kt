@@ -207,7 +207,8 @@ private class MyService(val scope: CoroutineScope)
 private suspend fun copyWithLoggingAndErrorHandling(src: EelReceiveChannel, dest: EelSendChannel, title: String, onError: (IOException) -> Unit) {
   try {
     copy(src, dest)
-  } catch (e: CopyError) {
+  }
+  catch (e: CopyError) {
     when (e) {
       is CopyError.InError -> {
         logger.warn("$title input error", e.cause)

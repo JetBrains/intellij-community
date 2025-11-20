@@ -382,7 +382,8 @@ suspend fun <T> EelTunnelsApiHelpers.GetConnectionToRemotePort.withConnectionToR
   return try {
     val connectionResult = eelIt()
     closeWithExceptionHandling({ action(connectionResult) }, { connectionResult.close() })
-  } catch (e: EelConnectionError) {
+  }
+  catch (e: EelConnectionError) {
     errorHandler(e)
   }
 }
@@ -442,7 +443,8 @@ suspend fun <T> EelTunnelsApiHelpers.GetAcceptorForRemotePort.withAcceptorForRem
   return try {
     val connectionResult = eelIt()
     closeWithExceptionHandling({ action(connectionResult) }, { connectionResult.close() })
-  } catch (e: EelConnectionError) {
+  }
+  catch (e: EelConnectionError) {
     errorHandler(e)
   }
 }
