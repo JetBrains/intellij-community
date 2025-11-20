@@ -166,7 +166,6 @@ object BranchesDashboardTreeComponent {
     val settings = actionManager.getAction("Git.Log.Branches.Settings")
 
     val group = DefaultActionGroup()
-    group.add(actionManager.getAction("Git.Log.Branches.Toolbar.Actions"))
     group.add(newBranchAction)
     group.add(updateSelectedAction)
     group.add(deleteAction)
@@ -175,6 +174,7 @@ object BranchesDashboardTreeComponent {
     group.add(fetchAction)
     group.add(toggleFavoriteAction)
     group.add(actionManager.getAction("Git.Log.Branches.Navigate.Log.To.Selected.Branch"))
+    group.add(actionManager.getAction("Git.Log.Branches.Toolbar.Actions"))
     group.add(Separator())
     group.add(settings)
     group.add(actionManager.getAction("Git.Log.Branches.Grouping.Settings"))
