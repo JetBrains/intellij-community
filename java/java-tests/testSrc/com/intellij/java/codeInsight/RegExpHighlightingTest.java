@@ -29,7 +29,7 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
 
   public void testWhiteSpaceProperty() {
     // needs only partial escaping
-    @NonNls String code = "<weak_warning descr=\"'\\\\P{IsBlank}' can be simplified to '[^ \\t]'\">\\\\P{IsBlank}</weak_warning>";
+    @NonNls String code = "<weak_warning descr=\"'\\\\P{IsBlank}' can be simplified to '[^ \\\\t]'\">\\\\P{IsBlank}</weak_warning>";
     myFixture.enableInspections(new RegExpSimplifiableInspection());
     myFixture.configureByText(JavaFileType.INSTANCE, "class X {{ java.util.regex.Pattern.compile(\"" + code + "\"); }}");
     myFixture.testHighlighting();

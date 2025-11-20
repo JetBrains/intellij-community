@@ -41,9 +41,9 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       if (branches.length < 2 || !ContainerUtil.and(branches, SingleCharAlternationVisitor::isSingleChar)) {
         return;
       }
-      final String text = buildReplacementText(pattern);
+      final String replacement = RegExpReplacementUtil.escapeForContext(buildReplacementText(pattern), pattern.getContainingFile());
       myHolder.registerProblem(pattern, RegExpBundle.message("inspection.warning.single.character.alternation.in.regexp"),
-                               new SingleCharAlternationFix(text));
+                               new SingleCharAlternationFix(replacement));
     }
 
     private static boolean isSingleChar(RegExpBranch branch) {

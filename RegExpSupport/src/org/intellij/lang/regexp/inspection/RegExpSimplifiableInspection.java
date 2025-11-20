@@ -89,18 +89,19 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
     @Override
     public void visitRegExpClosure(RegExpClosure closure) {
       super.visitRegExpClosure(closure);
-      ASTNode token = closure.getQuantifier().getToken();
+      final ASTNode token = closure.getQuantifier().getToken();
       if (token == null || token.getElementType() != RegExpTT.STAR) {
         return;
       }
-      PsiElement sibling = closure.getPrevSibling();
-      RegExpAtom atom = closure.getAtom();
-        if (sibling instanceof RegExpElement && atom.getClass() == sibling.getClass() && sibling.textMatches(atom) && !containsGroup(atom)) {
+      final PsiElement sibling = closure.getPrevSibling();
+      final RegExpAtom atom = closure.getAtom();
+      if (sibling instanceof RegExpElement && atom.getClass() == sibling.getClass() && sibling.textMatches(atom) && !containsGroup(atom)) {
         final String text = atom.getUnescapedText() + '+';
+        final String escaped = RegExpReplacementUtil.escapeForContext(text, closure.getContainingFile());
         myHolder.registerProblem(closure.getParent(),
                                  TextRange.from(sibling.getStartOffsetInParent(), sibling.getTextLength() + closure.getTextLength()),
-                                 RegExpBundle.message("inspection.warning.can.be.simplified", text),
-                                 new RegExpSimplifiableFix(text));
+                                 RegExpBundle.message("inspection.warning.can.be.simplified", escaped),
+                                 new RegExpSimplifiableFix(text, escaped));
       }
     }
 
@@ -153,9 +154,10 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
     }
 
     private void registerProblem(RegExpElement element, String replacement) {
+      final String escaped = RegExpReplacementUtil.escapeForContext(replacement, element.getContainingFile());
       myHolder.registerProblem(element,
-                               RegExpBundle.message("inspection.warning.can.be.simplified", replacement),
-                               new RegExpSimplifiableFix(replacement));
+                               RegExpBundle.message("inspection.warning.can.be.simplified", escaped),
+                               new RegExpSimplifiableFix(replacement, escaped));
     }
 
     private static boolean containsGroup(RegExpAtom atom) {
@@ -184,14 +186,17 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
 
     private static class RegExpSimplifiableFix extends ModCommandQuickFix {
       private final String myExpression;
+      private final String myPresentableExpression;
       private final boolean myDelete;
 
-      RegExpSimplifiableFix(String newExpression) {
-        this(newExpression, false);
+      RegExpSimplifiableFix(String newExpression, String presentableExpression) {
+        myExpression = newExpression;
+        myPresentableExpression = presentableExpression;
+        myDelete = false;
       }
 
       RegExpSimplifiableFix(String expression, boolean delete) {
-        myExpression = expression;
+        myExpression = myPresentableExpression = expression;
         myDelete = delete;
       }
 
@@ -203,8 +208,8 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
       @Override
       public @NotNull String getName() {
         return myDelete
-               ? CommonQuickFixBundle.message("fix.remove", myExpression)
-               : CommonQuickFixBundle.message("fix.replace.with.x", myExpression);
+               ? CommonQuickFixBundle.message("fix.remove", myPresentableExpression)
+               : CommonQuickFixBundle.message("fix.replace.with.x", myPresentableExpression);
       }
 
       @Override
