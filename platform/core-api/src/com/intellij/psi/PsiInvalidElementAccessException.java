@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -8,21 +8,25 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
+import java.util.Arrays;
 
 public final class PsiInvalidElementAccessException extends RuntimeException implements ExceptionWithAttachments {
   private static final Key<Object> INVALIDATION_TRACE = Key.create("INVALIDATION_TRACE");
+  private static final Key<Object> CREATION_TRACE = Key.create("CREATION_TRACE");
   private static final Key<Boolean> REPORTING_EXCEPTION = Key.create("REPORTING_EXCEPTION");
 
   private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, since exceptions are stored in IdeaLogger
@@ -58,9 +62,10 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
       element.putUserData(REPORTING_EXCEPTION, Boolean.TRUE);
 
       try {
-        Object trace = recursiveInvocation ? null : getPsiInvalidationTrace(element);
-        myMessage = getMessageWithReason(element, message, recursiveInvocation, trace);
-        myDiagnostic = createAttachments(trace);
+        Object invalidationTrace = recursiveInvocation ? null : getPsiInvalidationTrace(element);
+        Object creationTrace = findCreationTrace(element);
+        myMessage = getMessageWithReason(element, message, recursiveInvocation, invalidationTrace);
+        myDiagnostic = createAttachments(invalidationTrace, creationTrace);
       }
       finally {
         element.putUserData(REPORTING_EXCEPTION, null);
@@ -73,18 +78,76 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
     final IElementType elementType = node.getElementType();
     myMessage = "Element " + node.getClass() + " of type " + elementType + " (" + elementType.getClass() + ")" +
                 (message == null ? "" : "; " + message);
-    myDiagnostic = createAttachments(findInvalidationTrace(node));
+    myDiagnostic = createAttachments(findInvalidationTrace(node), findCreationTrace(node));
   }
 
   public static @NotNull PsiInvalidElementAccessException createByNode(@NotNull ASTNode node, @Nullable @NonNls String message) {
     return new PsiInvalidElementAccessException(node, message);
   }
 
-  private static Attachment @NotNull [] createAttachments(@Nullable Object trace) {
-    return trace == null
-           ? Attachment.EMPTY_ARRAY
-           : new Attachment[]{trace instanceof Throwable ? new Attachment("invalidation", (Throwable)trace)
-                                                         : new Attachment("diagnostic.txt", trace.toString())};
+  private static Attachment @NotNull [] createAttachments(@Nullable Object invalidationTrace, @Nullable Object creationTrace) {
+    Attachment invalidationAttachment = traceAsAttachment("invalidation", "diagnostics.txt", invalidationTrace);
+    Attachment creationAttachment = traceAsAttachment("creation_trace.txt", "creation_diagnostics.txt", creationTrace);
+    return ContainerUtil.notNullize(Arrays.asList(invalidationAttachment, creationAttachment)).toArray(Attachment.EMPTY_ARRAY);
+  }
+
+  private static @Nullable Attachment traceAsAttachment(@NotNull String nameForThrowable, @NotNull String nameForString, @Nullable Object trace) {
+    if (trace instanceof Throwable) {
+      return new Attachment(nameForThrowable, (Throwable)trace);
+    }
+    if (trace != null) {
+      return new Attachment(nameForString, trace.toString());
+    }
+    return null;
+  }
+
+  private static @Nullable Object findCreationTrace(@Nullable PsiElement element) {
+    if (element == null) return null;
+    if (element instanceof PsiFile) {
+      // don't try element.getNode() because this can trigger lazy file tree building
+      return findFileCreationTrace((PsiFile)element);
+    }
+    return findCreationTrace(element.getNode());
+  }
+
+  private static @Nullable Object findCreationTrace(@Nullable ASTNode node) {
+    while (node != null) {
+      Object astTrace = getCreationTrace(node);
+      if (astTrace != null) {
+        return astTrace;
+      }
+
+      PsiElement psi = node.getPsi();
+      if (psi != null) {
+        Object psiTrace = getCreationTrace(psi);
+        if (psiTrace != null) {
+          return psiTrace;
+        }
+      }
+
+      if (node instanceof FileASTNode) {
+        PsiElement filePsi = node.getPsi();
+        if (filePsi instanceof PsiFile) {
+          Object fileCreationTrace = findFileCreationTrace((PsiFile)filePsi);
+          if (fileCreationTrace != null) {
+            return fileCreationTrace;
+          }
+        }
+
+        return null;
+      }
+      node = node.getTreeParent();
+    }
+    return null;
+  }
+
+  private static @Nullable Object findFileCreationTrace(@NotNull PsiFile filePsi) {
+    VirtualFile virtualFile = filePsi.getViewProvider().getVirtualFile();
+    Object vfileCreationTrace = getCreationTrace(virtualFile);
+    if (vfileCreationTrace != null) {
+      return vfileCreationTrace;
+    }
+    return null;
   }
 
   private static @Nullable Object getPsiInvalidationTrace(@NotNull PsiElement element) {
@@ -239,6 +302,14 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
 
   public static Object getInvalidationTrace(@NotNull UserDataHolder element) {
     return element.getUserData(INVALIDATION_TRACE);
+  }
+
+  public static @Nullable Object getCreationTrace(@NotNull UserDataHolder element) {
+    return element.getUserData(CREATION_TRACE);
+  }
+
+  public static void setCreationTrace(@NotNull UserDataHolderBase userDataHolder, @NotNull Object trace) {
+    userDataHolder.putUserData(CREATION_TRACE, trace);
   }
 
   public static boolean isTrackingInvalidation() {
