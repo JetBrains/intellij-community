@@ -7,11 +7,8 @@ import com.jetbrains.python.psi.PyIfStatement
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
 import org.jetbrains.annotations.ApiStatus
 
-/**
- * @see [Version and Platform Checks](https://typing.readthedocs.io/en/latest/source/stubs.html.version-and-platform-checks)
- */
 @ApiStatus.Internal
-open class PyVersionAwareElementVisitor(languageLevel: LanguageLevel?) : PyRecursiveElementVisitor() {
+open class PyTypeCheckedElementVisitor(languageLevel: LanguageLevel?) : PyRecursiveElementVisitor() {
   private val version = languageLevel?.let { Version(it.majorVersion, it.minorVersion, 0) }
 
   override fun visitPyIfStatement(node: PyIfStatement) {

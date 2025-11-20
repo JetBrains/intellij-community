@@ -9,7 +9,7 @@ import com.jetbrains.python.psi.PyFunction
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-abstract class PyVersionAwareTopLevelElementVisitor(languageLevel: LanguageLevel) : PyVersionAwareElementVisitor(languageLevel) {
+abstract class PyTypeCheckedTopLevelElementVisitor(languageLevel: LanguageLevel) : PyTypeCheckedElementVisitor(languageLevel) {
   override fun visitPyElement(node: PyElement) {
     super.visitPyElement(node)
     checkAddElement(node)
