@@ -91,10 +91,14 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     val showPopupStartTime = System.currentTimeMillis()
 
     val tabFactories = SeTabFactory.EP_NAME.extensionList
-    val initialTabs = visibleTabsState ?: tabFactories.filterIsInstance<SeEssentialTabFactory>().sortedBy {
-        -it.priority
-      }.map {
-        SePopupHeaderPane.Tab(it.name, it.id, it.id)
+    val tabCustomizer = SeTabsCustomizer.getInstance()
+    val initialTabs = visibleTabsState ?: tabFactories.filterIsInstance<SeEssentialTabFactory>()
+      .mapNotNull { factory ->
+        tabCustomizer.customizeTabInfo(factory.id, SeTabInfo(factory.priority, factory.name))?.let { factory.id to it }
+      }.sortedBy {
+        -it.second.priority
+      }.map { (id, info) ->
+        SePopupHeaderPane.Tab(info.name, id, id)
       }
 
     val popupClosedCompletable = CompletableDeferred<Unit>()
@@ -170,14 +174,13 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     providersHolder: SeProvidersHolder,
   ) {
     val tabInitializationTimeoutMillis: Long = 50
-    val customizedTabFactories = SeTabsCustomizer.getInstance().customize(tabFactories)
-    val orderedTabFactoryIds = customizedTabFactories.map { it.id }
+    val orderedTabFactoryIds = tabFactories.map { it.id }
 
     // We initialize `adaptedTabs` before `tabsOrDeferredTabs`,
     // because `tabsOrDeferredTabs` are not fully asynchronous and may delay initialization of `adaptedTabs`
     val adaptedTabs = createAdaptedTabsIfMonolith(orderedTabFactoryIds, providersHolder, initEvent, popupScope, session)
 
-    val tabsOrDeferredTabs = customizedTabFactories.map {
+    val tabsOrDeferredTabs = tabFactories.map {
       it.id to initAsync(popupScope) {
         computeCatchingOrNull({ e -> "Error while getting tab from ${it.id} tab factory: ${e.message}" }) {
           it.getTab(popupScope, project, session, initEvent) { action ->

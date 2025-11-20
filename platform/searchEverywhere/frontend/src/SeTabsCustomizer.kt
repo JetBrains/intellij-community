@@ -3,10 +3,9 @@ package com.intellij.platform.searchEverywhere.frontend
 
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.ApiStatus
-import kotlin.jvm.java
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-@ApiStatus.Experimental
 interface SeTabsCustomizer {
   companion object {
     @JvmStatic
@@ -15,5 +14,8 @@ interface SeTabsCustomizer {
     }
   }
 
-  fun customize(tabFactories: List<SeTabFactory>) : List<SeTabFactory>
+  fun customizeTabInfo(tabId: String, info: SeTabInfo) : SeTabInfo?
 }
+
+@ApiStatus.Internal
+class SeTabInfo(val priority: Int, val name: @Nls String)

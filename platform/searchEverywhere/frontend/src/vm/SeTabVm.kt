@@ -36,14 +36,16 @@ class SeTabVm(
   private val project: Project?,
   coroutineScope: CoroutineScope,
   private val tab: SeTab,
+  private val customizedTabInfo: SeTabInfo,
   private val searchPattern: StateFlow<String>,
   private val availableLegacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
 ) {
-  val searchResults: StateFlow<SeSearchContext?> get() = _searchResults.asStateFlow()
-  val name: String get() = tab.name
-  val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
   val tabId: String get() = tab.id
-  val priority: Int get() = tab.priority
+  val name: String get() = customizedTabInfo.name
+  val priority: Int get() = customizedTabInfo.priority
+
+  val searchResults: StateFlow<SeSearchContext?> get() = _searchResults.asStateFlow()
+  val filterEditor: SuspendLazyProperty<SeFilterEditor?> = initAsync(coroutineScope) { tab.getFilterEditor() }
   val reportableTabId: String =
     if (SearchEverywhereUsageTriggerCollector.isReportable(tab)) tabId
     else SearchEverywhereUsageTriggerCollector.NOT_REPORTABLE_ID

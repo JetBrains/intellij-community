@@ -5,7 +5,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class SeDefaultTabsCustomizer: SeTabsCustomizer {
-  override fun customize(tabFactories: List<SeTabFactory>): List<SeTabFactory> {
-    return tabFactories
-  }
+  override fun customizeTabInfo(tabId: String, info: SeTabInfo): SeTabInfo = info
 }
