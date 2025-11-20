@@ -60,7 +60,8 @@ public final class AutoCloseableResourceInspection extends ResourceInspection {
                   "java.util.Formatter",
                   "java.util.Scanner",
                   "org.springframework.context.ConfigurableApplicationContext",
-                  "io.micronaut.context.ApplicationContext");
+                  "io.micronaut.context.ApplicationContext",
+                  "org.apache.pekko.actor.ActorSystem");
 
   @ApiStatus.Internal
   public final MethodMatcher myMethodMatcher;
