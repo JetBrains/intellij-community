@@ -263,6 +263,10 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       return if (errorState.affects(i)) AsciiUtils.isUpperAscii(errorState.getChar(myPattern, i)) else isUpperCase[i]
     }
 
+    fun isDigit(i: Int, errorState: ErrorState): Boolean {
+      return if (errorState.affects(i)) errorState.getChar(myPattern, i).isDigit() else myPattern[i].isDigit()
+    }
+
     fun isWordSeparator(i: Int, errorState: ErrorState): Boolean {
       return if (errorState.affects(i)) isWordSeparator(errorState.getChar(myPattern, i)) else isWordSeparator[i]
     }
@@ -331,7 +335,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
         // the trailing space should match if the pattern ends with the last word part or only its first hump character
         return if (isTrailingSpacePattern(errorState) &&
                    nameIndex != myName.length &&
-                   (patternIndex < 2 || !isUpperCaseOrDigit(charAt(patternIndex - 2, errorState)))) {
+                   (patternIndex < 2 || !isUpperCaseOrDigit(patternIndex - 2, errorState))) {
           val spaceIndex = myName.indexOf(' ', startIndex = nameIndex)
           if (spaceIndex >= 0) {
             FList.singleton(Range(spaceIndex, spaceIndex + 1, errorCount = 0))
@@ -353,8 +357,8 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       return isPatternChar(patternLength(errorState) - 1, ' ', errorState)
     }
 
-    private fun isUpperCaseOrDigit(p: Char): Boolean {
-      return p.isUpperCase() || p.isDigit()
+    private fun isUpperCaseOrDigit(patternIndex: Int, errorState: ErrorState): Boolean {
+      return isUpperCase(patternIndex, errorState) || isDigit(patternIndex, errorState)
     }
 
     /**
@@ -502,7 +506,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       var i = 1
       while (nameIndex + i < myName.length && patternIndex + i < patternLength(errorState)) {
         if (!charEquals(patternIndex + i, nameIndex + i, ignoreCase, true, errorState)) {
-          if (charAt(patternIndex + i, errorState).isDigit() && charAt(patternIndex + i - 1, errorState).isDigit()) {
+          if (isDigit(patternIndex + i, errorState) && isDigit(patternIndex + i - 1, errorState)) {
             return null
           }
           break
@@ -617,15 +621,13 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
       val ignoreCase = myMatchingMode != MatchingMode.MATCH_CASE
       if (!charEquals(patternIndex, nameIndex, ignoreCase, true, errorState)) return false
 
-      val patternChar = charAt(patternIndex, errorState)
-
       return !(myMatchingMode == MatchingMode.FIRST_LETTER &&
                (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) &&
-               hasCase(patternChar) && patternChar.isUpperCase() != myName[0].isUpperCase())
+               hasCase(patternIndex, errorState) && isUpperCase(patternIndex, errorState) != myName[0].isUpperCase())
     }
 
-    private fun hasCase(patternChar: Char): Boolean {
-      return patternChar.isUpperCase() || patternChar.isLowerCase()
+    private fun hasCase(patternIndex: Int, errorState: ErrorState): Boolean {
+      return isUpperCase(patternIndex, errorState) || isLowerCase(patternIndex, errorState)
     }
 
     fun isPatternChar(patternIndex: Int, c: Char, errorState: ErrorState): Boolean {

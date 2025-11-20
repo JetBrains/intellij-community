@@ -275,7 +275,7 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
 
     if (patternIndex == myPattern.length) {
       // the trailing space should match if the pattern ends with the last word part, or only its first hump character
-      if (isTrailingSpacePattern() && nameIndex != name.length() && (patternIndex < 2 || !isUpperCaseOrDigit(myPattern[patternIndex - 2]))) {
+      if (isTrailingSpacePattern() && nameIndex != name.length() && (patternIndex < 2 || !isUpperCaseOrDigit(patternIndex - 2))) {
         int spaceIndex = name.indexOf(' ', nameIndex);
         if (spaceIndex >= 0) {
           return FList.singleton(TextRange.from(spaceIndex, 1));
@@ -294,8 +294,8 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
     return isPatternChar(myPattern.length - 1, ' ');
   }
 
-  private static boolean isUpperCaseOrDigit(char p) {
-    return Character.isUpperCase(p) || Character.isDigit(p);
+  private boolean isUpperCaseOrDigit(int patternIndex) {
+    return isUpperCase[patternIndex] || Character.isDigit(myPattern[patternIndex]);
   }
 
   /**
@@ -491,15 +491,15 @@ final class MinusculeMatcherImpl extends MinusculeMatcher {
 
     if (myMatchingMode == MatchingMode.FIRST_LETTER &&
         (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) &&
-        hasCase(patternChar) &&
-        Character.isUpperCase(patternChar) != Character.isUpperCase(name.charAt(0))) {
+        hasCase(patternIndex) &&
+        isUpperCase[patternIndex] != Character.isUpperCase(name.charAt(0))) {
       return false;
     }
     return true;
   }
 
-  private static boolean hasCase(char patternChar) {
-    return Character.isUpperCase(patternChar) || Character.isLowerCase(patternChar);
+  private boolean hasCase(int patternIndex) {
+    return isUpperCase[patternIndex]  || isLowerCase[patternIndex];
   }
 
   private boolean isWildcard(int patternIndex) {
