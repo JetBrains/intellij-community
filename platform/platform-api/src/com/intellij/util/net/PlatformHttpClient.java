@@ -44,10 +44,11 @@ import java.util.zip.GZIPInputStream;
  * <p>
  * Example:
  * <pre>
- *   var client = PlatformHttpClient.client();
- *   var request = PlatformHttpClient.request(uri);
- *   var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
- *   var content = response.body();
+ *   try (var client = PlatformHttpClient.client()) {
+ *     var request = PlatformHttpClient.request(uri);
+ *     var response = PlatformHttpClient.checkResponse(client.send(request, HttpResponse.BodyHandlers.ofString()));
+ *     var content = response.body();
+ *   }
  * </pre>
  * <p>
  * Notable differences with {@link HttpRequests}:
@@ -62,6 +63,7 @@ import java.util.zip.GZIPInputStream;
 public final class PlatformHttpClient {
   /**
    * Returns a preconfigured {@link HttpClient}. For more customization, use {@link #clientBuilder()}.
+   * The resulting client is expected to be eventually {@link HttpClient#close() closed}.
    */
   public static @NotNull HttpClient client() {
     return clientBuilder().build();
@@ -69,6 +71,7 @@ public final class PlatformHttpClient {
 
   /**
    * Returns a preconfigured {@link HttpClient.Builder}.
+   * The resulting client is expected to be eventually {@link HttpClient#close() closed}.
    */
   public static HttpClient.@NotNull Builder clientBuilder() {
     var builder = new DelegatingHttpClientBuilder()
@@ -78,7 +81,7 @@ public final class PlatformHttpClient {
     if (LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()) {
       var app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        CertificateManager certificateManager = app.getServiceIfCreated(CertificateManager.class);
+        var certificateManager = app.getServiceIfCreated(CertificateManager.class);
         if (certificateManager != null) {
           builder = builder.sslContext(certificateManager.getSslContext());
         }
@@ -119,8 +122,9 @@ public final class PlatformHttpClient {
    * Throws {@link HttpStatusException} if a response status code is not the {@code [200, 300)} range.
    */
   public static <T> HttpResponse<T> checkResponse(@NotNull HttpResponse<T> response) throws HttpStatusException {
-    if (response.statusCode() < 200 || response.statusCode() >= 300) {
-      throw new HttpStatusException(errorMessage(response), response.statusCode(), response.uri().toString());
+    var statusCode = response.statusCode();
+    if (statusCode < 200 || statusCode >= 300) {
+      throw new HttpStatusException(errorMessage(response), statusCode, response.uri().toString());
     }
     return response;
   }
@@ -185,7 +189,7 @@ public final class PlatformHttpClient {
 
   private static Charset findCharset(HttpHeaders headers) {
     return headers.firstValue("Content-Type").map(v -> {
-      int p = v.indexOf("charset=");
+      var p = v.indexOf("charset=");
       if (p > 0) {
         try {
           return Charset.forName(v.substring(p + 8).trim());
