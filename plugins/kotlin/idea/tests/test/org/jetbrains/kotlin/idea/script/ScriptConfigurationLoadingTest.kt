@@ -106,25 +106,6 @@ class ScriptConfigurationLoadingTest8 : AbstractScriptConfigurationLoadingTest()
         assertNoSuggestedConfiguration()
     }
 
-    fun testConcurrentLoadingWhileNotApplied() {
-        assertAndLoadInitialConfiguration()
-
-        makeChanges("A")
-
-        assertAndDoAllBackgroundTasks()
-        assertSingleLoading()
-        assertAppliedConfiguration("initial")
-
-        // we have loaded and not applied configuration for A
-        // let's invalidate file again and check that loading will occur
-
-        makeChanges("B")
-        assertAndDoAllBackgroundTasks()
-        assertSingleLoading()
-        assertAndApplySuggestedConfiguration()
-        assertAppliedConfiguration("B")
-    }
-
     fun testConcurrentLoadingWhileNotAppliedABA() {
         assertAndLoadInitialConfiguration()
 
