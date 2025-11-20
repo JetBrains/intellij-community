@@ -196,8 +196,8 @@ internal class UnionScope private constructor(
 
         val (united, leftScopes) = scope.uniteWith(others) ?: continue
 
-        if (leftScopes.isEmpty()) {
-          return listOf(united)
+        if (leftScopes.size < 2) {
+          return listOf(united) + leftScopes
         }
 
         return listOf(united) + tryUniting(leftScopes)
