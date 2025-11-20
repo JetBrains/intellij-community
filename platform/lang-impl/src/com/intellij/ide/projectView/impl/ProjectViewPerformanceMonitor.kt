@@ -18,7 +18,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import javax.swing.tree.TreePath
-import kotlin.collections.iterator
 import kotlin.concurrent.atomics.*
 import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration
@@ -70,7 +69,7 @@ internal class ProjectViewPerformanceMonitor(
       is StartedEvent -> calculator.requestStarted(event.id, event.causes, event.startedTime)
       is LoadedEvent -> calculator.nodesLoaded(event.id, event.loadedCount)
       is FinishedEvent -> calculator.requestFinished(event.id, event.finishedTime)
-      is HeartbeatEvent -> calculator.reportSample()
+      is HeartbeatEvent -> calculator.reportSample(TimeSource.Monotonic.markNow())
     }
   }
 
@@ -87,7 +86,7 @@ internal class ProjectViewPerformanceMonitor(
         entry.key,
         entry.value.requestCount,
         entry.value.loadedNodeCount,
-        entry.value.sinceTime.elapsedNow().inWholeMilliseconds,
+        entry.value.stuckFor.inWholeMilliseconds,
       )
     }
   }
@@ -162,8 +161,8 @@ class ProjectViewUpdatePerformanceCalculator(
     current.requestFinished(id, finishedTime)
   }
 
-  fun reportSample() {
-    val report = current.report()
+  fun reportSample(reportTime: ComparableTimeMark) {
+    val report = current.report(reportTime)
     if (report != null) {
       processReport(report)
     }
@@ -239,14 +238,14 @@ class ProjectViewUpdatePerformanceCalculator(
       return result
     }
 
-    fun report(): ProjectViewUpdateReport? {
+    fun report(time: ComparableTimeMark): ProjectViewUpdateReport? {
       if (startedRequests == 0 && activeRequests == 0 && finishedRequests == 0) return null // don't spam when the IDE is idle
-      val report = computeReport()
+      val report = computeReport(time)
       reportToDebugLog(report)
       return report
     }
 
-    private fun computeReport(): ProjectViewUpdateReport {
+    private fun computeReport(time: ComparableTimeMark): ProjectViewUpdateReport {
       return ProjectViewUpdateReport(
         ProjectViewUpdateStatsReport(
           startedRequests,
@@ -254,11 +253,11 @@ class ProjectViewUpdatePerformanceCalculator(
           finishedRequests,
         ),
         causeReports,
-        computeStuckRequestReports(),
+        computeStuckRequestReports(time),
       )
     }
 
-    private fun computeStuckRequestReports(): HashMap<ProjectViewUpdateCause, ProjectViewUpdateStuckRequestReport> {
+    private fun computeStuckRequestReports(time: ComparableTimeMark): HashMap<ProjectViewUpdateCause, ProjectViewUpdateStuckRequestReport> {
       val reports = hashMapOf<ProjectViewUpdateCause, ProjectViewUpdateStuckRequestReport>()
       for (requestState in requestStates.values) {
         if (!requestState.isStuck) continue
@@ -266,6 +265,7 @@ class ProjectViewUpdatePerformanceCalculator(
           val report = reports.getOrPut(cause) {
             ProjectViewUpdateStuckRequestReport(
               sinceTime = requestState.startTime,
+              reportTime = time,
             )
           }
           report.sinceTime = min(report.sinceTime, requestState.startTime)
@@ -355,8 +355,12 @@ data class ProjectViewUpdateCauseReport(
 @VisibleForTesting
 data class ProjectViewUpdateStuckRequestReport(
   var sinceTime: ComparableTimeMark,
+  var reportTime: ComparableTimeMark,
   var requestCount: Int = 0,
   var loadedNodeCount: Int = 0,
-)
+) {
+  val stuckFor: Duration
+    get() = reportTime - sinceTime
+}
 
 private val LOG = logger<ProjectViewPerformanceMonitor>()
