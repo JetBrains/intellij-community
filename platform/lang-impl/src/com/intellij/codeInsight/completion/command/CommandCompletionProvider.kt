@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.impl.EmptySoftWrapModel
 import com.intellij.openapi.editor.impl.ImaginaryEditor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -169,6 +170,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
                               isInjected = isInjected,
                               commandCompletionType = commandCompletionType) { commands ->
       commands.forEach { command ->
+        ProgressManager.checkCanceled()
         CommandCompletionCollector.shown(command::class.java, originalFile.language, commandCompletionType::class.java)
         val customPrefixMatcher = command.customPrefixMatcher(prefix)
         val lookupElements = createLookupElements(command, commandCompletionFactory, prefix, customPrefixMatcher)
@@ -340,11 +342,14 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
     processor: Processor<in Collection<CompletionCommand>>,
   ) {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
-    val commandProviders = commandCompletionFactory.commandProviders(project, (adjustedParameters.injectedFile
-                                                                               ?: adjustedParameters.copyFile).language)
-    val afterHighlightingCommandProviders = commandProviders.filter { it is AfterHighlightingCommandProvider }.toSet()
-    for (provider in commandProviders.filter { it !is AfterHighlightingCommandProvider }) {
-      if(commandCompletionType is InvocationCommandType.FullLine && !provider.supportNewLineCompletion()) continue
+    val language = (adjustedParameters.injectedFile ?: adjustedParameters.copyFile).language
+    val allCommandProviders = commandCompletionFactory.commandProviders(project, language)
+
+    val (afterHighlightingCommandProviderList, commandProviders) = allCommandProviders.partition { it is AfterHighlightingCommandProvider }
+    val afterHighlightingCommandProviders = afterHighlightingCommandProviderList.toSet()
+
+    for (provider in commandProviders) {
+      if (commandCompletionType is InvocationCommandType.FullLine && !provider.supportNewLineCompletion()) continue
       try {
         if (provider is DirectIntentionCommandProvider) {
           provider.setAfterHighlightingProviders(afterHighlightingCommandProviders)
@@ -363,6 +368,8 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
           }
         val commands = provider.getCommands(context)
         processor.process(commands)
+
+        ProgressManager.checkCanceled()
       }
       catch (e: Exception) {
         if (e is ControlFlowException) {
