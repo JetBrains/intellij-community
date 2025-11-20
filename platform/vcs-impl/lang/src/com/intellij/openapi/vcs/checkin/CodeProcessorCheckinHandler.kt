@@ -2,10 +2,10 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
+import com.intellij.formatting.service.structuredAsyncDocumentFormattingScope
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -28,8 +28,10 @@ abstract class CodeProcessorCheckinHandler(
   protected abstract fun createCodeProcessor(files: List<VirtualFile>): AbstractLayoutCodeProcessor
 
   protected open suspend fun runCodeProcessor(processor: AbstractLayoutCodeProcessor) {
-    coroutineToIndicator {
-      processor.processFilesUnderProgress(it)
+    structuredAsyncDocumentFormattingScope {
+      coroutineToIndicator {
+        processor.processFilesUnderProgress(it)
+      }
     }
   }
 
