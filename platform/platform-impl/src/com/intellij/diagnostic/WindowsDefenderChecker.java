@@ -309,7 +309,7 @@ public class WindowsDefenderChecker {
     try {
       var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
       if (script == null) {
-        LOG.info("'" + HELPER_SCRIPT_NAME + "' is missing from '" + PathManager.getBinPath() + "'");
+        LOG.info("'" + HELPER_SCRIPT_NAME + "' is missing from '" + PathManager.getBinDir() + "'");
         return false;
       }
 
@@ -374,8 +374,9 @@ public class WindowsDefenderChecker {
     }
   }
 
+  @SuppressWarnings("IO_FILE_USAGE")
   private static ProcessOutput run(ProcessBuilder command, Charset charset) throws IOException {
-    var tempDir = NioFiles.createDirectories(Path.of(PathManager.getTempPath()));
+    var tempDir = NioFiles.createDirectories(PathManager.getTempDir());
     command.environment().put("PSModulePath", "");
     command.redirectErrorStream(true);
     command.directory(tempDir.toFile());
