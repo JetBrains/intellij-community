@@ -215,7 +215,10 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
       }
       """.trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("copy ref", ignoreCase = true) })
+    val item = elements.first { element -> element.lookupString.contains("copy ref", ignoreCase = true) }
+    val preview = (item.`as`(CommandCompletionLookupElement::class.java))?.preview
+    assertEquals("Copy reference for 'foo'.", (preview as IntentionPreviewInfo.Html).content().toString())
+    selectItem(item)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult("""
