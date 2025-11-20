@@ -64,7 +64,8 @@ private class ForcePushAction : PushActionBase() {
     }
 
     val message = if (commonTarget != null) {
-      DvcsBundle.message("action.force.push.to.confirmation.text", commonTarget.presentation)
+      val presentation = "'${commonTarget.presentation}'"
+      DvcsBundle.message("action.force.push.to.confirmation.text", presentation)
     }
     else {
       DvcsBundle.message("action.force.push.confirmation.text")
