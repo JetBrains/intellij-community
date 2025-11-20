@@ -14,11 +14,15 @@ import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.JPanel
 
-// Places analyzing progress indicator on top, adds a banner under it
+/**
+ * Places analyzing progress indicator on top, adds a banner under it
+ */
 internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose: Runnable) {
 
-  // component of analyzing progress,
-  // placed above banner
+  /**
+   * Component of analyzing progress,
+   * placed above banner
+   */
   private var analyzingComponent: Component? = null
 
   private val banner: Component by lazy { createBanner(onBannerClose) }
