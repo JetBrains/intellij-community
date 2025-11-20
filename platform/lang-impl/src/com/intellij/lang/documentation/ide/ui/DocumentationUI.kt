@@ -42,16 +42,12 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.awt.Color
 import java.awt.Font
-import java.awt.Graphics
 import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -89,6 +85,8 @@ internal class DocumentationUI(
   val contentSizeUpdates: SharedFlow<PopupUpdateEvent> = myContentSizeUpdates.asSharedFlow()
   private val switcher: DefinitionSwitcher<DocumentationRequest>
   private var contentKind: ContentKind? = null
+
+  private val customStyleFlow: MutableStateFlow<CustomStyle?> = MutableStateFlow(null)
 
   init {
     scrollPane = DocumentationScrollPane()
@@ -206,6 +204,25 @@ internal class DocumentationUI(
     }
   }
 
+  /**
+   * Tracks changes to a custom style and invokes the provided callback when the style changes.
+   *
+   * @param disposable A disposable object to manage the lifecycle of style change tracking. The tracking will stop when this disposable is disposed.
+   * @param onChange A callback function that is invoked whenever the custom style changes. The function receives the updated `CustomStyle` or `null` if no style is available.
+   */
+  fun trackDocumentationCustomStyleChange(disposable: Disposable, onChange: (CustomStyle?) -> Unit) {
+    val job = cs.launch {
+      customStyleFlow.collectLatest {
+        withContext(Dispatchers.EDT) {
+          onChange(it)
+        }
+      }
+    }
+    Disposer.register(disposable) {
+      job.cancel()
+    }
+  }
+
   private fun clearImages() {
     imageResolver = null
   }
@@ -284,6 +301,9 @@ internal class DocumentationUI(
       applyUIState(uiState)
     }
   }
+
+
+  internal data class CustomStyle(val backgroundColor: Color, val customEnabled: Boolean)
 
   private data class DecoratedData(@NlsSafe val html: String, val decoratedStyle: DecoratedStyle?)
   private data class DecoratedStyle(val fontSize: Float, val backgroundColor: Color)
@@ -378,6 +398,7 @@ internal class DocumentationUI(
         editorPane.isCustomSettingsEnabled = true
         editorPane.setFont(UIUtil.getFontWithFallback(editorPane.getFontName(), Font.PLAIN, JBUIScale.scale(decoratedStyle.fontSize).toInt()))
         editorPane.background = decoratedStyle.backgroundColor
+        customStyleFlow.value = CustomStyle(decoratedStyle.backgroundColor, true)
       }
       else {
         val localInitialDecoratedData = initialDecoratedData
@@ -385,6 +406,7 @@ internal class DocumentationUI(
           editorPane.isCustomSettingsEnabled = false
           editorPane.background = localInitialDecoratedData.backgroundColor
           editorPane.applyFontProps(localInitialDecoratedData.fontSize)
+          customStyleFlow.value = CustomStyle(localInitialDecoratedData.backgroundColor, false)
         }
       }
     }

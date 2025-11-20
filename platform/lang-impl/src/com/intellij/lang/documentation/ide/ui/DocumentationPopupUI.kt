@@ -88,10 +88,16 @@ internal class DocumentationPopupUI(
     gearActions.addAll(secondaryActions)
     gearActions.addSeparator()
     gearActions.addAll(primaryActions)
-
     val corner = toolbarComponent(DefaultActionGroup(editSourceAction, gearActions), editorPane).apply {
       border = JBUI.Borders.empty(0, 0, contentOuterPadding - 3, settingsButtonPadding - 5)
     }
+
+    ui.trackDocumentationCustomStyleChange(this){
+      if (it != null) {
+        corner.isVisible = !it.customEnabled
+      }
+    }
+
     ui.trackDocumentationBackgroundChange(this) {
       corner.background = it
     }
