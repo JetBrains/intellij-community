@@ -459,7 +459,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Override
   public void run(@NotNull Task task) {
     if (isSynchronousHeadless(task)) {
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         WriteIntentReadAction.run((Runnable)() -> runProcessWithProgressSynchronously(task));
       }
       else {

@@ -30,6 +30,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -322,7 +323,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void pumpSwingThread() {
-    LOG.assertTrue(SwingUtilities.isEventDispatchThread());
+    LOG.assertTrue(EDT.isCurrentThreadEdt());
 
     InvokeRatherLaterRequest request = myRatherLaterRequests.get(0);
     request.invokesN++;
@@ -377,7 +378,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       });
     }
     else {
-      if (!SwingUtilities.isEventDispatchThread()) {
+      if (!EDT.isCurrentThreadEdt()) {
         try {
           EdtInvocationManager.getInstance().invokeAndWait(() -> pumpSwingThread());
         }
@@ -577,7 +578,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         comment.done();
       }
     };
-    if (!SwingUtilities.isEventDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       DebuggerInvocationUtil.invokeAndWait(myProject, runnable, ModalityState.defaultModalityState());
     }
     else {

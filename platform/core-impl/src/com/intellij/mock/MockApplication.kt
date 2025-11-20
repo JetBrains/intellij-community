@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -91,7 +92,7 @@ open class MockApplication(parentDisposable: Disposable) : MockComponentManager(
 
   override fun getCoroutineScope(): CoroutineScope = appCoroutineScope
 
-  override fun isDispatchThread(): Boolean = SwingUtilities.isEventDispatchThread()
+  override fun isDispatchThread(): Boolean = EDT.isCurrentThreadEdt()
 
   override fun isWriteIntentLockAcquired(): Boolean = true
 

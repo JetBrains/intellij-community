@@ -2,7 +2,9 @@
 package com.intellij.openapi.application.ex
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EdtReplacementThread
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -12,6 +14,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Ref
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,7 +26,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.SwingUtilities
-import kotlin.Result
 import kotlin.time.Duration.Companion.milliseconds
 
 object ApplicationUtil {
@@ -155,7 +157,7 @@ object ApplicationUtil {
   fun invokeAndWaitSomewhere(thread: EdtReplacementThread, modalityState: ModalityState, r: Runnable) {
     when (thread) {
       EdtReplacementThread.EDT -> {
-        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteIntentLockAcquired) {
+        if (!EDT.isCurrentThreadEdt() && ApplicationManager.getApplication().isWriteIntentLockAcquired) {
           LOG.error("Can't invokeAndWait from WT to EDT: probably leads to deadlock")
         }
         EdtInvocationManager.invokeAndWaitIfNeeded(r)
@@ -163,7 +165,7 @@ object ApplicationUtil {
       EdtReplacementThread.WT -> if (ApplicationManager.getApplication().isWriteIntentLockAcquired) {
         r.run()
       }
-      else if (SwingUtilities.isEventDispatchThread()) {
+      else if (EDT.isCurrentThreadEdt()) {
         LOG.error("Can't invokeAndWait from EDT to WT")
       }
       else {
@@ -187,7 +189,7 @@ object ApplicationUtil {
         }
       }
       EdtReplacementThread.EDT_WITH_IW -> {
-        if (!SwingUtilities.isEventDispatchThread() && ApplicationManager.getApplication().isWriteIntentLockAcquired) {
+        if (!EDT.isCurrentThreadEdt() && ApplicationManager.getApplication().isWriteIntentLockAcquired) {
           LOG.error("Can't invokeAndWait from WT to EDT: probably leads to deadlock")
         }
         ApplicationManager.getApplication().invokeAndWait(r, modalityState)

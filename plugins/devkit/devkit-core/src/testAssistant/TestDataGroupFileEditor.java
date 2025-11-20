@@ -16,6 +16,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,7 @@ public class TestDataGroupFileEditor extends UserDataHolderBase implements TextE
 
   @Override
   public @NotNull Editor getEditor() {
-    return (SwingUtilities.isEventDispatchThread() && isBeforeEditorFocused() ? myBeforeEditor : myAfterEditor).getEditor();
+    return (EDT.isCurrentThreadEdt() && isBeforeEditorFocused() ? myBeforeEditor : myAfterEditor).getEditor();
   }
 
   private boolean isBeforeEditorFocused() {

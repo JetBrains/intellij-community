@@ -1,8 +1,9 @@
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.jetbrains.rd.util.reactive.IScheduler
+import com.intellij.util.ui.EDT
 import com.jetbrains.rd.util.reactive.ExecutionOrder
+import com.jetbrains.rd.util.reactive.IScheduler
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.SwingUtilities
 
@@ -20,5 +21,5 @@ object SwingScheduler : IScheduler {
   }
 
   override val isActive: Boolean
-    get() = SwingUtilities.isEventDispatchThread()
+    get() = EDT.isCurrentThreadEdt()
 }

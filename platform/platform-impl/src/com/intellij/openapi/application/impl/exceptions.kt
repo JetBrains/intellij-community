@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.Nls
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
@@ -77,7 +78,7 @@ private fun interactiveMode(coroutineContext: CoroutineContext?): Mode {
     return Mode.Interactive(action = text)
   }
   // Exception thrown on EDT with modal dialog (or no project) has something to do with current user task
-  if ((SwingUtilities.isEventDispatchThread() && LaterInvocator.isInModalContext()) ||
+  if ((EDT.isCurrentThreadEdt() && LaterInvocator.isInModalContext()) ||
       ProjectManager.getInstanceIfCreated()?.openProjects?.isEmpty() == true) {
     return Mode.Interactive(action = null)
   }

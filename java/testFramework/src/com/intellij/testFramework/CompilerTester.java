@@ -42,12 +42,12 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.LogSetup;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -233,7 +233,7 @@ public final class CompilerTester {
 
     // tests run in awt
     while (!semaphore.waitFor(100)) {
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         //noinspection TestOnlyProblems
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       }

@@ -376,7 +376,7 @@ public final class LaterInvocator {
     }
   }
   public static void pollWriteThreadEventsOnce() {
-    LOG.assertTrue(!SwingUtilities.isEventDispatchThread());
+    LOG.assertTrue(!EDT.isCurrentThreadEdt());
     LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired());
   }
 

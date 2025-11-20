@@ -17,6 +17,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.ui.EDT;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
@@ -187,7 +188,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
     if (executable != null) {
       return executable;
     }
-    var error = SwingUtilities.isEventDispatchThread()
+    var error = EDT.isCurrentThreadEdt()
                 ? getFileExecutionErrorOnEdt(fullPath, targetEnvConfig)
                 : getFileExecutionError(fullPath, targetEnvConfig);
     if (error != null) {

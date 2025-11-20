@@ -11,10 +11,7 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.NamedColorUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AWTAccessor;
@@ -263,7 +260,7 @@ public final class GuiUtils {
    * removes all children and parent references, listeners from {@code container} to avoid possible memory leaks
    */
   public static void removePotentiallyLeakingReferences(@NotNull Container container) {
-    assert SwingUtilities.isEventDispatchThread();
+    assert EDT.isCurrentThreadEdt();
     AWTAccessor.getComponentAccessor().setParent(container, null);
     container.removeAll();
     for (ComponentListener c : container.getComponentListeners()) container.removeComponentListener(c);

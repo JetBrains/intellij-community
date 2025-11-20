@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -100,7 +101,7 @@ public abstract class SearchResultPanel {
   }
 
   public void setQuery(@NotNull String query) {
-    assert SwingUtilities.isEventDispatchThread();
+    assert EDT.isCurrentThreadEdt();
 
     setEmptyText(query);
 
@@ -151,7 +152,7 @@ public abstract class SearchResultPanel {
 
   protected void updatePanel(AtomicBoolean runQuery) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      assert SwingUtilities.isEventDispatchThread();
+      assert EDT.isCurrentThreadEdt();
 
       if (!runQuery.get()) {
         return;

@@ -4,13 +4,13 @@ package com.intellij.testFramework;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import sun.awt.AWTAutoShutdown;
 
-import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 
@@ -66,7 +66,7 @@ public final class UITestUtil {
       return;
     }
 
-    if (SwingUtilities.isEventDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       throw new IllegalStateException("must not be called on EDT");
     }
 

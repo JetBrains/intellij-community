@@ -33,13 +33,13 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.DirectoryContentSpec;
 import com.intellij.util.io.DirectoryContentSpecKt;
 import com.intellij.util.io.TestFileSystemBuilder;
+import com.intellij.util.ui.EDT;
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
 import org.junit.Assert;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -271,11 +271,11 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
         if (!BuildManager.getInstance().isBuildProcessDebuggingEnabled() && System.currentTimeMillis() - start > 5 * 60 * 1000) {
           throw new RuntimeException("timeout");
         }
-        if (SwingUtilities.isEventDispatchThread()) {
+        if (EDT.isCurrentThreadEdt()) {
           PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
         }
       }
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       }
     }

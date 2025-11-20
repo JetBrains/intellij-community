@@ -16,11 +16,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Map;
 import java.util.Objects;
-
-import static com.intellij.concurrency.ThreadContext.currentThreadContext;
 
 public final class TransactionGuardImpl extends TransactionGuard {
   private static final Logger LOG = Logger.getInstance(TransactionGuardImpl.class);
@@ -35,7 +32,7 @@ public final class TransactionGuardImpl extends TransactionGuard {
 
   public TransactionGuardImpl() {
     myWriteSafeModalities.put(ModalityState.nonModal(), true);
-    myWritingAllowed = SwingUtilities.isEventDispatchThread(); // consider app startup a user activity
+    myWritingAllowed = EDT.isCurrentThreadEdt(); // consider app startup a user activity
   }
 
   @Override

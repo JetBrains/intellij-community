@@ -31,6 +31,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.EDT
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -62,7 +63,6 @@ import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
-import javax.swing.SwingUtilities
 import kotlin.io.path.Path
 import kotlin.io.path.div
 import kotlin.io.path.pathString
@@ -219,7 +219,7 @@ fun createSdkByGenerateTask(
     throw e
   }
 
-  val sdkName = suggestedSdkName ?: if (SwingUtilities.isEventDispatchThread()) {
+  val sdkName = suggestedSdkName ?: if (EDT.isCurrentThreadEdt()) {
     runWithModalProgressBlocking(ModalTaskOwner.guess(), "...") {
       withContext(Dispatchers.IO) {
         suggestAssociatedSdkName(homeFile.path, associatedProjectPath)

@@ -75,7 +75,7 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
   private final Supplier<Map<@NonNls String, @NlsContexts.ConfigurableName String>> myConfigurablesNames =
     new SynchronizedClearableLazy<>(() -> {
-      if (SwingUtilities.isEventDispatchThread() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      if (EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isUnitTestMode()) {
         LOG.error("Configurable names must not be loaded on EDT");
       }
 

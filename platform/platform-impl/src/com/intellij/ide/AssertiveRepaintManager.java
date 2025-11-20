@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,7 +121,7 @@ public final class AssertiveRepaintManager extends RepaintManager {
   }
 
   private void checkThreadViolations(@Nullable Component c) {
-    if (!SwingUtilities.isEventDispatchThread() && (c == null || c.isShowing())) {
+    if (!EDT.isCurrentThreadEdt() && (c == null || c.isShowing())) {
       final Exception exception = new Exception();
       StackTraceElement[] stackTrace = exception.getStackTrace();
 

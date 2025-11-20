@@ -64,6 +64,7 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.*
@@ -897,7 +898,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
   private fun awaitTermination(request: Runnable, delayMillis: Long) {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode) {
-      app.invokeLater(request, if (SwingUtilities.isEventDispatchThread()) ModalityState.current() else ModalityState.any())
+      app.invokeLater(request, if (EDT.isCurrentThreadEdt()) ModalityState.current() else ModalityState.any())
     }
     else {
       awaitingTerminationAlarm.addRequest(request, delayMillis)

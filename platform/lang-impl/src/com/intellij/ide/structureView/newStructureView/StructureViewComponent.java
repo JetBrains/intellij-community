@@ -61,6 +61,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -622,7 +623,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @Override
   public void dispose() {
-    LOG.assertTrue(EventQueue.isDispatchThread(), Thread.currentThread().getName());
+    LOG.assertTrue(EDT.isCurrentThreadEdt(), Thread.currentThread().getName());
     myDisposed = true;
     myFileEditor = null;
   }

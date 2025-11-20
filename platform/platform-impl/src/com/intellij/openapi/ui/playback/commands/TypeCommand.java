@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.ui.EDT;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 
@@ -30,7 +31,7 @@ public abstract class TypeCommand extends AbstractCommand {
   }
 
   protected void type(Robot robot, KeyStroke keyStroke) {
-    assert !SwingUtilities.isEventDispatchThread() : "Robot playback must not be in EDT";
+    assert !EDT.isCurrentThreadEdt() : "Robot playback must not be in EDT";
 
     boolean shift = (keyStroke.getModifiers() & InputEvent.SHIFT_MASK) > 0;
     boolean alt = (keyStroke.getModifiers() & InputEvent.ALT_MASK) > 0;

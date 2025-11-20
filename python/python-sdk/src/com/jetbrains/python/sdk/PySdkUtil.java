@@ -21,15 +21,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.sdk.impl.PySdkBundle;
+import com.intellij.util.ui.EDT;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.impl.PySdkBundle;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.*;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -147,7 +147,7 @@ public final class PySdkUtil {
           processInput.close();
         }
       }
-      if (SwingUtilities.isEventDispatchThread()) {
+      if (EDT.isCurrentThreadEdt()) {
         final ProgressManager progressManager = ProgressManager.getInstance();
         final Application application = ApplicationManager.getApplication();
         assert application.isUnitTestMode() ||
