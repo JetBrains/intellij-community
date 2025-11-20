@@ -70,7 +70,6 @@ kotlin {
       exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
     }
     implementation(project(":fleet.util.core"))
-    implementation(project(":fleet.ktor.network.tls"))
   }
   // KOTLIN__MARKER_END
 }

@@ -40,7 +40,7 @@ suspend fun ByteReader.readUTF8Line(): String? {
       if (builder.isNotEmpty() && builder[builder.length - 1] == '\r') {
         builder.deleteAt(builder.length - 1)
       }
-      assert(readBuffer.readByte() == 0x0A.toByte())
+      check(readBuffer.readByte() == 0x0A.toByte()) { "expected to see the previously found line terminator" }
 
       return builder.toString()
     }
