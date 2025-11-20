@@ -17,7 +17,6 @@ import io.ktor.util.decodeString
 import io.ktor.util.moveToByteArray
 import io.mockk.coEvery
 import io.mockk.mockk
-import io.mockk.spyk
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
 import org.easymock.EasyMock.*
@@ -132,22 +131,29 @@ class EelChannelToolsTest {
     val srcErrorText = "src err"
     val dstErrorText = "dst err"
 
-    val src = spyk(ByteArrayInputStream(data).consumeAsEelChannel())
-    coEvery { src.receive(any()) } answers {
-      if (srcErr) {
-        throw IOException(srcErrorText)
+    // spyk from MockK doesn't work well with suspend functions.
+    val src = run {
+      val originalSrc = ByteArrayInputStream(data).consumeAsEelChannel()
+      object : EelReceiveChannel by originalSrc {
+        override suspend fun receive(dst: ByteBuffer): ReadResult {
+          if (srcErr) {
+            throw IOException(srcErrorText)
+          }
+          return originalSrc.receive(dst)
+        }
       }
-      else callOriginal()
     }
 
-    val dst = spyk(ByteArrayOutputStream().asEelChannel())
-    coEvery {
-      @Suppress("OPT_IN_USAGE") dst.send(any())
-    } answers {
-      if (dstErr) {
-        throw IOException(dstErrorText)
+    val dst = run {
+      val originalDst = ByteArrayOutputStream().asEelChannel()
+      object : EelSendChannel by originalDst {
+        override suspend fun send(src: ByteBuffer) {
+          if (dstErr) {
+            throw IOException(dstErrorText)
+          }
+          originalDst.send(src)
+        }
       }
-      else callOriginal()
     }
 
     // Due to mokk bug `Default` can't be used

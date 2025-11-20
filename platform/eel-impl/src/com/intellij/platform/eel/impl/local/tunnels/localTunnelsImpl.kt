@@ -22,6 +22,8 @@ import kotlinx.coroutines.channels.ClosedSendChannelException
 import kotlinx.coroutines.channels.ReceiveChannel
 import java.io.IOException
 import java.net.*
+import java.nio.channels.SelectionKey
+import java.nio.channels.Selector
 import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 import java.nio.file.Files
@@ -30,6 +32,10 @@ import kotlin.io.path.Path
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.pathString
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.ZERO
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
 
 private val logger = fileLogger()
 
@@ -58,6 +64,7 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
     val tx = EelPipe()
     val rx = EelPipe()
     val serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
+    // TODO serverChannel.configureBlocking(false)
 
     // File might already be created.
     // On Windows file can't be used.
@@ -123,20 +130,34 @@ private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePor
     SocketChannel.open(it)
   } ?: SocketChannel.open()
   args.configureSocketBeforeConnection(ConfigurableClientSocketImpl(socketChannel.socket()))
-  val connKiller = async {
-    delay(args.timeout)
-    socketChannel.close()
-  }
-  return@withContext try {
-    socketChannel.connect(args.asInetSocketAddress)
-    SocketAdapter(socketChannel)
+  socketChannel.configureBlocking(false)
+  try {
+    Selector.open().use { selector ->
+      if (!socketChannel.connect(args.asInetSocketAddress)) {
+        socketChannel.register(selector, SelectionKey.OP_CONNECT)
+        val pollUntil = System.nanoTime().nanoseconds + args.timeout
+        do {
+          var timeout: Duration
+          do {
+            // 100 was taken just as a beautiful number with no research.
+            timeout = (pollUntil - System.nanoTime().nanoseconds).coerceAtMost(100.milliseconds)
+            ensureActive()
+          }
+          while (timeout.isPositive() && selector.select(timeout.inWholeMilliseconds) == 0)
+          selector.selectedKeys().clear()
+        }
+        while (!socketChannel.finishConnect() && timeout > ZERO)
+      }
+    }
   }
   catch (e: IOException) {
     throw EelConnectionError.UnknownFailure(e.toString())
   }
-  finally {
-    connKiller.cancel()
+  if (!socketChannel.isConnected) {
+    // TODO IMO Timeouts deserve a dedicated exception.
+    throw EelConnectionError.ConnectionProblem("Timed out waiting ${args.timeout}")
   }
+  SocketAdapter(socketChannel)
 }
 
 private fun getAcceptorForRemotePortImpl(args: GetAcceptorForRemotePort): ConnectionAcceptor {
@@ -167,7 +188,15 @@ private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocket
 
   init {
     assert(boundServerSocket.isOpen)
+    boundServerSocket.configureBlocking(false)
     listenSocket = ApplicationManager.getApplication().service<MyService>().scope.launch(Dispatchers.IO + CoroutineName("eel socket accept")) {
+      val selector = Selector.open()
+      boundServerSocket.register(selector, SelectionKey.OP_ACCEPT)
+      while (selector.select(100) == 0) {  // 100 was taken just as a beautiful number with no research.
+        ensureActive()
+      }
+      selector.selectedKeys().clear()
+
       try {
         val channel = boundServerSocket.accept()
         logger.info("Connection from ${channel.socket().remoteSocketAddress}")
@@ -180,6 +209,9 @@ private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocket
       }
       catch (e: IOException) {
         closeImpl(e)
+      }
+      finally {
+        selector.close()
       }
     }
   }

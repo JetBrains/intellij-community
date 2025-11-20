@@ -3,6 +3,7 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.*
+import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -12,20 +13,49 @@ import java.io.*
 import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.channels.ReadableByteChannel
+import java.nio.channels.SelectionKey
+import java.nio.channels.Selector
 import java.nio.channels.WritableByteChannel
 import java.nio.charset.Charset
 import kotlin.coroutines.CoroutineContext
 
 internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByteChannel, private val availableDelegate: () -> Int) : EelReceiveChannel {
-  override suspend fun receive(dst: ByteBuffer): ReadResult = withContext(Dispatchers.IO) {
-    val read =
+  init {
+    if (readableByteChannel is java.nio.channels.SocketChannel) {
+      readableByteChannel.configureBlocking(false)
+    }
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  override suspend fun receive(dst: ByteBuffer): ReadResult {
+    if (!dst.hasRemaining()) return ReadResult.NOT_EOF
+    return withContext(Dispatchers.IO) {
+      var read = 0
       try {
-        readableByteChannel.read(dst)
+        if (readableByteChannel is java.nio.channels.SelectableChannel) {
+          Selector.open().use { selector ->
+            readableByteChannel.register(selector, SelectionKey.OP_READ)
+            do {
+              while (selector.select(100) == 0) {  // I choose 100 ms at random.
+                ensureActive()
+              }
+              selector.selectedKeys().clear()
+              read = readableByteChannel.read(dst)
+            }
+            while (read == 0)
+          }
+        }
+        else {
+          read = computeDetached {
+            readableByteChannel.read(dst)
+          }
+        }
       }
       catch (err: IOException) {
         throw EelReceiveChannelException(this@NioReadToEelAdapter, err)
       }
-    ReadResult.fromNumberOfReadBytes(read)
+      ReadResult.fromNumberOfReadBytes(read)
+    }
   }
 
   override fun available(): Int = availableDelegate()
@@ -41,12 +71,44 @@ internal class NioWriteToEelAdapter(
   private val writableByteChannel: WritableByteChannel,
   private val flushable: Flushable? = null,
 ) : EelSendChannel {
+  init {
+    if (writableByteChannel is java.nio.channels.SelectableChannel) {
+      writableByteChannel.configureBlocking(false)
+    }
+  }
 
   override val isClosed: Boolean get() = !writableByteChannel.isOpen
 
-  override suspend fun send(src: ByteBuffer): Unit = withContext(Dispatchers.IO) {
-    writableByteChannel.write(src)
-    flushable?.flush()
+  @OptIn(DelicateCoroutinesApi::class)
+  @EelSendApi
+  override suspend fun send(src: ByteBuffer) {
+    if (!src.hasRemaining()) return
+    withContext(Dispatchers.IO) {
+      try {
+        if (writableByteChannel is java.nio.channels.SelectableChannel) {
+          Selector.open().use { selector ->
+            writableByteChannel.register(selector, SelectionKey.OP_WRITE)
+
+            do {
+              while (selector.select(100) == 0) {  // I choose 100 ms at random.
+                ensureActive()
+              }
+              selector.selectedKeys().clear()
+            }
+            while (writableByteChannel.write(src) == 0)
+          }
+        }
+        else {
+          computeDetached {
+            writableByteChannel.write(src)
+          }
+        }
+        flushable?.flush()
+      }
+      catch (err: IOException) {
+        throw EelSendChannelException(this@NioWriteToEelAdapter, err)
+      }
+    }
   }
 
   override suspend fun close(err: Throwable?) {

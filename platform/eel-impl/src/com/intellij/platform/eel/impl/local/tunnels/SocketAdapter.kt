@@ -7,6 +7,9 @@ import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.consumeAsEelChannel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.nio.channels.SocketChannel
 
 internal class SocketAdapter(channel: SocketChannel) : EelTunnelsApi.Connection {
@@ -23,11 +26,18 @@ internal class SocketAdapter(channel: SocketChannel) : EelTunnelsApi.Connection 
 
   override suspend fun close() {
     if (socket.isClosed) return
-    if (socket.soLinger != 0) {
-      // We do not export these methods, but calling them is a right thing to do (except for linger=0 which means "die asap")
-      socket.shutdownOutput()
-      socket.shutdownInput()
+    withContext(Dispatchers.IO) {
+      try {
+        if (socket.soLinger != 0) {
+          // We do not export these methods, but calling them is a right thing to do (except for linger=0 which means "die asap")
+          socket.shutdownOutput()
+          socket.shutdownInput()
+        }
+      }
+      catch (_: IOException) {
+        // Ignored.
+      }
+      socket.close()
     }
-    socket.close()
   }
 }
