@@ -3349,6 +3349,20 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   // PY-50642
+  public void testTypeCheckingInClassBody() {
+    doTest("int", """
+      from typing import TYPE_CHECKING
+      
+      class A:
+          if not not TYPE_CHECKING:
+              def foo(self) -> int: ...
+          else:
+              def foo(self) -> str: ...
+      expr = A().foo()
+      """);
+  }
+
+  // PY-50642
   public void testTypeCheckingMultiFile() {
     myFixture.addFileToProject("mod.py", """
       import typing
@@ -4085,7 +4099,7 @@ public class Py3TypeTest extends PyTestCase {
              a = []
 
              def fun():
-                 if True:
+                 if input():
                      a = True
                  else:
                      a = 5
