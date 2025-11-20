@@ -503,6 +503,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
           }
 
           val component get() = myUi.component
+          val ui get() = myUi
 
           val consoleManger = createLogConsoleManager(additionalTabComponentManager) { debugProcess.processHandler }
         }
@@ -511,6 +512,10 @@ class XDebugSessionImpl @JvmOverloads constructor(
         // This is a mock descriptor used in backend only
         val mockDescriptor = object : RunContentDescriptor(myConsoleView, debugProcess.getProcessHandler(), runTab.component,
                                                            sessionName, myIcon, null) {
+          init {
+            runnerLayoutUi = runTab.ui
+          }
+
           override fun isHiddenContent(): Boolean = true
         }
         Disposer.register(disposable, runTab)

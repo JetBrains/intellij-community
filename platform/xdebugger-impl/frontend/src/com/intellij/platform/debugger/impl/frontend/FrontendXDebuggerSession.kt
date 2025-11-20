@@ -437,9 +437,7 @@ class FrontendXDebuggerSession private constructor(
   private fun getCurrentSuspendContext() = suspendContext.get()
 
   override fun createTabLayouter(): XDebugTabLayouter {
-    // Additional tabs are not supported in RemDev
-    val monolithLayouter = XDebugMonolithUtils.findSessionById(id)?.debugProcess?.createTabLayouter()
-    return monolithLayouter ?: object : XDebugTabLayouter() {} // TODO support additional tabs in RemDev
+    return sessionDto.tabLayouter.createLayouter(tabScope)
   }
 
   override fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable) {

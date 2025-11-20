@@ -10,7 +10,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabDto
 import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabEvent
-import com.intellij.platform.debugger.impl.rpc.XDebuggerSessionAdditionalTabId
+import com.intellij.platform.debugger.impl.rpc.XDebuggerTabId
 import com.intellij.platform.kernel.ids.BackendValueIdType
 import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.kernel.ids.storeValueGlobally
@@ -32,7 +32,7 @@ class XDebugSessionAdditionalTabComponentManager(private val debugTabScope: Coro
   }
 
   val id: XDebugSessionAdditionalTabComponentManagerId = storeValueGlobally(debugTabScope, this, XDebugSessionAdditionalTabComponentManagerValueIdType)
-  private val tabToId = mutableMapOf<AdditionalTabComponent, XDebuggerSessionAdditionalTabId>()
+  private val tabToId = mutableMapOf<AdditionalTabComponent, XDebuggerTabId>()
 
   private val _tabComponentEvents = MutableSharedFlow<XDebuggerSessionAdditionalTabEvent>(replay = 1000)
   val tabComponentEvents: Flow<XDebuggerSessionAdditionalTabEvent> = _tabComponentEvents.asSharedFlow()
