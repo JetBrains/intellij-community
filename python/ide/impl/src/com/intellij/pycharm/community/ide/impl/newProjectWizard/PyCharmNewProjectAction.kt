@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.platform.ProjectGeneratorManager
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +16,7 @@ import kotlinx.coroutines.withContext
  */
 private class PyCharmNewProjectAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    currentThreadCoroutineScope().launch {
+    e.coroutineScope.launch {
       runCatching {
         service<ProjectGeneratorManager>().initProjectGenerator(e.project)
       }.onFailure {
