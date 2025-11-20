@@ -4301,12 +4301,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myMousePressArea = null;
       myLastMousePressedLocation = null;
-      runMouseReleasedCommand(e);
-      if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
-          Math.abs(e.getX() - myMousePressedEvent.getX()) < EditorUtil.getSpaceWidth(Font.PLAIN, EditorImpl.this) &&
-          Math.abs(e.getY() - myMousePressedEvent.getY()) < getLineHeight()) {
-        runMouseClickedCommand(e);
-      }
+      WriteIntentReadAction.run((Runnable) () -> {
+        runMouseReleasedCommand(e);
+        if (!e.isConsumed() && myMousePressedEvent != null && !myMousePressedEvent.isConsumed() &&
+            Math.abs(e.getX() - myMousePressedEvent.getX()) < EditorUtil.getSpaceWidth(Font.PLAIN, EditorImpl.this) &&
+            Math.abs(e.getY() - myMousePressedEvent.getY()) < getLineHeight()) {
+          runMouseClickedCommand(e);
+        }
+      });
     }
 
     @Override

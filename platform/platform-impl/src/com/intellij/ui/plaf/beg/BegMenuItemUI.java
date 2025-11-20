@@ -1,11 +1,12 @@
 
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -518,7 +519,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       msm.clearSelectedPath();
     }
     ActionEvent event = new ActionEvent(menuItem, ActionEvent.ACTION_PERFORMED, null, e.getWhen(), e.getModifiers());
-    item.fireActionPerformed(event);
+    WriteIntentReadAction.run((Runnable) () -> {
+      item.fireActionPerformed(event);
+    });
     if (keepMenuOpen) {
       Container parent = item.getParent();
       if (parent instanceof JComponent) {
