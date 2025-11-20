@@ -56,7 +56,7 @@
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
-    <projectService overrides="true" serviceInterface="com.intellij.execution.InlineResumeCreator" serviceImplementation="com.intellij.xdebugger.impl.runToolbar.XDebuggerInlineResumeCreator"/>
+    <execution.inlineResumeCreator implementation="com.intellij.xdebugger.impl.runToolbar.XDebuggerInlineResumeCreator" order="first"/>
     <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
                     preload="notLightEdit"/>
