@@ -15,10 +15,12 @@ jvm_library(
   exports = [
     "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
     "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
   ],
   runtime_deps = [
     "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-desktop",
     "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-saveable-desktop",
+    "@lib//:libraries-compose-runtime-desktop-androidx-compose-runtime-retain-desktop",
   ]
 )
 ### auto-generated section `build intellij.libraries.compose.runtime.desktop` end

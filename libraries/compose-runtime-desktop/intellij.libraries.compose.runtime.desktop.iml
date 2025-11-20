@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="androidx.compose.runtime.desktop" type="repository">
-        <properties maven-id="androidx.compose.runtime:runtime-desktop:1.10.0-alpha02">
+        <properties maven-id="androidx.compose.runtime:runtime-desktop:1.10.0-beta01">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.10.0-alpha02/runtime-desktop-1.10.0-alpha02.jar">
-              <sha256sum>63f2c95fcb64a90370d064d2fc32e7db36e044b6c39476c519a3579c877ae734</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.10.0-beta01/runtime-desktop-1.10.0-beta01.jar">
+              <sha256sum>d35610a718146c6623f1dc99bb03d33080da1d139325c7d18c81649061085353</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.5.0/collection-jvm-1.5.0.jar">
               <sha256sum>70b35924e4babcdffa37d0e575ee039c56a2d97123342624c48b603233704341</sha256sum>
@@ -20,7 +20,7 @@
             <artifact url="file://$MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1.jar">
               <sha256sum>1e343917ebf27ba96fe4dc52b1cad7fd32b738fbc6355bb6cd5b3b305d7212d0</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.10.0-alpha02/runtime-annotation-jvm-1.10.0-alpha02.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.10.0-beta01/runtime-annotation-jvm-1.10.0-beta01.jar">
               <sha256sum>f89dda8bcd73876d0fc16568844b2bd79443ee7ca62810874d25c7dcaa394bd6</sha256sum>
             </artifact>
           </verification>
@@ -32,41 +32,41 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.10.0-alpha02/runtime-desktop-1.10.0-alpha02.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.10.0-beta01/runtime-desktop-1.10.0-beta01.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.5.0/collection-jvm-1.5.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.10.0-alpha02/runtime-annotation-jvm-1.10.0-alpha02.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.10.0-beta01/runtime-annotation-jvm-1.10.0-beta01.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.10.0-alpha02/runtime-desktop-1.10.0-alpha02-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-desktop/1.10.0-beta01/runtime-desktop-1.10.0-beta01-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/collection/collection-jvm/1.5.0/collection-jvm-1.5.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation-jvm/1.9.1/annotation-jvm-1.9.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.10.0-alpha02/runtime-annotation-jvm-1.10.0-alpha02-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-annotation-jvm/1.10.0-beta01/runtime-annotation-jvm-1.10.0-beta01-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="androidx.compose.runtime.saveable.desktop" type="repository">
-        <properties maven-id="androidx.compose.runtime:runtime-saveable-desktop:1.10.0-alpha02">
+        <properties maven-id="androidx.compose.runtime:runtime-saveable-desktop:1.10.0-beta01">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-saveable-desktop/1.10.0-alpha02/runtime-saveable-desktop-1.10.0-alpha02.jar">
-              <sha256sum>edfb532b388995b5147936b9342936d4f202c8bb70b1022b6251d365680c7909</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-saveable-desktop/1.10.0-beta01/runtime-saveable-desktop-1.10.0-beta01.jar">
+              <sha256sum>12f491f7f5b36304d852e373231f06a3057ea52e369f380044ebc23097dfc2c5</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-compose-desktop/1.4.0-alpha03/savedstate-compose-desktop-1.4.0-alpha03.jar">
-              <sha256sum>c02a98b0c2b35cdde245c0bfe6e7ff453c7b6d06a5eb8681d25b7f54b874ea48</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-compose-desktop/1.3.2/savedstate-compose-desktop-1.3.2.jar">
+              <sha256sum>4a94787a6e5bcfe143390a4f2737d4425d2ea867f2b34a847de6cda3c6ccc58a</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1.4.0-alpha03/savedstate-desktop-1.4.0-alpha03.jar">
-              <sha256sum>4e1df5fb25533ec4eb54b3aafbcd206782fa8c7633ffd9b5aac440858e92f531</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1.3.2/savedstate-desktop-1.3.2.jar">
+              <sha256sum>c5c89062ba8402b8f8657efd54db1ff192f91ca95fae59c3b418fbc477c3e3ea</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.10.0-alpha03/lifecycle-runtime-compose-desktop-2.10.0-alpha03.jar">
-              <sha256sum>e94bbf91ffb5d715b8c759290951d638d73eef8fd1248a29a032bbdc9a6507c0</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.4/lifecycle-runtime-compose-desktop-2.9.4.jar">
+              <sha256sum>d25c083df93da718a1876a3293bd15f7dc7a811e998735943bce590683a57835</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.10.0-alpha03/lifecycle-runtime-desktop-2.10.0-alpha03.jar">
-              <sha256sum>70634adb54f9268685e45226e386a9f3856a2568dfc3de2db49b6b4c75c831fe</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.9.4/lifecycle-runtime-desktop-2.9.4.jar">
+              <sha256sum>2fb49f76d1021792fb359e0a9246c1509f2f5b555f0a46591d24d58deb68bd5c</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.10.0-alpha03/lifecycle-common-jvm-2.10.0-alpha03.jar">
-              <sha256sum>ee37d7927dba6cffd167c6244fc33e483f2b6d407def89395c8a2986bc2504c5</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.9.4/lifecycle-common-jvm-2.9.4.jar">
+              <sha256sum>37d89b2101f074ac6c260917dabb185607645ee200aa3018c7c5bde70edcf184</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar">
               <sha256sum>1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab</sha256sum>
@@ -88,27 +88,45 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-saveable-desktop/1.10.0-alpha02/runtime-saveable-desktop-1.10.0-alpha02.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-compose-desktop/1.4.0-alpha03/savedstate-compose-desktop-1.4.0-alpha03.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1.4.0-alpha03/savedstate-desktop-1.4.0-alpha03.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.10.0-alpha03/lifecycle-runtime-compose-desktop-2.10.0-alpha03.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.10.0-alpha03/lifecycle-runtime-desktop-2.10.0-alpha03.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.10.0-alpha03/lifecycle-common-jvm-2.10.0-alpha03.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-saveable-desktop/1.10.0-beta01/runtime-saveable-desktop-1.10.0-beta01.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-compose-desktop/1.3.2/savedstate-compose-desktop-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1.3.2/savedstate-desktop-1.3.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.4/lifecycle-runtime-compose-desktop-2.9.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.9.4/lifecycle-runtime-desktop-2.9.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.9.4/lifecycle-common-jvm-2.9.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/arch/core/core-common/2.2.0/core-common-2.2.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.1.0/annotation-1.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-saveable-desktop/1.10.0-alpha02/runtime-saveable-desktop-1.10.0-alpha02-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-compose-desktop/1.4.0-alpha03/savedstate-compose-desktop-1.4.0-alpha03-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1.4.0-alpha03/savedstate-desktop-1.4.0-alpha03-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.10.0-alpha03/lifecycle-runtime-compose-desktop-2.10.0-alpha03-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.10.0-alpha03/lifecycle-runtime-desktop-2.10.0-alpha03-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.10.0-alpha03/lifecycle-common-jvm-2.10.0-alpha03-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-saveable-desktop/1.10.0-beta01/runtime-saveable-desktop-1.10.0-beta01-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-compose-desktop/1.3.2/savedstate-compose-desktop-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/savedstate/savedstate-desktop/1.3.2/savedstate-desktop-1.3.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-compose-desktop/2.9.4/lifecycle-runtime-compose-desktop-2.9.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-runtime-desktop/2.9.4/lifecycle-runtime-desktop-2.9.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/lifecycle/lifecycle-common-jvm/2.9.4/lifecycle-common-jvm-2.9.4-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jspecify/jspecify/1.0.0/jspecify-1.0.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/arch/core/core-common/2.2.0/core-common-2.2.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/androidx/annotation/annotation/1.1.0/annotation-1.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="androidx.compose.runtime.retain.desktop" type="repository">
+        <properties include-transitive-deps="false" maven-id="androidx.compose.runtime:runtime-retain-desktop:1.10.0-beta01">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-retain-desktop/1.10.0-beta01/runtime-retain-desktop-1.10.0-beta01.jar">
+              <sha256sum>e673e7bd810699399fe967675e8f24f3502ef8c9a967ee695b79d4649ef31908</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-retain-desktop/1.10.0-beta01/runtime-retain-desktop-1.10.0-beta01.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/androidx/compose/runtime/runtime-retain-desktop/1.10.0-beta01/runtime-retain-desktop-1.10.0-beta01-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
