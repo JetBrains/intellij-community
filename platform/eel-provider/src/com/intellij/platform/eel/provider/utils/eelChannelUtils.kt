@@ -113,7 +113,7 @@ interface EelPipe {
 }
 
 @ApiStatus.Internal
-fun EelPipe(): EelPipe = EelPipeImpl()
+fun EelPipe(debugLabel: String = ""): EelPipe = EelPipeImpl(debugLabel)
 
 
 /**

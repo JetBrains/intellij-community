@@ -12,24 +12,28 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-internal class EelPipeImpl : EelPipe, EelReceiveChannel, EelSendChannelCustomSendWholeBuffer {
-  private sealed interface State {
-    object Idle : State
+internal class EelPipeImpl(private val debugLabel: String) : EelPipe, EelReceiveChannel, EelSendChannelCustomSendWholeBuffer {
+  private sealed class State {
+    override fun toString(): String = javaClass.simpleName
 
-    sealed interface TransferState : State {
-      val bufferToSend: ByteBuffer
+    object Idle : State()
+
+    sealed class TransferState : State() {
+      abstract val bufferToSend: ByteBuffer
     }
 
-    class ReadyToTransfer(override val bufferToSend: ByteBuffer) : TransferState {
+    class ReadyToTransfer(override val bufferToSend: ByteBuffer) : TransferState() {
       val initialPos: Int = bufferToSend.position()
     }
 
-    class TransferringNow(override val bufferToSend: ByteBuffer) : TransferState
+    class TransferringNow(override val bufferToSend: ByteBuffer) : TransferState()
 
-    class LastTransfer(val currentState: TransferState, val nextState: Closed) : State
+    class LastTransfer(val currentState: TransferState, val nextState: Closed) : State()
 
-    class Closed(val error: Throwable?) : State
+    class Closed(val error: Throwable?) : State()
   }
+
+  override fun toString(): String = "EelPipe($debugLabel)"
 
   private val state = AtomicReference<Pair<State, CompletableDeferred<Unit>>>(Idle to CompletableDeferred())
 
@@ -77,8 +81,6 @@ internal class EelPipeImpl : EelPipe, EelReceiveChannel, EelSendChannelCustomSen
     source.closeForReceive()
   }
 
-  private val closedToken = ReadyToTransfer(ByteBuffer.allocate(0))
-
   @EelDelicateApi
   override fun available(): Int =
     availableImpl(state.get().first)
@@ -91,16 +93,15 @@ internal class EelPipeImpl : EelPipe, EelReceiveChannel, EelSendChannelCustomSen
     }
 
   override suspend fun receive(dst: ByteBuffer): ReadResult {
-    lateinit var readyToTransfer: ReadyToTransfer
     val transferringNow: TransferringNow = maybeUpdate { state ->
-      readyToTransfer =
+      val readyToTransfer =
         when (state) {
           is Closed -> {
             if (state.error != null) {
               state.throwError()
             }
             else {
-              closedToken
+              return ReadResult.EOF
             }
           }
           Idle -> null
@@ -113,14 +114,11 @@ internal class EelPipeImpl : EelPipe, EelReceiveChannel, EelSendChannelCustomSen
         }
         ?: return@maybeUpdate null
 
-      if (readyToTransfer === closedToken) {
-        return ReadResult.EOF
-      }
       TransferringNow(readyToTransfer.bufferToSend)
     }
 
     val newState = run {
-      val src = readyToTransfer.bufferToSend
+      val src = transferringNow.bufferToSend
       dst.putPartially(src)
       if (src.hasRemaining())
         ReadyToTransfer(src)
@@ -130,7 +128,7 @@ internal class EelPipeImpl : EelPipe, EelReceiveChannel, EelSendChannelCustomSen
 
     maybeUpdate { state ->
       when (state) {
-        is TransferringNow -> {
+        transferringNow -> {
           return@maybeUpdate newState
         }
         is LastTransfer -> {
@@ -142,7 +140,7 @@ internal class EelPipeImpl : EelPipe, EelReceiveChannel, EelSendChannelCustomSen
           }
         }
 
-        is Closed, Idle, is ReadyToTransfer -> Unit
+        is TransferState, is Closed, Idle -> Unit
       }
       error("Bug. Unexpected concurrent modification of state: $transferringNow => ($state | $newState)")
     }
@@ -197,7 +195,7 @@ internal class EelPipeImpl : EelPipe, EelReceiveChannel, EelSendChannelCustomSen
 
   private fun State.currentTransfer(): TransferState? =
     when (this) {
-      is Closed -> throw IOException("Channel is closed")
+      is Closed -> throw IOException("Channel is closed", error)
       is Idle -> null
       is LastTransfer -> currentState
       is TransferState -> this
