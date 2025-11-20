@@ -18,17 +18,48 @@ import java.util.*
 data class FlowContext(val typeEvalContext: TypeEvalContext, val checkNoReturnCalls: Boolean)
 
 @ApiStatus.Internal
+enum class Reachability {
+  REACHABLE,
+  UNREACHABLE,
+  UNREACHABLE_FOR_TYPE_CHECKING
+}
+
+@ApiStatus.Internal
 class PyDataFlow(
   scopeOwner: ScopeOwner,
   private val controlFlow: PyControlFlow,
   context: FlowContext,
 ) : ControlFlow by controlFlow {
-  private val reachability: BooleanArray = BooleanArray(instructions.size)
+  private val reachability: Array<Reachability>
 
   init {
     val languageLevel = getEffectiveLanguageLevel(scopeOwner.containingFile)
     val languageVersion = Version(languageLevel.majorVersion, languageLevel.minorVersion, 0)
 
+    val reachabilityStrict = computeReachability(instructions, languageVersion, false, context)
+    val reachabilitySoft = computeReachability(instructions, languageVersion, true, context)
+
+    reachability = Array(instructions.size) { i ->
+      if (reachabilityStrict[i]) {
+        assert(reachabilitySoft[i])
+        Reachability.REACHABLE
+      }
+      else if (reachabilitySoft[i]) {
+        Reachability.UNREACHABLE_FOR_TYPE_CHECKING
+      }
+      else {
+        Reachability.UNREACHABLE
+      }
+    }
+  }
+
+  private fun computeReachability(
+    instructions: Array<Instruction>,
+    languageVersion: Version,
+    includeUnreachableForTypeChecking: Boolean,
+    context: FlowContext,
+  ): BooleanArray {
+    val reachability = BooleanArray(instructions.size)
     val stack = ArrayDeque<Instruction>()
     stack.push(instructions[0])
 
@@ -42,31 +73,40 @@ class PyDataFlow(
 
       reachability[instructionNum] = true
 
-      for (successor in getReachableSuccessors(instruction, languageVersion, context)) {
+      for (successor in getReachableSuccessors(instruction, languageVersion, includeUnreachableForTypeChecking, context)) {
         if (!reachability[successor.num()]) {
           stack.push(successor)
         }
       }
     }
+    return reachability
   }
 
-  private fun getReachableSuccessors(instruction: Instruction, languageVersion: Version, context: FlowContext): Collection<Instruction> {
+  private fun getReachableSuccessors(
+    instruction: Instruction,
+    languageVersion: Version,
+    includeUnreachableForTypeChecking: Boolean,
+    context: FlowContext
+  ): Collection<Instruction> {
     if (context.checkNoReturnCalls && instruction is CallInstruction && instruction.isNoReturnCall(context.typeEvalContext)) return emptyList()
     if (instruction is PyWithContextExitInstruction && !instruction.isSuppressingExceptions(context.typeEvalContext)) return emptyList()
     return instruction.allSucc()
       .filter { it.isReachableWithVersionChecks(languageVersion) }
-      .filter { next: Instruction ->
-        if (next is ReadWriteInstruction && next.access.isAssertTypeAccess) {
-          val type = next.getType(context.typeEvalContext, null)
+      .filter {
+        if (it is PyUnreachableInstruction) {
+          return@filter includeUnreachableForTypeChecking && it.isUnreachableForTypeChecking
+        }
+        if (it is ReadWriteInstruction && it.access.isAssertTypeAccess) {
+          val type = it.getType(context.typeEvalContext, null)
           return@filter !(type != null && type.get() is PyNeverType)
         }
         return@filter true
       }
   }
 
-  fun isUnreachable(instruction: Instruction): Boolean {
-    if (instruction.num() >= reachability.size) return false
-    return !reachability[instruction.num()]
+  fun getReachability(instruction: Instruction): Reachability {
+    if (instruction.num() >= reachability.size) return Reachability.REACHABLE
+    return reachability[instruction.num()]
   }
 
   private fun Instruction.isReachableWithVersionChecks(languageVersion: Version): Boolean {
@@ -91,21 +131,31 @@ class PyDataFlow(
  * - `assert False`
  * - calls to functions annotated with `NoReturn`
  */
-fun PsiElement.isUnreachableForInspection(context: TypeEvalContext): Boolean {
-  return isUnreachableForInspection(FlowContext(context, true))
+fun PsiElement.getReachabilityForInspection(context: TypeEvalContext): Reachability {
+  return getReachabilityForInspection(FlowContext(context, true))
 }
 
-private fun PsiElement.isUnreachableForInspection(context: FlowContext): Boolean {
-  return PyUtil.getParameterizedCachedValue(this, context) { isUnreachableForInspectionNoCache(it) }
+private fun PsiElement.getReachabilityForInspection(context: FlowContext): Reachability {
+  return PyUtil.getParameterizedCachedValue(this, context) { getReachabilityForInspectionNoCache(it) }
 }
 
-private fun PsiElement.isUnreachableForInspectionNoCache(context: FlowContext): Boolean {
-  if (parent is PyElement && parent.isUnreachableForInspection(context)) return true
-  return isUnreachableByControlFlow(context) && when (this) {
-    is PyStatementList -> !(statements.firstOrNull()?.isIgnoredUnreachableStatement(context) ?: true)
-    is PyStatement -> !this.isIgnoredUnreachableStatement(context)
-    else -> false
+private fun PsiElement.getReachabilityForInspectionNoCache(context: FlowContext): Reachability {
+  if (parent is PyElement) {
+    val reachability = parent.getReachabilityForInspection(context)
+    if (reachability != Reachability.REACHABLE) {
+      return reachability
+    }
   }
+  val reachability = getReachabilityByControlFlow(context)
+  if (reachability == Reachability.REACHABLE) {
+    return Reachability.REACHABLE
+  }
+  val isIgnoredUnreachableStatement = when (this) {
+    is PyStatementList -> (statements.firstOrNull()?.isIgnoredUnreachableStatement(context) ?: true)
+    is PyStatement -> this.isIgnoredUnreachableStatement(context)
+    else -> true
+  }
+  return if (isIgnoredUnreachableStatement) Reachability.REACHABLE else reachability
 }
 
 /**
@@ -113,14 +163,14 @@ private fun PsiElement.isUnreachableForInspectionNoCache(context: FlowContext): 
  * If the element does not have corresponding instruction in CFG, searches for the nearest parent that has.
  */
 fun PsiElement.isUnreachableByControlFlow(context: TypeEvalContext): Boolean {
-  return isUnreachableByControlFlow(FlowContext(context, true))
+  return getReachabilityByControlFlow(FlowContext(context, true)) != Reachability.REACHABLE
 }
 
-private fun PsiElement.isUnreachableByControlFlow(context: FlowContext): Boolean {
-  return PyUtil.getParameterizedCachedValue(this, context) { this.isUnreachableByControlFlowNoCache(it) }
+private fun PsiElement.getReachabilityByControlFlow(context: FlowContext): Reachability {
+  return PyUtil.getParameterizedCachedValue(this, context) { this.getReachabilityByControlFlowNoCache(it) }
 }
 
-private fun PsiElement.isUnreachableByControlFlowNoCache(context: FlowContext): Boolean {
+private fun PsiElement.getReachabilityByControlFlowNoCache(context: FlowContext): Reachability {
   val scope = ScopeUtil.getScopeOwner(this)
   if (scope != null) {
     val flow = ControlFlowCache.getDataFlow(scope, context)
@@ -128,18 +178,21 @@ private fun PsiElement.isUnreachableByControlFlowNoCache(context: FlowContext): 
     val idx = flow.getInstruction(this)
     if (idx < 0 || instructions[idx].isAuxiliary()) {
       val parent = this.parent
-      return parent != null && parent.isUnreachableByControlFlow(context)
+      if (parent == null) {
+        return Reachability.REACHABLE
+      }
+      return parent.getReachabilityByControlFlow(context)
     }
-    return flow.isUnreachable(instructions[idx])
+    return flow.getReachability(instructions[idx])
   }
-  return false
+  return Reachability.REACHABLE
 }
 
 private fun PyStatement.isIgnoredUnreachableStatement(context: FlowContext): Boolean {
   val parentBlock = this.parent as? PyStatementList ?: return false
   if (parentBlock.statements[0] != this) return false
   val parentCompoundStatement = parentBlock.findParentOfType<PyStatement>() ?: return false
-  return !parentCompoundStatement.isUnreachableByControlFlow(context) && isTerminatingStatement(context.typeEvalContext)
+  return parentCompoundStatement.getReachabilityByControlFlow(context) == Reachability.REACHABLE && isTerminatingStatement(context.typeEvalContext)
 }
 
 private fun PsiElement.isTerminatingStatement(context: TypeEvalContext): Boolean {

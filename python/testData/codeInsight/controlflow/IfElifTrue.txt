@@ -25,7 +25,7 @@
 24(25) ASSERTTYPE ACCESS: True
 25(26) element: PyStatementList
 26(31) element: PyPassStatement
-27(28) ASSERTTYPE ACCESS: null
+27(28) Unreachable
 28(29) element: PyStatementList
 29(30) element: PyAssignmentStatement
 30() WRITE ACCESS: e

@@ -466,6 +466,11 @@ public class PyEvaluator {
     return myAllowExpressionsAsValues ? expression : null;
   }
 
+  @ApiStatus.Internal
+  public static boolean isTypeCheckingExpression(@Nullable PyExpression expression) {
+    return expression instanceof PyReferenceExpression referenceExpression && isTypeCheckingExpression(referenceExpression);
+  }
+
   private static boolean isTypeCheckingExpression(@NotNull PyReferenceExpression expression) {
     QualifiedName qualifiedName = expression.asQualifiedName();
     return qualifiedName != null && TYPING_TYPE_CHECKING_NAMES.contains(qualifiedName);

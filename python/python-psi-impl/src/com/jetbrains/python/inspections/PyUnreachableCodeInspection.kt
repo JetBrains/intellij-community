@@ -2,11 +2,11 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.codeInsight.controlflow.isUnreachableForInspection
+import com.jetbrains.python.codeInsight.controlflow.Reachability
+import com.jetbrains.python.codeInsight.controlflow.getReachabilityForInspection
 import com.jetbrains.python.psi.PyStatement
 import com.jetbrains.python.psi.PyStatementList
 
@@ -21,15 +21,15 @@ class PyUnreachableCodeInspection : PyInspection() {
   ): PsiElementVisitor {
     return object : PyInspectionVisitor(holder, getContext(session)) {
       override fun visitPyStatementList(node: PyStatementList) {
-        if (node.parent.isUnreachableForInspection(myTypeEvalContext)) return
-        if (node.isUnreachableForInspection(myTypeEvalContext)) {
+        if (node.parent.getReachabilityForInspection(myTypeEvalContext) == Reachability.UNREACHABLE) return
+        if (node.getReachabilityForInspection(myTypeEvalContext) == Reachability.UNREACHABLE) {
           registerProblem(node, PyPsiBundle.message("INSP.unreachable.code"))
         }
       }
 
       override fun visitPyStatement(node: PyStatement) {
-        if (node.parent.isUnreachableForInspection(myTypeEvalContext)) return
-        if (node.isUnreachableForInspection(myTypeEvalContext)) {
+        if (node.parent.getReachabilityForInspection(myTypeEvalContext) == Reachability.UNREACHABLE) return
+        if (node.getReachabilityForInspection(myTypeEvalContext) == Reachability.UNREACHABLE) {
           registerProblem(node, PyPsiBundle.message("INSP.unreachable.code"))
         }
       }

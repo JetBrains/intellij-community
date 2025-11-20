@@ -3570,4 +3570,17 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    class Circle(Shape): ...
                    """);
   }
+
+  // PY-50642
+  public void testTypeChecking() {
+    doTestByText("""
+                   import typing
+                   
+                   if typing.TYPE_CHECKING:
+                       x: str
+                   
+                   if not typing.TYPE_CHECKING:
+                       x = 1
+                   """);
+  }
 }

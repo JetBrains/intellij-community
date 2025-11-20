@@ -4,7 +4,7 @@
 3(10) element: null. Condition: False:false
 4(5) element: null. Condition: False:true
 5(6) ASSERTTYPE ACCESS: False
-6(7) ASSERTTYPE ACCESS: null
+6(7) Unreachable
 7(8) element: PyStatementList
 8(9) element: PyAssignmentStatement
 9() WRITE ACCESS: a
@@ -13,7 +13,7 @@
 12(19) element: null. Condition: False:false
 13(14) element: null. Condition: False:true
 14(15) ASSERTTYPE ACCESS: False
-15(16) ASSERTTYPE ACCESS: null
+15(16) Unreachable
 16(17) element: PyStatementList
 17(18) element: PyAssignmentStatement
 18() WRITE ACCESS: b
@@ -24,7 +24,7 @@
 23(30) element: null. Condition: False:false
 24(25) element: null. Condition: False:true
 25(26) ASSERTTYPE ACCESS: False
-26(27) ASSERTTYPE ACCESS: null
+26(27) Unreachable
 27(28) element: PyStatementList
 28(29) element: PyAssignmentStatement
 29() WRITE ACCESS: c

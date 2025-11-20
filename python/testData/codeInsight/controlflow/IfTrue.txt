@@ -13,7 +13,7 @@
 12(13) ASSERTTYPE ACCESS: True
 13(14) element: PyStatementList
 14(19) element: PyPassStatement
-15(16) ASSERTTYPE ACCESS: null
+15(16) Unreachable
 16(17) element: PyStatementList
 17(18) element: PyAssignmentStatement
 18() WRITE ACCESS: b
@@ -28,11 +28,11 @@
 27(34) element: null. Condition: c:false
 28(29) element: null. Condition: c:true
 29(30) ASSERTTYPE ACCESS: c
-30(31) ASSERTTYPE ACCESS: null
+30(31) Unreachable
 31(32) element: PyStatementList
 32(33) element: PyAssignmentStatement
 33() WRITE ACCESS: d
-34(35) ASSERTTYPE ACCESS: null
+34(35) Unreachable
 35(36) element: PyStatementList
 36(37) element: PyAssignmentStatement
 37() WRITE ACCESS: e

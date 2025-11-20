@@ -702,6 +702,24 @@ async def nosupAssertFalse(b):
     });
   }
 
+  // PY-50642
+  public void testTypeChecking() {
+    doTestByText(
+      """
+        from typing import TYPE_CHECKING
+        
+        if TYPE_CHECKING:
+            x: int = 1
+        else:
+            x: str = "ab"
+        
+        if not TYPE_CHECKING:
+            y: list[int] = [1, 2]
+        else:
+            y: list[str] = ['a', 'b']"""
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {
