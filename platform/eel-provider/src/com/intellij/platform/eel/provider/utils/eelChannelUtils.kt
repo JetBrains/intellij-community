@@ -3,6 +3,7 @@ package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.Cancellation.ensureActive
 import com.intellij.platform.eel.ReadResult.EOF
+import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.sendWholeBuffer
@@ -109,6 +110,16 @@ fun Socket.asEelChannel(): EelSendChannel = asEelChannelImpl()
 interface EelPipe {
   val sink: EelSendChannel
   val source: EelReceiveChannel
+
+  /**
+   * Likely you want to call `sink.closeForSending`.
+   *
+   * Although this function exists, it is recommended to use it nowhere.
+   *
+   * This function not only closes [sink] but also makes impossible to read anything from [source].
+   * Even if there's unread data left in the pipe, an attempt to read will return [com.intellij.platform.eel.ReadResult.EOF].
+   */
+  @EelDelicateApi
   suspend fun closePipe(error: Throwable?)
 }
 

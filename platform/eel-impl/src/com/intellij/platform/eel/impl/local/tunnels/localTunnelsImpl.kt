@@ -86,17 +86,17 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
       client.use {
         val fromClient = launch {
           copyWithLoggingAndErrorHandling(client.consumeAsEelChannel(), rx.sink, "fromClient $socketFile") {
-            rx.closePipe(it)
+            rx.sink.close(it)
           }
         }
         val toClient = launch {
           copyWithLoggingAndErrorHandling(tx.source, client.asEelChannel(), "toClient $socketFile") {
-            tx.closePipe(it)
+            tx.sink.close(it)
           }
         }
         listOf(fromClient, toClient).joinAll()
-        tx.closePipe(null)
-        tx.closePipe(null)
+        tx.sink.close(null)
+        tx.sink.close(null)
       }
     }
     object : ListenOnUnixSocketResult {
