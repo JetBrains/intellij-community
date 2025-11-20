@@ -1099,7 +1099,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     else {
       getStatementList().acceptChildren(
-        new PyVersionAwareTopLevelElementVisitor(PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile())) {
+        new PyTypeCheckedTopLevelElementVisitor(PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile())) {
           @Override
           protected void checkAddElement(PsiElement psiElement) {
             if (psiElement instanceof PyAssignmentStatement assignmentStatement) {
