@@ -90,6 +90,7 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//python/python-process-output:processOutput",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
   ],
   plugins = ["@lib//:compose-plugin"]
 )

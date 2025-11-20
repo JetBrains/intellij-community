@@ -29,7 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-internal object LoggingLimits {
+@ApiStatus.Internal
+object LoggingLimits {
   /**
    * The maximum buffer size of a LoggingProcess
    */

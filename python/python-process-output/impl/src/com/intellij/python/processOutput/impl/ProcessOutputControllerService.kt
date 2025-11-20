@@ -125,7 +125,7 @@ class ProcessOutputControllerService(
     private val project: Project,
     private val coroutineScope: CoroutineScope,
 ) : ProcessOutputController {
-    private val loggedProcesses: StateFlow<List<LoggedProcess>> = run {
+    internal val loggedProcesses: StateFlow<List<LoggedProcess>> = run {
         var processList = listOf<LoggedProcess>()
         ApplicationManager.getApplication().service<ExecLoggerService>()
             .processes
