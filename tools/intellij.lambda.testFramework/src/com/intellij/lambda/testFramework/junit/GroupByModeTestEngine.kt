@@ -265,7 +265,8 @@ class GroupByModeTestEngine : TestEngine {
       // Wrap with filtering listener that applies post-discovery filters
       val filteringListener = FilteringExecutionListener(
         translatingListener,
-        postDiscoveryFilters
+        postDiscoveryFilters,
+        modeDescriptor.mode
       )
 
       // Reuse the original request's store to share application state

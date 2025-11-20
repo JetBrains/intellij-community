@@ -8,32 +8,40 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
 import org.junit.platform.commons.util.AnnotationUtils
+import java.lang.reflect.AnnotatedElement
 import java.util.*
 import java.util.function.Function
 import java.util.stream.Stream
 
+fun getModesToRun(annotatedElement: AnnotatedElement?): List<IdeRunMode> {
+  if (annotatedElement == null) return emptyList()
+  val annotation = AnnotationUtils.findAnnotation(annotatedElement, ExecuteInMonolithAndSplitMode::class.java).orNull()
+
+  return annotation?.mode?.toList() ?: emptyList()
+}
+
+fun getModesToRun(context: ExtensionContext): List<IdeRunMode> {
+  val annotation = AnnotationUtils.findAnnotation(context.testMethod, ExecuteInMonolithAndSplitMode::class.java).orElse(
+    AnnotationUtils.findAnnotation(context.testClass, ExecuteInMonolithAndSplitMode::class.java).orNull()
+  )
+
+  if (annotation == null) throw IllegalStateException("The test is expected to have ${ExecuteInMonolithAndSplitMode::javaClass.name} annotation")
+
+  // Check if we're running under GroupByModeTestEngine with a mode filter
+  val modeFilter = context.getConfigurationParameter("ide.run.mode.filter").orNull()
+
+  // If mode filter is set, only return that mode
+  return if (modeFilter != null) {
+    listOf(IdeRunMode.valueOf(modeFilter))
+  }
+  else {
+    annotation.mode.toList()
+  }
+}
+
 // For the already existing tests that use test parametrization (and rewriting them to use @CartesianTest isn't desirable)
 class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvider {
   override fun supportsTestTemplate(context: ExtensionContext): Boolean = getModesToRun(context).isNotEmpty()
-
-  private fun getModesToRun(context: ExtensionContext): List<IdeRunMode> {
-    val annotation = AnnotationUtils.findAnnotation(context.testMethod, ExecuteInMonolithAndSplitMode::class.java).orElse(
-      AnnotationUtils.findAnnotation(context.testClass, ExecuteInMonolithAndSplitMode::class.java).orNull()
-    )
-
-    if (annotation == null) throw IllegalStateException("The test is expected to have ${ExecuteInMonolithAndSplitMode::javaClass.name} annotation")
-
-    // Check if we're running under GroupByModeTestEngine with a mode filter
-    val modeFilter = context.getConfigurationParameter("ide.run.mode.filter").orNull()
-
-    // If mode filter is set, only return that mode
-    return if (modeFilter != null) {
-      listOf(IdeRunMode.valueOf(modeFilter))
-    }
-    else {
-      annotation.mode.toList()
-    }
-  }
 
   override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
     val modesToRun = getModesToRun(context)
