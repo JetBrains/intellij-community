@@ -178,10 +178,14 @@ internal abstract class ChangeListCommitMessagePolicy(
     val oldChangeList = currentChangeList
     currentChangeList = newChangeList
     if (oldChangeList.id != newChangeList.id) {
-      changeListManager.editComment(oldChangeList.name, commitMessageUi.text)
+      if (ChangeListClassifierProvider.providesCommitMessage(project, oldChangeList)) {
+        changeListManager.editComment(oldChangeList.name, commitMessageUi.text)
+      }
 
-      val newMessage = getCommitMessageForCurrentList() ?: CommitMessage.EMPTY
-      setCommitMessage(newMessage)
+      if (ChangeListClassifierProvider.providesCommitMessage(project, newChangeList)) {
+        val newMessage = getCommitMessageForCurrentList() ?: CommitMessage.EMPTY
+        setCommitMessage(newMessage)
+      }
     }
   }
 
