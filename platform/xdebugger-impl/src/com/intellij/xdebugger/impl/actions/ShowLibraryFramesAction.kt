@@ -3,10 +3,7 @@ package com.intellij.xdebugger.impl.actions
 
 import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -61,7 +58,7 @@ internal class ShowLibraryFramesAction : ToggleAction(), SplitDebuggerAction {
     // update on frontend optimistically
     XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowLibraryStackFrames = !enabled
     val project = e.project ?: return
-    saveSettingsForRemoteDevelopment(project)
+    saveSettingsForRemoteDevelopment(e.coroutineScope, project)
     e.project?.service<ShowLibraryFramesActionCoroutineScope>()?.toggle(!enabled)
   }
 

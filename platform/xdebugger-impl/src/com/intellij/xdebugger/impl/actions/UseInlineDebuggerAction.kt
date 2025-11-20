@@ -37,7 +37,7 @@ class UseInlineDebuggerAction : ToggleAction(), DumbAware, SplitDebuggerAction {
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     XDebuggerSettingManagerImpl.getInstanceImpl().dataViewSettings.isShowValuesInline = state
-    saveSettingsForRemoteDevelopment(application)
+    saveSettingsForRemoteDevelopment(e.coroutineScope, application)
     XDebuggerUtilImpl.rebuildAllSessionsViews(e.project)
   }
 

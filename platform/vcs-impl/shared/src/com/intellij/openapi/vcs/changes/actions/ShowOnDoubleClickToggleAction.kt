@@ -45,7 +45,7 @@ internal sealed class ShowOnDoubleClickToggleAction(private val isEditorPreview:
     else {
       VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK = newState
     }
-    saveSettingsForRemoteDevelopment(application)
+    saveSettingsForRemoteDevelopment(e.coroutineScope, application)
   }
 
   private fun isCommitToolWindowShown(project: Project): Boolean =

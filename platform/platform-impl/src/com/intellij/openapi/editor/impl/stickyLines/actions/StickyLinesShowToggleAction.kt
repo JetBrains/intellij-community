@@ -22,7 +22,7 @@ internal class StickyLinesShowToggleAction : ToggleAction(), DumbAware {
     val shown = settings.areStickyLinesShown()
     if (shown != isSelected) {
       settings.setStickyLinesShown(isSelected)
-      saveSettingsForRemoteDevelopment(application)
+      saveSettingsForRemoteDevelopment(event.coroutineScope, application)
     }
   }
 

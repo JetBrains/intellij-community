@@ -511,7 +511,7 @@ internal object BranchesDashboardActions {
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       super.setSelected(e, state)
-      e.project?.let { saveSettingsForRemoteDevelopment(it) }
+      e.project?.let { saveSettingsForRemoteDevelopment(e.coroutineScope, it) }
     }
   }
 

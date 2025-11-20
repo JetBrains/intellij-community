@@ -24,7 +24,7 @@ class ShowTypesAction extends DumbAwareToggleAction implements SplitDebuggerActi
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
     DebuggerSettings.getInstance().SHOW_TYPES = state;
-    StoreUtilKt.saveSettingsForRemoteDevelopment(ApplicationManager.getApplication());
+    StoreUtilKt.saveSettingsForRemoteDevelopment(e.getCoroutineScope(), ApplicationManager.getApplication());
     Project project = e.getProject();
     if (project != null) {
       if (DebuggerUIUtil.isInDetachedTree(e)) {

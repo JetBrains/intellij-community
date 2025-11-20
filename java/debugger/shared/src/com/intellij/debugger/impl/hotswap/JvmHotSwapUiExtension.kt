@@ -30,6 +30,6 @@ private class ToggleShowButtonAction : DumbAwareToggleAction(XDebuggerBundle.mes
   override fun isSelected(e: AnActionEvent) = DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     DebuggerSettings.getInstance().HOTSWAP_SHOW_FLOATING_BUTTON = state
-    saveSettingsForRemoteDevelopment(ApplicationManager.getApplication())
+    saveSettingsForRemoteDevelopment(e.coroutineScope, ApplicationManager.getApplication())
   }
 }
