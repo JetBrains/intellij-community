@@ -62,8 +62,12 @@ class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvide
       override fun getDisplayName(invocationIndex: Int): String {
         startIdeForUnitTestsWithInjectedLambdas(mode)
 
-        val params = if (args.isNotEmpty()) " with params: " + listOf(*args) else ""
-        return if (params.isNotEmpty()) "[$mode] $params" else "[$mode]"
+        // default jupiter engine
+        return if (!isGroupedExecutionEnabled) {
+          val params = if (args.isNotEmpty()) " with params: " + listOf(*args) else ""
+          if (params.isNotEmpty()) "[$mode] $params" else "[$mode]"
+        }
+        else super.getDisplayName(invocationIndex)
       }
 
       override fun getAdditionalExtensions(): MutableList<Extension> {

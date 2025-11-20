@@ -104,7 +104,9 @@ class TranslatingExecutionListener(
       else -> testMethodName.substringBefore("(").takeIf { it.isNotEmpty() } ?: testMethodName
     }
 
-    val syntheticId = modeContainer.uniqueId.append("test", jupiterDescriptor.uniqueId.toString())
+    // filter only test and invocation segments
+    val syntheticId = jupiterDescriptor.uniqueId.segments.filterNot { it.type in listOf("engine", "class") }
+      .fold(modeContainer.uniqueId) { acc, segment -> acc.append(segment) }
 
     val synthetic = object : AbstractTestDescriptor(
       syntheticId,
