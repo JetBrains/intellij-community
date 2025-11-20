@@ -165,6 +165,13 @@ abstract class ProductProperties {
   var scrambleMainJar: Boolean = false
 
   /**
+   * List of content modules from the core plugin which should be scrambled using [ProprietaryBuildTools.scrambleTool].
+   * Modules are mentioned here should be put to separate JARs (i.e., they aren't registered as 'embedded' and don't have the 'package' attribute).
+   * If some modules are listed here, it's required [scrambleMainJar] to be set to `true`.
+   */
+  var contentModulesToScramble: List<String> = emptyList()
+
+  /**
    * Path to an alternative scramble script which will should be used for a product.
    */
   var alternativeScrambleStubPath: Path? = null

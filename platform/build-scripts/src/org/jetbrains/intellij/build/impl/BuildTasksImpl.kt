@@ -637,6 +637,10 @@ private suspend fun checkProductProperties(context: BuildContext) {
       checkModules(modules = it.namesOfModulesRequiredToBeScrambled, fieldName = "ProprietaryBuildTools.scrambleTool.namesOfModulesRequiredToBeScrambled", context)
     }
   }
+  checkModules(properties.contentModulesToScramble, "productProperties.contentModulesToScramble", context)
+  if (properties.contentModulesToScramble.isNotEmpty() && !properties.scrambleMainJar) {
+    context.messages.logErrorAndThrow("productProperties.contentModulesToScramble specifies some modules, but productProperties.scrambleMainJar is not set to true")
+  }
 }
 
 private fun checkProductLayout(context: BuildContext) {
