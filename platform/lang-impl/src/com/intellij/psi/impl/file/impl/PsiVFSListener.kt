@@ -575,14 +575,17 @@ private class PsiVFSListener(private val project: Project) {
                 FileManagerImpl.areViewProvidersEquivalent(newViewProvider!!, (oldElements.first() as PsiFile).viewProvider)) {
 
               for (oldElement in oldElements) {
-                val treeEvent = PsiTreeChangeEventImpl(manager)
-                treeEvent.oldParent = oldParentDir
-                treeEvent.newParent = newParentDir
-                treeEvent.child = oldElement
                 if (oldElement.isValid) { // fileManager.removeInvalidFilesAndDirs(true) must have already invalided all old elements that must die.
+                  val treeEvent = PsiTreeChangeEventImpl(manager)
+                  treeEvent.oldParent = oldParentDir
+                  treeEvent.newParent = newParentDir
+                  treeEvent.child = oldElement
                   manager.childMoved(treeEvent)
                 }
                 else {
+                  val treeEvent = PsiTreeChangeEventImpl(manager)
+                  treeEvent.parent = oldParentDir
+                  treeEvent.child = oldElement
                   manager.childRemoved(treeEvent)
                 }
               }
