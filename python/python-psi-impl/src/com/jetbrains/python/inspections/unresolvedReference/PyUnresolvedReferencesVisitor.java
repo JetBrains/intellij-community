@@ -25,6 +25,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.codeInsight.controlflow.PyDataFlowKt;
+import com.jetbrains.python.codeInsight.controlflow.Reachability;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
@@ -249,7 +250,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         return;
       }
       if (!expr.isQualified()) {
-        if (PyDataFlowKt.isUnreachableForInspection(expr, myTypeEvalContext)) {
+        if (PyDataFlowKt.getReachabilityForInspection(expr, myTypeEvalContext) != Reachability.REACHABLE) {
           return;
         }
         ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(refText));

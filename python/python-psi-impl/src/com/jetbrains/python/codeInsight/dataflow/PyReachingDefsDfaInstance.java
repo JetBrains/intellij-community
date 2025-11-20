@@ -37,7 +37,7 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
     }
     final FlowContext context = new FlowContext(myContext, true);
     final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(element);
-    if (scopeOwner != null && ControlFlowCache.getDataFlow(scopeOwner, context).isUnreachable(instruction)) {
+    if (scopeOwner != null && ControlFlowCache.getDataFlow(scopeOwner, context).getReachability(instruction) != Reachability.REACHABLE) {
       return UNREACHABLE_MARKER;
     }
     if (instruction instanceof CallInstruction callInstruction) {

@@ -22,7 +22,6 @@ import com.intellij.codeInsight.controlflow.TransparentInstruction;
 import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
 import com.intellij.codeInsight.controlflow.impl.TransparentInstructionImpl;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,7 +31,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
-import com.jetbrains.python.psi.types.PyNeverType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +43,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
 
   private @Nullable TrueFalseNodes myTrueFalseNodes;
-  
+
   // see com.jetbrains.python.PyPatternTypeTest.testMatchClassPatternShadowingCapture
   private final @NotNull List<String> myPatternBindingNames = new ArrayList<>();
 
@@ -346,15 +344,15 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     for (PyCaseClause clause : matchStatement.getCaseClauses()) {
       myBuilder.prevInstruction = nextClause;
       nextClause = addTransparentInstruction();
-      
+
       myPatternBindingNames.clear();
-      
+
       PyPattern pattern = clause.getPattern();
       if (pattern != null) {
         pattern.accept(this);
         addTypeAssertionNodes(clause, true, myPatternBindingNames);
       }
-      
+
       PyExpression guard = clause.getGuardCondition();
       if (guard != null) {
         TransparentInstruction trueNode = addTransparentInstruction();
@@ -364,7 +362,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       }
 
       if (unreachable) {
-        addAssertTypeNever();
+        myBuilder.addNode(new PyUnreachableInstruction(myBuilder, false));
       }
       if (pattern != null && pattern.isIrrefutable() && (guard == null || PyEvaluator.evaluateAsBooleanNoResolve(guard, false))) {
         unreachable = true;
@@ -483,7 +481,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
 
     List<Instruction> exitInstructions = new ArrayList<>();
-    boolean seenAlwaysTrueCondition = false;
+    @Nullable PyExpression alwaysTrueCondition = null;
     for (PyIfPart ifPart : StreamEx.of(node.getIfPart()).append(node.getElifParts())) {
       TransparentInstruction thenNode = addTransparentInstruction();
       TransparentInstruction elseNode = addTransparentInstruction();
@@ -494,12 +492,19 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.prevInstruction = thenNode;
 
       Boolean conditionResult = PyEvaluator.evaluateAsBooleanNoResolve(condition);
-      boolean unreachable = seenAlwaysTrueCondition || Boolean.FALSE.equals(conditionResult);
+      boolean unreachable = alwaysTrueCondition != null || Boolean.FALSE.equals(conditionResult);
       if (unreachable) {
-        addAssertTypeNever();
+        boolean isUnreachableForTypeChecking;
+        if (alwaysTrueCondition != null) {
+          isUnreachableForTypeChecking = isTypeCheckingCondition(alwaysTrueCondition);
+        }
+        else {
+          isUnreachableForTypeChecking = isTypeCheckingCondition(condition);
+        }
+        myBuilder.addNode(new PyUnreachableInstruction(myBuilder, isUnreachableForTypeChecking));
       }
       if (Boolean.TRUE.equals(conditionResult)) {
-        seenAlwaysTrueCondition = true;
+        alwaysTrueCondition = condition;
       }
       visitPyStatementPart(ifPart);
 
@@ -511,13 +516,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
     final PyElsePart elsePart = node.getElsePart();
     if (elsePart != null) {
-      if (seenAlwaysTrueCondition) {
-        addAssertTypeNever();
+      if (alwaysTrueCondition != null) {
+        myBuilder.addNode(new PyUnreachableInstruction(myBuilder, isTypeCheckingCondition(alwaysTrueCondition)));
       }
       visitPyStatementPart(elsePart);
     }
 
-    if (!seenAlwaysTrueCondition) {
+    if (alwaysTrueCondition == null) {
       exitInstructions.add(myBuilder.prevInstruction);
     }
     myBuilder.prevInstruction = addTransparentInstruction(node);
@@ -525,6 +530,14 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     for (Instruction exitInstruction : Lists.reverse(exitInstructions)) {
       myBuilder.addEdge(exitInstruction, myBuilder.prevInstruction);
     }
+  }
+
+  private static boolean isTypeCheckingCondition(@Nullable PyExpression expression) {
+    expression = PyPsiUtils.flattenParens(expression);
+    if (expression instanceof PyPrefixExpression prefixExpression && prefixExpression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
+      return isTypeCheckingCondition(prefixExpression.getOperand());
+    }
+    return PyEvaluator.isTypeCheckingExpression(expression);
   }
 
   @Override
@@ -654,7 +667,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
-    
+
 
     myBuilder.flowAbrupted();
     collectInternalPendingEdges(node);
@@ -962,7 +975,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         myBuilder.addEdge(myBuilder.prevInstruction, i);
       }
     }
-    
+
     collectInternalPendingEdges(node);
   }
 
@@ -1151,7 +1164,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   private TransparentInstruction addTransparentInstruction() {
     return addTransparentInstruction(null);
   }
-  
+
   private TransparentInstruction addTransparentInstruction(@Nullable PsiElement element) {
     TransparentInstructionImpl instruction = new TransparentInstructionImpl(myBuilder, element, "");
     myBuilder.instructions.add(instruction);
@@ -1159,18 +1172,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   /**
-   * Can be used to mark a branch as unreachable.
-   */
-  private void addAssertTypeNever() {
-    myBuilder.addNode(ReadWriteInstruction.assertType(myBuilder, null, null, context -> Ref.create(PyNeverType.NEVER)));
-  }
-
-  /**
-   * Can be used to collect all pending edges  
+   * Can be used to collect all pending edges
    * that we used to build CFG for `node`,
    * but are not relevant to other elements.
    * Is almost equivalent to this:
-   * 
+   *
    * <pre>{@code
    * visitPy...(node);
    * myBuilder.startNode(node.nextSibling); // collectInternalPendingEdges does this, without needing nextSibling
