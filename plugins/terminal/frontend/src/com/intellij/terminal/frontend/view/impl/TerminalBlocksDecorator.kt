@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptionsListener
 import org.jetbrains.plugins.terminal.block.ui.*
@@ -16,7 +18,8 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.shellIntegration.*
 
-internal class TerminalBlocksDecorator(
+@ApiStatus.Internal
+class TerminalBlocksDecorator(
   private val editor: EditorEx,
   private val outputModel: TerminalOutputModel,
   private val blocksModel: TerminalBlocksModel,
@@ -24,7 +27,8 @@ internal class TerminalBlocksDecorator(
   coroutineScope: CoroutineScope,
 ) {
   /** Block ID to decoration */
-  private val decorations: MutableMap<TerminalBlockId, BlockDecoration> = HashMap()
+  @VisibleForTesting
+  val decorations: MutableMap<TerminalBlockId, BlockDecoration> = HashMap()
 
   init {
     blocksModel.addListener(coroutineScope.asDisposable(), object : TerminalBlocksModelListener {
@@ -41,7 +45,8 @@ internal class TerminalBlocksDecorator(
       }
     })
 
-    BlockTerminalOptions.getInstance().addListener(coroutineScope.asDisposable(), object : BlockTerminalOptionsListener {
+    val options = BlockTerminalOptions.getInstance()
+    options.addListener(coroutineScope.asDisposable(), object : BlockTerminalOptionsListener {
       override fun showSeparatorsBetweenBlocksChanged(shouldShow: Boolean) {
         if (shouldShow) {
           createDecorationsForAllBlocks()
@@ -50,7 +55,9 @@ internal class TerminalBlocksDecorator(
       }
     })
 
-    createDecorationsForAllBlocks()
+    if (options.showSeparatorsBetweenBlocks) {
+      createDecorationsForAllBlocks()
+    }
   }
 
   private fun handleBlocksModelEvent(event: TerminalBlocksModelEvent) {
@@ -198,7 +205,7 @@ internal class TerminalBlocksDecorator(
     )
   }
 
-  private data class BlockDecoration(
+  data class BlockDecoration(
     val blockId: TerminalBlockId,
     val backgroundHighlighter: RangeHighlighter,
     val cornersHighlighter: RangeHighlighter,
