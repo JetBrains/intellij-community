@@ -916,6 +916,8 @@
     />
 
     <typedHandler implementation="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypedHandlerDelegate"/>
+    <inline.completion.suppressor
+      implementation="com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressorByInlinePrompt"/>
     <inline.edit.awaiter implementation="com.intellij.codeInsight.inline.edit.InlineCompletionAwaiter"/>
     <editorActionHandler
       action="CallInlineCompletionAction"
