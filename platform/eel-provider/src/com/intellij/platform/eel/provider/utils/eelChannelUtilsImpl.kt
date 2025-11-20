@@ -62,7 +62,13 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
 
   override suspend fun closeForReceive() {
     withContext(Dispatchers.IO + NonCancellable) {
-      readableByteChannel.close()
+      // Hello Java!
+      if (readableByteChannel is java.nio.channels.SocketChannel) {
+        readableByteChannel.shutdownInput()
+      }
+      else {
+        readableByteChannel.close()
+      }
     }
   }
 }
@@ -121,7 +127,14 @@ internal class NioWriteToEelAdapter(
       catch (_: IOException) {
         // IO exception on close might be ignored
       }
-      writableByteChannel.close()
+
+      // Hello Java!
+      if (writableByteChannel is java.nio.channels.SocketChannel) {
+        writableByteChannel.shutdownOutput()
+      }
+      else {
+        writableByteChannel.close()
+      }
     }
   }
 }
