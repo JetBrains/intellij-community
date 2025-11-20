@@ -22,7 +22,7 @@ object PyVersionCheck {
     return ifPart.condition?.let(PyVersionCheck::convertToVersionRanges)
   }
 
-  private fun convertToVersionRanges(expression: PyExpression): ImmutableRangeSet<Version>? {
+  fun convertToVersionRanges(expression: PyExpression): ImmutableRangeSet<Version>? {
     val binaryExpr = PyPsiUtils.flattenParens(expression) as? PyBinaryExpression ?: return null
     when (val operator = binaryExpr.operator) {
       PyTokenTypes.AND_KEYWORD, PyTokenTypes.OR_KEYWORD -> {
