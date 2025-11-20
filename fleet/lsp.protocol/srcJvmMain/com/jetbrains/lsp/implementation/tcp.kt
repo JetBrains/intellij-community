@@ -5,7 +5,10 @@ import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.*
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.InternalAPI
 import kotlinx.coroutines.*
+import kotlinx.io.Sink
+import kotlinx.io.Source
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -98,9 +101,36 @@ sealed interface TcpConnectionConfig {
   ) : TcpConnectionConfig
 }
 
+@OptIn(InternalAPI::class)
+class KtorByteReader(val input: ByteReadChannel) : ByteReader {
+  override val closedCause: Throwable?
+    get() = input.closedCause
+  override val isClosedForRead: Boolean
+    get() = input.isClosedForRead
+  override val readBuffer: Source
+    get() = input.readBuffer
+
+  override suspend fun awaitContent(min: Int): Boolean = input.awaitContent()
+  override fun cancel(cause: Throwable?): Unit = input.cancel(cause)
+}
+
+@OptIn(InternalAPI::class)
+class KtorByteWriter(val output: ByteWriteChannel) : ByteWriter {
+  override val isClosedForWrite: Boolean
+    get() = output.isClosedForWrite
+  override val closedCause: Throwable?
+    get() = output.closedCause
+  override val writeBuffer: Sink
+    get() = output.writeBuffer
+
+  override suspend fun flush(): Unit = output.flush()
+  override suspend fun flushAndClose(): Unit = output.flushAndClose()
+  override fun cancel(cause: Throwable?): Unit = output.cancel(cause)
+}
+
 class KtorSocketConnection(private val socket: Socket) : LspConnection {
-  override val input: ByteReadChannel = socket.openReadChannel()
-  override val output: ByteWriteChannel = socket.openWriteChannel(autoFlush = true)
+  override val input: ByteReader = KtorByteReader(socket.openReadChannel())
+  override val output: ByteWriter = KtorByteWriter(socket.openWriteChannel(autoFlush = true))
 
   override fun close() {
     socket.close()
