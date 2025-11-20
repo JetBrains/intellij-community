@@ -48,7 +48,7 @@ public class WindowsDefenderChecker {
 
   private static final String IGNORE_STATUS_CHECK = "ignore.virus.scanning.warn.message";
   private static final String HELPER_SCRIPT_NAME = "defender-exclusions.ps1";
-  private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 30_000;
+  private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 60_000;
   private static final ExtensionPointName<Extension> EP_NAME = ExtensionPointName.create("com.intellij.defender.config");
 
   /**
