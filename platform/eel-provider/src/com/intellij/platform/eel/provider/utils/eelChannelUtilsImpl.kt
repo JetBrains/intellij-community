@@ -77,6 +77,8 @@ internal class NioWriteToEelAdapter(
     }
   }
 
+  override fun toString(): String = "NioWriteToEelAdapter[$writableByteChannel]"
+
   override val isClosed: Boolean get() = !writableByteChannel.isOpen
 
   @OptIn(DelicateCoroutinesApi::class)
@@ -149,10 +151,15 @@ internal class InputStreamAdapterImpl(
   // Pipe is a special case we can tell how much bytes are available.
   // In other cases, we do not know.
   // Unblocking read in IJ depends on it, so we can't simply return 0 here not to break unblocking read
-  @OptIn(EelDelicateApi::class)
   @Suppress("checkedExceptions")
-  override fun available(): Int =
-    receiveChannel.available()
+  override fun available(): Int {
+    return when (receiveChannel) {
+      is EelPipeImpl, is EelOutputChannel -> {
+        receiveChannel.available()
+      }
+      else -> 0
+    }
+  }
 
   override fun read(b: ByteArray, off: Int, len: Int): Int = read(ByteBuffer.wrap(b, off, len), len)
 

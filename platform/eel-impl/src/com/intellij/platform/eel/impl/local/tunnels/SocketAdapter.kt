@@ -12,9 +12,10 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.channels.SocketChannel
 
-internal class SocketAdapter(channel: SocketChannel) : EelTunnelsApi.Connection {
+internal class SocketAdapter(private val channel: SocketChannel) : EelTunnelsApi.Connection {
   private val socket = channel.socket()
 
+  override fun toString(): String = "SocketAdapter[$channel]"
 
   override val sendChannel: EelSendChannel = channel.asEelChannel()
   override val receiveChannel: EelReceiveChannel = channel.consumeAsEelChannel()
