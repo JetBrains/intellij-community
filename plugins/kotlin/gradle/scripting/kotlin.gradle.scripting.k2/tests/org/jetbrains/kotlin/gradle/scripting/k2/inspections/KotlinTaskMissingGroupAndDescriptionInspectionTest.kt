@@ -324,6 +324,82 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
 
     @ParameterizedTest
     @AllGradleVersionsSource
+    fun testInsideTasksBlock(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    <weak_warning>register</weak_warning>("someTask")
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testInsideTasksBlockDelegation(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    val someTask by <weak_warning>registering</weak_warning> {}
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testInsideTasksBlockDelegationNoConfigBlock(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    val someTask by <weak_warning>registering</weak_warning>
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testInsideTasksBlockNotMissing(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    register("someTask") {
+                        group = "some group"
+                        description = "some description"
+                    }
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testInsideTasksBlockDelegationNotMissing(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testHighlighting(
+                """
+                tasks {
+                    val someTask by registering {
+                        group = "some group"
+                        description = "some description"
+                    }
+                }
+                """.trimIndent()
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
     fun testAddingBoth(gradleVersion: GradleVersion) {
         runTest(gradleVersion) {
             testIntention(
@@ -475,6 +551,75 @@ class KotlinTaskMissingGroupAndDescriptionInspectionTest : K2GradleCodeInsightTe
                 val task by tasks.registering {
                     group = "AGroup"
                     description = ""
+                }
+                """.trimIndent(),
+                "Add a group and description"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testAddingBothInsideTasksBlock(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testIntention(
+                """
+                tasks {
+                    register<caret>("someTask")
+                }
+                """.trimIndent(),
+                """
+                tasks {
+                    register("someTask") {
+                        group = "AGroup"
+                        description = ""
+                    }
+                }
+                """.trimIndent(),
+                "Add a group and description"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testAddingBothInsideTasksBlockDelegation(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testIntention(
+                """
+                tasks {
+                    val someTask by registering<caret> {}
+                }
+                """.trimIndent(),
+                """
+                tasks {
+                    val someTask by registering {
+                        group = "AGroup"
+                        description = ""
+                    }
+                }
+                """.trimIndent(),
+                "Add a group and description"
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testAddingConfigBlockInsideTasksBlockDelegation(gradleVersion: GradleVersion) {
+        runTest(gradleVersion) {
+            testIntention(
+                """
+                tasks {
+                    val someTask by registering<caret>
+                }
+                """.trimIndent(),
+                """
+                tasks {
+                    val someTask by registering {
+                        group = "AGroup"
+                        description = ""
+                    }
                 }
                 """.trimIndent(),
                 "Add a group and description"
