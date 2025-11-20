@@ -406,19 +406,21 @@ class TerminalViewImpl(
   }
 
   private fun listenAlternateBufferSwitch() {
-    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Alternate buffer switch listener")) {
+    coroutineScope.launch(CoroutineName("Alternate buffer switch listener")) {
       sessionModel.terminalState.collect { state ->
-        if (state.isAlternateScreenBuffer != isAlternateScreenBuffer) {
-          isAlternateScreenBuffer = state.isAlternateScreenBuffer
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          if (state.isAlternateScreenBuffer != isAlternateScreenBuffer) {
+            isAlternateScreenBuffer = state.isAlternateScreenBuffer
 
-          val terminalWasFocused = terminalPanel.isFocusAncestor()
-          val editor = if (state.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
-          terminalPanel.setTerminalContent(editor)
-          terminalSearchController.finishSearchSession()
-          mutableOutputModels.setActiveModel(state.isAlternateScreenBuffer)
+            val terminalWasFocused = terminalPanel.isFocusAncestor()
+            val editor = if (state.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
+            terminalPanel.setTerminalContent(editor)
+            terminalSearchController.finishSearchSession()
+            mutableOutputModels.setActiveModel(state.isAlternateScreenBuffer)
 
-          if (terminalWasFocused) {
-            IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
+            if (terminalWasFocused) {
+              IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
+            }
           }
         }
       }
