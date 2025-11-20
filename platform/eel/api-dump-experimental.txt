@@ -287,6 +287,13 @@ f:com.intellij.platform.eel.EelPlatformKt
 *f:com.intellij.platform.eel.EelProcess$ResizePtyError$ProcessExited
 - com.intellij.platform.eel.EelProcess$ResizePtyError
 - <init>():V
+*:com.intellij.platform.eel.EelProxy
+- a:getAcceptor():com.intellij.platform.eel.EelTunnelsApi$ConnectionAcceptor
+- a:runForever(kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.EelProxyKt
+- *sf:eelProxy(com.intellij.platform.eel.EelTunnelsApiRunProxyOpts,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.platform.eel.EelProxyKtHelpersKt
+- *sf:eelProxy():com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
 *:com.intellij.platform.eel.EelTunnelsApi
 - *a:getConnectionToRemotePort(com.intellij.platform.eel.EelTunnelsApi$GetConnectionToRemotePortArgs,kotlin.coroutines.Continuation):java.lang.Object
 - *a:listenOnUnixSocket(com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketTemporaryPathOptions,kotlin.coroutines.Continuation):java.lang.Object
@@ -363,6 +370,35 @@ f:com.intellij.platform.eel.EelTunnelsApiHelpersKt
 - *sf:listenOnUnixSocket(com.intellij.platform.eel.EelTunnelsApi):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
 f:com.intellij.platform.eel.EelTunnelsApiKt
 - *sf:withConnectionToRemotePort(com.intellij.platform.eel.EelTunnelsApiHelpers$GetConnectionToRemotePort,kotlin.jvm.functions.Function2,kotlin.jvm.functions.Function3,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelTunnelsApiRunProxyOpts
+- getAcceptorFactory():kotlin.jvm.functions.Function1
+- getConnectionFactory():kotlin.jvm.functions.Function1
+- getDebugLabel():java.lang.String
+- getOnConnection():kotlin.jvm.functions.Function1
+- getOnConnectionClosed():kotlin.jvm.functions.Function1
+- getOnConnectionError():kotlin.jvm.functions.Function1
+- getTransferSpeed():com.intellij.platform.eel.EelTunnelsApiRunProxyOpts$TransferSpeed
+*e:com.intellij.platform.eel.EelTunnelsApiRunProxyOpts$TransferSpeed
+- java.lang.Enum
+- sf:MEMORY_EFFICIENT:com.intellij.platform.eel.EelTunnelsApiRunProxyOpts$TransferSpeed
+- sf:READ_AHEAD:com.intellij.platform.eel.EelTunnelsApiRunProxyOpts$TransferSpeed
+- sf:TMP_COPY_MODE:com.intellij.platform.eel.EelTunnelsApiRunProxyOpts$TransferSpeed
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.platform.eel.EelTunnelsApiRunProxyOpts$TransferSpeed
+- s:values():com.intellij.platform.eel.EelTunnelsApiRunProxyOpts$TransferSpeed[]
+*f:com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- <init>():V
+- f:acceptorFactory(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:build():com.intellij.platform.eel.EelTunnelsApiRunProxyOpts
+- f:connectionFactory(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:debugLabel(java.lang.String):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:memoryEfficient():com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:onConnection(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:onConnectionClosed(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:onConnectionError(kotlin.jvm.functions.Function1):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:readAhead():com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:tmpCopyMode():com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
+- f:transferSpeed(com.intellij.platform.eel.EelTunnelsApiRunProxyOpts$TransferSpeed):com.intellij.platform.eel.EelTunnelsApiRunProxyOptsBuilder
 *:com.intellij.platform.eel.EelTunnelsPosixApi
 - com.intellij.platform.eel.EelTunnelsApi
 *:com.intellij.platform.eel.EelTunnelsWindowsApi
@@ -468,6 +504,21 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - f:getChannel():com.intellij.platform.eel.channels.EelSendChannel
 f:com.intellij.platform.eel.channels.EelSendChannelKt
 - *sf:sendWholeBuffer(com.intellij.platform.eel.channels.EelSendChannel,java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.eelProxyKtHelpers
+- sf:INSTANCE:com.intellij.platform.eel.eelProxyKtHelpers
+*f:com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- <init>():V
+- f:acceptorFactory(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:connectionFactory(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:debugLabel(java.lang.String):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- f:memoryEfficient():com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:onConnection(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:onConnectionClosed(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:onConnectionError(kotlin.jvm.functions.Function1):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:readAhead():com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:tmpCopyMode():com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
+- f:transferSpeed(com.intellij.platform.eel.EelTunnelsApiRunProxyOpts$TransferSpeed):com.intellij.platform.eel.eelProxyKtHelpers$EelProxy
 *f:com.intellij.platform.eel.fs.EelFileUtils
 - sf:INSTANCE:com.intellij.platform.eel.fs.EelFileUtils
 - sf:deleteRecursively(java.nio.file.Path):V

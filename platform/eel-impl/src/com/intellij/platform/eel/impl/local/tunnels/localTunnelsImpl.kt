@@ -163,7 +163,7 @@ private suspend fun getConnectionToRemotePortImpl(args: GetConnectionToRemotePor
 private fun getAcceptorForRemotePortImpl(args: GetAcceptorForRemotePort): ConnectionAcceptor {
   val channel = try {
     ServerSocketChannel.open().apply {
-      bind(args.asInetSocketAddress)
+      bind(args.asInetSocketAddress, 50)  // Default backlog size, same as ServerSocket default.
       logger.info("Listening for $localAddress")
     }
   }
