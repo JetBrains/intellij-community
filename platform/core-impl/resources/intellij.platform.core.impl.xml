@@ -1,0 +1,11 @@
+<idea-plugin visibility="internal">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <dependencies>
+    <module name="intellij.libraries.aalto.xml"/>
+    <module name="intellij.libraries.automaton"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.platform.core"/>
+  </dependencies>
+  <!-- end editor-fold -->
+</idea-plugin>

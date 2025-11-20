@@ -1,4 +1,13 @@
 <idea-plugin visibility="internal">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <dependencies>
+    <module name="intellij.libraries.hash4j"/>
+    <module name="intellij.libraries.pty4j"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core"/>
+  </dependencies>
+  <!-- end editor-fold -->
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.platform.eel.provider.LocalWindowsEelApi"
                         serviceImplementation="com.intellij.platform.eel.impl.local.LocalWindowsEelApiImpl"/>

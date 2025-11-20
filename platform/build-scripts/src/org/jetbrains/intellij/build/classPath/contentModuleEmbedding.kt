@@ -39,8 +39,6 @@ import org.jetbrains.intellij.build.impl.XIncludeElementResolver
 import org.jetbrains.intellij.build.impl.contentModuleNameToDescriptorFileName
 import org.jetbrains.intellij.build.impl.resolveIncludes
 import org.jetbrains.intellij.build.impl.toLoadPath
-import java.io.IOException
-import java.nio.file.Files
 
 /**
  * Defines a search scope for resolving XInclude references in plugin descriptors.
@@ -357,23 +355,6 @@ internal class XIncludeElementResolverImpl(
       val descriptorCache = searchPath.descriptorCache
       descriptorCache.getCachedFileData(loadPath)?.let {
         return JDOMUtil.load(it)
-      }
-
-      // resolve module set files directly from generated directories
-      if (descriptorCache.isModuleSetOwner && loadPath.startsWith("META-INF/intellij.moduleSets.")) {
-        for (provider in context.productProperties.moduleSetsProviders) {
-          val file = provider.getOutputDirectory(context.paths).resolve(loadPath)
-          val data = try {
-            Files.readAllBytes(file)
-          }
-          catch (_: IOException) {
-            continue
-          }
-
-          // if someone else has resolved this file before, use their result
-          descriptorCache.putIfAbsent(loadPath, data)
-          return JDOMUtil.load(data)
-        }
       }
 
       for (module in searchPath.modules) {

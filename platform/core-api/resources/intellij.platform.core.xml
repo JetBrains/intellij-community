@@ -1,0 +1,7 @@
+<idea-plugin visibility="internal">
+  <!-- editor-fold desc="Generated dependencies - do not edit manually" -->
+  <dependencies>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+  </dependencies>
+  <!-- end editor-fold -->
+</idea-plugin>

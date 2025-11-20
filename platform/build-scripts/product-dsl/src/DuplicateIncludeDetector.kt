@@ -13,8 +13,7 @@ import kotlin.io.path.readText
  * Detects duplicate xi:include references in product plugin.xml files.
  * Analyzes both direct xi:includes and nested includes from deprecatedInclude XML files.
  */
-object DuplicateIncludeDetector {
-  
+internal object DuplicateIncludeDetector {
   /**
    * Detects duplicate xi:include references across all provided product XML files.
    * 

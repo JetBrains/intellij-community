@@ -20,11 +20,7 @@ fun writeCommunityProductViolations(
     gen.writeStringField("moduleSet", violation.moduleSet)
     gen.writeStringField("moduleSetFile", violation.moduleSetFile)
     
-    gen.writeArrayFieldStart("ultimateModules")
-    for (module in violation.ultimateModules) {
-      gen.writeString(module)
-    }
-    gen.writeEndArray()
+    gen.writeStringArray("ultimateModules", violation.ultimateModules)
     
     gen.writeNumberField("communityModulesCount", violation.communityModulesCount)
     gen.writeNumberField("unknownModulesCount", violation.unknownModulesCount)
@@ -37,17 +33,8 @@ fun writeCommunityProductViolations(
   gen.writeObjectFieldStart("summary")
   gen.writeNumberField("totalViolations", violations.size)
   
-  gen.writeArrayFieldStart("affectedProducts")
-  for (product in violations.map { it.product }.distinct().sorted()) {
-    gen.writeString(product)
-  }
-  gen.writeEndArray()
-  
-  gen.writeArrayFieldStart("affectedModuleSets")
-  for (moduleSet in violations.map { it.moduleSet }.distinct().sorted()) {
-    gen.writeString(moduleSet)
-  }
-  gen.writeEndArray()
+  gen.writeStringArray("affectedProducts", violations.map { it.product }.distinct().sorted())
+  gen.writeStringArray("affectedModuleSets", violations.map { it.moduleSet }.distinct().sorted())
   
   gen.writeEndObject()
 }
@@ -67,19 +54,11 @@ fun writeModuleSetLocationViolations(
     gen.writeStringField("issue", violation.issue)
     
     if (violation.ultimateModules != null) {
-      gen.writeArrayFieldStart("ultimateModules")
-      for (module in violation.ultimateModules) {
-        gen.writeString(module)
-      }
-      gen.writeEndArray()
+      gen.writeStringArray("ultimateModules", violation.ultimateModules)
     }
-    
+
     if (violation.communityModules != null) {
-      gen.writeArrayFieldStart("communityModules")
-      for (module in violation.communityModules) {
-        gen.writeString(module)
-      }
-      gen.writeEndArray()
+      gen.writeStringArray("communityModules", violation.communityModules)
     }
     
     if (violation.communityModulesCount != null) {

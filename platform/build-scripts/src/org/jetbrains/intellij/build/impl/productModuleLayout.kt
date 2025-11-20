@@ -196,6 +196,11 @@ private fun isModuleCloseSource(moduleName: String, context: BuildContext): Bool
     return false
   }
 
+  // todo will be removed on the next stage
+  if (moduleName == "fleet.protocol" || moduleName.startsWith("fleet.rpc.")) {
+    return false
+  }
+
   val sourceRoots = context.findRequiredModule(moduleName).sourceRoots.filter { it.rootType == JavaSourceRootType.SOURCE }
   if (sourceRoots.isEmpty()) {
     return false

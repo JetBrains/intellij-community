@@ -1,6 +1,6 @@
 <!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
-<!-- To regenerate, run: CommunityModuleSets.main() -->
-<!-- Source: see moduleSet("debugger") function in CommunityModuleSets.kt -->
+<!-- To regenerate, run: UltimateModuleSets.main() -->
+<!-- Source: see moduleSet("debugger") function in UltimateModuleSets.kt -->
 <!-- Note: Files are kept under VCS to support running products without dev mode (deprecated) -->
 <idea-plugin>
   <content namespace="jetbrains">
@@ -9,7 +9,7 @@
     <module name="intellij.platform.debugger.impl.shared" loading="embedded"/>
     <module name="intellij.platform.debugger.impl.rpc" loading="embedded"/>
     <module name="intellij.platform.debugger.impl.ui" loading="embedded"/>
-    <module name="intellij.platform.debugger.impl" loading="embedded"/>
     <module name="intellij.platform.debugger" loading="embedded"/>
+    <module name="intellij.platform.debugger.impl" loading="embedded"/>
   </content>
 </idea-plugin>

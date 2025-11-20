@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLATFORM_LOADER_JAR
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
@@ -22,6 +23,7 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesLayout
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsLibraryDependency
+import org.jetbrains.jps.model.module.JpsModuleDependency
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.SortedSet
 
@@ -35,26 +37,18 @@ import java.util.SortedSet
  */
 @Suppress("RemoveRedundantQualifierName")
 internal val PLATFORM_CORE_MODULES = java.util.List.of(
-  "intellij.platform.builtInServer",
-  "intellij.platform.diff",
   "intellij.platform.editor.ui",
-  "intellij.platform.externalSystem",
-  "intellij.platform.externalSystem.dependencyUpdater",
   "intellij.platform.codeStyle",
-  "intellij.platform.lang.core",
   "intellij.platform.ml",
   "intellij.platform.remote.core",
   "intellij.platform.remoteServers.agent.rt",
   "intellij.platform.usageView",
   "intellij.platform.execution",
 
-  "intellij.platform.analysis.impl",
   "intellij.platform.editor.ex",
-  "intellij.platform.externalProcessAuthHelper",
   "intellij.platform.lvcs",
   "intellij.platform.macro",
   "intellij.platform.remoteServers.impl",
-  "intellij.platform.smRunner",
   "intellij.platform.structureView.impl",
   "intellij.platform.testRunner",
   "intellij.platform.rd.community",
@@ -68,9 +62,6 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
 
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
-
-  "intellij.platform.externalSystem.impl",
-  "intellij.platform.credentialStore.ui",
 
   // do we need it?
   "intellij.platform.sqlite",
@@ -86,7 +77,7 @@ internal val PLATFORM_CORE_MODULES = java.util.List.of(
 )
 
 @Suppress("RemoveRedundantQualifierName")
-internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
+private val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = java.util.Map.of(
   "jetbrains-annotations", LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
 )
 
@@ -145,7 +136,6 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
     "intellij.platform.diagnostic.telemetry.rt",
     "intellij.platform.util",
     "intellij.platform.util.multiplatform",
-    "intellij.platform.core",
     // it has package `kotlin.coroutines.jvm.internal` - should be packed into the same JAR as coroutine lib,
     // to ensure that package index will not report one more JAR in a search path
     "intellij.platform.bootstrap.coroutine",
@@ -397,7 +387,7 @@ fun collectExportedLibrariesFromLibraryModules(
   context: BuildContext,
 ): Map<String, String> {
   val javaExtensionService = JpsJavaExtensionService.getInstance()
-  val result = mutableMapOf<String, String>()
+  val result = LinkedHashMap<String, String>()
   val includedModuleNames = layout.includedModules.map { it.moduleName }
   val corePluginsContentModuleNames = computeContentModulesPluginsWhichUseIdeaClassloader(context)
 
@@ -473,6 +463,61 @@ private fun toModuleItemSequence(list: Collection<String>, productLayout: Produc
 }
 
 /**
+ * Sorts embedded modules topologically so dependencies are processed before dependents.
+ * This ensures that when computing transitive dependencies, modules don't incorrectly
+ * include dependencies that should belong to their own dependencies.
+ *
+ * @param embeddedModules modules to sort
+ * @param context build context
+ * @return list of modules in dependency order (dependencies before dependents)
+ */
+private fun sortEmbeddedModulesTopologically(
+  embeddedModules: Collection<ModuleItem>,
+  context: ModuleOutputProvider,
+): List<ModuleItem> {
+  val moduleByName = embeddedModules.associateByTo(HashMap(embeddedModules.size)) { it.moduleName }
+  val moduleNames = moduleByName.keys
+
+  val result = mutableListOf<ModuleItem>()
+  val visited = HashSet<String>()
+  val visiting = HashSet<String>()
+
+  fun visit(moduleName: String) {
+    if (moduleName in visited) {
+      return
+    }
+
+    if (moduleName in visiting) {
+      throw IllegalStateException("Circular dependency: ${(visiting - moduleName).joinToString(" -> ")}")
+    }
+
+    visiting.add(moduleName)
+
+    // visit dependencies first (only those in our processing set)
+    val jpsModule = context.findRequiredModule(moduleName)
+    for (dep in jpsModule.dependenciesList.dependencies) {
+      if (dep is JpsModuleDependency) {
+        val depName = dep.moduleReference.moduleName
+        if (moduleByName.containsKey(depName)) {
+          visit(depName)
+        }
+      }
+    }
+
+    visiting.remove(moduleName)
+    visited.add(moduleName)
+    moduleByName.get(moduleName)?.let { result.add(it) }
+  }
+
+  // Visit all modules
+  for (moduleName in moduleNames) {
+    visit(moduleName)
+  }
+
+  return result
+}
+
+/**
  * Computes transitive dependencies for embedded modules that have `includeDependencies=true`.
  * Dependencies are packaged into the same JAR as their parent embedded module.
  *
@@ -490,8 +535,11 @@ private fun computeEmbeddedModuleDependencies(
   val result = LinkedHashSet<ModuleItem>()
   val rootChain = persistentListOf<String>()
 
+  // Sort modules topologically to ensure dependencies are processed before dependents
+  val sortedEmbeddedModules = sortEmbeddedModulesTopologically(embeddedModules, context)
+
   // For each embedded module, compute its transitive dependencies
-  for (embeddedModule in embeddedModules) {
+  for (embeddedModule in sortedEmbeddedModules) {
     val moduleName = embeddedModule.moduleName
     val relativeOutputFile = embeddedModule.relativeOutputFile
     val moduleSet = embeddedModule.moduleSet

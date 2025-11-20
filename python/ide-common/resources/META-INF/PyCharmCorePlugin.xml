@@ -18,7 +18,6 @@
   <xi:include href="/META-INF/pycharm-core-customization.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.ide.common.xml"/>
   <xi:include href="/META-INF/intellij.moduleSets.rd.common.xml"/>
-  <xi:include href="/META-INF/intellij.moduleSets.platformLangBase.xml"/>
   <!-- <editor-fold desc="additional"> -->
   <content namespace="jetbrains">
     <module name="intellij.platform.ide.newUiOnboarding"/>

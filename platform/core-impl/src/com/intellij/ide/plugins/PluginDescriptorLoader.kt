@@ -847,6 +847,7 @@ fun isProductWithTheOnlyDescriptor(platformPrefix: String): Boolean {
          platformPrefix == PlatformUtils.DBE_PREFIX ||
          platformPrefix == PlatformUtils.DATASPELL_PREFIX ||
          platformPrefix == PlatformUtils.GATEWAY_PREFIX ||
+         platformPrefix == "CodeServer" ||
          platformPrefix == PlatformUtils.GIT_CLIENT_PREFIX
 }
 

@@ -7,7 +7,10 @@ import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyFileToDir
-import org.jetbrains.intellij.build.productLayout.*
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.productModules
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -46,9 +49,6 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     additionalVmOptions = persistentListOf("-Dllm.show.ai.promotion.window.on.start=false")
     qodanaProductProperties = QodanaProductProperties(@Suppress("SpellCheckingInspection") "QDPYC", "Qodana Community for Python")
   }
-
-  override val moduleSetsProviders: List<ModuleSetProvider>
-    get() = listOf(CommunityModuleSets)
 
   override fun getProductContentDescriptor(): ProductModulesContentSpec = productModules {
     // Module capability aliases

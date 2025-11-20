@@ -9,7 +9,10 @@ import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
-import org.jetbrains.intellij.build.productLayout.*
+import org.jetbrains.intellij.build.productLayout.CommunityModuleSets
+import org.jetbrains.intellij.build.productLayout.CommunityProductFragments
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
+import org.jetbrains.intellij.build.productLayout.productModules
 import java.nio.file.Path
 
 val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListOf(
@@ -109,9 +112,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     qodanaProductProperties = QodanaProductProperties("QDJVMC", "Qodana Community for JVM")
     additionalVmOptions = persistentListOf("-Dllm.show.ai.promotion.window.on.start=false")
   }
-
-  override val moduleSetsProviders: List<ModuleSetProvider>
-    get() = listOf(CommunityModuleSets)
 
   override val baseFileName: String
     get() = "idea"

@@ -1,11 +1,18 @@
 ### auto-generated section `build intellij.platform.credentialStore.ui` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "credentialStore-ui_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "credentialStore-ui",
   module_name = "intellij.platform.credentialStore.ui",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
+  resources = [":credentialStore-ui_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",

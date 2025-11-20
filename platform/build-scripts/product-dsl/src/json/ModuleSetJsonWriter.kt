@@ -5,8 +5,8 @@ import com.fasterxml.jackson.core.JsonGenerator
 import org.jetbrains.intellij.build.productLayout.DuplicateIncludeDetector
 import org.jetbrains.intellij.build.productLayout.ModuleSet
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
+import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetTraversal
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
-import org.jetbrains.intellij.build.productLayout.collectAllModuleNames
 import org.jetbrains.intellij.build.productLayout.collectAllModuleNamesFromSet
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -17,7 +17,7 @@ import kotlin.io.path.isRegularFile
  * Uses kotlinx.serialization to serialize the ModuleSet structure directly,
  * then embeds the raw JSON using writeRawValue().
  */
-fun writeModuleSet(
+internal fun writeModuleSet(
   gen: JsonGenerator,
   moduleSet: ModuleSet,
   location: String,
@@ -59,7 +59,7 @@ fun writeDuplicateAnalysis(
   // Find modules that appear in multiple module sets
   val moduleToSets = mutableMapOf<String, MutableList<String>>()
   for ((moduleSet, _, _) in allModuleSets) {
-    val allModules = collectAllModuleNames(moduleSet)
+    val allModules = ModuleSetTraversal.collectAllModuleNames(moduleSet)
     for (moduleName in allModules) {
       moduleToSets.computeIfAbsent(moduleName) { mutableListOf() }.add(moduleSet.name)
     }
@@ -89,8 +89,8 @@ fun writeDuplicateAnalysis(
       val (set1, _, _) = allModuleSets[i]
       val (set2, _, _) = allModuleSets[j]
 
-      val modules1 = collectAllModuleNames(set1)
-      val modules2 = collectAllModuleNames(set2)
+      val modules1 = ModuleSetTraversal.collectAllModuleNames(set1)
+      val modules2 = ModuleSetTraversal.collectAllModuleNames(set2)
 
       val overlap = modules1.intersect(modules2)
       if (overlap.size > 5) { // Only report significant overlaps
