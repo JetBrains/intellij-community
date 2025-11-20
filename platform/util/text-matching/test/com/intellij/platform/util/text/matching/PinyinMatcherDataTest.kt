@@ -22,10 +22,11 @@ class PinyinMatcherDataTest {
     val encodingStr = initials.joinToString(",")
     val data = getDataString(mappings, initials)
 
-    val message = """Pinyin data mismatch. Please update constants in ${PinyinMatcher::class.qualifiedName} to the following:
-       ${toJavaStringLiteral("ENCODING", encodingStr)}
-       ${toJavaStringLiteral("DATA", data)}
-       """.trimIndent()
+    val message = """
+       Pinyin data mismatch. Please update constants in ${PinyinMatcher::class.qualifiedName} to the following:
+       ${toKotlinStringLiteral("ENCODING", encodingStr)}
+       ${toKotlinStringLiteral("DATA", data)}
+     """.trimIndent()
 
     assertEquals(PinyinMatcher.ENCODING, encodingStr, message)
     assertEquals(PinyinMatcher.DATA, data, message)
@@ -40,22 +41,23 @@ class PinyinMatcherDataTest {
       upperCase = true
       number {
         minLength = 4
+        removeLeadingZeros = true
       }
     }
 
-    private fun toJavaStringLiteral(varName: String?, input: String): String {
-      val result = StringBuilder("$varName =\n\"")
+    private fun toKotlinStringLiteral(varName: String?, input: String): String {
+      val result = StringBuilder("@ApiStatus.Internal\nval $varName: String =\n\"")
       var curLineLength = 0
       input.forEachIndexed { i, ch ->
         val charRepresentation = when {
-          ch == '"' || ch == '\\' -> {
+          ch == '$' || ch == '"' || ch == '\\' -> {
             "\\" + ch
           }
           ch.code < 127 -> {
             ch.toString()
           }
           else -> {
-            "\\u${unicodeEscapeCodePoint(ch.code)}"
+            unicodeEscapeCodePoint(ch.code)
           }
         }
         result.append(charRepresentation)
@@ -65,15 +67,17 @@ class PinyinMatcherDataTest {
           result.append("\" +\n\"")
         }
       }
-      return result.append("\";").toString()
+      return result.append("\"").toString()
     }
 
-    // todo
+    internal const val MIN_SUPPLEMENTARY_CODE_POINT = 0x10000
+    private const val HIGH_SURROGATE_ENCODE_OFFSET = (Char.MIN_HIGH_SURROGATE.code - (MIN_SUPPLEMENTARY_CODE_POINT ushr 10))
+
     fun unicodeEscapeCodePoint(cp: Int): String {
       if (cp <= 0xFFFF) return "\\u" + cp.toHexString(U4_UPPER)
       val u = cp - 0x10000
-      val hi = 0xD800 + (u ushr 10)
-      val lo = 0xDC00 + (u and 0x3FF)
+      val hi = (u ushr 10) + HIGH_SURROGATE_ENCODE_OFFSET
+      val lo = (u and 0x3FF) + Char.MIN_LOW_SURROGATE.code
       return "\\u" + hi.toHexString(U4_UPPER) + "\\u" + lo.toHexString(U4_UPPER)
     }
 

@@ -66,9 +66,15 @@ e:com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity
 - s:values():com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity[]
 f:com.intellij.psi.codeStyle.PinyinMatcher
 - com.intellij.psi.codeStyle.MinusculeMatcher
+- sf:Companion:com.intellij.psi.codeStyle.PinyinMatcher$Companion
+- sf:create(java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher):com.intellij.psi.codeStyle.MinusculeMatcher
 - getPattern():java.lang.String
 - matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
+f:com.intellij.psi.codeStyle.PinyinMatcher$Companion
+- f:create(java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher):com.intellij.psi.codeStyle.MinusculeMatcher
+- f:getDATA():java.lang.String
+- f:getENCODING():java.lang.String
 f:com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
 - com.intellij.util.text.matching.KeyboardLayoutConverter
 - sf:INSTANCE:com.intellij.psi.codeStyle.PlatformKeyboardLayoutConverter
