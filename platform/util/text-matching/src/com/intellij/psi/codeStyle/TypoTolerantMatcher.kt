@@ -1,916 +1,923 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.codeStyle;
+package com.intellij.psi.codeStyle
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.FList;
-import com.intellij.util.text.NameUtilCore;
-import com.intellij.util.text.matching.MatchingMode;
-import org.jetbrains.annotations.*;
-
-import java.util.BitSet;
-import java.util.List;
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.Strings
+import com.intellij.psi.codeStyle.AsciiUtils.isAscii
+import com.intellij.psi.codeStyle.AsciiUtils.isLowerAscii
+import com.intellij.psi.codeStyle.AsciiUtils.isUpperAscii
+import com.intellij.psi.codeStyle.AsciiUtils.nextWordAscii
+import com.intellij.psi.codeStyle.AsciiUtils.toLowerAscii
+import com.intellij.psi.codeStyle.AsciiUtils.toUpperAscii
+import com.intellij.util.ArrayUtil
+import com.intellij.util.SmartList
+import com.intellij.util.containers.FList
+import com.intellij.util.text.NameUtilCore.isWordStart
+import com.intellij.util.text.NameUtilCore.nextWord
+import com.intellij.util.text.matching.MatchingMode
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.*
+import kotlin.math.min
+import kotlin.math.pow
 
 @ApiStatus.Internal
-public final class TypoTolerantMatcher extends MinusculeMatcher {
-  private final char[] myPattern;
-  private final String myHardSeparators;
-  private final MatchingMode myMatchingMode;
-  private final boolean myHasHumps;
-  private final boolean myHasSeparators;
-  private final boolean myHasDots;
-  private final boolean[] isLowerCase;
-  private final boolean[] isUpperCase;
-  private final boolean[] isWordSeparator;
-  private final char[] toUpperCase;
-  private final char[] toLowerCase;
-  private final char[] myMeaningfulCharacters;
-  private final int myMinNameLength;
+class TypoTolerantMatcher @VisibleForTesting constructor(
+  pattern: String,
+  private val myMatchingMode: MatchingMode,
+  private val myHardSeparators: String
+) : MinusculeMatcher() {
+  private val myPattern: CharArray
+  private val myHasHumps: Boolean
+  private val myHasSeparators: Boolean
+  private val myHasDots: Boolean
+  private val isLowerCase: BooleanArray
+  private val isUpperCase: BooleanArray
+  private val isWordSeparator: BooleanArray
+  private val toUpperCase: CharArray
+  private val toLowerCase: CharArray
+  private val myMeaningfulCharacters: CharArray
+  private val myMinNameLength: Int
 
-  /**
-   * Constructs a matcher by a given pattern.
-   * @param pattern the pattern
-   * @param matchingMode case sensitivity settings
-   * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
-   * Need either an explicit uppercase letter or the same separator character in prefix
-   */
-  @VisibleForTesting
-  public TypoTolerantMatcher(@NotNull String pattern, @NotNull MatchingMode matchingMode, @NotNull String hardSeparators) {
-    myMatchingMode = matchingMode;
-    myPattern = Strings.trimEnd(pattern, "* ").toCharArray();
-    myHardSeparators = hardSeparators;
-    isLowerCase = new boolean[myPattern.length];
-    isUpperCase = new boolean[myPattern.length];
-    isWordSeparator = new boolean[myPattern.length];
-    toUpperCase = new char[myPattern.length];
-    toLowerCase = new char[myPattern.length];
-    StringBuilder meaningful = new StringBuilder();
-    for (int k = 0; k < myPattern.length; k++) {
-      char c = myPattern[k];
-      isLowerCase[k] = Character.isLowerCase(c);
-      isUpperCase[k] = Character.isUpperCase(c);
-      isWordSeparator[k] = isWordSeparator(c);
-      toUpperCase[k] = Strings.toUpperCase(c);
-      toLowerCase[k] = Strings.toLowerCase(c);
-      if (!isWildcard(k)) {
-        meaningful.append(toLowerCase[k]);
-        meaningful.append(toUpperCase[k]);
-      }
-    }
-    int i = 0;
-    while (isWildcard(i)) i++;
-    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i, isLowerCase);
-    myHasSeparators = hasFlag(i, isWordSeparator);
-    myHasDots = hasDots(i);
-    myMeaningfulCharacters = meaningful.toString().toCharArray();
-    myMinNameLength = myMeaningfulCharacters.length / 2;
-  }
-
-  private static boolean isWordSeparator(char c) {
-    return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':' || c == '+' || c == '.';
-  }
-
-  private static int nextWord(@NotNull String name, int start, boolean isAsciiName) {
-    if (start < name.length() && Character.isDigit(name.charAt(start))) {
-      return start + 1; //treat each digit as a separate hump
-    }
-    if (isAsciiName) {
-      return AsciiUtils.nextWordAscii(name, start);
-    }
-    return NameUtilCore.nextWord(name, start);
-  }
-
-  private boolean hasFlag(int start, boolean[] flags) {
-    for (int i = start; i < myPattern.length; i++) {
+  private fun hasFlag(start: Int, flags: BooleanArray): Boolean {
+    for (i in start..<myPattern.size) {
       if (flags[i]) {
-        return true;
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  private boolean hasDots(int start) {
-    for (int i = start; i < myPattern.length; i++) {
+  private fun hasDots(start: Int): Boolean {
+    for (i in start..<myPattern.size) {
       if (myPattern[i] == '.') {
-        return true;
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  private static @NotNull FList<TextRange> prependRange(@NotNull FList<TextRange> ranges, @NotNull Range range) {
-    Range head = ((Range)ranges.getHead());
-    if (head != null && head.getStartOffset() == range.getEndOffset()) {
-      return ranges.getTail().prepend(new Range(range.getStartOffset(), head.getEndOffset(), range.getErrorCount() + head.getErrorCount()));
-    }
-    return ranges.prepend(range);
+  public override fun matchingDegree(name: String): Int {
+    return matchingDegree(name, false)
   }
 
-  @Override
-  public int matchingDegree(@NotNull String name) {
-    return matchingDegree(name, false);
+  public override fun matchingDegree(name: String, valueStartCaseMatch: Boolean): Int {
+    return matchingDegree(name, valueStartCaseMatch, matchingFragments(name))
   }
 
-  @Override
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch) {
-    return matchingDegree(name, valueStartCaseMatch, matchingFragments(name));
-  }
+  public override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
+    if (fragments == null) return Int.Companion.MIN_VALUE
+    if (fragments.isEmpty()) return 0
 
-  @Override
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<? extends TextRange> fragments) {
-    if (fragments == null) return Integer.MIN_VALUE;
-    if (fragments.isEmpty()) return 0;
+    val first: TextRange = fragments.getHead()
+    val startMatch = first.getStartOffset() == 0
+    val valuedStartMatch = startMatch && valueStartCaseMatch
 
-    final TextRange first = fragments.getHead();
-    boolean startMatch = first.getStartOffset() == 0;
-    boolean valuedStartMatch = startMatch && valueStartCaseMatch;
+    var errors = 0
+    var matchingCase = 0
+    var p = -1
 
-    int errors = 0;
-    int matchingCase = 0;
-    int p = -1;
-
-    int skippedHumps = 0;
-    int nextHumpStart = 0;
-    boolean humpStartMatchedUpperCase = false;
-    for (TextRange range : fragments) {
-      for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
-        boolean afterGap = i == range.getStartOffset() && first != range;
-        boolean isHumpStart = false;
+    var skippedHumps = 0
+    var nextHumpStart = 0
+    var humpStartMatchedUpperCase = false
+    for (range in fragments) {
+      for (i in range.getStartOffset()..<range.getEndOffset()) {
+        val afterGap = i == range.getStartOffset() && first !== range
+        var isHumpStart = false
         while (nextHumpStart <= i) {
           if (nextHumpStart == i) {
-            isHumpStart = true;
+            isHumpStart = true
           }
           else if (afterGap) {
-            skippedHumps++;
+            skippedHumps++
           }
-          nextHumpStart = nextWord(name, nextHumpStart, false);
+          nextHumpStart = nextWord(name, nextHumpStart, false)
         }
 
-        char c = name.charAt(i);
-        p = Strings.indexOf(myPattern, c, p + 1, myPattern.length, false);
+        val c = name.get(i)
+        p = Strings.indexOf(myPattern, c, p + 1, myPattern.size, false)
         if (p < 0) {
-          break;
+          break
         }
 
         if (isHumpStart) {
-          humpStartMatchedUpperCase = c == myPattern[p] && isUpperCase[p];
+          humpStartMatchedUpperCase = c == myPattern[p] && isUpperCase[p]
         }
 
-        matchingCase += evaluateCaseMatching(valuedStartMatch, p, humpStartMatchedUpperCase, i, afterGap, isHumpStart, c);
+        matchingCase += evaluateCaseMatching(valuedStartMatch, p, humpStartMatchedUpperCase, i, afterGap, isHumpStart, c)
       }
 
-      errors += 2000.0 * Math.pow(1.0 * ((Range)range).getErrorCount() / range.getLength(), 2);
+      errors = (errors + 2000.0 * (1.0 * (range as Range).errorCount / range.getLength()).pow(2.0)).toInt()
     }
 
-    int startIndex = first.getStartOffset();
-    boolean afterSeparator = Strings.indexOfAny(name, myHardSeparators, 0, startIndex) >= 0;
-    boolean wordStart = startIndex == 0 || NameUtilCore.isWordStart(name, startIndex) && !NameUtilCore.isWordStart(name, startIndex - 1);
-    boolean finalMatch = fragments.get(fragments.size() - 1).getEndOffset() == name.length();
+    val startIndex = first.getStartOffset()
+    val afterSeparator = Strings.indexOfAny(name, myHardSeparators, 0, startIndex) >= 0
+    val wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1)
+    val finalMatch = fragments.get(fragments.size - 1).getEndOffset() == name.length
 
-    return (wordStart ? 1000 : 0) +
+    return (if (wordStart) 1000 else 0) +
            matchingCase -
-           fragments.size() +
+           fragments.size +
            -skippedHumps * 10 -
            errors +
-           (afterSeparator ? 0 : 2) +
-           (startMatch ? 1 : 0) +
-           (finalMatch ? 1 : 0);
+           (if (afterSeparator) 0 else 2) +
+           (if (startMatch) 1 else 0) +
+           (if (finalMatch) 1 else 0)
   }
 
-  private int evaluateCaseMatching(boolean valuedStartMatch,
-                                   int patternIndex,
-                                   boolean humpStartMatchedUpperCase,
-                                   int nameIndex,
-                                   boolean afterGap,
-                                   boolean isHumpStart,
-                                   char nameChar) {
+  private fun evaluateCaseMatching(
+    valuedStartMatch: Boolean,
+    patternIndex: Int,
+    humpStartMatchedUpperCase: Boolean,
+    nameIndex: Int,
+    afterGap: Boolean,
+    isHumpStart: Boolean,
+    nameChar: Char
+  ): Int {
     if (afterGap && isHumpStart && isLowerCase[patternIndex]) {
-      return -10; // disprefer when there's a hump but nothing in the pattern indicates the user meant it to be hump
+      return -10 // disprefer when there's a hump but nothing in the pattern indicates the user meant it to be hump
     }
     if (nameChar == myPattern[patternIndex]) {
-      if (isUpperCase[patternIndex]) return 50; // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
-      if (nameIndex == 0 && valuedStartMatch) return 150; // the very first letter case distinguishes classes in Java etc
-      if (isHumpStart) return 1; // if a lowercase matches lowercase hump start, that also means something
-    } else if (isHumpStart) {
+      if (isUpperCase[patternIndex]) return 50 // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
+
+      if (nameIndex == 0 && valuedStartMatch) return 150 // the very first letter case distinguishes classes in Java etc
+
+      if (isHumpStart) return 1 // if a lowercase matches lowercase hump start, that also means something
+    }
+    else if (isHumpStart) {
       // disfavor hump starts where pattern letter case doesn't match name case
-      return -1;
-    } else if (isLowerCase[patternIndex] && humpStartMatchedUpperCase) {
+      return -1
+    }
+    else if (isLowerCase[patternIndex] && humpStartMatchedUpperCase) {
       // disfavor lowercase non-humps matching uppercase in the name
-      return -1;
+      return -1
     }
-    return 0;
+    return 0
   }
 
-  @Override
-  public boolean isStartMatch(@NotNull String name) {
-    FList<TextRange> fragments = matchingFragments(name);
-    return fragments != null && isStartMatch(fragments);
+  public override fun isStartMatch(name: String): Boolean {
+    val fragments = matchingFragments(name)
+    return fragments != null && isStartMatch(fragments)
   }
 
-  @Override
-  public boolean matches(@NotNull String name) {
-    return matchingFragments(name) != null;
+  public override fun matches(name: String): Boolean {
+    return matchingFragments(name) != null
   }
 
-  @Override
-  public @NotNull String getPattern() {
-    return new String(myPattern);
-  }
+  val pattern: String
+    get() = String(myPattern)
 
-  @Override
-  public @Nullable FList<TextRange> matchingFragments(@NotNull String name) {
-    if (name.length() < myMinNameLength) {
-      return null;
+  public override fun matchingFragments(name: String): FList<TextRange>? {
+    if (name.length < myMinNameLength) {
+      return null
     }
-    boolean ascii = AsciiUtils.isAscii(name);
-    FList<TextRange> ranges = new Session(name, false, ascii).matchingFragments();
-    if (ranges != null) return ranges;
+    val ascii = isAscii(name)
+    val ranges: FList<TextRange>? = TypoTolerantMatcher.Session(name, false, ascii).matchingFragments()
+    if (ranges != null) return ranges
 
-    return new Session(name, true, ascii).matchingFragments();
+    return TypoTolerantMatcher.Session(name, true, ascii).matchingFragments()
   }
 
-  private class Session {
-    private final @NotNull String myName;
-    private final boolean isAsciiName;
+  private inner class Session(private val myName: String, private val myTypoAware: Boolean, private val isAsciiName: Boolean) {
+    private val myAllowTypos: Boolean
 
-    private final boolean myTypoAware;
-    private final boolean myAllowTypos;
-
-    Session(@NotNull String name, boolean typoAware, boolean ascii) {
-      myName = name;
-      isAsciiName = ascii;
-      myTypoAware = typoAware;
-      myAllowTypos = typoAware && ascii;
+    init {
+      myAllowTypos = myTypoAware && isAsciiName
     }
 
-    private char charAt(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? errorState.getChar(myPattern, i) : myPattern[i];
+    fun charAt(i: Int, errorState: ErrorState): Char {
+      return if (errorState.affects(i)) errorState.getChar(myPattern, i) else myPattern[i]
     }
 
-    private boolean equalsIgnoreCase(int patternIndex, @NotNull ErrorState errorState, char nameChar) {
+    fun equalsIgnoreCase(patternIndex: Int, errorState: ErrorState, nameChar: Char): Boolean {
       if (errorState.affects(patternIndex)) {
-        char patternChar = errorState.getChar(myPattern, patternIndex);
-        return AsciiUtils.toLowerAscii(patternChar) == nameChar ||
-               AsciiUtils.toUpperAscii(patternChar) == nameChar;
+        val patternChar = errorState.getChar(myPattern, patternIndex)
+        return toLowerAscii(patternChar) == nameChar ||
+               toUpperAscii(patternChar) == nameChar
       }
-      return toLowerCase[patternIndex] == nameChar || toUpperCase[patternIndex] == nameChar;
+      return toLowerCase[patternIndex] == nameChar || toUpperCase[patternIndex] == nameChar
     }
 
-    private boolean isLowerCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? AsciiUtils.isLowerAscii(errorState.getChar(myPattern, i)) : isLowerCase[i];
+    fun isLowerCase(i: Int, errorState: ErrorState): Boolean {
+      return if (errorState.affects(i)) isLowerAscii(errorState.getChar(myPattern, i)) else isLowerCase[i]
     }
 
-    private boolean isUpperCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? AsciiUtils.isUpperAscii(errorState.getChar(myPattern, i)) : isUpperCase[i];
+    fun isUpperCase(i: Int, errorState: ErrorState): Boolean {
+      return if (errorState.affects(i)) isUpperAscii(errorState.getChar(myPattern, i)) else isUpperCase[i]
     }
 
-    private boolean isWordSeparator(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? TypoTolerantMatcher.isWordSeparator(errorState.getChar(myPattern, i)) : isWordSeparator[i];
+    fun isWordSeparator(i: Int, errorState: ErrorState): Boolean {
+      return if (errorState.affects(i)) isWordSeparator(errorState.getChar(myPattern, i)) else isWordSeparator[i]
     }
 
-    private int patternLength(@NotNull ErrorState errorState) {
-      return errorState.length(myPattern);
+    fun patternLength(errorState: ErrorState): Int {
+      return errorState.length(myPattern)
     }
 
-    public @Nullable FList<TextRange> matchingFragments() {
-      int length = myName.length();
+    fun matchingFragments(): FList<TextRange>? {
+      val length = myName.length
       if (length < myMinNameLength) {
-        return null;
+        return null
       }
 
       //we're in typo mode, but non-ascii symbols are used. so aborting
-      if (myTypoAware && !isAsciiName) return null;
+      if (myTypoAware && !isAsciiName) return null
 
       if (!myTypoAware) {
-        int patternIndex = 0;
-        if (myMeaningfulCharacters.length > 0) {
-          for (int i = 0; i < length; ++i) {
-            char c = myName.charAt(i);
+        var patternIndex = 0
+        if (myMeaningfulCharacters.size > 0) {
+          for (i in 0..<length) {
+            val c = myName.get(i)
             if (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1]) {
-              patternIndex += 2;
-              if (patternIndex >= myMeaningfulCharacters.length) {
-                break;
+              patternIndex += 2
+              if (patternIndex >= myMeaningfulCharacters.size) {
+                break
               }
             }
           }
         }
         if (patternIndex < myMinNameLength * 2) {
-          return null;
+          return null
         }
       }
 
-      return matchWildcards(0, 0, new ErrorState());
+      return matchWildcards(0, 0, ErrorState())
     }
 
     /**
      * After a wildcard (* or space), search for the first non-wildcard pattern character in the name starting from nameIndex
-     * and try to {@link #matchFragment} for it.
+     * and try to [.matchFragment] for it.
      */
-    private @Nullable FList<TextRange> matchWildcards(int patternIndex,
-                                        int nameIndex,
-                                        @NotNull ErrorState errorState) {
+    fun matchWildcards(
+      patternIndex: Int,
+      nameIndex: Int,
+      errorState: ErrorState
+    ): FList<TextRange>? {
+      var patternIndex = patternIndex
       if (nameIndex < 0) {
-        return null;
+        return null
       }
       if (!isWildcard(patternIndex)) {
         if (patternIndex == patternLength(errorState)) {
-          return FList.emptyList();
+          return FList.emptyList<TextRange?>()
         }
-        return matchFragment(patternIndex, nameIndex, errorState);
+        return matchFragment(patternIndex, nameIndex, errorState)
       }
 
       do {
-        patternIndex++;
-      } while (isWildcard(patternIndex));
+        patternIndex++
+      }
+      while (isWildcard(patternIndex))
 
       if (patternIndex == patternLength(errorState)) {
         // the trailing space should match if the pattern ends with the last word part, or only its first hump character
-        if (isTrailingSpacePattern(errorState) && nameIndex != myName.length() && (patternIndex < 2 || !isUpperCaseOrDigit(charAt(
-          patternIndex - 2, errorState)))) {
-          int spaceIndex = myName.indexOf(' ', nameIndex);
+        if (isTrailingSpacePattern(errorState) && nameIndex != myName.length && (patternIndex < 2 || !isUpperCaseOrDigit(charAt(
+            patternIndex - 2, errorState)))
+        ) {
+          val spaceIndex = myName.indexOf(' ', nameIndex)
           if (spaceIndex >= 0) {
-            return FList.singleton(new Range(spaceIndex, spaceIndex + 1, 0));
+            return FList.singleton<TextRange?>(Range(spaceIndex, spaceIndex + 1, 0))
           }
-          return null;
+          return null
         }
-        return FList.emptyList();
+        return FList.emptyList<TextRange?>()
       }
 
-      FList<TextRange> ranges = matchFragment(patternIndex, nameIndex, errorState);
+      val ranges = matchFragment(patternIndex, nameIndex, errorState)
       if (ranges != null) {
-        return ranges;
+        return ranges
       }
 
-      return matchSkippingWords(patternIndex, nameIndex, true, errorState);
+      return matchSkippingWords(patternIndex, nameIndex, true, errorState)
     }
 
-    private boolean isTrailingSpacePattern(@NotNull ErrorState errorState) {
-      return isPatternChar(patternLength(errorState) - 1, ' ', errorState);
-    }
-
-    private static boolean isUpperCaseOrDigit(char p) {
-      return Character.isUpperCase(p) || Character.isDigit(p);
+    fun isTrailingSpacePattern(errorState: ErrorState): Boolean {
+      return isPatternChar(patternLength(errorState) - 1, ' ', errorState)
     }
 
     /**
      * Enumerates places in name that could be matched by the pattern at patternIndex position
-     * and invokes {@link #matchFragment} at those candidate positions
+     * and invokes [.matchFragment] at those candidate positions
      */
-    private @Nullable FList<TextRange> matchSkippingWords(int patternIndex,
-                                            int nameIndex,
-                                            boolean allowSpecialChars,
-                                            @NotNull ErrorState errorState) {
-      boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*', errorState) && !isWordSeparator(patternIndex, errorState);
+    fun matchSkippingWords(
+      patternIndex: Int,
+      nameIndex: Int,
+      allowSpecialChars: Boolean,
+      errorState: ErrorState
+    ): FList<TextRange>? {
+      var nameIndex = nameIndex
+      val wordStartsOnly = !isPatternChar(patternIndex - 1, '*', errorState) && !isWordSeparator(patternIndex, errorState)
 
-      int maxFoundLength = 0;
+      var maxFoundLength = 0
       while (true) {
-        nameIndex = findNextPatternCharOccurrence(nameIndex, patternIndex, allowSpecialChars, wordStartsOnly, errorState);
+        nameIndex = findNextPatternCharOccurrence(nameIndex, patternIndex, allowSpecialChars, wordStartsOnly, errorState)
         if (nameIndex < 0) {
-          return null;
+          return null
         }
-        Fragment fragment = seemsLikeFragmentStart(patternIndex, nameIndex, errorState) ? maxMatchingFragment(patternIndex, nameIndex, errorState) : null;
-        if (fragment == null) continue;
+        val fragment = if (seemsLikeFragmentStart(patternIndex, nameIndex, errorState)) maxMatchingFragment(patternIndex, nameIndex,
+                                                                                                            errorState)
+        else null
+        if (fragment == null) continue
 
         // match the remaining pattern only if we haven't already seen fragment of the same (or bigger) length
         // because otherwise it means that we already tried to match remaining pattern letters after it with the remaining name and failed
         // but now we have the same remaining pattern letters and even less remaining name letters, and so will fail as well
-        int fragmentLength = fragment.getLength();
-        if (fragmentLength > maxFoundLength || nameIndex + fragmentLength == myName.length() && isTrailingSpacePattern(errorState)) {
+        val fragmentLength = fragment.length
+        if (fragmentLength > maxFoundLength || nameIndex + fragmentLength == myName.length && isTrailingSpacePattern(errorState)) {
           if (!isMiddleMatch(patternIndex, nameIndex, errorState)) {
-            maxFoundLength = fragmentLength;
+            maxFoundLength = fragmentLength
           }
-          FList<TextRange> ranges = matchInsideFragment(patternIndex, nameIndex, fragment);
+          val ranges = matchInsideFragment(patternIndex, nameIndex, fragment)
           if (ranges != null) {
-            return ranges;
+            return ranges
           }
         }
       }
     }
 
-    private int findNextPatternCharOccurrence(int startAt,
-                                              int patternIndex,
-                                              boolean allowSpecialChars,
-                                              boolean wordStartsOnly,
-                                              @NotNull ErrorState errorState) {
-      int next = wordStartsOnly
-                 ? indexOfWordStart(patternIndex, startAt, errorState)
-                 : indexOfIgnoreCase(startAt + 1, patternIndex, errorState);
+    fun findNextPatternCharOccurrence(
+      startAt: Int,
+      patternIndex: Int,
+      allowSpecialChars: Boolean,
+      wordStartsOnly: Boolean,
+      errorState: ErrorState
+    ): Int {
+      val next = if (wordStartsOnly)
+        indexOfWordStart(patternIndex, startAt, errorState)
+      else
+        indexOfIgnoreCase(startAt + 1, patternIndex, errorState)
 
       // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
       if (!allowSpecialChars && !myHasSeparators && !myHasHumps && Strings.containsAnyChar(myName, myHardSeparators, startAt, next)) {
-        return -1;
+        return -1
       }
       // if the user has typed a dot, don't skip other dots between humps
       // but one pattern dot may match several name dots
-      if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.', errorState) && Strings.contains(myName, startAt, next, '.')) {
-        return -1;
+      if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.', errorState) && Strings.contains(myName, startAt, next,
+                                                                                                                   '.')
+      ) {
+        return -1
       }
 
-      return next;
+      return next
     }
 
-    private boolean seemsLikeFragmentStart(int patternIndex, int nextOccurrence, @NotNull ErrorState errorState) {
+    fun seemsLikeFragmentStart(patternIndex: Int, nextOccurrence: Int, errorState: ErrorState): Boolean {
       // uppercase should match either uppercase or a word start
       return !isUpperCase(patternIndex, errorState) ||
-             Character.isUpperCase(myName.charAt(nextOccurrence)) ||
-             NameUtilCore.isWordStart(myName, nextOccurrence) ||
-             // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
-             !myHasHumps && myMatchingMode != MatchingMode.MATCH_CASE;
+             Character.isUpperCase(myName.get(nextOccurrence)) ||
+             isWordStart(myName,
+                         nextOccurrence) ||  // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
+             !myHasHumps && myMatchingMode != MatchingMode.MATCH_CASE
     }
 
-    private boolean charEquals(int patternIndex, int nameIndex, boolean isIgnoreCase, boolean allowTypos, @NotNull ErrorState errorState) {
-      char patternChar = charAt(patternIndex, errorState);
-      char nameChar = myName.charAt(nameIndex);
-      int length = myName.length();
+    fun charEquals(patternIndex: Int, nameIndex: Int, isIgnoreCase: Boolean, allowTypos: Boolean, errorState: ErrorState): Boolean {
+      val patternChar = charAt(patternIndex, errorState)
+      val nameChar = myName.get(nameIndex)
+      val length = myName.length
 
       if (patternChar == nameChar || isIgnoreCase && equalsIgnoreCase(patternIndex, errorState, nameChar)) {
-        return true;
+        return true
       }
 
-      if (!myAllowTypos || !allowTypos) return false;
+      if (!myAllowTypos || !allowTypos) return false
 
-      if (errorState.countErrors(0, patternIndex) > 0) return false;
-      Error prevError = errorState.getError(patternIndex - 1);
-      if (prevError == SwapError.instance) {
-        return false;
+      if (errorState.countErrors(0, patternIndex) > 0) return false
+      val prevError = errorState.getError(patternIndex - 1)
+      if (prevError === SwapError.Companion.instance) {
+        return false
       }
 
-      char leftMiss = leftMiss(patternChar);
-      if (leftMiss != 0) {
+      val leftMiss: Char = leftMiss(patternChar)
+      if (leftMiss.code != 0) {
         if (leftMiss == nameChar ||
-            isIgnoreCase && (AsciiUtils.toLowerAscii(leftMiss) == nameChar || AsciiUtils.toUpperAscii(leftMiss) == nameChar)) {
-          errorState.addError(patternIndex, new TypoError(leftMiss));
-          return true;
+            isIgnoreCase && (toLowerAscii(leftMiss) == nameChar || toUpperAscii(leftMiss) == nameChar)
+        ) {
+          errorState.addError(patternIndex, TypoError(leftMiss))
+          return true
         }
       }
 
-      char rightMiss = rightMiss(patternChar);
-      if (rightMiss != 0) {
+      val rightMiss: Char = rightMiss(patternChar)
+      if (rightMiss.code != 0) {
         if (rightMiss == nameChar ||
-            isIgnoreCase && (AsciiUtils.toLowerAscii(rightMiss) == nameChar || AsciiUtils.toUpperAscii(rightMiss) == nameChar)) {
-          errorState.addError(patternIndex, new TypoError(rightMiss));
-          return true;
+            isIgnoreCase && (toLowerAscii(rightMiss) == nameChar || toUpperAscii(rightMiss) == nameChar)
+        ) {
+          errorState.addError(patternIndex, TypoError(rightMiss))
+          return true
         }
       }
 
       if (patternLength(errorState) > patternIndex + 1 && length > nameIndex + 1) {
-        char nextNameChar = myName.charAt(nameIndex + 1);
-        char nextPatternChar = charAt(patternIndex + 1, errorState);
+        val nextNameChar = myName.get(nameIndex + 1)
+        val nextPatternChar = charAt(patternIndex + 1, errorState)
 
         if ((patternChar == nextNameChar || isIgnoreCase && equalsIgnoreCase(patternIndex, errorState, nextNameChar)) &&
-            (nextPatternChar == nameChar || isIgnoreCase && equalsIgnoreCase(patternIndex + 1, errorState, nameChar))) {
-          errorState.addError(patternIndex, SwapError.instance);
-          return true;
+            (nextPatternChar == nameChar || isIgnoreCase && equalsIgnoreCase(patternIndex + 1, errorState, nameChar))
+        ) {
+          errorState.addError(patternIndex, SwapError.Companion.instance)
+          return true
         }
       }
 
       if (length > nameIndex + 1) {
-        char nextNameChar = myName.charAt(nameIndex + 1);
+        val nextNameChar = myName.get(nameIndex + 1)
 
         if (patternChar == nextNameChar || isIgnoreCase && equalsIgnoreCase(patternIndex, errorState, nextNameChar)) {
-          errorState.addError(patternIndex, new MissError(nameChar));
-          return true;
+          errorState.addError(patternIndex, MissError(nameChar))
+          return true
         }
       }
 
-      return false;
+      return false
     }
 
-    private @Nullable FList<TextRange> matchFragment(int patternIndex,
-                                                     int nameIndex,
-                                                     @NotNull ErrorState errorState) {
-      Fragment fragment = maxMatchingFragment(patternIndex, nameIndex, errorState);
-      return fragment == null ? null : matchInsideFragment(patternIndex, nameIndex, fragment);
+    fun matchFragment(
+      patternIndex: Int,
+      nameIndex: Int,
+      errorState: ErrorState
+    ): FList<TextRange>? {
+      val fragment = maxMatchingFragment(patternIndex, nameIndex, errorState)
+      return if (fragment == null) null else matchInsideFragment(patternIndex, nameIndex, fragment)
     }
 
-    private @Nullable Fragment maxMatchingFragment(int patternIndex, int nameIndex, @NotNull ErrorState baseErrorState) {
-      ErrorState errorState = baseErrorState.deriveFrom(patternIndex);
+    fun maxMatchingFragment(patternIndex: Int, nameIndex: Int, baseErrorState: ErrorState): Fragment? {
+      val errorState = baseErrorState.deriveFrom(patternIndex)
 
       if (!isFirstCharMatching(nameIndex, patternIndex, errorState)) {
-        return null;
+        return null
       }
 
-      int i = 1;
-      boolean ignoreCase = myMatchingMode != MatchingMode.MATCH_CASE;
-      while (nameIndex + i < myName.length() && patternIndex + i < patternLength(errorState)) {
+      var i = 1
+      val ignoreCase = myMatchingMode != MatchingMode.MATCH_CASE
+      while (nameIndex + i < myName.length && patternIndex + i < patternLength(errorState)) {
         if (!charEquals(patternIndex + i, nameIndex + i, ignoreCase, true, errorState)) {
           if (Character.isDigit(charAt(patternIndex + i, errorState)) && Character.isDigit(charAt(patternIndex + i - 1, errorState))) {
-            return null;
+            return null
           }
-          break;
+          break
         }
-        i++;
+        i++
       }
-      return new Fragment(i, errorState);
+      return Fragment(i, errorState)
     }
 
     // we've found the longest fragment matching pattern and name
-    private @Nullable FList<TextRange> matchInsideFragment(int patternIndex,
-                                             int nameIndex,
-                                             @NotNull Fragment fragment) {
+    fun matchInsideFragment(
+      patternIndex: Int,
+      nameIndex: Int,
+      fragment: Fragment
+    ): FList<TextRange>? {
       // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
-      int minFragment = isMiddleMatch(patternIndex, nameIndex, fragment.getErrorState())
-                        ? 3 : 1;
+      val minFragment = if (isMiddleMatch(patternIndex, nameIndex, fragment.errorState))
+        3
+      else
+        1
 
-      FList<TextRange> camelHumpRanges = improveCamelHumps(patternIndex, nameIndex, fragment.getLength(), minFragment, fragment.getErrorState());
+      val camelHumpRanges = improveCamelHumps(patternIndex, nameIndex,
+                                              fragment.length, minFragment,
+                                              fragment.errorState)
       if (camelHumpRanges != null) {
-        return camelHumpRanges;
+        return camelHumpRanges
       }
 
-      return findLongestMatchingPrefix(patternIndex, nameIndex, fragment.getLength(), minFragment, fragment.getErrorState());
+      return findLongestMatchingPrefix(patternIndex, nameIndex, fragment.length, minFragment, fragment.errorState)
     }
 
-    private boolean isMiddleMatch(int patternIndex, int nameIndex, @NotNull ErrorState errorState) {
+    fun isMiddleMatch(patternIndex: Int, nameIndex: Int, errorState: ErrorState): Boolean {
       return isPatternChar(patternIndex - 1, '*', errorState) && !isWildcard(patternIndex + 1) &&
-             Character.isLetterOrDigit(myName.charAt(nameIndex)) && !NameUtilCore.isWordStart(myName, nameIndex);
+             Character.isLetterOrDigit(myName.get(nameIndex)) && !isWordStart(myName, nameIndex)
     }
 
-    private @Nullable FList<TextRange> findLongestMatchingPrefix(int patternIndex,
-                                                                 int nameIndex,
-                                                                 int fragmentLength, int minFragment,
-                                                                 @NotNull ErrorState errorState) {
+    fun findLongestMatchingPrefix(
+      patternIndex: Int,
+      nameIndex: Int,
+      fragmentLength: Int, minFragment: Int,
+      errorState: ErrorState
+    ): FList<TextRange>? {
       if (patternIndex + fragmentLength >= patternLength(errorState)) {
-        int errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength);
-        if (errors == fragmentLength) return null;
-        return FList.singleton(new Range(nameIndex, nameIndex + fragmentLength, errors));
+        val errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength)
+        if (errors == fragmentLength) return null
+        return FList.singleton<TextRange?>(Range(nameIndex, nameIndex + fragmentLength, errors))
       }
 
       // try to match the remainder of pattern with the remainder of name
       // it may not succeed with the longest matching fragment, then try shorter matches
-      for (int i = fragmentLength; i >= minFragment || isWildcard(patternIndex + i); i--) {
-        ErrorState derivedErrorState = errorState.deriveFrom(patternIndex + i);
-        FList<TextRange> ranges = isWildcard(patternIndex + i) ?
-                              matchWildcards(patternIndex + i, nameIndex + i, derivedErrorState) :
-                              matchSkippingWords(patternIndex + i, nameIndex + i, false, derivedErrorState);
+      var i = fragmentLength
+      while (i >= minFragment || isWildcard(patternIndex + i)) {
+        val derivedErrorState = errorState.deriveFrom(patternIndex + i)
+        val ranges = if (isWildcard(patternIndex + i)) matchWildcards(patternIndex + i, nameIndex + i, derivedErrorState)
+        else matchSkippingWords(patternIndex + i, nameIndex + i, false, derivedErrorState)
         if (ranges != null) {
-          int errors = errorState.countErrors(patternIndex, patternIndex + i);
-          if (errors == i) return null;
-          return prependRange(ranges, new Range(nameIndex, nameIndex + i, errors));
+          val errors = errorState.countErrors(patternIndex, patternIndex + i)
+          if (errors == i) return null
+          return prependRange(ranges, Range(nameIndex, nameIndex + i, errors))
         }
+        i--
       }
-      return null;
+      return null
     }
 
     /**
      * When pattern is "CU" and the name is "CurrentUser", we already have a prefix "Cu" that matches,
      * but we try to find uppercase "U" later in name for better matching degree
      */
-    private @Nullable FList<TextRange> improveCamelHumps(int patternIndex,
-                                           int nameIndex,
-                                           int maxFragment,
-                                           int minFragment,
-                                           @NotNull ErrorState errorState) {
-      for (int i = minFragment; i < maxFragment; i++) {
+    fun improveCamelHumps(
+      patternIndex: Int,
+      nameIndex: Int,
+      maxFragment: Int,
+      minFragment: Int,
+      errorState: ErrorState
+    ): FList<TextRange>? {
+      for (i in minFragment..<maxFragment) {
         if (isUppercasePatternVsLowercaseNameChar(patternIndex + i, nameIndex + i, errorState)) {
-          FList<TextRange> ranges = findUppercaseMatchFurther(patternIndex + i, nameIndex + i, errorState.deriveFrom(patternIndex + i));
+          val ranges = findUppercaseMatchFurther(patternIndex + i, nameIndex + i, errorState.deriveFrom(patternIndex + i))
           if (ranges != null) {
-            int errors = errorState.countErrors(patternIndex, patternIndex + i);
-            if (errors == i) return null;
-            return prependRange(ranges, new Range(nameIndex, nameIndex + i, errors));
+            val errors = errorState.countErrors(patternIndex, patternIndex + i)
+            if (errors == i) return null
+            return prependRange(ranges, Range(nameIndex, nameIndex + i, errors))
           }
         }
       }
-      return null;
+      return null
     }
 
-    private boolean isUppercasePatternVsLowercaseNameChar(int patternIndex, int nameIndex, @NotNull ErrorState errorState) {
-      return isUpperCase(patternIndex, errorState) && !charEquals(patternIndex, nameIndex, false, false, errorState);
+    fun isUppercasePatternVsLowercaseNameChar(patternIndex: Int, nameIndex: Int, errorState: ErrorState): Boolean {
+      return isUpperCase(patternIndex, errorState) && !charEquals(patternIndex, nameIndex, false, false, errorState)
     }
 
-    private @Nullable FList<TextRange> findUppercaseMatchFurther(int patternIndex,
-                                                                 int nameIndex,
-                                                                 @NotNull ErrorState errorState) {
-      int nextWordStart = indexOfWordStart(patternIndex, nameIndex, errorState);
-      return matchWildcards(patternIndex, nextWordStart, errorState.deriveFrom(patternIndex));
+    fun findUppercaseMatchFurther(
+      patternIndex: Int,
+      nameIndex: Int,
+      errorState: ErrorState
+    ): FList<TextRange>? {
+      val nextWordStart = indexOfWordStart(patternIndex, nameIndex, errorState)
+      return matchWildcards(patternIndex, nextWordStart, errorState.deriveFrom(patternIndex))
     }
 
-    private boolean isFirstCharMatching(int nameIndex, int patternIndex, @NotNull ErrorState errorState) {
-      if (nameIndex >= myName.length()) return false;
+    fun isFirstCharMatching(nameIndex: Int, patternIndex: Int, errorState: ErrorState): Boolean {
+      if (nameIndex >= myName.length) return false
 
-      boolean ignoreCase = myMatchingMode != MatchingMode.MATCH_CASE;
-      if (!charEquals(patternIndex, nameIndex, ignoreCase, true, errorState)) return false;
+      val ignoreCase = myMatchingMode != MatchingMode.MATCH_CASE
+      if (!charEquals(patternIndex, nameIndex, ignoreCase, true, errorState)) return false
 
-      char patternChar = charAt(patternIndex, errorState);
+      val patternChar = charAt(patternIndex, errorState)
 
       if (myMatchingMode == MatchingMode.FIRST_LETTER &&
           (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) &&
-          hasCase(patternChar) &&
-          Character.isUpperCase(patternChar) != Character.isUpperCase(myName.charAt(0))) {
-        return false;
+          hasCase(patternChar) && Character.isUpperCase(patternChar) != Character.isUpperCase(myName.get(0))
+      ) {
+        return false
       }
-      return true;
+      return true
     }
 
-    private static boolean hasCase(char patternChar) {
-      return Character.isUpperCase(patternChar) || Character.isLowerCase(patternChar);
+    fun isPatternChar(patternIndex: Int, c: Char, errorState: ErrorState): Boolean {
+      return patternIndex >= 0 && patternIndex < patternLength(errorState) && charAt(patternIndex, errorState) == c
     }
 
-    private boolean isPatternChar(int patternIndex, char c, @NotNull ErrorState errorState) {
-      return patternIndex >= 0 && patternIndex < patternLength(errorState) && charAt(patternIndex, errorState) == c;
-    }
-
-    private int indexOfWordStart(int patternIndex, int startFrom, @NotNull ErrorState errorState) {
-      if (startFrom >= myName.length() ||
-          myHasHumps && isLowerCase(patternIndex, errorState) && !(patternIndex > 0 && isWordSeparator(patternIndex - 1, errorState))) {
-        return -1;
+    fun indexOfWordStart(patternIndex: Int, startFrom: Int, errorState: ErrorState): Int {
+      if (startFrom >= myName.length ||
+          myHasHumps && isLowerCase(patternIndex, errorState) && !(patternIndex > 0 && isWordSeparator(patternIndex - 1, errorState))
+      ) {
+        return -1
       }
-      int nextWordStart = startFrom;
+      var nextWordStart = startFrom
       while (true) {
-        nextWordStart = nextWord(myName, nextWordStart, isAsciiName);
-        if (nextWordStart >= myName.length()) {
-          return -1;
+        nextWordStart = nextWord(myName, nextWordStart, isAsciiName)
+        if (nextWordStart >= myName.length) {
+          return -1
         }
         if (charEquals(patternIndex, nextWordStart, true, true, errorState)) {
-          return nextWordStart;
+          return nextWordStart
         }
       }
     }
 
-    private int indexOfIgnoreCase(int fromIndex, int patternIndex, @NotNull ErrorState errorState) {
-      char p = charAt(patternIndex, errorState);
+    fun indexOfIgnoreCase(fromIndex: Int, patternIndex: Int, errorState: ErrorState): Int {
+      val p = charAt(patternIndex, errorState)
       if (isAsciiName && Strings.isAscii(p)) {
-        int i = indexIgnoringCaseAscii(fromIndex, p);
-        if (i != -1) return i;
+        val i = indexIgnoringCaseAscii(fromIndex, p)
+        if (i != -1) return i
 
         if (myAllowTypos) {
-          int leftMiss = indexIgnoringCaseAscii(fromIndex, leftMiss(p));
-          if (leftMiss != -1) return leftMiss;
+          val leftMiss = indexIgnoringCaseAscii(fromIndex, leftMiss(p))
+          if (leftMiss != -1) return leftMiss
 
-          int rightMiss = indexIgnoringCaseAscii(fromIndex, rightMiss(p));
-          if (rightMiss != -1) return rightMiss;
+          val rightMiss = indexIgnoringCaseAscii(fromIndex, rightMiss(p))
+          if (rightMiss != -1) return rightMiss
         }
 
-        return -1;
+        return -1
       }
-      return Strings.indexOfIgnoreCase(myName, p, fromIndex);
+      return Strings.indexOfIgnoreCase(myName, p, fromIndex)
     }
 
-    private int indexIgnoringCaseAscii(int fromIndex, char p) {
-      char pUpper = AsciiUtils.toUpperAscii(p);
-      char pLower = AsciiUtils.toLowerAscii(p);
-      for (int i = fromIndex; i < myName.length(); i++) {
-        char c = myName.charAt(i);
-        if (c == p || AsciiUtils.toUpperAscii(c) == pUpper || AsciiUtils.toLowerAscii(c) == pLower) {
-          return i;
+    fun indexIgnoringCaseAscii(fromIndex: Int, p: Char): Int {
+      val pUpper = toUpperAscii(p)
+      val pLower = toLowerAscii(p)
+      for (i in fromIndex..<myName.length) {
+        val c = myName.get(i)
+        if (c == p || toUpperAscii(c) == pUpper || toLowerAscii(c) == pLower) {
+          return i
         }
       }
-      return -1;
+      return -1
+    }
+
+    companion object {
+      private fun isUpperCaseOrDigit(p: Char): Boolean {
+        return Character.isUpperCase(p) || Character.isDigit(p)
+      }
+
+      private fun hasCase(patternChar: Char): Boolean {
+        return Character.isUpperCase(patternChar) || Character.isLowerCase(patternChar)
+      }
     }
   }
 
-  private boolean isWildcard(int patternIndex) {
-    if (patternIndex >= 0 && patternIndex < myPattern.length) {
-      char pc = myPattern[patternIndex];
-      return pc == ' ' || pc == '*';
+  private fun isWildcard(patternIndex: Int): Boolean {
+    if (patternIndex >= 0 && patternIndex < myPattern.size) {
+      val pc = myPattern[patternIndex]
+      return pc == ' ' || pc == '*'
     }
-    return false;
+    return false
   }
 
-  @Override
-  public @NonNls String toString() {
-    return "TypoTolerantMatcher{myPattern=" + new String(myPattern) + ", myOptions=" + myMatchingMode + '}';
+  @NonNls
+  override fun toString(): @NonNls String {
+    return "TypoTolerantMatcher{myPattern=" + String(myPattern) + ", myMatchingMode=" + myMatchingMode + '}'
   }
 
-  private record ErrorWithIndex(int index, Error error) {}
+  @JvmRecord
+  private data class ErrorWithIndex(val index: Int, val error: Error?)
 
-  private static class ErrorState {
-    private final @Nullable ErrorState myBase;
-    private final int myDeriveIndex;
+  private class ErrorState @JvmOverloads constructor(private val myBase: ErrorState? = null, private val myDeriveIndex: Int = 0) {
+    private var myAffected: BitSet? = null
+    private var myAllAffectedAfter = Int.Companion.MAX_VALUE
+    private var myErrors: MutableList<ErrorWithIndex>? = null
 
-    private BitSet myAffected;
-    private int myAllAffectedAfter = Integer.MAX_VALUE;
-    private List<ErrorWithIndex> myErrors;
+    private var myPattern: CharArray?
 
-    private char[] myPattern;
-
-    ErrorState(@Nullable ErrorState base, int deriveIndex) {
-      myBase = base;
-      myDeriveIndex = deriveIndex;
+    fun deriveFrom(index: Int): ErrorState {
+      return ErrorState(this, index)
     }
 
-    ErrorState() {
-      this(null, 0);
-    }
-
-    @NotNull
-    ErrorState deriveFrom(int index) {
-      return new ErrorState(this, index);
-    }
-
-    void addError(int index, @NotNull Error error) {
+    fun addError(index: Int, error: Error) {
       if (myErrors == null) {
-        myErrors = new SmartList<>();
-        myAffected = new BitSet();
+        myErrors = SmartList<ErrorWithIndex>()
+        myAffected = BitSet()
       }
-      ErrorWithIndex errorWithIndex = new ErrorWithIndex(index, error);
-      myErrors.add(errorWithIndex);
-      updateAffected(index, error);
+      val errorWithIndex = ErrorWithIndex(index, error)
+      myErrors!!.add(errorWithIndex)
+      updateAffected(index, error)
 
       if (myPattern != null) {
-        myPattern = applyError(myPattern, errorWithIndex);
+        myPattern = Companion.applyError(myPattern!!, errorWithIndex)
       }
     }
 
-    private void updateAffected(int index, @NotNull Error error) {
-      myAffected.set(index);
-      if (error instanceof SwapError) {
-        myAffected.set(index + 1);
+    fun updateAffected(index: Int, error: Error) {
+      myAffected!!.set(index)
+      if (error is SwapError) {
+        myAffected!!.set(index + 1)
       }
-      else if (error instanceof MissError) {
-        myAllAffectedAfter = Math.min(index, myAllAffectedAfter);
+      else if (error is MissError) {
+        myAllAffectedAfter = min(index, myAllAffectedAfter)
       }
     }
 
-    int countErrors(int start, int end) {
-      int errors = 0;
+    fun countErrors(start: Int, end: Int): Int {
+      var errors = 0
       if (myBase != null && start < myDeriveIndex) {
-        errors += myBase.countErrors(start, myDeriveIndex);
+        errors += myBase.countErrors(start, myDeriveIndex)
       }
 
       if (myErrors != null) {
-        for (ErrorWithIndex error : myErrors) {
+        for (error in myErrors) {
           if (start <= error.index && error.index < end) {
-            errors++;
+            errors++
           }
         }
       }
 
-      return errors;
+      return errors
     }
 
-    public char getChar(char[] pattern, int index) {
+    fun getChar(pattern: CharArray, index: Int): Char {
       if (myPattern == null) {
-        myPattern = applyErrors(pattern.clone(), Integer.MAX_VALUE);
+        myPattern = applyErrors(pattern.clone(), Int.Companion.MAX_VALUE)
       }
 
-      return myPattern[index];
+      return myPattern!![index]
     }
 
-    private char[] applyErrors(char[] pattern, int upToIndex) {
+    fun applyErrors(pattern: CharArray, upToIndex: Int): CharArray {
+      var pattern = pattern
       if (myBase != null) {
-        pattern = myBase.applyErrors(pattern, Math.min(myDeriveIndex, upToIndex));
+        pattern = myBase.applyErrors(pattern, min(myDeriveIndex, upToIndex))
       }
 
       if (myErrors != null) {
-        for (ErrorWithIndex error : myErrors) {
+        for (error in myErrors) {
           if (error.index < upToIndex) {
-            pattern = applyError(pattern, error);
+            pattern = applyError(pattern, error)!!
           }
         }
       }
 
-      return pattern;
+      return pattern
     }
 
-    private static char[] applyError(char[] pattern, ErrorWithIndex error) {
-      if (error.error instanceof TypoError(char correctChar)) {
-        pattern[error.index] = correctChar;
-        return pattern;
-      }
-      else if (error.error instanceof SwapError) {
-        int index = error.index;
-        char c = pattern[index];
-        pattern[index] = pattern[index + 1];
-        pattern[index + 1] = c;
-        return pattern;
-      }
-      else if (error.error instanceof MissError(char missedChar)) {
-        return ArrayUtil.insert(pattern, error.index, missedChar);
-      }
-
-      return pattern;
+    fun affects(index: Int): Boolean {
+      return localAffects(index) || (myBase != null && myBase.affects(index))
     }
 
-    public boolean affects(final int index) {
-      return localAffects(index) || (myBase != null && myBase.affects(index));
+    fun localAffects(index: Int): Boolean {
+      return index >= myAllAffectedAfter || myAffected != null && myAffected!!.get(index)
     }
 
-    private boolean localAffects(int index) {
-      return index >= myAllAffectedAfter || myAffected != null && myAffected.get(index);
-    }
-
-    public Error getError(int i) {
-      if (myErrors != null && myAffected.get(i)) {
-        for (ErrorWithIndex error : myErrors) {
-          if (error.index == i) return error.error;
+    fun getError(i: Int): Error? {
+      if (myErrors != null && myAffected!!.get(i)) {
+        for (error in myErrors) {
+          if (error.index == i) return error.error
         }
       }
 
       if (myBase != null && myDeriveIndex > i) {
-        return myBase.getError(i);
+        return myBase.getError(i)
       }
 
-      return null;
+      return null
     }
 
-    private int numMisses(int end) {
-      int numMisses = 0;
+    fun numMisses(end: Int): Int {
+      var numMisses = 0
       if (myErrors != null && end > 0) {
-        for (ErrorWithIndex error : myErrors) {
-          if (error.index < end && error.error instanceof MissError) {
-            numMisses++;
+        for (error in myErrors) {
+          if (error.index < end && error.error is MissError) {
+            numMisses++
           }
         }
       }
-      return numMisses + (myBase == null ? 0 : myBase.numMisses(myDeriveIndex));
+      return numMisses + (if (myBase == null) 0 else myBase.numMisses(myDeriveIndex))
     }
 
-    public int length(char[] pattern) {
+    fun length(pattern: CharArray): Int {
       if (myPattern != null) {
-        return myPattern.length;
+        return myPattern!!.size
       }
-      return pattern.length + numMisses(Integer.MAX_VALUE);
+      return pattern.size + numMisses(Int.Companion.MAX_VALUE)
+    }
+
+    companion object {
+      private fun applyError(pattern: CharArray, error: ErrorWithIndex): CharArray? {
+        if (error.error is) {
+          pattern[error.index] = correctChar
+          return pattern
+        }
+        else if (error.error is SwapError) {
+          val index = error.index
+          val c = pattern[index]
+          pattern[index] = pattern[index + 1]
+          pattern[index + 1] = c
+          return pattern
+        }
+        else if (error.error is) {
+          return ArrayUtil.insert(pattern, error.index, missedChar)
+        }
+
+        return pattern
+      }
     }
   }
 
-  private sealed interface Error { }
+  private interface Error
 
-  private record TypoError(char correctChar) implements Error {}
-  private record SwapError() implements Error {
-    public static final SwapError instance = new SwapError();
-  }
-  private record MissError(char missedChar) implements Error {}
-
-  private static class Fragment {
-    private final int myLength;
-    private final ErrorState myErrorState;
-
-    Fragment(int length, @NotNull ErrorState errorState) {
-      myLength = length;
-      myErrorState = errorState;
+  @JvmRecord
+  private data class TypoError(val correctChar: Char) : Error
+  private class SwapError : Error {
+    companion object {
+      val instance: SwapError = SwapError()
     }
-
-    int getLength() {return myLength;}
-
-    @NotNull
-    ErrorState getErrorState() {return myErrorState;}
   }
 
-  private static class Range extends TextRange {
-    private final int myErrorCount;
+  @JvmRecord
+  private data class MissError(val missedChar: Char) : Error
 
-    Range(int startOffset, int endOffset, int errorCount) {
-      super(startOffset, endOffset);
-      myErrorCount = errorCount;
-    }
+  private class Fragment(val length: Int, val errorState: ErrorState)
 
-    public int getErrorCount() {
-      return myErrorCount;
-    }
-
-    @Override
-    public @NotNull Range shiftRight(int delta) {
-      if (delta == 0) return this;
-      return new Range(getStartOffset() + delta, getEndOffset() + delta, getErrorCount());
+  private class Range(startOffset: Int, endOffset: Int, val errorCount: Int) : TextRange(startOffset, endOffset) {
+    override fun shiftRight(delta: Int): Range {
+      if (delta == 0) return this
+      return Range(getStartOffset() + delta, getEndOffset() + delta, this.errorCount)
     }
   }
 
 
-  private static final char[][] keyboard = {
-    {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'},
-    {'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'},
-    {'z', 'x', 'c', 'v', 'b', 'n', 'm'}
-  };
+  /**
+   * Constructs a matcher by a given pattern.
+   * @param pattern the pattern
+   * @param myMatchingMode matching mode
+   * @param myHardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
+   * Need either an explicit uppercase letter or the same separator character in prefix
+   */
+  init {
+    myPattern = Strings.trimEnd(pattern, "* ").toCharArray()
+    isLowerCase = BooleanArray(myPattern.size)
+    isUpperCase = BooleanArray(myPattern.size)
+    isWordSeparator = BooleanArray(myPattern.size)
+    toUpperCase = CharArray(myPattern.size)
+    toLowerCase = CharArray(myPattern.size)
+    val meaningful = StringBuilder()
+    for (k in myPattern.indices) {
+      val c = myPattern[k]
+      isLowerCase[k] = Character.isLowerCase(c)
+      isUpperCase[k] = Character.isUpperCase(c)
+      isWordSeparator[k] = isWordSeparator(c)
+      toUpperCase[k] = Strings.toUpperCase(c)
+      toLowerCase[k] = Strings.toLowerCase(c)
+      if (!isWildcard(k)) {
+        meaningful.append(toLowerCase[k])
+        meaningful.append(toUpperCase[k])
+      }
+    }
+    var i = 0
+    while (isWildcard(i)) i++
+    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i, isLowerCase)
+    myHasSeparators = hasFlag(i, isWordSeparator)
+    myHasDots = hasDots(i)
+    myMeaningfulCharacters = meaningful.toString().toCharArray()
+    myMinNameLength = myMeaningfulCharacters.size / 2
+  }
 
-  private static char leftMiss(char aChar) {
-    boolean isUpperCase = AsciiUtils.isUpperAscii(aChar);
-    char lc = isUpperCase ? AsciiUtils.toLowerAscii(aChar) : aChar;
+  companion object {
+    private fun isWordSeparator(c: Char): Boolean {
+      return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':' || c == '+' || c == '.'
+    }
 
-    for (char[] line : keyboard) {
-      for (int j = 0; j < line.length; j++) {
-        char c = line[j];
-        if (c == lc) {
-          if (j > 0) {
-            return isUpperCase ? AsciiUtils.toUpperAscii(line[j - 1]) : line[j - 1];
-          }
-          else {
-            return 0;
+    private fun nextWord(name: String, start: Int, isAsciiName: Boolean): Int {
+      if (start < name.length() && Character.isDigit(name.charAt(start))) {
+        return start + 1 //treat each digit as a separate hump
+      }
+      if (isAsciiName) {
+        return nextWordAscii(name, start)
+      }
+      return nextWord(name, start)
+    }
+
+    private fun prependRange(ranges: FList<TextRange>, range: Range): FList<TextRange> {
+      val head = (ranges.getHead() as Range?)
+      if (head != null && head.getStartOffset() == range.getEndOffset()) {
+        return ranges.getTail().prepend(Range(range.getStartOffset(), head.getEndOffset(), range.errorCount + head.errorCount))
+      }
+      return ranges.prepend(range)
+    }
+
+    private val keyboard = arrayOf<CharArray>(charArrayOf('q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'),
+                                              charArrayOf('a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'),
+                                              charArrayOf('z', 'x', 'c', 'v', 'b', 'n', 'm')
+    )
+
+    private fun leftMiss(aChar: Char): Char {
+      val isUpperCase = isUpperAscii(aChar)
+      val lc = if (isUpperCase) toLowerAscii(aChar) else aChar
+
+      for (line in keyboard) {
+        for (j in line.indices) {
+          val c = line[j]
+          if (c == lc) {
+            if (j > 0) {
+              return if (isUpperCase) toUpperAscii(line[j - 1]) else line[j - 1]
+            }
+            else {
+              return 0.toChar()
+            }
           }
         }
       }
+      return 0.toChar()
     }
-    return 0;
-  }
 
-  private static char rightMiss(char aChar) {
-    boolean isUpperCase = AsciiUtils.isUpperAscii(aChar);
-    char lc = isUpperCase ? AsciiUtils.toLowerAscii(aChar) : aChar;
+    private fun rightMiss(aChar: Char): Char {
+      val isUpperCase = isUpperAscii(aChar)
+      val lc = if (isUpperCase) toLowerAscii(aChar) else aChar
 
-    for (char[] line : keyboard) {
-      for (int j = 0; j < line.length; j++) {
-        char c = line[j];
-        if (c == lc) {
-          if (j + 1 < line.length) {
-            return isUpperCase ? AsciiUtils.toUpperAscii(line[j + 1]) : line[j + 1];
-          }
-          else {
-            return 0;
+      for (line in keyboard) {
+        for (j in line.indices) {
+          val c = line[j]
+          if (c == lc) {
+            if (j + 1 < line.size) {
+              return if (isUpperCase) toUpperAscii(line[j + 1]) else line[j + 1]
+            }
+            else {
+              return 0.toChar()
+            }
           }
         }
       }
+      return 0.toChar()
     }
-    return 0;
   }
 }
