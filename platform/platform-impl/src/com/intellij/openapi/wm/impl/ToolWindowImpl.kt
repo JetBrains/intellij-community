@@ -165,9 +165,11 @@ import kotlin.math.abs
               toolWindowManager.log().debug { "Invoking scheduled tool window $id bounds update" }
               toolWindowManager.movedOrResized(decorator)
             }
-            val updatedWindowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
-            this@ToolWindowImpl.windowInfo = updatedWindowInfo
-            toolWindowManager.log().debug { "Updated window info: $updatedWindowInfo" }
+            val updatedWindowInfo = toolWindowManager.getLayout().getInfo(getId())
+            if (updatedWindowInfo != null) {
+              this@ToolWindowImpl.windowInfo = updatedWindowInfo
+              toolWindowManager.log().debug { "Updated window info: $updatedWindowInfo" }
+            }
           }
         }
     }.cancelOnDispose(disposable)
