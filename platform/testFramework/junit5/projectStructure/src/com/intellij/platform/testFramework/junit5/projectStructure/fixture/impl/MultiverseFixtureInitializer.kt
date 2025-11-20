@@ -12,9 +12,9 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixtureInitializer
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import kotlin.io.path.Path
 
 @TestOnly
 internal class MultiverseFixtureInitializer(
@@ -30,18 +30,17 @@ internal class MultiverseFixtureInitializer(
     openProjectTask: OpenProjectTask = OpenProjectTask.build(),
     openAfterCreation: Boolean
   ): Project {
-    projectFixture = projectFixture(openProjectTask = openProjectTask, openAfterCreation = openAfterCreation)
+
+    val projectRootFixture = tempPathFixture()
+    projectRootPath = projectRootFixture.init()
+
+    projectFixture = projectFixture(pathFixture = projectRootFixture, openProjectTask = openProjectTask, openAfterCreation = openAfterCreation)
     val project = projectFixture.init()
-
-    projectRootPath = project.basePath?.let { Path(it) } ?: error("Project base path is not available")
-
-    val projectRootAsFixture = dirFixture(projectRootPath)
-    projectRootAsFixture.init()
 
     val builder = DirectoryBuilderBase("", structure)
     builder.init()
 
-    initializeChildren(builder, projectRootAsFixture)
+    initializeChildren(builder, projectRootFixture)
 
     return project
   }
