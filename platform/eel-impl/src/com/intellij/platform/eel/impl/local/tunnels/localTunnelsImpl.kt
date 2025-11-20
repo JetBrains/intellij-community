@@ -192,19 +192,22 @@ private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocket
     listenSocket = ApplicationManager.getApplication().service<MyService>().scope.launch(Dispatchers.IO + CoroutineName("eel socket accept")) {
       val selector = Selector.open()
       boundServerSocket.register(selector, SelectionKey.OP_ACCEPT)
-      while (selector.select(100) == 0) {  // 100 was taken just as a beautiful number with no research.
-        ensureActive()
-      }
-      selector.selectedKeys().clear()
 
       try {
-        val channel = boundServerSocket.accept()
-        logger.info("Connection from ${channel.socket().remoteSocketAddress}")
-        try {
-          _incomingConnections.send(SocketAdapter(channel))
-        }
-        catch (_: ClosedSendChannelException) {
-          channel.close()
+        while (isActive) {
+          while (selector.select(100) == 0) {  // 100 was taken just as a beautiful number with no research.
+            ensureActive()
+          }
+          selector.selectedKeys().clear()
+
+          val channel = boundServerSocket.accept()
+          logger.info("Connection from ${channel.socket().remoteSocketAddress}")
+          try {
+            _incomingConnections.send(SocketAdapter(channel))
+          }
+          catch (_: ClosedSendChannelException) {
+            channel.close()
+          }
         }
       }
       catch (e: IOException) {

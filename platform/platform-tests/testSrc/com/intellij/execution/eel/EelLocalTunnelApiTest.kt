@@ -70,16 +70,21 @@ class EelLocalTunnelApiTest {
   fun testServerListensForConnection(): Unit = timeoutRunBlocking(1.minutes) {
     val helper = clientExecutor.createBuilderToExecuteMain(localEel.exec).eelIt()
     val acceptor = localEel.tunnels.getAcceptorForRemotePort().eelIt()
-    helper.stdin.sendWholeText(acceptor.boundAddress.port.toString() + "\n")
-    val conn = acceptor.incomingConnections.receive()
     try {
-      val buff = ByteBuffer.allocate(1024)
-      conn.receiveChannel.receive(buff)
-      val fromServer = NetworkConstants.fromByteBuffer(buff.flip())
-      assertEquals(NetworkConstants.HELLO_FROM_CLIENT, fromServer)
+      helper.stdin.sendWholeText(acceptor.boundAddress.port.toString() + "\n")
+      val conn = acceptor.incomingConnections.receive()
+      try {
+        val buff = ByteBuffer.allocate(1024)
+        conn.receiveChannel.receive(buff)
+        val fromServer = NetworkConstants.fromByteBuffer(buff.flip())
+        assertEquals(NetworkConstants.HELLO_FROM_CLIENT, fromServer)
+      }
+      finally {
+        conn.close()
+      }
     }
     finally {
-      conn.close()
+        acceptor.close()
     }
   }
 
