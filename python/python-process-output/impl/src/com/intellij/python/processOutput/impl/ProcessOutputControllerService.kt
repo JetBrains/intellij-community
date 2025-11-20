@@ -26,6 +26,7 @@ import com.jetbrains.python.TraceContext
 import kotlin.collections.minus
 import kotlin.collections.plus
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -49,6 +50,11 @@ import org.jetbrains.jewel.foundation.lazy.tree.Tree
 import org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope
 import org.jetbrains.jewel.foundation.lazy.tree.TreeState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
+
+@ApiStatus.Internal
+object CoroutineNames {
+    const val EXIT_INFO_COLLECTOR: String = "ProcessOutput.ExitInfoCollector"
+}
 
 internal object ProcessOutputControllerServiceLimits {
     const val MAX_PROCESSES = 512
@@ -388,16 +394,17 @@ class ProcessOutputControllerService(
                     list
                         .filter { it.traceContext == NON_INTERACTIVE_ROOT_TRACE_CONTEXT }
                         .forEach { process ->
-                            backgroundObservingCoroutines += launch {
-                                process.exitInfo.collect {
-                                    val exitValue = it?.exitValue
-                                    if (exitValue != null && exitValue != 0) {
-                                        backgroundErrorProcesses.value += process.id
-                                    } else {
-                                        backgroundErrorProcesses.value -= process.id
+                            backgroundObservingCoroutines +=
+                                launch(CoroutineName(CoroutineNames.EXIT_INFO_COLLECTOR)) {
+                                    process.exitInfo.collect {
+                                        val exitValue = it?.exitValue
+                                        if (exitValue != null && exitValue != 0) {
+                                            backgroundErrorProcesses.value += process.id
+                                        } else {
+                                            backgroundErrorProcesses.value -= process.id
+                                        }
                                     }
                                 }
-                            }
                         }
                 }
         }
