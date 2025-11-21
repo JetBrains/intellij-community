@@ -15,7 +15,6 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.intellij.lang.xpath.xslt.run.XsltCommandLineState;
 import org.intellij.lang.xpath.xslt.run.XsltRunConfiguration;
 import org.intellij.plugins.xsltDebugger.impl.XsltDebugProcess;
@@ -46,21 +45,22 @@ public class XsltDebuggerRunner implements ProgramRunner<RunnerSettings> {
 
   private RunContentDescriptor createContentDescriptor(RunProfileState runProfileState, @NotNull ExecutionEnvironment environment)
     throws ExecutionException {
-    XDebugSession debugSession =
-      XDebuggerManager.getInstance(environment.getProject()).startSession(environment, new XDebugProcessStarter() {
-        @Override
-        public @NotNull XDebugProcess start(final @NotNull XDebugSession session) throws ExecutionException {
-          ACTIVE.set(Boolean.TRUE);
-          try {
-            final XsltCommandLineState c = (XsltCommandLineState)runProfileState;
-            final ExecutionResult result = runProfileState.execute(environment.getExecutor(), XsltDebuggerRunner.this);
-            return new XsltDebugProcess(session, result, c.getExtensionData().getUserData(XsltDebuggerExtension.VERSION));
-          }
-          finally {
-            ACTIVE.remove();
-          }
+    XDebugProcessStarter starter = new XDebugProcessStarter() {
+      @Override
+      public @NotNull XDebugProcess start(final @NotNull XDebugSession session) throws ExecutionException {
+        ACTIVE.set(Boolean.TRUE);
+        try {
+          final XsltCommandLineState c = (XsltCommandLineState)runProfileState;
+          final ExecutionResult result = runProfileState.execute(environment.getExecutor(), XsltDebuggerRunner.this);
+          return new XsltDebugProcess(session, result, c.getExtensionData().getUserData(XsltDebuggerExtension.VERSION));
         }
-      });
-    return ((XDebugSessionImpl)debugSession).getMockRunContentDescriptor();
+        finally {
+          ACTIVE.remove();
+        }
+      }
+    };
+    return XDebuggerManager.getInstance(environment.getProject()).newSessionBuilder(starter)
+      .environment(environment)
+      .startSession().getRunContentDescriptor();
   }
 }

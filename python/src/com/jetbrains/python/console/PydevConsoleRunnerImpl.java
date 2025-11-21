@@ -1269,54 +1269,58 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private XDebugSession connectToDebugger() throws ExecutionException {
     final ServerSocket serverSocket = PythonCommandLineState.createServerSocket();
 
-    return XDebuggerManager.getInstance(myProject).
-      startSessionAndShowTab(PyBundle.message("pydev.console.runner.python.console.debugger"), PythonParserIcons.PythonFile, null, true,
-                             new XDebugProcessStarter() {
-                               @Override
-                               public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
-                                 PythonDebugLanguageConsoleView debugConsoleView = new PythonDebugLanguageConsoleView(myProject, mySdk);
+    XDebugProcessStarter starter = new XDebugProcessStarter() {
+      @Override
+      public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
+        PythonDebugLanguageConsoleView debugConsoleView = new PythonDebugLanguageConsoleView(myProject, mySdk);
 
-                                 PyConsoleDebugProcessHandler consoleDebugProcessHandler =
-                                   new PyConsoleDebugProcessHandler(myProcessHandler);
+        PyConsoleDebugProcessHandler consoleDebugProcessHandler =
+          new PyConsoleDebugProcessHandler(myProcessHandler);
 
-                                 PyConsoleDebugProcess consoleDebugProcess =
-                                   new PyConsoleDebugProcess(session, serverSocket, debugConsoleView,
-                                                             consoleDebugProcessHandler);
+        PyConsoleDebugProcess consoleDebugProcess =
+          new PyConsoleDebugProcess(session, serverSocket, debugConsoleView,
+                                    consoleDebugProcessHandler);
 
-                                 PythonDebugConsoleCommunication<PyConsoleDebugProcess> communication =
-                                   PyDebugRunner
-                                     .initDebugConsole(myProject, consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler,
-                                                       session);
+        PythonDebugConsoleCommunication<PyConsoleDebugProcess> communication =
+          PyDebugRunner
+            .initDebugConsole(myProject, consoleDebugProcess, debugConsoleView, consoleDebugProcessHandler,
+                              session);
 
-                                 communication.addCommunicationListener(new ConsoleCommunicationListener() {
-                                   @Override
-                                   public void commandExecuted(boolean more) {
-                                     session.rebuildViews();
-                                   }
+        communication.addCommunicationListener(new ConsoleCommunicationListener() {
+          @Override
+          public void commandExecuted(boolean more) {
+            session.rebuildViews();
+          }
 
-                                   @Override
-                                   public void inputRequested() {
-                                   }
-                                 });
+          @Override
+          public void inputRequested() {
+          }
+        });
 
-                                 myPydevConsoleCommunication.setDebugCommunication(communication);
-                                 debugConsoleView.attachToProcess(consoleDebugProcessHandler);
+        myPydevConsoleCommunication.setDebugCommunication(communication);
+        debugConsoleView.attachToProcess(consoleDebugProcessHandler);
 
-                                 consoleDebugProcess.waitForNextConnection();
+        consoleDebugProcess.waitForNextConnection();
 
-                                 try {
-                                   consoleDebugProcess.connect(myPydevConsoleCommunication);
-                                 }
-                                 catch (Exception e) {
-                                   LOG.error(e); //TODO
-                                 }
+        try {
+          consoleDebugProcess.connect(myPydevConsoleCommunication);
+        }
+        catch (Exception e) {
+          LOG.error(e); //TODO
+        }
 
-                                 myProcessHandler
-                                   .notifyTextAvailable(PyBundle.message("pydev.console.debugger.connected"), ProcessOutputTypes.STDERR);
+        myProcessHandler
+          .notifyTextAvailable(PyBundle.message("pydev.console.debugger.connected"), ProcessOutputTypes.STDERR);
 
-                                 return consoleDebugProcess;
-                               }
-                             });
+        return consoleDebugProcess;
+      }
+    };
+    return XDebuggerManager.getInstance(myProject).newSessionBuilder(starter)
+      .sessionName(PyBundle.message("pydev.console.runner.python.console.debugger"))
+      .icon(PythonParserIcons.PythonFile)
+      .showToolWindowOnSuspendOnly(true)
+      .showTab(true)
+      .startSession().getSession();
   }
 
   @Override

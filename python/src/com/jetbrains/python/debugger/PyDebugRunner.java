@@ -227,31 +227,33 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   private @NotNull XDebugSession createXDebugSession(@NotNull ExecutionEnvironment environment,
                                                      PythonCommandLineState pyState,
                                                      ServerSocket serverSocket, ExecutionResult result) throws ExecutionException {
-    XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
-      startSession(environment, new XDebugProcessStarter() {
-        @Override
-        public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
-          pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
+    XDebugProcessStarter starter = new XDebugProcessStarter() {
+      @Override
+      public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
+        pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
 
-          createConsoleCommunication(environment.getProject(), result, pyDebugProcess, session);
-          return pyDebugProcess;
-        }
-      });
-    return session;
+        createConsoleCommunication(environment.getProject(), result, pyDebugProcess, session);
+        return pyDebugProcess;
+      }
+    };
+    return XDebuggerManager.getInstance(environment.getProject()).newSessionBuilder(starter)
+      .environment(environment)
+      .startSession().getSession();
   }
 
   private @NotNull XDebugSession createXDebugSession(@NotNull ExecutionEnvironment environment,
                                                      int serverPort, ExecutionResult result) throws ExecutionException {
-    XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
-      startSession(environment, new XDebugProcessStarter() {
-        @Override
-        public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
-          PyDebugProcess pyDebugProcess = createDebugProcess(session, serverPort, result);
-          createConsoleCommunication(environment.getProject(), result, pyDebugProcess, session);
-          return pyDebugProcess;
-        }
-      });
-    return session;
+    XDebugProcessStarter starter = new XDebugProcessStarter() {
+      @Override
+      public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
+        PyDebugProcess pyDebugProcess = createDebugProcess(session, serverPort, result);
+        createConsoleCommunication(environment.getProject(), result, pyDebugProcess, session);
+        return pyDebugProcess;
+      }
+    };
+    return XDebuggerManager.getInstance(environment.getProject()).newSessionBuilder(starter)
+      .environment(environment)
+      .startSession().getSession();
   }
 
   protected @NotNull PyDebugProcess createDebugProcess(@NotNull XDebugSession session,

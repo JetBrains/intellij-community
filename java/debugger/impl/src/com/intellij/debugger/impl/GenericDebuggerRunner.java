@@ -161,7 +161,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         DebugProcessImpl debugProcess = debuggerSession.getProcess();
-        XDebugSession session = XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
+        XDebugProcessStarter starter = new XDebugProcessStarter() {
           @Override
           public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
             XDebugSessionImpl sessionImpl = (XDebugSessionImpl)session;
@@ -173,8 +173,10 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             sessionImpl.setPauseActionSupported(true); // enable pause by default
             return JavaDebugProcess.create(session, debuggerSession);
           }
-        });
-        RunContentDescriptor descriptor = ((XDebugSessionImpl)session).getMockRunContentDescriptor();
+        };
+        RunContentDescriptor descriptor = XDebuggerManager.getInstance(env.getProject()).newSessionBuilder(starter)
+          .environment(env)
+          .startSession().getRunContentDescriptor();
         result.set(descriptor);
       }
       catch (ProcessCanceledException ignored) {

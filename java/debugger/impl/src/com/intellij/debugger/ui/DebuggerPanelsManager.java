@@ -18,7 +18,6 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,14 +43,17 @@ public final class DebuggerPanelsManager {
       return null;
     }
 
-    XDebugSession debugSession =
-      XDebuggerManager.getInstance(myProject).startSessionAndShowTab(modelEnvironment.getSessionName(), environment.getReuseContent(), new XDebugProcessStarter() {
-        @Override
-        public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
-          return JavaDebugProcess.create(session, debuggerSession);
-        }
-      });
-    return ((XDebugSessionImpl)debugSession).getMockRunContentDescriptor();
+    XDebugProcessStarter starter = new XDebugProcessStarter() {
+      @Override
+      public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
+        return JavaDebugProcess.create(session, debuggerSession);
+      }
+    };
+    return XDebuggerManager.getInstance(myProject).newSessionBuilder(starter)
+      .sessionName(modelEnvironment.getSessionName())
+      .contentToReuse(environment.getReuseContent())
+      .showTab(true)
+      .startSession().getRunContentDescriptor();
   }
 
   public static DebuggerPanelsManager getInstance(Project project) {

@@ -148,13 +148,15 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
     RunContentDescriptor result;
 
     try {
-      XDebugSession session = XDebuggerManager.getInstance(env.getProject()).startSession(env, new XDebugProcessStarter() {
+      XDebugProcessStarter starter = new XDebugProcessStarter() {
         @Override
         public @NotNull XDebugProcess start(@NotNull XDebugSession session) throws ExecutionException {
           return jvmProcessToDebug(session, state, env);
         }
-      });
-      result = ((XDebugSessionImpl)session).getMockRunContentDescriptor();
+      };
+      result = XDebuggerManager.getInstance(env.getProject()).newSessionBuilder(starter)
+        .environment(env)
+        .startSession().getRunContentDescriptor();
     }
     catch (ExecutionException e) {
       if (!e.getMessage().equals(ATTACH_VM_FAILED)) {
