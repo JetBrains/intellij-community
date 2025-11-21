@@ -1,23 +1,22 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.util.CurrentJavaVersion;
+import com.intellij.util.system.OS;
+import org.jetbrains.annotations.ApiStatus;
 
 public final class Patches {
   /**
    * See <a href="https://bugs.openjdk.org/browse/JDK-6322854">JDK-6322854</a>.
    * java.lang.NullPointerException: Failed to retrieve atom name.
    */
-  public static final boolean SUN_BUG_ID_6322854 = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
+  public static final boolean SUN_BUG_ID_6322854 = OS.isGenericUnix();
 
   /**
    * See <a href="https://bugs.openjdk.org/browse/JDK-4818143">JDK-4818143</a>.
-   * The bug is marked as fixed but it actually isn't - {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may hang
+   * The bug is marked as fixed, but it actually isn't - {@link java.awt.datatransfer.Clipboard#getContents(Object)} call may hang
    * for up to 10 seconds if clipboard owner is not responding.
    */
-  public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = SystemInfoRt.isUnix;
+  public static final boolean SLOW_GETTING_CLIPBOARD_CONTENTS = OS.CURRENT != OS.Windows;
 
   /**
    * Debugger hangs in trace mode with TRACE_SEND when method argument is a {@link com.sun.jdi.StringReference}
@@ -35,9 +34,8 @@ public final class Patches {
    */
   public static final boolean JDK_BUG_ID_8032832 = true;
 
-  /**
-   * <a href="https://bugs.openjdk.org/browse/JDK-8220231">JDK-8220231</a>
-   */
-  @ReviseWhenPortedToJDK("13")
-  public static final boolean TEXT_LAYOUT_IS_SLOW = CurrentJavaVersion.currentJavaVersion().feature == 12 && !SystemInfo.isJetBrainsJvm;
+  /** @deprecated obsolete */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public static final boolean TEXT_LAYOUT_IS_SLOW = false;
 }
