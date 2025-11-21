@@ -12,10 +12,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.frame.XDropFrameHandler;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XSuspendContext;
-import com.intellij.xdebugger.frame.XValueMarkerProvider;
+import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.mixedMode.XMixedModeDebugProcessExtension;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
@@ -27,6 +24,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.event.HyperlinkListener;
+import java.util.List;
 
 /**
  * Extend this class to provide debugging capabilities for a custom language/framework.
@@ -298,6 +296,14 @@ public abstract class XDebugProcess {
   @ApiStatus.Internal
   public @Nullable XDebugSessionEventsProvider getSessionEventsProvider() {
     return null;
+  }
+
+  /**
+   * Provide execution stacks corresponding to all the live threads in the debug process to the {@code container}.
+   */
+  @ApiStatus.Internal
+  public void computeRunningExecutionStacks(XSuspendContext.XExecutionStackContainer container) {
+    container.addExecutionStack(List.of(), true);
   }
 
   /**

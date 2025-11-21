@@ -92,7 +92,18 @@ interface XDebugSessionProxy {
   fun isTopFrameSelected(): Boolean
   fun hasSuspendContext(): Boolean
   fun isSteppingSuspendContext(): Boolean
+
+  /**
+   * Computes execution stacks corresponding to all the live threads in the debug process and adds them to the provided container
+   * if suspendContext is available.
+   */
   fun computeExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer)
+
+  /**
+   * Computes execution stacks corresponding to all the live threads in the debug process and adds them to the provided container.
+   * Uses [com.intellij.xdebugger.XDebugProcess.computeRunningExecutionStacks] on the backend and doesn't require suspendContext.
+   */
+  fun computeRunningExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer)
   fun createTabLayouter(): XDebugTabLayouter
   fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable)
   fun rebuildViews()
@@ -242,6 +253,10 @@ interface XDebugSessionProxy {
 
     override fun computeExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer) {
       session.suspendContext?.computeExecutionStacks(provideContainer())
+    }
+
+    override fun computeRunningExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer) {
+      session.debugProcess.computeRunningExecutionStacks(provideContainer())
     }
 
     override fun createTabLayouter(): XDebugTabLayouter = session.debugProcess.createTabLayouter()

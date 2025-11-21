@@ -19,10 +19,11 @@ import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.platform.util.coroutines.attachAsChildTo
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.FileColorManager
-import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.ThreeState
 import com.intellij.util.asDisposable
+import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -43,6 +44,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoVariant
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -189,12 +191,29 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
     }
   }
 
-  @OptIn(AwaitCancellationAndInvoke::class)
-  override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
-    return channelFlow {
-      val suspendContextModel = suspendContextId.findValue() ?: return@channelFlow
-      attachAsChildTo(suspendContextModel.coroutineScope)
+  override suspend fun computeRunningExecutionStacks(sessionId: XDebugSessionId): Flow<XExecutionStacksEvent> {
+    val session = sessionId.findValue() ?: return emptyFlow()
+    val scope = session.coroutineScope.childScopeCancelledOnSessionEvents("RunningExecutionStacksScope", session)
+    return createExecutionStacksEventFlow(session, scope) { container ->
+      session.debugProcess.computeRunningExecutionStacks(container)
+    }
+  }
 
+  override suspend fun computeExecutionStacks(suspendContextId: XSuspendContextId): Flow<XExecutionStacksEvent> {
+    val suspendContextModel = suspendContextId.findValue() ?: return emptyFlow()
+    val session = suspendContextModel.session
+    return createExecutionStacksEventFlow(session, suspendContextModel.coroutineScope) { container ->
+      suspendContextModel.suspendContext.computeExecutionStacks(container)
+    }
+  }
+
+  private fun createExecutionStacksEventFlow(
+    session: XDebugSessionImpl,
+    scope: CoroutineScope,
+    computeExecutionStacks: (XSuspendContext.XExecutionStackContainer) -> Unit
+  ) : Flow<XExecutionStacksEvent> {
+    return channelFlow {
+      attachAsChildTo(scope)
       val container = object : XSuspendContext.XExecutionStackContainer {
         @Volatile
         var obsolete = false
@@ -204,9 +223,8 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
         }
 
         override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
-          val session = suspendContextModel.session
           val stacks = executionStacks.map { stack ->
-            stack.toRpc(suspendContextModel.coroutineScope, session)
+            stack.toRpc(scope, session)
           }
           trySend(XExecutionStacksEvent.NewExecutionStacks(stacks, last))
           if (last) {
@@ -218,12 +236,25 @@ internal class BackendXDebugSessionApi : XDebugSessionApi {
           trySend(XExecutionStacksEvent.ErrorOccurred(errorMessage))
         }
       }
-      suspendContextModel.suspendContext.computeExecutionStacks(container)
+      computeExecutionStacks(container)
+
       awaitClose {
         container.obsolete = true
       }
     }.buffer(Channel.UNLIMITED)
   }
+
+  private fun CoroutineScope.childScopeCancelledOnSessionEvents(name: String, session: XDebugSessionImpl): CoroutineScope =
+    childScope(name).also { childScope ->
+      val listener = object : XDebugSessionListener {
+        override fun sessionPaused() { childScope.cancel() }
+
+        override fun sessionResumed() { childScope.cancel() }
+
+        override fun sessionStopped() { childScope.cancel() }
+      }
+      session.addSessionListener(listener, childScope.asDisposable())
+    }
 
   override suspend fun muteBreakpoints(sessionDataId: XDebugSessionDataId, muted: Boolean) {
     val session = sessionDataId.findValue()?.session ?: return

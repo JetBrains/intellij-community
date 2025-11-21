@@ -18,6 +18,7 @@ import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandl
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
 import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
+import com.intellij.platform.debugger.impl.frontend.frame.collectExecutionStackEvents
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
@@ -432,6 +433,15 @@ class FrontendXDebuggerSession private constructor(
 
   override fun computeExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer) {
     getCurrentSuspendContext()?.computeExecutionStacks(provideContainer())
+  }
+
+  override fun computeRunningExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer) {
+    coroutineScope.launch {
+      val container = provideContainer()
+      XDebugSessionApi.getInstance()
+        .computeRunningExecutionStacks(id)
+        .collectExecutionStackEvents(project, coroutineScope, container)
+    }
   }
 
   private fun getCurrentSuspendContext() = suspendContext.get()
