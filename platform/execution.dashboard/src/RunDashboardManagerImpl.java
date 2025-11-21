@@ -82,6 +82,11 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
+  public boolean isInitialized() {
+    return true;
+  }
+
+  @Override
   public void updateServiceRunContentDescriptor(@NotNull Content contentWithNewDescriptor, @NotNull RunContentDescriptor oldDescriptor) {
     RunContentDescriptorId oldDescriptorId = oldDescriptor.getId();
     if (oldDescriptorId == null) return;

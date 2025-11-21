@@ -70,6 +70,10 @@ public final class RunDashboardServiceViewContributor
   @Override
   public @NotNull @Unmodifiable List<FrontendRunConfigurationNode> getServices(@NotNull Project project) {
     if (!shouldEnableServicesViewInCurrentEnvironment()) return Collections.emptyList();
+    if (!RunDashboardManagerProxy.getInstance(project).isInitialized()) {
+      FrontendRunDashboardManager.getInstance(project).tryStartInitialization();
+      return ContainerUtil.emptyList();
+    }
 
     return ContainerUtil.map(FrontendRunDashboardManager.getInstance(project).getServicePresentations(),
                              value -> new FrontendRunConfigurationNode(project, value));
