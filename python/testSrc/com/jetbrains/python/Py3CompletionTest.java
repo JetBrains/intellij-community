@@ -580,7 +580,7 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
-    doTestVariantTypeText("plainDirectory/sample.py", "logging1", "plainDirectory");
+    doTestVariantTypeText("plainDirectory/sample.py", "logging", "plainDirectory");
   }
 
   // PY-46056
@@ -590,7 +590,7 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-46056
   public void testFromImportCompletionHintForSameDirectoryModuleInPlainDirectory() {
-    doTestVariantTypeText("plainDirectory/sample.py", "logging1", "plainDirectory");
+    doTestVariantTypeText("plainDirectory/sample.py", "logging", "plainDirectory");
   }
 
   private void doTestVariantTypeText(@NotNull String entryFilePath, @NotNull String variantName, @Nullable String typeText) {
