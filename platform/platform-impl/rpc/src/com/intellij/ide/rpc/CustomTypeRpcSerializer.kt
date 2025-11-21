@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.rpc
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import fleet.util.openmap.SerializedValue
@@ -33,6 +35,9 @@ abstract class CustomTypeRpcSerializer<T : Any>(internal val serializationClass:
  */
 @ApiStatus.Internal
 fun <ValueClass : Any> serializeToRpc(value: ValueClass): SerializedValue? {
+  // IdeProductMode is not available here, so we use an old style session type check
+  if (ApplicationManager.getApplication().currentSessionOrNull == null) return null
+
   val serializedValue = CustomTypeRpcSerializer.EP_NAME.extensionList.firstNotNullOfOrNull { serializer ->
     try {
       serializer.takeIf { it.serializationClass.isInstance(value) }?.let {
