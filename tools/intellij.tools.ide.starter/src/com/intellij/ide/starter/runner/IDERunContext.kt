@@ -88,7 +88,7 @@ data class IDERunContext(
     }
   }
 
-  internal fun publishArtifacts() {
+  fun publishArtifacts() {
     testContext.publishArtifact(
       source = logsDir,
       artifactPath = contextName,
@@ -235,7 +235,7 @@ data class IDERunContext(
     startConfig: IDEStartConfig,
     process: Process,
     snapshotsDir: Path,
-    runContext: IDERunContext
+    runContext: IDERunContext,
   ) {
     catchAll {
       takeScreenshot(logsDir)
