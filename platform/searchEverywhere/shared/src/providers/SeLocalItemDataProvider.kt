@@ -36,6 +36,8 @@ class SeLocalItemDataProvider(
     get() = provider.displayName
   val isAdapted: Boolean
     get() = provider is SeAdaptedItemsProvider
+  val isAdaptedWithPresentation: Boolean
+    get() = provider is SeAdaptedItemsProvider && provider.hasPresentationProvider
 
   private val infoWithReportableId = mapOf(
     SeItemDataKeys.REPORTABLE_PROVIDER_ID to

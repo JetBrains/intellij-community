@@ -30,12 +30,12 @@ class SeProvidersHolder(
   val legacyAllTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
   val legacySeparateTabContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>
 ) : Disposable {
-  val adaptedAllTabProviders: Set<SeProviderId> =
-    allTabProviders.values.mapNotNull { it.takeIf { it.isAdapted }?.id }.toSet()
+  fun adaptedAllTabProviders(withPresentation: Boolean): Set<SeProviderId> =
+    allTabProviders.values.mapNotNull { it.takeIf { it.isAdapted && (it.isAdaptedWithPresentation == withPresentation) }?.id }.toSet()
 
-  val adaptedLegacyTabInfos: List<SeLegacyTabInfo> =
+  fun adaptedTabInfos(withPresentation: Boolean): List<SeLegacyTabInfo> =
     separateTabProviders.values.mapNotNull {
-      if (!it.isAdapted) return@mapNotNull null
+      if (!it.isAdapted || (it.isAdaptedWithPresentation != withPresentation)) return@mapNotNull null
       val legacySeparateTabContributor = legacySeparateTabContributors[it.id] ?: return@mapNotNull null
       SeLegacyTabInfo(it.id, legacySeparateTabContributor.sortWeight, legacySeparateTabContributor.groupName)
     }
@@ -116,8 +116,9 @@ class SeProvidersHolder(
       }
 
       if (withAdaptedLegacyContributors) {
-        allTabProviders.putAll(createAdaptedProvidersIfNecessary(legacyContributors, allTabProviders, session, logLabel))
-        separateTabProviders.putAll(createAdaptedProvidersIfNecessary(separateTabLegacyContributors, separateTabProviders, session, logLabel))
+        val presentationProviders = SeLegacyItemPresentationProvider.EP_NAME.extensionList.associateBy { it.id.toProviderId() }
+        allTabProviders.putAll(createAdaptedProvidersIfNecessary(legacyContributors, allTabProviders, presentationProviders, session, logLabel))
+        separateTabProviders.putAll(createAdaptedProvidersIfNecessary(separateTabLegacyContributors, separateTabProviders, presentationProviders, session, logLabel))
       }
 
       return SeProvidersHolder(allTabProviders,
@@ -128,6 +129,7 @@ class SeProvidersHolder(
 
     private fun createAdaptedProvidersIfNecessary(legacyContributors: Map<SeProviderId, SearchEverywhereContributor<Any>>,
                                                   supportedProviders: Map<SeProviderId, SeLocalItemDataProvider>,
+                                                  presentationProviders: Map<SeProviderId, SeLegacyItemPresentationProvider>,
                                                   session: SeSession,
                                                   logLabel: String): List<Pair<SeProviderId, SeLocalItemDataProvider>> {
       val providerIds = supportedProviders.keys.map {
@@ -135,16 +137,7 @@ class SeProvidersHolder(
       }
 
       return legacyContributors.filter { !providerIds.contains(it.key) }.map {
-        it.key to SeLocalItemDataProvider(SeAdaptedItemsProvider(it.value), session, logLabel)
-      }
-    }
-
-    private fun MutableMap<SeProviderId, SearchEverywhereContributor<Any>>.disposeAndFilterOutUnnecessaryLegacyContributors(providerIds: Set<SeProviderId>) {
-      val contributorsToDispose = filter { !providerIds.contains(it.key) }
-
-      contributorsToDispose.forEach {
-        Disposer.dispose(it.value)
-        remove(it.key)
+        it.key to SeLocalItemDataProvider(SeAdaptedItemsProvider(it.value, presentationProviders[it.key]), session, logLabel)
       }
     }
 

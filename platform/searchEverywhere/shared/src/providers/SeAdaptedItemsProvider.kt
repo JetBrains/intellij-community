@@ -11,17 +11,23 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
-class SeAdaptedItem(override val rawObject: Any, private val weight: Int, override val contributor: SearchEverywhereContributor<*>): SeLegacyItem {
+class SeAdaptedItem(override val rawObject: Any,
+                    private val weight: Int,
+                    val presentationProvider: suspend () -> SeItemPresentation?,
+                    override val contributor: SearchEverywhereContributor<*>): SeLegacyItem {
   override fun weight(): Int = weight
-  override suspend fun presentation(): SeItemPresentation = SeAdaptedItemEmptyPresentation(contributor.isMultiSelectionSupported)
+  override suspend fun presentation(): SeItemPresentation =
+    presentationProvider() ?: SeAdaptedItemEmptyPresentation(contributor.isMultiSelectionSupported)
 }
 
 @ApiStatus.Internal
-class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>) : SeItemsProvider {
+class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>,
+                             private val presentationProvider: SeLegacyItemPresentationProvider?) : SeItemsProvider {
   override val id: String
     get() = contributorWrapper.contributor.searchProviderId
   override val displayName: @Nls String
     get() = contributorWrapper.contributor.fullGroupName
+  val hasPresentationProvider: Boolean get() = presentationProvider != null
 
   private val contributorWrapper = SeAsyncContributorWrapper(contributor)
   private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
@@ -36,7 +42,10 @@ class SeAdaptedItemsProvider(contributor: SearchEverywhereContributor<Any>) : Se
 
     contributorWrapper.fetchElements(params.inputQuery, object : AsyncProcessor<Any> {
       override suspend fun process(item: Any, weight: Int): Boolean {
-        return collector.put(SeAdaptedItem(item, weight, contributorWrapper.contributor))
+        return collector.put(SeAdaptedItem(item,
+                                           weight,
+                                           { presentationProvider?.getPresentation(item) },
+                                           contributorWrapper.contributor))
       }
     })
   }

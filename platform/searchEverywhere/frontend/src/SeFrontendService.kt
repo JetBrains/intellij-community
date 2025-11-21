@@ -263,10 +263,10 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
         SeRemoteApi.getInstance().getAvailableProviderIds(it.projectId(), session, dataContextId)
       } ?: return@initAsync null
 
-      // We support adapted tabs only for monolith mode
-      if (!availableRemoteProviders.isFetchable) return@initAsync null
+      val adaptedSeparateTabInfos = availableRemoteProviders.adaptedWithPresentationOrFetchable(frontendProvidersHolder.legacySeparateTabContributors.keys).separateTab
+      if (adaptedSeparateTabInfos.isEmpty()) return@initAsync null
 
-      availableRemoteProviders.adaptedSeparateTab
+      adaptedSeparateTabInfos
         .filter { !supportedTabIds.contains(it.providerId.value) }
         .sortedBy { it.tabSortWeight }
     }.getValue() ?: return@initAsync emptyList()
