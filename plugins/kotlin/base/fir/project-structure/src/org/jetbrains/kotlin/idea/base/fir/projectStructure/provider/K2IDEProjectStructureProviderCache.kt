@@ -62,7 +62,7 @@ class K2IDEProjectStructureProviderCache : Disposable {
     internal fun getCacheSourcesTracker(): ModificationTracker = sourcesTracker
 
     /**
-     * [messageBus] may be null, it means there is no need to subscribe to invalidations. Needed in Analyzer to reuse this cache between snapshots.
+     * [messageBus] may be null, it means there is no need to subscribe to invalidations. Used in Analyzer to reuse the cache between snapshots.
      */
     @NonInjectable
     constructor(project: Project, messageBus: MessageBus?) {
