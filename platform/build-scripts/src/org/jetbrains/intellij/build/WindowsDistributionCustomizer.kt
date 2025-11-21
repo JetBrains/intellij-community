@@ -88,6 +88,16 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
   var buildZipArchiveWithoutBundledJre: Boolean = false
   
   /**
+   * Suffix for ZIP archive with bundled JRE.
+   */
+  var zipArchiveWithBundledJreSuffix: String = ".win"
+  
+  /**
+   * Suffix for ZIP archive without bundled JRE.
+   */
+  var zipArchiveWithoutBundledJreSuffix: String = "-no-jbr.win"
+  
+  /**
    * Paths to files which will be used to overwrite the standard *.nsi files.
    * Paths will be automatically prefixed with projectHome during build.
    */
@@ -181,6 +191,8 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
       includeBatchLaunchers = builder.includeBatchLaunchers
       buildZipArchiveWithBundledJre = builder.buildZipArchiveWithBundledJre
       buildZipArchiveWithoutBundledJre = builder.buildZipArchiveWithoutBundledJre
+      zipArchiveWithBundledJreSuffix = builder.zipArchiveWithBundledJreSuffix
+      zipArchiveWithoutBundledJreSuffix = builder.zipArchiveWithoutBundledJreSuffix
     }
 
     override val associateIpr: Boolean
