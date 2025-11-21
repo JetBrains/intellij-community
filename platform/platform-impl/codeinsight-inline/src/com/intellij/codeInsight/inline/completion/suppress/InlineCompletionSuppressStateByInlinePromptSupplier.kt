@@ -4,7 +4,7 @@ package com.intellij.codeInsight.inline.completion.suppress
 import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.openapi.editor.Editor
 
-internal class InlineCompletionSuppressorByInlinePrompt : InlineCompletionSuppressor {
+internal class InlineCompletionSuppressStateByInlinePromptSupplier : InlineCompletionSuppressStateSupplier {
   override fun isSuppressed(editor: Editor): Boolean {
     return isInlinePromptShown(editor)
   }

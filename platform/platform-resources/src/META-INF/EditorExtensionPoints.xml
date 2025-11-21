@@ -117,8 +117,8 @@
       interface="com.intellij.codeInsight.inline.edit.InlineEditAwaiter"
       dynamic="true"/>
     <extensionPoint
-      name="inline.completion.suppressor"
-      interface="com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressor"
+      name="inline.completion.suppress.state.supplier"
+      interface="com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressStateSupplier"
       dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

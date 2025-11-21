@@ -17,7 +17,7 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsComputer
-import com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressor
+import com.intellij.codeInsight.inline.completion.suppress.InlineCompletionSuppressStateSupplier
 import com.intellij.codeInsight.inline.edit.InlineEditRequestExecutor
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
@@ -146,7 +146,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
         return
       }
 
-      if (InlineCompletionSuppressor.isSuppressed(editor)) {
+      if (InlineCompletionSuppressStateSupplier.isSuppressed(editor)) {
         LOG.trace { "Inline completion is suppressed. Event $event is ignored." }
         return
       }
