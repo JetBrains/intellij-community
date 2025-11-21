@@ -12,7 +12,9 @@ import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKnownDecoratorUtil;
+import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassType;
@@ -36,6 +38,49 @@ import static com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef;
  * Infer type for reference of decorated {@link PyDecoratable} objects.
  */
 public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
+
+  @Override
+  public @Nullable Ref<PyType> getParameterType(@NotNull PyNamedParameter param,
+                                                @NotNull PyFunction func,
+                                                @NotNull TypeEvalContext context) {
+    if (param.getAnnotation() != null || param.getTypeCommentAnnotation() != null) return null;
+    if (param.isPositionalContainer() || param.isKeywordContainer()) return null;
+
+    var decoratorList = func.getDecoratorList();
+    if (decoratorList == null) return null;
+
+    var decorators = decoratorList.getDecorators();
+    var explicitlyTypedDecorators = ContainerUtil.filter(decorators, d ->
+      !isTransparentDecorator(d, context)
+    );
+    if (explicitlyTypedDecorators.isEmpty()) return null;
+
+    var innermost = explicitlyTypedDecorators.getLast();
+
+    var decoratorCallableType = getDecoratorType(innermost, null, context);
+    if (decoratorCallableType == null) return null;
+
+    var decoratorParams = decoratorCallableType.getParameters(context);
+    if (decoratorParams == null || decoratorParams.isEmpty()) return null;
+
+    var expectedFuncType = decoratorParams.getFirst().getType(context);
+    if (!(expectedFuncType instanceof PyCallableType expectedCallable)) return null;
+
+    var expectedParams = expectedCallable.getParameters(context);
+    if (expectedParams == null) return null;
+
+    // Apply implicit offset to skip self-like params in the expected callable
+    int implicitOffset = Math.min(expectedCallable.getImplicitOffset(), expectedParams.size());
+    var explicitExpectedParams = expectedParams.subList(implicitOffset, expectedParams.size());
+
+    // Find the position of param among non-self named parameters of the function
+    var params = ParamHelper.collectNamedParameters(func.getParameterList());
+    int paramPos = params.indexOf(param);
+    if (paramPos < 0) return null;
+
+    var type = ParamHelper.getExpectedTypeForPositionalParam(paramPos, explicitExpectedParams, context);
+    return type != null ? Ref.create(type) : null;
+  }
 
   @Override
   public @Nullable Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget,
