@@ -16,6 +16,7 @@ import com.intellij.openapi.application.impl.BorderPainterHolder
 import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.application.impl.ToolWindowUIDecorator
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorHeaderComponent
 import com.intellij.openapi.editor.impl.SearchReplaceFacade
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -92,6 +93,15 @@ internal class IslandsUICustomization : InternalUICustomization() {
       }
       return value
     }
+
+  private val isBreadcrumbsAbove: Boolean
+    get() {
+      val settings = EditorSettingsExternalizable.getInstance()
+      return settings.isBreadcrumbsShown && settings.isBreadcrumbsAbove
+    }
+
+  private val searchReplaceEmptyTopSpace: Int
+    get() = if (UISettings.getInstance().editorTabPlacement == SwingConstants.TOP && !isBreadcrumbsAbove) 0 else 6
 
   private fun isDefaultTheme(): Boolean {
     val id = LafManager.getInstance().currentUIThemeLookAndFeel?.id ?: return false
@@ -616,10 +626,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
       super.paintComponent(g)
 
       if (isManyIslandEnabled) {
-        val isTop = UISettings.getInstance().editorTabPlacement == SwingConstants.TOP
-
         val rect = Rectangle(size)
-        JBInsets.removeFrom(rect, if (isTop) JBInsets.create(0, 7) else JBInsets(6, 7, 2, 7))
+        JBInsets.removeFrom(rect, JBInsets(searchReplaceEmptyTopSpace, 7, 0, 7))
 
         g as Graphics2D
 
@@ -653,12 +661,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
       @Suppress("UseDPIAwareInsets")
       val supplier = Supplier {
-        if (UISettings.getInstance().editorTabPlacement == SwingConstants.TOP) {
-          Insets(2, 10, 2, 10)
-        }
-        else {
-          Insets(8, 10, 4, 10)
-        }
+        Insets(5 + searchReplaceEmptyTopSpace, 10, 5, 10)
       }
       @Suppress("UNCHECKED_CAST")
       parent.border = JBUI.Borders.empty(JBInsets.create(supplier as Supplier<Insets?>, supplier.get()))
@@ -672,7 +675,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
   }
 
   override fun shouldPaintEditorTabsBottomBorder(editorCompositePanel: JComponent): Boolean {
-    if (isManyIslandEnabled) {
+    if (isManyIslandEnabled && !isBreadcrumbsAbove) {
       return UIUtil.findComponentOfType(editorCompositePanel, SearchReplaceWrapper::class.java) == null
     }
     return true
