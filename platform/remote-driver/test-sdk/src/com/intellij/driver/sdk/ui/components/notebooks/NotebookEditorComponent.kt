@@ -233,7 +233,7 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
         waitFor("wait for project tree to load", 30.seconds) {
           getAllTexts().isNotEmpty()
         }
-        invokeAction("ScrollPane-scrollHome") // making sure the first line is within the visible bounds
+        invokeActionWithRetries("ScrollPane-scrollHome") // making sure the first line is within the visible bounds
         getAllTexts().first().strictClick()
       }
     }
