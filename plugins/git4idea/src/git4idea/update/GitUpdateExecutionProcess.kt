@@ -25,11 +25,11 @@ internal object GitUpdateExecutionProcess {
   fun launchUpdate(
     project: Project,
     repositories: Collection<GitRepository>,
-    updateConfig: Map<GitRepository, GitBranchPair>,
+    updateConfig: Map<GitRepository, GitBranchPair>?,
     updateMethod: UpdateMethod,
     shouldSetAsUpstream: Boolean = false,
   ) {
-    if (updateConfig.isEmpty()) {
+    if (updateConfig != null && updateConfig.isEmpty()) {
       notifyNothingToUpdate(project)
       return
     }
@@ -73,7 +73,7 @@ internal object GitUpdateExecutionProcess {
   private fun createSpec(
     project: Project,
     roots: List<FilePath>,
-    updateConfig: Map<GitRepository, GitBranchPair>,
+    updateConfig: Map<GitRepository, GitBranchPair>?,
     updateMethod: UpdateMethod,
     shouldSetAsUpstream: Boolean,
   ): VcsUpdateSpecification {
@@ -81,7 +81,7 @@ internal object GitUpdateExecutionProcess {
     val updateEnvironment = object : UpdateEnvironment by gitUpdateEnvironment {
       override fun updateDirectories(contentRoots: Array<out FilePath>, updatedFiles: UpdatedFiles, progressIndicator: ProgressIndicator, context: Ref<SequentialUpdatesContext?>): UpdateSession {
         if (shouldSetAsUpstream) {
-          updateConfig.forEach { (repository, branchPair) -> setBranchUpstream(repository, branchPair) }
+          updateConfig?.forEach { (repository, branchPair) -> setBranchUpstream(repository, branchPair) }
         }
 
         return GitUpdateEnvironment.performUpdate(project, contentRoots, updatedFiles, progressIndicator, updateMethod, updateConfig)

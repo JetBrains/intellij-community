@@ -725,6 +725,7 @@
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500"/>
     <generalVcsSettingsExtension instance="git4idea.rebase.log.GitLogCommitEditingConfigurable"
                                  location="confirmations"/>
+    <vcs.updateOptionsDialogProvider implementation="git4idea.update.GitUpdateOptionsDialogProvider"/>
 
     <projectService serviceImplementation="git4idea.config.GitRebaseSettings"/>
     <projectService serviceImplementation="git4idea.config.GitMergeSettings"/>

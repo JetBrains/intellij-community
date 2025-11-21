@@ -78,8 +78,11 @@ public abstract class GitUpdater {
     if (updateMethod == UpdateMethod.BRANCH_DEFAULT) {
       updateMethod = resolveUpdateMethod(repository);
     }
-    return updateMethod == UpdateMethod.REBASE ?
-           new GitRebaseUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles):
+    if (updateMethod == UpdateMethod.RESET) {
+      return new GitResetUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles);
+    }
+    return updateMethod == REBASE ?
+           new GitRebaseUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles) :
            new GitMergeUpdater(project, git, repository, trackedBranches, progressIndicator, updatedFiles);
   }
 

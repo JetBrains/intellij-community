@@ -119,7 +119,7 @@ public final class GitUpdateProcess {
    * Perform update on all roots.
    * 0. Blocks reloading project on external change, saving/syncing on frame deactivation.
    * 1. Checks if update is possible (rebase/merge in progress, no tracked branches...) and provides merge dialog to solve problems.
-   * 2. Finds updaters to use (merge or rebase).
+   * 2. Finds updaters to use (merge, rebase or reset).
    * 3. Preserves local changes if needed (not needed for merge sometimes).
    * 4. Updates via 'git pull' or equivalent.
    * 5. Restores local changes if update completed or failed with error. If update is incomplete, i.e. some unmerged files remain,
