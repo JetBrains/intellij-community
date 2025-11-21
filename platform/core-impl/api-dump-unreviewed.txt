@@ -2450,8 +2450,8 @@ a:com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider
 - a:getAnchor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - a:restoreElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 f:com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl
-- com.intellij.psi.SmartPointerManager
 - com.intellij.openapi.Disposable
+- com.intellij.psi.SmartPointerManager
 - <init>(com.intellij.openapi.project.Project):V
 - createSmartPsiElementPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
 - createSmartPsiElementPointer(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):com.intellij.psi.SmartPsiElementPointer

@@ -37,17 +37,17 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
 
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
-  protected final SmartPointerManagerImpl myManager;
+  protected final SmartPointerManagerEx myManager;
   private byte myReferenceCount = 1;
   @Nullable SmartPointerTracker.PointerReference pointerReference;
 
-  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerImpl manager,
+  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerEx manager,
                              @NotNull E element,
                              @Nullable PsiFile containingFile,
                              boolean forInjected) {
     this(manager, element, createElementInfo(manager, element, containingFile, forInjected));
   }
-  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerImpl manager,
+  SmartPsiElementPointerImpl(@NotNull SmartPointerManagerEx manager,
                              @NotNull E element,
                              @NotNull SmartPointerElementInfo elementInfo) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -136,7 +136,7 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
     return myElementInfo.getPsiRange(myManager);
   }
 
-  private static @NotNull <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull SmartPointerManagerImpl manager,
+  private static @NotNull <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull SmartPointerManagerEx manager,
                                                                                            @NotNull E element,
                                                                                            @Nullable PsiFile containingFile,
                                                                                            boolean forInjected) {

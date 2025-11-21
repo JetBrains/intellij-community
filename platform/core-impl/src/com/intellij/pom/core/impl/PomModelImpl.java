@@ -26,7 +26,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.file.impl.FileManager;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -277,7 +277,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
     VirtualFile vFile = psiFile == null ? null : psiFile.getViewProvider().getVirtualFile();
     if (psiFile != null) {
-      ((SmartPointerManagerImpl) SmartPointerManager.getInstance(myProject)).fastenBelts(vFile);
+      ((SmartPointerManagerEx) SmartPointerManager.getInstance(myProject)).fastenBelts(vFile);
       if (psiFile instanceof PsiFileImpl) {
         ((PsiFileImpl)psiFile).beforeAstChange();
       }

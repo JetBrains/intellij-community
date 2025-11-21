@@ -10,7 +10,7 @@ import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 class SmartPsiFileRangePointerImpl extends SmartPsiElementPointerImpl<PsiFile> implements SmartPsiFileRange {
-  SmartPsiFileRangePointerImpl(@NotNull SmartPointerManagerImpl manager, @NotNull PsiFile containingFile, @NotNull ProperTextRange range, boolean forInjected) {
+  SmartPsiFileRangePointerImpl(@NotNull SmartPointerManagerEx manager, @NotNull PsiFile containingFile, @NotNull ProperTextRange range, boolean forInjected) {
     super(manager, containingFile, createElementInfo(containingFile, range, forInjected));
   }
 

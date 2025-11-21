@@ -66,24 +66,24 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   VirtualFile getVirtualFile() {
-    PsiElement element = restoreElement((SmartPointerManagerImpl)SmartPointerManager.getInstance(getProject()));
+    PsiElement element = restoreElement((SmartPointerManagerEx)SmartPointerManager.getInstance(getProject()));
     if (element == null) return null;
     return element.getContainingFile().getVirtualFile();
   }
 
   @Override
-  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
+  Segment getRange(@NotNull SmartPointerManagerEx manager) {
     return getInjectedRange(false);
   }
 
   @Nullable
   @Override
-  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
+  Segment getPsiRange(@NotNull SmartPointerManagerEx manager) {
     return getInjectedRange(true);
   }
 
   @Override
-  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
+  PsiElement restoreElement(@NotNull SmartPointerManagerEx manager) {
     PsiFile hostFile = myHostContext.getContainingFile();
     if (hostFile == null || !hostFile.isValid()) return null;
 
@@ -140,7 +140,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerEx manager) {
     if (getClass() != other.getClass()) return false;
     if (!((InjectedSelfElementInfo)other).myHostContext.equals(myHostContext)) return false;
     SmartPointerElementInfo myElementInfo = ((SmartPsiElementPointerImpl<?>)myInjectedFileRangeInHostFile).getElementInfo();
@@ -149,7 +149,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
+  PsiFile restoreFile(@NotNull SmartPointerManagerEx manager) {
     PsiFile hostFile = myHostContext.getContainingFile();
     if (hostFile == null || !hostFile.isValid()) return null;
 
@@ -169,7 +169,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
     Segment hostElementRange = psi ? myInjectedFileRangeInHostFile.getPsiRange() : myInjectedFileRangeInHostFile.getRange();
     if (hostElementRange == null) return null;
 
-    return hostToInjected(psi, hostElementRange, restoreFile((SmartPointerManagerImpl)SmartPointerManager.getInstance(getProject())), myAffixOffsets);
+    return hostToInjected(psi, hostElementRange, restoreFile((SmartPointerManagerEx)SmartPointerManager.getInstance(getProject())), myAffixOffsets);
   }
 
   private static @Nullable ProperTextRange hostToInjected(boolean psi, @NotNull Segment hostRange, @Nullable PsiFile injectedFile, @Nullable AffixOffsets affixOffsets) {

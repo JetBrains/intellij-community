@@ -40,7 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.text.BlockSupport;
@@ -1213,8 +1213,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return info;
   }
 
-  private SmartPointerManagerImpl getSmartPointerManager() {
-    return (SmartPointerManagerImpl)SmartPointerManager.getInstance(myProject);
+  private SmartPointerManagerEx getSmartPointerManager() {
+    return (SmartPointerManagerEx)SmartPointerManager.getInstance(myProject);
   }
 
   private boolean isRelevant(@NotNull VirtualFile virtualFile) {

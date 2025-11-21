@@ -17,7 +17,7 @@ class ClsElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
+  PsiElement restoreElement(@NotNull SmartPointerManagerEx manager) {
     return myStubIndexReference.retrieve();
   }
 
@@ -27,7 +27,7 @@ class ClsElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerEx manager) {
     return other instanceof ClsElementInfo && myStubIndexReference.equals(((ClsElementInfo)other).myStubIndexReference);
   }
 
@@ -38,18 +38,18 @@ class ClsElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
+  Segment getRange(@NotNull SmartPointerManagerEx manager) {
     return null;
   }
 
   @Nullable
   @Override
-  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
+  Segment getPsiRange(@NotNull SmartPointerManagerEx manager) {
     return null;
   }
 
   @Override
-  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
+  PsiFile restoreFile(@NotNull SmartPointerManagerEx manager) {
     return myStubIndexReference.getFile();
   }
 

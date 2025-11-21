@@ -115,7 +115,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
+  PsiElement restoreElement(@NotNull SmartPointerManagerEx manager) {
     Segment segment = getPsiRange(manager);
     if (segment == null) return null;
 
@@ -127,7 +127,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Nullable
   @Override
-  TextRange getPsiRange(@NotNull SmartPointerManagerImpl manager) {
+  TextRange getPsiRange(@NotNull SmartPointerManagerEx manager) {
     return calcPsiRange();
   }
 
@@ -141,7 +141,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   @Nullable
-  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
+  PsiFile restoreFile(@NotNull SmartPointerManagerEx manager) {
     Language language = myIdentikit.getFileLanguage();
     if (language == null) return null;
     return restoreFileFromVirtual(getVirtualFile(), getContext() ,manager.getProject(), language);
@@ -200,7 +200,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerEx manager) {
     if (other instanceof SelfElementInfo) {
       SelfElementInfo otherInfo = (SelfElementInfo)other;
       if (!getVirtualFile().equals(other.getVirtualFile()) || myIdentikit != otherInfo.myIdentikit) return false;
@@ -223,7 +223,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   @Override
   @Nullable
-  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
+  Segment getRange(@NotNull SmartPointerManagerEx manager) {
     if (hasRange()) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
@@ -250,7 +250,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
     List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
     if (!events.isEmpty()) {
-      SmartPointerManagerImpl pointerManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(project);
+      SmartPointerManagerEx pointerManager = (SmartPointerManagerEx)SmartPointerManager.getInstance(project);
       SmartPointerTracker tracker = pointerManager.getTracker(containingFile.getViewProvider().getVirtualFile());
       if (tracker != null) {
         return tracker.getUpdatedRange(containingFile, segment, isSegmentGreedy, (FrozenDocument)documentManager.getLastCommittedDocument(document), events);

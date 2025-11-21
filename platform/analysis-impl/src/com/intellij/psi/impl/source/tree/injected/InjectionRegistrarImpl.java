@@ -28,7 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.smartPointers.Identikit;
 import com.intellij.psi.impl.smartPointers.SelfElementInfo;
-import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -212,7 +212,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
 
     TextRange hostTextRange = info.host.getTextRange();
     TextRange relevantRangeInHostFile = relevantRange.shiftRight(hostTextRange.getStartOffset());
-    SmartPointerManagerImpl manager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(hostPsiFile.getProject());
+    SmartPointerManagerEx manager = (SmartPointerManagerEx)SmartPointerManager.getInstance(hostPsiFile.getProject());
     return new ShredImpl(manager.createSmartPsiFileRangePointer(hostPsiFile, relevantRangeInHostFile, true),
                          manager.createSmartPsiElementPointer(info.host, hostPsiFile, true),
                          info.prefix, info.suffix, info.rangeInDecodedPSI, false, info.myEscaper.isOneLine());

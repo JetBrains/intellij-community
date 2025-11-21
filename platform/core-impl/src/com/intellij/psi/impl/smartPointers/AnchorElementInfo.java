@@ -46,7 +46,7 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public @Nullable PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
+  public @Nullable PsiElement restoreElement(@NotNull SmartPointerManagerEx manager) {
     long typeAndId = myStubElementTypeAndId;
     int stubId = (int)typeAndId;
     if (stubId != -1) {
@@ -61,7 +61,7 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
+  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerEx manager) {
     if (other instanceof AnchorElementInfo) {
       if (!getVirtualFile().equals(other.getVirtualFile())) return false;
 
@@ -79,14 +79,14 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public void fastenBelt(@NotNull SmartPointerManagerImpl manager) {
+  public void fastenBelt(@NotNull SmartPointerManagerEx manager) {
     if (getStubId() != -1) {
       switchToTree(manager);
     }
     super.fastenBelt(manager);
   }
 
-  private void switchToTree(@NotNull SmartPointerManagerImpl manager) {
+  private void switchToTree(@NotNull SmartPointerManagerEx manager) {
     PsiElement element = restoreElement(manager);
     SmartPointerTracker tracker = manager.getTracker(getVirtualFile());
     if (element != null && tracker != null) {
@@ -100,7 +100,7 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public Segment getRange(@NotNull SmartPointerManagerImpl manager) {
+  public Segment getRange(@NotNull SmartPointerManagerEx manager) {
     if (getStubId() != -1) {
       switchToTree(manager);
     }
@@ -108,7 +108,7 @@ class AnchorElementInfo extends SelfElementInfo {
   }
 
   @Override
-  public @Nullable TextRange getPsiRange(@NotNull SmartPointerManagerImpl manager) {
+  public @Nullable TextRange getPsiRange(@NotNull SmartPointerManagerEx manager) {
     if (getStubId() != -1) {
       switchToTree(manager);
     }
