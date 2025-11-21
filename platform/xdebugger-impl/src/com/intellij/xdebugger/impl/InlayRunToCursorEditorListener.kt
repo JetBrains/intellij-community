@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl
 
 import com.intellij.codeInsight.actions.VcsFacade
@@ -211,9 +211,10 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
     val actionManager = serviceAsync<ActionManager>()
     val virtualFile = editor.virtualFile ?: return
-    val hasVcsLineMarker = hasVcsLineMarker(editor, lineNumber)
-    val isAtExecution = readAction {
-      runToCursorService.isAtExecution(virtualFile, lineNumber)
+    val (hasVcsLineMarker, isAtExecution) = readAction {
+      val hasVfsLineMarker = hasVcsLineMarker(editor, lineNumber)
+      val isAtExecution = runToCursorService.isAtExecution(virtualFile, lineNumber)
+      hasVfsLineMarker to isAtExecution
     }
     if (isAtExecution) {
       showHint(editor, lineNumber, firstNonSpacePos, listOf(actionManager.getAction(XDebuggerActions.RESUME)), lineY, hasVcsLineMarker)
