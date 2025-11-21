@@ -3421,6 +3421,13 @@ c:com.intellij.openapi.vcs.update.UpdateInfoTree
 - setCanGroupByChangeList(Z):V
 - setChangeLists(java.util.List):V
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+com.intellij.openapi.vcs.update.UpdateOptionsDialogProvider
+- sf:Companion:com.intellij.openapi.vcs.update.UpdateOptionsDialogProvider$Companion
+- a:create(com.intellij.openapi.project.Project,java.lang.String,java.util.LinkedHashMap):com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog
+- s:createOptionsDialog(com.intellij.openapi.project.Project,java.lang.String,java.util.LinkedHashMap):com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog
+f:com.intellij.openapi.vcs.update.UpdateOptionsDialogProvider$Companion
+- f:createOptionsDialog(com.intellij.openapi.project.Project,java.lang.String,java.util.LinkedHashMap):com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 a:com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog
 - com.intellij.util.ui.OptionsDialog
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.util.Map):V

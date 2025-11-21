@@ -277,5 +277,9 @@
     <extensionPoint qualifiedName="com.intellij.vcs.impl.changeListDiffViewerDecorator"
                     interface="com.intellij.openapi.vcs.changes.actions.diff.lst.ChangeListDiffViewerDecorator"
                     dynamic="true"/>
+
+    <extensionPoint name="vcs.updateOptionsDialogProvider"
+                    interface="com.intellij.openapi.vcs.update.UpdateOptionsDialogProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
