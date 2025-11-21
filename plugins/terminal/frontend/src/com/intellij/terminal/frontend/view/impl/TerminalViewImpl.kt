@@ -619,6 +619,14 @@ class TerminalViewImpl(
       val hyperlinkFacade = if (isAlternateScreenBuffer) alternateBufferHyperlinkFacade else outputHyperlinkFacade
       sink[TerminalHyperlinkId.KEY] = hyperlinkFacade.getHoveredHyperlinkId()
       sink.setNull(PlatformDataKeys.COPY_PROVIDER)
+
+      // Add selection text to the data context, so features like Search Everywhere and Find in Files
+      // can use it as an initial query.
+      val selection = textSelectionModel.selection
+      if (selection != null) {
+        val selectionText = outputModels.active.value.getText(selection.startOffset, selection.endOffset).toString()
+        sink[PlatformDataKeys.PREDEFINED_TEXT] = selectionText
+      }
     }
 
     fun setTerminalContent(editor: Editor) {
