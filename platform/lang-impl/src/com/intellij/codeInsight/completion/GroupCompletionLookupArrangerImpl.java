@@ -130,6 +130,10 @@ public final class GroupCompletionLookupArrangerImpl extends CompletionLookupArr
     if (mySupportGroups) {
       CompletionGroup group = item.getUserData(COMPLETION_GROUP_KEY);
       if (group != null) {
+        if (isPrefixItem(item, true)) {
+          item.putUserData(COMPLETION_GROUP_KEY, null);
+          return false;
+        }
         myGroupCache.putValue(group, item);
         return true;
       }

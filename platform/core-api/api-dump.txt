@@ -1317,6 +1317,9 @@ com.intellij.psi.PsiFileSystemItem
 - a:processChildren(com.intellij.psi.search.PsiElementProcessor):Z
 com.intellij.psi.PsiFileWithOneLanguage
 - com.intellij.psi.PsiFile
+f:com.intellij.psi.PsiInvalidElementAccessException
+- s:getCreationTrace(com.intellij.openapi.util.UserDataHolder):java.lang.Object
+- s:setCreationTrace(com.intellij.openapi.util.UserDataHolderBase,java.lang.Object):V
 com.intellij.psi.PsiLanguageInjectionHost
 - com.intellij.model.psi.PsiExternalReferenceHost
 - a:createLiteralTextEscaper():com.intellij.psi.LiteralTextEscaper

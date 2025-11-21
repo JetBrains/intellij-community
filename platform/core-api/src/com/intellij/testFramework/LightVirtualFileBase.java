@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.*;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
     myName = name;
     myFileType = fileType;
     myModStamp = modificationStamp;
+    PsiInvalidElementAccessException.setCreationTrace(this, new Throwable());
   }
 
   public void setFileType(FileType fileType) {

@@ -217,7 +217,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       totalUpdatesTimeMs.duration.addAndGet(this)
       updatesCounter.incrementAndGet()
     }
-    log.info("Project model updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+    log.info("Project model for project ${project.name} updated to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       log.info(
         "Project model update details: Updater code: $updateTimeMillis ms, Pre handlers: $preHandlersTimeMillis ms, Collect changes: $collectChangesTimeMillis ms")
@@ -387,7 +387,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       val builder = replacement.builder
       this.initializeBridges(replacement.changes, builder)
       entityStorage.replace(builder.toSnapshot(), replacement.changes, replacement.symbolicEntityIdChanges, this::onBeforeChanged, this::onChanged)
-      log.info("Project model updated to version ${entityStorage.pointer.version}: $description")
+      log.info("Project model for project ${project.name} updated to version ${entityStorage.pointer.version}: $description")
     }
     return true
   }
@@ -407,7 +407,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
 
       val unloadBuilder = unloadStorageReplacement.builder
       unloadedEntitiesStorage.replace(unloadBuilder.toSnapshot(), unloadStorageReplacement.changes, unloadStorageReplacement.symbolicEntityIdChanges, {}, ::onUnloadedEntitiesChanged)
-      log.info("Project model updated to version ${entityStorage.pointer.version}")
+      log.info("Project model for project ${project.name} updated to version ${entityStorage.pointer.version}")
     }
     return true
   }

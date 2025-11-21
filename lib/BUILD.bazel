@@ -4056,6 +4056,13 @@ jvm_import(
 )
 
 jvm_import(
+  name = "kotlin-test-junit5",
+  jar = "@org_jetbrains_kotlin-kotlin-test-junit5-2_2_20_http//file",
+  source_jar = "@org_jetbrains_kotlin-kotlin-test-junit5-2_2_20-sources_http//file",
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
   name = "kotlin-tooling-core",
   jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http//file",
   source_jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162-sources_http//file",

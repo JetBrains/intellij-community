@@ -2,6 +2,7 @@ package com.intellij.lambda.testFramework.junit
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.splitMode
+import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.starter.newContextWithLambda
@@ -16,6 +17,7 @@ object IdeInstance {
     private set
   lateinit var currentIdeMode: IdeRunMode
     private set
+  private lateinit var runContext: IDERunContext
 
   fun startIde(runMode: IdeRunMode): BackgroundRunWithLambda = synchronized(this) {
     try {
@@ -33,7 +35,7 @@ object IdeInstance {
       val testContext = Starter.newContextWithLambda(runMode.name,
                                                      UltimateTestCases.JpsEmptyProject,
                                                      *LambdaTestPluginHolder.additionalPluginIds().toTypedArray())
-      ideBackgroundRun = testContext.runIdeWithLambda()
+      ideBackgroundRun = testContext.runIdeWithLambda(configure = { runContext = this })
 
       return ideBackgroundRun
     }
@@ -48,5 +50,9 @@ object IdeInstance {
 
     logOutput("Stopping IDE that is running in mode: $currentIdeMode")
     catchAll { ideBackgroundRun.forceKill() }
+  }
+
+  fun publishArtifacts(): Unit = synchronized(this) {
+    runContext.publishArtifacts()
   }
 }

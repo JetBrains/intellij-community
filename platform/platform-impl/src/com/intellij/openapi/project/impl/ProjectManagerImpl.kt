@@ -264,6 +264,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
     updateTheOnlyProjectField()
     openProjectByHash.put(project.locationHash, project)
+    LOG.info("Project ${project.name} was added to the list of open projects")
     return true
   }
 

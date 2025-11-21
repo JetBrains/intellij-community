@@ -88,6 +88,16 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
   var buildZipArchiveWithoutBundledJre: Boolean = false
   
   /**
+   * Suffix for ZIP archive with bundled JRE.
+   */
+  var zipArchiveWithBundledJreSuffix: String = ".win"
+  
+  /**
+   * Suffix for ZIP archive without bundled JRE.
+   */
+  var zipArchiveWithoutBundledJreSuffix: String = "-no-jbr.win"
+  
+  /**
    * Paths to files which will be used to overwrite the standard *.nsi files.
    * Paths will be automatically prefixed with projectHome during build.
    */
@@ -181,6 +191,8 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
       includeBatchLaunchers = builder.includeBatchLaunchers
       buildZipArchiveWithBundledJre = builder.buildZipArchiveWithBundledJre
       buildZipArchiveWithoutBundledJre = builder.buildZipArchiveWithoutBundledJre
+      zipArchiveWithBundledJreSuffix = builder.zipArchiveWithBundledJreSuffix
+      zipArchiveWithoutBundledJreSuffix = builder.zipArchiveWithoutBundledJreSuffix
     }
 
     override val associateIpr: Boolean
@@ -216,6 +228,38 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
     override fun getBinariesToSign(context: BuildContext): List<String> {
       return builder.binariesToSignHandler?.invoke(context) ?: super.getBinariesToSign(context)
     }
+  }
+}
+
+/**
+ * Creates a [WindowsDistributionCustomizer] with Community edition defaults using a builder DSL.
+ *
+ * Example usage:
+ * ```kotlin
+ * communityWindowsCustomizer(projectHome) {
+ *   // Override or extend Community defaults
+ *   fileAssociations += "xml"
+ * }
+ * ```
+ */
+inline fun communityWindowsCustomizer(projectHome: Path, configure: WindowsCustomizerBuilder.() -> Unit = {}): WindowsDistributionCustomizer {
+  return windowsCustomizer(projectHome) {
+    // Set Community defaults
+    icoPath = "build/conf/ideaCE/win/images/idea_CE.ico"
+    icoPathForEAP = "build/conf/ideaCE/win/images/idea_CE_EAP.ico"
+    installerImagesPath = "build/conf/ideaCE/win/images"
+    fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
+    
+    fullName { "IntelliJ IDEA Community Edition" }
+    
+    fullNameAndVendor { "IntelliJ IDEA Community Edition" }
+    
+    uninstallFeedbackUrl { appInfo ->
+      "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
+    }
+    
+    // Apply user configuration
+    configure()
   }
 }
 

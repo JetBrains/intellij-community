@@ -6230,6 +6230,20 @@ http_file(
 )
 
 http_file(
+  name = "org_jetbrains_kotlin-kotlin-test-junit5-2_2_20_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit5/2.2.20/kotlin-test-junit5-2.2.20.jar",
+  sha256 = "677dcbb681b33eb5df548f16171fcedf37214302a8b2d7731a37d30cdc6a20af",
+  downloaded_file_path = "kotlin-test-junit5-2.2.20.jar"
+)
+
+http_file(
+  name = "org_jetbrains_kotlin-kotlin-test-junit5-2_2_20-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-test-junit5/2.2.20/kotlin-test-junit5-2.2.20-sources.jar",
+  sha256 = "891c56d8183d2cd3e912cf250adeca889dba51d02b07fce3015321e08f72b4a2",
+  downloaded_file_path = "kotlin-test-junit5-2.2.20-sources.jar"
+)
+
+http_file(
   name = "org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http",
   url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-tooling-core/1.9.20-dev-8162/kotlin-tooling-core-1.9.20-dev-8162.jar",
   sha256 = "8938eb97e36320daa3e6fb2a60fd2a05b232ff4a557173c5019f045b8832d9f4",

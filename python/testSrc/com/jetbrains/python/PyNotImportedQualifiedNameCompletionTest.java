@@ -180,11 +180,6 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
   }
 
   // PY-47962
-  public void testNonImportedModulesSuggestedLast() {
-    assertNull(doBasicCompletion());
-  }
-
-  // PY-47962
   public void testModuleNamesWithMiddleMatchNotSuggested() {
     List<String> variants = doBasicCompletion();
     assertDoesntContain(variants, "mod_foo_bar", "mod_fb", "foobar");
