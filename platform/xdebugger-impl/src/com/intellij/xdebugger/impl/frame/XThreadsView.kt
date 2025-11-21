@@ -133,11 +133,6 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
     if (event == SessionEvent.FRAME_CHANGED) {
       return
     }
-    if (event == SessionEvent.PAUSED) {
-      // clear immediately
-      cancelClear()
-      clear()
-    }
     requestRebuild()
   }
 
