@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface InlineCompletionSuppressor {
+interface InlineCompletionSuppressStateSupplier {
 
   /**
    * Whether inline completion should not be invoked right now.
@@ -16,7 +16,7 @@ interface InlineCompletionSuppressor {
   fun isSuppressed(editor: Editor): Boolean
 
   companion object {
-    private val EP_NAME = ExtensionPointName.create<InlineCompletionSuppressor>("com.intellij.inline.completion.suppressor")
+    private val EP_NAME = ExtensionPointName.create<InlineCompletionSuppressStateSupplier>("com.intellij.inline.completion.suppress.state.supplier")
 
     internal fun isSuppressed(editor: Editor): Boolean = EP_NAME.extensionList.any { it.isSuppressed(editor) }
   }
