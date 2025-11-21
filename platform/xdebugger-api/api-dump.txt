@@ -142,6 +142,7 @@ Fa:com.intellij.xdebugger.XDebuggerManager
 - a:getDebugSession(com.intellij.execution.ui.ExecutionConsole):com.intellij.xdebugger.XDebugSession
 - a:getDebugSessions():com.intellij.xdebugger.XDebugSession[]
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.XDebuggerManager
+- a:newSessionBuilder(com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XSessionBuilder
 - a:startSession(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
 - a:startSessionAndShowTab(java.lang.String,com.intellij.execution.ui.RunContentDescriptor,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession
 - a:startSessionAndShowTab(java.lang.String,com.intellij.execution.ui.RunContentDescriptor,Z,com.intellij.xdebugger.XDebugProcessStarter):com.intellij.xdebugger.XDebugSession

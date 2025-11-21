@@ -3,6 +3,8 @@
 package com.intellij.xdebugger;
 
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.runners.AsyncProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -28,7 +30,7 @@ import javax.swing.event.HyperlinkListener;
 
 /**
  * Instances of this class are created by the debugging subsystem
- * when the {@link XDebuggerManager#startSession} or {@link XDebuggerManager#startSessionAndShowTab} method is called.
+ * when the {@link XSessionBuilder#startSession()} method is called.
  * It isn't supposed to be implemented by a plugin.
  * <p>
  * An instance of this class can be obtained from the {@link XDebugProcess#getSession()} method
@@ -166,6 +168,12 @@ public interface XDebugSession extends AbstractDebuggerSession {
   @NlsContexts.TabTitle
   String getSessionName();
 
+  /**
+   * @deprecated To access {@link com.intellij.execution.process.ProcessHandler}, use {@link XDebugProcess#getProcessHandler()} instead.
+   * To return the {@link RunContentDescriptor} instance into {@link AsyncProgramRunner#execute(ExecutionEnvironment, RunProfileState)},
+   * use {@link XSessionStartedResult#getRunContentDescriptor()} instead.
+   */
+  @Deprecated
   @NotNull
   RunContentDescriptor getRunContentDescriptor();
 

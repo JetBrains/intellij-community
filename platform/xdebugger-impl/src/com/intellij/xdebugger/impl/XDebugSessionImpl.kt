@@ -212,6 +212,7 @@ class XDebugSessionImpl @JvmOverloads constructor(
   val tabInitDataFlow: Flow<XDebuggerSessionTabAbstractInfo>
     get() = myTabInitDataFlow.filterNotNull()
 
+  @Deprecated("Deprecated in Java")
   override fun getRunContentDescriptor(): RunContentDescriptor {
     if (SplitDebuggerMode.showSplitWarnings()) {
       LOG.error("[Split debugger] RunContentDescriptor should not be used in split mode from XDebugSession")

@@ -31,10 +31,10 @@ import java.util.List;
  * <p>
  * In order to start the debugger by a 'Debug' action for a specific run configuration,
  * implement {@link com.intellij.execution.runners.ProgramRunner}
- * and call {@link XDebuggerManager#startSession}
+ * and call {@link XDebuggerManager#newSessionBuilder} and {@link XSessionBuilder#startSession()} without setting {@link XSessionBuilder#showTab}
  * from the {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method.
  * <p>
- * Otherwise, use method {@link XDebuggerManager#startSessionAndShowTab} to start a new debugging session.
+ * Otherwise, show tab with {@link XSessionBuilder#showTab} to start a new debugging session.
  */
 public abstract class XDebugProcess {
   private final @NotNull XDebugSession mySession;

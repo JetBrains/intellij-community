@@ -43,10 +43,23 @@ public abstract class XDebuggerManager {
 
   public abstract @Nullable XDebugSession getCurrentSession();
 
+
+  /**
+   * Creates a new builder for configuring and launching a debugging session.
+   *
+   * @param starter an instance of {@link XDebugProcessStarter} responsible for providing the debug process to be used in the session.
+   * @return a {@link XSessionBuilder} instance allowing further configuration before starting the debugging session.
+   */
+  @RequiresEdt(generateAssertion = false)
+  public abstract @NotNull XSessionBuilder newSessionBuilder(@NotNull XDebugProcessStarter starter);
+
   /**
    * Start a new debugging session. Use this method only if debugging is started by using standard 'Debug' action i.e. this methods is called
-   * from {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method. Otherwise, use {@link #startSessionAndShowTab} method
+   * from {@link com.intellij.execution.runners.ProgramRunner#execute(ExecutionEnvironment)} method. Otherwise, use {@link XSessionBuilder#showTab} method
+   *
+   * @deprecated Use {@link XSessionBuilder#startSession()} instead
    */
+  @Deprecated
   @RequiresEdt(generateAssertion = false)
   public abstract @NotNull XDebugSession startSession(@NotNull ExecutionEnvironment environment,
                                                       @NotNull XDebugProcessStarter processStarter) throws ExecutionException;
@@ -55,7 +68,10 @@ public abstract class XDebuggerManager {
    * Start a new debugging session and open 'Debug' tool window
    *
    * @param sessionName title of 'Debug' tool window
+   *
+   * @deprecated Use {@link XSessionBuilder#startSession()} instead
    */
+  @Deprecated
   @RequiresEdt(generateAssertion = false)
   public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
                                                                 @Nullable RunContentDescriptor contentToReuse,
@@ -65,7 +81,10 @@ public abstract class XDebuggerManager {
    * Start a new debugging session and open 'Debug' tool window
    *
    * @param sessionName title of 'Debug' tool window
+   *
+   * @deprecated Use {@link XSessionBuilder#startSession()} instead
    */
+  @Deprecated
   @RequiresEdt(generateAssertion = false)
   public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
                                                                 @NotNull XDebugProcessStarter starter,
@@ -76,7 +95,10 @@ public abstract class XDebuggerManager {
    *
    * @param sessionName                 title of 'Debug' tool window
    * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
+   *
+   * @deprecated Use {@link XSessionBuilder#startSession()} instead
    */
+  @Deprecated
   @RequiresEdt(generateAssertion = false)
   public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
                                                                 @Nullable RunContentDescriptor contentToReuse,
@@ -89,7 +111,10 @@ public abstract class XDebuggerManager {
    * @param sessionName                 title of 'Debug' tool window
    * @param icon                        icon of 'Debug' tool window
    * @param showToolWindowOnSuspendOnly if {@code true} 'Debug' tool window won't be shown until debug process is suspended on a breakpoint
+   *
+   * @deprecated Use {@link XSessionBuilder#startSession()} instead
    */
+  @Deprecated
   @RequiresEdt(generateAssertion = false)
   public abstract @NotNull XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
                                                                 @Nullable Icon icon,
