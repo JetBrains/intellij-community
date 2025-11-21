@@ -311,7 +311,7 @@ private class HighlightTaskRunner(
     try {
       LOG.debug {
         "Started the task ${task} " +
-        "on the output model ${describe(outputModel)}, "
+        "on the output model ${describe(outputModel)}, " +
         "will process lines $topStartLine-$topStopLineInclusive at the top " +
         "and $bottomStartLine-$bottomStopLineInclusive at the bottom"
       }
