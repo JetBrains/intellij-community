@@ -18,7 +18,9 @@ import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContribu
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper
 import com.intellij.platform.execution.dashboard.splitApi.*
 import com.intellij.platform.execution.dashboard.splitApi.frontend.tree.RunDashboardStatusFilter
+import com.intellij.platform.execution.serviceView.shouldEnableServicesViewInCurrentEnvironment
 import com.intellij.platform.project.projectId
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.content.Content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +40,23 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
   private val frontendExcludedConfigurationTypeIds = MutableStateFlow(emptySet<String>())
   private val statusFilter = RunDashboardStatusFilter()
   private val configurationTypes = MutableStateFlow(emptySet<String>())
+  private var isInitialized = MutableStateFlow(false)
+
+  override fun isInitialized(): Boolean {
+    return isInitialized.value
+  }
+
+  fun tryStartInitialization() {
+    if (!shouldEnableServicesViewInCurrentEnvironment()) return
+    if (!isInitialized.compareAndSet(expect = false, update = true)) return
+
+    try {
+      scheduleFetchInitialState(project)
+    }
+    finally {
+      isInitialized.value = true
+    }
+  }
 
   internal suspend fun subscribeToBackendSettingsUpdates() {
     RunDashboardServiceRpc.getInstance().getSettings(project.projectId()).collect { updatesFromBackend ->
@@ -310,6 +329,34 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
         RunDashboardServiceViewContributorHelper.scheduleDetachRunContentDescriptorId(project, contentId)
         break
       }
+    }
+  }
+
+  private fun scheduleFetchInitialState(project: Project) {
+    val synchronizationScope = RunDashboardCoroutineScopeProvider.getInstance(project).cs.childScope("RunDashboardServiceSynchronizer")
+    synchronizationScope.launch {
+      subscribeToBackendSettingsUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendServicesUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendStatusesUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendCustomizationsUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendConfigurationTypesUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendAvailableConfigurationUpdates()
+    }
+    synchronizationScope.launch {
+      subscribeToBackendExcludedConfigurationUpdates()
+    }
+    synchronizationScope.launch {
+      FrontendRunDashboardLuxHolder.getInstance(project).subscribeToRunToolwindowUpdates()
     }
   }
 
