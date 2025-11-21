@@ -310,25 +310,33 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
       return
     }
 
-    val content = myDraggingTab!!.content
+    val tab = myDraggingTab!!
+    val content = tab.content
     content.putUserData(TEMPORARY_REMOVED_KEY, true)
     if (content is SingleContentLayout.SubContent && sourceDecorator.isSingleContentLayout()) {
       val tabs = content.supplier.getTabs()
       val tabInfo = content.info
       val index = tabs.getIndexOf(tabInfo)
       SwingUtilities.invokeLater {
+        if (tab != myDraggingTab) {
+          return@invokeLater  // no more actual
+        }
+
         tabInfo.isHidden = true
-        sourceDecorator.setDropInfoIndex(index, myDraggingTab!!.width)
+        sourceDecorator.setDropInfoIndex(index, tab.width)
       }
     }
     else {
       val manager = sourceDecorator.contentManager
       val index = manager.getIndexOfContent(content) + 1
       SwingUtilities.invokeLater {
+        if (tab != myDraggingTab) {
+          return@invokeLater  // no more actual
+        }
         try {
           sourceDecorator.isSplitUnsplitInProgress = true
           manager.removeContent(content, false)
-          sourceDecorator.setDropInfoIndex(index, myDraggingTab!!.width)
+          sourceDecorator.setDropInfoIndex(index, tab.width)
         }
         finally {
           sourceDecorator.isSplitUnsplitInProgress = false
