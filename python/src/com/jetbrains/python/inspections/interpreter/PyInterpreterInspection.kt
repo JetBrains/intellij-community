@@ -13,7 +13,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
@@ -25,6 +25,7 @@ import com.intellij.python.sdkConfigurator.common.enableSDKAutoConfigurator
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
+import com.jetbrains.python.inspections.PyAsyncFileInspectionRunner
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.inspections.PyInspectionVisitor
@@ -40,19 +41,32 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.ui.PyUiUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.regex.Pattern
 
 private val NAME: Pattern = Pattern.compile("Python (?<version>\\d\\.\\d+)\\s*(\\((?<name>.+?)\\))?")
 
-class PyInterpreterInspection : PyInspection() {
+class PyInterpreterInspection : PyInspection(), DumbAware {
+  private val asyncFileInspectionRunner = PyAsyncFileInspectionRunner(
+    PyPsiBundle.message("INSP.interpreter.checking.existing.environments")
+  ) { module ->
+    buildList {
+      val sdkName = ProjectRootManager.getInstance(module.project).projectSdkName
+      getSuitableSdkFix(sdkName, module)?.let { add(it) }
+      add(ConfigureInterpreterFix())
+    }
+  }
+
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
-    PyInterpreterInspectionVisitor(holder, PyInspectionVisitor.getContext(session))
+    PyInterpreterInspectionVisitor(holder, PyInspectionVisitor.getContext(session), asyncFileInspectionRunner)
 }
 
-class PyInterpreterInspectionVisitor(
+private class PyInterpreterInspectionVisitor(
   holder: ProblemsHolder?,
   context: TypeEvalContext,
+  private val asyncFileInspectionRunner: PyAsyncFileInspectionRunner,
 ) : PyInspectionVisitor(holder, context) {
 
   override fun visitPyFile(node: PyFile) {
@@ -74,35 +88,29 @@ class PyInterpreterInspectionVisitor(
   }
 
   private fun registerProblemWithCommonFixes(node: PyFile, @InspectionMessage message: String, module: Module?, pyCharm: Boolean) {
-    val fixes = buildList {
-      if (module != null && pyCharm) {
-        val sdkName = ProjectRootManager.getInstance(node.project).projectSdkName
-        getSuitableSdkFix(sdkName, module)?.let { add(it) }
-        add(ConfigureInterpreterFix())
-      }
-      else {
-        add(InterpreterSettingsQuickFix(module))
+    if (module != null && pyCharm) {
+      asyncFileInspectionRunner.runInspection(node, module)?.let { fixes ->
+        registerProblem(node, message, *fixes.toTypedArray())
       }
     }
-
-    registerProblem(node, message, *fixes.toTypedArray())
+    else {
+      registerProblem(node, message, InterpreterSettingsQuickFix(module))
+    }
   }
 }
 
-private fun getSuitableSdkFix(name: String?, module: Module): LocalQuickFix? {
+private suspend fun getSuitableSdkFix(name: String?, module: Module): LocalQuickFix? = withContext(Dispatchers.Default) {
   // this method is based on com.jetbrains.python.sdk.PySdkExtKt.suggestAssociatedSdkName
   // please keep it in sync with the mentioned method and com.jetbrains.python.PythonSdkConfigurator.configureSdk
 
   val existingSdks = getExistingSdks()
 
   val associatedSdk = mostPreferred(filterAssociatedSdks(module, existingSdks))
-  if (associatedSdk != null) return UseExistingInterpreterFix(associatedSdk, module)
+  if (associatedSdk != null) return@withContext UseExistingInterpreterFix(associatedSdk, module)
 
   val context = UserDataHolderBase()
-  val createSdkInfo = runBlockingMaybeCancellable {
-    PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull()
-  }
-  if (createSdkInfo != null) return UseProvidedInterpreterFix(module, createSdkInfo)
+  val createSdkInfo = PyProjectSdkConfigurationExtension.findAllSortedForModule(module).firstOrNull()
+  if (createSdkInfo != null) return@withContext UseProvidedInterpreterFix(module, createSdkInfo)
 
   if (name != null) {
     val matcher = NAME.matcher(name)
@@ -111,13 +119,13 @@ private fun getSuitableSdkFix(name: String?, module: Module): LocalQuickFix? {
       if (venvName != null) {
         val detectedAssociatedViaRootNameEnv = detectAssociatedViaRootNameEnv(venvName, module, existingSdks, context)
         if (detectedAssociatedViaRootNameEnv != null) {
-          return UseDetectedInterpreterFix(detectedAssociatedViaRootNameEnv, existingSdks, true, module)
+          return@withContext UseDetectedInterpreterFix(detectedAssociatedViaRootNameEnv, existingSdks, true, module)
         }
       }
       else {
         val detectedSystemWideSdk = detectSystemWideSdk(matcher.group("version"), module, existingSdks, context)
         if (detectedSystemWideSdk != null) {
-          return UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module)
+          return@withContext UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module)
         }
       }
     }
@@ -125,23 +133,22 @@ private fun getSuitableSdkFix(name: String?, module: Module): LocalQuickFix? {
 
   if (PyCondaSdkCustomizer.instance.suggestSharedCondaEnvironments) {
     val sharedCondaEnv = mostPreferred(filterSharedCondaEnvs(module, existingSdks))
-    if (sharedCondaEnv != null) return UseExistingInterpreterFix(sharedCondaEnv, module)
+    if (sharedCondaEnv != null) return@withContext UseExistingInterpreterFix(sharedCondaEnv, module)
   }
 
   // TODO: We should use SystemPythonService here as well, postponing as it's quite unlikely we get here (although we can)
   val systemWideSdk = mostPreferred(filterSystemWideSdks(existingSdks))
-  if (systemWideSdk != null) return UseExistingInterpreterFix(systemWideSdk, module)
+  if (systemWideSdk != null) return@withContext UseExistingInterpreterFix(systemWideSdk, module)
 
-  val configurator = PyCondaSdkCustomizer.instance.fallbackConfigurator
-  if (configurator != null) {
-    val fallbackCreateSdkInfo = PyCondaSdkCustomizer.checkEnvironmentAndPrepareSdkCreatorBlocking(configurator, module)
-    if (fallbackCreateSdkInfo != null) return UseProvidedInterpreterFix(module, fallbackCreateSdkInfo)
+  val fallbackCreateSdkInfo = PyCondaSdkCustomizer.instance.fallbackConfigurator?.let { configurator ->
+    configurator.checkEnvironmentAndPrepareSdkCreator(module)?.let { CreateSdkInfoWithTool(it, configurator.toolId) }
   }
+  if (fallbackCreateSdkInfo != null) return@withContext UseProvidedInterpreterFix(module, fallbackCreateSdkInfo)
 
   val detectedSystemWideSdk = detectSystemWideSdks(module, existingSdks).firstOrNull()
-  if (detectedSystemWideSdk != null) return UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module)
+  if (detectedSystemWideSdk != null) return@withContext UseDetectedInterpreterFix(detectedSystemWideSdk, existingSdks, false, module)
 
-  return null
+  null
 }
 
 private fun getExistingSdks(): List<Sdk> {
@@ -155,7 +162,7 @@ private fun detectAssociatedViaRootNameEnv(
 ): PyDetectedSdk? = findAssociatedViaRootNameEnv(associatedName, detectVirtualEnvs(module, existingSdks, context))
 
 private fun detectSystemWideSdk(version: String, module: Module, existingSdks: List<Sdk>, context: UserDataHolderBase): PyDetectedSdk? {
-  val parsedVersion = LanguageLevel.fromPythonVersion(version)!!
+  val parsedVersion = LanguageLevel.fromPythonVersion(version)
 
   return if (parsedVersion.toString() == version) {
     detectSystemWideSdks(module, existingSdks, context).firstOrNull { it.guessedLanguageLevel == parsedVersion }
@@ -176,7 +183,7 @@ private fun isFileIgnored(pyFile: PyFile): Boolean =
   PyInspectionExtension.EP_NAME.extensionList.any { it.ignoreInterpreterWarnings(pyFile) }
 
 
-class ConfigureInterpreterFix : LocalQuickFix {
+private class ConfigureInterpreterFix : LocalQuickFix {
   @IntentionFamilyName
   override fun getFamilyName(): String = PyPsiBundle.message("INSP.interpreter.configure.python.interpreter")
 

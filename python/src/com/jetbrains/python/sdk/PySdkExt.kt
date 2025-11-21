@@ -39,7 +39,6 @@ import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isVirtualEnv
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
@@ -298,7 +297,8 @@ val Sdk.associatedModuleNioPath: Path?
   get() =
     try {
       associatedModulePath?.let { Path(it) }
-    }catch (e: InvalidPathException) {
+    }
+    catch (e: InvalidPathException) {
       if (getUserData(SDK_ERROR_REPORTED) != true) {
         LOGGER.warn("Can't convert ${associatedModulePath} to path", e)
         putUserData(SDK_ERROR_REPORTED, true)
@@ -323,17 +323,6 @@ internal fun Sdk.adminPermissionsNeeded(): Boolean {
 fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
   val homeDir = homeDirectory ?: return null
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), null, null)
-}
-
-// For Java only
-internal fun PyDetectedSdk.setupSdkLaunch(
-  module: Module,
-  existingSdks: List<Sdk>,
-  doAssociate: Boolean,
-) {
-  PyPackageCoroutine.launch(project = module.project) {
-    setupSdk(module, existingSdks, doAssociate)
-  }
 }
 
 @Internal
@@ -464,7 +453,7 @@ fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
 }
 
 internal suspend fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? = withContext(Dispatchers.IO) {
-  // please don't forget to update com.jetbrains.python.inspections.interpreter.PyInterpreterInspection.Visitor#getSuitableSdkFix
+  // please don't forget to update com.jetbrains.python.inspections.interpreter.PyInterpreterInspection#getSuitableSdkFix
   // after changing this method
 
   val baseSdkName = PythonSdkType.suggestBaseSdkName(sdkHome) ?: return@withContext null
