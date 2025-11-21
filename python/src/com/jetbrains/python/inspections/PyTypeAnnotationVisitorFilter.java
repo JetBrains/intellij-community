@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 

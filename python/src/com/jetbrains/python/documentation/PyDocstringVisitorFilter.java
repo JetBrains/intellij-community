@@ -4,6 +4,7 @@ package com.jetbrains.python.documentation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PythonVisitorFilter;

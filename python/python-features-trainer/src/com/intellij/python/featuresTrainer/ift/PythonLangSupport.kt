@@ -24,7 +24,7 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
-import com.jetbrains.python.inspections.PyInterpreterInspection
+import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox

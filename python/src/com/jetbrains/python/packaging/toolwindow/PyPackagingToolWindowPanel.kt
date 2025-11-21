@@ -28,7 +28,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.asDisposable
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.TraceContext
-import com.jetbrains.python.inspections.PyInterpreterInspection
+import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.ErrorNode

@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection
 
 class PyInterpreterInspectionTest : PyTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor? = ourPyLatestDescriptor
