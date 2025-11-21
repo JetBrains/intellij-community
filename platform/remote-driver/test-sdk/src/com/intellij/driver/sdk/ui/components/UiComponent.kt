@@ -474,6 +474,18 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     }
   }
 
+  fun mouseWheelClick(point: Point? = null) {
+    LOG.info("Mouse wheel click at $this${point?.let { ": $it" } ?: ""}")
+    withComponent {
+      if (point != null) {
+        robot.click(it, point, RemoteMouseButton.MIDDLE)
+      }
+      else {
+        robot.click(it, RemoteMouseButton.MIDDLE)
+      }
+    }
+  }
+
   fun moveMouse(point: Point? = null) {
     LOG.info("Move mouse to $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
