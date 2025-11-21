@@ -4,7 +4,7 @@
 
 | Min supported IJP versions | Compose Multiplatform version |
 |----------------------------|-------------------------------|
-| 2025.3, 2026.1*            | 1.10.0-beta01                 |
+| 2025.3, 2026.1*            | 1.10.0-alpha01                |
 
 This is a small release, not too much going on. But we still shipped a big improvement to Markdown rendering, which now supports some basic HTML too!
 
