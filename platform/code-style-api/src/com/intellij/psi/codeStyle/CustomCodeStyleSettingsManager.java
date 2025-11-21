@@ -24,15 +24,7 @@ class CustomCodeStyleSettingsManager {
 
   void initCustomSettings() {
     for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
-      if (!factory.getClass().getSimpleName().startsWith("AndroidStudio")) { // Android Studio: b/175998141
       addCustomSettings(myRootSettings, factory);
-      }
-    }
-    // Android Studio: also apply our predefined Android code styles (b/175998141).
-    for (final CustomCodeStyleSettingsFactory factory : CodeStyleSettingsService.getInstance().getCustomCodeStyleSettingsFactories()) {
-      if (factory.getClass().getSimpleName().startsWith("AndroidStudio")) {
-        addCustomSettings(myRootSettings, factory);
-      }
     }
   }
 
