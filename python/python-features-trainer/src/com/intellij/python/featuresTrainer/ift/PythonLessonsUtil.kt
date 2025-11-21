@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
-import com.jetbrains.python.inspections.PyInterpreterInspection
+import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection
 import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pythonSdk

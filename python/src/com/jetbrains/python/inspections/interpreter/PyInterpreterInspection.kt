@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.inspections
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.inspections.interpreter
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -9,10 +9,10 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.ide.actions.ShowSettingsUtilImpl.Companion.showSettingsDialog
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
@@ -33,17 +33,17 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonIdeLanguageCustomization
+import com.jetbrains.python.inspections.PyInspection
+import com.jetbrains.python.inspections.PyInspectionExtension
+import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.findSdkForFile
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.PySdkPopupFactory.Companion.createAndShow
-import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer.Companion.checkEnvironmentAndPrepareSdkCreatorBlocking
-import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer.Companion.instance
+import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.configureSdkUsingCreateSdkInfo
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.ui.PyUiUtil
 import one.util.streamex.StreamEx
@@ -68,7 +68,7 @@ class PyInterpreterInspection : PyInspection() {
     override fun visitPyFile(node: PyFile) {
       if (isFileIgnored(node)) return
       val module = ModuleUtilCore.findModuleForPsiElement(node)
-      val sdk = findSdkForFile(node)
+      val sdk = PyBuiltinCache.Companion.findSdkForFile(node)
       val pyCharm = PythonIdeLanguageCustomization.isMainlyPythonIde()
 
       val fixes: MutableList<LocalQuickFix?> = ArrayList<LocalQuickFix?>()
@@ -142,7 +142,7 @@ class PyInterpreterInspection : PyInspection() {
           }
         }
 
-        if (instance.suggestSharedCondaEnvironments) {
+        if (PyCondaSdkCustomizer.Companion.instance.suggestSharedCondaEnvironments) {
           val sharedCondaEnv = mostPreferred(filterSharedCondaEnvs(module, existingSdks))
           if (sharedCondaEnv != null) {
             return UseExistingInterpreterFix(sharedCondaEnv, module)
@@ -155,10 +155,10 @@ class PyInterpreterInspection : PyInspection() {
           return UseExistingInterpreterFix(systemWideSdk, module)
         }
 
-        val configurator = instance.fallbackConfigurator
+        val configurator = PyCondaSdkCustomizer.Companion.instance.fallbackConfigurator
         if (configurator != null) {
           val fallbackCreateSdkInfo =
-            checkEnvironmentAndPrepareSdkCreatorBlocking(configurator, module)
+            PyCondaSdkCustomizer.Companion.checkEnvironmentAndPrepareSdkCreatorBlocking(configurator, module)
           if (fallbackCreateSdkInfo != null) {
             return UseProvidedInterpreterFix(module, fallbackCreateSdkInfo)
           }
@@ -177,7 +177,7 @@ class PyInterpreterInspection : PyInspection() {
           val model = ProjectSdksModel()
           model.reset(null)
           return ContainerUtil.filter(model.getSdks(),
-                                            Condition { it.getSdkType() is PythonSdkType })
+                                      Condition { it.getSdkType() is PythonSdkType })
         }
 
       private fun detectAssociatedViaRootNameEnv(
@@ -189,7 +189,7 @@ class PyInterpreterInspection : PyInspection() {
         return Companion.findAssociatedViaRootNameEnv(
           associatedName,
           detectVirtualEnvs(module, existingSdks, context),
-          Function { sdk: PyDetectedSdk? -> Companion.getVirtualEnvRootName(sdk!!) }
+          Function { sdk: PyDetectedSdk? -> getVirtualEnvRootName(sdk!!) }
         )
       }
 
@@ -255,7 +255,7 @@ class PyInterpreterInspection : PyInspection() {
         val id = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
         val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true)
         if (ConfigurableVisitor.findById(id, mutableListOf<ConfigurableGroup?>(group)) != null) {
-          showSettingsDialog(project, id, null)
+          ShowSettingsUtilImpl.Companion.showSettingsDialog(project, id, null)
           return
         }
 
@@ -270,7 +270,7 @@ class PyInterpreterInspection : PyInspection() {
 
       private fun justOneModuleInheritingSdk(project: Project, module: Module): Boolean {
         return ProjectRootManager.getInstance(project).getProjectSdk() == null &&
-               ModuleRootManager.getInstance(module).isSdkInherited() && getInstance(project).modules.size < 2
+               ModuleRootManager.getInstance(module).isSdkInherited() && ModuleManager.Companion.getInstance(project).modules.size < 2
       }
     }
   }
@@ -292,7 +292,7 @@ class PyInterpreterInspection : PyInspection() {
       val module = ModuleUtilCore.findModuleForPsiElement(element)
       if (module == null) return
 
-      createAndShow(module)
+      PySdkPopupFactory.Companion.createAndShow(module)
     }
   }
 
@@ -312,7 +312,7 @@ class PyInterpreterInspection : PyInspection() {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
       if (!detectSdkForModulesIn(project)) {
-        configureSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo)
+        PyProjectSdkConfiguration.configureSdkUsingCreateSdkInfo(myModule, myCreateSdkInfo)
       }
     }
 
