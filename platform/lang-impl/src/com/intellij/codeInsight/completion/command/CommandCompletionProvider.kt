@@ -640,7 +640,7 @@ internal fun findCommandCompletionType(
   return null
 }
 
-private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : CamelHumpMatcher(myCurrentPrefix, false, true) {
+private class LimitedToleranceMatcher(prefix: String) : CamelHumpMatcher(prefix, false, true) {
 
   fun basePrefixMatches(element: LookupElement): Boolean {
     return super.prefixMatches(element)
@@ -685,7 +685,7 @@ private class LimitedToleranceMatcher(private val myCurrentPrefix: String) : Cam
   }
 
   override fun cloneWithPrefix(prefix: String): PrefixMatcher {
-    if (prefix == myCurrentPrefix) {
+    if (prefix == this.prefix) {
       return this
     }
     return LimitedToleranceMatcher(prefix)
