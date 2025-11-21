@@ -198,6 +198,12 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     fun getGrayedForeground(@Suppress("UNUSED_PARAMETER") isSelected: Boolean): Color = UIUtil.getContextHelpForeground()
 
     @JvmStatic
+    fun getMatchingFragmentList(prefix: String, name: String): List<TextRange>? {
+      return NameUtil.buildMatcher("*$prefix").build().match(name)
+    }
+
+    @Deprecated("use getMatchingFragmentList(prefix, name)", ReplaceWith("getMatchingFragmentList(prefix, name)"))
+    @JvmStatic
     fun getMatchingFragments(prefix: String, name: String): FList<TextRange>? {
       return NameUtil.buildMatcher("*$prefix").build().matchingFragments(name)
     }
@@ -464,11 +470,11 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     val prefix = if (item is EmptyLookupItem) "" else lookup.itemPattern(item)
     if (prefix.isNotEmpty()) {
       val itemMatcher = lookup.itemMatcher(item)
-      var ranges: List<TextRange>? = itemMatcher.getMatchingFragments(name) ?: getMatchingFragments(prefix, name)
+      var ranges: List<TextRange>? = itemMatcher.getMatchingFragments(name) ?: getMatchingFragmentList(prefix, name)
       if (ranges == null) {
         val startIndex = item.lookupString.indexOf(name)
         if (startIndex != -1) {
-          ranges = getMatchingFragments(prefix, item.lookupString)
+          ranges = getMatchingFragmentList(prefix, item.lookupString)
             ?.map { TextRange((it.startOffset - startIndex).coerceIn(0, name.length), (it.endOffset - startIndex).coerceIn(0, name.length)) }
             ?.filter { it.length != 0 }
         }

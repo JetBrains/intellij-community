@@ -117,7 +117,7 @@ private open class PresentableChangeNode(presentableChange: PresentableChange, p
     super.render(tree, renderer, selected, expanded, hasFocus)
     val speedSearch = TreeSpeedSearch.getSupply(tree)
     if (speedSearch?.isPopupActive != true) {
-      val matchedFragments = activityMatcher?.matchingFragments(renderer.getCharSequence(true).toString())
+      val matchedFragments = activityMatcher?.match(renderer.getCharSequence(true).toString())
       SpeedSearchUtil.applySpeedSearchHighlighting(renderer, matchedFragments, selected)
     }
   }

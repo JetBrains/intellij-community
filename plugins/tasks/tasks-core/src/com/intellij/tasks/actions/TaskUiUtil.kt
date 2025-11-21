@@ -40,7 +40,7 @@ internal fun getTaskCellRenderer(project: Project) = listCellRenderer<Any> {
           foreground = greyForeground
         }
         speedSearch {
-          ranges = matcher?.matchingFragments(task.presentableName)
+          ranges = matcher?.match(task.presentableName)
         }
       }
     }

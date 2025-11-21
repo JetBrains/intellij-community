@@ -26,7 +26,6 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -324,7 +323,7 @@ public final class JavaGenerateMemberCompletionContributor {
       if (!myPrefix.contains(" ")) return true;
 
       String signature = element.getLookupString();
-      FList<TextRange> fragments = matchingFragments(signature);
+      List<TextRange> fragments = matchingFragments(signature);
       return fragments == null || !ContainerUtil.exists(fragments, f -> isMiddleMatch(signature, f));
 
     }

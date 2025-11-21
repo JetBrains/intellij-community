@@ -140,7 +140,7 @@ public final class MethodTags {
     private void highlightLast(@NotNull LookupElementPresentation presentation, int start) {
       List<LookupElementPresentation.TextFragment> fragments = presentation.getTailFragments();
       LookupElementPresentation.TextFragment lastFragment = fragments.getLast();
-      Iterable<TextRange> ranges = LookupCellRenderer.getMatchingFragments(myPrefix, lastFragment.text);
+      Iterable<TextRange> ranges = LookupCellRenderer.getMatchingFragmentList(myPrefix, lastFragment.text);
       if (ranges != null) {
         for (TextRange nextHighlightedRange : ranges) {
           presentation.decorateTailItemTextRange(

@@ -13,47 +13,47 @@ class AllOccurrencesMatcherTest {
   @Test
   fun simpleCase() {
     val matcher = AllOccurrencesMatcher.create("*fooBar", MatchingMode.IGNORE_CASE, "", KeyboardLayoutConverter.noop)
-    assertEquals(listOf(TextRange(0, 6), TextRange(6, 12)), matcher.matchingFragments("fooBarFooBar")?.toList())
-    assertEquals(listOf(TextRange(0, 6), TextRange(6, 9), TextRange(13, 16)), matcher.matchingFragments("fooBarFooBuzzBar")?.toList())
-    assertEquals(listOf(TextRange(0, 6)), matcher.matchingFragments("fooBarBuzzFoo")?.toList())
-    assertEquals(listOf(TextRange(0, 6), TextRange(10, 13), TextRange(17, 20)), matcher.matchingFragments("fooBarBuzzFooBuzzBar")?.toList())
-    assertEquals(listOf(TextRange(0, 3), TextRange(14, 17)), matcher.matchingFragments("fooBuzzFooBuzzBar")?.toList())
+    assertEquals(listOf(TextRange(0, 6), TextRange(6, 12)), matcher.match("fooBarFooBar"))
+    assertEquals(listOf(TextRange(0, 6), TextRange(6, 9), TextRange(13, 16)), matcher.match("fooBarFooBuzzBar"))
+    assertEquals(listOf(TextRange(0, 6)), matcher.match("fooBarBuzzFoo"))
+    assertEquals(listOf(TextRange(0, 6), TextRange(10, 13), TextRange(17, 20)), matcher.match("fooBarBuzzFooBuzzBar"))
+    assertEquals(listOf(TextRange(0, 3), TextRange(14, 17)), matcher.match("fooBuzzFooBuzzBar"))
   }
 
   @Test
   fun testCaseInsensitive() {
     val matcher = AllOccurrencesMatcher.create("*foo", MatchingMode.IGNORE_CASE, "", KeyboardLayoutConverter.noop)
-    assertEquals(listOf(TextRange(0, 3), TextRange(3, 6), TextRange(6, 9)), matcher.matchingFragments("fooFooFOO")?.toList())
-    assertEquals(listOf(TextRange(0, 3), TextRange(6, 9)), matcher.matchingFragments("FooBarfooBar")?.toList())
+    assertEquals(listOf(TextRange(0, 3), TextRange(3, 6), TextRange(6, 9)), matcher.match("fooFooFOO"))
+    assertEquals(listOf(TextRange(0, 3), TextRange(6, 9)), matcher.match("FooBarfooBar"))
   }
 
   @Test
   fun testCaseSensitive() {
     val matcher = AllOccurrencesMatcher.create("*Foo", MatchingMode.MATCH_CASE, "", KeyboardLayoutConverter.noop)
-    assertEquals(listOf(TextRange(0, 3), TextRange(6, 9)), matcher.matchingFragments("FooBarFooBar")?.toList())
-    assertEquals(listOf(TextRange(0, 3)), matcher.matchingFragments("FooBarfooBar")?.toList())
-    assertNull(matcher.matchingFragments("fooBarFOOBar"))
+    assertEquals(listOf(TextRange(0, 3), TextRange(6, 9)), matcher.match("FooBarFooBar"))
+    assertEquals(listOf(TextRange(0, 3)), matcher.match("FooBarfooBar"))
+    assertNull(matcher.match("fooBarFOOBar"))
   }
 
   @Test
   fun testFirstLetterSensitive() {
     val lowerMatcher = AllOccurrencesMatcher.create("*foo", MatchingMode.FIRST_LETTER, "", KeyboardLayoutConverter.noop)
-    assertEquals(listOf(TextRange(0, 3)), lowerMatcher.matchingFragments("fooBarfooBar")?.toList())
-    assertNull(lowerMatcher.matchingFragments("FooBarFooBar"))
+    assertEquals(listOf(TextRange(0, 3)), lowerMatcher.match("fooBarfooBar"))
+    assertNull(lowerMatcher.match("FooBarFooBar"))
 
     val upperMatcher = AllOccurrencesMatcher.create("*Foo", MatchingMode.FIRST_LETTER, "", KeyboardLayoutConverter.noop)
-    assertEquals(listOf(TextRange(0, 3), TextRange(6, 9)), upperMatcher.matchingFragments("FooBarFooBar")?.toList())
-    assertNull(upperMatcher.matchingFragments("fooBarfooBar"))
+    assertEquals(listOf(TextRange(0, 3), TextRange(6, 9)), upperMatcher.match("FooBarFooBar"))
+    assertNull(upperMatcher.match("fooBarfooBar"))
   }
 
   @Test
   fun testFirstLetterSensitiveWithWildcardLeadingSpace() {
     val lowerMatcher = AllOccurrencesMatcher.create(" foo", MatchingMode.FIRST_LETTER, "", KeyboardLayoutConverter.noop)
-    assertEquals(listOf(TextRange(0, 3)), lowerMatcher.matchingFragments("fooBarfoo")?.toList())
-    assertNull(lowerMatcher.matchingFragments("FooBarFoo"))
+    assertEquals(listOf(TextRange(0, 3)), lowerMatcher.match("fooBarfoo"))
+    assertNull(lowerMatcher.match("FooBarFoo"))
 
     val upperMatcher = AllOccurrencesMatcher.create(" Foo", MatchingMode.FIRST_LETTER, "", KeyboardLayoutConverter.noop)
-    assertEquals(listOf(TextRange(0, 3), TextRange(6, 9)), upperMatcher.matchingFragments("FooBarFoo")?.toList())
-    assertNull(upperMatcher.matchingFragments("fooBarfoo"))
+    assertEquals(listOf(TextRange(0, 3), TextRange(6, 9)), upperMatcher.match("FooBarFoo"))
+    assertNull(upperMatcher.match("fooBarfoo"))
   }
 }

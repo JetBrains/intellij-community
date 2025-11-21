@@ -333,6 +333,10 @@ com.intellij.codeInsight.lookup.LookupActionProvider
 com.intellij.codeInsight.lookup.LookupManagerListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:activeLookupChanged(com.intellij.codeInsight.lookup.Lookup,com.intellij.codeInsight.lookup.Lookup):V
+f:com.intellij.codeInsight.lookup.impl.LookupCellRenderer
+- sf:getMatchingFragmentList(java.lang.String,java.lang.String):java.util.List
+f:com.intellij.codeInsight.lookup.impl.LookupCellRenderer$Companion
+- f:getMatchingFragmentList(java.lang.String,java.lang.String):java.util.List
 com.intellij.codeInsight.lookup.impl.LookupCellRenderer$IconDecorator
 - javax.swing.Icon
 - a:getDelegate():javax.swing.Icon

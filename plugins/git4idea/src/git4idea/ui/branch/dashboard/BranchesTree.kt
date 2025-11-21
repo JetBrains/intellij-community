@@ -408,7 +408,7 @@ private class BranchesFilteringSpeedSearch(
     val text = tree.getText(userObject) ?: return
     val singleMatch = matchingFragments?.singleOrNull() ?: return
 
-    val matchingDegree = matcher.matchingDegree(text, false, FList.singleton(singleMatch))
+    val matchingDegree = matcher.matchingDegree(text, false, listOf(singleMatch))
     if (matchingDegree > (bestMatch?.matchingDegree ?: 0)) {
       val node = tree.searchModel.getNode(userObject)
       bestMatch = BestMatch(matchingDegree, node)

@@ -10,7 +10,6 @@ import com.intellij.util.text.matching.KeyboardLayoutConverter
 import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.NonNls
 import org.junit.jupiter.api.Test
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -468,37 +467,37 @@ class NameUtilMatchingTest {
   fun testMatchingFragments() {
     @NonNls var sample = "NoClassDefFoundException"
     //                    0 2    7  10   15    21
-    assertContentEquals(NameUtil.buildMatcher("ncldfou*ion", MatchingMode.IGNORE_CASE).matchingFragments(sample),
-                        listOf(TextRange.from(0, 1), TextRange.from(2, 2), TextRange.from(7, 1), TextRange.from(10, 3), TextRange.from(21, 3)))
+    assertEquals(NameUtil.buildMatcher("ncldfou*ion", MatchingMode.IGNORE_CASE).match(sample),
+                 listOf(TextRange.from(0, 1), TextRange.from(2, 2), TextRange.from(7, 1), TextRange.from(10, 3), TextRange.from(21, 3)))
 
     sample = "doGet(HttpServletRequest, HttpServletResponse):void"
     //        0                     22
-    assertContentEquals(NameUtil.buildMatcher("d*st", MatchingMode.IGNORE_CASE).matchingFragments(sample),
-                        listOf(TextRange.from(0, 1), TextRange.from(22, 2)))
-    assertContentEquals(NameUtil.buildMatcher("doge*st", MatchingMode.IGNORE_CASE).matchingFragments(sample),
-                        listOf(TextRange.from(0, 4), TextRange.from(22, 2)))
+    assertEquals(NameUtil.buildMatcher("d*st", MatchingMode.IGNORE_CASE).match(sample),
+                 listOf(TextRange.from(0, 1), TextRange.from(22, 2)))
+    assertEquals(NameUtil.buildMatcher("doge*st", MatchingMode.IGNORE_CASE).match(sample),
+                 listOf(TextRange.from(0, 4), TextRange.from(22, 2)))
 
     sample = "_test"
-    assertContentEquals(NameUtil.buildMatcher("_", MatchingMode.IGNORE_CASE).matchingFragments(sample),
-                        listOf(TextRange.from(0, 1)))
-    assertContentEquals(NameUtil.buildMatcher("_t", MatchingMode.IGNORE_CASE).matchingFragments(sample),
-                        listOf(TextRange.from(0, 2)))
+    assertEquals(NameUtil.buildMatcher("_", MatchingMode.IGNORE_CASE).match(sample),
+                 listOf(TextRange.from(0, 1)))
+    assertEquals(NameUtil.buildMatcher("_t", MatchingMode.IGNORE_CASE).match(sample),
+                 listOf(TextRange.from(0, 2)))
   }
 
   @Test
   fun testMatchingFragmentsSorted() {
     @NonNls val sample = "SWUPGRADEHDLRFSPR7TEST"
     //                    0        9  12
-    assertContentEquals(NameUtil.buildMatcher("SWU*H*R", MatchingMode.IGNORE_CASE).matchingFragments(sample),
-                        listOf(TextRange.from(0, 3), TextRange.from(9, 1), TextRange.from(12, 1)))
+    assertEquals(NameUtil.buildMatcher("SWU*H*R", MatchingMode.IGNORE_CASE).match(sample),
+                 listOf(TextRange.from(0, 3), TextRange.from(9, 1), TextRange.from(12, 1)))
   }
 
   @Test
   fun testPreferCapsMatching() {
     val sample = "getCurrentUser"
     //            0   4     10
-    assertContentEquals(NameUtil.buildMatcher("getCU", MatchingMode.IGNORE_CASE).matchingFragments(sample),
-                        listOf(TextRange.from(0, 4), TextRange.from(10, 1)))
+    assertEquals(NameUtil.buildMatcher("getCU", MatchingMode.IGNORE_CASE).match(sample),
+                 listOf(TextRange.from(0, 4), TextRange.from(10, 1)))
   }
 
   @Test
@@ -646,12 +645,12 @@ class NameUtilMatchingTest {
   fun testMatchingAllOccurrences() {
     val text = "some text"
     val matcher = create("*e", MatchingMode.IGNORE_CASE, "", KeyboardLayoutConverter.noop)
-    assertContentEquals(matcher.matchingFragments(text), listOf(TextRange(3, 4), TextRange(6, 7)))
+    assertEquals(matcher.match(text), listOf(TextRange(3, 4), TextRange(6, 7)))
   }
 
   @Test
   fun testCamelHumpWinsOverConsecutiveCaseMismatch() {
-    assertEquals(3, NameUtil.buildMatcher("GEN", MatchingMode.IGNORE_CASE).matchingFragments("GetExtendedName")!!.size)
+    assertEquals(3, NameUtil.buildMatcher("GEN", MatchingMode.IGNORE_CASE).match("GetExtendedName")!!.size)
 
     assertPreference("GEN", "GetName", "GetExtendedName")
     assertPreference("*GEN", "GetName", "GetExtendedName")

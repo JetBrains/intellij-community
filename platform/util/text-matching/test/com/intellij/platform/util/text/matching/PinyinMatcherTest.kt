@@ -3,7 +3,6 @@ package com.intellij.platform.util.text.matching
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.FixingLayoutMatcher
-import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.codeStyle.PinyinMatcher
 import com.intellij.util.text.matching.KeyboardLayoutConverter
 import com.intellij.util.text.matching.MatchingMode
@@ -15,19 +14,19 @@ class PinyinMatcherTest {
   @Test
   fun test() {
     val matcher = PinyinMatcher.create("*nh", FixingLayoutMatcher("*nh", MatchingMode.IGNORE_CASE, "", KeyboardLayoutConverter.noop))
-    assertEquals(matcher.matchingFragments("你好")?.toList(), listOf(TextRange(0, 2)));
-    assertEquals(matcher.matchingFragments("get你好")?.toList(), listOf(TextRange(3, 5)));
+    assertEquals(matcher.match("你好"), listOf(TextRange(0, 2)))
+    assertEquals(matcher.match("get你好"), listOf(TextRange(3, 5)))
   }
 
   @Test
   fun test2() {
     val matcher = PinyinMatcher.create("*gh", FixingLayoutMatcher("*gh", MatchingMode.IGNORE_CASE, "", KeyboardLayoutConverter.noop))
-    assertNull(matcher.matchingFragments("角色")?.toList());
+    assertNull(matcher.match("角色"))
   }
 
   @Test
   fun test3() {
     val matcher = PinyinMatcher.create("*g", FixingLayoutMatcher("*g", MatchingMode.IGNORE_CASE, "", KeyboardLayoutConverter.noop))
-    assertEquals(matcher.matchingFragments("角色")?.toList(), listOf(TextRange(0, 1)));
+    assertEquals(matcher.match("角色"), listOf(TextRange(0, 1)))
   }
 }

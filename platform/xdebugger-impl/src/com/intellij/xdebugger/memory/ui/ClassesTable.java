@@ -17,7 +17,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -563,7 +562,7 @@ public class ClassesTable extends JBTable implements UiDataProvider, Disposable 
       String presentation = ((TypeInfo)value).name();
       append(" ");
       if (isSelected) {
-        FList<TextRange> textRanges = myMatcher.matchingFragments(presentation);
+        List<TextRange> textRanges = myMatcher.match(presentation);
         if (textRanges != null) {
           SimpleTextAttributes attributes = new SimpleTextAttributes(getBackground(), getForeground(), null,
                                                                      SimpleTextAttributes.STYLE_SEARCH_MATCH);

@@ -161,7 +161,7 @@ class SeTargetItemPresentationBuilder {
   companion object {
     private fun MinusculeMatcher.calcMatchedRanges(text: String?): List<TextRange>? {
       text ?: return null
-      return matchingFragments(text)
+      return match(text)
     }
   }
 }

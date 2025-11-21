@@ -42,7 +42,7 @@ public class SpeedSearchComparator {
   }
 
   public @Nullable Iterable<TextRange> matchingFragments(@NotNull String pattern, @NotNull String text) {
-    return obtainMatcher(pattern).matchingFragments(text);
+    return obtainMatcher(pattern).match(text);
   }
 
   private MinusculeMatcher obtainMatcher(@NotNull String pattern) {

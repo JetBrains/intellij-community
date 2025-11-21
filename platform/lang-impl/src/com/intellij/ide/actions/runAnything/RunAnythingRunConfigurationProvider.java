@@ -44,9 +44,9 @@ public final class RunAnythingRunConfigurationProvider extends com.intellij.ide.
     TreeMap<Integer, ItemWrapper> map = new TreeMap<>(Comparator.reverseOrder());
     for (ItemWrapper<?> wrapper : list) {
       String name = wrapper.getText();
-      FList<TextRange> fragments = matcher.matchingFragments(name);
+      List<TextRange> fragments = matcher.match(name);
       if (fragments != null) {
-        int rest = fragments.isEmpty() ? 0 : name.length() - fragments.get(fragments.size() - 1).getEndOffset();
+        int rest = fragments.isEmpty() ? 0 : name.length() - fragments.getLast().getEndOffset();
         map.put(matcher.matchingDegree(name, false, fragments) - rest, wrapper);
       }
     }
