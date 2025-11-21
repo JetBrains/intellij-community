@@ -99,10 +99,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   @Override
-  public void openServicesToolWindowOnRun(String toolwindowId, Boolean focus, RunContentDescriptorId descriptorId){
+  public void navigateToServiceOnRun(RunContentDescriptorId descriptorId, Boolean focus){
     RunDashboardService service = findService(descriptorId);
     RunDashboardServiceId serviceId = (service == null) ? null : service.getUuid();
-    mySharedState.fireOpenToolwindowForRunningConfiguration(toolwindowId, focus, serviceId);
+    mySharedState.fireNavigateToServiceEvent(serviceId, focus);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
@@ -287,8 +287,8 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     return mySharedState.getConfigurationTypes();
   }
 
-  public Flow<OpenToolWindowEventDto> getOpenToolwindowEvents() {
-    return mySharedState.getOpenToolWindowEvents();
+  public Flow<NavigateToServiceEvent> getNavigateToServiceEvents() {
+    return mySharedState.getNavigateToServiceEvents();
   }
 
   public void runCallbackForLink(@NotNull String link, @NotNull RunDashboardServiceId serviceId) {

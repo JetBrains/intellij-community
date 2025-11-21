@@ -7,8 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-data class OpenToolWindowEventDto(
-  val toolwindowId: String,
-  val focus: Boolean,
-  val serviceId: RunDashboardServiceId?
+data class NavigateToServiceEvent(
+  val serviceId: RunDashboardServiceId?,
+  val focus: Boolean
 )

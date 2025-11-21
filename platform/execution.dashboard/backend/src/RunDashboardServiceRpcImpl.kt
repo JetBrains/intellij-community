@@ -99,9 +99,9 @@ internal class RunDashboardServiceRpcImpl : RunDashboardServiceRpc {
     return RunDashboardManagerImpl.getInstance(project).excludedTypesDto
   }
 
-  override suspend fun getOpenToolWindowEvents(projectId: ProjectId): Flow<OpenToolWindowEventDto> {
+  override suspend fun getNavigateToServiceEvents(projectId: ProjectId): Flow<NavigateToServiceEvent> {
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
-    return RunDashboardManagerImpl.getInstance(project).openToolwindowEvents
+    return RunDashboardManagerImpl.getInstance(project).navigateToServiceEvents
   }
 
   override suspend fun setNewExcluded(projectId: ProjectId, configurationTypeId: String, newExcluded: Boolean) {

@@ -15,7 +15,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.execution.dashboard.RunDashboardCoroutineScopeProvider
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor
 import com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributorHelper
@@ -128,11 +127,14 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     }
   }
 
-  internal suspend fun subscribeToBackendOpenToolWindowEvents() {
-    RunDashboardServiceRpc.getInstance().getOpenToolWindowEvents(project.projectId()).collect { updateFromBackend ->
-      val toolwindow = ToolWindowManager.getInstance(project).getToolWindow(updateFromBackend.toolwindowId) ?: return@collect
+  internal suspend fun subscribeToNavigateToServiceEvents() {
+    RunDashboardServiceRpc.getInstance().getNavigateToServiceEvents(project.projectId()).collect { updateFromBackend ->
+      val serviceDto = frontendDtos.value.find { it.uuid == updateFromBackend.serviceId } ?: return@collect
+      val configurationNode = FrontendRunConfigurationNode(project, FrontendRunDashboardService(serviceDto))
       withContext(Dispatchers.EDT) {
-        toolwindow.activate (null, updateFromBackend.focus, updateFromBackend.focus)
+        (ServiceViewManager.getInstance(project) as ServiceViewManagerImpl?)
+          ?.trackingSelect(configurationNode, RunDashboardServiceViewContributor::class.java,
+                           serviceDto.isActivateToolWindowBeforeRun, updateFromBackend.focus)
       }
     }
   }
@@ -241,8 +243,8 @@ class FrontendRunDashboardManager(private val project: Project) : RunDashboardMa
     return emptySet()
   }
 
-  override fun openServicesToolWindowOnRun(toolwindowId: String, focus: Boolean) {
-    LOG.debug("openServicesToolWindowOnRun() invoked on frontend; returning empty set")
+  override fun navigateToServiceOnRun(descriptorId: RunContentDescriptorId, focus: Boolean) {
+    LOG.debug("navigateToServiceOnRun() invoked on frontend; ignored")
     return
   }
 

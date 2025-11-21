@@ -419,9 +419,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         focus = true
       }
       getToolWindowManager().getToolWindow(toolWindowId)!!.activate(descriptor.activationCallback, focus, focus)
-      val manager = RunDashboardUiManager.getInstanceIfCreated(project)
-      val descriptorId = descriptor.id
-      manager?.openToolWindow(toolWindowId,  focus, descriptorId) // todo: name this better
+      RunDashboardUiManager.getInstanceIfCreated(project)
+        ?.navigateToServiceOnRun(descriptor.id, focus)  // Reveal running service in dashboard in split mode
     }, project.disposed)
   }
 
