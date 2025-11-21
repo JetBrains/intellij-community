@@ -118,6 +118,7 @@
     <module name="fleet.util.core" loading="embedded"/>
     <module name="fleet.util.logging.api" loading="embedded"/>
     <module name="fleet.util.serialization" loading="embedded"/>
+    <module name="fleet.rpc.server" loading="embedded"/>
     <!-- </editor-fold> -->
 
     <!-- <editor-fold desc="direct modules"> -->

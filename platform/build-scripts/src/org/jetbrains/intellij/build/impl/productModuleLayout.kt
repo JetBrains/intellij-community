@@ -28,9 +28,6 @@ internal val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
   "intellij.rider", listOf(
   "intellij.platform.debugger.modulesView"
 ),
-  "intellij.platform.rpc.backend", listOf(
-  "fleet.rpc.server",
-)
 )
 
 internal fun getProductModuleJarName(moduleName: String, context: BuildContext, frontendModuleFilter: FrontendModuleFilter): String {

@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.rpc"/>
+    <module name="fleet.rpc.server"/>
   </dependencies>
 
   <extensionPoints>

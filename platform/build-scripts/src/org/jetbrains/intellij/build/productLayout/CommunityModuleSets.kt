@@ -460,6 +460,8 @@ object CommunityModuleSets : ModuleSetProvider {
     embeddedModule("fleet.util.core")
     embeddedModule("fleet.util.logging.api")
     embeddedModule("fleet.util.serialization")
+
+    embeddedModule("fleet.rpc.server")
   }
 
   /**
