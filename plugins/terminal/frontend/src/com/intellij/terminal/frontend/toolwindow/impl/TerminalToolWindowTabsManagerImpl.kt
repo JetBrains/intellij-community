@@ -174,7 +174,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     // Let's try to hide the tool window tab right on terminal scope cancellation,
     // but do not store strong reference to the content to avoid leaks.
     val tabReference = WeakReference(content)
-    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.EDT) {
+    terminal.coroutineScope.awaitCancellationAndInvoke(Dispatchers.UiWithModelAccess) {
       val content = tabReference.get() ?: return@awaitCancellationAndInvoke
       val manager = content.manager ?: return@awaitCancellationAndInvoke
       manager.removeContent(content, true)
