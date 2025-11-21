@@ -219,6 +219,38 @@ class WindowsCustomizerBuilder @PublishedApi internal constructor(private val pr
   }
 }
 
+/**
+ * Creates a [WindowsDistributionCustomizer] with Community edition defaults using a builder DSL.
+ *
+ * Example usage:
+ * ```kotlin
+ * communityWindowsCustomizer(projectHome) {
+ *   // Override or extend Community defaults
+ *   fileAssociations += "xml"
+ * }
+ * ```
+ */
+inline fun communityWindowsCustomizer(projectHome: Path, configure: WindowsCustomizerBuilder.() -> Unit = {}): WindowsDistributionCustomizer {
+  return windowsCustomizer(projectHome) {
+    // Set Community defaults
+    icoPath = "build/conf/ideaCE/win/images/idea_CE.ico"
+    icoPathForEAP = "build/conf/ideaCE/win/images/idea_CE_EAP.ico"
+    installerImagesPath = "build/conf/ideaCE/win/images"
+    fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
+    
+    fullName { "IntelliJ IDEA Community Edition" }
+    
+    fullNameAndVendor { "IntelliJ IDEA Community Edition" }
+    
+    uninstallFeedbackUrl { appInfo ->
+      "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
+    }
+    
+    // Apply user configuration
+    configure()
+  }
+}
+
 abstract class WindowsDistributionCustomizer {
   /**
    * Path to 256x256 *.ico file for Windows distribution.

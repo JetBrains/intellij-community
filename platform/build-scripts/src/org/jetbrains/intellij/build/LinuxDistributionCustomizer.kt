@@ -5,7 +5,45 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
+import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import java.nio.file.Path
+
+/**
+ * Creates a [LinuxDistributionCustomizer] with Community edition defaults.
+ *
+ * Example usage:
+ * ```kotlin
+ * communityLinuxCustomizer(projectHome) {
+ *   // Override or extend Community defaults
+ *   extraExecutables += "bin/custom-tool"
+ * }
+ * ```
+ */
+inline fun communityLinuxCustomizer(projectHome: String, configure: LinuxDistributionCustomizer.() -> Unit = {}): LinuxDistributionCustomizer {
+  return object : LinuxDistributionCustomizer() {
+    init {
+      iconPngPath = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_128.png"
+      iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
+      snapName = "intellij-idea-community"
+      snapDescription =
+        "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
+        "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
+    }
+
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "idea-IC-$buildNumber"
+
+    override fun generateExecutableFilesPatterns(
+      includeRuntime: Boolean,
+      arch: JvmArchitecture,
+      targetLibcImpl: LibcImpl,
+      context: BuildContext,
+    ): Sequence<String> {
+      return super.generateExecutableFilesPatterns(includeRuntime, arch, targetLibcImpl, context)
+        .plus(KotlinBinaries.kotlinCompilerExecutables)
+        .filterNot { it == "plugins/**/*.sh" }
+    }
+  }.apply(configure)
+}
 
 open class LinuxDistributionCustomizer {
   /**

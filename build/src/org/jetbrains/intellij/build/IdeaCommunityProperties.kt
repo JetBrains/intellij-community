@@ -9,7 +9,6 @@ import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
-import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.intellij.build.productLayout.*
 import java.nio.file.Path
 
@@ -134,81 +133,11 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
 
   protected open suspend fun bundleExternalPlugins(context: BuildContext, targetDirectory: Path) {}
 
-  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = CommunityWindowsDistributionCustomizer()
+  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = communityWindowsCustomizer(communityHomeDir)
 
-  override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer = CommunityLinuxDistributionCustomizer()
+  override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer = communityLinuxCustomizer(communityHomeDir.toString())
 
-  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = CommunityMacDistributionCustomizer()
-
-  protected open inner class CommunityWindowsDistributionCustomizer : WindowsDistributionCustomizer() {
-    init {
-      icoPath = communityHomeDir.resolve("build/conf/ideaCE/win/images/idea_CE.ico")
-      icoPathForEAP = communityHomeDir.resolve("build/conf/ideaCE/win/images/idea_CE_EAP.ico")
-      installerImagesPath = communityHomeDir.resolve("build/conf/ideaCE/win/images")
-    }
-
-    override val fileAssociations: List<String>
-      get() = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
-
-    override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String = "IntelliJ IDEA Community Edition"
-
-    override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String = "IntelliJ IDEA Community Edition"
-
-    override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String {
-      return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
-    }
-  }
-
-  protected open inner class CommunityLinuxDistributionCustomizer : LinuxDistributionCustomizer() {
-    init {
-      iconPngPath = "${communityHomeDir}/build/conf/ideaCE/linux/images/icon_CE_128.png"
-      iconPngPathForEAP = "${communityHomeDir}/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
-      snapName = "intellij-idea-community"
-      snapDescription =
-        "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
-        "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
-    }
-
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "idea-IC-$buildNumber"
-
-    override fun generateExecutableFilesPatterns(
-      includeRuntime: Boolean,
-      arch: JvmArchitecture,
-      targetLibcImpl: LibcImpl,
-      context: BuildContext,
-    ): Sequence<String> {
-      return super.generateExecutableFilesPatterns(includeRuntime, arch, targetLibcImpl, context)
-        .plus(KotlinBinaries.kotlinCompilerExecutables)
-        .filterNot { it == "plugins/**/*.sh" }
-    }
-  }
-
-  protected open inner class CommunityMacDistributionCustomizer : MacDistributionCustomizer() {
-    init {
-      icnsPath = communityHomeDir.resolve("build/conf/ideaCE/mac/images/idea.icns")
-      icnsPathForEAP = communityHomeDir.resolve("build/conf/ideaCE/mac/images/communityEAP.icns")
-      urlSchemes = listOf("idea")
-      associateIpr = true
-      fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
-      bundleIdentifier = "com.jetbrains.intellij.ce"
-      dmgImagePath = communityHomeDir.resolve("build/conf/ideaCE/mac/images/dmg_background.tiff")
-    }
-
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
-      if (appInfo.isEAP) {
-        return "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
-      }
-      else {
-        return "IntelliJ IDEA CE.app"
-      }
-    }
-
-    override fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, context: BuildContext): Sequence<String> {
-      return super.generateExecutableFilesPatterns(includeRuntime, arch, context)
-        .plus(KotlinBinaries.kotlinCompilerExecutables)
-        .filterNot { it == "plugins/**/*.sh" }
-    }
-  }
+  override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer = communityMacCustomizer(communityHomeDir)
 
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
     return "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
