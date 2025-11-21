@@ -51,6 +51,8 @@ com.intellij.codeInsight.completion.LookupElementListPresenter
 - a:getSelectedIndex():I
 - a:isSelectionTouched():Z
 - a:isShown():Z
+c:com.intellij.codeInsight.completion.PlainPrefixMatcher
+- sf:ALWAYS_TRUE:com.intellij.codeInsight.completion.PrefixMatcher
 a:com.intellij.codeInsight.completion.PrefixMatcher
 - getMatchingFragments(java.lang.String):java.util.List
 com.intellij.codeInsight.daemon.ChangeLocalityDetector

@@ -16,8 +16,14 @@ import java.util.List;
  * Base class for prefix-based matching logic used in code completion.
  * Determines whether strings or lookup elements match a given prefix
  * and provides utilities for sorting and highlighting matches.
+ *
+ * @see PlainPrefixMatcher#ALWAYS_TRUE
  */
 public abstract class PrefixMatcher {
+  /**
+   * @deprecated Use {@link PlainPrefixMatcher#ALWAYS_TRUE} instead.
+   */
+  @Deprecated
   public static final PrefixMatcher ALWAYS_TRUE = new PlainPrefixMatcher("");
 
   protected final String myPrefix;

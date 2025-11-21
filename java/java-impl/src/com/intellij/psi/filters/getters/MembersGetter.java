@@ -2,10 +2,7 @@
 package com.intellij.psi.filters.getters;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.JavaCompletionUtil;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.StaticMemberProcessor;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
@@ -109,7 +106,7 @@ public abstract class MembersGetter {
     };
     consumer.consume(baseType);
     if (searchInheritors && !CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) {
-      CodeInsightUtil.processSubTypes(baseType, myPlace, true, PrefixMatcher.ALWAYS_TRUE, consumer);
+      CodeInsightUtil.processSubTypes(baseType, myPlace, true, PlainPrefixMatcher.ALWAYS_TRUE, consumer);
     } else if (qualifiedName != null) {
       // If we don't search inheritors, we still process some known very common ones
       StreamEx.ofTree(qualifiedName, cls -> StreamEx.of(COMMON_INHERITORS.getOrDefault(cls, List.of()))).skip(1)
