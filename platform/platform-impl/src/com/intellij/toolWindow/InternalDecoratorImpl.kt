@@ -506,7 +506,7 @@ class InternalDecoratorImpl internal constructor(
 
     fun collectCell(decorator: InternalDecoratorImpl) {
       if (decorator.mode.isSplit) {
-        val decorators = nestedDecorators!!
+        val decorators = decorator.nestedDecorators!!
         collectCell(decorators.first)
         collectCell(decorators.second)
       }
