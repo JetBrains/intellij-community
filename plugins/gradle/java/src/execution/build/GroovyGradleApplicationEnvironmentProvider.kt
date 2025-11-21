@@ -4,6 +4,11 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.execution.JavaRunConfigurationBase
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.util.ScriptFileUtil
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.task.ExecuteRunConfigurationTask
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
@@ -27,7 +32,17 @@ class GroovyGradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironm
 
   override fun isApplicable(task: ExecuteRunConfigurationTask?): Boolean {
     val runProfile = task?.runProfile ?: return false
+    if (runProfile !is JavaRunConfigurationBase || !isGroovyPluginEnabledAndLoaded(runProfile)) return false
     if(runProfile !is GroovyScriptRunConfiguration) return false
     return GroovyConfigUtils.getInstance().isVersionAtLeast(runProfile.module, GroovyConfigUtils.GROOVY5_0, false)
+  }
+
+  private fun isGroovyPluginEnabledAndLoaded(runProfile: JavaRunConfigurationBase): Boolean {
+    val project = runProfile.project
+    return CachedValuesManager.getManager(project).getCachedValue(runProfile) {
+      val groovyPluginId = PluginId.getId("org.intellij.groovy")
+      val pluginSet = PluginManagerCore.getPluginSet()
+      CachedValueProvider.Result.create(pluginSet.isPluginEnabled(groovyPluginId), PsiModificationTracker.NEVER_CHANGED)
+    }
   }
 }
