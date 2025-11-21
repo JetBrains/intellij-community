@@ -11,7 +11,7 @@ import kotlin.jvm.JvmStatic
  * Used in navigation, code completion, speed search, etc.
  * 
  * 
- * Inheritors MUST override the [.matchingFragments] and [.matchingDegree] methods,
+ * Inheritors MUST override the [matchingFragments] and [matchingDegree] methods,
  * they are not abstract for binary compatibility.
  * 
  * @see NameUtil.buildMatcher
