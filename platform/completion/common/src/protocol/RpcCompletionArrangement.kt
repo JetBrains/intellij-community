@@ -7,7 +7,6 @@ import kotlinx.serialization.Serializable
  * Contains weights of ALL completion items reported by the current backend completion session.
  */
 @Serializable
-data class RpcCompletionListOrder(
+data class RpcCompletionArrangement(
   val weights: List<RpcCompletionItemWeight>,
 )
-
