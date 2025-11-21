@@ -115,13 +115,12 @@ class SePopupHeaderPane(
   private suspend fun updateTabs(old: Configuration, new: Configuration) = coroutineScope {
     withContext(Dispatchers.EDT) {
       val prevSelectedTabId = old.tabs.getOrNull(old.selectedIndexFlow.value)?.id
+      tabbedPane.removeAll()
 
       if (new.tabs.isEmpty()) {
         tabbedPane.addTab(SeAllTab.NAME, null, JPanel(), null)
         return@withContext
       }
-
-      tabbedPane.removeAll()
 
       for (tab in new.tabs) {
         tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
