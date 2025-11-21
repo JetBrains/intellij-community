@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.ActivityTracker;
@@ -11,6 +11,7 @@ import com.intellij.ide.util.treeView.CachedTreePresentationSupport;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
@@ -461,7 +462,9 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   protected void processKeyEvent(KeyEvent e) {
-    super.processKeyEvent(e);
+    WriteIntentReadAction.run((Runnable)() -> {
+      super.processKeyEvent(e);
+    });
   }
 
   @Override
