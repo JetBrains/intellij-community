@@ -8,6 +8,7 @@ import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -21,7 +22,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class ShowHoverInfoAction: AnAction(), ActionToIgnore, PopupAction, DumbAware, PerformWithDocumentsCommitted {
+class ShowHoverInfoAction: AnAction(), ActionToIgnore, PopupAction, DumbAware, PerformWithDocumentsCommitted, ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
