@@ -3,7 +3,6 @@ package com.intellij.vcs.changes.viewModel
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesViewDiffAction
 import com.intellij.openapi.vcs.changes.CommitChangesViewWithToolbarPanel
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG
@@ -14,7 +13,6 @@ import com.intellij.util.ui.tree.TreeUtil.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import javax.swing.tree.TreePath
 
 /**
@@ -26,7 +24,7 @@ internal class LocalChangesViewProxy(
 ) : ChangesViewProxy(panel.project, scope) {
   override val inclusionChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  override val diffRequests: SharedFlow<ChangesViewDiffAction> = panel.diffRequests
+  override val diffRequests = panel.diffRequests
 
   override fun setInclusionModel(model: InclusionModel?) {
     panel.changesView.setInclusionModel(model)

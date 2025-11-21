@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -72,7 +73,7 @@ abstract class CommitChangesViewWithToolbarPanel(
   }
 
   private val inputHandler = ChangesViewInputHandler(cs, changesView)
-  val diffRequests: SharedFlow<ChangesViewDiffAction> = inputHandler.diffRequests
+  val diffRequests: SharedFlow<Pair<ChangesViewDiffAction, ClientId>> = inputHandler.diffRequests
 
   @RequiresEdt
   open fun initPanel() {
@@ -194,7 +195,7 @@ abstract class CommitChangesViewWithToolbarPanel(
 }
 
 private class ChangesViewInputHandler(private val cs: CoroutineScope, private val changesView: ChangesListView) {
-  val diffRequests: MutableSharedFlow<ChangesViewDiffAction> =
+  val diffRequests: MutableSharedFlow<Pair<ChangesViewDiffAction, ClientId>> =
     MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
@@ -208,7 +209,7 @@ private class ChangesViewInputHandler(private val cs: CoroutineScope, private va
     changesView.addSelectionListener {
       if (Registry.get("show.diff.preview.as.editor.tab.with.single.click").asBoolean() &&
           getInstance(changesView.project).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN) {
-        diffRequests.tryEmit(ChangesViewDiffAction.TRY_SHOW_PREVIEW)
+        diffRequests.tryEmit(ChangesViewDiffAction.TRY_SHOW_PREVIEW to ClientId.current)
       }
     }
   }
@@ -217,7 +218,7 @@ private class ChangesViewInputHandler(private val cs: CoroutineScope, private va
     if (!performHoverAction()) {
       val diffPreviewOnDoubleClickOrEnter = changesView.project.service<CommitToolWindowViewModel>().diffPreviewOnDoubleClickOrEnter
       if (diffPreviewOnDoubleClickOrEnter) {
-        diffRequests.tryEmit(ChangesViewDiffAction.PERFORM_DIFF)
+        diffRequests.tryEmit(ChangesViewDiffAction.PERFORM_DIFF to ClientId.current)
       }
       else {
         val dataContext = DataManager.getInstance().getDataContext(changesView)
