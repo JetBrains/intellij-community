@@ -181,7 +181,7 @@ fun parsePoetryShow(input: String): List<PythonPackage> {
 
 @Internal
 suspend fun poetryShowOutdated(sdk: Sdk): PyResult<Map<String, PythonOutdatedPackage>> {
-  val output = runPoetryWithSdk(sdk, "show", "--outdated").getOr { return it }
+  val output = runPoetryWithSdk(sdk, "show", "--all", "--outdated").getOr { return it }
 
   return parsePoetryShowOutdated(output).let { PyResult.success(it) }
 }
