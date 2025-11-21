@@ -4,8 +4,7 @@ package com.intellij.codeInsight.folding.impl;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.VisualPosition;
@@ -14,6 +13,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiDocumentManager;
@@ -59,7 +59,15 @@ final class FoldingHintMouseMotionListener implements EditorMouseMotionListener 
 
       TextRange psiElementRange;
       try (AccessToken ignore = SlowOperations.knownIssue("EA-841311, IDEA-345919")) {
-        psiElementRange = ReadAction.compute(() -> EditorFoldingInfo.get(editor).getPsiElementRange(fold));
+        Ref<TextRange> rangeRef = new Ref<>();
+        boolean readActionSucceeded = ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
+          TextRange range = EditorFoldingInfo.get(editor).getPsiElementRange(fold);
+          rangeRef.set(range);
+        });
+        if (!readActionSucceeded) {
+          // background write action is running, so we'll fail to show hover. No big deal
+        }
+        psiElementRange = rangeRef.get();
       }
       if (psiElementRange == null) return;
 
