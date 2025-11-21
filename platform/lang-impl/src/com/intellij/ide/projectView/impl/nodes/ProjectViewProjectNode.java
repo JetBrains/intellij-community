@@ -5,6 +5,8 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PathElementIdProvider;
+import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
@@ -15,10 +17,11 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ProjectViewProjectNode extends AbstractProjectNode {
+public class ProjectViewProjectNode extends AbstractProjectNode implements PathElementIdProvider {
   public ProjectViewProjectNode(@NotNull Project project, ViewSettings viewSettings) {
     super(project, project, viewSettings);
   }
@@ -113,5 +116,25 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
   @Override
   protected @NotNull AbstractTreeNode createModuleGroupNode(final @NotNull ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
+  }
+
+  @Override
+  public @NotNull String getPathElementId() {
+    if (shouldUseSimplifiedProjectTreeState()) {
+      return "ROOT";
+    }
+    else {
+      return TreeState.defaultPathElementId(this);
+    }
+  }
+
+  @Override
+  public @Nullable String getPathElementType() {
+    if (shouldUseSimplifiedProjectTreeState()) {
+      return GENERIC_PROJECT_VIEW_NODE_TYPE;
+    }
+    else {
+      return null;
+    }
   }
 }

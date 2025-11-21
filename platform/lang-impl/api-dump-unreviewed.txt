@@ -9879,12 +9879,15 @@ c:com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode
 - getWeight():I
 c:com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
 - com.intellij.ide.projectView.impl.nodes.AbstractProjectNode
+- com.intellij.ide.util.treeView.PathElementIdProvider
 - <init>(com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):V
 - canRepresent(java.lang.Object):Z
 - p:createModuleGroup(com.intellij.openapi.module.Module):com.intellij.ide.util.treeView.AbstractTreeNode
 - p:createModuleGroupNode(com.intellij.ide.projectView.impl.ModuleGroup):com.intellij.ide.util.treeView.AbstractTreeNode
 - p:createUnloadedModuleNode(com.intellij.openapi.module.UnloadedModuleDescription):com.intellij.ide.util.treeView.AbstractTreeNode
 - getChildren():java.util.Collection
+- getPathElementId():java.lang.String
+- getPathElementType():java.lang.String
 - isAlwaysShowPlus():Z
 c:com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 - com.intellij.ide.projectView.impl.nodes.BasePsiNode
@@ -9902,6 +9905,7 @@ c:com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 - getFilter():com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter
 - getNavigateActionText(Z):java.lang.String
 - getPathElementId():java.lang.String
+- getPathElementType():java.lang.String
 - getQualifiedNameSortKey():java.lang.String
 - getSortKey():java.lang.Comparable
 - getSortOrder(com.intellij.ide.projectView.NodeSortSettings):com.intellij.ide.projectView.NodeSortOrder
@@ -9921,6 +9925,7 @@ c:com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 - p:updateImpl(com.intellij.ide.projectView.PresentationData):V
 c:com.intellij.ide.projectView.impl.nodes.PsiFileNode
 - com.intellij.ide.projectView.impl.nodes.BasePsiNode
+- com.intellij.ide.util.treeView.PathElementIdProvider
 - com.intellij.pom.NavigatableWithText
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.ide.projectView.ViewSettings):V
 - canNavigate():Z
@@ -9928,6 +9933,8 @@ c:com.intellij.ide.projectView.impl.nodes.PsiFileNode
 - contains(com.intellij.openapi.vfs.VirtualFile):Z
 - getChildrenImpl():java.util.Collection
 - getNavigateActionText(Z):java.lang.String
+- getPathElementId():java.lang.String
+- getPathElementType():java.lang.String
 - getTitle():java.lang.String
 - getTypeSortKey():java.lang.Comparable
 - getWeight():I
