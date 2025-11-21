@@ -305,6 +305,16 @@ internal class BackendTerminalHyperlinkHighlighterTest : BasePlatformTestCase() 
   }
 
   @Test
+  fun `many small updates, fast filter`() = withFixture {
+    for (line in 0L..499L) {
+      updateModel(line, "$line: link$line")
+    }
+    assertLinks(
+      *(0..499).map { link(at(it, "link${it}")) }.toTypedArray(),
+    )
+  }
+
+  @Test
   fun `many links, slow filter, several updates`() = withFixture {
     filter.delayPerLine = 1
     updateModel(0L, generateLines(0, 499, links = (0..499).toList()))
