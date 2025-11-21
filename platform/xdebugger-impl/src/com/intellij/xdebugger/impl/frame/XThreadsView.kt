@@ -124,10 +124,6 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
     if (event == SessionEvent.BEFORE_RESUME) {
       return
     }
-    if (!session.hasSuspendContext()) {
-      requestClear()
-      return
-    }
     // Do not refresh a tree on a FRAME_CHANGED event
     // so that selecting stack frames does not collapse a thread node.
     if (event == SessionEvent.FRAME_CHANGED) {
@@ -139,25 +135,30 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
   override fun dispose() {
   }
 
-  class ThreadsContainer(val session: XDebugSessionProxy) : XValueContainer() {
+  class ThreadsContainer(private val session: XDebugSessionProxy) : XValueContainer() {
     override fun computeChildren(node: XCompositeNode) {
-      session.computeExecutionStacks {
-        object : XSuspendContext.XExecutionStackContainer {
-          override fun errorOccurred(errorMessage: String) {
-          }
-
-          override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
-            val children = XValueChildrenList()
-            executionStacks.map { FramesContainer(it) }.forEach { children.add("", it) }
-            node.addChildren(children, last)
-          }
+      val container = object : XSuspendContext.XExecutionStackContainer {
+        override fun errorOccurred(errorMessage: String) {
         }
+
+        override fun addExecutionStack(executionStacks: List<XExecutionStack>, last: Boolean) {
+          val children = XValueChildrenList()
+          executionStacks.map { FramesContainer(it, session) }.forEach { children.add("", it) }
+          node.addChildren(children, last)
+        }
+      }
+      if (session.hasSuspendContext()) {
+        session.computeExecutionStacks { container }
+      } else {
+        session.computeRunningExecutionStacks { container }
       }
     }
   }
 
-  class FramesContainer(val executionStack: XExecutionStack) : XValue() {
+  class FramesContainer(val executionStack: XExecutionStack, private val session: XDebugSessionProxy) : XValue() {
     override fun computeChildren(node: XCompositeNode) {
+      if (!session.hasSuspendContext()) return
+
       executionStack.computeStackFrames(0, object : XExecutionStack.XStackFrameContainer {
         override fun errorOccurred(errorMessage: String) {
         }
