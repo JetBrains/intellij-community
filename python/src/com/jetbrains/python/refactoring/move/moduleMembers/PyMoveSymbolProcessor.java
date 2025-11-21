@@ -216,14 +216,12 @@ public class PyMoveSymbolProcessor {
     if (srcFile != expression.getContainingFile()) {
       final QualifiedName qualifier = QualifiedNameFinder.findCanonicalImportPath(srcFile, expression);
       if (PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
-        // Respect preference: use from-import of the module and `module.Name`
         PyPsiRefactoringUtil.insertImport(expression, srcFile, null, true);
         final String moduleName = qualifier.getLastComponent();
         final String newQualifiedReference = moduleName + "." + expression.getReferencedName();
         expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
       }
       else {
-        // Default behavior: import the module and use fully qualified reference
         PyPsiRefactoringUtil.insertImport(expression, srcFile, null, false);
         final String newQualifiedReference = qualifier + "." + expression.getReferencedName();
         expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
