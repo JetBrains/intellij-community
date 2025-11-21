@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.*
 import com.intellij.platform.searchEverywhere.data.SeDataKeys
 import com.intellij.platform.searchEverywhere.frontend.*
@@ -363,9 +362,7 @@ class SePopupContentPane(
             }
           }
           else if (semanticWarning) {
-            val noExactMatchesText = SemanticBundleProvider.getSemanticBundle()?.getMessage("search.everywhere.no.exact.matches")?.let {
-              StringUtil.trimTrailing(it, ':')
-            }
+            val noExactMatchesText = SearchEverywhereFrontendBundle.getMessage("search.everywhere.no.exact.matches")
             hintHelper.setHint(noExactMatchesText)
           }
           else {
