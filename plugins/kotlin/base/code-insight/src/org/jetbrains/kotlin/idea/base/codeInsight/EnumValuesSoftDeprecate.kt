@@ -4,21 +4,21 @@ package org.jetbrains.kotlin.idea.base.codeInsight
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.staticMemberScope
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.name.FqName
+
 
 context(_: KaSession)
 @ApiStatus.Internal
-fun isSoftDeprecatedEnumValuesMethodAndEntriesPropertyExists(symbol: KaCallableSymbol): Boolean {
-    val enumClassSymbol = (symbol.containingDeclaration as? KaClassSymbol) ?: return false
-    return isSoftDeprecatedEnumValuesMethod(symbol, enumClassSymbol) &&
-            getEntriesPropertyOfEnumClass(enumClassSymbol) != null
-}
+fun isEnumValuesFunctionCall(symbol: KaCallableSymbol): Boolean = symbol.callableId?.asSingleFqName() == FqName("kotlin.enumValues")
 
 @ApiStatus.Internal
 fun isSoftDeprecatedEnumValuesMethod(

@@ -21,7 +21,7 @@ internal class EnumValuesSoftDeprecateInspection : EnumValuesSoftDeprecateInspec
     }
 
     private class K2ReplaceFix(fixType: ReplaceFixType, enumClassQualifiedName: String) :
-        ReplaceFix(fixType, enumClassQualifiedName) {
+        ReplaceFix(fixType,  "Enum.entries", "$enumClassQualifiedName.entries") {
         override fun shortenReferences(element: KtElement) {
             shortenReferences(element, callableShortenStrategy = { ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED })
         }

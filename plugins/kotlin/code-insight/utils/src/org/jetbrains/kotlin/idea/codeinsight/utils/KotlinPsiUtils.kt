@@ -389,11 +389,15 @@ operator fun FqName.plus(name: Name): FqName = child(name)
 @ApiStatus.Internal
 operator fun FqName.plus(name: String): FqName = this + Name.identifier(name)
 
-private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES = arrayOf(
-    StandardKotlinNames.Enum.enumEntries,
-    StandardKotlinNames.Enum.enumValues,
-    StandardKotlinNames.Enum.enumValueOf
-)
+private val KOTLIN_BUILTIN_ENUM_FUNCTION_FQ_NAMES: Array<FqName>
+    /* An initialization cycle between KotlinPsiUtils.kt and StandardKotlinNames.kt causes this property to be initialized with
+    an array of nulls. To prevent this, use a getter to guarantee that a non-null value is returned upon calling it.
+    */
+    get() = arrayOf(
+        StandardKotlinNames.Enum.enumEntries,
+        StandardKotlinNames.Enum.enumValues,
+        StandardKotlinNames.Enum.enumValueOf
+    )
 
 @OptIn(KaContextParameterApi::class)
 context(_: KaSession)

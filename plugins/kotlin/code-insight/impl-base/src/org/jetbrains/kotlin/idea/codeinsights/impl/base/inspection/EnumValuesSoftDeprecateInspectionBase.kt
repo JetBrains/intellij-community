@@ -12,13 +12,13 @@ import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.codeInsight.*
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -40,73 +40,83 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
     defaultDeprecationData = DeprecatedFeaturesInspectionData()
 ) {
 
+    protected open fun isEnumValuesSoftDeprecateEnabled(file: KtFile): Boolean = file.isEnumValuesSoftDeprecateEnabled()
+
+    protected open fun isDeprecatedExpression(callExpression: KtCallExpression): Boolean = callExpression.text == "values()"
+
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor =
-        if (!holder.file.isEnumValuesSoftDeprecateEnabled()) {
-            PsiElementVisitor.EMPTY_VISITOR
-        } else {
-            callExpressionVisitor(fun(callExpression: KtCallExpression) {
-                if (callExpression.text != "values()") {
+        callExpressionVisitor(fun(callExpression: KtCallExpression) {
+            if (!isEnumValuesSoftDeprecateEnabled(holder.file as KtFile)) return
+            if (!isDeprecatedExpression(callExpression)) return
+
+            analyze(callExpression) {
+                val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
+                val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
+
+                if (!isSoftDeprecatedEnumValuesCall(resolvedCallSymbol)) return
+
+                if (isOptInRequired(callExpression, resolvedCallSymbol) && !isOptInAllowed(callExpression, EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
                     return
                 }
-                analyze(callExpression) {
-                    val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
-                    val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
-                    val enumClassSymbol = (resolvedCallSymbol.containingDeclaration as? KaClassSymbol) ?: return
+                val quickFix = createQuickFix(callExpression, resolvedCallSymbol) ?: return
+                session.updateDeprecationData { it.withDeprecatedFeature() }
+                holder.registerProblem(
+                    callExpression,
+                    displayName,
+                    quickFix
+                )
+            }
+        })
 
-                    if (!isSoftDeprecatedEnumValuesMethod(resolvedCallSymbol, enumClassSymbol)) {
-                        return
-                    }
-                    val enumEntriesPropertySymbol = getEntriesPropertyOfEnumClass(enumClassSymbol) ?: return
-                    val enumEntriesClassSymbol = enumEntriesPropertySymbol.returnType.expandedSymbol ?: return
+    override fun getDisplayName(): String = KotlinBundle.message("inspection.enum.values.method.soft.deprecate.migration.display.name")
 
-                    val optInRequired = enumEntriesClassSymbol.isOptInRequired(
-                        EXPERIMENTAL_ANNOTATION_CLASS_ID,
-                        callExpression.languageVersionSettings.apiVersion
-                    )
-                    if (optInRequired && !isOptInAllowed(callExpression, EXPERIMENTAL_ANNOTATION_CLASS_ID)) {
-                        return
-                    }
-                    val quickFix = createQuickFix(callExpression, resolvedCallSymbol) ?: return
-                    session.updateDeprecationData { it.withDeprecatedFeature() }
-                    holder.registerProblem(
-                        callExpression,
-                        KotlinBundle.message("inspection.enum.values.method.soft.deprecate.migration.display.name"),
-                        quickFix
-                    )
-                }
-            })
-        }
+    context(_: KaSession)
+    protected open fun isSoftDeprecatedEnumValuesCall(resolvedCallSymbol: KaFunctionSymbol): Boolean {
+        val enumClassSymbol = (resolvedCallSymbol.containingDeclaration as? KaClassSymbol) ?: return false
+        return isSoftDeprecatedEnumValuesMethod(resolvedCallSymbol, enumClassSymbol)
+    }
+
+    context(_: KaSession)
+    protected open fun isOptInRequired(callExpression: KtCallExpression, symbol: KaFunctionSymbol): Boolean {
+        val enumClassSymbol = (symbol.containingDeclaration as? KaClassSymbol) ?: return false
+        val enumEntriesPropertySymbol = getEntriesPropertyOfEnumClass(enumClassSymbol) ?: return false
+        val enumEntriesClassSymbol = enumEntriesPropertySymbol.returnType.expandedSymbol ?: return false
+        return enumEntriesClassSymbol.isOptInRequired(
+            EXPERIMENTAL_ANNOTATION_CLASS_ID,
+            callExpression.languageVersionSettings.apiVersion
+        )
+    }
 
     context(_: KaSession)
     protected abstract fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 
     context(_: KaSession)
-    private fun createQuickFix(callExpression: KtCallExpression, symbol: KaFunctionSymbol): LocalQuickFix? {
+    open fun createQuickFix(callExpression: KtCallExpression, symbol: KaFunctionSymbol): LocalQuickFix? {
         val enumClassSymbol = symbol.containingDeclaration as? KaClassSymbol
         val enumClassQualifiedName = enumClassSymbol?.classId?.asFqNameString() ?: return null
         return createQuickFix(getReplaceFixType(callExpression), enumClassQualifiedName)
     }
 
     protected open fun createQuickFix(fixType: ReplaceFixType, enumClassQualifiedName: String): LocalQuickFix {
-        return ReplaceFix(fixType, enumClassQualifiedName)
+        return ReplaceFix(fixType, "Enum.entries","${enumClassQualifiedName}.entries")
     }
 
     context(_: KaSession)
-    private fun getReplaceFixType(callExpression: KtCallExpression): ReplaceFixType {
+    protected fun getReplaceFixType(callExpression: KtCallExpression): ReplaceFixType {
         val qualifiedOrSimpleCall = callExpression.qualifiedOrSimpleValuesCall()
         val parent = qualifiedOrSimpleCall.parent
         // Special handling for most popular use cases where `entries` can be used without cast to Array
-        when {
-            parent is KtBlockExpression && parent.parent is KtNamedFunction -> return ReplaceFixType.WITHOUT_CAST
+        when (parent) {
+            is KtBlockExpression if parent.parent is KtNamedFunction -> return ReplaceFixType.WITHOUT_CAST
 
             // values()[index]
-            parent is KtArrayAccessExpression && parent.parent !is KtBinaryExpression -> return ReplaceFixType.WITHOUT_CAST
+            is KtArrayAccessExpression if parent.parent !is KtBinaryExpression -> return ReplaceFixType.WITHOUT_CAST
 
             // for (v in values())
-            parent is KtContainerNode && parent.parent is KtForExpression -> return ReplaceFixType.WITHOUT_CAST
+            is KtContainerNode if parent.parent is KtForExpression -> return ReplaceFixType.WITHOUT_CAST
 
             // values().someMethod()
-            parent is KtDotQualifiedExpression -> {
+            is KtDotQualifiedExpression -> {
                 val callableIdString = getCallableMethodIdString(parent.selectorExpression)
                 if (callableIdString in LIST_CONVERSION_METHOD_IDS) {
                     return ReplaceFixType.REMOVE_SUBSEQUENT_TO_LIST_CALL
@@ -117,7 +127,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
             }
 
             // listOf(values())
-            parent is KtValueArgument && parent.isSpread && parent.parent is KtValueArgumentList -> {
+            is KtValueArgument if parent.isSpread && parent.parent is KtValueArgumentList -> {
                 val argumentList = parent.parent as KtValueArgumentList
                 if (argumentList.arguments.size == 1) {
                     val callableIdString = getCallableMethodIdString(argumentList.parent as? KtCallExpression)
@@ -143,18 +153,21 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         REMOVE_WRAPPED_LIST_OF_CALL,
     }
 
-    protected open class ReplaceFix(private val fixType: ReplaceFixType,
-                                    private val enumClassQualifiedName: String) : LocalQuickFix {
-        override fun getFamilyName(): String = KotlinBundle.message("replace.with.0", "Enum.entries")
+    protected open class ReplaceFix(
+        private val fixType: ReplaceFixType,
+        private val replacementName: String,
+        private val fixExpression: String
+    ) : LocalQuickFix {
+        override fun getFamilyName(): String = KotlinBundle.message("replace.with.0", replacementName)
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val qualifiedOrSimpleCall = descriptor.psiElement.qualifiedOrSimpleValuesCall()
-            val entriesCallStr = when(fixType) {
-                ReplaceFixType.WITH_CAST -> "entries.toTypedArray()"
-                else -> "entries"
+            val entriesCallStr = when (fixType) {
+                ReplaceFixType.WITH_CAST -> "$fixExpression.toTypedArray()"
+                else -> fixExpression
             }
             KotlinLanguageFeaturesFUSCollector.enumEntriesCollector.logQuickFixApplied(qualifiedOrSimpleCall.containingFile)
-            var replaced = qualifiedOrSimpleCall.replace(KtPsiFactory(project).createExpression("$enumClassQualifiedName.$entriesCallStr"))
+            var replaced = qualifiedOrSimpleCall.replace(KtPsiFactory(project).createExpression(entriesCallStr))
             replaced = applyRemovalsIfNeeded(replaced)
 
             if (replaced is KtElement) {

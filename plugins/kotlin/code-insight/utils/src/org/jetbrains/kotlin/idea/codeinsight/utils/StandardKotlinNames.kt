@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.StandardNames.BUILT_INS_PACKAGE_FQ_NAME
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.JvmStandardClassIds
@@ -47,6 +48,7 @@ object StandardKotlinNames {
         @JvmField val enumEntries: FqName = BASE_ENUMS_PACKAGE + "enumEntries"
         @JvmField val enumValues: FqName = BUILT_INS_PACKAGE_FQ_NAME + "enumValues"
         @JvmField val enumValueOf: FqName = BUILT_INS_PACKAGE_FQ_NAME + "enumValueOf"
+        @JvmField val enumEntriesTopLevelFunction: CallableId = CallableId(BASE_ENUMS_PACKAGE, enumEntries.shortName())
     }
 
     @JvmField val exceptionClassId: ClassId = ClassId(BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("Exception"))

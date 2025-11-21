@@ -13546,6 +13546,105 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation")
+        public static class EnumValuesTopLevelFunctionSoftDeprecation extends AbstractK2LocalInspectionTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("arrayAssignOperator.kt")
+            public void testArrayAssignOperator() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/arrayAssignOperator.kt");
+            }
+
+            @TestMetadata("arrayGetMethod.kt")
+            public void testArrayGetMethod() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/arrayGetMethod.kt");
+            }
+
+            @TestMetadata("callInsideEnumWithCast.kt")
+            public void testCallInsideEnumWithCast() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/callInsideEnumWithCast.kt");
+            }
+
+            @TestMetadata("callInsideEnumWithoutCast.kt")
+            public void testCallInsideEnumWithoutCast() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/callInsideEnumWithoutCast.kt");
+            }
+
+            @TestMetadata("equalsCheck.kt")
+            public void testEqualsCheck() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/equalsCheck.kt");
+            }
+
+            @TestMetadata("explicitTypeInGeneric.kt")
+            public void testExplicitTypeInGeneric() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/explicitTypeInGeneric.kt");
+            }
+
+            @TestMetadata("forLoop.kt")
+            public void testForLoop() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/forLoop.kt");
+            }
+
+            @TestMetadata("iteration.kt")
+            public void testIteration() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/iteration.kt");
+            }
+
+            @TestMetadata("lambdaReturnType.kt")
+            public void testLambdaReturnType() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/lambdaReturnType.kt");
+            }
+
+            @TestMetadata("listOfCallOnArray.kt")
+            public void testListOfCallOnArray() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/listOfCallOnArray.kt");
+            }
+
+            @TestMetadata("listOfCallOnVararg.kt")
+            public void testListOfCallOnVararg() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/listOfCallOnVararg.kt");
+            }
+
+            @TestMetadata("methodReferenceNonSuitableForList.kt")
+            public void testMethodReferenceNonSuitableForList() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/methodReferenceNonSuitableForList.kt");
+            }
+
+            @TestMetadata("methodReferenceSuitableForList.kt")
+            public void testMethodReferenceSuitableForList() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/methodReferenceSuitableForList.kt");
+            }
+
+            @TestMetadata("passAsArray.kt")
+            public void testPassAsArray() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/passAsArray.kt");
+            }
+
+            @TestMetadata("passAsCollection.kt")
+            public void testPassAsCollection() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/passAsCollection.kt");
+            }
+
+            @TestMetadata("propertyAssignment.kt")
+            public void testPropertyAssignment() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/propertyAssignment.kt");
+            }
+
+            @TestMetadata("qualifiedCallNoContext.kt")
+            public void testQualifiedCallNoContext() throws Exception {
+                runTest("testData/inspectionsLocal/enumValuesTopLevelFunctionSoftDeprecation/qualifiedCallNoContext.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/hasPlatformType")
         public static class HasPlatformType extends AbstractK2LocalInspectionTest {
             @java.lang.Override
