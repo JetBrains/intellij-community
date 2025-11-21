@@ -30,7 +30,9 @@ import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -276,5 +278,36 @@ public final class ParamHelper {
       }
     );
     return result;
+  }
+
+  /**
+   * Returns the argument type from {@code expectedParams} that a callable type expects for a
+   * parameter at positional index {@code paramPos} in a function definition, respecting variadic
+   * {@code *args} parameters, position-only separators ({@code /}), and keyword-only separators
+   * ({@code *}).
+   *
+   * @param paramPos      0-based index of the parameter within the function's non-self named parameters
+   * @param expectedParams explicit (non-implicit) parameters of the callable type
+   */
+  @ApiStatus.Experimental
+  public static @Nullable PyType getExpectedTypeForPositionalParam(int paramPos,
+                                                                   @NotNull List<PyCallableParameter> expectedParams,
+                                                                   @NotNull TypeEvalContext context) {
+    int expectedPos = 0;
+    for (PyCallableParameter expectedParam : expectedParams) {
+      if (expectedParam.isPositionalContainer()) {
+        return paramPos >= expectedPos ? expectedParam.getArgumentType(context) : null;
+      }
+      if (expectedParam.isKeywordContainer() || expectedParam.isKeywordOnlySeparator()) {
+        break;
+      }
+      if (!expectedParam.isPositionOnlySeparator()) {
+        if (expectedPos == paramPos) {
+          return expectedParam.getArgumentType(context);
+        }
+        expectedPos++;
+      }
+    }
+    return null;
   }
 }
