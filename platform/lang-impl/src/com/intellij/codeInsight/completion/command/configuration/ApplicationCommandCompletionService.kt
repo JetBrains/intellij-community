@@ -103,6 +103,8 @@ internal class AppCommandCompletionSettings(
   }
 
   private fun calculateFromRegistry(): Boolean {
+    if (ApplicationManager.getApplication().isUnitTestMode() &&
+        Registry.`is`("ide.completion.command.force.enabled")) return true
     if (!PlatformUtils.isIntelliJ()) return false
     return Registry.`is`("ide.completion.command.force.enabled") ||
            (!ApplicationManager.getApplication().isUnitTestMode() &&
