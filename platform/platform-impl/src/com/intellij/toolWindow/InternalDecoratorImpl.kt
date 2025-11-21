@@ -497,7 +497,11 @@ class InternalDecoratorImpl internal constructor(
     else null
   }
 
-  private fun getOrderedCells(): List<InternalDecoratorImpl> {
+  /**
+   * Returns the list of all child cells (recursively) if this decorator is split.
+   * Otherwise, will return the list of itself.
+   */
+  fun getOrderedCells(): List<InternalDecoratorImpl> {
     val cells = mutableListOf<InternalDecoratorImpl>()
 
     fun collectCell(decorator: InternalDecoratorImpl) {
@@ -925,9 +929,6 @@ class InternalDecoratorImpl internal constructor(
       log().trace(Throwable("Tool window $toolWindowId shown"))
     }
     super.addNotify()
-    if (isSplitUnsplitInProgress()) {
-      return
-    }
 
     disposable?.let {
       Disposer.dispose(it)
@@ -957,9 +958,6 @@ class InternalDecoratorImpl internal constructor(
       log().trace(Throwable("Tool window $toolWindowId hidden"))
     }
     super.removeNotify()
-    if (isSplitUnsplitInProgress()) {
-      return
-    }
 
     val disposable = disposable
     if (disposable != null && !disposable.isDisposed) {

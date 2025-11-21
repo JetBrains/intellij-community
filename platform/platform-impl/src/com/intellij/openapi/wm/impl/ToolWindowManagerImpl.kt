@@ -478,8 +478,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       for (entry in idToEntry.values) {
         if (entry.readOnlyWindowInfo.isVisible) {
           val decorator = entry.toolWindow.decorator ?: continue
-          decorator.repaint()
-          decorator.updateActiveAndHoverState()
+          // The tool window can be split, so we need to update the hover state in all cells.
+          val cells = decorator.getOrderedCells()
+          for (cell in cells) {
+            cell.repaint()
+            cell.updateActiveAndHoverState()
+          }
         }
       }
       revalidateStripeButtons()
