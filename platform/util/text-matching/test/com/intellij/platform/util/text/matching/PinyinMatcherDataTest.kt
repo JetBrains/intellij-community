@@ -3,7 +3,7 @@ package com.intellij.platform.util.text.matching
 
 import com.intellij.psi.codeStyle.PinyinMatcher
 import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import java.net.URL
 import java.text.Normalizer
 import java.util.zip.ZipInputStream

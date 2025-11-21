@@ -5,9 +5,9 @@ import com.intellij.psi.codeStyle.AllOccurrencesMatcher
 import com.intellij.util.text.matching.KeyboardLayoutConverter
 import com.intellij.util.text.matching.MatchedFragment
 import com.intellij.util.text.matching.MatchingMode
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertNull
+import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class AllOccurrencesMatcherTest {
   @Test

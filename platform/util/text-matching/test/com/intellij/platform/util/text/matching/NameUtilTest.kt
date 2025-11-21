@@ -3,7 +3,7 @@ package com.intellij.platform.util.text.matching
 
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.util.text.NameUtilCore.isWordStart
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 

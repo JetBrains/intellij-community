@@ -9,7 +9,7 @@ import com.intellij.util.text.matching.KeyboardLayoutConverter
 import com.intellij.util.text.matching.MatchedFragment
 import com.intellij.util.text.matching.MatchingMode
 import org.jetbrains.annotations.NonNls
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

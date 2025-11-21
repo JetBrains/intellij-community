@@ -26,7 +26,7 @@ jvm_library(
     "//platform/util-rt:util-rt_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-test",
-    "@lib//:kotlin-test-junit",
+    "@lib//:kotlin-test-junit5",
     "@lib//:junit5",
   ]
 )

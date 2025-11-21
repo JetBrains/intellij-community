@@ -4,7 +4,7 @@ package com.intellij.platform.util.text.matching
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.codeStyle.TypoTolerantMatcher
 import com.intellij.util.text.matching.MatchingMode
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
