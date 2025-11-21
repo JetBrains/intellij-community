@@ -84,16 +84,13 @@ interface PyRunToolProvider {
    * @param sdk the SDK to check the availability for
    * @return true if the tool is available for the specified SDK, false otherwise
    */
-  suspend fun isAvailable(sdk: Sdk): Boolean
+  fun isAvailable(sdk: Sdk): Boolean
 
   companion object {
     @JvmField
     val EP: ExtensionPointName<PyRunToolProvider> = ExtensionPointName.create("Pythonid.pyRunToolProvider")
 
     @JvmStatic
-    @RequiresBackgroundThread
-    fun forSdk(sdk: Sdk): PyRunToolProvider? = runBlockingMaybeCancellable {
-      EP.extensionList.firstOrNull { it.isAvailable(sdk) }
-    }
+    fun forSdk(sdk: Sdk): PyRunToolProvider? = EP.extensionList.firstOrNull { it.isAvailable(sdk) }
   }
 }

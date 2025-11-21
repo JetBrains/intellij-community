@@ -40,7 +40,7 @@ private class UvRunToolProvider : PyRunToolProvider {
 
   override val initialToolState: Boolean = true
 
-  override suspend fun isAvailable(sdk: Sdk): Boolean = sdk.isUv && getUvExecutable() != null
+  override fun isAvailable(sdk: Sdk): Boolean = sdk.isUv
 
   /**
    * We use runToolParameters only if a tool provider is available. So we need to have a lazy initialization here
