@@ -39,8 +39,8 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
   }
 
   @Override
-  protected boolean canDataNavigate(boolean isDataValid) {
-    return isDataValid && getUsage().canNavigate();
+  protected boolean canDataNavigate() {
+    return getUsage().canNavigate();
   }
 
   @Override

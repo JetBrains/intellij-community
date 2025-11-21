@@ -63,7 +63,7 @@ public abstract class Node extends DefaultMutableTreeNode {
 
   protected abstract boolean isDataExcluded();
 
-  protected abstract boolean canDataNavigate(boolean isDataValid);
+  protected abstract boolean canDataNavigate();
 
   @ApiStatus.Internal
   public @Nullable UsageNodePresentation getCachedPresentation() {
@@ -106,8 +106,7 @@ public abstract class Node extends DefaultMutableTreeNode {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
-    // pass isDataValid here to avoid recomputing it inside
-    boolean canNavigate = canDataNavigate(isDataValid);
+    boolean canNavigate = isDataValid && canDataNavigate();
     String text = getNodeText();
     updateCachedPresentation();
     doUpdate(isDataValid, isReadOnly, canNavigate, text, edtFireTreeNodesChangedQueue);

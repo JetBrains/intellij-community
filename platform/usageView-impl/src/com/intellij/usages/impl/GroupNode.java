@@ -342,7 +342,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @Override
-  protected boolean canDataNavigate(boolean isDataValid) {
+  protected boolean canDataNavigate() {
     return getGroup() != null && getGroup().canNavigate();
   }
 

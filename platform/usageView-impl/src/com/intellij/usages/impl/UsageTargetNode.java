@@ -26,7 +26,7 @@ class UsageTargetNode extends Node {
   }
 
   @Override
-  protected boolean canDataNavigate(boolean isDataValid) {
+  protected boolean canDataNavigate() {
     return false;
   }
 
