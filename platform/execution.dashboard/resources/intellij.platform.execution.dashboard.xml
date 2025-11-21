@@ -20,7 +20,6 @@
       implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.FrontendRunDashboardManagerProxy"/>
     <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardUiManager"
                     serviceImplementation="com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardUiManagerImpl"/>
-    <postStartupActivity implementation="com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardServiceSynchronizer"/>
     <serviceViewContributor implementation="com.intellij.platform.execution.dashboard.RunDashboardServiceViewContributor"/>
 
     <runDashboardGroupingRule id="type" order="first"

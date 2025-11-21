@@ -21,6 +21,9 @@ import java.util.Set;
 public interface RunDashboardManager {
 
   @ApiStatus.Internal
+  boolean isInitialized();
+
+  @ApiStatus.Internal
   void updateServiceRunContentDescriptor(@NotNull Content contentWithNewDescriptor, @NotNull RunContentDescriptor oldDescriptor);
 
   static RunDashboardManager getInstance(@NotNull Project project) {
