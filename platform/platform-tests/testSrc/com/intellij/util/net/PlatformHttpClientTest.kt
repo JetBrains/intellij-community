@@ -171,16 +171,16 @@ class PlatformHttpClientTest {
     assertThat(response.body()).isEmpty()
   }
 
-  @Test fun permissionDenied() {
+  @Test fun accessDenied() {
     server.createContext("/") { ex ->
-      ex.sendResponseHeaders(HttpURLConnection.HTTP_UNAUTHORIZED, -1)
+      ex.sendResponseHeaders(HttpURLConnection.HTTP_FORBIDDEN, -1)
       ex.close()
     }
     val response = client.send(serverRequest, HttpResponse.BodyHandlers.ofString())
     assertThatThrownBy { PlatformHttpClient.checkResponse(response) }
       .isInstanceOf(HttpRequests.HttpStatusException::class.java)
       .extracting { (it as? HttpRequests.HttpStatusException)?.statusCode }
-      .isEqualTo(HttpURLConnection.HTTP_UNAUTHORIZED)
+      .isEqualTo(HttpURLConnection.HTTP_FORBIDDEN)
   }
 
   @Test
