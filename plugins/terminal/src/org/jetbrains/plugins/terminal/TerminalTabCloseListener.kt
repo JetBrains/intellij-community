@@ -8,7 +8,6 @@ import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
@@ -27,7 +26,7 @@ abstract class TerminalTabCloseListener(
     if (projectClosing) {
       return true
     }
-    if (content.getUserData(SILENT) == true) {
+    if (content.getUserData(Content.TEMPORARY_REMOVED_KEY) == true) {
       return true
     }
 
@@ -60,16 +59,15 @@ abstract class TerminalTabCloseListener(
 
   companion object {
     fun executeContentOperationSilently(content: Content, runnable: () -> Unit) {
-      content.putUserData(SILENT, true)
+      content.putUserData(Content.TEMPORARY_REMOVED_KEY, true)
       try {
         runnable()
       }
       finally {
-        content.putUserData(SILENT, null)
+        content.putUserData(Content.TEMPORARY_REMOVED_KEY, null)
       }
     }
   }
 }
 
-private val SILENT = Key.create<Boolean>("Silent content operation")
 private val LOG = logger<TerminalTabCloseListener>()
