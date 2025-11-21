@@ -138,7 +138,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     val bundled = productModules.bundledPluginModuleGroups.map { moduleGroup ->
       scope.async {
-        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet } || isPluginWithUseIdeaClassLoader(moduleGroup, context)) {
+        if (moduleGroup.includedModules.none { it.moduleDescriptor.moduleId in mainGroupModulesSet } || isPluginWithUseIdeaClassLoader(moduleGroup, context, zipFilePool)) {
           val serviceModuleMapping = serviceModuleMappingDeferred.await()
           loadPluginDescriptorFromRuntimeModule(
             pluginModuleGroup = moduleGroup,
@@ -170,9 +170,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   private fun isPluginWithUseIdeaClassLoader(
     pluginModuleGroup: PluginModuleGroup,
     loadingContext: PluginDescriptorLoadingContext,
+    zipFilePool: ZipEntryResolverPool,
   ): Boolean {
     val mainResourceRoot = pluginModuleGroup.mainModule.resourceRootPaths.singleOrNull() ?: return false
-    val input = Files.readAllBytes(mainResourceRoot.resolve(PluginManagerCore.PLUGIN_XML_PATH))
+    val input = readMainModulePluginXml(mainResourceRoot, zipFilePool, pluginModuleGroup) ?: return false
     // TODO: do we need to support xIncludes in this case?
     @Suppress("TestOnlyProblems")
     val rawDescriptor = PluginDescriptorFromXmlStreamConsumer(loadingContext.readContext, xIncludeLoader = null).let {
@@ -180,6 +181,31 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       it.build()
     }
     return rawDescriptor.isUseIdeaClassLoader
+  }
+
+  private fun readMainModulePluginXml(
+    mainResourceRoot: Path,
+    zipFilePool: ZipEntryResolverPool,
+    pluginModuleGroup: PluginModuleGroup,
+  ): ByteArray? {
+    if (Files.isDirectory(mainResourceRoot)) {
+      val dataLoader = LocalFsDataLoader(mainResourceRoot)
+      return dataLoader.load(path = PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)
+    }
+    // mainResourceRoot is a JAR file
+    var resolver: ZipEntryResolverPool.EntryResolver? = null
+    try {
+      resolver = zipFilePool.load(mainResourceRoot)
+      val dataLoader = ImmutableZipFileDataLoader(resolver = resolver, zipPath = mainResourceRoot)
+      return dataLoader.load(path = PluginManagerCore.PLUGIN_XML_PATH, pluginDescriptorSourceOnly = true)
+    }
+    catch (e: Throwable) {
+      logger<ModuleBasedProductLoadingStrategy>().warn("Failed to load ${PluginManagerCore.PLUGIN_XML_PATH} from '${pluginModuleGroup.mainModule.moduleId.stringId}' module: $e", e)
+      return null
+    }
+    finally {
+      resolver?.close()
+    }
   }
 
   private fun loadCustomPluginDescriptors(
