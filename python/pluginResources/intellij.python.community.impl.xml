@@ -249,7 +249,7 @@
                      implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
     <localInspection language="Python" shortName="PyInterpreterInspection" suppressId="PyInterpreter" bundle="messages.PyPsiBundle"
                      key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.jetbrains.python.inspections.PyInterpreterInspection"/>
+                     implementationClass="com.jetbrains.python.inspections.interpreter.PyInterpreterInspection"/>
     <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility"
                      bundle="messages.PyPsiBundle" key="INSP.stub.packages.compatibility" groupKey="INSP.GROUP.python"
                      enabledByDefault="true" level="WARNING"
