@@ -583,6 +583,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta R",             "GotoSymbol", "WebInspector.Browser.Refresh"},
       {"shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore", "org.jetbrains.r.actions.RRunAction",
                                    "Terminal.SmartCommandExecution.Debug", "Console.TableResult.ShowRecordView"},
+      {"shift meta J",             "EditorSelectWord", "Jdbc.OpenConsole.Scratch"},
       {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
       {"shift meta V",             "$Paste", "JupyterNotebookPasteCellAboveCommandModeAction"},
     }),
