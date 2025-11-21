@@ -14,13 +14,19 @@ class GitBranchesMatcherWrapper(private val delegate: MinusculeMatcher) : Minusc
   override val pattern: String
     get() = delegate.pattern
 
+  override fun match(name: String): List<TextRange>? = delegate.match(name)
+
+  @Deprecated("use match(String)", replaceWith = ReplaceWith("match(name)"))
   override fun matchingFragments(name: String): FList<TextRange>? = delegate.matchingFragments(name)
 
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
+    val degree = delegate.matchingDegree(name, valueStartCaseMatch, fragments)
+    return fragments?.firstOrNull()?.startOffset?.let { degree + MATCH_OFFSET - it } ?: degree
+  }
+
+  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
-    var degree = delegate.matchingDegree(name, valueStartCaseMatch, fragments)
-    if (fragments.isNullOrEmpty()) return degree
-    degree += MATCH_OFFSET - fragments.head.startOffset
-    return degree
+    return matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)
   }
 
   companion object {

@@ -84,11 +84,11 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     myMinNameLength = myMeaningfulCharacters.size / 2
   }
 
-  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
     if (fragments == null) return Int.MIN_VALUE
     if (fragments.isEmpty()) return 0
 
-    val first: TextRange = fragments.getHead()
+    val first: TextRange = fragments.first()
     val startMatch = first.startOffset == 0
     val valuedStartMatch = startMatch && valueStartCaseMatch
 
@@ -139,6 +139,11 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
            (if (finalMatch) 1 else 0)
   }
 
+  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
+    return matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)
+  }
+
   private fun evaluateCaseMatching(
     valuedStartMatch: Boolean,
     patternIndex: Int,
@@ -169,7 +174,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
   override val pattern: String
     get() = String(myPattern)
 
-  override fun matchingFragments(name: String): FList<TextRange>? {
+  override fun match(name: String): List<TextRange>? {
     if (name.length < myMinNameLength) {
       return null
     }
@@ -191,10 +196,15 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     if (patternIndex < myMinNameLength * 2) {
       return null
     }
-    return matchWildcards(name, 0, 0)
+    return matchWildcards(name, 0, 0)?.asReversed()
   }
 
-  private fun matchBySubstring(name: String): FList<TextRange>? {
+  @Deprecated("use match(String)", replaceWith = ReplaceWith("match(name)"))
+  override fun matchingFragments(name: String): FList<TextRange>? {
+    return match(name)?.asReversed()?.let(FList<TextRange>::createFromReversed)
+  }
+
+  private fun matchBySubstring(name: String): List<TextRange>? {
     val infix = isPatternChar(0, '*')
     val patternWithoutWildChar = filterWildcard(myPattern)
     if (name.length < patternWithoutWildChar.size) {
@@ -203,12 +213,12 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     if (infix) {
       val index = Strings.indexOfIgnoreCase(name, CharArrayCharSequence(patternWithoutWildChar, 0, patternWithoutWildChar.size), 0)
       if (index >= 0) {
-        return FList.singleton(TextRange.from(index, patternWithoutWildChar.size - 1))
+        return listOf(TextRange.from(index, patternWithoutWildChar.size - 1))
       }
       return null
     }
     if (CharArrayUtil.regionMatches(patternWithoutWildChar, 0, patternWithoutWildChar.size, name)) {
-      return FList.singleton(TextRange(0, patternWithoutWildChar.size))
+      return listOf(TextRange(0, patternWithoutWildChar.size))
     }
     return null
   }
@@ -221,14 +231,14 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     name: String,
     patternIndex: Int,
     nameIndex: Int,
-  ): FList<TextRange>? {
+  ): List<TextRange>? {
     var patternIndex = patternIndex
     if (nameIndex < 0) {
       return null
     }
     if (!isWildcard(patternIndex)) {
       return if (patternIndex == myPattern.size) {
-        FList.emptyList()
+        emptyList()
       }
       else {
         matchFragment(name, patternIndex, nameIndex)
@@ -245,14 +255,14 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
       return if (this.isTrailingSpacePattern && nameIndex != name.length && (patternIndex < 2 || !isUpperCaseOrDigit(patternIndex - 2))) {
         val spaceIndex = name.indexOf(' ', nameIndex)
         if (spaceIndex >= 0) {
-          FList.singleton(TextRange.from(spaceIndex, 1))
+          mutableListOf(TextRange.from(spaceIndex, 1))
         }
         else {
           null
         }
       }
       else {
-        FList.emptyList()
+        emptyList()
       }
     }
 
@@ -280,7 +290,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     patternIndex: Int,
     nameIndex: Int,
     allowSpecialChars: Boolean,
-  ): FList<TextRange>? {
+  ): List<TextRange>? {
     var nameIndex = nameIndex
     var maxFoundLength = 0
     while (nameIndex >= 0) {
@@ -356,7 +366,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     name: String,
     patternIndex: Int,
     nameIndex: Int,
-  ): FList<TextRange>? {
+  ): List<TextRange>? {
     val fragmentLength = maxMatchingFragment(name, patternIndex, nameIndex)
     return if (fragmentLength == 0) null else matchInsideFragment(name, patternIndex, nameIndex, fragmentLength)
   }
@@ -391,7 +401,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     patternIndex: Int,
     nameIndex: Int,
     fragmentLength: Int,
-  ): FList<TextRange>? {
+  ): List<TextRange>? {
     // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
     val minFragment = if (isMiddleMatch(name, patternIndex, nameIndex)) 3 else 1
     val camelHumpRanges = improveCamelHumps(name, patternIndex, nameIndex, fragmentLength, minFragment)
@@ -408,16 +418,16 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     patternIndex: Int,
     nameIndex: Int,
     fragmentLength: Int, minFragment: Int,
-  ): FList<TextRange>? {
+  ): List<TextRange>? {
     if (patternIndex + fragmentLength >= myPattern.size) {
-      return FList.singleton(TextRange.from(nameIndex, fragmentLength))
+      return mutableListOf(TextRange.from(nameIndex, fragmentLength))
     }
 
     // try to match the remainder of pattern with the remainder of name
     // it may not succeed with the longest matching fragment, then try shorter matches
     var i = fragmentLength
     while (i >= minFragment || (i > 0 && isWildcard(patternIndex + i))) {
-      val ranges: FList<TextRange>?
+      val ranges: List<TextRange>?
       if (isWildcard(patternIndex + i)) {
         ranges = matchWildcards(name, patternIndex + i, nameIndex + i)
       }
@@ -432,7 +442,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
         }
       }
       if (ranges != null) {
-        return prependRange(ranges, nameIndex, i)
+        return appendRange(ranges, nameIndex, i)
       }
       i--
     }
@@ -449,12 +459,12 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     nameIndex: Int,
     maxFragment: Int,
     minFragment: Int,
-  ): FList<TextRange>? {
+  ): List<TextRange>? {
     for (i in minFragment..<maxFragment) {
       if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i)) {
         val ranges = findUppercaseMatchFurther(name, patternIndex + i, nameIndex + i)
         if (ranges != null) {
-          return prependRange(ranges, nameIndex, i)
+          return appendRange(ranges, nameIndex, i)
         }
       }
     }
@@ -469,7 +479,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     name: String,
     patternIndex: Int,
     nameIndex: Int,
-  ): FList<TextRange>? {
+  ): List<TextRange>? {
     val nextWordStart = indexOfWordStart(name, patternIndex, nameIndex)
     return matchWildcards(name, patternIndex, nextWordStart)
   }
@@ -533,7 +543,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
 
   @NonNls
   override fun toString(): @NonNls String {
-    return "MinusculeMatcherImpl{myPattern=" + String(myPattern) + ", myOptions=" + myMatchingMode + '}'
+    return "MinusculeMatcherImpl{myPattern=" + String(myPattern) + ", myMatchingMode=" + myMatchingMode + '}'
   }
 
   companion object {
@@ -551,14 +561,20 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
       return NameUtilCore.nextWord(name, start)
     }
 
-    private fun prependRange(ranges: FList<TextRange>, from: Int, length: Int): FList<TextRange> {
-      val head = ranges.head
-      return if (head != null && head.startOffset == from + length) {
-        ranges.getTail().prepend(TextRange(from, head.endOffset))
+    private fun appendRange(ranges: List<TextRange>, from: Int, length: Int): List<TextRange> {
+      if (ranges.isEmpty()) {
+        return mutableListOf(TextRange.from(from, length))
+      }
+
+      require(ranges is MutableList<TextRange>)
+      val last = ranges.last()
+      if (last.startOffset == from + length) {
+        ranges[ranges.size - 1] = TextRange(from, last.endOffset)
       }
       else {
-        ranges.prepend(TextRange.from(from, length))
+        ranges.add(TextRange.from(from, length))
       }
+      return ranges
     }
 
     private fun filterWildcard(source: CharArray): CharArray {

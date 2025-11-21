@@ -8,21 +8,31 @@ class PreferStartMatchMatcherWrapper(private val myDelegateMatcher: MinusculeMat
   override val pattern: String
     get() = myDelegateMatcher.pattern
 
+  @Deprecated("use match(String)", replaceWith = ReplaceWith("match(name)"))
   override fun matchingFragments(name: String): FList<TextRange>? {
     return myDelegateMatcher.matchingFragments(name)
   }
 
-  override fun matchingDegree(
-    name: String,
-    valueStartCaseMatch: Boolean,
-    fragments: FList<out TextRange?>?,
-  ): Int {
+  override fun match(name: String): List<TextRange>? {
+    return myDelegateMatcher.match(name)
+  }
+
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
     val degree = myDelegateMatcher.matchingDegree(name, valueStartCaseMatch, fragments)
     return when {
       fragments.isNullOrEmpty() -> degree
-      fragments.getHead().startOffset == 0 -> degree + START_MATCH_WEIGHT
+      fragments.first().startOffset == 0 -> degree + START_MATCH_WEIGHT
       else -> degree
     }
+  }
+
+  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments.toList())"))
+  override fun matchingDegree(
+    name: String,
+    valueStartCaseMatch: Boolean,
+    fragments: FList<out TextRange>?,
+  ): Int {
+    return matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)
   }
 
   private companion object {

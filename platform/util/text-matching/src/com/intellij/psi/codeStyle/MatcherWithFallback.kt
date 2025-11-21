@@ -18,14 +18,19 @@ open class MatcherWithFallback internal constructor(
            myFallbackMatcher != null && myFallbackMatcher.matches(name)
   }
 
-  override fun matchingFragments(name: String): FList<TextRange>? {
-    val mainRanges = myMainMatcher.matchingFragments(name)
+  override fun match(name: String): List<TextRange>? {
+    val mainRanges = myMainMatcher.match(name)
     val useMainRanges = !mainRanges.isNullOrEmpty() || myFallbackMatcher == null
-    return if (useMainRanges) mainRanges else myFallbackMatcher.matchingFragments(name)
+    return if (useMainRanges) mainRanges else myFallbackMatcher.match(name)
+  }
+
+  @Deprecated("use match(String)", replaceWith = ReplaceWith("match(name)"))
+  override fun matchingFragments(name: String): FList<TextRange>? {
+    return match(name)?.asReversed()?.let(FList<TextRange>::createFromReversed)
   }
 
   override fun matchingDegree(name: String, valueStartCaseMatch: Boolean): Int {
-    val mainRanges = myMainMatcher.matchingFragments(name)
+    val mainRanges = myMainMatcher.match(name)
     val useMainRanges = !mainRanges.isNullOrEmpty() || myFallbackMatcher == null
 
     return if (useMainRanges) {
@@ -36,8 +41,8 @@ open class MatcherWithFallback internal constructor(
     }
   }
 
-  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
-    val mainRanges = myMainMatcher.matchingFragments(name)
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: List<TextRange>?): Int {
+    val mainRanges = myMainMatcher.match(name)
     val useMainRanges = !mainRanges.isNullOrEmpty() || myFallbackMatcher == null
 
     return if (useMainRanges) {
@@ -46,6 +51,11 @@ open class MatcherWithFallback internal constructor(
     else {
       myFallbackMatcher.matchingDegree(name, valueStartCaseMatch, fragments)
     }
+  }
+
+  @Deprecated("use matchingDegree(String, Boolean, List<TextRange>)", replaceWith = ReplaceWith("matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)"))
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
+    return matchingDegree(name, valueStartCaseMatch, fragments as List<TextRange>?)
   }
 
   override fun toString(): String {

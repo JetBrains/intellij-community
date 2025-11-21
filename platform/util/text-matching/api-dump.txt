@@ -5,7 +5,9 @@ f:com.intellij.psi.codeStyle.AllOccurrencesMatcher
 - sf:create(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher
 - sf:create(java.lang.String,com.intellij.util.text.matching.MatchingMode,java.lang.String,com.intellij.util.text.matching.KeyboardLayoutConverter):com.intellij.psi.codeStyle.MinusculeMatcher
 - getPattern():java.lang.String
+- match(java.lang.String):java.util.List
 - matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingDegree(java.lang.String,Z,java.util.List):I
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
 f:com.intellij.psi.codeStyle.AllOccurrencesMatcher$Companion
 - f:create(java.lang.String,com.intellij.psi.codeStyle.NameUtil$MatchingCaseSensitivity,java.lang.String):com.intellij.psi.codeStyle.MinusculeMatcher
@@ -25,10 +27,12 @@ a:com.intellij.psi.codeStyle.MinusculeMatcher
 - a:getPattern():java.lang.String
 - sf:isStartMatch(java.lang.Iterable):Z
 - isStartMatch(java.lang.String):Z
+- match(java.lang.String):java.util.List
 - matches(java.lang.String):Z
 - matchingDegree(java.lang.String):I
 - matchingDegree(java.lang.String,Z):I
 - matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingDegree(java.lang.String,Z,java.util.List):I
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
 f:com.intellij.psi.codeStyle.MinusculeMatcher$Companion
 - f:isStartMatch(java.lang.Iterable):Z
@@ -69,7 +73,9 @@ f:com.intellij.psi.codeStyle.PinyinMatcher
 - sf:Companion:com.intellij.psi.codeStyle.PinyinMatcher$Companion
 - sf:create(java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher):com.intellij.psi.codeStyle.MinusculeMatcher
 - getPattern():java.lang.String
+- match(java.lang.String):java.util.List
 - matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingDegree(java.lang.String,Z,java.util.List):I
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
 f:com.intellij.psi.codeStyle.PinyinMatcher$Companion
 - f:create(java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher):com.intellij.psi.codeStyle.MinusculeMatcher
@@ -83,7 +89,9 @@ f:com.intellij.psi.codeStyle.PreferStartMatchMatcherWrapper
 - com.intellij.psi.codeStyle.MinusculeMatcher
 - <init>(com.intellij.psi.codeStyle.MinusculeMatcher):V
 - getPattern():java.lang.String
+- match(java.lang.String):java.util.List
 - matchingDegree(java.lang.String,Z,com.intellij.util.containers.FList):I
+- matchingDegree(java.lang.String,Z,java.util.List):I
 - matchingFragments(java.lang.String):com.intellij.util.containers.FList
 f:com.intellij.psi.codeStyle.WordPrefixMatcher
 - com.intellij.util.text.Matcher
