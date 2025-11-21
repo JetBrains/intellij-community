@@ -20,16 +20,6 @@ import org.jetbrains.intellij.build.isOptionalLoadingRule
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.java.JavaSourceRootType
 
-// Contrary to what it looks like, this is not a step back.
-// Previously, it was specified in PLATFORM_IMPLEMENTATION_MODULES/PLATFORM_API_MODULES.
-// Once the shape of the extracted module becomes fully discernible,
-// we can consider ways to improve `pluginAuto` and eliminate the need for an explicit declaration here.
-internal val PRODUCT_MODULE_IMPL_COMPOSITION = java.util.Map.of(
-  "intellij.rider", listOf(
-  "intellij.platform.debugger.modulesView"
-),
-)
-
 internal fun getProductModuleJarName(moduleName: String, context: BuildContext, frontendModuleFilter: FrontendModuleFilter): String {
   return when {
     isModuleCloseSource(moduleName = moduleName, context = context) -> if (frontendModuleFilter.isBackendModule(moduleName)) PRODUCT_BACKEND_JAR else PRODUCT_JAR
@@ -178,13 +168,6 @@ private fun processProductModule(
       includeDependencies = includeDependencies,
     )
   )
-  PRODUCT_MODULE_IMPL_COMPOSITION.get(moduleName)?.let { list ->
-    list
-      .filter { !context.productProperties.productLayout.productImplementationModules.contains(it) }
-      .mapTo(result) { subModuleName ->
-        ModuleItem(moduleName = subModuleName, relativeOutputFile = relativeOutFile, reason = ModuleIncludeReasons.PRODUCT_MODULES, moduleSet = moduleSet)
-      }
-  }
 
   // We do not embed the module descriptor because scrambling can rename classes.
   //

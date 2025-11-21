@@ -289,7 +289,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   for (item in productPluginContentModules) {
     val iterator = filteredExplicit.iterator()
     while (iterator.hasNext()) {
-      if (item.moduleName == iterator.next().moduleName && !PRODUCT_MODULE_IMPL_COMPOSITION.values.any { it.contains(item.moduleName) }) {
+      if (item.moduleName == iterator.next().moduleName) {
         // todo - error instead of warn
         Span.current().addEvent("product module MUST NOT BE explicitly specified: ${item.moduleName}")
         iterator.remove()
