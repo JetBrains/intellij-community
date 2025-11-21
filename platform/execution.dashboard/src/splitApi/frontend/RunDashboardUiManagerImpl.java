@@ -250,10 +250,10 @@ public final class RunDashboardUiManagerImpl implements RunDashboardUiManager {
   }
 
   @Override
-  public void openToolWindow(String toolWindowId, Boolean focus) {
+  public void openToolWindow(String toolWindowId, Boolean focus, RunContentDescriptorId descriptorId) {
     if(!IdeProductMode.isBackend()) return;
     RunDashboardManagerImpl runDashboardManager = RunDashboardManagerImpl.getInstance(myProject);
-    runDashboardManager.openServicesToolWindowOnRun(toolWindowId, focus);
+    runDashboardManager.openServicesToolWindowOnRun(toolWindowId, focus, descriptorId);
   }
 
   @ApiStatus.Internal

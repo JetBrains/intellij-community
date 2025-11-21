@@ -420,7 +420,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
       getToolWindowManager().getToolWindow(toolWindowId)!!.activate(descriptor.activationCallback, focus, focus)
       val manager = RunDashboardUiManager.getInstanceIfCreated(project)
-      manager?.openToolWindow(toolWindowId, focus) // todo: name this better
+      val descriptorId = descriptor.id
+      manager?.openToolWindow(toolWindowId,  focus, descriptorId) // todo: name this better
     }, project.disposed)
   }
 

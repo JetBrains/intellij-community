@@ -11,9 +11,11 @@ import com.intellij.execution.dashboard.RunDashboardServiceId
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.openapi.project.Project
 import com.intellij.platform.execution.dashboard.splitApi.*
+import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 internal class BackendRunDashboardManagerState(private val project: Project) {
   private val sharedSettings = MutableStateFlow(RunDashboardSettingsDto())
@@ -88,10 +90,9 @@ internal class BackendRunDashboardManagerState(private val project: Project) {
     }
   }
 
-  fun fireOpenToolwindowForRunningConfiguration(toolwindowId : String, focus: Boolean){
+  fun fireOpenToolwindowForRunningConfiguration(toolwindowId : String, focus: Boolean, serviceId: RunDashboardServiceId?){
     scheduleSharedStateUpdate {
-      openToolWindowEvents.tryEmit(OpenToolWindowEventDto(toolwindowId, focus))
-      println("fireOpenToolwindowForRunningConfiguration")
+      openToolWindowEvents.tryEmit(OpenToolWindowEventDto(toolwindowId, focus, serviceId))
     }
   }
 
