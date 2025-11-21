@@ -2,6 +2,7 @@ package com.intellij.python.junit5Tests.env
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
@@ -43,6 +44,7 @@ class ProcessOutputControllerServiceTest {
     ): Unit = timeoutRunBlocking(5.minutes) {
         val service = projectFixture.get().service<ProcessOutputControllerService>()
 
+        val newLineLen = if (SystemInfoRt.isWindows) 2 else 1
         val binOnEel = BinOnEel(python, cwd)
         val mainPy = Files.createFile(cwd.resolve(MAIN_PY))
 
@@ -80,7 +82,7 @@ class ProcessOutputControllerServiceTest {
                 assertEquals(3, size)
                 assertEquals("test $it", get(0).text)
                 assertEquals(
-                    LoggingLimits.MAX_OUTPUT_SIZE - ("test $it".length + 1),
+                    LoggingLimits.MAX_OUTPUT_SIZE - ("test $it".length + newLineLen),
                     get(1).text.length,
                 )
                 assertEquals(LoggingLimits.MAX_OUTPUT_SIZE, get(2).text.length)
@@ -117,7 +119,7 @@ class ProcessOutputControllerServiceTest {
                 assertEquals(3, size)
                 assertEquals("test $newIt", get(0).text)
                 assertEquals(
-                    LoggingLimits.MAX_OUTPUT_SIZE - ("test $newIt".length + 1),
+                    LoggingLimits.MAX_OUTPUT_SIZE - ("test $newIt".length + newLineLen),
                     get(1).text.length,
                 )
                 assertEquals(LoggingLimits.MAX_OUTPUT_SIZE, get(2).text.length)
