@@ -10,6 +10,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XDebugSession
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation
 import com.intellij.xdebugger.frame.presentation.XValuePresentation
@@ -45,6 +46,8 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
   private val treePanel = XDebuggerTreePanel(project, session.editorsProvider, this, null, THREADS_VIEW_POPUP_GROUP, null)
 
   init {
+    tree.emptyText.text = XDebuggerBundle.message("debugger.threads.not.available")
+
     object : AutoScrollToSourceHandler() {
       override fun isAutoScrollMode(): Boolean = true
 
