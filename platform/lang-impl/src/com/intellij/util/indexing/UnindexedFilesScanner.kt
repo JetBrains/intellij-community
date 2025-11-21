@@ -79,6 +79,14 @@ class ScanningIterators(
   }
 }
 
+/**
+ * A task in [UnindexedFilesScannerExecutor]: (re-)scan files to index.
+ * Typical usage is `UnindexedFilesScanner(...).queue()`.
+ *
+ * BEWARE: Scanner implements [Closeable], but usually it doesn't need try-with-resources, because [close] actually called async,
+ * while processed by [UnindexedFilesScannerExecutor]. The only case there [close] should be called explicitly is when the scanner
+ * object is created, but does NOT [queue]-ed.
+ */
 @ApiStatus.Internal
 class UnindexedFilesScanner (
   private val myProject: Project,
