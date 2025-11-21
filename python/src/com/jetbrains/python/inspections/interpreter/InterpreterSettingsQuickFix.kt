@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.project.Project
@@ -17,16 +16,12 @@ import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyPsiBundle
 
 class InterpreterSettingsQuickFix(private val myModule: Module?) : LocalQuickFix {
-  override fun getFamilyName(): String {
-    return if (PlatformUtils.isPyCharm())
-      PyPsiBundle.message("INSP.interpreter.interpreter.settings")
-    else
-      PyPsiBundle.message("INSP.interpreter.configure.python.interpreter")
-  }
+  override fun getFamilyName(): String = if (PlatformUtils.isPyCharm())
+    PyPsiBundle.message("INSP.interpreter.interpreter.settings")
+  else
+    PyPsiBundle.message("INSP.interpreter.configure.python.interpreter")
 
-  override fun startInWriteAction(): Boolean {
-    return false
-  }
+  override fun startInWriteAction(): Boolean = false
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     showPythonInterpreterSettings(project, myModule)
@@ -36,8 +31,8 @@ class InterpreterSettingsQuickFix(private val myModule: Module?) : LocalQuickFix
     fun showPythonInterpreterSettings(project: Project, module: Module?) {
       val id = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
       val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true)
-      if (ConfigurableVisitor.findById(id, mutableListOf<ConfigurableGroup?>(group)) != null) {
-        ShowSettingsUtilImpl.Companion.showSettingsDialog(project, id, null)
+      if (ConfigurableVisitor.findById(id, listOf(group)) != null) {
+        ShowSettingsUtilImpl.showSettingsDialog(project, id, null)
         return
       }
 
@@ -51,8 +46,9 @@ class InterpreterSettingsQuickFix(private val myModule: Module?) : LocalQuickFix
     }
 
     private fun justOneModuleInheritingSdk(project: Project, module: Module): Boolean {
-      return ProjectRootManager.getInstance(project).getProjectSdk() == null &&
-             ModuleRootManager.getInstance(module).isSdkInherited() && ModuleManager.Companion.getInstance(project).modules.size < 2
+      return ProjectRootManager.getInstance(project).projectSdk == null &&
+             ModuleRootManager.getInstance(module).isSdkInherited &&
+             ModuleManager.getInstance(project).modules.size < 2
     }
   }
 }
