@@ -16,7 +16,7 @@ import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.SwingHelper
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
-import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection
+import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.codeCouldProbablyBeRunWithConfig
@@ -127,7 +127,7 @@ class PySdkPopupFactory(val module: Module) {
 
   private inner class InterpreterSettingsAction : DumbAwareAction(PyBundle.messagePointer("python.sdk.popup.interpreter.settings")) {
     override fun actionPerformed(e: AnActionEvent) {
-      PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(module.project, module)
+      InterpreterSettingsQuickFix.showPythonInterpreterSettings(module.project, module)
     }
   }
 }

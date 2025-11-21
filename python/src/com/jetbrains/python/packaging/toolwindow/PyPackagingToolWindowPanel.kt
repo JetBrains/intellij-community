@@ -28,7 +28,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.asDisposable
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.TraceContext
-import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection
+import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.packaging.toolwindow.details.PyPackageInfoPanel
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.ErrorNode
@@ -93,7 +93,7 @@ class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindo
     @Suppress("DialogTitleCapitalization")
     emptyText.appendLine(message("python.sdk.popup.interpreter.settings"), SimpleTextAttributes.LINK_ATTRIBUTES, object : ActionListener {
       override fun actionPerformed(e: ActionEvent?) {
-        PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, null)
+        InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, null)
       }
     })
   }
