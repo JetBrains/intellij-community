@@ -15,7 +15,6 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.layout.impl.DockableGridContainerFactory
 import com.intellij.execution.rpc.emitLiveIconUpdate
-import com.intellij.execution.rpc.emitToolWindowOpen
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -420,9 +419,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         focus = true
       }
       getToolWindowManager().getToolWindow(toolWindowId)!!.activate(descriptor.activationCallback, focus, focus)
-      //emitToolWindowOpen(project, toolWindowId, focus)
       val manager = RunDashboardUiManager.getInstanceIfCreated(project)
-      manager?.openToolWindow(toolWindowId, focus);
+      manager?.openToolWindow(toolWindowId, focus) // todo: name this better
     }, project.disposed)
   }
 

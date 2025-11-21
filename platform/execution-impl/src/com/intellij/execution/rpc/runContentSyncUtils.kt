@@ -8,27 +8,15 @@ import com.intellij.platform.rpc.topics.broadcast
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
-val RPC_SYNC_RUN_TOPIC: ProjectRemoteTopic<RunContentSyncEvent> =
-  ProjectRemoteTopic("SyncRunContentTopic", RunContentSyncEvent.serializer())
+val RPC_SYNC_RUN_TOPIC: ProjectRemoteTopic<RunContentLiveIconSyncEvent> =
+  ProjectRemoteTopic("SyncRunContentTopic", RunContentLiveIconSyncEvent.serializer())
 
 @ApiStatus.Internal
 fun emitLiveIconUpdate(project: Project, toolwindowId: String, alive: Boolean){
   if(!IdeProductMode.isBackend) return
-  RPC_SYNC_RUN_TOPIC.broadcast(project, RunContentSyncEvent.ShowLiveIcon(toolwindowId, alive))
-}
-
-@ApiStatus.Internal
-fun emitToolWindowOpen(project: Project, toolwindowId: String, focus: Boolean){
-  if(!IdeProductMode.isBackend) return
-  RPC_SYNC_RUN_TOPIC.broadcast(project, RunContentSyncEvent.OpenToolWindow(toolwindowId, focus))
+  RPC_SYNC_RUN_TOPIC.broadcast(project, RunContentLiveIconSyncEvent(toolwindowId, alive))
 }
 
 @ApiStatus.Internal
 @Serializable
-sealed interface RunContentSyncEvent{
-  @Serializable
-  data class ShowLiveIcon(val toolwindowId: String, val alive: Boolean) : RunContentSyncEvent
-
-  @Serializable
-  data class OpenToolWindow(val toolwindowId: String, val focus: Boolean) : RunContentSyncEvent
-}
+data class RunContentLiveIconSyncEvent(val toolwindowId: String, val alive: Boolean)
