@@ -463,6 +463,15 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     else if (param.isKeywordOnlySeparator()) {
       result.append(escaped(PyAstSingleStarParameter.TEXT));
     }
+    else if (param.isPositionalContainer() || param.isKeywordContainer()) {
+      PyType type = param.getArgumentType(myTypeEvalContext);
+      if (param.getName() != null) {
+        result.append(escaped(param.isPositionalContainer() ? "*" : "**"));
+        result.append(styled(param.getName(), PyHighlighter.PY_PARAMETER));
+        result.append(styled(": ", PyHighlighter.PY_OPERATION_SIGN));
+      }
+      result.append(render(type));
+    }
     else {
       PyType type = param.getType(myTypeEvalContext);
       // TODO remove that

@@ -1749,7 +1749,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInAnnotations() {
-    doTest("(c: (**P) -> int, **P, **P) -> None", """
+    doTest("(c: (**P) -> int, *args: **P, **kwargs: **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1762,7 +1762,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInTypeComments() {
-    doTest("(c: (**P) -> int, **P, **P) -> None", """
+    doTest("(c: (**P) -> int, *args: **P, **kwargs: **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1779,7 +1779,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInFunctionTypeComment() {
-    doTest("(c: (**P) -> int, **P, **P) -> None", """
+    doTest("(c: (**P) -> int, *args: **P, **kwargs: **P) -> None", """
       from typing import Callable, ParamSpec
       
       P = ParamSpec('P')
@@ -1793,7 +1793,7 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   public void testParamSpecArgsKwargsInImportedFile() {
-    doMultiFileTest("(c: (**P) -> int, **P, **P) -> None", """
+    doMultiFileTest("(c: (**P) -> int, *args: **P, **kwargs: **P) -> None", """
       from mod import func
             
       expr = func
@@ -1980,7 +1980,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateAdd() {
-    doTest("(str, x: int, args: tuple[bool, ...]) -> bool",
+    doTest("(str, x: int, *args: bool) -> bool",
            """
              from typing import Callable, Concatenate, ParamSpec
 
@@ -1998,7 +1998,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateAddSeveralParameters() {
-    doTest("(str, bool, x: int, args: tuple[bool, ...]) -> bool",
+    doTest("(str, bool, x: int, *args: bool) -> bool",
            """
              from typing import Callable, Concatenate, ParamSpec
 
@@ -2016,7 +2016,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateRemove() {
-    doTest("(args: tuple[bool, ...]) -> bool",
+    doTest("(*args: bool) -> bool",
            """
              from typing import Callable, Concatenate, ParamSpec
 
@@ -2034,7 +2034,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateTransform() {
-    doTest("(str, args: tuple[bool, ...]) -> bool",
+    doTest("(str, *args: bool) -> bool",
            """
              from typing import Callable, Concatenate, ParamSpec
 
@@ -3191,7 +3191,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-61883
   public void testParamSpecConcatenateTransformWithPEP695Syntax() {
-    doTest("(str, args: tuple[bool, ...]) -> bool",
+    doTest("(str, *args: bool) -> bool",
            """
             from typing import Callable, Concatenate
             
