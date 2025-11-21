@@ -600,7 +600,8 @@ public class Py3CompletionTest extends PyTestCase {
     assertNotNull(variants);
     LookupElement lookupElement = ContainerUtil.find(variants, v -> v.getLookupString().equals(variantName));
     assertNotNull(lookupElement);
-    LookupElementPresentation presentation = TestLookupElementPresentation.renderElement(lookupElement);
+    LookupElementPresentation presentation = LookupElementPresentation.renderElement(lookupElement);
+    //noinspection unchecked
     LookupElementRenderer<LookupElement> expensiveRenderer = (LookupElementRenderer<LookupElement>)lookupElement.getExpensiveRenderer();
     if (expensiveRenderer != null) {
       expensiveRenderer.renderElement(lookupElement, presentation);
