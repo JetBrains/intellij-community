@@ -87,25 +87,21 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
 
   override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "pycharmPC-$buildNumber"
 
-  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = object : WindowsDistributionCustomizer() {
-    init {
-      icoPath = communityHome.resolve("python/build/resources/PyCharmCore.ico")
-      icoPathForEAP = communityHome.resolve("python/build/resources/PyCharmCore_EAP.ico")
-      installerImagesPath = communityHome.resolve("python/build/resources")
-    }
+  override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer = windowsCustomizer(communityHome) {
+    icoPath = "python/build/resources/PyCharmCore.ico"
+    icoPathForEAP = "python/build/resources/PyCharmCore_EAP.ico"
+    installerImagesPath = "python/build/resources"
 
-    override val fileAssociations: List<String>
-      get() = listOf("py")
+    fileAssociations = listOf("py")
 
-    override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties) = "PyCharm Community Edition"
+    fullName { "PyCharm Community Edition" }
 
-    override suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
-      super.copyAdditionalFiles(targetDir, arch, context)
+    copyAdditionalFiles { targetDir, arch, context ->
       PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-win*.zip")
     }
 
-    override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String {
-      return "https://www.jetbrains.com/pycharm/uninstall/?version=${appInfo.productCode}-${appInfo.majorVersion}.${appInfo.minorVersion}"
+    uninstallFeedbackUrl { appInfo ->
+      "https://www.jetbrains.com/pycharm/uninstall/?version=${appInfo.productCode}-${appInfo.majorVersion}.${appInfo.minorVersion}"
     }
   }
 
