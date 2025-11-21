@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -40,7 +40,7 @@ abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
     event.presentation.isVisible = forward == null
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
@@ -69,7 +69,7 @@ internal abstract class BaseRecentFilesAction(private val onlyEditedFiles: Boole
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -91,7 +91,7 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
+    return ActionUpdateThread.EDT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
