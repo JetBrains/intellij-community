@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.externalSystem.service.execution
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.*
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
@@ -10,11 +11,15 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+import kotlin.io.path.Path
 
 /**
  * The initial naming of the method is wrong, the method has nothing to do with "non-blocking execution".
@@ -39,18 +44,42 @@ suspend fun SdkLookupProvider.resolveJdkInfo(project: Project?, projectSdk: Sdk?
   }
 }
 
-private suspend fun SdkLookupProvider.resolveJavaHomeJdkInfo(project: Project?): SdkInfo {
-  val eelDescriptor = project?.getEelDescriptor() ?: LocalEelDescriptor
-  val eel = eelDescriptor.toEelApi()
-  val environment = eel.exec.fetchLoginShellEnvVariables()
-  val jdkPathEnvValue = environment[JAVA_HOME]
-  if (jdkPathEnvValue == null) {
-    return SdkInfo.Undefined
+
+/**
+ * Get __local__ `JAVA_HOME` if it happens to point to [eelDescriptor].
+ * In most cases you do not need this function, but [getJavaHomeForEel].
+ *
+ * Use it only if you can't call suspend function.
+ */
+fun getLocalJavaHomeIfMatchesEel(eelDescriptor: EelDescriptor): Path? {
+  val javaFromHost = getJavaHome()?.let { Path(it) } ?: return null
+  return if (javaFromHost.getEelDescriptor() == eelDescriptor) {
+    javaFromHost
   }
-  val jdkPath = eel.fs.getPath(jdkPathEnvValue)
-    .asNioPath()
-    .toString()
-  return createJdkInfo(JAVA_HOME, jdkPath)
+  else {
+    null
+  }
+}
+
+/**
+ * Does its best to find `JAVA_HOME` for [eelDescriptor]: either fetches `PATH` or falls back to [getLocalJavaHomeIfMatchesEel]
+ */
+suspend fun getJavaHomeForEel(eelDescriptor: EelDescriptor): Path? {
+  val eel = eelDescriptor.toEelApi()
+  if (!ApplicationManager.getApplication().isWriteAccessAllowed) {
+    val environment = eel.exec.environmentVariables().eelIt().await()
+    val javaFromEel = environment[JAVA_HOME]?.let { eel.fs.getPath(it) }?.asNioPath()
+    if (javaFromEel != null) {
+      return javaFromEel
+    }
+  }
+  return getLocalJavaHomeIfMatchesEel(eelDescriptor)
+}
+
+private suspend fun resolveJavaHomeJdkInfo(project: Project?): SdkInfo {
+  val eelDescriptor = project?.getEelDescriptor() ?: LocalEelDescriptor
+  val jdkPath = getJavaHomeForEel(eelDescriptor) ?: return SdkInfo.Undefined
+  return createJdkInfo(JAVA_HOME, jdkPath.toString())
 }
 
 private fun getInternalJdk(): Sdk {
