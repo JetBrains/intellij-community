@@ -18,6 +18,7 @@ class JLabelUiComponent(data: ComponentData) : UiComponent(data) {
 open class TabLabelUi(data: ComponentData) : UiComponent(data) {
   protected val tabComponent get() = driver.cast(component, TabLabel::class)
   val closeButton = x { and(byType("com.intellij.ui.InplaceButton"), contains(byAccessibleName("Close"))) }
+  val unpinTabButton = x { byAccessibleName("Unpin Tab") }
   val text get() = tabComponent.info.text
   val fontSize get() = tabComponent.info.getFontSize()
   val isPinned get() = tabComponent.isPinned
