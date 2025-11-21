@@ -116,6 +116,9 @@ enum class PositionEncodingKind {
     UTF32
 }
 
+/**
+ * @see <a href="https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#range">Range (LSP spec)</a>
+ */
 @Serializable
 data class Range(
     /**
