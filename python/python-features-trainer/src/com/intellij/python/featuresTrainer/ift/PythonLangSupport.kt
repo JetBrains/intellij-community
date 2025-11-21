@@ -19,17 +19,17 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
-import com.jetbrains.python.inspections.interpreter.PyInterpreterInspection
+import com.jetbrains.python.inspections.interpreter.InterpreterSettingsQuickFix
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.findBaseSdks
+import com.jetbrains.python.sdk.impl.PySdkBundle
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
 import com.jetbrains.python.util.ShowingMessageErrorSync
@@ -175,7 +175,7 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ShowingMessa
       }
       val configureCallbackId = LearningUiManager.addCallback {
         val module = project.modules.singleOrNull()
-        PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
+        InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
       }
       if (useUserProjects || isLearningProject(project, primaryLanguage)) {
         showWarning(PythonLessonsBundle.message("no.interpreter.in.learning.project", configureCallbackId),

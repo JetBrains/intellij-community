@@ -9,26 +9,18 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
-import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.options.ConfigurableGroup
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
-import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.python.sdkConfigurator.common.detectSdkForModulesIn
 import com.intellij.util.PathUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.jetbrains.python.PyPsiBundle
@@ -230,47 +222,6 @@ class PyInterpreterInspection : PyInspection() {
 
       private fun getEnvRootName(envRoot: File?): String? {
         return if (envRoot == null) null else PathUtil.getFileName(envRoot.getPath())
-      }
-    }
-  }
-
-  class InterpreterSettingsQuickFix(private val myModule: Module?) : LocalQuickFix {
-    override fun getFamilyName(): String {
-      return if (PlatformUtils.isPyCharm())
-        PyPsiBundle.message("INSP.interpreter.interpreter.settings")
-      else
-        PyPsiBundle.message("INSP.interpreter.configure.python.interpreter")
-    }
-
-    override fun startInWriteAction(): Boolean {
-      return false
-    }
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      showPythonInterpreterSettings(project, myModule)
-    }
-
-    companion object {
-      fun showPythonInterpreterSettings(project: Project, module: Module?) {
-        val id = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-        val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true)
-        if (ConfigurableVisitor.findById(id, mutableListOf<ConfigurableGroup?>(group)) != null) {
-          ShowSettingsUtilImpl.Companion.showSettingsDialog(project, id, null)
-          return
-        }
-
-        val settingsService = ProjectSettingsService.getInstance(project)
-        if (module == null || justOneModuleInheritingSdk(project, module)) {
-          settingsService.openProjectSettings()
-        }
-        else {
-          settingsService.openModuleSettings(module)
-        }
-      }
-
-      private fun justOneModuleInheritingSdk(project: Project, module: Module): Boolean {
-        return ProjectRootManager.getInstance(project).getProjectSdk() == null &&
-               ModuleRootManager.getInstance(module).isSdkInherited() && ModuleManager.Companion.getInstance(project).modules.size < 2
       }
     }
   }
