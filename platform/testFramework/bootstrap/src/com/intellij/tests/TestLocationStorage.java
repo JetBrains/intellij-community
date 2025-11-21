@@ -25,8 +25,30 @@ public final class TestLocationStorage {
   /**
    * Path to the test location artifact file (NDJSON format)
    */
-  private static final Path TEST_LOCATION_ARTIFACT =
-    Paths.get(System.getProperty("intellij.test.location.artifact", "../../out/test-artifacts/test-locations.ndjson"));
+  private static final Path TEST_LOCATION_ARTIFACT = getDefaultArtifactPath();
+
+  private static Path getDefaultArtifactPath() {
+    String customPath = System.getProperty("intellij.test.location.artifact");
+    if (customPath != null) {
+      return Paths.get(customPath);
+    }
+
+    Path parent = Paths.get("").getParent();
+    if (parent != null) {
+      Path grandParent = parent.getParent();
+      if (grandParent != null) {
+        if (Files.exists(grandParent.resolve("out"))) {
+          return grandParent.resolve("out/test-artifacts/test-locations.ndjson");
+        }
+      }
+
+      // We're in community folder
+      if (Files.exists(parent.resolve("out"))) {
+        return parent.resolve("out/test-artifacts/test-locations.ndjson");
+      }
+    }
+    return Paths.get("out/test-artifacts/test-locations.ndjson");
+  }
 
   private TestLocationStorage() {
   }
