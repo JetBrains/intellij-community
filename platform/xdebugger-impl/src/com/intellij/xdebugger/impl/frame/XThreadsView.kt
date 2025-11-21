@@ -84,6 +84,7 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
         .debounce(200)
         .collectLatest {
           withContext(Dispatchers.EDT) {
+            DebuggerUIUtil.freezePaintingToReduceFlickering(treePanel.contentComponent)
             if (panel.isShowing) {
               tree.setRoot(XThreadsRootNode(tree, session), false)
             }
