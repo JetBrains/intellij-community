@@ -126,7 +126,7 @@ internal class BackendTerminalHyperlinkHighlighter(
     })
     coroutineScope.launch(CoroutineName("running filters")) {
       fakeMouseEventJob.await() // must complete before any attempt to show a context menu for a HyperlinkWithPopupMenuInfo
-      currentTaskState.mapNotNull { it.currentTaskRunner }.collect { runner ->
+      currentTaskState.mapNotNull { it.currentTaskRunner }.distinctUntilChanged().collect { runner ->
         runner.run()
       }
     }
