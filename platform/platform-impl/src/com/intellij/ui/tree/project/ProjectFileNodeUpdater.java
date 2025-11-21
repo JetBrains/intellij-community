@@ -132,8 +132,14 @@ public abstract class ProjectFileNodeUpdater {
 
   /**
    * Notifies that project roots are changed.
+   * <p>
    * The {@link #onInvokerThread} method will be executed with a small delay
    * after calling of this method.
+   * </p>
+   * <p>
+   *   This method is for plugin developers only. For internal use, call {@link #updateFromRoot(ProjectViewUpdateCause)}
+   *   and specify the update cause explicitly.
+   * </p>
    *
    * @see #getUpdatingDelay
    */
@@ -150,9 +156,15 @@ public abstract class ProjectFileNodeUpdater {
 
   /**
    * Notifies that the specified file (or folder) is changed.
+   * <p>
    * The {@link #onInvokerThread} method will be executed with a small delay
    * after last calling of this method,
    * i.e. a bunch of modified files will be reported together.
+   * </p>
+   * <p>
+   *   This method is for plugin developers only. For internal use, call {@link #updateFromFile(VirtualFile, ProjectViewUpdateCause)}
+   *   and specify the update cause explicitly.
+   * </p>
    *
    * @param file a modified virtual file
    * @see #getUpdatingDelay
@@ -174,8 +186,14 @@ public abstract class ProjectFileNodeUpdater {
 
   /**
    * Notifies that the specified PSI element is changed.
+   * <p>
    * If this element corresponds to a virtual file,
    * it will be marked as changed.
+   * </p>
+   * <p>
+   *   This method is for plugin developers only. For internal use, call {@link #updateFromElement(PsiElement, ProjectViewUpdateCause)}
+   *   and specify the update cause explicitly.
+   * </p>
    *
    * @param element a modified PSI element
    * @see #updateFromFile

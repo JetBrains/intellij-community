@@ -62,6 +62,13 @@ public abstract class ProjectView {
   @ApiStatus.Internal
   public abstract void refresh(@NotNull ProjectViewUpdateCause cause);
 
+  /**
+   * Refreshes the current pane asynchronously.
+   * <p>
+   *   Note: this method is for plugin developers only. For internal use,
+   *   call {@link #refresh(ProjectViewUpdateCause)} and specify the update cause explicitly.
+   * </p>
+   */
   public abstract void refresh();
 
   public abstract boolean isAutoscrollToSource(String paneId);
