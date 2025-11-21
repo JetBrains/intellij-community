@@ -116,8 +116,7 @@ private fun findInstalledPlugins(descriptors: Collection<IdeaPluginDescriptor>):
   if (result.size != descriptors.size) {
     return null
   }
-  // drop duplicates just in case
-  return result.toSet().toList()
+  return result.distinct() // drop duplicates just in case
 }
 
 private fun findInstalledPlugin(descriptor: IdeaPluginDescriptor): PluginMainDescriptor {
