@@ -46,6 +46,10 @@ class ShowUsagesPopupUi(data: ComponentData) : PopupUiComponent(data) {
       clickCell(row, 0)
     }
 
+    fun doubleClickRow(row: Int) {
+      doubleClickCell(row, 0)
+    }
+
     data class ShowUsagesItem(val file: String, val line: Int, val usageText: String)
   }
 }
