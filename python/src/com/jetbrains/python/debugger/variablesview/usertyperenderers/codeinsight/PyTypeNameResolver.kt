@@ -28,6 +28,19 @@ class PyTypeNameResolver(val project: Project) {
     private const val BUILTINS_MODULE_FOR_PYTHON3 = "builtins"
   }
 
+  fun isPythonBuiltinsModule(qualifiedName: String): Boolean {
+    if (qualifiedName.isBlank()) return true
+    val components = qualifiedName.split('.').filter { it.isNotEmpty() }
+    if (components.isEmpty()) return true
+
+    val moduleComponents = components.init()
+    // No module part (single name) → implicit builtins
+    if (moduleComponents.isEmpty()) return true
+
+    val head = moduleComponents.first()
+    return head == BUILTINS_MODULE_FOR_PYTHON2 || head == BUILTINS_MODULE_FOR_PYTHON3
+  }
+
   private fun getClass(file: PyFile, name: String): PyClass? {
     val moduleType = PyModuleType(file)
     val resolveContext = PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(file.project))
