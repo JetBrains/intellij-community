@@ -3,6 +3,7 @@ package com.intellij.application.options.editor.fonts
 
 import com.intellij.application.options.colors.AbstractFontOptionsPanel
 import com.intellij.application.options.colors.ColorAndFontSettingsListener
+import com.intellij.application.options.colors.FontGlyphHashCache
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.FontPreferences
@@ -37,6 +38,7 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
   private var variantsPlaceholder: Placeholder? = null
   private var currentFont: String? = null
   private val currentFeatures: MutableMap<String, JBCheckBox> = mutableMapOf()
+  private val fontGlyphCache: FontGlyphHashCache = FontGlyphHashCache()
 
   init {
     addListener(object : ColorAndFontSettingsListener.Abstract() {
@@ -249,6 +251,8 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     fireFontChanged()
   }
 
+  private val previewChars = ('!'..'~').joinToString()
+
   private fun Panel.addFeatureCheckbox(feature: String, label: @Nls String, selected: Boolean) {
     row {
       val featureCb = checkBox(label)
@@ -262,6 +266,9 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
         .component
 
       currentFeatures[feature] = featureCb
+
+      FontDiffPopup.diffForFeatures(fontGlyphCache, scheme, previewChars, feature)
+        .installOn(featureCb)
     }
   }
 
