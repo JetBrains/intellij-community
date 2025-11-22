@@ -5,6 +5,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -24,7 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -68,6 +68,10 @@ import org.jetbrains.jewel.ui.theme.popupContainerStyle
  *
  * This component provides a standard dropdown UI with a text label. When clicked, it displays a popup with customizable
  * content. Supports keyboard navigation, focus management, and various visual states.
+ *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
  *
  * @param labelText The text to display in the dropdown field
  * @param modifier Modifier to be applied to the combo box
@@ -127,6 +131,10 @@ public fun ComboBox(
  * This component provides a standard dropdown UI with a text label. When clicked, it displays a popup with customizable
  * content. Supports keyboard navigation, focus management, and various visual states.
  *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
+ *
  * @param labelText The text to display in the dropdown field
  * @param modifier Modifier to be applied to the combo box
  * @param popupModifier Modifier to be applied to the popup
@@ -185,6 +193,10 @@ public fun ComboBox(
  * with customizable content. Supports keyboard navigation, focus management, and various visual states.
  *
  * This version of ComboBox allows for complete customization of the label area through a composable function.
+ *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
  *
  * @param labelContent Composable content for the label area of the combo box
  * @param popupContent Composable content for the popup
@@ -287,7 +299,7 @@ internal fun ComboBoxImpl(
     var comboBoxWidth by remember { mutableStateOf(Dp.Unspecified) }
     val density = LocalDensity.current
 
-    Box(
+    Row(
         modifier =
             modifier
                 .focusRequester(comboBoxFocusRequester)
@@ -361,44 +373,41 @@ internal fun ComboBoxImpl(
                 .widthIn(min = style.metrics.minSize.width)
                 .height(style.metrics.minSize.height)
                 .onSizeChanged { comboBoxWidth = with(density) { it.width.toDp() } },
-        contentAlignment = Alignment.CenterStart,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         CompositionLocalProvider(LocalContentColor provides style.colors.contentFor(comboBoxState).value) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.focusable(false).focusProperties { canFocus = false },
+            Box(
+                modifier = Modifier.height(style.metrics.minSize.height).weight(1f, fill = false),
+                contentAlignment = Alignment.CenterStart,
             ) {
-                Box(
-                    modifier = Modifier.weight(1f).height(style.metrics.minSize.height),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    labelContent()
-                }
-                Chevron(style, enabled)
+                labelContent()
             }
-        }
 
-        if (popupVisible) {
-            val maxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
+            if (popupVisible) {
+                val maxHeight = maxPopupHeight.takeOrElse { style.metrics.maxPopupHeight }
 
-            PopupContainer(
-                onDismissRequest = {
-                    if (!chevronHovered) {
-                        popupManager.setPopupVisible(false)
-                    }
-                },
-                modifier =
-                    Modifier.testTag("Jewel.ComboBox.Popup")
-                        .heightIn(max = maxHeight)
-                        .widthIn(min = comboBoxWidth, max = maxPopupWidth.coerceAtLeast(comboBoxWidth))
-                        .then(popupModifier)
-                        .onClick { popupManager.setPopupVisible(false) },
-                horizontalAlignment = horizontalPopupAlignment,
-                popupProperties = PopupProperties(focusable = false),
-                style = popupStyle,
-                popupPositionProvider = popupPositionProvider,
-                content = popupContent,
-            )
+                PopupContainer(
+                    onDismissRequest = {
+                        if (!chevronHovered) {
+                            popupManager.setPopupVisible(false)
+                        }
+                    },
+                    modifier =
+                        Modifier.testTag("Jewel.ComboBox.Popup")
+                            .heightIn(max = maxHeight)
+                            .widthIn(min = comboBoxWidth, max = maxPopupWidth.coerceAtLeast(comboBoxWidth))
+                            .then(popupModifier)
+                            .onClick { popupManager.setPopupVisible(false) },
+                    horizontalAlignment = horizontalPopupAlignment,
+                    popupProperties = PopupProperties(focusable = false),
+                    style = popupStyle,
+                    popupPositionProvider = popupPositionProvider,
+                    content = popupContent,
+                )
+            }
+
+            Chevron(style, enabled, modifier = Modifier)
         }
     }
 }
@@ -410,6 +419,10 @@ internal fun ComboBoxImpl(
  * with customizable content. Supports keyboard navigation, focus management, and various visual states.
  *
  * This version of ComboBox allows for complete customization of the label area through a composable function.
+ *
+ * It is **strongly** recommended to provide a fixed width for the component, by using modifiers such as `width`,
+ * `weight`, `fillMaxWidth`, etc. If the component does not have a fixed width, it will size itself based on the label
+ * content. This means the width of the component will change based on the selected item's label.
  *
  * @param labelContent Composable content for the label area of the combo box
  * @param popupContent Composable content for the popup
@@ -479,10 +492,10 @@ internal fun ComboBoxLabelText(text: String, style: TextStyle, comboBoxStyle: Co
  * @param enabled Whether the combo box is enabled, affects the icon color
  */
 @Composable
-private fun Chevron(style: ComboBoxStyle, enabled: Boolean) {
+private fun Chevron(style: ComboBoxStyle, enabled: Boolean, modifier: Modifier = Modifier) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier.testTag("Jewel.ComboBox.ChevronContainer").size(style.metrics.arrowAreaSize),
+        modifier = Modifier.testTag("Jewel.ComboBox.ChevronContainer").size(style.metrics.arrowAreaSize).then(modifier),
     ) {
         val iconColor = if (enabled) Color.Unspecified else style.colors.borderDisabled
         Icon(key = style.icons.chevronDown, tint = iconColor, contentDescription = null)
