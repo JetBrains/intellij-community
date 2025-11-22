@@ -111,6 +111,13 @@ public open class ScrollSyncMarkdownBlockRenderer(
         }
     }
 
+    @Deprecated(
+        message =
+            "This class function is not scalable as it relies on a pre-resolved MimeType object. " +
+                "This prevents automatic support for languages not explicitly defined in the MimeType system" +
+                "(e.g., from TextMate bundles). Use RenderCodeWithLanguage instead.",
+        replaceWith = ReplaceWith("RenderCodeWithLanguage(block, styling, enabled)"),
+    )
     @Composable
     override fun RenderCodeWithMimeType(
         block: FencedCodeBlock,
@@ -127,7 +134,39 @@ public open class ScrollSyncMarkdownBlockRenderer(
 
         val content = block.content
         val highlightedCode by
-            LocalCodeHighlighter.current.highlight(content, block.mimeType).collectAsState(AnnotatedString(content))
+            LocalCodeHighlighter.current.highlight(content, mimeType).collectAsState(AnnotatedString(content))
+        val uniqueBlock = LocalLocatableBlock.current?.takeIf { it.originalBlock == block } ?: block
+        val actualBlock by rememberUpdatedState(uniqueBlock)
+        AutoScrollableBlock(actualBlock, synchronizer) {
+            Text(
+                text = highlightedCode,
+                style = styling.editorTextStyle,
+                modifier =
+                    Modifier.focusProperties { canFocus = false }
+                        .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
+                onTextLayout = { textLayoutResult -> synchronizer.acceptTextLayout(actualBlock, textLayoutResult) },
+            )
+        }
+    }
+
+    @Composable
+    override fun RenderCodeWithLanguage(
+        block: FencedCodeBlock,
+        styling: MarkdownStyling.Code.Fenced,
+        enabled: Boolean,
+    ) {
+        val synchronizer =
+            (JewelTheme.markdownMode as? EditorPreview)?.scrollingSynchronizer
+                ?: run {
+                    super.RenderCodeWithLanguage(block, styling, enabled)
+                    return
+                }
+
+        val content = block.content
+        val highlightedCode by
+            LocalCodeHighlighter.current
+                .highlight(content, block.language.orEmpty())
+                .collectAsState(AnnotatedString(content))
         val uniqueBlock = LocalLocatableBlock.current?.takeIf { it.originalBlock == block } ?: block
         val actualBlock by rememberUpdatedState(uniqueBlock)
         AutoScrollableBlock(actualBlock, synchronizer) {
