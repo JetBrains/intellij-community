@@ -1,11 +1,11 @@
 package com.intellij.python.processOutput.impl.ui
 
-import com.intellij.python.processOutput.impl.PythonProcessOutputIcons
+import com.intellij.python.processOutput.impl.icons.PythonProcessOutputImplIcons
 import org.jetbrains.jewel.ui.icon.PathIconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 internal object Icons {
-    @JvmField val CommandQueue = PythonProcessOutputIcons.CommandQueue
+    @JvmField val CommandQueue = PythonProcessOutputImplIcons.CommandQueue
 
     object Keys {
         val Process = PathIconKey("/icons/process.svg", Icons::class.java)
