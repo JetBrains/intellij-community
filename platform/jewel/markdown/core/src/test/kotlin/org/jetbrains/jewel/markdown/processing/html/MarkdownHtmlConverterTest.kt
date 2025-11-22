@@ -520,4 +520,28 @@ public class MarkdownHtmlConverterTest {
             MarkdownBlock.Paragraph(listOf(InlineMarkdown.Text("Tail"))),
         )
     }
+
+    @Test
+    public fun `wraps blocks with HtmlBlockWithAttributes -- p with attributes`() {
+        val parsed = processor.processMarkdownDocument("<p class=\"greeting\" align='center'>Hello</p>")
+
+        parsed.assertEquals(
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("class" to "greeting", "align" to "center"),
+                mdBlock = MarkdownBlock.Paragraph(listOf(InlineMarkdown.Text("Hello"))),
+            )
+        )
+    }
+
+    @Test
+    public fun `wraps blocks with HtmlBlockWithAttributes -- h3 with attributes`() {
+        val parsed = processor.processMarkdownDocument("<h3 id=\"title\" align='center'>Head</h3>")
+
+        parsed.assertEquals(
+            MarkdownBlock.HtmlBlockWithAttributes(
+                attributes = mapOf("id" to "title", "align" to "center"),
+                mdBlock = MarkdownBlock.Heading(inlineContent = listOf(InlineMarkdown.Text("Head")), level = 3),
+            )
+        )
+    }
 }

@@ -68,13 +68,22 @@ internal class MarkdownHtmlConverter {
             }
             is MarkdownHtmlNode.Element -> {
                 val converter = provideConverter(processor, htmlElement.tag) ?: return null
-                val block =
+                val convertedBlock =
                     converter.convert(
                         htmlElement,
                         { convertChildren(processor, transform) },
                         { convert(processor, htmlElementsToInlines(processor, it)) },
                     ) ?: return null
-                transform(block, htmlElement.lineRange)
+                val transformedBlock = transform(convertedBlock, htmlElement.lineRange)
+
+                return if (htmlElement.attributes.isEmpty()) {
+                    transformedBlock
+                } else {
+                    transform(
+                        MarkdownBlock.HtmlBlockWithAttributes(transformedBlock, htmlElement.attributes),
+                        htmlElement.lineRange,
+                    )
+                }
             }
         }
     }
