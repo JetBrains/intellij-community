@@ -12,6 +12,7 @@ open class PyTestRunLineMarkerTest : PyTestCase() {
   companion object {
     const val TESTS_DIR = "/pyTestLineMarker/"
     const val PYTHON_FILE = "pythonFile.py"
+    const val FIXTURE_FILE = "fixtureTest.py"
   }
 
   override fun getTestDataPath(): String = super.getTestDataPath() + TESTS_DIR
@@ -53,5 +54,24 @@ open class PyTestRunLineMarkerTest : PyTestCase() {
     if (element != null) {
       assertInfoFound(element, lineMarkerContributor)
     }
+  }
+
+  fun testFixtureWithTestPrefix() {
+    val lineMarkerContributor = PyTestLineMarkerContributor()
+
+    myFixture.configureByText(FIXTURE_FILE, """
+      import pytest
+
+      @pytest.fixture
+      def <caret>test_fixture():
+          return 42
+
+      def test_actual():
+          assert True
+    """.trimIndent())
+
+    val fixtureElement = myFixture.file.findElementAt(myFixture.caretOffset)
+    assertNotNull(fixtureElement)
+    assertInfoNotFound(fixtureElement!!, lineMarkerContributor)
   }
 }
