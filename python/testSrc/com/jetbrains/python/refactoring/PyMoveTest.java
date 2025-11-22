@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -276,6 +277,18 @@ public class PyMoveTest extends PyTestCase {
     try {
       PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = false;
       doMoveSymbolTest("bar", "b.py");
+    }
+    finally {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = defaultImportStyle;
+    }
+  }
+
+  @TestFor(issues="PY-84659")
+  public void testQualifiedUsageRespectsPreferFromImport() {
+    final boolean defaultImportStyle = PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    try {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = true;
+      doMoveSymbolTest("C", "lib/dst.py");
     }
     finally {
       PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = defaultImportStyle;

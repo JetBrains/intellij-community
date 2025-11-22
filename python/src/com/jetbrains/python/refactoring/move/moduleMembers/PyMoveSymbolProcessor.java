@@ -11,6 +11,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.PyDunderAllReference;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -214,9 +215,17 @@ public class PyMoveSymbolProcessor {
     final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
     if (srcFile != expression.getContainingFile()) {
       final QualifiedName qualifier = QualifiedNameFinder.findCanonicalImportPath(srcFile, expression);
-      PyPsiRefactoringUtil.insertImport(expression, srcFile, null, false);
-      final String newQualifiedReference = qualifier + "." + expression.getReferencedName();
-      expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
+      if (PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
+        PyPsiRefactoringUtil.insertImport(expression, srcFile, null, true);
+        final String moduleName = qualifier.getLastComponent();
+        final String newQualifiedReference = moduleName + "." + expression.getReferencedName();
+        expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
+      }
+      else {
+        PyPsiRefactoringUtil.insertImport(expression, srcFile, null, false);
+        final String newQualifiedReference = qualifier + "." + expression.getReferencedName();
+        expression.replace(generator.createExpressionFromText(languageLevel, newQualifiedReference));
+      }
     }
     else {
       expression.replace(generator.createExpressionFromText(languageLevel, expression.getReferencedName()));
