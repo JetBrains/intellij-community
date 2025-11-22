@@ -57,7 +57,14 @@ class Registry {
     private val EMPTY_VALUE_LISTENER: RegistryValueListener = object : RegistryValueListener {
     }
 
-    private val registry = Registry()
+    private val staticRegistry by lazy { Registry() }
+
+    @set:Internal
+    @get:Internal
+    var registrySupplier: (() -> Registry)? = null
+
+    private val registry
+      get() = registrySupplier?.invoke() ?: staticRegistry
 
     @JvmStatic
     fun get(key: @NonNls String): RegistryValue = getInstance().resolveValue(key)
