@@ -151,8 +151,8 @@ public final class GradleTestsExecutionConsoleManager
       consoleView.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
     }
 
-    Disposable disposable = Disposer.newDisposable(consoleView, "Gradle test runner build event listener disposable");
     BuildViewManager buildViewManager = project.getService(BuildViewManager.class);
+    Disposable disposable = Disposer.newDisposable(buildViewManager, "Gradle test runner build event listener disposable");
     project.getService(ExternalSystemRunConfigurationViewManager.class).addListener(new BuildProgressListener() {
       @Override
       public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
