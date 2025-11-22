@@ -1,4 +1,7 @@
-# Fast PR Guide
+# Jewel PR Guide
+
+First of all, read the [Jewel contribution](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/docs/jewel-contribution-guide.md)
+guide.
 
 To get your pull requests merged with any further complications in the community repository, it is advised to follow
 these steps:
@@ -19,6 +22,28 @@ these steps:
    to avoid or at least minimise changes in experimental APIs too (see `api-dump-experimental.txt` files)
 8. Check that there are no new issues reported by Metalava either, with `scripts/metalava-signatures.main.kts validate`;
    if any is found, update the baseline files accordingly with the `--update-baseline` parameter.
+9. If your PR has any user-visible changes, add release notes to the bottom of the PR description using this template:
+
+   ```
+   ## Release notes
+   
+   ### ⚠️ Important Changes
+    * 
+   
+   ### New features
+    * 
+   
+   ### Bug fixes
+    * 
+   
+   ### Deprecated API
+    *   
+   ```
+
+   Remove the sections you do not need. Use the [existing release notes](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/RELEASE%20NOTES.md)
+   as reference for style and tone.
+10. If the PR introduces visual changes, always include at a minimum an "after" screenshot or video. If relevant, please
+    add "before" ones too, and anything else that you think could be useful to evaluate the changes.
 
 If your change includes changes to the module structure and/or to dependencies, refer to the following sections as well
 for more guidance.
