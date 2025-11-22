@@ -57,6 +57,7 @@ jvm_library(
     "//platform/progress/shared:ide-progress",
     "//platform/util/diff",
     "//platform/runtime/product",
+    "//platform/util/coroutines",
   ],
   exports = [
     "//platform/util",
