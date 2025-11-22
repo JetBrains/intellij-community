@@ -358,7 +358,7 @@ private class ExtractReleaseNotesCommand : CliktCommand() {
                     .let { Json.parseToJsonElement(it).jsonObject }
 
             val prUrl = prInfo["url"]?.jsonPrimitive?.content!!
-            val prBody = prInfo["body"]?.jsonPrimitive?.content!!
+            val prBody = prInfo["body"]?.jsonPrimitive?.content!!.substringBefore("<!-- CURSOR_SUMMARY -->")
             val prTitle = prInfo["title"]?.jsonPrimitive?.content!!
             if (isVerbose) logs.add("ℹ️  PR body fetched:\n${prBody.prependIndent("      ")}\n")
 
