@@ -283,7 +283,7 @@ final class SearchForUsagesRunnable implements Runnable {
     List<Segment> segments = new ArrayList<>();
     Processor<Segment> processor = Processors.cancelableCollectProcessor(segments);
     usageInfo.processRangeMarkers(processor);
-    rangeBlinker.resetMarkers(segments);
+    rangeBlinker.resetMarkers(segments, false);
     rangeBlinker.startBlinking();
   }
 

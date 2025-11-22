@@ -29,6 +29,7 @@ class RangeBlinker(
   private var timeToLive: Int,
   parentDisposable: Disposable?,
 ) {
+  private val lifetime = timeToLive
   private val markers = ArrayList<Segment>()
   private var show = true
   private val addedHighlighters = ArrayList<RangeHighlighter>()
@@ -43,12 +44,13 @@ class RangeBlinker(
     }
   }
 
-  fun resetMarkers(markers: List<Segment>) {
+  fun resetMarkers(markers: List<Segment>, resetTime: Boolean = false) {
     removeHighlights()
     this.markers.clear()
     stopBlinking()
     this.markers.addAll(markers)
     show = true
+    if (resetTime) timeToLive = lifetime
   }
 
   private fun removeHighlights() {
