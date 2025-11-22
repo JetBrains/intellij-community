@@ -249,6 +249,18 @@ public class MarkdownHtmlConverterTest {
     }
 
     @Test
+    public fun `parses single image in a paragraph`() {
+        val parsed =
+            processor.processMarkdownDocument("<img alt=\"Jewel logo\" src=\"art/jewel-logo.svg\" width=\"20%\"/>")
+
+        parsed.assertEquals(
+            MarkdownBlock.Paragraph(
+                listOf(InlineMarkdown.Image(source = "art/jewel-logo.svg", alt = "Jewel logo", title = null))
+            )
+        )
+    }
+
+    @Test
     public fun `parses line breaks -- br`() {
         val parsed = processor.processMarkdownDocument("Look at <br/> this!")
 

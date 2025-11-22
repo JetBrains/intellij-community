@@ -24,7 +24,25 @@ internal val converters: Map<Tag, HtmlElementConverter> =
         "h6" to HeadingConverter(6),
         "code" to InlineCodeConverter,
         "pre" to MultilineCodeConverter,
+        "img" to ImageConverter,
     )
+
+private object ImageConverter : HtmlElementConverter {
+    override fun convert(
+        htmlElement: MarkdownHtmlNode.Element,
+        convertChildren: MarkdownHtmlNode.Element.() -> List<MarkdownBlock>,
+        convertInlines: (List<MarkdownHtmlNode>) -> List<InlineMarkdown>,
+    ): MarkdownBlock =
+        MarkdownBlock.Paragraph(
+            listOf(
+                InlineMarkdown.Image(
+                    source = htmlElement.attributes["src"].orEmpty(),
+                    alt = htmlElement.attributes["alt"].orEmpty(),
+                    title = htmlElement.attributes["title"],
+                )
+            )
+        )
+}
 
 private object ParagraphConverter : HtmlElementConverter {
     override fun convert(
