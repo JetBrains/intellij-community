@@ -1,30 +1,24 @@
 package org.jetbrains.jewel.ui.component
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.animateScrollBy
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.FocusInteraction
 import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -35,14 +29,16 @@ import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
-import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.util.fastRoundToInt
+import kotlinx.coroutines.delay
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
+import org.jetbrains.jewel.ui.component.styling.ScrollbarColors
+import org.jetbrains.jewel.ui.component.styling.ScrollbarStyle
 import org.jetbrains.jewel.ui.component.styling.TabStyle
 
 /**
@@ -94,51 +90,55 @@ public fun TabStrip(
         }
     }
 
-    Box(
-        modifier
-            .onPreviewKeyEvent { event ->
-                if (!enabled || tabs.isEmpty()) return@onPreviewKeyEvent false
+    HorizontallyScrollableContainer(
+        modifier =
+            modifier
+                .onPreviewKeyEvent { event ->
+                    if (!enabled || tabs.isEmpty()) return@onPreviewKeyEvent false
 
-                when (event.type) {
-                    KeyEventType.KeyDown ->
-                        when (event.key) {
-                            Key.DirectionLeft -> {
-                                tabs[if (selectedIndex > 0) (selectedIndex - 1) else tabs.lastIndex].onClick()
-                                true
+                    when (event.type) {
+                        KeyEventType.KeyDown ->
+                            when (event.key) {
+                                Key.DirectionLeft -> {
+                                    tabs[if (selectedIndex > 0) (selectedIndex - 1) else tabs.lastIndex].onClick()
+                                    true
+                                }
+
+                                Key.DirectionRight -> {
+                                    tabs[(selectedIndex + 1) % tabCount].onClick()
+                                    true
+                                }
+
+                                else -> false
                             }
 
-                            Key.DirectionRight -> {
-                                tabs[(selectedIndex + 1) % tabCount].onClick()
-                                true
+                        KeyEventType.KeyUp ->
+                            when (event.key) {
+                                Key.MoveHome -> {
+                                    tabs.first().onClick()
+                                    true
+                                }
+
+                                Key.MoveEnd -> {
+                                    tabs.last().onClick()
+                                    true
+                                }
+
+                                else -> false
                             }
 
-                            else -> false
-                        }
-
-                    KeyEventType.KeyUp ->
-                        when (event.key) {
-                            Key.MoveHome -> {
-                                tabs.first().onClick()
-                                true
-                            }
-
-                            Key.MoveEnd -> {
-                                tabs.last().onClick()
-                                true
-                            }
-
-                            else -> false
-                        }
-
-                    else -> false
+                        else -> false
+                    }
                 }
-            }
-            .focusable(enabled, interactionSource)
-            .hoverable(interactionSource, enabled)
+                .focusable(enabled, interactionSource)
+                .hoverable(interactionSource, enabled),
+        style = rememberTabStripScrollbarStyle(tabStripState, style),
+        scrollState = scrollState,
+        scrollbarPosition = ScrollbarPosition.Start,
     ) {
         Row(
             modifier =
-                Modifier.horizontalScroll(scrollState).selectableGroup().semantics {
+                Modifier.selectableGroup().semantics {
                     collectionInfo = CollectionInfo(rowCount = 1, columnCount = tabCount)
                 }
         ) {
@@ -181,15 +181,6 @@ public fun TabStrip(
                     return@LaunchedEffect
                 }
             }
-        }
-
-        AnimatedVisibility(
-            visible = tabStripState.isHovered,
-            enter = fadeIn(tween(durationMillis = 125, delayMillis = 0, easing = LinearEasing)),
-            exit = fadeOut(tween(durationMillis = 125, delayMillis = 700, easing = LinearEasing)),
-            modifier = Modifier.semantics { hideFromAccessibility() },
-        ) {
-            HorizontalScrollbar(scrollState, style = style.scrollbarStyle, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -380,3 +371,46 @@ public value class TabStripState(public val state: ULong) : FocusableComponentSt
             )
     }
 }
+
+@Composable
+private fun rememberTabStripScrollbarStyle(container: TabStripState, style: TabStyle): ScrollbarStyle {
+    var scrollbarColors by remember { mutableStateOf(ScrollbarColors.transparent()) }
+    val scrollbarStyle by remember {
+        derivedStateOf {
+            ScrollbarStyle(
+                colors = scrollbarColors,
+                metrics = style.scrollbarStyle.metrics,
+                trackClickBehavior = style.scrollbarStyle.trackClickBehavior,
+                scrollbarVisibility = style.scrollbarStyle.scrollbarVisibility,
+            )
+        }
+    }
+
+    LaunchedEffect(container.isHovered, style) {
+        scrollbarColors =
+            if (container.isHovered) {
+                style.scrollbarStyle.colors
+            } else {
+                delay(style.scrollbarStyle.scrollbarVisibility.lingerDuration)
+                ScrollbarColors.transparent()
+            }
+    }
+
+    return scrollbarStyle
+}
+
+private fun ScrollbarColors.Companion.transparent() =
+    ScrollbarColors(
+        thumbBackground = Color.Transparent,
+        thumbBackgroundActive = Color.Transparent,
+        thumbOpaqueBackground = Color.Transparent,
+        thumbOpaqueBackgroundHovered = Color.Transparent,
+        thumbBorder = Color.Transparent,
+        thumbBorderActive = Color.Transparent,
+        thumbOpaqueBorder = Color.Transparent,
+        thumbOpaqueBorderHovered = Color.Transparent,
+        trackBackground = Color.Transparent,
+        trackBackgroundExpanded = Color.Transparent,
+        trackOpaqueBackground = Color.Transparent,
+        trackOpaqueBackgroundHovered = Color.Transparent,
+    )

@@ -31,6 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -158,7 +159,11 @@ private fun BaseScrollbar(
     keepVisible: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
     val dragInteraction = remember { mutableStateOf<DragInteraction.Start?>(null) }
+    var showScrollbar by remember { mutableStateOf(false) }
+
     DisposableEffect(interactionSource) {
         onDispose {
             dragInteraction.value?.let { interaction ->
@@ -168,27 +173,21 @@ private fun BaseScrollbar(
         }
     }
 
-    val visibilityStyle = style.scrollbarVisibility
-    val isOpaque = visibilityStyle is AlwaysVisible
-    var isExpanded by remember { mutableStateOf(false) }
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    var showScrollbar by remember { mutableStateOf(false) }
+    val visibilityStyle by rememberUpdatedState(style.scrollbarVisibility)
+    val isOpaque by remember { derivedStateOf { visibilityStyle is AlwaysVisible } }
 
-    val isDragging = dragInteraction.value != null
-    val isScrolling = scrollState.isScrollInProgress || isDragging
-    val isActive = isOpaque || isScrolling || (keepVisible && showScrollbar)
+    val isDragging by remember { derivedStateOf { dragInteraction.value != null } }
+    val isExpanded by remember { derivedStateOf { showScrollbar && (isHovered || isDragging) } }
+    val isScrolling by remember { derivedStateOf { scrollState.isScrollInProgress || isDragging } }
+    val isActive by remember { derivedStateOf { isOpaque || isScrolling || (keepVisible && showScrollbar) } }
 
-    if (isHovered && showScrollbar) isExpanded = true
-
-    LaunchedEffect(isActive, isHovered, showScrollbar) {
-        val isVisibleAndHovered = showScrollbar && isHovered
-        if (isActive || isVisibleAndHovered) {
+    LaunchedEffect(isActive, isHovered, isDragging) {
+        if (isActive || isHovered) {
             showScrollbar = true
-        } else {
+        } else if (!isDragging) {
             launch {
                 delay(visibilityStyle.lingerDuration)
                 showScrollbar = false
-                isExpanded = false
             }
         }
     }
@@ -222,8 +221,14 @@ private fun BaseScrollbar(
         val thumbBackgroundColor = getThumbBackgroundColor(isOpaque, isHovered, isScrolling, style, showScrollbar)
         val thumbBorderColor = getThumbBorderColor(isOpaque, isHovered, isScrolling, style, showScrollbar)
         val hasVisibleBorder = !areTheSameColor(thumbBackgroundColor, thumbBorderColor)
-        val trackPadding =
-            if (hasVisibleBorder) visibilityStyle.trackPaddingWithBorder else visibilityStyle.trackPadding
+        val trackPadding by
+            rememberUpdatedState(
+                when {
+                    isExpanded -> visibilityStyle.trackPaddingExpanded
+                    hasVisibleBorder -> visibilityStyle.trackPaddingWithBorder
+                    else -> visibilityStyle.trackPadding
+                }
+            )
 
         val thumbThicknessPx =
             if (isVertical) {
@@ -433,9 +438,11 @@ private fun trackColorTween(visibility: ScrollbarVisibility) =
 private fun thumbColorTween(showScrollbar: Boolean, visibility: ScrollbarVisibility) =
     tween<Color>(
         durationMillis =
-            if (visibility is AlwaysVisible || !showScrollbar) {
-                visibility.thumbColorAnimationDuration.inWholeMilliseconds.toInt()
-            } else 0,
+            when {
+                visibility is AlwaysVisible || !showScrollbar ->
+                    visibility.thumbColorAnimationDuration.inWholeMilliseconds.toInt()
+                else -> 0
+            },
         delayMillis =
             when {
                 visibility is AlwaysVisible && !showScrollbar -> visibility.lingerDuration.inWholeMilliseconds.toInt()
@@ -588,8 +595,10 @@ private class TrackPressScroller(
 
         if (direction == 0) return
 
-        if (clickBehavior == NextPage) startScrollingByPage()
-        else if (clickBehavior == JumpToSpot) scrollToOffset(offset)
+        when (clickBehavior) {
+            NextPage -> startScrollingByPage()
+            JumpToSpot -> scrollToOffset(offset)
+        }
     }
 
     /** Invoked when the pointer moves while pressed during the gesture. */
