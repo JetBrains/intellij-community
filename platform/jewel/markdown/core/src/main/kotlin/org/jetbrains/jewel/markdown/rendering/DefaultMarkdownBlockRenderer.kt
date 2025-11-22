@@ -3,12 +3,15 @@ package org.jetbrains.jewel.markdown.rendering
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.InlineTextContent
@@ -18,6 +21,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,6 +33,7 @@ import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -75,7 +80,7 @@ private const val DISABLED_CODE_ALPHA = .5f
  *
  * @see MarkdownBlockRenderer
  */
-@Suppress("OVERRIDE_DEPRECATION")
+@Suppress("OVERRIDE_DEPRECATION", "LargeClass")
 @ApiStatus.Experimental
 @ExperimentalJewelApi
 public open class DefaultMarkdownBlockRenderer(
@@ -193,23 +198,30 @@ public open class DefaultMarkdownBlockRenderer(
         softWrap: Boolean,
         maxLines: Int,
     ) {
-        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
-        val textColor =
-            styling.inlinesStyling.textStyle.color
-                .takeOrElse { LocalContentColor.current }
-                .takeOrElse { styling.inlinesStyling.textStyle.color }
-        val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
+        val onlyImages = remember(block) { block.inlineContent.all { it is InlineMarkdown.Image } }
+        val images = renderedImages(block)
 
-        Text(
-            modifier = modifier,
-            text = renderedContent,
-            overflow = overflow,
-            softWrap = softWrap,
-            maxLines = maxLines,
-            onTextLayout = onTextLayout,
-            inlineContent = renderedImages(block),
-            style = mergedStyle,
-        )
+        if (onlyImages) {
+            RenderImages(images, modifier)
+        } else {
+            val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
+            val textColor =
+                styling.inlinesStyling.textStyle.color
+                    .takeOrElse { LocalContentColor.current }
+                    .takeOrElse { styling.inlinesStyling.textStyle.color }
+            val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
+
+            Text(
+                modifier = modifier,
+                text = renderedContent,
+                overflow = overflow,
+                softWrap = softWrap,
+                maxLines = maxLines,
+                onTextLayout = onTextLayout,
+                inlineContent = images,
+                style = mergedStyle,
+            )
+        }
     }
 
     @Composable
@@ -263,19 +275,29 @@ public open class DefaultMarkdownBlockRenderer(
         onUrlClick: (String) -> Unit,
         modifier: Modifier,
     ) {
-        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
+        val onlyImages = remember(block) { block.inlineContent.all { it is InlineMarkdown.Image } }
+        val images = renderedImages(block)
+
+        if (onlyImages && images.isEmpty()) return
+
         Column(modifier = modifier.padding(styling.padding)) {
-            val textColor =
-                styling.inlinesStyling.textStyle.color.takeOrElse {
-                    LocalContentColor.current.takeOrElse { styling.inlinesStyling.textStyle.color }
-                }
-            val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
-            Text(
-                text = renderedContent,
-                style = mergedStyle,
-                modifier = Modifier.focusProperties { this.canFocus = false },
-                inlineContent = this@DefaultMarkdownBlockRenderer.renderedImages(block),
-            )
+            if (onlyImages) {
+                RenderImages(images)
+            } else {
+                val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled, onUrlClick)
+
+                val textColor =
+                    styling.inlinesStyling.textStyle.color.takeOrElse {
+                        LocalContentColor.current.takeOrElse { styling.inlinesStyling.textStyle.color }
+                    }
+                val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
+                Text(
+                    text = renderedContent,
+                    style = mergedStyle,
+                    modifier = Modifier.focusProperties { this.canFocus = false },
+                    inlineContent = images,
+                )
+            }
 
             if (styling.underlineWidth > 0.dp && styling.underlineColor.isSpecified) {
                 Spacer(Modifier.height(styling.underlineGap))
@@ -685,15 +707,22 @@ public open class DefaultMarkdownBlockRenderer(
         }
 
     @Composable
-    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> =
-        rendererExtensions
-            .firstNotNullOfOrNull { it.imageRendererExtension }
-            ?.let { imagesRenderer ->
-                getImages(blockInlineContent).associate { image ->
-                    image.source to imagesRenderer.renderImageContent(image)
-                }
+    private fun renderedImages(blockInlineContent: WithInlineMarkdown): Map<String, InlineTextContent> {
+        val map = remember(blockInlineContent) { mutableStateMapOf<String, InlineTextContent>() }
+
+        val imagesRenderer = rendererExtensions.firstNotNullOfOrNull { it.imageRendererExtension }
+
+        for (image in getImages(blockInlineContent)) {
+            val renderedImage = imagesRenderer?.renderImageContent(image)
+            if (renderedImage == null) {
+                map.remove(image.source)
+            } else {
+                map[image.source] = renderedImage
             }
-            .orEmpty()
+        }
+
+        return map
+    }
 
     @Composable
     protected fun MaybeScrollingContainer(
@@ -707,6 +736,25 @@ public open class DefaultMarkdownBlockRenderer(
             HorizontallyScrollableContainer(modifier) { movableContent() }
         } else {
             movableContent()
+        }
+    }
+
+    @Composable
+    private fun RenderImages(images: Map<String, InlineTextContent>, modifier: Modifier = Modifier) {
+        if (images.isEmpty()) return
+
+        val density = LocalDensity.current
+        FlowRow(modifier) {
+            images.map { (text, inlineBlock) ->
+                Box(
+                    modifier =
+                        with(density) {
+                            Modifier.size(inlineBlock.placeholder.width.toDp(), inlineBlock.placeholder.height.toDp())
+                        }
+                ) {
+                    inlineBlock.children(text)
+                }
+            }
         }
     }
 
@@ -734,9 +782,11 @@ private fun getImages(input: WithInlineMarkdown): List<InlineMarkdown.Image> = b
                 is InlineMarkdown.Image -> {
                     if (item.source.isNotBlank()) add(item)
                 }
+
                 is WithInlineMarkdown -> {
                     collectImagesRecursively(item.inlineContent)
                 }
+
                 else -> {
                     // Ignored
                 }
