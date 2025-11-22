@@ -132,6 +132,9 @@
 - name: lib/modules/intellij.python.parser.jar
   contentModules:
   - name: intellij.python.parser
+- name: lib/modules/intellij.python.processOutput.impl.jar
+  contentModules:
+  - name: intellij.python.processOutput.impl
 - name: lib/modules/intellij.python.processOutput.jar
   contentModules:
   - name: intellij.python.processOutput
@@ -184,5 +187,4 @@
   modules:
   - name: intellij.python.community.plugin
   contentModules:
-  - name: intellij.python.processOutput.impl
   - name: intellij.commandInterface

@@ -12,7 +12,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.community.execService.impl.ExecLoggerService
@@ -24,10 +23,15 @@ import com.intellij.python.processOutput.impl.ui.toggle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.TraceContext
+import kotlin.collections.minus
+import kotlin.collections.plus
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -39,7 +43,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
@@ -48,8 +51,13 @@ import org.jetbrains.jewel.foundation.lazy.tree.TreeGeneratorScope
 import org.jetbrains.jewel.foundation.lazy.tree.TreeState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 
+@ApiStatus.Internal
+object CoroutineNames {
+    const val EXIT_INFO_COLLECTOR: String = "ProcessOutput.ExitInfoCollector"
+}
+
 internal object ProcessOutputControllerServiceLimits {
-    const val MAX_PROCESSES = 256
+    const val MAX_PROCESSES = 512
 }
 
 internal interface ProcessOutputController {
@@ -123,7 +131,7 @@ class ProcessOutputControllerService(
     private val project: Project,
     private val coroutineScope: CoroutineScope,
 ) : ProcessOutputController {
-    private val loggedProcesses: StateFlow<List<LoggedProcess>> = run {
+    internal val loggedProcesses: StateFlow<List<LoggedProcess>> = run {
         var processList = listOf<LoggedProcess>()
         ApplicationManager.getApplication().service<ExecLoggerService>()
             .processes
@@ -367,33 +375,43 @@ class ProcessOutputControllerService(
         }
     }
 
+    @OptIn(FlowPreview::class)
     private fun collectProcessTree() {
         val backgroundErrorProcesses = MutableStateFlow<Set<Int>>(setOf())
+        val backgroundObservingCoroutines = mutableListOf<Job>()
 
         coroutineScope.launch {
             loggedProcesses
+                .debounce(100.milliseconds)
                 .collect { list ->
+                    for (coroutine in backgroundObservingCoroutines) {
+                        coroutine.cancelAndJoin()
+                    }
+                    backgroundObservingCoroutines.clear()
+
                     backgroundErrorProcesses.value = setOf()
+
                     list
                         .filter { it.traceContext == NON_INTERACTIVE_ROOT_TRACE_CONTEXT }
                         .forEach { process ->
-                            launch {
-                                process.exitInfo.collect {
-                                    val exitValue = it?.exitValue
-                                    if (exitValue != null && exitValue != 0) {
-                                        backgroundErrorProcesses.value += process.id
-                                    } else {
-                                        backgroundErrorProcesses.value -= process.id
+                            backgroundObservingCoroutines +=
+                                launch(CoroutineName(CoroutineNames.EXIT_INFO_COLLECTOR)) {
+                                    process.exitInfo.collect {
+                                        val exitValue = it?.exitValue
+                                        if (exitValue != null && exitValue != 0) {
+                                            backgroundErrorProcesses.value += process.id
+                                        } else {
+                                            backgroundErrorProcesses.value -= process.id
+                                        }
                                     }
                                 }
-                            }
                         }
                 }
         }
 
         combine(
             backgroundErrorProcesses,
-            loggedProcesses,
+            loggedProcesses.debounce(100.milliseconds),
             snapshotFlow { processTreeUiState.searchState.text },
             snapshotFlow { processTreeUiState.filters.toSet() },
         )
@@ -436,10 +454,8 @@ class ProcessOutputControllerService(
                                     .firstOrNull { node ->
                                         node.traceContext == currentContext
                                     }
-                                    ?: run {
-                                        Node(traceContext = currentContext).also {
-                                            currentRoot += it
-                                        }
+                                    ?: Node(traceContext = currentContext).also {
+                                        currentRoot += it
                                     }
 
                             currentRoot = node.children
