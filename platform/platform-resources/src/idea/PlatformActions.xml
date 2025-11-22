@@ -1625,12 +1625,10 @@
     </group>
 
     <group id="Internal.HeapAnalysis" popup="true" internal="true">
-    <!-- Commented out in Android Studio. These are defined in androidstudio.xml
       <action id="UserInvokedFullAnalysis" class="com.intellij.diagnostic.hprof.action.InternalUserInvokedFullAnalysisAction"
               internal="true"/>
       <action id="SilentHeapDumpSnapshot" class="com.intellij.diagnostic.hprof.action.InternalNonuserInvokedHeapDumpSnapshotAction"
               internal="true"/>
-    -->
       <action id="AnalyzeHeapDumpSnapshot" class="com.intellij.diagnostic.hprof.action.AnalyzeReportAction" internal="true"/>
       <add-to-group group-id="Internal"/>
     </group>
