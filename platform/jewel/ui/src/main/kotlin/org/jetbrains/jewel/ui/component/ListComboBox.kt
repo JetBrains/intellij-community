@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.takeOrElse
 import androidx.compose.ui.window.PopupPositionProvider
 import kotlinx.coroutines.flow.filter
@@ -405,7 +407,7 @@ public fun EditableListComboBox(
         rememberSelectableLazyListState(selectedIndex.takeIfInBoundsOrZero(items.indices)),
 ) {
     val density = LocalDensity.current
-    var comboBoxWidth by remember { mutableStateOf(Dp.Unspecified) }
+    var comboBoxSize by remember { mutableStateOf(DpSize.Zero) }
 
     val textFieldState = rememberTextFieldState(items.getOrNull(selectedIndex).orEmpty())
     var hoveredItemIndex by remember { mutableIntStateOf(-1) }
@@ -442,10 +444,11 @@ public fun EditableListComboBox(
 
     EditableComboBox(
         textFieldState = textFieldState,
-        modifier = modifier.onSizeChanged { with(density) { comboBoxWidth = it.width.toDp() } },
+        modifier =
+            modifier.onSizeChanged { comboBoxSize = with(density) { DpSize(it.width.toDp(), it.height.toDp()) } },
         popupModifier = popupModifier,
         maxPopupHeight = popupMaxHeight,
-        maxPopupWidth = maxPopupWidth.takeOrElse { comboBoxWidth },
+        maxPopupWidth = maxPopupWidth.takeOrElse { comboBoxSize.width },
         enabled = enabled,
         outline = outline,
         interactionSource = interactionSource,
@@ -500,6 +503,7 @@ public fun EditableListComboBox(
                 previewSelectedItemIndex = hoveredItemIndex,
                 listState = listState,
                 contentPadding = contentPadding,
+                comboBoxSize = comboBoxSize,
                 onHoveredItemChange = {
                     if (it >= 0 && hoveredItemIndex != it) {
                         @Suppress("AssignedValueIsNeverRead")
@@ -658,7 +662,7 @@ internal fun <T : Any> ListComboBoxImpl(
     }
 
     val density = LocalDensity.current
-    var comboBoxWidth by remember { mutableStateOf(Dp.Unspecified) }
+    var comboBoxSize by remember { mutableStateOf(DpSize.Zero) }
 
     val currentSelectedIndex by rememberUpdatedState(selectedIndex)
     var hoveredItemIndex by remember { mutableIntStateOf(selectedIndex) }
@@ -773,7 +777,7 @@ internal fun <T : Any> ListComboBoxImpl(
     ComboBoxImpl(
         modifier =
             modifier
-                .onSizeChanged { comboBoxWidth = with(density) { it.width.toDp() } }
+                .onSizeChanged { comboBoxSize = with(density) { DpSize(it.width.toDp(), it.height.toDp()) } }
                 .onPreviewKeyEvent {
                     if (it.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                     return@onPreviewKeyEvent handlePopupKeyDown(it)
@@ -781,7 +785,7 @@ internal fun <T : Any> ListComboBoxImpl(
         popupModifier = popupModifier,
         enabled = enabled,
         maxPopupHeight = popupMaxHeight,
-        maxPopupWidth = maxPopupWidth.takeOrElse { comboBoxWidth },
+        maxPopupWidth = maxPopupWidth.takeOrElse { comboBoxSize.width },
         onArrowDownPress = down@{
                 if (popupManager.isPopupVisible.value) return@down
                 navigateDown()
@@ -805,6 +809,7 @@ internal fun <T : Any> ListComboBoxImpl(
                 currentlySelectedIndex = selectedIndex,
                 listState = listState,
                 contentPadding = contentPadding,
+                comboBoxSize = comboBoxSize,
                 onHoveredItemChange = {
                     if (it >= 0 && hoveredItemIndex != it) {
                         hoveredItemIndex = it
@@ -825,6 +830,7 @@ private fun <T : Any> PopupContent(
     previewSelectedItemIndex: Int,
     listState: SelectableLazyListState,
     contentPadding: PaddingValues,
+    comboBoxSize: DpSize,
     onHoveredItemChange: (Int) -> Unit,
     onSelectedItemChange: (Int) -> Unit,
     itemKeys: (Int, T) -> Any,
@@ -832,7 +838,18 @@ private fun <T : Any> PopupContent(
 ) {
     VerticallyScrollableContainer(scrollState = listState.lazyListState as ScrollableState) {
         SelectableLazyColumn(
-            modifier = Modifier.fillMaxWidth().padding(contentPadding).testTag("Jewel.ComboBox.List"),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .testTag("Jewel.ComboBox.List")
+                    .thenIf(items.isNotEmpty()) { padding(contentPadding) }
+                    .thenIf(items.isEmpty()) {
+                        heightIn(
+                            min =
+                                comboBoxSize.height +
+                                    contentPadding.calculateTopPadding() +
+                                    contentPadding.calculateBottomPadding()
+                        )
+                    },
             selectionMode = SelectionMode.Single,
             state = listState,
             onSelectedIndexesChange = { selectedItemsIndexes ->
