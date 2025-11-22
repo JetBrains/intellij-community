@@ -56,7 +56,7 @@ def build_unittest_args(
 
     if verbose:
         args.append("--verbose")
-    else:
+    elif sys.version_info >= (3, 0):
         args.append("--quiet")
 
     args += additional_args
