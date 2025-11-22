@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.elements.JTableUiComponent
 import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
+import com.intellij.driver.sdk.ui.components.elements.actionButton
 
 fun IdeaFrameUI.showUsagesPopupUi(block: ShowUsagesPopupUi.() -> Unit = {}) =
   x(ShowUsagesPopupUi::class.java) {
@@ -15,6 +16,7 @@ fun IdeaFrameUI.showUsagesPopupUi(block: ShowUsagesPopupUi.() -> Unit = {}) =
 
 class ShowUsagesPopupUi(data: ComponentData) : PopupUiComponent(data) {
   val usagesFoundLabel = x { contains(byAccessibleName("usages")) }
+  val previewButton = actionButton { byAccessibleName("Preview Source") }
   val showUsagesTable: ShowUsagesResultsTableUi = x(ShowUsagesResultsTableUi::class.java) { byClass("ShowUsagesTable") }
 
   class ShowUsagesResultsTableUi(data: ComponentData): JTableUiComponent(data) {
@@ -37,6 +39,10 @@ class ShowUsagesPopupUi(data: ComponentData) : PopupUiComponent(data) {
 
     fun clickItem(predicate: (ShowUsagesItem) -> Boolean) {
       val row = items.withIndex().singleOrNull { predicate(it.value) }?.index ?: error("The item is not found in the usages table")
+      clickCell(row, 0)
+    }
+
+    fun clickRow(row: Int) {
       clickCell(row, 0)
     }
 
