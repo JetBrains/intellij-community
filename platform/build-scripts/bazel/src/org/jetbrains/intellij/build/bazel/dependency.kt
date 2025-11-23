@@ -44,10 +44,7 @@ internal data class ModuleDeps(
   @JvmField val exports: List<BazelLabel>,
   @JvmField val associates: List<BazelLabel>,
   @JvmField val plugins: List<String>,
-) {
-  val depsModuleSet = deps.mapNotNull { it.module }.toSet()
-  val runtimeDepsModuleSet = runtimeDeps.mapNotNull { it.module }.toSet()
-}
+)
 
 internal fun generateDeps(
   m2Repo: Path,
