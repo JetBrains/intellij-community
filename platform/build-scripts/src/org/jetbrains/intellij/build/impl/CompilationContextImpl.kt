@@ -7,6 +7,7 @@ import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.util.BazelEnvironmentUtil.isBazelTestRun
 import com.jetbrains.JBR
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -107,7 +108,7 @@ class CompilationContextImpl private constructor(
   val global: JpsGlobal
     get() = model.global
 
-  private val moduleOutputProvider = JpsModuleOutputProvider(project.modules)
+  private val moduleOutputProvider = JpsModuleOutputProvider(project)
 
   override var classesOutputDirectory: Path
     get() = Path.of(JpsPathUtil.urlToPath(JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl))
@@ -306,6 +307,8 @@ class CompilationContextImpl private constructor(
   }
 
   override fun findRequiredModule(name: String): JpsModule = moduleOutputProvider.findRequiredModule(name)
+  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> =
+    moduleOutputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName)
 
   override fun findModule(name: String): JpsModule? = moduleOutputProvider.findModule(name)
 
@@ -378,7 +381,14 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
   }
 
   spanBuilder("load project").use(Dispatchers.IO) { span ->
-    val mavenRepositoryPath = getMavenRepositoryPath()
+    val mavenRepositoryPath = if (isRunningFromBazelOut()) {
+      // set this to a missing path, so the code won't access libraries download by maven
+      getMavenRepositoryPath() + "-do-not-use-maven-repository-with-bazel"
+    }
+    else {
+      getMavenRepositoryPath()
+    }
+
     span.addEvent(
       "Resolved local maven repository path",
       Attributes.of(AttributeKey.stringKey("m2 repository path"), mavenRepositoryPath),

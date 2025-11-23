@@ -22,6 +22,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.moveTo
 import kotlin.io.path.readText
+import kotlin.io.path.relativeTo
 import kotlin.io.path.writeText
 
 /**
@@ -117,7 +118,7 @@ internal class JpsModuleToBazel {
 
       if (ultimateRoot != null) {
         val targetsFile = ultimateRoot.resolve("build/bazel-targets.json")
-        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList, generator.mavenLibraries.values + generator.localLibraries.values)
+        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList, generator.mavenLibraries.values + generator.localLibraries.values, ultimateRoot)
       }
     }
 
@@ -166,7 +167,14 @@ internal class JpsModuleToBazel {
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, moduleList: ModuleList, libs: Collection<Library>) {
+    fun saveTargets(file: Path, targets: List<BazelBuildFileGenerator.ModuleTargets>, moduleList: ModuleList, libs: Collection<Library>, ultimateRoot: Path) {
+      @Serializable
+      data class LibraryDescription(
+        val target: String,
+        val jars: List<String>,
+        val sourceJars: List<String>,
+      )
+
       @Serializable
       data class TargetsFileModuleDescription(
         val productionTargets: List<String>,
@@ -174,32 +182,97 @@ internal class JpsModuleToBazel {
         val testTargets: List<String>,
         val testJars: List<String>,
         val exports: List<String>,
+        val moduleLibraries: Map<String, LibraryDescription>,
       )
 
       @Serializable
       data class TargetsFile(
         val modules: Map<String, TargetsFileModuleDescription>,
-        val projectLibraries: Map<String, String>
+        val projectLibraries: Map<String, LibraryDescription>,
       )
 
+      fun makeJarPath(library: Library, file: MavenFileDescription): String {
+        val path = "external/" +
+                   library.target.container.repoLabel.removePrefix("@") +
+                   "++_repo_rules+" +
+                   "${fileToHttpRuleFile(file.mavenCoordinates)}/" +
+                   "${file.mavenCoordinates.artifactId}-${file.mavenCoordinates.version}" +
+                   (if (file.mavenCoordinates.classifier != null) "-${file.mavenCoordinates.classifier}" else "") +
+                   ".jar"
+        // uncomment to assert, requires all libraries to be already downloaded (e.g. by ./bazel-build-all.cmd)
+        //val root = bazelOutputRoot
+        //check(root.resolve(path).isRegularFile()) {
+        //  "Cannot find ${root.resolve(path)} (library ${library.target.jpsName} library module=${library.target.moduleLibraryModuleName})"
+        //}
+        return path
+      }
+
+      fun makeLibraryDescription(library: Library): LibraryDescription {
+        val target = "${library.target.container.repoLabel}//:${library.target.targetName}"
+
+        return when (library) {
+          is MavenLibrary -> LibraryDescription(
+            target = target,
+            jars = library.jars.map { makeJarPath(library, it) },
+            sourceJars = library.sourceJars.map { makeJarPath(library, it) },
+          )
+
+          is LocalLibrary -> {
+            LibraryDescription(
+              target = target,
+              jars = library.files.map {
+                require(it.normalize().startsWith(ultimateRoot)) {
+                  "Library file ${it.relativeTo(ultimateRoot)} is not under ultimateRoot ($it)"
+                }
+
+                val relativeToUltimateRoot = it.relativeTo(ultimateRoot).invariantSeparatorsPathString
+
+                val relativeToBazelOutputRoot = when {
+                  relativeToUltimateRoot.startsWith("lib/") ->
+                    "external/ultimate_lib+/" + relativeToUltimateRoot.removePrefix("lib/")
+                  relativeToUltimateRoot.startsWith("community/") ->
+                    "external/community+/" + relativeToUltimateRoot.removePrefix("community/")
+                  else -> "execroot/_main/$relativeToUltimateRoot"
+                }
+
+                // uncomment to assert, requires all libraries to be already downloaded (e.g. by ./bazel-build-all.cmd)
+                //val root = bazelOutputRoot
+                //check(root.resolve(relativeToBazelOutputRoot).isRegularFile()) {
+                //  "Cannot find ${root.resolve(relativeToBazelOutputRoot)} (library ${library.target.jpsName} library module=${library.target.moduleLibraryModuleName})"
+                //}
+
+                relativeToBazelOutputRoot
+              },
+              sourceJars = emptyList(),
+            )
+          }
+        }
+      }
+
       val skippedModules = moduleList.skippedModules
-      val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList())
+      val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyMap())
+      val module2Libraries = libs
+        .filter { it.target.moduleLibraryModuleName != null }
+        .groupBy { it.target.moduleLibraryModuleName }
 
       val fileContent = jsonSerializer.encodeToString(
         serializer = jsonSerializer.serializersModule.serializer(),
         value = TargetsFile(
           modules = targets.associate { moduleTarget ->
-            moduleTarget.moduleDescriptor.module.name to TargetsFileModuleDescription(
+            val moduleName = moduleTarget.moduleDescriptor.module.name
+            moduleName to TargetsFileModuleDescription(
               productionTargets = moduleTarget.productionTargets,
               productionJars = moduleTarget.productionJars,
               testTargets = moduleTarget.testTargets,
               testJars = moduleTarget.testJars,
               exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
+              moduleLibraries = module2Libraries[moduleName]
+                ?.associate { it.target.jpsName to makeLibraryDescription(it) } ?: emptyMap(),
             )
           } + skippedModules.associateWith { emptyModule },
           projectLibraries = libs.asSequence().mapNotNull {
-            if (it.target.isModuleLibrary) return@mapNotNull null
-            return@mapNotNull it.target.jpsName to "${it.target.container.repoLabel}//:${it.target.targetName}"
+            if (it.target.moduleLibraryModuleName != null) return@mapNotNull null
+            return@mapNotNull it.target.jpsName to makeLibraryDescription(it)
           }.sortedBy { it.first }.toMap()
         )
       )

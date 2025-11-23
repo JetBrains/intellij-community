@@ -402,18 +402,22 @@ class ProductModulesContentSpecTest {
  */
 private class MockModuleOutputProvider : ModuleOutputProvider {
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
-    TODO("Not yet implemented")
+    throw UnsupportedOperationException("Not available in mock")
   }
 
   override fun findModule(name: String): JpsModule? {
-    TODO("Not yet implemented")
+    throw UnsupportedOperationException("Not available in mock")
   }
 
   override fun findRequiredModule(name: String): JpsModule {
-    TODO("Not yet implemented")
+    throw UnsupportedOperationException("Not available in mock")
+  }
+
+  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    throw UnsupportedOperationException("Not available in mock")
   }
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    TODO("Not yet implemented")
+    throw UnsupportedOperationException("Not available in mock")
   }
 }

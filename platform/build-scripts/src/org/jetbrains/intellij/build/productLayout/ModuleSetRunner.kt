@@ -7,7 +7,7 @@ import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.impl.BazelModuleOutputProvider
 import org.jetbrains.intellij.build.impl.JpsModuleOutputProvider
-import org.jetbrains.intellij.build.impl.isRunningFromBazelOut
+import org.jetbrains.intellij.build.impl.bazelOutputRoot
 import org.jetbrains.intellij.build.productLayout.analysis.JsonFilter
 import org.jetbrains.intellij.build.productLayout.analysis.ModuleSetMetadata
 import org.jetbrains.intellij.build.productLayout.analysis.ProductSpec
@@ -156,10 +156,15 @@ internal fun createModuleOutputProvider(projectRoot: Path): ModuleOutputProvider
     mapOf("MAVEN_REPOSITORY" to JpsMavenSettings.getMavenRepositoryPath()),
     false
   )
-  return if (isRunningFromBazelOut()) {
-    BazelModuleOutputProvider(project.modules, projectRoot)
+  val bazelOutputRoot = bazelOutputRoot
+  return if (bazelOutputRoot != null) {
+    BazelModuleOutputProvider(
+      modules = project.modules,
+      projectHome = projectRoot,
+      bazelOutputRoot = bazelOutputRoot,
+    )
   }
   else {
-    JpsModuleOutputProvider(project.modules)
+    JpsModuleOutputProvider(project)
   }
 }

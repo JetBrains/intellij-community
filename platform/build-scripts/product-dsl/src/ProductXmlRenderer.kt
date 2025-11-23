@@ -81,7 +81,8 @@ internal fun generateXIncludes(
     }
 
     val data = findFileInModuleSources(module, resourcePath)?.let { JDOMUtil.load(it) }
-               ?: findFileInModuleLibraryDependencies(module = module, relativePath = resourcePath)?.let { JDOMUtil.load(it) }
+               ?: findFileInModuleLibraryDependencies(module = module, relativePath = resourcePath, moduleOutputProvider = moduleOutputProvider)
+                 ?.let { JDOMUtil.load(it) }
                ?: error("Resource '$resourcePath' not found in module '${module.name}' sources or libraries (referenced in xi:include)")
 
     if (inlineXmlIncludes && !include.optional) {

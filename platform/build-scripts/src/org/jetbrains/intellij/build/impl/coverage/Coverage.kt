@@ -14,7 +14,6 @@ import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -66,11 +65,7 @@ internal class CoverageImpl(
     val libraryName = "jetbrains.intellij.deps.coverage.reporter"
     val libraryModule = "intellij.platform.buildScripts"
     val jarName = "intellij-coverage-agent"
-    val library = context.findRequiredModule(libraryModule)
-                    .libraryCollection
-                    .findLibrary(libraryName)
-                  ?: error("Can't find the '$libraryName' library in the '$libraryModule' module")
-    val jar = library.getPaths(JpsOrderRootType.COMPILED)
+    val jar = context.findLibraryRoots(libraryName, moduleLibraryModuleName = libraryModule)
                 .firstOrNull { it.name.startsWith(jarName) && it.extension == "jar" }
               ?: error("Can't find the '$jarName' jar in '$libraryName' library")
     check(jar.exists()) { "'$jar' doesn't exist" }

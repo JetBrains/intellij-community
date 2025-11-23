@@ -4,14 +4,18 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 
-internal class JpsModuleOutputProvider(modules: List<JpsModule>) : ModuleOutputProvider {
+internal class JpsModuleOutputProvider(private val project: JpsProject) : ModuleOutputProvider {
+  private val modules = project.modules
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
@@ -32,6 +36,28 @@ internal class JpsModuleOutputProvider(modules: List<JpsModule>) : ModuleOutputP
     return requireNotNull(findModule(name)) {
       "Cannot find required module '$name' in the project"
     }
+  }
+
+  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    val module = moduleLibraryModuleName?.let { findRequiredModule(it) }
+    val library = if (module != null) {
+      module.libraryCollection.findLibrary(libraryName) ?: error("Could not find module-level library $libraryName in module ${module.name}")
+    }
+    else {
+      project.libraryCollection.findLibrary(libraryName) ?: error("Could not find project-level library $libraryName")
+    }
+
+    val libraryMoniker = "library '$libraryName' " +
+                         if (moduleLibraryModuleName == null) "(project level)" else "(in module '$moduleLibraryModuleName'"
+
+    val paths = library.getPaths(JpsOrderRootType.COMPILED)
+    for (path in paths) {
+      check(path.isRegularFile()) {
+        "Library file '$path' does not exists, required for $libraryMoniker"
+      }
+    }
+
+    return paths
   }
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {

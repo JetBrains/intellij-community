@@ -527,18 +527,17 @@ object CommunityRepositoryModules {
           spec.withModuleLibrary(javacppLibraryName, "intellij.android.streaming", "${javacppLibraryName}-$javacppVersion.jar")
         }
         else {
+          val streamingModuleName = "intellij.android.streaming"
+
           spec.withGeneratedPlatformResources(supportedOs, supportedArch, supportedLibc) { targetDir, context ->
-            val streamingModule = context.projectModel.project.findModuleByName("intellij.android.streaming")!!
-            val ffmpegLibrary = streamingModule.libraryCollection.findLibrary(ffmpegLibraryName)!!
-            val javacppLibrary = streamingModule.libraryCollection.findLibrary(javacppLibraryName)!!
             val libDir = targetDir.resolve("lib")
 
-            copyFileToDir(ffmpegLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
-            copyFileToDir(javacppLibrary.getFiles(JpsOrderRootType.COMPILED)[0].toPath(), libDir)
+            copyFileToDir(context.findLibraryRoots(ffmpegLibraryName, moduleLibraryModuleName = streamingModuleName).single(), libDir)
+            copyFileToDir(context.findLibraryRoots(javacppLibraryName, moduleLibraryModuleName = streamingModuleName).single(), libDir)
           }
 
-          spec.excludeModuleLibrary(ffmpegLibraryName, "intellij.android.streaming")
-          spec.excludeModuleLibrary(javacppLibraryName, "intellij.android.streaming")
+          spec.excludeModuleLibrary(ffmpegLibraryName, streamingModuleName)
+          spec.excludeModuleLibrary(javacppLibraryName, streamingModuleName)
         }
       }
 

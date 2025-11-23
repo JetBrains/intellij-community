@@ -9,12 +9,13 @@ import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 
-internal class BazelModuleOutputProvider(modules: List<JpsModule>, projectHome: Path) : ModuleOutputProvider {
+internal class BazelModuleOutputProvider(modules: List<JpsModule>, val projectHome: Path, val bazelOutputRoot: Path) : ModuleOutputProvider {
   private val nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
 
-  private val modulesToOutputRoots: Map<String, BazelCompilationContext.BazelTargetsInfo.ModuleOutputRoots> by lazy {
-    BazelCompilationContext.BazelTargetsInfo.loadModulesOutputRootsFromBazelTargetsJson(projectHome)
+  private val bazelTargetsMap: BazelCompilationContext.BazelTargetsInfo.TargetsFile by lazy {
+    BazelCompilationContext.BazelTargetsInfo.loadBazelTargetsJson(projectHome)
   }
 
   override fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
@@ -45,8 +46,45 @@ internal class BazelModuleOutputProvider(modules: List<JpsModule>, projectHome: 
     }
   }
 
+  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    val librariesTable = if (moduleLibraryModuleName == null) {
+      bazelTargetsMap.projectLibraries
+    }
+    else {
+      val module = bazelTargetsMap.modules[moduleLibraryModuleName] ?: error("Cannot find module '$moduleLibraryModuleName' in the project")
+      module.moduleLibraries
+    }
+
+    val libraryMoniker = "library '$libraryName' " +
+                         if (moduleLibraryModuleName == null) "(project level)" else "(in module '$moduleLibraryModuleName'"
+    val library = librariesTable[libraryName] ?: error(
+      "Cannot find $libraryMoniker"
+    )
+
+    val paths = library.jars.map { bazelOutputRoot.resolve(it) }
+
+    check(paths.isNotEmpty()) {
+      "No files found for $libraryMoniker"
+    }
+
+    for (path in paths) {
+      check(path.isRegularFile()) {
+        "Library file '$path' does not exists, required for $libraryMoniker. Locally please run ./bazel-build-all.cmd"
+      }
+    }
+
+    return paths
+  }
+
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    val moduleOutputRoots = requireNotNull(modulesToOutputRoots.get(module.name)) { "No output roots for module '${module.name}'" }
-    return if (forTests) moduleOutputRoots.testJars else moduleOutputRoots.productionJars
+    val moduleDescription = bazelTargetsMap.modules[module.name] ?: error("Cannot find module '${module.name}' in the project")
+    val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
+    val jars = jarsRelative.map { projectHome.resolve(it) }
+    for (path in jars) {
+      check(path.isRegularFile()) {
+        "Module output '$path' does not exists, required for module ${module.name}. Locally please run ./bazel-build-all.cmd"
+      }
+    }
+    return jars
   }
 }

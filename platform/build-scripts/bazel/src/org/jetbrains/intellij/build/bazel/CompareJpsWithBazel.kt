@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.bazel
 
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -129,6 +130,7 @@ internal class CompareJpsWithBazel {
 
   private class BazelTargetsInfo {
     companion object {
+      @OptIn(ExperimentalSerializationApi::class)
       fun loadModulesOutputRootsFromBazelTargetsJson(projectRoot: Path): Map<String, ModuleOutputRoots> {
         val bazelTargetsJsonFile = projectRoot.resolve("build").resolve("bazel-targets.json")
         val targetsFile = bazelTargetsJsonFile.inputStream().use { Json.decodeFromStream<TargetsFile>(it) }

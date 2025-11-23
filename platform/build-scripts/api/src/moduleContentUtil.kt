@@ -8,10 +8,12 @@ import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsLibraryReference
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.model.module.JpsModuleReference
 import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -58,11 +60,21 @@ fun findFileInModuleSources(module: JpsModule, relativePath: String, onlyProduct
 
 fun isModuleNameLikeFilename(relativePath: String): Boolean = relativePath.startsWith("intellij.") || relativePath.startsWith("fleet.")
 
-fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath: String): ByteArray? {
+fun getLibraryReferenceRoots(libraryReference: JpsLibraryReference, moduleOutputProvider: ModuleOutputProvider): List<Path> {
+  val parentLibraryReference = libraryReference.parentReference
+  val moduleLibraryModuleName = if (parentLibraryReference is JpsModuleReference) parentLibraryReference.moduleName else null
+  val libraryRoots = moduleOutputProvider.findLibraryRoots(libraryReference.libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
+  return libraryRoots
+}
+
+fun getLibraryRoots(library: JpsLibrary, moduleOutputProvider: ModuleOutputProvider): List<Path> {
+  return getLibraryReferenceRoots(library.createReference(), moduleOutputProvider)
+}
+
+fun findFileInModuleLibraryDependencies(module: JpsModule, relativePath: String, moduleOutputProvider: ModuleOutputProvider): ByteArray? {
   for (dependency in module.dependenciesList.dependencies) {
     if (dependency is JpsLibraryDependency) {
-      val library = dependency.library ?: continue
-      for (jarPath in library.getPaths(JpsOrderRootType.COMPILED)) {
+      for (jarPath in getLibraryReferenceRoots(dependency.libraryReference, moduleOutputProvider)) {
         ImmutableZipFile.load(jarPath).use { zipFile ->
           zipFile.getData(relativePath)?.let { return it }
         }
@@ -83,7 +95,7 @@ fun findFileInModuleDependencies(
   processedModules: MutableSet<String>,
   recursiveModuleExclude: String? = null,
 ): ByteArray? {
-  findFileInModuleLibraryDependencies(module, relativePath)?.let {
+  findFileInModuleLibraryDependencies(module, relativePath, context)?.let {
     return it
   }
 

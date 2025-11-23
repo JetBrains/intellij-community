@@ -22,7 +22,7 @@ internal data class LibraryTarget(
   @JvmField val jpsName: String,
   @JvmField val targetName: String,
   @JvmField val container: LibraryContainer,
-  @JvmField val isModuleLibrary: Boolean,
+  @JvmField val moduleLibraryModuleName: String?,
 )
 
 internal sealed interface Library {
@@ -295,7 +295,7 @@ private fun mavenCoordinatesToHttpRuleRepoName(mavenCoordinates: MavenCoordinate
   return sanitizedName + "_http"
 }
 
-private fun fileToHttpRuleFile(coordinates: MavenCoordinates): String =
+internal fun fileToHttpRuleFile(coordinates: MavenCoordinates): String =
   mavenCoordinatesToHttpRuleRepoName(coordinates) + "//file"
 
 internal fun generateLocalLibs(libs: Collection<LocalLibrary>, isLibraryProvided: (Library) -> Boolean, fileToUpdater: MutableMap<Path, BazelFileUpdater>) {

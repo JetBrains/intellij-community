@@ -11,5 +11,7 @@ interface ModuleOutputProvider {
 
   fun findRequiredModule(name: String): JpsModule
 
+  fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String? = null): List<Path>
+
   fun getModuleOutputRoots(module: JpsModule, forTests: Boolean = false): List<Path>
 }

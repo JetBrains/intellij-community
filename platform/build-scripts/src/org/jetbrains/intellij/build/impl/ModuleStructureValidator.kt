@@ -6,6 +6,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.intellij.build.productLayout.buildProductContentXml
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.impl.JpsJavaDependencyExtensionRole
@@ -57,9 +58,8 @@ class ModuleStructureValidator(
     @Suppress("NAME_SHADOWING")
     return libraryFiles.computeIfAbsent(library) { library ->
       val result = HashSet<String>()
-      for (libraryRootUrl in library.getRootUrls(JpsOrderRootType.COMPILED)) {
-        val path = Path.of(JpsPathUtil.urlToPath(libraryRootUrl))
-        FileSystems.newFileSystem(path).use {
+      for (libraryRootPath in getLibraryRoots(library, context)) {
+        FileSystems.newFileSystem(libraryRootPath).use {
           it.rootDirectories.forEach { rootDirectory ->
             rootDirectory.walk().forEach { file ->
               result.add(file.invariantSeparatorsPathString.removePrefix("/"))

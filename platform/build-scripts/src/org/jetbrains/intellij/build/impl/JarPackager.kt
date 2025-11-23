@@ -27,6 +27,7 @@ import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.InMemoryContentSource
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.LazySource
+import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.NativeFileHandler
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.SignNativeFileMode
@@ -40,6 +41,7 @@ import org.jetbrains.intellij.build.computeHashForModuleOutput
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
 import org.jetbrains.intellij.build.defaultLibrarySourcesNamesFilter
 import org.jetbrains.intellij.build.findFileInModuleSources
+import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_BACKEND_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.PRODUCT_JAR
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
@@ -498,7 +500,7 @@ class JarPackager private constructor(
         packLibFilesIntoModuleJar(
           asset = asset.value,
           item = item,
-          files = library.getPaths(JpsOrderRootType.COMPILED),
+          files = getLibraryRoots(library, context),
           projectLibraryData = projectLibraryData,
           library = library,
         )
@@ -510,7 +512,7 @@ class JarPackager private constructor(
         }
 
         val targetFile = outDir.resolve(item.relativeOutputFile)
-        val files = getLibraryFiles(library, copiedFiles, targetFile)
+        val files = getLibraryFiles(library, context, copiedFiles, targetFile)
         if (layout is PluginLayout && item.relativeOutputFile == layout.getMainJarName()) {
           if (files.size > 1) {
             for (i in (files.size - 1) downTo 0) {
@@ -611,7 +613,7 @@ class JarPackager private constructor(
       }
 
       val asset = getJarAsset(targetFile, relativePath)
-      val files = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = targetFile)
+      val files = getLibraryFiles(library = library, context, copiedFiles = copiedFiles, targetFile = targetFile)
       filesToSourceWithMapping(asset = asset, files = files, library = library, relativeOutputFile = relativePath, projectLibraryData = null)
     }
   }
@@ -679,7 +681,7 @@ class JarPackager private constructor(
 
       val outPath = libraryData.outPath
       if (packMode == LibraryPackMode.MERGED && outPath == null) {
-        toMerge[library] = getLibraryFiles(library = library, copiedFiles = copiedFiles, targetFile = null)
+        toMerge[library] = getLibraryFiles(library = library, moduleOutputProvider = context, copiedFiles = copiedFiles, targetFile = null)
         continue
       }
 
@@ -688,7 +690,7 @@ class JarPackager private constructor(
         if (outPath.endsWith(".jar")) {
           val targetFile = outDir.resolve(outPath)
           val asset = getJarAsset(targetFile, outPath)
-          val files = getLibraryFiles(library, copiedFiles, targetFile)
+          val files = getLibraryFiles(library, moduleOutputProvider = context, copiedFiles, targetFile)
           filesToSourceWithMapping(asset, files, library, outPath, libraryData)
           continue
         }
@@ -704,10 +706,10 @@ class JarPackager private constructor(
       if (packMode == LibraryPackMode.STANDALONE_MERGED) {
         val targetFile = libOutputDir.resolve(nameToJarFileName(libName))
         val relativeOutputFile = if (outDir == libOutputDir) "" else outDir.relativize(targetFile).invariantSeparatorsPathString
-        addLibrary(targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = getLibraryFiles(library, copiedFiles, targetFile))
+        addLibrary(targetFile = targetFile, relativeOutputFile = relativeOutputFile, files = getLibraryFiles(library, moduleOutputProvider = context, copiedFiles, targetFile))
       }
       else {
-        for (file in library.getPaths(JpsOrderRootType.COMPILED)) {
+        for (file in getLibraryRoots(library, context)) {
           var fileName = file.fileName.toString()
           if (packMode == LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
             fileName = removeVersionFromJar(fileName)
@@ -806,8 +808,8 @@ private fun removeVersionFromJar(fileName: String): String {
   return if (matcher.matches()) "${matcher.group(1)}.jar" else fileName
 }
 
-private fun getLibraryFiles(library: JpsLibrary, copiedFiles: MutableMap<CopiedForKey, CopiedFor>, targetFile: Path?): MutableList<Path> {
-  val files = library.getPaths(JpsOrderRootType.COMPILED)
+private fun getLibraryFiles(library: JpsLibrary, moduleOutputProvider: ModuleOutputProvider, copiedFiles: MutableMap<CopiedForKey, CopiedFor>, targetFile: Path?): MutableList<Path> {
+  val files = getLibraryRoots(library, moduleOutputProvider).toMutableList()
   val iterator = files.iterator()
   while (iterator.hasNext()) {
     val file = iterator.next()
@@ -855,7 +857,11 @@ internal val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().
 }
 
 fun moduleOutputAsSource(context: CompilationContext, module: JpsModule, excludes: List<PathMatcher> = commonModuleExcludes): Source {
-  val moduleOutput = context.getModuleOutputDir(module)
+  val outputs = context.getModuleOutputRoots(module)
+  if (outputs.size != 1) {
+    throw IllegalStateException("Supports only one module output for module '${module.name}', but got ${outputs.size}: $outputs")
+  }
+  val moduleOutput = outputs.single()
   check(Files.exists(moduleOutput)) {
     "${module.name} module output directory doesn't exist: $moduleOutput"
   }
