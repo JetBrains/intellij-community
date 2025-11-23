@@ -44,13 +44,13 @@ public class PsiToDocumentSynchronizer {
   private static final Logger LOG = Logger.getInstance(PsiToDocumentSynchronizer.class);
   private static final Key<Boolean> PSI_DOCUMENT_ATOMIC_ACTION = Key.create("PSI_DOCUMENT_ATOMIC_ACTION");
 
-  private final PsiDocumentManagerBase myPsiDocumentManager;
+  private final PsiDocumentManagerEx myPsiDocumentManager;
   private final MessageBus myBus;
   private final Map<Document, Pair<DocumentChangeTransaction, Integer>> myTransactionsMap = new ConcurrentHashMap<>();
 
   private volatile Document mySyncDocument;
 
-  PsiToDocumentSynchronizer(@NotNull PsiDocumentManagerBase psiDocumentManager, @NotNull MessageBus bus) {
+  PsiToDocumentSynchronizer(@NotNull PsiDocumentManagerEx psiDocumentManager, @NotNull MessageBus bus) {
     myPsiDocumentManager = psiDocumentManager;
     myBus = bus;
     myBus.connect(psiDocumentManager)

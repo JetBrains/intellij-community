@@ -77,9 +77,9 @@ a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - getLanguage():com.intellij.lang.Language
 - getReferences():com.intellij.psi.PsiReference[]
 a:com.intellij.psi.impl.PsiDocumentManagerBase
-- com.intellij.psi.PsiDocumentManager
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.editor.event.DocumentListener
+- com.intellij.psi.PsiDocumentManager
 - *:getPsiFile(com.intellij.openapi.editor.Document,com.intellij.codeInsight.multiverse.CodeInsightContext):com.intellij.psi.PsiFile
 *:com.intellij.psi.impl.PsiDocumentTransactionListenerBackgroundable
 - com.intellij.psi.impl.PsiDocumentTransactionListener

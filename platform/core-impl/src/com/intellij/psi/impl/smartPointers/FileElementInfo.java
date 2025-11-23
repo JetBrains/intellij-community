@@ -16,6 +16,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -81,7 +82,7 @@ final class FileElementInfo extends SmartPointerElementInfo {
   Segment getPsiRange(@NotNull SmartPointerManagerEx manager) {
     Document currentDoc = FileDocumentManager.getInstance().getCachedDocument(myVirtualFile);
     Document committedDoc = currentDoc == null ? null :
-                                  ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).getLastCommittedDocument(currentDoc);
+                                  ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject)).getLastCommittedDocument(currentDoc);
     return committedDoc == null ? getRange(manager) : new TextRange(0, committedDoc.getTextLength());
   }
 

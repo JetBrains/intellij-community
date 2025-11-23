@@ -178,7 +178,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   private void commitTransaction(@NotNull PsiFile containingFileByTree, @Nullable Document document) {
-    final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+    final PsiDocumentManagerEx manager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
 
     boolean isFromCommit = manager.isCommitInProgress();
@@ -255,7 +255,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
 
   @Contract("_,null -> null")
   private @Nullable Document startTransaction(@NotNull PomTransaction transaction, @Nullable PsiFile psiFile) {
-    final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+    final PsiDocumentManagerEx manager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();
 

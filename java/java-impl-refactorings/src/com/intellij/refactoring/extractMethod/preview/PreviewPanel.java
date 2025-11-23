@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
@@ -140,7 +141,7 @@ class PreviewPanel extends BorderLayoutPanel implements Disposable, UiDataProvid
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(() -> {
       if (myProject.isDisposed()) return;
-      PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
+      PsiDocumentManagerEx documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject);
       documentManager.cancelAndRunWhenAllCommitted("ExtractMethodPreview", this::updateImmediately);
     }, 300);
   }

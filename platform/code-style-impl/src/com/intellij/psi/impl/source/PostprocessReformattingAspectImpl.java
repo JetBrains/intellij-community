@@ -35,6 +35,7 @@ import com.intellij.pom.tree.events.impl.TreeChangeImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -443,7 +444,7 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
 
       for (PsiFile file : viewProvider.getAllFiles()) {
         if (file.getUserData(REPARSE_PENDING) != null || rootsToReparse.contains(file)) {
-          ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).reparseFileFromText((PsiFileImpl)file);
+          ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject)).reparseFileFromText((PsiFileImpl)file);
           file.putUserData(REPARSE_PENDING, null);
         }
       }

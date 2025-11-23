@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,5 +41,5 @@ public abstract class SmartPointerManagerEx extends SmartPointerManager {
   public abstract Project getProject();
 
   @NotNull
-  public abstract PsiDocumentManagerBase getPsiDocumentManager();
+  public abstract PsiDocumentManagerEx getPsiDocumentManager();
 }

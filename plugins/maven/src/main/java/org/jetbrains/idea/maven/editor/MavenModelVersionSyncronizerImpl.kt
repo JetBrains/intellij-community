@@ -22,6 +22,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.psi.impl.PsiDocumentManagerEx
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlFile
@@ -41,7 +42,7 @@ class MavenModelVersionSyncronizerImpl(
   }
 
   private var applying = false
-  private val pdm = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+  private val pdm = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
 
   fun listenForDocumentChanges() {
     Disposer.register(editor.disposable, this)

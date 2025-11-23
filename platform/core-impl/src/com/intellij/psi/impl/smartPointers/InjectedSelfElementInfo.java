@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +104,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private PsiFile getInjectedFileIn(@NotNull PsiElement hostContext,
                                     @NotNull PsiFile hostFile,
                                     @NotNull TextRange rangeInHostFile) {
-    PsiDocumentManagerBase docManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(getProject());
+    PsiDocumentManagerEx docManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(getProject());
     PsiFile[] result = {null};
     PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
       Document document = docManager.getDocument(injectedPsi);
@@ -178,7 +179,7 @@ class InjectedSelfElementInfo extends SmartPointerElementInfo {
       Project project = injectedFile.getProject();
       DocumentWindow documentWindow = ((VirtualFileWindow)virtualFile).getDocumentWindow();
       if (psi) {
-        documentWindow = (DocumentWindow) ((PsiDocumentManagerBase) PsiDocumentManager.getInstance(project)).getLastCommittedDocument(documentWindow);
+        documentWindow = (DocumentWindow) ((PsiDocumentManagerEx) PsiDocumentManager.getInstance(project)).getLastCommittedDocument(documentWindow);
       }
       int start = documentWindow.hostToInjected(hostRange.getStartOffset());
       int end = documentWindow.hostToInjected(hostRange.getEndOffset());

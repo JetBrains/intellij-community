@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import org.jetbrains.annotations.TestOnly;
 import org.junit.Assert;
 
@@ -35,7 +36,7 @@ public final class EditorListenerTracker {
         // listeners may hang on default project which comes and goes unpredictably, so just ignore them
         afterList.removeIf(listener -> {
           //noinspection CastConflictsWithInstanceof
-          if (listener instanceof PsiDocumentManager && ((PsiDocumentManagerBase)listener).isDefaultProject()) {
+          if (listener instanceof PsiDocumentManager && ((PsiDocumentManagerEx)listener).isDefaultProject()) {
             return true;
           }
 

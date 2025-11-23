@@ -14,6 +14,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -227,7 +228,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     if (hasRange()) {
       Document document = getDocumentToSynchronize();
       if (document != null) {
-        PsiDocumentManagerBase documentManager = manager.getPsiDocumentManager();
+        PsiDocumentManagerEx documentManager = manager.getPsiDocumentManager();
         List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
         if (!events.isEmpty()) {
           SmartPointerTracker tracker = manager.getTracker(getVirtualFile());
@@ -247,7 +248,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
 
   public static Segment calcActualRangeAfterDocumentEvents(@NotNull PsiFile containingFile, @NotNull Document document, @NotNull Segment segment, boolean isSegmentGreedy) {
     Project project = containingFile.getProject();
-    PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    PsiDocumentManagerEx documentManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
     List<DocumentEvent> events = documentManager.getEventsSinceCommit(document);
     if (!events.isEmpty()) {
       SmartPointerManagerEx pointerManager = (SmartPointerManagerEx)SmartPointerManager.getInstance(project);

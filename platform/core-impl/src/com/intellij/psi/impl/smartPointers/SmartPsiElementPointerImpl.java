@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.LanguageStubDescriptor;
@@ -201,7 +202,7 @@ public class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPo
 
     Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
     if (document != null &&
-        ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).getSynchronizer().isDocumentAffectedByTransactions(document)) {
+        ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(project)).getSynchronizer().isDocumentAffectedByTransactions(document)) {
       LOG.error("Smart pointers must not be created during PSI changes");
     }
 

@@ -51,7 +51,6 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -60,7 +59,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-public abstract class PsiDocumentManagerBase extends PsiDocumentManager implements DocumentListener, Disposable {
+public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implements DocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
 
@@ -141,6 +140,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return psiFile;
   }
 
+  @Override
+  @ApiStatus.Internal
+  public @NotNull Project getProject() {
+    return myProject;
+  }
+
+  @Override
+  @ApiStatus.Internal
   public void associatePsi(@NotNull Document document, @NotNull PsiFile file) {
     if (file.getProject() != myProject) {
       throw new IllegalArgumentException("Method associatePsi() called with file from the wrong project. Expected: "+myProject+" but got: "+file.getProject());
@@ -171,12 +178,14 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    * It's guaranteed to not perform any expensive ops like creating files/reparse/resurrecting PsiFile from temp comatose state.
    */
   @ApiStatus.Internal
+  @Override
   public final @Nullable PsiFile getRawCachedFile(@NotNull VirtualFile virtualFile, @NotNull CodeInsightContext context) {
     FileManagerEx manager = ((FileManagerEx)getFileManager());
     return manager.getRawCachedFile(virtualFile, context);
   }
 
   @ApiStatus.Internal
+  @Override
   public final @NotNull @Unmodifiable List<FileViewProvider> getCachedViewProviders(@NotNull Document document) {
     VirtualFile virtualFile = getVirtualFile(document);
     if (virtualFile == null) return Collections.emptyList();
@@ -339,6 +348,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    *               The action will be executed in EDT.
    * @return true if action has been run immediately, or false if action was scheduled for execution later.
    */
+  @Override
+  @ApiStatus.Internal
   public boolean cancelAndRunWhenAllCommitted(@NonNls @NotNull Object key, @NotNull Runnable action) {
     ThreadingAssertions.assertEventDispatchThread();
     if (myProject.isDisposed()) {
@@ -379,6 +390,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    * {@code addRunOnCommit(document, d->d.getText())}
    */
   @ApiStatus.Internal
+  @Override
   public void addRunOnCommit(@NotNull Document document, @NotNull Consumer<? super @NotNull Document> action) {
     List<Consumer<? super Document>> actions = documentCommitActions.computeIfAbsent(document, __ -> ContainerUtil.createConcurrentList());
     actions.add(ThreadContext.captureThreadContext(action));
@@ -423,6 +435,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @ApiStatus.Internal
+  @Override
   public boolean isEventSystemEnabled(@NotNull Document document) {
     return ReadAction.compute(() -> {
       List<FileViewProvider> viewProviders = getCachedViewProviders(document);
@@ -431,6 +444,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @ApiStatus.Internal
+  @Override
   public boolean finishCommit(@NotNull Document document,
                               @NotNull @Unmodifiable List<? extends BooleanRunnable> finishProcessors,
                               @NotNull @Unmodifiable List<? extends BooleanRunnable> reparseInjectedProcessors,
@@ -535,6 +549,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @ApiStatus.Internal
+  @Override
   public void forceReload(@Nullable VirtualFile virtualFile, @NotNull @Unmodifiable List<? extends FileViewProvider> viewProviders) {
     if (!viewProviders.isEmpty()) {
       DebugUtil.performPsiModification("psi.forceReload", () -> {
@@ -596,6 +611,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   // true if the PSI is being modified and events being sent
+  @Override
   public boolean isCommitInProgress() {
     return myIsCommitInProgress.get() != null || isFullReparseInProgress();
   }
@@ -893,6 +909,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return document == null ? null : getLastCommittedDocument(document);
   }
 
+  @Override
+  @ApiStatus.Internal
   public @NotNull DocumentEx getLastCommittedDocument(@NotNull Document document) {
     if (document instanceof FrozenDocument) return (DocumentEx)document;
 
@@ -929,6 +947,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  @ApiStatus.Internal
   public @NotNull @Unmodifiable List<DocumentEvent> getEventsSinceCommit(@NotNull Document document) {
     assert document instanceof DocumentImpl : document;
     UncommittedInfo info = getUncommittedInfo(document);
@@ -951,11 +971,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @ApiStatus.Internal
+  @Override
   public @NotNull Map<Document, Throwable> getUncommitedDocumentsWithTraces() {
     return Collections.unmodifiableMap(myUncommittedDocumentTraces);
   }
 
   @ApiStatus.Internal
+  @Override
   public boolean isInUncommittedSet(@NotNull Document document) {
     return myUncommittedDocuments.contains(getTopLevelDocument(document));
   }
@@ -1165,6 +1187,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @ApiStatus.Internal
+  @Override
   public void handleCommitWithoutPsi(@NotNull Document document) {
     UncommittedInfo prevInfo = clearUncommittedInfo(document);
     if (prevInfo == null) {
@@ -1287,6 +1310,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @TestOnly
   @ApiStatus.Internal
+  @Override
   public void clearUncommittedDocuments() {
     myUncommittedDocuments.clear();
     myUncommittedDocumentTraces.clear();
@@ -1294,6 +1318,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @TestOnly
+  @Override
+  @ApiStatus.Internal
   public void disableBackgroundCommit(@NotNull Disposable parentDisposable) {
     assert myPerformBackgroundCommit;
     myPerformBackgroundCommit = false;
@@ -1303,10 +1329,13 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   @Override
   public void dispose() {}
 
+  @Override
   public @NotNull PsiToDocumentSynchronizer getSynchronizer() {
     return mySynchronizer;
   }
 
+  @Override
+  @ApiStatus.Internal
   public void reparseFileFromText(@NotNull PsiFileImpl file) {
     if (isCommitInProgress()) {
       throw new IllegalStateException("Re-entrant commit is not allowed");
@@ -1336,22 +1365,25 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  @NotNull
   @ApiStatus.Internal
-  public @Unmodifiable List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
-                                                                             @NotNull PsiFile hostPsiFile,
-                                                                             @NotNull TextRange range,
-                                                                             @NotNull ProgressIndicator indicator,
-                                                                             @NotNull ASTNode oldRoot,
-                                                                             @NotNull ASTNode newRoot) {
+  @Override
+  public @NotNull @Unmodifiable List<BooleanRunnable> reparseChangedInjectedFragments(@NotNull Document hostDocument,
+                                                                                      @NotNull PsiFile hostPsiFile,
+                                                                                      @NotNull TextRange range,
+                                                                                      @NotNull ProgressIndicator indicator,
+                                                                                      @NotNull ASTNode oldRoot,
+                                                                                      @NotNull ASTNode newRoot) {
     return Collections.emptyList();
   }
 
   @TestOnly
+  @Override
+  @ApiStatus.Internal
   public boolean isDefaultProject() {
     return myProject.isDefault();
   }
 
+  @Override
   public @NonNls String someDocumentDebugInfo(@NotNull Document document) {
     @NotNull List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     return "cachedProvider: " + viewProviders +
@@ -1365,6 +1397,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
    * Try to find the project the {@code virtualFile} belongs to (from the directory structure the file located in) and make sure it's the same as {@link #myProject}
    */
   @ApiStatus.Internal
+  @Override
   public void assertFileIsFromCorrectProject(@NotNull VirtualFile virtualFile) {}
 
   @TestOnly

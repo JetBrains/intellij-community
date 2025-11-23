@@ -337,7 +337,7 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
       return;
     }
     if (document != null &&
-        ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myManager.getProject())).getSynchronizer().isInSynchronization(document)) {
+        ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myManager.getProject())).getSynchronizer().isInSynchronization(document)) {
       return;
     }
 

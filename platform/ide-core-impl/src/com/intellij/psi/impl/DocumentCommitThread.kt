@@ -83,7 +83,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
   override fun commitAsynchronously(
     project: Project,
-    documentManager: PsiDocumentManagerBase,
+    documentManager: PsiDocumentManagerEx,
     document: Document,
     reason: Any,
     modality: ModalityState,
@@ -94,7 +94,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     }
 
     @Suppress("SuspiciousPackagePrivateAccess")
-    require(documentManager.myProject === project) { "Wrong project: $project; expected: ${documentManager.myProject}" }
+    require(documentManager.project === project) { "Wrong project: $project; expected: ${documentManager.project}" }
 
     TransactionGuard.getInstance().assertWriteSafeContext(modality)
 
@@ -123,7 +123,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val publishedDocumentCommitRequests: ConcurrentMap<Document, Job> = CollectionFactory.createConcurrentWeakMap()
   }
 
-  private fun commitDocumentWithCoroutines(document: Document, task: CommitTask, documentManager: PsiDocumentManagerBase) {
+  private fun commitDocumentWithCoroutines(document: Document, task: CommitTask, documentManager: PsiDocumentManagerEx) {
     val service = task.myProject.service<PerProjectDocumentCommitRegistry>()
     val job = service.scope.launch(commitDispatcher, start = CoroutineStart.LAZY) {
       commitDispatcherSuspender.acquire()
@@ -157,7 +157,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     job.start()
   }
 
-  private fun ReadAndWriteScope.doCommitInReadAndWriteScope(task: CommitTask, documentManager: PsiDocumentManagerBase): ReadResult<Unit> {
+  private fun ReadAndWriteScope.doCommitInReadAndWriteScope(task: CommitTask, documentManager: PsiDocumentManagerEx): ReadResult<Unit> {
     if (isExpired(task, documentManager)) {
       return value(Unit)
     }
@@ -170,7 +170,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     }
   }
 
-  private fun isExpired(task: CommitTask, docManager: PsiDocumentManagerBase): Boolean {
+  private fun isExpired(task: CommitTask, docManager: PsiDocumentManagerEx): Boolean {
     return isDisposed || task.isExpired(docManager)
   }
 
@@ -181,7 +181,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
       "Must not call sync commit with unopened project: $project; Disposed: ${project.isDisposed()}; Open: ${project.isOpen()}"
     }
 
-    val documentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
+    val documentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx
     val task = CommitTask(project, document, "Sync commit", ModalityState.defaultModalityState())
 
     commitUnderProgress(task, synchronously = true, documentManager)()
@@ -189,7 +189,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
   @RequiresReadLock
   // returns finish commit Runnable (to be invoked later in EDT) or null on failure
-  private fun commitUnderProgress(task: CommitTask, synchronously: Boolean, documentManager: PsiDocumentManagerBase): () -> Unit {
+  private fun commitUnderProgress(task: CommitTask, synchronously: Boolean, documentManager: PsiDocumentManagerEx): () -> Unit {
     if (!synchronously) {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
     }
@@ -388,7 +388,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
         null
       }
     }
-    fun isExpired(documentManager: PsiDocumentManagerBase): Boolean {
+    fun isExpired(documentManager: PsiDocumentManagerEx): Boolean {
       val document = stillValidDocument()
       val expired = myProject.isDisposed() ||
                     document == null ||
@@ -408,7 +408,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     oldFileNode: FileASTNode,
     changedPsiRange: ProperTextRange,
     outReparseInjectedProcessors: MutableList<BooleanRunnable>,
-    documentManager: PsiDocumentManagerBase,
+    documentManager: PsiDocumentManagerEx,
   ): BooleanRunnable {
     if (!synchronously) {
       ApplicationManager.getApplication().assertIsNonDispatchThread()
@@ -471,7 +471,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
 
   private fun handleCommitWithoutPsi(
     task: CommitTask,
-    documentManager: PsiDocumentManagerBase,
+    documentManager: PsiDocumentManagerEx,
   ): BooleanRunnable {
     return BooleanRunnable {
       val document = task.myDocumentRef.get() ?: return@BooleanRunnable false

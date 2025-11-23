@@ -15,6 +15,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.CollectionFactory;
@@ -32,13 +33,13 @@ import static com.intellij.reference.SoftReference.dereference;
 public final class SmartPointerManagerImpl extends SmartPointerManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance(SmartPointerManagerImpl.class);
   private final Project myProject;
-  private final PsiDocumentManagerBase myPsiDocManager;
+  private final PsiDocumentManagerEx myPsiDocManager;
   private final Key<WeakReference<SmartPointerTracker>> LIGHT_TRACKER_KEY;
   private final ConcurrentMap<VirtualFile, SmartPointerTracker> myPhysicalTrackers = CollectionFactory.createConcurrentWeakValueMap();
 
   public SmartPointerManagerImpl(@NotNull Project project) {
     myProject = project;
-    myPsiDocManager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(project);
+    myPsiDocManager = (PsiDocumentManagerEx)PsiDocumentManager.getInstance(project);
     LIGHT_TRACKER_KEY = Key.create("SMART_POINTERS " + (project.isDefault() ? "default" : project.hashCode()));
   }
 
@@ -243,7 +244,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx impleme
   @ApiStatus.Internal
   @Override
   @NotNull
-  public PsiDocumentManagerBase getPsiDocumentManager() {
+  public PsiDocumentManagerEx getPsiDocumentManager() {
     return myPsiDocManager;
   }
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
@@ -177,6 +178,6 @@ public class GridUtilCore {
     if (oldFile instanceof LightVirtualFileBase lf) {
       lf.setValid(false);
     }
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(psiFile.getProject())).associatePsi(document, psiFile);
+    ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(psiFile.getProject())).associatePsi(document, psiFile);
   }
 }

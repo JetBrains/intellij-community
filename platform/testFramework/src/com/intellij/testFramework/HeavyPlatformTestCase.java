@@ -52,6 +52,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.common.TestApplicationKt;
@@ -245,7 +246,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     if (myProject != null) {
       CodeStyle.setTemporarySettings(myProject, CodeStyle.createTestSettings());
       InjectedLanguageManagerImpl.pushInjectors(myProject);
-      ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
+      ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(myProject)).clearUncommittedDocuments();
       IndexingTestUtil.waitUntilIndexesAreReady(myProject, getIndexingTimeout());
     }
 

@@ -52,7 +52,7 @@ import java.util.*;
 
 @ApiStatus.Internal
 public final class InjectionRegistrarImpl implements MultiHostRegistrar {
-  private final PsiDocumentManagerBase myDocumentManagerBase;
+  private final PsiDocumentManagerEx myDocumentManagerBase;
   private List<PsiFile> resultFiles;
   private List<Pair<ReferenceInjector, Place>> resultReferences;
   private Language myLanguage;
@@ -78,7 +78,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     FileViewProvider viewProvider = myHostPsiFile.getViewProvider();
     if (viewProvider instanceof InjectedFileViewProvider) throw new IllegalArgumentException(viewProvider +" must not be injected");
     myHostVirtualFile = viewProvider.getVirtualFile();
-    myDocumentManagerBase = (PsiDocumentManagerBase)docManager;
+    myDocumentManagerBase = (PsiDocumentManagerEx)docManager;
     myHostDocument = (DocumentEx)viewProvider.getDocument();
   }
 
@@ -245,7 +245,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
                                                     @NotNull PsiFile hostPsiFile,
                                                     @NotNull VirtualFile hostVirtualFile,
                                                     @NotNull DocumentEx hostDocument,
-                                                    @NotNull PsiDocumentManagerBase documentManager) {
+                                                    @NotNull PsiDocumentManagerEx documentManager) {
     boolean isAncestor = false;
     for (PlaceInfo info : placeInfos) {
       isAncestor |= PsiTreeUtil.isAncestor(contextElement, info.host, false);
@@ -294,7 +294,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
   }
 
   private static @NotNull PsiFile createOrMergeInjectedFile(@NotNull PsiFile hostPsiFile,
-                                                            @NotNull PsiDocumentManagerBase documentManager,
+                                                            @NotNull PsiDocumentManagerEx documentManager,
                                                             @NotNull Place place,
                                                             @NotNull DocumentWindowImpl documentWindow,
                                                             @NotNull PsiFile injectedPsiFile,
@@ -409,7 +409,8 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
                                                  @NotNull PsiFile hostPsiFile,
                                                  @NotNull VirtualFile hostVirtualFile,
                                                  @NotNull DocumentEx hostDocument,
-                                                 @NotNull List<PlaceInfo> placeInfos, @NotNull PsiDocumentManagerBase documentManager) {
+                                                 @NotNull List<PlaceInfo> placeInfos,
+                                                 @NotNull PsiDocumentManager documentManager) {
     return msg + ".\n" +
            "OK let's see. Host file: " + hostPsiFile + " in '" + hostVirtualFile.getPresentableUrl() + "' (" + hostPsiFile.getLanguage()+") " +
            (documentManager.isUncommited(hostDocument) ? " (uncommitted)" : "") + "\n" +
@@ -433,7 +434,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     return node;
   }
 
-  private static void assertEverythingIsAllright(@NotNull PsiDocumentManagerBase documentManager,
+  private static void assertEverythingIsAllright(@NotNull PsiDocumentManagerEx documentManager,
                                                  @NotNull DocumentWindowImpl documentWindow,
                                                  @NotNull PsiFile psiFile) {
     InjectedFileViewProvider injectedFileViewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
@@ -572,7 +573,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
                                  @NotNull ProgressIndicator indicator,
                                  @NotNull ASTNode oldRoot,
                                  @NotNull ASTNode newRoot,
-                                 @NotNull PsiDocumentManagerBase documentManager) {
+                                 @NotNull PsiDocumentManager documentManager) {
     Project project = hostPsiFile.getProject();
     String newText = oldDocumentWindow.getText();
     FileASTNode oldNode = oldInjectedPsi.getNode();
@@ -683,7 +684,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
                                                @NotNull CharSequence documentText,
                                                @NotNull List<PlaceInfo> placeInfos,
                                                @NotNull StringBuilder decodedChars,
-                                               @NotNull String fileName, @NotNull PsiDocumentManagerBase documentManager) {
+                                               @NotNull String fileName, @NotNull PsiDocumentManager documentManager) {
     VirtualFileWindowImpl virtualFile = new VirtualFileWindowImpl(fileName, hostVirtualFile, documentWindow, language, decodedChars);
     Language finalLanguage = forcedLanguage == null ? LanguageSubstitutors.getInstance().substituteLanguage(language, virtualFile, project) : forcedLanguage;
     InjectedFileViewProvider viewProvider = InjectedFileViewProvider.create(PsiManagerEx.getInstanceEx(project), virtualFile, documentWindow, finalLanguage);
