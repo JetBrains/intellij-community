@@ -9,6 +9,10 @@ fun Driver.disableAllBalloonNotifications() {
 
 fun Driver.closeAndDisableAllBalloonNotifications() {
   disableAllBalloonNotifications()
+  closeAllNotifications()
+}
+
+fun Driver.closeAllNotifications() {
   runCatching { invokeAction("CloseAllNotifications") }
 }
 
