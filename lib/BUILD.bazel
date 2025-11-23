@@ -46,47 +46,6 @@ kt_compiler_plugin(
   deps = ["@rules_jvm//:kotlin-compose-compiler-plugin_import"],
 )
 
-java_binary(
-  name = "manifest_updater",
-  srcs = ["ManifestUpdater.java"],
-  main_class = "org.jetbrains.intellij.build.ManifestUpdater",
-  visibility = ["//visibility:public"],
-)
-
-run_binary(
-  name = "kotlinx-collections-immutable-jvm-source",
-  tool = ":manifest_updater",
-  srcs = ["@kotlinx_collections_immutable_jvm_0_3_8_http//file"],
-  outs = ["kotlinx.collections.immutable.jvm.jar"],
-  args = [
-    "$(location @kotlinx_collections_immutable_jvm_0_3_8_http//file)",
-    "$(location :kotlinx.collections.immutable.jvm.jar)",
-  ],
-)
-
-run_binary(
-  name = "bifurcan-source",
-  tool = ":manifest_updater",
-  srcs = ["@bifurcan_0_2_0_alpha6_http//file"],
-  outs = ["bifurcan.jar"],
-  args = [
-    "$(location @bifurcan_0_2_0_alpha6_http//file)",
-    "$(location :bifurcan.jar)",
-  ],
-)
-
-kt_jvm_import(
-  name = "kotlinx-collections-immutable-jvm",
-  jar = "kotlinx.collections.immutable.jvm.jar",
-  visibility = ["//visibility:public"],
-)
-
-kt_jvm_import(
-  name = "bifurcan",
-  jar = "bifurcan.jar",
-  visibility = ["//visibility:public"]
-)
-
 ### auto-generated section `local-libs` start
 load("@rules_java//java:defs.bzl", "java_import", "java_library")
 
