@@ -10,6 +10,12 @@ kt_javac_options(
 )
 
 jvm_library(
+  name = "benchmarks",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "benchmarks_test_lib",
   module_name = "intellij.platform.benchmarks",
   visibility = ["//visibility:public"],

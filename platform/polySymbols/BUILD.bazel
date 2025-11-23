@@ -78,6 +78,12 @@ resourcegroup(
 )
 
 jvm_library(
+  name = "polySymbols-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "polySymbols-tests_test_lib",
   module_name = "intellij.platform.polySymbols.tests",
   visibility = ["//visibility:public"],

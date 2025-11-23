@@ -619,6 +619,12 @@ resourcegroup(
 )
 
 jvm_library(
+  name = "python-helpers-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "python-helpers-tests_test_lib",
   module_name = "intellij.python.helpers.tests",
   visibility = ["//visibility:public"],

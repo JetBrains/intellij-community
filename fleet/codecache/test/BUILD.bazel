@@ -15,6 +15,12 @@ create_kotlinc_options(
 )
 
 jvm_library(
+  name = "test",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True, exclude = ["**/module-info.java"])
+)
+
+jvm_library(
   name = "test_test_lib",
   module_name = "fleet.codecache.test",
   visibility = ["//visibility:public"],

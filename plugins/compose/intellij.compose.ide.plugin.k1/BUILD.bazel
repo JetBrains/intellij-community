@@ -46,6 +46,12 @@ jvm_library(
 
 ### auto-generated section `build intellij.compose.ide.plugin.k1.tests` start
 jvm_library(
+  name = "ide-plugin-k1-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "ide-plugin-k1-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java", "tests/**/*.form"], allow_empty = True),

@@ -2,6 +2,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
+  name = "junit-v6-rt-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "junit-v6-rt-tests_test_lib",
   module_name = "intellij.junit.v6.rt.tests",
   visibility = ["//visibility:public"],

@@ -66,6 +66,12 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.eel.tests` start
 jvm_library(
+  name = "eel-tests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "eel-tests_test_lib",
   module_name = "intellij.platform.eel.tests",
   visibility = ["//visibility:public"],

@@ -8,6 +8,12 @@ create_kotlinc_options(
 )
 
 jvm_library(
+  name = "lambda-sampleTests",
+  visibility = ["//visibility:public"],
+  srcs = glob([], allow_empty = True)
+)
+
+jvm_library(
   name = "lambda-sampleTests_test_lib",
   module_name = "intellij.lambda.sampleTests",
   visibility = ["//visibility:public"],
