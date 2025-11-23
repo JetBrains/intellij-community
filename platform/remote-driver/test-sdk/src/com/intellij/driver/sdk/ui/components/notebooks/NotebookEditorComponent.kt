@@ -11,6 +11,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.common.EditorComponentImpl
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
@@ -230,6 +231,7 @@ fun Driver.createNewNotebook(name: String = "New Notebook", type: NotebookType) 
     leftToolWindowToolbar.projectButton.open() // making sure the project view is open and in focus for correct scrolling
     projectView {
       projectViewTree.run {
+        waitFound(30.seconds)
         waitFor("wait for project tree to load", 30.seconds) {
           getAllTexts().isNotEmpty()
         }
