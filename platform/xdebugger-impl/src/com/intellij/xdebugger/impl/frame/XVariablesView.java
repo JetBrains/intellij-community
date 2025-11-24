@@ -106,7 +106,7 @@ public class XVariablesView extends XVariablesViewBase {
   public final @Nullable XDebugSessionImpl getSession() {
     XDebugSessionProxy proxy = getSessionProxy();
     if (proxy == null) return null;
-    if (!(proxy instanceof XDebugSessionProxy.Monolith monolith)) {
+    if (!(proxy instanceof MonolithSessionProxy monolith)) {
       Logger.getInstance(XVariablesView.class).error("This method can be used only with monolith session proxies, got: " +
                                                      proxy + " of type " + proxy.getClass() + " instead");
       return null;

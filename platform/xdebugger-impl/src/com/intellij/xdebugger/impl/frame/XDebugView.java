@@ -52,7 +52,7 @@ public abstract class XDebugView implements Disposable {
   @ApiStatus.OverrideOnly
   @ApiStatus.Internal
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
-    if (session instanceof XDebugSessionProxy.Monolith monolith) {
+    if (session instanceof MonolithSessionProxy monolith) {
       processSessionEvent(event, monolith.getSession());
     }
   }

@@ -13,7 +13,7 @@ internal class XDebugSessionProxyKeeper {
   private val proxyMap = mutableMapOf<XDebugSession, XDebugSessionProxy>()
 
   fun getOrCreateProxy(session: XDebugSession): XDebugSessionProxy {
-    return proxyMap.getOrPut(session) { XDebugSessionProxy.Monolith(session) }
+    return proxyMap.getOrPut(session) { MonolithSessionProxy(session) }
   }
 
   fun removeProxy(session: XDebugSession) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler;
+import com.intellij.xdebugger.impl.frame.MonolithSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -48,7 +49,7 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
 
   @ApiStatus.Internal
   protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
-    if (session instanceof XDebugSessionProxy.Monolith monolith) {
+    if (session instanceof MonolithSessionProxy monolith) {
       return isEnabled(monolith.getSession(), dataContext);
     }
     return false;
@@ -57,7 +58,7 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   @ApiStatus.Internal
   @ApiStatus.OverrideOnly
   protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
-    if (session instanceof XDebugSessionProxy.Monolith monolith) {
+    if (session instanceof MonolithSessionProxy monolith) {
       perform(monolith.getSession(), dataContext);
     }
     else {

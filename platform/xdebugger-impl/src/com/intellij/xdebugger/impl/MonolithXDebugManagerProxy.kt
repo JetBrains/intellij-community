@@ -14,6 +14,7 @@ import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy
 import com.intellij.xdebugger.impl.breakpoints.asProxy
+import com.intellij.xdebugger.impl.frame.MonolithSessionProxy
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.frame.asProxy
@@ -36,7 +37,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   }
 
   override suspend fun <T> withId(value: XValue, session: XDebugSessionProxy, block: suspend (XValueId) -> T): T {
-    val sessionImpl = (session as XDebugSessionProxy.Monolith).sessionImpl
+    val sessionImpl = (session as MonolithSessionProxy).sessionImpl
     return withTemporaryXValueId(value, sessionImpl, block)
   }
 
@@ -47,7 +48,7 @@ private class MonolithXDebugManagerProxy : XDebugManagerProxy {
   override fun getXExecutionStackId(stack: XExecutionStack): XExecutionStackId? = null
 
   override suspend fun <T> withId(stack: XExecutionStack, session: XDebugSessionProxy, block: suspend (XExecutionStackId) -> T): T {
-    val sessionImpl = (session as XDebugSessionProxy.Monolith).sessionImpl
+    val sessionImpl = (session as MonolithSessionProxy).sessionImpl
     return withCoroutineScopeForId(block) { scope ->
       val (_, id) = stack.getOrStoreGlobally(scope, sessionImpl)
       id
