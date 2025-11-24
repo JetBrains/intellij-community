@@ -26,7 +26,8 @@ import org.jetbrains.concurrency.Promises;
 
 /**
  * Command simulates pressing a keyboard key.
- * Only defined set of key is supported for now: "ENTER", "BACKSPACE", "TAB", "ESCAPE", "ARROW_DOWN" and "ARROW_UP"
+ * Only a defined set of keys is supported for now: "ENTER", "BACKSPACE", "TAB", "ESCAPE", "ARROW_UP", "ARROW_DOWN", "PAGE_UP", and
+ * "DELETE_LINE".
  * <p>
  * Syntax: %pressKey <KEY>
  * Example: %pressKey ENTER
@@ -87,8 +88,10 @@ public class IdeEditorKeyCommand extends KeyCodeTypeCommand {
     BACKSPACE(IdeActions.ACTION_EDITOR_BACKSPACE),
     TAB(IdeActions.ACTION_EDITOR_TAB),
     ESCAPE(IdeActions.ACTION_EDITOR_ESCAPE),
+    ARROW_UP(IdeActions.ACTION_EDITOR_MOVE_CARET_UP),
     ARROW_DOWN(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN),
-    ARROW_UP(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP);
+    PAGE_UP(IdeActions.ACTION_EDITOR_MOVE_CARET_PAGE_UP),
+    DELETE_LINE(IdeActions.ACTION_EDITOR_DELETE_LINE);
 
     private final String action;
 
