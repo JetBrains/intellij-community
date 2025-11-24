@@ -22,6 +22,7 @@ enum class IdeRunMode {
   //TestApplicationExtension::class,
   MonolithAndSplitModeContextProvider::class,
   MonolithAndSplitModeInvocationInterceptor::class,
+  MonolithAndSplitModeParameterizedTestSupport::class,
   RemoteDevRun::class
 )
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
