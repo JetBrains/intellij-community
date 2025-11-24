@@ -523,6 +523,7 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OSValue?): ServiceE
       PluginXmlConst.SERVICE_EP_PRELOAD_ATTR -> {
         when (reader.getAttributeValue(i)) {
           PluginXmlConst.SERVICE_EP_PRELOAD_TRUE_VALUE -> preload = PreloadModeValue.TRUE
+          PluginXmlConst.SERVICE_EP_PRELOAD_FALSE_VALUE -> preload = PreloadModeValue.FALSE
           PluginXmlConst.SERVICE_EP_PRELOAD_AWAIT_VALUE -> preload = PreloadModeValue.AWAIT
           PluginXmlConst.SERVICE_EP_PRELOAD_NOT_HEADLESS_VALUE -> preload = PreloadModeValue.NOT_HEADLESS
           PluginXmlConst.SERVICE_EP_PRELOAD_NOT_LIGHT_EDIT_VALUE -> preload = PreloadModeValue.NOT_LIGHT_EDIT
