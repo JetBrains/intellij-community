@@ -36,6 +36,7 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.KotlinConstructorUMethod
 import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
+import kotlin.math.PI
 
 interface UastApiFixtureTestBase {
 
@@ -2394,5 +2395,52 @@ interface UastApiFixtureTestBase {
         val literal = replaceWith!!.valueArguments.getOrNull(0)?.evaluate()
         TestCase.assertNotNull(literal)
         TestCase.assertEquals("bar()", literal)
+    }
+
+    fun checkMathPi(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt",
+            """
+                package test.pkg
+                import kotlin.math.PI
+                
+                annotation class Anno(val x : Double)
+                
+                @Anno(x = -PI)
+                class Foo
+
+                @Anno(x = 2 * PI)
+                class Bar
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        var count = 0
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitClass(node: UClass): Boolean {
+                    if (node.isAnnotationType)
+                        return super.visitClass(node)
+
+                    val anno = node.uAnnotations.single()
+                    val attr = anno.findAttributeValue("x")
+                    TestCase.assertNotNull(attr)
+                    val eval = attr!!.evaluate()
+                    if (node.name == "Foo") {
+                        TestCase.assertEquals(-PI, eval)
+                    } else {
+                        TestCase.assertEquals(2 * PI, eval)
+                    }
+                    return super.visitClass(node)
+                }
+
+                override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
+                    val eval = node.evaluate()
+                    TestCase.assertEquals(PI, eval)
+                    count++
+                    return super.visitSimpleNameReferenceExpression(node)
+                }
+            }
+        )
+        TestCase.assertEquals(2, count)
     }
 }
