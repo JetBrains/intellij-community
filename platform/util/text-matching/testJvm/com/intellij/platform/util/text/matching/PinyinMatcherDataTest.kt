@@ -1,12 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.text.matching
 
 import com.intellij.psi.codeStyle.PinyinMatcher
 import org.junit.jupiter.api.Disabled
-import kotlin.test.Test
 import java.net.URL
 import java.text.Normalizer
 import java.util.zip.ZipInputStream
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**

@@ -17,7 +17,7 @@ jvm_library(
 jvm_library(
   name = "text-matching_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form"], allow_empty = True),
+  srcs = glob(["test/**/*.kt", "test/**/*.java", "test/**/*.form", "testJvm/**/*.kt", "testJvm/**/*.java", "testJvm/**/*.form"], allow_empty = True),
   associates = [":text-matching"],
   deps = [
     "@lib//:jetbrains-annotations",

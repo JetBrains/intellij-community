@@ -1,12 +1,15 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.text.matching
 
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.util.text.NameUtilCore.isWordStart
+import com.intellij.util.text.NameUtilCore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+/**
+ * todo: move to platform test module together with com.intellij.psi.codeStyle.NameUtil
+ */
 class NameUtilTest {
   @Test
   fun testSplitIntoWords1() {
@@ -64,8 +67,8 @@ class NameUtilTest {
 
   @Test
   fun testIsWordStart() {
-    assertTrue(isWordStart("测试打补丁", 0))
-    assertTrue(isWordStart("测试打补丁", 2))
+    assertTrue(NameUtilCore.isWordStart("测试打补丁", 0))
+    assertTrue(NameUtilCore.isWordStart("测试打补丁", 2))
   }
 
   private fun assertSplitEquals(expected: List<String>, name: String) {
