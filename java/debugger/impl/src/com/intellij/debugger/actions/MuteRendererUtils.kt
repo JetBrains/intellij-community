@@ -15,10 +15,6 @@ object MuteRendererUtils {
     return sessionData.getOrCreateUserData(MUTE_RENDERERS_FLOW) { MutableStateFlow(false) }
   }
 
-  fun getFlow(sessionData: XDebugSessionData): MutableStateFlow<Boolean> {
-    return sessionData.getUserData(MUTE_RENDERERS_FLOW)!!
-  }
-
   @JvmStatic
   fun isMuted(sessionData: XDebugSessionData): Boolean {
     return sessionData.getUserData(MUTE_RENDERERS_FLOW)?.value ?: false

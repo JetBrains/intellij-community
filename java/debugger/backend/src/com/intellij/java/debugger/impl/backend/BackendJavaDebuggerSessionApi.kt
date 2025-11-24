@@ -90,7 +90,7 @@ internal class BackendJavaDebuggerSessionApi : JavaDebuggerSessionApi {
 
   override suspend fun muteRenderers(sessionId: XDebugSessionId, state: Boolean) {
     val xSession = sessionId.findValue() ?: return
-    val renderersFlow = MuteRendererUtils.getFlow(xSession.sessionData)
+    val renderersFlow = MuteRendererUtils.getOrCreateFlow(xSession.sessionData)
     renderersFlow.value = state
     NodeRendererSettings.getInstance().fireRenderersChanged()
   }
