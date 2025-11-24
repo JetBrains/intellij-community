@@ -413,6 +413,7 @@ com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider
 - a:getAttributeDescriptors():com.intellij.openapi.options.colors.AttributesDescriptor[]
 - a:getColorDescriptors():com.intellij.openapi.options.colors.ColorDescriptor[]
 - a:getDisplayName():java.lang.String
+- getId():java.lang.String
 com.intellij.openapi.options.colors.ColorSettingsPage
 - com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

@@ -4,6 +4,7 @@ com.intellij.application.options.OptionsContainingConfigurable
 com.intellij.application.options.colors.ColorAndFontPanelFactory
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createPanel(com.intellij.application.options.colors.ColorAndFontOptions):com.intellij.application.options.colors.NewColorAndFontPanel
+- getConfigurableId():java.lang.String
 - getOriginalClass():java.lang.Class
 - a:getPanelDisplayName():java.lang.String
 com.intellij.application.options.colors.ColorAndFontSettingsListener

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
@@ -531,6 +531,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         }
 
         @Override
+        public @NotNull @NonNls String getConfigurableId() {
+          return page.getId();
+        }
+
+        @Override
         public DisplayPriority getPriority() {
           if (page instanceof DisplayPrioritySortable) {
             return ((DisplayPrioritySortable)page).getPriority();
@@ -581,6 +586,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     @Override
+    public @NotNull @NonNls String getConfigurableId() {
+      return "ColorSchemeFont";
+    }
+
+    @Override
     public DisplayPriority getPriority() {
       return DisplayPriority.FONT_SETTINGS;
     }
@@ -607,6 +617,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public @NotNull String getPanelDisplayName() {
       return ApplicationBundle.message("title.console.font");
     }
+
+     @Override
+     public @NotNull @NonNls String getConfigurableId() {
+       return "ConsoleFont";
+     }
 
      @Override
      public @NotNull DisplayPriority getPriority() {
@@ -1589,7 +1604,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public @NotNull String getId() {
-      return ColorAndFontOptions.this.getId() + "." + getDisplayName();
+      return ColorAndFontOptions.this.getId() + "." + myFactory.getConfigurableId();
     }
 
     @Override

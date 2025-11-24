@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.colors;
 
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,6 +37,11 @@ final class ScopeColorsPageFactory implements ColorAndFontPanelFactoryEx {
   @Override
   public @NotNull String getPanelDisplayName() {
     return ColorAndFontOptions.getScopesGroup();
+  }
+
+  @Override
+  public @NotNull @NonNls String getConfigurableId() {
+    return "ByScope";
   }
 
   private static JPanel createChooseScopePanel() {

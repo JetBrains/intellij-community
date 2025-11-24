@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.ui.search
@@ -164,11 +164,16 @@ private suspend fun saveResults(outDir: Path, roots: Map<OptionSetId, List<Confi
                        "-" + SEARCHABLE_OPTIONS_XML_NAME + ".json"
         val file = outDir.resolve(fileName)
         try {
+          val localizableIds = mutableListOf<String>()
           Files.newBufferedWriter(file).use { writer ->
             hash.putInt(value.size)
             for (entry in value) {
+              val id = getKeyByMessage(entry.id)
+              if (id != entry.id) {
+                localizableIds.add(entry.id)
+              }
               val modifiedEntry = entry.copy(
-                id = getKeyByMessage(entry.id),
+                id = id,
                 name = getKeyByMessage(entry.name),
                 entries = entry.entries.mapTo(mutableListOf()) { optionEntry ->
                   optionEntry.copy(
@@ -192,6 +197,9 @@ private suspend fun saveResults(outDir: Path, roots: Map<OptionSetId, List<Confi
               writer.write(encoded)
               writer.append('\n')
             }
+          }
+          if (localizableIds.isNotEmpty()) {
+            println("Searchable options index contains ${localizableIds.size} localizable configurable ids")
           }
         }
         catch (e: CancellationException) {
