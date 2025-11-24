@@ -195,7 +195,7 @@ internal class SearchEverywhereActionFeaturesProvider :
                                         isSe: Boolean): List<EventPair<*>> {
     return buildList {
       addAll(getUsageStatistics(usage, maxUsage, isSe))
-      addAll(getLastTimeUsadStatistics(time, lastUsedTime, isSe))
+      addAll(getLastTimeUsedStatistics(time, lastUsedTime, isSe))
     }
   }
 
@@ -213,7 +213,7 @@ internal class SearchEverywhereActionFeaturesProvider :
     }
   }
 
-  private fun getLastTimeUsadStatistics(time: Long, lastUsedTime: Long, isSe: Boolean): List<EventPair<*>> {
+  private fun getLastTimeUsedStatistics(time: Long, lastUsedTime: Long, isSe: Boolean): List<EventPair<*>> {
     if (lastUsedTime <= 0) return emptyList()
 
     val timeSinceLastUsage = time - lastUsedTime
