@@ -48,7 +48,7 @@ public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldTe
    * @param offset offset within the {@link #file()} before this command is applied
    * @return new offset after this command is applied
    */
-  int translateOffset(int offset, boolean leanRight) {
+  public int translateOffset(int offset, boolean leanRight) {
     for (Fragment range : updatedRanges) {
       offset = leanRight ? range.adjustForwardLeanRight(offset) : range.adjustForward(offset);
     }
