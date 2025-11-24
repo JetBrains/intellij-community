@@ -162,45 +162,148 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/innerClass")
-        public static class InnerClass extends AbstractHighLevelQuickFixMultiFileTest {
-            @java.lang.Override
-            @org.jetbrains.annotations.NotNull
-            public final KotlinPluginMode getPluginMode() {
-                return KotlinPluginMode.K2;
+        public abstract static class InnerClass extends AbstractHighLevelQuickFixMultiFileTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased")
+            public static class Typealiased extends AbstractHighLevelQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
+
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInCallableReference.test")
+                public void testInnerClassViaTypeAliasInCallableReference() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInCallableReference.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInCallableReference_implicitReceiver.test")
+                public void testInnerClassViaTypeAliasInCallableReference_implicitReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInCallableReference_implicitReceiver.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInCallableReference_wrongReceiver.test")
+                public void testInnerClassViaTypeAliasInCallableReference_wrongReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInCallableReference_wrongReceiver.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression.test")
+                public void testInnerClassViaTypeAliasInExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_implicitReceiver.test")
+                public void testInnerClassViaTypeAliasInExpression_implicitReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_implicitReceiver.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_implicitReceiver_noCall.test")
+                public void testInnerClassViaTypeAliasInExpression_implicitReceiver_noCall() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_implicitReceiver_noCall.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_implicitReceiver_wrongReceiver.test")
+                public void testInnerClassViaTypeAliasInExpression_implicitReceiver_wrongReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_implicitReceiver_wrongReceiver.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_incompatibleTypeParams.test")
+                public void testInnerClassViaTypeAliasInExpression_incompatibleTypeParams() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_incompatibleTypeParams.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_infixCall.test")
+                public void testInnerClassViaTypeAliasInExpression_infixCall() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_infixCall.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_nestedTypeAlias.test")
+                public void testInnerClassViaTypeAliasInExpression_nestedTypeAlias() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_nestedTypeAlias.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_noCall.test")
+                public void testInnerClassViaTypeAliasInExpression_noCall() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_noCall.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_safeCall.test")
+                public void testInnerClassViaTypeAliasInExpression_safeCall() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_safeCall.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_subClass.test")
+                public void testInnerClassViaTypeAliasInExpression_subClass() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_subClass.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_wrongExplicitReceiver_correctImplicitReceiver.test")
+                public void testInnerClassViaTypeAliasInExpression_wrongExplicitReceiver_correctImplicitReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_wrongExplicitReceiver_correctImplicitReceiver.test");
+                }
+
+                @TestMetadata("innerClassViaTypeAliasInExpression_wrongReceiver.test")
+                public void testInnerClassViaTypeAliasInExpression_wrongReceiver() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/innerClassViaTypeAliasInExpression_wrongReceiver.test");
+                }
+
+                @TestMetadata("nestedInterfaceViaTypeAliasInExpression.test")
+                public void testNestedInterfaceViaTypeAliasInExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/nestedInterfaceViaTypeAliasInExpression.test");
+                }
+
+                @TestMetadata("nestedObjectViaTypeAliasInExpression.test")
+                public void testNestedObjectViaTypeAliasInExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/typealiased/nestedObjectViaTypeAliasInExpression.test");
+                }
             }
 
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../../idea/tests/testData/quickfix/autoImports/innerClass")
+            public static class Uncategorized extends AbstractHighLevelQuickFixMultiFileTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K2;
+                }
 
-            @TestMetadata("innerClassInCallableReference.test")
-            public void testInnerClassInCallableReference() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInCallableReference.test");
-            }
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+                }
 
-            @TestMetadata("innerClassInCallableReference_fromJava.test")
-            public void testInnerClassInCallableReference_fromJava() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInCallableReference_fromJava.test");
-            }
+                @TestMetadata("innerClassInCallableReference.test")
+                public void testInnerClassInCallableReference() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInCallableReference.test");
+                }
 
-            @TestMetadata("innerClassInExpression.test")
-            public void testInnerClassInExpression() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInExpression.test");
-            }
+                @TestMetadata("innerClassInCallableReference_fromJava.test")
+                public void testInnerClassInCallableReference_fromJava() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInCallableReference_fromJava.test");
+                }
 
-            @TestMetadata("innerClassInExpression_fromJava.test")
-            public void testInnerClassInExpression_fromJava() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInExpression_fromJava.test");
-            }
+                @TestMetadata("innerClassInExpression.test")
+                public void testInnerClassInExpression() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInExpression.test");
+                }
 
-            @TestMetadata("innerClassInTypeReference.test")
-            public void testInnerClassInTypeReference() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInTypeReference.test");
-            }
+                @TestMetadata("innerClassInExpression_fromJava.test")
+                public void testInnerClassInExpression_fromJava() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInExpression_fromJava.test");
+                }
 
-            @TestMetadata("innerClassInTypeReference_fromJava.test")
-            public void testInnerClassInTypeReference_fromJava() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInTypeReference_fromJava.test");
+                @TestMetadata("innerClassInTypeReference.test")
+                public void testInnerClassInTypeReference() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInTypeReference.test");
+                }
+
+                @TestMetadata("innerClassInTypeReference_fromJava.test")
+                public void testInnerClassInTypeReference_fromJava() throws Exception {
+                    runTest("../../../idea/tests/testData/quickfix/autoImports/innerClass/innerClassInTypeReference_fromJava.test");
+                }
             }
         }
 

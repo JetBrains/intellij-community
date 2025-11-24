@@ -1,0 +1,34 @@
+// FILE: first.before.kt
+// "Import type alias 'InnerTypeAlias'" "true"
+// IGNORE_K1
+
+package test
+
+class Outer {
+    inner class Inner
+}
+
+fun Outer.usage() {
+    ::<caret>InnerTypeAlias
+}
+
+// FILE: second.kt
+package some
+
+typealias InnerTypeAlias = test.Outer.Inner
+
+// FILE: first.after.kt
+// "Import type alias 'InnerTypeAlias'" "true"
+// IGNORE_K1
+
+package test
+
+import some.InnerTypeAlias
+
+class Outer {
+    inner class Inner
+}
+
+fun Outer.usage() {
+    ::<caret>InnerTypeAlias
+}

@@ -55,11 +55,16 @@ internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQui
         is ImportPositionType.DefaultCall -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
             ClassifierImportCandidatesProvider(importContext),
+            TypeAliasedInnerClassImportCandidatesProvider(importContext),
             EnumEntryImportCandidatesProvider(importContext),
         )
 
         is ImportPositionType.DotCall,
-        is ImportPositionType.SafeCall,
+        is ImportPositionType.SafeCall -> sequenceOf(
+            CallableImportCandidatesProvider(importContext),
+            TypeAliasedInnerClassImportCandidatesProvider(importContext),
+        )
+
         is ImportPositionType.InfixCall,
         is ImportPositionType.OperatorCall -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
@@ -71,6 +76,7 @@ internal object UnresolvedNameReferenceImportQuickFixFactory : AbstractImportQui
 
         is ImportPositionType.CallableReference -> sequenceOf(
             CallableImportCandidatesProvider(importContext),
+            TypeAliasedInnerClassImportCandidatesProvider(importContext),
             ConstructorReferenceImportCandidatesProvider(importContext),
         )
 
