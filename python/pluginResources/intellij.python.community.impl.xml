@@ -621,12 +621,10 @@
     <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder"/>
 
     <!-- Source root detection -->
-    <registryKey key="python.source.root.detection.enabled" defaultValue="true" description="Enables source root detection"/>
     <registryKey key="python.source.root.suggest.quickfix" defaultValue="true" description="Suggests to mark a detected source root via quick-fix for the red import"/>
-    <registryKey key="python.source.root.suggest.notification" defaultValue="true" description="Suggests to mark a detected source root via in-editor notification"/>
+    <registryKey key="python.source.root.suggest.quickfix.auto.apply" defaultValue="true" description="Automatically applies suggested source root quick-fix"/>
     <notificationGroup id="Python source root detection" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle"
                        key="python.source.root.detection.confirm.notification.group"/>
-    <editorNotificationProvider implementation="com.jetbrains.python.module.PySourceRootDetectedNotificationPanel"/>
 
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="com.jetbrains.python.icons.PythonIcons.Python.PythonPackages"

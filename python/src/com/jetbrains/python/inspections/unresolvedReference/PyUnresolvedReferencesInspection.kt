@@ -119,7 +119,7 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
     }
 
     override fun getAddSourceRootQuickFix(node: PyElement): LocalQuickFix? {
-      if (!Registry.`is`("python.source.root.detection.enabled")) {
+      if (!Registry.`is`("python.source.root.suggest.quickfix")) {
         return null
       }
       val importStatementBase = PsiTreeUtil.getParentOfType(node, PyAstImportStatementBase::class.java, true)
@@ -144,10 +144,6 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
           continue
         }
 
-        if (isAlreadyHiddenSourceRoot(project, containingDirectory)) {
-          continue
-        }
-
         val context = fromModule(module)
           .copyWithoutStubs()
           .copyWithoutRoots()
@@ -162,9 +158,8 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
         
         val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
         if (!resolveResult.isEmpty()) {
-          project.getService(PySourceRootDetectionService::class.java).onSourceRootDetected(containingDirectory)
-          if (!Registry.`is`("python.source.root.suggest.quickfix") || !Registry.`is`("python.source.root.detection.enabled")) {
-            return null
+          if (Registry.`is`("python.source.root.suggest.quickfix.auto.apply")) {
+            project.getService(PySourceRootDetectionService::class.java).onSourceRootDetected(containingDirectory)
           }
           return PyMarkDirectoryAsSourceRootQuickFix(project, containingDirectory)
         }
@@ -176,10 +171,6 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
       val model = ModuleRootManager.getInstance(module).modifiableModel
       val entry = MarkRootsManager.findContentEntry(model, virtualFile) ?: return false
       return entry.getSourceFolders().any { it.file == virtualFile }
-    }
-
-    private fun isAlreadyHiddenSourceRoot(project: Project, virtualFile: VirtualFile): Boolean {
-      return project.getService(PySourceRootDetectionService::class.java).isSourceRootHidden(virtualFile)
     }
 
     override fun getAddIgnoredIdentifierQuickFixes(qualifiedNames: List<QualifiedName>): List<LocalQuickFix> {
