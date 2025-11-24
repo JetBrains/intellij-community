@@ -8295,7 +8295,7 @@ a:com.intellij.openapi.options.BeanConfigurable
 - pf:checkBox(java.lang.String,com.intellij.openapi.util.Getter,com.intellij.openapi.util.Setter):V
 - pf:checkBox(java.lang.String,kotlin.reflect.KMutableProperty0):V
 - createComponent():javax.swing.JComponent
-- createContent(com.intellij.ui.dsl.builder.Panel):V
+- f:createContent(com.intellij.ui.dsl.builder.Panel):V
 - pf:getInstance():java.lang.Object
 - getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
 - f:getTitle():java.lang.String

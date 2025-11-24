@@ -14,14 +14,12 @@ class BaseCodeFoldingOptionsProvider : BeanConfigurable<CodeFoldingSettings>(
   CodeFoldingSettings.getInstance(), ApplicationBundle.message("title.general")), CodeFoldingOptionsProvider {
 
   init {
+    groupTopGap = TopGap.NONE
+
     checkBox(ApplicationBundle.message("checkbox.collapse.file.header"), instance::COLLAPSE_FILE_HEADER)
     checkBox(ApplicationBundle.message("checkbox.collapse.title.imports"), instance::COLLAPSE_IMPORTS)
     checkBox(ApplicationBundle.message("checkbox.collapse.javadoc.comments"), instance::COLLAPSE_DOC_COMMENTS)
     checkBox(ApplicationBundle.message("checkbox.collapse.method.bodies"), instance::COLLAPSE_METHODS)
     checkBox(ApplicationBundle.message("checkbox.collapse.custom.folding.regions"), instance::COLLAPSE_CUSTOM_FOLDING_REGIONS)
-  }
-
-  override fun Panel.createContent() {
-    ConfigurableBuilderHelper.integrateBeanPanel(this, this@BaseCodeFoldingOptionsProvider, components, groupTopGap = TopGap.NONE)
   }
 }

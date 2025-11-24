@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Setter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.function.Function
@@ -18,9 +19,12 @@ import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
 abstract class BeanConfigurable<T : Any> protected constructor(protected val instance: T) : UnnamedConfigurable, ConfigurableWithOptionDescriptors, UiDslUnnamedConfigurable {
+
   var title: @NlsContexts.BorderTitle String? = null
     protected set
 
+  @ApiStatus.Internal
+  protected var groupTopGap: TopGap? = null
   private val myFields = mutableListOf<CheckboxField>()
 
   protected constructor(beanInstance: T, title: @NlsContexts.BorderTitle String?) : this(beanInstance) {
@@ -187,12 +191,25 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
     }
   }
 
+  /**
+   * Content customization is not allowed. Use [UiDslUnnamedConfigurable.Simple] or similar classes
+   * for full UI customization instead. When converting [BeanConfigurable] to [UiDslUnnamedConfigurable], remember to implement
+   * [ConfigurableWithOptionDescriptors] (if applicable).
+   */
+  @Deprecated("Content customization is not allowed. Use [UiDslUnnamedConfigurable.Simple] or similar classes for full UI customization instead",
+              level = DeprecationLevel.WARNING)
+  @ApiStatus.ScheduledForRemoval
   override fun createComponent(): JComponent {
     return ConfigurableBuilderHelper.createBeanPanel(this, components)
   }
 
-  override fun Panel.createContent() {
-    ConfigurableBuilderHelper.integrateBeanPanel(this, this@BeanConfigurable, components)
+  /**
+   * Content customization is not allowed. Use [UiDslUnnamedConfigurable.Simple] or similar classes
+   * for full UI customization instead. When converting [BeanConfigurable] to [UiDslUnnamedConfigurable], remember to implement
+   * [ConfigurableWithOptionDescriptors] (if applicable).
+   */
+  final override fun Panel.createContent() {
+    ConfigurableBuilderHelper.integrateBeanPanel(this, this@BeanConfigurable, components, groupTopGap)
   }
 
   override fun isModified(): Boolean {
