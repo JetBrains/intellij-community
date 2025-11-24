@@ -21,10 +21,12 @@ data class RpcCompletionItem(
   val isCaseSensitive: Boolean,
   val shouldStopLookupInsertion: Boolean,
   val isDirectInsertion: Boolean,
+  val prefixMatcher: RpcPrefixMatcher,
 )
 
 fun CompletionResult.toRpc(): RpcCompletionItem {
   val element = this.lookupElement
+  val prefixMatcher = this.prefixMatcher
   val presentation = element.render()
   val id = RpcCompletionItemId()
   return RpcCompletionItem(
@@ -38,6 +40,7 @@ fun CompletionResult.toRpc(): RpcCompletionItem {
     isCaseSensitive = element.isCaseSensitive,
     shouldStopLookupInsertion = element is LookupElementInsertStopper && element.shouldStopLookupInsertion(),
     isDirectInsertion = element.getUserData(CodeCompletionHandlerBase.DIRECT_INSERTION) != null,
+    prefixMatcher = prefixMatcher.toRpc(id),
   )
 }
 

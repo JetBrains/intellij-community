@@ -4,9 +4,13 @@ package com.intellij.platform.completion.common.protocol
 import kotlinx.serialization.Serializable
 
 /**
- * Contains weights of ALL completion items reported by the current backend completion session.
+ * Contains weights of *matched* completion items reported by the current backend completion session.
+ * All other items are considered *non-matched*, and their weights are not reported.
+ * Non-matched items are passed as well.
  */
 @Serializable
 data class RpcCompletionArrangement(
   val weightsOfMatchedItems: List<RpcCompletionItemWeight>,
+  val nonMatchedItems: List<RpcCompletionItemId>,
+  val startMatches: List<RpcCompletionItemId>,
 )

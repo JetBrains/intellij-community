@@ -21,6 +21,15 @@ sealed interface RpcCompletionResponseEvent {
   ) : RpcCompletionResponseEvent
 
   /**
+   * This event is sent when all items are already emitted,
+   * but the prefix changed without completion restaring, and we need to re-sort items.
+   */
+  @Serializable
+  data class NewArrangement(
+    val completionArrangement: RpcCompletionArrangement,
+  ) : RpcCompletionResponseEvent
+
+  /**
    * This event is sent when all completion items are sent.
    * After it is sent, the backend can send only updates for the existing items (and [CompletionFinished] event).
    *
