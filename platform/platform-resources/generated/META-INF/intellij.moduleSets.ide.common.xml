@@ -164,6 +164,7 @@
     <module name="intellij.platform.debugger.impl.backend"/>
     <module name="intellij.platform.debugger.impl.shared" loading="embedded"/>
     <module name="intellij.platform.debugger.impl.rpc" loading="embedded"/>
+    <module name="intellij.platform.debugger.impl.ui" loading="embedded"/>
     <module name="intellij.platform.debugger.impl" loading="embedded"/>
     <module name="intellij.platform.debugger" loading="embedded"/>
     <!-- </editor-fold> -->

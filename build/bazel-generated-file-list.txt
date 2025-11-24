@@ -826,6 +826,7 @@ platform/xdebugger-impl/backend
 platform/xdebugger-impl/frontend
 platform/xdebugger-impl/rpc
 platform/xdebugger-impl/shared
+platform/xdebugger-impl/ui
 platform/xdebugger-testFramework
 plugins/ByteCodeViewer
 plugins/IntelliLang

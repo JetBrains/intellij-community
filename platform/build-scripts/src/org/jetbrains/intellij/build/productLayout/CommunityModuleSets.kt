@@ -154,6 +154,7 @@ object CommunityModuleSets : ModuleSetProvider {
     module("intellij.platform.debugger.impl.backend")
     embeddedModule("intellij.platform.debugger.impl.shared")
     embeddedModule("intellij.platform.debugger.impl.rpc")
+    embeddedModule("intellij.platform.debugger.impl.ui")
     embeddedModule("intellij.platform.debugger.impl")
     embeddedModule("intellij.platform.debugger")
   }

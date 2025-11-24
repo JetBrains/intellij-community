@@ -1,6 +1,6 @@
 <idea-plugin>
   <dependencies>
-    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger"/>
   </dependencies>
 
 </idea-plugin>
