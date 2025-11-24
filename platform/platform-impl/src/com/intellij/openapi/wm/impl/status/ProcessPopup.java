@@ -32,6 +32,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 final class ProcessPopup {
   public static final Key<ProgressPanel> KEY = new Key<>("ProgressPanel");
+  static final JBDimension POPUP_MIN_SIZE = new JBDimension(300, 100);
   private static final String DIMENSION_SERVICE_KEY = "ProcessPopupWindow";
 
   private final InfoAndProgressPanel myProgressPanel;
@@ -55,7 +56,7 @@ final class ProcessPopup {
     }
 
     myTasksFinishedDecorator = new TasksFinishedDecorator(myIndicatorPanel);
-    myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> {
+    myAnalyzingBannerDecorator = new AnalyzingBannerDecorator(myIndicatorPanel, () -> myPopup, () -> {
       SeparatorDecorator.placeSeparators(myIndicatorPanel);
       revalidateAll();
     });
@@ -75,11 +76,6 @@ final class ProcessPopup {
     myAnalyzingBannerDecorator.indicatorAdded(indicator);
     mySeparatorDecorator.indicatorAdded();
     revalidateAll();
-
-    if (myPopupVisible && myAnalyzingBannerDecorator.isBannerPresent()) {
-      updateContentUI();
-      updateHeight(myAnalyzingBannerDecorator.getBannerHeight());
-    }
   }
 
   public void removeIndicator(@NotNull ProgressComponent indicator) {
@@ -137,32 +133,18 @@ final class ProcessPopup {
     return new Rectangle(x, y, width, height);
   }
 
-  private void updateHeight(int height) {
-    if (!myPopupVisible || myContentPanel.getSize().height >= height) {
-      return;
-    }
-
-    myContentPanel.setPreferredSize(new Dimension(myContentPanel.getPreferredSize().width, height));
-    myContentPanel.revalidate();
-    myPopup.pack(false, true);
-
-    myPopup.moveToFitScreen();
-  }
-
   public void show(boolean requestFocus) {
     updateContentUI();
 
     createPopup(myContentPanel, myIndicatorPanel, requestFocus);
 
     ApplicationManager.getApplication().getMessageBus().connect(myPopup).subscribe(LafManagerListener.TOPIC, source -> updateContentUI());
+    myAnalyzingBannerDecorator.resizePopupToFitBannerIfNecessary();
 
     Rectangle popupBounds = calculateBounds();
     myContentPanel.setPreferredSize(popupBounds.getSize());
     myPopupVisible = true;
     myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), popupBounds.getLocation());
-    if (myAnalyzingBannerDecorator.isBannerPresent()) {
-      updateHeight(myAnalyzingBannerDecorator.getBannerHeight());
-    }
   }
 
   public boolean isShowing() {
@@ -227,7 +209,7 @@ final class ProcessPopup {
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
-    builder.setMinSize(new JBDimension(300, 100));
+    builder.setMinSize(POPUP_MIN_SIZE);
     Project project = ProjectUtil.getProjectForComponent(myProgressPanel.getComponent());
     builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
     builder.setLocateWithinScreenBounds(false);

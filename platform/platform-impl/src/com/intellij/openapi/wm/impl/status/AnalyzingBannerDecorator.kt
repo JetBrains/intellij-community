@@ -5,19 +5,24 @@ import com.intellij.help.impl.HelpManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.status.ProcessPopup.hideSeparator
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.InlineBanner
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.JPanel
+import kotlin.getValue
 
 /**
- * Places analyzing progress indicator on top, adds a banner under it
+ * Places analyzing progress indicator on top, adds a banner under it.
+ * Increases the popup minimum size when the banner appears and decreases it when it disappears.
+ * So, the popup is large enough to fit the banner.
  */
-internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose: Runnable) {
+internal class AnalyzingBannerDecorator(private val panel: JPanel, private val popupGetter: () -> JBPopup?, onBannerClose: Runnable) {
 
   /**
    * Component of analyzing progress,
@@ -27,6 +32,10 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose
 
   private val banner: Component by lazy { createBanner(onBannerClose) }
 
+  private val popupMinSizeWithBanner: JBDimension by lazy { JBDimension(355, 265) }
+
+  private val popup: JBPopup?
+    get() = popupGetter()
 
   fun indicatorAdded(indicator: ProgressComponent) {
     if (userClosedBanner()) return
@@ -35,6 +44,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose
       analyzingComponent = indicator.component
       panel.add(analyzingComponent, 0, 0)
       panel.add(banner, 1, 1)
+      resizePopupToFitBannerIfNecessary()
     }
   }
 
@@ -44,25 +54,41 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose
     if (indicator.component == analyzingComponent) {
       analyzingComponent = null
       if (!isShowing) {
-        panel.remove(banner)
+        removeBanner()
       }
     }
   }
 
-  // hides banner on popup close if analyzing completed
+  /**
+   * Removes the banner and restores the default minimum size of the popup
+   */
+  private fun removeBanner() {
+    panel.remove(banner)
+    popup?.setMinimumSize(ProcessPopup.POPUP_MIN_SIZE)
+    popup?.content?.minimumSize = null
+  }
+
+  /**
+   * hides banner on popup close if analyzing completed
+   */
   fun handlePopupClose() {
     if (userClosedBanner() || analyzingComponent != null) return
-    panel.remove(banner)
+    removeBanner()
   }
 
-  fun getBannerHeight(): Int {
-    if (userClosedBanner()) return 0
-    return banner.preferredSize.height + (analyzingComponent?.preferredSize?.height ?: 0) + JBUI.scale(28)
-  }
+  /**
+   * Increases the minimum size of the popup to fit the banner if it is present.
+   * If the popup is visible, ensures that it will fit the screen
+   */
+  fun resizePopupToFitBannerIfNecessary() {
+    if (userClosedBanner() || !panel.components.contains(banner)) return
 
-  fun isBannerPresent(): Boolean {
-    if (userClosedBanner()) return false
-    return panel.components.contains(banner)
+    popupMinSizeWithBanner.update() // rescale to the current zoom level
+    popup?.setMinimumSize(popupMinSizeWithBanner)
+    popup?.content?.minimumSize = popupMinSizeWithBanner // this is required so the popup size is calculated correctly during showing
+    if (popup?.isVisible == true) {
+      popup?.moveToFitScreen()
+    }
   }
 
   private fun createBanner(revalidatePanel: Runnable): Component {
@@ -81,7 +107,7 @@ internal class AnalyzingBannerDecorator(private val panel: JPanel, onBannerClose
 
       // removes banner and prevents showing it again
       setCloseAction {
-        panel.remove(banner)
+        removeBanner()
         PropertiesComponent.getInstance().setValue(USER_CLOSED_ANALYZING_BANNER_KEY, true)
         revalidatePanel.run()
       }
