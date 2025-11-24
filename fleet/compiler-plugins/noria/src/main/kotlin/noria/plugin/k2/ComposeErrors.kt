@@ -98,6 +98,8 @@ object ComposeErrors : KtDiagnosticsContainer() {
 
     val ABSTRACT_COMPOSABLE_DEFAULT_PARAMETER_VALUE by error1<KtElement, LanguageVersion>()
 
+    val CLASS_OR_OBJECT_INSIDE_COMPOSABLE by warning0<KtElement>()
+
     override fun getRendererFactory(): BaseDiagnosticRendererFactory = ComposeErrorMessages
 }
 

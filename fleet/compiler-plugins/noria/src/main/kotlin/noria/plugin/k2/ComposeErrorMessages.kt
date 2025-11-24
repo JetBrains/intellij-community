@@ -139,5 +139,10 @@ object ComposeErrorMessages : BaseDiagnosticRendererFactory() {
             "Default parameters in open @Composable functions are not supported before language version 2.2 (configured version is {0})",
             KtDiagnosticRenderers.TO_STRING
         )
+
+        map.put(
+            ComposeErrors.CLASS_OR_OBJECT_INSIDE_COMPOSABLE,
+            "Class declarations and object expressions are not allowed inside @Composable functions (patch for CMP-9325)"
+        )
     }
 }

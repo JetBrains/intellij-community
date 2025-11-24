@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.dumpKotlinLike
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import java.io.File
 
 /**
@@ -60,6 +61,15 @@ class NoriaComponentRegistrar : CompilerPluginRegistrar() {
 
     // WrapWithScopes should run after adding NoriaContext as a parameter, since we need NoriaContext for wrapping
     IrGenerationExtension.registerExtension(WrapWithScopesPass)
+
+    IrGenerationExtension.registerExtension(object : IrGenerationExtension {
+      override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
+        val isKlibTarget = !pluginContext.platform.isJvm()
+        if (isKlibTarget) {
+          KlibAssignableParamTransformer(pluginContext).lower(moduleFragment)
+        }
+      }
+    })
 
     if (false) {
       IrGenerationExtension.registerExtension(object : IrGenerationExtension {

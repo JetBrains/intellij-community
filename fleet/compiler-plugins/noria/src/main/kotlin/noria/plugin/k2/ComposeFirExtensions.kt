@@ -106,6 +106,12 @@ class ComposeFirCheckersExtension(session: FirSession) : FirAdditionalCheckersEx
 
     override val propertyCheckers: Set<FirPropertyChecker> =
       setOf(ComposablePropertyChecker)
+
+    override val regularClassCheckers =
+      setOf(ComposableInnerClassChecker)
+
+    override val anonymousObjectCheckers =
+      setOf(ComposableAnonymousObjectChecker)
   }
 
   override val typeCheckers: TypeCheckers = object : TypeCheckers() {
