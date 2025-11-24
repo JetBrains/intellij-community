@@ -31,7 +31,9 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -205,14 +207,22 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   @ApiStatus.Internal
   public final @NotNull CompletableFuture<?> invalidateAsync(@NotNull TreeModelUpdateRequest request) {
+    var requestHandled = new AtomicBoolean();
     return onValidThread(__ -> {
       var requestRef = updateRequest.get();
       requestRef.set(request);
       try {
+        requestHandled.set(true); // now it's the responsibility of invalidateInternal
         return invalidateInternal(null, true);
       }
       finally {
         requestRef.set(null);
+      }
+    }).whenComplete((p, e) -> {
+      if (!requestHandled.get()) {
+        // If the request wasn't handled for whatever reason (e.g., the node was disposed),
+        // close it to avoid "stuck request" false positives.
+        request.finished();
       }
     });
   }
@@ -232,16 +242,24 @@ public class StructureTreeModel<Structure extends AbstractTreeStructure>
 
   @ApiStatus.Internal
   public final @NotNull Promise<TreePath> invalidate(@NotNull TreePath path, boolean structure, @NotNull TreeModelUpdateRequest request) {
+    var requestHandled = new AtomicBoolean();
     return Promises.asPromise(onValidThread(path, node -> {
       var requestRef = updateRequest.get();
       requestRef.set(request);
       try {
+        requestHandled.set(true); // now it's the responsibility of invalidateInternal
         return invalidateInternal(node, structure);
       }
       finally {
         requestRef.set(null);
       }
-    }));
+    })).onProcessed((p) -> {
+      if (!requestHandled.get()) {
+        // If the request wasn't handled for whatever reason (e.g., the node was disposed),
+        // close it to avoid "stuck request" false positives.
+        request.finished();
+      }
+    });
   }
 
   /**
