@@ -66,7 +66,7 @@ public interface PsiSearchHelper {
    * Note that this doesn't mean the files contain the text itself.
    */
   boolean processCandidateFilesForText(@NotNull GlobalSearchScope scope,
-                                       short searchContext,
+                                       @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                        boolean caseSensitively,
                                        @NotNull String text,
                                        @NotNull Processor<? super VirtualFile> processor);
@@ -203,9 +203,8 @@ public interface PsiSearchHelper {
                                        @NotNull TextOccurenceProcessor processor,
                                        @NotNull SearchScope searchScope,
                                        @NotNull String text,
-                                       short searchContext,
+                                       @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                        boolean caseSensitive);
-
 
   /**
    * @deprecated use {@link #isCheapEnoughToSearch(String, GlobalSearchScope, PsiFile)}

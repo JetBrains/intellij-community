@@ -14,10 +14,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.impl.search.PsiSearchHelperImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +38,7 @@ public final class IndexCacheManagerImpl implements CacheManager {
 
   @Override
   public PsiFile @NotNull [] getFilesWithWord(@NotNull String word,
-                                              short occurenceMask,
+                                              @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurrenceMask,
                                               @NotNull GlobalSearchScope scope,
                                               boolean caseSensitively) {
     if (myProject.isDefault()) {
@@ -45,7 +47,7 @@ public final class IndexCacheManagerImpl implements CacheManager {
     List<PsiFile> result = new ArrayList<>();
     Processor<PsiFile> processor = Processors.cancelableCollectProcessor(result);
 
-    processFilesWithWord(processor, word, occurenceMask, scope, caseSensitively);
+    processFilesWithWord(processor, word, occurrenceMask, scope, caseSensitively);
     return result.isEmpty() ? PsiFile.EMPTY_ARRAY : result.toArray(PsiFile.EMPTY_ARRAY);
   }
 
@@ -68,14 +70,14 @@ public final class IndexCacheManagerImpl implements CacheManager {
 
   @Override
   public boolean processVirtualFilesWithAllWords(@NotNull Collection<String> words,
-                                                 short occurenceMask,
+                                                 @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurrenceMask,
                                                  @NotNull GlobalSearchScope scope,
                                                  boolean caseSensitively,
                                                  @NotNull Processor<? super VirtualFile> processor) {
     if (myProject.isDefault()) {
       return true;
     }
-    PsiSearchHelperImpl.TextIndexQuery query = PsiSearchHelperImpl.TextIndexQuery.fromWords(words, caseSensitively, false, occurenceMask);
+    PsiSearchHelperImpl.TextIndexQuery query = PsiSearchHelperImpl.TextIndexQuery.fromWords(words, caseSensitively, false, occurrenceMask);
 
     if (PsiSearchHelperImpl.LOG.isTraceEnabled()) {
       PsiSearchHelperImpl.LOG.trace("searching for words " + words + " in " + scope);
@@ -94,7 +96,7 @@ public final class IndexCacheManagerImpl implements CacheManager {
   // we cannot call it inside FileBasedIndex.processValues() method except in collecting form
   // If we do, deadlocks are possible (IDEADEV-42137). Process the files without not holding indices' read lock.
   private void collectVirtualFilesWithWord(@NotNull String word,
-                                           short occurrenceMask,
+                                           @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurrenceMask,
                                            @NotNull GlobalSearchScope scope,
                                            boolean caseSensitively,
                                            @NotNull Processor<? super VirtualFile> fileProcessor) {
@@ -102,7 +104,11 @@ public final class IndexCacheManagerImpl implements CacheManager {
   }
 
   @Override
-  public boolean processFilesWithWord(@NotNull Processor<? super PsiFile> psiFileProcessor, @NotNull String word, short occurrenceMask, @NotNull GlobalSearchScope scope, boolean caseSensitively) {
+  public boolean processFilesWithWord(@NotNull Processor<? super PsiFile> psiFileProcessor,
+                                      @NotNull String word,
+                                      @MagicConstant(flagsFromClass = UsageSearchContext.class) short occurrenceMask,
+                                      @NotNull GlobalSearchScope scope,
+                                      boolean caseSensitively) {
     List<VirtualFile> result = new ArrayList<>(5);
     Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(result);
     collectVirtualFilesWithWord(word, occurrenceMask, scope, caseSensitively, processor);

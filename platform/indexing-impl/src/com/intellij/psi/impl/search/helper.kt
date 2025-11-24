@@ -227,7 +227,7 @@ private class Layer<T>(
     }
 
     val globalsIds: Map<PsiSearchHelperImpl.TextIndexQuery, List<WordRequestInfo>> = globals.groupBy(
-      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.TextIndexQuery.fromWord(request.word, request.isCaseSensitive, null) },
+      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.TextIndexQuery.fromWord(request.word, request.isCaseSensitive, -1) },
       { (request: WordRequestInfo, _) -> progress.checkCanceled(); request }
     )
     return myHelper.processGlobalRequests(globalsIds, progress, scopeProcessors(globals))
