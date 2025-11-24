@@ -62,6 +62,7 @@ internal suspend fun buildPluginsForDevMode(
       moduleOutputPatcher = moduleOutputPatcher,
       plugins = plugins,
       os = null,
+      arch = null,
       targetDir = pluginRootDir,
       state = DistributionBuilderState(platformLayout = platform, pluginsToPublish = emptySet(), context = context),
       buildPlatformJob = buildPlatformJob,

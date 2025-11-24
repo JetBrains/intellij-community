@@ -155,7 +155,7 @@ private suspend fun generateProjectStructureMapping(
       descriptorCache = pluginDescriptorCache,
       context = context,
     )
-    entries.add(PluginBuildDescriptor(dir = targetDir, os = null, layout = pluginLayout, distribution = pluginEntries))
+    entries.add(PluginBuildDescriptor(dir = targetDir, os = null, arch = null, layout = pluginLayout, distribution = pluginEntries))
   }
   libDirLayout.await() to entries
 }

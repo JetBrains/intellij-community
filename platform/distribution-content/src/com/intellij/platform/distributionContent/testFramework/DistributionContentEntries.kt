@@ -129,5 +129,6 @@ data class ModuleLibraryFile(
 data class PluginContentReport(
   @JvmField val mainModule: String,
   @JvmField val os: String? = null,
+  @JvmField val arch: String? = null,
   @JvmField val content: List<FileEntry> = emptyList(),
 )
