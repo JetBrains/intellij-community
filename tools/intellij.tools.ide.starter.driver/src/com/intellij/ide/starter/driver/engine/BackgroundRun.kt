@@ -58,31 +58,32 @@ open class BackgroundRun(override val startResult: Deferred<IDEStartResult>, dri
   }
 
   protected fun Driver.closeIdeAndWait(closeIdeTimeout: Duration, takeScreenshot: Boolean = true): IDEStartResult {
+    val logPrefix = "[Closing ${process.id}]"
     try {
       if (isConnected) {
         if (takeScreenshot) {
           takeScreenshot("beforeIdeClosed")
         }
         exitApplication()
-        waitFor("Driver is not connected", closeIdeTimeout, 3.seconds) { !isConnected }
+        waitFor("$logPrefix Driver is not connected", closeIdeTimeout, 3.seconds) { !isConnected }
       }
       else {
-        error("Driver is not connected, so it can't exit IDE")
+        error("$logPrefix Driver is not connected, so it can't exit IDE")
       }
     }
     catch (t: Throwable) {
-      logError("Error on exit application via Driver", t)
+      logError("$logPrefix Error on exit application via Driver", t)
       forceKill()
     }
     finally {
       try {
         if (isConnected) close()
-        waitFor("Process is closed", closeIdeTimeout, 3.seconds) { !process.isAlive }
+        waitFor("$logPrefix Process is closed", closeIdeTimeout, 3.seconds) { !process.isAlive }
       }
       catch (e: Throwable) {
-        logError("Error waiting IDE is closed: ${e.message}: ${e.stackTraceToString()}", e)
+        logError("$logPrefix Error waiting IDE is closed", e)
         forceKill()
-        throw IllegalStateException("Process didn't die after waiting for Driver to close IDE", e)
+        throw IllegalStateException("$logPrefix Process didn't die after waiting for Driver to close IDE", e)
       }
     }
 
@@ -93,7 +94,7 @@ open class BackgroundRun(override val startResult: Deferred<IDEStartResult>, dri
   }
 
   override fun forceKill() {
-    logOutput("Performing force kill")
+    logOutput("[Closing ${process.id}] Performing force kill")
     process.kill()
   }
 }
