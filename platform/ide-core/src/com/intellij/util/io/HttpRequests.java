@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.Patches;
@@ -679,22 +679,32 @@ public final class HttpRequests {
     throw new IOException(IdeCoreBundle.message("error.connection.failed.redirects"));
   }
 
-  private static void throwHttpStatusError(HttpURLConnection connection,
-                                           RequestImpl request,
-                                           RequestBuilderImpl builder,
-                                           int responseCode) throws IOException {
+  private static void throwHttpStatusError(
+    HttpURLConnection connection,
+    RequestImpl request,
+    RequestBuilderImpl builder,
+    int statusCode
+  ) throws IOException {
     String message = null;
-    if (responseCode == CUSTOM_ERROR_CODE) {
+    if (statusCode == CUSTOM_ERROR_CODE) {
       message = connection.getHeaderField("Error-Message");
     }
     if ((message == null || message.isEmpty()) && builder.myIsReadResponseOnError) {
       message = request.readError(connection);
     }
     if (message == null || message.isEmpty()) {
-      message = IdeCoreBundle.message("error.connection.failed.status", responseCode);
+      message = IdeCoreBundle.message("error.connection.failed.status", statusCode);
     }
     connection.disconnect();
-    throw new HttpStatusException(message, responseCode, requireNonNullElse(request.myUrl, "Empty URL"));
+    if (statusCode == HttpURLConnection.HTTP_PROXY_AUTH) {
+      var uiService = getIdeUiService();
+      var notificationShown = uiService != null && uiService.showProxyAuthNotification();
+      if (notificationShown && LOG.isDebugEnabled()) LOG.debug(
+        "proxy auth failed for " + request.getURL() + "; Proxy-Authenticate=" + connection.getHeaderField("Proxy-Authenticate"),
+        new Exception()
+      );
+    }
+    throw new HttpStatusException(message, statusCode, requireNonNullElse(request.myUrl, "Empty URL"));
   }
 
   private static void configureSslConnection(@NotNull String url, @NotNull HttpsURLConnection connection) {
@@ -715,6 +725,11 @@ public final class HttpRequests {
     catch (Throwable e) {
       LOG.info("Problems configuring SSL connection to " + url, e);
     }
+  }
+
+  private static @Nullable IdeUiService getIdeUiService() {
+    var app = ApplicationManager.getApplication();
+    return app != null ? app.getServiceIfCreated(IdeUiService.class) : null;
   }
 
   /*

@@ -6,6 +6,7 @@ import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.HttpRequests.HttpStatusException;
 import com.intellij.util.net.ssl.CertificateManager;
@@ -119,8 +120,16 @@ public final class PlatformHttpClient {
    * Throws {@link HttpStatusException} if a response status code is not the {@code [200, 300)} range.
    */
   public static <T> HttpResponse<T> checkResponse(@NotNull HttpResponse<T> response) throws HttpStatusException {
-    if (response.statusCode() < 200 || response.statusCode() >= 300) {
-      throw new HttpStatusException(errorMessage(response), response.statusCode(), response.uri().toString());
+    var statusCode = response.statusCode();
+    if (statusCode < 200 || statusCode >= 300) {
+      if (statusCode == HttpURLConnection.HTTP_PROXY_AUTH && JdkProxyProvider.showProxyAuthNotification()) {
+        var logger = Logger.getInstance(PlatformHttpClient.class);
+        if (logger.isDebugEnabled()) logger.debug(
+          "proxy auth failed for " + response.uri() + "; Proxy-Authenticate=" + response.headers().firstValue("Proxy-Authenticate"),
+          new Exception()
+        );
+      }
+      throw new HttpStatusException(errorMessage(response), statusCode, response.uri().toString());
     }
     return response;
   }

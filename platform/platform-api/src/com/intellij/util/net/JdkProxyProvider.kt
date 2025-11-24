@@ -1,17 +1,25 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.UIBundle
 import com.intellij.util.net.AppShutdownProxySelector.AppShutdownProxyMode.*
 import com.intellij.util.proxy.CommonProxyCompatibility
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
 import java.io.IOException
 import java.net.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.atomic.AtomicBoolean
 
 sealed interface JdkProxyProvider {
   val proxySelector: ProxySelector
@@ -39,6 +47,23 @@ sealed interface JdkProxyProvider {
      */
     @JvmStatic
     fun ensureDefault(): Unit = ensureDefaultProxyProviderImpl()
+
+    private val proxyAuthNotificationActive = AtomicBoolean(false)
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun showProxyAuthNotification(): Boolean {
+      if (proxyAuthNotificationActive.getAndSet(true)) return false
+      val title = UIBundle.message("proxy.auth.notification.title")
+      val content = UIBundle.message("proxy.auth.notification.text")
+      Notification("proxy.auth.failed", title, content, NotificationType.WARNING)
+        .addAction(NotificationAction.createSimpleExpiring(UIBundle.message("proxy.auth.notification.action"), Runnable {
+          ShowSettingsUtil.getInstance().editConfigurable(null as Component?, HttpProxyConfigurable())
+        }))
+        .whenExpired { proxyAuthNotificationActive.set(false) }
+        .notify(null)
+      return true
+    }
   }
 }
 

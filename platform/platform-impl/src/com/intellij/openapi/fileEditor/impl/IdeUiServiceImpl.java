@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -27,6 +27,7 @@ import com.intellij.refactoring.util.RefactoringMessageDialog;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.net.IOExceptionDialog;
+import com.intellij.util.net.JdkProxyProvider;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.SwingHelper;
@@ -212,5 +213,10 @@ public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public void showErrorHint(Editor editor, String message) {
     HintManager.getInstance().showErrorHint(editor, message);
+  }
+
+  @Override
+  public boolean showProxyAuthNotification() {
+    return JdkProxyProvider.showProxyAuthNotification();
   }
 }
