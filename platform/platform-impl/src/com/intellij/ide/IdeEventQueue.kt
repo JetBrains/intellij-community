@@ -418,6 +418,9 @@ class IdeEventQueue private constructor() : EventQueue() {
       // 'bare' ControlFlowException-s are not reported
       t = RuntimeException(t)
     }
+    if (tryAttachMessagesToLockingExceptions.get()) {
+      t = tryWrapIntoRelaxedEnvironmentException(t)
+    }
     StartupErrorReporter.processException(t)
   }
 
@@ -510,14 +513,18 @@ class IdeEventQueue private constructor() : EventQueue() {
           dispatchMouseEvent(e)
         }
       } else {
-        dispatchMouseEvent(e)
+        withThreadLocal(tryAttachMessagesToLockingExceptions, { true }).use {
+          dispatchMouseEvent(e)
+        }
       }
       e is KeyEvent -> if (wrapHighLevelInputEventsInWriteIntentLock) {
         threadingSupport.runPreventiveWriteIntentReadAction {
           dispatchKeyEvent(e)
         }
       } else {
-        dispatchKeyEvent(e)
+        withThreadLocal(tryAttachMessagesToLockingExceptions, { true }).use {
+          dispatchKeyEvent(e)
+        }
       }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
@@ -529,6 +536,24 @@ class IdeEventQueue private constructor() : EventQueue() {
         defaultDispatchEvent(e)
       }
       else -> defaultDispatchEvent(e)
+    }
+  }
+
+  private val tryAttachMessagesToLockingExceptions: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
+  private class RelaxedEnvironmentException(override val cause: Throwable): Exception() {
+    override val message: String = "Write-intent access is revoked due to IJPL-219144. Consider wrapping this computation into read or write-intent lock."
+  }
+
+  private fun tryWrapIntoRelaxedEnvironmentException(e: Throwable): Throwable {
+    val message = e.message ?: return e
+    if (message.contains("read-action", ignoreCase = true)
+        || message.contains("read access", ignoreCase = true)
+        || message.contains("write access", ignoreCase = true)
+        || message.contains("write-intent access", ignoreCase = true)) {
+      return RelaxedEnvironmentException(e)
+    } else {
+      return e
     }
   }
 
