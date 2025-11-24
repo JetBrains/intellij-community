@@ -8,5 +8,5 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class RpcCompletionArrangement(
-  val weights: List<RpcCompletionItemWeight>,
+  val weightsOfMatchedItems: List<RpcCompletionItemWeight>,
 )
