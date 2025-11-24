@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProvide
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionEvent
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSetupEvent
-import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
 import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.MatchesExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
@@ -102,20 +101,32 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         completionSetupEvent.commit()
 
-        val addedResults = CompletionEvent().timeEvent {
-            Completions.complete(
+        val event = CompletionEvent()
+        val addedResults: Boolean
+        try {
+            event.begin()
+            addedResults = Completions.complete(
                 parameters = parameters,
                 positionContext = positionContext,
                 resultSet = resultSet,
             )
+            event.wasCompleted = true
+        } finally {
+            event.commit()
         }
 
         // If we have not found any results and we have an invocation count 1, we want to re-run completion because
         // it will also start looking in nested objects etc.
         if (!addedResults && parameters.invocationCount == 1) {
             val newParameters = KotlinFirCompletionParameters.Original.create(parameters.delegate.withInvocationCount(2)) ?: return
-            CompletionEvent(isRerun = true).timeEvent {
+
+            val event = CompletionEvent(isRerun = true)
+            try {
+                event.begin()
                 Completions.complete(newParameters, positionContext, resultSet)
+                event.wasCompleted = true
+            } finally {
+                event.commit()
             }
         }
     }

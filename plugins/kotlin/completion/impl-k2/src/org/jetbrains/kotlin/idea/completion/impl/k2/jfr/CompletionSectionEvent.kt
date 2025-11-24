@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.jfr
 
 import jdk.jfr.Category
 import jdk.jfr.Enabled
+import jdk.jfr.Event
 import jdk.jfr.Label
 import jdk.jfr.Name
 import jdk.jfr.StackTrace
@@ -17,7 +18,7 @@ internal class CompletionSectionEvent(
     val contributorName: String = "",
     @Label("Section Name")
     val sectionName: String? = null,
-) : AbstractCompletionEvent() {
-    @Label("Was Interrupted")
-    override var wasInterrupted: Boolean = false
+) : Event() {
+    @Label("Was Completed")
+    var wasCompleted: Boolean = false
 }

@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.KtCompletionExtensi
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.K2ChainCompletionContributor
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.replaceTypeParametersWithStarProjections
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSectionEvent
-import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -312,11 +311,17 @@ context(_: KaSession, context: K2CompletionSectionContext<P>)
 private fun <P : KotlinRawPositionContext> K2CompletionSection<P>.executeIfAllowed() {
     if (!contributor.shouldExecute()) return
 
-    CompletionSectionEvent(
+    val event = CompletionSectionEvent(
         contributorName = contributor::class.simpleName ?: "Unknown",
         sectionName = name.takeIf { it != contributor::class.simpleName }
-    ).timeEvent {
+    )
+
+    try {
+        event.begin()
         runnable()
+        event.wasCompleted = true
+    } finally {
+        event.commit()
     }
 }
 
