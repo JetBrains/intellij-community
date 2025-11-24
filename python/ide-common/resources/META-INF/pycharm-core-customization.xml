@@ -1,5 +1,9 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <!-- WARNING: This file if for PyCharm Community only. Most probably this is not what you are looking for.
+    For Unified Distro see `pycharm-customization.xml`
+    -->
+
     <registryKey defaultValue="true" description="Show unhandled exceptions that were thrown during interactive operation"
                  key="ide.exceptions.show.interactive" overrides="true"/>
     <registryKey defaultValue="false" description="Enable existence of multiple workspace models, one per each isolated environment"
