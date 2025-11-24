@@ -541,6 +541,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <properties>
                          <subChildName>subChild</subChildName>
                        </properties>
@@ -550,6 +551,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                           <groupId>test</groupId>
                                           <artifactId>child</artifactId>
                                           <version>1</version>
+                                          <packaging>pom</packaging>
                                           <parent>
                                             <groupId>test</groupId>
                                             <artifactId>parent</artifactId>
@@ -949,6 +951,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <properties>
                          <subChildName>subChild</subChildName>
                        </properties>
@@ -958,6 +961,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                           <groupId>test</groupId>
                                           <artifactId>child</artifactId>
                                           <version>1</version>
+                                          <packaging>pom</packaging>
                                           <parent>
                                             <groupId>test</groupId>
                                             <artifactId>parent</artifactId>
