@@ -134,8 +134,7 @@ internal fun StringBuilder.appendModuleSetXml(
 internal fun StringBuilder.appendModuleLine(moduleWithLoading: ModuleWithLoading, indent: String = "    ") {
   append("$indent<module name=\"${moduleWithLoading.name}\"")
   if (moduleWithLoading.loading != null) {
-    // convert enum to lowercase with hyphens (e.g., ON_DEMAND -> on-demand)
-    append(" loading=\"${moduleWithLoading.loading.name.lowercase().replace('_', '-')}\"")
+    append(" loading=\"${moduleWithLoading.loading.xmlValue}\"")
   }
   append("/>\n")
 }

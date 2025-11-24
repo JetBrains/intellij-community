@@ -14,7 +14,6 @@ import com.intellij.platform.plugins.parser.impl.elements.PreloadMode.*
 import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.platform.plugins.parser.impl.elements.ClientKind as ClientKindElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue as ModuleLoadingRuleElement
 import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility as ModuleVisibilityElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(
@@ -89,11 +88,11 @@ fun PreloadMode.convert(): ServiceDescriptor.PreloadMode = when (this) {
   NOT_LIGHT_EDIT -> ServiceDescriptor.PreloadMode.NOT_LIGHT_EDIT
 }
 
-fun ModuleLoadingRuleElement.convert(): ModuleLoadingRule = when (this) {
-  ModuleLoadingRuleElement.REQUIRED -> ModuleLoadingRule.REQUIRED
-  ModuleLoadingRuleElement.EMBEDDED -> ModuleLoadingRule.EMBEDDED
-  ModuleLoadingRuleElement.OPTIONAL -> ModuleLoadingRule.OPTIONAL
-  ModuleLoadingRuleElement.ON_DEMAND -> ModuleLoadingRule.ON_DEMAND
+fun ModuleLoadingRuleValue.convert(): ModuleLoadingRule = when (this) {
+  ModuleLoadingRuleValue.REQUIRED -> ModuleLoadingRule.REQUIRED
+  ModuleLoadingRuleValue.EMBEDDED -> ModuleLoadingRule.EMBEDDED
+  ModuleLoadingRuleValue.OPTIONAL -> ModuleLoadingRule.OPTIONAL
+  ModuleLoadingRuleValue.ON_DEMAND -> ModuleLoadingRule.ON_DEMAND
   else -> throw IllegalArgumentException("Unknown module loading rule: ${this}")
 }
 

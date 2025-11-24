@@ -81,7 +81,7 @@ internal fun processAndGetProductPluginContentModules(
   val moduleItems = LinkedHashSet<ModuleItem>()
   filterAndProcessContentModules(rootElement = element, pluginMainModuleName = null, context = context) { moduleElement, moduleName, loadingRule ->
     processProductModule(
-      isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRuleValue.EMBEDDED.name.lowercase(),
+      isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRuleValue.EMBEDDED.xmlValue,
       moduleName = moduleName,
       moduleElement = moduleElement,
       frontendModuleFilter = frontendModuleFilter,
