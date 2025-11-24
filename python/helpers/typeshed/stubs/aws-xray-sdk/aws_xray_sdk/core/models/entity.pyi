@@ -7,7 +7,7 @@ from .subsegment import Subsegment
 from .throwable import Throwable
 
 log: Logger
-ORIGIN_TRACE_HEADER_ATTR_KEY: Final[str]
+ORIGIN_TRACE_HEADER_ATTR_KEY: Final = "_origin_trace_header"
 
 class Entity:
     id: str

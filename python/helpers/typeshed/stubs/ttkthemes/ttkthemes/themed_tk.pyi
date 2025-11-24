@@ -8,19 +8,18 @@ class ThemedTk(tkinter.Tk, ThemedWidget):
     def __init__(
         self,
         # non-keyword-only args copied from tkinter.Tk
-        screenName: str | None = ...,
-        baseName: str | None = ...,
-        className: str = ...,
-        useTk: bool = ...,
-        sync: bool = ...,
-        use: str | None = ...,
-        *,
-        theme: str | None = ...,
+        screenName: str | None = None,
+        baseName: str | None = None,
+        className: str = "Tk",
+        useTk: bool = True,
+        sync: bool = False,
+        use: str | None = None,
+        theme: str | None = None,
         # fonts argument does nothing
-        toplevel: bool | None = ...,
-        themebg: bool | None = ...,
-        background: bool | None = ...,  # old alias for themebg
-        gif_override: bool = ...,
+        toplevel: bool | None = None,
+        themebg: bool | None = None,
+        background: bool | None = None,  # old alias for themebg
+        gif_override: bool = False,
     ) -> None: ...
     def set_theme(self, theme_name: str, toplevel: bool | None = None, themebg: bool | None = None) -> None: ...
     # Keep this in sync with tkinter.Tk

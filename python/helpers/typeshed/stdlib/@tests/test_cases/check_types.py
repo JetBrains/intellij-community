@@ -62,7 +62,21 @@ class DCAtest:
         self._value = None
 
 
-if sys.version_info > (3, 10):
+# check that NotImplemented is treated as an "Any"
+x: int = NotImplemented
+
+if sys.version_info >= (3, 10):
+    # test NotImplementedType usage
+    assert_type(NotImplemented, types.NotImplementedType)
+    assert_type(types.NotImplementedType(), types.NotImplementedType)
+    # test EllipsisType usage
+    assert_type(Ellipsis, types.EllipsisType)
+    assert_type(types.EllipsisType(), types.EllipsisType)
+    # test NoneType usage (disabled, passes with pyright, but mypy errors
+    # assert_type(None, types.NoneType)
+    # assert_type(types.NoneType(), types.NoneType)
+
+if sys.version_info >= (3, 11):
     union_type = int | list[_T]
 
     # ideally this would be `_SpecialForm` (Union)

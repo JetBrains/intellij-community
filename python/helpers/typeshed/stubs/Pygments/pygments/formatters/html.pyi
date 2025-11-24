@@ -1,4 +1,5 @@
-from typing import Any, TypeVar
+from _typeshed import Incomplete
+from typing import TypeVar
 
 from pygments.formatter import Formatter
 
@@ -6,32 +7,32 @@ _T = TypeVar("_T", str, bytes)
 
 class HtmlFormatter(Formatter[_T]):
     name: str
-    aliases: Any
-    filenames: Any
-    title: Any
-    nowrap: Any
-    noclasses: Any
-    classprefix: Any
-    cssclass: Any
-    cssstyles: Any
-    prestyles: Any
-    cssfile: Any
-    noclobber_cssfile: Any
-    tagsfile: Any
-    tagurlformat: Any
-    filename: Any
-    wrapcode: Any
-    span_element_openers: Any
+    aliases: Incomplete
+    filenames: Incomplete
+    title: Incomplete
+    nowrap: Incomplete
+    noclasses: Incomplete
+    classprefix: Incomplete
+    cssclass: Incomplete
+    cssstyles: Incomplete
+    prestyles: Incomplete
+    cssfile: Incomplete
+    noclobber_cssfile: Incomplete
+    tagsfile: Incomplete
+    tagurlformat: Incomplete
+    filename: Incomplete
+    wrapcode: Incomplete
+    span_element_openers: Incomplete
     linenos: int
-    linenostart: Any
-    linenostep: Any
-    linenospecial: Any
-    nobackground: Any
-    lineseparator: Any
-    lineanchors: Any
-    linespans: Any
-    anchorlinenos: Any
-    hl_lines: Any
+    linenostart: Incomplete
+    linenostep: Incomplete
+    linenospecial: Incomplete
+    nobackground: Incomplete
+    lineseparator: Incomplete
+    lineanchors: Incomplete
+    linespans: Incomplete
+    anchorlinenos: Incomplete
+    hl_lines: Incomplete
     def get_style_defs(self, arg=None): ...
     def get_token_style_defs(self, arg=None): ...
     def get_background_style_defs(self, arg=None): ...

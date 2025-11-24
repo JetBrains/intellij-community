@@ -30,6 +30,7 @@
         "stubs/boltons",
         "stubs/braintree",
         "stubs/cffi",
+        "stubs/colorful",
         "stubs/dateparser",
         "stubs/defusedxml",
         "stubs/docker",
@@ -79,7 +80,6 @@
         "stubs/PyMySQL",
         "stubs/python-dateutil",
         "stubs/python-jose",
-        "stubs/pytz/pytz/lazy.pyi",
         "stubs/pywin32",
         "stubs/PyYAML",
         "stubs/reportlab",
@@ -88,6 +88,7 @@
         "stubs/seaborn",
         "stubs/setuptools/setuptools",
         "stubs/shapely",
+        "stubs/simple-websocket",
         "stubs/tensorflow",
         "stubs/tqdm",
         "stubs/vobject",
@@ -107,8 +108,6 @@
     // No effect in stubs
     "reportMissingSuperCall": "none",
     "reportUninitializedInstanceVariable": "none",
-    // stdlib stubs trigger reportShadowedImports
-    "reportShadowedImports": "none",
     // Stubs are allowed to use private variables
     "reportPrivateUsage": "none",
     // Stubs don't need the actual modules to be installed

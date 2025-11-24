@@ -1,17 +1,18 @@
-from typing import Any, Generic, TypeVar, overload
+from _typeshed import Incomplete
+from typing import Generic, TypeVar, overload
 
 _T = TypeVar("_T", str, bytes)
 
 class Formatter(Generic[_T]):
-    name: Any
-    aliases: Any
-    filenames: Any
+    name: Incomplete
+    aliases: Incomplete
+    filenames: Incomplete
     unicodeoutput: bool
-    style: Any
-    full: Any
-    title: Any
-    encoding: Any
-    options: Any
+    style: Incomplete
+    full: Incomplete
+    title: Incomplete
+    encoding: Incomplete
+    options: Incomplete
     @overload
     def __init__(self: Formatter[str], *, encoding: None = None, outencoding: None = None, **options) -> None: ...
     @overload

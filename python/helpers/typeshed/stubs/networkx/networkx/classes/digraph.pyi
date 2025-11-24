@@ -10,6 +10,7 @@ from networkx.classes.reportviews import (
     InDegreeView,
     InEdgeView,
     InMultiDegreeView,
+    InMultiEdgeView,
     OutDegreeView,
     OutEdgeView,
     OutMultiDegreeView,
@@ -17,6 +18,9 @@ from networkx.classes.reportviews import (
 
 __all__ = ["DiGraph"]
 
+# NOTE: Graph subclasses relationships are so complex
+# we're only overriding methods that differ in signature from the base classes
+# to use inheritance to our advantage and reduce complexity
 class DiGraph(Graph[_Node]):
     @cached_property
     def succ(self) -> AdjacencyView[_Node, _Node, dict[str, Any]]: ...
@@ -30,17 +34,19 @@ class DiGraph(Graph[_Node]):
 
     def predecessors(self, n: _Node) -> Iterator[_Node]: ...
     @cached_property
+    def edges(self) -> OutEdgeView[_Node]: ...
+    @cached_property
     def out_edges(self) -> OutEdgeView[_Node]: ...
     @cached_property
-    def in_edges(self) -> InEdgeView[_Node]: ...
+    # Including subtypes' possible return types for LSP
+    def in_edges(self) -> InEdgeView[_Node] | InMultiEdgeView[_Node]: ...
     @cached_property
+    def degree(self) -> DiDegreeView[_Node]: ...
+    @cached_property
+    # Including subtypes' possible return types for LSP
     def in_degree(self) -> InDegreeView[_Node] | InMultiDegreeView[_Node]: ...
     @cached_property
+    # Including subtypes' possible return types for LSP
     def out_degree(self) -> OutDegreeView[_Node] | OutMultiDegreeView[_Node]: ...
-    def to_undirected(self, reciprocal: bool = False, as_view: bool = False) -> Graph[_Node]: ...  # type: ignore[override]
-    # reciprocal : If True, only edges that appear in both directions ... will be kept in the undirected graph.
+    def to_undirected(self, reciprocal: bool = False, as_view: bool = False) -> Graph[_Node]: ...  # type: ignore[override] # Has an additional `reciprocal` keyword argument
     def reverse(self, copy: bool = True) -> Self: ...
-    @cached_property
-    def edges(self) -> OutEdgeView[_Node]: ...  # type: ignore[override] # An OutEdgeView of the DiGraph as G.edges or G.edges().
-    @cached_property
-    def degree(self) -> int | DiDegreeView[_Node]: ...  # type: ignore[override] # Returns DiDegreeView or int

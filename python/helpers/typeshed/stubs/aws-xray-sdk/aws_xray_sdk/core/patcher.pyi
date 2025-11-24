@@ -1,9 +1,10 @@
 from collections.abc import Iterable
 from logging import Logger
+from typing import Final
 
 log: Logger
-SUPPORTED_MODULES: tuple[str, ...]
-NO_DOUBLE_PATCH: tuple[str, ...]
+SUPPORTED_MODULES: Final[tuple[str, ...]]
+NO_DOUBLE_PATCH: Final[tuple[str, ...]]
 
 def patch_all(double_patch: bool = False) -> None: ...
 def patch(

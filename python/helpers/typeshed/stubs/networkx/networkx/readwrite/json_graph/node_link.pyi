@@ -15,13 +15,13 @@ Use the `edges` keyword instead."""
 def node_link_data(
     G: Graph[_Node],
     *,
+    link: str | None,
     source: str = "source",
     target: str = "target",
     name: str = "id",
     key: str = "key",
     edges: str | None = None,
     nodes: str = "nodes",
-    link: str | None = None,
 ): ...
 @overload
 def node_link_data(

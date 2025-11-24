@@ -8,7 +8,7 @@ from .dummy_entities import DummySegment
 from .entity import Entity
 from .subsegment import Subsegment
 
-ORIGIN_TRACE_HEADER_ATTR_KEY: Final[str]
+ORIGIN_TRACE_HEADER_ATTR_KEY: Final = "_origin_trace_header"
 
 class SegmentContextManager:
     name: str | None

@@ -1,81 +1,15 @@
-import ssl
-import types
 import urllib.request
 from _socket import _Address
 from _typeshed import ReadableBuffer, SupportsRead, Unused
-from asyncio.events import AbstractEventLoop
-from collections.abc import AsyncIterable, Awaitable, Callable, Collection, Iterable, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, MutableMapping
 from http.client import HTTPResponse
 from http.cookiejar import CookieJar
-from socket import socket
 from subprocess import Popen
-from typing import Any, AnyStr, Generic, Literal, TypeVar, overload
-from typing_extensions import Self
-
-from websockets import ClientConnection, HeadersLike, LoggerLike, Origin, Subprotocol
-from websockets.asyncio.client import connect
-from websockets.extensions import ClientExtensionFactory
+from typing import Any, AnyStr, TypeVar
 
 has_certifi: bool
 has_websockets: bool
 _T = TypeVar("_T")
-
-class WebSocketsWrapper(Generic[_T]):
-    pool: _T | None
-    loop: AbstractEventLoop
-    conn: connect
-    def __init__(
-        self,
-        url: str,
-        headers: Mapping[str, str] | None = None,
-        connect: bool = True,
-        *,
-        # Passed to websockets.connect()
-        origin: Origin | None = None,
-        extensions: Sequence[ClientExtensionFactory] | None = None,
-        subprotocols: Sequence[Subprotocol] | None = None,
-        compression: str | None = "deflate",
-        additional_headers: HeadersLike | None = None,
-        user_agent_header: str | None = ...,
-        proxy: str | Literal[True] | None = True,
-        process_exception: Callable[[Exception], Exception | None] = ...,
-        open_timeout: float | None = 10,
-        ping_interval: float | None = 20,
-        ping_timeout: float | None = 20,
-        close_timeout: float | None = 10,
-        max_size: int | None = 1048576,
-        max_queue: int | None | tuple[int | None, int | None] = 16,
-        write_limit: int | tuple[int, int | None] = 32768,
-        logger: LoggerLike | None = None,
-        create_connection: type[ClientConnection] | None = None,
-        # Passed to AbstractEventLoop.connect() by websockets
-        ssl: bool | None | ssl.SSLContext = None,
-        family: int = 0,
-        proto: int = 0,
-        flags: int = 0,
-        sock: socket | None = None,
-        local_addr: None = None,
-        server_hostname: str | None = None,
-        ssl_handshake_timeout: float | None = None,
-        ssl_shutdown_timeout: float | None = None,
-        happy_eyeballs_delay: float | None = None,
-        interleave: int | None = None,
-    ) -> None: ...
-    def __enter__(self) -> Self: ...
-    def send(
-        self, message: str | bytes | Iterable[str | bytes] | AsyncIterable[str | bytes], text: bool | None = None
-    ) -> None: ...
-    @overload
-    def recv(self, decode: Literal[True]) -> str: ...
-    @overload
-    def recv(self, decode: Literal[False]) -> bytes: ...
-    @overload
-    def recv(self, decode: bool | None = None) -> str | bytes: ...
-    def __exit__(
-        self, type: type[BaseException] | None, value: BaseException | None, traceback: types.TracebackType | None
-    ) -> None: ...
-    @staticmethod
-    def run_with_loop(main: Awaitable[_T], loop: AbstractEventLoop) -> _T: ...
 
 def load_plugins(name: str, suffix: str, namespace: dict[str, Any]) -> dict[str, type[Any]]: ...
 def traverse_dict(dictn: Mapping[str, Any], keys: Collection[str], casesense: bool = True) -> Any: ...

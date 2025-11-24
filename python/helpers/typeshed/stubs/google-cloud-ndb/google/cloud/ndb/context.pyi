@@ -1,6 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Callable
-from typing import Any, NamedTuple
+from typing import NamedTuple
 
 from google.cloud.ndb import Key, exceptions as exceptions
 
@@ -19,18 +19,18 @@ def get_context(raise_context_error: bool = ...): ...
 def get_toplevel_context(raise_context_error: bool = ...): ...
 
 class _ContextTuple(NamedTuple):
-    id: Any
-    client: Any
-    namespace: Any
-    eventloop: Any
-    batches: Any
-    commit_batches: Any
-    transaction: Any
-    cache: Any
-    global_cache: Any
-    on_commit_callbacks: Any
-    transaction_complete_callbacks: Any
-    legacy_data: Any
+    id: Incomplete
+    client: Incomplete
+    namespace: Incomplete
+    eventloop: Incomplete
+    batches: Incomplete
+    commit_batches: Incomplete
+    transaction: Incomplete
+    cache: Incomplete
+    global_cache: Incomplete
+    on_commit_callbacks: Incomplete
+    transaction_complete_callbacks: Incomplete
+    legacy_data: Incomplete
 
 class _Context(_ContextTuple):
     def __new__(
@@ -67,19 +67,19 @@ class Context(_Context):
     def get_cache_policy(self): ...
     def get_datastore_policy(self) -> None: ...
     def get_global_cache_policy(self): ...
-    get_memcache_policy: Any
+    get_memcache_policy: Incomplete
     def get_global_cache_timeout_policy(self): ...
-    get_memcache_timeout_policy: Any
-    cache_policy: Any
+    get_memcache_timeout_policy: Incomplete
+    cache_policy: Incomplete
     def set_cache_policy(self, policy): ...
-    datastore_policy: Any
+    datastore_policy: Incomplete
     def set_datastore_policy(self, policy): ...
-    global_cache_policy: Any
+    global_cache_policy: Incomplete
     def set_global_cache_policy(self, policy): ...
-    set_memcache_policy: Any
-    global_cache_timeout_policy: Any
+    set_memcache_policy: Incomplete
+    global_cache_timeout_policy: Incomplete
     def set_global_cache_timeout_policy(self, policy): ...
-    set_memcache_timeout_policy: Any
+    set_memcache_timeout_policy: Incomplete
     def get_retry_state(self): ...
     def set_retry_state(self, state) -> None: ...
     def clear_retry_state(self) -> None: ...

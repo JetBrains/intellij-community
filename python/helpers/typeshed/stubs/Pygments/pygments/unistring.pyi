@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 Cc: str
 Cf: str
@@ -32,7 +32,7 @@ Zp: str
 Zs: str
 xid_continue: str
 xid_start: str
-cats: Any
+cats: Incomplete
 
 def combine(*args): ...
 def allexcept(*args): ...

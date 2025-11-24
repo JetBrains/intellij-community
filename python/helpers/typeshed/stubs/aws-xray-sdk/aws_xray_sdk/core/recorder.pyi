@@ -1,8 +1,8 @@
 import time
-from _typeshed import FileDescriptorOrPath
-from collections.abc import Callable, Iterable
+from _typeshed import FileDescriptorOrPath, Incomplete
+from collections.abc import Callable, Iterable, Mapping
 from logging import Logger
-from typing import Any
+from typing import Any, Final, TypeVar
 
 from .context import Context
 from .emitters.udp_emitter import UDPEmitter
@@ -15,11 +15,13 @@ from .sampling.sampler import DefaultSampler
 from .streaming.default_streaming import DefaultStreaming
 
 log: Logger
-TRACING_NAME_KEY: str
-DAEMON_ADDR_KEY: str
-CONTEXT_MISSING_KEY: str
-XRAY_META: dict[str, dict[str, str]]
-SERVICE_INFO: dict[str, str]
+TRACING_NAME_KEY: Final = "AWS_XRAY_TRACING_NAME"
+DAEMON_ADDR_KEY: Final = "AWS_XRAY_DAEMON_ADDRESS"
+CONTEXT_MISSING_KEY: Final = "AWS_XRAY_CONTEXT_MISSING"
+XRAY_META: Final[dict[str, dict[str, str]]]
+SERVICE_INFO: Final[dict[str, str]]
+
+_T = TypeVar("_T")
 
 class AWSXRayRecorder:
     def __init__(self) -> None: ...
@@ -40,8 +42,10 @@ class AWSXRayRecorder:
         sampler: LocalSampler | DefaultSampler | None = None,
         stream_sql: bool | None = True,
     ) -> None: ...
-    def in_segment(self, name: str | None = None, **segment_kwargs) -> SegmentContextManager: ...
-    def in_subsegment(self, name: str | None = None, **subsegment_kwargs) -> SubsegmentContextManager: ...
+    def in_segment(
+        self, name: str | None = None, *, traceid: str | None = None, parent_id: str | None = None, sampling: bool | None = None
+    ) -> SegmentContextManager: ...
+    def in_subsegment(self, name: str | None = None, *, namespace: str = "local") -> SubsegmentContextManager: ...
     def begin_segment(
         self, name: str | None = None, traceid: str | None = None, parent_id: str | None = None, sampling: bool | None = None
     ) -> Segment | DummySegment: ...
@@ -61,14 +65,14 @@ class AWSXRayRecorder:
     def capture(self, name: str | None = None) -> SubsegmentContextManager: ...
     def record_subsegment(
         self,
-        wrapped: Callable[..., Any],
+        wrapped: Callable[..., _T],
         instance: Any,
-        args: list[Any],
-        kwargs: dict[str, Any],
+        args: Iterable[Incomplete],
+        kwargs: Mapping[str, Incomplete],
         name: str,
         namespace: str,
-        meta_processor: Callable[..., object],
-    ) -> Any: ...
+        meta_processor: Callable[..., object] | None,
+    ) -> _T: ...
     @property
     def enabled(self) -> bool: ...
     @enabled.setter

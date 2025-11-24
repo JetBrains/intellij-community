@@ -1,5 +1,5 @@
+from _typeshed import Incomplete
 from threading import Thread
-from typing import Any
 
 from .base import BaseStrategy
 
@@ -10,27 +10,27 @@ BOGUS_EXTENDED: int
 BOGUS_ABANDON: int
 
 class ReusableStrategy(BaseStrategy):
-    pools: Any
+    pools: Incomplete
     def receiving(self) -> None: ...
     def get_stream(self) -> None: ...
     def set_stream(self, value) -> None: ...
 
     class ConnectionPool:
         def __new__(cls, connection): ...
-        name: Any
-        master_connection: Any
-        workers: Any
-        pool_size: Any
-        lifetime: Any
-        keepalive: Any
-        request_queue: Any
+        name: Incomplete
+        master_connection: Incomplete
+        workers: Incomplete
+        pool_size: Incomplete
+        lifetime: Incomplete
+        keepalive: Incomplete
+        request_queue: Incomplete
         open_pool: bool
         bind_pool: bool
         tls_pool: bool
         counter: int
-        terminated_usage: Any
+        terminated_usage: Incomplete
         terminated: bool
-        pool_lock: Any
+        pool_lock: Incomplete
         started: bool
         def __init__(self, connection) -> None: ...
         def get_info_from_server(self) -> None: ...
@@ -41,22 +41,22 @@ class ReusableStrategy(BaseStrategy):
 
     class PooledConnectionThread(Thread):
         daemon: bool
-        worker: Any
-        master_connection: Any
+        worker: Incomplete
+        master_connection: Incomplete
         def __init__(self, worker, master_connection) -> None: ...
         def run(self) -> None: ...
 
     class PooledConnectionWorker:
-        master_connection: Any
-        request_queue: Any
+        master_connection: Incomplete
+        request_queue: Incomplete
         running: bool
         busy: bool
         get_info_from_server: bool
-        connection: Any
-        creation_time: Any
+        connection: Incomplete
+        creation_time: Incomplete
         task_counter: int
-        thread: Any
-        worker_lock: Any
+        thread: Incomplete
+        worker_lock: Incomplete
         def __init__(self, connection, request_queue) -> None: ...
         def new_connection(self) -> None: ...
 
@@ -64,7 +64,7 @@ class ReusableStrategy(BaseStrategy):
     no_real_dsa: bool
     pooled: bool
     can_stream: bool
-    pool: Any
+    pool: Incomplete
     def __init__(self, ldap_connection) -> None: ...
     def open(self, reset_usage: bool = True, read_server_info: bool = True) -> None: ...
     def terminate(self) -> None: ...

@@ -1,7 +1,9 @@
-from _typeshed import Incomplete
 from logging import Logger
 from traceback import StackSummary
 from typing import TypedDict, type_check_only
+from typing_extensions import NotRequired
+
+log: Logger
 
 @type_check_only
 class _StackInfo(TypedDict):
@@ -9,7 +11,13 @@ class _StackInfo(TypedDict):
     line: int
     label: str
 
-log: Logger
+@type_check_only
+class _ThrowableAttrs(TypedDict):
+    id: str
+    message: NotRequired[str]
+    type: str
+    remote: bool
+    stack: NotRequired[list[_StackInfo]]
 
 class Throwable:
     id: str
@@ -18,4 +26,4 @@ class Throwable:
     remote: bool
     stack: list[_StackInfo] | None
     def __init__(self, exception: Exception, stack: StackSummary, remote: bool = False) -> None: ...
-    def to_dict(self) -> dict[str, Incomplete]: ...
+    def to_dict(self) -> _ThrowableAttrs: ...

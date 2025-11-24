@@ -1,10 +1,10 @@
-import socket
 from types import FrameType
 from typing import ClassVar
 
 from gunicorn.app.base import BaseApplication
 from gunicorn.config import Config
 from gunicorn.glogging import Logger as GLogger
+from gunicorn.sock import BaseSocket
 from gunicorn.workers.base import Worker
 
 from ._types import _AddressType
@@ -14,7 +14,7 @@ class Arbiter:
     WORKER_BOOT_ERROR: ClassVar[int]
     APP_LOAD_ERROR: ClassVar[int]
     START_CTX: ClassVar[dict[int | str, str | list[str]]]
-    LISTENERS: ClassVar[list[socket.socket]]
+    LISTENERS: ClassVar[list[BaseSocket]]
     WORKERS: ClassVar[dict[int, Worker]]
     PIPE: ClassVar[list[int]]
     SIG_QUEUE: ClassVar[list[int]]

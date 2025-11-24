@@ -1,10 +1,10 @@
+from _typeshed import Incomplete
 from io import TextIOWrapper
-from typing import Any
 
-split_path_re: Any
-doctype_lookup_re: Any
-tag_re: Any
-xml_decl_re: Any
+split_path_re: Incomplete
+doctype_lookup_re: Incomplete
+tag_re: Incomplete
+xml_decl_re: Incomplete
 
 class ClassNotFound(ValueError): ...
 class OptionError(Exception): ...

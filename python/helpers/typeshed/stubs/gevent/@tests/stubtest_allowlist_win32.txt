@@ -4,6 +4,7 @@
 gevent.signal.__all__
 gevent.signal.getsignal
 gevent.signal.signal
+gevent.signal.set_wakeup_fd
 
 # these don't exist on win32 in stdlib, but they do in gevent, for now we ignore them
 gevent.socket.SocketType.share

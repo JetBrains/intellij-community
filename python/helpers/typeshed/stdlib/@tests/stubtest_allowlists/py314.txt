@@ -40,6 +40,9 @@ concurrent.interpreters._queues.UNBOUND_REMOVE
 
 importlib.util.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
 
+# Condition functions are exported in __init__
+threading.Condition.locked
+multiprocessing.dummy.Condition.locked
 
 # ====================================
 # Pre-existing errors from Python 3.13

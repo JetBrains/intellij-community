@@ -1,4 +1,4 @@
-version = "7.0.*"
+version = "7.1.1"
 upstream_repository = "https://github.com/giampaolo/psutil"
 
 [tool.stubtest]

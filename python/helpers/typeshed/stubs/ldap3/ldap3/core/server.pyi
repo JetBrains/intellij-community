@@ -1,22 +1,23 @@
-from typing import Any, Literal
+from _typeshed import Incomplete
+from typing import Literal
 
 unix_socket_available: bool
 
 class Server:
     ipc: bool
-    host: Any
-    port: Any
-    allowed_referral_hosts: Any
-    ssl: Any
-    tls: Any
-    name: Any
-    get_info: Any
-    dit_lock: Any
-    custom_formatter: Any
-    custom_validator: Any
-    current_address: Any
-    connect_timeout: Any
-    mode: Any
+    host: Incomplete
+    port: Incomplete
+    allowed_referral_hosts: Incomplete
+    ssl: Incomplete
+    tls: Incomplete
+    name: Incomplete
+    get_info: Incomplete
+    dit_lock: Incomplete
+    custom_formatter: Incomplete
+    custom_validator: Incomplete
+    current_address: Incomplete
+    connect_timeout: Incomplete
+    mode: Incomplete
     def __init__(
         self,
         host: str,

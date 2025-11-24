@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 from .sync import SyncStrategy
 
@@ -7,9 +7,9 @@ class RestartableStrategy(SyncStrategy):
     no_real_dsa: bool
     pooled: bool
     can_stream: bool
-    restartable_sleep_time: Any
-    restartable_tries: Any
-    exception_history: Any
+    restartable_sleep_time: Incomplete
+    restartable_tries: Incomplete
+    exception_history: Incomplete
     def __init__(self, ldap_connection) -> None: ...
     def open(self, reset_usage: bool = False, read_server_info: bool = True) -> None: ...
     def send(self, message_type, request, controls=None): ...

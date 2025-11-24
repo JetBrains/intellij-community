@@ -26,6 +26,7 @@ exclude = [
 ]
 
 [tool.ruff.lint]
+future-annotations = true
 # Disable all rules on test cases by default:
 # test cases often deliberately contain code
 # that might not be considered idiomatic or modern.
@@ -69,15 +70,22 @@ select = [
     # Only include flake8-annotations rules that are autofixable. Otherwise leave this to mypy+pyright
     "ANN2",
     # Most refurb rules are in preview and can be opinionated,
-    # consider them individually as they come out of preview (last check: 0.8.4)
+    # consider them individually as they come out of preview (last check: 0.13.1)
     "FURB105", # Unnecessary empty string passed to `print`
+    "FURB116", # Replace `{function_name}` call with `{display}`
+    "FURB122", # Use of `{}.write` in a for loop
     "FURB129", # Instead of calling `readlines()`, iterate over file object directly
+    "FURB132", # Use `{suggestion}` instead of `check` and `remove`
     "FURB136", # Replace `if` expression with `{min_max}` call
+    "FURB157", # Verbose expression in `Decimal` constructor
+    "FURB162", # Unnecessary timezone replacement with zero offset
+    "FURB166", # Use of `int` with explicit `base={base}` after removing prefix
     "FURB167", # Use of regular expression alias `re.{}`
     "FURB168", # Prefer `is` operator over `isinstance` to check if an object is `None`
     "FURB169", # Compare the identities of `{object}` and None instead of their respective types
     "FURB177", # Prefer `Path.cwd()` over `Path().resolve()` for current-directory lookups
     "FURB187", # Use of assignment of `reversed` on list `{name}`
+    "FURB188", # Prefer `str.removeprefix()` over conditionally replacing with slice.
     # Used for lint.flake8-import-conventions.aliases
     "ICN001", # `{name}` should be imported as `{asname}`
     # PYI: only enable rules that have autofixes and that we always want to fix (even manually),
@@ -89,6 +97,7 @@ select = [
     "PYI014", # Only simple default values allowed for arguments
     "PYI015", # Only simple default values allowed for assignments
     "PYI016", # Duplicate union member `{}`
+    "PYI018", # Private `{type_var_like_kind}` `{type_var_like_name}` is never used
     "PYI019", # Methods like `{method_name}` should return `Self` instead of a custom `TypeVar`
     "PYI020", # Quoted annotations should not be included in stubs
     "PYI025", # Use `from collections.abc import Set as AbstractSet` to avoid confusion with the `set` builtin
@@ -99,7 +108,8 @@ select = [
     "PYI044", # `from __future__ import annotations` has no effect in stub files, since type checkers automatically treat stubs as having those semantics
     "PYI055", # Multiple `type[T]` usages in a union. Combine them into one, e.g., `type[{union_str}]`.
     "PYI058", # Use `{return_type}` as the return value for simple `{method}` methods
-    # "PYI061", # TODO: Enable when out of preview
+    # "PYI059", # TODO: Add when dropping Python 3.9 support
+    "PYI061", # Use `None` rather than `Literal[None]`
     "PYI062", # Duplicate literal member `{}`
     "PYI064", # `Final[Literal[{literal}]]` can be replaced with a bare Final
     # flake8-simplify, excluding rules that can reduce performance or readability due to long line formatting
@@ -124,6 +134,7 @@ select = [
     "SIM223", # Use `{expr}` instead of `{replaced}`
     "SIM300", # Yoda condition detected
     "SIM401", # Use `{contents}` instead of an if block
+    "SIM905", # Consider using a list literal instead of `str.{}`
     "SIM910", # Use `{expected}` instead of `{actual}` (dict-get-with-none-default)
     "SIM911", # Use `{expected}` instead of `{actual}` (zip-dict-keys-and-values)
     # Don't include TC rules that create a TYPE_CHECKING block or stringifies annotations
@@ -159,7 +170,7 @@ ignore = [
     # see https://github.com/astral-sh/ruff/issues/6465
     "E721", # Do not compare types, use `isinstance()`
     # Highly opinionated, and it's often necessary to violate it
-    "PLC0415",  # `import` should be at the top-level of a file
+    "PLC0415", # `import` should be at the top-level of a file
     # Leave the size and complexity of tests to human interpretation
     "PLR09", # Too many ...
     # Too many magic number "2" that are preferable inline. https://github.com/astral-sh/ruff/issues/10009
@@ -175,7 +186,6 @@ ignore = [
     "TD003", # Missing issue link for this TODO
     # Mostly from scripts and tests, it's ok to have messages passed directly to exceptions
     "TRY003", # Avoid specifying long messages outside the exception class
-    "PLC0205", # Sometimes __slots__ really is a string at runtime
     ###
     # False-positives, but already checked by type-checkers
     ###
@@ -206,6 +216,8 @@ ignore = [
     # Most pep8-naming rules don't apply for third-party stubs like typeshed.
     # N811 to N814 could apply, but we often use them to disambiguate a name whilst making it look like a more common one
     "N8", # pep8-naming
+    # Sometimes __slots__ really is a string at runtime
+    "PLC0205", # Class `__slots__` should be a non-string iterable
     # Stubs are allowed to use private variables (pyright's reportPrivateUsage is also disabled)
     "PLC2701", # Private name import from external module
     # Names in stubs should match implementation

@@ -1,3 +1,11 @@
+# =======
+# <= 3.14
+# =======
+
+# Added in Python 3.11.15 (parameter `scripting`)
+html.parser.HTMLParser.__init__
+
+
 # =============================================================
 # Allowlist entries that cannot or should not be fixed; <= 3.12
 # =============================================================

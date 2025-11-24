@@ -24,7 +24,7 @@ bugbear.NamedExprFinder.__gt__
 bugbear.NamedExprFinder.__le__
 bugbear.NamedExprFinder.__lt__
 bugbear.NamedExprFinder.__match_args__
-# >= Python 3.13
+# == Python 3.13
 bugbear.B040CaughtException.__replace__
 bugbear.B041VariableKeyType.__replace__
 bugbear.BugBearChecker.__replace__

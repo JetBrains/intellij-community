@@ -54,9 +54,6 @@ _?socket.SOL_IPX
 _?socket.SOL_NETROM
 _?socket.SOL_ROSE
 
-# Some of these exist on non-windows, but they are useless and this is not intended
-stat.FILE_ATTRIBUTE_[A-Z_]+
-
 # This is available on Linux, but it's documented as for kernel debugging and
 # not present on GitHub Actions runners.
 termios.TIOCTTYGSTRUCT
