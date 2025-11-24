@@ -611,8 +611,8 @@ private suspend fun checkProductProperties(context: BuildContext) {
   }
 
   context.linuxDistributionCustomizer?.let { linuxDistributionCustomizer ->
-    checkStringPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPath), "productProperties.linuxCustomizer.iconPngPath")
-    checkStringPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPathForEAP), "productProperties.linuxCustomizer.iconPngPathForEAP")
+    checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPath), "productProperties.linuxCustomizer.iconPngPath")
+    checkPaths(listOfNotNull(linuxDistributionCustomizer.iconPngPathForEAP), "productProperties.linuxCustomizer.iconPngPathForEAP")
   }
 
   context.macDistributionCustomizer?.let { macCustomizer ->
@@ -773,13 +773,6 @@ private fun checkPluginModules(pluginModules: Collection<String>?, fieldName: St
 
 private fun checkPaths(paths: Collection<Path>, propertyName: String) {
   val nonExistingFiles = paths.filter { Files.notExists(it) }
-  check(nonExistingFiles.isEmpty()) {
-    "$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}"
-  }
-}
-
-private fun checkStringPaths(paths: Collection<String>, propertyName: String) {
-  val nonExistingFiles = paths.filter { Files.notExists(Path.of(it)) }
   check(nonExistingFiles.isEmpty()) {
     "$propertyName contains non-existing files: ${nonExistingFiles.joinToString()}"
   }

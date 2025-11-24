@@ -96,7 +96,7 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
 
     fullName { "PyCharm Community Edition" }
 
-    copyAdditionalFiles { targetDir, arch, context ->
+    copyAdditionalFiles { targetDir, _, context ->
       PyCharmBuildUtils.copySkeletons(context, targetDir, "skeletons-win*.zip")
     }
 
@@ -110,8 +110,8 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
   override fun createLinuxCustomizer(projectHome: String): LinuxDistributionCustomizer {
     return object : LinuxDistributionCustomizer() {
       init {
-        iconPngPath = "${communityHome}/python/build/resources/PyCharmCore128.png"
-        iconPngPathForEAP = "${communityHome}/python/build/resources/PyCharmCore128_EAP.png"
+        iconPngPath = communityHome.resolve("python/build/resources/PyCharmCore128.png")
+        iconPngPathForEAP = communityHome.resolve("python/build/resources/PyCharmCore128_EAP.png")
         snaps += Snap(
           name = "pycharm-community",
           description =

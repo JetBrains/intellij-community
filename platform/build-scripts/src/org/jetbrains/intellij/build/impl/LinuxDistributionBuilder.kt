@@ -62,8 +62,7 @@ class LinuxDistributionBuilder(
   private val iconPngPath: Path?
 
   init {
-    val iconPng = (if (context.applicationInfo.isEAP) customizer.iconPngPathForEAP else null) ?: customizer.iconPngPath
-    iconPngPath = if (iconPng.isNullOrEmpty()) null else Path.of(iconPng)
+    iconPngPath = (if (context.applicationInfo.isEAP) customizer.iconPngPathForEAP else null) ?: customizer.iconPngPath
   }
 
   override val targetOs: OsFamily

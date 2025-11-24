@@ -142,8 +142,8 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
     private val projectHome: Path,
   ) : LinuxDistributionCustomizer() {
     init {
-      builder.iconPngPath?.let { iconPngPath = projectHome.resolve(it).toString() }
-      builder.iconPngPathForEAP?.let { iconPngPathForEAP = projectHome.resolve(it).toString() }
+      builder.iconPngPath?.let { iconPngPath = projectHome.resolve(it) }
+      builder.iconPngPathForEAP?.let { iconPngPathForEAP = projectHome.resolve(it) }
       extraExecutables = builder.extraExecutables
       buildArtifactWithoutRuntime = builder.buildArtifactWithoutRuntime
       snaps = builder.snaps
@@ -210,12 +210,12 @@ open class LinuxDistributionCustomizer {
    * Path to a 128x128 PNG product icon for Linux distribution.
    * If omitted, only an SVG icon will be included.
    */
-  var iconPngPath: String? = null
+  var iconPngPath: Path? = null
 
   /**
    * Path to a PNG product icon for EAP builds (if `null`, [iconPngPath] will be used).
    */
-  var iconPngPathForEAP: String? = null
+  var iconPngPathForEAP: Path? = null
 
   @Suppress("unused")
   @ApiStatus.ScheduledForRemoval
