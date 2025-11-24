@@ -94,4 +94,7 @@ kotlin {
     api(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
+  sourceSets.iosMain.dependencies {
+    implementation(jps.io.ktor.ktor.client.core.jvm53990062.get().let { "${it.group}:ktor-client-darwin:${it.version}" })
+  }
 }

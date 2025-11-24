@@ -14,4 +14,4 @@ internal fun codepointOfPlatformSpecificNative(highSurrogate: Char, lowSurrogate
 internal fun highSurrogatePlatformSpecificNative(codepoint: Int): Char = highSurrogateMultiplatform(codepoint)
 
 @fleet.util.multiplatform.Actual
-internal fun lowSurrogatePlatformSpecificNative(codepoint: Int): Char = lowSurrogateMultiplatform(codepoint
+internal fun lowSurrogatePlatformSpecificNative(codepoint: Int): Char = lowSurrogateMultiplatform(codepoint)

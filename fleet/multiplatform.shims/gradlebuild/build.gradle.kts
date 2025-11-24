@@ -77,4 +77,7 @@ kotlin {
     api(project(":fleet.util.multiplatform"))
   }
   // KOTLIN__MARKER_END
+  sourceSets.iosMain.dependencies {
+    implementation("org.jetbrains.kotlinx:atomicfu:0.23.1")
+  }
 }
