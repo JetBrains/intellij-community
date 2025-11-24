@@ -1044,9 +1044,7 @@ class SePopupContentPane(
   }
 
   override fun registerHint(h: JBPopup) {
-    if (quickDocPopup != null && quickDocPopup!!.isVisible && quickDocPopup != h) {
-      quickDocPopup!!.cancel()
-    }
+    quickDocPopup?.takeIf { it.isVisible && it != h }?.cancel()
     quickDocPopup = h
   }
 
@@ -1062,17 +1060,16 @@ class SePopupContentPane(
    *   SePopupContentPane.registerHint is never called
    */
   private fun updateQuickDocPopup(itemData: SeItemData?) {
-    if (quickDocPopup == null || !quickDocPopup!!.isVisible()) return
-    val rawObject = itemData?.fetchItemIfExists()?.rawObject ?: return
+    val quickDocPopup = quickDocPopup ?: return
+    if (!quickDocPopup.isVisible()) return
+    val rawObject = itemData?.fetchItemIfExists()?.rawObject ?: hideQuickDocPopup()
 
-    val updateProcessor = quickDocPopup!!.getUserData(PopupUpdateProcessorBase::class.java)
+    val updateProcessor = quickDocPopup.getUserData(PopupUpdateProcessorBase::class.java)
     updateProcessor?.updatePopup(rawObject)
   }
 
   private fun hideQuickDocPopup() {
-    if (quickDocPopup != null && quickDocPopup!!.isVisible) {
-      quickDocPopup!!.cancel()
-    }
+    quickDocPopup?.takeIf { it.isVisible }?.cancel()
   }
 
   override fun dispose() {}
