@@ -664,7 +664,7 @@ internal class IslandsUICustomization : InternalUICustomization() {
         Insets(5 + searchReplaceEmptyTopSpace, 10, 5, 10)
       }
       @Suppress("UNCHECKED_CAST")
-      parent.border = JBUI.Borders.empty(JBInsets.create(supplier as Supplier<Insets?>, supplier.get()))
+      parent.border = JBUI.Borders.empty(JBInsets.create(supplier, supplier.get()))
     }
     else {
       component.border = originalBorder

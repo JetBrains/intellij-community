@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public class JBInsets extends Insets {
-  private final @Nullable Supplier<@Nullable Insets> unscaledSupplier;
+  private final @Nullable Supplier<? extends @Nullable Insets> unscaledSupplier;
   private final @NotNull Insets unscaledDefault;
 
   @ApiStatus.Internal
@@ -66,7 +66,7 @@ public class JBInsets extends Insets {
 
   @SuppressWarnings("UseDPIAwareInsets")
   private JBInsets(
-    @Nullable Supplier<@Nullable Insets> unscaledSupplier,
+    @Nullable Supplier<? extends @Nullable Insets> unscaledSupplier,
     @NotNull Insets unscaledDefault,
     int scaledTop,
     int scaledLeft,
@@ -130,7 +130,7 @@ public class JBInsets extends Insets {
   }
 
   @ApiStatus.Internal
-  public static @NotNull JBInsets create(@Nullable Supplier<@Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
+  public static @NotNull JBInsets create(@Nullable Supplier<? extends @Nullable Insets> unscaledSupplier, @NotNull Insets unscaledDefault) {
     // zero values will be overwritten by update()
     var result = new JBInsets(unscaledSupplier, unscaledDefault, 0, 0, 0, 0);
     result.update();
