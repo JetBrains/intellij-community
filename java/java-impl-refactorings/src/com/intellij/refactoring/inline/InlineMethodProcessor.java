@@ -3,6 +3,7 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpressionUtil;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -133,7 +134,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @Override
   protected UsageInfo @NotNull [] findUsages() {
     if (myInlineThisOnly) return new UsageInfo[]{new UsageInfo(myReference)};
-    Set<UsageInfo> usages = new HashSet<>();
+    Set<UsageInfo> usages = ConcurrentCollectionFactory.createConcurrentSet();
     if (myReference != null) {
       usages.add(new UsageInfo(myReference.getElement()));
     }

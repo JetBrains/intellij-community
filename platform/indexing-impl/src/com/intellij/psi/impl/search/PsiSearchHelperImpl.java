@@ -4,10 +4,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncUtil;
-import com.intellij.concurrency.JobLauncher;
-import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.concurrency.*;
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
@@ -204,6 +201,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return AsyncUtil.wrapBoolean(processRequests(collector, processor));
   }
 
+  /**
+   * @param processor must be thread-safe
+   */
   public boolean processElementsWithWord(@NotNull SearchScope searchScope,
                                          @NotNull String text,
                                          @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
@@ -216,6 +216,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                   offsetsInScope, processor));
   }
 
+  /**
+   * @param processor must be thread-safe
+   */
   boolean bulkProcessElementsWithWord(@NotNull SearchScope searchScope,
                                       @NotNull String text,
                                       @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
@@ -739,7 +742,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     });
     PsiFile[] files = myDumbService.runReadActionInSmartMode(() -> CacheManager.getInstance(myManager.getProject())
       .getFilesWithWord(wordToSearch, UsageSearchContext.IN_PLAIN_TEXT, theSearchScope, true));
-
+    if (files.length == 0) {
+      return true;
+    }
     StringSearcher searcher = new StringSearcher(qName, true, true, false);
 
     progress.pushState();
@@ -750,10 +755,11 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       SearchScope useScope = originalElement == null ? null : myDumbService.runReadActionInSmartMode(() -> getUseScope(originalElement));
 
       int patternLength = qName.length();
-      for (int i = 0; i < files.length; i++) {
-        ProgressManager.checkCanceled();
-        PsiFile psiFile = files[i];
-        if (psiFile instanceof PsiBinaryFile) continue;
+      AtomicInteger i = new AtomicInteger();
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(files), progress, psiFile -> {
+        if (psiFile instanceof PsiBinaryFile) {
+          return true;
+        }
 
         CharSequence text = ReadAction.compute(() -> psiFile.getViewProvider().getContents());
 
@@ -769,9 +775,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
           return true;
         });
-        if (stopped.get()) break;
-        progress.setFraction((double)(i + 1) / files.length);
-      }
+        if (stopped.get()) {
+          return false;
+        }
+        progress.setFraction((double)(i.incrementAndGet()) / files.length);
+        return true;
+      });
     }
     finally {
       progress.popState();
@@ -1005,7 +1014,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                         @NotNull Map<VirtualFile, Collection<T>> restCandidateFiles,
                                                                         @Nullable FileRankerMlService fileRankerMlService,
                                                                         @NotNull List<String> queryNames,
-                                                                        @NotNull List<VirtualFile> queryFiles) {
+                                                                        @NotNull List<? extends VirtualFile> queryFiles) {
 
     if (fileRankerMlService != null) {
       // Inform fileRankerMlService about this session, but discard the order, as it is not used.
@@ -1036,7 +1045,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                                          @NotNull Map<VirtualFile, Collection<T>> restCandidateFiles,
                                                                          @Nullable FileRankerMlService fileRankerService,
                                                                          @NotNull List<String> queryNames,
-                                                                         @NotNull List<VirtualFile> queryFiles) {
+                                                                         @NotNull List<? extends VirtualFile> queryFiles) {
     Map<VirtualFile, Collection<T>> allFiles = new HashMap<>(totalSize);
     allFiles.putAll(targetFiles);
     allFiles.putAll(nearDirectoryFiles);
@@ -1056,7 +1065,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private <T> boolean processCandidates(@NotNull Map<T, Processor<? super CandidateFileInfo>> localProcessors,
                                         @NotNull Map<VirtualFile, Collection<T>> candidateFiles,
-                                        @NotNull List<VirtualFile> orderedFiles,
+                                        @NotNull List<? extends VirtualFile> orderedFiles,
                                         @NotNull ProgressIndicator progress,
                                         int totalSize,
                                         int alreadyProcessedFiles) {

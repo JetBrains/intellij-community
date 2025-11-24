@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UndeclaredTestInspection.class);
@@ -64,7 +65,7 @@ public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspect
 
       for (final String name : names) {
         final boolean isFullName = qName.equals(name);
-        final boolean[] found = new boolean[]{false};
+        final AtomicBoolean found = new AtomicBoolean();
         PsiSearchHelper.getInstance(project)
           .processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
             if (file.findReferenceAt(startOffset) != null) {
@@ -79,12 +80,12 @@ public final class UndeclaredTestInspection extends AbstractBaseJavaLocalInspect
                 if (value == null) return true;
                 if (!value.endsWith(".*") && !value.equals(packageQName)) return true;
               }
-              found[0] = true;
+              found.set(true);
               return false;
             }
             return true;
           }, new TestNGSearchScope(project));
-        if (found[0]) return null;
+        if (found.get()) return null;
       }
       final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       LOG.assertTrue(nameIdentifier != null);

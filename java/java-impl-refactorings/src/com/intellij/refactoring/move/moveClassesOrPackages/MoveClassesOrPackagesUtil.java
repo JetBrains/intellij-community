@@ -53,7 +53,7 @@ public final class MoveClassesOrPackagesUtil {
                                                  boolean searchInStringsAndComments,
                                                  boolean searchInNonJavaFiles,
                                                  String newQName) {
-    ArrayList<UsageInfo> results = new ArrayList<>();
+    List<UsageInfo> results = Collections.synchronizedList(new ArrayList<>());
     Set<PsiReference> foundReferences = new HashSet<>();
 
     for (PsiReference reference : ReferencesSearch.search(element, searchScope, false).asIterable()) {
@@ -68,7 +68,7 @@ public final class MoveClassesOrPackagesUtil {
     return results.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private static void preprocessUsages(ArrayList<UsageInfo> results) {
+  private static void preprocessUsages(@NotNull List<UsageInfo> results) {
     for (MoveClassHandler handler : MoveClassHandler.EP_NAME.getExtensions()) {
       handler.preprocessUsages(results);
     }

@@ -23,6 +23,9 @@ public final class TextOccurrencesUtilBase {
   private TextOccurrencesUtilBase() {
   }
 
+  /**
+   * @param results must be thread-safe
+   */
   public static void addTextOccurrences(@NotNull PsiElement element,
                                         @NotNull String stringToSearch,
                                         @NotNull GlobalSearchScope searchScope,

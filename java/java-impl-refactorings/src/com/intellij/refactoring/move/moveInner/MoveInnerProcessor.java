@@ -88,7 +88,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     LOG.assertTrue(myTargetContainer != null);
 
     Collection<PsiReference> innerClassRefs = ReferencesSearch.search(myInnerClass, myRefactoringScope).findAll();
-    ArrayList<UsageInfo> usageInfos = new ArrayList<>(innerClassRefs.size());
+    List<UsageInfo> usageInfos = Collections.synchronizedList(new ArrayList<>(innerClassRefs.size()));
     for (PsiReference innerClassRef : innerClassRefs) {
       PsiElement ref = innerClassRef.getElement();
       if (!PsiTreeUtil.isAncestor(myInnerClass, ref, true)) { // do not show self-references
@@ -120,7 +120,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
     return usageInfos.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
-  private static void preprocessUsages(ArrayList<UsageInfo> results) {
+  private static void preprocessUsages(@NotNull List<UsageInfo> results) {
     Set<Language> languages = new HashSet<>();
     for (UsageInfo result : results) {
       PsiElement element = result.getElement();

@@ -70,7 +70,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
     final String qName = myClass.getQualifiedName();
     if (qName != null) {
-      List<UsageInfo> nonCodeUsages = new ArrayList<>();
+      List<UsageInfo> nonCodeUsages = Collections.synchronizedList(new ArrayList<>());
       if (mySearchInComments) {
         TextOccurrencesUtil.addUsagesInStringsAndComments(myClass, myRefactoringScope, qName, nonCodeUsages,
                                                           new NonCodeUsageInfoFactory(myClass, qName));

@@ -99,7 +99,7 @@ public interface PsiSearchHelper {
    * @param originalElement the element whose use scope is used to restrict the search scope,
    *                        or null if the search scope is not restricted.
    * @param qName           the class name to search.
-   * @param processor       the processor which accepts the references.
+   * @param processor       the processor which accepts the references. Must be thread-safe.
    * @param searchScope     the scope in which occurrences are searched.
    */
   boolean processUsagesInNonJavaFiles(@Nullable PsiElement originalElement,
@@ -180,12 +180,18 @@ public interface PsiSearchHelper {
   @NotNull
   AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<? super PsiReference> processor);
 
+  /**
+   * @param processor must be thread-safe
+   */
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                   @NotNull SearchScope searchScope,
                                   @NotNull String text,
                                   @MagicConstant(flagsFromClass = UsageSearchContext.class) short searchContext,
                                   boolean caseSensitive);
 
+  /**
+   * @param processor must be thread-safe
+   */
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                   @NotNull SearchScope searchScope,
                                   @NotNull String text,
