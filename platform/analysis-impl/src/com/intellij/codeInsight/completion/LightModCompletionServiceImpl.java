@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 
@@ -49,10 +50,16 @@ public final class LightModCompletionServiceImpl {
     }
     List<ModCompletionItemProvider> providers = ModCompletionItemProvider.EP_NAME.allForLanguage(file.getLanguage());
     String prefix = file.getFileDocument().getText(TextRange.create(startOffset, caretOffset));
+    var matcher = new CamelHumpMatcher(prefix);
     ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
-      file, caretOffset, element, new CamelHumpMatcher(prefix), invocationCount, type);
+      file, caretOffset, element, matcher, invocationCount, type);
     for (ModCompletionItemProvider provider : providers) {
-      provider.provideItems(context, sink);
+      provider.provideItems(context, item -> {
+        if (matcher.prefixMatches(item.mainLookupString()) ||
+            ContainerUtil.exists(item.additionalLookupStrings(), matcher::prefixMatches)) {
+          sink.accept(item);
+        }
+      });
     }
   }
 }
