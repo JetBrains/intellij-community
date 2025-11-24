@@ -739,7 +739,7 @@ internal class MutableEntityStorageImpl(
     try {
       startWriting()
       builder as MutableEntityStorageImpl
-      applyChangesFromProtection(builder)
+      // applyChangesFromProtection(builder)
       val applyChangesFromOperation = ApplyChangesFromOperation(this, builder)
       upgradeApplyChangesFromEngine?.invoke(applyChangesFromOperation)
       applyChangesFromOperation.applyChangesFrom()

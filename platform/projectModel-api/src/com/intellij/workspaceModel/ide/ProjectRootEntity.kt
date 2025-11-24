@@ -13,9 +13,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 suspend fun registerProjectRoot(project: Project, projectDir: VirtualFileUrl) {
-  val entity = ProjectRootEntity(projectDir, ProjectRootEntitySource)
   val workspaceModel = project.serviceAsync<WorkspaceModel>()
   workspaceModel.update("Add project root ${projectDir.presentableUrl} to project ${project.name}") { storage ->
+    val entity = ProjectRootEntity(projectDir, ProjectRootEntitySource)
     if (storage.entities<ProjectRootEntity>().none { it.root == entity.root }) storage.addEntity(entity)
   }
 }
@@ -57,9 +57,9 @@ fun unregisterProjectRootBlocking(project: Project, projectDir: VirtualFileUrl) 
 fun registerProjectRootBlocking(project: Project, projectDir: Path) {
   val workspaceModel = WorkspaceModel.getInstance(project)
   val projectBaseDirUrl = projectDir.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
-  val entity = ProjectRootEntity(projectBaseDirUrl, ProjectRootEntitySource)
   ApplicationManager.getApplication().runWriteAction {
     workspaceModel.updateProjectModel("Add project root $projectDir to project ${project.name}") { storage ->
+      val entity = ProjectRootEntity(projectBaseDirUrl, ProjectRootEntitySource)
       if (storage.entities<ProjectRootEntity>().none { it.root == entity.root }) storage.addEntity(entity)
     }
   }

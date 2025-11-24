@@ -1,2 +1,6 @@
 <idea-plugin visibility="internal">
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="workspaceModel.update.under.wa" defaultValue="false" restartRequired="false"
+                 description="Disable workspace model initial 2 attempts to execute updater without write action"/>
+  </extensions>
 </idea-plugin>

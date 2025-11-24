@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileAttributes
@@ -231,9 +232,53 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     }
   }
 
+  suspend fun updateWithRetry(
+    description: String,
+    maxRetryAttempts: Int = 3,
+    updater: (MutableEntityStorage) -> Unit,
+  ) {
+    if (Registry.`is`("workspaceModel.update.under.wa", false)) {
+      updateUnderWriteAction(description, updater)
+      return
+    }
+    var success = false
+    val generalTime = measureTimeMillis {
+      for (attempt in 1..<maxRetryAttempts) {
+        val builderSnapshot = getBuilderSnapshot()
+        val updaterTime = measureTimeMillis {
+          updater(builderSnapshot.builder)
+        }
+        if (!builderSnapshot.areEntitiesChanged()) {
+          success = true
+          break
+        }
+        checkCanceled()
+        val replacement = builderSnapshot.getStorageReplacement()
+        log.info("Workspace model update attempt $attempt/$maxRetryAttempts, updater took $updaterTime ms: $description")
+        success = edtWriteAction { replaceWorkspaceModel(description, replacement) }
+        if (success) {
+          break
+        }
+      }
+    }
+    if (!success) {
+      if (maxRetryAttempts > 1) {
+        log.info("Failed to update workspace model after ${maxRetryAttempts - 1} attempts in $generalTime ms. Falling back to update under WA: $description")
+      }
+      updateUnderWriteAction(description, updater)
+    }
+    else {
+      log.info("Workspace model updated in $generalTime ms: $description")
+    }
+  }
+
+  suspend fun updateUnderWriteAction(description: String, updater: (MutableEntityStorage) -> Unit) {
+    edtWriteAction { updateProjectModel(description, updater) }
+  }
+
   override suspend fun update(description: String, updater: (MutableEntityStorage) -> Unit) {
     // TODO:: Has to be migrated to the implementation without WA. See IDEA-336937
-    edtWriteAction { updateProjectModel(description, updater) }
+    updateWithRetry(description, updater = updater)
   }
 
   /**
