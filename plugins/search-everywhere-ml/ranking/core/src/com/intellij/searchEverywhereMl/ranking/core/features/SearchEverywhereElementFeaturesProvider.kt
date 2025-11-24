@@ -105,6 +105,10 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
   }
 
   protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Collection<EventPair<*>> {
+    if (nameOfFoundElement.isBlank() || searchQuery.isBlank()) {
+      return emptyList()
+    }
+
     // For a quicker lookup
     val nameToFeature = getDefaultFields()
       .associateBy { it.name }
