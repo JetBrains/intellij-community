@@ -10,7 +10,169 @@ import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import java.nio.file.Path
 
 /**
- * Creates a [LinuxDistributionCustomizer] with Community edition defaults.
+ * DSL marker annotation for Linux customizer builder DSL.
+ * Prevents implicit receiver leakage in nested scopes.
+ */
+@DslMarker
+annotation class LinuxCustomizerDsl
+
+/**
+ * Creates a [LinuxDistributionCustomizer] using a builder DSL.
+ *
+ * Example usage:
+ * ```kotlin
+ * linuxCustomizer(projectHome) {
+ *   iconPngPath = "build/images/linux/icon_128.png"
+ *   iconPngPathForEAP = "build/images/linux/icon_EAP_128.png"
+ *   snaps += Snap(name = "product-name", description = "Product description")
+ *   extraExecutables += "bin/custom-tool"
+ *
+ *   copyAdditionalFiles { targetDir, arch, context ->
+ *     // Custom file copying logic
+ *   }
+ *
+ *   rootDirectoryName { appInfo, buildNumber ->
+ *     "product-$buildNumber"
+ *   }
+ *
+ *   executableFilePatterns { base, includeRuntime, arch, targetLibcImpl, context ->
+ *     base + listOf("bin/custom/$arch/tool")
+ *   }
+ * }
+ * ```
+ */
+inline fun linuxCustomizer(projectHome: Path, configure: LinuxCustomizerBuilder.() -> Unit): LinuxDistributionCustomizer {
+  return LinuxCustomizerBuilder(projectHome).apply(configure).build()
+}
+
+/**
+ * Builder class for creating [LinuxDistributionCustomizer] instances using a DSL.
+ */
+@LinuxCustomizerDsl
+class LinuxCustomizerBuilder @PublishedApi internal constructor(private val projectHome: Path) {
+  /**
+   * Path to 128x128 PNG product icon for Linux distribution, relative to projectHome.
+   * Specify as a relative string path (e.g., "build/images/linux/icon.png").
+   * Will be automatically resolved against projectHome during build.
+   * If omitted, only an SVG icon will be included.
+   */
+  var iconPngPath: String? = null
+
+  /**
+   * Path to PNG product icon for EAP builds, relative to projectHome.
+   * If null, [iconPngPath] will be used.
+   * Specify as a relative string path - will be resolved against projectHome during build.
+   */
+  var iconPngPathForEAP: String? = null
+
+  /**
+   * Relative paths to files in the Linux distribution which should take 'executable' permissions.
+   */
+  var extraExecutables: PersistentList<String> = persistentListOf()
+
+  /**
+   * If `true`, a separate `*[org.jetbrains.intellij.build.impl.NO_RUNTIME_SUFFIX].tar.gz` artifact without a runtime will be produced.
+   */
+  var buildArtifactWithoutRuntime: Boolean = false
+
+  /**
+   * Add an instance of [Snap] if a .snap package should be produced.
+   */
+  var snaps: PersistentList<LinuxDistributionCustomizer.Snap> = persistentListOf()
+
+  // Method override handlers (stored as lambdas)
+  private var copyAdditionalFilesHandler: (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = null
+  private var rootDirectoryNameHandler: ((ApplicationInfoProperties, String) -> String)? = null
+  private var executableFilePatternsHandler: ((Sequence<String>, Boolean, JvmArchitecture, LibcImpl, BuildContext) -> Sequence<String>)? = null
+
+  /**
+   * Gets the current copyAdditionalFiles handler for wrapping purposes.
+   * @return the current handler, or null if none is set
+   */
+  fun getCopyAdditionalFilesHandler(): (suspend (Path, JvmArchitecture, BuildContext) -> Unit)? = copyAdditionalFilesHandler
+
+  /**
+   * Adds custom logic for copying additional files to the Linux distribution.
+   * This handler is called after the base copyAdditionalFiles logic.
+   *
+   * @param handler Lambda receiving targetDir, arch, and context
+   */
+  fun copyAdditionalFiles(handler: suspend (targetDir: Path, arch: JvmArchitecture, context: BuildContext) -> Unit) {
+    this.copyAdditionalFilesHandler = handler
+  }
+
+  /**
+   * Sets a custom root directory name inside the .tar.gz archive.
+   *
+   * @param handler Lambda receiving ApplicationInfoProperties and buildNumber, returning the root directory name
+   */
+  fun rootDirectoryName(handler: (ApplicationInfoProperties, String) -> String) {
+    this.rootDirectoryNameHandler = handler
+  }
+
+  /**
+   * Sets custom executable file patterns generator.
+   * The handler receives base patterns from the parent customizer, making it easy to extend or filter them.
+   *
+   * Note: Linux-specific parameter `targetLibcImpl` indicates GLIBC vs MUSL variant.
+   *
+   * Example:
+   * ```kotlin
+   * executableFilePatterns { base, _, arch, _, _ ->
+   *   base + listOf("bin/custom/$arch/tool")
+   * }
+   * ```
+   *
+   * @param handler Lambda receiving base patterns, includeRuntime flag, arch, targetLibcImpl, and context, returning a sequence of patterns
+   */
+  fun executableFilePatterns(handler: (basePatterns: Sequence<String>, Boolean, JvmArchitecture, LibcImpl, BuildContext) -> Sequence<String>) {
+    this.executableFilePatternsHandler = handler
+  }
+
+  /**
+   * Builds the [LinuxDistributionCustomizer] with the configured settings.
+   * Automatically resolves relative paths against projectHome.
+   */
+  fun build(): LinuxDistributionCustomizer {
+    return LinuxDistributionCustomizerImpl(builder = this, projectHome = projectHome)
+  }
+
+  private class LinuxDistributionCustomizerImpl(
+    private val builder: LinuxCustomizerBuilder,
+    private val projectHome: Path,
+  ) : LinuxDistributionCustomizer() {
+    init {
+      builder.iconPngPath?.let { iconPngPath = projectHome.resolve(it).toString() }
+      builder.iconPngPathForEAP?.let { iconPngPathForEAP = projectHome.resolve(it).toString() }
+      extraExecutables = builder.extraExecutables
+      buildArtifactWithoutRuntime = builder.buildArtifactWithoutRuntime
+      snaps = builder.snaps
+    }
+
+    override suspend fun copyAdditionalFiles(targetDir: Path, arch: JvmArchitecture, context: BuildContext) {
+      super.copyAdditionalFiles(targetDir = targetDir, arch = arch, context = context)
+      builder.copyAdditionalFilesHandler?.invoke(targetDir, arch, context)
+    }
+
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+      return builder.rootDirectoryNameHandler?.invoke(appInfo, buildNumber) ?: super.getRootDirectoryName(appInfo, buildNumber)
+    }
+
+    override fun generateExecutableFilesPatterns(
+      includeRuntime: Boolean,
+      arch: JvmArchitecture,
+      targetLibcImpl: LibcImpl,
+      context: BuildContext
+    ): Sequence<String> {
+      val basePatterns = super.generateExecutableFilesPatterns(includeRuntime, arch, targetLibcImpl, context)
+      return builder.executableFilePatternsHandler?.invoke(basePatterns, includeRuntime, arch, targetLibcImpl, context)
+        ?: basePatterns
+    }
+  }
+}
+
+/**
+ * Creates a [LinuxDistributionCustomizer] with Community edition defaults using a builder DSL.
  *
  * Example usage:
  * ```kotlin
@@ -20,32 +182,27 @@ import java.nio.file.Path
  * }
  * ```
  */
-inline fun communityLinuxCustomizer(projectHome: String, configure: LinuxDistributionCustomizer.() -> Unit = {}): LinuxDistributionCustomizer {
-  return object : LinuxDistributionCustomizer() {
-    init {
-      iconPngPath = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_128.png"
-      iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
-      snaps += Snap(
-        name = "intellij-idea-community",
-        description =
-          "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
-          "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
-      )
+inline fun communityLinuxCustomizer(projectHome: Path, configure: LinuxCustomizerBuilder.() -> Unit = {}): LinuxDistributionCustomizer {
+  return linuxCustomizer(projectHome) {
+    // Set Community defaults
+    iconPngPath = "build/conf/ideaCE/linux/images/icon_CE_128.png"
+    iconPngPathForEAP = "build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
+    snaps += LinuxDistributionCustomizer.Snap(
+      name = "intellij-idea-community",
+      description =
+        "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
+        "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
+    )
+
+    rootDirectoryName { _, buildNumber -> "idea-IC-$buildNumber" }
+
+    executableFilePatterns { base, _, _, _, _ ->
+      base.plus(KotlinBinaries.kotlinCompilerExecutables).filterNot { it == "plugins/**/*.sh" }
     }
 
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "idea-IC-$buildNumber"
-
-    override fun generateExecutableFilesPatterns(
-      includeRuntime: Boolean,
-      arch: JvmArchitecture,
-      targetLibcImpl: LibcImpl,
-      context: BuildContext,
-    ): Sequence<String> {
-      return super.generateExecutableFilesPatterns(includeRuntime, arch, targetLibcImpl, context)
-        .plus(KotlinBinaries.kotlinCompilerExecutables)
-        .filterNot { it == "plugins/**/*.sh" }
-    }
-  }.apply(configure)
+    // Apply user configuration
+    configure()
+  }
 }
 
 open class LinuxDistributionCustomizer {
