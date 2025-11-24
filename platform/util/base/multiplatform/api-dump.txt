@@ -92,6 +92,8 @@ c:com.intellij.util.text.CharSequenceSubSequence
 - hashCode():I
 - f:length():I
 - subSequence(I,I):java.lang.CharSequence
+com.intellij.util.text.Matcher
+- a:matches(java.lang.String):Z
 f:com.intellij.util.text.MergingCharSequence
 - java.lang.CharSequence
 - <init>(java.lang.CharSequence,java.lang.CharSequence):V
