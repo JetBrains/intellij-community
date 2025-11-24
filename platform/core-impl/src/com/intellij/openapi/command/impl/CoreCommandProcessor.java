@@ -2,8 +2,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -99,8 +98,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     boolean shouldRecordCommandForActiveDocument,
     @Nullable Document document
   ) {
-    Application application = ApplicationManager.getApplication();
-    application.assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format(
@@ -119,10 +117,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     }
 
     if (currentCommand != null) {
-      application.runWriteIntentReadAction(() -> {
-        command.run();
-        return null;
-      });
+      runCommandTask(command);
       return;
     }
 
@@ -136,7 +131,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       document
     );
     currentCommand = descriptor;
-    application.runWriteIntentReadAction(() -> {
+    Runnable commandTask = () -> {
       Throwable throwable = null;
       try {
         fireCommandStarted();
@@ -154,8 +149,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
           throw (ProcessCanceledException)finalThrowable;
         }
       }
-      return null;
-    });
+    };
+    runCommandTask(commandTask);
   }
 
   @Override
@@ -165,7 +160,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     @Nullable Object groupId,
     @NotNull UndoConfirmationPolicy undoConfirmationPolicy
   ) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertEventDispatchThread();
     if (project != null && project.isDisposed()) {
       return null;
     }
@@ -194,7 +189,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(currentCommand != null, "no current command in progress");
     fireCommandFinished();
   }
@@ -220,14 +215,14 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void setCurrentCommandName(String name) {
-    ThreadingAssertions.assertWriteIntentReadAccess();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(currentCommand != null);
     currentCommand = currentCommand.withName(name);
   }
 
   @Override
   public void setCurrentCommandGroupId(Object groupId) {
-    ThreadingAssertions.assertWriteIntentReadAccess();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(currentCommand != null);
     currentCommand = currentCommand.withGroupId(groupId);
   }
@@ -315,7 +310,6 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   public AccessToken allowMergeGlobalCommands() {
     ThreadingAssertions.assertWriteIntentReadAccess();
     allowMergeGlobalCommandsCount++;
-
     return new AccessToken() {
       @Override
       public void finish() {
@@ -394,5 +388,10 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       }
     }
     return null;
+  }
+
+  private static void runCommandTask(Runnable commandTask) {
+    // TODO: remove WI within IJPL-215129
+    WriteIntentReadAction.run(commandTask);
   }
 }

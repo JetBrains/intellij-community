@@ -102,14 +102,14 @@ public class UndoManagerImpl extends UndoManager {
 
   @Override
   public void undo(@Nullable FileEditor editor) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(isUndoAvailable(editor));
     undoOrRedo(editor, true);
   }
 
   @Override
   public void redo(@Nullable FileEditor editor) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertEventDispatchThread();
     LOG.assertTrue(isRedoAvailable(editor));
     undoOrRedo(editor, false);
   }
@@ -128,7 +128,7 @@ public class UndoManagerImpl extends UndoManager {
 
   @Override
   public void nonundoableActionPerformed(@NotNull DocumentReference ref, boolean isGlobal) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myProject != null && myProject.isDisposed()) {
       return;
     }
@@ -137,7 +137,7 @@ public class UndoManagerImpl extends UndoManager {
 
   @Override
   public void undoableActionPerformed(@NotNull UndoableAction action) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myProject != null && myProject.isDisposed()) {
       return;
     }
@@ -198,7 +198,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   public void invalidateActionsFor(@NotNull DocumentReference ref) {
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
+    ThreadingAssertions.assertEventDispatchThread();
     for (UndoClientState state : getAllClientStates()) {
       state.invalidateActions(ref);
     }
@@ -478,9 +478,13 @@ public class UndoManagerImpl extends UndoManager {
     return Pair.create(name.trim(), description.trim());
   }
 
+  private boolean isUndoRedoAvailable(@Nullable FileEditor editor, boolean undo) {
+    ThreadingAssertions.assertEventDispatchThread();
+    return isUndoRedoAvailableUnsafe(editor, undo);
+  }
+
   @ApiStatus.Internal
-  protected boolean isUndoRedoAvailable(@Nullable FileEditor editor, boolean undo) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  protected boolean isUndoRedoAvailableUnsafe(@Nullable FileEditor editor, boolean undo) {
     UndoClientState state = getClientState(editor);
     return state != null && state.isUndoRedoAvailable(editor, undo);
   }
