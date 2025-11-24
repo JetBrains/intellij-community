@@ -70,7 +70,7 @@ public final class RepositoryHelper {
 
     pluginsUrl = System.getProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY);
     if (pluginsUrl != null) {
-      hosts.add(pluginsUrl);
+      hosts.addAll(Arrays.asList(pluginsUrl.split(",")));
     }
 
     ContainerUtil.removeDuplicates(hosts);
