@@ -148,9 +148,9 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
         }
       }
       if (session.hasSuspendContext()) {
-        session.computeExecutionStacks { container }
+        session.computeExecutionStacks(container)
       } else {
-        session.computeRunningExecutionStacks { container }
+        session.computeRunningExecutionStacks(container)
       }
     }
   }

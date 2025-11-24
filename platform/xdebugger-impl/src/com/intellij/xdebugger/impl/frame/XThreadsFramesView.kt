@@ -523,7 +523,7 @@ class XThreadsFramesView(val debugTab: XDebugSessionTab3, private val sessionPro
         }
 
         myThreadsList.selectedIndex = 0
-        sessionProxy.computeExecutionStacks { this@ThreadsContainer }
+        sessionProxy.computeExecutionStacks(this@ThreadsContainer)
         isStarted = true
       }
     }

@@ -161,12 +161,12 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
     return session.suspendContext is XSteppingSuspendContext
   }
 
-  override fun computeExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer) {
-    session.suspendContext?.computeExecutionStacks(provideContainer())
+  override fun computeExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
+    session.suspendContext?.computeExecutionStacks(container)
   }
 
-  override fun computeRunningExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer) {
-    session.debugProcess.computeRunningExecutionStacks(provideContainer())
+  override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
+    session.debugProcess.computeRunningExecutionStacks(container)
   }
 
   override fun createTabLayouter(): XDebugTabLayouter = session.debugProcess.createTabLayouter()

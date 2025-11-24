@@ -224,7 +224,7 @@ public final class XFramesView extends XDebugView {
           return;
         }
         myBuilder = new ThreadsBuilder();
-        session.computeExecutionStacks(() -> myBuilder);
+        session.computeExecutionStacks(myBuilder);
       }
     });
 

@@ -14,11 +14,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.frontend.evaluate.quick.FrontendXValue
-import com.intellij.platform.debugger.impl.frontend.frame.FrontendDropFrameHandler
-import com.intellij.platform.debugger.impl.frontend.frame.FrontendXExecutionStack
-import com.intellij.platform.debugger.impl.frontend.frame.FrontendXStackFrame
-import com.intellij.platform.debugger.impl.frontend.frame.FrontendXSuspendContext
-import com.intellij.platform.debugger.impl.frontend.frame.collectExecutionStackEvents
+import com.intellij.platform.debugger.impl.frontend.frame.*
 import com.intellij.platform.debugger.impl.frontend.storage.getOrCreateStackFrame
 import com.intellij.platform.debugger.impl.rpc.*
 import com.intellij.platform.execution.impl.frontend.createFrontendProcessHandler
@@ -431,13 +427,12 @@ class FrontendXDebuggerSession private constructor(
     return currentContext.isStepping
   }
 
-  override fun computeExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer) {
-    getCurrentSuspendContext()?.computeExecutionStacks(provideContainer())
+  override fun computeExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
+    getCurrentSuspendContext()?.computeExecutionStacks(container)
   }
 
-  override fun computeRunningExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer) {
+  override fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackContainer) {
     coroutineScope.launch {
-      val container = provideContainer()
       XDebugSessionApi.getInstance()
         .computeRunningExecutionStacks(id)
         .collectExecutionStackEvents(project, coroutineScope, container)

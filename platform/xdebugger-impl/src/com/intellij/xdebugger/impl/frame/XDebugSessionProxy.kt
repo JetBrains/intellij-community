@@ -88,13 +88,13 @@ interface XDebugSessionProxy {
    * Computes execution stacks corresponding to all the live threads in the debug process and adds them to the provided container
    * if suspendContext is available.
    */
-  fun computeExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer)
+  fun computeExecutionStacks(container: XSuspendContext.XExecutionStackContainer)
 
   /**
    * Computes execution stacks corresponding to all the live threads in the debug process and adds them to the provided container.
    * Uses [com.intellij.xdebugger.XDebugProcess.computeRunningExecutionStacks] on the backend and doesn't require suspendContext.
    */
-  fun computeRunningExecutionStacks(provideContainer: () -> XSuspendContext.XExecutionStackContainer)
+  fun computeRunningExecutionStacks(container: XSuspendContext.XExecutionStackContainer)
   fun createTabLayouter(): XDebugTabLayouter
   fun addSessionListener(listener: XDebugSessionListener, disposable: Disposable)
   fun rebuildViews()
