@@ -2,6 +2,7 @@
 package com.intellij.platform.completion.common.protocol
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionResult
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementInsertStopper
@@ -22,19 +23,21 @@ data class RpcCompletionItem(
   val isDirectInsertion: Boolean,
 )
 
-fun LookupElement.toRpc(): RpcCompletionItem {
-  val presentation = render()
+fun CompletionResult.toRpc(): RpcCompletionItem {
+  val element = this.lookupElement
+  val presentation = element.render()
+  val id = RpcCompletionItemId()
   return RpcCompletionItem(
-    lookupString = this.lookupString,
-    allLookupStrings = this.allLookupStrings,
+    lookupString = element.lookupString,
+    allLookupStrings = element.allLookupStrings,
     presentation = presentation.toRpc(),
-    id = RpcCompletionItemId(),
-    insertHandler = this.getRpcInsertHandler(),
-    requiresCommittedDocuments = this.requiresCommittedDocuments(),
-    autoCompletionPolicy = this.autoCompletionPolicy,
-    isCaseSensitive = this.isCaseSensitive,
-    shouldStopLookupInsertion = this is LookupElementInsertStopper && this.shouldStopLookupInsertion(),
-    isDirectInsertion = this.getUserData(CodeCompletionHandlerBase.DIRECT_INSERTION) != null
+    id = id,
+    insertHandler = element.getRpcInsertHandler(),
+    requiresCommittedDocuments = element.requiresCommittedDocuments(),
+    autoCompletionPolicy = element.autoCompletionPolicy,
+    isCaseSensitive = element.isCaseSensitive,
+    shouldStopLookupInsertion = element is LookupElementInsertStopper && element.shouldStopLookupInsertion(),
+    isDirectInsertion = element.getUserData(CodeCompletionHandlerBase.DIRECT_INSERTION) != null,
   )
 }
 
