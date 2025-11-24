@@ -9,17 +9,11 @@ import org.jetbrains.annotations.CheckReturnValue
 @NonExtendable
 interface ProgressBuildEventBuilder {
 
-  @CheckReturnValue // mandatory field
-  fun withStartId(startId: Any): ProgressBuildEventBuilder
-
   @CheckReturnValue
   fun withParentId(parentId: Any?): ProgressBuildEventBuilder
 
   @CheckReturnValue
   fun withTime(time: Long?): ProgressBuildEventBuilder
-
-  @CheckReturnValue // mandatory field
-  fun withMessage(message: @Message String): ProgressBuildEventBuilder
 
   @CheckReturnValue
   fun withHint(hint: @Hint String?): ProgressBuildEventBuilder

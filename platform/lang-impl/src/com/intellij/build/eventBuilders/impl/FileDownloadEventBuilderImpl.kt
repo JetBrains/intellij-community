@@ -9,12 +9,15 @@ import com.intellij.build.events.impl.FileDownloadEventImpl
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class FileDownloadEventBuilderImpl : FileDownloadEventBuilder {
+class FileDownloadEventBuilderImpl(
+  private val startId: Any,
+  private val message: @Message String,
+  private val isFirstInGroup: Boolean,
+  private val downloadPath: String,
+) : FileDownloadEventBuilder {
 
-  private var startId: Any? = null
   private var parentId: Any? = null
   private var time: Long? = null
-  private var message: @Message String? = null
   private var hint: @Hint String? = null
   private var description: @Description String? = null
 
@@ -22,20 +25,11 @@ class FileDownloadEventBuilderImpl : FileDownloadEventBuilder {
   private var progress: Long? = null
   private var unit: String? = null
 
-  private var isFirstInGroup: Boolean? = null
-  private var downloadPath: String? = null
-
-  override fun withStartId(startId: Any): FileDownloadEventBuilderImpl =
-    apply { this.startId = startId }
-
   override fun withParentId(parentId: Any?): FileDownloadEventBuilderImpl =
     apply { this.parentId = parentId }
 
   override fun withTime(time: Long?): FileDownloadEventBuilderImpl =
     apply { this.time = time }
-
-  override fun withMessage(message: @Message String): FileDownloadEventBuilderImpl =
-    apply { this.message = message }
 
   override fun withHint(hint: @Hint String?): FileDownloadEventBuilderImpl =
     apply { this.hint = hint }
@@ -52,24 +46,6 @@ class FileDownloadEventBuilderImpl : FileDownloadEventBuilder {
   override fun withUnit(unit: String?): FileDownloadEventBuilderImpl =
     apply { this.unit = unit }
 
-  override fun withFirstInGroup(isFirstInGroup: Boolean): FileDownloadEventBuilderImpl =
-    apply { this.isFirstInGroup = isFirstInGroup }
-
-  override fun withDownloadPath(downloadPath: String): FileDownloadEventBuilderImpl =
-    apply { this.downloadPath = downloadPath }
-
   override fun build(): FileDownloadEventImpl =
-    FileDownloadEventImpl(
-      startId ?: throw IllegalStateException("The FileDownloadEvent's 'startId' property should be defined"),
-      parentId,
-      time,
-      message ?: throw IllegalStateException("The FileDownloadEvent's 'message' property should be defined"),
-      hint,
-      description,
-      total,
-      progress,
-      unit,
-      isFirstInGroup ?: throw IllegalStateException("The FileDownloadEvent's 'isFirstInGroup' property should be defined"),
-      downloadPath ?: throw IllegalStateException("The FileDownloadEvent's 'downloadPath' property should be defined")
-    )
+    FileDownloadEventImpl(startId, parentId, time, message, hint, description, total, progress, unit, isFirstInGroup, downloadPath)
 }

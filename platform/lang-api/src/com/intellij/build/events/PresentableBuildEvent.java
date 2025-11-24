@@ -20,8 +20,6 @@ public interface PresentableBuildEvent extends BuildEvent {
     @NotNull @Message String message,
     @NotNull BuildEventPresentationData presentationData
   ) {
-    return BuildEvents.getInstance().presentable()
-      .withMessage(message)
-      .withPresentationData(presentationData);
+    return BuildEvents.getInstance().presentable(message, presentationData);
   }
 }

@@ -9,16 +9,15 @@ import com.intellij.build.issue.BuildIssue
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class BuildIssueEventBuilderImpl : BuildIssueEventBuilder {
+class BuildIssueEventBuilderImpl(
+  private val issue: BuildIssue,
+  private val kind: MessageEvent.Kind,
+) : BuildIssueEventBuilder {
 
   private var id: Any? = null
   private var parentId: Any? = null
   private var time: Long? = null
   private var hint: @Hint String? = null
-
-  private var kind: MessageEvent.Kind? = null
-
-  private var issue: BuildIssue? = null
 
   override fun withId(id: Any?): BuildIssueEventBuilderImpl =
     apply { this.id = id }
@@ -32,19 +31,6 @@ class BuildIssueEventBuilderImpl : BuildIssueEventBuilder {
   override fun withHint(hint: @Hint String?): BuildIssueEventBuilderImpl =
     apply { this.hint = hint }
 
-  override fun withKind(kind: MessageEvent.Kind): BuildIssueEventBuilderImpl =
-    apply { this.kind = kind }
-
-  override fun withIssue(issue: BuildIssue): BuildIssueEventBuilderImpl =
-    apply { this.issue = issue }
-
   override fun build(): BuildIssueEventImpl =
-    BuildIssueEventImpl(
-      id,
-      parentId,
-      time,
-      hint,
-      issue ?: throw IllegalStateException("The BuildIssueEvent's 'issue' property should be defined"),
-      kind ?: throw IllegalStateException("The BuildIssueEvent's 'kind' property should be defined")
-    )
+    BuildIssueEventImpl(id, parentId, time, hint, issue, kind)
 }

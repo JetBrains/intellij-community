@@ -30,8 +30,6 @@ public interface StartEvent extends BuildEvent {
     @NotNull Object id,
     @NotNull @Message String message
   ) {
-    return BuildEvents.getInstance().start()
-      .withId(id)
-      .withMessage(message);
+    return BuildEvents.getInstance().start(id, message);
   }
 }

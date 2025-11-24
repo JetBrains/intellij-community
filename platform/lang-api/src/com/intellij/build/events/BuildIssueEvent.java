@@ -22,8 +22,6 @@ public interface BuildIssueEvent extends MessageEvent {
     @NotNull BuildIssue issue,
     @NotNull MessageEvent.Kind kind
   ) {
-    return BuildEvents.getInstance().buildIssue()
-      .withIssue(issue)
-      .withKind(kind);
+    return BuildEvents.getInstance().buildIssue(issue, kind);
   }
 }

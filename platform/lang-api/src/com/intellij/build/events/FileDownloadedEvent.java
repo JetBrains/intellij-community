@@ -2,6 +2,7 @@
 package com.intellij.build.events;
 
 import com.intellij.build.eventBuilders.FileDownloadedEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
 import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,14 +15,10 @@ public interface FileDownloadedEvent extends BuildEvent {
   @CheckReturnValue
   static @NotNull FileDownloadedEventBuilder builder(
     @NotNull Object startId,
-    @NotNull @BuildEventsNls.Message String message,
+    @NotNull @Message String message,
     long duration,
     @NotNull String downloadPath
   ) {
-    return BuildEvents.getInstance().fileDownloaded()
-      .withStartId(startId)
-      .withMessage(message)
-      .withDuration(duration)
-      .withDownloadPath(downloadPath);
+    return BuildEvents.getInstance().fileDownloaded(startId, message, duration, downloadPath);
   }
 }

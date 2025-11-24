@@ -9,29 +9,17 @@ import org.jetbrains.annotations.CheckReturnValue
 @NonExtendable
 interface FileDownloadedEventBuilder {
 
-  @CheckReturnValue // mandatory field
-  fun withStartId(startId: Any): FileDownloadedEventBuilder
-
   @CheckReturnValue
   fun withParentId(parentId: Any?): FileDownloadedEventBuilder
 
   @CheckReturnValue
   fun withTime(time: Long?): FileDownloadedEventBuilder
 
-  @CheckReturnValue // mandatory field
-  fun withMessage(message: @Message String): FileDownloadedEventBuilder
-
   @CheckReturnValue
   fun withHint(hint: @Hint String?): FileDownloadedEventBuilder
 
   @CheckReturnValue
   fun withDescription(description: @Description String?): FileDownloadedEventBuilder
-
-  @CheckReturnValue // mandatory field
-  fun withDuration(duration: Long): FileDownloadedEventBuilder
-
-  @CheckReturnValue // mandatory field
-  fun withDownloadPath(downloadPath: String): FileDownloadedEventBuilder
 
   fun build(): FileDownloadedEvent
 }

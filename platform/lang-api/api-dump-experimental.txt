@@ -23,8 +23,6 @@
 - a:build():com.intellij.build.events.BuildIssueEvent
 - a:withHint(java.lang.String):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
-- a:withIssue(com.intellij.build.issue.BuildIssue):com.intellij.build.eventBuilders.BuildIssueEventBuilder
-- a:withKind(com.intellij.build.events.MessageEvent$Kind):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withTime(java.lang.Long):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 *:com.intellij.build.eventBuilders.PresentableBuildEventBuilder
@@ -32,9 +30,7 @@
 - a:withDescription(java.lang.String):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
 - a:withHint(java.lang.String):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
 - a:withId(java.lang.Object):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
-- a:withMessage(java.lang.String):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
 - a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
-- a:withPresentationData(com.intellij.build.events.BuildEventPresentationData):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
 - a:withTime(java.lang.Long):com.intellij.build.eventBuilders.PresentableBuildEventBuilder
 com.intellij.build.eventBuilders.StartBuildEventBuilder
 - *a:withBuildViewSettings(com.intellij.build.BuildViewSettingsProvider):com.intellij.build.eventBuilders.StartBuildEventBuilder

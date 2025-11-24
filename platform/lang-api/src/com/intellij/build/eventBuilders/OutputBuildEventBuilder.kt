@@ -19,9 +19,6 @@ interface OutputBuildEventBuilder {
   @CheckReturnValue
   fun withTime(time: Long?): OutputBuildEventBuilder
 
-  @CheckReturnValue // mandatory field
-  fun withMessage(message: @Message String): OutputBuildEventBuilder
-
   @CheckReturnValue
   fun withHint(hint: @Hint String?): OutputBuildEventBuilder
 

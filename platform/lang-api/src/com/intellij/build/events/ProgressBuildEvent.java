@@ -50,8 +50,6 @@ public interface ProgressBuildEvent extends BuildEvent {
     @NotNull Object startId,
     @NotNull @Message String message
   ) {
-    return BuildEvents.getInstance().progress()
-      .withStartId(startId)
-      .withMessage(message);
+    return BuildEvents.getInstance().progress(startId, message);
   }
 }

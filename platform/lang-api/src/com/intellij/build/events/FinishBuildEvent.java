@@ -31,9 +31,6 @@ public interface FinishBuildEvent extends FinishEvent {
     @NotNull @Message String message,
     @NotNull EventResult result
   ) {
-    return BuildEvents.getInstance().finishBuild()
-      .withStartBuildId(startBuildId)
-      .withMessage(message)
-      .withResult(result);
+    return BuildEvents.getInstance().finishBuild(startBuildId, message, result);
   }
 }

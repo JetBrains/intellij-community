@@ -21,10 +21,6 @@ public interface FileDownloadEvent extends ProgressBuildEvent {
     boolean isFirstInGroup,
     @NotNull String downloadPath
   ) {
-    return BuildEvents.getInstance().fileDownload()
-      .withStartId(startId)
-      .withMessage(message)
-      .withFirstInGroup(isFirstInGroup)
-      .withDownloadPath(downloadPath);
+    return BuildEvents.getInstance().fileDownload(startId, message, isFirstInGroup, downloadPath);
   }
 }

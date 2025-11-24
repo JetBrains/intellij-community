@@ -19,17 +19,11 @@ interface MessageEventBuilder {
   @CheckReturnValue
   fun withTime(time: Long?): MessageEventBuilder
 
-  @CheckReturnValue // mandatory field
-  fun withMessage(message: @Message String): MessageEventBuilder
-
   @CheckReturnValue
   fun withHint(hint: @Hint String?): MessageEventBuilder
 
   @CheckReturnValue
   fun withDescription(description: @Description String?): MessageEventBuilder
-
-  @CheckReturnValue // mandatory field
-  fun withKind(kind: MessageEvent.Kind): MessageEventBuilder
 
   @CheckReturnValue
   fun withGroup(group: @Title String?): MessageEventBuilder

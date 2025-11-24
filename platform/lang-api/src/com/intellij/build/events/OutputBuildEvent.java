@@ -30,7 +30,6 @@ public interface OutputBuildEvent extends BuildEvent {
   static @NotNull OutputBuildEventBuilder builder(
     @NotNull @Message String message
   ) {
-    return BuildEvents.getInstance().output()
-      .withMessage(message);
+    return BuildEvents.getInstance().output(message);
   }
 }

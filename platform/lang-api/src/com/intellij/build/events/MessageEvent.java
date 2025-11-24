@@ -32,8 +32,6 @@ public interface MessageEvent extends BuildEvent {
     @NotNull @Message String message,
     @NotNull MessageEvent.Kind kind
   ) {
-    return BuildEvents.getInstance().message()
-      .withMessage(message)
-      .withKind(kind);
+    return BuildEvents.getInstance().message(message, kind);
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.build.events;
 
 import com.intellij.build.FilePosition;
 import com.intellij.build.eventBuilders.FileMessageEventBuilder;
+import com.intellij.build.events.BuildEventsNls.Message;
 import org.jetbrains.annotations.CheckReturnValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,13 +19,10 @@ public interface FileMessageEvent extends MessageEvent {
 
   @CheckReturnValue
   static @NotNull FileMessageEventBuilder builder(
-    @NotNull @BuildEventsNls.Message String message,
+    @NotNull @Message String message,
     @NotNull MessageEvent.Kind kind,
     @NotNull FilePosition filePosition
   ) {
-    return BuildEvents.getInstance().fileMessage()
-      .withMessage(message)
-      .withKind(kind)
-      .withFilePosition(filePosition);
+    return BuildEvents.getInstance().fileMessage(message, kind, filePosition);
   }
 }

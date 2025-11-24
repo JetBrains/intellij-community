@@ -41,8 +41,6 @@ public interface StartBuildEvent extends StartEvent {
     @NotNull @Message String message,
     @NotNull BuildDescriptor buildDescriptor
   ) {
-    return BuildEvents.getInstance().startBuild()
-      .withMessage(message)
-      .withBuildDescriptor(buildDescriptor);
+    return BuildEvents.getInstance().startBuild(message, buildDescriptor);
   }
 }
