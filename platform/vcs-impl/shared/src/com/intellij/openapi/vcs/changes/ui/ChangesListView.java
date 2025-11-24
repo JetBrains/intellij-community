@@ -100,23 +100,9 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
 
   @Override
   protected boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
-    if (isUnderResolvedConflicts(node)) return true;
+    if (VcsTreeModelDataExKt.isUnderTag(node, RESOLVED_CONFLICTS_NODE_TAG)) return true;
 
     return super.isIncludable(node);
-  }
-
-  private static boolean isUnderResolvedConflicts(@NotNull ChangesBrowserNode<?> node) {
-    ChangesBrowserNode<?> curNode = node;
-
-    while (curNode != null && !(node.getUserObject() instanceof LocalChangeList)
-           && curNode.getUserObject() != RESOLVED_CONFLICTS_NODE_TAG) {
-      curNode = curNode.getParent();
-      if (curNode != null && curNode.getUserObject() == RESOLVED_CONFLICTS_NODE_TAG) return true;
-    }
-
-    if (curNode == null) return false;
-
-    return curNode.getUserObject() == RESOLVED_CONFLICTS_NODE_TAG;
   }
 
   private static @Nullable ChangesBrowserNode<?> getSubtreeRoot(@NotNull ChangesBrowserNode<?> node) {

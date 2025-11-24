@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.openapi.vcs.changes.ui.isUnderTag
 import com.intellij.platform.vcs.changes.ChangesUtil
 import com.intellij.platform.vcs.impl.shared.changes.ChangesTreePath
 import com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffableSelection
@@ -93,18 +94,9 @@ internal class ChangesViewDiffableSelectionHelper(private val changesView: Chang
     return previousNode to nextNode
   }
 
-  private fun isUnderUnversioned(node: ChangesBrowserNode<*>): Boolean {
-    var current: ChangesBrowserNode<*>? = node.parent
-    while (current != null) {
-      if (current.userObject == ChangesBrowserNode.UNVERSIONED_FILES_TAG) return true
-      current = current.parent
-    }
-    return false
-  }
-
   private fun isDiffableNode(node: ChangesBrowserNode<*>): Boolean = when (node.userObject) {
     is Change -> true
-    is FilePath -> isUnderUnversioned(node)
+    is FilePath -> node.isUnderTag(ChangesBrowserNode.UNVERSIONED_FILES_TAG)
     else -> false
   }
 }
