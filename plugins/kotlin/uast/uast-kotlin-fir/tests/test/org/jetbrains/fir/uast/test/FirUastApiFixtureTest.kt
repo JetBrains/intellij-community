@@ -253,4 +253,8 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testAttributeValueWithExtraParenthesis() {
         checkAttributeValueWithExtraParenthesis(myFixture)
     }
+
+    fun testMathPi() {
+        checkMathPi(myFixture)
+    }
 }
