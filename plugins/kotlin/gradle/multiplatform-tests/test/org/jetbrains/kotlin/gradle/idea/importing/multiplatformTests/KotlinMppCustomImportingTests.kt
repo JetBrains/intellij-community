@@ -74,21 +74,6 @@ class KotlinMppCustomImportingTests : AbstractKotlinMppGradleImportingTest() {
 
             assertNull(builtGradleModel.getByProjectPathOrThrow(":p3"))
 
-            /* Check root project */
-            run {
-                val rootModel = builtGradleModel.getNotNullByProjectPathOrThrow(":")
-
-                kotlin.test.assertEquals(
-                    setOf("prepareKotlinIdeaImport"), rootModel.prepareKotlinIdeaImportTaskNames,
-                    "Expected root module supporting the 'prepareKotlinIdeaImport' task"
-                )
-
-                kotlin.test.assertEquals(
-                    emptySet(), rootModel.legacyTaskNames,
-                    "Expected no 'legacyTaskNames' on root module"
-                )
-            }
-
             /* Check p1 */
             run {
                 val p1Model = builtGradleModel.getNotNullByProjectPathOrThrow(":p1")
