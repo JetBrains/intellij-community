@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.jetbrains.python.PyNames.TYPE_ENUM_FLAG;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
@@ -103,7 +104,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
     if (referenceTarget instanceof PyQualifiedNameOwner qualifiedNameOwner) {
       final String name = qualifiedNameOwner.getQualifiedName();
-      if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
+      if ((PyNames.TYPE_ENUM + ".name").equals(name) || (TYPE_ENUM_FLAG + ".name").equals(name)) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
       else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
