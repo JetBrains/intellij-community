@@ -3,6 +3,7 @@ package com.intellij.openapi.options
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -21,19 +22,25 @@ class ConfigurableBuilderHelper {
 
     @JvmStatic
     @ApiStatus.Internal
-    fun integrateBeanPanel(rootPanel: Panel, beanConfigurable: BeanConfigurable<*>, components: List<JComponent>) {
-      rootPanel.appendBeanConfigurableContent(beanConfigurable, components)
+    fun integrateBeanPanel(rootPanel: Panel, beanConfigurable: BeanConfigurable<*>, components: List<JComponent>, groupTopGap: TopGap? = null) {
+      rootPanel.appendBeanConfigurableContent(beanConfigurable, components, groupTopGap)
       rootPanel.onApply { beanConfigurable.apply() }
       rootPanel.onIsModified { beanConfigurable.isModified() }
       rootPanel.onReset { beanConfigurable.reset() }
     }
 
-    private fun Panel.appendBeanConfigurableContent(beanConfigurable: BeanConfigurable<*>, components: List<JComponent>) {
+    private fun Panel.appendBeanConfigurableContent(
+      beanConfigurable: BeanConfigurable<*>, components: List<JComponent>,
+      groupTopGap: TopGap? = null,
+    ) {
       val title = beanConfigurable.title
 
       if (title != null) {
-        group(title) {
+        val group = group(title) {
           appendBeanFields(components)
+        }
+        if (groupTopGap != null) {
+          group.topGap(groupTopGap)
         }
       }
       else {

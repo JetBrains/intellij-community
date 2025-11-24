@@ -21,7 +21,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
   var title: @NlsContexts.BorderTitle String? = null
     protected set
 
-  private val myFields: MutableList<CheckboxField> = ArrayList<CheckboxField>()
+  private val myFields = mutableListOf<CheckboxField>()
 
   protected constructor(beanInstance: T, title: @NlsContexts.BorderTitle String?) : this(beanInstance) {
     this.title = title
@@ -192,7 +192,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
   }
 
   override fun Panel.createContent() {
-    ConfigurableBuilderHelper.integrateBeanPanel(this, this@BeanConfigurable, this@BeanConfigurable.components)
+    ConfigurableBuilderHelper.integrateBeanPanel(this, this@BeanConfigurable, components)
   }
 
   override fun isModified(): Boolean {
@@ -215,6 +215,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
     }
   }
 
-  private val components: List<JComponent>
+  protected val components: List<JComponent>
+    @ApiStatus.Internal
     get() = myFields.map { it.component }
 }
