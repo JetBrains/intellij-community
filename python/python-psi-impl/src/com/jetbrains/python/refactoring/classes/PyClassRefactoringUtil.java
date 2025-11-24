@@ -25,11 +25,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -273,7 +275,27 @@ public final class PyClassRefactoringUtil {
       if (PsiTreeUtil.isAncestor(targetNode.getContainingFile(), target, false)) return;
       if (ArrayUtil.contains(target, otherMovedElements)) return;
       if (target instanceof PyFile || target instanceof PsiDirectory) {
-        PyPsiRefactoringUtil.insertImport(targetNode, target, asName, useFromImport != null ? useFromImport : true);
+        boolean preferFromImport = useFromImport != null ? useFromImport : true;
+        boolean isUsedAsQualifier = sourceNode.getParent() instanceof PyQualifiedExpression &&
+                                   ((PyQualifiedExpression)sourceNode.getParent()).getQualifier() == sourceNode;
+        boolean shouldQualifyReference = target instanceof PyFile && 
+                                        PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT && 
+                                        useFromImport != null && useFromImport && 
+                                        asName == null &&
+                                        !isUsedAsQualifier;
+        if (shouldQualifyReference) {
+          preferFromImport = false;
+        }
+        PyPsiRefactoringUtil.insertImport(targetNode, target, asName, preferFromImport);
+        if (shouldQualifyReference) {
+          QualifiedName canonicalPath = QualifiedNameFinder.findCanonicalImportPath(target, targetNode);
+          if (canonicalPath != null && sourceNode.isValid()) {
+            String qualifiedReference = canonicalPath.toString();
+            PyElementGenerator generator = PyElementGenerator.getInstance(sourceNode.getProject());
+            PyExpression newExpr = generator.createExpressionFromText(LanguageLevel.forElement(sourceNode), qualifiedReference);
+            sourceNode.replace(newExpr);
+          }
+        }
       }
       else {
         PyPsiRefactoringUtil.insertImport(targetNode, target, asName, true);

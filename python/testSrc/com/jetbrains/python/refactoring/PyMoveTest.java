@@ -283,6 +283,18 @@ public class PyMoveTest extends PyTestCase {
     }
   }
 
+  @TestFor(issues="PY-6591")
+  public void testImportForMovedElementWithPreferredQualifiedImportStyleModule() {
+    final boolean defaultImportStyle = PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
+    try {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = true;
+      doMoveSymbolTest("usage", "lib/dst.py");
+    }
+    finally {
+      PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT = defaultImportStyle;
+    }
+  }
+
   @TestFor(issues="PY-84659")
   public void testQualifiedUsageRespectsPreferFromImport() {
     final boolean defaultImportStyle = PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
