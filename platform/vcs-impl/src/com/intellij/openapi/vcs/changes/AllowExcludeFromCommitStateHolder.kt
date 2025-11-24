@@ -21,14 +21,18 @@ internal class AllowExcludeFromCommitStateHolder(project: Project) {
 
     val currentWorkflowHandler = workflowManager.commitWorkflowHandler
     registerListener(currentWorkflowHandler)
-    _allowExcludeFromCommit.value = currentWorkflowHandler?.isActive == true
   }
 
   private fun registerListener(workflowHandler: ChangesViewCommitWorkflowHandler?) {
     workflowHandler?.addActivityListener(object : ChangesViewCommitWorkflowHandler.ActivityListener {
       override fun activityStateChanged() {
-        _allowExcludeFromCommit.value = workflowHandler.isActive == true
+        allowExcludeFromCommit(workflowHandler)
       }
     })
+    allowExcludeFromCommit(workflowHandler)
+  }
+
+  private fun allowExcludeFromCommit(workflowHandler: ChangesViewCommitWorkflowHandler?) {
+    _allowExcludeFromCommit.value = workflowHandler?.isActive == true
   }
 }
