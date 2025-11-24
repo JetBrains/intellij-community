@@ -4,7 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import io.opentelemetry.api.trace.Span
 import org.jdom.Element
 import org.jetbrains.intellij.build.BuildContext
@@ -81,7 +81,7 @@ internal fun processAndGetProductPluginContentModules(
   val moduleItems = LinkedHashSet<ModuleItem>()
   filterAndProcessContentModules(rootElement = element, pluginMainModuleName = null, context = context) { moduleElement, moduleName, loadingRule ->
     processProductModule(
-      isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRule.EMBEDDED.name.lowercase(),
+      isEmbedded = loadingRule != null && loadingRule == ModuleLoadingRuleValue.EMBEDDED.name.lowercase(),
       moduleName = moduleName,
       moduleElement = moduleElement,
       frontendModuleFilter = frontendModuleFilter,

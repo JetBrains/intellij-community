@@ -1,6 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.plugins.parser.impl.elements
 
-enum class ModuleLoadingRule {
+enum class ModuleLoadingRuleValue {
   REQUIRED, EMBEDDED, OPTIONAL, ON_DEMAND
 }

@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility
 import com.intellij.platform.plugins.testFramework.LoadFromSourceXIncludeLoader
 import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
@@ -378,7 +378,7 @@ class PluginModelValidator(
     sourceModuleNameToPluginFileInfo: Map<String, PluginDescriptorFileInfo>,
     contentModuleToContainingPlugins: HashMap<String, MutableList<ModuleInfo>>,
     isMainModule: Boolean,
-    contentModuleNameFromThisPluginToLoadingRule: Map<String, ModuleLoadingRule>,
+    contentModuleNameFromThisPluginToLoadingRule: Map<String, ModuleLoadingRuleValue>,
   ) {
     val moduleDependenciesCount = dependenciesElements.count { 
       it is DependenciesElement.ModuleDependency || it is DependenciesElement.PluginDependency && it.pluginId.startsWith("com.intellij.modules.")
@@ -478,15 +478,15 @@ class PluginModelValidator(
                         |""".trimMargin())
               continue
             }
-            !isMainModule && loadingRule == ModuleLoadingRule.OPTIONAL 
-              && moduleName != "intellij.platform.backend" -> { // remove this check when IJPL-201428 is fixed
+            !isMainModule && loadingRule == ModuleLoadingRuleValue.OPTIONAL
+            && moduleName != "intellij.platform.backend" -> { // remove this check when IJPL-201428 is fixed
                 
               val thisModuleName = referencingModuleInfo.name ?: error("Module name is not specified for $referencingModuleInfo")
               val thisLoadingRule = contentModuleNameFromThisPluginToLoadingRule.getValue(thisModuleName)
               val problemDescription = when (thisLoadingRule) {
-                ModuleLoadingRule.EMBEDDED ->
+                ModuleLoadingRuleValue.EMBEDDED ->
                   "Since optional modules have implicit dependencies on the main module, this creates a circular dependency and the plugin won't load."
-                ModuleLoadingRule.REQUIRED ->
+                ModuleLoadingRuleValue.REQUIRED ->
                   "This actually makes '${moduleName}' required as well (the plugin won't load if it's not available)."
                 else -> null
               }
@@ -587,7 +587,7 @@ class PluginModelValidator(
 
       val moduleDescriptorFileInfo = contentModuleNameToFileInfo[moduleName]
       if (moduleDescriptorFileInfo == null) {
-        if (contentElement.loadingRule == ModuleLoadingRule.REQUIRED || contentElement.loadingRule == ModuleLoadingRule.EMBEDDED || !validationOptions.skipUnresolvedOptionalContentModules) {
+        if (contentElement.loadingRule == ModuleLoadingRuleValue.REQUIRED || contentElement.loadingRule == ModuleLoadingRuleValue.EMBEDDED || !validationOptions.skipUnresolvedOptionalContentModules) {
           reportError("Cannot find module $moduleName", referencingModuleInfo.sourceModule, mapOf(
             "referencingDescriptorFile" to referencingModuleInfo.descriptorFile
           ))

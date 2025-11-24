@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.serialization.Serializable
 
 /**
@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ModuleSetWithOverrides(
   @JvmField val moduleSet: ModuleSet,
-  @JvmField val loadingOverrides: Map<String, ModuleLoadingRule> = emptyMap(),
+  @JvmField val loadingOverrides: Map<String, ModuleLoadingRuleValue> = emptyMap(),
 ) {
   val hasOverrides: Boolean
     get() = loadingOverrides.isNotEmpty()
@@ -25,31 +25,31 @@ data class ModuleSetWithOverrides(
  */
 @ProductDslMarker
 class ModuleLoadingOverrideBuilder {
-  private val overrides = HashMap<String, ModuleLoadingRule>()
+  private val overrides = HashMap<String, ModuleLoadingRuleValue>()
 
   /**
    * Override a module in this module set to be loaded as embedded (loading="embedded").
    */
   fun overrideAsEmbedded(moduleName: String) {
-    overrides.put(moduleName, ModuleLoadingRule.EMBEDDED)
+    overrides.put(moduleName, ModuleLoadingRuleValue.EMBEDDED)
   }
 
   /**
    * Override a module in this module set to be loaded as required (loading="required").
    */
   fun overrideAsRequired(moduleName: String) {
-    overrides.put(moduleName, ModuleLoadingRule.REQUIRED)
+    overrides.put(moduleName, ModuleLoadingRuleValue.REQUIRED)
   }
 
   /**
    * Set custom loading rule for modules.
    */
-  fun loading(rule: ModuleLoadingRule, vararg moduleNames: String) {
+  fun loading(rule: ModuleLoadingRuleValue, vararg moduleNames: String) {
     for (name in moduleNames) {
       overrides.put(name, rule)
     }
   }
 
   @PublishedApi
-  internal fun build(): Map<String, ModuleLoadingRule> = overrides.toMap()
+  internal fun build(): Map<String, ModuleLoadingRuleValue> = overrides.toMap()
 }

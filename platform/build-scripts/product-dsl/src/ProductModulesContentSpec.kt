@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.serialization.Serializable
 
 /**
@@ -272,7 +272,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   }
 
   @PublishedApi
-  internal fun addModuleSet(set: ModuleSet, overrides: Map<String, ModuleLoadingRule>) {
+  internal fun addModuleSet(set: ModuleSet, overrides: Map<String, ModuleLoadingRuleValue>) {
     moduleSets.add(ModuleSetWithOverrides(set, overrides))
     compositionGraph.add(SpecComposition(
       type = CompositionType.MODULE_SET_REF,
@@ -285,7 +285,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
   /**
    * Add an individual module to additionalModules.
    */
-  fun module(name: String, loading: ModuleLoadingRule? = null) {
+  fun module(name: String, loading: ModuleLoadingRuleValue? = null) {
     additionalModules.add(ContentModule(name, loading))
     compositionGraph.add(SpecComposition(
       type = CompositionType.DIRECT_MODULE,
@@ -299,7 +299,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * Add an individual module with EMBEDDED loading to additionalModules.
    */
   fun embeddedModule(name: String) {
-    additionalModules.add(ContentModule(name, ModuleLoadingRule.EMBEDDED))
+    additionalModules.add(ContentModule(name, ModuleLoadingRuleValue.EMBEDDED))
     compositionGraph.add(SpecComposition(
       type = CompositionType.DIRECT_MODULE,
       reference = name,
@@ -312,7 +312,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
    * Add an individual module with REQUIRED loading to additionalModules.
    */
   fun requiredModule(name: String) {
-    additionalModules.add(ContentModule(name, ModuleLoadingRule.REQUIRED))
+    additionalModules.add(ContentModule(name, ModuleLoadingRuleValue.REQUIRED))
     compositionGraph.add(SpecComposition(
       type = CompositionType.DIRECT_MODULE,
       reference = name,

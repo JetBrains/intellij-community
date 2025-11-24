@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productLayout
 
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import kotlinx.serialization.Serializable
 import org.jetbrains.intellij.build.BuildPaths
 import java.nio.file.Files
@@ -16,7 +16,7 @@ import java.nio.file.Path
 @Serializable
 data class ContentModule(
   @JvmField val name: String,
-  @JvmField val loading: ModuleLoadingRule? = null,
+  @JvmField val loading: ModuleLoadingRuleValue? = null,
   @JvmField val includeDependencies: Boolean = false,
 )
 
@@ -59,7 +59,7 @@ class ModuleSetBuilder {
   /**
    * Add a single module.
    */
-  fun module(name: String, loading: ModuleLoadingRule? = null) {
+  fun module(name: String, loading: ModuleLoadingRuleValue? = null) {
     modules.add(ContentModule(name, loading))
   }
 
@@ -67,7 +67,7 @@ class ModuleSetBuilder {
    * Add a single module with EMBEDDED loading.
    */
   fun embeddedModule(name: String, includeDependencies: Boolean = false) {
-    modules.add(ContentModule(name, ModuleLoadingRule.EMBEDDED, includeDependencies))
+    modules.add(ContentModule(name, ModuleLoadingRuleValue.EMBEDDED, includeDependencies))
   }
 
   /**
@@ -109,7 +109,7 @@ inline fun moduleSet(name: String, alias: String? = null, block: ModuleSetBuilde
  */
 private fun appendModuleXml(sb: StringBuilder, module: ContentModule) {
   sb.append("    <module name=\"${module.name}\"")
-  if (module.loading == ModuleLoadingRule.EMBEDDED) {
+  if (module.loading == ModuleLoadingRuleValue.EMBEDDED) {
     sb.append(" loading=\"embedded\"")
   }
   sb.append("/>")

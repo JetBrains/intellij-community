@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 
 internal data class ContentBuildData(
   @JvmField val contentBlocks: List<ContentBlock>,
@@ -32,7 +32,7 @@ internal fun buildContentBlocksAndChainMapping(
   val processedSets = HashSet<String>()
   val contentBlockByName = HashMap<String, ContentBlock>()
 
-  fun traverse(moduleSet: ModuleSet, chain: List<String>, overrides: Map<String, ModuleLoadingRule>) {
+  fun traverse(moduleSet: ModuleSet, chain: List<String>, overrides: Map<String, ModuleLoadingRuleValue>) {
     val setName = "$MODULE_SET_PREFIX${moduleSet.name}"
     
     // Check if already processed

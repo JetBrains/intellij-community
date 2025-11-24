@@ -14,7 +14,7 @@ import com.intellij.platform.plugins.parser.impl.elements.PreloadMode.*
 import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.platform.plugins.parser.impl.elements.ClientKind as ClientKindElement
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule as ModuleLoadingRuleElement
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue as ModuleLoadingRuleElement
 import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility as ModuleVisibilityElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(

@@ -3,7 +3,7 @@ package com.intellij.platform.plugins.parser.impl.elements
 
 class ContentModuleElement(
   val name: String,
-  val loadingRule: ModuleLoadingRule,
+  val loadingRule: ModuleLoadingRuleValue,
   /** `required-if-available` attribute value */
   val requiredIfAvailable: String?,
   val embeddedDescriptorContent: CharArray?,

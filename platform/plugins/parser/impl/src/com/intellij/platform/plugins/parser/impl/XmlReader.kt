@@ -25,7 +25,7 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule as LoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue as LoadingRule
 
 internal fun readModuleDescriptor(
   consumer: PluginDescriptorFromXmlStreamConsumer,

@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.productLayout
 
-import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRule
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 
 // Constants for magic strings used throughout the generator
 internal const val ADDITIONAL_MODULES_BLOCK = "additional"
@@ -38,7 +38,7 @@ data class ModuleWithLoading(
   /** Module name */
   @JvmField val name: String,
   /** Effective loading mode (null means default/no attribute) */
-  @JvmField val loading: ModuleLoadingRule?,
+  @JvmField val loading: ModuleLoadingRuleValue?,
   /** Whether to include dependencies of this module */
   @JvmField val includeDependencies: Boolean = false,
 )
