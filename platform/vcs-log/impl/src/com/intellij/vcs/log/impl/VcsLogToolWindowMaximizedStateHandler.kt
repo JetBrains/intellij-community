@@ -139,8 +139,8 @@ internal class VcsLogToolWindowMaximizedStateComponent : PersistentStateComponen
 private fun Project.vcsToolWindowFlow(): Flow<ToolWindow?> = callbackFlow {
   messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
     override fun toolWindowsRegistered(ids: List<String?>, toolWindowManager: ToolWindowManager) {
-      ids.find { it == ToolWindowId.VCS }?.let { toolWindowManager.getToolWindow(it) }
-        .let(::trySend)
+      if (!ids.contains(ToolWindowId.VCS)) return
+      toolWindowManager.getToolWindow(ToolWindowId.VCS)?.let(::trySend)
     }
 
     override fun toolWindowUnregistered(id: String, toolWindow: ToolWindow) {
