@@ -16,10 +16,7 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.formatter.java.LegacyChainedMethodCallsBlockBuilder;
 import com.intellij.util.IncorrectOperationException;
 
 /**
@@ -838,40 +835,5 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
             }
         }"""
     );
-  }
-
-  public void testIdea274778() {
-    CommonCodeStyleSettings.IndentOptions indentOptions = getSettings().getIndentOptions();
-    indentOptions.INDENT_SIZE = 3;
-    indentOptions.CONTINUATION_INDENT_SIZE = 3;
-    getSettings().ALIGN_MULTILINE_CHAINED_METHODS = true;
-    RegistryValue pre212compat = Registry.get(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY);
-    try {
-      pre212compat.setValue(true);
-      doTextTest(
-        """
-          class Foo {
-          void foo() {
-          LOG.error(DetailsMessage.of(
-          "TITLE",
-          "LONG MESSAGE TEXT...")
-          .with("value", value));
-          }
-          }""",
-
-        """
-          class Foo {
-             void foo() {
-                LOG.error(DetailsMessage.of(
-                   "TITLE",
-                   "LONG MESSAGE TEXT...")
-                                        .with("value", value));
-             }
-          }"""
-      );
-    }
-    finally {
-      pre212compat.setValue(false);
-    }
   }
 }

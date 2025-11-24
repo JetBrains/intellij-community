@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -2048,8 +2047,6 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private boolean isAllowedToMoveSemicolonInLongCallChain() {
     if (!myJavaSettings.WRAP_SEMICOLON_AFTER_CALL_CHAIN) return false;
-
-    if (Registry.is(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY)) return false;
 
     if(!(myChild1 instanceof PsiMethodCallExpression) || myType1 != JavaElementType.METHOD_CALL_EXPRESSION) return false;
 
