@@ -22,7 +22,6 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Version;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyLanguageFacadeKt;
@@ -37,8 +36,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.function.Function;
-
-import static com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt.evaluateVersionsForElement;
 
 /**
  * @author Dennis.Ushakov
@@ -70,7 +67,7 @@ public final class PyDefUseUtil {
     if (startNum < 0) {
       return Collections.emptyList();
     }
-    
+
     QualifiedName varQname = QualifiedName.fromDottedString(varName);
 
     LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(anchor.getContainingFile());
@@ -125,27 +122,21 @@ public final class PyDefUseUtil {
                         acceptTypeAssertions && access.isAssertTypeAccess() && instruction.num() < startNum) {
 
                       final String name = rwInstruction.getName();
-                      
+
                       if (name != null && isQualifiedBy(varQname, name)) {
-                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)){
-                          foundPrefixWrite.set(true);
-                          return ControlFlowUtil.Operation.BREAK;
-                        }
+                        foundPrefixWrite.set(true);
+                        return ControlFlowUtil.Operation.BREAK;
                       }
-                      
+
                       if (Comparing.strEqual(name, varName)) {
-                        if (isReachableWithVersionChecks(rwInstruction, languageLevel)) {
-                          result.add(rwInstruction);
-                        }
+                        result.add(rwInstruction);
                         return ControlFlowUtil.Operation.CONTINUE;
                       }
                     }
                   }
                   else if (acceptImplicitImports && instruction.getElement() instanceof PyImplicitImportNameDefiner implicit) {
                     if (!implicit.multiResolveName(varName).isEmpty()) {
-                      if (isReachableWithVersionChecks(instruction, languageLevel)) {
-                        result.add(instruction);
-                      }
+                      result.add(instruction);
                       return ControlFlowUtil.Operation.CONTINUE;
                     }
                   }
@@ -223,13 +214,6 @@ public final class PyDefUseUtil {
         }
       }
     }
-  }
-
-  private static boolean isReachableWithVersionChecks(@NotNull Instruction instruction, @NotNull LanguageLevel languageLevel) {
-    PsiElement element = instruction.getElement();
-    if (element == null) return true;
-    Version version = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
-    return evaluateVersionsForElement(element).contains(version);
   }
 
   public static PsiElement @NotNull [] getPostRefs(@NotNull ScopeOwner block, @NotNull PyTargetExpression var, PyExpression anchor) {

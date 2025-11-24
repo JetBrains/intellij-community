@@ -108,19 +108,24 @@ print('Reachable')
                    """);
   }
 
-  // PY-81936
+  // PY-83344
   public void testUnreachableWithLangLevel() {
-    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> doTestByText("""
-import sys
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> doTestByText(
+      """
+        import sys
 
-if sys.version_info < (2, 7):
-    <warning descr="This code is unreachable">print("Unreachable")</warning>
-
-if sys.version_info > (3, 11):
-    <warning descr="This code is unreachable">print("Unreachable")</warning>
-                   """));
+        if sys.version_info < (2, 7):
+            print("Unreachable")
+        
+        if sys.version_info > (3, 11):
+            print("Unreachable")
+        
+        if sys.version_info < (3,) or sys.version_info >= (3, 11):
+            print("Unreachable")
+        """
+    ));
   }
-  
+
   // PY-81947
   public void testAnyOrNoneAfterIsNotNoneCast(){
     doTestByText("""

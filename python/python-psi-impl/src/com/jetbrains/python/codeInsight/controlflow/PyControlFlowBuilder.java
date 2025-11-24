@@ -41,11 +41,14 @@ import java.util.List;
 public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
+  private final @Nullable LanguageLevel myLanguageLevel;
 
   private @Nullable TrueFalseNodes myTrueFalseNodes;
 
   // see com.jetbrains.python.PyPatternTypeTest.testMatchClassPatternShadowingCapture
   private final @NotNull List<String> myPatternBindingNames = new ArrayList<>();
+
+  public PyControlFlowBuilder(@Nullable LanguageLevel languageLevel) { myLanguageLevel = languageLevel; }
 
   private record TrueFalseNodes(@NotNull Instruction trueNode, @NotNull Instruction falseNode) {}
 
@@ -491,7 +494,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       }
       myBuilder.prevInstruction = thenNode;
 
-      Boolean conditionResult = PyEvaluator.evaluateAsBooleanNoResolve(condition);
+      Boolean conditionResult = PyEvaluator.evaluateAsBooleanNoResolve(condition, myLanguageLevel);
       boolean unreachable = alwaysTrueCondition != null || Boolean.FALSE.equals(conditionResult);
       if (unreachable) {
         boolean isUnreachableForTypeChecking;
@@ -533,11 +536,40 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   private static boolean isTypeCheckingCondition(@Nullable PyExpression expression) {
+    return isTypeCheckingCheck(expression) || isVersionCheck(expression);
+  }
+
+  private static boolean isTypeCheckingCheck(@Nullable PyExpression expression) {
     expression = PyPsiUtils.flattenParens(expression);
     if (expression instanceof PyPrefixExpression prefixExpression && prefixExpression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
       return isTypeCheckingCondition(prefixExpression.getOperand());
     }
     return PyEvaluator.isTypeCheckingExpression(expression);
+  }
+
+  private static boolean isVersionCheck(@Nullable PyExpression expression) {
+    expression = PyPsiUtils.flattenParens(expression);
+    if (expression instanceof PyPrefixExpression prefixExpression && prefixExpression.getOperator() == PyTokenTypes.NOT_KEYWORD) {
+      return isVersionCheck(prefixExpression.getOperand());
+    }
+    if (expression instanceof PyBinaryExpression binaryExpression) {
+      PyElementType op = binaryExpression.getOperator();
+      if (PyTokenTypes.AND_KEYWORD.equals(op) || PyTokenTypes.OR_KEYWORD.equals(op)) {
+        return isVersionCheck(binaryExpression.getLeftExpression()) &&
+               isVersionCheck(binaryExpression.getRightExpression());
+      }
+      if (PyTokenTypes.RELATIONAL_OPERATIONS.contains(op)) {
+        if (PyEvaluator.isSysVersionInfoExpression(binaryExpression.getLeftExpression()) &&
+            PyPsiUtils.flattenParens(binaryExpression.getRightExpression()) instanceof PyTupleExpression) {
+          return true;
+        }
+        if (PyPsiUtils.flattenParens(binaryExpression.getLeftExpression()) instanceof PyTupleExpression &&
+            PyEvaluator.isSysVersionInfoExpression(binaryExpression.getRightExpression())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override
