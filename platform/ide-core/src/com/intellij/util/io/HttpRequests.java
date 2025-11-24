@@ -2,10 +2,8 @@
 package com.intellij.util.io;
 
 import com.intellij.Patches;
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.ui.IdeUiService;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -19,10 +17,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.Url;
 import com.intellij.util.net.NetUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.net.ssl.*;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
@@ -30,9 +32,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNullElse;
@@ -56,7 +55,7 @@ import static java.util.Objects.requireNonNullElse;
  * {@code int firstByte = HttpRequests.request("file:///dev/random").connect(request -> request.getInputStream().read())}<br>
  * {@code String firstLine = HttpRequests.request("https://example.com").connect(request -> new BufferedReader(request.getReader()).readLine())}</p>
  *
- * @see HttpStatusException a sublass of IOException, which includes an actual URL and HTTP response code
+ * @see HttpStatusException a subclass of IOException, which includes an actual URL and HTTP response code
  * @see URLUtil
  */
 public final class HttpRequests {
@@ -90,6 +89,9 @@ public final class HttpRequests {
 
     @NotNull BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
 
+    /** Prefer {@link #saveToFile(Path, ProgressIndicator)}. */
+    @ApiStatus.Obsolete
+    @SuppressWarnings("IO_FILE_USAGE")
     default @NotNull File saveToFile(@NotNull File file, @Nullable ProgressIndicator indicator) throws IOException {
       return saveToFile(file.toPath(), indicator).toFile();
     }
@@ -115,9 +117,9 @@ public final class HttpRequests {
     }
 
     default void write(byte @NotNull [] data) throws IOException {
-      HttpURLConnection connection = (HttpURLConnection)getConnection();
+      var connection = (HttpURLConnection)getConnection();
       connection.setFixedLengthStreamingMode(data.length);
-      try (OutputStream stream = connection.getOutputStream()) {
+      try (var stream = connection.getOutputStream()) {
         stream.write(data);
       }
     }
@@ -199,7 +201,7 @@ public final class HttpRequests {
 
   private static RequestBuilder requestWithBody(String url, String requestMethod, @Nullable String contentType, @Nullable ConnectionTuner tuner) {
     return new RequestBuilderImpl(url, rawConnection -> {
-      HttpURLConnection connection = (HttpURLConnection)rawConnection;
+      var connection = (HttpURLConnection)rawConnection;
       connection.setRequestMethod(requestMethod);
       connection.setDoOutput(true);
       if (contentType != null) connection.setRequestProperty("Content-Type", contentType);
@@ -208,12 +210,12 @@ public final class HttpRequests {
   }
 
   public static @NotNull String createErrorMessage(@NotNull IOException e, @NotNull Request request, boolean includeHeaders) {
-    StringBuilder builder = new StringBuilder();
+    var builder = new StringBuilder();
 
     builder.append("Cannot download '").append(request.getURL()).append("': ").append(e.getMessage());
 
     try {
-      URLConnection connection = request.getConnection();
+      var connection = request.getConnection();
       if (includeHeaders) {
         builder.append("\n, headers: ").append(connection.getHeaderFields());
       }
@@ -243,7 +245,7 @@ public final class HttpRequests {
     private final ConnectionTuner myInternalTuner;
     private boolean myThrowStatusCodeException = true;
 
-    private RequestBuilderImpl(@NotNull String url, @Nullable ConnectionTuner internalTuner) {
+    private RequestBuilderImpl(String url, @Nullable ConnectionTuner internalTuner) {
       myUrl = url;
       myInternalTuner = internalTuner;
     }
@@ -314,17 +316,17 @@ public final class HttpRequests {
     @Override
     public RequestBuilder productNameAsUserAgent() {
       String userAgent;
-      Application app = ApplicationManager.getApplication();
+      var app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        String productName = ApplicationNamesInfo.getInstance().getFullProductName();
-        String version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
+        var productName = ApplicationNamesInfo.getInstance().getFullProductName();
+        var version = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode();
         userAgent = productName + '/' + version;
       }
       else {
         userAgent = "IntelliJ";
       }
 
-      String currentBuildUrl = System.getenv("BUILD_URL");
+      var currentBuildUrl = System.getenv("BUILD_URL");
       if (currentBuildUrl != null) {
         userAgent += " (" + currentBuildUrl + ")";
       }
@@ -386,7 +388,7 @@ public final class HttpRequests {
     @Override
     public @NotNull InputStream getInputStream() throws IOException {
       if (myInputStream == null) {
-        URLConnection connection = getConnection();
+        var connection = getConnection();
         myInputStream = unzipStreamIfNeeded(connection, connection.getInputStream());
       }
       return myInputStream;
@@ -404,9 +406,9 @@ public final class HttpRequests {
     @Override
     public @NotNull BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException {
       if (myReader == null) {
-        InputStream inputStream = getInputStream();
+        var inputStream = getInputStream();
         if (indicator != null) {
-          long contentLength = getConnection().getContentLengthLong();
+          var contentLength = getConnection().getContentLengthLong();
           if (contentLength > 0) {
             inputStream = new ProgressMonitorInputStream(indicator, inputStream, contentLength);
           }
@@ -421,9 +423,9 @@ public final class HttpRequests {
     }
 
     private static Charset getCharset(URLConnection connection) throws IOException {
-      String contentType = connection.getContentType();
+      var contentType = connection.getContentType();
       if (contentType != null && !contentType.isEmpty()) {
-        Matcher m = CHARSET_PATTERN.matcher(contentType);
+        var m = CHARSET_PATTERN.matcher(contentType);
         if (m.find()) {
           try {
             return Charset.forName(StringUtil.unquoteString(m.group(1)));
@@ -443,20 +445,20 @@ public final class HttpRequests {
 
     @Override
     public @NotNull String readString(@Nullable ProgressIndicator indicator) throws IOException {
-      BufferExposingByteArrayOutputStream stream = doReadBytes(indicator);
+      var stream = doReadBytes(indicator);
       return stream.size() == 0 ? "" : new String(stream.getInternalBuffer(), 0, stream.size(), getCharset());
     }
 
     @Override
     public @NotNull CharSequence readChars(@Nullable ProgressIndicator indicator) throws IOException {
-      BufferExposingByteArrayOutputStream stream = doReadBytes(indicator);
+      var stream = doReadBytes(indicator);
       return stream.size() == 0 ? "" : getCharset().decode(ByteBuffer.wrap(stream.getInternalBuffer(), 0, stream.size()));
     }
 
     private BufferExposingByteArrayOutputStream doReadBytes(@Nullable ProgressIndicator indicator) throws IOException {
-      long contentLength = getConnection().getContentLengthLong();
+      var contentLength = getConnection().getContentLengthLong();
       if (contentLength > Integer.MAX_VALUE) throw new IOException("Cannot download more than 2 GiB; content length is " + contentLength);
-      BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? (int)contentLength : 16384);
+      var out = new BufferExposingByteArrayOutputStream(contentLength > 0 ? (int)contentLength : 16384);
       NetUtils.copyStreamContent(indicator, getInputStream(), out, contentLength, false);
       return out;
     }
@@ -467,7 +469,7 @@ public final class HttpRequests {
     }
 
     private @Nullable String readError(HttpURLConnection connection) throws IOException {
-      InputStream stream = connection.getErrorStream();
+      var stream = connection.getErrorStream();
       return stream == null ? null : StreamUtil.readText(new InputStreamReader(unzipStreamIfNeeded(connection, stream), getCharset(connection)));
     }
 
@@ -480,8 +482,8 @@ public final class HttpRequests {
     public @NotNull Path saveToFile(@NotNull Path file, @Nullable ProgressIndicator indicator, boolean progressDescription) throws IOException {
       NioFiles.createDirectories(file.getParent());
 
-      boolean deleteFile = true;
-      try (OutputStream out = Files.newOutputStream(file)) {
+      var deleteFile = true;
+      try (var out = Files.newOutputStream(file)) {
         NetUtils.copyStreamContent(indicator, getInputStream(), out, getConnection().getContentLengthLong(), progressDescription);
         deleteFile = false;
       }
@@ -503,7 +505,7 @@ public final class HttpRequests {
     @Override
     public void close() throws IOException {
       //noinspection EmptyTryBlock
-      try (@SuppressWarnings("unused") InputStream s = myInputStream; @SuppressWarnings("unused") Reader r = myReader) { }
+      try (@SuppressWarnings("unused") var s = myInputStream; @SuppressWarnings("unused") Reader r = myReader) { }
       finally {
         if (myConnection instanceof HttpURLConnection) {
           ((HttpURLConnection)myConnection).disconnect();
@@ -513,15 +515,16 @@ public final class HttpRequests {
   }
 
   private static <T> T process(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
-    Application app = ApplicationManager.getApplication();
-    LOG.assertTrue(app == null || app.isUnitTestMode() || app.isHeadlessEnvironment() || !app.holdsReadLock(),
-                   "Network must not be accessed in EDT or inside read action, because this may take considerable amount of time, " +
-                   "and write actions will be blocked during that time so user won't be able to perform tasks in the IDE");
-
-    ClassLoader contextLoader = Thread.currentThread().getContextClassLoader();
+    var app = ApplicationManager.getApplication();
+    LOG.assertTrue(
+      app == null || app.isUnitTestMode() || app.isHeadlessEnvironment() || !app.holdsReadLock(),
+      "Network must not be accessed in EDT or inside read action, because this may take considerable amount of time, " +
+      "and write actions will be blocked during that time so user won't be able to perform tasks in the IDE"
+    );
+    var contextLoader = Thread.currentThread().getContextClassLoader();
     if (contextLoader != null && shouldOverrideContextClassLoader()) {
       // hack-around for class loader lock in sun.net.www.protocol.http.NegotiateAuthentication (IDEA-131621)
-      try (URLClassLoader cl = new URLClassLoader(new URL[0], contextLoader)) {
+      try (var cl = new URLClassLoader(new URL[0], contextLoader)) {
         Thread.currentThread().setContextClassLoader(cl);
         return doProcess(builder, processor);
       }
@@ -535,20 +538,19 @@ public final class HttpRequests {
   }
 
   private static boolean shouldOverrideContextClassLoader() {
-    return Patches.JDK_BUG_ID_8032832 &&
-           SystemProperties.getBooleanProperty("http.requests.override.context.classloader", true);
+    return Patches.JDK_BUG_ID_8032832 && SystemProperties.getBooleanProperty("http.requests.override.context.classloader", true);
   }
 
   private static <T> T doProcess(RequestBuilderImpl builder, RequestProcessor<T> processor) throws IOException {
-    try (RequestImpl request = new RequestImpl(builder)) {
-      T result = processor.process(request);
+    try (var request = new RequestImpl(builder)) {
+      var result = processor.process(request);
 
       if (builder.myThrowStatusCodeException) {
-        URLConnection connection = request.myConnection;
+        var connection = request.myConnection;
         if (connection != null && connection.getDoOutput()) {
           // getResponseCode is not checked on connect, because writing must happen before reading
-          HttpURLConnection urlConnection = (HttpURLConnection)connection;
-          int responseCode = urlConnection.getResponseCode();
+          var urlConnection = (HttpURLConnection)connection;
+          var responseCode = urlConnection.getResponseCode();
           if (responseCode >= 400) {
             throwHttpStatusError(urlConnection, request, builder, responseCode);
           }
@@ -564,22 +566,26 @@ public final class HttpRequests {
       request.myUrl = "https:" + request.myUrl.substring(5);
     }
 
-    for (int i = 0; i < builder.myRedirectLimit; i++) {
-      final String url = request.myUrl;
+    for (var i = 0; i < builder.myRedirectLimit; i++) {
+      var url = request.myUrl;
 
-      final URLConnection connection;
-      if (!builder.myUseProxy) {
-        connection = new URL(url).openConnection(Proxy.NO_PROXY);
-      }
-      else {
-        Application app = ApplicationManager.getApplication();
-        IdeUiService uiService = app != null ? app.getServiceIfCreated(IdeUiService.class) : null;
-        if (uiService != null) {
-          connection = uiService.openHttpConnection(url);
+      URLConnection connection;
+      try {
+        if (!builder.myUseProxy) {
+          connection = new URI(url).toURL().openConnection(Proxy.NO_PROXY);
         }
         else {
-          connection = new URL(url).openConnection();
+          var uiService = getIdeUiService();
+          if (uiService != null) {
+            connection = uiService.openHttpConnection(url);
+          }
+          else {
+            connection = new URI(url).toURL().openConnection();
+          }
         }
+      }
+      catch (URISyntaxException e) {
+        throw new IOException(e);
       }
 
       if (connection instanceof HttpsURLConnection) {
@@ -627,7 +633,7 @@ public final class HttpRequests {
         return connection;
       }
 
-      String method = httpURLConnection.getRequestMethod();
+      var method = httpURLConnection.getRequestMethod();
 
       LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
                      "'" + method + "' not supported; please use GET, HEAD, DELETE, PUT or POST");
@@ -655,13 +661,17 @@ public final class HttpRequests {
           }
 
           httpURLConnection.disconnect();
-          String loc = connection.getHeaderField("Location");
+          var loc = connection.getHeaderField("Location");
           if (LOG.isDebugEnabled()) LOG.debug("redirect from " + url + ": " + loc);
           if (loc != null) {
-            if (!loc.contains("://")) {
-              // Location is a relative URI
-              URL locUrl = new URL(new URL(url), loc);
-              loc = locUrl.toExternalForm();
+            if (!loc.contains(URLUtil.SCHEME_SEPARATOR)) {
+              // location is relative
+              try {
+                loc = new URI(url).resolve(new URI(loc)).toString();
+              }
+              catch (URISyntaxException e) {
+                throw new IOException(e);
+              }
             }
             request.myUrl = loc;
             continue;
@@ -707,14 +717,15 @@ public final class HttpRequests {
     throw new HttpStatusException(message, statusCode, requireNonNullElse(request.myUrl, "Empty URL"));
   }
 
-  private static void configureSslConnection(@NotNull String url, @NotNull HttpsURLConnection connection) {
-    if (!LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
+  private static void configureSslConnection(String url, HttpsURLConnection connection) {
+    var uiService = getIdeUiService();
+    if (uiService == null) {
       LOG.info("Application is not initialized yet; Using default SSL configuration to connect to " + url);
       return;
     }
 
     try {
-      SSLSocketFactory factory = IdeUiService.getInstance().getSslSocketFactory();
+      var factory = uiService.getSslSocketFactory();
       if (factory == null) {
         LOG.info("SSLSocketFactory is not defined by the IDE Certificate Manager; Using default SSL configuration to connect to " + url);
       }
@@ -737,12 +748,14 @@ public final class HttpRequests {
    * This method checks the request and removes invalid headers.
    */
   private static void checkRequestHeadersForNulBytes(URLConnection connection) {
-    for (Map.Entry<String, List<String>> header : connection.getRequestProperties().entrySet()) {
-      for (String headerValue : header.getValue()) {
+    for (var header : connection.getRequestProperties().entrySet()) {
+      for (var headerValue : header.getValue()) {
         if (headerValue.indexOf('\0') >= 0) {
           connection.setRequestProperty(header.getKey(), null);
-          LOG.error(String.format("Problem during request to '%s'. Header's '%s' value contains NUL bytes: '%s'. Omitting this header.",
-                                  connection.getURL().toString(), header.getKey(), headerValue));
+          LOG.error(String.format(
+            "Problem during request to '%s'. Header's '%s' value contains NUL bytes: '%s'. Omitting this header.",
+            connection.getURL().toString(), header.getKey(), headerValue
+          ));
           break;
         }
       }

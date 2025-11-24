@@ -3422,10 +3422,6 @@ a:com.intellij.ide.plugins.UIComponentVirtualFile
 - <init>(java.lang.String,javax.swing.Icon):V
 - a:createContent(com.intellij.ide.plugins.UIComponentFileEditor):com.intellij.ide.plugins.UIComponentVirtualFile$Content
 - getPath():java.lang.String
-f:com.intellij.ide.plugins.auth.PluginRepositoryAuthService
-- <init>():V
-- f:getAllCustomHeaders(java.lang.String):java.util.Map
-- f:getConnectionTuner():com.intellij.util.io.HttpRequests$ConnectionTuner
 e:com.intellij.ide.plugins.enums.PluginsGroupType
 - java.lang.Enum
 - sf:BUNDLED_UPDATE:com.intellij.ide.plugins.enums.PluginsGroupType

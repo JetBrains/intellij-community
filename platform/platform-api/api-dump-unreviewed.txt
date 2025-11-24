@@ -9239,9 +9239,6 @@ f:com.intellij.util.net.IOExceptionDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(java.lang.String,java.lang.String):V
 - s:showErrorDialog(java.lang.String,java.lang.String):Z
-f:com.intellij.util.net.IdeProxyAuthenticator
-- java.net.Authenticator
-- <init>(com.intellij.util.net.ProxyAuthentication):V
 f:com.intellij.util.net.IdeProxySelector
 - java.net.ProxySelector
 - sf:Companion:com.intellij.util.net.IdeProxySelector$Companion

@@ -42,13 +42,47 @@ sealed interface JdkProxyProvider {
     fun getInstance(): JdkProxyProvider = CustomizedPlatformJdkProxyProvider
 
     /**
-     * This utility ensures that [ProxySelector] and [Authenticator] from [JdkProxyProvider.getInstance] are used by default by the
-     * java network stack.
+     * This utility ensures that [ProxySelector] and [Authenticator] from [JdkProxyProvider.getInstance]
+     * are used by default by the Java network stack.
      */
     @JvmStatic
     fun ensureDefault(): Unit = ensureDefaultProxyProviderImpl()
 
+    private var javaProxyInstallationFlag: Boolean = false
     private val proxyAuthNotificationActive = AtomicBoolean(false)
+
+    @Synchronized
+    private fun ensureDefaultProxyProviderImpl() {
+      val provider = getInstance()
+      val proxySelector = provider.proxySelector
+      val authenticator = provider.authenticator
+      if (!javaProxyInstallationFlag) {
+        ProxySelector.setDefault(proxySelector)
+        Authenticator.setDefault(authenticator)
+        javaProxyInstallationFlag = true
+        return
+      }
+      val defaultProxySelector = ProxySelector.getDefault()
+      if (defaultProxySelector !== proxySelector) {
+        logger<ProxySelector>().error("""
+      ProxySelector.setDefault() was changed to [$defaultProxySelector] - other than [$proxySelector].
+      This will make some ${ApplicationNamesInfo.getInstance().productName} network calls fail.
+      Instead, ProxyService.instance.proxySelector should be the default proxy selector.
+      """.trimIndent()
+        )
+        ProxySelector.setDefault(proxySelector)
+      }
+      val defaultAuthenticator = Authenticator.getDefault()
+      if (defaultAuthenticator !== authenticator) {
+        logger<ProxySelector>().error("""
+      Authenticator.setDefault() was changed to [$defaultAuthenticator] - other than [$authenticator].
+      This may make some ${ApplicationNamesInfo.getInstance().productName} network calls fail.
+      Instead, ProxyService.instance.authenticator should be used as a default proxy authenticator.
+      """.trimIndent()
+        )
+        Authenticator.setDefault(authenticator)
+      }
+    }
 
     @ApiStatus.Internal
     @JvmStatic
@@ -89,41 +123,6 @@ private class OverrideDefaultJdkProxy : ApplicationInitializedListener {
     })
   }
 }
-
-@Synchronized
-private fun ensureDefaultProxyProviderImpl() {
-  val provider = JdkProxyProvider.getInstance()
-  val proxySelector = provider.proxySelector
-  val authenticator = provider.authenticator
-  if (!javaProxyInstallationFlag) {
-    ProxySelector.setDefault(proxySelector)
-    Authenticator.setDefault(authenticator)
-    javaProxyInstallationFlag = true
-    return
-  }
-  val defaultProxySelector = ProxySelector.getDefault()
-  if (defaultProxySelector !== proxySelector) {
-    logger<ProxySelector>().error("""
-      ProxySelector.setDefault() was changed to [$defaultProxySelector] - other than [$proxySelector].
-      This will make some ${ApplicationNamesInfo.getInstance().productName} network calls fail.
-      Instead, ProxyService.instance.proxySelector should be the default proxy selector.
-      """.trimIndent()
-    )
-    ProxySelector.setDefault(proxySelector)
-  }
-  val defaultAuthenticator = Authenticator.getDefault()
-  if (defaultAuthenticator !== authenticator) {
-    logger<ProxySelector>().error("""
-      Authenticator.setDefault() was changed to [$defaultAuthenticator] - other than [$authenticator].
-      This may make some ${ApplicationNamesInfo.getInstance().productName} network calls fail.
-      Instead, ProxyService.instance.authenticator should be used as a default proxy authenticator.
-      """.trimIndent()
-    )
-    Authenticator.setDefault(authenticator)
-  }
-}
-
-private var javaProxyInstallationFlag: Boolean = false
 
 /**
  * If default proxy selector was replaced with [AppShutdownProxySelector], the app is in the progress of shutting down, or is already shut down.
