@@ -119,14 +119,14 @@ private fun readRootAttributes(reader: XMLStreamReader2, builder: PluginDescript
   }
 }
 
-private fun readModuleVisibility(value: String, reader: XMLStreamReader2): ModuleVisibility {
+private fun readModuleVisibility(value: String, reader: XMLStreamReader2): ModuleVisibilityValue {
   return when (value) {
-    PluginXmlConst.CONTENT_MODULE_VISIBILITY_PRIVATE_VALUE -> ModuleVisibility.PRIVATE
-    PluginXmlConst.CONTENT_MODULE_VISIBILITY_INTERNAL_VALUE -> ModuleVisibility.INTERNAL
-    PluginXmlConst.CONTENT_MODULE_VISIBILITY_PUBLIC_VALUE -> ModuleVisibility.PUBLIC
+    PluginXmlConst.CONTENT_MODULE_VISIBILITY_PRIVATE_VALUE -> ModuleVisibilityValue.PRIVATE
+    PluginXmlConst.CONTENT_MODULE_VISIBILITY_INTERNAL_VALUE -> ModuleVisibilityValue.INTERNAL
+    PluginXmlConst.CONTENT_MODULE_VISIBILITY_PUBLIC_VALUE -> ModuleVisibilityValue.PUBLIC
     else -> {
       LOG.error("Unexpected value '$value' of '${PluginXmlConst.CONTENT_MODULE_VISIBILITY_ATTR}' attribute at ${reader.location}")
-      ModuleVisibility.PRIVATE
+      ModuleVisibilityValue.PRIVATE
     }
   }
 }

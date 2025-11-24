@@ -10,7 +10,7 @@ import com.intellij.platform.plugins.parser.impl.RawPluginDescriptor
 import com.intellij.platform.plugins.parser.impl.elements.ContentModuleElement
 import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
-import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibility
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.plugins.testFramework.LoadFromSourceXIncludeLoader
 import com.intellij.platform.plugins.testFramework.loadRawPluginDescriptorInTest
 import com.intellij.project.IntelliJProjectConfiguration
@@ -507,7 +507,7 @@ class PluginModelValidator(
           referencingModuleInfo.dependencies.add(Reference(moduleName, isPlugin = false, moduleInfo))
           if (!pluginModuleVisibilityCheckDisabled) {
             when (moduleInfo.descriptor.moduleVisibility) {
-              ModuleVisibility.PRIVATE -> {
+              ModuleVisibilityValue.PRIVATE -> {
                 if (containingPlugins.all { it.pluginId != referencingPluginInfo.pluginId }) {
                   val differentContainingPlugin = containingPlugins.first()
                   registerError("""
@@ -517,7 +517,7 @@ class PluginModelValidator(
                   |""".trimMargin())
                 }
               }
-              ModuleVisibility.INTERNAL -> {
+              ModuleVisibilityValue.INTERNAL -> {
                 val referencingNamespace = referencingPluginInfo.descriptor.namespace
                 val containingPluginFromAnotherNamespace = containingPlugins.find { it.descriptor.namespace != referencingNamespace }
                 if (containingPluginFromAnotherNamespace != null) {
@@ -540,7 +540,7 @@ class PluginModelValidator(
                 """.trimMargin())
                 }
               }
-              ModuleVisibility.PUBLIC -> {}
+              ModuleVisibilityValue.PUBLIC -> {}
             }
           }
 
@@ -596,7 +596,7 @@ class PluginModelValidator(
       }
 
       val moduleDescriptor = moduleDescriptorFileInfo.descriptor
-      if (moduleDescriptor.moduleVisibility != ModuleVisibility.PRIVATE) {
+      if (moduleDescriptor.moduleVisibility != ModuleVisibilityValue.PRIVATE) {
         nonPrivateModules.add(moduleName)
       }
       val moduleInfo = createModuleFileInfo(moduleDescriptorFileInfo, moduleName, moduleNameToInfo)
@@ -618,7 +618,7 @@ class PluginModelValidator(
       checkContentModuleUnexpectedElements(moduleDescriptor, referencingModuleInfo.sourceModule, moduleInfo)
       checkModuleElements(moduleDescriptor, moduleInfo.sourceModule, moduleInfo.descriptorFile)
 
-      if (moduleDescriptor.moduleVisibility != ModuleVisibility.PUBLIC && moduleDescriptor.pluginAliases.isNotEmpty()) {
+      if (moduleDescriptor.moduleVisibility != ModuleVisibilityValue.PUBLIC && moduleDescriptor.pluginAliases.isNotEmpty()) {
         val aliases =
           if (moduleDescriptor.pluginAliases.size > 1) "${moduleDescriptor.pluginAliases.size} plugin aliases (${moduleDescriptor.pluginAliases.joinToString()})"
           else "a plugin alias '${moduleDescriptor.pluginAliases.first()}'"
