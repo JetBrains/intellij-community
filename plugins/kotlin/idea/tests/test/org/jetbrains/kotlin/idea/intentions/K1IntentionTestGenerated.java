@@ -8380,6 +8380,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToBlockBody/funWithCustomUnitClass.kt");
         }
 
+        @TestMetadata("funWithReturnStmt.kt")
+        public void testFunWithReturnStmt() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/funWithReturnStmt.kt");
+        }
+
         @TestMetadata("funWithThrow.kt")
         public void testFunWithThrow() throws Exception {
             runTest("testData/intentions/convertToBlockBody/funWithThrow.kt");

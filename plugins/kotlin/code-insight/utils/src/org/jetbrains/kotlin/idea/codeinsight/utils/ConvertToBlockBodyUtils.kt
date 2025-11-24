@@ -45,12 +45,12 @@ object ConvertToBlockBodyUtils {
         if (!isConvertibleByPsi(declaration)) return null
 
         val body = declaration.bodyExpression ?: return null
-        val returnType = declaration.returnType.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
+
+        val bodyType = ((body as? KtReturnExpression)?.returnedExpression ?: body).expressionType ?: return null
+        val returnType = (declaration.returnType.takeIf { declaration.hasDeclaredReturnType() } ?: bodyType).approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true)
         if (!isErrorReturnTypeAllowed && returnType is KaErrorType && declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) {
             return null
         }
-
-        val bodyType = body.expressionType ?: return null
 
         return ConvertToBlockBodyContext(
             returnTypeIsUnit = returnType.isUnitType,

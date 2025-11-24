@@ -3254,6 +3254,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/funWithCustomUnitClass.kt");
         }
 
+        @TestMetadata("funWithReturnStmt.kt")
+        public void testFunWithReturnStmt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertToBlockBody/funWithReturnStmt.kt");
+        }
+
         @TestMetadata("funWithThrow.kt")
         public void testFunWithThrow() throws Exception {
             runTest("../../../idea/tests/testData/intentions/convertToBlockBody/funWithThrow.kt");

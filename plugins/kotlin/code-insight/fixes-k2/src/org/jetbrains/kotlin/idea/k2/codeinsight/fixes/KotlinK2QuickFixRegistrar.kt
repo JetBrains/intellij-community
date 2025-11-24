@@ -444,6 +444,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeTypeQuickFixFactories.typeMismatch)
         registerFactory(ChangeTypeQuickFixFactories.incompatibleTypes)
 
+        registerFactory(ChangeTypeQuickFixFactories.returnTypeRequired)
+        registerFactory(ChangeTypeQuickFixFactories.returnTypeRequiredWarning)
+        registerFactory(ChangeTypeQuickFixFactories.returnTypeRequiredWithImplicitType)
+
         registerFactory(AddToStringFixFactories.typeMismatch)
         registerFactory(AddToStringFixFactories.argumentTypeMismatch)
         registerFactory(AddToStringFixFactories.assignmentTypeMismatch)

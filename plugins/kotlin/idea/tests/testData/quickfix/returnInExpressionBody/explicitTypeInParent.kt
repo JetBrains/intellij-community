@@ -1,0 +1,12 @@
+// "Change return type of enclosing function 'Derived.explicitFunReturnType' to 'Int'" "true"
+// K2_AFTER_ERROR: Returns are prohibited in functions with expression body. Use block body '{...}'.
+interface Base {
+    fun explicitFunReturnType() : Int = 1
+}
+
+class Derived : Base {
+    override fun explicitFunReturnType() = retu<caret>rn 1
+}
+
+// IGNORE_K1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

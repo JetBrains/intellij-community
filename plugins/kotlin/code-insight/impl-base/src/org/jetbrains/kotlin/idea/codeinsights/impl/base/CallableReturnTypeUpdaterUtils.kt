@@ -19,6 +19,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.endOffset
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -238,6 +239,9 @@ object CallableReturnTypeUpdaterUtils {
                     else -> emptyList()
                 }
                 addAll(smartCastTypes)
+            }
+            if (declaration is KtFunction && !declaration.hasBlockBody() && declaration.bodyExpression is KtReturnExpression) {
+                addIfNotNull((declaration.bodyExpression as? KtReturnExpression)?.returnedExpression?.expressionType)
             }
             if (this.isEmpty()) {
                 add(declaration.returnType)
