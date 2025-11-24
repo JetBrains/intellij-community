@@ -301,6 +301,7 @@ private fun launchUsingIsShowingFlow(
 
 @Internal
 @VisibleForTesting
+@Volatile
 var forceRespectIsShowingClientProperty: Boolean = false
 
 @Internal

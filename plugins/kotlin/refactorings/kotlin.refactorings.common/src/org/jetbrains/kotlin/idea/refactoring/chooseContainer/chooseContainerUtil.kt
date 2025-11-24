@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.chooseContainer
 
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
 import com.intellij.codeInsight.unwrap.RangeSplitter
 import com.intellij.codeInsight.unwrap.UnwrapHandler
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -16,6 +17,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
@@ -23,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.impl.file.PsiPackageBase
 import com.intellij.psi.impl.light.LightElement
+import com.intellij.util.ui.UiReadExecutor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.collapseSpaces
@@ -143,15 +146,19 @@ private fun <T : PsiElement> getPsiElementPopup(
 ): JBPopup {
     val project = elements.firstOrNull()?.project ?: throw IllegalArgumentException("Can't create popup because no elements are provided")
     val highlighter = if (highlightSelection) SelectionAwareScopeHighlighter(editor) else null
-    return PsiTargetNavigator(elements)
+    val disposable = Disposer.newDisposable()
+    val executor = UiReadExecutor.conflatedUiReadExecutor(editor.component, disposable, "highlighter in Kotlin refactoring")
+    val popup = PsiTargetNavigator(elements)
         .presentationProvider(presentationProvider)
         .selection(selection)
         .builderConsumer { builder ->
             builder
                 .setItemSelectedCallback { presentation ->
-                    highlighter?.dropHighlight()
-                    val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@setItemSelectedCallback
-                    highlighter?.highlight(psiElement)
+                    executor.executeWithReadAccess {
+                        highlighter?.dropHighlight()
+                        val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@executeWithReadAccess
+                        highlighter?.highlight(psiElement)
+                    }
                 }
                 .setItemChosenCallback {
                     @Suppress("UNCHECKED_CAST")
@@ -165,6 +172,8 @@ private fun <T : PsiElement> getPsiElementPopup(
                 })
         }
         .createPopup(project, title)
+    Disposer.register(popup, disposable)
+    return popup
 }
 
 fun popupPresentationProvider(): TargetPresentationProvider<PsiElement> = object : PsiTargetPresentationRenderer<PsiElement>() {
