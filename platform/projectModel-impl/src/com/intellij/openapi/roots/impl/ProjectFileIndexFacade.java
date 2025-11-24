@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
@@ -26,6 +27,14 @@ import java.util.Set;
 public class ProjectFileIndexFacade extends FileIndexFacade {
   private final ProjectFileIndex myFileIndex;
   private final WorkspaceFileIndexEx myWorkspaceFileIndex;
+
+  @NonInjectable
+  @ApiStatus.Internal
+  public ProjectFileIndexFacade(Project project, ProjectFileIndex projectFileIndex, WorkspaceFileIndexEx workspaceFileIndex) {
+    super(project);
+    myFileIndex = projectFileIndex;
+    myWorkspaceFileIndex = workspaceFileIndex;
+  }
 
   @ApiStatus.Internal
   public ProjectFileIndexFacade(@NotNull Project project) {
