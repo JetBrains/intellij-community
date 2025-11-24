@@ -9,7 +9,7 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.platform.plugins.parser.impl.ScopedElementsContainer
 import com.intellij.platform.plugins.parser.impl.elements.*
-import com.intellij.platform.plugins.parser.impl.elements.OS.*
+import com.intellij.platform.plugins.parser.impl.elements.OSValue.*
 import com.intellij.platform.plugins.parser.impl.elements.PreloadMode.*
 import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
@@ -58,7 +58,7 @@ fun ListenerElement.convert(): ListenerDescriptor = ListenerDescriptor(
   activeInHeadlessMode,
 )
 
-fun OS.convert(): ExtensionDescriptor.Os = when (this) {
+fun OSValue.convert(): ExtensionDescriptor.Os = when (this) {
   MAC -> ExtensionDescriptor.Os.mac
   LINUX -> ExtensionDescriptor.Os.linux
   WINDOWS -> ExtensionDescriptor.Os.windows

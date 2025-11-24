@@ -4,13 +4,13 @@ package com.intellij.platform.plugins.parser.impl.elements
 import com.intellij.util.xml.dom.XmlElement
 
 class ExtensionElement(
-   @JvmField val implementation: String?,
-   @JvmField val os: OS?,
-   @JvmField val orderId: String?,
+  @JvmField val implementation: String?,
+  @JvmField val os: OSValue?,
+  @JvmField val orderId: String?,
    // TODO return it back to parsed LoadingOrder after extracting the parser into a separate module
-   @JvmField val order: String?,
-   @JvmField val element: XmlElement?,
-   @JvmField val hasExtraAttributes: Boolean,
+  @JvmField val order: String?,
+  @JvmField val element: XmlElement?,
+  @JvmField val hasExtraAttributes: Boolean,
 ) {
   override fun toString(): String {
     return buildString {

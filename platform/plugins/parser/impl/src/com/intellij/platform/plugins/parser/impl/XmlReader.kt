@@ -334,7 +334,7 @@ private fun readExtensions(reader: XMLStreamReader2, builder: PluginDescriptorBu
     }
 
     var implementation: String? = null
-    var os: OS? = null
+    var os: OSValue? = null
     var qualifiedExtensionPointName: String? = null
     var order: String? = null
     var orderId: String? = null
@@ -499,7 +499,7 @@ private inline fun copyExtensionPoints(from: PluginDescriptorBuilder, to: Plugin
 }
 
 @Suppress("DuplicatedCode")
-private fun readServiceElement(reader: XMLStreamReader2, os: OS?): ServiceElement {
+private fun readServiceElement(reader: XMLStreamReader2, os: OSValue?): ServiceElement {
   var serviceInterface: String? = null
   var serviceImplementation: String? = null
   var testServiceImplementation: String? = null
@@ -588,7 +588,7 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Scoped
     var interfaceClass: String? = null
     var implementationClass: String? = null
     var headlessImplementationClass: String? = null
-    var os: OS? = null
+    var os: OSValue? = null
     var overrides = false
     var options: MutableMap<String, String>? = null
 
@@ -880,7 +880,7 @@ private fun parseReleaseDate(dateString: String): LocalDate? {
 
 private fun readListeners(reader: XMLStreamReader2, containerDescriptor: ScopedElementsContainerBuilder) {
   reader.consumeChildElements(PluginXmlConst.LISTENER_ELEM) {
-    var os: OS? = null
+    var os: OSValue? = null
     var listenerClassName: String? = null
     var topicClassName: String? = null
     var activeInTestMode = true
@@ -915,13 +915,13 @@ private fun readListeners(reader: XMLStreamReader2, containerDescriptor: ScopedE
   assert(reader.isEndElement)
 }
 
-private fun readOSValue(value: String): OS {
+private fun readOSValue(value: String): OSValue {
   return when (value) {
-    PluginXmlConst.OS_MAC_VALUE -> OS.MAC
-    PluginXmlConst.OS_LINUX_VALUE -> OS.LINUX
-    PluginXmlConst.OS_WINDOWS_VALUE -> OS.WINDOWS
-    PluginXmlConst.OS_UNIX_VALUE -> OS.UNIX
-    PluginXmlConst.OS_FREEBSD_VALUE -> OS.FREEBSD
+    PluginXmlConst.OS_MAC_VALUE -> OSValue.MAC
+    PluginXmlConst.OS_LINUX_VALUE -> OSValue.LINUX
+    PluginXmlConst.OS_WINDOWS_VALUE -> OSValue.WINDOWS
+    PluginXmlConst.OS_UNIX_VALUE -> OSValue.UNIX
+    PluginXmlConst.OS_FREEBSD_VALUE -> OSValue.FREEBSD
     else -> throw IllegalArgumentException("Unknown OS: $value")
   }
 }

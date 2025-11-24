@@ -6,7 +6,7 @@ class ListenerElement(
   @JvmField val topicClassName: String,
   @JvmField val activeInTestMode: Boolean,
   @JvmField val activeInHeadlessMode: Boolean,
-  @JvmField val os: OS?,
+  @JvmField val os: OSValue?,
 ) {
   override fun toString(): String {
     return buildString {
