@@ -120,6 +120,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//xml/xml-psi-api:psi",
     "//libraries/io",
+    "//xml/xml-psi-impl:psi-impl",
   ]
 )
 ### auto-generated section `build intellij.java.ui.tests` end
