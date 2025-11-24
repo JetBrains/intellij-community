@@ -142,8 +142,18 @@ public abstract class LookupArranger implements WeighingContext {
     prefixChanged(lookup);
   }
 
-  public void prefixChanged(@NotNull Lookup lookup) {
-    myAdditionalPrefix = ((LookupElementListPresenter)lookup).getAdditionalPrefix();
+  public final void prefixChanged(@NotNull Lookup lookup) {
+    prefixChanged(((LookupElementListPresenter)lookup).getAdditionalPrefix());
+  }
+
+  /**
+   * Called when the prefix of the lookup has changed.
+   *
+   * @param newAdditionalPrefix the updated additional prefix meaning all the additional characters that were added to the prefix after completion contributors were run.
+   */
+  @ApiStatus.Internal
+  public void prefixChanged(@NotNull String newAdditionalPrefix) {
+    myAdditionalPrefix = newAdditionalPrefix;
     rebuildItemCache();
   }
 

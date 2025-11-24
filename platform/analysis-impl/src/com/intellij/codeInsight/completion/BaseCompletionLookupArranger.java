@@ -674,11 +674,12 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return myLocation;
   }
 
+  @ApiStatus.Internal
   @Override
-  public synchronized void prefixChanged(@NotNull Lookup lookup) {
+  public synchronized void prefixChanged(@NotNull String newAdditionalPrefix) {
     myPrefixChanges++;
     myFrozenItems.clear();
-    super.prefixChanged(lookup);
+    super.prefixChanged(newAdditionalPrefix);
   }
 
   @Override
