@@ -187,8 +187,8 @@ class MonolithSessionProxy internal constructor(val session: XDebugSession) : XD
     sink[XDebugSession.DATA_KEY] = session
   }
 
-  override fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache {
-    return XStackFramesListColorsCache.Monolith(sessionImpl, framesList)
+  override fun createFileColorsCache(onAllComputed: () -> Unit): XStackFramesListColorsCache {
+    return MonolithFramesColorCache(sessionImpl, onAllComputed)
   }
 
   override fun areBreakpointsMuted(): Boolean {

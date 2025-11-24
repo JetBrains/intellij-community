@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XDebugSessionId
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
@@ -29,6 +30,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 import javax.swing.event.HyperlinkListener
 
 @ApiStatus.Internal
@@ -100,7 +102,7 @@ interface XDebugSessionProxy {
   fun rebuildViews()
   fun registerAdditionalActions(leftToolbar: DefaultActionGroup, topLeftToolbar: DefaultActionGroup, settings: DefaultActionGroup)
   fun putKey(sink: DataSink)
-  fun createFileColorsCache(framesList: XDebuggerFramesList): XStackFramesListColorsCache
+  fun createFileColorsCache(onAllComputed: () -> Unit): XStackFramesListColorsCache
 
   fun areBreakpointsMuted(): Boolean
   fun muteBreakpoints(value: Boolean)
@@ -125,4 +127,11 @@ interface XDebugSessionProxy {
 @ApiStatus.Internal
 interface XSmartStepIntoHandlerEntry {
   val popupTitle: String
+}
+
+@ApiStatus.Internal
+fun interface XStackFramesListColorsCache {
+
+  @RequiresEdt
+  fun get(stackFrame: XStackFrame, project: Project): Color?
 }
