@@ -319,6 +319,20 @@ public class PyEvaluatorTest extends PyTestCase {
     assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = TYPE_CHECKING")));
   }
 
+  public void testSysVersionCheck() {
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info >= (3, 4)"), LanguageLevel.PYTHON34));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info >= (3, 5)"), LanguageLevel.PYTHON34));
+
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info > (3, 4)"), LanguageLevel.PYTHON34));
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info > (3, 3)"), LanguageLevel.PYTHON34));
+
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info <= (3, 4)"), LanguageLevel.PYTHON34));
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info <= (3, 3)"), LanguageLevel.PYTHON34));
+
+    assertFalse(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info < (3, 4)"), LanguageLevel.PYTHON34));
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = sys.version_info < (3, 5)"), LanguageLevel.PYTHON34));
+  }
+
   @NotNull
   private <T> T byExpression(@NotNull String expression, @NotNull Class<T> cls) {
     final Object value = new PyEvaluator().evaluate(parseExpression(expression));
