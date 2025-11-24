@@ -11,15 +11,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class MockFileIndexFacade extends FileIndexFacade {
   private final Module myModule;
-  private final List<VirtualFile> myLibraryRoots = new ArrayList<>();
+  private final Set<VirtualFile> myLibraryRoots = new HashSet<>();
 
   public MockFileIndexFacade(final Project project) {
     super(project);
@@ -43,12 +43,12 @@ public class MockFileIndexFacade extends FileIndexFacade {
 
   @Override
   public boolean isInLibraryClasses(@NotNull VirtualFile file) {
-    for (VirtualFile libraryRoot : myLibraryRoots) {
-      if (VfsUtilCore.isAncestor(libraryRoot, file, false)) {
-        return true;
-      }
+    VirtualFile parent = file.getParent();
+    while (true) {
+      if (parent == null) return false;
+      if (myLibraryRoots.contains(parent)) return true;
+      parent = parent.getParent();
     }
-    return false;
   }
 
   @Override
