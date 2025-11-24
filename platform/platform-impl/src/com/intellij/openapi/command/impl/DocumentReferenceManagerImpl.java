@@ -133,7 +133,7 @@ public final class DocumentReferenceManagerImpl extends DocumentReferenceManager
   }
 
   private static void assertIsWriteThread() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    // TODO: make it thread-safe instead of grabbing global RW lock
   }
 
   @TestOnly

@@ -20,6 +20,15 @@ val useBackgroundWriteAction: Boolean = System.getProperty("idea.background.writ
 val wrapHighLevelFunctionsInWriteIntent: Boolean = System.getProperty("idea.wrap.high.level.functions.in.write.intent", "false").toBoolean()
 
 /**
+ * - `true` means [com.intellij.openapi.command.CommandProcessor] will use write-intent lock for execution commands
+ * - `false` means that write-intent lock will not be inserted there
+ *
+ * See IJPL-215129
+ */
+@ApiStatus.Internal
+val wrapCommandsInWriteIntent: Boolean = System.getProperty("idea.wrap.commands.in.write.intent", "false").toBoolean()
+
+/**
  * - `true` means some high-level Swing code will use write-intent lock defensively for execution of input events
  * - `false` means that write-intent lock will not be inserted there
  */

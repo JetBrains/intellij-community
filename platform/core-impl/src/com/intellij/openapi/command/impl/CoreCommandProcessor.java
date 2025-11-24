@@ -2,6 +2,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ThreadingRuntimeFlagsKt;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -391,7 +392,11 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   }
 
   private static void runCommandTask(Runnable commandTask) {
-    // TODO: remove WI within IJPL-215129
-    WriteIntentReadAction.run(commandTask);
+    if (ThreadingRuntimeFlagsKt.getWrapCommandsInWriteIntent()) {
+      WriteIntentReadAction.run(commandTask);
+    }
+    else {
+      commandTask.run();
+    }
   }
 }
