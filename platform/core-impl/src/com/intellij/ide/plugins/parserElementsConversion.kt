@@ -94,6 +94,14 @@ fun ModuleLoadingRuleValue.convert(): ModuleLoadingRule = when (this) {
   else -> throw IllegalArgumentException("Unknown module loading rule: ${this}")
 }
 
+fun ModuleLoadingRule.asParserElement(): ModuleLoadingRuleValue = when (this) {
+  ModuleLoadingRule.REQUIRED -> ModuleLoadingRuleValue.REQUIRED
+  ModuleLoadingRule.EMBEDDED -> ModuleLoadingRuleValue.EMBEDDED
+  ModuleLoadingRule.OPTIONAL -> ModuleLoadingRuleValue.OPTIONAL
+  ModuleLoadingRule.ON_DEMAND -> ModuleLoadingRuleValue.ON_DEMAND
+  else -> throw IllegalArgumentException("Unknown module loading rule: ${this}")
+}
+
 fun ModuleVisibilityValue.convert(): ModuleVisibility = when (this) {
   ModuleVisibilityValue.PRIVATE -> ModuleVisibility.PRIVATE
   ModuleVisibilityValue.INTERNAL -> ModuleVisibility.INTERNAL

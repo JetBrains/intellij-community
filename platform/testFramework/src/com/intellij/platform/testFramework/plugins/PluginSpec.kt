@@ -3,8 +3,8 @@
 
 package com.intellij.platform.testFramework.plugins
 
-import com.intellij.ide.plugins.ModuleLoadingRule
-import com.intellij.ide.plugins.ModuleVisibility
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
 import org.intellij.lang.annotations.Language
 
 
@@ -27,7 +27,7 @@ class PluginSpec internal constructor(
   val pluginDependencies: List<DependsSpec>,
   val moduleDependencies: List<ModuleDependencySpec>,
   val pluginMainModuleDependencies: List<String>,
-  val moduleVisibility: ModuleVisibility,
+  val moduleVisibility: ModuleVisibilityValue,
 
   val pluginAliases: List<String>,
   val incompatibleWith: List<String>,
@@ -68,7 +68,7 @@ class PluginSpecBuilder(
   internal var moduleDependencies: List<ModuleDependencySpec> = emptyList(),
   internal var pluginMainModuleDependencies: List<String> = emptyList(),
 
-  var moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE,
+  var moduleVisibility: ModuleVisibilityValue = ModuleVisibilityValue.PRIVATE,
   var pluginAliases: List<String> = emptyList(),
   var incompatibleWith: List<String> = emptyList(),
   var namespace: String? = null,
@@ -101,7 +101,7 @@ class PluginSpecBuilder(
 
 class ContentModuleSpec internal constructor(
   val moduleId: String,
-  val loadingRule: ModuleLoadingRule,
+  val loadingRule: ModuleLoadingRuleValue,
   val requiredIfAvailable: String?,
   val spec: PluginSpec,
 )

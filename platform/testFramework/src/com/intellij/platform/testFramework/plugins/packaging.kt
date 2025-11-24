@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.plugins
 
-import com.intellij.ide.plugins.ModuleLoadingRule
-import com.intellij.ide.plugins.ModuleVisibility
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.util.io.DirectoryContentBuilder
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.jarFile
@@ -38,7 +38,7 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
     if (implementationDetail) append(""" implementation-detail="true"""")
     if (packagePrefix != null) append(""" package="$packagePrefix"""")
     if (isSeparateJar) append(""" separate-jar="true"""")
-    if (moduleVisibility != ModuleVisibility.PRIVATE) append(""" visibility="${moduleVisibility.name.lowercase()}"""")
+    if (moduleVisibility != ModuleVisibilityValue.PRIVATE) append(""" visibility="${moduleVisibility.name.lowercase()}"""")
     if (rootTagAttributes != null) append(" $rootTagAttributes")
     appendLine(">")
     if (id != null) appendLine("<id>$id</id>")
@@ -85,10 +85,10 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
       appendLine("<content$attributes>")
       for (module in content) {
         val loadingAttribute = when (module.loadingRule) {
-          ModuleLoadingRule.OPTIONAL -> ""
-          ModuleLoadingRule.REQUIRED -> "loading=\"required\" "
-          ModuleLoadingRule.EMBEDDED -> "loading=\"embedded\" "
-          ModuleLoadingRule.ON_DEMAND -> "loading=\"on-demand\" "
+          ModuleLoadingRuleValue.OPTIONAL -> ""
+          ModuleLoadingRuleValue.REQUIRED -> "loading=\"required\" "
+          ModuleLoadingRuleValue.EMBEDDED -> "loading=\"embedded\" "
+          ModuleLoadingRuleValue.ON_DEMAND -> "loading=\"on-demand\" "
         } + module.requiredIfAvailable?.let { "required-if-available=\"$it\" " }.orEmpty()
         val tag = """module name="${module.moduleId}" $loadingAttribute"""
         if (module.embedToPluginXml) {
