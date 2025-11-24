@@ -39,7 +39,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   public static final int MAX_COMMENT_WIDTH = 70;
 
-  private final JComponent myComponent;
+  private final @NotNull JComponent myComponent;
 
   private @NlsContexts.Label String myLabelText;
   private boolean myLabelOnTop;
@@ -57,7 +57,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private boolean myResizeX = true;
   private boolean valid = true;
 
-  public ComponentPanelBuilder(JComponent component) {
+  public ComponentPanelBuilder(@NotNull JComponent component) {
     myComponent = component;
   }
 
@@ -69,7 +69,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    *              Default is <code>false</code>
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder resizeY(boolean resize) {
+  public @NotNull ComponentPanelBuilder resizeY(boolean resize) {
     myResizeY = resize;
     return this;
   }
@@ -82,7 +82,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    *              Default is <code>true</code>
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder resizeX(boolean resize) {
+  public @NotNull ComponentPanelBuilder resizeX(boolean resize) {
     myResizeX = resize;
     return this;
   }
@@ -91,7 +91,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param labelText text for the label.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withLabel(@NotNull @NlsContexts.Label String labelText) {
+  public @NotNull ComponentPanelBuilder withLabel(@NotNull @NlsContexts.Label String labelText) {
     myLabelText = labelText;
     return this;
   }
@@ -101,13 +101,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    *
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder moveLabelOnTop() {
+  public @NotNull ComponentPanelBuilder moveLabelOnTop() {
     myLabelOnTop = true;
     valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
-  public ComponentPanelBuilder anchorLabelOn(UI.Anchor anchor) {
+  public @NotNull ComponentPanelBuilder anchorLabelOn(UI.Anchor anchor) {
     myAnchor = anchor;
     return this;
   }
@@ -116,18 +116,18 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param comment help context styled text written below the owner component.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withComment(@NotNull @NlsContexts.DetailedDescription String comment) {
+  public @NotNull ComponentPanelBuilder withComment(@NotNull @NlsContexts.DetailedDescription String comment) {
     return withComment(comment, true);
   }
 
-  public ComponentPanelBuilder withComment(@NotNull @NlsContexts.DetailedDescription String comment, boolean allowAutoWrapping) {
+  public @NotNull ComponentPanelBuilder withComment(@NotNull @NlsContexts.DetailedDescription String comment, boolean allowAutoWrapping) {
     myCommentText = comment;
     myCommentAllowAutoWrapping = allowAutoWrapping;
     valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
     return this;
   }
 
-  public ComponentPanelBuilder withCommentIcon(@NotNull Icon icon) {
+  public @NotNull ComponentPanelBuilder withCommentIcon(@NotNull Icon icon) {
     myCommentIcon = icon;
     return this;
   }
@@ -140,7 +140,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param listener new <code>HyperlinkListener</code>
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withCommentHyperlinkListener(@NotNull HyperlinkListener listener) {
+  public @NotNull ComponentPanelBuilder withCommentHyperlinkListener(@NotNull HyperlinkListener listener) {
     myHyperlinkListener = listener;
     return this;
   }
@@ -153,7 +153,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param topRightComponent the component to be added
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withTopRightComponent(@NotNull JComponent topRightComponent) {
+  public @NotNull ComponentPanelBuilder withTopRightComponent(@NotNull JComponent topRightComponent) {
     myTopRightComponent = topRightComponent;
     valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(myHTDescription);
     return this;
@@ -164,7 +164,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    *
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder moveCommentRight() {
+  public @NotNull ComponentPanelBuilder moveCommentRight() {
     myCommentBelow = false;
     return this;
   }
@@ -175,7 +175,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    * @param description help tooltip description.
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withTooltip(@NotNull @NlsContexts.Tooltip String description) {
+  public @NotNull ComponentPanelBuilder withTooltip(@NotNull @NlsContexts.Tooltip String description) {
     myHTDescription = description;
     valid = StringUtil.isEmpty(myCommentText) || StringUtil.isEmpty(description);
     return this;
@@ -190,7 +190,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
    *
    * @return <code>this</code>
    */
-  public ComponentPanelBuilder withTooltipLink(@NotNull @NlsContexts.LinkLabel String linkText, @NotNull Runnable action) {
+  public @NotNull ComponentPanelBuilder withTooltipLink(@NotNull @NlsContexts.LinkLabel String linkText, @NotNull Runnable action) {
     myHTLinkText = linkText;
     myHTAction = action;
     return this;
@@ -224,13 +224,13 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   @Override
-  public void addToPanel(JPanel panel, GridBagConstraints gc, boolean splitColumns) {
+  public void addToPanel(@NotNull JPanel panel, @NotNull GridBagConstraints gc, boolean splitColumns) {
     if (constrainsValid()) {
       new ComponentPanelImpl(splitColumns).addToPanel(panel, gc);
     }
   }
 
-  private Border getCommentBorder() {
+  private @NotNull Border getCommentBorder() {
     if (StringUtil.isNotEmpty(myCommentText)) {
       return new JBEmptyBorder(computeCommentInsets(myComponent, myCommentBelow));
     } else {
@@ -302,7 +302,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return createCommentComponent(() -> new CommentLabel(""), commentText, isCommentBelow, maxLineLength, allowAutoWrapping);
   }
 
-  private static JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier,
+  private static @NotNull JLabel createCommentComponent(@NotNull Supplier<? extends JBLabel> labelSupplier,
                                                @Nullable @NlsContexts.DetailedDescription String commentText,
                                                boolean isCommentBelow,
                                                int maxLineLength,
@@ -323,7 +323,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     return component;
   }
 
-  public static JLabel createNonWrappingCommentComponent(@NotNull @NlsContexts.DetailedDescription String commentText) {
+  public static @NotNull JLabel createNonWrappingCommentComponent(@NotNull @NlsContexts.DetailedDescription String commentText) {
     return new CommentLabel(commentText);
   }
 
@@ -377,8 +377,8 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   }
 
   private final class ComponentPanelImpl extends ComponentPanel {
-    private final JLabel label;
-    private final JLabel comment;
+    private final @NotNull JLabel label;
+    private final @NotNull JLabel comment;
     private final boolean splitColumns;
 
     private ComponentPanelImpl(boolean splitColumns) {
@@ -423,7 +423,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       ComponentPanelBuilder.setCommentText(comment, commentText, myCommentBelow, MAX_COMMENT_WIDTH);
     }
 
-    private void addToPanel(JPanel panel, GridBagConstraints gc) {
+    private void addToPanel(@NotNull JPanel panel, @NotNull GridBagConstraints gc) {
       gc.gridx = 0;
       gc.gridwidth = 1;
       gc.weightx = 0.0;
