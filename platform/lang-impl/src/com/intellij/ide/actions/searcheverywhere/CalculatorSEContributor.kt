@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.scale.JBUIScale
@@ -48,6 +49,7 @@ internal class CalculatorSEContributor : WeightedSearchEverywhereContributor<Eva
   override fun getGroupName(): String = LangBundle.message("search.everywhere.calculator.group.name")
   override fun getSortWeight(): Int = 0
   override fun showInFindResults(): Boolean = false
+  override fun isShownInSeparateTab(): Boolean = Registry.`is`("search.everywhere.calculator.tab", false)
 
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,
