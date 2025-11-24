@@ -1,13 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts;
 
-import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,14 +15,13 @@ import java.util.List;
 
 abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
 
-  private final MyModel myModel;
-  private final boolean myMarkRecommended;
+  private final @NotNull MyModel myModel;
 
   FontWeightCombo(boolean markRecommended) {
-    myMarkRecommended = markRecommended;
     myModel = new MyModel();
     setModel(myModel);
-    setRenderer(new MyListCellRenderer());
+    setSwingPopup(false);
+    setRenderer(FontWeightComboUI.getRenderer(markRecommended));
   }
 
   void update(@NotNull FontPreferences fontPreferences) {
@@ -34,8 +30,7 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
 
   @Nullable
   String getSelectedSubFamily() {
-    Object selected = myModel.getSelectedItem();
-    return selected instanceof MyWeightItem ? ((MyWeightItem)selected).subFamily : null;
+    return myModel.getSelectedItem() instanceof MyWeightItem weightItem ? weightItem.subFamily : null;
   }
 
   private final class MyModel extends AbstractListModel<MyWeightItem> implements ComboBoxModel<MyWeightItem> {
@@ -81,26 +76,11 @@ abstract class FontWeightCombo extends ComboBox<FontWeightCombo.MyWeightItem> {
     }
   }
 
-  private final class MyListCellRenderer extends ColoredListCellRenderer<MyWeightItem> {
-
-    @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends MyWeightItem> list,
-                                         MyWeightItem value, int index, boolean selected, boolean hasFocus) {
-      if (value != null) {
-        append(value.subFamily);
-        if (value.isRecommended && myMarkRecommended && list.getModel().getSize() > 2) {
-          append("  ");
-          append(ApplicationBundle.message("settings.editor.font.recommended"), SimpleTextAttributes.GRAY_ATTRIBUTES);
-        }
-      }
-    }
-  }
-
   static final class MyWeightItem {
-    private final @NlsSafe String subFamily;
-    private final boolean isRecommended;
+    public final @NlsSafe @NotNull String subFamily;
+    public final boolean isRecommended;
 
-    MyWeightItem(String subFamily, boolean isRecommended) {
+    MyWeightItem(@NotNull String subFamily, boolean isRecommended) {
       this.subFamily = subFamily;
       this.isRecommended = isRecommended;
     }

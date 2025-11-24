@@ -16,7 +16,6 @@ import com.intellij.ui.AbstractFontCombo
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
 import com.jetbrains.JBR
 import org.jetbrains.annotations.ApiStatus
@@ -182,7 +181,7 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
       row(ApplicationBundle.message("settings.editor.font.main.weight")) {
         val component = createRegularWeightCombo()
         regularWeightCombo = component
-        cell(component)
+        cell(component).widthGroup("TypographySettingsCombo")
       }
 
       row(ApplicationBundle.message("settings.editor.font.bold.weight")) {
@@ -190,6 +189,7 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
         boldWeightCombo = component
         val boldFontHint = createBoldFontHint()
         cell(component)
+          .widthGroup("TypographySettingsCombo")
           .comment(boldFontHint.first, DEFAULT_COMMENT_WIDTH, boldFontHint.second)
       }.bottomGap(BottomGap.SMALL)
 
@@ -197,6 +197,7 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
       setSecondaryFontLabel(secondaryFont)
       row(secondaryFont) {
         cell(secondaryCombo)
+          .widthGroup("TypographySettingsCombo")
           .comment(ApplicationBundle.message("label.fallback.fonts.list.description"))
       }
 
@@ -213,7 +214,6 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
 
   private fun createRegularWeightCombo(): FontWeightCombo {
     val result = RegularFontWeightCombo()
-    fixComboWidth(result)
 
     result.addActionListener {
       changeFontPreferences { preferences: FontPreferences ->
@@ -232,7 +232,6 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
 
   private fun createBoldWeightCombo(): FontWeightCombo {
     val result = BoldFontWeightCombo()
-    fixComboWidth(result)
 
     result.addActionListener {
       changeFontPreferences { preferences: FontPreferences ->
@@ -331,7 +330,7 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     override fun getRecommendedSubFamily(family: String): String {
       return FontFamilyService.getRecommendedBoldSubFamily(
         family,
-        ObjectUtils.notNull(regularWeightCombo?.selectedSubFamily, FontFamilyService.getRecommendedSubFamily(family)))
+        ((regularWeightCombo?.selectedSubFamily) ?: FontFamilyService.getRecommendedSubFamily(family)))
     }
   }
 
@@ -339,17 +338,5 @@ open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : Abstrac
     super.updateOptionsList()
     regularWeightCombo?.isEnabled = !isReadOnly
     boldWeightCombo?.isEnabled = !isReadOnly
-  }
-}
-
-private const val FONT_WEIGHT_COMBO_WIDTH = 250
-
-private fun fixComboWidth(combo: FontWeightCombo) {
-  val width = JBUI.scale(FONT_WEIGHT_COMBO_WIDTH)
-
-  with(combo) {
-    minimumSize = Dimension(width, 0)
-    maximumSize = Dimension(width, Int.MAX_VALUE)
-    preferredSize = Dimension(width, preferredSize.height)
   }
 }
