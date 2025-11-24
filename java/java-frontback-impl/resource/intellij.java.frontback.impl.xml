@@ -86,6 +86,14 @@
                  description="Enable checks that the import layout is compatible"
                  restartRequired="true"/>
 
+    <declarationRangeHandler key="com.intellij.psi.PsiClassInitializer"
+                             implementationClass="com.intellij.codeInsight.hint.ClassInitializerDeclarationRangeHandler"/>
+    <declarationRangeHandler key="com.intellij.psi.PsiClass"
+                             implementationClass="com.intellij.codeInsight.hint.ClassDeclarationRangeHandler"/>
+    <declarationRangeHandler key="com.intellij.psi.PsiLambdaExpression"
+                             implementationClass="com.intellij.codeInsight.hint.LambdaDeclarationRangeHandler"/>
+    <declarationRangeHandler key="com.intellij.psi.PsiMethod"
+                             implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
 
   </extensions>
 </idea-plugin>

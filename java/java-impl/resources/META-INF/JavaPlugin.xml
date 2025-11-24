@@ -1200,14 +1200,6 @@
     <liveTemplateContext contextId="COMPLETION" baseContextId="JAVA_CODE"
                          implementation="com.intellij.codeInsight.template.SmartCompletionContextType"/>
     <usageTargetProvider implementation="com.intellij.find.findUsages.JavaUsageTargetProvider"/>
-    <declarationRangeHandler key="com.intellij.psi.PsiClassInitializer"
-                             implementationClass="com.intellij.codeInsight.hint.ClassInitializerDeclarationRangeHandler"/>
-    <declarationRangeHandler key="com.intellij.psi.PsiClass"
-                             implementationClass="com.intellij.codeInsight.hint.ClassDeclarationRangeHandler"/>
-    <declarationRangeHandler key="com.intellij.psi.PsiLambdaExpression"
-                             implementationClass="com.intellij.codeInsight.hint.LambdaDeclarationRangeHandler"/>
-    <declarationRangeHandler key="com.intellij.psi.PsiMethod"
-                             implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.JavadocCopyPastePreProcessor"/>
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
