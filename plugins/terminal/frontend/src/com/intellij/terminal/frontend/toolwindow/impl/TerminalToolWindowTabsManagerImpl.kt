@@ -88,6 +88,10 @@ internal class TerminalToolWindowTabsManagerImpl(
       val manager = tab.content.manager ?: error("No content manager for $tab")
       manager.removeContent(tab.content, true)
     }
+    val toolWindow = getToolWindow()
+    if (toolWindow.contentManager.isEmpty) {
+      toolWindow.hide()
+    }
     return tab.view
   }
 
