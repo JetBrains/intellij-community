@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.plugins.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.plugins.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.testFramework.loadDescriptorInTest
@@ -217,7 +218,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with a slash in its name loads if module descriptor file has a dot instead of a slash`() {
     plugin("bar") {
       content {
-        module("bar/module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module" }
+        module("bar/module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.descriptorFilename: String get() = "bar.module.xml"
@@ -232,7 +233,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with a slash in its name does not load if module descriptor file is placed in a subdirectory`() {
     plugin("bar") {
       content {
-        module("bar/module", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module" }
+        module("bar/module", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.descriptorFilename: String get() = "bar/module.xml"
@@ -249,7 +250,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with multiple slashes in its name does not load`() {
     plugin("bar") {
       content {
-        module("bar/module/sub", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module.sub" }
+        module("bar/module/sub", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module.sub" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.descriptorFilename: String get() = "bar.module.sub.xml"
@@ -266,7 +267,7 @@ class PluginDescriptorTest {
   fun `descriptor with a v2 content module with multiple slashes in its name loads from a subdirectory`() { // FIXME
     plugin("bar") {
       content {
-        module("bar/module/sub", loadingRule = ModuleLoadingRule.REQUIRED) { packagePrefix = "bar.module.sub" }
+        module("bar/module/sub", loadingRule = ModuleLoadingRuleValue.REQUIRED) { packagePrefix = "bar.module.sub" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.descriptorFilename: String get() = "bar/module.sub.xml"
@@ -357,9 +358,9 @@ class PluginDescriptorTest {
     plugin("bar") {
       resourceBundle = "resourceBundle"
       content {
-        module("bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) {}
-        module("bar.req", loadingRule = ModuleLoadingRule.REQUIRED) {}
-        module("bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) {}
+        module("bar.opt", loadingRule = ModuleLoadingRuleValue.OPTIONAL) {}
+        module("bar.req", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
+        module("bar.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) {}
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.packageToMainJar: Boolean get() = true
@@ -377,9 +378,9 @@ class PluginDescriptorTest {
     plugin("bar") {
       resourceBundle = "resourceBundle"
       content {
-        module("bar.opt", loadingRule = ModuleLoadingRule.OPTIONAL) { resourceBundle = "bar.opt" }
-        module("bar.req", loadingRule = ModuleLoadingRule.REQUIRED) { resourceBundle = "bar.req" }
-        module("bar.emb", loadingRule = ModuleLoadingRule.EMBEDDED) { resourceBundle = "bar.emb" }
+        module("bar.opt", loadingRule = ModuleLoadingRuleValue.OPTIONAL) { resourceBundle = "bar.opt" }
+        module("bar.req", loadingRule = ModuleLoadingRuleValue.REQUIRED) { resourceBundle = "bar.req" }
+        module("bar.emb", loadingRule = ModuleLoadingRuleValue.EMBEDDED) { resourceBundle = "bar.emb" }
       }
     }.buildDir(pluginDirPath, object : PluginPackagingConfig() {
       override val ContentModuleSpec.packageToMainJar: Boolean get() = true
@@ -432,10 +433,10 @@ class PluginDescriptorTest {
   fun `content module's content modules are disregarded`() {
     plugin("bar") {
       content {
-        module("bar.module", loadingRule = ModuleLoadingRule.REQUIRED) {
+        module("bar.module", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
           packagePrefix = "bar.module"
           content {
-            module("bar.module.inner", loadingRule = ModuleLoadingRule.REQUIRED) {
+            module("bar.module.inner", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
               packagePrefix = "bar.module.inner"
             }
           }
