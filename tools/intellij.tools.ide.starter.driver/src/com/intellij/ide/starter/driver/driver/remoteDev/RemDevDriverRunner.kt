@@ -1,6 +1,7 @@
 package com.intellij.ide.starter.driver.driver.remoteDev
 
 import com.intellij.driver.client.impl.JmxHost
+import com.intellij.ide.starter.driver.driver.remoteDev.IDEBackendHandler.Companion.remoteDevDirectLink
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.DriverRunner
 import com.intellij.ide.starter.driver.engine.DriverWithDetailedLogging
@@ -25,13 +26,14 @@ class RemDevDriverRunner : DriverRunner {
 
     val remoteDevDriverOptions = RemoteDevDriverOptions()
     context.addRemoteDevSpecificTraces()
-    val ideBackendHandler = IDEBackendHandler(context, remoteDevDriverOptions)
-    val ideFrontendHandler = IDEFrontendHandler(context, remoteDevDriverOptions)
 
-    val (backendRun, joinLink) = ideBackendHandler.run(commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
+    val backendRun = IDEBackendHandler(context, remoteDevDriverOptions.backendOptions, remoteDevDriverOptions.backendDebugPort).run(commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
+    val joinLink = backendRun.driver.remoteDevDirectLink()
 
+    // should be run before the actual frontend start as otherwise we miss IdeLaunchEvent
     val frontendDriverWithLogging = DriverWithDetailedLogging(RemDevFrontendDriver(JmxHost(address = remoteDevDriverOptions.frontendOptions.address)))
-    val (frontendStartResult, frontendProcess) = ideFrontendHandler.runInBackground(launchName, joinLink = joinLink, runTimeout = runTimeout)
+
+    val (frontendStartResult, frontendProcess) = IDEFrontendHandler(context.frontendIDEContext, remoteDevDriverOptions.frontendOptions, remoteDevDriverOptions.debugPort).runInBackground(launchName, joinLink, runTimeout)
 
     return RemoteDevBackgroundRun(backendRun = backendRun,
                                   frontendProcess = frontendProcess,
