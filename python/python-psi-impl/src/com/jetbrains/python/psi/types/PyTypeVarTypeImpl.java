@@ -7,7 +7,6 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
-import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -181,10 +180,6 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
   public @NotNull PyTypeVarTypeImpl withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
     return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), getVariance(), isDefinition(),
                                  getDeclarationElement(), scopeOwner);
-  }
-
-  public @NotNull PyTypeVarTypeImpl withTargetExpression(@Nullable PyTargetExpression targetExpression) {
-    return withDeclarationElement(targetExpression);
   }
 
   public @NotNull PyTypeVarTypeImpl withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
