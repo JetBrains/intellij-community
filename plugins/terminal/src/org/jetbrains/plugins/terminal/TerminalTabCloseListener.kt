@@ -58,6 +58,11 @@ abstract class TerminalTabCloseListener(
   }
 
   companion object {
+    /**
+     * If you remove the content from the tool window content manager using this method,
+     * close the tool window manually in case it became empty.
+     * Because it won't be closed by the platform logic because of [Content.TEMPORARY_REMOVED_KEY] we set.
+     */
     fun executeContentOperationSilently(content: Content, runnable: () -> Unit) {
       content.putUserData(Content.TEMPORARY_REMOVED_KEY, true)
       try {
