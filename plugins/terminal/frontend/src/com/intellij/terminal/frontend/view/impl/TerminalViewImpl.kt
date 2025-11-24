@@ -406,21 +406,23 @@ class TerminalViewImpl(
   }
 
   private fun listenAlternateBufferSwitch() {
-    coroutineScope.launch(CoroutineName("Alternate buffer switch listener")) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement() + CoroutineName("Alternate buffer switch listener")) {
       sessionModel.terminalState.collect { state ->
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          if (state.isAlternateScreenBuffer != isAlternateScreenBuffer) {
-            isAlternateScreenBuffer = state.isAlternateScreenBuffer
+        if (state.isAlternateScreenBuffer != isAlternateScreenBuffer) {
+          isAlternateScreenBuffer = state.isAlternateScreenBuffer
 
-            val terminalWasFocused = terminalPanel.isFocusAncestor()
-            val editor = if (state.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
-            terminalPanel.setTerminalContent(editor)
-            terminalSearchController.finishSearchSession()
-            mutableOutputModels.setActiveModel(state.isAlternateScreenBuffer)
+          // Check the whole terminal panel to not miss the case of focus in a search bar.
+          // And check both editors because buffer change requests can arrive in a row, before the previous focus change is processed.
+          val terminalWasFocused = terminalPanel.isFocusAncestor()
+                                   || outputEditor.component.isFocusAncestor()
+                                   || alternateBufferEditor.component.isFocusAncestor()
+          val editor = if (state.isAlternateScreenBuffer) alternateBufferEditor else outputEditor
+          terminalPanel.setTerminalContent(editor)
+          terminalSearchController.finishSearchSession()
+          mutableOutputModels.setActiveModel(state.isAlternateScreenBuffer)
 
-            if (terminalWasFocused) {
-              IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
-            }
+          if (terminalWasFocused) {
+            IdeFocusManager.getInstance(project).requestFocus(terminalPanel.preferredFocusableComponent, true)
           }
         }
       }
