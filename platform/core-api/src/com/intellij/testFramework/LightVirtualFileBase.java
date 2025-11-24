@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.*;
@@ -27,7 +29,7 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
     myName = name;
     myFileType = fileType;
     myModStamp = modificationStamp;
-    PsiInvalidElementAccessException.setCreationTrace(this, new Throwable());
+    registerCreationTrace();
   }
 
   public void setFileType(FileType fileType) {
@@ -205,5 +207,14 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
     assertWritable();
     super.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor);
+  }
+
+  private void registerCreationTrace() {
+    Application application = ApplicationManager.getApplication();
+    if (application == null || application.isUnitTestMode()) {
+      return;
+    }
+
+    PsiInvalidElementAccessException.setCreationTrace(this, new Throwable());
   }
 }
