@@ -179,7 +179,18 @@ jobs:
 
       - name: Check that the Bazel build is up-to-date (except android submodule)
         run: |
-          CHANGED_BAZEL_FILES=$(git diff --name-only HEAD | grep -E '\.(bzl|bazel)$|^BUILD|^WORKSPACE' | grep -v '^android/' || true)
+          # 1. Get all changed files
+          # 2. Filter for Bazel files (extensions .bzl, .bazel, or filenames BUILD, WORKSPACE)
+          # 3. Exclude the android submodule
+          # 4. Keep only relevant files:
+          #    - Top-level files (no slashes)
+          #    - build/BUILD.bazel
+          #    - Files in platform/jewel/
+          CHANGED_BAZEL_FILES=$(git diff --name-only HEAD \
+            | grep -E '\.(bzl|bazel)$|^BUILD|^WORKSPACE' \
+            | grep -v '^android/' \
+            | grep -E '^[^/]+$|^build/BUILD\.bazel$|^platform/jewel/' \
+            || true)
           if [ -n "$CHANGED_BAZEL_FILES" ]; then
             echo "Error: Bazel files need to be updated:"
             echo "$CHANGED_BAZEL_FILES"
