@@ -13,7 +13,6 @@ import com.intellij.platform.plugins.parser.impl.elements.OS.*
 import com.intellij.platform.plugins.parser.impl.elements.PreloadMode.*
 import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.platform.plugins.parser.impl.elements.ClientKind as ClientKindElement
 
 fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor(
   services = services.map { it.convert() },
@@ -22,14 +21,14 @@ fun ScopedElementsContainer.convert(): ContainerDescriptor = ContainerDescriptor
   extensionPoints = extensionPoints.map { it.convert() },
 )
 
-fun ClientKindElement.convert(): ClientKind = when (this) {
-  ClientKindElement.LOCAL -> ClientKind.LOCAL
-  ClientKindElement.FRONTEND -> ClientKind.FRONTEND
-  ClientKindElement.CONTROLLER -> ClientKind.CONTROLLER
-  ClientKindElement.GUEST -> ClientKind.GUEST
-  ClientKindElement.OWNER -> ClientKind.OWNER
-  ClientKindElement.REMOTE -> ClientKind.REMOTE
-  ClientKindElement.ALL -> ClientKind.ALL
+fun ClientKindValue.convert(): ClientKind = when (this) {
+  ClientKindValue.LOCAL -> ClientKind.LOCAL
+  ClientKindValue.FRONTEND -> ClientKind.FRONTEND
+  ClientKindValue.CONTROLLER -> ClientKind.CONTROLLER
+  ClientKindValue.GUEST -> ClientKind.GUEST
+  ClientKindValue.OWNER -> ClientKind.OWNER
+  ClientKindValue.REMOTE -> ClientKind.REMOTE
+  ClientKindValue.ALL -> ClientKind.ALL
 }
 
 fun ComponentElement.convert(): ComponentConfig = ComponentConfig(

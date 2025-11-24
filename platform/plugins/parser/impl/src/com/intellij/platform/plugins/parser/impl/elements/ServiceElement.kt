@@ -9,7 +9,7 @@ class ServiceElement(
   @JvmField val overrides: Boolean,
   @JvmField val configurationSchemaKey: String?,
   @JvmField val preload: PreloadMode,
-  @JvmField val client: ClientKind?,
+  @JvmField val client: ClientKindValue?,
   @JvmField val os: OS?
 ) {
   override fun toString(): String {

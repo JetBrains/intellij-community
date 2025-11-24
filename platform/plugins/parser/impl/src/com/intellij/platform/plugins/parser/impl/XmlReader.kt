@@ -507,7 +507,7 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OS?): ServiceElemen
   var configurationSchemaKey: String? = null
   var overrides = false
   var preload = PreloadMode.FALSE
-  var client: ClientKind? = null
+  var client: ClientKindValue? = null
   for (i in 0 until reader.attributeCount) {
     when (reader.getAttributeLocalName(i)) {
       PluginXmlConst.SERVICE_EP_SERVICE_INTERFACE_ATTR -> serviceInterface = getNullifiedAttributeValue(
@@ -532,13 +532,13 @@ private fun readServiceElement(reader: XMLStreamReader2, os: OS?): ServiceElemen
       PluginXmlConst.SERVICE_EP_CLIENT_ATTR -> {
         @Suppress("DEPRECATION")
         when (reader.getAttributeValue(i)) {
-          PluginXmlConst.SERVICE_EP_CLIENT_LOCAL_VALUE -> client = ClientKind.LOCAL
-          PluginXmlConst.SERVICE_EP_CLIENT_GUEST_VALUE -> client = ClientKind.GUEST
-          PluginXmlConst.SERVICE_EP_CLIENT_CONTROLLER_VALUE -> client = ClientKind.CONTROLLER
-          PluginXmlConst.SERVICE_EP_CLIENT_OWNER_VALUE -> client = ClientKind.OWNER
-          PluginXmlConst.SERVICE_EP_CLIENT_REMOTE_VALUE -> client = ClientKind.REMOTE
-          PluginXmlConst.SERVICE_EP_CLIENT_FRONTEND_VALUE -> client = ClientKind.FRONTEND
-          PluginXmlConst.SERVICE_EP_CLIENT_ALL_VALUE -> client = ClientKind.ALL
+          PluginXmlConst.SERVICE_EP_CLIENT_LOCAL_VALUE -> client = ClientKindValue.LOCAL
+          PluginXmlConst.SERVICE_EP_CLIENT_GUEST_VALUE -> client = ClientKindValue.GUEST
+          PluginXmlConst.SERVICE_EP_CLIENT_CONTROLLER_VALUE -> client = ClientKindValue.CONTROLLER
+          PluginXmlConst.SERVICE_EP_CLIENT_OWNER_VALUE -> client = ClientKindValue.OWNER
+          PluginXmlConst.SERVICE_EP_CLIENT_REMOTE_VALUE -> client = ClientKindValue.REMOTE
+          PluginXmlConst.SERVICE_EP_CLIENT_FRONTEND_VALUE -> client = ClientKindValue.FRONTEND
+          PluginXmlConst.SERVICE_EP_CLIENT_ALL_VALUE -> client = ClientKindValue.ALL
           else -> LOG.error("Unknown client value: ${reader.getAttributeValue(i)} at ${reader.location}")
         }
       }
