@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
+import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SeTabVm
 import com.intellij.platform.searchEverywhere.frontend.withPrevious
 import com.intellij.ui.components.JBTabbedPane
@@ -86,7 +87,7 @@ class SePopupHeaderPane(
     val initialConfiguration = configurationFlow.value
 
     initialConfiguration.tabs.ifEmpty {
-      listOf(Tab(SeAllTab.NAME, SeAllTab.ID, SeAllTab.ID))
+      listOf(Tab(SeAllTab.NAME, SeAllTab.ID, SeAllTab.PRIORITY, SeAllTab.ID))
     }.forEach { tab ->
       tabbedPane.addTab(tab.name, null, JPanel(), tabShortcuts[tab.id])
     }
@@ -217,8 +218,8 @@ class SePopupHeaderPane(
     }
   }
 
-  class Tab(val name: @Nls String, val id: String, val reportableId: String) {
-    constructor(tabVm: SeTabVm) : this(tabVm.name, tabVm.tabId, tabVm.reportableTabId)
+  class Tab(val name: @Nls String, val id: String, val priority: Int, val reportableId: String) {
+    constructor(tabVm: SeTabVm) : this(tabVm.name, tabVm.tabId, tabVm.priority, tabVm.reportableTabId)
   }
 
   class Configuration(
@@ -227,10 +228,12 @@ class SePopupHeaderPane(
   ) {
     companion object {
       fun createInitial(
-        initialTabs: List<Tab>,
+        initialTabs: List<SeDummyTabVm>,
         selectedTabId: String,
-      ): Configuration =
+      ): Configuration = initialTabs.let {
+        val initialTabs = initialTabs.map { Tab(it) }
         Configuration(initialTabs, MutableStateFlow(initialTabs.indexOfTabWithIdOrZero(selectedTabId)))
+      }
     }
   }
 

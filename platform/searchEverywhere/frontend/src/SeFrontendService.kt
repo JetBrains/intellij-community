@@ -30,6 +30,7 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.symbols.SeSymbolsTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextTab
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
+import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -92,14 +93,15 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
     val tabFactories = SeTabFactory.EP_NAME.extensionList
     val tabCustomizer = SeTabsCustomizer.getInstance()
-    val initialTabs = visibleTabsState ?: tabFactories.filterIsInstance<SeEssentialTabFactory>()
-      .mapNotNull { factory ->
-        tabCustomizer.customizeTabInfo(factory.id, SeTabInfo(factory.priority, factory.name))?.let { factory.id to it }
-      }.sortedBy {
-        -it.second.priority
-      }.map { (id, info) ->
-        SePopupHeaderPane.Tab(info.name, id, id)
-      }
+    val initialTabs = visibleTabsState?.map { tab ->
+      SeDummyTabVm(tab)
+    } ?: tabFactories.filterIsInstance<SeEssentialTabFactory>().mapNotNull { factory ->
+      tabCustomizer.customizeTabInfo(factory.id, SeTabInfo(factory.priority, factory.name))?.let { factory.id to it }
+    }.sortedBy { (_, info) ->
+      -info.priority
+    }.map { (id, info) ->
+      SeDummyTabVm(id, info)
+    }
 
     val popupClosedCompletable = CompletableDeferred<Unit>()
     val searchStatePublisher = SeSearchStatePublisher()
@@ -127,6 +129,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                     popup,
                                     popupContentPane,
                                     searchStatePublisher,
+                                    initialTabs,
                                     tabFactories,
                                     tabId,
                                     searchText,
@@ -165,6 +168,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     popup: JBPopup,
     popupContentPane: SePopupContentPane,
     searchStatePublisher: SeSearchStatePublisher,
+    initialTabs: List<SeDummyTabVm>,
     tabFactories: List<SeTabFactory>,
     tabId: String,
     searchText: String?,
@@ -218,6 +222,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       popupScope,
       session,
       project,
+      initialTabs,
       tabs,
       deferredTabs,
       adaptedTabs,
@@ -294,7 +299,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
 
   private fun createAndShowIdlePopup(
     popupScope: CoroutineScope,
-    initialTabs: List<SePopupHeaderPane.Tab>,
+    initialTabs: List<SeDummyTabVm>,
     selectedTabId: String,
     searchText: String?,
     searchStatePublisher: SeSearchStatePublisher,

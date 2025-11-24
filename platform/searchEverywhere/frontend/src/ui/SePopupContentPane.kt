@@ -33,6 +33,7 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItem
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
+import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.ui.*
@@ -74,11 +75,11 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
 class SePopupContentPane(
-  private val project: Project?, //private val vm: SePopupVm,
+  private val project: Project?,
   private val resizePopupHandler: (Dimension) -> Unit,
   private val searchStatePublisher: SeSearchStatePublisher,
   private val coroutineScope: CoroutineScope,
-  initialTabs: List<SePopupHeaderPane.Tab>,
+  initialTabs: List<SeDummyTabVm>,
   selectedTabId: String,
   initialSearchText: String?,
   initPopupExtendedSize: Dimension?,

@@ -40,6 +40,7 @@ class SePopupVm(
   val coroutineScope: CoroutineScope,
   val session: SeSession,
   private val project: Project?,
+  initialDummyTabs: List<SeDummyTabVm>,
   tabs: List<SeTab>,
   deferredTabs: List<SuspendLazyProperty<SeTab?>>,
   adaptedTabs: SuspendLazyProperty<List<SeTab>>,
@@ -54,14 +55,17 @@ class SePopupVm(
   private val _searchPattern: MutableStateFlow<String> = MutableStateFlow("")
   val searchPattern: StateFlow<String> = _searchPattern.asStateFlow()
 
-  private val _deferredTabVms = MutableSharedFlow<SeTabVm>(replay = 100)
+  private val _deferredTabVms = MutableSharedFlow<SeTabInitEvent>(replay = 100)
   private val _tabsModelFlow = MutableStateFlow(run {
+    val initialModel = SeTabsModel(initialDummyTabs, initialTabId)
+
     val customizer = SeTabsCustomizer.getInstance()
     val tabsVms = tabs.mapNotNull {
       val tabInfo = customizer.customizeTabInfo(it.id, SeTabInfo(it.priority, it.name)) ?: return@mapNotNull null
-      SeTabVm(project, coroutineScope, it, tabInfo, searchPattern, availableLegacyAllTabContributors)
+      SeTabVmImpl(project, coroutineScope, it, tabInfo, searchPattern, availableLegacyAllTabContributors)
     }
-    SeTabsModel(tabsVms, initialTabId)
+
+    initialModel.newModelWithReplacedTab(tabsVms, initialTabId)
   })
   val tabsModelFlow: StateFlow<SeTabsModel> get() = _tabsModelFlow.asStateFlow()
   val tabsModel: SeTabsModel get() = tabsModelFlow.value
@@ -114,9 +118,9 @@ class SePopupVm(
     }
 
     coroutineScope.launch {
-      _deferredTabVms.collect { tabVm ->
+      _deferredTabVms.collect { tabInitEvent ->
         _tabsModelFlow.update { model ->
-          model.newModelWith(tabVm)
+          model.newModelWithReplacedTab(tabInitEvent.newTabs, removeDummy = tabInitEvent.removeDummy)
         }
       }
     }
@@ -132,7 +136,8 @@ class SePopupVm(
       coroutineScope.launch {
         it.getValue()?.let { tab ->
           val newInfo = tabsCustomizer.customizeTabInfo(tab.id, SeTabInfo(tab.priority, tab.name)) ?: return@launch
-          _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, newInfo, searchPattern, availableLegacyAllTabContributors))
+          val tabVm = SeTabVmImpl(project, coroutineScope, tab, newInfo, searchPattern, availableLegacyAllTabContributors)
+          _deferredTabVms.emit(SeTabInitEvent(listOf(tabVm)))
         }
       }
     }
@@ -141,14 +146,16 @@ class SePopupVm(
       deferredTabJobs.joinAll()
 
       val adaptedTabs = adaptedTabs.getValue()
-      adaptedTabs.forEach { tab ->
+      val adaptedCustomized = adaptedTabs.mapNotNull { tab ->
         val providerId = tab.id.toProviderId()
-        val availableLegacyContributor = availableLegacySeparateTabContributors[providerId] ?: return@forEach
+        val availableLegacyContributor = availableLegacySeparateTabContributors[providerId] ?: return@mapNotNull null
 
         tabsCustomizer.customizeTabInfo(tab.id, SeTabInfo(tab.priority, tab.name))?.let { tabInfo ->
-          _deferredTabVms.emit(SeTabVm(project, coroutineScope, tab, tabInfo, searchPattern, mapOf(providerId to availableLegacyContributor)))
+          SeTabVmImpl(project, coroutineScope, tab, tabInfo, searchPattern, mapOf(providerId to availableLegacyContributor))
         }
       }
+
+      _deferredTabVms.emit(SeTabInitEvent(adaptedCustomized, true))
     }
 
     coroutineScope.launch {
@@ -313,6 +320,8 @@ class SePopupVm(
       return ActionUpdateThread.BGT
     }
   }
+
+  private class SeTabInitEvent(val newTabs: List<SeTabVm>, val removeDummy: Boolean = false)
 }
 
 @ApiStatus.Internal
@@ -346,5 +355,16 @@ class SeTabsModel(tabVms: List<SeTabVm>, selectedTabId: String) {
     sortedTabVms.indexOfFirst { it.tabId == tabId }.takeIf { it != -1 }?.let { selectedTabIndexFlow.value = it }
   }
 
-  fun newModelWith(tab: SeTabVm): SeTabsModel = SeTabsModel(sortedTabVms + tab, selectedTab.tabId)
+  fun newModelWithReplacedTab(newTabs: List<SeTabVm>, selectedTabId: String? = null, removeDummy: Boolean = false): SeTabsModel {
+    val newTabs = newTabs.associateBy { it.tabId }.toMutableMap()
+
+    val mergedTabs = (sortedTabVms.map {
+      newTabs.remove(it.tabId) ?: return@map it
+    } + newTabs.values).let {
+      if (removeDummy) it.filterIsInstance<SeTabVmImpl>()
+      else it
+    }
+
+    return SeTabsModel(mergedTabs, selectedTabId ?: selectedTab.tabId)
+  }
 }
