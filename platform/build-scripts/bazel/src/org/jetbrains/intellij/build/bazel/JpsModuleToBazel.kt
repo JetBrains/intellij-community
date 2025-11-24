@@ -111,6 +111,9 @@ internal class JpsModuleToBazel {
       generator.save(ultimateResult.moduleBuildFiles)
 
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = Path.of(m2Repo))
+      if (ultimateRoot != null) {
+        generator.generateToolboxDeps()
+      }
 
       // Check that after all workings of generator, all checksums from urls with checksums
       // are saved to MODULE.bazel correctly
