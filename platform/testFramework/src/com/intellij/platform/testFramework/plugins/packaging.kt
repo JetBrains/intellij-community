@@ -84,12 +84,8 @@ fun PluginSpec.buildXml(config: PluginPackagingConfig = PluginPackagingConfig())
       val attributes = if (namespace != null) """ namespace="$namespace"""" else ""
       appendLine("<content$attributes>")
       for (module in content) {
-        val loadingAttribute = when (module.loadingRule) {
-          ModuleLoadingRuleValue.OPTIONAL -> ""
-          ModuleLoadingRuleValue.REQUIRED -> "loading=\"required\" "
-          ModuleLoadingRuleValue.EMBEDDED -> "loading=\"embedded\" "
-          ModuleLoadingRuleValue.ON_DEMAND -> "loading=\"on-demand\" "
-        } + module.requiredIfAvailable?.let { "required-if-available=\"$it\" " }.orEmpty()
+        val loadingAttribute = module.loadingRule.takeIf { it != ModuleLoadingRuleValue.OPTIONAL }?.let { "loading=\"${it.xmlValue}\" " }.orEmpty() +
+                               module.requiredIfAvailable?.let { "required-if-available=\"$it\" " }.orEmpty()
         val tag = """module name="${module.moduleId}" $loadingAttribute"""
         if (module.embedToPluginXml) {
           appendLine("<$tag><![CDATA[${module.spec.buildXml(config)}]]></module>")
