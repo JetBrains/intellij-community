@@ -137,7 +137,10 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
 
         }.toSet()
       // Remove stale pythons from the cache
-      state.userProvidedPythons.removeAll(badPythons.map { it.pathString })
+      val newPaths = state.userProvidedPythons.distinct().toMutableList()
+      newPaths.removeAll(badPythons.map { it.pathString })
+      state.userProvidedPythons.clear()
+      state.userProvidedPythons.addAll(newPaths)
       logger.info("pythons refreshed")
       return@withContext result.sorted()
     }

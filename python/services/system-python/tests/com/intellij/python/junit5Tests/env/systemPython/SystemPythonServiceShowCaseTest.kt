@@ -4,21 +4,18 @@ package com.intellij.python.junit5Tests.env.systemPython
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.eel.spawnProcess
-import com.intellij.python.community.impl.venv.createVenv
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl
 import com.intellij.python.junit5Tests.assertFail
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
-import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.python.junit5Tests.randomBinary
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
@@ -29,18 +26,12 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.async
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.hasItem
-import org.hamcrest.Matchers.not
+import org.hamcrest.MatcherAssert
+import org.hamcrest.Matchers
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.nio.file.Path
-import kotlin.io.path.deleteExisting
 import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.minutes
 
@@ -66,6 +57,17 @@ class SystemPythonServiceShowCaseTest {
   @Test
   fun testCustomPythonRainyDay(): Unit = timeoutRunBlocking(10.minutes) {
     SystemPythonService().registerSystemPython(randomBinary).assertFail()
+  }
+
+  @Test
+  fun testRegister(@PythonBinaryPath path: PythonBinary): Unit = timeoutRunBlocking(10.minutes) {
+    val sut = SystemPythonService()
+    repeat(10) {
+      sut.registerSystemPython(path).orThrow()
+    }
+    val pythons = sut.findSystemPythons(forceRefresh = true).map { it.pythonBinary }
+    MatcherAssert.assertThat("No registered python", pythons, Matchers.hasItem(path))
+    Assertions.assertEquals(pythons.distinct().size, pythons.size, "Duplicates found")
   }
 
   @Test
