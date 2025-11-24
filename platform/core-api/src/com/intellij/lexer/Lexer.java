@@ -105,6 +105,8 @@ public abstract class Lexer {
 
   /**
    * Restores the lexer to the specified state and position.
+   * Lexer can only be restored if the {@code buffer} and {@code bufferEnd}
+   * have not changed since acquiring the position with {@link #getCurrentPosition()}.
    *
    * @param position the state and position to restore to.
    */
