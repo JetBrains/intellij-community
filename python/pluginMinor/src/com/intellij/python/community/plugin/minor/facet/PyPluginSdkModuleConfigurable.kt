@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil
 import com.jetbrains.python.configuration.PyActiveSdkConfigurable
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
+import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.removeTransferredRoots
 import com.jetbrains.python.sdk.transferRoots
 import org.jetbrains.annotations.ApiStatus
@@ -22,7 +23,7 @@ internal class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkMod
       }
 
       override fun getSdk(): Sdk? {
-        return getSdkFromFacet(module)
+        return PyModuleService.getInstance().findPythonSdk(module)
       }
     }
   }
@@ -40,13 +41,6 @@ fun setSdkToFacet(item: Sdk?, module: Module) {
   else {
     setFacetSdk(facet, item, module)
   }
-}
-
-@ApiStatus.Internal
-fun getSdkFromFacet(module: Module): Sdk? {
-  val facetManager = FacetManager.getInstance(module)
-  val facet = facetManager.getFacetByType(MinorPythonFacet.ID)
-  return facet?.configuration?.sdk
 }
 
 private fun setFacetSdk(facet: MinorPythonFacet,

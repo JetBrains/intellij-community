@@ -3,13 +3,13 @@ package com.jetbrains.python.run.configuration
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Computable
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams
 import com.jetbrains.python.sdk.PySdkListCellRenderer
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.pythonSdk
 import java.util.function.Consumer
 
 class PySdkComboBox(private val addDefault: Boolean,
@@ -48,7 +48,7 @@ class PySdkComboBox(private val addDefault: Boolean,
   }
 
   private fun updateDefaultInterpreter(module: Module?) {
-    val sdk = if (module == null) null else ModuleRootManager.getInstance(module).sdk
+    val sdk = module?.pythonSdk
     setRenderer(
       if (sdk == null) PySdkListCellRenderer()
       else PySdkListCellRenderer(PyBundle.message("python.sdk.rendering.project.default.0", sdk.name), sdk)

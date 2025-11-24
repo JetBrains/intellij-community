@@ -41,7 +41,7 @@ internal object InterpreterServiceImpl : InterpreterService {
   }
 
   override suspend fun getForModule(module: Module): Interpreter? {
-    val pythonSdk = ModuleRootManager.getInstance(module).sdk?.takeIf { isPythonSdk(it) } ?: return null
+    val pythonSdk = PythonSdkUtil.findPythonSdk(module)?.takeIf { isPythonSdk(it) } ?: return null
     val data = pythonSdk.getOrCreateAdditionalData()
 
     return findInterpreter(data, pythonSdk)

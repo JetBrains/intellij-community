@@ -25,6 +25,7 @@ import com.jetbrains.python.sdk.configuration.CreateSdkInfo
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.setAssociationToPath
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.collections.immutable.toPersistentList
@@ -108,7 +109,7 @@ internal class ModulesSdkConfigurator private constructor(
       val tools = PyProjectSdkConfigurationExtension.createMap()
       val limit = Semaphore(permits = Registry.intValue("intellij.python.sdkConfigurator.backend.sdk.parallel"))
       val now = System.currentTimeMillis()
-      val resultDef = project.modules.filter { ModuleRootManager.getInstance(it).sdk == null }.map { module ->
+      val resultDef = project.modules.filter { PythonSdkUtil.findPythonSdk(it) == null }.map { module ->
         limit.withPermit {
           async {
             val moduleInfo = getModuleInfo(module, tools) ?: return@async null
@@ -190,7 +191,7 @@ internal class ModulesSdkConfigurator private constructor(
         } // Link workspace members with their workspace
         val reportedBrokenModules = mutableSetOf<Module>()
         for ((module, parentModule) in modulesWithSameSdk) {
-          val parentSdk = ModuleRootManager.getInstance(parentModule).sdk
+          val parentSdk = PythonSdkUtil.findPythonSdk(module)
           if (parentSdk != null) {
             ModuleRootModificationUtil.setModuleSdk(module, parentSdk) // This SDK is shared, no need to associate it
             // TODO: Support association with multiple modules

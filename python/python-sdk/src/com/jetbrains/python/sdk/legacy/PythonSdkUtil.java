@@ -97,13 +97,7 @@ public final class PythonSdkUtil {
     if (module == null || module.isDisposed()) {
       return null;
     }
-
-    Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    if (sdk != null && isPythonSdk(sdk)) {
-      return sdk;
-    }
-
-    sdk = PyModuleService.getInstance().findPythonSdk(module);
+    var sdk = PyModuleService.getInstance().findPythonSdk(module);
     if (sdk != null && isPythonSdk(sdk)) {
       return sdk;
     }

@@ -17,7 +17,7 @@ package com.jetbrains.python.extensions
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
 
-fun Module.getSdk(): Sdk? = ModuleRootManager.getInstance(this).sdk
+fun Module.getSdk(): Sdk? = PythonSdkUtil.findPythonSdk(this)

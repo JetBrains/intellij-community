@@ -53,6 +53,7 @@ public final class PythonDocTestConfigurationProducer extends PythonTestLegacyCo
   @Override
   protected boolean isAvailable(final @NotNull Location location) {
     final Module module = location.getModule();
+    if (module == null) return false;
     if (!isPythonModule(module)) return false;
     final PsiElement element = location.getPsiElement();
     if (element instanceof PsiFile) {
