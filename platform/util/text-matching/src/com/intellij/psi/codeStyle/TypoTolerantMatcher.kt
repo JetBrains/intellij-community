@@ -2,18 +2,12 @@
 package com.intellij.psi.codeStyle
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.FList
 import com.intellij.util.text.NameUtilCore
-import com.intellij.util.text.matching.AsciiUtils
-import com.intellij.util.text.matching.MatchedFragment
-import com.intellij.util.text.matching.MatchingMode
-import com.intellij.util.text.matching.deprecated
-import com.intellij.util.text.matching.undeprecate
+import com.intellij.util.text.matching.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
 import kotlin.math.min
 import kotlin.math.pow
 
@@ -21,7 +15,7 @@ import kotlin.math.pow
 class TypoTolerantMatcher @VisibleForTesting constructor(
   pattern: String,
   private val myMatchingMode: MatchingMode,
-  private val myHardSeparators: String,
+  hardSeparators: String,
 ) : MinusculeMatcher() {
   private val myPattern: CharArray
   private val myMixedCase: Boolean
@@ -34,6 +28,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
   private val toLowerCase: CharArray
   private val myMeaningfulCharacters: CharArray
   private val myMinNameLength: Int
+  private val myHardSeparators = hardSeparators.toCharArray()
 
   /**
    * Constructs a matcher by a given pattern.
@@ -95,7 +90,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
   }
 
   override val pattern: String
-    get() = String(myPattern)
+    get() = myPattern.concatToString()
 
   private fun isWordSeparator(c: Char): Boolean {
     return c.isWhitespace() || c == '_' || c == '-' || c == ':' || c == '+' || c == '.'
@@ -155,7 +150,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
         }
 
         val c = name[i]
-        p = Strings.indexOf(myPattern, c, p + 1, myPattern.size, false)
+        p = indexOf(myPattern, c, p + 1, myPattern.size, ignoreCase = true)
         if (p < 0) {
           break
         }
@@ -171,7 +166,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
     }
 
     val startIndex = first.startOffset
-    val afterSeparator = Strings.indexOfAny(name, myHardSeparators, 0, startIndex) >= 0
+    val afterSeparator = indexOfAny(name, myHardSeparators, 0, startIndex) >= 0
     val wordStart = startIndex == 0 || NameUtilCore.isWordStart(name, startIndex) && !NameUtilCore.isWordStart(name, startIndex - 1)
     val finalMatch = fragments.last().endOffset == name.length
 
@@ -424,10 +419,10 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
 
       return when {
         // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
-        !allowSpecialChars && !myHasSeparators && !myMixedCase && Strings.containsAnyChar(myName, myHardSeparators, startAt, next) -> -1
+        !allowSpecialChars && !myHasSeparators && !myMixedCase && indexOfAny(myName, myHardSeparators, start = startAt, end = next) != -1 -> -1
         // if the user has typed a dot, don't skip other dots between humps
         // but one pattern dot may match several name dots
-        !allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.', errorState) && Strings.contains(myName, startAt, next, '.') -> -1
+        !allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.', errorState) && indexOf(myName, '.', start = startAt, end = next, ignoreCase = false) != -1 -> -1
         else -> next
       }
     }
@@ -696,7 +691,7 @@ class TypoTolerantMatcher @VisibleForTesting constructor(
 
   @NonNls
   override fun toString(): @NonNls String {
-    return "TypoTolerantMatcher{myPattern=" + String(myPattern) + ", myMatchingMode=" + myMatchingMode + '}'
+    return "TypoTolerantMatcher{myPattern=${pattern}, myMatchingMode=$myMatchingMode}"
   }
 
   private data class ErrorWithIndex(val index: Int, val error: Error)

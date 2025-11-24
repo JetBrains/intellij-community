@@ -2,16 +2,10 @@
 package com.intellij.psi.codeStyle
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.FList
-import com.intellij.util.text.CharArrayCharSequence
-import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.text.NameUtilCore
 import com.intellij.util.text.NameUtilCore.isWordStart
-import com.intellij.util.text.matching.MatchedFragment
-import com.intellij.util.text.matching.MatchingMode
-import com.intellij.util.text.matching.deprecated
-import com.intellij.util.text.matching.undeprecate
+import com.intellij.util.text.matching.*
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -20,7 +14,7 @@ import org.jetbrains.annotations.NonNls
  * 
  * @see NameUtil.buildMatcher
  */
-internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode: MatchingMode, private val myHardSeparators: String) :
+internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode: MatchingMode, hardSeparators: String) :
   MinusculeMatcher() {
   private val myPattern: CharArray = pattern.removeSuffix("* ").toCharArray()
   private val isLowerCase: BooleanArray = BooleanArray(myPattern.size)
@@ -28,6 +22,8 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
   private val isWordSeparator: BooleanArray = BooleanArray(myPattern.size)
   private val toUpperCase: CharArray = CharArray(myPattern.size)
   private val toLowerCase: CharArray = CharArray(myPattern.size)
+private val myHardSeparators: CharArray = hardSeparators.toCharArray()
+
   private val myMixedCase: Boolean
   private val myHasSeparators: Boolean
   private val myHasDots: Boolean
@@ -116,7 +112,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
         }
 
         val c = name[i]
-        p = Strings.indexOf(myPattern, c, p + 1, myPattern.size, false)
+        p = indexOf(myPattern, c, p + 1, myPattern.size, ignoreCase = true)
         if (p < 0) {
           break
         }
@@ -130,7 +126,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     }
 
     val startIndex = first.startOffset
-    val afterSeparator = Strings.indexOfAny(name, myHardSeparators, 0, startIndex) >= 0
+    val afterSeparator = indexOfAny(name, myHardSeparators, start = 0, end = startIndex) >= 0
     val wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1)
     val finalMatch = fragments.last().endOffset == name.length
 
@@ -175,7 +171,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
   }
 
   override val pattern: String
-    get() = String(myPattern)
+    get() = myPattern.concatToString()
 
   override fun match(name: String): List<MatchedFragment>? {
     if (name.length < myMinNameLength) {
@@ -210,18 +206,19 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
   private fun matchBySubstring(name: String): List<MatchedFragment>? {
     val infix = isPatternChar(0, '*')
     val patternWithoutWildChar = filterWildcard(myPattern)
-    if (name.length < patternWithoutWildChar.size) {
+    if (name.length < patternWithoutWildChar.length) {
       return null
     }
     if (infix) {
-      val index = Strings.indexOfIgnoreCase(name, CharArrayCharSequence(patternWithoutWildChar, 0, patternWithoutWildChar.size), 0)
+      val index = name.indexOf(patternWithoutWildChar, ignoreCase = true)
       if (index >= 0) {
-        return listOf(MatchedFragment(index, index + patternWithoutWildChar.size - 1))
+        return listOf(MatchedFragment(index, index + patternWithoutWildChar.length - 1))
       }
       return null
     }
-    if (CharArrayUtil.regionMatches(patternWithoutWildChar, 0, patternWithoutWildChar.size, name)) {
-      return listOf(MatchedFragment(0, patternWithoutWildChar.size))
+
+    if (regionMatches(patternWithoutWildChar, 0, patternWithoutWildChar.length, name)) {
+      return listOf(MatchedFragment(0, patternWithoutWildChar.length))
     }
     return null
   }
@@ -331,7 +328,7 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
       indexOfWordStart(name, patternIndex, startAt)
     }
     else {
-      indexOfIgnoreCase(name, startAt, myPattern[patternIndex], patternIndex)
+      indexOfIgnoreCase(name, startAt, patternIndex)
     }
   }
 
@@ -339,12 +336,12 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     if (end < 0) return -1
 
     // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
-    if (!myHasSeparators && !myMixedCase && Strings.containsAnyChar(name, myHardSeparators, start, end)) {
+    if (!myHasSeparators && !myMixedCase && indexOfAny(name, myHardSeparators, start, end) != -1) {
       return -1
     }
     // if the user has typed a dot, don't skip other dots between humps
     // but one pattern dot may match several name dots
-    if (myHasDots && !isPatternChar(patternIndex - 1, '.') && Strings.contains(name, start, end, '.')) {
+    if (myHasDots && !isPatternChar(patternIndex - 1, '.') && indexOf(name, '.', start, end, ignoreCase = false) != -1) {
       return -1
     }
     return end
@@ -522,15 +519,16 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
     var i = startFrom
     val isSpecialSymbol = !p.isLetterOrDigit()
     while (true) {
-      i = indexOfIgnoreCase(name, i, p, patternIndex)
+      i = indexOfIgnoreCase(name, i, patternIndex)
       if (i < 0) return -1
       if (isSpecialSymbol || isWordStart(name, i)) return i
       i++
     }
   }
 
-  private fun indexOfIgnoreCase(name: String, fromIndex: Int, p: Char, patternIndex: Int): Int {
-    if (Strings.isAscii(p)) {
+  private fun indexOfIgnoreCase(name: String, fromIndex: Int, patternIndex: Int): Int {
+    val p = myPattern[patternIndex]
+    if (AsciiUtils.isAscii(p)) {
       val pUpper = toUpperCase[patternIndex]
       val pLower = toLowerCase[patternIndex]
       for (i in fromIndex..<name.length) {
@@ -541,12 +539,12 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
       }
       return -1
     }
-    return Strings.indexOfIgnoreCase(name, p, fromIndex)
+    return indexOf(name, p, fromIndex, name.length, ignoreCase = true)
   }
 
   @NonNls
   override fun toString(): @NonNls String {
-    return "MinusculeMatcherImpl{myPattern=" + String(myPattern) + ", myMatchingMode=" + myMatchingMode + '}'
+    return "MinusculeMatcherImpl{myPattern=${pattern}, myMatchingMode=$myMatchingMode}"
   }
 
   companion object {
@@ -580,14 +578,12 @@ internal class MinusculeMatcherImpl(pattern: String, private val myMatchingMode:
       return ranges
     }
 
-    private fun filterWildcard(source: CharArray): CharArray {
-      val buffer = CharArray(source.size)
-      var i = 0
-      for (c in source) {
-        if (c != '*') buffer[i++] = c
+    private fun filterWildcard(source: CharArray): String {
+      return buildString(capacity = source.size) {
+        for (c in source) {
+          if (c != '*') append(c)
+        }
       }
-
-      return buffer.copyOf(i)
     }
   }
 }

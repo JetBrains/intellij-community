@@ -30,7 +30,7 @@ open class FixingLayoutMatcher(
       var hasLetters = false
       var onlyWrongLetters = true
       for (c in pattern) {
-        if (Character.isLetter(c)) {
+        if (c.isLetter()) {
           hasLetters = true
           if (c <= '\u007f') {
             onlyWrongLetters = false
@@ -44,7 +44,7 @@ open class FixingLayoutMatcher(
         pattern.forEachIndexed { i, c ->
           alternatePattern[i] = keyboardLayoutConverter.convert(c) ?: c
         }
-        String(alternatePattern)
+        alternatePattern.concatToString()
       }
       else {
         null
