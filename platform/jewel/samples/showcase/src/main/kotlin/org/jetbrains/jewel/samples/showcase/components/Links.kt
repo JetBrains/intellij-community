@@ -56,7 +56,7 @@ public fun Links(modifier: Modifier = Modifier) {
 
             Link(text = "Always underlined", onClick = {}, style = alwaysUnderline, enabled = false)
 
-            ExternalLink(text = "ExternalLink", uri = jewelReadMeLink)
+            ExternalLink(text = "ExternalLink", uri = jewelReadMeLink, enabled = false)
 
             DropdownLink(text = "DropdownLink", enabled = false) {}
         }
