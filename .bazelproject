@@ -6,3 +6,7 @@ targets:
   @rules_jvm//...
 
 use_jetbrains_test_runner: true
+
+java_source_root_optimization_enable: true
+java_source_root_optimization_patterns:
+  *
