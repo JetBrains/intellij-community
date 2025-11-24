@@ -6,6 +6,7 @@ import com.intellij.ide.rpc.ThrottledItems
 import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.platform.searchEverywhere.SeItemDataKeys
 import com.intellij.platform.searchEverywhere.SeResultAddedEvent
+import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
@@ -95,7 +96,9 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
       }
     }
 
-    isValidAndHasOnlySemantic = (isValidAndHasOnlySemantic || (wasEmpty && !isEmpty)) && throttledEvent.allItemsAreSemantic()
+    if (!throttledEvent.isEndEvent()) { // isValidAndHasOnlySemantic does not change if it is an end event
+      isValidAndHasOnlySemantic = (isValidAndHasOnlySemantic || (wasEmpty && !isEmpty)) && throttledEvent.allItemsAreSemantic()
+    }
   }
 
   class Freezer(private val listSize: () -> Int) {
@@ -130,6 +133,12 @@ private fun <T : SeResultEvent> ThrottledItems<T>.allItemsAreSemantic(): Boolean
     is ThrottledOneItem<T> -> item.isSemantic()
   }
 
+private fun <T : SeResultEvent> ThrottledItems<T>.isEndEvent(): Boolean =
+  when (this) {
+    is ThrottledAccumulatedItems<T> -> items.size == 1 && items[0] is SeResultEndEvent
+    is ThrottledOneItem<T> -> item is SeResultEndEvent
+  }
+
 private fun SeResultEvent.isSemantic(): Boolean {
   val itemData = when (this) {
     is SeResultAddedEvent -> {
@@ -140,5 +149,5 @@ private fun SeResultEvent.isSemantic(): Boolean {
     }
     else -> null
   }
-  return itemData?.additionalInfo?.get(SeItemDataKeys.IS_SEMANTIC).toBoolean()
+  return itemData?.additionalInfo[SeItemDataKeys.IS_SEMANTIC].toBoolean()
 }
