@@ -446,6 +446,26 @@ interface EelFileSystemApi {
   }
 
   /**
+   * Streaming write sends chunks continuously and reports the total number of bytes written only at the end.
+   * It is guaranteed that all chunks will be written completely, otherwise there is an error.
+   * Data is written from the beginning of the file, unless the file is opened in append mode.
+   * This method is highly preferable over [EelOpenedFile.Writer.write] when writing a lot of data to a remote file.
+   *
+   * [chunks] Chunks of data to be written to the file
+   */
+  @CheckReturnValue
+  suspend fun streamingWrite(chunks: Flow<ByteBuffer>, targetFileOpenOptions: WriteOptions): StreamingWriteResult
+
+  sealed interface StreamingWriteError : EelFsError {
+    interface DoesNotExist : StreamingWriteError, EelFsError.DoesNotExist
+    interface AlreadyExists : StreamingWriteError, EelFsError.AlreadyExists
+    interface PermissionDenied : StreamingWriteError, EelFsError.PermissionDenied
+    interface NotFile : StreamingWriteError, EelFsError.NotFile
+    interface NotEnoughSpace : StreamingWriteError, EelFsError.NotEnoughSpace
+    interface Other : StreamingWriteError, EelFsError.Other
+  }
+
+  /**
    * Opens the file only for writing
    */
   @CheckReturnValue
