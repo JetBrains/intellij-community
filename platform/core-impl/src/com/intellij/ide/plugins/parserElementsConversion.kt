@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.platform.plugins.parser.impl.ScopedElementsContainer
 import com.intellij.platform.plugins.parser.impl.elements.*
 import com.intellij.platform.plugins.parser.impl.elements.OSValue.*
-import com.intellij.platform.plugins.parser.impl.elements.PreloadMode.*
+import com.intellij.platform.plugins.parser.impl.elements.PreloadModeValue.*
 import com.intellij.util.messages.ListenerDescriptor
 import org.jetbrains.annotations.ApiStatus
 
@@ -78,7 +78,7 @@ fun ServiceElement.convert(): ServiceDescriptor = ServiceDescriptor(
   os?.convert()
 )
 
-fun PreloadMode.convert(): ServiceDescriptor.PreloadMode = when (this) {
+fun PreloadModeValue.convert(): ServiceDescriptor.PreloadMode = when (this) {
   TRUE -> ServiceDescriptor.PreloadMode.TRUE
   FALSE -> ServiceDescriptor.PreloadMode.FALSE
   AWAIT -> ServiceDescriptor.PreloadMode.AWAIT

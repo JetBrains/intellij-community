@@ -8,7 +8,7 @@ class ServiceElement(
   @JvmField val headlessImplementation: String?,
   @JvmField val overrides: Boolean,
   @JvmField val configurationSchemaKey: String?,
-  @JvmField val preload: PreloadMode,
+  @JvmField val preload: PreloadModeValue,
   @JvmField val client: ClientKindValue?,
   @JvmField val os: OSValue?
 ) {
@@ -20,7 +20,7 @@ class ServiceElement(
       if (headlessImplementation != null) append(", headlessImplementation=$headlessImplementation")
       if (overrides) append(", overrides=true")
       if (configurationSchemaKey != null) append(", configurationSchemaKey=$configurationSchemaKey")
-      if (preload != PreloadMode.FALSE) append(", preload=$preload")
+      if (preload != PreloadModeValue.FALSE) append(", preload=$preload")
       if (client != null) append(", client=$client")
       if (os != null) append(", os=$os")
       append(")")
