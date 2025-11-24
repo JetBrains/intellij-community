@@ -81,6 +81,9 @@ import static com.intellij.codeInsight.completion.CompletionPhase.CUSTOM_CODE_CO
 
 /**
  * See cancellation logic in {@link CompletionPhase.BgCalculation#restartOnWriteAction)}
+ *
+ * @see CompletionService#getCurrentCompletion
+ * @see CompletionServiceImpl#getCurrentCompletionProgressIndicator()
  */
 @ApiStatus.Internal
 public final class CompletionProgressIndicator extends ProgressIndicatorBase implements CompletionProcessEx, Disposable {

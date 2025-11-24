@@ -60,6 +60,8 @@ import kotlin.math.max
  *  *  [EmptyAutoPopup] -  completion was triggered by typing, but no completion items were found, and the lookup is not shown
  *  *  [InsertedSingleItem] - a single item was found, and it was inserted into the document
  *  *  [NoSuggestionsHint] - candidate inference has finished, but no candidates were found and a warning "no suggestions found" is shown.
+ *
+ *  @See CompletionServiceImpl.completionPhase
  */
 sealed class CompletionPhase @ApiStatus.Internal constructor(
   @JvmField
