@@ -65,10 +65,6 @@ private val ObjClass<*>.implWsEntityAnnotations: String
 
 private fun getLinksOfConnectionIds(type: ObjClass<*>): String {
   return lines(2) {
-    line("private val connections = listOf<$ConnectionId>(")
-    type.allRefsFields.forEach {
-      line("    " + it.refsConnectionId + ",")
-    }
-    line(")")
+    line(type.allRefsFields.joinToString(separator = ",", prefix = "private val connections = listOf<$ConnectionId>(", postfix = ")") { it.refsConnectionId })
   }
 }
