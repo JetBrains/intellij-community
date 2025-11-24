@@ -8,6 +8,7 @@
                                             implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinCommandCompletionFactory"/>
 <!--    <codeInsight.completion.command.provider language="kotlin"-->
 <!--                                             implementationClass="com.intellij.codeInsight.completion.command.commands.SimpleRunMarkerCommandProvider"/>-->
+    <codeInsight.completion.command.provider language="kotlin" implementationClass="com.intellij.codeInsight.completion.command.commands.DirectIntentionCommandProvider" order="last"/>
     <codeInsight.completion.command.provider language="kotlin"
                                                implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.contributors.commands.KotlinRenameActionCommandProvider"/>
     <codeInsight.completion.command.provider language="kotlin"
