@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actionSystem.EditorAction
+import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.ACTION_PLUGIN_TYPE
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.GLOBAL_STATISTICS_DEFAULT
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.GLOBAL_STATISTICS_UPDATED
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.GROUP_LENGTH_KEY
@@ -31,7 +32,6 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereAct
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.IS_TOGGLE_ACTION_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.MATCH_MODE_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.PLUGIN_ID
-import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.PLUGIN_TYPE
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.TEXT_LENGTH_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.TIME_SINCE_LAST_USAGE
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereActionFeaturesProvider.Fields.TIME_SINCE_LAST_USAGE_SE
@@ -63,7 +63,7 @@ internal class SearchEverywhereActionFeaturesProvider :
     internal val IS_GROUP_KEY = EventFields.Boolean("is_group")
     internal val GROUP_LENGTH_KEY = EventFields.Int("group_length")
     internal val HAS_ICON_KEY = EventFields.Boolean("with_icon")
-    internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("plugin_type", "plugin_type")
+    internal val ACTION_PLUGIN_TYPE = EventFields.StringValidatedByEnum("action_plugin_type", "plugin_type")
     internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("plugin_id", PluginIdRuleValidator::class.java)
 
     internal val GLOBAL_STATISTICS_DEFAULT = ActionsGlobalStatisticsFields(ActionsGlobalSummaryManager.STATISTICS_VERSION)
@@ -92,7 +92,7 @@ internal class SearchEverywhereActionFeaturesProvider :
       addAll(listOf(
         IS_ACTION_DATA_KEY, IS_TOGGLE_ACTION_DATA_KEY, IS_EDITOR_ACTION, IS_SEARCH_ACTION,
         MATCH_MODE_KEY, TEXT_LENGTH_KEY, IS_GROUP_KEY, GROUP_LENGTH_KEY, HAS_ICON_KEY,
-        PLUGIN_TYPE, PLUGIN_ID,
+        ACTION_PLUGIN_TYPE, PLUGIN_ID,
         USAGE, USAGE_SE, USAGE_TO_MAX, USAGE_TO_MAX_SE,
         TIME_SINCE_LAST_USAGE, TIME_SINCE_LAST_USAGE_SE,
         WAS_USED_IN_LAST_MINUTE, WAS_USED_IN_LAST_MINUTE_SE,
@@ -153,7 +153,7 @@ internal class SearchEverywhereActionFeaturesProvider :
 
       val pluginInfo = getPluginInfo(action.javaClass)
       if (pluginInfo.isSafeToReport()) {
-        add(PLUGIN_TYPE.with(pluginInfo.type.name))
+        add(ACTION_PLUGIN_TYPE.with(pluginInfo.type.name))
         pluginInfo.id?.let {
           add(PLUGIN_ID.with(it))
         }

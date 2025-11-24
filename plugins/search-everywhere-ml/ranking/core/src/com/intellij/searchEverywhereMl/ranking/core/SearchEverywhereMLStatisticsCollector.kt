@@ -159,7 +159,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  internal val GROUP = EventLogGroup("mlse.log", 127, MLSE_RECORDER_ID,
+  internal val GROUP = EventLogGroup("mlse.log", 128, MLSE_RECORDER_ID,
                                      "ML in Search Everywhere Log Group")
 
   internal val IS_INTERNAL = EventFields.Boolean("is_internal")
