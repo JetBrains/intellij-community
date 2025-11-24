@@ -175,8 +175,8 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  public int matchingDegree(@NotNull String string) {
-    return matchingDegree(string, matchingFragments(string));
+  public int matchingDegree(@NotNull String name) {
+    return matchingDegree(name, matchingFragments(name));
   }
 
   public @Nullable FList<TextRange> matchingFragments(String string) {

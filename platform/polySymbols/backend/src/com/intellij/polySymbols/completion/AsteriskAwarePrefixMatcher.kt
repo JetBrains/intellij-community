@@ -15,7 +15,7 @@ class AsteriskAwarePrefixMatcher private constructor(prefix: String, delegate: P
   override fun prefixMatches(element: LookupElement): Boolean = myDelegate.prefixMatches(convert(element))
   override fun isStartMatch(name: String): Boolean = myDelegate.isStartMatch(convert(name))
   override fun isStartMatch(element: LookupElement): Boolean = myDelegate.isStartMatch(convert(element))
-  override fun matchingDegree(string: String): Int = myDelegate.matchingDegree(convert(string))
+  override fun matchingDegree(name: String): Int = myDelegate.matchingDegree(convert(name))
 
   override fun cloneWithPrefix(prefix: String): PrefixMatcher =
     if (prefix == myPrefix) this
