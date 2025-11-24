@@ -11,11 +11,13 @@ import com.intellij.xdebugger.impl.rpc.models.findValue
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -27,6 +29,8 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
     val executionStackModel = executionStackId.findValue() ?: return emptyFlow()
     return channelFlow {
       val executionStack = executionStackModel.executionStack
+      val pendingPresentationJobs = mutableListOf<Job>()
+
       executionStack.computeStackFrames(firstFrameIndex, object : XExecutionStack.XStackFrameContainer {
         override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
           // Create a copy of stackFrames to avoid concurrent modification
@@ -38,21 +42,32 @@ internal class BackendXExecutionStackApi : XExecutionStackApi {
           }
           trySend(XStackFramesEvent.XNewStackFrames(frameDtos, last))
           val framesWithIds = frameDtos.zip(framesCopy) { dto, frame -> dto.stackFrameId to frame }
-          subscribeToPresentationUpdates(framesWithIds)
+          subscribeToPresentationUpdates(executionStackId, framesWithIds, last)
         }
 
-        private fun ProducerScope<XStackFramesEvent>.subscribeToPresentationUpdates(stacksWithIds: List<Pair<XStackFrameId, XStackFrame>>) {
-          for ((id, stack) in stacksWithIds) {
+        private fun ProducerScope<XStackFramesEvent>.subscribeToPresentationUpdates(executionStackId: XExecutionStackId,
+                                                                                    framesWithIds: List<Pair<XStackFrameId, XStackFrame>>,
+                                                                                    last: Boolean) {
+          pendingPresentationJobs.addAll(framesWithIds.map { (id, frame) ->
             launch(CoroutineName("Presentation update for $id")) {
-              stack.customizePresentation().collectLatest { presentation ->
+              frame.customizePresentation().collectLatest { presentation ->
                 val fragments = buildList {
                   presentation.fragments.forEach { (text, attributes) ->
                     add(XStackFramePresentationFragment(text, attributes.toRpc()))
                   }
                 }
                 val newPresentation = XStackFramePresentation(fragments, presentation.icon?.rpcId(), presentation.tooltipText)
-                send(XStackFramesEvent.NewPresentation(id, newPresentation))
+                this@channelFlow.trySend(XStackFramesEvent.NewPresentation(id, newPresentation))
               }
+            }
+          })
+          if (last) {
+            // here I rely on two things:
+            // 1. subscribeToPresentationUpdates is always called synchronously, because `addStackFrames` is synchronous
+            // 2. XStackFrame.customizePresentation() returns a finite flow, as stated in its doc.
+            launch(CoroutineName("computeStackFrames finisher for $executionStackId")) {
+              pendingPresentationJobs.joinAll()
+              this@channelFlow.close()
             }
           }
         }
