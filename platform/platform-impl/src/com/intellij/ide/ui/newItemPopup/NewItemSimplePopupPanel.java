@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -65,7 +66,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
   public void setApplyAction(@NotNull Consumer<? super InputEvent> applyAction) {
     myApplyAction = e -> {
       try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
-        applyAction.consume(e);
+        WriteIntentReadAction.run((Runnable)() -> applyAction.consume(e));
       }
     };
   }
