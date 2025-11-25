@@ -66,7 +66,7 @@ internal const val ARGUMENTS_SEPARATOR = "], ["
 
 internal fun argumentsToString(arguments: List<Any>): String = arguments.joinToString(ARGUMENTS_SEPARATOR, prefix = "[", postfix = "]") { it.toString() }
 
-internal fun argumentsFromString(argumentsString: String): List<Any> = argumentsString.removePrefix("[").removeSuffix("]")
+internal fun argumentsFromString(argumentsString: String): List<String> = argumentsString.removePrefix("[").removeSuffix("]")
   .split(ARGUMENTS_SEPARATOR).map { it.trim() }
 
 
