@@ -1,6 +1,7 @@
 package com.intellij.lambda.testFramework.junit
 
 import com.intellij.ide.starter.coroutine.perTestSupervisorScope
+import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.jetbrains.rd.util.printlnError
 import kotlinx.coroutines.runBlocking

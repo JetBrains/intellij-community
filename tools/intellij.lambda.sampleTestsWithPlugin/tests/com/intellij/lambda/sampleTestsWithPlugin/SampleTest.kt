@@ -3,7 +3,7 @@ package com.intellij.lambda.sampleTestsWithPlugin
 
 import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
-import com.intellij.lambda.testFramework.junit.UltimateTestCases.JpsEmptyProject
+import com.intellij.lambda.testFramework.starter.UltimateTestCases.JpsEmptyProject
 import com.intellij.lambda.testFramework.testApi.editor.openFile
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.lambda.testFramework.testApi.getProjects

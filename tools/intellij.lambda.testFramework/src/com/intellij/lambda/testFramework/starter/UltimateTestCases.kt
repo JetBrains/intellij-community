@@ -1,4 +1,4 @@
-package com.intellij.lambda.testFramework.junit
+package com.intellij.lambda.testFramework.starter
 
 import com.intellij.ide.starter.ide.IdeProductProvider
 import com.intellij.ide.starter.models.TestCase

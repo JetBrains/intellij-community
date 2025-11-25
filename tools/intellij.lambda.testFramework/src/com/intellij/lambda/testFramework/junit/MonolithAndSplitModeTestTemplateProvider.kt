@@ -1,6 +1,7 @@
 
 package com.intellij.lambda.testFramework.junit
 
+import com.intellij.lambda.testFramework.starter.IdeInstance
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.containers.orNull

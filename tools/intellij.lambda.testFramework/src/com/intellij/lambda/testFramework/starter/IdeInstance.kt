@@ -1,11 +1,12 @@
-package com.intellij.lambda.testFramework.junit
+package com.intellij.lambda.testFramework.starter
 
 import com.intellij.ide.starter.config.ConfigurationStorage
 import com.intellij.ide.starter.config.splitMode
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.utils.catchAll
-import com.intellij.lambda.testFramework.starter.newContextWithLambda
+import com.intellij.lambda.testFramework.junit.IdeRunMode
+import com.intellij.lambda.testFramework.starter.UltimateTestCases
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder
@@ -30,7 +31,7 @@ object IdeInstance {
 
       stopIde()
       currentIdeMode = runMode
-      ConfigurationStorage.splitMode(currentIdeMode == IdeRunMode.SPLIT)
+      ConfigurationStorage.Companion.splitMode(currentIdeMode == IdeRunMode.SPLIT)
 
       val testContext = Starter.newContextWithLambda(runMode.name,
                                                      UltimateTestCases.JpsEmptyProject,
