@@ -45,8 +45,8 @@ import org.jetbrains.kotlin.idea.maven.*
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingConfigurationError
-import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
+import org.jetbrains.kotlin.idea.statistics.KotlinConfigurationError
+import org.jetbrains.kotlin.idea.statistics.KotlinConfigurationFUSCollector
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
 abstract class KotlinMavenConfigurator protected constructor(
@@ -68,28 +68,28 @@ abstract class KotlinMavenConfigurator protected constructor(
             psi == null -> {
                 return logErrorAndReturnBrokenStatus(
                     module.project,
-                    KotlinJ2KOnboardingConfigurationError.NO_POM_FILE
+                    KotlinConfigurationError.NO_POM_FILE
                 )
             }
 
             !psi.isValid -> {
                 return logErrorAndReturnBrokenStatus(
                     module.project,
-                    KotlinJ2KOnboardingConfigurationError.PSI_FOR_POM_IS_NOT_VALID
+                    KotlinConfigurationError.PSI_FOR_POM_IS_NOT_VALID
                 )
             }
 
             psi !is XmlFile -> {
                 return logErrorAndReturnBrokenStatus(
                     module.project,
-                    KotlinJ2KOnboardingConfigurationError.POM_IS_NOT_XML
+                    KotlinConfigurationError.POM_IS_NOT_XML
                 )
             }
 
             psi.virtualFile == null -> {
                 return logErrorAndReturnBrokenStatus(
                     module.project,
-                    KotlinJ2KOnboardingConfigurationError.VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE
+                    KotlinConfigurationError.VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE
                 )
             }
 
@@ -101,8 +101,8 @@ abstract class KotlinMavenConfigurator protected constructor(
         }
     }
 
-    private fun logErrorAndReturnBrokenStatus(project: Project, error: KotlinJ2KOnboardingConfigurationError): ConfigureKotlinStatus {
-        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, error)
+    private fun logErrorAndReturnBrokenStatus(project: Project, error: KotlinConfigurationError): ConfigureKotlinStatus {
+        KotlinConfigurationFUSCollector.logConfigureKtFailed(project, error)
         return ConfigureKotlinStatus.BROKEN
     }
 
@@ -121,7 +121,7 @@ abstract class KotlinMavenConfigurator protected constructor(
         val mavenProjectsManager = MavenProjectsManager.getInstance(project)
         val mavenProject = mavenProjectsManager.findProject(module) ?: return logErrorAndReturnBrokenStatus(
             project,
-            KotlinJ2KOnboardingConfigurationError.MAVEN_PROJECT_FOR_MODULE_NOT_FOUND
+            KotlinConfigurationError.MAVEN_PROJECT_FOR_MODULE_NOT_FOUND
         )
 
         val kotlinPluginId = kotlinPluginId()
@@ -154,9 +154,9 @@ abstract class KotlinMavenConfigurator protected constructor(
         dialog.show()
         if (!dialog.isOK) return emptySet()
         val kotlinVersion = dialog.kotlinVersion ?: return emptySet()
-        KotlinJ2KOnboardingFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
+        KotlinConfigurationFUSCollector.logChosenKotlinVersion(project, kotlinVersion)
 
-        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project)
+        KotlinConfigurationFUSCollector.logStartConfigureKt(project)
 
         val configuredModules = mutableSetOf<Module>()
         project.executeWriteCommand(KotlinMavenBundle.message("configure.title")) {
@@ -170,12 +170,12 @@ abstract class KotlinMavenConfigurator protected constructor(
                         OpenFileAction.openFile(file.virtualFile, project)
                         configuredModules.add(module)
                     } else {
-                        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, KotlinJ2KOnboardingConfigurationError.OTHER)
+                        KotlinConfigurationFUSCollector.logConfigureKtFailed(project, KotlinConfigurationError.OTHER)
                     }
                 } else {
-                    KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+                    KotlinConfigurationFUSCollector.logConfigureKtFailed(
                         project,
-                        KotlinJ2KOnboardingConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
+                        KotlinConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
                     )
                     showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
                 }
@@ -227,7 +227,7 @@ abstract class KotlinMavenConfigurator protected constructor(
     override suspend fun runAutoConfig(settings: AutoConfigurationSettings) {
         val module = settings.module
         val project = module.project
-        KotlinJ2KOnboardingFUSCollector.logStartConfigureKt(project, true)
+        KotlinConfigurationFUSCollector.logStartConfigureKt(project, true)
         reportSequentialProgress { reporter ->
             reporter.nextStep(endFraction = 30, KotlinProjectConfigurationBundle.message("step.configure.kotlin.preparing"))
             edtWriteAction {
@@ -250,12 +250,12 @@ abstract class KotlinMavenConfigurator protected constructor(
                             collector.showNotification()
                             ConfigureKotlinNotificationManager.expireOldNotifications(project)
                         } else {
-                            KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(project, KotlinJ2KOnboardingConfigurationError.OTHER)
+                            KotlinConfigurationFUSCollector.logConfigureKtFailed(project, KotlinConfigurationError.OTHER)
                         }
                     } else {
-                        KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+                        KotlinConfigurationFUSCollector.logConfigureKtFailed(
                             project,
-                            KotlinJ2KOnboardingConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
+                            KotlinConfigurationError.BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE
                         )
                         showErrorMessage(project, KotlinMavenBundle.message("error.cant.find.pom.for.module", module.name))
                     }
@@ -287,17 +287,17 @@ abstract class KotlinMavenConfigurator protected constructor(
         val virtualFile = file.virtualFile
         val project = module.project
         if (virtualFile == null) {
-            KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+            KotlinConfigurationFUSCollector.logConfigureKtFailed(
                 project,
-                KotlinJ2KOnboardingConfigurationError.VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE
+                KotlinConfigurationError.VIRTUAL_FILE_DOESNT_EXIST_FOR_PSI_FILE
             )
             error("Virtual file should exists for psi file " + file.name)
         }
         val domModel = MavenDomUtil.getMavenDomProjectModel(project, virtualFile)
         if (domModel == null) {
-            KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+            KotlinConfigurationFUSCollector.logConfigureKtFailed(
                 project,
-                KotlinJ2KOnboardingConfigurationError.DOM_MODEL_DOESNT_EXIST
+                KotlinConfigurationError.DOM_MODEL_DOESNT_EXIST
             )
             showErrorMessage(project, null)
             return false
@@ -305,9 +305,9 @@ abstract class KotlinMavenConfigurator protected constructor(
 
         val pom = PomFile.forFileOrNull(file as XmlFile)
         if (pom == null) {
-            KotlinJ2KOnboardingFUSCollector.logConfigureKtFailed(
+            KotlinConfigurationFUSCollector.logConfigureKtFailed(
                 project,
-                KotlinJ2KOnboardingConfigurationError.WASNT_ABLE_TO_TRANSFORM_XML_TO_POM
+                KotlinConfigurationError.WASNT_ABLE_TO_TRANSFORM_XML_TO_POM
             )
             return false
         }

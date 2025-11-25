@@ -34,24 +34,24 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.math.absoluteValue
 import kotlin.random.Random
 
-class KotlinJ2KOnboardingImportListener(private val project: Project) : ProjectDataImportListener {
+class KotlinConfigurationImportListener(private val project: Project) : ProjectDataImportListener {
     override fun onImportFinished(projectPath: String?) {
-        KotlinJ2KOnboardingFUSCollector.logProjectSyncCompleted(project)
+        KotlinConfigurationFUSCollector.logProjectSyncCompleted(project)
     }
 }
 
-object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
+object KotlinConfigurationFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    val GROUP: EventLogGroup = EventLogGroup("kotlin.onboarding.j2k", 5)
+    val GROUP: EventLogGroup = EventLogGroup("kotlin.configuration", 1)
 
     internal val pluginVersion = getPluginInfoById(KotlinIdePlugin.id).version
-    internal val buildSystemField = EventFields.Enum<KotlinJ2KOnboardingBuildSystem>("build_system")
+    internal val buildSystemField = EventFields.Enum<BuildSystem>("build_system")
     internal val buildSystemVersionField = EventFields.StringValidatedByRegexpReference("build_system_version", "version")
-    internal val sessionIdField = EventFields.Int("onboarding_session_id")
+    internal val sessionIdField = EventFields.Int("configuration_session_id")
     internal val canAutoConfigureField = EventFields.Boolean("can_auto_configure")
     internal val isAutoConfigurationField = EventFields.Boolean("is_auto_configuration")
-    internal val failureReasonField = EventFields.Enum<KotlinJ2KOnboardingConfigurationError>("failure_reason")
+    internal val failureReasonField = EventFields.Enum<KotlinConfigurationError>("failure_reason")
     internal val chosenKotlinVersionField = EventFields.StringValidatedByInlineRegexp("chosen_kotlin_version", "\\d+\\.\\d+\\.\\d+")
 
     private val commonFields = arrayOf(
@@ -79,19 +79,19 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     private val chooseKotlinVersionFromDialog =
         GROUP.registerVarargEvent("configure_kt.kotlin_version_chosen", *kotlinVersionChosenFields.toTypedArray())
 
-    private fun KotlinOnboardingSession.log(project: Project, eventId: VarargEventId, vararg pairs: EventPair<*>) {
+    private fun KotlinConfigurationSession.log(project: Project, eventId: VarargEventId, vararg pairs: EventPair<*>) {
         eventId.log(project, getPairs() + pairs)
     }
 
-    private fun Project.runEventLogger(runnable: suspend KotlinOnboardingJ2KSessionService.() -> Unit) {
+    private fun Project.runEventLogger(runnable: suspend KotlinConfigurationSessionService.() -> Unit) {
         if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) {
             // No statistic collection allowed -> no point running the event logger
             return
         }
-        val service = serviceOrNull<KotlinOnboardingJ2KSessionService>() ?: return
+        val service = serviceOrNull<KotlinConfigurationSessionService>() ?: return
         // We are currently only interested in Gradle and Maven projects
-        if (service.determineBuildSystem() != KotlinJ2KOnboardingBuildSystem.GRADLE &&
-            service.determineBuildSystem() != KotlinJ2KOnboardingBuildSystem.MAVEN
+        if (service.determineBuildSystem() != BuildSystem.GRADLE &&
+            service.determineBuildSystem() != BuildSystem.MAVEN
         ) {
             return
         }
@@ -194,7 +194,7 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
         session.log(project, undoConfigureKotlin)
     }
 
-    fun logConfigureKtFailed(project: Project, failureReason: KotlinJ2KOnboardingConfigurationError): Unit = project.runEventLogger {
+    fun logConfigureKtFailed(project: Project, failureReason: KotlinConfigurationError): Unit = project.runEventLogger {
         val session = openSession ?: return@runEventLogger
         session.log(project, failedConfigureKt, failureReasonField.with(failureReason))
     }
@@ -207,36 +207,36 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
 
 
 /**
- * A session of the J2K onboarding process.
+ * A session of the Kotlin configuration process.
  * This session was initially started and is kept open until
  * the Kotlin plugin was added and synced correctly.
  */
-internal data class KotlinOnboardingSession(
+internal data class KotlinConfigurationSession(
     val id: Int,
-    val buildSystemType: KotlinJ2KOnboardingBuildSystem,
+    val buildSystemType: BuildSystem,
     val buildSystemVersion: String?
 ) {
     fun getPairs(): List<EventPair<*>> {
         return mutableListOf<EventPair<*>>().apply {
-            add(KotlinJ2KOnboardingFUSCollector.sessionIdField.with(id))
-            add(KotlinJ2KOnboardingFUSCollector.buildSystemField.with(buildSystemType))
+            add(KotlinConfigurationFUSCollector.sessionIdField.with(id))
+            add(KotlinConfigurationFUSCollector.buildSystemField.with(buildSystemType))
             buildSystemVersion?.let {
-                add(KotlinJ2KOnboardingFUSCollector.buildSystemVersionField.with(buildSystemVersion))
+                add(KotlinConfigurationFUSCollector.buildSystemVersionField.with(buildSystemVersion))
             }
-            add(EventFields.Version.with(KotlinJ2KOnboardingFUSCollector.pluginVersion))
+            add(EventFields.Version.with(KotlinConfigurationFUSCollector.pluginVersion))
         }
     }
 }
 
 @Service(Service.Level.PROJECT)
-class KotlinOnboardingJ2KSessionService(private val project: Project, private val coroutineScope: CoroutineScope) {
+class KotlinConfigurationSessionService(private val project: Project, private val coroutineScope: CoroutineScope) {
     private var hasKotlinPlugin: Boolean? = null
     private var hasKotlinFile: Boolean? = null
 
-    internal var openSession: KotlinOnboardingSession? = null
+    internal var openSession: KotlinConfigurationSession? = null
         private set
 
-    internal var lastSuccessfullyCompletedSession: KotlinOnboardingSession? = null
+    internal var lastSuccessfullyCompletedSession: KotlinConfigurationSession? = null
         private set
 
     internal var kotlinConfiguredBeforeSync: Boolean? = null
@@ -251,7 +251,7 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
      * which also prevents synchronization issues with members of this companion object.
      * It is guaranteed that the [runnable]s are executed in the same order as they are submitted.
      */
-    internal fun runEventLogger(runnable: suspend KotlinOnboardingJ2KSessionService.() -> Unit) {
+    internal fun runEventLogger(runnable: suspend KotlinConfigurationSessionService.() -> Unit) {
         coroutineScope.launch {
             // This (almost) ensures that we have a FIFO behaviour of events.
             sessionMutex.withLock {
@@ -260,25 +260,25 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
         }
     }
 
-    private fun BuildSystemType.getType(): KotlinJ2KOnboardingBuildSystem {
+    private fun BuildSystemType.getType(): BuildSystem {
         return when (this) {
-            BuildSystemType.Gradle -> KotlinJ2KOnboardingBuildSystem.GRADLE
-            BuildSystemType.AndroidGradle -> KotlinJ2KOnboardingBuildSystem.GRADLE
-            BuildSystemType.Maven -> KotlinJ2KOnboardingBuildSystem.MAVEN
-            BuildSystemType.JPS -> KotlinJ2KOnboardingBuildSystem.JPS
-            else -> KotlinJ2KOnboardingBuildSystem.UNKNOWN
+            BuildSystemType.Gradle -> BuildSystem.GRADLE
+            BuildSystemType.AndroidGradle -> BuildSystem.GRADLE
+            BuildSystemType.Maven -> BuildSystem.MAVEN
+            BuildSystemType.JPS -> BuildSystem.JPS
+            else -> BuildSystem.UNKNOWN
         }
     }
 
-    private var cachedBuildSystem: KotlinJ2KOnboardingBuildSystem? = null
+    private var cachedBuildSystem: BuildSystem? = null
 
-    internal fun determineBuildSystem(): KotlinJ2KOnboardingBuildSystem {
+    internal fun determineBuildSystem(): BuildSystem {
         cachedBuildSystem?.let { return it }
         val allBuildSystems = project.modules.map { it.buildSystemType.getType() }.toSet()
-        if (allBuildSystems.size > 1) return KotlinJ2KOnboardingBuildSystem.MULTIPLE
+        if (allBuildSystems.size > 1) return BuildSystem.MULTIPLE
         val buildSystem = allBuildSystems.singleOrNull()
         cachedBuildSystem = buildSystem
-        return buildSystem ?: KotlinJ2KOnboardingBuildSystem.UNKNOWN
+        return buildSystem ?: BuildSystem.UNKNOWN
     }
 
     private suspend fun getGradleVersion(): String? {
@@ -293,12 +293,12 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
         }*/
     }
 
-    internal suspend fun getOrCreateSession(): KotlinOnboardingSession {
+    internal suspend fun getOrCreateSession(): KotlinConfigurationSession {
         val existingSession = openSession
         if (existingSession != null) return existingSession
         val buildSystem = determineBuildSystem()
-        val buildSystemVersion = if (buildSystem == KotlinJ2KOnboardingBuildSystem.GRADLE) getGradleVersion() else null
-        val newSession = KotlinOnboardingSession(
+        val buildSystemVersion = if (buildSystem == BuildSystem.GRADLE) getGradleVersion() else null
+        val newSession = KotlinConfigurationSession(
             id = Random.nextInt().absoluteValue,
             buildSystemType = buildSystem,
             buildSystemVersion = buildSystemVersion
@@ -363,11 +363,11 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
     }
 }
 
-internal enum class KotlinJ2KOnboardingBuildSystem {
+internal enum class BuildSystem {
     GRADLE, MAVEN, MULTIPLE, UNKNOWN, JPS
 }
 
-enum class KotlinJ2KOnboardingConfigurationError {
+enum class KotlinConfigurationError {
     // Gradle specific errors
     BUILD_SCRIPT_FOR_MODULE_IS_ABSENT_OR_NOT_WRITABLE,
     CONFIGURING_OF_TOP_LEVEL_BUILD_SCRIPT_FAILED,
