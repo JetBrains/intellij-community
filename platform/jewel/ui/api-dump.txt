@@ -282,9 +282,12 @@ f:org.jetbrains.jewel.ui.component.ContextMenuDivider
 f:org.jetbrains.jewel.ui.component.ContextMenuItemOption
 - androidx.compose.foundation.ContextMenuItem
 - sf:$stable:I
-- <init>(org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,java.lang.String,kotlin.jvm.functions.Function0):V
+- b:<init>(org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,java.lang.String,kotlin.jvm.functions.Function0):V
 - b:<init>(org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,java.lang.String,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,Z,java.lang.String,kotlin.jvm.functions.Function0):V
+- b:<init>(org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction,Z,java.lang.String,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getActionType():org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction
+- f:getEnabled():Z
 - f:getIcon():org.jetbrains.jewel.ui.icon.IconKey
 a:org.jetbrains.jewel.ui.component.ContextMenuItemOptionAction
 - sf:$stable:I

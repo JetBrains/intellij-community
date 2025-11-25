@@ -31,6 +31,8 @@ internal fun readMenuStyle(): MenuStyle {
     val keybindingTint = retrieveColorOrUnspecified("MenuItem.acceleratorForeground")
     val keybindingTintSelected = Color.Unspecified
 
+    val contentDisabled = retrieveColorOrUnspecified("PopupMenu.disabledForeground")
+
     val colors =
         MenuColors(
             background = retrieveColorOrUnspecified("PopupMenu.background"),
@@ -47,7 +49,7 @@ internal fun readMenuStyle(): MenuStyle {
                     backgroundPressed = backgroundSelected,
                     backgroundHovered = backgroundSelected,
                     content = retrieveColorOrUnspecified("PopupMenu.foreground"),
-                    contentDisabled = retrieveColorOrUnspecified("PopupMenu.disabledForeground"),
+                    contentDisabled = contentDisabled,
                     contentFocused = foregroundSelected,
                     contentPressed = foregroundSelected,
                     contentHovered = foregroundSelected,
@@ -57,7 +59,7 @@ internal fun readMenuStyle(): MenuStyle {
                     iconTintPressed = Color.Unspecified,
                     iconTintHovered = Color.Unspecified,
                     keybindingTint = keybindingTint,
-                    keybindingTintDisabled = keybindingTint,
+                    keybindingTintDisabled = contentDisabled,
                     keybindingTintFocused = keybindingTintSelected,
                     keybindingTintPressed = keybindingTintSelected,
                     keybindingTintHovered = keybindingTintSelected,
