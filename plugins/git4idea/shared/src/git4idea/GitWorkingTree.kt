@@ -4,6 +4,7 @@ package git4idea
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.LocalFilePath
+import com.intellij.openapi.vcs.actions.VcsContextFactory
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -29,7 +30,7 @@ data class GitWorkingTree(
 
   constructor(path: @NlsSafe String, fullBranchName: @NlsSafe String?, isMain: Boolean, isCurrent: Boolean) :
     this(
-      LocalFilePath(path, true),
+      VcsContextFactory.getInstance().createFilePath(path, true),
       if (fullBranchName == null) null else GitStandardLocalBranch(fullBranchName),
       isMain,
       isCurrent

@@ -3,7 +3,6 @@ package git4idea.workingTrees.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_TOOLBAR
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -36,6 +35,12 @@ import javax.swing.JList
 import javax.swing.SwingConstants
 
 internal class GitWorkingTreesContentProvider(private val project: Project) : ChangesViewContentProvider {
+
+  companion object {
+    //registered with com.intellij.statistics.actionCustomPlaceAllowlist ExtensionPoint
+    internal const val GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR: String = "GitWorkingTreeToolWindowTabToolbar"
+  }
+
   override fun initTabContent(content: Content) {
     content.component = GitWorkingTreesUi()
   }
@@ -46,8 +51,10 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
       val scrollPane = ScrollPaneFactory.createScrollPane(list, true)
       addToCenter(scrollPane)
 
-      val toolbarActionGroup = ActionManager.getInstance().getAction("Git.WorkingTrees.ToolwindowGroup.Toolbar") as ActionGroup
-      val toolbar = ActionManager.getInstance().createActionToolbar(CHANGES_VIEW_TOOLBAR, toolbarActionGroup, false)
+      val actionManager = ActionManager.getInstance()
+      val toolbarActionGroup = actionManager.getAction("Git.WorkingTrees.ToolwindowGroup.Toolbar") as ActionGroup
+      val toolbar = actionManager.createActionToolbar(GIT_WORKING_TREE_TOOLWINDOW_TAB_TOOLBAR,
+                                                      toolbarActionGroup, false)
       toolbar.setTargetComponent(list)
       toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY
       toolbar.setOrientation(SwingConstants.VERTICAL)
@@ -103,7 +110,7 @@ internal class GitWorkingTreesContentProvider(private val project: Project) : Ch
 
     fun reload(project: Project) {
       clear()
-      val currentRepository = GitWorkingTreesService.getSingleRepositoryOrNullIfEnabled(project)
+      val currentRepository = GitWorkingTreesService.getRepoForWorkingTreesSupport(project)
       repository = currentRepository
       val workingTrees = currentRepository?.workingTreeHolder?.getWorkingTrees()
       if (workingTrees != null && workingTrees.size > 1) {

@@ -15,9 +15,9 @@ import git4idea.GitNotificationIdsHolder
 import git4idea.GitWorkingTree
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys
 import git4idea.actions.workingTree.GitWorkingTreeTabActionsDataKeys.SELECTED_WORKING_TREES
+import git4idea.commands.Git
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.workingTrees.GitWorkingTreesCommandService
 import git4idea.workingTrees.GitWorkingTreesService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,7 +71,7 @@ internal class RemoveWorkingTreeAction : DumbAwareAction() {
 
   private suspend fun delete(project: Project, tree: GitWorkingTree, repository: GitRepository) {
     val commandResult = withBackgroundProgress(project, GitBundle.message("progress.title.deleting.worktree"), cancellable = true) {
-      service<GitWorkingTreesCommandService>().deleteWorkingTree(project, tree)
+      service<Git>().deleteWorkingTree(project, tree)
     }
     if (commandResult.success()) {
       repository.workingTreeHolder.reload()

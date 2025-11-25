@@ -35,6 +35,7 @@ jvm_library(
     "//platform/platform-impl/ui",
     "//platform/diagnostic/telemetry",
     "@lib//:opentelemetry",
+    "//platform/vcs-api/shared",
   ]
 )
 ### auto-generated section `build intellij.vcs.git.shared` end

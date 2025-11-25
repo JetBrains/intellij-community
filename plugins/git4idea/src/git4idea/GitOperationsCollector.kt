@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -6,7 +6,9 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.RoundedIntEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import git4idea.actions.workingTree.GitWorkingTreeDialogData
 import git4idea.commands.GitCommandResult
 import git4idea.inMemory.rebase.InMemoryRebaseResult
 import git4idea.push.GitPushRepoResult
@@ -17,7 +19,7 @@ import git4idea.rebase.interactive.CantRebaseUsingLogException
 internal object GitOperationsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("git.operations", 6)
+  private val GROUP: EventLogGroup = EventLogGroup("git.operations", 7)
 
   internal val UPDATE_FORCE_PUSHED_BRANCH_ACTIVITY = GROUP.registerIdeActivity("update.force.pushed")
 
@@ -45,10 +47,12 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
   )
   private val INTERACTIVE_REBASE_WAS_SUCCESSFUL = EventFields.Boolean("was_successful")
   private val INTERACTIVE_REBASE_ACTIVITY = GROUP.registerIdeActivity("interactive.rebase",
-                                                                      finishEventAdditionalFields = arrayOf(INTERACTIVE_REBASE_WAS_SUCCESSFUL))
+                                                                      finishEventAdditionalFields = arrayOf(
+                                                                        INTERACTIVE_REBASE_WAS_SUCCESSFUL))
   private val IN_MEMORY_REBASE_RESULT = EventFields.Enum<InMemoryRebaseResult>("in_memory_rebase_result")
   private val IN_MEMORY_INTERACTIVE_REBASE_ACTIVITY = GROUP.registerIdeActivity("in.memory.interactive.rebase",
-                                                                                finishEventAdditionalFields = arrayOf(IN_MEMORY_REBASE_RESULT))
+                                                                                finishEventAdditionalFields = arrayOf(
+                                                                                  IN_MEMORY_REBASE_RESULT))
 
   private val CANT_REBASE_USING_LOG_REASON = EventFields.Enum<CantRebaseUsingLogException.Reason>("cant_rebase_using_log_reason")
   private val CANT_REBASE_USING_LOG_EVENT = GROUP.registerEvent("cant.rebase.using.log", CANT_REBASE_USING_LOG_REASON)
@@ -58,6 +62,20 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
   }
   private val REBASE_START_USING_LOG_EVENT = GROUP.registerVarargEvent("rebase.start.using.log",
                                                                        *REBASE_ENTRY_TYPE_FIELDS.values.toTypedArray())
+
+  private val WITH_PROVIDED_BRANCH = EventFields.Boolean("with_provided_branch")
+  private val WORKING_TREE_CREATION_ACTIVITY =
+    GROUP.registerIdeActivity("create.worktree",
+                              startEventAdditionalFields = arrayOf(EventFields.ActionPlace, WITH_PROVIDED_BRANCH),
+                              subStepWithStepId = true)
+
+  private val WITH_EXISTING_BRANCH = EventFields.Boolean("with_existing_branch")
+  private val WORKTREE_CREATION_DIALOG_EXIT_OK_STAGE =
+    WORKING_TREE_CREATION_ACTIVITY.registerStage("worktree.creation.dialog.exited.with.ok",
+                                                 arrayOf(WITH_EXISTING_BRANCH))
+
+  private val WORKTREE_PROJECT_WAS_OPENED_AFTER_CREATION_STAGE =
+    WORKING_TREE_CREATION_ACTIVITY.registerStage("worktree.project.was.opened.after.creation")
 
   @JvmStatic
   fun startLogPush(project: Project): StructuredIdeActivity {
@@ -121,5 +139,21 @@ internal object GitOperationsCollector : CounterUsagesCollector() {
     }.toTypedArray()
 
     REBASE_START_USING_LOG_EVENT.log(project, *eventPairs)
+  }
+
+  fun logCreateWorktreeActionInvoked(e: AnActionEvent, branch: GitStandardLocalBranch?): StructuredIdeActivity {
+    return WORKING_TREE_CREATION_ACTIVITY.started(e.project) {
+      listOf(EventFields.ActionPlace.with(e.place), WITH_PROVIDED_BRANCH.with(branch != null))
+    }
+  }
+
+  fun logWorktreeCreationDialogExitedWithOk(activity: StructuredIdeActivity, workingTreeData: GitWorkingTreeDialogData) {
+    activity.stageStarted(WORKTREE_CREATION_DIALOG_EXIT_OK_STAGE) {
+      listOf(WITH_EXISTING_BRANCH.with(workingTreeData.newBranchName == null))
+    }
+  }
+
+  fun logWorktreeProjectOpenedAfterCreation(activity: StructuredIdeActivity) {
+    activity.stageStarted(WORKTREE_PROJECT_WAS_OPENED_AFTER_CREATION_STAGE)
   }
 }

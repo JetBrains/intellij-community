@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.dvcs.actions.DvcsQuickListContentProvider;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.Separator;
 import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +25,11 @@ public class GitQuickListContentProvider extends DvcsQuickListContentProvider {
     add("Vcs.Push", manager, actions);
     add("Git.Stash", manager, actions);
     add("Git.Unstash", manager, actions);
+
+    actions.add(Separator.getInstance());
+    add("Git.CreateNewWorkingTree", manager, actions);
+    add("Show.WorkingTrees", manager, actions);
+    actions.add(Separator.getInstance());
 
     add("ChangesView.AddUnversioned", manager, actions);
     add("Vcs.CopyCurrentBranchName", manager, actions);
