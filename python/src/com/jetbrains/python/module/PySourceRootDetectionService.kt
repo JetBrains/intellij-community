@@ -132,25 +132,9 @@ class PySourceRootDetectionService(
     val group = NotificationGroupManager.getInstance().getNotificationGroup("Python source root detection")
     val notification = group.createNotification(message, NotificationType.INFORMATION)
 
-    // Ok action just closes the notification
-    notification.addAction(NotificationAction.createSimpleExpiring(
-      PyBundle.message("python.source.root.detection.confirm.notification.action.ok")
-    ) { /* no-op, expiring */ })
-
-    // Revert action removes the just added source root
-    notification.addAction(object : NotificationAction(PyBundle.message("python.source.root.detection.confirm.notification.action.revert")) {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        unmarkAsSourceRoot(sourceRoot)
-        notification.expire()
-      }
-    })
-
-    notification.addAction(object : NotificationAction(PyBundle.message("python.source.root.detection.confirm.notification.action.mute")) {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        Registry.get("python.source.root.suggest.quickfix.auto.apply").setValue(false)
-        notification.expire()
-      }
-    })
+    notification.addAction(OkAction)
+    notification.addAction(RevertAction(sourceRoot))
+    notification.addAction(MuteAction)
 
     notification.notify(project)
   }
@@ -165,4 +149,30 @@ class PySourceRootDetectionService(
     @JvmField
     val sourcePathsSet: Set<String> = emptySet(),
   )
+
+  private object OkAction : NotificationAction(
+    PyBundle.message("python.source.root.detection.confirm.notification.action.ok")
+  ) {
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      notification.expire()
+    }
+  }
+
+  private inner class RevertAction(private val sourceRoot: VirtualFile) : NotificationAction(
+    PyBundle.message("python.source.root.detection.confirm.notification.action.revert")
+  ) {
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      unmarkAsSourceRoot(sourceRoot)
+      notification.expire()
+    }
+  }
+
+  private object MuteAction : NotificationAction(
+    PyBundle.message("python.source.root.detection.confirm.notification.action.mute")
+  ) {
+    override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+      Registry.get("python.source.root.suggest.quickfix.auto.apply").setValue(false)
+      notification.expire()
+    }
+  }
 }
