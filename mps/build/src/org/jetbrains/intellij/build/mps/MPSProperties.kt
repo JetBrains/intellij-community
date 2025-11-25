@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -107,7 +108,7 @@ class MPSProperties : JetBrainsProductProperties() {
         buildSourcesArchive = true
     }
 
-    override suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path) {
+    override suspend fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {
         val communityHome = COMMUNITY_ROOT.communityRoot
         FileSet(Path.of("$communityHome/lib/ant")).includeAll().copyToDir(Path.of("$targetDir/lib/ant"))
 
@@ -159,13 +160,15 @@ class MPSProperties : JetBrainsProductProperties() {
     override val customProductCode: String
         get() = "MPS"
 
+    override fun getProductContentDescriptor(): ProductModulesContentSpec? = null
+
     override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String {
         return "MPS${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
     }
 
     override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "platform"
 
-    override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer? {
+    override fun createWindowsCustomizer(projectHome: Path): WindowsDistributionCustomizer? {
         return MPSWindowsDistributionCustomizer(projectHome)
     }
 
@@ -173,19 +176,23 @@ class MPSProperties : JetBrainsProductProperties() {
         return null
     }
 
-    override fun createMacCustomizer(projectHome: String): MacDistributionCustomizer? {
+    override fun createMacCustomizer(projectHome: Path): MacDistributionCustomizer? {
         return null
     }
 
-    private class MPSWindowsDistributionCustomizer(projectHome: String) : WindowsDistributionCustomizer() {
+    private class MPSWindowsDistributionCustomizer(projectHome: Path) : WindowsDistributionCustomizer() {
+        override val fileAssociations: List<String>
+            get() = listOf("mps", "mpsr", "model")
+
+        override val associateIpr: Boolean
+            get() = false
+
         init {
-            icoPath = "$projectHome/build/resources/mps.ico"
-            icoPathForEAP = "$projectHome/build/resources/mps.ico"
+            icoPath = projectHome.resolve("build/resources/mps.ico")
+            icoPathForEAP = projectHome.resolve("build/resources/mps.ico")
             // The following properties are required by the build script but are only used when building installers
             // We ignore installer artifacts in Platform builds but set these to reasonable values anyway
-            installerImagesPath = "$projectHome/build/resources"
-            fileAssociations = listOf("mps", "mpsr", "model")
-            associateIpr = false
+            installerImagesPath = projectHome.resolve("build/resources")
         }
     }
 }
