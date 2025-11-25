@@ -1,36 +1,31 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes;
+package com.intellij.openapi.vcs.changes
 
-import com.intellij.openapi.project.Project;
-import com.intellij.util.messages.Topic;
-import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.EventListener;
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.util.messages.Topic
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 @ApiStatus.NonExtendable
-public abstract class ChangesViewWorkflowManager {
-  @Topic.ProjectLevel
-  public static final Topic<ChangesViewWorkflowListener> TOPIC =
-    new Topic<>(ChangesViewWorkflowListener.class, Topic.BroadcastDirection.NONE, true);
-
-  public static @NotNull ChangesViewWorkflowManager getInstance(@NotNull Project project) {
-    return project.getService(ChangesViewWorkflowManager.class);
-  }
+abstract class ChangesViewWorkflowManager @ApiStatus.Internal protected constructor() {
+  val commitWorkflowHandler: ChangesViewCommitWorkflowHandler?
+    get() = doGetCommitWorkflowHandler()
 
   @ApiStatus.Internal
-  protected ChangesViewWorkflowManager() { }
+  protected abstract fun doGetCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler?
 
-  public final @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
-    return doGetCommitWorkflowHandler();
+  fun interface ChangesViewWorkflowListener : EventListener {
+    fun commitWorkflowChanged()
   }
 
-  @ApiStatus.Internal
-  protected abstract @Nullable ChangesViewCommitWorkflowHandler doGetCommitWorkflowHandler();
+  companion object {
+    @JvmField
+    @Topic.ProjectLevel
+    val TOPIC: Topic<ChangesViewWorkflowListener> = Topic(ChangesViewWorkflowListener::class.java, Topic.BroadcastDirection.NONE, true)
 
-  public interface ChangesViewWorkflowListener extends EventListener {
-    void commitWorkflowChanged();
+    @JvmStatic
+    fun getInstance(project: Project): ChangesViewWorkflowManager = project.service<ChangesViewWorkflowManager>()
   }
 }
