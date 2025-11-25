@@ -119,13 +119,13 @@ public final class MoveJavaClassHandler implements MoveClassHandler {
   }
 
   @Override
-  public String getName(PsiClass clazz) {
+  public String getName(@NotNull PsiClass clazz) {
     final PsiFile file = clazz.getContainingFile();
     if (!(file instanceof PsiJavaFile)) return null;
     return ((PsiJavaFile)file).getClasses().length > 1 ? clazz.getName() + "." + JavaFileType.INSTANCE.getDefaultExtension() : file.getName();
   }
 
   @Override
-  public void preprocessUsages(Collection<UsageInfo> results) {
+  public void preprocessUsages(@NotNull Collection<UsageInfo> results) {
   }
 }

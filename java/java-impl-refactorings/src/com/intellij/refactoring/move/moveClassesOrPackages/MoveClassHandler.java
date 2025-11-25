@@ -52,7 +52,7 @@ public interface MoveClassHandler {
    * @return null, if this instance of FileNameForPsiProvider cannot provide name for clazz
    */
   @Contract(pure = true)
-  String getName(PsiClass clazz);
+  String getName(@NotNull PsiClass clazz);
 
-  void preprocessUsages(Collection<UsageInfo> results);
+  void preprocessUsages(@NotNull Collection<UsageInfo> results);
 }
