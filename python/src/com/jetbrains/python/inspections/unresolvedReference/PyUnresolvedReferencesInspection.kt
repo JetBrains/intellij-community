@@ -137,24 +137,24 @@ class PyUnresolvedReferencesInspection : PyUnresolvedReferencesInspectionBase() 
 
       val filesByName = FilenameIndex.getVirtualFilesByName(folderNameToSearchFor, scope)
 
+      val context = fromModule(module)
+        .copyWithoutStubs()
+        .copyWithoutRoots()
+        .run {
+          // resolve members only for 'from .. import ..'
+          if (importStatementBase is PyAstFromImportStatement) {
+            copyWithMembers()
+          } else {
+            this
+          }
+        }
+
       for (file in filesByName) {
         val containingDirectory = file.getParent() ?: continue
 
         if (isAlreadySourceRoot(containingDirectory, module)) {
           continue
         }
-
-        val context = fromModule(module)
-          .copyWithoutStubs()
-          .copyWithoutRoots()
-          .run {
-            // resolve members only for 'from .. import ..'
-            if (importStatementBase is PyAstFromImportStatement) {
-              copyWithMembers()
-            } else {
-              this
-            }
-          }
         
         val resolveResult: List<PsiElement> = resolveInRoot(qname, containingDirectory, context)
         if (!resolveResult.isEmpty()) {
