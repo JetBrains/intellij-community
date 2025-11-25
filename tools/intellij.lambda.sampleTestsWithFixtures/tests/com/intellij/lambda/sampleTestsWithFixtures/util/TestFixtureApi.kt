@@ -1,16 +1,22 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lambda.sampleTestsWithFixtures.util
 
+import com.intellij.ide.impl.OpenUntrustedProjectChoice
+import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
 import com.intellij.openapi.application.writeAction
-import com.intellij.remoteDev.tests.LambdaIdeContext
+import com.intellij.openapi.util.Disposer
+import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.job
 
-context(lambdaIdeContext: LambdaIdeContext)
-suspend fun openNewEditor(relativePath: String) {
+context(_: LambdaBackendContext)
+suspend fun openNewProjectAndEditor(relativePath: String) {
+  val disposable = Disposer.newDisposable("Dialog setup")
+  TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, disposable)
+
   val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("Test")
   val codeInsightFixture = CodeInsightTestFixtureImpl(projectBuilder.fixture, TempDirTestFixtureImpl())
   codeInsightFixture.setUp()
@@ -39,5 +45,8 @@ suspend fun openNewEditor(relativePath: String) {
         .virtualFile
     )
   }
-  currentCoroutineContext().job.invokeOnCompletion { codeInsightFixture.tearDown() }
+  currentCoroutineContext().job.invokeOnCompletion {
+    codeInsightFixture.tearDown()
+    Disposer.dispose(disposable)
+  }
 }
