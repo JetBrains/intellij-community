@@ -59,8 +59,6 @@ public class PluginUpdateDialog extends DialogWrapper {
   private final ActionLink myIgnoreAction;
   private final JBCheckBox myAutoUpdateOption;
 
-  //Binary compatibility fields for AIA
-  private boolean myUpdateOnOk = false;
   private Collection<PluginDownloader> myDownloaders;
 
   private @Nullable Runnable myFinishCallback;
@@ -255,19 +253,6 @@ public class PluginUpdateDialog extends DialogWrapper {
         ApplicationManager.getApplication().getService(PluginAutoUpdateService.class).onSettingsChanged();
       }
     }
-
-    if (myPlatformUpdate || !myUpdateOnOk) return;
-
-    List<PluginDownloader> toDownloads = new ArrayList<>();
-
-    for (PluginDownloader downloader : myDownloaders) {
-      ListPluginComponent component = Objects.requireNonNull(myGroup.ui.findComponent(downloader.getDescriptor()));
-      if (component.getChooseUpdateButton().isSelected()) {
-        toDownloads.add(downloader);
-      }
-    }
-
-    runUpdateAll(toDownloads, getContentPanel(), myFinishCallback, null);
   }
 
   public static void runUpdateAll(@NotNull Collection<PluginDownloader> toDownload,
