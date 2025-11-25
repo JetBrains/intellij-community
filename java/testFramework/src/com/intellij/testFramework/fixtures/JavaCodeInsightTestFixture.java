@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
@@ -34,4 +35,11 @@ public interface JavaCodeInsightTestFixture extends CodeInsightTestFixture {
   @NotNull PsiClass findClass(@NotNull @NonNls String name);
 
   @NotNull PsiPackage findPackage(@NotNull @NonNls String name);
+
+  /**
+   * @param file file to allow tree access for. 
+   *             By default, it's prohibited to read full content of *.java and *.class files, except the one opened in the editor.
+   *             Do not overuse this: it's generally expected that only stubs of non-opened files should be accessible. 
+   */
+  void allowTreeAccessForFile(@NotNull VirtualFile file);
 }

@@ -10,14 +10,12 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -31,7 +29,6 @@ public class PropertiesHighlightingTest extends JavaCodeInsightFixtureTestCase {
 
   private void doTest(boolean checkWarnings) {
     myFixture.configureByFile(getTestName(false) + ".properties");
-    ((CodeInsightTestFixtureImpl)myFixture).setVirtualFileFilter(VirtualFileFilter.NONE);
     myFixture.checkHighlighting(checkWarnings, false, false);
   }
 

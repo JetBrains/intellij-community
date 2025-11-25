@@ -762,8 +762,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Experimental
   void renameTarget(@NotNull RenameTarget renameTarget, @NotNull String newName);
 
-  void allowTreeAccessForFile(@NotNull VirtualFile file);
-
+  /**
+   * Removes any previously installed filters for virtual file access
+   */
   void allowTreeAccessForAllFiles();
 
   void renameElement(@NotNull PsiElement element,

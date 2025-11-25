@@ -80,8 +80,8 @@ abstract class GradleCodeInsightBaseTestCase : GradleProjectTestCase(), BaseTest
 
     override fun shouldTrackVirtualFilePointers(): Boolean = false
 
-    init {
-      setVirtualFileFilter(null)
+    init { 
+      allowTreeAccessForAllFiles()
     }
 
     override fun setUp() {

@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.ide.highlighter.JavaClassFileType;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ public class FileTreeAccessFilter implements VirtualFileFilter {
     if (myAddedClasses.contains(file) || myTreeAccessAllowed) return false;
 
     FileType fileType = file.getFileType();
-    return (fileType == StdFileTypes.JAVA || fileType == StdFileTypes.CLASS) && !file.getName().equals("package-info.java");
+    return (fileType == JavaFileType.INSTANCE || fileType == JavaClassFileType.INSTANCE);
   }
 
   public void allowTreeAccessForFile(@NotNull VirtualFile file) {

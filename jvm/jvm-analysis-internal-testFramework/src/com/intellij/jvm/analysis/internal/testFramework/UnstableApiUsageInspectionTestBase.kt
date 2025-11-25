@@ -2,10 +2,8 @@ package com.intellij.jvm.analysis.internal.testFramework
 
 import com.intellij.codeInspection.UnstableApiUsageInspection
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
-import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 abstract class UnstableApiUsageInspectionTestBase : JvmInspectionTestBase() {
   override val inspection: UnstableApiUsageInspection by lazy { UnstableApiUsageInspection() } // lazy because inspection needs service in initialization
@@ -15,7 +13,7 @@ abstract class UnstableApiUsageInspectionTestBase : JvmInspectionTestBase() {
   override fun setUp() {
     super.setUp()
     // otherwise assertion in PsiFileImpl ("Access to tree elements not allowed") will not pass
-    (myFixture as CodeInsightTestFixtureImpl).setVirtualFileFilter(VirtualFileFilter.NONE)
+    myFixture.allowTreeAccessForAllFiles()
     setupExperimentalApi()
     setupScheduledForRemovalApi()
   }
