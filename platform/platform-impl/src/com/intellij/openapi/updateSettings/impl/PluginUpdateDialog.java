@@ -64,52 +64,6 @@ public class PluginUpdateDialog extends DialogWrapper {
                             @NotNull Collection<PluginUiModel> updates,
                             @Nullable Collection<PluginUiModel> customRepositoryPlugins,
                             Map<PluginId, PluginUiModel> installedPlugins) {
-    this(project, updates, customRepositoryPlugins, installedPlugins, false);
-    setTitle(IdeBundle.message("dialog.title.plugin.updates"));
-  }
-
-  public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, @NotNull PluginUpdateDialog dialog) {
-    if (dialog.showAndGet()) {
-      List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
-      List<PluginDownloader> selectedDownloaders = findDownloadersForPlugins(downloaders, selectedPlugins);
-      runUpdateAll(selectedDownloaders, dialog.getContentPanel(), dialog.myFinishCallback, null);
-      return true;
-    }
-    return false;
-  }
-
-  private static Map<PluginId, PluginUiModel> findInstalledPlugins(Collection<PluginDownloader> downloaders) {
-    if (downloaders.isEmpty()) return Collections.emptyMap();
-    PluginDownloader downloader = ContainerUtil.getFirstItem(downloaders);
-    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.getPluginSet().buildPluginIdMap().get(downloader.getId());
-    if (descriptor == null) return Collections.emptyMap();
-    return Map.of(descriptor.getPluginId(), new PluginUiModelAdapter(descriptor));
-  }
-
-  public static List<PluginDownloader> getSelectedDownloaders(@NotNull Collection<PluginDownloader> downloaders,
-                                                              @NotNull PluginUpdateDialog dialog) {
-    return findDownloadersForPlugins(downloaders, dialog.getSelectedPluginModels());
-  }
-
-  private static @NotNull List<PluginDownloader> findDownloadersForPlugins(@NotNull Collection<PluginDownloader> downloaders,
-                                                                           @NotNull List<PluginUiModel> selectedPlugins) {
-    List<PluginDownloader> selectedDownloaders = new ArrayList<>();
-    Set<PluginId> selectedPluginIds = ContainerUtil.map2Set(selectedPlugins, PluginUiModel::getPluginId);
-
-    for (PluginDownloader downloader : downloaders) {
-      if (selectedPluginIds.contains(downloader.getDescriptor().getPluginId())) {
-        selectedDownloaders.add(downloader);
-      }
-    }
-
-    return selectedDownloaders;
-  }
-
-  private PluginUpdateDialog(@Nullable Project project,
-                             Collection<PluginUiModel> updates,
-                             @Nullable Collection<PluginUiModel> customRepositoryPlugins,
-                             Map<PluginId, PluginUiModel> installedPlugins,
-                             boolean platformUpdate) {
     super(project, true);
 
     myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updates.size()), e -> {
@@ -189,6 +143,44 @@ public class PluginUpdateDialog extends DialogWrapper {
     if (rootPane != null) {
       rootPane.setPreferredSize(new JBDimension(800, 600));
     }
+    setTitle(IdeBundle.message("dialog.title.plugin.updates"));
+  }
+
+  public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, @NotNull PluginUpdateDialog dialog) {
+    if (dialog.showAndGet()) {
+      List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
+      List<PluginDownloader> selectedDownloaders = findDownloadersForPlugins(downloaders, selectedPlugins);
+      runUpdateAll(selectedDownloaders, dialog.getContentPanel(), dialog.myFinishCallback, null);
+      return true;
+    }
+    return false;
+  }
+
+  private static Map<PluginId, PluginUiModel> findInstalledPlugins(Collection<PluginDownloader> downloaders) {
+    if (downloaders.isEmpty()) return Collections.emptyMap();
+    PluginDownloader downloader = ContainerUtil.getFirstItem(downloaders);
+    IdeaPluginDescriptorImpl descriptor = PluginManagerCore.getPluginSet().buildPluginIdMap().get(downloader.getId());
+    if (descriptor == null) return Collections.emptyMap();
+    return Map.of(descriptor.getPluginId(), new PluginUiModelAdapter(descriptor));
+  }
+
+  public static List<PluginDownloader> getSelectedDownloaders(@NotNull Collection<PluginDownloader> downloaders,
+                                                              @NotNull PluginUpdateDialog dialog) {
+    return findDownloadersForPlugins(downloaders, dialog.getSelectedPluginModels());
+  }
+
+  private static @NotNull List<PluginDownloader> findDownloadersForPlugins(@NotNull Collection<PluginDownloader> downloaders,
+                                                                           @NotNull List<PluginUiModel> selectedPlugins) {
+    List<PluginDownloader> selectedDownloaders = new ArrayList<>();
+    Set<PluginId> selectedPluginIds = ContainerUtil.map2Set(selectedPlugins, PluginUiModel::getPluginId);
+
+    for (PluginDownloader downloader : downloaders) {
+      if (selectedPluginIds.contains(downloader.getDescriptor().getPluginId())) {
+        selectedDownloaders.add(downloader);
+      }
+    }
+
+    return selectedDownloaders;
   }
 
   protected void doIgnoreUpdateAction(ActionEvent e) {
