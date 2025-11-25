@@ -21,31 +21,32 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
   private PsiReference myReference;
   private RangeMarker myReferenceRangeMarker;
 
-  public MoveRenameUsageInfo(PsiReference reference, PsiElement referencedElement){
+  public MoveRenameUsageInfo(@NotNull PsiReference reference, PsiElement referencedElement){
     this(reference.getElement(), reference, referencedElement);
   }
 
-  public MoveRenameUsageInfo(PsiElement element, PsiReference reference, PsiElement referencedElement){
+  public MoveRenameUsageInfo(@NotNull PsiElement element, PsiReference reference, PsiElement referencedElement){
     super(element);
     init(element, reference, referencedElement);
-
   }
 
-  public MoveRenameUsageInfo(PsiElement element, PsiReference reference, int startOffset, int endOffset, PsiElement referencedElement, boolean nonCodeUsage){
+  public MoveRenameUsageInfo(@NotNull PsiElement element, PsiReference reference, int startOffset, int endOffset, PsiElement referencedElement, boolean nonCodeUsage){
     super(element, startOffset, endOffset, nonCodeUsage);
     init(element, reference, referencedElement);
   }
 
-  private void init(final PsiElement element, PsiReference reference, final PsiElement referencedElement) {
-    final Project project = element.getProject();
+  private void init(@NotNull PsiElement element, @Nullable PsiReference reference, @Nullable PsiElement referencedElement) {
+    Project project = element.getProject();
     myReferencedElement = referencedElement;
     if (referencedElement != null) {
       myReferencedElementPointer = SmartPointerManager.getInstance(referencedElement.getProject()).createSmartPsiElementPointer(referencedElement);
     }
-    if (reference == null) reference = element.getReference();
+    if (reference == null) {
+      reference = element.getReference();
+    }
     PsiFile containingFile = element.getContainingFile();
     if (reference == null) {
-      final TextRange textRange = element.getTextRange();
+      TextRange textRange = element.getTextRange();
       if (textRange != null) {
         reference = containingFile.findReferenceAt(textRange.getStartOffset());
       }
@@ -54,8 +55,8 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
       if (document != null) {
-        final int elementStart = reference.getElement().getTextRange().getStartOffset();
-        final TextRange rangeInElement = reference.getRangeInElement();
+        int elementStart = reference.getElement().getTextRange().getStartOffset();
+        TextRange rangeInElement = reference.getRangeInElement();
         LOG.assertTrue(elementStart + rangeInElement.getEndOffset() <= document.getTextLength(), reference);
         myReferenceRangeMarker = document.createRangeMarker(elementStart + rangeInElement.getStartOffset(),
                                                             elementStart + rangeInElement.getEndOffset());
@@ -75,13 +76,13 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
   @Override
   public @Nullable PsiReference getReference() {
     if (myReference != null) {
-      final PsiElement element = myReference.getElement();
+      PsiElement element = myReference.getElement();
       if (element.isValid()) {
         if (myReferenceRangeMarker == null) {
           return myReference;
         }
 
-        final PsiReference reference = checkReferenceRange(element, start -> myReference);
+        PsiReference reference = checkReferenceRange(element, start -> myReference);
 
         if (reference != null) {
           return reference;
@@ -90,7 +91,7 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
     }
 
     if (myReferenceRangeMarker == null) return null;
-    final PsiElement element = getElement();
+    PsiElement element = getElement();
     if (element == null || !element.isValid()) {
       return null;
     }
@@ -108,15 +109,15 @@ public class MoveRenameUsageInfo extends UsageInfo implements Cloneable {
     return myReferenceRangeMarker;
   }
 
-  private @Nullable PsiReference checkReferenceRange(PsiElement element, Function<? super Integer, ? extends PsiReference> fn) {
+  private @Nullable PsiReference checkReferenceRange(@NotNull PsiElement element, @NotNull Function<? super Integer, ? extends PsiReference> fn) {
     var rangeToCheck = getReferenceRangeToCheck(element);
-    final int start = rangeToCheck.getStartOffset() - element.getTextRange().getStartOffset();
-    final int end = rangeToCheck.getEndOffset() - element.getTextRange().getStartOffset();
-    final PsiReference reference = fn.fun(start);
+    int start = rangeToCheck.getStartOffset() - element.getTextRange().getStartOffset();
+    int end = rangeToCheck.getEndOffset() - element.getTextRange().getStartOffset();
+    PsiReference reference = fn.fun(start);
     if (reference == null) {
       return null;
     }
-    final TextRange rangeInElement = reference.getRangeInElement();
+    TextRange rangeInElement = reference.getRangeInElement();
     if (rangeInElement.getStartOffset() != start || rangeInElement.getEndOffset() != end) {
       return null;
     }

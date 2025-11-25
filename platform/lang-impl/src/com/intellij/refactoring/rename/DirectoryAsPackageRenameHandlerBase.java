@@ -35,7 +35,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
 
   protected abstract boolean isIdentifier(String name, Project project);
 
-  protected abstract String getQualifiedName(T aPackage);
+  protected abstract @NotNull String getQualifiedName(T aPackage);
 
   protected abstract @Nullable T getPackage(PsiDirectory psiDirectory);
 

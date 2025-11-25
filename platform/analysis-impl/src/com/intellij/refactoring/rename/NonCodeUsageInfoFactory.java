@@ -11,11 +11,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class NonCodeUsageInfoFactory implements UsageInfoFactory {
-  private final PsiElement myElement;
+  private final PsiElement myPsiElement;
   private final String myStringToReplace;
 
-  public NonCodeUsageInfoFactory(final PsiElement element, final String stringToReplace) {
-    myElement = element;
+  public NonCodeUsageInfoFactory(@NotNull PsiElement psiElement, final String stringToReplace) {
+    myPsiElement = psiElement;
     myStringToReplace = stringToReplace;
   }
 
@@ -27,6 +27,6 @@ public class NonCodeUsageInfoFactory implements UsageInfoFactory {
     }
 
     int start = usage.getTextRange().getStartOffset();
-    return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, myElement, myStringToReplace);
+    return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, myPsiElement, myStringToReplace);
   }
 }

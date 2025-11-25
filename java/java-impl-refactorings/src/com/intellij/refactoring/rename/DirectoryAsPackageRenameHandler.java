@@ -27,7 +27,7 @@ public class DirectoryAsPackageRenameHandler extends DirectoryAsPackageRenameHan
   }
 
   @Override
-  protected String getQualifiedName(PsiPackage aPackage) {
+  protected @NotNull String getQualifiedName(PsiPackage aPackage) {
     return aPackage.getQualifiedName();
   }
 
