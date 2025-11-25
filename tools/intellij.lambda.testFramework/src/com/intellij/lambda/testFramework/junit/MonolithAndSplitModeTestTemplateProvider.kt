@@ -37,7 +37,7 @@ fun getModesToRun(context: ExtensionContext): List<IdeRunMode> {
   }
 }
 
-class MonolithAndSplitModeContextProvider : TestTemplateInvocationContextProvider {
+class MonolithAndSplitModeTestTemplateProvider : TestTemplateInvocationContextProvider {
   override fun supportsTestTemplate(context: ExtensionContext): Boolean {
     // Don't support @ParameterizedTest - Jupiter will handle those natively
     val isParameterized = context.testMethod.orNull()?.isAnnotationPresent(ParameterizedTest::class.java) == true

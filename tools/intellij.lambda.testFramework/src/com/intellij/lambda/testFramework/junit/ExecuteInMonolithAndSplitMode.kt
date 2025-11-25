@@ -20,7 +20,7 @@ enum class IdeRunMode {
 @Inherited
 @ExtendWith(
   //TestApplicationExtension::class,
-  MonolithAndSplitModeContextProvider::class,
+  MonolithAndSplitModeTestTemplateProvider::class,
   MonolithAndSplitModeInvocationInterceptor::class,
   MonolithAndSplitModeParameterizedTestSupport::class,
   RemoteDevRun::class
