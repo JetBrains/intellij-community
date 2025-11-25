@@ -4,8 +4,8 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.java.util.JspFileTypeUtil;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.psi.*;
@@ -24,7 +24,7 @@ public final class HyperlinksToClassesOption extends PrintOption {
   public @Nullable Map<Integer, PsiReference> collectReferences(@NotNull PsiFile psiFile, @NotNull Map<PsiFile, PsiFile> filesMap) {
     if (isGenerateHyperlinksToClasses) {
       FileType fileType = psiFile.getFileType();
-      if (JavaFileType.INSTANCE == fileType || StdFileTypes.JSP == fileType) {
+      if (JavaFileType.INSTANCE == fileType || JspFileTypeUtil.isJsp(fileType)) {
         Map<Integer, PsiReference> refMap = new TreeMap<>();
         findClassReferences(psiFile, refMap, filesMap, psiFile);
         return refMap;

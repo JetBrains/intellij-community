@@ -2,10 +2,10 @@
 package com.intellij.lang;
 
 import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.java.util.JspFileTypeUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -126,8 +126,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
     private static boolean isIgnoredFileType(@NotNull FileType type) {
       return type.equals(HtmlFileType.INSTANCE) ||
              type instanceof LanguageFileType && "JavaScript".equals(((LanguageFileType)type).getLanguage().getID()) ||
-             type.equals(StdFileTypes.JSP) ||
-             type.equals(StdFileTypes.JSPX);
+             JspFileTypeUtil.isJspOrJspX(type);
     }
   }
 

@@ -7,8 +7,8 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.java.syntax.parser.JavaKeywords;
+import com.intellij.java.util.JspFileTypeUtil;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -29,7 +29,7 @@ public final class JavaCharFilter extends CharFilter {
     PsiFile file = lookup.getPsiFile();
     if (file == null) return null;
     boolean isJava = file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
-    boolean isJsp = file.getFileType() == StdFileTypes.JSP;
+    boolean isJsp = JspFileTypeUtil.isJsp(file);
     if (!isJava && !isJsp) {
       return null;
     }
