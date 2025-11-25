@@ -32,7 +32,7 @@ class MonolithAndSplitModeTestTemplateProvider : TestTemplateInvocationContextPr
   private fun createInvocationContext(mode: IdeRunMode, context: ExtensionContext): TestTemplateInvocationContext {
     return object : TestTemplateInvocationContext {
       override fun getDisplayName(invocationIndex: Int): String {
-        startIdeForUnitTestsWithInjectedLambdas(mode)
+        IdeInstance.startIde(mode)
 
         return if (!isGroupedExecutionEnabled) {
           "[$mode]"
@@ -50,10 +50,6 @@ class MonolithAndSplitModeTestTemplateProvider : TestTemplateInvocationContextPr
           })
       }
     }
-  }
-
-  private fun startIdeForUnitTestsWithInjectedLambdas(mode: IdeRunMode) {
-    IdeInstance.startIde(mode)
   }
 }
 
