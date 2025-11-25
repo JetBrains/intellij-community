@@ -257,7 +257,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   protected fun addToOpened(project: Project): Boolean {
     assert(!project.isDisposed) { "Must not open already disposed project" }
     synchronized(lock) {
-      if (isProjectOpened(project)) {
+      if (openProjectByHash[project.locationHash] != null) {
         return false
       }
       openProjects += project
@@ -708,7 +708,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
             }
 
             if (!addToOpened(project)) {
-              throw CancellationException("project is already opened")
+              throw CancellationException("project name=${project.name}, locationHash=${project.locationHash} is already opened")
             }
 
             // The project is loaded and is initialized, project services and components can be accessed.
