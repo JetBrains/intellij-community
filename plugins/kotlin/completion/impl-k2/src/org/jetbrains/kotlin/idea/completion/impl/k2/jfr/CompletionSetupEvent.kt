@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.jfr
 
 import jdk.jfr.Category
 import jdk.jfr.Enabled
-import jdk.jfr.Event
 import jdk.jfr.Label
 import jdk.jfr.Name
 import jdk.jfr.StackTrace
@@ -13,4 +12,7 @@ import jdk.jfr.StackTrace
 @Label("Completion Setup")
 @StackTrace(false)
 @Enabled(false)
-internal class CompletionSetupEvent : Event()
+internal class CompletionSetupEvent : AbstractCompletionEvent() {
+    @Label("Was Interrupted")
+    override var wasInterrupted: Boolean = false
+}

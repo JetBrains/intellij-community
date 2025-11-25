@@ -9,6 +9,7 @@ import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionEvent
+import org.jetbrains.kotlin.idea.completion.impl.k2.jfr.timeEvent
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -53,18 +54,12 @@ internal class KotlinChainCompletionContributor : CompletionContributor() {
                         }
                     }
 
-
-                    val event = CompletionEvent(isChainCompletion = true)
-                    try {
-                        event.begin()
+                    CompletionEvent(isChainCompletion = true).timeEvent {
                         Completions.complete(
                             parameters = parameters,
                             positionContext = KotlinExpressionNameReferencePositionContext(nameExpression),
                             resultSet = result.withPrefixMatcher(ExactPrefixMatcher(nameExpression.text)),
                         )
-                        event.wasCompleted = true
-                    } finally {
-                        event.commit()
                     }
                 }
             }
