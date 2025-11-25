@@ -9,6 +9,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -35,6 +36,7 @@ import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.IgnoredTraverseEntry;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -178,10 +180,16 @@ public final class LeakHunter {
     ProjectManager projectManager = ApplicationManager.getApplication() == null ? null : ProjectManager.getInstance();
     for (Project project : projectManager == null ? new Project[0] : projectManager.getOpenProjects()) {
       if (EDT.isCurrentThreadEdt()) {
-        UIUtil.dispatchAllInvocationEvents();
+        TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+          UIUtil.dispatchAllInvocationEvents();
+          return Unit.INSTANCE;
+        });
         while (DumbService.getInstance(project).isDumb()) {
           DumbService.getInstance(project).waitForSmartMode(100L);
-          UIUtil.dispatchAllInvocationEvents();
+          TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
+            UIUtil.dispatchAllInvocationEvents();
+            return Unit.INSTANCE;
+          });
         }
       }
       else {
