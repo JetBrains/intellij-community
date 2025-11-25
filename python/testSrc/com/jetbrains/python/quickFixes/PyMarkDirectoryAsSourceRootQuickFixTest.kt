@@ -75,6 +75,22 @@ class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
     testSourceRoot(expectedSourceRootPaths = setOf("/src/mysrc"))
   }
 
+  fun testDoesNotUpdateSourceRootsAutomaticallyIfWasHidden() {
+    testSourceRoot(expectedSourceRootPaths = emptySet())
+    openAndHighlightFile("mysrc/foo/abc_auto.py")
+    testSourceRoot(expectedSourceRootPaths = setOf("/src/mysrc"))
+
+    // Now we remove detected source roots; they should not be added one more time automatically, only via quick fix
+    cleanupSourceRoots()
+
+    testSourceRoot(expectedSourceRootPaths = emptySet())
+    openAndHighlightFile("mysrc/foo/abc.py")
+    testSourceRoot(expectedSourceRootPaths = emptySet())
+    // quick fix is expected because it does not matter if the source root was hidden before
+    findAndExecuteSourcesQuickFix(isQuickFixExpected = true)
+    testSourceRoot(expectedSourceRootPaths = setOf("/src/mysrc"))
+  }
+
   fun testNoQuickFixBecauseSourceRootNotFound() {
     testSourceRoot(expectedSourceRootPaths = emptySet())
     openAndHighlightFile("mysrc/foo/abc_no_src.py")
