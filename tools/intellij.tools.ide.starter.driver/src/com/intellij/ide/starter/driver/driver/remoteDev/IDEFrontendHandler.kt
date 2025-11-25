@@ -16,6 +16,7 @@ import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import kotlinx.coroutines.*
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 internal class IDEFrontendHandler(private val ideRemDevTestContext: IDERemDevTestContext, private val remoteDevDriverOptions: RemoteDevDriverOptions) {
   private val frontendContext = ideRemDevTestContext.frontendIDEContext
@@ -81,6 +82,6 @@ internal class IDEFrontendHandler(private val ideRemDevTestContext: IDERemDevTes
       }
     }
 
-    return Pair(result, runBlocking { process.await() })
+    return Pair(result, runBlocking(CoroutineName("Awaiting for Frontend Process")) { withTimeout(2.minutes) { process.await() }})
   }
 }
