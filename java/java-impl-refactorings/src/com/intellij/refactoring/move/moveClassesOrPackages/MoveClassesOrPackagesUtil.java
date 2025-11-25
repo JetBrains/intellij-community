@@ -74,6 +74,9 @@ public final class MoveClassesOrPackagesUtil {
     }
   }
 
+  /**
+   * @param results must be thread-safe
+   */
   public static void findNonCodeUsages(@NotNull PsiElement element,
                                        @NotNull SearchScope searchScope,
                                        boolean searchInStringsAndComments,

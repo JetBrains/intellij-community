@@ -3356,7 +3356,6 @@ f:com.intellij.refactoring.util.NonCodeSearchDescriptionLocation
 - isNonJava():Z
 f:com.intellij.refactoring.util.TextOccurrencesUtilBase
 - s:addTextOccurrences(com.intellij.psi.PsiElement,java.lang.String,com.intellij.psi.search.GlobalSearchScope,java.util.Collection,com.intellij.usageView.UsageInfoFactory):V
-- s:addUsagesInStringsAndComments(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,java.lang.String,java.util.Collection,com.intellij.usageView.UsageInfoFactory):V
 - s:isStringLiteralElement(com.intellij.psi.PsiElement):Z
 - s:processUsagesInStringsAndComments(com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,java.lang.String,Z,com.intellij.util.PairProcessor):Z
 - s:processUsagesInStringsAndComments(com.intellij.util.Processor,com.intellij.psi.PsiElement,com.intellij.psi.search.SearchScope,java.lang.String,com.intellij.usageView.UsageInfoFactory):Z
