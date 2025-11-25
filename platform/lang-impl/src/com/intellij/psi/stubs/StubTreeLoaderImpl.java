@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiDocumentManager;
@@ -21,14 +20,16 @@ import com.intellij.util.indexing.events.IndexingEventsLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 
-final class StubTreeLoaderImpl extends StubTreeLoader {
+final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
   private static final Logger LOG = Logger.getInstance(StubTreeLoaderImpl.class);
+  //FIXME RC: need to close this on Reindex!
   private final IndexingStampInfoStorage indexingStampInfoStorage = createStorage();
 
   private static IndexingStampInfoStorage createStorage() {
@@ -289,5 +290,10 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
     if (indexingStampInfo != null) {
       indexingStampInfoStorage.writeStampInfo(fileId, indexingStampInfo);
     }
+  }
+
+  @Override
+  public void close() throws IOException {
+    indexingStampInfoStorage.close();//will be re-opened on access, see implementation
   }
 }
