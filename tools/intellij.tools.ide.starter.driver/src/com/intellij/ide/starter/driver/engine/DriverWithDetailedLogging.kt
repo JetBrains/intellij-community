@@ -35,16 +35,15 @@ internal class DriverWithDetailedLogging(private val driver: Driver, logUiHierar
   init {
     EventsBus.subscribeOnce(this) { event: IdeLaunchEvent ->
       runContext = event.runContext
-      if (!CIServer.instance.isBuildRunningOnCI && !ConfigurationStorage.useDockerContainer()) {
+      if (!CIServer.instance.isBuildRunningOnCI && !ConfigurationStorage.useDockerContainer() &&
+          logUiHierarchy && !event.runContext.calculateVmOptions().hasHeadlessMode()) {
         withTimeoutOrNull(1.minutes) {
           while (!driver.isConnected) {
             delay(3.seconds)
           }
-          if (logUiHierarchy) {
-            driver.withContext {
-              val webserverPort = utility(BuiltInServerOptions::class).getInstance().getEffectiveBuiltInServerPort()
-              logOutput("UI Hierarchy: http://localhost:$webserverPort/api/remote-driver/".color(LogColor.PURPLE))
-            }
+          driver.withContext {
+            val webserverPort = utility(BuiltInServerOptions::class).getInstance().getEffectiveBuiltInServerPort()
+            logOutput("UI Hierarchy: http://localhost:$webserverPort/api/remote-driver/".color(LogColor.PURPLE))
           }
         }
       }
