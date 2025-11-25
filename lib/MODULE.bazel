@@ -4032,17 +4032,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_plugins-structure-intellij-3_316_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.316/structure-intellij-3.316.jar",
-  sha256 = "0efe45aca820a2f722f29a49e5ffe5cd14f06c51ad60842247fcb15f8048e28a",
-  downloaded_file_path = "structure-intellij-3.316.jar"
+  name = "org_jetbrains_intellij_plugins-structure-intellij-3_319_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.319/structure-intellij-3.319.jar",
+  sha256 = "1f07513578286fe33d12c9f3165f9c15fe35fd47668e10ac5543e715214b66e9",
+  downloaded_file_path = "structure-intellij-3.319.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_plugins-structure-base-3_316_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.316/structure-base-3.316.jar",
-  sha256 = "83789c1710426adb1637f773ec79e46ad0acf845e77e7964d7f2030cc2fd25c9",
-  downloaded_file_path = "structure-base-3.316.jar"
+  name = "org_jetbrains_intellij_plugins-structure-base-3_319_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.319/structure-base-3.319.jar",
+  sha256 = "2041f06d6afa4c2adc61fa1c700454265a69a18221d8e153f0d54ac34bebdc3e",
+  downloaded_file_path = "structure-base-3.319.jar"
 )
 
 http_file(
@@ -4060,17 +4060,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains_intellij_plugins-structure-intellij-3_316-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.316/structure-intellij-3.316-sources.jar",
-  sha256 = "5aafc4c1b9f592b766b579f37ca60bf3e705feefa44ae3b74d52796ce66c49ec",
-  downloaded_file_path = "structure-intellij-3.316-sources.jar"
+  name = "org_jetbrains_intellij_plugins-structure-intellij-3_319-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-intellij/3.319/structure-intellij-3.319-sources.jar",
+  sha256 = "34064d9c62aaafecc0e038258ae1b8e727b4e9b31b6dc2c8d6c6e840771b9ccc",
+  downloaded_file_path = "structure-intellij-3.319-sources.jar"
 )
 
 http_file(
-  name = "org_jetbrains_intellij_plugins-structure-base-3_316-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.316/structure-base-3.316-sources.jar",
-  sha256 = "ef0fb2a2f72cc6487de79a46ef89ad06157582be54be5ba229030d968301d32a",
-  downloaded_file_path = "structure-base-3.316-sources.jar"
+  name = "org_jetbrains_intellij_plugins-structure-base-3_319-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/plugins/structure-base/3.319/structure-base-3.319-sources.jar",
+  sha256 = "448e55215de28a48c848e827f84effee3c5deeda0a7217066baae6784272703b",
+  downloaded_file_path = "structure-base-3.319-sources.jar"
 )
 
 http_file(
