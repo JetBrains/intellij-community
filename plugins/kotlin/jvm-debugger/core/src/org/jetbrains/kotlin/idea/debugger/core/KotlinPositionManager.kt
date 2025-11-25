@@ -64,10 +64,10 @@ import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.*
-import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
 import org.jetbrains.kotlin.idea.codeinsight.utils.getInlineArgumentSymbol
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.base.util.*
@@ -97,7 +97,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         KotlinAllFilesScopeProvider.getInstance(debugProcess.project).getAllKotlinFilesScope()
     )
 
-    override fun getAcceptedFileTypes(): Set<FileType> = KOTLIN_FILE_TYPES
+    override fun isAcceptedFileType(fileType: FileType): Boolean = fileType == KotlinFileType.INSTANCE
 
     override fun evaluateCondition(
         context: EvaluationContext,

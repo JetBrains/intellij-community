@@ -223,8 +223,7 @@ class CompoundPositionManager() : PositionManagerWithConditionEvaluation, MultiR
 
 private fun acceptsFileType(positionManager: PositionManager, fileType: FileType?): Boolean {
   if (fileType == null || fileType === UnknownFileType.INSTANCE) return true
-  val types = positionManager.acceptedFileTypes ?: return true
-  return types.contains(fileType)
+  return positionManager.isAcceptedFileType(fileType)
 }
 
 private suspend fun getSourcePositionAsync(positionManager: PositionManager, location: Location?): SourcePosition? {
