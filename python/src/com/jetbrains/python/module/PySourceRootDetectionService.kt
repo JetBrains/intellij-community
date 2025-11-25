@@ -29,15 +29,18 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.jetbrains.python.PyBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
 
+@ApiStatus.Internal
 @Service( Service.Level.PROJECT)
 @State(
   name = "PySourceRootDetectionService",
   storages = [Storage(value = "pySourceRootDetection.xml", roamingType = RoamingType.DISABLED)]
 )
-internal class PySourceRootDetectionService(
+class PySourceRootDetectionService(
   private val project: Project,
   private val cs: CoroutineScope
 ) : ModuleRootListener, SerializablePersistentStateComponent<PySourceRootDetectionService.HiddenSourcesState>(HiddenSourcesState()) {
@@ -152,7 +155,13 @@ internal class PySourceRootDetectionService(
     notification.notify(project)
   }
 
-  internal data class HiddenSourcesState(
+  @TestOnly
+  fun resetState() {
+    updateState { HiddenSourcesState() }
+  }
+
+  @ApiStatus.Internal
+  data class HiddenSourcesState(
     @JvmField
     val sourcePathsSet: Set<String> = emptySet(),
   )

@@ -3,11 +3,13 @@ package com.jetbrains.python.quickFixes
 
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.PyQuickFixTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
+import com.jetbrains.python.module.PySourceRootDetectionService
 
 @TestDataPath("\$CONTENT_ROOT/../testData/quickFixes/PyMarkDirectoryAsSourceRootQuickFixTest")
 class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
@@ -21,6 +23,7 @@ class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
 
   override fun tearDown() {
     cleanupSourceRoots()
+    myFixture.project.service<PySourceRootDetectionService>().resetState()
     super.tearDown()
   }
 
