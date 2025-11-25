@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status
 
 import com.intellij.ide.ui.UISettings
@@ -33,9 +33,11 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Internal
 @OptIn(FlowPreview::class)
-open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
-                         scope: CoroutineScope,
-                         protected val helper: EditorBasedWidgetHelper = EditorBasedWidgetHelper(dataContext.project)) : TextWidgetPresentation {
+open class PositionPanel(
+  private val dataContext: WidgetPresentationDataContext,
+  scope: CoroutineScope,
+  protected val helper: EditorBasedWidgetHelper = EditorBasedWidgetHelper(dataContext.project),
+) : TextWidgetPresentation {
   private val updateTextRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     .also { it.tryEmit(Unit) }
   private val charCountRequests = MutableSharedFlow<CodePointCountTask>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -141,7 +143,6 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     }
   }
 
-  @Suppress("HardCodedStringLiteral")
   private fun getPositionText(editor: Editor): @NlsContexts.Label String {
     if (editor.isDisposed) {
       return ""
@@ -174,9 +175,11 @@ open class PositionPanel(private val dataContext: WidgetPresentationDataContext,
     }
     else {
       message.append(CHAR_COUNT_UNKNOWN).append(' ').append(UIBundle.message("position.panel.selected.chars.count", 2))
-      check(charCountRequests.tryEmit(CodePointCountTask(text = editor.document.immutableCharSequence,
-                                                         startOffset = selectionStart,
-                                                         endOffset = selectionEnd)))
+      check(charCountRequests.tryEmit(CodePointCountTask(
+        text = editor.document.immutableCharSequence,
+        startOffset = selectionStart,
+        endOffset = selectionEnd,
+      )))
     }
 
     val selectionStartLine = editor.document.getLineNumber(selectionStart)
