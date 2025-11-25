@@ -6,6 +6,7 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="com.intellij.psi.impl.cache.impl.todo.TodoIndex"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.todo.backend.rpc.TodoRemoteApiProvider"/>
   </extensions>
 </idea-plugin>
