@@ -159,10 +159,14 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
 
   class FramesContainer(val executionStack: XExecutionStack, private val session: XDebugSessionProxy) : XValue() {
     override fun computeChildren(node: XCompositeNode) {
-      if (!session.hasSuspendContext()) return
+      if (!session.hasSuspendContext()) {
+        node.setMessage(XDebuggerBundle.message("debugger.frames.not.available"))
+        return
+      }
 
       executionStack.computeStackFrames(0, object : XExecutionStack.XStackFrameContainer {
         override fun errorOccurred(errorMessage: String) {
+          node.setMessage(errorMessage)
         }
 
         override fun addStackFrames(stackFrames: List<XStackFrame>, last: Boolean) {
@@ -175,6 +179,12 @@ class XThreadsView(project: Project, session: XDebugSessionProxy) : XDebugView()
 
     override fun computePresentation(node: XValueNode, place: XValuePlace) {
       node.setPresentation(executionStack.icon, XRegularValuePresentation(executionStack.displayName, null, ""), true)
+    }
+
+    private fun XCompositeNode.setMessage(text: String) {
+      // remove temporary loading message nodes
+      addChildren(XValueChildrenList.EMPTY, true)
+      setMessage(text, null, SimpleTextAttributes.GRAYED_ATTRIBUTES, null)
     }
   }
 
