@@ -39,7 +39,7 @@ internal class LocalChangesViewProxy(
   override fun isModelUpdateInProgress(): Boolean = panel.changesView.isModelUpdateInProgress
 
   override fun scheduleRefreshNow(callback: Runnable?) {
-    panel.scheduleRefreshNow(callback)
+    panel.scheduleRefreshNow(if (callback == null) null else callback::run)
   }
 
   override fun scheduleDelayedRefresh() {

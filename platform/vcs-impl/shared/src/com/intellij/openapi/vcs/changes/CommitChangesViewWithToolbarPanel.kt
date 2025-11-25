@@ -49,10 +49,10 @@ import kotlinx.coroutines.flow.merge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import java.awt.event.MouseEvent
-import java.lang.Runnable
 import kotlin.time.Duration.Companion.milliseconds
 
 private val REFRESH_DELAY = 100.milliseconds
+private typealias RefreshCallback = suspend () -> Unit
 
 @ApiStatus.Internal
 abstract class CommitChangesViewWithToolbarPanel(
@@ -117,7 +117,7 @@ abstract class CommitChangesViewWithToolbarPanel(
   }
 
   @CalledInAny
-  fun scheduleRefreshNow(@RequiresBackgroundThread callback: Runnable? = null) {
+  fun scheduleRefreshNow(callback: RefreshCallback? = null) {
     scheduleRefresh(withDelay = false, callback = callback)
   }
 
@@ -128,7 +128,7 @@ abstract class CommitChangesViewWithToolbarPanel(
   }
 
   @CalledInAny
-  protected fun scheduleRefresh(withDelay: Boolean, @RequiresBackgroundThread callback: Runnable? = null) {
+  protected fun scheduleRefresh(withDelay: Boolean, callback: RefreshCallback? = null) {
     if (!withDelay && callback == null) {
       refresher.request()
       return
@@ -138,7 +138,7 @@ abstract class CommitChangesViewWithToolbarPanel(
       if (withDelay) delay(REFRESH_DELAY)
       refresher.request()
       refresher.awaitNotBusy()
-      callback?.run()
+      callback?.invoke()
     }
   }
 

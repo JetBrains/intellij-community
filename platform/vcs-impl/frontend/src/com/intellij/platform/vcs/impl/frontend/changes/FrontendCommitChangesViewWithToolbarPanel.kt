@@ -99,10 +99,8 @@ internal class FrontendCommitChangesViewWithToolbarPanel(
 
   private fun scheduleRefresh(withDelay: Boolean, refreshCounter: Int) {
     scheduleRefresh(withDelay) {
-      cs.launch {
-        LOG.debug { "Changes view refreshed ($refreshCounter)" }
-        ChangesViewApi.getInstance().notifyRefreshPerformed(project.projectId(), refreshCounter)
-      }
+      LOG.debug { "Changes view refreshed ($refreshCounter)" }
+      ChangesViewApi.getInstance().notifyRefreshPerformed(project.projectId(), refreshCounter)
     }
   }
 
