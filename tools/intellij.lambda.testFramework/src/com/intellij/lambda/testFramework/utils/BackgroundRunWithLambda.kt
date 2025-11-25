@@ -16,7 +16,7 @@ class BackgroundRunWithLambda(delegate: BackgroundRun, val rdSession: LambdaRdTe
   suspend inline fun <T : LambdaIdeContext> LambdaRdTestSession.run(name: String? = null, crossinline lambda: suspend T.() -> Unit) {
     val protocol = this@run.protocol
                    ?: error("RD Protocol is not initialized for session. Make sure the IDE connection is established before running tests.")
-    val exec = SerializedLambda.fromLambdaWithCoroutineScope(lambda)
+    val exec = SerializedLambda.fromLambdaWithCoroutineScope(name, lambda)
     val lambda = LambdaRdSerializedLambda("${protocol.name}: ${name ?: ("Step " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss.SSS")))}",
                                           exec.serializedDataBase64,
                                           exec.classPath.map { it.canonicalPath })
