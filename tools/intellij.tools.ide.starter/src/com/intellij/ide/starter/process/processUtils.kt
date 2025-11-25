@@ -46,9 +46,10 @@ fun findAndKillLeftoverProcessesFromTestRuns(reportErrors: Boolean = false) {
   val substringToSearch: List<String> = listOf("/$IDE_TESTS_SUBSTRING/", "\\$IDE_TESTS_SUBSTRING\\")
   findAndKillProcessesBySubstring(*substringToSearch.toTypedArray()) { processInfosToKill ->
     if (reportErrors) {
-      val message = "Unexpected running processes were detected after IDE was stopped ${processInfosToKill.joinToString(", ") { "Process:[Name:${it.name},Id:${it.pid}]\n" }}"
+      val message = "Unexpected running processes were detected after IDE was stopped ${processInfosToKill.joinToString(", ") { it.name }}"
       CIServer.instance.reportTestFailure(testName = message,
                                           message = message + "\n" +
+                                                    processInfosToKill.joinToString(", ") { "Process:[Name:${it.name},Id:${it.pid}]\n" } + "\n" +
                                                     "Please investigate if the process should have been stopped together with the IDE, it means it is a bug, you can raise a YT ticket and mute the exception.\n" +
                                                     "If it is an expected behaviour, it is recommended to add a call `${::findAndKillProcesses}` with appropriate arguments in @After/@AfterEach.\n" +
                                                     "Processes were collected based on command line, containing '${substringToSearch.joinToString(", ")}'.\n" +
