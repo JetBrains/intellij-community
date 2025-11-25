@@ -3318,6 +3318,23 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  // PY-50642
+  public void testTypeCheckingMultiFile() {
+    myFixture.addFileToProject("mod.py", """
+      import typing
+
+      if not not typing.TYPE_CHECKING:
+          v: int = -1
+      else:
+          v: str = 'ab'
+      """);
+
+    doTest("int", """
+      from mod import v
+      expr = v
+      """);
+  }
+
   // PY-73958
   public void testNoStackOverflow() {
     doTest("Foo", """
