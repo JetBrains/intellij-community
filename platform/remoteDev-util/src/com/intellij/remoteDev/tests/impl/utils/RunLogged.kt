@@ -1,5 +1,6 @@
 package com.intellij.remoteDev.tests.impl.utils
 
+import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.remoteDev.tests.impl.RdctTestFrameworkLoggerCategory
 import kotlinx.coroutines.CancellationException
@@ -11,7 +12,9 @@ import kotlin.time.DurationUnit
 import kotlin.time.measureTimedValue
 
 // it is easier to sort out logs from just testFramework
-internal val LOG = Logger.getInstance(RdctTestFrameworkLoggerCategory.category)
+internal val LOG = Logger.getInstance(RdctTestFrameworkLoggerCategory.category).also {
+  it.setLevel(LogLevel.INFO)
+}
 
 @TestOnly
 @ApiStatus.Internal
