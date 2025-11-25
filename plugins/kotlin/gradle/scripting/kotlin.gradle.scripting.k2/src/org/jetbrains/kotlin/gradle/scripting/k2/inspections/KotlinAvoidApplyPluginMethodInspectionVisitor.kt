@@ -69,9 +69,7 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
         if (!isValidRepositorySetup(buildScriptBlock)) return null
 
         val pluginDependenciesBlock = buildScriptBlock.findBlock("dependencies") ?: return null
-        val (psiElement, version) = findPluginClasspathDependency(pluginDependenciesBlock, pluginName) ?: return null
-
-        return PluginFixInfo(pluginName, version, psiElement)
+        return findPluginClasspathDependency(pluginDependenciesBlock, pluginName)
     }
 
     private fun getBuildScriptBlock(): KtBlockExpression? {
@@ -86,7 +84,7 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
 
     private fun findPluginClasspathDependency(
         pluginDependenciesBlock: KtBlockExpression, pluginName: String
-    ): Pair<SmartPsiElementPointer<KtCallExpression>, String>? {
+    ): PluginFixInfo? {
         return pluginDependenciesBlock.descendantsOfType<KtCallExpression>().firstNotNullOfOrNull { callExpression ->
             extractPluginDependencyInfo(callExpression, pluginName)
         }
@@ -95,7 +93,7 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
     private fun extractPluginDependencyInfo(
         callExpression: KtCallExpression,
         pluginName: String
-    ): Pair<SmartPsiElementPointer<KtCallExpression>, String>? {
+    ): PluginFixInfo? {
         if (callExpression.calleeExpression?.text != "classpath") return null
 
         val depType = findDependencyType(callExpression) ?: return null
@@ -108,7 +106,7 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
             DependencyType.OTHER -> return null
         } ?: return null
 
-        return callExpression.createSmartPointer() to version
+        return PluginFixInfo(pluginName, version, callExpression.createSmartPointer())
     }
 
     private fun extractVersionFromSingleArgument(
@@ -116,8 +114,8 @@ class KotlinAvoidApplyPluginMethodInspectionVisitor(private val holder: Problems
         pluginName: String
     ): String? {
         val arg = args.firstOrNull()?.getArgumentExpression() ?: return null
-        val classpath = arg.evaluateString() ?: return null
-        val split = classpath.split(":")
+        val dependencyNotation = arg.evaluateString() ?: return null
+        val split = dependencyNotation.split(":")
         return if (split.size == 3 && split.first() == pluginName) split.last() else null
     }
 
