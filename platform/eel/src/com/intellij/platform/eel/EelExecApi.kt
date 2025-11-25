@@ -240,9 +240,6 @@ sealed interface EelExecApi {
   /**
    * Represents a callback script which can be called from command-line tools like `git`.
    * The script passes its input data to the IDE and then passes back the answer.
-   *
-   * It's important to call [ExternalCliEntrypoint.delete] after the process which could call the script finishes
-   * to avoid resource leak.
    */
   @ApiStatus.Internal
   interface ExternalCliEntrypoint {
@@ -291,10 +288,12 @@ sealed interface EelExecApi {
     val envVariablesToCapture: List<String>
   }
 
-  // TODO Generate builder?
+  /**
+   * It's obligatory to call [ExternalCliEntrypoint.consumeInvocations] on the resulting value.
+   */
   @CheckReturnValue
   @ApiStatus.Internal
-  suspend fun createExternalCli(options: ExternalCliOptions): ExternalCliEntrypoint
+  suspend fun createExternalCli(@GeneratedBuilder options: ExternalCliOptions): ExternalCliEntrypoint
 
   @Deprecated("Use spawnProcess instead")
   @ApiStatus.Internal

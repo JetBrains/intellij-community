@@ -69,6 +69,21 @@ fun EelExecApi.spawnProcess(
     exe = exe,
   )
 
+/**
+ * It's obligatory to call [ExternalCliEntrypoint.consumeInvocations] on the resulting value.
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Internal
+fun EelExecApi.createExternalCli(
+  envVariablesToCapture: List<String>,
+  filePrefix: String,
+): EelExecApiHelpers.CreateExternalCli =
+  EelExecApiHelpers.CreateExternalCli(
+    owner = this,
+    envVariablesToCapture = envVariablesToCapture,
+    filePrefix = filePrefix,
+  )
+
 @ApiStatus.Experimental
 object EelExecApiHelpers {
   /**
@@ -313,6 +328,44 @@ object EelExecApiHelpers {
           ptyOrStdErrSettings = ptyOrStdErrSettings,
           scope = scope,
           workingDirectory = workingDirectory,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.EelExecApi.createExternalCli].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Internal
+  class CreateExternalCli(
+    private val owner: EelExecApi,
+    private var envVariablesToCapture: List<String>,
+    private var filePrefix: String,
+  ) : OwnedBuilder<EelExecApi.ExternalCliEntrypoint> {
+
+
+    fun envVariablesToCapture(arg: List<String>): CreateExternalCli = apply {
+      this.envVariablesToCapture = arg
+    }
+
+    fun envVariablesToCapture(vararg arg: String): CreateExternalCli = apply {
+      this.envVariablesToCapture = listOf(*arg)
+    }
+
+    fun filePrefix(arg: String): CreateExternalCli = apply {
+      this.filePrefix = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.EelExecApi.createExternalCli]
+     * with an instance of [com.intellij.platform.eel.EelExecApi.ExternalCliOptions].
+     */
+    @CheckReturnValue
+    override suspend fun eelIt(): EelExecApi.ExternalCliEntrypoint =
+      owner.createExternalCli(
+        ExternalCliOptionsImpl(
+          envVariablesToCapture = envVariablesToCapture,
+          filePrefix = filePrefix,
         )
       )
   }
