@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.components.IconLabelButton
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.util.preferredWidth
@@ -348,6 +349,7 @@ internal object GHPRCreateComponentFactory {
           }?.onFailure {
             add(ErrorLabel(message("pull.request.create.failed.to.check.branches")))
             add(ErrorLink(it))
+            add(RefreshIconLabelButton(vm))
             isVisible = true
           }?.onSuccess { result ->
             when (result) {
@@ -502,6 +504,15 @@ private fun ErrorLink(error: Throwable) =
         .createPopup().showAbove(link)
     }
   }
+
+@Suppress("FunctionName")
+private fun RefreshIconLabelButton(vm: GHPRCreateViewModel): IconLabelButton {
+  return IconLabelButton(AllIcons.Actions.Refresh) {
+    vm.refreshBranchesState()
+  }.also {
+    it.toolTipText = message("pull.request.create.error.refresh")
+  }
+}
 
 @Suppress("FunctionName")
 private fun HintPane(message: @Nls String) = SimpleHtmlPane(message).apply {
