@@ -4,6 +4,6 @@
     <file>Main.java</file>
     <line>1</line>
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Unused import</problem_class>
-    <description>Unused import &lt;code&gt;import module java.base;/**/&lt;/code&gt; #loc</description>
+    <description>Unused import &lt;code&gt;import module java.base;/**/&lt;/code&gt;</description>
   </problem>
 </problems>
