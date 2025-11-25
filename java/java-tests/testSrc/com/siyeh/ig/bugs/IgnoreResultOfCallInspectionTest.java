@@ -130,6 +130,15 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         public @interface CanIgnoreReturnValue{}
         """,
       """
+        package org.assertj.core.annotation;
+        import java.lang.annotation.ElementType;
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        import java.lang.annotation.Target;
+        @Target({CONSTRUCTOR,METHOD,PACKAGE,TYPE})
+        public @interface CanIgnoreReturnValue{}
+        """,
+      """
         package org.apache.commons.lang3;
         public class Validate {
           public native static <T> T notNull(T object);
@@ -337,6 +346,27 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         }
         """);
   }
+
+  public void testCanIgnoreReturnValue4() {
+    doTest("""
+             import org.assertj.core.annotation.CanIgnoreReturnValue;
+             import javax.annotation.CheckReturnValue;
+
+             @CheckReturnValue
+             class Test {
+               int lookAtMe() { return 1; }
+
+               @CanIgnoreReturnValue
+               int ignoreMe() { return 2; }
+
+               void run() {
+                 /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.
+                 ignoreMe(); // OK.  This line should *not* produce a warning.
+               }
+             }""");
+  }
+
+
 
   public void testCustomCheckReturnValue() {
     doTest("""
