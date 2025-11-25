@@ -33,7 +33,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesInBuildGradleHighlighted(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testHighlighting(
                 """
                 <weak_warning>repositories</weak_warning> {
@@ -47,7 +47,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesInBuildscriptHighlighted(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testHighlighting(
                 """
                 buildscript {
@@ -63,7 +63,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMoveToSettingsFile(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -94,7 +94,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMoveFromBuildscriptToSettingsFile(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 buildscript {
@@ -129,7 +129,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingDependencyResolutionManagement(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -166,7 +166,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingPluginManagement(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 buildscript {
@@ -206,7 +206,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingDependencyResolutionManagement(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -241,7 +241,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingDependencyResolutionManagementOverlap(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -278,7 +278,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingPluginManagement(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 buildscript {
@@ -316,7 +316,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingEmptyDependencyResolutionManagement(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -344,7 +344,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMergeToExistingDependencyResolutionManagementEmptyRepositories(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -374,7 +374,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingEmptyPluginManagement(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 buildscript {
@@ -407,7 +407,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingPluginManagementEmptyRepositories(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 buildscript {
@@ -442,7 +442,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testRepositoriesWithMultipleStatements(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testHighlighting(
                 """
                 <weak_warning>repositories</weak_warning> {
@@ -460,7 +460,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testMultipleRepositoriesWithComplexContent(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -495,7 +495,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testNestedRepositoriesNotHighlighted(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_PUBLISHING_PLUGIN) {
             testHighlighting(
                 """
                 publishing {
@@ -513,7 +513,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testMultipleRepositoriesBlocks(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testHighlighting(
                 """
                 <weak_warning>repositories</weak_warning> {
@@ -535,7 +535,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testDependencyResolutionManagementAfterPluginManagement(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -576,7 +576,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testDependencyResolutionManagementAfterPluginsBlock(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -617,7 +617,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testDependencyResolutionManagementAfterBothPluginManagementAndPlugins(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -682,7 +682,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testPluginManagementOrderingWithBuildscriptRepositories(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 buildscript {
@@ -729,7 +729,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testCorrectOrderingWithAllTopLevelBlocks(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -784,7 +784,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testEmptySettingsFile(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -811,7 +811,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testBuildCacheDoesNotAffectOrdering(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_BUILD_FILE) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
                 """
                 repositories<caret> {
@@ -849,15 +849,80 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         }
     }
 
-    // A project without a settings file does not need to centralize its repositories
     @ParameterizedTest
     @AllGradleVersionsSource
-    fun testNoInspectionWithoutSettingsFile(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_ONLY_BUILD_FILE) {
-            testHighlighting("repositories { mavenCentral() }")
-            testNoIntentions(
-                "repositories<caret> { mavenCentral() }",
-                "Move repositories to the Gradle settings file"
+    fun testMoveRepositoriesWithoutSettingsFile(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_ONLY_BUILD_FILE) {
+            testHighlighting(
+                """
+                <weak_warning>repositories</weak_warning> {
+                    mavenCentral()
+                }
+                """.trimIndent()
+            )
+            testMyIntention(
+                """
+                <caret>repositories {
+                    mavenCentral()
+                }
+                """.trimIndent(),
+                "",
+                null,
+                """
+                plugins {
+                    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+                }
+                rootProject.name = "empty-project-with-only-build-file"
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.PREFER_PROJECT
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
+                false
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testMoveRepositoriesInBuildscriptWithoutSettingsFile(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_ONLY_BUILD_FILE) {
+            testHighlighting(
+                """
+                buildscript {
+                    <weak_warning>repositories</weak_warning> { 
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent()
+            )
+            testMyIntention(
+                """
+                buildscript {
+                    <caret>repositories {
+                        mavenCentral()
+                    }
+                }
+                """.trimIndent(),
+                """
+                buildscript {
+                }
+                """.trimIndent(),
+                null,
+                """
+                pluginManagement {
+                    repositories {
+                        mavenCentral()
+                    }
+                }
+                plugins {
+                    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+                }
+                rootProject.name = "empty-project-with-only-build-file"
+                """.trimIndent(),
+                true
             )
         }
     }
@@ -865,7 +930,7 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
     @ParameterizedTest
     @AllGradleVersionsSource
     fun testNoQuickFixWithGroovySettingsFile(gradleVersion: GradleVersion) {
-        runTest(gradleVersion, EMPTY_PROJECT_WITH_GROOVY_BUILD_FILE) {
+        runTest(gradleVersion, EMPTY_PROJECT_WITH_GROOVY_SETTINGS_FILE) {
             testHighlighting("<weak_warning>repositories</weak_warning> { mavenCentral() }")
             testNoIntentions(
                 "repositories<caret> { mavenCentral() }",
@@ -886,36 +951,40 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
         checkCaret(buildBefore)
         writeTextAndCommit(GradleConstants.KOTLIN_DSL_SCRIPT_NAME, buildBefore)
         if (settingsBefore != null) writeTextAndCommit(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME, settingsBefore)
+        else gradleFixture.fileFixture.snapshot(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME)
         runInEdtAndWait {
             codeInsightFixture.configureFromExistingVirtualFile(getFile(GradleConstants.KOTLIN_DSL_SCRIPT_NAME))
             val repositoriesParentBlockInSettingsName = if (isForPlugins) "pluginManagement" else "dependencyResolutionManagement"
-            val intention = codeInsightFixture.findSingleIntention(
-                "Move repositories to '$repositoriesParentBlockInSettingsName' in the Gradle settings file"
-            )
+            val intentionName =
+                if (settingsBefore != null) "Move repositories to '$repositoriesParentBlockInSettingsName' in the Gradle settings file"
+                else "Create a 'settings.gradle.kts' file and move repositories to '$repositoriesParentBlockInSettingsName'"
+            val intention = codeInsightFixture.findSingleIntention(intentionName)
             codeInsightFixture.launchAction(intention)
-            codeInsightFixture.checkResult(buildAfter, false)
+            codeInsightFixture.checkResult(buildAfter)
             codeInsightFixture.configureFromExistingVirtualFile(getFile(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME))
-            codeInsightFixture.checkResult(settingsAfter, false)
+            codeInsightFixture.checkResult(settingsAfter)
             gradleFixture.fileFixture.rollback(GradleConstants.KOTLIN_DSL_SCRIPT_NAME)
             gradleFixture.fileFixture.rollback(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME)
         }
     }
 
     companion object {
-        private val EMPTY_PROJECT_WITH_BUILD_FILE = GradleTestFixtureBuilder.create("empty-project-with-build-file") { gradleVersion ->
-            withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                setProjectName("empty-project-with-build-file")
+        private val EMPTY_PROJECT_WITH_PUBLISHING_PLUGIN =
+            GradleTestFixtureBuilder.create("empty-project-with-publishing-plugin") { gradleVersion ->
+                withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    setProjectName("empty-project-with-publishing-plugin")
+                }
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
+                    withPlugin("publishing")
+                }
             }
-            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
-                withPlugin("publishing")
+
+        private val EMPTY_PROJECT_WITH_ONLY_BUILD_FILE =
+            GradleTestFixtureBuilder.create("empty-project-with-only-build-file") { gradleVersion ->
+                withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
             }
-        }
 
-        private val EMPTY_PROJECT_ONLY_BUILD_FILE = GradleTestFixtureBuilder.create("empty-project-only-build-file") { gradleVersion ->
-            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {}
-        }
-
-        private val EMPTY_PROJECT_WITH_GROOVY_BUILD_FILE =
+        private val EMPTY_PROJECT_WITH_GROOVY_SETTINGS_FILE =
             GradleTestFixtureBuilder.create("empty-project-with-groovy-settings-file") { gradleVersion ->
                 withSettingsFile(gradleVersion, gradleDsl = GradleDsl.GROOVY) {
                     setProjectName("empty-project-with-groovy-settings-file")

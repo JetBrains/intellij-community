@@ -30,7 +30,8 @@ abstract class AbstractKotlinGradleCodeInsightBaseTest: GradleCodeInsightBaseTes
     }
 
     companion object {
-        private val KOTLIN_DSL_EMPTY_PROJECT = GradleTestFixtureBuilder.create("kotlin-dsl-empty-project") { gradleVersion ->
+        @JvmStatic
+        protected val KOTLIN_DSL_EMPTY_PROJECT = GradleTestFixtureBuilder.create("kotlin-dsl-empty-project") { gradleVersion ->
             withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 setProjectName("kotlin-dsl-empty-project")
             }
