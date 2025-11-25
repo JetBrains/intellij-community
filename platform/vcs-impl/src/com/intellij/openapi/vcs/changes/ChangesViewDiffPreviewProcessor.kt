@@ -89,7 +89,7 @@ class ChangesViewDiffPreviewProcessor(
 
   fun subscribeOnAllowExcludeFromCommit() {
     VcsDisposable.getInstance(project).coroutineScope.launch {
-      project.serviceAsync<AllowExcludeFromCommitStateHolder>().allowExcludeFromCommit.collect {
+      project.serviceAsync<ChangesViewWorkflowManager>().allowExcludeFromCommit.collect {
         withContext(Dispatchers.EDT) {
           setAllowExcludeFromCommit(it)
         }

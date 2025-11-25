@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -12,6 +13,8 @@ import java.util.*
 abstract class ChangesViewWorkflowManager @ApiStatus.Internal protected constructor() {
   val commitWorkflowHandler: ChangesViewCommitWorkflowHandler?
     get() = doGetCommitWorkflowHandler()
+
+  abstract val allowExcludeFromCommit: StateFlow<Boolean>
 
   @ApiStatus.Internal
   protected abstract fun doGetCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler?

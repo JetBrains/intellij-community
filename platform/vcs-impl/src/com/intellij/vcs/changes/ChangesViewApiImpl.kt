@@ -6,8 +6,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.changes.AllowExcludeFromCommitStateHolder
 import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
@@ -56,7 +56,7 @@ internal class ChangesViewApiImpl : ChangesViewApi {
   }
 
   override suspend fun canExcludeFromCommit(projectId: ProjectId): Flow<Boolean> = getProjectScoped(projectId) { project ->
-    project.serviceAsync<AllowExcludeFromCommitStateHolder>().allowExcludeFromCommit
+    project.serviceAsync<ChangesViewWorkflowManager>().allowExcludeFromCommit
   } ?: flowOf(false)
 
   override suspend fun showResolveConflictsDialog(projectId: ProjectId, changeIds: List<ChangeId>) = projectScoped(projectId) { project ->

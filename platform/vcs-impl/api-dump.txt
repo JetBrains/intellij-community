@@ -758,7 +758,6 @@ f:com.intellij.openapi.vcs.changes.ChangesPreprocess
 com.intellij.openapi.vcs.changes.ChangesViewEx
 - com.intellij.openapi.vcs.changes.ChangesViewI
 - a:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
-- a:isAllowExcludeFromCommit():Z
 - a:resetViewImmediatelyAndRefreshLater():V
 - a:scheduleRefresh(java.lang.Runnable):V
 com.intellij.openapi.vcs.changes.ChangesViewI
@@ -778,7 +777,6 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewI
 - s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewEx
 - s:getLocalChangesToolWindowName(com.intellij.openapi.project.Project):java.lang.String
-- isAllowExcludeFromCommit():Z
 - isDiffPreviewAvailable():Z
 - resetViewImmediatelyAndRefreshLater():V
 - scheduleRefresh():V
@@ -798,6 +796,7 @@ c:com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier
 Fa:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 - sf:Companion:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
+- a:getAllowExcludeFromCommit():kotlinx.coroutines.flow.StateFlow
 - f:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager$ChangesViewWorkflowListener

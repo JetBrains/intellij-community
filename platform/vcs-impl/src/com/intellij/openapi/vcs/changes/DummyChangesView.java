@@ -57,11 +57,6 @@ class DummyChangesView implements ChangesViewEx {
   }
 
   @Override
-  public boolean isAllowExcludeFromCommit() {
-    return false;
-  }
-
-  @Override
   public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
     return null;
   }

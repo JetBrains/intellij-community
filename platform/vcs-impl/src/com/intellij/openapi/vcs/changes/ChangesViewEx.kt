@@ -16,8 +16,6 @@ interface ChangesViewEx : ChangesViewI {
   @CalledInAny
   fun scheduleRefresh(@RequiresBackgroundThread callback: Runnable)
 
-  val isAllowExcludeFromCommit: Boolean
-
   @get:Deprecated("Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.")
   val commitWorkflowHandler: ChangesViewCommitWorkflowHandler?
 }

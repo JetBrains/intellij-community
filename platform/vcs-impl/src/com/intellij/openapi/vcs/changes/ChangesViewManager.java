@@ -214,11 +214,6 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     myToolWindowPanel.updateCommitWorkflow();
   }
 
-  @Override
-  public boolean isAllowExcludeFromCommit() {
-    return myProject.getService(AllowExcludeFromCommitStateHolder.class).getAllowExcludeFromCommit().getValue();
-  }
-
   public void closeEditorPreview(boolean onlyIfEmpty) {
     if (myToolWindowPanel == null) return;
     myToolWindowPanel.closeEditorPreview(onlyIfEmpty);
