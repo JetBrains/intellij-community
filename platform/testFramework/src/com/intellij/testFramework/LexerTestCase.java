@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.lang.TokenWrapper;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerPosition;
 import com.intellij.lexer.RestartableLexer;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Trinity;
@@ -101,6 +102,24 @@ public abstract class LexerTestCase extends UsefulTestCase {
     }
   }
 
+  protected void checkCorrectRestartUsingPosition(@NotNull String text) {
+    Lexer mainLexer = createLexer();
+    List<Trinity<IElementType, Integer, Integer>> allTokens = tokenize(text, 0, 0, mainLexer);
+    List<LexerPosition> allPositions = buildPositions(text, 0, mainLexer);
+    for (int i = 0; i < allPositions.size(); i++) {
+      LexerPosition position = allPositions.get(i);
+      List<Trinity<IElementType, Integer, Integer>> expectedTokens = allTokens.subList(i, allTokens.size());
+      List<Trinity<IElementType, Integer, Integer>> restartedTokens = tokenize(position, mainLexer);
+      mainLexer.restore(position);
+      assertEquals(
+        "Restarting using position impossible from offset " + position.getOffset() + " - " + mainLexer.getTokenText() + "\n" +
+        "All tokens <type, offset, lexer state>: " + allTokens + "\n",
+        expectedTokens.stream().map(Objects::toString).collect(Collectors.joining("\n")),
+        restartedTokens.stream().map(Objects::toString).collect(Collectors.joining("\n"))
+      );
+    }
+  }
+
   private static @NotNull List<Trinity<IElementType, Integer, Integer>> tokenize(@NotNull String text,
                                                                                  int start,
                                                                                  int state,
@@ -111,6 +130,42 @@ public abstract class LexerTestCase extends UsefulTestCase {
     }
     catch (Throwable t) {
       LOG.error("Restarting impossible from offset " + start, t);
+      throw new RuntimeException(t);
+    }
+    while (lexer.getTokenType() != null) {
+      allTokens.add(Trinity.create(lexer.getTokenType(), lexer.getTokenStart(), lexer.getState()));
+      lexer.advance();
+    }
+    return allTokens;
+  }
+
+
+  private static @NotNull List<LexerPosition> buildPositions(@NotNull String text,
+                                                             int start,
+                                                             @NotNull Lexer lexer) {
+    List<LexerPosition> result = new ArrayList<>();
+    try {
+      lexer.start(text, start, text.length());
+    }
+    catch (Throwable t) {
+      LOG.error("Restarting impossible from offset " + start, t);
+      throw new RuntimeException(t);
+    }
+    while (lexer.getTokenType() != null) {
+      result.add(lexer.getCurrentPosition());
+      lexer.advance();
+    }
+    return result;
+  }
+
+  private static @NotNull List<Trinity<IElementType, Integer, Integer>> tokenize(@NotNull LexerPosition position,
+                                                                                 @NotNull Lexer lexer) {
+    List<Trinity<IElementType, Integer, Integer>> allTokens = new ArrayList<>();
+    try {
+      lexer.restore(position);
+    }
+    catch (Throwable t) {
+      LOG.error("Restoring location impossible from offset " + position.getOffset(), t);
       throw new RuntimeException(t);
     }
     while (lexer.getTokenType() != null) {
