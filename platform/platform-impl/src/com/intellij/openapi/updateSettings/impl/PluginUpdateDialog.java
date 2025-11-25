@@ -73,27 +73,6 @@ public class PluginUpdateDialog extends DialogWrapper {
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
-  //For compatibility purposes only
-  @Deprecated
-  public PluginUpdateDialog(@Nullable Project project,
-                            @NotNull Collection<PluginDownloader> updatesForPlugins,
-                            Map<PluginId, PluginUiModel> installedPlugins) {
-    this(project, ContainerUtil.map(updatesForPlugins, PluginDownloader::getUiModel), null, installedPlugins, true);
-    myUpdateOnOk = true;
-    myDownloaders = updatesForPlugins;
-    setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
-  }
-
-  //For compatibility purposes only
-  @Deprecated
-  public PluginUpdateDialog(@Nullable Project project,
-                            @NotNull Collection<PluginDownloader> updatesForPlugins) {
-    this(project, ContainerUtil.map(updatesForPlugins, PluginDownloader::getUiModel), null, findInstalledPlugins(updatesForPlugins), true);
-    myUpdateOnOk = true;
-    myDownloaders = updatesForPlugins;
-    setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
-  }
-
   public static boolean showDialogAndUpdate(@NotNull Collection<PluginDownloader> downloaders, @NotNull PluginUpdateDialog dialog) {
     if (dialog.showAndGet()) {
       List<PluginUiModel> selectedPlugins = dialog.getSelectedPluginModels();
