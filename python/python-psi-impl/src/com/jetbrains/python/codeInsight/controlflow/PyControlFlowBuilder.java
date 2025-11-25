@@ -483,7 +483,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     myBuilder.startNode(node);
 
     List<Instruction> exitInstructions = new ArrayList<>();
-    boolean unreachable = false;
+    boolean seenAlwaysTrueCondition = false;
     for (PyIfPart ifPart : StreamEx.of(node.getIfPart()).append(node.getElifParts())) {
       TransparentInstruction thenNode = addTransparentInstruction();
       TransparentInstruction elseNode = addTransparentInstruction();
@@ -494,28 +494,32 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.prevInstruction = thenNode;
 
       Boolean conditionResult = PyEvaluator.evaluateAsBooleanNoResolve(condition);
-      if (unreachable || Boolean.FALSE.equals(conditionResult)) {
-        // Condition is always False, or some previous condition is always True.
+      boolean unreachable = seenAlwaysTrueCondition || Boolean.FALSE.equals(conditionResult);
+      if (unreachable) {
         addAssertTypeNever();
       }
       if (Boolean.TRUE.equals(conditionResult)) {
-        unreachable = true;
+        seenAlwaysTrueCondition = true;
       }
       visitPyStatementPart(ifPart);
 
-      exitInstructions.add(myBuilder.prevInstruction);
+      if (!unreachable) {
+        exitInstructions.add(myBuilder.prevInstruction);
+      }
       myBuilder.prevInstruction = elseNode;
     }
 
     final PyElsePart elsePart = node.getElsePart();
     if (elsePart != null) {
-      if (unreachable) {
+      if (seenAlwaysTrueCondition) {
         addAssertTypeNever();
       }
       visitPyStatementPart(elsePart);
     }
 
-    exitInstructions.add(myBuilder.prevInstruction);
+    if (!seenAlwaysTrueCondition) {
+      exitInstructions.add(myBuilder.prevInstruction);
+    }
     myBuilder.prevInstruction = addTransparentInstruction(node);
 
     for (Instruction exitInstruction : Lists.reverse(exitInstructions)) {

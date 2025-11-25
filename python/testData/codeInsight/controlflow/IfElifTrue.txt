@@ -7,7 +7,7 @@
 6(7) element: PyStatementList
 7(14) element: PyPassStatement
 8(9,10) READ ACCESS: True
-9(14) element: null. Condition: True:false
+9() element: null. Condition: True:false
 10(11) element: null. Condition: True:true
 11(12) ASSERTTYPE ACCESS: True
 12(13) element: PyStatementList
@@ -28,5 +28,5 @@
 27(28) ASSERTTYPE ACCESS: null
 28(29) element: PyStatementList
 29(30) element: PyAssignmentStatement
-30(31) WRITE ACCESS: e
+30() WRITE ACCESS: e
 31() element: null
