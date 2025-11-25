@@ -249,8 +249,10 @@ class StructureViewWrapperImpl(
       return
     }
     val dataContext = DataManager.getInstance().getDataContext(owner)
-    if (WRAPPER_DATA_KEY.getData(dataContext) === this) return
-    if (CommonDataKeys.PROJECT.getData(dataContext) !== project) return
+    // do not update view if current structure view is in focus, but proceed if a file was closed
+    if (WRAPPER_DATA_KEY.getData(dataContext) === this && myFileEditor?.isValid == true) return
+    val aProject = CommonDataKeys.PROJECT.getData(dataContext)
+    if (aProject != null && aProject !== project) return
     if (insideToolwindow) {
       if (myFirstRun) {
         setFileFromSelectionHistory()
