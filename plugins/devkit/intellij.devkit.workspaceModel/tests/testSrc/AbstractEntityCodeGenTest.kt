@@ -18,10 +18,6 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   fun testSimpleCase() {
     doTest()
   }
-  
-  fun testKeepOld() {
-    doTest()
-  }
 
   fun testFinalProperty() {
     doTest()
@@ -94,7 +90,7 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   fun testPropertiesOrder() {
     doTest()
   }
-  
+
   fun testCompatibilityInvoke() {
     doTest()
   }
@@ -130,7 +126,7 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   fun testInheritanceNonAbstract() {
     doTestAndCheckErrorMessage("Failed to generate code for IllegalEntity: Class 'LegalEntity' cannot be extended")
   }
-  
+
   fun testVisibilityModifier() {
     doTest()
   }

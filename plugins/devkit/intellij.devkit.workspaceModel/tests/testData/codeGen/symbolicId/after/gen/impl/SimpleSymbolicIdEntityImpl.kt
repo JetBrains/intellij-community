@@ -26,14 +26,12 @@ import com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntityBuilder
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -73,8 +71,7 @@ internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolic
   }
 
 
-  internal class Builder(result: SimpleSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityData>(
-    result), SimpleSymbolicIdEntityBuilder {
+  internal class Builder(result: SimpleSymbolicIdEntityData?) : ModifiableWorkspaceEntityBase<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityData>(result), SimpleSymbolicIdEntityBuilder {
     internal constructor() : this(SimpleSymbolicIdEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -406,8 +403,7 @@ internal class SimpleSymbolicIdEntityData : WorkspaceEntityData<SimpleSymbolicId
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return SimpleSymbolicIdEntity(version, name, related, sealedClassWithLinks, entitySource) {
-    }
+    return SimpleSymbolicIdEntity(version, name, related, sealedClassWithLinks, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {

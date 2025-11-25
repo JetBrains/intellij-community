@@ -26,8 +26,7 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -84,8 +83,7 @@ internal class ChildEntityImpl(private val dataSource: ChildEntityData) : ChildE
   }
 
 
-  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(
-    result), ChildEntityBuilder {
+  internal class Builder(result: ChildEntityData?) : ModifiableWorkspaceEntityBase<ChildEntity, ChildEntityData>(result), ChildEntityBuilder {
     internal constructor() : this(ChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -356,9 +354,7 @@ internal class ChildEntityData : WorkspaceEntityData<ChildEntity>(), SoftLinkabl
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return ChildEntity(name, moduleId, aBaseEntityProperty, dBaseEntityProperty, bBaseEntityProperty, sealedDataClassProperty,
-                       cChildEntityProperty, entitySource) {
-    }
+    return ChildEntity(name, moduleId, aBaseEntityProperty, dBaseEntityProperty, bBaseEntityProperty, sealedDataClassProperty, cChildEntityProperty, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {

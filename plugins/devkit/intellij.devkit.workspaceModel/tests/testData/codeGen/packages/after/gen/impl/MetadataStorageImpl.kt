@@ -17,71 +17,26 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
     var typeMetadata: StorageTypeMetadata
 
-    typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.test.api.subpackage2.SimpleEntitySourceObject",
-                                                     properties = listOf(
-                                                       OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
-                                                                           name = "virtualFileUrl",
-                                                                           valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                             isNullable = true,
-                                                                             typeMetadata = FinalClassMetadata.KnownClass(
-                                                                               fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                           withDefault = false)),
-                                                     supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+    typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.workspaceModel.test.api.subpackage2.SimpleEntitySourceObject", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
 
     addMetadata(typeMetadata)
 
-    typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.workspaceModel.test.api.subpackage3.SimpleEntitySourceClass",
-                                                    properties = listOf(
-                                                      OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false,
-                                                                          name = "virtualFileUrl",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                            isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(
-                                                                              fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                          withDefault = false)),
-                                                    supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+    typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.workspaceModel.test.api.subpackage3.SimpleEntitySourceClass", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
 
     addMetadata(typeMetadata)
 
-    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.SimpleEntity",
-                                  entityDataFqName = "com.intellij.workspaceModel.test.api.impl.SimpleEntityData",
-                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "version", valueType = primitiveTypeIntNotNullable,
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable,
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "isSimple",
-                            valueType = primitiveTypeBooleanNotNullable, withDefault = false)), extProperties = listOf(),
-                                  isAbstract = false)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.SimpleEntity", entityDataFqName = "com.intellij.workspaceModel.test.api.impl.SimpleEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "version", valueType = primitiveTypeIntNotNullable, withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "isSimple", valueType = primitiveTypeBooleanNotNullable, withDefault = false)), extProperties = listOf(), isAbstract = false)
 
     addMetadata(typeMetadata)
 
-    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.subpackage.SubSimpleEntity",
-                                  entityDataFqName = "com.intellij.workspaceModel.test.api.subpackage.impl.SubSimpleEntityData",
-                                  supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource",
-                            valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                  fqName = "com.intellij.platform.workspace.storage.EntitySource")),
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "version", valueType = primitiveTypeIntNotNullable,
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable,
-                            withDefault = false),
-        OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "isSimple",
-                            valueType = primitiveTypeBooleanNotNullable, withDefault = false)), extProperties = listOf(),
-                                  isAbstract = false)
+    typeMetadata = EntityMetadata(fqName = "com.intellij.workspaceModel.test.api.subpackage.SubSimpleEntity", entityDataFqName = "com.intellij.workspaceModel.test.api.subpackage.impl.SubSimpleEntityData", supertypes = listOf("com.intellij.platform.workspace.storage.WorkspaceEntity"), properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "entitySource", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.EntitySource")), withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "version", valueType = primitiveTypeIntNotNullable, withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "name", valueType = primitiveTypeStringNotNullable, withDefault = false), OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "isSimple", valueType = primitiveTypeBooleanNotNullable, withDefault = false)), extProperties = listOf(), isAbstract = false)
 
     addMetadata(typeMetadata)
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleEntity", metadataHash = 513917454)
-    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.subpackage.SubSimpleEntity", metadataHash = 1398130266)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.SimpleEntity", metadataHash = 284369588)
+    addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.subpackage.SubSimpleEntity", metadataHash = -1550163480)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1297322940)
     addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.subpackage2.SimpleEntitySourceObject", metadataHash = -1265359381)
     addMetadataHash(typeFqn = "com.intellij.workspaceModel.test.api.subpackage3.SimpleEntitySourceClass", metadataHash = 940328784)

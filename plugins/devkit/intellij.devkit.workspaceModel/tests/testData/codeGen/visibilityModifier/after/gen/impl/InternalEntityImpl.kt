@@ -25,8 +25,7 @@ internal class InternalEntityImpl(private val dataSource: InternalEntityData) : 
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -58,8 +57,7 @@ internal class InternalEntityImpl(private val dataSource: InternalEntityData) : 
   }
 
 
-  internal class Builder(result: InternalEntityData?) : ModifiableWorkspaceEntityBase<InternalEntity, InternalEntityData>(
-    result), InternalEntityBuilder {
+  internal class Builder(result: InternalEntityData?) : ModifiableWorkspaceEntityBase<InternalEntity, InternalEntityData>(result), InternalEntityBuilder {
     internal constructor() : this(InternalEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -184,8 +182,7 @@ internal class InternalEntityData : WorkspaceEntityData<InternalEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return InternalEntity(version, name, isSimple, entitySource) {
-    }
+    return InternalEntity(version, name, isSimple, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {

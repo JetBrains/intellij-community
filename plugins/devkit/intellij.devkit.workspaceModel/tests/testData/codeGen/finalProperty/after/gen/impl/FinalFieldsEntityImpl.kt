@@ -26,8 +26,7 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
   private companion object {
 
 
-    private val connections = listOf<ConnectionId>(
-    )
+    private val connections = listOf<ConnectionId>()
 
   }
 
@@ -48,8 +47,7 @@ internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityDa
   }
 
 
-  internal class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(
-    result), FinalFieldsEntityBuilder {
+  internal class Builder(result: FinalFieldsEntityData?) : ModifiableWorkspaceEntityBase<FinalFieldsEntity, FinalFieldsEntityData>(result), FinalFieldsEntityBuilder {
     internal constructor() : this(FinalFieldsEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -153,8 +151,7 @@ internal class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() 
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return FinalFieldsEntity(descriptor, entitySource) {
-    }
+    return FinalFieldsEntity(descriptor, entitySource)
   }
 
   override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
