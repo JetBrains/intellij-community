@@ -9,9 +9,7 @@ import com.intellij.platform.vcs.impl.shared.commit.insertEditedCommitNode
 
 internal class EditedCommitChangesViewModifier(private val project: Project) : ChangesViewModifier {
   override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
-    val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler ?: return
-    val editedCommit = workflowHandler.ui.editedCommit ?: return
-
+    val editedCommit = ChangesViewWorkflowManager.getInstance(project).editedCommit.value ?: return
     insertEditedCommitNode(builder, editedCommit)
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.Companion.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsRoot
+import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitDetails
@@ -91,7 +92,7 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   }
 
   private fun setEditedCommit(amendDetails: EditedCommitPresentation?) {
-    workflowHandler.ui.editedCommit = amendDetails
+    ChangesViewWorkflowManager.getInstance(project).setEditedCommit(amendDetails)
   }
 
   private fun setAmendAuthor(currentUser: VcsUser?, amendAuthor: VcsUser) {

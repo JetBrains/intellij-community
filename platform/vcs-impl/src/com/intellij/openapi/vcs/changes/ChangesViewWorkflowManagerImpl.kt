@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.*
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
@@ -16,6 +17,7 @@ internal class ChangesViewWorkflowManagerImpl(
   private val project: Project,
 ) : ChangesViewWorkflowManager(), Disposable {
   override val allowExcludeFromCommit = MutableStateFlow(false)
+  override val editedCommit = MutableStateFlow<EditedCommitPresentation?>(null)
 
   private var _commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
 
@@ -74,6 +76,7 @@ internal class ChangesViewWorkflowManagerImpl(
     else {
       allowExcludeFromCommit.value = false
     }
+    setEditedCommit(null)
     project.messageBus.syncPublisher(TOPIC).commitWorkflowChanged()
   }
 
@@ -90,5 +93,9 @@ internal class ChangesViewWorkflowManagerImpl(
       updateCommitWorkflowHandler()
     }
     return _commitWorkflowHandler
+  }
+
+  override fun setEditedCommit(editedCommit: EditedCommitPresentation?) {
+    this.editedCommit.value = editedCommit
   }
 }

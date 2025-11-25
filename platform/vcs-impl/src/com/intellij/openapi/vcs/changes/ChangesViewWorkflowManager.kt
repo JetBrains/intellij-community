@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import kotlinx.coroutines.flow.StateFlow
@@ -15,9 +16,12 @@ abstract class ChangesViewWorkflowManager @ApiStatus.Internal protected construc
     get() = doGetCommitWorkflowHandler()
 
   abstract val allowExcludeFromCommit: StateFlow<Boolean>
+  abstract val editedCommit: StateFlow<EditedCommitPresentation?>
 
   @ApiStatus.Internal
   protected abstract fun doGetCommitWorkflowHandler(): ChangesViewCommitWorkflowHandler?
+
+  internal abstract fun setEditedCommit(editedCommit: EditedCommitPresentation?)
 
   fun interface ChangesViewWorkflowListener : EventListener {
     fun commitWorkflowChanged()

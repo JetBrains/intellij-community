@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
@@ -33,10 +34,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.switcher.QuickActionProvider
-import com.intellij.util.EditSourceOnDoubleClickHandler
-import com.intellij.util.EventDispatcher
-import com.intellij.util.OpenSourceUtil
-import com.intellij.util.Processor
+import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -45,6 +43,7 @@ import com.intellij.vcs.commit.CommitWorkflowListener
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.ui.ProgressStripe
+import git4idea.GitDisposable
 import git4idea.GitVcs
 import git4idea.conflicts.GitConflictsUtil.canShowMergeWindow
 import git4idea.conflicts.GitConflictsUtil.showMergeWindow
@@ -60,6 +59,9 @@ import git4idea.repo.GitConflict
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitRefreshListener
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.event.MouseEvent
@@ -108,7 +110,6 @@ internal class GitStagePanel(
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
     }
     commitPanel.commitActionsPanel.createActions().forEach { it.registerCustomShortcutSet(this, this) }
-    commitPanel.addEditedCommitListener(_tree::editedCommitChanged, this)
     commitPanel.setIncludedRoots(_tree.getIncludedRoots())
     _tree.addIncludedRootsListener(object : IncludedRootsListener {
       override fun includedRootsChanged() {
@@ -368,21 +369,29 @@ internal class GitStagePanel(
           includedRootsListeners.multicaster.includedRootsChanged()
         }
       }, this@GitStagePanel)
-    }
 
-    fun editedCommitChanged() {
-      requestRefresh {
-        commitPanel.editedCommit?.let {
-          val node = TreeUtil.findNodeWithObject(root, it)
-          node?.let { expandPath(TreeUtil.getPathFromRoot(node)) }
+      GitDisposable.getInstance(project).coroutineScope.launch {
+        ChangesViewWorkflowManager.getInstance(project).editedCommit.collect { editedCommitPresentation ->
+          if (editedCommitPresentation != null) {
+            requestRefresh {
+              launch {
+                withContext(Dispatchers.UiWithModelAccess) {
+                  TreeUtil.findNodeWithObject(root, editedCommitPresentation)?.let {
+                    expandPath(TreeUtil.getPathFromRoot(it))
+                  }
+                }
+              }
+            }
+          } else {
+            requestRefresh()
+          }
         }
-      }
+      }.cancelOnDispose(this@GitStagePanel)
     }
 
     override fun customizeTreeModel(builder: TreeModelBuilder) {
       super.customizeTreeModel(builder)
-
-      commitPanel.editedCommit?.let { editedCommit ->
+      ChangesViewWorkflowManager.getInstance(project).editedCommit.value?.let { editedCommit ->
         insertEditedCommitNode(builder, editedCommit)
       }
     }

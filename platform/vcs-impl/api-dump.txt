@@ -705,6 +705,7 @@ a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 - p:getCurrentRequestProvider():com.intellij.diff.chains.DiffRequestProducer
 - getProject():com.intellij.openapi.project.Project
 - getSelectedChanges():java.util.stream.Stream
+- p:getSelectionStrategy(Z):com.intellij.diff.tools.util.PrevNextDifferenceIterable
 - p:goToNextChange(Z):V
 - p:goToPrevChange(Z):V
 - p:hasNextChange(Z):Z
@@ -798,6 +799,7 @@ Fa:com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 - sf:TOPIC:com.intellij.util.messages.Topic
 - a:getAllowExcludeFromCommit():kotlinx.coroutines.flow.StateFlow
 - f:getCommitWorkflowHandler():com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
+- a:getEditedCommit():kotlinx.coroutines.flow.StateFlow
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager$ChangesViewWorkflowListener
 - java.util.EventListener
@@ -3939,13 +3941,11 @@ a:com.intellij.vcs.commit.ChangeListViewCommitPanel
 - f:getCommitProgressUi():com.intellij.vcs.commit.CommitProgressUi
 - f:getDisplayedChanges():java.util.List
 - f:getDisplayedUnversionedFiles():java.util.List
-- f:getEditedCommit():com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 - f:getIncludedChanges():java.util.List
 - f:getIncludedUnversionedFiles():java.util.List
 - f:select(java.lang.Object):V
 - f:selectFirst(java.util.Collection):V
 - f:setCompletionContext(java.util.List):V
-- f:setEditedCommit(com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation):V
 - setInclusionModel(com.intellij.openapi.vcs.changes.InclusionModel):V
 f:com.intellij.vcs.commit.ChangesViewCommitPanel
 - com.intellij.vcs.commit.NonModalCommitPanel
@@ -3957,7 +3957,6 @@ f:com.intellij.vcs.commit.ChangesViewCommitPanel
 - getCommitProgressUi():com.intellij.vcs.commit.CommitProgressUi
 - getDisplayedChanges():java.util.List
 - getDisplayedUnversionedFiles():java.util.List
-- getEditedCommit():com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
 - getIncludedChanges():java.util.List
 - getIncludedUnversionedFiles():java.util.List
 - isActive():Z
@@ -3965,7 +3964,6 @@ f:com.intellij.vcs.commit.ChangesViewCommitPanel
 - select(java.lang.Object):V
 - selectFirst(java.util.Collection):V
 - setCompletionContext(java.util.List):V
-- setEditedCommit(com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation):V
 - setInclusionModel(com.intellij.openapi.vcs.changes.InclusionModel):V
 com.intellij.vcs.commit.ChangesViewCommitWorkflowUi
 - com.intellij.vcs.commit.NonModalCommitWorkflowUi
@@ -4288,8 +4286,6 @@ com.intellij.vcs.commit.NonModalCommitWorkflowUi
 - com.intellij.vcs.commit.CommitAuthorTracker
 - com.intellij.vcs.commit.CommitWorkflowUi
 - a:getCommitProgressUi():com.intellij.vcs.commit.CommitProgressUi
-- a:getEditedCommit():com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
-- a:setEditedCommit(com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation):V
 - a:showCommitOptions(com.intellij.vcs.commit.CommitOptions,java.lang.String,Z,com.intellij.openapi.actionSystem.DataContext):V
 f:com.intellij.vcs.commit.SaveCommittingDocumentsVetoerKt
 - sf:vetoDocumentSaving(com.intellij.openapi.project.Project,java.util.Collection,kotlin.jvm.functions.Function0):V
