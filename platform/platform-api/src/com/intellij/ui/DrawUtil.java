@@ -38,7 +38,7 @@ public final class DrawUtil {
   }
 
   public static boolean isSimplifiedUI() {
-    return Registry.is("ui.no.bangs.and.whistles", false) || Registry.is("ui.simplified", false) ||
+    return Registry.is("ui.simplified", false) ||
            RemoteDesktopService.isRemoteSession() || PowerSaveMode.isEnabled();
   }
 }

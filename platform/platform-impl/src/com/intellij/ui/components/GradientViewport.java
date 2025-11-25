@@ -45,7 +45,7 @@ public class GradientViewport extends JBViewport {
           g.fillRect(header.getX(), header.getY(), header.getWidth(), header.getHeight());
         }
       }
-      if (g instanceof Graphics2D && background != null && !Registry.is("ui.no.bangs.and.whistles")) {
+      if (g instanceof Graphics2D && background != null && !Registry.is("ui.simplified")) {
         paintGradient((Graphics2D)g, background, 0, header == null ? 0 : header.getHeight());
       }
       if (header != null) {

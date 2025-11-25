@@ -297,7 +297,7 @@ open class TabLabel @Internal constructor(
     }
   }
 
-  protected open fun shouldPaintFadeout(): Boolean = !Registry.`is`("ui.no.bangs.and.whistles", false) && tabs.isSingleRow
+  protected open fun shouldPaintFadeout(): Boolean = !Registry.`is`("ui.simplified", false) && tabs.isSingleRow
 
   protected fun paintFadeout(g: Graphics) {
     val g2d = g.create() as Graphics2D
