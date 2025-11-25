@@ -50,7 +50,6 @@ import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public class PluginUpdateDialog extends DialogWrapper {
-  private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
   private final PluginsGroupComponent myPluginsPanel;
   private final PluginsGroup myGroup = new PluginsGroup("", PluginsGroupType.UPDATE);
@@ -58,8 +57,6 @@ public class PluginUpdateDialog extends DialogWrapper {
   private final JLabel myTotalLabel = new JLabel();
   private final ActionLink myIgnoreAction;
   private final JBCheckBox myAutoUpdateOption;
-
-  private Collection<PluginDownloader> myDownloaders;
 
   private @Nullable Runnable myFinishCallback;
 
@@ -114,8 +111,6 @@ public class PluginUpdateDialog extends DialogWrapper {
                              Map<PluginId, PluginUiModel> installedPlugins,
                              boolean platformUpdate) {
     super(project, true);
-
-    myPlatformUpdate = platformUpdate;
 
     myIgnoreAction = new ActionLink(IdeBundle.message("updates.ignore.updates.button", updates.size()), e -> {
       doIgnoreUpdateAction(e);
