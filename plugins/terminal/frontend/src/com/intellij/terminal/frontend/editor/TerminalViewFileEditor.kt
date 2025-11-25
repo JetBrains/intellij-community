@@ -41,7 +41,7 @@ internal class TerminalViewFileEditor(
         if (state == TerminalViewSessionState.Terminated) {
           // Execute in the separate scope, because closing of the file may dispose the file editor and cancel the current coroutine.
           terminalProjectScope(project).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            serviceAsync<FileEditorManager>().closeFile(file)
+            project.serviceAsync<FileEditorManager>().closeFile(file)
           }
         }
       }
