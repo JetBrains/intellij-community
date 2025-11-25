@@ -40,7 +40,12 @@ internal fun readMenuStyle(): MenuStyle {
                 retrieveColorOrUnspecified("Popup.borderColor").takeOrElse {
                     retrieveColorOrUnspecified("Popup.Border.color")
                 },
-            shadow = Color.Black.copy(alpha = .6f),
+            shadow =
+                if (isDark) {
+                    Color(0x66000000)
+                } else {
+                    Color(0x78919191)
+                },
             itemColors =
                 MenuItemColors(
                     background = retrieveColorOrUnspecified("MenuItem.background"),
