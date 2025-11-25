@@ -15,9 +15,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.createSmartPointer
+import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.PathUtil
 import com.intellij.util.asSafely
@@ -28,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder.Companion.settingsScript
@@ -145,7 +144,7 @@ private class MoveRepositoriesToSettingsFile(
         GradleInspectionBundle.message("intention.family.name.move.repositories.to.settings.file")
 
     override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
-        val itemsToMove = element.getBlock()?.children?.toList() ?: emptyList() // still want to move the block itself
+        val itemsToMove = element.getBlock()?.allChildren?.filterNot { it is PsiWhiteSpace }?.toList() ?: emptyList()
         val psiFactory = KtPsiFactory(element.project, true)
         val settingsFileCopy = updater.getWritable(settingsFilePointer.element!!)
 
@@ -157,12 +156,11 @@ private class MoveRepositoriesToSettingsFile(
         }
 
         val (repositoriesBlock, wasRepositoriesAdded) = repositoriesParentBlock.findOrAddRepositoriesBlock(psiFactory)
-        val existingItems = repositoriesBlock.statements.toList()
 
-        // append the repositories to the end of the list
-        val movedItems = calculateRepositoriesToAppend(itemsToMove, existingItems).map {
-            repositoriesBlock.add(psiFactory.createNewLine())
-            repositoriesBlock.add(it.copy())
+        val movedItems = if (!repositoriesBlock.startsWith(itemsToMove)) {
+            repositoriesBlock.appendDistinctSuffix(psiFactory, itemsToMove)
+        } else {
+            emptyList()
         }
 
         // move the caret to the last added item
@@ -176,48 +174,45 @@ private class MoveRepositoriesToSettingsFile(
         )
     }
 
-    /**
-     * Checks if itemsToMove is a prefix of existingItems. If so, there is no need to move them.
-     * Else returns the non-overlapping tail of itemsToMove.
-     */
-    private fun calculateRepositoriesToAppend(itemsToMove: List<PsiElement>, existingItems: List<KtExpression>): List<PsiElement> {
+    private fun KtBlockExpression.startsWith(itemsToMove: List<PsiElement>): Boolean {
         val itemsToMoveTexts = itemsToMove.map { it.text }
-        val existingItemsTexts = existingItems.take(itemsToMove.size).map { it.text }
-
-        if (itemsToMoveTexts == existingItemsTexts) return emptyList()
-        else return getRepositoriesTailAfterOverlap(itemsToMove, existingItems)
+        val existingItemsTexts = this.allChildren.filterNot { it is PsiWhiteSpace }.take(itemsToMoveTexts.size).map { it.text }.toList()
+        return itemsToMoveTexts == existingItemsTexts
     }
 
-    private fun getRepositoriesTailAfterOverlap(itemsToMove: List<PsiElement>, existingItems: List<KtExpression>): List<PsiElement> {
-        val itemsToMoveStatements = itemsToMove.filterIsInstance<KtExpression>() // filter out comments, etc.
-        if (itemsToMoveStatements.isEmpty() || existingItems.isEmpty()) return itemsToMove
+    /**
+     * The list of repositories to move may be the same as the existing list with an extra repository at the end.
+     * In that case the overlapping part will not be re-added.
+     */
+    private fun KtBlockExpression.appendDistinctSuffix(psiFactory: KtPsiFactory, itemsToMove: List<PsiElement>): List<PsiElement> {
+        val existingItems = this.allChildren.filterNot { it is PsiWhiteSpace }.toList()
+        return calculateSuffixToAppend(itemsToMove, existingItems).map { itemToMove ->
+            this.add(psiFactory.createNewLine())
+            if (itemToMove is PsiComment) this.add(psiFactory.createComment(itemToMove.text))
+            else this.add(itemToMove.copy())
+        }
+    }
 
-        // Find the longest prefix of itemsToMove that matches the suffix of currentItems
+    private fun calculateSuffixToAppend(itemsToMove: List<PsiElement>, existingItems: List<PsiElement>): List<PsiElement> {
+        if (itemsToMove.isEmpty() || existingItems.isEmpty()) return itemsToMove
+
+        // find the longest prefix of itemsToMove that matches the suffix of existingItems
         var overlapSize = 0
-        val maxPossibleOverlap = minOf(itemsToMoveStatements.size, existingItems.size)
+        val maxPossibleOverlap = minOf(itemsToMove.size, existingItems.size)
+        val itemsToMoveTexts = itemsToMove.map { it.text }
+        val existingItemsTexts = existingItems.map { it.text }
 
         for (i in 1..maxPossibleOverlap) {
-            val itemsPrefix = itemsToMoveStatements.take(i).map { it.text }
-            val currentSuffix = existingItems.takeLast(i).map { it.text }
+            val itemsPrefix = itemsToMoveTexts.take(i)
+            val currentSuffix = existingItemsTexts.takeLast(i)
 
             if (itemsPrefix == currentSuffix) {
                 overlapSize = i
             }
         }
 
-        // return the tail after overlap, without skipping comments
-        val result = mutableListOf<PsiElement>()
-        var skippedStatements = 0
-        for (item in itemsToMove) {
-            if (item is KtExpression) {
-                if (skippedStatements < overlapSize) {
-                    skippedStatements++
-                    continue
-                }
-            }
-            result.add(item)
-        }
-        return result
+        // return the tail after overlap
+        return itemsToMove.drop(overlapSize)
     }
 
     private fun KtFile.findOrAddPluginManagementBlock(psiFactory: KtPsiFactory): Pair<KtBlockExpression, Boolean> {
