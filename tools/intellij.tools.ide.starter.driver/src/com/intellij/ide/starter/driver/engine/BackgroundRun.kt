@@ -65,7 +65,7 @@ open class BackgroundRun(override val startResult: Deferred<IDEStartResult>, dri
           takeScreenshot("beforeIdeClosed")
         }
         exitApplication()
-        waitFor("$logPrefix Driver is not connected", closeIdeTimeout, 3.seconds) { !isConnected }
+        waitFor("$logPrefix Driver is not connected", closeIdeTimeout) { !isConnected }
       }
       else {
         error("$logPrefix Driver is not connected, so it can't exit IDE")
@@ -78,7 +78,7 @@ open class BackgroundRun(override val startResult: Deferred<IDEStartResult>, dri
     finally {
       try {
         if (isConnected) close()
-        waitFor("$logPrefix Process is closed", closeIdeTimeout, 3.seconds) { !process.isAlive }
+        waitFor("$logPrefix Process is closed", closeIdeTimeout) { !process.isAlive }
       }
       catch (e: Throwable) {
         logError("$logPrefix Error waiting IDE is closed", e)
