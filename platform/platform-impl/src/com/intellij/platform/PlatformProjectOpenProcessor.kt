@@ -165,7 +165,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     fun doOpenProject(file: Path, originalOptions: OpenProjectTask): Project? {
       if (Files.isDirectory(file)) {
         val options = runUnderModalProgressIfIsEdt {
-          createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null)
+          createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
+            projectName = originalOptions.projectName,
+          )
         }
         return ProjectManagerEx.getInstanceEx().openProject(file, options)
       }
@@ -224,9 +226,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       LOG.info("Opening $file")
 
       if (Files.isDirectory(file)) {
+        // todo: originalOptions should not be dropped
         return ProjectManagerEx.getInstanceEx().openProjectAsync(
           projectIdentityFile = file,
-          options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null),
+          options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, projectToClose = null).copy(
+            projectName = originalOptions.projectName,
+          ),
         )
       }
 

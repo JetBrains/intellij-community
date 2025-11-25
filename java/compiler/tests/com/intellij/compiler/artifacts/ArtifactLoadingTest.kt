@@ -8,6 +8,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.ex.ProjectManagerEx.Companion.getInstanceEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.packaging.artifacts.ArtifactManager
@@ -15,21 +16,15 @@ import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.rules.ProjectModelRule
+import com.intellij.testFramework.*
 import org.junit.Assert.*
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.nio.file.Path
 
 class ArtifactLoadingTest {
-  @Rule
-  @JvmField
-  val projectModel = ProjectModelRule()
-
   @Rule
   @JvmField
   var disposableRule = DisposableRule()
@@ -43,50 +38,52 @@ class ArtifactLoadingTest {
   @Test
   fun `loading of default artifact properties`() {
     runWithRegisteredExtension(MockArtifactPropertiesProvider(), ArtifactPropertiesProvider.EP_NAME) {
-      val project = projectModel.project
+      val projectFile = TemporaryDirectory.generateTemporaryPath("loading_of_default_artifact_properties")
+      getInstanceEx().openProject(projectFile, OpenProjectTaskBuilder().build())!!.useProject { project ->
+        val artifactManager = ArtifactManager.getInstance(project)
+        WriteAction.runAndWait<RuntimeException> {
+          artifactManager.addArtifact("Artifact", PlainArtifactType.getInstance(),
+                                      PackagingElementFactory.getInstance().createArtifactRootElement())
+        }
 
-      val artifactManager = ArtifactManager.getInstance(project)
-      WriteAction.runAndWait<RuntimeException> {
-        artifactManager.addArtifact("Artifact", PlainArtifactType.getInstance(),
-          PackagingElementFactory.getInstance().createArtifactRootElement())
-      }
+        PlatformTestUtil.saveProject(project)
 
-      PlatformTestUtil.saveProject(project)
-
-      assertArtifactFileTextEquals("""
+        assertArtifactFileTextEquals(projectFile, """
           |<component name="ArtifactManager">
           |  <artifact name="Artifact">
           |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
           |    <root id="root" />
           |  </artifact>
           |</component>""".trimMargin())
-      val project1 = PlatformTestUtil.loadAndOpenProject(projectModel.baseProjectDir.rootPath, disposableRule.disposable)
-
-      val defaultProperty = runReadAction {
-        ArtifactManager.getInstance(project1).artifacts.single().getProperties(MockArtifactPropertiesProvider.getInstance())
       }
-      assertNotNull(defaultProperty)
+
+      getInstanceEx().openProject(projectFile, OpenProjectTaskBuilder().build())!!.useProject { project1 ->
+        val defaultProperty = runReadAction {
+          ArtifactManager.getInstance(project1).artifacts.single().getProperties(MockArtifactPropertiesProvider.getInstance())
+        }
+        assertNotNull(defaultProperty)
+      }
     }
   }
 
   @Test
   fun `loading of properties with changes`() {
     runWithRegisteredExtension(MockArtifactPropertiesProvider(), ArtifactPropertiesProvider.EP_NAME) {
-      val project = projectModel.project
+      val projectFile = TemporaryDirectory.generateTemporaryPath("loading_of_properties_with_changes")
+      getInstanceEx().openProject(projectFile, OpenProjectTaskBuilder().build())!!.useProject { project ->
+        val artifactManager = ArtifactManager.getInstance(project)
+        WriteAction.runAndWait<RuntimeException> {
+          val addArtifact = artifactManager.addArtifact("Artifact", PlainArtifactType.getInstance(),
+                                                        PackagingElementFactory.getInstance().createArtifactRootElement())
+          val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
+          val modifiableArtifact = modifiableModel.getOrCreateModifiableArtifact(addArtifact)
+          modifiableArtifact.setProperties(MockArtifactPropertiesProvider.getInstance(), MockArtifactProperties().also { it.data = "123" })
+          modifiableModel.commit()
+        }
 
-      val artifactManager = ArtifactManager.getInstance(project)
-      WriteAction.runAndWait<RuntimeException> {
-        val addArtifact = artifactManager.addArtifact("Artifact", PlainArtifactType.getInstance(),
-          PackagingElementFactory.getInstance().createArtifactRootElement())
-        val modifiableModel = ArtifactManager.getInstance(project).createModifiableModel()
-        val modifiableArtifact = modifiableModel.getOrCreateModifiableArtifact(addArtifact)
-        modifiableArtifact.setProperties(MockArtifactPropertiesProvider.getInstance(), MockArtifactProperties().also { it.data = "123" })
-        modifiableModel.commit()
-      }
+        PlatformTestUtil.saveProject(project)
 
-      PlatformTestUtil.saveProject(project)
-
-      assertArtifactFileTextEquals("""
+        assertArtifactFileTextEquals(projectFile, """
           |<component name="ArtifactManager">
           |  <artifact name="Artifact">
           |    <output-path>${'$'}PROJECT_DIR${'$'}/out/artifacts/Artifact</output-path>
@@ -98,24 +95,26 @@ class ArtifactLoadingTest {
           |    <root id="root" />
           |  </artifact>
           |</component>""".trimMargin())
-      val project1 = PlatformTestUtil.loadAndOpenProject(projectModel.baseProjectDir.rootPath, disposableRule.disposable)
+      }
 
-      val defaultProperty = WorkspaceModel.getInstance(project1).currentSnapshot
-        .entities(ArtifactEntity::class.java)
-        .single()
-        .customProperties
-        .filter { it.providerType == MockArtifactPropertiesProvider.getInstance().id }
-        .single()
-      assertTrue("123" in defaultProperty.propertiesXmlTag!!)
+      getInstanceEx().openProject(projectFile, OpenProjectTaskBuilder().build())!!.useProject { project1 ->
+        val defaultProperty = WorkspaceModel.getInstance(project1).currentSnapshot
+          .entities(ArtifactEntity::class.java)
+          .single()
+          .customProperties
+          .filter { it.providerType == MockArtifactPropertiesProvider.getInstance().id }
+          .single()
+        assertTrue("123" in defaultProperty.propertiesXmlTag!!)
 
-      val properties = runReadAction { ArtifactManager.getInstance(project).artifacts.single().getProperties(MockArtifactPropertiesProvider.getInstance()) }
-      assertEquals("123", (properties as MockArtifactProperties).data)
+        val properties = runReadAction { ArtifactManager.getInstance(project1).artifacts.single().getProperties(MockArtifactPropertiesProvider.getInstance()) }
+        assertEquals("123", (properties as MockArtifactProperties).data)
+      }
     }
   }
 
-  private fun assertArtifactFileTextEquals(expectedText: String) {
+  private fun assertArtifactFileTextEquals(path: Path, expectedText: String) {
     assertEquals(StringUtil.convertLineSeparators(expectedText),
-      StringUtil.convertLineSeparators(File(projectModel.baseProjectDir.root, ".idea/artifacts/Artifact.xml").readText()))
+                 StringUtil.convertLineSeparators(File(path.toString(), ".idea/artifacts/Artifact.xml").readText()))
   }
 
   private inline fun <T : Any> runWithRegisteredExtension(extension: T, extensionPoint: ExtensionPointName<T>, action: () -> Unit) {
