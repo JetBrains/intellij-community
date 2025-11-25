@@ -13,7 +13,7 @@
 12(13) ASSERTTYPE ACCESS: null
 13(14) element: PyStatementList
 14(15) element: PyAssignmentStatement
-15(16) WRITE ACCESS: a
+15() WRITE ACCESS: a
 16(17) element: PyIfStatement
 17(18,19) READ ACCESS: d
 18(23) element: null. Condition: d:false
@@ -28,7 +28,7 @@
 27(28) ASSERTTYPE ACCESS: null
 28(29) element: PyStatementList
 29(30) element: PyAssignmentStatement
-30(33) WRITE ACCESS: b
+30() WRITE ACCESS: b
 31(32) element: PyStatementList
 32(33) element: PyPassStatement
 33() element: null

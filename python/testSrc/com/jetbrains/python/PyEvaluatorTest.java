@@ -314,6 +314,11 @@ public class PyEvaluatorTest extends PyTestCase {
     assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("a = []\nexpr = a")));
   }
 
+  public void testTypingTypeChecking() {
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = typing.TYPE_CHECKING")));
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = TYPE_CHECKING")));
+  }
+
   @NotNull
   private <T> T byExpression(@NotNull String expression, @NotNull Class<T> cls) {
     final Object value = new PyEvaluator().evaluate(parseExpression(expression));

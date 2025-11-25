@@ -3335,6 +3335,18 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+  // PY-50642
+  public void testTypeChecking() {
+    doTest("int", """
+      from typing import TYPE_CHECKING
+      
+      if not not TYPE_CHECKING:
+          v: int = -1
+      else:
+          v: str = 'ab'
+      expr = v
+      """);
+  }
 
   // PY-73958
   public void testNoStackOverflow() {
