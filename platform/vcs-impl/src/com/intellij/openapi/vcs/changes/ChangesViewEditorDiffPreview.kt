@@ -2,10 +2,8 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -54,12 +52,11 @@ internal class ChangesViewEditorDiffPreview(
     }
   }
 
-  override fun hasContent(): Boolean = ChangesViewDiffPreviewHandler.hasContent(changesView.getTree())
+  override fun hasContent(): Boolean = changesView.hasContentToDiff()
 
   override fun createViewer(): DiffEditorViewer = changesView.createDiffPreviewProcessor(true)
 
-  override fun collectDiffProducers(selectedOnly: Boolean): ListSelection<out DiffRequestProducer> =
-    ChangesViewDiffPreviewHandler.collectDiffProducers(changesView.getTree(), selectedOnly)
+  override fun collectDiffProducers(selectedOnly: Boolean) = changesView.getDiffRequestProducers(selectedOnly)
 
   override fun handleEscapeKey() {
     closePreview()

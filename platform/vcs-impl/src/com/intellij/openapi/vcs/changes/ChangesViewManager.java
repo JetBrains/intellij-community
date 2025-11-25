@@ -379,7 +379,7 @@ public class ChangesViewManager implements ChangesViewEx, Disposable {
     }
 
     private class ChangesViewSplitterDiffPreview implements DiffPreview, Disposable {
-      private final ChangesViewDiffPreviewProcessor myProcessor;
+      private final ChangeViewDiffRequestProcessor myProcessor;
       private final PreviewDiffSplitterComponent mySplitterComponent;
 
       private ChangesViewSplitterDiffPreview() {
