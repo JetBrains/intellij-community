@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ui.docking.impl
@@ -9,6 +9,7 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.util.Disposer
@@ -31,6 +32,8 @@ import com.intellij.ui.docking.DockContainer
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import java.awt.BorderLayout
 import java.awt.Window
 import java.awt.event.KeyEvent
@@ -68,9 +71,15 @@ internal class DockWindow(
       if (mainStatusBar != null) {
         val frame = getFrame()
         if (frame is IdeFrame) {
-          statusBar = mainStatusBar.createChild(coroutineScope = coroutineScope.childScope(), frame = frame, editorProvider = {
-            (container as? DockableEditorTabbedContainer)?.splitters?.currentWindow?.selectedComposite?.selectedWithProvider?.fileEditor
-          })
+          val dockContainer = container as? DockableEditorTabbedContainer
+          val currentFileEditorFlow: StateFlow<FileEditor?> =
+            dockContainer?.splitters?.currentFileEditorFlow ?: MutableStateFlow(null)
+
+          statusBar = mainStatusBar.createChild(
+            coroutineScope = coroutineScope.childScope("DockWindow $id"),
+            frame = frame,
+            currentFileEditorFlow = currentFileEditorFlow,
+          )
         }
       }
     }
@@ -117,8 +126,12 @@ internal class DockWindow(
       buttonManager = ToolWindowPaneOldButtonManager(paneId)
     }
     val containerComponent = container.containerComponent
-    toolWindowPane = ToolWindowPane.create(frame = frame, coroutineScope = coroutineScope!!.childScope(), paneId = paneId,
-                                           buttonManager = buttonManager)
+    toolWindowPane = ToolWindowPane.create(
+      frame = frame,
+      coroutineScope = coroutineScope!!.childScope("DockWindow.toolWindowPane $id"),
+      paneId = paneId,
+      buttonManager = buttonManager,
+    )
     val toolWindowManagerImpl = ToolWindowManager.getInstance(dockManager.project) as ToolWindowManagerImpl
     toolWindowManagerImpl.addToolWindowPane(toolWindowPane!!, this)
 
@@ -154,7 +167,7 @@ internal class DockWindow(
     val oldContainer = this.container
     this.container = container
     if (container is Activatable && getFrame().isVisible) {
-      (container as Activatable).showNotify()
+      container.showNotify()
     }
     return oldContainer
   }

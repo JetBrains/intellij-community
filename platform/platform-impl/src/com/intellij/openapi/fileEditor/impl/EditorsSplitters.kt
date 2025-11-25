@@ -133,6 +133,9 @@ open class EditorsSplitters internal constructor(
   @JvmField
   internal val currentCompositeFlow: StateFlow<EditorComposite?>
 
+  @JvmField
+  internal val currentFileEditorFlow: StateFlow<FileEditor?>
+
   val currentWindow: EditorWindow?
     get() = _currentWindowFlow.value
 
@@ -226,6 +229,13 @@ open class EditorsSplitters internal constructor(
           }
           flow
         }
+      }
+      .stateIn(coroutineScope, SharingStarted.Lazily, null)
+
+    @Suppress("OPT_IN_USAGE")
+    currentFileEditorFlow = currentCompositeFlow
+      .flatMapLatest { composite ->
+        composite?.selectedEditorWithProvider?.map { it?.fileEditor } ?: flowOf(null)
       }
       .stateIn(coroutineScope, SharingStarted.Lazily, null)
 
