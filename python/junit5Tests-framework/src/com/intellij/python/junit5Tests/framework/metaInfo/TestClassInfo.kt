@@ -11,8 +11,8 @@ import kotlin.jvm.optionals.getOrNull
 
 @TestOnly
 enum class Repository(val contentRootResolver: (String) -> String) {
-  PY_COMMUNITY({ "${PathManager.getHomePath()}/community/python/${it}" }),
-  PY_PROFESSIONAL({ "${PathManager.getHomePath()}/python/${it}" }),
+  PY_COMMUNITY({ "${PathManager.getHomeDirFor(Repository::class.java)}/community/python/${it}" }),
+  PY_PROFESSIONAL({ "${PathManager.getHomeDirFor(Repository::class.java)}/python/${it}" }),
   PLUGINS({ PluginPathManager.getPluginHomePath(it) })
 }
 
