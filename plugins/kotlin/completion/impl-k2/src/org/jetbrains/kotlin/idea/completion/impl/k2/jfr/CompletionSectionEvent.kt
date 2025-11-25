@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.jfr
 
 import jdk.jfr.Category
-import jdk.jfr.Enabled
 import jdk.jfr.Label
 import jdk.jfr.Name
 import jdk.jfr.StackTrace
@@ -11,7 +10,6 @@ import jdk.jfr.StackTrace
 @Name("org.jetbrains.kotlin.idea.completion.impl.k2.jfr.CompletionSectionEvent")
 @Label("Completion Section")
 @StackTrace(false)
-@Enabled(false)
 internal class CompletionSectionEvent(
     @Label("Contributor Name")
     val contributorName: String = "",
