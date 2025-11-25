@@ -19,7 +19,6 @@ dataclasses_transform_field.py
 dataclasses_transform_meta.py
 dataclasses_usage.py
 directives_deprecated.py
-directives_type_checking.py
 directives_version_platform.py
 generics_base_class.py
 generics_paramspec_components.py
