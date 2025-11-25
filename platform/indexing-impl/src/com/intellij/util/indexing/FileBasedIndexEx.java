@@ -102,13 +102,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public abstract void waitUntilIndicesAreInitialized();
 
   /**
+   * @param project should be non-null, left nullable for backward-compatibility, but null project will lead to errors
    * @return true if index can be processed after it or
    * false if no need to process it because, for example, scope is empty or index is going to rebuild.
    */
   @ApiStatus.Internal
   public abstract <K> boolean ensureUpToDate(@NotNull ID<K, ?> indexId,
                                              @Nullable Project project,
-                                             @Nullable GlobalSearchScope filter,
+                                             @Nullable GlobalSearchScope scope,
                                              @Nullable VirtualFile restrictedFile);
 
   @Override

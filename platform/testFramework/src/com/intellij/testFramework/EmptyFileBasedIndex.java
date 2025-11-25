@@ -181,7 +181,7 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   @Override
   public <K> boolean ensureUpToDate(@NotNull ID<K, ?> indexId,
                                     @Nullable Project project,
-                                    @Nullable GlobalSearchScope filter,
+                                    @Nullable GlobalSearchScope scope,
                                     @Nullable VirtualFile restrictedFile) {
     return true;
   }

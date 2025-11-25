@@ -201,12 +201,14 @@ public final class RegisteredIndexes {
   private final class DocumentUpdateTask extends UpdateTask<Document> {
     private final ID<?, ?> myIndexId;
 
-    DocumentUpdateTask(ID<?, ?> indexId) {
+    DocumentUpdateTask(@NotNull ID<?, ?> indexId) {
       myIndexId = indexId;
     }
 
     @Override
-    protected void doProcess(Document document, Project project) {
+    protected void doProcess(Document document, @Nullable Project project) {
+      if (project == null) throw new IllegalArgumentException("project must not be null here");
+
       myFileBasedIndex.indexUnsavedDocument(document, myIndexId, project, myFileDocumentManager.getFile(document));
     }
   }
