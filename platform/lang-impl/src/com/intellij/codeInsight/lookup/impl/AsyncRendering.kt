@@ -10,17 +10,17 @@ import com.intellij.codeInsight.lookup.SuspendingLookupElementRenderer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.Key
 import com.intellij.util.indexing.DumbModeAccessType
-import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 
 internal class AsyncRendering(private val lookup: LookupImpl) {
   companion object {
     private val LAST_COMPUTED_PRESENTATION = Key.create<LookupElementPresentation>("LAST_COMPUTED_PRESENTATION")
     private val LAST_COMPUTATION = Key.create<Job>("LAST_COMPUTATION")
-    private val limitedDispatcher = Dispatchers.Default.limitedParallelism(1)
 
     fun rememberPresentation(element: LookupElement, presentation: LookupElementPresentation) {
       element.putUserData(LAST_COMPUTED_PRESENTATION, presentation)
@@ -35,8 +35,8 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
     }
   }
 
-  private val nonSuspendingRenderersMutex = Mutex(false)
-  private val suspendingRenderersSemaphore = Semaphore(10)
+  // Use a maximum of three concurrent rendering jobs to not overload the CPU unnecessarily.
+  private val renderersSemaphore = Semaphore(3)
 
   fun getLastComputed(element: LookupElement): LookupElementPresentation = element.getUserData(LAST_COMPUTED_PRESENTATION)!!
 
@@ -48,30 +48,29 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
         return
       }
 
-      val job = lookup.coroutineScope.launch(limitedDispatcher) {
-        val job = coroutineContext.job
-        if (renderer is SuspendingLookupElementRenderer<LookupElement>) {
-          // Suspending renderers work on the `limitedDispatcher`, so there is no need to limit the throughput.
-          // However, the user code may still move the coroutine to a different dispatcher, so just in case
-          // limit the throughput.
-          suspendingRenderersSemaphore.withPermit {
+      val job = lookup.coroutineScope.launch {
+        // If we use a limited dispatcher, `readAction` (and other calls) would redirect the coroutine to the `Dispatcher.default`
+        // (or other dispatchers), leaving the limited dispatcher free. The next coroutine would then be processed on the limited dispatcher
+        // and so on. Ultimately, this could spin a new dispatcher worker thread for almost each item on the list overloading the coroutine
+        // scheduler and coroutine pool. To mitigate this issue, we can use a semaphore, which will allow for a maximum of three concurrent
+        // rendering jobs.
+
+        renderersSemaphore.withPermit {
+          val job = coroutineContext.job
+
+          if (renderer is SuspendingLookupElementRenderer<LookupElement>) {
             renderInBackgroundSuspending(element, renderer)
           }
-        } else {
-          // `readAction` redirects the coroutine to the `Dispatcher.default` leaving `limitedDispatcher` free.
-          // The next coroutine is then processed on the `limitedDispatcher` and so on. Ultimately, this can spin
-          // a new dispatcher worker thread for almost each item on the list. We should only allow a single
-          // non-suspending renderer to run within the read action.
-          nonSuspendingRenderersMutex.withLock {
+          else {
             readAction {
               if (element.isValid) {
                 renderInBackground(element, renderer)
               }
             }
           }
-        }
-        synchronized(LAST_COMPUTATION) {
-          element.replace(LAST_COMPUTATION, job, null)
+          synchronized(LAST_COMPUTATION) {
+            element.replace(LAST_COMPUTATION, job, null)
+          }
         }
       }
       element.putUserData(LAST_COMPUTATION, job)
