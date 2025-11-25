@@ -16,7 +16,7 @@ val frameworkLogger: Logger by lazy {
 // Determines if long timeout is used for the local debug of the tests.
 private const val defaultLongWaitingOnDebug = true
 private val debugLongTimeout = 30.minutes
-private val isDebugging by lazy { DebugAttachDetector.isAttached() }
+internal val isDebugging by lazy { DebugAttachDetector.isAttached() }
 
 fun getTimeoutHonouringDebug(providedTimeout: Duration): Duration =
   if (isDebugging && defaultLongWaitingOnDebug) {

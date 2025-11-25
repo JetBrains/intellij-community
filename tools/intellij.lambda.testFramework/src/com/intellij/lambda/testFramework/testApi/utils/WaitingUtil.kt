@@ -1,6 +1,7 @@
 package com.intellij.lambda.testFramework.testApi.utils
 
 import com.intellij.lambda.testFramework.getTimeoutHonouringDebug
+import com.intellij.lambda.testFramework.isDebugging
 import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.impl.utils.withTimeoutDumping
 import kotlinx.coroutines.delay
@@ -51,14 +52,15 @@ suspend fun <T> waitSuspending(
   failMessageProducer: ((T?) -> String) = { defaultFailMessageProvider(it) },
   getter: suspend () -> T,
   checker: suspend (T) -> Boolean,
-): T =
-  runLogged("$subjectOfWaiting with $timeout timeout") {
+): T {
+  val timeoutHonouringDebug = getTimeoutHonouringDebug(timeout)
+  return runLogged("$subjectOfWaiting with $timeoutHonouringDebug timeout${if (isDebugging) "[debug]" else ""}") {
     var result: T = getter()
 
     var toDelay = delay
     withTimeoutDumping(
       title = subjectOfWaiting,
-      timeout = getTimeoutHonouringDebug(timeout),
+      timeout = timeoutHonouringDebug,
       action = {
         while (!checker(result)) {
           delay(toDelay)
@@ -72,6 +74,7 @@ suspend fun <T> waitSuspending(
       failMessageProducer = { failMessageProducer(result) + "\n" + defaultFailMessageProvider(result) }
     )
   }
+}
 
 suspend fun <T> waitSuspendingForOne(
   subjectOfWaiting: String,
