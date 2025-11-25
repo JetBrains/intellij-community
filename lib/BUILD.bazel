@@ -2588,8 +2588,8 @@ jvm_import(
 java_library(
   name = "intellij-plugin-structure",
   exports = [
-    ":org_jetbrains_intellij_plugins-structure-intellij-3_319_http_import",
-    ":org_jetbrains_intellij_plugins-structure-base-3_319_http_import",
+    ":org_jetbrains_intellij_plugins-structure-intellij-3_320_http_import",
+    ":org_jetbrains_intellij_plugins-structure-base-3_320_http_import",
     ":org_atteo-evo-inflector-1_3_http_import",
     ":org_jdom-jdom2-2_0_6_1_http_import",
   ],
@@ -2597,15 +2597,15 @@ java_library(
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_plugins-structure-intellij-3_319_http_import",
-  jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_319_http//file",
-  source_jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_319-sources_http//file"
+  name = "org_jetbrains_intellij_plugins-structure-intellij-3_320_http_import",
+  jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_320_http//file",
+  source_jar = "@org_jetbrains_intellij_plugins-structure-intellij-3_320-sources_http//file"
 )
 
 jvm_import(
-  name = "org_jetbrains_intellij_plugins-structure-base-3_319_http_import",
-  jar = "@org_jetbrains_intellij_plugins-structure-base-3_319_http//file",
-  source_jar = "@org_jetbrains_intellij_plugins-structure-base-3_319-sources_http//file"
+  name = "org_jetbrains_intellij_plugins-structure-base-3_320_http_import",
+  jar = "@org_jetbrains_intellij_plugins-structure-base-3_320_http//file",
+  source_jar = "@org_jetbrains_intellij_plugins-structure-base-3_320-sources_http//file"
 )
 
 jvm_import(
