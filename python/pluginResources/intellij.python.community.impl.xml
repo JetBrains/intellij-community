@@ -24,6 +24,8 @@
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.python.processOutput"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
   </dependencies>
 
   <resource-bundle>messages.PyBundle</resource-bundle>

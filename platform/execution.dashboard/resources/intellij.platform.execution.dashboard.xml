@@ -2,6 +2,8 @@
   <dependencies>
     <module name="intellij.platform.rpc"/>
     <module name="intellij.platform.execution.serviceView"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.runDashboardManagerProxy"

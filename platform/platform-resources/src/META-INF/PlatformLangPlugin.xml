@@ -14,7 +14,6 @@
   <xi:include href="/idea/PlatformActions.xml"/>
   <xi:include href="/META-INF/PlatformExecutionActions.xml"/>
   <xi:include href="/idea/ExecutionActions.xml"/>
-  <xi:include href="/idea/XDebuggerActions.xml"/>
   <xi:include href="/idea/LangActions.xml"/>
   <xi:include href="/idea/UsageViewActions.xml"/>
   <xi:include href="/idea/ProblemsViewActions.xml"/>

@@ -1,4 +1,8 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.debugger.settings.DebuggerSettings"/>
     <applicationSettings service="com.intellij.debugger.settings.DebuggerSettings"/>

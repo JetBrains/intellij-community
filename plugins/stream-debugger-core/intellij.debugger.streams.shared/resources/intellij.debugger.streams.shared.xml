@@ -1,4 +1,8 @@
 <idea-plugin visibility="internal">
+  <dependencies>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+  </dependencies>
   <actions resource-bundle="messages.SharedStreamDebuggerBundle">
     <action id="StreamTracerAction"
             class="com.intellij.debugger.streams.shared.TraceStreamAction"
