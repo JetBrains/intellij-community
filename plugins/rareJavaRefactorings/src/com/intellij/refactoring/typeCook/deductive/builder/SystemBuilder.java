@@ -4,7 +4,6 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -796,8 +795,7 @@ public class SystemBuilder {
   private static SearchScope getScope(final PsiSearchHelper helper, final PsiElement element) {
     SearchScope scope = helper.getUseScope(element);
     if (scope instanceof GlobalSearchScope) {
-      scope =
-        GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)scope, JavaFileType.INSTANCE, StdFileTypes.JSP, StdFileTypes.JSPX);
+      scope = GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)scope, JavaFileType.INSTANCE);
     }
     return scope;
   }
