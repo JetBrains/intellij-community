@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lambda.sampleTestsWithFixtures.util
 
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.trustedProjects.impl.TrustedProjectStartupDialog
 import com.intellij.openapi.application.writeAction
@@ -16,6 +17,7 @@ context(_: LambdaBackendContext)
 suspend fun openNewProjectAndEditor(relativePath: String) {
   val disposable = Disposer.newDisposable("Dialog setup")
   TrustedProjectStartupDialog.setDialogChoiceInTests(OpenUntrustedProjectChoice.TRUST_AND_OPEN, disposable)
+  GeneralSettings.getInstance().confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_SAME_WINDOW
 
   val projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder("Test")
   val codeInsightFixture = CodeInsightTestFixtureImpl(projectBuilder.fixture, TempDirTestFixtureImpl())
