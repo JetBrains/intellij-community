@@ -1,6 +1,13 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform">
 
   <extensions defaultExtensionNs="com.intellij">
+    <registryKey
+            defaultValue="false"
+            description="Whether module-specific instead of global modification events should be published for project structure changes."
+            key="kotlin.analysis.enableModuleSpecificProjectStructureModificationEvents"
+            restartRequired="true"
+    />
+
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinModificationTrackerFactory"/>
