@@ -36,7 +36,7 @@ class AcquirableScopedValueOwner<out T : Any>(
       if (!cs.isActive) error("Already cancelled")
 
       subscriptionCount += 1
-      borrowCs.launchNow {
+      borrowCs.launchNow(CoroutineName("Value borrowing coroutine for $this")) {
         try {
           awaitCancellation()
         }
