@@ -4,14 +4,10 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.RefWrapper
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.*
-import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
-import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.QueryBuilder
+import com.intellij.driver.sdk.ui.*
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.*
-import com.intellij.driver.sdk.ui.should
-import com.intellij.driver.sdk.ui.xQuery
 import org.intellij.lang.annotations.Language
 import javax.swing.JList
 import kotlin.time.Duration.Companion.seconds
@@ -79,6 +75,10 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
     typeFilterButton.click()
     searchEverywhereTypeFilterPopup().button("None").click()
     typeFilterButton.click()
+  }
+
+  fun selectTab(tab: String) {
+    x { byVisibleText(tab) }.click()
   }
 
   private fun invokeActionWithShortcut(shortcut: String, chooser: (List<AnAction>) -> AnAction? = { it.singleOrNull() }) {
