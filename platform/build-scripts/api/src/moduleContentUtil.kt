@@ -63,8 +63,7 @@ fun isModuleNameLikeFilename(relativePath: String): Boolean = relativePath.start
 fun getLibraryReferenceRoots(libraryReference: JpsLibraryReference, moduleOutputProvider: ModuleOutputProvider): List<Path> {
   val parentLibraryReference = libraryReference.parentReference
   val moduleLibraryModuleName = if (parentLibraryReference is JpsModuleReference) parentLibraryReference.moduleName else null
-  val libraryRoots = moduleOutputProvider.findLibraryRoots(libraryReference.libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
-  return libraryRoots
+  return moduleOutputProvider.findLibraryRoots(libraryReference.libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
 }
 
 fun getLibraryRoots(library: JpsLibrary, moduleOutputProvider: ModuleOutputProvider): List<Path> {

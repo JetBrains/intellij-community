@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl
 
@@ -21,17 +21,20 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.DirSource
 import org.jetbrains.intellij.build.FrontendModuleFilter
 import org.jetbrains.intellij.build.InMemoryContentSource
 import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.LazySource
+import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.NativeFileHandler
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.Source
+import org.jetbrains.intellij.build.USER_HOME
 import org.jetbrains.intellij.build.UTIL_8_JAR
 import org.jetbrains.intellij.build.UTIL_JAR
 import org.jetbrains.intellij.build.ZipSource
@@ -551,7 +554,9 @@ class JarPackager private constructor(
     library: JpsLibrary,
   ) {
     val libraryName = getLibraryFilename(library)
+    val mavenPaths = library.getPaths(JpsOrderRootType.COMPILED).map { toCanonicalReportPath(it, context.paths) }
     for (file in files) {
+      val canonicalPath = getCanonicalPath(mavenPaths, file)
       @Suppress("NAME_SHADOWING")
       asset.sources.add(
         ZipSource(
@@ -563,6 +568,7 @@ class JarPackager private constructor(
                 moduleName = item.moduleName,
                 libraryName = libraryName,
                 libraryFile = file,
+                canonicalLibraryPath = canonicalPath,
                 size = size,
                 hash = hash,
                 relativeOutputFile = item.relativeOutputFile,
@@ -574,6 +580,7 @@ class JarPackager private constructor(
                 path = targetFile,
                 data = projectLibraryData,
                 libraryFile = file,
+                canonicalLibraryPath = canonicalPath,
                 hash = hash,
                 size = size,
                 relativeOutputFile = item.relativeOutputFile,
@@ -667,7 +674,7 @@ class JarPackager private constructor(
     for (libraryData in projectLibs) {
       val library = context.project.libraryCollection.findLibrary(libraryData.libraryName)
                     ?: throw IllegalArgumentException("Cannot find library ${libraryData.libraryName} in the project")
-      libToMetadata[library] = libraryData
+      libToMetadata.put(library, libraryData)
       val libName = library.name
       var packMode = libraryData.packMode
       if (packMode == LibraryPackMode.MERGED) {
@@ -681,7 +688,7 @@ class JarPackager private constructor(
 
       val outPath = libraryData.outPath
       if (packMode == LibraryPackMode.MERGED && outPath == null) {
-        toMerge[library] = getLibraryFiles(library = library, moduleOutputProvider = context, copiedFiles = copiedFiles, targetFile = null)
+        toMerge.put(library, getLibraryFiles(library = library, moduleOutputProvider = context, copiedFiles = copiedFiles, targetFile = null))
         continue
       }
 
@@ -739,7 +746,9 @@ class JarPackager private constructor(
 
     val sources = asset.sources
     val isPreSignedCandidate = isRootDir && isLibPreSigned(library)
+    val mavenPaths = library.getPaths(JpsOrderRootType.COMPILED).map { toCanonicalReportPath(it, context.paths) }
     for (file in files) {
+      val canonicalPath = getCanonicalPath(mavenPaths, file)
       sources.add(
         ZipSource(
           file = file,
@@ -748,7 +757,15 @@ class JarPackager private constructor(
           distributionFileEntryProducer = { size, hash, targetFile ->
             if (moduleName == null) {
               val data = projectLibraryData ?: throw IllegalStateException("Metadata not specified for $libraryName")
-              ProjectLibraryEntry(path = targetFile, data = data, libraryFile = file, hash = hash, size = size, relativeOutputFile = relativeOutputFile)
+              ProjectLibraryEntry(
+                path = targetFile,
+                data = data,
+                libraryFile = file,
+                canonicalLibraryPath = canonicalPath,
+                hash = hash,
+                size = size,
+                relativeOutputFile = relativeOutputFile,
+              )
             }
             else {
               ModuleLibraryFileEntry(
@@ -756,6 +773,7 @@ class JarPackager private constructor(
                 moduleName = moduleName,
                 libraryName = getLibraryFilename(library),
                 libraryFile = file,
+                canonicalLibraryPath = canonicalPath,
                 size = size,
                 hash = hash,
                 relativeOutputFile = relativeOutputFile,
@@ -770,11 +788,35 @@ class JarPackager private constructor(
     }
   }
 
-  private fun getJarAsset(targetFile: Path, relativeOutputFile: String): AssetDescriptor = assets.computeIfAbsent(targetFile) {
-    AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile)
+  private fun getJarAsset(targetFile: Path, relativeOutputFile: String): AssetDescriptor {
+    return assets.computeIfAbsent(targetFile) {
+      AssetDescriptor(isDir = false, file = targetFile, relativePath = relativeOutputFile)
+    }
   }
 }
 
+private fun getCanonicalPath(mavenPaths: List<String>, file: Path): String {
+  @Suppress("IO_FILE_USAGE")
+  return mavenPaths.singleOrNull()
+         ?: mavenPaths.firstOrNull { it.endsWith(java.io.File.separatorChar + file.fileName.toString()) }
+         ?: throw IllegalStateException("Cannot find canonical path for $file in $mavenPaths")
+}
+
+private fun toCanonicalReportPath(file: Path, buildPaths: BuildPaths): String {
+  val projectHome = buildPaths.projectHome
+  val mavenHome = MAVEN_REPO
+  for (root in listOf(bazelMavenHome, mavenHome, projectHome)) {
+    if (file.startsWith(root)) {
+      val macro = if (root === projectHome) $$"$PROJECT_DIR$/" else $$"$MAVEN_REPOSITORY$/"
+      return macro + root.relativize(file).toString()
+    }
+  }
+  return file.toString()
+}
+
+private val bazelMavenHome = USER_HOME.resolve(".m2/repository-do-not-use-maven-repository-with-bazel")
+
+@Suppress("SpellCheckingInspection")
 private val agentLibrariesNotForcedInSeparateJars = listOf(
   "ideformer",
   "code-agents",

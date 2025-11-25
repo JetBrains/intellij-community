@@ -462,7 +462,7 @@ private fun writeFiles(
   writer.writeArrayFieldStart(arrayFieldName)
   for (entry in entries) {
     writer.writeStartObject()
-    writer.writeStringField("name", shortenAndNormalizePath(entry.libraryFile!!, buildPaths))
+    writer.writeStringField("name", entry.canonicalLibraryPath ?: shortenAndNormalizePath(entry.libraryFile!!, buildPaths))
     writer.writeNumberField("size", entry.size)
     writer.writeEndObject()
   }
@@ -499,7 +499,7 @@ private fun writeProjectLibs(entries: List<DistributionFileEntry>, writer: JsonG
     writer.writeArrayFieldStart("files")
     for (fileEntry in value) {
       writer.writeStartObject()
-      writer.writeStringField("name", shortenAndNormalizePath(fileEntry.libraryFile!!, buildPaths, null))
+      writer.writeStringField("name", fileEntry.canonicalLibraryPath ?: shortenAndNormalizePath(file = fileEntry.libraryFile!!, buildPaths = buildPaths, extraRoot = null))
       writer.writeNumberField("size", fileEntry.size)
       writer.writeEndObject()
     }

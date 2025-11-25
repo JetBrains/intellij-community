@@ -66,8 +66,10 @@ class BazelCompilationContext(
   override suspend fun getOriginalModuleRepository(): OriginalModuleRepository = originalModuleRepository.await()
 
   override fun findRequiredModule(name: String): JpsModule = delegate.findRequiredModule(name)
-  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> =
-    moduleOutputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName)
+
+  override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    return moduleOutputProvider.findLibraryRoots(libraryName, moduleLibraryModuleName)
+  }
 
   override fun findModule(name: String): JpsModule? = delegate.findModule(name)
 

@@ -41,6 +41,12 @@ sealed interface DistributionFileEntry {
 
 sealed interface LibraryFileEntry : DistributionFileEntry {
   val libraryFile: Path?
+  /**
+   * The canonical relative path for reporting purposes (e.g., "org/xerial/sqlite-jdbc/3/sqlite-jdbc-3.jar").
+   * Used to produce consistent `$MAVEN_REPOSITORY$/...` paths across different build systems (JPS vs Bazel).
+   * When null, falls back to [libraryFile].
+   */
+  val canonicalLibraryPath: String?
   val size: Int
 }
 
@@ -65,6 +71,7 @@ internal data class ModuleLibraryFileEntry(
   @JvmField val moduleName: String,
   @JvmField val libraryName: String,
   override val libraryFile: Path?,
+  override val canonicalLibraryPath: String?,
   override val size: Int,
   override val hash: Long,
   override val relativeOutputFile: String?,
@@ -95,6 +102,7 @@ internal data class ProjectLibraryEntry(
   override val path: Path,
   @JvmField val data: ProjectLibraryData,
   override val libraryFile: Path?,
+  override val canonicalLibraryPath: String?,
   override val hash: Long,
   override val size: Int,
   override val relativeOutputFile: String?,

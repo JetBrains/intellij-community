@@ -24,7 +24,6 @@ import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.net.URI
 import java.nio.file.Path
 import java.util.Locale
@@ -692,6 +691,7 @@ private suspend fun copyAnt(mainModule: String, pluginDir: Path, context: BuildC
         path = antTargetFile,
         data = libraryData,
         libraryFile = source.file,
+        canonicalLibraryPath = context.paths.communityHomeDir.relativize(source.file).toString(),
         hash = 0,
         size = 0,
         relativeOutputFile = "dist/ant.jar",
