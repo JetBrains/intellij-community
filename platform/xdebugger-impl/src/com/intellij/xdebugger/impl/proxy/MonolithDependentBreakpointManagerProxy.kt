@@ -2,9 +2,9 @@
 package com.intellij.xdebugger.impl.proxy
 
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager
-import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDependentBreakpointManagerProxy
 
 internal class MonolithDependentBreakpointManagerProxy(val dependentManager: XDependentBreakpointManager) : XDependentBreakpointManagerProxy {
   override fun getMasterBreakpoint(breakpoint: XBreakpointProxy): XBreakpointProxy? {

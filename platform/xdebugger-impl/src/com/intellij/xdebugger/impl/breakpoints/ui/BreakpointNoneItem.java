@@ -7,7 +7,7 @@ import com.intellij.platform.debugger.impl.rpc.XBreakpointId;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;

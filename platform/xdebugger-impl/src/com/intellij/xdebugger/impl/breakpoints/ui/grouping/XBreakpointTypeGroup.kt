@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping
 
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import javax.swing.Icon
 
 internal class XBreakpointTypeGroup(private val breakpointType: XBreakpointTypeProxy) : XBreakpointGroup() {

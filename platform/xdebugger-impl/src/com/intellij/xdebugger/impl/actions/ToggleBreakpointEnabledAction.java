@@ -10,11 +10,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.debugger.impl.shared.SplitDebuggerAction;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointManagerProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
 import com.intellij.util.Range;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerProxy;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointManagerProxy;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy;
 import com.intellij.xdebugger.impl.frame.XDebugManagerProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public class ToggleBreakpointEnabledAction extends DumbAwareAction implements Sp
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (project == null || editor == null) return Collections.emptySet();
     XBreakpointManagerProxy breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project);
-    XLineBreakpointManager lineBreakpointManager = breakpointManager.getLineBreakpointManager();
+    XLineBreakpointManagerProxy lineBreakpointManager = breakpointManager.getLineBreakpointManager();
     Document document = editor.getDocument();
     Collection<Range<Integer>> lineRanges = new ArrayList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {

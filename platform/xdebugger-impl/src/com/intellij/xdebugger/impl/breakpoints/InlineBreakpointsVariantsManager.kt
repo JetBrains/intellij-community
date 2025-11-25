@@ -26,16 +26,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.asDeferred
 
 @ApiStatus.Internal
-data class InlineVariantWithMatchingBreakpointProxy(
-  val variant: XLineBreakpointInlineVariantProxy?,
-  val lightBreakpoint: InlineLightBreakpoint?,
-) {
-  init {
-    require(lightBreakpoint != null || variant != null) { "Both breakpoint and variant are null" }
-  }
-}
-
-@ApiStatus.Internal
 data class InlineVariantWithMatchingBreakpoint(
   val variant: XLineBreakpointType<*>.XLineBreakpointVariant?,
   val breakpoint: XLineBreakpointImpl<*>?,

@@ -17,13 +17,13 @@ import com.intellij.openapi.vfs.findDocument
 import com.intellij.platform.debugger.impl.rpc.XBreakpointApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointDto
 import com.intellij.platform.debugger.impl.rpc.XLineBreakpointInfo
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.xdebugger.SplitDebuggerMode
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointVisualRepresentation
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointHighlighterRange
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointProxy
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.collectLatest

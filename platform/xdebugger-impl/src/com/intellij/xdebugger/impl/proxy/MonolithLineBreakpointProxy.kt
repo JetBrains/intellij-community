@@ -6,7 +6,11 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.markup.GutterDraggableObject
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.xdebugger.impl.breakpoints.*
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointHighlighterRange
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.highlightRange
 
 @Suppress("DEPRECATION")
 internal class MonolithLineBreakpointProxy @Deprecated("Use breakpoint.asProxy() instead") internal constructor(

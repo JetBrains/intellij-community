@@ -7,8 +7,8 @@ import com.intellij.platform.debugger.impl.rpc.XBreakpointDependencyEvent
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
 import com.intellij.platform.debugger.impl.rpc.XDependentBreakpointManagerApi
 import com.intellij.platform.project.projectId
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy
-import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManagerProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XDependentBreakpointManagerProxy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch

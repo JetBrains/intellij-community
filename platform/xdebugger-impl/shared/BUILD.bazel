@@ -17,6 +17,8 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/platform-api:ide",
     "//platform/kernel/shared:kernel",
     "//platform/xdebugger-api:debugger",
     "//libraries/kotlinx/serialization/core",
@@ -27,6 +29,8 @@ jvm_library(
     "//platform/remote-topics/shared:rpc-topics",
     "//platform/xdebugger-impl/rpc",
     "//platform/platform-impl:ide-impl",
+    "//platform/util/coroutines",
+    "//platform/projectModel-api:projectModel",
   ]
 )
 ### auto-generated section `build intellij.platform.debugger.impl.shared` end

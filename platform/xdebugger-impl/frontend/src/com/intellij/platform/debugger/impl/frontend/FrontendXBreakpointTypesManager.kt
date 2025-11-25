@@ -7,9 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeApi
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeDto
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeId
+import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
+import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointTypeProxy
 import com.intellij.platform.project.projectId
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointTypeProxy
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointTypeProxy
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope

@@ -235,13 +235,6 @@ f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtilKt
 - sf:getHighlightRange(com.intellij.xdebugger.breakpoints.XLineBreakpoint):com.intellij.openapi.util.TextRange
 - sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
 - sf:getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
-f:com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState
-- com.intellij.openapi.components.BaseState
-- <init>():V
-- f:getSelectedGroupingRules():java.util.Set
-- f:getTreeState():com.intellij.ide.util.treeView.TreeState
-- f:setSelectedGroupingRules(java.util.Set):V
-- f:setTreeState(com.intellij.ide.util.treeView.TreeState):V
 com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic
