@@ -69,6 +69,9 @@ internal class GitBranchComparisonResultImpl(
             patch.afterVersionId = commitSha
             _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, false, fileHistory)
           }
+          else {
+            LOG.debug("Non-text file ${patch.filePath} patch encountered in a commit $commitSha diff")
+          }
         }
       }
 
@@ -99,6 +102,9 @@ internal class GitBranchComparisonResultImpl(
         patch.afterVersionId = headSha
 
         _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, true, fileHistory)
+      }
+      else {
+        LOG.debug("Non-text file ${patch.filePath} patch encountered in a cumulative diff")
       }
     }
   }
