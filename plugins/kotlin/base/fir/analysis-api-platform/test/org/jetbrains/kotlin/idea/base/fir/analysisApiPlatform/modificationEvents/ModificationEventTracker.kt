@@ -14,7 +14,7 @@ import org.junit.Assert
  * [expectedEventKind] -- that is, the modification tracker primarily checks if a modification event with that exact kind was or was not
  * received.
  *
- * [allowedEventKinds] can be additionally specified as "side effect" events which are expected to be , such as a global out-of-block
+ * [allowedEventKinds] can be additionally specified as "side effect" events which might be published, such as a global out-of-block
  * modification event after a module roots change. The modification event tracker understands **all** other event kinds as *forbidden* and
  * will fail the test if such an event is encountered.
  */
