@@ -18,6 +18,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -39,6 +40,11 @@ import java.util.*;
  * TODO: Merge PythonDataflowUtil and {@link PyEvaluator} and all its inheritors and improve Abstract Interpretation
  */
 public class PyEvaluator {
+
+  private static final List<QualifiedName> TYPING_TYPE_CHECKING_NAMES = List.of(
+    QualifiedName.fromDottedString("TYPE_CHECKING"),
+    QualifiedName.fromDottedString("typing.TYPE_CHECKING")
+  );
 
   private final @NotNull Set<PyExpression> myVisited = new HashSet<>();
 
@@ -253,6 +259,9 @@ public class PyEvaluator {
   }
 
   protected @Nullable Object evaluateReference(@NotNull PyReferenceExpression expression) {
+    if (isTypeCheckingExpression(expression)) {
+      return true;
+    }
     if (!expression.isQualified()) {
       if (myNamespace != null) {
         return myNamespace.get(expression.getReferencedName());
@@ -455,5 +464,10 @@ public class PyEvaluator {
       return result;
     }
     return myAllowExpressionsAsValues ? expression : null;
+  }
+
+  private static boolean isTypeCheckingExpression(@NotNull PyReferenceExpression expression) {
+    QualifiedName qualifiedName = expression.asQualifiedName();
+    return qualifiedName != null && TYPING_TYPE_CHECKING_NAMES.contains(qualifiedName);
   }
 }

@@ -14,5 +14,5 @@
 13(17) element: PyBreakStatement
 14(15) ASSERTTYPE ACCESS: null
 15(16) element: PyStatementList
-16(17) element: PyPrintStatement
+16() element: PyPrintStatement
 17() element: null
