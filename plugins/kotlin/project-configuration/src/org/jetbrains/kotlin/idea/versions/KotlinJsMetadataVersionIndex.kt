@@ -47,7 +47,7 @@ class KotlinJsMetadataVersionIndex internal constructor() : KotlinMetadataVersio
             val metadataList = ArrayList<KotlinJavascriptMetadata>()
             KotlinJavascriptMetadataUtils.parseMetadata(inputData.contentAsText, metadataList)
             for (metadata in metadataList) {
-                val version = metadata.version.takeIf { it.isCompatible() }
+                val version = metadata.version.takeIf { it.isCompatibleWithCurrentCompilerVersion() }
                 // Version is set to something weird
                     ?: JsMetadataVersion.INVALID_VERSION
                 result[version] = null

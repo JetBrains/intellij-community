@@ -25,6 +25,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.io.URLUtil
 import junit.framework.TestCase
+import org.jetbrains.kotlin.K1Deprecation
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
@@ -117,6 +118,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
         val trace = NoScopeRecordCliBindingTrace(project)
 
+        @Suppress("DEPRECATION_ERROR")
         TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
             project = project,
             files = kotlinCoreEnvironment.getSourceFiles(),
@@ -198,6 +200,7 @@ abstract class AbstractKotlinUastTest : TestCase(),
         compilerConfiguration.put(JVMConfigurationKeys.USE_PSI_CLASS_FILES_READING, true)
         compilerConfiguration.put(CLIConfigurationKeys.PATH_TO_KOTLIN_COMPILER_JAR, TestKotlinArtifacts.kotlinCompiler.toFile())
 
+        @OptIn(K1Deprecation::class)
         kotlinCoreEnvironment = KotlinCoreEnvironment.createForTests(
             parentDisposable = testRootDisposable,
             initialConfiguration = compilerConfiguration,

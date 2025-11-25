@@ -28,6 +28,7 @@ object JvmResolveUtil {
         files: Collection<KtFile> = emptyList(),
         targetEnvironment: TargetEnvironment = CompilerEnvironment
     ): ComponentProvider =
+        @Suppress("DEPRECATION_ERROR")
         TopDownAnalyzerFacadeForJVM.createContainer(
             environment.project, files, NoScopeRecordCliBindingTrace(environment.project),
             environment.configuration, { PackagePartProvider.Empty }, ::FileBasedDeclarationProviderFactory,
@@ -85,6 +86,7 @@ object JvmResolveUtil {
         trace: BindingTrace = CliBindingTrace(project),
         klibList: List<KotlinLibrary> = emptyList()
     ): AnalysisResult {
+        @Suppress("DEPRECATION_ERROR")
         return TopDownAnalyzerFacadeForJVM.analyzeFilesWithJavaIntegration(
             project, files, trace, configuration, packagePartProviderFactory,
             klibList = klibList
