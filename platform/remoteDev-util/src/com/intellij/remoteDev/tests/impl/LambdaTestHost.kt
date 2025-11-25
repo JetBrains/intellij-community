@@ -201,7 +201,7 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
           val testModuleId = System.getProperty(TEST_MODULE_ID_PROPERTY_NAME)
                              ?: return@run null
           val tmd = PluginManagerCore.getPluginSet().findEnabledModule(PluginModuleId(testModuleId, PluginModuleId.JETBRAINS_NAMESPACE))
-                     ?: error("Test plugin with test module '$testModuleId' is not found")
+                    ?: error("Test plugin with test module '$testModuleId' is not found")
 
           assert(tmd.pluginClassLoader != null) {
             "Test plugin with test module '${testModuleId}' is not loaded." +
@@ -265,14 +265,9 @@ open class LambdaTestHost(coroutineScope: CoroutineScope) {
             assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
             LOG.info("'$serializedLambda': received serialized lambda execution request")
 
-            val providedCoroutineContext = Dispatchers.Default + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.stepName}")
-            val clientId = providedCoroutineContext.clientId() ?: ClientId.current
-
-            withContext(providedCoroutineContext) {
-              assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
-
-              val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
+            withContext(Dispatchers.Default + CoroutineName("Lambda task: SerializedLambda:${serializedLambda.stepName}")) {
               runLogged(serializedLambda.stepName, 10.minutes) {
+                val urls = serializedLambda.classPath.map { File(it).toURI().toURL() }
                 URLClassLoader(urls.toTypedArray(), testModuleDescriptor?.pluginClassLoader ?: this::class.java.classLoader).use {
                   SerializedLambdaLoader().load(serializedLambda.serializedDataBase64, classLoader = it, context = ideContext)
                     .accept(ideContext)
