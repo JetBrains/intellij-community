@@ -20,6 +20,7 @@ import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowRightToolbarUi
 import com.intellij.driver.sdk.ui.components.common.toolwindows.projectView
+import com.intellij.driver.sdk.ui.components.elements.*
 import com.intellij.driver.sdk.ui.components.elements.JLabelUiComponent
 import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.JcefOffScreenViewComponent
@@ -107,6 +108,8 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = x("//div[@class='MyScrollPane']//div[@class='JBViewport']//div[@class='EditorGutterComponentImpl']")
   val cellActions: List<UiComponent>
     get() = xx("//div[@class='JupyterCellActionsToolbar']").list()
+  val newCellActions: List<UiComponent>
+    get() = x("//div[@class='JupyterAddNewCellToolbar']").xx("//div[@class='ActionButtonWithText']", JButtonUiComponent::class.java).list()
   val foldingBars: List<UiComponent>
     get() = xx("//div[@class='EditorCellFoldingBarComponent']").list()
 
@@ -124,7 +127,9 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
       service<PsiManager>(singleProject()).findFile(editor.getVirtualFile())
     }
 
-  fun addEmptyCodeCell(): Unit = addCellBelow.strictClick()
+  fun addEmptyCodeCell(): Unit {
+    driver.invokeActionWithRetries("NotebookInsertCodeCellAction")
+  }
 
   fun addCodeCell(text: String) {
     addEmptyCodeCell()
