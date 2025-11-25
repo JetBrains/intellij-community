@@ -3871,18 +3871,19 @@ a:com.intellij.openapi.ui.panel.ComponentPanel
 - a:setCommentText(java.lang.String):V
 c:com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - com.intellij.openapi.ui.panel.GridBagPanelBuilder
+- sf:Companion:com.intellij.openapi.ui.panel.ComponentPanelBuilder$Companion
 - sf:MAX_COMMENT_WIDTH:I
 - <init>(javax.swing.JComponent):V
 - addToPanel(javax.swing.JPanel,java.awt.GridBagConstraints,Z):V
 - anchorLabelOn(com.intellij.util.ui.UI$Anchor):com.intellij.openapi.ui.panel.ComponentPanelBuilder
-- s:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
+- sf:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
 - constrainsValid():Z
-- s:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
-- s:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
-- s:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
-- s:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
+- sf:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
+- sf:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
+- sf:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
+- sf:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
 - createPanel():javax.swing.JPanel
-- s:getCommentFont(java.awt.Font):java.awt.Font
+- sf:getCommentFont(java.awt.Font):java.awt.Font
 - gridWidth():I
 - moveCommentRight():com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - moveLabelOnTop():com.intellij.openapi.ui.panel.ComponentPanelBuilder
@@ -3896,6 +3897,13 @@ c:com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - withTooltip(java.lang.String):com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - withTooltipLink(java.lang.String,java.lang.Runnable):com.intellij.openapi.ui.panel.ComponentPanelBuilder
 - withTopRightComponent(javax.swing.JComponent):com.intellij.openapi.ui.panel.ComponentPanelBuilder
+f:com.intellij.openapi.ui.panel.ComponentPanelBuilder$Companion
+- f:computeCommentInsets(javax.swing.JComponent,Z):java.awt.Insets
+- f:createCommentComponent(java.lang.String,Z):javax.swing.JLabel
+- f:createCommentComponent(java.lang.String,Z,I):javax.swing.JLabel
+- f:createCommentComponent(java.lang.String,Z,I,Z):javax.swing.JLabel
+- f:createNonWrappingCommentComponent(java.lang.String):javax.swing.JLabel
+- f:getCommentFont(java.awt.Font):java.awt.Font
 c:com.intellij.openapi.ui.panel.PanelGridBuilder
 - com.intellij.openapi.ui.panel.PanelBuilder
 - <init>():V
