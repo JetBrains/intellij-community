@@ -307,6 +307,18 @@ fun Driver.createNewNotebookWithMouse(name: String = "New Notebook", type: Noteb
   }
 }
 
+//TODO: @Stankevych should be refactored to a single fun that interacts with the right toolbar
+fun Driver.openRightToolWindow(stripeButtonName: String) {
+  ideFrame {
+    val rightToolbar = xx(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }.list().firstOrNull()
+                       ?: return@ideFrame
+    val varsButton = rightToolbar.stripeButton(stripeButtonName)
+    if (varsButton.present()) {
+      varsButton.open()
+    }
+  }
+}
+
 fun Driver.closeRightToolWindow(stripeButtonName: String) {
   ideFrame {
     val rightToolbar = xx(ToolWindowRightToolbarUi::class.java) { byClass("ToolWindowRightToolbar") }.list().firstOrNull()
@@ -318,6 +330,7 @@ fun Driver.closeRightToolWindow(stripeButtonName: String) {
   }
 }
 
+//TODO: @Stankevych should be refactored to a single fun that interacts with the left toolbar
 fun Driver.openLeftToolWindow(stripeButtonName: String) {
   ideFrame {
     val leftToolbar = xx(ToolWindowLeftToolbarUi::class.java) { byClass("ToolWindowLeftToolbar") }.list().firstOrNull()

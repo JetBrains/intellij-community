@@ -28,6 +28,9 @@ inline fun Finder.withKotlinNotebookToolWindow(action: KotlinNotebookToolWindowU
   }
 }
 
+val Finder.jupyterVariablesPanel: UiComponent
+  get() = x("//div[@class='PythonJupyterVarsToolWindow']")
+
 class KotlinNotebookToolWindowUiComponent(data: ComponentData) : UiComponent(data) {
   val notebookTabs: UIComponentsList<UiComponent>
     get() = xx("""
