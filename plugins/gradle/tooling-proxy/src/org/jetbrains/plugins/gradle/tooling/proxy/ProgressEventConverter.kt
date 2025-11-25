@@ -3,10 +3,16 @@ package org.jetbrains.plugins.gradle.tooling.proxy
 
 import org.gradle.tooling.Failure
 import org.gradle.tooling.events.*
+import org.gradle.tooling.events.problems.ProblemGroup
+import org.gradle.tooling.events.problems.ProblemSummary
+import org.gradle.tooling.events.problems.internal.DefaultProblemSummariesEvent
 import org.gradle.tooling.events.task.*
 import org.gradle.tooling.events.test.*
 import org.gradle.tooling.model.UnsupportedMethodException
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.*
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblemGroup
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblemId
+import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.problem.InternalProblemSummary
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.task.*
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.events.test.*
 import java.util.*
@@ -27,7 +33,21 @@ class ProgressEventConverter {
     is StatusEvent -> progressEvent.run { InternalStatusEvent(eventTime, displayName, convert(descriptor), total, progress, unit) }
     is StartEvent -> progressEvent.run { InternalStartEvent(eventTime, displayName, convert(descriptor)) }
     is FinishEvent -> progressEvent.run { InternalFinishEvent(eventTime, displayName, convert(descriptor), convert(result)) }
+    is DefaultProblemSummariesEvent -> progressEvent.run {
+      InternalProblemSummariesEvent(eventTime, displayName, convert(descriptor), convert(problemSummaries))
+    }
     else -> progressEvent
+  }
+
+  private fun convert(summaries: List<ProblemSummary>?): List<ProblemSummary> {
+    return summaries?.map { problem ->
+      val problemId = problem.problemId.let { id -> InternalProblemId(id.name, id.displayName, convert(id.group)) }
+      InternalProblemSummary(problemId, problem.count)
+    } ?: ArrayList()
+  }
+
+  private fun convert(group: ProblemGroup?): InternalProblemGroup? {
+    return group?.let { InternalProblemGroup(it.name, it.displayName, convert(it.parent)) }
   }
 
   private fun convert(result: TaskOperationResult?): TaskOperationResult? {

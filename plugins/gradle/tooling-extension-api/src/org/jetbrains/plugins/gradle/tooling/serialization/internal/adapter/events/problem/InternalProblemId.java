@@ -3,17 +3,18 @@ package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.even
 
 import org.gradle.tooling.events.problems.ProblemId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class InternalProblemId implements ProblemId {
 
   private final @NotNull String name;
   private final @NotNull String displayName;
-  private final @NotNull InternalProblemGroup problemGroup;
+  private final @Nullable InternalProblemGroup problemGroup;
 
   public InternalProblemId(
     @NotNull String name,
     @NotNull String displayName,
-    @NotNull InternalProblemGroup problemGroup
+    @Nullable InternalProblemGroup problemGroup
   ) {
     this.name = name;
     this.displayName = displayName;
@@ -31,7 +32,7 @@ public class InternalProblemId implements ProblemId {
   }
 
   @Override
-  public @NotNull InternalProblemGroup getGroup() {
+  public @Nullable InternalProblemGroup getGroup() {
     return problemGroup;
   }
 }
