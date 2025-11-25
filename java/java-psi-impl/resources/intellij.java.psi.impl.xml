@@ -171,6 +171,10 @@
     <registryKey key="java.folding.icons.for.control.flow"
                  defaultValue="true"
                  description="Add folding icons to the gutter for control flow statements"/>
+    <registryKey key="unsound.capture.conversion.java.spec.change" defaultValue="false"
+                 description="Capture in method reference return type is unsound, and the spec would be changed, see https://bugs.openjdk.org/browse/JDK-8170887"/>
+    <registryKey key="ide.goto.implementation.show.interfaces" defaultValue="true"
+                 description="Whether to show sub-interfaces when invoking the 'Go to Implementation' action (Ctrl+Alt+B) on an interface."/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

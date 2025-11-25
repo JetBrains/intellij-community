@@ -108,6 +108,8 @@
 
     <registryKey key="javafx.fxml.controller.from.loader" defaultValue="false"
                  description="Resolve FXML controllers specified with FXMLLoader.setController()"/>
+    <registryKey key="embed.scene.builder" defaultValue="true"
+                 description="Show SceneBuilder embedded into an IntelliJ IDEA frame"/>
   </extensions>
 
   <projectListeners>

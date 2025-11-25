@@ -2786,6 +2786,10 @@
                                  targetClass="com.siyeh.ig.format.StringFormatSymbolReferenceProvider$JavaFormatArgumentSymbol"/>
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="com.siyeh.ig.format.StringFormatUsageSearcher"/>
+
+    <registryKey key="ide.ignore.call.result.inspection.honor.inferred.pure"
+                 defaultValue="true"
+                 description="Whether inferred @Contract(pure=true) annotations should be taken into account in the &quot;Result of method call ignored&quot; inspection"/>
   </extensions>
 
 </idea-plugin>

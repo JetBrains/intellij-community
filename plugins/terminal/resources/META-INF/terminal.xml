@@ -33,6 +33,9 @@
     <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.terminal.fus.TerminalFocusRule"/>
     <statistics.applicationUsagesCollector implementation="org.jetbrains.plugins.terminal.fus.TerminalSettingsStateCollector"/>
 
+    <registryKey key="terminal.persistent.tabs" defaultValue="true"
+                 description="Save state of terminal tabs between IDE restarts"/>
+
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
 
