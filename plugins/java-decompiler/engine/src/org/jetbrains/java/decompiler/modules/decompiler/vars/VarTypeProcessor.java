@@ -99,13 +99,13 @@ public class VarTypeProcessor {
     if (exprentTypeBounds == null) return true;
 
     for (var entry : exprentTypeBounds.getMaxTypeExprents()) {
-      if (entry.type.getTypeFamily() != CodeConstants.TYPE_FAMILY_OBJECT) {
-        changeExprentType(entry.exprent, entry.type, false);
+      if (entry.type().getTypeFamily() != CodeConstants.TYPE_FAMILY_OBJECT) {
+        changeExprentType(entry.exprent(), entry.type(), false);
       }
     }
     boolean result = true;
     for (var entry : exprentTypeBounds.getMinTypeExprents()) {
-      result &= changeExprentType(entry.exprent, entry.type, true);
+      result &= changeExprentType(entry.exprent(), entry.type(), true);
     }
     return result;
   }

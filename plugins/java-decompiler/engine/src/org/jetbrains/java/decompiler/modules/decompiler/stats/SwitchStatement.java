@@ -369,7 +369,7 @@ public final class SwitchStatement extends Statement {
   private void collectExitEdgesIndices(@NotNull Map<StatEdge, Integer> edgeIndicesMapping,
                                        @NotNull List<@Nullable Statement> nodes,
                                        @NotNull List<List<Integer>> edgeIndices) {
-    List<StatEdge> firstExitEdges = first.getSuccessorEdges(EdgeType.BREAK.unite(EdgeType.CONTINUE));
+    List<StatEdge> firstExitEdges = first.getSuccessorEdges(EdgeType.CONTINUE_BREAK);
     while (!firstExitEdges.isEmpty()) {
       StatEdge exitEdge = firstExitEdges.get(0);
       List<Integer> exitEdgeIndices = new ArrayList<>();

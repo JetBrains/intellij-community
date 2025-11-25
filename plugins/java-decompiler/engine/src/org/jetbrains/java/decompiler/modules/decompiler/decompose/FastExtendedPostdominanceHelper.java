@@ -229,7 +229,7 @@ public class FastExtendedPostdominanceHelper {
   }
 
   private void calcDefaultReachableSets() {
-    EdgeType edgetype = EdgeType.REGULAR.unite(EdgeType.EXCEPTION);
+    EdgeType edgetype = EdgeType.REGULAR_EXCEPTION;
 
     calcReachabilitySuppPoints(edgetype);
 
