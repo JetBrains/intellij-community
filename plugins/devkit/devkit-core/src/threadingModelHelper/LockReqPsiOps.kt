@@ -19,7 +19,9 @@ private object LockReqPsiOpsProvider : LanguageExtension<LockReqPsiOps>("DevKit.
  */
 interface LockReqPsiOps {
   companion object {
-    fun forLanguage(language: Language): LockReqPsiOps = LockReqPsiOpsProvider.forLanguage(language)
+    fun forLanguage(language: Language): LockReqPsiOps = forLanguageOrNull(language) ?: error("No LockReqPsiOps for language $language")
+
+    fun forLanguageOrNull(language: Language): LockReqPsiOps? = LockReqPsiOpsProvider.forLanguage(language)
   }
 
   @RequiresReadLock

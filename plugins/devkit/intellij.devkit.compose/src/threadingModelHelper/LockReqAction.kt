@@ -81,7 +81,7 @@ class LockReqAction : AnAction() {
   private fun shouldBeEnabled(e: AnActionEvent): Boolean {
     val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return false
     val caretOffset = e.getData(CommonDataKeys.EDITOR)?.caretModel?.offset ?: return false
-    return LockReqPsiOps.forLanguage(psiFile.language).extractTargetElement(psiFile, caretOffset) != null
+    return LockReqPsiOps.forLanguageOrNull(psiFile.language)?.extractTargetElement(psiFile, caretOffset) != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
