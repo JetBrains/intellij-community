@@ -77,7 +77,7 @@ import static com.intellij.ide.actions.runAnything.RunAnythingSearchListModel.Ru
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
 @ApiStatus.Internal
-public final class RunAnythingPopupUI extends BigPopupUI {
+public final class RunAnythingPopupUI extends BigPopupUI implements UiDataProvider {
   public static final int SEARCH_FIELD_COLUMNS = 25;
   public static final Icon UNKNOWN_CONFIGURATION_ICON = AllIcons.Actions.RunAnything;
   static final String RUN_ANYTHING = "RunAnything";
@@ -305,6 +305,11 @@ public final class RunAnythingPopupUI extends BigPopupUI {
     }
 
     return getBaseDirectory(getModule());
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.LANGUAGE, RunAnythingLanguage.INSTANCE);
   }
 
   private @NotNull VirtualFile getBaseDirectory(@Nullable Module module) {
