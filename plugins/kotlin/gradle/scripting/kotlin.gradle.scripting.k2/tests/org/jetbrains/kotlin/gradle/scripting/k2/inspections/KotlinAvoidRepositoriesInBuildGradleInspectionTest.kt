@@ -373,6 +373,127 @@ class KotlinAvoidRepositoriesInBuildGradleInspectionTest : K2GradleCodeInsightTe
 
     @ParameterizedTest
     @AllGradleVersionsSource
+    fun testRepositoriesMergeWithComments(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
+            testMyIntention(
+                """
+                repositories<caret> {
+                    // first comment
+                    mavenCentral()
+                    // second comment
+                    google()
+                    myRepo()
+                }
+                """.trimIndent(),
+                "",
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                        google()
+                    }
+                }
+                """.trimIndent(),
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                        google()
+                        // first comment
+                        mavenCentral()
+                        // second comment
+                        google()
+                        myRepo()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = false
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testRepositoriesMergePrefixMatch(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
+            testMyIntention(
+                """
+                repositories<caret> {
+                    mavenCentral()
+                    google()
+                    myRepo()
+                }
+                """.trimIndent(),
+                "",
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                        google()
+                        myRepo()
+                        anotherRepo()
+                    }
+                }
+                """.trimIndent(),
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                        google()
+                        myRepo()
+                        anotherRepo()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = false
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
+    fun testRepositoriesMergeTotalMatch(gradleVersion: GradleVersion) {
+        runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
+            testMyIntention(
+                """
+                repositories<caret> {
+                    mavenCentral()
+                    google()
+                    myRepo()
+                }
+                """.trimIndent(),
+                "",
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                        google()
+                        myRepo()
+                    }
+                }
+                """.trimIndent(),
+                """
+                dependencyResolutionManagement {
+                    repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS
+                    repositories {
+                        mavenCentral()
+                        google()
+                        myRepo()
+                    }
+                }
+                """.trimIndent(),
+                isForPlugins = false
+            )
+        }
+    }
+
+    @ParameterizedTest
+    @AllGradleVersionsSource
     fun testRepositoriesMoveToExistingEmptyPluginManagement(gradleVersion: GradleVersion) {
         runTest(gradleVersion, KOTLIN_DSL_EMPTY_PROJECT) {
             testMyIntention(
