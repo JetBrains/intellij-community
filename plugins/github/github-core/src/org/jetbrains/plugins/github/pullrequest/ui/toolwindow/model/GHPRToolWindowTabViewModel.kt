@@ -2,8 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model
 
 import com.intellij.collaboration.ui.toolwindow.ReviewTabViewModel
+import com.intellij.openapi.Disposable
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -14,11 +16,12 @@ import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateV
 
 @ApiStatus.Experimental
 sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
+  // Disposable bc `com.intellij.collaboration.ui.toolwindow.ReviewToolwindowTabsStateHolder` requires it for cleanup
   @ApiStatus.Experimental
   class PullRequest internal constructor(parentCs: CoroutineScope,
                                          projectVm: GHPRToolWindowProjectViewModel,
                                          id: GHPRIdentifier)
-    : GHPRToolWindowTabViewModel {
+    : GHPRToolWindowTabViewModel, Disposable {
     private val cs = parentCs.childScope(javaClass.name)
 
     override val displayName: String = "#${id.number}"
@@ -33,6 +36,10 @@ sealed interface GHPRToolWindowTabViewModel : ReviewTabViewModel {
 
     fun selectCommit(oid: String) {
       infoVm.detailsVm.value.result?.getOrNull()?.changesVm?.selectCommit(oid)
+    }
+
+    override fun dispose() {
+      cs.cancel()
     }
   }
 
