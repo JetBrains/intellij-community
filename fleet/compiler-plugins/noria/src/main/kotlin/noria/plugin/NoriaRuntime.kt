@@ -1,8 +1,8 @@
 package noria.plugin
 
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -29,12 +29,18 @@ internal fun funByName(
   name: String,
   prefix: FqName,
   pluginContext: IrPluginContext,
-  moduleFragment: IrModuleFragment
+  from: IrFile,
 ): IrSimpleFunctionSymbol {
   val callableId = CallableId(prefix, Name.identifier(name))
-  return pluginContext.referenceFunctions(callableId).singleOrNull()
-         ?: throw SymbolNotFoundException(callableId.toString(), moduleFragment)
+  return pluginContext.referenceFunctions(callableId)
+    .also { refs ->
+      refs.forEach { ref ->
+        pluginContext.recordLookup(ref.owner, from)
+      }
+    }
+    .singleOrNull()
+    ?: throw SymbolNotFoundException(callableId.toString(), from)
 }
 
-class SymbolNotFoundException(fqn: String, module: IrModuleFragment) :
-  RuntimeException("$fqn cannot be resolved from module `${module.name.asString()}`.")
+class SymbolNotFoundException(fqn: String, file: IrFile) :
+  RuntimeException("$fqn cannot be resolved from module `${file.fileEntry.name}`.")
