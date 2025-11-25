@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.bridge
 
+import androidx.compose.foundation.ComposeFoundationFlags
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ProvidableCompositionLocal
@@ -205,6 +206,9 @@ private fun createJewelComposePanel(
             JewelLogger.getInstance("SkikoLoader").warn("Bundled Skiko not found/not readable, falling back to default")
         }
     }
+
+    ComposeFoundationFlags.isNewContextMenuEnabled = false
+
     val jewelPanel = JewelComposePanelWrapper(focusOnClickInside)
     jewelPanel.composePanel.config(jewelPanel)
     ComposeUiInspector(jewelPanel)
