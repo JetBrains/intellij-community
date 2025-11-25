@@ -6,7 +6,6 @@ import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.Starter
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.junit.IdeRunMode
-import com.intellij.lambda.testFramework.starter.UltimateTestCases
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.lambda.testFramework.utils.IdeLambdaStarter.runIdeWithLambda
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder

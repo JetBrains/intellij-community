@@ -1,4 +1,3 @@
-
 package com.intellij.lambda.testFramework.junit
 
 import com.intellij.lambda.testFramework.starter.IdeInstance
@@ -7,36 +6,8 @@ import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.util.containers.orNull
 import org.junit.jupiter.api.extension.*
 import org.junit.jupiter.params.ParameterizedTest
-import org.junit.platform.commons.util.AnnotationUtils
-import java.lang.reflect.AnnotatedElement
 import java.util.stream.Stream
 import kotlin.jvm.optionals.getOrNull
-
-fun getModesToRun(annotatedElement: AnnotatedElement?): List<IdeRunMode> {
-  if (annotatedElement == null) return emptyList()
-  val annotation = AnnotationUtils.findAnnotation(annotatedElement, ExecuteInMonolithAndSplitMode::class.java).orNull()
-
-  return annotation?.mode?.toList() ?: emptyList()
-}
-
-fun getModesToRun(context: ExtensionContext): List<IdeRunMode> {
-  val annotation = AnnotationUtils.findAnnotation(context.testMethod, ExecuteInMonolithAndSplitMode::class.java).orElse(
-    AnnotationUtils.findAnnotation(context.testClass, ExecuteInMonolithAndSplitMode::class.java).orNull()
-  )
-
-  if (annotation == null) throw IllegalStateException("The test is expected to have ${ExecuteInMonolithAndSplitMode::javaClass.name} annotation")
-
-  // Check if we're running under GroupByModeTestEngine with a mode filter
-  val modeFilter = context.getConfigurationParameter("ide.run.mode.filter").orNull()
-
-  // If mode filter is set, only return that mode
-  return if (modeFilter != null) {
-    listOf(IdeRunMode.valueOf(modeFilter))
-  }
-  else {
-    annotation.mode.toList()
-  }
-}
 
 class MonolithAndSplitModeTestTemplateProvider : TestTemplateInvocationContextProvider {
   override fun supportsTestTemplate(context: ExtensionContext): Boolean {

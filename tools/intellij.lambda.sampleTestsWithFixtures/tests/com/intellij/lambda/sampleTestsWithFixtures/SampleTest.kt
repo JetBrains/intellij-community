@@ -3,16 +3,13 @@ package com.intellij.lambda.sampleTestsWithFixtures
 
 import com.intellij.lambda.sampleTestsWithFixtures.util.openNewEditor
 import com.intellij.lambda.testFramework.junit.ExecuteInMonolithAndSplitMode
-import com.intellij.lambda.testFramework.junit.IdeRunMode
 import com.intellij.lambda.testFramework.testApi.editor.openFile
 import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.lambda.testFramework.testApi.getProjects
-import com.intellij.lambda.testFramework.testApi.waitForProject
 import com.intellij.lambda.testFramework.utils.BackgroundRunWithLambda
 import com.intellij.openapi.diagnostic.Logger
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.TestTemplate
-import kotlin.time.Duration.Companion.seconds
 
 @ExecuteInMonolithAndSplitMode
 class SampleTest {
