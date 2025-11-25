@@ -174,3 +174,62 @@ private suspend fun loadModules(
       .loadLibraries(targetBuilder, workspaceModel)
   }
 }
+
+/**
+ * Analyzer only needs to initialize bridges for modules. It doesn't use Global Workspace Model.
+ * This code is copied from the ModuleBridgeLoaderService to remove the call to [com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel.registerInitializingProjectForUpdatesFromGlobalModel]
+ * because there is no [com.intellij.openapi.startup.StartupManager] in Analyzer.
+ * Todo (Andrey Zaytsev): remove everything that is irrelevant for the Analyzer
+ */
+@ApiStatus.Internal
+suspend fun initializeModuleBridges(project: Project) {
+  coroutineScope {
+    val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
+    val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
+
+    LOG.assertTrue(workspaceModel.loadedFromCache)
+
+    launch {
+      readAction {
+        ProjectRootManager.getInstance(project)
+      }
+    }
+
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor().machine)
+
+    val globalWsmAppliedToProjectWsm = CompletableDeferred<Project>()
+    span("modules loading with cache") {
+      if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
+        LOG.warn("Loaded from cache, but no serialized modules found. " +
+                 "Workspace model cache will be ignored, project structure will be recreated.")
+        workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
+        project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
+      }
+      loadModules(
+        project = project,
+        targetBuilder = null,
+        targetUnloadedEntitiesBuilder = null,
+        loadedFromCache = workspaceModel.loadedFromCache,
+        workspaceModel = workspaceModel,
+        globalWsmAppliedToProjectWsm = globalWsmAppliedToProjectWsm,
+      )
+    }
+    backgroundWriteAction {
+      try {
+        globalWorkspaceModel.applyStateToProject(project)
+      }
+      finally {
+        globalWsmAppliedToProjectWsm.complete(project)
+      }
+    }
+
+    val projectRootManager = coroutineScope {
+      // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
+      launch { serviceAsync<ProjectJdkTable>() }
+      project.serviceAsync<ProjectRootManager>() as ProjectRootManagerBridge
+    }
+    backgroundWriteAction {
+      projectRootManager.setupTrackedLibrariesAndJdks()
+    }
+  }
+}
